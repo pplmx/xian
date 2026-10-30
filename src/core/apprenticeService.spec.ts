@@ -10,6 +10,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import {
   apprenticeOverview,
+  apprenticeRoster,
   apprenticeSpoils,
   apprenticeTaskProgress,
   taskDone,
@@ -91,6 +92,33 @@ describe("门庭今日", () => {
       nextReturnAt: null,
       nextReturnSpec: null,
     });
+  });
+
+  it("值日簿候差在前,在途按归期从近到远,同刻保留原序", () => {
+    const roster = apprenticeRoster([
+      apprentice({
+        uid: "later",
+        task: { spec: "herb", startAt: 0, finishAt: 9000 },
+      }),
+      apprentice({ uid: "idle-a" }),
+      apprentice({
+        uid: "sooner",
+        task: { spec: "study", startAt: 0, finishAt: 3000 },
+      }),
+      apprentice({ uid: "idle-b" }),
+      apprentice({
+        uid: "same-time",
+        task: { spec: "ore", startAt: 0, finishAt: 3000 },
+      }),
+    ]);
+
+    expect(roster.map((row) => [row.apprentice.uid, row.away])).toEqual([
+      ["idle-a", false],
+      ["idle-b", false],
+      ["sooner", true],
+      ["same-time", true],
+      ["later", true],
+    ]);
   });
 });
 

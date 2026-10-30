@@ -23,6 +23,7 @@ import {
 } from "@/data/apprentices";
 import {
   apprenticeOverview,
+  apprenticeRoster,
   apprenticeRecruitCost,
   apprenticeSpoils,
   apprenticeTaskProgress,
@@ -33,12 +34,15 @@ import {
   type OwnedApprentice,
 } from "@/core/apprenticeService";
 import { pillDef } from "@/data/pills";
+import { qualityDef } from "@/data/qualities";
 import { formatCountdown, formatGN } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import { notify } from "@/core/notify";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
+import SectionTitle from "@/components/common/SectionTitle.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
+import ApprenticeCourt from "@/components/apprentice/ApprenticeCourt.vue";
 
 const appr = useApprenticeStore();
 const player = usePlayerStore();
@@ -75,6 +79,36 @@ onUnmounted(() => {
 const slots = computed(() => apprenticeSlots(player.major));
 /** 门庭卷首、派发按钮与朱点共用的唯一汇总。 */
 const pulse = computed(() => apprenticeOverview(appr.apprentices));
+/** 值日簿顺序也在 service 定一次:候差在前,在途按最近归期排。 */
+const roster = computed(() => apprenticeRoster(appr.apprentices));
+const idleRows = computed(() => roster.value.filter((row) => !row.away));
+const awayRows = computed(() => roster.value.filter((row) => row.away));
+const rosterGroups = computed(() =>
+  [
+    { key: "idle", mark: "壹", title: "候差", hint: "可即刻派活", rows: idleRows.value },
+    { key: "away", mark: "贰", title: "在途", hint: "按归期先后", rows: awayRows.value },
+  ].filter((group) => group.rows.length > 0),
+);
+
+const TALENT_MARKS: Record<ApprenticeSpec, string> = {
+  herb: "药",
+  ore: "矿",
+  adventure: "剑",
+  seek: "缘",
+  study: "悟",
+};
+
+const courtNodes = computed(() =>
+  roster.value.map(({ apprentice: a }) => {
+    const talent = apprenticeDef(a.archId)?.talent ?? "adventure";
+    return {
+      uid: a.uid,
+      mark: TALENT_MARKS[talent],
+      idle: !a.task,
+      progress: a.task ? apprenticeTaskProgress(a.task, now.value) * 100 : 0,
+    };
+  }),
+);
 
 function secondsLeft(finishAt: number): number {
   return Math.max(0, Math.ceil((finishAt - now.value) / 1000));
@@ -88,11 +122,24 @@ function send(uid: string, spec: (typeof APPRENTICE_TASKS)[number]["spec"]): voi
  * 而真传那档还带跨世之缘(有实际转世收益)的隐藏机制,冲它的人该在达成前就看得见门槛与方向。
  * 返回 null 表示已到真传(封顶,无下一档)。
  */
-function bondNext(bond: number): { name: string; remaining: number } | null {
+function bondNext(
+  bond: number,
+): { name: string; remaining: number; from: number; threshold: number } | null {
   for (const t of BOND_TITLES) {
-    if (bond < t.min) return { name: t.name, remaining: t.min - bond };
+    if (bond < t.min) {
+      const from =
+        [...BOND_TITLES].reverse().find((step) => step.min <= bond)?.min ?? BOND_TITLES[0]!.min;
+      return { name: t.name, remaining: t.min - bond, from, threshold: t.min };
+    }
   }
   return null;
+}
+
+function bondProgress(a: OwnedApprentice): number {
+  const next = bondNext(a.bond);
+  if (!next) return 100;
+  const span = next.threshold - next.from;
+  return span <= 0 ? 0 : Math.max(0, Math.min(1, ((a.bond - next.from) / span) * 100));
 }
 
 /** 收徒成本与槽位 —— 直接问 service 那一处实现(不再在这里算一遍同一式子) */
@@ -102,9 +149,9 @@ const recruitShort = computed(() =>
   Math.max(0, toNum(recruitCost.value) - toNum(resources.spiritStone)),
 );
 
-/** 派活期望产出 —— 由 apprenticeSpoils 现算(天赋门类 ×1.25),不与结算双写 */
-function taskYield(a: OwnedApprentice, spec: ApprenticeSpec): string {
-  const s = apprenticeSpoils(a.archId, spec, player.major, a.level);
+/** 派活期望产出 —— 由 apprenticeSpoils 现算(天赋门类读常量),不与结算双写 */
+function taskYield(a: OwnedApprentice, spec: ApprenticeSpec, major = player.major): string {
+  const s = apprenticeSpoils(a.archId, spec, major, a.level);
   const talent = apprenticeDef(a.archId)?.talent === spec;
   const tag = talent ? `·天赋×${APPRENTICE_TALENT_BONUS}` : "";
   const parts: string[] = [];
@@ -169,16 +216,44 @@ const dispatchLabel = computed(() => {
 });
 
 /** 卷首只报最近一单；逐单归期仍在各自卡上。 */
-const nextReturnText = computed(() => {
+const nextReturn = computed(() => {
   const at = pulse.value.nextReturnAt;
-  if (at === null) return "无人在途";
-  if (at <= now.value) return "即将归来";
+  if (at === null) return { at, route: "", countdown: "无人在途" };
   const spec = pulse.value.nextReturnSpec;
-  return `${spec ? taskDef(spec).name : "差事"} ${formatCountdown(secondsLeft(at))}`;
+  const who = roster.value.find((row) => row.away)?.apprentice;
+  const name = who ? (apprenticeDef(who.archId)?.name ?? "弟子") : "弟子";
+  const task = spec ? taskDef(spec).name : "差事";
+  return {
+    at,
+    route: `${name} · ${task}`,
+    countdown: at <= now.value ? "即将归来" : formatCountdown(secondsLeft(at)),
+  };
 });
+const nextReturnText = computed(() =>
+  nextReturn.value.at === null
+    ? nextReturn.value.countdown
+    : `${nextReturn.value.route} ${nextReturn.value.countdown}`,
+);
 
 function taskProgress(a: OwnedApprentice): number {
   return a.task ? apprenticeTaskProgress(a.task, now.value) : 0;
+}
+
+function taskTalent(a: OwnedApprentice, spec: ApprenticeSpec): boolean {
+  return apprenticeDef(a.archId)?.talent === spec;
+}
+
+function qualityText(a: OwnedApprentice): string {
+  const q = apprenticeDef(a.archId)?.quality;
+  return q ? qualityDef(q).name : "凡品";
+}
+
+function talentOf(a: OwnedApprentice): ApprenticeSpec {
+  return apprenticeDef(a.archId)?.talent ?? "adventure";
+}
+
+function talentText(a: OwnedApprentice): string {
+  return taskDef(talentOf(a)).name;
 }
 
 /**
@@ -219,10 +294,15 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
   <div class="folio-page folio-page--stack stagger-in">
     <FolioPageHeader
       title="门庭有徒"
-      :subtitle="`弟子跑腿,资材自来 · ${slots} 槽`"
+      :subtitle="`弟子跑腿,资材自来 · 本境 ${slots} 席`"
       back-to="dongfu"
       back-label="返回"
+      featured
     >
+      <template #visual>
+        <ApprenticeCourt :nodes="courtNodes" :slots="slots" :idle="pulse.idle" :away="pulse.away" />
+      </template>
+
       <template #action>
         <button
           class="btn-seal min-h-[28px] !px-2 !py-1 whitespace-nowrap text-body tinylens:w-full"
@@ -239,182 +319,274 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
         </button>
       </template>
 
-      <!-- 卷首先报门庭此刻:谁在家、谁在路上、最近何时回来;一键派发也收在这里。 -->
+      <!-- 卷首先总账,值日簿随后逐人摊开;一键派发必须是这一块里的第一枚按钮。 -->
       <div
-        v-if="appr.apprentices.length"
-        class="border-t border-ink/10 pt-2.5"
+        class="apprentice-pulse"
         data-apprentice-pulse
         :data-apprentice-total="pulse.total"
         :data-apprentice-idle="pulse.idle"
         :data-apprentice-away="pulse.away"
       >
-        <div class="flex items-baseline justify-between gap-2">
-          <span class="font-kai text-title tracking-[0.22em] text-ink">门庭今日</span>
-          <span class="text-note text-ink-faint">共 {{ pulse.total }} 名弟子</span>
+        <header class="apprentice-pulse__head">
+          <span class="apprentice-pulse__seal" aria-hidden="true">庭</span>
+          <span class="apprentice-pulse__heading">
+            <span class="apprentice-pulse__eyebrow">今日门庭</span>
+            <span class="apprentice-pulse__title text-heading">一册值日</span>
+          </span>
+          <span class="apprentice-pulse__position tabular">
+            {{ pulse.total }} / {{ slots }} 席
+          </span>
+        </header>
+
+        <div class="apprentice-pulse__body">
+          <div class="apprentice-pulse__tallies">
+            <div class="apprentice-pulse__tally">
+              <span class="apprentice-pulse__label">候差</span>
+              <strong class="apprentice-pulse__value tabular" data-apprentice-idle>{{
+                pulse.idle
+              }}</strong>
+              <span class="apprentice-pulse__unit">人</span>
+            </div>
+            <div class="apprentice-pulse__tally">
+              <span class="apprentice-pulse__label">在途</span>
+              <strong class="apprentice-pulse__value tabular" data-apprentice-away>{{
+                pulse.away
+              }}</strong>
+              <span class="apprentice-pulse__unit">人</span>
+            </div>
+            <div class="apprentice-pulse__next">
+              <span class="apprentice-pulse__label">最近归来</span>
+              <strong
+                class="apprentice-pulse__next-value tabular"
+                data-apprentice-next-return
+                :aria-label="`最近归来 ${nextReturnText}`"
+              >
+                <template v-if="nextReturn.at !== null">
+                  <span class="apprentice-pulse__next-route">{{ nextReturn.route }}</span>
+                  <span class="apprentice-pulse__next-countdown">{{ nextReturn.countdown }}</span>
+                </template>
+                <template v-else>{{ nextReturn.countdown }}</template>
+              </strong>
+            </div>
+          </div>
+
+          <button
+            class="btn-seal apprentice-pulse__dispatch"
+            :disabled="!hasIdle"
+            :aria-label="hasIdle ? dispatchLabel : '弟子都在路上'"
+            @click="doDispatchAll"
+          >
+            {{ hasIdle ? dispatchLabel : "弟子都在路上" }}
+          </button>
         </div>
-        <div
-          class="mt-2 grid grid-cols-3 divide-x divide-ink/10 text-center tinylens:grid-cols-1 tinylens:divide-x-0 tinylens:divide-y tinylens:divide-ink/10"
-        >
-          <p class="px-1 py-1">
-            <span class="block text-note text-ink-faint">在途</span>
-            <span class="block text-body tabular text-ink-soft" data-apprentice-away
-              >{{ pulse.away }} 人</span
-            >
-          </p>
-          <p class="px-1 py-1">
-            <span class="block text-note text-ink-faint">闲置</span>
-            <span
-              class="block text-body tabular"
-              :class="pulse.idle > 0 ? 'text-cinnabar' : 'text-ink-soft'"
-              data-apprentice-idle
-              >{{ pulse.idle }} 人</span
-            >
-          </p>
-          <p class="px-1 py-1">
-            <span class="block text-note text-ink-faint">最近归来</span>
-            <span class="block text-body tabular text-ink-soft" data-apprentice-next-return>{{
-              nextReturnText
-            }}</span>
-          </p>
-        </div>
-        <button
-          class="btn-seal mt-2 min-h-[28px] w-full !py-1 text-body"
-          :disabled="!hasIdle"
-          @click="doDispatchAll"
-        >
-          {{ hasIdle ? dispatchLabel : "弟子都在路上" }}
-        </button>
+
+        <p class="apprentice-pulse__foot">
+          候差者可按库存一令齐发；各自的本命门类与逐单进度,都摊在下面值日簿里。
+        </p>
       </div>
     </FolioPageHeader>
 
-    <!-- 弟子 -->
-    <div v-if="appr.apprentices.length" class="space-y-2">
-      <div
-        v-for="a in appr.apprentices"
-        :key="a.uid"
-        class="rounded-sm border border-ink/10 bg-paper-deep/60 px-3 py-2"
-      >
-        <!-- 极窄档(≤220 CSS px):「名字 + 等级 + 羁绊 + 天赋描述」一行塞不下,描述被压到
-             10px 一字一行 —— 允许换行,描述整块落到下一行。320 / 390 两档不动。 -->
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="font-kai text-title text-ink">{{
-            apprenticeDef(a.archId)?.name ?? a.archId
-          }}</span>
-          <span class="text-note text-ink-faint">Lv{{ a.level }}/{{ APPRENTICE_MAX_LEVEL }}</span>
-          <span
-            v-if="a.bond > 0"
-            class="rounded bg-cinnabar/6 px-1.5 py-0.5 text-note text-cinnabar"
-            :title="
-              bondNext(a.bond)
-                ? `羁绊 ${a.bond} 趟 · 距「${bondNext(a.bond)!.name}」还差 ${bondNext(a.bond)!.remaining} 趟(完工趟数,纯称谓不带加成)`
-                : `羁绊 ${a.bond} 趟(完工趟数,纯称谓不带加成)`
-            "
-            >{{ bondTitle(a.bond) }} · {{ a.bond }} 趟</span
-          >
-          <span v-if="bondNext(a.bond)" class="whitespace-nowrap text-note text-ink-faint"
-            >距离「{{ bondNext(a.bond)!.name }}」{{ bondNext(a.bond)!.remaining }} 趟</span
-          >
-          <span class="ml-auto text-note text-ink-faint">{{
-            apprenticeDef(a.archId)?.desc ?? ""
-          }}</span>
+    <section class="folio-span-all apprentice-roster-section" data-apprentice-roster>
+      <SectionTitle
+        title="值日簿"
+        :hint="`候差 ${idleRows.length} · 在途 ${awayRows.length} · 在途按归期先后`"
+      />
+
+      <div class="apprentice-roster">
+        <div v-if="roster.length === 0" class="apprentice-roster__empty">
+          <span class="apprentice-roster__empty-seal" aria-hidden="true">庭</span>
+          <p>尚无一徒 —— 开局白送一名,或从卷首再收一名。</p>
         </div>
 
-        <!-- 在途 -->
-        <div v-if="a.task" class="mt-1.5" :data-apprentice-task-progress="taskProgress(a)">
-          <div class="flex items-center gap-2 text-body">
-            <span class="rounded bg-ink/5 px-1.5 py-0.5">{{ taskDef(a.task.spec).name }}</span>
-            <span class="tabular text-ink-faint"
-              >归期
-              <span class="countdown-slot">{{
-                formatCountdown(secondsLeft(a.task.finishAt))
-              }}</span></span
-            >
-          </div>
-          <ProgressBar
-            class="mt-1.5"
-            :value="taskProgress(a)"
-            color="var(--color-jade)"
-            :height="4"
-            role="progressbar"
-            :aria-label="`${taskDef(a.task.spec).name}进度`"
-            aria-valuemin="0"
-            aria-valuemax="100"
-            :aria-valuenow="taskProgress(a) * 100"
-          />
-        </div>
+        <section
+          v-for="group in rosterGroups"
+          :key="group.key"
+          class="apprentice-roster__group"
+          :data-apprentice-group="group.key"
+        >
+          <header class="apprentice-roster__group-head">
+            <span class="apprentice-roster__group-index tabular">{{ group.mark }}</span>
+            <span class="apprentice-roster__group-title text-section">{{ group.title }}</span>
+            <span class="apprentice-roster__group-hint">{{ group.hint }}</span>
+            <span class="apprentice-roster__group-count tabular"> {{ group.rows.length }} 人 </span>
+          </header>
 
-        <!-- 闲置:可派活 -->
-        <div v-else class="mt-1.5">
-          <p class="mb-1 text-note text-ink-faint">派去:</p>
-          <div class="grid grid-cols-2 gap-1.5 tinylens:grid-cols-1">
-            <button
-              v-for="t in APPRENTICE_TASKS"
-              :key="t.spec"
-              class="flex min-h-[44px] w-full items-center gap-1.5 rounded-md border px-1.5 py-1 text-left transition-colors active:scale-[0.98]"
-              :class="
-                isTaskOpen(a.uid, t.spec)
-                  ? 'border-cinnabar/35 bg-cinnabar/4'
-                  : 'border-ink/10 bg-paper/35 hoverable:hover:border-cinnabar'
-              "
-              :aria-expanded="isTaskOpen(a.uid, t.spec)"
-              @click="tapTask(a.uid, t.spec)"
+          <div class="apprentice-roster__list">
+            <article
+              v-for="{ apprentice: a, away } in group.rows"
+              :key="a.uid"
+              class="apprentice-roster__row"
+              :data-apprentice-row="a.uid"
+              :data-apprentice-status="away ? 'away' : 'idle'"
+              :data-apprentice-task-progress="away ? taskProgress(a) : undefined"
             >
-              <span
-                class="shrink-0"
-                :class="isTaskOpen(a.uid, t.spec) ? 'text-cinnabar' : 'text-ink-faint'"
-              >
-                <GameIcon :name="t.icon" :size="15" />
-              </span>
-              <span class="min-w-0 flex-1">
-                <span class="flex items-baseline justify-between gap-1">
-                  <span class="font-kai text-body tracking-[0.05em] text-ink">{{ t.name }}</span>
-                  <span class="shrink-0 text-note tabular text-ink-faint"
-                    >{{ Math.round(apprenticeTaskSeconds(t.spec) / 60) }} 分</span
-                  >
-                </span>
-                <span class="mt-0.5 block text-note leading-relaxed text-ink-faint">{{
-                  taskYield(a, t.spec)
+              <div class="apprentice-roster__identity flex flex-wrap items-center gap-2">
+                <span class="apprentice-roster__mark" aria-hidden="true">{{
+                  TALENT_MARKS[talentOf(a)]
                 }}</span>
-              </span>
-            </button>
-          </div>
-          <!-- 任务说明点开直出(与适配理由/天赋芯片同族)::title 在手机上是死提示。
-               第一tap 展开,再点同一枚即派出 —— 派出锁人 30~90 分钟,顺手变成两步。 -->
-          <p
-            v-if="tappedTask && tappedTask.uid === a.uid"
-            class="mt-1 text-note leading-relaxed text-ink-faint"
-          >
-            「{{ taskDef(tappedTask.spec).name }}」{{ taskDef(tappedTask.spec).desc }} ——
-            再点一次「{{ taskDef(tappedTask.spec).name }}」即派出
-          </p>
-        </div>
-        <!-- 真传:跨世之缘只对最高羁绊开放 —— 养出真传的玩家该看得见这条,不藏注释 -->
-        <p v-if="a.bond >= BOND_TRUECODE_MIN" class="mt-1.5 text-note text-gold-ink">
-          真传 —— 转世时凝一缕跨世之缘,来世情谊随魂而来
-        </p>
-        <!-- 未到真传也要把这条机制与门槛摊明:冲「跨世之缘」的人在达成前就该知道它存在、差几趟 -->
-        <p v-else class="mt-1.5 text-note text-ink-faint">
-          抵达「真传」({{ BOND_TRUECODE_MIN }} 趟)后,转世时凝一缕跨世之缘,来世情谊随魂而来
-        </p>
-      </div>
-    </div>
-    <p v-else class="py-3 text-center text-body text-ink-faint">
-      尚无一徒 —— 开局白送一名,或再收。
-    </p>
+                <span class="apprentice-roster__name text-title font-kai">{{
+                  apprenticeDef(a.archId)?.name ?? a.archId
+                }}</span>
+                <span class="apprentice-roster__quality">{{ qualityText(a) }}</span>
+                <span class="apprentice-roster__talent">
+                  <GameIcon :name="taskDef(talentOf(a)).icon" :size="12" />
+                  本命 · {{ talentText(a) }}
+                </span>
+                <span class="apprentice-roster__level tabular"
+                  >Lv{{ a.level }}/{{ APPRENTICE_MAX_LEVEL }}</span
+                >
+                <span class="apprentice-roster__status" :class="away ? 'is-away' : 'is-idle'">{{
+                  away ? "在途" : "候差"
+                }}</span>
+              </div>
 
-    <!-- 收徒成本说明 -->
-    <p class="text-note leading-relaxed text-ink-faint">
-      收徒一次耗灵石(按当前境界)。弟子天赋门类的产出 ×{{
-        APPRENTICE_TALENT_BONUS
-      }}。到时辰归来,久不在线亦照算。
-    </p>
-    <!--
-      等级从哪来:升级由完工趟数驱动(每收割一趟 +1,封顶 20),机制里没有
-      「半格进度」可言 —— 故不编一条「距下次升级」的假进度,把来源说清楚。
-      羁绊(趟数)已逐档摊在弟子卡上,与升级同源同长。
-    -->
-    <p class="text-note leading-relaxed text-ink-faint">
-      弟子每完工一趟升一级(封顶 {{ APPRENTICE_MAX_LEVEL }} 级),等级越高,一趟带回的越多。
-    </p>
+              <p class="apprentice-roster__desc">
+                {{ apprenticeDef(a.archId)?.desc ?? "" }}
+              </p>
+
+              <div class="apprentice-roster__bond" :data-apprentice-bond-progress="bondProgress(a)">
+                <span class="apprentice-roster__bond-title"
+                  >{{ bondTitle(a.bond) }} · {{ a.bond }} 趟</span
+                >
+                <template v-if="bondNext(a.bond)">
+                  <span class="apprentice-roster__bond-next"
+                    >距「{{ bondNext(a.bond)!.name }}」{{ bondNext(a.bond)!.remaining }} 趟</span
+                  >
+                  <span class="apprentice-roster__bond-track" aria-hidden="true">
+                    <span :style="{ width: `${bondProgress(a)}%` }" />
+                  </span>
+                </template>
+                <span v-else class="apprentice-roster__bond-done">羁绊已至真传</span>
+              </div>
+
+              <div v-if="away && a.task" class="apprentice-roster__task">
+                <div class="apprentice-roster__task-head">
+                  <span class="apprentice-roster__task-name font-kai">{{
+                    taskDef(a.task.spec).name
+                  }}</span>
+                  <span v-if="taskTalent(a, a.task.spec)" class="apprentice-roster__task-talent"
+                    >本命加成</span
+                  >
+                  <span class="apprentice-roster__task-eta tabular"
+                    >归期
+                    <span class="countdown-slot">{{
+                      formatCountdown(secondsLeft(a.task.finishAt))
+                    }}</span></span
+                  >
+                </div>
+                <ProgressBar
+                  class="apprentice-roster__task-bar"
+                  :value="taskProgress(a)"
+                  color="var(--color-qing)"
+                  :height="4"
+                  role="progressbar"
+                  :aria-label="`${taskDef(a.task.spec).name}进度`"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  :aria-valuenow="taskProgress(a) * 100"
+                />
+                <p class="apprentice-roster__task-yield">
+                  归来可得
+                  <span>{{ taskYield(a, a.task.spec, a.task.rewardMajor ?? player.major) }}</span>
+                </p>
+              </div>
+
+              <div v-else class="apprentice-roster__dispatch">
+                <p class="apprentice-roster__dispatch-note">遣往 · 先看说明,再点同一门一次即派出</p>
+                <div class="grid grid-cols-2 gap-1.5 tinylens:grid-cols-1">
+                  <button
+                    v-for="t in APPRENTICE_TASKS"
+                    :key="t.spec"
+                    class="apprentice-task-choice flex min-h-[44px] w-full items-center gap-1.5 border px-1.5 py-1 text-left transition-colors active:scale-[0.98]"
+                    :class="
+                      isTaskOpen(a.uid, t.spec)
+                        ? 'border-cinnabar/35 bg-cinnabar/4'
+                        : 'border-ink/10 bg-paper/35 hoverable:hover:border-cinnabar'
+                    "
+                    :aria-expanded="isTaskOpen(a.uid, t.spec)"
+                    :data-apprentice-talent="taskTalent(a, t.spec) ? '' : undefined"
+                    @click="tapTask(a.uid, t.spec)"
+                  >
+                    <span
+                      class="apprentice-task-choice__icon shrink-0"
+                      :class="isTaskOpen(a.uid, t.spec) ? 'text-cinnabar' : 'text-ink-faint'"
+                    >
+                      <GameIcon :name="t.icon" :size="15" />
+                    </span>
+                    <span class="min-w-0 flex-1">
+                      <span
+                        class="apprentice-task-choice__top flex items-baseline justify-between gap-1"
+                      >
+                        <span class="apprentice-task-choice__name font-kai">{{ t.name }}</span>
+                        <span v-if="taskTalent(a, t.spec)" class="apprentice-task-choice__talent"
+                          >本命</span
+                        >
+                        <span class="apprentice-task-choice__time shrink-0 text-note tabular"
+                          >{{ Math.round(apprenticeTaskSeconds(t.spec) / 60) }} 分</span
+                        >
+                      </span>
+                      <span class="apprentice-task-choice__yield">{{ taskYield(a, t.spec) }}</span>
+                    </span>
+                  </button>
+                </div>
+                <!-- 手机没有 hover:任务说明必须第一下点开,第二次才真的锁人出发。 -->
+                <p
+                  v-if="tappedTask && tappedTask.uid === a.uid"
+                  class="apprentice-roster__task-note"
+                >
+                  「{{ taskDef(tappedTask.spec).name }}」{{ taskDef(tappedTask.spec).desc }} ——
+                  再点一次「{{ taskDef(tappedTask.spec).name }}」即派出
+                </p>
+              </div>
+            </article>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="folio-span-all apprentice-rules-section">
+      <SectionTitle title="门规" hint="界面读数与结算同源" />
+      <div class="apprentice-rules">
+        <article class="apprentice-rules__item">
+          <span class="apprentice-rules__index tabular" aria-hidden="true">壹</span>
+          <div>
+            <h3 class="apprentice-rules__title">收徒与席位</h3>
+            <p class="apprentice-rules__copy">
+              本境开 {{ slots }} 席；价签按当前境界现算,槽满即止。
+            </p>
+          </div>
+        </article>
+        <article class="apprentice-rules__item">
+          <span class="apprentice-rules__index tabular" aria-hidden="true">贰</span>
+          <div>
+            <h3 class="apprentice-rules__title">本命天赋</h3>
+            <p class="apprentice-rules__copy">
+              本命门类产出 ×{{ APPRENTICE_TALENT_BONUS }},时长仍按任务簿。
+            </p>
+          </div>
+        </article>
+        <article class="apprentice-rules__item">
+          <span class="apprentice-rules__index tabular" aria-hidden="true">叁</span>
+          <div>
+            <h3 class="apprentice-rules__title">等级与羁绊</h3>
+            <p class="apprentice-rules__copy">
+              每完工一趟升一级(封顶
+              {{ APPRENTICE_MAX_LEVEL }}
+              级),等级越高带回越多；羁绊只记称谓,不另加产出。抵达「真传」({{ BOND_TRUECODE_MIN }}
+              趟)后,转世时凝一缕跨世之缘,来世情谊随魂而来。
+            </p>
+          </div>
+        </article>
+        <article class="apprentice-rules__item">
+          <span class="apprentice-rules__index tabular" aria-hidden="true">肆</span>
+          <div>
+            <h3 class="apprentice-rules__title">墙钟与归来</h3>
+            <p class="apprentice-rules__copy">
+              差事按墙钟走,关闭页面亦照算；归来自动入账,并逐名通报带回之物。
+            </p>
+          </div>
+        </article>
+      </div>
+    </section>
   </div>
 </template>

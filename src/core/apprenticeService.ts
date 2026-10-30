@@ -151,6 +151,31 @@ export function apprenticeOverview(apprentices: readonly OwnedApprentice[]): App
   };
 }
 
+export interface ApprenticeRosterEntry {
+  apprentice: OwnedApprentice;
+  away: boolean;
+}
+
+/**
+ * 值日簿顺序：候差在前，在途按归期从近到远。
+ *
+ * 页面分组若自己再排一遍，卷首说「最近归来」而正文第一张在途卡却不是同一个人，
+ * 玩家会以为归期算错了。顺序也只在这里定一次；原数组不动，空闲弟子保持收录顺序。
+ */
+export function apprenticeRoster(apprentices: readonly OwnedApprentice[]): ApprenticeRosterEntry[] {
+  return apprentices
+    .map((apprentice, index) => ({ apprentice, away: apprentice.task !== null, index }))
+    .sort((a, b) => {
+      if (a.away !== b.away) return a.away ? 1 : -1;
+      if (a.away && b.away) {
+        const delta = a.apprentice.task!.finishAt - b.apprentice.task!.finishAt;
+        if (delta !== 0) return delta;
+      }
+      return a.index - b.index;
+    })
+    .map(({ apprentice, away }) => ({ apprentice, away }));
+}
+
 /** 差事进度按墙钟线性推进；坏时长也不把 NaN 送进界面。 */
 export function apprenticeTaskProgress(
   task: Pick<NonNullable<OwnedApprentice["task"]>, "startAt" | "finishAt">,

@@ -213,6 +213,7 @@ const CATEGORIES = [
       "contentReachability",
       "contentDensity",
       "mentorService",
+      "apprenticeDesk",
       "apprentice",
       "daoluService",
       "bondEvents",
