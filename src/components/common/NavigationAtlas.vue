@@ -1,6 +1,6 @@
 <template>
-  <BaseModal :open="open" title="玄枢图" wide @close="emit('close')">
-    <div data-nav-atlas class="space-y-3">
+  <BaseModal :open="open" title="玄枢图" size="max" @close="emit('close')">
+    <div ref="atlasRoot" data-nav-atlas class="space-y-3">
       <!-- 当前落点:一枚「在」印压在册口,先回答「我在哪一册」。 -->
       <div
         class="atlas-current relative overflow-hidden border border-ink/15 bg-paper-deep/60 py-3 pl-14 pr-3"
@@ -25,40 +25,87 @@
         </div>
       </div>
 
+      <!--
+        五卷总目:先给一张全站方向图,再进入卷宗。
+
+        十七册若从第一行一路排到末行,玩家得先滚完整座目录才知道「天机卷在哪」。
+        这里把五卷压成一排快引,点哪卷就把下方卷宗卷到眼前;所有册目仍完整留在
+        DOM 里,不靠隐藏页签省空间,读屏与键盘也能一次读到全站。
+      -->
+      <section class="atlas-compass-shell" aria-labelledby="atlas-compass-title">
+        <div class="atlas-compass-head">
+          <div class="min-w-0">
+            <p id="atlas-compass-title" class="font-kai text-title tracking-[0.22em] text-ink">
+              五卷总目
+            </p>
+            <p class="mt-0.5 text-note leading-relaxed text-ink-faint">点一卷，翻到该卷册页</p>
+          </div>
+          <span class="atlas-compass-count shrink-0 text-note tabular text-ink-faint">
+            {{ NAVIGATION_SECTIONS.length }} 卷 · {{ NAVIGATION_ENTRIES.length }} 册
+          </span>
+        </div>
+        <div data-atlas-compass class="atlas-compass" role="group" aria-label="五卷快引">
+          <button
+            v-for="(group, groupIndex) in NAVIGATION_SECTIONS"
+            :key="group.id"
+            type="button"
+            class="atlas-volume"
+            :data-atlas-volume="group.id"
+            :data-atlas-volume-active="activeVolumeId === group.id ? '' : undefined"
+            :data-atlas-volume-current="currentVolumeId === group.id ? '' : undefined"
+            :aria-controls="`atlas-volume-${group.id}`"
+            :aria-label="`翻到${group.label}卷，${group.entries.length}册`"
+            @click="jumpToSection(group.id)"
+            @keydown="onVolumeKeydown($event, groupIndex)"
+          >
+            <span class="atlas-volume__number" aria-hidden="true">{{
+              sectionNumber(groupIndex)
+            }}</span>
+            <span
+              class="atlas-volume__label tinylens:tracking-[0.06em]"
+              :class="activeVolumeId === group.id ? 'text-cinnabar' : 'text-ink'"
+              >{{ group.label }}</span
+            >
+            <span class="atlas-volume__count tabular">{{ group.entries.length }}册</span>
+          </button>
+        </div>
+      </section>
+
       <div class="atlas-index">
         <section
           v-for="(group, groupIndex) in NAVIGATION_SECTIONS"
+          :id="`atlas-volume-${group.id}`"
           :key="group.id"
           class="atlas-section"
           :data-atlas-section="group.id"
+          :data-atlas-section-current="currentVolumeId === group.id ? '' : undefined"
         >
-          <div class="flex items-start gap-2">
-            <span
-              class="atlas-section__number grid h-6 w-6 shrink-0 place-items-center border border-ink/20 font-kai text-body text-ink-soft"
-              aria-hidden="true"
-              >{{ sectionNumber(groupIndex) }}</span
-            >
+          <span class="atlas-section__watermark" aria-hidden="true">{{
+            group.label.slice(0, 1)
+          }}</span>
+          <header class="atlas-section__head">
+            <span class="atlas-section__number" aria-hidden="true">{{
+              sectionNumber(groupIndex)
+            }}</span>
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                <span class="font-kai text-title tracking-[0.25em] text-ink">{{
-                  group.label
-                }}</span>
-                <span class="text-note text-ink-faint">{{ group.hint }}</span>
+                <span class="atlas-section__title">{{ group.label }}卷</span>
+                <span v-if="currentVolumeId === group.id" class="atlas-section__presence">
+                  此刻在卷
+                </span>
               </div>
-              <span
-                class="mt-1 block h-px w-full bg-gradient-to-r from-ink/15 to-transparent"
-                aria-hidden="true"
-              />
+              <p class="atlas-section__hint">{{ group.hint }}</p>
             </div>
-          </div>
+            <span class="atlas-section__count shrink-0 tabular">{{ group.entries.length }}册</span>
+          </header>
 
-          <div class="atlas-entry-list mt-1.5 border-t border-ink/10">
+          <div class="atlas-entry-list">
             <RouterLink
               v-for="entry in group.entries"
               :key="entry.name"
               :to="entry.to"
               data-atlas-entry
-              class="atlas-entry group relative flex min-h-[48px] items-center gap-2.5 border-b border-ink/10 px-1.5 py-2 text-left transition-[transform,background-color,color] active:scale-99 tinylens:gap-1.5 tinylens:px-1"
+              class="atlas-entry group relative flex min-h-[50px] items-center gap-2.5 border-b border-ink/10 px-2.5 py-2 text-left transition-[transform,background-color,color] active:scale-99 tinylens:gap-1.5 tinylens:px-1"
               :class="
                 route.name === entry.name
                   ? 'bg-cinnabar/6 text-cinnabar'
@@ -111,21 +158,30 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, nextTick, ref, useTemplateRef, watch } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { usePlayerStore } from "@/stores/player";
+import { useSettingsStore } from "@/stores/settings";
 import { cnNumber } from "@/utils/format";
+import { atlasJumpIndex, atlasSectionIdForRoute } from "@/ui/atlas";
 import { NAVIGATION_ENTRIES, NAVIGATION_SECTIONS, navigationPositionOf } from "@/ui/navigation";
 import BaseModal from "./BaseModal.vue";
 import GameIcon from "./GameIcon.vue";
 
-defineProps<{ open: boolean }>();
+const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 
 const route = useRoute();
 const player = usePlayerStore();
+const settings = useSettingsStore();
+const atlasRoot = useTemplateRef<HTMLElement>("atlasRoot");
+const activeVolumeId = ref(atlasSectionIdForRoute(route.name));
+
 const currentPosition = computed(() => navigationPositionOf(route.name));
 const current = computed(() => currentPosition.value?.entry);
+const currentVolumeId = computed(
+  () => currentPosition.value?.section.id ?? NAVIGATION_SECTIONS[0]!.id,
+);
 const currentOrdinal = computed(() => {
   const position = currentPosition.value;
   return position
@@ -133,4 +189,45 @@ const currentOrdinal = computed(() => {
     : "未入册";
 });
 const sectionNumber = (index: number): string => cnNumber(index + 1);
+
+watch(
+  () => props.open,
+  (open) => {
+    if (open) activeVolumeId.value = atlasSectionIdForRoute(route.name);
+  },
+);
+watch(
+  () => route.name,
+  () => {
+    activeVolumeId.value = atlasSectionIdForRoute(route.name);
+  },
+);
+
+function focusVolume(index: number): void {
+  const buttons = atlasRoot.value?.querySelectorAll<HTMLButtonElement>("[data-atlas-volume]");
+  buttons?.[index]?.focus();
+}
+
+function onVolumeKeydown(event: KeyboardEvent, index: number): void {
+  const next = atlasJumpIndex(index, event.key, NAVIGATION_SECTIONS.length);
+  if (next === index) return;
+  event.preventDefault();
+  focusVolume(next);
+}
+
+function jumpToSection(id: string): void {
+  activeVolumeId.value = id;
+  void nextTick(() => {
+    const root = atlasRoot.value;
+    const scroller = root?.closest<HTMLElement>("[data-folio-modal-scroll]");
+    const section = root?.querySelector<HTMLElement>(`[data-atlas-section="${id}"]`);
+    if (!scroller || !section) return;
+    const top =
+      scroller.scrollTop +
+      section.getBoundingClientRect().top -
+      scroller.getBoundingClientRect().top -
+      8;
+    scroller.scrollTo({ top, behavior: settings.reduceMotion ? "auto" : "smooth" });
+  });
+}
 </script>

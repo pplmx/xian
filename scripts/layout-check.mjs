@@ -12127,8 +12127,9 @@ async function taskReadOnlyTab() {
  * 玄枢图:顶栏那枚「玄」印是全站册目的唯一入口。
  *
  * 底栏只有五册,而洞府营造、坊市、器魂、天界等页面都从这枚印进入。这里不只数
- * 入口数量:在 390 与 200% 缩放档(195)各开一次,量册目本身有没有把页面撑坏,
- * 并真的点一册跳到对应路由。册目是新壳层的高频入口,不能只在源码里有 17 条数据。
+ * 入口数量:在 390 与 200% 缩放档(195)各开一次,量五卷快引、十七册卷宗有没有
+ * 把页面撑坏;390 档还要真的点「天机」快引翻到末卷,再点一册跳到对应路由。
+ * 册目是新壳层的高频入口,不能只在源码里有 17 条数据。
  */
 async function taskAtlasNavigation() {
   const failures = [];
@@ -12162,10 +12163,18 @@ async function taskAtlasNavigation() {
       const state = await page.evaluate(() => {
         const atlas = document.querySelector("[data-nav-atlas]");
         const entries = [...document.querySelectorAll("[data-atlas-entry]")];
+        const volumes = [...document.querySelectorAll("[data-atlas-volume]")];
         const current = document.querySelector(".atlas-current");
         return {
           present: !!atlas,
           entries: entries.length,
+          volumes: volumes.length,
+          activeVolumes: volumes.filter(
+            (el) => el.getAttribute("data-atlas-volume-active") !== null,
+          ).length,
+          currentVolumes: volumes.filter(
+            (el) => el.getAttribute("data-atlas-volume-current") !== null,
+          ).length,
           current: (current?.textContent || "").replace(/\s+/g, " ").trim(),
           active: entries.filter((el) => el.getAttribute("aria-current") === "page").length,
         };
@@ -12174,6 +12183,15 @@ async function taskAtlasNavigation() {
       if (!state.present) failures.push(`[${vp.tag}] 玄枢图没有打开`);
       if (state.entries !== 17) {
         failures.push(`[${vp.tag}] 玄枢图册目 ${state.entries} 条(应为 17)`);
+      }
+      if (state.volumes !== 5) {
+        failures.push(`[${vp.tag}] 玄枢图五卷快引 ${state.volumes} 条(应为 5)`);
+      }
+      if (state.activeVolumes !== 1) {
+        failures.push(`[${vp.tag}] 玄枢图当前快引标了 ${state.activeVolumes} 次(应恰为 1)`);
+      }
+      if (state.currentVolumes !== 1) {
+        failures.push(`[${vp.tag}] 玄枢图当前落卷标了 ${state.currentVolumes} 次(应恰为 1)`);
       }
       if (!state.current.includes("修行") || !state.current.includes("洞府总览")) {
         failures.push(`[${vp.tag}] 玄枢图卷首没有报出当前落点:${state.current}`);
@@ -12187,6 +12205,24 @@ async function taskAtlasNavigation() {
       for (const problem of problems) failures.push(`[${vp.tag}] 玄枢图:${problem}`);
 
       if (vp.tag === "390") {
+        await page.locator('[data-atlas-volume="fate"]').click();
+        const volumeJumped = await page
+          .waitForFunction(
+            () => {
+              const scroller = document.querySelector("[data-folio-modal-scroll]");
+              const target = document.querySelector('[data-atlas-section="fate"]');
+              if (!scroller || !target) return false;
+              const viewport = scroller.getBoundingClientRect();
+              const section = target.getBoundingClientRect();
+              return section.top >= viewport.top - 12 && section.top < viewport.bottom - 24;
+            },
+            { timeout: 3000 },
+          )
+          .then(() => true)
+          .catch(() => false);
+        checked += 1;
+        if (!volumeJumped) failures.push("[390] 玄枢图点「天机」快引没有翻到末卷");
+
         const souls = page.locator('[data-atlas-entry][href="#/souls"]');
         await souls.click();
         const jumped = await page

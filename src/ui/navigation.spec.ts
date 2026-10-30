@@ -64,5 +64,6 @@ describe("玄枢图 · 全站册目", () => {
     expect(atlas, "玄枢图要能直接去各页").toContain("<RouterLink");
     expect(atlas, "玄枢图要复用全站弹窗的焦点与返回键纪律").toContain("<BaseModal");
     expect(atlas, "运行时判据要能定位册目").toContain("data-nav-atlas");
+    expect(atlas, "玄枢图要给出五卷总图而不只列单册").toContain("data-atlas-compass");
   });
 });

@@ -15,7 +15,7 @@
           tabindex="-1"
           data-folio-modal
           class="modal-panel folio-modal paper-grain relative flex max-h-[84vh] w-full flex-col overflow-hidden rounded-[3px] border border-ink/20 border-t-2 border-t-[var(--world-bar)] bg-paper shadow-2xl outline-none"
-          :class="props.wide ? 'max-w-100' : 'max-w-90'"
+          :class="panelSizeClass"
           @keydown="onPanelKeydown"
         >
           <!-- 卷首题签:先报这一扇浮层落在哪一卷,再落册名。 -->
@@ -117,6 +117,13 @@ const props = withDefaults(
     closable?: boolean;
     wide?: boolean;
     /**
+     * 总图尺寸。
+     *
+     * 玄枢图要在桌面铺成两列卷宗，400px 的普通宽弹窗放不下；其余 `wide`
+     * 弹窗仍维持原来的宽度。移动端受 `w-full` 与视口约束，不会因此变宽。
+     */
+    size?: "default" | "wide" | "max";
+    /**
      * 无标题弹窗的可访问名。
      *
      * 有的弹窗自带一张大标题卡(归来 / 寿元将尽 / 突破结果 / 灵脉),
@@ -127,11 +134,23 @@ const props = withDefaults(
     /** 顶层弹窗:叠在普通弹窗(z-50)之上,用于详情盖列表等场景 */
     top?: boolean;
   }>(),
-  { title: "", closable: true, wide: false, top: false, ariaLabel: "" },
+  {
+    title: "",
+    closable: true,
+    wide: false,
+    top: false,
+    ariaLabel: "",
+    size: "default",
+  },
 );
 
 const emit = defineEmits<{ close: [] }>();
 const route = useRoute();
+const panelSizeClass = computed(() => {
+  if (props.size === "max") return "max-w-[52rem]";
+  if (props.size === "wide" || props.wide) return "max-w-100";
+  return "max-w-90";
+});
 const modalPosition = computed(() => {
   const position = navigationPositionOf(route.name);
   return position ? `卷${cnNumber(position.sectionIndex + 1)} · ${position.section.label}` : "玄枢";

@@ -43,15 +43,18 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     expect(css, "当前书脚签要抬起纸面").toContain(".bottom-dock-slip[data-dock-current]");
   });
 
-  it("玄枢图是按卷展开的册目，而不是两列通用入口卡", () => {
+  it("玄枢图是五卷快引加卷宗分册，而不是一条没有总目的长列表", () => {
     const atlas = source("src/components/common/NavigationAtlas.vue");
     const css = source("src/style.css");
 
-    expect(atlas, "册目要有连续索引结构").toContain("atlas-index");
+    expect(atlas, "五卷要有总目快引").toContain("atlas-compass");
+    expect(atlas, "快引要逐卷落点").toContain("data-atlas-volume");
+    expect(atlas, "册目仍要完整铺成卷宗").toContain("atlas-index");
     expect(atlas, "每一卷要有卷次标记").toContain("atlas-section__number");
     expect(atlas, "每一册改为单列目录行").toContain("atlas-entry-list");
     expect(atlas, "当前册要留一枚在册印").toContain("atlas-current__seal");
-    expect(css, "玄枢图索引要有独立样式").toContain(".atlas-index");
+    expect(css, "五卷总目要有独立样式").toContain(".atlas-compass");
+    expect(css, "卷宗分册要有独立样式").toContain(".atlas-index");
   });
 
   it("书首、卷首与弹窗共用同一套卷次册次，不再各算各的序号", () => {
@@ -94,16 +97,17 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     );
   });
 
-  it("玄枢图在 195px 档收紧索引槽，册名与副题不被挤成竖排", () => {
+  it("玄枢图在 195px 档收住五卷与册目，不把卷名与副题挤成竖排", () => {
     const atlas = source("src/components/common/NavigationAtlas.vue");
     const css = source("src/style.css");
 
+    expect(atlas, "五卷快引在极窄档要收字距").toContain("tinylens:tracking-[0.06em]");
     expect(atlas, "目录行在极窄档要收紧间距与图标").toContain("tinylens:gap-1.5");
     expect(atlas, "目录行在极窄档要收回横向内边距").toContain("tinylens:px-1");
     expect(atlas, "目录图标在极窄档要缩成 28px").toContain("tinylens:h-7 tinylens:w-7");
     expect(atlas, "册名在极窄档要收字距").toContain("tinylens:tracking-[0.08em]");
-    expect(css, "册目索引槽也要让出极窄档的宽度").toContain(
-      ".atlas-entry-list {\n    margin-left: 1.5rem;",
+    expect(css, "卷宗题头与目录行在极窄档要收回内边距").toContain(
+      ".atlas-section__head {\n    padding-inline: 0.5rem;",
     );
   });
 

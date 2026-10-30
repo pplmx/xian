@@ -279,6 +279,7 @@ const CATEGORIES = [
       "dongfuDesk",
       "desktopSpine",
       "navigation",
+      "atlas.spec",
       "visualRhythm",
       "typeScale",
       "itemText",
