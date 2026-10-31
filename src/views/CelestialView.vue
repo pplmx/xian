@@ -97,7 +97,7 @@
           <!-- 道途:此世已定则摊开代价、章法与剑意；未定则先列七道 -->
           <section class="celestial-dao">
             <div class="celestial-dao__head">
-              <SectionTitle title="道途" hint="此生一诺，来世另择" />
+              <SectionTitle title="道途与门径" hint="此生一诺，炉魂另启" />
               <span class="celestial-dao__state">{{ currentDao ? "此世已定" : "七道待择" }}</span>
             </div>
 

@@ -11310,6 +11310,8 @@ async function taskTitlePetOverflow() {
     const pageErrors = [];
     watchPageErrors(page, pageErrors);
     await page.goto(INDEX + "#/titles", { waitUntil: "load" });
+    const titleTab = page.getByRole("tab", { name: /名号/ }).first();
+    const petTab = page.getByRole("tab", { name: /灵兽/ }).first();
 
     async function readList(kind) {
       return page.evaluate((key) => {
@@ -11373,6 +11375,59 @@ async function taskTitlePetOverflow() {
             `盒 ${Math.round(fit.left)}..${Math.round(fit.right)} / ` +
             `内容 ${fit.scrollWidth}>${fit.clientWidth} / ` +
             `高 ${Math.round(fit.height * 10) / 10}px / 视口 ${fit.viewport}`,
+        );
+      }
+    }
+
+    async function nameBeastDeskSpread(kind, label) {
+      const layout = await page.evaluate((key) => {
+        const summary = document.querySelector(`[data-${key}-ledger]`);
+        const index = document.querySelector(`[data-${key}-total]`);
+        const tab = summary?.closest(".name-beast-tab");
+        if (!summary || !index || !tab) return null;
+        const summaryBox = summary.getBoundingClientRect();
+        const indexBox = index.getBoundingClientRect();
+        const tabStyle = getComputedStyle(tab);
+        return {
+          display: tabStyle.display,
+          columns: tabStyle.gridTemplateColumns.split(" ").filter(Boolean),
+          summary: {
+            left: summaryBox.left,
+            right: summaryBox.right,
+            top: summaryBox.top,
+            width: summaryBox.width,
+          },
+          index: {
+            left: indexBox.left,
+            right: indexBox.right,
+            top: indexBox.top,
+            width: indexBox.width,
+          },
+          viewport: window.innerWidth,
+        };
+      }, kind);
+      checked += 1;
+      if (
+        !layout ||
+        layout.display !== "grid" ||
+        layout.columns.length !== 2 ||
+        Math.abs(layout.summary.top - layout.index.top) > 2 ||
+        layout.summary.right + 8 > layout.index.left ||
+        layout.summary.width < 270 ||
+        layout.index.width < 390 ||
+        layout.summary.left < -1 ||
+        layout.index.right > layout.viewport + 1
+      ) {
+        failures.push(
+          `[1280] 名兽案总案与全谱没有摊成左右两页:${label} ` +
+            (layout
+              ? `display=${layout.display} / columns=${layout.columns.join(" | ")} / ` +
+                `左 ${Math.round(layout.summary.left)}..${Math.round(layout.summary.right)} ` +
+                `(${Math.round(layout.summary.width)}) / ` +
+                `右 ${Math.round(layout.index.left)}..${Math.round(layout.index.right)} ` +
+                `(${Math.round(layout.index.width)}) / ` +
+                `顶差 ${Math.round(Math.abs(layout.summary.top - layout.index.top))}`
+              : "取不到总案或全谱"),
         );
       }
     }
@@ -11526,7 +11581,19 @@ async function taskTitlePetOverflow() {
         `[320] 名号卷首没有报出当前佩印「${wornTitle.name}」:${titleCurrentText || "空白"}`,
       );
     }
+
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await settleVisuals(page);
+    await nameBeastDeskSpread("title", "名号册");
+
+    await petTab.click({ timeout: 5000 });
+    await page.locator("[data-pet-total]").waitFor({ state: "visible", timeout: 5000 });
+    await settleVisuals(page);
+    await nameBeastDeskSpread("pet", "灵兽册");
+
     await page.setViewportSize({ width: 195, height: 422 });
+    await titleTab.click({ timeout: 5000 });
+    await page.locator("[data-title-total]").waitFor({ state: "visible", timeout: 5000 });
     await settleVisuals(page);
     await exerciseList({
       kind: "title",
@@ -11536,7 +11603,6 @@ async function taskTitlePetOverflow() {
       sortedIds: titleSorted.map((title) => title.id),
     });
 
-    const petTab = page.getByRole("tab", { name: /灵兽/ }).first();
     await petTab.click({ timeout: 5000 });
     await page.locator("[data-pet-total]").waitFor({ state: "visible", timeout: 5000 });
     const petCurrentText =
@@ -12912,6 +12978,7 @@ if (failures.length === 0) {
   console.log("✓ 顶栏一格一行(320 窄屏与横屏、桌面都不折行)");
   console.log(`✓ 桌面书桌(${desktopFolioSeen} 页:五册双页、十一册宽案、设置读卷)`);
   console.log(`✓ 桌面书脊(${desktopSpineSeen} 页:十七册齐全、当前册唯一、手机底栏退场)`);
+  console.log("✓ 桌面名兽案(名号 / 灵兽)总案与全谱并读");
   console.log(`✓ 主值行一格一行(${valueRowsSeen} 处带 data-value-row 的行没被次要读数挤折)`);
   console.log(`✓ 两百档字号(${zoomSeen} 页在 200% 缩放下不溢出、主值行不折)`);
   console.log(`✓ 渐变与图片底上的字(${pixelTextsSeen} 处按屏幕像素采过,没有成片读不出来的)`);

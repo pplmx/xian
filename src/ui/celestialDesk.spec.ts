@@ -77,6 +77,7 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
   it("道途正文摊开代价、章法与剑意,七道选择仍读同一份数据源", () => {
     const view = source("src/views/CelestialView.vue");
 
+    expect(view, "页签已报道途，章头改报道途与门径").toContain('<SectionTitle title="道途与门径"');
     expect(view, "道途正文按已定与待择分流").toContain('<article v-if="currentDao"');
     expect(view, "规则与章法分栏").toContain('class="celestial-dao__columns"');
     expect(view, "剑意层数读纯函数").toContain("swordInfo.layers");

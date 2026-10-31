@@ -96,6 +96,17 @@ describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
     expect(view, "不再用 v-show 常驻三册").not.toContain('v-show="marketTab ===');
   });
 
+  it("页签已经报过册名，正文章头只报本册小目，不再原词重复", () => {
+    const view = source("src/views/MarketView.vue");
+
+    expect(view, "货架章头改报本架货目").toContain('<SectionTitle title="本架货目"');
+    expect(view, "悬赏章头改报本期赏单").toContain('<SectionTitle title="本期赏单"');
+    expect(view, "售出章头改报寄卖与即时柜").toContain('<SectionTitle title="寄卖与即时柜"');
+    expect(view, "货架章头不再与页签同名").not.toContain('<SectionTitle title="货架"');
+    expect(view, "悬赏章头不再与页签同名").not.toContain('<SectionTitle title="悬赏板"');
+    expect(view, "售出章头不再与页签同名").not.toContain('<SectionTitle title="售出"');
+  });
+
   it("售罄与已领只换底和划记，不用整行透明度把文字压到读不清", () => {
     const css = source("src/styles/pages/market.css");
 

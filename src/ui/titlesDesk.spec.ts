@@ -102,7 +102,7 @@ describe("名兽案 · 名号与灵兽各成一册,卷首先报此刻", () => {
     expect(atlas, "双印谱是重复信息的视觉摘要,不重复进入读屏").toContain('aria-hidden="true"');
   });
 
-  it("手机单列、620 起当前与来路并读,220 以下动作退整行", () => {
+  it("手机单列、620 起当前与来路并读、1100 起总案与全谱并读,220 以下动作退整行", () => {
     const css = source("src/style.css");
     const start = css.indexOf("/*\n   * 名兽案");
     const end = css.indexOf("/*\n   * 道躯案", start);
@@ -115,6 +115,12 @@ describe("名兽案 · 名号与灵兽各成一册,卷首先报此刻", () => {
     );
     expect(titleCss).toMatch(
       /@media \(min-width: 620px\)\s*\{[\s\S]{0,260}\.name-beast-ledger__grid\s*\{[\s\S]{0,120}repeat\(2, minmax\(0, 1fr\)\)/,
+    );
+    expect(titleCss).toMatch(
+      /@media \(min-width: 1100px\)\s*\{[\s\S]{0,360}\.name-beast-tab\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(18rem, 0\.74fr\) minmax\(0, 1\.26fr\)/,
+    );
+    expect(titleCss).toMatch(
+      /@media \(min-width: 1100px\)\s*\{[\s\S]{0,700}\.name-beast-tab > \.name-beast-ledger:first-child \.name-beast-ledger__grid\s*\{[\s\S]{0,120}minmax\(0, 1fr\)/,
     );
     expect(titleCss).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.name-beast-ledger__grid\s*\{[\s\S]{0,100}minmax\(0, 1fr\)/,

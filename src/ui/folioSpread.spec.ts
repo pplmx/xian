@@ -115,5 +115,7 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
     expect(layout).toContain("行囊九佩与藏品没有并读");
     expect(layout).toContain("行囊丹药册没有并读");
     expect(layout).toContain("藏珍总谱与卷目没有并读");
+    expect(layout).toContain("nameBeastDeskSpread");
+    expect(layout).toContain("名兽案总案与全谱没有摊成左右两页");
   });
 });
