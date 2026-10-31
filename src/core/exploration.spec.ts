@@ -20,6 +20,7 @@ import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
 import { useUiStore } from "@/stores/ui";
 import { EVENT_AUTO_RESOLVE_SECONDS, EXPLORE_BOSS_AFTER_WINS } from "@/data/constants";
+import { REGIONS } from "@/data/regions";
 import { tickExploration, startExploration, winsUntilRegionBoss } from "./exploration";
 import {
   startRetreat,
@@ -83,9 +84,9 @@ afterEach(() => {
   artifactOnly.value = false;
 });
 
-function forgeSession(now: number): void {
+function forgeSession(now: number, regionId = "qingyun"): void {
   useAdventureStore().setSession({
-    regionId: "qingyun",
+    regionId,
     mode: "normal",
     startedAt: now - 5000,
     endsAt: now + 60000,
@@ -298,6 +299,45 @@ describe("镇压资格首次自动、此后自由", () => {
     tickExploration(now2, 0);
     expect(player.suppressedRegions, "已取得资格后不该再被自动接管").not.toContain("qingyun");
     expect(player.suppressQualified).toContain("qingyun");
+  });
+});
+
+describe("低境越级镇压 · 入口、战果与刷新同一账", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    protect.value = false;
+    combatWin.value = true;
+  });
+
+  it("低境界可进已解锁高境地界；凭战力打满资格后标记镇压，刷新读档仍保留", () => {
+    const player = usePlayerStore();
+    player.initCharacter("越境镇守", { roots: [] } as never);
+    const high = REGIONS.find((r) => r.minRealm >= player.major + 2);
+    expect(high, "测试需要一处至少高两境的地界").toBeDefined();
+
+    const adventure = useAdventureStore();
+    adventure.unlocked = [high!.id];
+    expect(startExploration(high!.id, "normal"), "高境门槛不该封死已解锁地界").toBe(true);
+
+    player.regionStats[high!.id] = {
+      totalFights: 30,
+      avgRounds: 2,
+      avgDamageTakenPct: 0.03,
+      consecutiveWins: 30,
+      lastUpdateAt: Date.now(),
+    };
+    const now = Date.now();
+    adventure.setSession({ ...adventure.session!, nextBattleAt: now - 1 });
+    tickExploration(now, 0);
+
+    expect(player.major, "战果来自战力，不是因为境界被抬高").toBeLessThan(high!.minRealm);
+    expect(player.suppressedRegions).toContain(high!.id);
+    expect(player.suppressQualified).toContain(high!.id);
+
+    player.sanitize();
+    expect(player.suppressedRegions, "刷新读档不能按 minRealm 反删镇压").toContain(high!.id);
+    expect(player.suppressQualified).toContain(high!.id);
+    expect(player.suppressedSince[high!.id]).toBeGreaterThan(0);
   });
 });
 

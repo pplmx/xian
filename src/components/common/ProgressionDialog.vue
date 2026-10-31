@@ -36,8 +36,10 @@
         </p>
         <p class="mt-1 text-note text-ink-faint">
           数值按指数堆叠,耗时却压在 x{{ OUTER_TIME_PER_MAJOR.toFixed(2) }} ——
-          于是每一境都明显更"重", 整条阶梯仍在可达范围。渡劫之上为界外(第
-          {{ PROGRESSION_NOTES.worldBreakMajor + 1 }} 境起)。
+          于是每一境都更"重",整条阶梯仍在可达范围。渡劫期雷海淬体让基础吐纳 ×{{
+            TRIBULATION_CULT_BOOST
+          }},飞升入界外时仙灵之气再 ×{{ ASCENSION_CULT_BOOST }},高境长尾不再滚成数十年。界外从第
+          {{ PROGRESSION_NOTES.worldBreakMajor + 1 }} 境起。
         </p>
       </div>
 
@@ -137,6 +139,7 @@
 <script setup lang="ts">
 import BaseModal from "./BaseModal.vue";
 import {
+  ASCENSION_CULT_BOOST,
   COST_CURVES,
   LIFESPAN_CURVES,
   MORTAL_TIME_PER_MAJOR,
@@ -145,6 +148,7 @@ import {
   PROGRESSION_NOTES,
   SORCERY_LAYERS,
   SORCERY_SUMMARY,
+  TRIBULATION_CULT_BOOST,
 } from "@/data/progressionDoc";
 import { formatGN } from "@/utils/format";
 import { ascensionLeap } from "@/data/realms";

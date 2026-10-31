@@ -1,6 +1,8 @@
 /* oxlint-disable no-console -- 模拟器体检报告的正式输出(bun run test:report 依赖) */
 import { describe, expect, it } from "vite-plus/test";
-import { REALMS, WORLD_BREAK_MAJOR, MAX_MAJOR } from "@/data/realms";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { REALMS, WORLDS, WORLD_BREAK_MAJOR, MAX_MAJOR } from "@/data/realms";
 import {
   BUILDING_CULT_CAP,
   DEFAULT_ASSUMPTIONS,
@@ -17,6 +19,7 @@ import { gongfaModsAt } from "@/stores/cultivation";
 import { GONGFA_BRANCHES } from "@/data/gongfaBranches";
 import { BUILDINGS } from "@/data/buildings";
 import { AFFIXES } from "@/data/affixes";
+import { fullHoursToReach, fullSecondsForMajor } from "./rebirthRoi";
 
 const fmt = (h: number): string =>
   h < 1 ? `${(h * 60).toFixed(1)}分` : h < 48 ? `${h.toFixed(1)}时` : `${(h / 24).toFixed(1)}天`;
@@ -48,12 +51,17 @@ describe("数值曲线审计(Phase 14)", () => {
     expect(h(9)).toBeLessThan(4200); // 也不至于遥遥无期(<175天)
   });
 
-  it("每个大境界耗时增幅在 2~6 倍之间(平滑放置曲线)", () => {
-    for (let m = 1; m <= 8; m += 1) {
+  it("凡尘前八境的耗时增幅在 2~6 倍之间;渡劫由雷海淬体单独落档", () => {
+    for (let m = 1; m <= 7; m += 1) {
       const ratio = secondsForMajor(m, 0) / secondsForMajor(m - 1, 0);
       expect(ratio).toBeGreaterThan(2);
       expect(ratio).toBeLessThan(6);
     }
+    // 渡劫是飞升入口,不是普通凡尘境界:×8 吐纳只把它从百天级拉回月内,
+    // 并允许它比大乘先一步换挡。若把这档删掉,这条会立刻红。
+    expect(fullSecondsForMajor(8)).toBeLessThan(fullSecondsForMajor(7));
+    expect(fullSecondsForMajor(8) / 86_400).toBeGreaterThan(10);
+    expect(fullSecondsForMajor(8) / 86_400).toBeLessThan(30);
   });
 
   /**
@@ -62,15 +70,43 @@ describe("数值曲线审计(Phase 14)", () => {
    *   1. 每个新大境界仍比上一境更慢(是攀登,不是白送),但增幅被压到 2 倍以内
    *   2. 整条界外长尾有界——不至于让最后一个境界成为数学上不可达
    */
-  it("界外每境耗时增幅收敛在 (1, 2) 之间", () => {
+  it("界外同一界域内逐境变慢;跨界入口由界末墙与仙灵之气换挡", () => {
+    const worldStarts = new Set(WORLDS.map((world) => world.start));
     for (let m = WORLD_BREAK_MAJOR + 1; m <= MAX_MAJOR; m += 1) {
+      // 新界域第一境承接上一界末圆满的 ×2 墙,耗时回落是设计中的换挡,
+      // 不是一个普通境界的捷径。只对同一界域内的相邻境界要求单调变慢。
+      if (worldStarts.has(m)) continue;
       const ratio = secondsForMajor(m, 0) / secondsForMajor(m - 1, 0);
       expect(ratio, `${REALMS[m]!.name} 相对 ${REALMS[m - 1]!.name} 的耗时增幅`).toBeGreaterThan(1);
       expect(ratio).toBeLessThan(2);
     }
   });
 
-  it("界外长尾有界:修满混沌道祖的耗时不到修满真仙的 200 倍", () => {
+  it("Phase 40:渡劫起所有高境单境完整耗时压在 30 天内", () => {
+    for (let m = WORLD_BREAK_MAJOR - 1; m <= MAX_MAJOR; m += 1) {
+      const days = fullSecondsForMajor(m, 0) / 86_400;
+      expect(
+        days,
+        `${REALMS[m]!.name}完整修满要 ${days.toFixed(1)} 天,又滚回月级长尾`,
+      ).toBeLessThan(30);
+      expect(
+        days,
+        `${REALMS[m]!.name}完整修满只用 ${days.toFixed(1)} 天,高境没有重量`,
+      ).toBeGreaterThan(7);
+    }
+  });
+
+  it("Phase 40 文档里那张高境耗时表与模拟器同源", () => {
+    const design = readFileSync(resolve(__dirname, "../../docs/design.md"), "utf8");
+    for (const major of [8, 9, 13, 17, 20]) {
+      const row =
+        `| ${REALMS[major]!.name} | ${(fullSecondsForMajor(major, 0) / 86_400).toFixed(1)} 天 | ` +
+        `${(fullHoursToReach(major + 1, 0) / 24).toFixed(1)} 天 |`;
+      expect(design, `设计文档的高境耗时行与模拟器不一致:\n${row}`).toContain(row);
+    }
+  });
+
+  it("界外长尾有界:修满混沌道祖的耗时不超过修满真仙的 10 倍", () => {
     const toZhenxian = hoursToReach(WORLD_BREAK_MAJOR, 0);
     const toPeak = hoursToReach(MAX_MAJOR, 0);
     console.log(
@@ -87,11 +123,11 @@ describe("数值曲线审计(Phase 14)", () => {
      * 实测长尾 160 倍,故上限抬到 200:仍要"有界"(每境增幅另有一条 <2 倍的判据守着),
      * 但允许它是一条更长的坡。
      *
-     * Phase 39:4.4 → 4.6,且界末三处(渡劫/大罗/神帝的圆满)各加一道修为墙,
-     * 实测长尾 218 倍 —— 上限随之抬到 260。这一版是玩家明确要的「上界更难、跨界更陡」,
-     * 故允许更长的坡,但仍是**有界**的坡:每境增幅 <2 倍那条判据没有放松。
+     * Phase 40 收回界外复利并加飞升吐纳跃升,实测长尾 4.3 倍。上限收到 10,
+     * 守的是「终局不能重新滚回数十倍长尾」;若只守数学可达,这条判据会
+     * 允许曲线悄悄退回到玩家已经明确否定的旧手感。
      */
-    expect(toPeak / toZhenxian).toBeLessThan(260); // 但有界,不至于数学上不可达
+    expect(toPeak / toZhenxian).toBeLessThan(10);
   });
 
   /**

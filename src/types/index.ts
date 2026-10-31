@@ -831,6 +831,10 @@ export interface FoeOriginPart {
   label: string;
   /** 三维倍率 */
   ratio: number;
+  /** 这一项附带的敌方增伤(仅少数判定项使用,如境界压制) */
+  damageBonus?: number;
+  /** 这一项附带的敌方减伤 */
+  damageReduction?: number;
 }
 
 /**

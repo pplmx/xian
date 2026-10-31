@@ -11,6 +11,8 @@
  *   3. 修为与灵气可**积余**:卡在某一境时仍继续累积,越过需求的部分带走
  */
 import {
+  ASCENSION_CULT_SPEED_MULT,
+  TRIBULATION_CULT_SPEED_MULT,
   BUILDING_COST_GROWTH,
   COMBAT_MAJOR_GROWTH,
   CULT_MAJOR_SPEED_GROWTH,
@@ -83,6 +85,10 @@ export const PROGRESSION_AXES: ProgressionAxis[] = [
 /** 净耗时倍率 = 修为需求 / 修炼速度:这才是玩家真正感受到的「难度」 */
 export const MORTAL_TIME_PER_MAJOR = EXP_MAJOR_GROWTH / CULT_MAJOR_SPEED_GROWTH;
 export const OUTER_TIME_PER_MAJOR = LATE_EXP_GROWTH / LATE_CULT_SPEED_GROWTH;
+/** 渡劫→真仙时,基础吐纳的额外跃升;界外每境再把这一乘数带入 */
+export const ASCENSION_CULT_BOOST = ASCENSION_CULT_SPEED_MULT;
+/** 渡劫本境的雷海淬体跃升;只作用于飞升前最后一境 */
+export const TRIBULATION_CULT_BOOST = TRIBULATION_CULT_SPEED_MULT;
 
 export interface CostCurve {
   id: string;

@@ -48,7 +48,7 @@ describe("深修补偿 · A 案:道果阶数追平耗时", () => {
     const rows = exponentialFruitTable(requiredFruitGrowth(0.5));
     const zhenxian = rows[rows.length - 1]!;
     expect(zhenxian.major).toBe(REBIRTH_REFERENCE_MAJOR);
-    // 现行 168 枚 → A 案约 2.85 万枚
+    // 现行 168 枚 → A 案约 2.64 万枚
     expect(zhenxian.inflation).toBeGreaterThan(100);
     // 单**一世**就给出天文级战力加成
     expect(zhenxian.combatBonus).toBeGreaterThan(50);
@@ -83,23 +83,23 @@ describe("深修补偿 · B 案:纯效率补偿的深坑", () => {
     }
   });
 
-  it("补偿需求随境界指数发散,真仙要 168 倍道果的额外价值", () => {
+  it("补偿需求随境界增长,真仙仍需三十余倍道果的额外价值", () => {
     const rows = compensationTable(0.5);
     const zhenxian = rows[rows.length - 1]!;
-    expect(zhenxian.timesFruit).toBeGreaterThan(100);
-    // 且是指数发散,不是线性
+    expect(zhenxian.timesFruit).toBeGreaterThan(30);
+    // 高境换挡并未把差距抹平：合体到真仙仍要继续抬三倍有余
     const heti = rows.find((r) => r.major === 6)!;
-    expect(zhenxian.timesFruit / heti.timesFruit).toBeGreaterThan(10);
+    expect(zhenxian.timesFruit / heti.timesFruit).toBeGreaterThan(3);
     console.log(
       `\n合体需 ${heti.timesFruit.toFixed(1)} 倍 → 真仙需 ${zhenxian.timesFruit.toFixed(1)} 倍,` +
         `跨三境放大 ${(zhenxian.timesFruit / heti.timesFruit).toFixed(0)} 倍——补偿路线越走越陡`,
     );
   });
 
-  it("即便只求「不落后到十分之一」,深世仍需数十倍补偿", () => {
+  it("即便只求「不落后到十分之一」,深世仍需数倍补偿", () => {
     const rows = compensationTable(0.1);
     const zhenxian = rows[rows.length - 1]!;
-    expect(zhenxian.timesFruit).toBeGreaterThan(20);
+    expect(zhenxian.timesFruit).toBeGreaterThan(5);
     const needCount = rows.filter((r) => r.needed > 0).length;
     console.log(
       `\n目标降到最优的 10%,仍有 ${needCount}/8 境需补偿,真仙要 ${zhenxian.timesFruit.toFixed(1)} 倍`,
@@ -118,7 +118,7 @@ describe("深修补偿 · 结论:补偿路线走不通,出路在不可替代性"
     const aInflation = exponentialFruitTable(requiredFruitGrowth(0.5))[7]!.inflation;
     const bCompensation = compensationTable(0.5)[7]!.timesFruit;
     expect(aInflation).toBeGreaterThan(100);
-    expect(bCompensation).toBeGreaterThan(100);
+    expect(bCompensation).toBeGreaterThan(30);
     console.log(
       `\nA 案真仙道果放大 ${aInflation.toFixed(0)} 倍;B 案真仙需 ${bCompensation.toFixed(0)} 倍补偿。` +
         `\n两条路都在同一个陷阱里——它们都试图用「可折算的量」去追一条指数曲线`,

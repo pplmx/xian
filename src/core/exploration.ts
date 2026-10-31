@@ -23,6 +23,7 @@ import {
 import { mansionEventLuck } from "./astronomy";
 import type { LastBattleView, StatMods } from "@/types";
 import { makeEnemySnap, mortalFoeOriginFromParts, resolveCombat } from "./combat";
+import { applyRealmPressure, realmPressure, type RealmPressure } from "./realmPressure";
 import { petDef } from "@/data/pets";
 import type { RegionEventId } from "./regionEvent";
 import { mergeRules } from "./gauntlet";
@@ -213,6 +214,8 @@ export function dangerFactorFor(
  */
 export function explorationFoeDanger(o: {
   tier: number;
+  targetMinRealm: number;
+  playerMajor: number;
   mode: ExploreMode;
   regionDanger: number;
   petId: string | null;
@@ -222,14 +225,19 @@ export function explorationFoeDanger(o: {
   const pet = personalityEffects(o.petId);
   const evDef = o.eventId ? regionEventDef(o.eventId, usePlayerStore().major) : undefined;
   const eventMult = evDef?.dangerMult ?? 1;
-  const total = dangerFactorFor(modeMult, o.regionDanger, pet.dangerMult, eventMult);
+  const pressure = realmPressure(o.playerMajor, o.targetMinRealm);
+  const total =
+    dangerFactorFor(modeMult, o.regionDanger, pet.dangerMult, eventMult) * pressure.enemyScale;
   const petName = o.petId ? petDef(o.petId)?.name : undefined;
-  const origin = mortalFoeOriginFromParts(o.tier, [
-    { label: EXPLORE_MODES[o.mode].name, ratio: modeMult },
-    { label: "地界凶险", ratio: 1 + (o.regionDanger - 1) * 0.05 },
-    { label: petName ? `${petName}之性` : "灵兽之性", ratio: pet.dangerMult },
-    { label: evDef?.name ?? "区域事件", ratio: eventMult },
-  ]);
+  const origin = applyRealmPressure(
+    mortalFoeOriginFromParts(o.tier, [
+      { label: EXPLORE_MODES[o.mode].name, ratio: modeMult },
+      { label: "地界凶险", ratio: 1 + (o.regionDanger - 1) * 0.05 },
+      { label: petName ? `${petName}之性` : "灵兽之性", ratio: pet.dangerMult },
+      { label: evDef?.name ?? "区域事件", ratio: eventMult },
+    ]),
+    pressure,
+  );
   return { total, origin };
 }
 
@@ -239,12 +247,21 @@ export function explorationFoeDanger(o: {
  * 出行方式与灵兽之性等到出行那一刻再摊开(那时玩家才做得了选择)。
  */
 export function regionFoeOrigin(region: RegionDef): FoeOrigin {
-  const ev = usePlayerStore().currentRegionEvent(region.id);
-  const evDef = ev ? regionEventDef(ev.eventId, usePlayerStore().major) : undefined;
-  return mortalFoeOriginFromParts(region.tier, [
-    { label: "地界凶险", ratio: 1 + (region.danger - 1) * 0.05 },
-    { label: evDef?.name ?? "区域事件", ratio: evDef?.dangerMult ?? 1 },
-  ]);
+  const player = usePlayerStore();
+  const ev = player.currentRegionEvent(region.id);
+  const evDef = ev ? regionEventDef(ev.eventId, player.major) : undefined;
+  return applyRealmPressure(
+    mortalFoeOriginFromParts(region.tier, [
+      { label: "地界凶险", ratio: 1 + (region.danger - 1) * 0.05 },
+      { label: evDef?.name ?? "区域事件", ratio: evDef?.dangerMult ?? 1 },
+    ]),
+    realmPressure(player.major, region.minRealm),
+  );
+}
+
+/** 选地卡片与出行弹窗共用同一份压制账,不再各自拿 major 比 minRealm。 */
+export function regionRealmPressure(region: RegionDef): RealmPressure {
+  return realmPressure(usePlayerStore().major, region.minRealm);
 }
 
 /**
@@ -311,6 +328,8 @@ function runBattle(now: number): void {
   // 危险因子与它的来源说明书一次算出来:两处各乘一遍,迟早有一个悄悄变了
   const { total: dangerFactor, origin: foeOrigin } = explorationFoeDanger({
     tier: region.tier,
+    targetMinRealm: region.minRealm,
+    playerMajor: player.major,
     mode: s.mode,
     regionDanger: region.danger,
     petId: player.petId,

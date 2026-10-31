@@ -432,7 +432,7 @@ describe("服丹 · 丹从包里出去,药力真的落下", () => {
       "单枚丹把整层填满了 —— 低境界那一层只要几十秒,这条一破就是连跳几层",
     ).toBeLessThan(low.req);
     // 高境界:同一枚丹只占那一层千分之几(旧口径下它在任何境界都占同样的百分比)
-    expect(high.gain / high.req).toBeLessThan(0.002);
+    expect(high.gain / high.req).toBeLessThan(0.003);
     expect(
       high.gain / high.req,
       "在高境界反而更值钱 —— 按需求百分比的旧口径又回来了",

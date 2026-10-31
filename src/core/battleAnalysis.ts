@@ -42,11 +42,19 @@ function hasEdge(o: FoeOrigin): boolean {
 /** 倍数用两位小数:1.113^20 这种数写成 1.9 与写成 1.87 对玩家是两回事 */
 const ratioText = (n: number): string => `×${(Math.round(n * 100) / 100).toFixed(2)}`;
 
-/** 各项来源摊成一行:「层级补偿 ×1.90 · 地界凶险 ×1.15」 */
+function originPartText(part: FoeOrigin["parts"][number]): string {
+  const effects: string[] = [];
+  if ((part.damageBonus ?? 0) > 0) effects.push(`增伤 +${Math.round(part.damageBonus! * 100)}%`);
+  if ((part.damageReduction ?? 0) > 0)
+    effects.push(`减伤 +${Math.round(part.damageReduction! * 100)}%`);
+  return `${part.label} ${ratioText(part.ratio)}${effects.length ? `(${effects.join(" · ")})` : ""}`;
+}
+
+/** 各项来源摊成一行:「层级补偿 ×1.90 · 境界压制 ×1.24(增伤 +32% · 减伤 +12%)」 */
 export function foeOriginPartsText(origin: FoeOrigin): string {
   return origin.parts
     .filter((p) => p.ratio !== 1)
-    .map((p) => `${p.label} ${ratioText(p.ratio)}`)
+    .map(originPartText)
     .join(" · ");
 }
 
@@ -61,11 +69,16 @@ export function foeOriginLines(origin: FoeOrigin | undefined): string[] {
   const lines: string[] = [];
   for (const p of origin.parts) {
     if (p.ratio === 1) continue;
-    lines.push(`${p.label} ${ratioText(p.ratio)}`);
+    lines.push(originPartText(p));
   }
-  if (origin.damageBonus > 0)
+  const partDamageBonus = origin.parts.reduce((sum, p) => sum + Math.max(0, p.damageBonus ?? 0), 0);
+  const partDamageReduction = origin.parts.reduce(
+    (sum, p) => sum + Math.max(0, p.damageReduction ?? 0),
+    0,
+  );
+  if (origin.damageBonus - partDamageBonus > 1e-9)
     lines.push(`${origin.label} 增伤 +${Math.round(origin.damageBonus * 100)}%`);
-  if (origin.damageReduction > 0)
+  if (origin.damageReduction - partDamageReduction > 1e-9)
     lines.push(`${origin.label} 减伤 +${Math.round(origin.damageReduction * 100)}%`);
   if (origin.note) lines.push(origin.note);
   return lines.length > 0 ? lines : [`${origin.label} ${ratioText(origin.ratio)}`];
@@ -76,8 +89,15 @@ export function foeOriginRow(origin: FoeOrigin): { label: string; value: string 
   if (!hasAccount(origin)) return { label: "敌之加成", value: "无" };
   const detail = foeOriginPartsText(origin);
   const extras: string[] = [];
-  if (origin.damageBonus > 0) extras.push(`增伤 +${Math.round(origin.damageBonus * 100)}%`);
-  if (origin.damageReduction > 0) extras.push(`减伤 +${Math.round(origin.damageReduction * 100)}%`);
+  const partDamageBonus = origin.parts.reduce((sum, p) => sum + Math.max(0, p.damageBonus ?? 0), 0);
+  const partDamageReduction = origin.parts.reduce(
+    (sum, p) => sum + Math.max(0, p.damageReduction ?? 0),
+    0,
+  );
+  if (origin.damageBonus - partDamageBonus > 1e-9)
+    extras.push(`增伤 +${Math.round(origin.damageBonus * 100)}%`);
+  if (origin.damageReduction - partDamageReduction > 1e-9)
+    extras.push(`减伤 +${Math.round(origin.damageReduction * 100)}%`);
   const head = `三维 ${ratioText(origin.ratio)}${detail ? `(${detail})` : ""}`;
   return { label: "敌之加成", value: [head, ...extras].join(" · ") };
 }

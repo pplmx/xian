@@ -184,12 +184,15 @@
                     凶险名抬到 ink-soft(它才是要判的那一项),凶险 ≥4 另有朱砂。
                   -->
                     <p class="mt-0.5 text-body text-ink-faint">
-                      {{ REALMS[row.def.minRealm]?.name }}境相宜 ·
+                      {{ REALMS[row.def.minRealm]?.name }}境{{
+                        row.pressure.active ? "门槛" : "相宜"
+                      }}
+                      ·
                       <span :class="row.def.danger >= 4 ? 'text-cinnabar' : 'text-ink-soft'">{{
                         DANGER_NAMES[row.def.danger]
                       }}</span>
-                      <span v-if="row.tooHard" class="ml-1 text-cinnabar"
-                        >· 境界尚浅,恐有性命之忧</span
+                      <span v-if="row.pressure.active" class="ml-1 text-cinnabar"
+                        >· {{ row.pressure.label }},仍可凭战力硬闯</span
                       >
                       <!-- 复聚要说出"该怎么办":旧主归来了,再历一程即可复靖 -->
                       <span v-if="row.revived" class="ml-1 text-cinnabar"
@@ -432,6 +435,16 @@
         <p class="mt-1.5 text-note text-ink-faint tabular">
           战力 {{ formatGN(player.finalStats.power) }} · 装备成色、词条与临场随机仍定成败
         </p>
+        <div
+          v-if="preview.pressure.active"
+          data-realm-pressure
+          class="mt-2 border-l-2 border-cinnabar/55 pl-2.5"
+        >
+          <p class="text-body text-cinnabar tabular">{{ preview.pressure.summary }}</p>
+          <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
+            {{ preview.pressure.guidance }}
+          </p>
+        </div>
       </div>
       <p class="text-body text-ink-faint">此行欲作何打算?</p>
       <!-- 灵兽之性会改动出行时长与遇险:结算读了它,弹窗就必须摊开(见 exploration 的乘积) -->
@@ -515,7 +528,7 @@ import { biasEffectOf } from "@/core/mortalBias";
 import { isRetreating } from "@/core/earlyGameService";
 import { REALMS } from "@/data/realms";
 import { EXPLORE_MODES } from "@/data/constants";
-import { regionFoeOrigin, startExploration } from "@/core/exploration";
+import { regionFoeOrigin, regionRealmPressure, startExploration } from "@/core/exploration";
 import { EVENT_TIERS, tierOddsText } from "@/core/eventTier";
 import { pendingChainStages } from "@/core/eventEngine";
 import { foeOriginPartsText } from "@/core/battleAnalysis";
@@ -658,7 +671,7 @@ const regionRows = computed(() =>
       recall,
       /** 镇压资格进度(三条判据的当前值/阈值) */
       progress: suppressionProgress(player.regionStats[r.id]),
-      tooHard: r.minRealm > player.major,
+      pressure: regionRealmPressure(r),
       /** 此地之敌的加成来源(层级补偿 × 地界凶险;出行方式那一档另算) */
       foeOrigin: regionFoeOrigin(r),
       // 第一层信息:只保留最强的两个生态标签
@@ -674,7 +687,7 @@ const preview = computed(() => {
   const eco = regionEcology(modeTarget.value);
   const mine = currentBuild.value ? detectionAdaptation(currentBuild.value, eco) : null;
   const recs = recommendForRegion(modeTarget.value).slice(0, 2);
-  return { mine, recs };
+  return { mine, recs, pressure: regionRealmPressure(modeTarget.value) };
 });
 
 /**

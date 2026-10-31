@@ -46,7 +46,7 @@ import { autoResolveEvent, regionEventPoolFor, type EventResolution } from "./ev
 import {
   clearRegionAndUnlockNext,
   exploreEventChance,
-  dangerFactorFor,
+  explorationFoeDanger,
   explorationRules,
   winsUntilRegionBoss,
 } from "./exploration";
@@ -320,20 +320,25 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
      */
     if (region) {
       const modeDef = EXPLORE_MODES[session.mode];
-      // 与在线同源:灵兽性格 × 区域事件(妖潮)修正危险,普通战与首领战共用——
-      // 从前离线两处都漏,「好战更易走险路 / 谨慎避祸」离线毫无作用
-      const petDangerMult = personalityEffects(player.petId).dangerMult;
       // 与在线同源:区域事件(妖潮/古墓/商队)同时改两件事 —— 危险(dangerMult)与加丰(rewardMult)。
       // 危险侧此前已接进离线;奖励侧漏了的话,事件就只剩「更难」没有「更丰」——
       // 在线 afterWin 每次取胜都乘 rewardMult,离线这里读同一份 regionEventDef,一次读两用
       const regEvent = player.currentRegionEvent(region.id);
-      const regionEventDanger = regEvent ? (regionEventDef(regEvent.eventId)?.dangerMult ?? 1) : 1;
       const regionEventReward = regEvent ? (regionEventDef(regEvent.eventId)?.rewardMult ?? 1) : 1;
       const remainSec = Math.max(0, (session.endsAt - (nowMs - dtSec * 1000)) / 1000);
       // 与材料/钻研同款 0.9 挂机折扣(设计注释与披露都自称历练打折,见离线头部与归来卷轴)
       // —— 从前只封顶不打折,历练遭遇/战斗/胜利比设计意图高约 11%。
       const simSec = Math.min(effSec, remainSec);
       const mods = player.finalStats.mods;
+      const { total: dangerFactor, origin: foeOrigin } = explorationFoeDanger({
+        tier: region.tier,
+        targetMinRealm: region.minRealm,
+        playerMajor: player.major,
+        mode: session.mode,
+        regionDanger: region.danger,
+        petId: player.petId,
+        eventId: regEvent?.eventId ?? null,
+      });
       const speed = 1 + modOf(mods, "explorationSpeed");
       const encounters = Math.floor((simSec / EXPLORE_BATTLE_INTERVAL) * speed);
       // 与在线同源:同一个 exploreEventChance(含今日星象之利)——
@@ -366,18 +371,12 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
         // 与在线同源:敌群取自本世路线节点
         const mobId = rng.pick([...placeContent(region.id).enemies]);
         const mobDef = enemyDef(mobId);
-        const dangerFactor = dangerFactorFor(
-          modeDef.dangerMult,
-          region.danger,
-          petDangerMult,
-          regionEventDanger,
-        );
         // 与在线同源:道途规则 × 本世逆旅契(explorationRules)一并生效——
         // 从前离线只带 currentDaoRules,四张逆旅契的加难在本世最大时段里落空
         const winRate = mobDef
           ? sampleWinRateRaw(
               buildPlayerSnap(),
-              makeEnemySnap(mobDef, region.tier, dangerFactor),
+              makeEnemySnap(mobDef, region.tier, dangerFactor, foeOrigin),
               rng,
               3,
               explorationRules(),
@@ -600,7 +599,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
         if (wins > 0 && mobDef) {
           const sampleFight = resolveCombat(
             buildPlayerSnap(),
-            makeEnemySnap(mobDef, region.tier, dangerFactor),
+            makeEnemySnap(mobDef, region.tier, dangerFactor, foeOrigin),
             rng,
             explorationRules(),
           );
@@ -663,15 +662,9 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
         const bossDef = enemyDef(placeContent(region.id).boss);
         if (bossDef) {
           bossFights += 1;
-          const bossDanger = dangerFactorFor(
-            modeDef.dangerMult,
-            region.danger,
-            petDangerMult,
-            regionEventDanger,
-          );
           const bossResult = resolveCombat(
             buildPlayerSnap(),
-            makeEnemySnap(bossDef, region.tier, bossDanger),
+            makeEnemySnap(bossDef, region.tier, dangerFactor, foeOrigin),
             rng,
             explorationRules(),
           );

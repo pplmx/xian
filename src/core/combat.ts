@@ -94,11 +94,13 @@ export function mortalFoeOriginFromParts(
   if (gear !== 1) parts.push({ label: "层级补偿", ratio: gear });
   for (const p of situation) if (p.ratio !== 1) parts.push({ ...p });
   const ratio = parts.reduce((acc, p) => acc * p.ratio, 1);
+  const damageBonus = parts.reduce((sum, p) => sum + Math.max(0, p.damageBonus ?? 0), 0);
+  const damageReduction = parts.reduce((sum, p) => sum + Math.max(0, p.damageReduction ?? 0), 0);
   return {
     label: parts.map((p) => p.label).join(" · "),
     ratio,
-    damageBonus: 0,
-    damageReduction: 0,
+    damageBonus,
+    damageReduction,
     parts,
     // 报了病因也要给方向:加成全在敌人那一侧的三维上,解法自然也在自己这一侧。
     // 反向的账(敌人比这一层该有的还薄)也照实说 —— 占了便宜却不说,玩家会以为自己看错了
@@ -124,6 +126,11 @@ export function makeEnemySnap(
 ): CombatantSnap {
   const scale = powerScale(tier);
   const gear = enemyGearFactor(tier) * dangerMult;
+  const mods: StatMods = { ...def.mods };
+  // 来源账不只写给战后看:境界压制等判定附带的增伤减伤必须真的落进本场快照
+  if (origin?.damageBonus) mods.damageBonus = (mods.damageBonus ?? 0) + origin.damageBonus;
+  if (origin?.damageReduction)
+    mods.damageReduction = (mods.damageReduction ?? 0) + origin.damageReduction;
   return {
     name: def.name,
     icon: def.icon,
@@ -133,7 +140,7 @@ export function makeEnemySnap(
     defense: mulN(scale, COMBAT_DEF_BASE * def.defMult * gear),
     maxHp: mulN(scale, COMBAT_HP_BASE * def.hpMult * gear),
     speed: def.speed,
-    mods: def.mods ? { ...def.mods } : {},
+    mods,
     skills: def.skills.map((s) => ({ name: s.name, mult: s.mult, rate: s.rate, effect: s.effect })),
     phases: def.phases,
     archetype: def.archetype,

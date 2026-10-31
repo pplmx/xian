@@ -82,6 +82,7 @@ const CATEGORIES = [
     match: [
       "combat.spec",
       "battleFactor",
+      "realmPressure",
       "highTierSmoke",
       "ironwall",
       "bossAudit",

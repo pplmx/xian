@@ -7,7 +7,8 @@
  * 「好战更易走上险路」「谨慎避祸」离线全不兑现,妖潮离线也白过。
  *
  * 判据(HYP-015:同一件事两处算法必漏一处,抽成一个函数):
- *   - 全局只认 dangerFactorFor 这一个实现,在线与离线都调它;
+ *   - 基础危险只认 dangerFactorFor 这一份,在线、离线与选地卡都经
+ *     explorationFoeDanger / regionFoeOrigin 取同一份含境界压制的敌势;
  *   - 任何一处不得再内联 `(1 + (region.danger - 1) * 0.05)` 这根原常数。
  *
  * 这四条判据直接读源码对账:函数存在、在线 import、离线 import、再无线内联。
@@ -27,12 +28,14 @@ describe("战斗危险因子 · 同源函数", () => {
     expect(dangerFactorFor(1.45, 3, 1.15, 1.4)).toBeCloseTo(1.45 * (1 + 2 * 0.05) * 1.15 * 1.4, 10);
   });
 
-  it("全局只有一个实现:探索与离线都 import dangerFactorFor,再无内联常数", () => {
+  it("全局只有一个实现:探索与离线都取同一份敌势,再无内联常数", () => {
     const exploration = readFileSync(resolve(__dirname, "./exploration.ts"), "utf8");
     const offline = readFileSync(resolve(__dirname, "./offline.ts"), "utf8");
-    // 两处都从本模块 import 同源函数
+    // 在线定义这一份;离线必须调同一个入口,不能只拿基础 danger 再自己补来源
     expect(exploration).toContain("dangerFactorFor");
-    expect(offline).toContain("dangerFactorFor");
+    expect(exploration).toContain("explorationFoeDanger");
+    expect(offline).toContain("explorationFoeDanger");
+    expect(offline).toContain("makeEnemySnap(mobDef, region.tier, dangerFactor, foeOrigin)");
     // 原内联常数((region.danger - 1) * 0.05)不得再出现在离线结算里
     expect(offline).not.toContain("1 + (region.danger - 1) * 0.05");
   });

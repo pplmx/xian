@@ -178,17 +178,26 @@ describe("转世不残留产出型镇压", () => {
     expect(Object.keys(p.suppressedSince)).toHaveLength(0);
   });
 
-  it("老档兜底:修复前已转世的存档,读档时远境镇压照清(不然还得再转一次世)", () => {
+  it("低境界凭战力镇压高境界地界后,刷新读档仍保留镇压与守时", () => {
     const p = usePlayerStore();
     p.initCharacter("测试道友", { roots: [] } as never);
-    // 模拟修复上线前的旧档:境界 0(已然转世),却带着高界远境的镇压列表
+    // 低境界不等于打不过:战力足够时仍可镇压高境界地界,读档不能按 minRealm 反删权益
     const far = seedFarSuppress(p);
     p.sanitize();
-    // 这一世(境界 0)根本打不进那个远境 —— 妖气复聚;本世合法的 qingyun(minRealm 0)原样留
-    expect(p.suppressedRegions).toEqual(["qingyun"]);
-    expect(p.suppressQualified).toEqual(["qingyun"]);
-    expect(Object.keys(p.suppressedSince)).toEqual(["qingyun"]);
-    expect(p.suppressedRegions).not.toContain(far);
+    expect(p.suppressedRegions).toEqual([far, "qingyun"]);
+    expect(p.suppressQualified).toEqual([far, "qingyun"]);
+    expect(p.suppressedSince).toEqual({ [far]: 12345, qingyun: 67890 });
+  });
+
+  it("旧档只有镇压列表、没有起点时,读档补一个起点而不是让复聚立刻收走", () => {
+    const p = usePlayerStore();
+    p.initCharacter("测试道友", { roots: [] } as never);
+    const far = seedFarSuppress(p);
+    p.suppressedSince = {};
+    p.sanitize();
+    expect(p.suppressedRegions).toEqual([far, "qingyun"]);
+    expect(p.suppressedSince[far]).toBeGreaterThan(0);
+    expect(p.suppressedSince.qingyun).toBeGreaterThan(0);
   });
 });
 

@@ -31,7 +31,7 @@ const NAMES = ["炼气", "筑基", "金丹", "元婴", "化神", "炼虚", "合�
 
 describe("轮回 ROI · 各转世点的道果效率", () => {
   // 审计报告(只打印,不断言):逐境界效率表是底稿;
-  // 「最优转世点就是门槛本身」「相差 537 倍」等结论由本文件其余用例断言。
+  // 「最优转世点就是门槛本身」「效率差数十倍」等结论由本文件其余用例断言。
   it("合法转世点的效率表", () => {
     const rows = rebirthPoints();
     const best = optimalRebirthPoint();
@@ -45,19 +45,24 @@ describe("轮回 ROI · 各转世点的道果效率", () => {
     }
   });
 
-  it("效率随境界单调递减——越浅修越划算", () => {
+  it("效率整体下行;飞升入口允许一档有限的换挡回升", () => {
     const rows = rebirthPoints();
     for (let i = 1; i < rows.length; i += 1) {
+      if (rows[i]!.major === 9) {
+        expect(rows[i]!.efficiency / rows[i - 1]!.efficiency).toBeLessThan(1.05);
+        continue;
+      }
       expect(rows[i]!.efficiency).toBeLessThan(rows[i - 1]!.efficiency);
     }
   });
 
-  it("最优转世点就是门槛本身(金丹),不是玩家选出来的", () => {
+  it("最优转世点仍是门槛本身(金丹)", () => {
     const best = optimalRebirthPoint();
     expect(best.major).toBe(MANUAL_REBIRTH_MIN_MAJOR);
     const worst = rebirthPoints()[rebirthPoints().length - 1]!;
-    // 金丹转世的道果效率是真仙转世的数百倍
-    expect(best.efficiency / worst.efficiency).toBeGreaterThan(100);
+    // Phase 40 给高境入口加了吐纳换挡,把旧口径的数百倍落差压到数十倍;
+    // 但金丹仍是压倒性的最优,不能因为高境提速就把这条结构性结论抹平。
+    expect(best.efficiency / worst.efficiency).toBeGreaterThan(50);
     console.log(
       `\n最优:${NAMES[best.major]}(效率 ${best.efficiency.toFixed(2)}),` +
         `最差:${NAMES[worst.major]}(${worst.efficiency.toFixed(3)})——相差 ${(best.efficiency / worst.efficiency).toFixed(0)} 倍`,
@@ -92,26 +97,32 @@ describe("轮回 ROI · 边际账:再修一境值不值", () => {
     }
   });
 
-  it("边际效率同样单调递减,不存在「修到某境界忽然划算」的拐点", () => {
+  it("凡尘内部边际效率递减;飞升入口是有限换挡,不是新的最优路线", () => {
     const rows = marginalTable();
-    for (let i = 1; i < rows.length; i += 1) {
-      expect(rows[i]!.marginal).toBeLessThan(rows[i - 1]!.marginal);
+    const preBreakthrough = rows.filter((row) => row.from < 7);
+    for (let i = 1; i < preBreakthrough.length; i += 1) {
+      expect(preBreakthrough[i]!.marginal).toBeLessThan(preBreakthrough[i - 1]!.marginal);
+    }
+    const best = optimalRebirthPoint();
+    for (const row of rows.filter((item) => item.from >= 7)) {
+      expect(row.marginal / best.efficiency).toBeLessThan(0.05);
     }
   });
 });
 
 describe("轮回 ROI · 结构成因", () => {
-  it("道果二次增长而耗时指数增长,阶数不匹配", () => {
+  it("道果二次增长而耗时仍高一个数量级,阶数不匹配", () => {
     const g = growthOrders();
     console.log(
       `\n金丹→真仙:道果 ×${g.fruitSpan.toFixed(1)},耗时 ×${g.hoursSpan.toFixed(0)}` +
         ` → 效率跌 ${g.efficiencyDrop.toFixed(0)} 倍`,
     );
-    // 道果按 Σ(i+1) 只涨几倍,耗时按 ~3.3^n 涨几千倍
+    // 道果按 Σ(i+1) 只涨几倍;Phase 40 的高境换挡把耗时从近千倍压到约 570 倍,
+    // 数量级差仍在,故「浅修更快」不是参数噪声。
     expect(g.fruitSpan).toBeLessThan(15);
-    expect(g.hoursSpan).toBeGreaterThan(1000);
+    expect(g.hoursSpan).toBeGreaterThan(500);
     // 这不是参数没调好,是分子二次分母指数的阶数问题
-    expect(g.efficiencyDrop).toBeGreaterThan(100);
+    expect(g.efficiencyDrop).toBeGreaterThan(50);
   });
 
   it("两位真实玩家的落点都在效率曲线的高位段", () => {
@@ -164,17 +175,11 @@ describe("轮回 ROI · 口径完整性", () => {
     expect(optimalRebirthPoint().major).toBe(MANUAL_REBIRTH_MIN_MAJOR);
     const g = growthOrders();
     /**
-     * 跌幅由旧口径 466 倍变为 339 倍(Phase 32 的口径补齐),Phase 39 又回到 537 倍。
-     *
-     * 为什么回涨:这一版把人间每大境界的净耗时从 ×3.46 抬到 ×3.65
-     * (需求 18 → 19 且基础修速 1.6 → 1.3),深修耗时这条分母陡了一档,
-     * 而道果分子仍只按 Σ(i+1) 二次增长 —— 阶数没变,剖面自然更深。
-     *
-     * 这不是把上一条结论推翻:高频轮回仍是最优(optimalRebirthPoint 仍是金丹)。
-     * 它记的是**这一版让「深修的路」相对更贵了**,若要动,该动的是道果曲线
-     * (DAO_FRUIT_PER_MAJOR / 软上限),不是把修为需求改回去 —— 后者是玩家明确要的。
+     * Phase 40 用 ×8 / ×26 两档吐纳换挡，把金丹→真仙的耗时落差从 Phase 39 的
+     * 537 倍压到约 71 倍；但仍远高于道果的 8 倍增长，故高频轮回依旧最优。
+     * 这条不是要求「高境绝对耗时保持旧读数」——那正是玩家反馈要改掉的长尾。
      */
-    expect(g.efficiencyDrop).toBeGreaterThan(100);
+    expect(g.efficiencyDrop).toBeGreaterThan(50);
     expect(g.efficiencyDrop).toBeLessThan(600);
   });
 });

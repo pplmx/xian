@@ -13,6 +13,7 @@
  */
 import { beforeEach, describe, expect, it } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
+import { usePlayerStore } from "@/stores/player";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { CombatSideStats, EnemyDef, FoeOrigin, RegionDef, WorldFoeShape } from "@/types";
@@ -21,6 +22,7 @@ import { COMBAT_ATK_BASE } from "@/data/constants";
 import { enemyGearFactor, powerScale } from "./formulas";
 import { makeEnemySnap, mortalFoeOrigin, mortalFoeOriginFromParts, resolveCombat } from "./combat";
 import { dangerFactorFor, explorationFoeDanger, regionFoeOrigin } from "./exploration";
+import { realmPressure } from "./realmPressure";
 import {
   JUDGEMENT_DIRECTION,
   celestialAnchor,
@@ -125,7 +127,13 @@ describe("凡界:敌人的加成来源必修写明", () => {
         { regionDanger: 5, petId: PET, eventId: "yaochao" as const },
       ];
       for (const c of cases) {
-        const { total, origin } = explorationFoeDanger({ tier: 8, mode, ...c });
+        const { total, origin } = explorationFoeDanger({
+          tier: 8,
+          targetMinRealm: 3,
+          playerMajor: 20,
+          mode,
+          ...c,
+        });
         const modeMult = EXPLORE_MODES[mode].dangerMult;
         const petMult = c.petId ? personalityEffects(c.petId).dangerMult : 1;
         const expected = dangerFactorFor(modeMult, c.regionDanger, petMult, c.eventId ? 1.15 : 1);
@@ -139,16 +147,41 @@ describe("凡界:敌人的加成来源必修写明", () => {
 
   it("选了涉险就是选了更凶的敌人 —— 同一处境下,档位越高账目越高", () => {
     const at = (mode: "normal" | "deep" | "risky"): number =>
-      explorationFoeDanger({ tier: 8, mode, regionDanger: 3, petId: null, eventId: null }).origin
-        .ratio;
+      explorationFoeDanger({
+        tier: 8,
+        targetMinRealm: 3,
+        playerMajor: 20,
+        mode,
+        regionDanger: 3,
+        petId: null,
+        eventId: null,
+      }).origin.ratio;
     expect(at("deep")).toBeGreaterThan(at("normal"));
     expect(at("risky")).toBeGreaterThan(at("deep"));
   });
 
   it("选地卡片只报与出行方式无关的那一半(层级补偿 + 地界凶险)", () => {
+    usePlayerStore().major = REGION.minRealm;
     const o = regionFoeOrigin(REGION);
     expect(o.parts.map((p) => p.label)).toEqual(["层级补偿", "地界凶险"]);
     expect(o.ratio).toBeCloseTo(enemyGearFactor(REGION.tier) * (1 + (REGION.danger - 1) * 0.05), 9);
+  });
+
+  it("低境看高境地界:同一张卡把境界压制写进来源,但入口仍可走", () => {
+    usePlayerStore().major = 2;
+    const high = { ...REGION, minRealm: 4 };
+    const o = regionFoeOrigin(high);
+    const part = o.parts.at(-1)!;
+    expect(part.label).toBe("境界压制");
+    expect(realmPressure(2, 4)).toMatchObject({
+      gap: 2,
+      enemyScale: 1.24,
+      damageBonus: 0.32,
+      damageReduction: 0.12,
+    });
+    expect(part.ratio).toBeCloseTo(1.24, 9);
+    expect(o.damageBonus).toBeCloseTo(0.32, 9);
+    expect(o.damageReduction).toBeCloseTo(0.12, 9);
   });
 
   it("反向的账也要照实说:一阶敌人比这条线薄,就不许写成「加成」", () => {
@@ -343,5 +376,13 @@ describe("来源到屏幕的接线", () => {
     const gauntlet = src("./gauntlet.ts");
     expect(combat, "凡界造敌必须写明来源").toMatch(/origin: origin \?\? mortalFoeOrigin/);
     expect(gauntlet, "天界造敌同样要写").toContain("celestialFoeOrigin(");
+  });
+
+  it("低境卡的境界压制不藏在数值里:选地提示与出行弹窗都读同一份 readout", () => {
+    const view = src("../views/AdventureView.vue");
+    expect(view).toContain("regionRealmPressure(");
+    expect(view, "出行前要摊开差几境与增伤减伤").toContain("data-realm-pressure");
+    expect(view).toContain("preview.pressure.summary");
+    expect(view).toContain("preview.pressure.guidance");
   });
 });

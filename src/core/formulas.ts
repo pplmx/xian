@@ -38,6 +38,8 @@ import {
   TRIB_WAVE_BASE,
   TRIB_WAVE_MAJOR,
   TRIB_WAVE_STEP,
+  ASCENSION_CULT_SPEED_MULT,
+  TRIBULATION_CULT_SPEED_MULT,
   BT_MAX_RATE,
   BT_MIN_RATE,
   DAO_FRUIT_PER_MAJOR,
@@ -49,6 +51,7 @@ import {
   UPGRADE_DUST_GROWTH,
   UPGRADE_STONE_TIER_BASE,
 } from "@/data/constants";
+import { WORLD_BREAK_MAJOR } from "@/data/realms";
 import { earlyLate, majorCombatFactor } from "./tierScale";
 import { ENGINE_WORLD } from "./engineWorld";
 
@@ -71,8 +74,15 @@ export function expRequirement(major: number, sub: number): GNum {
 /** 基础修为/秒(未计任何倍率) */
 export function baseCultPerSec(major: number, sub: number): number {
   const { early, late } = earlyLate(major);
+  const highRealmBoost =
+    major >= WORLD_BREAK_MAJOR
+      ? ASCENSION_CULT_SPEED_MULT
+      : major === WORLD_BREAK_MAJOR - 1
+        ? TRIBULATION_CULT_SPEED_MULT
+        : 1;
   return (
     CULT_BASE_SPEED *
+    highRealmBoost *
     Math.pow(CULT_MAJOR_SPEED_GROWTH, early) *
     Math.pow(LATE_CULT_SPEED_GROWTH, late) *
     Math.pow(CULT_SUB_SPEED_GROWTH, sub)

@@ -615,8 +615,8 @@ export const usePlayerStore = defineStore(
       // 「低境界刷低副本掉远超当前的装备」)。这属于「我拥有多少」而非「我是谁」;
       // 世界记忆(regionStats 战绩、区域兴衰)仍随神魂不灭,「世界记得你」的叙事不丢。
       // suppressQualified(永久资格令)也是经济权柄,不随世走 —— 否则新世一键把
-      // 旧世高阶远境切回收益态,爆炸换个入口又回来。sanitize 的 suppressReachable
-      // 兜修复前已转世的旧档(见 sanitize)。
+      // 旧世高阶远境切回收益态,爆炸换个入口又回来。读档只修形状、不按境界反删:
+      // 低境凭战力镇压高境是合法战果(见 sanitize)。
       suppressedRegions.value = [];
       suppressedSince.value = {};
       suppressQualified.value = [];
@@ -745,28 +745,39 @@ export const usePlayerStore = defineStore(
         else regionEvent.value = { ...ev, endsAt };
       }
       /**
-       * 数组类字段先补形,再谈内容 —— 存档可能被改坏、写坏或在旧版本里根本没有这一栏。
-       * 此前只挡了 suppressQualified,没挡 suppressedRegions,于是坏档会在
-       * `for...of` 上直接抛出,玩家看到的是白屏而不是「回到玄枢山下」。
+       * 镇压权益只做**形状修复**,不按当前境界反删。
+       *
+       * 低境界修士凭高战力镇压高境界地界是合法战果;读档若按 minRealm 过滤,
+       * 玩家一刷新就会看到「镇压没了」。转世清空由 rebirth 负责,读档不能越权代做。
        */
-      if (!Array.isArray(suppressedRegions.value)) suppressedRegions.value = [];
-      if (!Array.isArray(suppressQualified.value)) suppressQualified.value = [];
-      // 镇压权益是「这一世」的东西:凡这一世根本打不进那一界(minRealm>当前境界)的,
-      // 一律复聚回历练地 —— 修复前已转世却带着旧世远境镇压的存档,读档即清(不必再转一世)。
-      // 本世合法压下的(minRealm≤境界,转世前也这么压过)原样保留;suppressedSince 同步清,
-      // 免得一旧一新。这也是 maxTierForMajor 的同款判据,两处共用区域表。
-      if (typeof suppressedSince.value !== "object" || suppressedSince.value === null)
-        suppressedSince.value = {};
-      const suppressReachable = (id: string): boolean =>
-        (regionDef(id)?.minRealm ?? Infinity) <= major.value;
-      suppressedRegions.value = suppressedRegions.value.filter(suppressReachable);
-      suppressQualified.value = suppressQualified.value.filter(suppressReachable);
-      suppressedSince.value = Object.fromEntries(
-        Object.entries(suppressedSince.value).filter(([id]) => suppressReachable(id)),
+      const knownRegionId = (id: unknown): id is string =>
+        typeof id === "string" && regionDef(id) !== undefined;
+      suppressedRegions.value = [
+        ...new Set(asStringArray(suppressedRegions.value).filter(knownRegionId)),
+      ];
+      suppressQualified.value = [
+        ...new Set(asStringArray(suppressQualified.value).filter(knownRegionId)),
+      ];
+      const rawSince =
+        typeof suppressedSince.value === "object" && suppressedSince.value !== null
+          ? suppressedSince.value
+          : {};
+      const knownSince = Object.fromEntries(
+        Object.entries(rawSince)
+          .filter(([id]) => knownRegionId(id))
+          .map(([id, at]) => [id, asFiniteNumber(at, 0, 0)] as const)
+          .filter(([, at]) => at > 0),
       );
+      const suppressedAt = Date.now();
       for (const id of suppressedRegions.value) {
+        // 旧档可能只存了「正在镇压」而没有起点。若就此放手,复聚判定会拿
+        // 更早的战斗时间当钟,刷新一次便把镇压收走。缺起点时以本次读档为起点。
+        if (!knownSince[id]) knownSince[id] = suppressedAt;
         if (!suppressQualified.value.includes(id)) suppressQualified.value.push(id);
       }
+      suppressedSince.value = Object.fromEntries(
+        Object.entries(knownSince).filter(([id]) => suppressedRegions.value.includes(id)),
+      );
       reincarnation.value = {
         count,
         daoFruit: Number.isFinite(r?.daoFruit) ? Math.max(0, r.daoFruit) : 0,
