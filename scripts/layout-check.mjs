@@ -2262,6 +2262,12 @@ async function taskPageTour(vp) {
         const settingsStyle = settingsAfterword ? getComputedStyle(settingsAfterword) : null;
         const archiveRect = settingsArchive?.getBoundingClientRect();
         const trailRect = settingsTrail?.getBoundingClientRect();
+        const characterCatalog = document.querySelector("[data-character-catalog]");
+        const catalogStyle = characterCatalog ? getComputedStyle(characterCatalog) : null;
+        const catalogGroups = characterCatalog
+          ? [...characterCatalog.querySelectorAll("[data-character-index]")]
+          : [];
+        const catalogRects = catalogGroups.map((group) => group.getBoundingClientRect());
         return {
           layout: shell.getAttribute("data-folio-layout"),
           shellWidth: Math.round(shell.getBoundingClientRect().width),
@@ -2296,6 +2302,18 @@ async function taskPageTour(vp) {
                 sideWidth: trailRect ? Math.round(trailRect.width) : 0,
               }
             : null,
+          characterCatalog:
+            characterCatalog && catalogStyle
+              ? {
+                  columns: catalogStyle.gridTemplateColumns.split(/\s+/).filter(Boolean).length,
+                  groups: catalogGroups.length,
+                  entries: characterCatalog.querySelectorAll(".character-index__row").length,
+                  sameRow:
+                    catalogRects.length === 3 &&
+                    catalogRects.every((rect) => Math.abs(rect.top - catalogRects[0].top) <= 2),
+                  narrowest: Math.round(Math.min(...catalogRects.map((rect) => rect.width))),
+                }
+              : null,
         };
       });
       desktopFolioSeen += 1;
@@ -2374,6 +2392,19 @@ async function taskPageTour(vp) {
             `[${vp.tag}] /settings 存续案与留痕、索引没有在桌面上并读(${JSON.stringify(
               desk.settingsPair,
             )})`,
+          );
+        }
+        if (
+          route === "/character" &&
+          (!desk.characterCatalog ||
+            desk.characterCatalog.columns < 3 ||
+            desk.characterCatalog.groups !== 3 ||
+            desk.characterCatalog.entries !== 9 ||
+            !desk.characterCatalog.sameRow ||
+            desk.characterCatalog.narrowest < 250)
+        ) {
+          failures.push(
+            `[${vp.tag}] /character 卷末目录没有三组并读(${JSON.stringify(desk.characterCatalog)})`,
           );
         }
       }

@@ -220,132 +220,166 @@
     <div class="ink-divider-mark my-4" aria-hidden="true" />
 
     <!--
-      九处去向不再各占一张同形入口卡。三组册目只留「去向 / 当前事实 / 动作」三列，
-      一行读一件事；人物页的主体回到战力与灵根，导航退成一册索引。
+      九处去向原分三章长滚,每章都要重起一枚章节头;桌面上又各自只占半页,
+      三组目录因此把正文拖成一条断续的侧栏。现在三组同收进一张卷末目录:
+      桌面上三栏并读,手机上仍按「道途 → 缘法 → 行迹」单列续读。
     -->
-    <section>
-      <SectionTitle title="道途" hint="路数与身份" />
-      <div class="character-index mt-2" data-character-index="way">
-        <CharacterIndexRow
-          to="/build"
-          icon="swords"
-          title="流 派"
-          tone="cinnabar"
-          action="参详"
-          :sub="
-            build
-              ? `${build.displayName} · 契合 ${formatPercent(build.affinity, 0)} · 快照 ${loadouts.list.length} 套`
-              : '道途尚未成路,词条与功法凑成一派便见分晓'
-          "
-        />
+    <section class="character-afterword folio-span-all" data-character-afterword>
+      <SectionTitle title="卷末目录" hint="道途、缘法、行迹,九处去向一页可寻" />
+      <div class="character-catalog" data-character-catalog>
+        <section
+          class="character-catalog__group"
+          data-character-index="way"
+          aria-labelledby="character-catalog-way"
+        >
+          <header class="character-catalog__head">
+            <span class="character-catalog__ordinal" aria-hidden="true">壹</span>
+            <div class="character-catalog__copy">
+              <h3 id="character-catalog-way" class="character-catalog__title">道途</h3>
+              <span class="character-catalog__hint">路数与身份</span>
+            </div>
+          </header>
+          <div class="character-catalog__rows">
+            <CharacterIndexRow
+              to="/build"
+              icon="swords"
+              title="流 派"
+              tone="cinnabar"
+              action="参详"
+              :sub="
+                build
+                  ? `${build.displayName} · 契合 ${formatPercent(build.affinity, 0)} · 快照 ${loadouts.list.length} 套`
+                  : '道途尚未成路,词条与功法凑成一派便见分晓'
+              "
+            />
 
-        <!-- 修行画像(Phase 31.2:历史行为归纳,纯描述无数值) -->
-        <CharacterIndexRow
-          icon="circle-user"
-          title="修行画像"
-          action="展卷"
-          :sub="`「${identity?.epithet ?? '玄枢散人'}」 · ${identity?.narrative ?? '足迹尚浅'}`"
-          @click="identityOpen = true"
-        />
+            <!-- 修行画像(Phase 31.2:历史行为归纳,纯描述无数值) -->
+            <CharacterIndexRow
+              icon="circle-user"
+              title="修行画像"
+              action="展卷"
+              :sub="`「${identity?.epithet ?? '玄枢散人'}」 · ${identity?.narrative ?? '足迹尚浅'}`"
+              @click="identityOpen = true"
+            />
 
-        <!-- 相伴灵兽的「脸」:有伴亮伴侣的形,未伴用名号的冕 —— 同其他入口一样是一枚题头图 -->
-        <CharacterIndexRow
-          to="/titles"
-          :icon="currentPetIcon ?? 'crown'"
-          title="名号与灵兽"
-          tone="jade"
-          action="整理"
-          :sub="`${currentTitleName ?? '未佩名号'} · ${currentPetName ?? '未伴灵兽'}`"
-        />
-      </div>
-    </section>
+            <!-- 相伴灵兽的「脸」:有伴亮伴侣的形,未伴用名号的冕 —— 同其他入口一样是一枚题头图 -->
+            <CharacterIndexRow
+              to="/titles"
+              :icon="currentPetIcon ?? 'crown'"
+              title="名号与灵兽"
+              tone="jade"
+              action="整理"
+              :sub="`${currentTitleName ?? '未佩名号'} · ${currentPetName ?? '未伴灵兽'}`"
+            />
+          </div>
+        </section>
 
-    <!-- 缘法:这一世遇见的人 -->
-    <section>
-      <SectionTitle title="缘法" hint="师承道侣" />
-      <div class="character-index mt-2" data-character-index="bond">
-        <!-- 师承(Phase 31 S1):修行理念 + 师尊评价 -->
-        <CharacterIndexRow
-          icon="scroll"
-          title="师 承"
-          tone="qing"
-          :action="mentorVer ? '求教' : '拜师'"
-          :sub="
-            mentorVer
-              ? `${mentorVer.mentor?.name ?? ''}·${mentorVer.mentor?.title ?? ''} | ${mentorVer.line}`
-              : '尚未拜师,可寻一位师尊'
-          "
-          @click="mentorDialog = true"
-        />
+        <section
+          class="character-catalog__group"
+          data-character-index="bond"
+          aria-labelledby="character-catalog-bond"
+        >
+          <header class="character-catalog__head">
+            <span class="character-catalog__ordinal" aria-hidden="true">贰</span>
+            <div class="character-catalog__copy">
+              <h3 id="character-catalog-bond" class="character-catalog__title">缘法</h3>
+              <span class="character-catalog__hint">这一世遇见的人</span>
+            </div>
+          </header>
+          <div class="character-catalog__rows">
+            <!-- 师承(Phase 31 S1):修行理念 + 师尊评价 -->
+            <CharacterIndexRow
+              icon="scroll"
+              title="师 承"
+              tone="qing"
+              :action="mentorVer ? '求教' : '拜师'"
+              :sub="
+                mentorVer
+                  ? `${mentorVer.mentor?.name ?? ''}·${mentorVer.mentor?.title ?? ''} | ${mentorVer.line}`
+                  : '尚未拜师,可寻一位师尊'
+              "
+              @click="mentorDialog = true"
+            />
 
-        <!--
-          道侣(Phase 33.8):这一世遇见的人。只记关系与经历,不给任何属性。
-          她开了口 / 提了事,还等你一句 —— 这一行要报出来。此前只有点开弹窗
-          才知道有事在等,而不开弹窗就永远不知道(与「卦在身」「今日天道未做」同族)。
-        -->
-        <CharacterIndexRow
-          icon="user"
-          title="道 侣"
-          tone="qing"
-          :action="bondDef ? '相知' : '履历'"
-          :badge="hasBondWord ? '有话说' : ''"
-          :sub="
-            bondDef && bond
-              ? `${bondDef.name}·${STAGE_NAMES[bond.stage]}${bond.fallen ? '(已殁)' : bond.departed ? '(已离)' : ''} | ${bondDef.brief}`
-              : pastBonds.length
-                ? `此生尚未遇见,历世曾有 ${pastBonds.length} 段同行`
-                : '此生尚未遇见谁'
-          "
-          @click="bondDialog = true"
-        />
-      </div>
-    </section>
+            <!--
+              道侣(Phase 33.8):这一世遇见的人。只记关系与经历,不给任何属性。
+              她开了口 / 提了事,还等你一句 —— 这一行要报出来。此前只有点开弹窗
+              才知道有事在等,而不开弹窗就永远不知道(与「卦在身」「今日天道未做」同族)。
+            -->
+            <CharacterIndexRow
+              icon="user"
+              title="道 侣"
+              tone="qing"
+              :action="bondDef ? '相知' : '履历'"
+              :badge="hasBondWord ? '有话说' : ''"
+              :sub="
+                bondDef && bond
+                  ? `${bondDef.name}·${STAGE_NAMES[bond.stage]}${bond.fallen ? '(已殁)' : bond.departed ? '(已离)' : ''} | ${bondDef.brief}`
+                  : pastBonds.length
+                    ? `此生尚未遇见,历世曾有 ${pastBonds.length} 段同行`
+                    : '此生尚未遇见谁'
+              "
+              @click="bondDialog = true"
+            />
+          </div>
+        </section>
 
-    <!-- 记录:走过什么、这条路从哪来 -->
-    <section>
-      <SectionTitle title="行迹" hint="藏珍与轮回" />
-      <div class="character-index mt-2" data-character-index="record">
-        <CharacterIndexRow
-          to="/collection"
-          icon="gem"
-          title="藏珍与成就"
-          tone="gold"
-          action="翻阅"
-          :badge="quests.hasCollectionNew ? '有新得' : ''"
-          :sub="`成就 ${achievementCounts(achievementStateOf(quests.achieved)).done}/${ACHIEVEMENTS.length} · 图鉴 ${collectionSummary.known}/${collectionSummary.total}`"
-        />
+        <section
+          class="character-catalog__group"
+          data-character-index="record"
+          aria-labelledby="character-catalog-record"
+        >
+          <header class="character-catalog__head">
+            <span class="character-catalog__ordinal" aria-hidden="true">叁</span>
+            <div class="character-catalog__copy">
+              <h3 id="character-catalog-record" class="character-catalog__title">行迹</h3>
+              <span class="character-catalog__hint">走过什么,路从哪来</span>
+            </div>
+          </header>
+          <div class="character-catalog__rows">
+            <CharacterIndexRow
+              to="/collection"
+              icon="gem"
+              title="藏珍与成就"
+              tone="gold"
+              action="翻阅"
+              :badge="quests.hasCollectionNew ? '有新得' : ''"
+              :sub="`成就 ${achievementCounts(achievementStateOf(quests.achieved)).done}/${ACHIEVEMENTS.length} · 图鉴 ${collectionSummary.known}/${collectionSummary.total}`"
+            />
 
-        <CharacterIndexRow
-          to="/legacy"
-          icon="book"
-          title="修仙录"
-          action="展卷"
-          sub="画像 · 节点 · 我的纪录——这一部只写你自己"
-        />
+            <CharacterIndexRow
+              to="/legacy"
+              icon="book"
+              title="修仙录"
+              action="展卷"
+              sub="画像 · 节点 · 我的纪录——这一部只写你自己"
+            />
 
-        <!--
-          界域志:与修仙录同级 —— 一部写你,一部写这条路从哪来。
-          这一册装着两半:界域/典籍是「来路」(只读),周易/紫微/星象/奇门是「术数四门」
-          (有当下,问卦就在里面) —— 副题要把两半都说出来,否则想找问卦的人根本不会点进来。
-        -->
-        <CharacterIndexRow
-          to="/codex"
-          icon="mountain"
-          title="界域志"
-          action="查阅"
-          :badge="divinationOn ? '卦在身' : ''"
-          :sub="`${cnNumber(WORLDS.length)}界${cnNumber(REALMS.length)}境的来路与典籍 · 术数四门`"
-        />
+            <!--
+              界域志:与修仙录同级 —— 一部写你,一部写这条路从哪来。
+              这一册装着两半:界域/典籍是「来路」(只读),周易/紫微/星象/奇门是「术数四门」
+              (有当下,问卦就在里面) —— 副题要把两半都说出来,否则想找问卦的人根本不会点进来。
+            -->
+            <CharacterIndexRow
+              to="/codex"
+              icon="mountain"
+              title="界域志"
+              action="查阅"
+              :badge="divinationOn ? '卦在身' : ''"
+              :sub="`${cnNumber(WORLDS.length)}界${cnNumber(REALMS.length)}境的来路与典籍 · 术数四门`"
+            />
 
-        <CharacterIndexRow
-          icon="refresh"
-          title="轮 回"
-          tone="violet"
-          action="观想"
-          badge="永久积累"
-          :sub="`道果 ${formatNum(player.reincarnation.daoFruit)} · 天赋 ${ownedTalents.length} 项`"
-          @click="rebirthOpen = true"
-        />
+            <CharacterIndexRow
+              icon="refresh"
+              title="轮 回"
+              tone="violet"
+              action="观想"
+              badge="永久积累"
+              :sub="`道果 ${formatNum(player.reincarnation.daoFruit)} · 天赋 ${ownedTalents.length} 项`"
+              @click="rebirthOpen = true"
+            />
+          </div>
+        </section>
       </div>
     </section>
 

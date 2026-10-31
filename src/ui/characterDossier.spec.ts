@@ -60,16 +60,29 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
     expect(view, "护盾上限边界仍保留").toContain("SHIELD_CAP_RATIO");
   });
 
-  it("九处去向收成三组册目,所有原有动作与待办提醒一个不少", () => {
+  it("九处去向收成一页卷末目录,三组同席而非三张长卡", () => {
     const view = source("src/views/CharacterView.vue");
     const wayAt = view.indexOf('data-character-index="way"');
     const bondAt = view.indexOf('data-character-index="bond"');
     const recordAt = view.indexOf('data-character-index="record"');
 
+    expect(view, "卷末目录只起一章").toContain(
+      '<SectionTitle title="卷末目录" hint="道途、缘法、行迹,九处去向一页可寻" />',
+    );
+    expect(view, "目录要收进同一张跨栏纸面").toContain(
+      '<section class="character-afterword folio-span-all" data-character-afterword>',
+    );
+    expect(view, "三组共用一个目录网格").toContain(
+      '<div class="character-catalog" data-character-catalog>',
+    );
+    expect((view.match(/data-character-index=/g) ?? []).length, "卷末仍只分三组").toBe(3);
     expect((view.match(/<CharacterIndexRow/g) ?? []).length, "九行册目一项不少").toBe(9);
     expect(wayAt, "道途组要有稳定落点").toBeGreaterThan(-1);
     expect(bondAt, "缘法组要排在道途之后").toBeGreaterThan(wayAt);
     expect(recordAt, "行迹组要排在缘法之后").toBeGreaterThan(bondAt);
+    expect(view, "旧的三段章节头不再各起一页").not.toContain('<SectionTitle title="道途"');
+    expect(view, "旧的三段章节头不再各起一页").not.toContain('<SectionTitle title="缘法"');
+    expect(view, "旧的三段章节头不再各起一页").not.toContain('<SectionTitle title="行迹"');
     expect(view, "册目读取同一份流派识别").toContain("build?.displayName");
     expect(view, "画像仍开原弹窗").toContain('@click="identityOpen = true"');
     expect(view, "师承仍开原弹窗").toContain('@click="mentorDialog = true"');
@@ -79,7 +92,7 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
     expect(view, "旧同形入口卡不再参与道躯页").not.toContain("<NavCard");
   });
 
-  it("手机总案单列,720 起战力与灵根并读,220 以下册目动作退到下一行", () => {
+  it("手机总案与目录单列,720 起总案并读,桌面上三组目录并排", () => {
     const css = source("src/style.css");
     const start = css.indexOf(".character-dossier {");
     const end = css.indexOf("/*\n * 开关(.toggle-ink)", start);
@@ -94,10 +107,13 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
       /@media \(min-width: 720px\)\s*\{[\s\S]{0,180}\.character-dossier__grid\s*\{[\s\S]{0,120}minmax\(0, 1\.08fr\) minmax\(0, 0\.92fr\)/,
     );
     expect(characterCss).toMatch(
-      /\.character-index__row\s*\{[\s\S]{0,160}grid-template-columns:\s*2\.15rem minmax\(0, 1fr\)/,
+      /\.character-catalog\s*\{[\s\S]{0,220}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
     expect(characterCss).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1600}\.character-index__head\s*\{[\s\S]{0,120}flex-direction:\s*column/,
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,220}\.character-catalog\s*\{[\s\S]{0,120}repeat\(3, minmax\(0, 1fr\)\)/,
+    );
+    expect(characterCss).toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,2200}\.character-index__head\s*\{[\s\S]{0,120}flex-direction:\s*column/,
     );
   });
 });

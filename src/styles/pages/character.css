@@ -194,25 +194,94 @@
     line-height: 1;
     text-align: center;
   }
-  .character-index {
+  /*
+   * 卷末目录不是三张“入口卡”,而是一张从册页底部长出来的总目录。
+   * 三组共享纸面与边框,组题只占一行;桌面上三栏并读,手机上按组单列续读。
+   * 这样页面最后只起一次章节头,也不再把“道途 / 缘法 / 行迹”各撑成一章。
+   */
+  .character-catalog {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 0.5rem;
     overflow: hidden;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.13);
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.15);
     border-top: 2px solid rgb(var(--color-qing-rgb) / 0.55);
     border-radius: 2px;
     background:
-      linear-gradient(110deg, rgb(var(--color-qing-rgb) / 0.028), transparent 46%),
+      radial-gradient(circle at 100% 0, rgb(var(--color-qing-rgb) / 0.045), transparent 15rem),
+      linear-gradient(110deg, rgb(var(--color-qing-rgb) / 0.025), transparent 46%),
       rgb(var(--color-paper-lifted-rgb));
     box-shadow:
       inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.18),
       2px 2px 0 rgb(var(--color-ink-rgb) / 0.02);
   }
+  .character-catalog::after {
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.026);
+    content: "";
+    pointer-events: none;
+  }
+  .character-catalog__group {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+  }
+  .character-catalog__group + .character-catalog__group {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.11);
+  }
+  .character-catalog__head {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.58rem 0.72rem 0.52rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    background:
+      linear-gradient(90deg, rgb(var(--color-paper-rgb) / 0.34), transparent 70%),
+      rgb(var(--color-paper-deep-rgb) / 0.16);
+  }
+  .character-catalog__ordinal {
+    display: grid;
+    width: 1.45rem;
+    height: 1.45rem;
+    flex: none;
+    place-items: center;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.42);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  .character-catalog__copy {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.05rem 0.5rem;
+  }
+  .character-catalog__title {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    line-height: 1.25;
+  }
+  .character-catalog__hint {
+    min-width: 0;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.35;
+  }
   .character-index__row {
     display: grid;
     min-width: 0;
-    grid-template-columns: 2.15rem minmax(0, 1fr);
+    grid-template-columns: 1.85rem minmax(0, 1fr);
     align-items: start;
-    gap: 0.65rem;
-    padding: 0.7rem 0.78rem;
+    gap: 0.58rem;
+    padding: 0.62rem 0.72rem;
     color: inherit;
     text-align: left;
     text-decoration: none;
@@ -223,8 +292,8 @@
   }
   .character-index__mark {
     display: grid;
-    width: 2.15rem;
-    height: 2.15rem;
+    width: 1.85rem;
+    height: 1.85rem;
     place-items: center;
     border: 1px solid currentColor;
     background: rgb(var(--color-paper-rgb) / 0.34);
@@ -246,9 +315,9 @@
     min-width: 0;
     color: rgb(var(--color-ink-rgb));
     font-family: var(--font-kai);
-    font-size: var(--type-title);
-    letter-spacing: 0.14em;
-    line-height: 1.4;
+    font-size: var(--type-body);
+    letter-spacing: 0.12em;
+    line-height: 1.45;
   }
   .character-index__action {
     flex: none;
@@ -259,11 +328,11 @@
   }
   .character-index__sub {
     display: block;
-    margin-top: 0.12rem;
+    margin-top: 0.08rem;
     overflow-wrap: anywhere;
     color: rgb(var(--color-ink-faint-rgb));
     font-size: var(--type-note);
-    line-height: 1.55;
+    line-height: 1.48;
   }
   .character-index__badge {
     display: inline-block;
@@ -286,6 +355,16 @@
       border-left: 1px solid rgb(var(--color-ink-rgb) / 0.1);
     }
   }
+  @media (min-width: 960px) {
+    .character-catalog {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .character-catalog__group + .character-catalog__group {
+      border-top: 0;
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.11);
+    }
+  }
   @media (max-width: 220px) {
     .character-dossier__power,
     .character-dossier__roots {
@@ -301,15 +380,30 @@
       grid-column: 2;
     }
 
+    .character-catalog__head {
+      gap: 0.4rem;
+      padding-inline: 0.58rem;
+    }
+
+    .character-catalog__ordinal {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+
+    .character-catalog__copy {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
     .character-index__row {
-      grid-template-columns: 1.9rem minmax(0, 1fr);
-      gap: 0.5rem;
-      padding-inline: 0.62rem;
+      grid-template-columns: 1.65rem minmax(0, 1fr);
+      gap: 0.45rem;
+      padding-inline: 0.58rem;
     }
 
     .character-index__mark {
-      width: 1.9rem;
-      height: 1.9rem;
+      width: 1.65rem;
+      height: 1.65rem;
     }
 
     .character-index__head {

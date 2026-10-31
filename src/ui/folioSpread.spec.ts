@@ -52,12 +52,15 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
     expect(css).toContain(".folio-span-all");
   });
 
-  it("首页修行志与人物页道躯总案跨两栏,不再留半页空白", () => {
+  it("首页修行志、人物页道躯总案与卷末目录跨两栏,不再留半页空白", () => {
     expect(source("src/views/HomeView.vue")).toMatch(
       /<section class="folio-span-all">\s*<SectionTitle title="修行志"/,
     );
     expect(source("src/views/CharacterView.vue")).toMatch(
       /<section class="folio-span-all">\s*<SectionTitle title="道躯总案"/,
+    );
+    expect(source("src/views/CharacterView.vue")).toMatch(
+      /<section class="character-afterword folio-span-all" data-character-afterword>\s*<SectionTitle title="卷末目录"/,
     );
   });
 
@@ -75,5 +78,6 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
     expect(layout).toContain("desktopFolioSeen");
     expect(layout).toContain("双页册没有真的展开");
     expect(layout).toContain("单叶册在桌面上拉得过宽");
+    expect(layout).toContain("卷末目录没有三组并读");
   });
 });
