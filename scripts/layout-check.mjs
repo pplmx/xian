@@ -2254,6 +2254,9 @@ async function taskPageTour(vp) {
         const pageStyle = getComputedStyle(page);
         const gutter = getComputedStyle(page, "::before");
         const spineStyle = spine ? getComputedStyle(spine) : null;
+        const masthead = document.querySelector("[data-folio-masthead]");
+        const mastheadStyle = masthead ? getComputedStyle(masthead) : null;
+        const mastheadOrdinal = masthead?.querySelector(".folio-masthead__ordinal");
         const head = document.querySelector("[data-folio-head]");
         const ledger = document.querySelector("[data-desktop-ledger]");
         const spineNav = spine?.querySelector('nav[aria-label="全站册目"]');
@@ -2292,6 +2295,22 @@ async function taskPageTour(vp) {
           layout: shell.getAttribute("data-folio-layout"),
           shellWidth: Math.round(shell.getBoundingClientRect().width),
           pageWidth: Math.round(page.getBoundingClientRect().width),
+          masthead: mastheadStyle
+            ? {
+                borderTop: Number.parseFloat(mastheadStyle.borderTopWidth),
+                borderRight: Number.parseFloat(mastheadStyle.borderRightWidth),
+                borderBottom: Number.parseFloat(mastheadStyle.borderBottomWidth),
+                borderLeft: Number.parseFloat(mastheadStyle.borderLeftWidth),
+                shadow: mastheadStyle.boxShadow,
+                fold: getComputedStyle(masthead, "::after").display,
+                ordinal: mastheadOrdinal
+                  ? {
+                      display: getComputedStyle(mastheadOrdinal).display,
+                      text: mastheadOrdinal.textContent?.trim() ?? "",
+                    }
+                  : null,
+              }
+            : null,
           display: pageStyle.display,
           columns: pageStyle.gridTemplateColumns.split(/\s+/).filter(Boolean).length,
           gutter: gutter.backgroundImage,
@@ -2433,6 +2452,22 @@ async function taskPageTour(vp) {
             failures.push(
               `[${vp.tag}] ${route} 双页正文只有 ${desk.pageWidth}px —— 没有用上书桌宽度`,
             );
+          }
+          if (
+            !desk.masthead ||
+            desk.masthead.borderLeft <= 0 ||
+            desk.masthead.borderRight !== 0 ||
+            desk.masthead.shadow !== "none" ||
+            desk.masthead.fold !== "none"
+          ) {
+            failures.push(`[${vp.tag}] ${route} 桌面卷首仍叠着厚卡片边框或角贴`);
+          }
+          if (
+            !desk.masthead?.ordinal ||
+            desk.masthead.ordinal.display === "none" ||
+            !/^\d{2}$/.test(desk.masthead.ordinal.text)
+          ) {
+            failures.push(`[${vp.tag}] ${route} 桌面卷首册次水印没有落出来`);
           }
           if (!desk.gutter.includes("linear-gradient")) {
             failures.push(`[${vp.tag}] ${route} 双页中缝没有画出来`);

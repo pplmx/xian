@@ -21,6 +21,7 @@ describe("册页卷首 · 一页只讲清一件事", () => {
     expect(masthead, "运行时判据要能定位卷首").toContain("data-folio-masthead");
     expect(masthead, "右侧动作要独立成槽").toContain('<slot name="action"');
     expect(masthead, "卷首读数要独立成槽").toContain('<slot name="meta"');
+    expect(masthead, "卷首要从同一册目位置生成册次水印").toContain("folioOrdinal");
   });
 
   it("极窄档动作落整行，不把册名与说明挤成竖排", () => {
@@ -30,6 +31,24 @@ describe("册页卷首 · 一页只讲清一件事", () => {
     expect(masthead).toContain("tinylens:w-full");
     expect(css).toContain(".folio-masthead");
     expect(css).toContain(".folio-masthead::after");
+  });
+
+  it("桌面卷首改成开页题签，只留卷边与切口，不再叠一张厚卡", () => {
+    const css = source("src/style.css");
+
+    expect(css, "桌面卷首要有独立册次水印").toContain(".folio-masthead__ordinal");
+    expect(css, "宽屏题签要撤掉右侧框线").toMatch(
+      /\.app-shell\[data-game-shell="desk"\] \.folio-masthead \{[\s\S]{0,260}?border-right:\s*0;/,
+    );
+    expect(css, "宽屏题签要保留世界卷边").toMatch(
+      /\.app-shell\[data-game-shell="desk"\] \.folio-masthead \{[\s\S]{0,260}?border-left:\s*2px solid var\(--world-bar\);/,
+    );
+    expect(css, "宽屏题签不再投出卡片阴影").toMatch(
+      /\.app-shell\[data-game-shell="desk"\] \.folio-masthead \{[\s\S]{0,300}?box-shadow:\s*none;/,
+    );
+    expect(css, "桌面把角贴让给开页切口").toMatch(
+      /\.app-shell\[data-game-shell="desk"\] \.folio-masthead::after \{[\s\S]{0,80}?display:\s*none;/,
+    );
   });
 
   it("详情页族全部换用同一枚卷首，不再各手搓一条返回线与标题", () => {

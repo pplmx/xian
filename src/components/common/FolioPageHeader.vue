@@ -6,8 +6,11 @@
     "
     data-folio-masthead
     :data-folio-featured="featured ? '' : undefined"
+    :data-folio-ordinal="folioOrdinal"
   >
     <slot name="backdrop" />
+
+    <span class="folio-masthead__ordinal" aria-hidden="true">{{ folioOrdinal }}</span>
 
     <div class="relative z-10 flex flex-wrap items-center gap-x-2 gap-y-1">
       <button
@@ -113,6 +116,9 @@ const positionMark = computed(() =>
   position.value
     ? `卷${cnNumber(position.value.sectionIndex + 1)} · ${position.value.section.label}`
     : "卷首",
+);
+const folioOrdinal = computed(() =>
+  position.value ? String(position.value.entryIndex + 1).padStart(2, "0") : "00",
 );
 const description = computed(() => props.subtitle || navigation.value?.description || "");
 </script>
