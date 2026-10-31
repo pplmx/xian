@@ -1,9 +1,8 @@
 @layer reset, shared, page, app-utilities;
 @layer page {
   /*
-   * 藏珍案 —— 卷首用一枚九册藏珍格，功名与藏珍共用同一份总览。
-   * 功名状只报整体与最近三枚，方向卷目再按需展开；藏珍谱只报九册总谱，
-   * 新得先看、将满次之，册目与条目仍保留原来的分批与回翻。
+   * 藏珍案 —— 页签后先读一枚九册总印，再直接进入眼下可追 / 眼下新得。
+   * 总印只报九册与两份总量；重复的大总案退场，方向卷目与册目仍按需展开。
    */
   .collection-page .folio-masthead--featured {
     background:
@@ -42,44 +41,20 @@
     content: "";
     pointer-events: none;
   }
-  .achievement-briefing__meter,
-  .collection-briefing__meter {
+  .achievement-briefing > .folio-ledger-head,
+  .collection-briefing > .folio-ledger-head {
     position: relative;
     z-index: 1;
-    padding: 0 0.82rem;
-  }
-  .achievement-briefing__label,
-  .collection-briefing__label {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    min-width: 0;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.5rem;
-    margin-top: 0.64rem;
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
-    padding: 0.58rem 0.82rem 0;
-  }
-  .achievement-briefing__label p,
-  .collection-briefing__label p {
-    color: rgb(var(--color-ink-soft-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-body);
-    letter-spacing: 0.14em;
-  }
-  .achievement-briefing__label span,
-  .collection-briefing__label span {
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
   }
   .achievement-briefing__targets {
     position: relative;
     z-index: 1;
     display: grid;
     min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.28rem;
-    padding: 0.5rem 0.7rem 0.2rem;
+    padding: 0.32rem 0.7rem 0.56rem;
   }
   .achievement-target {
     display: grid;
@@ -136,13 +111,11 @@
   }
   .achievement-target__desc {
     display: block;
-    overflow: hidden;
     margin-top: 0.08rem;
     color: rgb(var(--color-ink-faint-rgb));
     font-size: var(--type-note);
     line-height: 1.5;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
   }
   .achievement-target__arrow {
     color: rgb(var(--color-ink-faint-rgb));
@@ -160,29 +133,6 @@
   }
   .collection-briefing__empty.is-jade {
     color: rgb(var(--color-jade-rgb));
-  }
-  .achievement-briefing__foot,
-  .collection-briefing__foot {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.2rem 0.6rem;
-    margin-top: 0.4rem;
-    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
-    padding: 0.46rem 0.82rem 0.54rem;
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-    line-height: 1.45;
-  }
-  .achievement-briefing__foot span:first-child,
-  .collection-briefing__foot span:first-child {
-    color: rgb(var(--color-ink-soft-rgb));
-    font-family: var(--font-kai);
-    letter-spacing: 0.12em;
   }
   .achievement-volumes,
   .collection-shelves {
@@ -367,9 +317,11 @@
   .collection-briefing__highlights {
     position: relative;
     z-index: 1;
+    display: grid;
     min-width: 0;
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
     gap: 0.34rem;
-    padding: 0.5rem 0.7rem 0;
+    padding: 0.36rem 0.7rem 0.56rem;
   }
   .collection-highlight {
     display: grid;
@@ -694,10 +646,6 @@
     }
   }
   @media (max-width: 220px) {
-    .achievement-briefing__label,
-    .collection-briefing__label,
-    .achievement-briefing__foot,
-    .collection-briefing__foot,
     .achievement-volume__head,
     .collection-volume__head,
     .achievement-entry {

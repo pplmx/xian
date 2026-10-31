@@ -1,15 +1,24 @@
 <template>
   <!--
-    藏珍格只报九册有没有开卷、哪册有新得，以及功名与藏珍两份总进度。
-    册名、来源、条目与成就条件都在正文完整出现，故整图不重复进入读屏。
+    九册总印是页签后的第一张总账：左边九枚册印，右边功名与藏珍总进度。
+    390px 下九册压成一行；更窄时先收起格内读数，195px 再退回三列。
   -->
-  <div class="collection-cabinet" data-collection-cabinet aria-hidden="true">
+  <section class="collection-cabinet" data-collection-cabinet aria-label="九册总印">
     <div class="collection-cabinet__head">
-      <span class="collection-cabinet__title">藏珍格</span>
-      <span class="collection-cabinet__edition tabular">九册</span>
+      <span class="collection-cabinet__title">九册总印</span>
+      <div class="collection-cabinet__totals">
+        <span class="tabular"
+          >名 <strong>{{ achievementDone }}</strong
+          >/{{ achievementTotal }}</span
+        >
+        <span class="tabular"
+          >珍 <strong>{{ collectionKnown }}</strong
+          >/{{ collectionTotal }}</span
+        >
+      </div>
     </div>
 
-    <div class="collection-cabinet__grid">
+    <div class="collection-cabinet__grid" role="list" aria-label="九册收录进度">
       <span
         v-for="cell in cells"
         :key="cell.key"
@@ -19,33 +28,29 @@
           'is-complete': cell.complete,
           'is-new': cell.newCount > 0,
         }"
+        role="listitem"
       >
-        <span class="collection-cabinet__mark">{{ cell.mark }}</span>
-        <span class="collection-cabinet__track">
+        <span class="sr-only">{{ cell.name }}</span>
+        <span class="collection-cabinet__cell-copy">
+          <span class="collection-cabinet__mark" aria-hidden="true">{{ cell.mark }}</span>
+          <span class="collection-cabinet__reading tabular">{{ cell.known }}/{{ cell.total }}</span>
+        </span>
+        <span class="collection-cabinet__track" aria-hidden="true">
           <span :style="{ width: `${cell.ratio * 100}%` }" />
         </span>
-        <span v-if="cell.newCount > 0" class="collection-cabinet__spark" />
+        <span v-if="cell.newCount > 0" class="collection-cabinet__spark" aria-hidden="true" />
       </span>
     </div>
-
-    <div class="collection-cabinet__caption">
-      <span class="tabular"
-        >名 <strong>{{ achievementDone }}</strong
-        >/{{ achievementTotal }}</span
-      >
-      <span class="tabular"
-        >珍 <strong>{{ collectionKnown }}</strong
-        >/{{ collectionTotal }}</span
-      >
-    </div>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
 interface CabinetCell {
   key: string;
+  name: string;
   mark: string;
   known: number;
+  total: number;
   ratio: number;
   complete: boolean;
   newCount: number;
@@ -64,39 +69,36 @@ defineProps<{
 .collection-cabinet {
   position: relative;
   display: grid;
-  width: 154px;
-  height: 128px;
-  grid-template-rows: auto 1fr auto;
-  gap: 0.28rem;
-  overflow: hidden;
-  border: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+  width: 100%;
+  min-width: 0;
+  grid-template-rows: auto auto;
+  gap: 0.34rem;
+  border-block: 1px solid rgb(var(--color-ink-rgb) / 0.1);
   background:
-    linear-gradient(145deg, rgb(var(--color-paper-rgb) / 0.52), transparent 52%),
-    radial-gradient(circle at 88% 10%, rgb(var(--color-gold-ink-rgb) / 0.05), transparent 48%),
-    rgb(var(--color-paper-lifted-rgb) / 0.42);
-  box-shadow:
-    inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.24),
-    2px 2px 0 rgb(var(--color-ink-rgb) / 0.025);
-  padding: 0.42rem 0.48rem 0.38rem;
+    linear-gradient(112deg, rgb(var(--color-paper-rgb) / 0.3), transparent 58%),
+    rgb(var(--color-paper-lifted-rgb) / 0.18);
+  padding: 0.46rem 0.72rem 0.52rem;
 }
 
 .collection-cabinet::before {
   position: absolute;
-  inset: 0.25rem;
-  border: 1px solid rgb(var(--color-ink-rgb) / 0.035);
+  inset-block: 0.22rem;
+  right: 0.72rem;
+  left: 0.72rem;
+  border-block: 1px solid rgb(var(--color-ink-rgb) / 0.025);
   content: "";
   pointer-events: none;
 }
 
-.collection-cabinet__head,
-.collection-cabinet__caption {
+.collection-cabinet__head {
   position: relative;
   z-index: 1;
   display: flex;
   min-width: 0;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 0.35rem;
+  gap: 0.16rem 0.7rem;
 }
 
 .collection-cabinet__title {
@@ -104,41 +106,51 @@ defineProps<{
   font-family: var(--font-kai);
   font-size: var(--type-note);
   letter-spacing: 0.16em;
+  line-height: 1.35;
 }
 
-.collection-cabinet__edition {
+.collection-cabinet__totals {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.18rem 0.55rem;
   color: rgb(var(--color-ink-faint-rgb));
   font-size: var(--type-note);
+  line-height: 1.35;
+}
+
+.collection-cabinet__totals > span {
+  white-space: nowrap;
+}
+
+.collection-cabinet__totals strong {
+  color: rgb(var(--color-ink-rgb));
+  font-family: var(--font-kai);
+  font-weight: 500;
 }
 
 .collection-cabinet__grid {
   position: relative;
   z-index: 1;
   display: grid;
-  min-height: 0;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.18rem;
-  border-block: 1px solid rgb(var(--color-ink-rgb) / 0.07);
-  padding-block: 0.28rem;
+  min-width: 0;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 0.16rem;
 }
 
 .collection-cabinet__cell {
   position: relative;
   display: grid;
   min-width: 0;
-  place-items: center;
+  min-height: 2.7rem;
+  grid-template-rows: 1fr 1px;
+  align-items: center;
+  gap: 0.2rem;
   overflow: hidden;
   border: 1px solid rgb(var(--color-ink-rgb) / 0.08);
   background: rgb(var(--color-paper-rgb) / 0.16);
-}
-
-.collection-cabinet__cell::before {
-  position: absolute;
-  inset-block: 0.18rem;
-  left: 0.18rem;
-  width: 1px;
-  background: rgb(var(--color-ink-rgb) / 0.06);
-  content: "";
+  padding: 0.24rem 0.08rem 0.2rem;
 }
 
 .collection-cabinet__cell.is-lit {
@@ -156,12 +168,17 @@ defineProps<{
   background: rgb(var(--color-cinnabar-rgb) / 0.04);
 }
 
+.collection-cabinet__cell-copy {
+  display: grid;
+  min-width: 0;
+  place-items: center;
+  gap: 0.08rem;
+}
+
 .collection-cabinet__mark {
-  position: relative;
-  z-index: 1;
   color: rgb(var(--color-ink-faint-rgb));
   font-family: var(--font-kai);
-  font-size: var(--type-note);
+  font-size: var(--type-body);
   line-height: 1;
 }
 
@@ -177,12 +194,28 @@ defineProps<{
   color: rgb(var(--color-cinnabar-rgb));
 }
 
+.collection-cabinet__reading {
+  max-width: 100%;
+  overflow: hidden;
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: var(--type-note);
+  line-height: 1.15;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.collection-cabinet__cell.is-complete .collection-cabinet__reading {
+  color: rgb(var(--color-jade-rgb));
+}
+
+.collection-cabinet__cell.is-new .collection-cabinet__reading {
+  color: rgb(var(--color-cinnabar-rgb));
+}
+
 .collection-cabinet__track {
-  position: absolute;
-  right: 0.2rem;
-  bottom: 0.15rem;
-  left: 0.2rem;
+  width: 100%;
   height: 1px;
+  overflow: hidden;
   background: rgb(var(--color-ink-rgb) / 0.06);
 }
 
@@ -202,23 +235,49 @@ defineProps<{
 
 .collection-cabinet__spark {
   position: absolute;
-  top: 0.18rem;
-  right: 0.18rem;
-  width: 0.22rem;
-  height: 0.22rem;
+  top: 0.16rem;
+  right: 0.16rem;
+  width: 0.2rem;
+  height: 0.2rem;
   border-radius: 50%;
   background: rgb(var(--color-cinnabar-rgb) / 0.78);
 }
 
-.collection-cabinet__caption {
-  color: rgb(var(--color-ink-faint-rgb));
-  font-size: var(--type-note);
-  line-height: 1.25;
+@media (max-width: 360px) {
+  .collection-cabinet__cell {
+    min-height: 1.9rem;
+  }
+
+  .collection-cabinet__reading {
+    display: none;
+  }
 }
 
-.collection-cabinet__caption strong {
-  color: rgb(var(--color-cinnabar-rgb));
-  font-family: var(--font-kai);
-  font-weight: 500;
+@media (max-width: 220px) {
+  .collection-cabinet {
+    padding-inline: 0.58rem;
+  }
+
+  .collection-cabinet__head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .collection-cabinet__totals {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .collection-cabinet__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .collection-cabinet__cell {
+    min-height: 2.35rem;
+  }
+
+  .collection-cabinet__reading {
+    display: block;
+  }
 }
 </style>

@@ -6,8 +6,14 @@
       back-to="character"
       back-label="人物"
       featured
-    >
-      <template #visual>
+    />
+
+    <!-- 页签(看过的「收藏」才挂新得点,见 tabRows) -->
+    <InkTabs v-model="tab" :tabs="tabRows" class="collection-tabs folio-span-all" />
+
+    <!-- 功名:九册总印 + 眼下可追 + 按方向收起的功名卷 -->
+    <template v-if="tab === 'achievement'">
+      <section class="achievement-briefing" data-achievement-hero>
         <CollectionCabinet
           :cells="collectionCabinetCells"
           :achievement-done="doneCount"
@@ -15,36 +21,13 @@
           :collection-known="collectionOverview.known"
           :collection-total="collectionOverview.total"
         />
-      </template>
-    </FolioPageHeader>
 
-    <!-- 页签(看过的「收藏」才挂新得点,见 tabRows) -->
-    <InkTabs v-model="tab" :tabs="tabRows" class="collection-tabs folio-span-all" />
-
-    <!-- 功名:一张卷首账 + 按方向收起的功名卷 -->
-    <template v-if="tab === 'achievement'">
-      <section class="achievement-briefing" data-achievement-hero>
         <LedgerHeader
-          seal="名"
-          eyebrow="功名状"
-          title="成就谱"
-          description="名称与条件不再藏着；做成一枚，记一枚。"
-          :score-value="doneCount"
-          :score-suffix="`/${ACHIEVEMENTS.length}`"
+          variant="index"
+          eyebrow="功名状 · 按完成比例"
+          title="眼下可追"
+          :description="achievementLeadDescription"
         />
-
-        <div class="achievement-briefing__meter">
-          <ProgressBar
-            :value="doneCount / ACHIEVEMENTS.length"
-            color="var(--color-jade)"
-            :height="3"
-          />
-        </div>
-
-        <div class="achievement-briefing__label">
-          <p class="text-body">眼下可追</p>
-          <span class="text-note">按完成比例</span>
-        </div>
 
         <div v-if="nearestAchievements.length" class="achievement-briefing__targets">
           <button
@@ -54,7 +37,7 @@
             class="achievement-target"
             :data-achievement-jump="row.def.id"
             :data-achievement-jump-direction="row.direction"
-            :aria-label="`查看成就 ${row.def.name}`"
+            :aria-label="`${row.def.name}，${row.def.desc}，${row.label}，查看并定位功名卷`"
             @click="revealAchievement(row)"
           >
             <span class="achievement-target__ordinal" aria-hidden="true">
@@ -70,12 +53,6 @@
             <span class="achievement-target__arrow" aria-hidden="true">›</span>
           </button>
         </div>
-        <p v-else class="achievement-briefing__empty">全谱已成，往后的路只看你怎么走。</p>
-
-        <footer class="achievement-briefing__foot">
-          <span>一路只开一卷</span>
-          <span>点最近一枚，可落到目标卷目</span>
-        </footer>
       </section>
 
       <section class="achievement-volumes" data-achievement-volumes>
@@ -179,53 +156,26 @@
       </section>
     </template>
 
-    <!-- 藏珍:先给九册总谱,再把册目收成可逐册翻看的藏珍格 -->
+    <!-- 藏珍:九册总印 + 新得 / 将满之册 + 可逐册翻看的藏珍格 -->
     <template v-else>
       <section class="collection-briefing" data-collection-hero>
-        <LedgerHeader
-          seal="珍"
-          eyebrow="九册总谱"
-          title="藏珍谱"
-          :description="
-            collectionOverview.newCount > 0
-              ? `${collectionOverview.newRows.length} 册有新得，已展 ${openedNewCount} 册${
-                  collectionOverview.newRows.length > openedNewCount
-                    ? `；余 ${collectionOverview.newRows.length - openedNewCount} 册可展开。`
-                    : '。'
-                }`
-              : collectionOverview.known > 0
-                ? '先看将满的一册；余册收着，点开再翻。'
-                : '九册尚未开册；点开一册，看来源与收录进度。'
-          "
-          :score-value="collectionOverview.known"
-          :score-suffix="`/${collectionOverview.total}`"
+        <CollectionCabinet
+          :cells="collectionCabinetCells"
+          :achievement-done="doneCount"
+          :achievement-total="ACHIEVEMENTS.length"
+          :collection-known="collectionOverview.known"
+          :collection-total="collectionOverview.total"
         />
 
-        <div class="collection-briefing__meter">
-          <ProgressBar
-            :value="
-              collectionOverview.total > 0 ? collectionOverview.known / collectionOverview.total : 0
-            "
-            color="var(--color-jade)"
-            :height="3"
-          />
-        </div>
-
-        <div class="collection-briefing__label">
-          <p class="text-body">{{ collectionOverview.newCount > 0 ? "眼下新得" : "将满之册" }}</p>
-          <span class="text-note">
-            {{
-              collectionOverview.newCount > 0
-                ? `${collectionOverview.newCount} 枚待看`
-                : "按已录比例"
-            }}
-          </span>
-        </div>
+        <LedgerHeader
+          variant="index"
+          eyebrow="藏珍谱 · 新得优先"
+          :title="collectionLeadTitle"
+          :description="collectionLeadDescription"
+        />
 
         <template v-if="collectionHighlights.length">
-          <div
-            class="collection-briefing__highlights grid grid-cols-[repeat(auto-fit,minmax(96px,1fr))]"
-          >
+          <div class="collection-briefing__highlights">
             <button
               v-for="row in collectionHighlights"
               :key="row.key"
@@ -293,11 +243,6 @@
         <p v-else class="collection-briefing__empty">
           先从历练、炼丹与奇缘里带回第一件，九册会自己亮起来。
         </p>
-
-        <footer class="collection-briefing__foot">
-          <span>新得先看</span>
-          <span>无新得时，先翻将满之册</span>
-        </footer>
       </section>
 
       <section class="collection-shelves" data-collection-shelves>
@@ -600,6 +545,11 @@ const achievementRows = computed<AchievementRow[]>(() =>
 
 const doneCount = computed(() => achievementRows.value.filter((row) => row.done).length);
 const nearestAchievements = computed(() => nearestAchievementRows(achievementRows.value, 3));
+const achievementLeadDescription = computed(() =>
+  nearestAchievements.value.length > 0
+    ? "先做最近的一枚；点它，落到对应功名卷。"
+    : "全谱已成，往后的路只看你怎么走。",
+);
 
 /**
  * 成就按「方向」分组:组头先报这一路的进度与最近一枚,组内未达成者按完成比例
@@ -752,6 +702,29 @@ const openedNewCount = computed(
   () =>
     collectionOverview.value.newRows.filter((row) => openCollectionKeys.value.has(row.key)).length,
 );
+const collectionAllComplete = computed(
+  () =>
+    collectionOverview.value.total > 0 &&
+    collectionOverview.value.known >= collectionOverview.value.total,
+);
+const collectionLeadTitle = computed(() => {
+  if (collectionOverview.value.newCount > 0) return "眼下新得";
+  if (collectionOverview.value.known === 0) return "九册待启";
+  if (collectionAllComplete.value) return "九册尽收";
+  return "将满之册";
+});
+const collectionLeadDescription = computed(() => {
+  const overview = collectionOverview.value;
+  if (overview.newCount > 0) {
+    const remaining = overview.newRows.length - openedNewCount.value;
+    return `${overview.newRows.length} 册有新得，已展 ${openedNewCount.value} 册；${overview.newCount} 枚待看${
+      remaining > 0 ? `，余 ${remaining} 册可一键展开。` : "。"
+    }`;
+  }
+  if (collectionAllComplete.value) return "九册已无未识之物；点开任一卷回看。";
+  if (overview.known > 0) return "先翻将满的一册；余册收着，点开再翻。";
+  return "点开一册，看来源与收录进度。";
+});
 const collectionMoreNewOpen = computed(
   () =>
     collectionMoreNewRows.value.length > 0 &&

@@ -59,6 +59,8 @@ describe("洞府巡游(Phase 28)", () => {
     const player = usePlayerStore();
     vi.useFakeTimers();
     try {
+      // 固定本地正午，避免 23:59 起跑后快进跨日，把「占用今日」误判成新一天可重掷。
+      vi.setSystemTime(new Date(2026, 0, 15, 12, 0, 0));
       const today = todayLocalNum();
       vi.spyOn(Math, "random").mockReturnValue(0.1); // 确保触发成功
       const ev = mayTriggerCaveEvent();

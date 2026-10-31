@@ -813,8 +813,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(col?.src, "新得册与将满册要分开报").toContain("眼下新得");
     expect(col?.src, "无新得时卷首改报将满之册").toContain("将满之册");
     expect(col?.src, "三册入口压成一眼能扫完的索引").toContain(
-      "grid-cols-[repeat(auto-fit,minmax(96px,1fr))]",
+      'class="collection-briefing__highlights"',
     );
+    expect(col?.src, "重复的藏珍总案标题已退场").not.toContain('title="藏珍谱"');
     expect(col?.src, "超过三册的新得不能静默消失").toContain("collectionMoreNewCount");
     expect(col?.src).toContain("data-collection-more-new");
     expect(col?.src, "余册提示必须是一键收展入口,不是被动脚注").toContain(
@@ -3103,6 +3104,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // + :key=id 保证新 toast 只新增一个节点,念出的是新条;旧条移除不发声。
     const host = FILES.find((f) => f.path === "components/common/ToastHost.vue");
     expect(host?.src, "toast 容器要挂 aria-live=polite").toContain('aria-live="polite"');
+    expect(host?.src, "toast 要标明自己的多行语义").toContain("data-toast");
+    const layout = readFileSync(resolve(__dirname, "../../scripts/layout-check.mjs"), "utf8");
+    expect(layout, "多行 toast 不该被动作标签折行判据误伤").toContain('el.closest("[data-toast]")');
   });
 
   it("同日多 toast 各有其声 —— 稀有转世不被末尾 info 顶掉音画", () => {

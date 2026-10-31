@@ -35,8 +35,10 @@ const ACHIEVEMENT_DIRECTION_MARKS: Record<string, string> = {
 
 export interface CollectionCabinetCell {
   key: string;
+  name: string;
   mark: string;
   known: number;
+  total: number;
   ratio: number;
   complete: boolean;
   newCount: number;
@@ -56,8 +58,10 @@ export function collectionCabinetCells(
 ): CollectionCabinetCell[] {
   return rows.map((row) => ({
     key: row.key,
+    name: row.name,
     mark: collectionCategoryMark(row.key),
     known: row.known,
+    total: row.total,
     ratio: row.ratio,
     complete: row.complete,
     newCount: row.newCount,

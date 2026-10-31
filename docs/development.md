@@ -281,10 +281,12 @@ error: Failed to resolve vite command: GenericFailure, Expected
 器魂页的结构与事实源由 `src/ui/soulDesk.spec.ts` 与 `src/core/soulOverview.spec.ts`
 守住。
 
-藏珍页卷首用九册藏珍格同报功名与藏珍总进度,功名状只列最近三枚,藏珍谱只报九册
-整体与新得 / 将满;两者仍共用 `collectionProgressOverviewFromCodex` 与
-`nearestAchievementRows`,九册单字印与格内读数由 `ui/collectionDesk` 搬运,不在
-组件里重数条目。九册正文继续保留来源、尽收、分批窗口与回翻;结构与事实源由
+藏珍页在页签后先落九册总印,同报功名与藏珍总进度;功名页只列最近三枚,
+藏珍页按新得 / 将满 / 待启 / 尽收给下一步。总印把九册压成一条可读索引,
+不再借卷首主视觉复写大标题,也不再在行动席重复整体总量;两侧仍共用
+`collectionProgressOverviewFromCodex` 与 `nearestAchievementRows`,
+九册单字印与格内读数由 `ui/collectionDesk` 搬运,不在组件里重数条目。
+九册正文继续保留来源、尽收、分批窗口与回翻;结构与事实源由
 `src/ui/collectionDesk.spec.ts` 守住。
 
 名号与灵兽页卷首用双印谱同报当前佩印、相伴灵兽与两册收集进度;名号总案先摊当前

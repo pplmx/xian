@@ -220,6 +220,7 @@ import { PETS } from "../src/data/pets.ts";
 import { EQUIPMENT_TEMPLATES } from "../src/data/equipment.ts";
 import { EVENTS } from "../src/data/events.ts";
 import { GONGFA } from "../src/data/gongfa.ts";
+import { ACHIEVEMENTS } from "../src/data/achievements.ts";
 import { qualityDef } from "../src/data/qualities.ts";
 import { NAVIGATION_ENTRIES, NAVIGATION_SECTIONS } from "../src/ui/navigation.ts";
 import { folioLayoutOf } from "../src/ui/folioSpread.ts";
@@ -1055,6 +1056,7 @@ async function measurePage(page) {
       wrappedButtonLabels: (() => {
         const out = [];
         for (const el of document.querySelectorAll("button")) {
+          if (el.closest("[data-toast]")) continue; // toast 明确允许多行,不是动作标签
           if (el.children.length > 0) continue; // 只看纯文字按钮
           const text = (el.textContent || "").trim();
           if (text.length < 2 || text.length > 18) continue;
@@ -7520,6 +7522,19 @@ async function taskAchievementFold() {
           const nav = document.querySelector("[data-folio-dock]")?.getBoundingClientRect();
           const hero = document.querySelector("[data-achievement-hero]");
           const heroRect = hero?.getBoundingClientRect();
+          const tabs = document.querySelector(".collection-tabs")?.getBoundingClientRect();
+          const cabinet = document.querySelector("[data-collection-cabinet]");
+          const cabinetRect = cabinet?.getBoundingClientRect();
+          const cabinetCells = [
+            ...(cabinet?.querySelectorAll(".collection-cabinet__cell") ?? []),
+          ].map((cell) => {
+            const rect = cell.getBoundingClientRect();
+            return {
+              text: (cell.textContent || "").replace(/\s+/g, " ").trim(),
+              top: Math.round(rect.top),
+              left: Math.round(rect.left),
+            };
+          });
           const jumps = [...document.querySelectorAll("[data-achievement-jump]")].map((btn) => ({
             id: btn.getAttribute("data-achievement-jump") ?? "",
             direction: btn.getAttribute("data-achievement-jump-direction") ?? "",
@@ -7549,6 +7564,12 @@ async function taskAchievementFold() {
             navTop: nav?.top ?? innerHeight,
             heroTop: heroRect?.top ?? null,
             heroBottom: heroRect?.bottom ?? null,
+            tabsBottom: tabs?.bottom ?? null,
+            cabinetTop: cabinetRect?.top ?? null,
+            cabinetBottom: cabinetRect?.bottom ?? null,
+            cabinetInHero: Boolean(cabinet && hero?.contains(cabinet)),
+            cabinetText: (cabinet?.textContent || "").replace(/\s+/g, " ").trim(),
+            cabinetCells,
             heroText: (hero?.textContent || "").replace(/\s+/g, " ").trim(),
             jumps,
             toggles,
@@ -7563,6 +7584,25 @@ async function taskAchievementFold() {
       } else if (fold.heroBottom > fold.navTop + 1) {
         failures.push(
           `[390-achievement] 成就谱卷首被推到折线以下(hero bottom ${Math.round(fold.heroBottom)} / nav top ${Math.round(fold.navTop)})`,
+        );
+      }
+      if (
+        fold.cabinetTop === null ||
+        fold.cabinetBottom === null ||
+        fold.tabsBottom === null ||
+        fold.cabinetTop < fold.tabsBottom - 1 ||
+        !fold.cabinetInHero ||
+        fold.cabinetBottom > fold.navTop + 1
+      ) {
+        failures.push("[390-achievement] 九册总印没有紧随页签并完整落在首屏");
+      }
+      if (
+        fold.cabinetCells.length !== 9 ||
+        new Set(fold.cabinetCells.map((cell) => cell.top)).size !== 1 ||
+        !fold.cabinetText.includes(`/${ACHIEVEMENTS.length}`)
+      ) {
+        failures.push(
+          `[390-achievement] 九册没有压成一条可读索引(«${fold.cabinetText}» / ${fold.cabinetCells.length} 格)`,
         );
       }
       if (fold.jumps.length !== 3) {
@@ -7718,6 +7758,19 @@ async function taskCollectionFold() {
           const nav = document.querySelector("[data-folio-dock]")?.getBoundingClientRect();
           const hero = document.querySelector("[data-collection-hero]");
           const heroRect = hero?.getBoundingClientRect();
+          const tabs = document.querySelector(".collection-tabs")?.getBoundingClientRect();
+          const cabinet = document.querySelector("[data-collection-cabinet]");
+          const cabinetRect = cabinet?.getBoundingClientRect();
+          const cabinetCells = [
+            ...(cabinet?.querySelectorAll(".collection-cabinet__cell") ?? []),
+          ].map((cell) => {
+            const rect = cell.getBoundingClientRect();
+            return {
+              text: (cell.textContent || "").replace(/\s+/g, " ").trim(),
+              top: Math.round(rect.top),
+              left: Math.round(rect.left),
+            };
+          });
           const toggles = [...document.querySelectorAll("[data-collection-category-toggle]")].map(
             (btn) => {
               const key = btn.getAttribute("data-collection-category-toggle") ?? "";
@@ -7751,6 +7804,12 @@ async function taskCollectionFold() {
             navTop: nav?.top ?? innerHeight,
             heroTop: heroRect?.top ?? null,
             heroBottom: heroRect?.bottom ?? null,
+            tabsBottom: tabs?.bottom ?? null,
+            cabinetTop: cabinetRect?.top ?? null,
+            cabinetBottom: cabinetRect?.bottom ?? null,
+            cabinetInHero: Boolean(cabinet && hero?.contains(cabinet)),
+            cabinetText: (cabinet?.textContent || "").replace(/\s+/g, " ").trim(),
+            cabinetCells,
             heroText: (hero?.textContent || "").replace(/\s+/g, " ").trim(),
             toggles,
             jumps,
@@ -7766,6 +7825,25 @@ async function taskCollectionFold() {
       } else if (fold.heroBottom > fold.navTop + 1) {
         failures.push(
           `[390-collection] 藏珍谱卷首被推到折线以下(hero bottom ${Math.round(fold.heroBottom)} / nav top ${Math.round(fold.navTop)})`,
+        );
+      }
+      if (
+        fold.cabinetTop === null ||
+        fold.cabinetBottom === null ||
+        fold.tabsBottom === null ||
+        fold.cabinetTop < fold.tabsBottom - 1 ||
+        !fold.cabinetInHero ||
+        fold.cabinetBottom > fold.navTop + 1
+      ) {
+        failures.push("[390-collection] 九册总印没有紧随页签并完整落在首屏");
+      }
+      if (
+        fold.cabinetCells.length !== 9 ||
+        new Set(fold.cabinetCells.map((cell) => cell.top)).size !== 1 ||
+        !/珍\s*\d+\s*\/\s*\d+/.test(fold.cabinetText)
+      ) {
+        failures.push(
+          `[390-collection] 九册没有压成一条可读索引(«${fold.cabinetText}» / ${fold.cabinetCells.length} 格)`,
         );
       }
       if (
