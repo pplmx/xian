@@ -2238,8 +2238,8 @@ async function taskPageTour(vp) {
       }
     }
     /*
-     * 桌面不是「放大的手机」:960px 以上游戏外壳应展开成书桌,首页 / 修炼 / 道躯
-     * 三册走双页网格,其余页是一张 48rem 的单叶。源码契约在 folioSpread.spec 里,
+     * 桌面不是「放大的手机」:960px 以上游戏外壳应展开成书桌,首页 / 修炼 / 行囊 /
+     * 道躯四册走双页网格,其余页是一张 48rem 的单叶。源码契约在 folioSpread.spec 里,
      * 这里量真实布局 —— 只改断点不改 App 数据属性、或网格被页框压回单列,都该红。
      */
     if (vp.tag === "1280x800") {
@@ -2268,6 +2268,12 @@ async function taskPageTour(vp) {
           ? [...characterCatalog.querySelectorAll("[data-character-index]")]
           : [];
         const catalogRects = catalogGroups.map((group) => group.getBoundingClientRect());
+        const inventoryEquipment = document.querySelector("[data-inventory-equipment]");
+        const inventoryCollection = document.querySelector(
+          ".inventory-collection[data-inventory-total]",
+        );
+        const equipmentRect = inventoryEquipment?.getBoundingClientRect();
+        const collectionRect = inventoryCollection?.getBoundingClientRect();
         return {
           layout: shell.getAttribute("data-folio-layout"),
           shellWidth: Math.round(shell.getBoundingClientRect().width),
@@ -2314,6 +2320,15 @@ async function taskPageTour(vp) {
                   narrowest: Math.round(Math.min(...catalogRects.map((rect) => rect.width))),
                 }
               : null,
+          inventoryPair:
+            equipmentRect && collectionRect
+              ? {
+                  sameRow: Math.abs(equipmentRect.top - collectionRect.top) <= 2,
+                  collectionOnRight: collectionRect.left >= equipmentRect.right - 1,
+                  equipmentWidth: Math.round(equipmentRect.width),
+                  collectionWidth: Math.round(collectionRect.width),
+                }
+              : null,
         };
       });
       desktopFolioSeen += 1;
@@ -2343,7 +2358,7 @@ async function taskPageTour(vp) {
             `[${vp.tag}] ${route} 游戏态外壳只有 ${desk.shellWidth}px —— 桌面仍是一条手机屏`,
           );
         }
-        if (["/", "/cultivation", "/character"].includes(route)) {
+        if (["/", "/cultivation", "/inventory", "/character"].includes(route)) {
           if (desk.layout !== "spread" || desk.display !== "grid" || desk.columns < 2) {
             failures.push(
               `[${vp.tag}] ${route} 双页册没有真的展开(${desk.layout} / ${desk.display} / ${desk.columns} 栏)`,
@@ -2367,6 +2382,20 @@ async function taskPageTour(vp) {
             failures.push(
               `[${vp.tag}] /cultivation 行功账与下一步没有在双页上并读(${JSON.stringify(
                 desk.cultivationPair,
+              )})`,
+            );
+          }
+          if (
+            route === "/inventory" &&
+            (!desk.inventoryPair ||
+              !desk.inventoryPair.sameRow ||
+              !desk.inventoryPair.collectionOnRight ||
+              desk.inventoryPair.equipmentWidth < 360 ||
+              desk.inventoryPair.collectionWidth < 320)
+          ) {
+            failures.push(
+              `[${vp.tag}] /inventory 行囊九佩与藏品没有并读(${JSON.stringify(
+                desk.inventoryPair,
               )})`,
             );
           }
@@ -2406,6 +2435,34 @@ async function taskPageTour(vp) {
           failures.push(
             `[${vp.tag}] /character 卷末目录没有三组并读(${JSON.stringify(desk.characterCatalog)})`,
           );
+        }
+        if (route === "/inventory") {
+          await page.getByRole("tab", { name: "丹药" }).click();
+          await settleVisuals(page);
+          const pillPair = await page.evaluate(() => {
+            const workshop = document.querySelector("[data-inventory-workshop]");
+            const cabinet = document.querySelector("[data-inventory-pill-cabinet]");
+            if (!workshop || !cabinet) return null;
+            const workshopRect = workshop.getBoundingClientRect();
+            const cabinetRect = cabinet.getBoundingClientRect();
+            return {
+              sameRow: Math.abs(workshopRect.top - cabinetRect.top) <= 2,
+              cabinetOnRight: cabinetRect.left >= workshopRect.right - 1,
+              workshopWidth: Math.round(workshopRect.width),
+              cabinetWidth: Math.round(cabinetRect.width),
+            };
+          });
+          if (
+            !pillPair ||
+            !pillPair.sameRow ||
+            !pillPair.cabinetOnRight ||
+            pillPair.workshopWidth < 360 ||
+            pillPair.cabinetWidth < 320
+          ) {
+            failures.push(`[${vp.tag}] /inventory 行囊丹药册没有并读(${JSON.stringify(pillPair)})`);
+          }
+          await page.getByRole("tab", { name: "装备" }).click();
+          await settleVisuals(page);
         }
       }
     }
@@ -12702,7 +12759,7 @@ if (failures.length === 0) {
   console.log("✓ 顶栏底栏钉死(文档层没有可滚余量,滚窗两栏不动),外壳高度认 dvh");
   console.log("✓ 六处页签栏吸顶(背包四册 / 图鉴 / 名号 / 界域志 / 天界 / 坊市),且铺满内容区宽度");
   console.log("✓ 顶栏一格一行(320 窄屏与横屏、桌面都不折行)");
-  console.log(`✓ 桌面书桌(${desktopFolioSeen} 页:三册双页、其余单叶)`);
+  console.log(`✓ 桌面书桌(${desktopFolioSeen} 页:四册双页、其余单叶)`);
   console.log(`✓ 桌面书脊(${desktopSpineSeen} 页:十七册齐全、当前册唯一、手机底栏退场)`);
   console.log(`✓ 主值行一格一行(${valueRowsSeen} 处带 data-value-row 的行没被次要读数挤折)`);
   console.log(`✓ 两百档字号(${zoomSeen} 页在 200% 缩放下不溢出、主值行不折)`);

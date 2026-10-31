@@ -91,7 +91,8 @@
   .inventory-collection,
   .inventory-workshop,
   .inventory-pill-cabinet,
-  .inventory-materials {
+  .inventory-materials,
+  .inventory-artifacts {
     min-width: 0;
   }
   .inventory-briefing__heading {
@@ -487,6 +488,11 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.5rem;
   }
+  .inventory-artifact-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.625rem;
+  }
   .inventory-materials__groups {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -547,6 +553,15 @@
     }
 
     .inventory-materials__groups {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .app-shell[data-folio-layout="spread"] .inventory-collection__grid,
+    .app-shell[data-folio-layout="spread"] .inventory-pill-cabinet__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .app-shell[data-folio-layout="spread"] .inventory-artifact-list {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }

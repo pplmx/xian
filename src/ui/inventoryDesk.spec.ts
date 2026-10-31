@@ -108,6 +108,47 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
     );
   });
 
+  it("桌面从单叶展开成行囊书桌,四册各自把主账与清单并读", () => {
+    const view = source("src/views/InventoryView.vue");
+    const artifacts = source("src/components/inventory/ArtifactPanel.vue");
+    const css = source("src/styles/pages/inventory.css");
+
+    expect(view, "行囊根页要接入双页网格").toContain(
+      '<div class="folio-page folio-page--stack stagger-in">',
+    );
+    expect(view, "页签跨两栏且保留原页签状态").toContain(
+      'class="inventory-tabs folio-span-all mt-3"',
+    );
+    expect(view, "检点账先跨两栏摊开").toContain('class="inventory-briefing folio-span-all mt-3"');
+    expect(view, "九佩与藏品各占一页并读").toContain(
+      'class="inventory-equipment" data-inventory-equipment',
+    );
+    expect(view, "藏品仍是九佩之后的另一半").toContain('class="inventory-collection"');
+    expect(view, "丹房与丹匣同排双页").toContain('class="inventory-workshop"');
+    expect(view, "丹匣与丹房同排且仍读同一份持有数").toContain(
+      'class="inventory-pill-cabinet" data-inventory-pill-cabinet',
+    );
+    expect(view, "材簿两组成跨栏总账").toContain(
+      'class="inventory-materials folio-span-all" data-inventory-materials',
+    );
+    expect(view, "法宝册要有统一章节头与跨栏落点").toContain(
+      '<section class="inventory-artifacts folio-span-all" data-inventory-artifacts>',
+    );
+    expect(view).toContain('<SectionTitle title="法宝" hint="位次、祭炼与随身取舍" />');
+    expect(artifacts, "法宝卡改挂可响应的语义清单").toContain(
+      '<div class="inventory-artifact-list">',
+    );
+    expect(css).toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]*\.inventory-collection__grid,[\s\S]{0,120}\.inventory-pill-cabinet__grid\s*\{[\s\S]{0,100}repeat\(3, minmax\(0, 1fr\)\)/,
+    );
+    expect(css).toMatch(
+      /\.inventory-artifact-list\s*\{[\s\S]{0,160}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(css).toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]*\.inventory-artifact-list\s*\{[\s\S]{0,100}repeat\(2, minmax\(0, 1fr\)\)/,
+    );
+  });
+
   it("手机上检点单列,360 起并读,220 以下把九佩、丹房与材簿放开", () => {
     const css = source("src/style.css");
     const start = css.indexOf("/*\n   * 行囊案");

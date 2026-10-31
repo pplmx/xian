@@ -17,6 +17,8 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
     expect(folioLayoutOf("home")).toBe("spread");
     expect(folioLayoutOf("cultivation")).toBe("spread");
     expect(folioLayoutOf("character")).toBe("spread");
+    expect(folioLayoutOf("inventory")).toBe("spread");
+    expect(folioLayoutOf("market")).toBe("single");
     expect(folioLayoutOf("settings")).toBe("single");
     expect(folioLayoutOf(undefined)).toBe("single");
   });
@@ -72,6 +74,18 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
     expect(view).not.toContain('<section class="folio-span-all cultivation-next"');
   });
 
+  it("行囊在主读数下把九佩与藏品并读,四册页签共用同一张书桌", () => {
+    const view = source("src/views/InventoryView.vue");
+
+    expect(view).toContain('<div class="folio-page folio-page--stack stagger-in">');
+    expect(view).toContain('class="inventory-tabs folio-span-all mt-3"');
+    expect(view).toContain('class="inventory-briefing folio-span-all mt-3"');
+    expect(view).toContain('class="inventory-equipment" data-inventory-equipment');
+    expect(view).toContain('class="inventory-collection"');
+    expect(view).toContain('class="inventory-materials folio-span-all"');
+    expect(view).toContain('class="inventory-artifacts folio-span-all"');
+  });
+
   it("真浏览器门在 1280 档核外壳宽度、双栏与单叶宽度,避免只靠源码自证", () => {
     const layout = source("scripts/layout-check.mjs");
 
@@ -79,5 +93,7 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
     expect(layout).toContain("双页册没有真的展开");
     expect(layout).toContain("单叶册在桌面上拉得过宽");
     expect(layout).toContain("卷末目录没有三组并读");
+    expect(layout).toContain("行囊九佩与藏品没有并读");
+    expect(layout).toContain("行囊丹药册没有并读");
   });
 });

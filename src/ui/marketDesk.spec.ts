@@ -13,12 +13,22 @@ function source(rel: string): string {
 }
 
 describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
-  it("常见两档品名在品阶晕染上仍有正文可读性，其余品阶不改字色", () => {
+  it("品名在各自的品阶晕染上都留足正文可读性", () => {
     expect(qualityTextColor("mortal")).toBe("var(--color-ink)");
-    expect(qualityTextColor("fine")).toBe(
-      `color-mix(in srgb, ${qualityDef("fine").color} 75%, var(--color-ink) 25%)`,
-    );
-    expect(qualityTextColor("excellent")).toBe(qualityDef("excellent").color);
+    for (const quality of [
+      "fine",
+      "excellent",
+      "spirit",
+      "profound",
+      "earth",
+      "heaven",
+      "immortal",
+      "divine",
+    ] as const) {
+      expect(qualityTextColor(quality)).toBe(
+        `color-mix(in srgb, ${qualityDef(quality).color} 80%, var(--color-ink) 20%)`,
+      );
+    }
   });
 
   it("卷首市桥图读三册真值，整图不重复进入读屏", () => {

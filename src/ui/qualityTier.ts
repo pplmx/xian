@@ -25,16 +25,12 @@ export function isRareQuality(quality: QualityId): boolean {
 /**
  * 品阶名当正文时的字色。
  *
- * 凡品原用 ink-soft，直接落在纸面尚可；一旦叠上自己 6% 的品阶晕染，夜间手机
- * 实测只剩 4.45:1。良品的石绿也离边界太近，85/15 时只剩 4.46:1。这里让凡品
- * 回到正文墨色，并把良品向墨色收到 75/25；晕染仍用品阶原色，不把同行的说明与
- * 价格一起推过 AA 线。
+ * 品阶色直接落在自己的 6% 晕染上时，精品石青在夜间手机实测只有 4.45:1；神品
+ * 朱砂甚至只有 4.49:1。这里让凡品回到正文墨色，其余品阶都向墨色收 20% ——
+ * 色相仍由原品阶色承担，字却不会被随机货架抽到某一档时跌破 AA。
  */
 export function qualityTextColor(quality: QualityId): string {
   const def = qualityDef(quality);
   if (def.rank === 0) return "var(--color-ink)";
-  if (def.rank === 1) {
-    return `color-mix(in srgb, ${def.color} 75%, var(--color-ink) 25%)`;
-  }
-  return def.color;
+  return `color-mix(in srgb, ${def.color} 80%, var(--color-ink) 20%)`;
 }

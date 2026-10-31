@@ -26,7 +26,7 @@
         artifactPage.shown
       }}
     </p>
-    <div class="space-y-2.5">
+    <div class="inventory-artifact-list">
       <!--
       法宝行卡的品阶晕染:边框随档加深(qualityTier 同源),天/仙/神另有角章。
       底色**固定 6%**(不随档):法宝行是多行文字密卡(名/描述/被动/神通 11-14px),

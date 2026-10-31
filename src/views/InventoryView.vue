@@ -1,5 +1,5 @@
 <template>
-  <div class="folio-page stagger-in">
+  <div class="folio-page folio-page--stack stagger-in">
     <FolioPageHeader title="行囊" subtitle="九佩随身,余珍入藏" featured>
       <template #meta>
         <div class="inventory-masthead__meta">
@@ -22,7 +22,7 @@
     </FolioPageHeader>
 
     <!-- 页签 -->
-    <InkTabs v-model="tab" :tabs="TABS" class="mt-3" />
+    <InkTabs v-model="tab" :tabs="TABS" class="inventory-tabs folio-span-all mt-3" />
 
     <!-- 装备:部位槽,点击唤起部位列表 -->
     <template v-if="tab === 'equip'">
@@ -31,7 +31,7 @@
         新得、可换与穿齐仍各读原有同一份核心清单;这里只重排先后,不另算一次。
       -->
       <section
-        class="inventory-briefing mt-3"
+        class="inventory-briefing folio-span-all mt-3"
         data-inventory-overview
         :data-inventory-bag-count="inventory.bagItems.length"
         :data-inventory-new-count="inventory.newItemCount"
@@ -257,7 +257,7 @@
           </button>
         </div>
       </section>
-      <p v-else class="empty-note mt-8 text-center text-body text-ink-faint">
+      <p v-else class="empty-note folio-span-all mt-8 text-center text-body text-ink-faint">
         行囊空空,去历练中寻些机缘吧
       </p>
     </template>
@@ -304,7 +304,7 @@
         </div>
       </section>
 
-      <section class="inventory-pill-cabinet">
+      <section class="inventory-pill-cabinet" data-inventory-pill-cabinet>
         <SectionTitle title="丹匣" :hint="`${pillRows.length} 味 · 点一格看火候`" />
         <!-- 丹匣:格子只给图标、名号与存量,详情看弹窗 -->
         <div v-if="pillRows.length" class="inventory-pill-cabinet__grid mt-2">
@@ -333,7 +333,7 @@
         差得很远(前三样进炉子,后三样进账本)。分两组,各带一行说明 ——
         找「炼丹要什么」与「我还有多少底子」是两件事。
       -->
-      <section class="inventory-materials" data-inventory-materials>
+      <section class="inventory-materials folio-span-all" data-inventory-materials>
         <SectionTitle title="材簿" hint="炼制与账本,两类去处" />
         <div class="inventory-materials__groups">
           <section class="inventory-material-group" data-inventory-material-group="craft">
@@ -386,7 +386,10 @@
 
     <!-- 法宝:面板不是弹窗,整段在 ArtifactPanel(祭炼的账随面板走) -->
     <template v-else>
-      <ArtifactPanel />
+      <section class="inventory-artifacts folio-span-all" data-inventory-artifacts>
+        <SectionTitle title="法宝" hint="位次、祭炼与随身取舍" />
+        <ArtifactPanel />
+      </section>
     </template>
 
     <!-- 丹药详情 -->
