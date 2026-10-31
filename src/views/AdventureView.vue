@@ -88,288 +88,317 @@
         <section data-adventure-regions class="adventure-regions">
           <SectionTitle
             title="眼下可往"
-            :hint="`${visibleRows.length} 处已显 · 前路未至处仍有留白`"
+            :hint="`沿山河线而往 · ${visibleRows.length} 处已显 · 前路仍有留白`"
           />
-          <div class="adventure-regions__list">
-            <template v-for="group in groupedRows" :key="group.world.id">
-              <div class="adventure-regions__group">
-                <span class="adventure-regions__world">{{ group.world.name }}</span>
-                <span class="adventure-regions__rule" aria-hidden="true" />
-                <span class="adventure-regions__count">{{ group.rows.length }} 处</span>
-              </div>
-              <div
-                v-for="row in group.rows"
-                :key="row.def.id"
-                data-region-card
-                class="card-ink adventure-region px-4 py-3"
-                :class="{
-                  'border-ink/15': !row.canEnter,
-                  '!border-gold-ink/30 bg-gold-ink/5': row.suppressed,
-                  'adventure-region--next': row.id === nextActionableId,
-                }"
-                :data-adventure-next="row.id === nextActionableId ? '' : undefined"
-              >
-                <!--
+          <div class="adventure-regions__list adventure-atlas" data-adventure-atlas>
+            <section
+              v-for="group in groupedRows"
+              :key="group.world.id"
+              class="adventure-atlas__reach"
+            >
+              <header class="adventure-atlas__chapter">
+                <span class="adventure-atlas__seal" aria-hidden="true">{{
+                  group.world.name.slice(0, 1)
+                }}</span>
+                <span class="adventure-atlas__world">{{ group.world.name }}</span>
+                <span class="adventure-atlas__rule" aria-hidden="true" />
+                <span class="adventure-atlas__count">{{ group.rows.length }} 处</span>
+              </header>
+              <div class="adventure-atlas__trail">
+                <div
+                  v-for="(row, rowIndex) in group.rows"
+                  :key="row.def.id"
+                  class="adventure-atlas__stop"
+                  :data-atlas-state="atlasStateOf(row)"
+                >
+                  <div class="adventure-atlas__rail" aria-hidden="true">
+                    <span class="adventure-atlas__node tabular">{{
+                      String(rowIndex + 1).padStart(2, "0")
+                    }}</span>
+                    <span
+                      v-if="rowIndex < group.rows.length - 1"
+                      class="adventure-atlas__line"
+                      :class="{ 'is-walked': row.cleared || row.suppressed }"
+                    />
+                  </div>
+                  <article
+                    data-region-card
+                    class="card-ink adventure-region adventure-atlas__card px-4 py-3"
+                    :class="{
+                      'border-ink/15': !row.canEnter,
+                      '!border-gold-ink/30 bg-gold-ink/5': row.suppressed,
+                      'adventure-region--next': row.id === nextActionableId,
+                    }"
+                    :data-adventure-next="row.id === nextActionableId ? '' : undefined"
+                  >
+                    <!--
               第一行只放「图标 + 名字 + 标签 + 一个短动作」。
   
               产出速率、守土时长、复聚倒计时这些**长信息一律下移成整行** —— 从前它们和名字挤在同一行,
               右侧那一列 `shrink-0` 把左边的名字压到只剩一个字宽,「青云山麓」当场变成竖排,
               标签还会盖到产出字上(无头浏览器量的「横向溢出」抓不到这种挤压:它不溢出,只是挤)。
             -->
-                <div class="flex items-start gap-3 tinylens:flex-col tinylens:gap-1.5">
-                  <span
-                    class="grid h-10 w-10 shrink-0 place-items-center rounded-[2px] tinylens:h-8 tinylens:w-8"
-                    :class="
-                      row.suppressed
-                        ? 'bg-gold-ink/6 text-gold-ink'
-                        : row.canEnter
-                          ? 'bg-indigo-ink/6 text-indigo-ink'
-                          : 'bg-ink/4 text-ink-faint'
-                    "
-                  >
-                    <GameIcon
-                      :name="row.suppressed ? 'shield-check' : row.canEnter ? row.def.icon : 'lock'"
-                      :size="18"
-                    />
-                  </span>
-                  <div data-region-head class="min-w-0 grow">
-                    <!-- 标签与名字同排但**可换行**:窄屏上宁可标签绕到下一行,也不许把名字挤成竖排 -->
-                    <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <div class="flex items-start gap-3 tinylens:flex-col tinylens:gap-1.5">
                       <span
-                        data-region-name
-                        class="font-kai whitespace-nowrap text-section tracking-wider text-ink"
-                        >{{ row.def.name }}</span
-                      >
-                      <span
-                        v-if="row.isRouteCurrent"
-                        data-route-current
-                        class="chip-ink border-qing/60 text-note text-qing"
-                        >本世眼下</span
-                      >
-                      <span
-                        v-else-if="row.id === nextActionableId"
-                        class="chip-ink border-qing/45 text-note text-qing"
-                        >眼前可往</span
-                      >
-                      <span
-                        v-if="row.suppressed"
-                        class="chip-ink border-gold-ink/60 text-note text-gold-ink"
-                        >已镇压</span
-                      >
-                      <span
-                        v-else-if="row.revived"
-                        class="chip-ink border-cinnabar/60 text-note text-cinnabar"
-                        >妖气复聚</span
-                      >
-                      <span
-                        v-else-if="row.cleared"
-                        class="chip-ink border-jade/60 text-note text-jade"
-                        >已靖</span
-                      >
-                      <!-- 世界记忆(Phase 30.9):区域兴衰状态 -->
-                      <span
-                        v-if="row.recall.prosperity !== 'chaos'"
-                        class="chip-ink text-note"
+                        class="grid h-10 w-10 shrink-0 place-items-center rounded-[2px] tinylens:h-8 tinylens:w-8"
                         :class="
-                          row.recall.prosperity === 'flourish'
-                            ? 'border-qing/60 text-qing'
-                            : 'border-jade/60 text-jade'
+                          row.suppressed
+                            ? 'bg-gold-ink/6 text-gold-ink'
+                            : row.canEnter
+                              ? 'bg-indigo-ink/6 text-indigo-ink'
+                              : 'bg-ink/4 text-ink-faint'
                         "
                       >
-                        {{ prosperityName(row.recall.prosperity) }}
+                        <GameIcon
+                          :name="
+                            row.suppressed ? 'shield-check' : row.canEnter ? row.def.icon : 'lock'
+                          "
+                          :size="18"
+                        />
                       </span>
-                    </p>
-                    <!--
+                      <div data-region-head class="min-w-0 grow">
+                        <!-- 标签与名字同排但**可换行**:窄屏上宁可标签绕到下一行,也不许把名字挤成竖排 -->
+                        <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <span
+                            data-region-name
+                            class="font-kai whitespace-nowrap text-section tracking-wider text-ink"
+                            >{{ row.def.name }}</span
+                          >
+                          <span
+                            v-if="row.isRouteCurrent"
+                            data-route-current
+                            class="chip-ink border-qing/60 text-note text-qing"
+                            >本世眼下</span
+                          >
+                          <span
+                            v-else-if="row.id === nextActionableId"
+                            class="chip-ink border-qing/45 text-note text-qing"
+                            >眼前可往</span
+                          >
+                          <span
+                            v-if="row.suppressed"
+                            class="chip-ink border-gold-ink/60 text-note text-gold-ink"
+                            >已镇压</span
+                          >
+                          <span
+                            v-else-if="row.revived"
+                            class="chip-ink border-cinnabar/60 text-note text-cinnabar"
+                            >妖气复聚</span
+                          >
+                          <span
+                            v-else-if="row.cleared"
+                            class="chip-ink border-jade/60 text-note text-jade"
+                            >已靖</span
+                          >
+                          <!-- 世界记忆(Phase 30.9):区域兴衰状态 -->
+                          <span
+                            v-if="row.recall.prosperity !== 'chaos'"
+                            class="chip-ink text-note"
+                            :class="
+                              row.recall.prosperity === 'flourish'
+                                ? 'border-qing/60 text-qing'
+                                : 'border-jade/60 text-jade'
+                            "
+                          >
+                            {{ prosperityName(row.recall.prosperity) }}
+                          </span>
+                        </p>
+                        <!--
                     这一行是三档字号里的「注」:境相宜与中点留在最淡处(它是基准线),
                     凶险名抬到 ink-soft(它才是要判的那一项),凶险 ≥4 另有朱砂。
                   -->
-                    <p class="mt-0.5 text-body text-ink-faint">
-                      {{ REALMS[row.def.minRealm]?.name }}境{{
-                        row.pressure.active ? "门槛" : "相宜"
-                      }}
-                      ·
-                      <span :class="row.def.danger >= 4 ? 'text-cinnabar' : 'text-ink-soft'">{{
-                        DANGER_NAMES[row.def.danger]
-                      }}</span>
-                      <span v-if="row.pressure.active" class="ml-1 text-cinnabar"
-                        >· {{ row.pressure.label }},仍可凭战力硬闯</span
-                      >
-                      <!-- 复聚要说出"该怎么办":旧主归来了,再历一程即可复靖 -->
-                      <span v-if="row.revived" class="ml-1 text-cinnabar"
-                        >· 旧主归来,再历一程即可复靖</span
-                      >
-                    </p>
-                    <!--
+                        <p class="mt-0.5 text-body text-ink-faint">
+                          {{ REALMS[row.def.minRealm]?.name }}境{{
+                            row.pressure.active ? "门槛" : "相宜"
+                          }}
+                          ·
+                          <span :class="row.def.danger >= 4 ? 'text-cinnabar' : 'text-ink-soft'">{{
+                            DANGER_NAMES[row.def.danger]
+                          }}</span>
+                          <span v-if="row.pressure.active" class="ml-1 text-cinnabar"
+                            >· {{ row.pressure.label }},仍可凭战力硬闯</span
+                          >
+                          <!-- 复聚要说出"该怎么办":旧主归来了,再历一程即可复靖 -->
+                          <span v-if="row.revived" class="ml-1 text-cinnabar"
+                            >· 旧主归来,再历一程即可复靖</span
+                          >
+                        </p>
+                        <!--
                   敌人的「层级补偿」此前只落在数值里:玩家看到的只是一只小怪,打起来却像换了一身装备。
                   此处与战后归因同源(regionFoeOrigin)—— 出行方式与灵兽之性那一半在出行弹窗里摊开。
                 -->
-                    <p
-                      v-if="row.foeOrigin.parts.length"
-                      data-region-foe-origin
-                      class="mt-0.5 text-note leading-relaxed text-ink-faint"
-                    >
-                      此地之敌:{{ foeOriginPartsText(row.foeOrigin) }}
-                    </p>
-                  </div>
-                  <!--
+                        <p
+                          v-if="row.foeOrigin.parts.length"
+                          data-region-foe-origin
+                          class="mt-0.5 text-note leading-relaxed text-ink-faint"
+                        >
+                          此地之敌:{{ foeOriginPartsText(row.foeOrigin) }}
+                        </p>
+                      </div>
+                      <!--
                 已通关的地界仍可再历 —— 「已靖」只是标记,不是封路。
                 首领已清之后进去仍能刷杂兵、拾遗、碰机缘;而旧地界放久了妖气复聚
                 (见 core/regionRevival),旧主会回来,那时它又是一处有首领的地界
               -->
-                  <button
-                    v-if="row.canEnter && !row.suppressed"
-                    data-region-action
-                    class="btn-seal shrink-0 !px-4 !py-2 !text-title tinylens:!px-2.5 tinylens:!py-1 tinylens:!text-body"
-                    @click="chooseMode(row.def)"
-                  >
-                    出发
-                  </button>
-                </div>
+                      <button
+                        v-if="row.canEnter && !row.suppressed"
+                        data-region-action
+                        class="btn-seal shrink-0 !px-4 !py-2 !text-title tinylens:!px-2.5 tinylens:!py-1 tinylens:!text-body"
+                        @click="chooseMode(row.def)"
+                      >
+                        出发
+                      </button>
+                    </div>
 
-                <!--
+                    <!--
               镇压中的产出条:整行铺开、可换行。
               速率放在这里而不是右上角,长数字(1.2 亿灵石/时 · 玄铁 12/时)才有地方舒展
             -->
-                <div
-                  v-if="row.suppressed"
-                  data-region-action
-                  data-suppress-info
-                  class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[2px] bg-gold-ink/6 px-2.5 py-1.5"
-                >
-                  <span class="text-body text-gold-ink tabular"
-                    >自动产出 · {{ rateText(row.def, row.recall) }}</span
-                  >
-                  <!-- 守土之年:守得越久,兴衰越盛,产出随之上浮 -->
-                  <span class="text-note text-ink-faint tabular"
-                    >已守 {{ heldText(row.def.id) }}</span
-                  >
-                  <!-- 复聚有确定期限,就该有倒计时:否则玩家只会看到镇压某天突然消失 -->
-                  <span
-                    class="text-note tabular"
-                    :class="reviveNow(row) <= 12 ? 'text-cinnabar' : 'text-ink-faint'"
-                  >
-                    妖气 {{ reviveText(reviveNow(row)) }}后复聚
-                  </span>
-                  <!-- 停取收益是次级动作:放在产出条里,不跟名字抢那一行 -->
-                  <button
-                    class="ml-auto inline-flex min-h-[28px] items-center px-1 text-note text-ink-faint underline underline-offset-2 active:scale-95 active:text-ink"
-                    @click.stop="unsuppress(row.def.id)"
-                  >
-                    停取收益,改去历练
-                  </button>
-                </div>
+                    <div
+                      v-if="row.suppressed"
+                      data-region-action
+                      data-suppress-info
+                      class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[2px] bg-gold-ink/6 px-2.5 py-1.5"
+                    >
+                      <span class="text-body text-gold-ink tabular"
+                        >自动产出 · {{ rateText(row.def, row.recall) }}</span
+                      >
+                      <!-- 守土之年:守得越久,兴衰越盛,产出随之上浮 -->
+                      <span class="text-note text-ink-faint tabular"
+                        >已守 {{ heldText(row.def.id) }}</span
+                      >
+                      <!-- 复聚有确定期限,就该有倒计时:否则玩家只会看到镇压某天突然消失 -->
+                      <span
+                        class="text-note tabular"
+                        :class="reviveNow(row) <= 12 ? 'text-cinnabar' : 'text-ink-faint'"
+                      >
+                        妖气 {{ reviveText(reviveNow(row)) }}后复聚
+                      </span>
+                      <!-- 停取收益是次级动作:放在产出条里,不跟名字抢那一行 -->
+                      <button
+                        class="ml-auto inline-flex min-h-[28px] items-center px-1 text-note text-ink-faint underline underline-offset-2 active:scale-95 active:text-ink"
+                        @click.stop="unsuppress(row.def.id)"
+                      >
+                        停取收益,改去历练
+                      </button>
+                    </div>
 
-                <!--
+                    <!--
               已取得镇压资格、眼前正在历练的地界:转收益的入口与产出同样整行铺开,
               不去挤右上角那枚「出发」
             -->
-                <div
-                  v-else-if="row.canEnter && row.qualified"
-                  data-region-action
-                  class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[2px] bg-ink/4 px-2.5 py-1.5"
-                >
-                  <span class="text-note text-ink-faint">已取得镇压资格</span>
-                  <span class="text-note text-gold-ink tabular">{{
-                    rateText(row.def, row.recall)
-                  }}</span>
-                  <button
-                    class="ml-auto chip-ink min-h-[28px] !text-note active:scale-95"
-                    @click.stop="suppress(row.def.id)"
-                  >
-                    转为镇压收益
-                  </button>
-                </div>
-                <!--
+                    <div
+                      v-else-if="row.canEnter && row.qualified"
+                      data-region-action
+                      class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[2px] bg-ink/4 px-2.5 py-1.5"
+                    >
+                      <span class="text-note text-ink-faint">已取得镇压资格</span>
+                      <span class="text-note text-gold-ink tabular">{{
+                        rateText(row.def, row.recall)
+                      }}</span>
+                      <button
+                        class="ml-auto chip-ink min-h-[28px] !text-note active:scale-95"
+                        @click.stop="suppress(row.def.id)"
+                      >
+                        转为镇压收益
+                      </button>
+                    </div>
+                    <!--
                 路线内已有统一理由时,不再同时念旧链前置 —— 两套顺序可能指向不同地界,
                 同屏两句会把「眼下该往哪」说成互相打架的两件事。
               -->
-                <p v-if="!row.canEnter && !row.blockReason" class="mt-2 t-body text-ink-faint">
-                  需先击败{{ prevRegionName(row.def) }}之主,方可踏足此地。
-                </p>
-                <!--
+                    <p v-if="!row.canEnter && !row.blockReason" class="mt-2 t-body text-ink-faint">
+                      需先击败{{ prevRegionName(row.def) }}之主,方可踏足此地。
+                    </p>
+                    <!--
               镇压资格进度:只显示「能不能镇压」时,玩家打够了场数却压不住,
               只能猜自己差在哪 —— 这里把三条判据的当前值与阈值并排摆出来,未达标项标红
             -->
-                <p
-                  v-if="row.canEnter && !row.suppressed && !row.qualified"
-                  class="mt-1 text-note leading-relaxed tabular"
-                >
-                  <span class="text-body text-ink-soft">镇压资格</span>
-                  <span class="ml-1" :class="row.progress.winsOk ? 'text-jade' : 'text-ink-soft'">
-                    {{ row.progress.wins }}/{{ row.progress.needWins }} 胜
-                  </span>
-                  <template v-if="row.progress.hasStats">
-                    <span
-                      class="ml-1.5"
-                      :class="row.progress.roundsOk ? 'text-ink-faint' : 'text-cinnabar'"
+                    <p
+                      v-if="row.canEnter && !row.suppressed && !row.qualified"
+                      class="mt-1 text-note leading-relaxed tabular"
                     >
-                      均 {{ row.progress.avgRounds.toFixed(1) }} 回合(需≤{{
-                        row.progress.maxAvgRounds
-                      }})
-                    </span>
-                    <span
-                      class="ml-1.5"
-                      :class="row.progress.damageOk ? 'text-ink-faint' : 'text-cinnabar'"
+                      <span class="text-body text-ink-soft">镇压资格</span>
+                      <span
+                        class="ml-1"
+                        :class="row.progress.winsOk ? 'text-jade' : 'text-ink-soft'"
+                      >
+                        {{ row.progress.wins }}/{{ row.progress.needWins }} 胜
+                      </span>
+                      <template v-if="row.progress.hasStats">
+                        <span
+                          class="ml-1.5"
+                          :class="row.progress.roundsOk ? 'text-ink-faint' : 'text-cinnabar'"
+                        >
+                          均 {{ row.progress.avgRounds.toFixed(1) }} 回合(需≤{{
+                            row.progress.maxAvgRounds
+                          }})
+                        </span>
+                        <span
+                          class="ml-1.5"
+                          :class="row.progress.damageOk ? 'text-ink-faint' : 'text-cinnabar'"
+                        >
+                          均受伤 {{ formatPercent(row.progress.avgDamagePct, 0) }}(需≤{{
+                            formatPercent(row.progress.maxAvgDamagePct, 0)
+                          }})
+                        </span>
+                      </template>
+                      <span v-else class="ml-1.5 text-ink-faint">尚无战绩</span>
+                    </p>
+                    <!-- 进不去时,理由指向眼下就能去的那一段,不让玩家自己排先后 -->
+                    <p v-if="row.blockReason" class="mt-1 text-body text-cinnabar">
+                      {{ row.blockReason }}
+                    </p>
+                    <div
+                      v-if="row.canEnter && (row.chips.length || row.adaptation)"
+                      class="mt-2 flex flex-wrap items-center gap-1.5"
                     >
-                      均受伤 {{ formatPercent(row.progress.avgDamagePct, 0) }}(需≤{{
-                        formatPercent(row.progress.maxAvgDamagePct, 0)
-                      }})
-                    </span>
-                  </template>
-                  <span v-else class="ml-1.5 text-ink-faint">尚无战绩</span>
-                </p>
-                <!-- 进不去时,理由指向眼下就能去的那一段,不让玩家自己排先后 -->
-                <p v-if="row.blockReason" class="mt-1 text-body text-cinnabar">
-                  {{ row.blockReason }}
-                </p>
-                <div
-                  v-if="row.canEnter && (row.chips.length || row.adaptation)"
-                  class="mt-2 flex flex-wrap items-center gap-1.5"
-                >
-                  <span
-                    v-for="chip in row.chips"
-                    :key="chip.trait"
-                    class="chip-ink !text-note"
-                    :class="
-                      chip.level >= 3
-                        ? 'border-cinnabar/50 text-cinnabar'
-                        : 'border-ink/25 text-ink-faint'
-                    "
-                  >
-                    {{ chip.name }}·{{ ECO_LEVEL_NAMES[chip.level] }}
-                  </span>
-                  <!-- 适配原因点按展开:手机没有 hover,得知道自己为什么被看好/看衰 -->
-                  <!-- min-h-[28px] 是排版自检的尺子:展开按钮此前只有 15px 高,拇指点不着 -->
-                  <button
-                    v-if="row.adaptation"
-                    class="ml-auto inline-flex min-h-[28px] items-center text-note text-ink-soft tabular active:scale-95"
-                    :title="row.adaptation.reasons.join(';')"
-                    :aria-expanded="adaptExpand === row.def.id"
-                    @click="adaptExpand = adaptExpand === row.def.id ? null : row.def.id"
-                  >
-                    适配
-                    <span class="text-gold-ink">{{ starsText(row.adaptation.stars) }}</span>
-                  </button>
-                </div>
-                <!--
+                      <span
+                        v-for="chip in row.chips"
+                        :key="chip.trait"
+                        class="chip-ink !text-note"
+                        :class="
+                          chip.level >= 3
+                            ? 'border-cinnabar/50 text-cinnabar'
+                            : 'border-ink/25 text-ink-faint'
+                        "
+                      >
+                        {{ chip.name }}·{{ ECO_LEVEL_NAMES[chip.level] }}
+                      </span>
+                      <!-- 适配原因点按展开:手机没有 hover,得知道自己为什么被看好/看衰 -->
+                      <!-- min-h-[28px] 是排版自检的尺子:展开按钮此前只有 15px 高,拇指点不着 -->
+                      <button
+                        v-if="row.adaptation"
+                        class="ml-auto inline-flex min-h-[28px] items-center text-note text-ink-soft tabular active:scale-95"
+                        :title="row.adaptation.reasons.join(';')"
+                        :aria-expanded="adaptExpand === row.def.id"
+                        @click="adaptExpand = adaptExpand === row.def.id ? null : row.def.id"
+                      >
+                        适配
+                        <span class="text-gold-ink">{{ starsText(row.adaptation.stars) }}</span>
+                      </button>
+                    </div>
+                    <!--
                 描述归末:它是这一行里唯一的散文,却排在 chips 之前 ——
                 先读一段描写再看见「能不能打、打得合不合路数」,判断被夹在中间。
                 移到判据与 chips 之后、适配理由展开之前,字号收到 10px 一档。
               -->
-                <p v-if="row.canEnter" class="mt-2 text-note leading-relaxed text-ink-faint">
-                  {{ row.def.desc }}
-                </p>
-                <div v-if="adaptExpand === row.def.id && row.adaptation" class="mt-1">
-                  <p
-                    v-for="(r, i) in row.adaptation.reasons"
-                    :key="i"
-                    class="text-note leading-relaxed text-ink-faint"
-                  >
-                    · {{ r }}
-                  </p>
+                    <p v-if="row.canEnter" class="mt-2 text-note leading-relaxed text-ink-faint">
+                      {{ row.def.desc }}
+                    </p>
+                    <div v-if="adaptExpand === row.def.id && row.adaptation" class="mt-1">
+                      <p
+                        v-for="(r, i) in row.adaptation.reasons"
+                        :key="i"
+                        class="text-note leading-relaxed text-ink-faint"
+                      >
+                        · {{ r }}
+                      </p>
+                    </div>
+                  </article>
                 </div>
               </div>
-            </template>
+            </section>
           </div>
         </section>
 
@@ -708,6 +737,19 @@ const nextActionableId = computed(
 const actionableCount = computed(
   () => visibleRows.value.filter((row) => row.canEnter && !row.suppressed).length,
 );
+
+type RegionRow = (typeof regionRows.value)[number];
+type AtlasState = "current" | "next" | "suppressed" | "cleared" | "open" | "locked";
+
+/** 行旅图只把现有状态翻译成沿线记号，不另判准入或镇压。 */
+function atlasStateOf(row: RegionRow): AtlasState {
+  if (row.isRouteCurrent) return "current";
+  if (row.id === nextActionableId.value) return "next";
+  if (row.suppressed) return "suppressed";
+  if (row.cleared) return "cleared";
+  if (row.canEnter) return "open";
+  return "locked";
+}
 
 /** 按界域分组展示:人间界/仙界/神界/混沌海的历练地界各自成段,便于在高界导航 */
 const groupedRows = computed(() => {

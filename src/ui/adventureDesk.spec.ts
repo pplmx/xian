@@ -85,6 +85,40 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
     expect(view.slice(rulesAt), "规则仍读同一份镇压阈值").toContain("SUPPRESS_THRESHOLDS.minWins");
   });
 
+  it("地界沿山河线连续排布,沿线状态只翻译现有准入与镇压事实", () => {
+    const view = source("src/views/AdventureView.vue");
+    const css = source("src/styles/pages/adventure.css");
+    const atlas =
+      view.match(/<div[^>]*data-adventure-atlas[\s\S]*?<\/section>\s*<\/div>/)?.[0] ?? "";
+    const stateAt = view.indexOf("function atlasStateOf");
+    const groupAt = view.indexOf("/** 按界域分组展示");
+
+    expect(view, "主线路要挂稳定的行旅图落点").toContain("data-adventure-atlas");
+    expect(atlas, "每个界域要有地图章头").toContain('class="adventure-atlas__chapter"');
+    expect(atlas, "地界要沿同一条轨道排列").toContain('class="adventure-atlas__trail"');
+    expect(atlas, "每个停靠点保留运行时状态").toContain(':data-atlas-state="atlasStateOf(row)"');
+    expect(atlas, "节点序号直接读当前可见顺序").toContain('String(rowIndex + 1).padStart(2, "0")');
+    expect(atlas, "原区域卡落点不许在改版中丢失").toContain("data-region-card");
+    expect(stateAt).toBeGreaterThan(-1);
+    expect(groupAt).toBeGreaterThan(stateAt);
+    const stateFn = view.slice(stateAt, groupAt);
+    expect(stateFn, "行旅图只翻译路线事实").toContain("row.isRouteCurrent");
+    expect(stateFn, "行旅图只翻译首个可行动事实").toContain("nextActionableId.value");
+    expect(stateFn, "行旅图不许另判准入").not.toContain("canEnterRegion");
+    expect(css, "地图用一条左侧轨道串起地界").toMatch(
+      /\.adventure-atlas__stop\s*\{[\s\S]{0,180}grid-template-columns:\s*1\.35rem minmax\(0, 1fr\)/,
+    );
+    expect(css, "当前程在轨道上用石青抬出").toMatch(
+      /data-atlas-state="current"[\s\S]{0,220}--color-qing-rgb/,
+    );
+    expect(css, "未至处只留虚线节点").toMatch(
+      /data-atlas-state="locked"[\s\S]{0,100}border-style:\s*dashed/,
+    );
+    expect(css, "195 宽把节点移到卡上方,不给正文再挤一列").toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1600}\.adventure-atlas__stop\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+  });
+
   it("今日账把三档落成连续概率行,手机不靠三列硬挤,极窄档再拆行", () => {
     const css = source("src/styles/pages/adventure.css");
     const view = source("src/views/AdventureView.vue");

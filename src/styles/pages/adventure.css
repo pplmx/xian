@@ -359,34 +359,153 @@
     text-decoration: underline;
     text-underline-offset: 2px;
   }
-  .adventure-regions__list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
+  .adventure-atlas {
+    position: relative;
+    display: grid;
+    gap: 0.82rem;
     margin-top: 0.55rem;
   }
-  .adventure-regions__group {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-    padding: 0.15rem 0.15rem 0;
+  .adventure-atlas::before {
+    position: absolute;
+    inset: 0.2rem -0.2rem 0;
+    background:
+      repeating-linear-gradient(
+        112deg,
+        rgb(var(--color-ink-rgb) / 0.018) 0,
+        rgb(var(--color-ink-rgb) / 0.018) 1px,
+        transparent 1px,
+        transparent 42px
+      ),
+      radial-gradient(circle at 5% 12%, rgb(var(--color-qing-rgb) / 0.04), transparent 42%);
+    content: "";
+    mask-image: linear-gradient(105deg, black, transparent 82%);
+    pointer-events: none;
   }
-  .adventure-regions__world {
+  .adventure-atlas__reach {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+  }
+  .adventure-atlas__chapter {
+    display: flex;
+    min-height: 1.42rem;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0 0.15rem;
+  }
+  .adventure-atlas__seal {
+    display: grid;
+    width: 1.38rem;
+    height: 1.38rem;
+    flex: none;
+    place-items: center;
+    border: 1px solid rgb(var(--color-qing-rgb) / 0.28);
+    background: rgb(var(--color-qing-rgb) / 0.045);
+    color: rgb(var(--color-qing-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+  }
+  .adventure-atlas__world {
     flex: none;
     color: rgb(var(--color-ink-soft-rgb));
     font-family: var(--font-kai);
     font-size: var(--type-body);
     letter-spacing: 0.22em;
   }
-  .adventure-regions__rule {
+  .adventure-atlas__rule {
     height: 1px;
     flex: 1;
     background: linear-gradient(90deg, rgb(var(--color-ink-rgb) / 0.12), transparent);
   }
-  .adventure-regions__count {
+  .adventure-atlas__count {
     flex: none;
     color: rgb(var(--color-ink-faint-rgb));
     font-size: var(--type-note);
+  }
+  .adventure-atlas__trail {
+    display: grid;
+    gap: 0.5rem;
+    margin-top: 0.18rem;
+  }
+  .adventure-atlas__stop {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.35rem minmax(0, 1fr);
+    align-items: stretch;
+    gap: 0.4rem;
+  }
+  .adventure-atlas__rail {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    justify-content: center;
+  }
+  .adventure-atlas__node {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    width: 1.28rem;
+    height: 1.28rem;
+    margin-top: 0.78rem;
+    place-items: center;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.22);
+    border-radius: 50%;
+    background: rgb(var(--color-paper-lifted-rgb));
+    box-shadow: 0 0 0 3px rgb(var(--color-paper-rgb));
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  .adventure-atlas__line {
+    position: absolute;
+    top: 2.08rem;
+    bottom: -0.55rem;
+    left: 50%;
+    width: 1px;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgb(var(--color-ink-rgb) / 0.2) 0,
+      rgb(var(--color-ink-rgb) / 0.2) 3px,
+      transparent 3px,
+      transparent 7px
+    );
+    transform: translateX(-50%);
+  }
+  .adventure-atlas__line.is-walked {
+    background: linear-gradient(
+      rgb(var(--color-jade-rgb) / 0.68),
+      rgb(var(--color-jade-rgb) / 0.2)
+    );
+  }
+  .adventure-atlas__card {
+    position: relative;
+    min-width: 0;
+  }
+  .adventure-atlas__stop[data-atlas-state="current"] .adventure-atlas__node {
+    border-color: rgb(var(--color-qing-rgb) / 0.72);
+    background: rgb(var(--color-qing-rgb) / 0.08);
+    box-shadow:
+      0 0 0 3px rgb(var(--color-paper-rgb)),
+      0 0 0 4px rgb(var(--color-qing-rgb) / 0.18);
+    color: rgb(var(--color-qing-rgb));
+  }
+  .adventure-atlas__stop[data-atlas-state="next"] .adventure-atlas__node {
+    border-color: rgb(var(--color-cinnabar-rgb) / 0.62);
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  .adventure-atlas__stop[data-atlas-state="suppressed"] .adventure-atlas__node {
+    border-color: rgb(var(--color-gold-ink-rgb) / 0.55);
+    background: rgb(var(--color-gold-ink-rgb) / 0.06);
+    color: rgb(var(--color-gold-ink-rgb));
+  }
+  .adventure-atlas__stop[data-atlas-state="cleared"] .adventure-atlas__node {
+    border-color: rgb(var(--color-jade-rgb) / 0.55);
+    color: rgb(var(--color-jade-rgb));
+  }
+  .adventure-atlas__stop[data-atlas-state="locked"] .adventure-atlas__node {
+    border-style: dashed;
   }
   .adventure-region {
     position: relative;
@@ -449,6 +568,44 @@
     }
   }
   @media (max-width: 220px) {
+    .adventure-atlas {
+      gap: 0.66rem;
+    }
+
+    .adventure-atlas__chapter {
+      min-height: 1.25rem;
+    }
+
+    .adventure-atlas__seal {
+      width: 1.22rem;
+      height: 1.22rem;
+    }
+
+    .adventure-atlas__stop {
+      position: relative;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+      padding-top: 1.42rem;
+    }
+
+    .adventure-atlas__rail {
+      position: absolute;
+      top: 0;
+      left: 0.5rem;
+      width: 1.22rem;
+      height: 1.22rem;
+    }
+
+    .adventure-atlas__node {
+      width: 1.22rem;
+      height: 1.22rem;
+      margin-top: 0;
+    }
+
+    .adventure-atlas__line {
+      display: none;
+    }
+
     .adventure-route {
       padding-inline: 0.5rem;
     }
