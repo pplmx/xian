@@ -83,13 +83,21 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
 
   it("底栏是五枚书脚签：当前册抬为纸面，其余压回栏内", () => {
     const dock = source("src/components/common/BottomNavigation.vue");
+    const layout = source("scripts/layout-check.mjs");
     const css = source("src/style.css");
 
     expect(dock, "底栏根节点要能被装帧判据定位").toContain("data-folio-dock");
     expect(dock, "每一册都要有书脚签结构").toContain("bottom-dock-slip");
     expect(dock, "当前册要带运行时标记").toContain("data-dock-current");
+    expect(dock, "平板不让五枚书脚签随宽页拉成一条长栏").toContain("max-w-[40rem]");
+    expect(dock, "收束后的书脚索引要在栏内居中").toContain("mx-auto");
+    expect(dock, "底栏要有独立可访问名").toContain('aria-label="主册导航"');
     expect(css, "书脚签要有独立样式").toContain(".bottom-dock-slip");
     expect(css, "当前书脚签要抬起纸面").toContain(".bottom-dock-slip[data-dock-current]");
+    expect(layout, "真浏览器要核平板底栏书脚索引没有拉满宽页").toContain(
+      "平板底栏书脚索引没有按 40rem 上限与可用宽度收束",
+    );
+    expect(layout, "收束后的书脚索引必须居中").toContain("平板底栏书脚索引没有居中");
   });
 
   it("玄枢图是五卷快引加卷宗分册，而不是一条没有总目的长列表", () => {

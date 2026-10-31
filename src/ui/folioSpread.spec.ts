@@ -124,6 +124,18 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
     expect(layout, "768 宽要单独成为一档真浏览器视口").toContain(
       '{ width: 768, height: 1024, tag: "768x1024", dpr: 1 }',
     );
+    expect(layout, "620 宽叶下界要单独成为一档").toContain(
+      '{ width: 620, height: 900, tag: "620x900", dpr: 2 }',
+    );
+    expect(layout, "959 宽叶上界要单独成为一档").toContain(
+      '{ width: 959, height: 1024, tag: "959x1024", dpr: 1 }',
+    );
+    expect(layout, "四档宽叶要共用同一份视口名单").toContain(
+      'const TABLET_LEAF_TAGS = new Set(["620x900", "768x1024", "844x390", "959x1024"]);',
+    );
+    expect(layout, "620 档按外壳可用宽收束,不把 640 写死").toContain(
+      "Math.min(640, shellWidth - 18)",
+    );
     expect(layout, "平板宽叶必须逐页计数,不能只改 CSS").toContain("tabletLeafSeen");
     expect(layout, "平板仍是一条手机窄栏要当场报红").toContain("平板宽叶仍收成手机窄栏");
     expect(layout).toContain("desktopFolioSeen");

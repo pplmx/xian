@@ -6,11 +6,18 @@
   -->
   <nav
     data-folio-dock
+    aria-label="主册导航"
     class="bottom-dock relative z-20 shrink-0 border-t border-transparent bg-paper-deep/95 backdrop-blur"
     :style="`padding-bottom: max(env(safe-area-inset-bottom), ${navInset}px)`"
   >
     <div class="ink-divider absolute -top-px inset-x-0" />
-    <div class="bottom-dock-rail mx-2 mt-1.5 grid grid-cols-5 border-y border-ink/15 bg-paper/70">
+    <!--
+      手机宽度仍铺满栏底；620px 以上的宽叶不再把五册拉成一条长栏。
+      收在 40rem 并居中后，每枚书脚签仍有 96~128px 触达宽度，像一列真的书脚索引。
+    -->
+    <div
+      class="bottom-dock-rail mx-auto mt-1.5 grid w-[calc(100%_-_1rem)] max-w-[40rem] grid-cols-5 border-y border-ink/15 bg-paper/70"
+    >
       <!--
         当前在哪一页交给 RouterLink:它在 exact-active 时自己渲染 aria-current="page"
         (vue-router 的 aria-current-value 默认值就是 page)。这里不再手写一份 ——

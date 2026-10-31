@@ -241,13 +241,17 @@ const VIEWPORTS = [
   { width: 390, height: 844, tag: "390", dpr: 3 },
   { width: 375, height: 812, tag: "375", dpr: 3 },
   { width: 320, height: 568, tag: "320", dpr: 2 },
-  // 三档「不是手机竖屏」的设备。它们各自暴露过一类毛病,故各占一档:
+  // 五档「不是手机竖屏」的设备。它们各自暴露过一类毛病,故各占一档:
   //   横屏 844×390 —— 上下两栏吃掉 22% 的高度(改前 26%),而宽度只用掉一半;
+  //   平板 620×900 —— 刚进入宽叶,检查页边、底栏与书脊边界;
   //   平板 768×1024 —— 620~959 应铺成宽单叶,不能一边触发多栏、一边锁死 430px;
+  //   平板 959×1024 —— 宽叶上限,不能让桌面书脊或双页提前一像素出现;
   //   桌面 1280×800 —— 游戏态展开成书桌:五册双页、多栏案卷放宽、设置仍按读卷居中。
-  // 安卓壳与桌面客户端都能转到这三档;PWA manifest 锁了竖屏,浏览器里随意缩窗。
+  // 安卓壳与桌面客户端都能转到这五档;PWA manifest 锁了竖屏,浏览器里随意缩窗。
+  { width: 620, height: 900, tag: "620x900", dpr: 2 },
   { width: 844, height: 390, tag: "844x390", dpr: 2 },
   { width: 768, height: 1024, tag: "768x1024", dpr: 1 },
+  { width: 959, height: 1024, tag: "959x1024", dpr: 1 },
   { width: 1280, height: 800, tag: "1280x800", dpr: 1 },
 ];
 /**
@@ -315,8 +319,11 @@ let desktopFolioSeen = 0;
 let desktopSpineSeen = 0;
 /** 844×390 横屏档逐页核过多少次卷首收缩与正文露头 */
 let landscapeMastheadSeen = 0;
-/** 768×1024 平板档逐页核过多少次宽单叶、底栏保留与书脊未提前出现 */
+/** 620 / 768 / 844 / 959 四档宽叶逐页核过多少次铺满、底栏保留与书脊未提前出现 */
 let tabletLeafSeen = 0;
+const TABLET_LEAF_TAGS = new Set(["620x900", "768x1024", "844x390", "959x1024"]);
+/** 四档宽叶逐页核过多少次底栏书脚索引收束与居中 */
+let tabletDockSeen = 0;
 /** 拦掉的外域请求数 —— 打印出来,顺带证明这条拦截是活的 */
 // 外域请求拦截:计数在 context 层累积,收尾打印(见 auditContext)
 
@@ -1966,6 +1973,37 @@ function problemsOf(info) {
  * ========================================================================== */
 
 /** 巡页:一档视口一个任务,六个视口并行(每一档都用独立 context 与自己的存档)。 */
+async function measureTabletDock(page) {
+  return page.evaluate(() => {
+    const shell = document.querySelector(".app-shell");
+    const rail = document.querySelector(".bottom-dock-rail");
+    if (!rail || !shell) return null;
+    const shellWidth = Math.round(shell.getBoundingClientRect().width);
+    const expected = Math.min(640, shellWidth - 18);
+    const rect = rail.getBoundingClientRect();
+    return {
+      width: Math.round(rect.width),
+      left: Math.round(rect.left),
+      right: Math.round(innerWidth - rect.right),
+      expected,
+    };
+  });
+}
+
+function tabletDockProblems(dock) {
+  if (!dock) return ["平板底栏书脚索引没量到"];
+  const problems = [];
+  if (Math.abs(dock.width - dock.expected) > 2) {
+    problems.push(
+      `平板底栏书脚索引没有按 40rem 上限与可用宽度收束(${dock.width}px / 应 ${dock.expected}px)`,
+    );
+  }
+  if (Math.abs(dock.left - dock.right) > 2) {
+    problems.push(`平板底栏书脚索引没有居中(${dock.left} / ${dock.right})`);
+  }
+  return problems;
+}
+
 async function taskPageTour(vp) {
   const failures = [];
   let checked = 0;
@@ -2175,7 +2213,15 @@ async function taskPageTour(vp) {
         }
       }
     }
-    if (vp.tag === "768x1024") {
+    if (TABLET_LEAF_TAGS.has(vp.tag)) {
+      const dock = await measureTabletDock(page);
+      tabletDockSeen += 1;
+      checked += 1;
+      for (const problem of tabletDockProblems(dock)) {
+        failures.push(`[${vp.tag}] ${route} ${problem}`);
+      }
+    }
+    if (TABLET_LEAF_TAGS.has(vp.tag)) {
       const leaf = await page.evaluate(() => {
         const shell = document.querySelector(".app-shell");
         const dock = document.querySelector("[data-folio-dock]");
@@ -13112,9 +13158,14 @@ if (landscapeMastheadSeen < ROUTES.length) {
     `矮横屏卷首只量了 ${landscapeMastheadSeen}/${ROUTES.length} 页 —— 844×390 巡页没覆盖全量路由`,
   );
 }
-if (tabletLeafSeen < ROUTES.length) {
+if (tabletLeafSeen < ROUTES.length * TABLET_LEAF_TAGS.size) {
   failures.push(
-    `平板宽叶只量了 ${tabletLeafSeen}/${ROUTES.length} 页 —— 768×1024 巡页没覆盖全量路由`,
+    `平板宽叶只量了 ${tabletLeafSeen}/${ROUTES.length * TABLET_LEAF_TAGS.size} 页 —— 四档边界巡页没覆盖全量路由`,
+  );
+}
+if (tabletDockSeen < ROUTES.length * TABLET_LEAF_TAGS.size) {
+  failures.push(
+    `平板底栏书脚索引只量了 ${tabletDockSeen}/${ROUTES.length * TABLET_LEAF_TAGS.size} 页 —— 四档边界巡页没覆盖全量路由`,
   );
 }
 
@@ -13153,7 +13204,8 @@ if (failures.length === 0) {
   console.log(`✓ 桌面书桌(${desktopFolioSeen} 页:五册双页、十一册宽案、设置读卷)`);
   console.log(`✓ 桌面书脊(${desktopSpineSeen} 页:十七册齐全、当前册唯一、手机底栏退场)`);
   console.log(`✓ 矮横屏卷首(${landscapeMastheadSeen} 页:重复主视觉收起、正文探出导航)`);
-  console.log(`✓ 平板宽叶(${tabletLeafSeen} 页:铺满余宽、底栏保留、书脊未提前挂出)`);
+  console.log(`✓ 宽叶四界(${tabletLeafSeen} 页:铺满余宽、底栏保留、书脊未提前挂出)`);
+  console.log(`✓ 宽叶书脚索引(${tabletDockSeen} 页:40rem 收束、居中)`);
   console.log("✓ 桌面名兽案(名号 / 灵兽)总案与全谱并读");
   console.log("✓ 桌面界域志当前卷与境界谱并读");
   console.log(`✓ 主值行一格一行(${valueRowsSeen} 处带 data-value-row 的行没被次要读数挤折)`);
