@@ -102,6 +102,30 @@
       </section>
     </nav>
 
+    <div data-desktop-ledger class="desktop-spine__ledger" aria-label="随身账">
+      <div class="desktop-spine__ledger-head">
+        <span>随身账</span>
+        <RouterLink to="/settings" class="desktop-spine__settings" aria-label="设置">
+          <GameIcon name="settings" :size="13" />
+          <span>设置</span>
+        </RouterLink>
+      </div>
+      <span class="desktop-spine__ledger-entry" title="灵石">
+        <GameIcon name="gem" :size="13" class="text-gold-ink" />
+        <span class="desktop-spine__ledger-label">灵石</span>
+        <span class="desktop-spine__ledger-value tabular">{{
+          formatGN(resources.spiritStone)
+        }}</span>
+      </span>
+      <span class="desktop-spine__ledger-entry" title="灵气">
+        <GameIcon name="wind" :size="13" class="text-qing" />
+        <span class="desktop-spine__ledger-label">灵气</span>
+        <span class="desktop-spine__ledger-value tabular">{{
+          formatNum(Math.floor(resources.qi))
+        }}</span>
+      </span>
+    </div>
+
     <footer class="desktop-spine__colophon">
       <span>{{ player.worldName }}</span>
       <span v-if="player.reincarnation.count > 0">{{ player.reincarnation.count }} 世</span>
@@ -116,7 +140,8 @@ import { RouterLink, useRoute } from "vue-router";
 import { useNavigationSignals } from "@/composables/useNavigationSignals";
 import { LIFESPAN_WARN_RATIO } from "@/data/constants";
 import { usePlayerStore } from "@/stores/player";
-import { cnNumber, lifespanPair } from "@/utils/format";
+import { useResourcesStore } from "@/stores/resources";
+import { cnNumber, formatGN, formatNum, lifespanPair } from "@/utils/format";
 import { atlasShortcutHintOf } from "@/ui/atlas";
 import { NAVIGATION_ENTRIES, NAVIGATION_SECTIONS } from "@/ui/navigation";
 import GameIcon from "./GameIcon.vue";
@@ -124,6 +149,7 @@ import GameIcon from "./GameIcon.vue";
 const emit = defineEmits<{ openAtlas: [] }>();
 const route = useRoute();
 const player = usePlayerStore();
+const resources = useResourcesStore();
 const { bagNewCount, canBreakthrough } = useNavigationSignals();
 const lifespan = computed(() => lifespanPair(player.age, player.lifespanMax));
 const shortcutHint = atlasShortcutHintOf(

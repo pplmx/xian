@@ -221,7 +221,7 @@ import { EQUIPMENT_TEMPLATES } from "../src/data/equipment.ts";
 import { EVENTS } from "../src/data/events.ts";
 import { GONGFA } from "../src/data/gongfa.ts";
 import { qualityDef } from "../src/data/qualities.ts";
-import { NAVIGATION_ENTRIES } from "../src/ui/navigation.ts";
+import { NAVIGATION_ENTRIES, NAVIGATION_SECTIONS } from "../src/ui/navigation.ts";
 import { folioLayoutOf } from "../src/ui/folioSpread.ts";
 import { mkdirSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
 import { cpus } from "node:os";
@@ -2254,6 +2254,14 @@ async function taskPageTour(vp) {
         const pageStyle = getComputedStyle(page);
         const gutter = getComputedStyle(page, "::before");
         const spineStyle = spine ? getComputedStyle(spine) : null;
+        const head = document.querySelector("[data-folio-head]");
+        const ledger = document.querySelector("[data-desktop-ledger]");
+        const spineNav = spine?.querySelector('nav[aria-label="全站册目"]');
+        const spineNavRect = spineNav?.getBoundingClientRect();
+        const spineLinks = spineNav ? [...spineNav.querySelectorAll("a[href]")] : [];
+        const spineSections = spineNav
+          ? [...spineNav.querySelectorAll("[data-spine-section]")]
+          : [];
         const cultivationLedger = document.querySelector("[data-cultivation-ledger]");
         const cultivationNext = document.querySelector("[data-cultivation-next]");
         const ledgerRect = cultivationLedger?.getBoundingClientRect();
@@ -2294,6 +2302,27 @@ async function taskPageTour(vp) {
                 entries: spine.querySelectorAll('nav[aria-label="全站册目"] a[href]').length,
                 current: spine.querySelectorAll("[data-spine-current]").length,
                 currentHref: spine.querySelector("[data-spine-current]")?.getAttribute("href"),
+                head: head ? getComputedStyle(head).display : null,
+                ledger: ledger ? getComputedStyle(ledger).display : null,
+                linksInView:
+                  spineNavRect === undefined
+                    ? 0
+                    : spineLinks.filter((link) => {
+                        const rect = link.getBoundingClientRect();
+                        return (
+                          rect.top >= spineNavRect.top - 1 && rect.bottom <= spineNavRect.bottom + 1
+                        );
+                      }).length,
+                sectionsInView:
+                  spineNavRect === undefined
+                    ? 0
+                    : spineSections.filter((section) => {
+                        const rect = section.getBoundingClientRect();
+                        return (
+                          rect.top >= spineNavRect.top - 1 && rect.bottom <= spineNavRect.bottom + 1
+                        );
+                      }).length,
+                navScrolls: spineNav ? spineNav.scrollHeight > spineNav.clientHeight + 1 : null,
               }
             : null,
           dock: dock ? getComputedStyle(dock).display : null,
@@ -2362,6 +2391,21 @@ async function taskPageTour(vp) {
           if (desk.spine.current !== 1 || desk.spine.currentHref !== `#${route}`) {
             failures.push(
               `[${vp.tag}] ${route} 桌面书脊当前册标记为 ${desk.spine.current} 处 / ${desk.spine.currentHref}`,
+            );
+          }
+          if (desk.spine.head !== "none") {
+            failures.push(`[${vp.tag}] ${route} 展开书脊后顶栏仍在重复报位置`);
+          }
+          if (desk.spine.ledger === "none" || desk.spine.ledger === null) {
+            failures.push(`[${vp.tag}] ${route} 桌面书脊随身账没有出现`);
+          }
+          if (
+            desk.spine.linksInView !== NAVIGATION_ENTRIES.length ||
+            desk.spine.sectionsInView !== NAVIGATION_SECTIONS.length ||
+            desk.spine.navScrolls
+          ) {
+            failures.push(
+              `[${vp.tag}] ${route} 桌面书脊还有册目藏在滚动区外(${desk.spine.linksInView} 册 / ${desk.spine.sectionsInView} 卷,滚动=${desk.spine.navScrolls})`,
             );
           }
         }

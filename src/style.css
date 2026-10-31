@@ -2292,6 +2292,7 @@
   .desktop-spine__copy,
   .desktop-spine__entry-copy,
   .desktop-spine__current,
+  .desktop-spine__ledger,
   .desktop-spine__colophon {
     display: none;
   }
@@ -2560,6 +2561,54 @@
     font-size: var(--type-note);
     line-height: 1.2;
   }
+  .desktop-spine__ledger {
+    flex: none;
+    margin: 0 0.55rem 0.45rem;
+    padding: 0.45rem 0.5rem 0.4rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    background: rgb(var(--color-paper-rgb) / 0.25);
+  }
+  .desktop-spine__ledger-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.14em;
+    line-height: 1.2;
+  }
+  .desktop-spine__settings {
+    display: flex;
+    min-height: 28px;
+    align-items: center;
+    gap: 0.2rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    text-decoration: none;
+  }
+  .desktop-spine__ledger-entry {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 13px 1.8rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.25rem;
+    padding-top: 0.3rem;
+    color: rgb(var(--color-ink-soft-rgb));
+    line-height: 1.25;
+  }
+  .desktop-spine__ledger-label {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .desktop-spine__ledger-value {
+    overflow: hidden;
+    font-size: var(--type-body);
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   @media (hover: hover) and (pointer: fine) {
     .desktop-spine__lookup:hover {
       border-color: rgb(var(--color-ink-rgb) / 0.24);
@@ -2696,6 +2745,10 @@
       display: flex;
     }
 
+    .app-shell[data-game-shell="desk"] .desktop-spine__ledger {
+      display: block;
+    }
+
     .app-shell[data-game-shell="desk"] .desktop-spine__lookup {
       display: flex;
       justify-content: flex-start;
@@ -2739,6 +2792,111 @@
 
     .app-shell[data-game-shell="desk"] .folio-head__desktop-context {
       display: flex;
+    }
+
+    /*
+     * 展开书脊后,书首的身份、位置与资源账都已各有归处. 顶栏若继续钉在正文上方,
+     * 同一册次会在左侧目录、书首和页头各报一遍,还永久吃掉六十余像素的阅读高度.
+     * 960~1099px 的窄桌面仍保留顶栏,因为那一档书脊只露图标,没有身份与资源.
+     */
+    .app-shell[data-game-shell="desk"] .folio-head {
+      display: none;
+    }
+  }
+  @media (min-width: 1200px) {
+    /*
+     * 1280 级桌面上把五卷摊成两列总目。单列时十七册会从「身外」开始被卷进
+     * 没有滚动条的暗处,最后一卷「天机」根本看不见;两列仍是同一份册目,
+     * 左列修行 / 道场 / 行旅,右列身外 / 天机,一屏能把全站去向看全。
+     */
+    .app-shell[data-game-shell="desk"] {
+      grid-template-columns: 15rem minmax(0, 1fr);
+    }
+
+    .app-shell[data-game-shell="desk"] .desktop-spine__index.scroll-pane {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-content: start;
+      column-gap: 0.45rem;
+      padding-inline: 0.35rem;
+      background-image: linear-gradient(
+        90deg,
+        transparent calc(50% - 0.5px),
+        rgb(var(--color-ink-rgb) / 0.08) calc(50% - 0.5px),
+        rgb(var(--color-ink-rgb) / 0.08) calc(50% + 0.5px),
+        transparent calc(50% + 0.5px)
+      );
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
+    }
+
+    .app-shell[data-game-shell="desk"] .desktop-spine__section {
+      min-width: 0;
+      margin-top: 0.25rem;
+    }
+
+    .app-shell[data-game-shell="desk"] .desktop-spine__section:nth-child(1),
+    .app-shell[data-game-shell="desk"] .desktop-spine__section:nth-child(2),
+    .app-shell[data-game-shell="desk"] .desktop-spine__section:nth-child(3) {
+      grid-column: 1;
+    }
+
+    .app-shell[data-game-shell="desk"] .desktop-spine__section[data-spine-section="belongings"] {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .app-shell[data-game-shell="desk"] .desktop-spine__section[data-spine-section="fate"] {
+      grid-column: 2;
+      grid-row: 2;
+    }
+
+    .app-shell[data-game-shell="desk"] .desktop-spine__section-head {
+      min-height: 22px;
+      gap: 0.3rem;
+      padding-inline: 0.15rem;
+    }
+
+    .app-shell[data-game-shell="desk"] .desktop-spine__section-number {
+      width: 15px;
+      height: 15px;
+    }
+
+    .app-shell[data-game-shell="desk"] .desktop-spine__section-hint {
+      display: none;
+    }
+
+    .app-shell[data-game-shell="desk"] .desktop-spine__entry {
+      min-height: 28px;
+      gap: 0.25rem;
+      padding: 0.1rem 0.2rem;
+    }
+
+    .app-shell[data-game-shell="desk"] .desktop-spine__entry-icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    .app-shell[data-game-shell="desk"] .desktop-spine__entry-label {
+      font-size: var(--type-body);
+      letter-spacing: 0.06em;
+    }
+
+    .app-shell[data-game-shell="desk"] .desktop-spine__current {
+      position: absolute;
+      top: 4px;
+      right: 3px;
+      width: 7px;
+      height: 7px;
+      overflow: hidden;
+      border: 0;
+      background: rgb(var(--color-cinnabar-rgb));
+      color: transparent;
+      font-size: 0;
+    }
+
+    .app-shell[data-game-shell="desk"] .desktop-spine__badge {
+      left: 14px;
     }
   } /* 宣纸颗粒 */
   .paper-grain::after {
