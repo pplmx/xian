@@ -26,14 +26,14 @@ export function isRareQuality(quality: QualityId): boolean {
  * 品阶名当正文时的字色。
  *
  * 凡品的墨色只适合直接落在纸面；良品的石绿也离边界太近。坊市这类「品阶色 6%
- * 晕染底」会把夜间卡片再抬亮，实测名称只剩 4.46:1。这里把常见两档的文字向墨色
- * 收一点，晕染仍用品阶原色，不把同行的说明与价格一起推过 AA 线。
+ * 晕染底」会把夜间卡片再抬亮，85/15 的石绿仍只剩 4.46:1。这里把常见两档的文字
+ * 向墨色收到 75/25，晕染仍用品阶原色，不把同行的说明与价格一起推过 AA 线。
  */
 export function qualityTextColor(quality: QualityId): string {
   const def = qualityDef(quality);
   if (def.rank === 0) return "var(--color-ink-soft)";
   if (def.rank === 1) {
-    return `color-mix(in srgb, ${def.color} 85%, var(--color-ink) 15%)`;
+    return `color-mix(in srgb, ${def.color} 75%, var(--color-ink) 25%)`;
   }
   return def.color;
 }

@@ -177,11 +177,12 @@ describe("排版量法口径", () => {
     expect(lateSeed).toContain("await ctx.addInitScript(");
   });
 
-  it("坏档场景要等首轮导航落定后再进设置页 —— 20 秒不替启动竞态买单", () => {
+  it("坏档场景要等首轮导航落定，并允许重写 hash 重试进设置页", () => {
     /*
      * app.mount 早于 router 首轮导航落定。坏档任务若在 mount 后立刻把 hash 改成
      * /settings,首轮导航仍可能把它写回 /;并发全量跑时实测卡满 20 秒,而单跑
-     * 同一份产物正常。先等首轮导航落到 /,再走设置页,判据本身不动。
+     * 同一份产物正常。先等首轮导航落到 /;若尾帧仍把 hash 覆盖回 /,每次重写后
+     * 再等 6 秒、最多试三次,判据本身不动。
      */
     const start = SCRIPT.indexOf("async function taskBadSave()");
     const end = SCRIPT.indexOf("/** iOS 存档风险提示 */", start);
@@ -189,8 +190,9 @@ describe("排版量法口径", () => {
     expect(end, "坏档任务的结尾要能定位到").toBeGreaterThan(start);
     const task = SCRIPT.slice(start, end);
     expect(task).toContain('.waitForFunction(() => location.hash === "#/", { timeout: 5000 })');
+    expect(task).toContain("for (let attempt = 0; attempt < 3 && !cardShown; attempt += 1)");
     expect(task).toContain('location.hash = "#/settings";');
-    expect(task).toContain('.waitForFunction(() => location.hash.startsWith("#/settings")');
+    expect(task).toContain("{ timeout: 6000 }");
     expect(task).not.toContain('page.goto(INDEX + "#" + "/settings"');
   });
 

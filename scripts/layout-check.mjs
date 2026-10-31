@@ -2232,6 +2232,12 @@ async function taskPageTour(vp) {
         const cultivationNext = document.querySelector("[data-cultivation-next]");
         const ledgerRect = cultivationLedger?.getBoundingClientRect();
         const nextRect = cultivationNext?.getBoundingClientRect();
+        const settingsAfterword = document.querySelector("[data-settings-afterword]");
+        const settingsArchive = document.querySelector(".settings-afterword__archive");
+        const settingsTrail = document.querySelector(".settings-afterword__side");
+        const settingsStyle = settingsAfterword ? getComputedStyle(settingsAfterword) : null;
+        const archiveRect = settingsArchive?.getBoundingClientRect();
+        const trailRect = settingsTrail?.getBoundingClientRect();
         return {
           layout: shell.getAttribute("data-folio-layout"),
           shellWidth: Math.round(shell.getBoundingClientRect().width),
@@ -2257,6 +2263,15 @@ async function taskPageTour(vp) {
                   nextWidth: Math.round(nextRect.width),
                 }
               : null,
+          settingsPair: settingsAfterword
+            ? {
+                columns: settingsStyle.gridTemplateColumns.split(/\s+/).filter(Boolean).length,
+                sameRow:
+                  archiveRect && trailRect ? Math.abs(archiveRect.top - trailRect.top) <= 2 : false,
+                archiveWidth: archiveRect ? Math.round(archiveRect.width) : 0,
+                sideWidth: trailRect ? Math.round(trailRect.width) : 0,
+              }
+            : null,
         };
       });
       desktopFolioSeen += 1;
@@ -2322,6 +2337,20 @@ async function taskPageTour(vp) {
               `[${vp.tag}] ${route} 单叶册在桌面上拉得过宽(${desk.pageWidth}px,应不超过 800px)`,
             );
           }
+        }
+        if (
+          route === "/settings" &&
+          (!desk.settingsPair ||
+            desk.settingsPair.columns < 2 ||
+            !desk.settingsPair.sameRow ||
+            desk.settingsPair.archiveWidth < 300 ||
+            desk.settingsPair.sideWidth < 260)
+        ) {
+          failures.push(
+            `[${vp.tag}] /settings 存续案与留痕、索引没有在桌面上并读(${JSON.stringify(
+              desk.settingsPair,
+            )})`,
+          );
         }
       }
     }
@@ -8108,12 +8137,6 @@ async function taskBadSave() {
           (await page.evaluate(() => location.hash)) || "?"
         })`,
       );
-    await page.evaluate(() => {
-      location.hash = "#/settings";
-    });
-    await page
-      .waitForFunction(() => location.hash.startsWith("#/settings"), { timeout: 5000 })
-      .catch(() => undefined);
     /**
      * 等那张卡真的画出来 —— 不要固定 900ms。
      *
@@ -8123,22 +8146,27 @@ async function taskBadSave() {
      * 确定性:等到含「存档版本」的卡片出现为止(启动提示那条也是这么改的)。
      */
     /**
-     * 并发跑到 8 路时,设置页是路由分包里的最后一个冷 chunk —— 实测本机单跑 55ms
-     * 就能出卡,但整轮 204 个组合并行时偶发超过 8 秒(本轮 20:xx 那次:三条判据
-     * 一起亮,而同一份产物单跑时卡片就在)。故把上限抬到 20 秒,**判据不变**;
-     * 超时也不再只是留个空串:把整页正文的头一段带进失败信息,下次能一眼分清
-     * 「卡没画出来」与「卡画出来了但没写那三件事」。
+     * 并发跑到 8 路时,设置页是路由分包里的最后一个冷 chunk;更糟的是首轮路由尾帧
+     * 仍可能把刚写进去的 #/settings 覆盖回 #/。故每次重写 hash 后再等 6 秒,最多
+     * 试三次(总预算仍约 20 秒)。超时也不再只是留个空串:把整页正文的头一段带进
+     * 失败信息,下次能一眼分清「卡没画出来」与「卡画出来了但没写那三件事」。
      */
-    const cardShown = await page
-      .waitForFunction(
-        () =>
-          [...document.querySelectorAll("[data-settings-archive]")].some((c) =>
-            (c.textContent || "").includes("存档版本"),
-          ),
-        { timeout: 20000 },
-      )
-      .then(() => true)
-      .catch(() => false);
+    let cardShown = false;
+    for (let attempt = 0; attempt < 3 && !cardShown; attempt += 1) {
+      await page.evaluate(() => {
+        location.hash = "#/settings";
+      });
+      cardShown = await page
+        .waitForFunction(
+          () =>
+            [...document.querySelectorAll("[data-settings-archive]")].some((c) =>
+              (c.textContent || "").includes("存档版本"),
+            ),
+          { timeout: 6000 },
+        )
+        .then(() => true)
+        .catch(() => false);
+    }
     const notice = await page.evaluate(() => {
       const card = [...document.querySelectorAll("[data-settings-archive]")].find((c) =>
         (c.textContent || "").includes("存档版本"),

@@ -16,7 +16,7 @@ describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
   it("常见两档品名在品阶晕染上仍有正文可读性，其余品阶不改字色", () => {
     expect(qualityTextColor("mortal")).toBe("var(--color-ink-soft)");
     expect(qualityTextColor("fine")).toBe(
-      `color-mix(in srgb, ${qualityDef("fine").color} 85%, var(--color-ink) 15%)`,
+      `color-mix(in srgb, ${qualityDef("fine").color} 75%, var(--color-ink) 25%)`,
     );
     expect(qualityTextColor("excellent")).toBe(qualityDef("excellent").color);
   });

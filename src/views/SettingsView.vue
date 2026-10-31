@@ -230,203 +230,207 @@
       </section>
     </section>
 
-    <section class="folio-span-all">
-      <SectionTitle title="存续案" hint="备份是丢档前唯一的保险" />
-      <section class="settings-archive" data-settings-archive :data-backup="backupReadout.state">
-        <LedgerHeader
-          seal="档"
-          eyebrow="本机存档"
-          title="存续与迁移"
-          description="导出是唯一能带走的一份；导入会整体替换当前进度，确认前先摊清底细。"
-        >
-          <template #meta>
-            <p class="folio-ledger-head__meta tabular text-qing">存档版本 v{{ SAVE_VERSION }}</p>
-          </template>
-        </LedgerHeader>
+    <div class="settings-afterword folio-span-all" data-settings-afterword>
+      <section class="settings-afterword__archive">
+        <SectionTitle title="存续案" hint="备份是丢档前唯一的保险" />
+        <section class="settings-archive" data-settings-archive :data-backup="backupReadout.state">
+          <LedgerHeader
+            seal="档"
+            eyebrow="本机存档"
+            title="存续与迁移"
+            description="导出是唯一能带走的一份；导入会整体替换当前进度，确认前先摊清底细。"
+          >
+            <template #meta>
+              <p class="folio-ledger-head__meta tabular text-qing">存档版本 v{{ SAVE_VERSION }}</p>
+            </template>
+          </LedgerHeader>
 
-        <div class="settings-archive__ledger">
-          <div class="settings-archive__stat" data-settings-save-stat="duration">
-            <span>修行时长</span>
-            <strong class="tabular">{{ formatDuration(game.totalPlaySec) }}</strong>
+          <div class="settings-archive__ledger">
+            <div class="settings-archive__stat" data-settings-save-stat="duration">
+              <span>修行时长</span>
+              <strong class="tabular">{{ formatDuration(game.totalPlaySec) }}</strong>
+            </div>
+            <div class="settings-archive__stat" data-settings-save-stat="export">
+              <span>上次导出备份</span>
+              <strong class="tabular">{{ backupReadout.detail }}</strong>
+            </div>
+            <div class="settings-archive__stat" data-settings-save-stat="backup">
+              <span>备份状态</span>
+              <strong
+                :class="backupReadout.state === 'fresh' ? 'text-qing' : 'text-cinnabar'"
+                class="tabular"
+              >
+                {{ backupReadout.label }}
+              </strong>
+            </div>
           </div>
-          <div class="settings-archive__stat" data-settings-save-stat="export">
-            <span>上次导出备份</span>
-            <strong class="tabular">{{ backupReadout.detail }}</strong>
-          </div>
-          <div class="settings-archive__stat" data-settings-save-stat="backup">
-            <span>备份状态</span>
-            <strong
-              :class="backupReadout.state === 'fresh' ? 'text-qing' : 'text-cinnabar'"
-              class="tabular"
-            >
-              {{ backupReadout.label }}
-            </strong>
-          </div>
-        </div>
 
-        <div v-if="backupPrompt" class="settings-archive__notice" data-backup-prompt>
-          <span class="settings-archive__notice-mark" aria-hidden="true">备</span>
-          <p>
-            <strong>建议导出一份。</strong>
-            安卓清应用数据、iOS 七天不打开，都可能把进度带走。
+          <div v-if="backupPrompt" class="settings-archive__notice" data-backup-prompt>
+            <span class="settings-archive__notice-mark" aria-hidden="true">备</span>
+            <p>
+              <strong>建议导出一份。</strong>
+              安卓清应用数据、iOS 七天不打开，都可能把进度带走。
+            </p>
+          </div>
+
+          <!-- 写盘失败时这里必须说话:玩家可能正玩得兴起,却不知道进度没进档 -->
+          <p v-if="saveFailed" class="settings-archive__danger">
+            上次写入存档失败 ——
+            浏览器存储可能已满。请先「导出存档」留一份，再清理浏览器数据或换设备导入。
+            腾出空间后会自动重试，成功时这条自己消失。
           </p>
-        </div>
 
-        <!-- 写盘失败时这里必须说话:玩家可能正玩得兴起,却不知道进度没进档 -->
-        <p v-if="saveFailed" class="settings-archive__danger">
-          上次写入存档失败 ——
-          浏览器存储可能已满。请先「导出存档」留一份，再清理浏览器数据或换设备导入。
-          腾出空间后会自动重试，成功时这条自己消失。
-        </p>
-
-        <!--
+          <!--
           坏掉的分片只说一次(启动时一条 2.4 秒的提示)是不够的:
           玩家多半是先发现「我的灵石怎么没了」,再回来找原因。
           故这里常驻一条:哪一片坏了、原档还在哪儿、以及最该做的那件事(导入备份)。
         -->
-        <div v-if="corruptedNotice.length" class="settings-archive__danger">
-          <p>
-            启动时发现 {{ corruptedNotice.length }} 个存档分片损坏，已跳过损坏内容：{{
-              corruptedNotice.map((id) => STORE_NAMES[id] ?? id).join("、")
-            }}。损坏的原档没有删除，仍在本机。备份键：<span class="break-all">{{
-              corruptKeys
-            }}</span
-            >；备份失败时仍在原键：<span class="break-all">{{ sourceKeys }}</span
-            >。同一片多次损坏时，后续原文会追加 .1/.2。若手上还有导出的备份，可在此导入恢复。
-          </p>
-          <button
-            class="settings-archive__acknowledge"
-            type="button"
-            @click="ui.corruptedNotice = []"
-          >
-            知道了
-          </button>
-        </div>
-
-        <div class="settings-archive__actions">
-          <button class="btn-seal !text-body" type="button" @click="onExport">导出存档</button>
-          <button class="btn-ghost !text-body" type="button" @click="triggerImport">
-            导入存档
-          </button>
-          <input
-            ref="fileInput"
-            type="file"
-            accept="application/json,.save"
-            class="hidden"
-            @change="onFilePicked"
-          />
-        </div>
-
-        <button
-          class="settings-archive__reset btn-ghost w-full !text-body"
-          type="button"
-          @click="openReset"
-        >
-          散尽修为，重入轮回（清空存档）
-        </button>
-      </section>
-    </section>
-
-    <!-- iOS 专属:装到主屏幕才躲得过系统清存储(非 iOS 不显示,见组件注释) -->
-    <InstallToHomeNotice permanent />
-
-    <!--
-      诊断:异常留档。
-
-      从前全局异常只 toast 一句「出现异常,已记录」—— 手机上根本没有控制台,
-      那句「已记录」无处可查。这里把它坐实:最近 20 条、可复制、也随「导出存档」一起走。
-    -->
-    <section class="folio-span-all">
-      <SectionTitle title="留痕案" :hint="`异常最多留 ${DIAG_MAX} 条`" />
-      <section class="settings-trail" data-settings-trail :data-state="diagReadout.state">
-        <LedgerHeader :seal="diagReadout.mark" eyebrow="本机留痕" title="异常记录">
-          <template #meta>
-            <p
-              class="folio-ledger-head__meta tabular"
-              :class="diagReadout.state === 'clear' ? 'text-qing' : 'text-cinnabar'"
-            >
-              {{ diagReadout.label }}
+          <div v-if="corruptedNotice.length" class="settings-archive__danger">
+            <p>
+              启动时发现 {{ corruptedNotice.length }} 个存档分片损坏，已跳过损坏内容：{{
+                corruptedNotice.map((id) => STORE_NAMES[id] ?? id).join("、")
+              }}。损坏的原档没有删除，仍在本机。备份键：<span class="break-all">{{
+                corruptKeys
+              }}</span
+              >；备份失败时仍在原键：<span class="break-all">{{ sourceKeys }}</span
+              >。同一片多次损坏时，后续原文会追加 .1/.2。若手上还有导出的备份，可在此导入恢复。
             </p>
-          </template>
-        </LedgerHeader>
-
-        <div class="settings-trail__body">
-          <p class="settings-trail__copy">
-            <template v-if="diag.errors.length">
-              最近记录了 {{ diag.errors.length }} 条异常（最多留 {{ DIAG_MAX }} 条）。
-            </template>
-            <template v-else>
-              未记录到异常。真出问题时这里会自动留一条，可连同「导出存档」一起发给我们。
-            </template>
-          </p>
-
-          <p v-if="latestError" class="settings-trail__latest">
-            <span class="tabular text-ink-faint">{{ formatClock(latestError.at) }}</span>
-            <span v-if="latestError.count > 1" class="ml-1 text-ink-faint"
-              >×{{ latestError.count }}</span
+            <button
+              class="settings-archive__acknowledge"
+              type="button"
+              @click="ui.corruptedNotice = []"
             >
-            <span class="ml-1 break-all">{{ latestError.message }}</span>
-            <span v-if="latestError.route" class="ml-1 text-ink-faint">{{
-              latestError.route
-            }}</span>
-          </p>
-
-          <div v-if="diag.errors.length" class="settings-trail__actions">
-            <button class="btn-ghost !text-body" type="button" @click="copyDiag">
-              复制异常记录
-            </button>
-            <button class="btn-ghost !text-body" type="button" @click="diag.clear()">
-              清空记录
+              知道了
             </button>
           </div>
-        </div>
-      </section>
-    </section>
 
-    <section class="folio-span-all">
-      <SectionTitle title="卷末索引" hint="关于、隐私与数值来路" />
-      <div class="settings-index" data-settings-index>
-        <button
-          class="settings-index__row"
-          type="button"
-          data-settings-about
-          @click="aboutOpen = true"
-        >
-          <span class="settings-index__ordinal" aria-hidden="true">壹</span>
-          <span class="settings-index__copy">
-            <strong>关于此作</strong>
-            <span>版本、作者与开源致谢</span>
-          </span>
-          <span class="settings-index__action">展卷 →</span>
-        </button>
-        <button
-          class="settings-index__row"
-          type="button"
-          data-settings-privacy
-          @click="privacyOpen = true"
-        >
-          <span class="settings-index__ordinal" aria-hidden="true">贰</span>
-          <span class="settings-index__copy">
-            <strong>隐私政策</strong>
-            <span>本地存档与零外域请求</span>
-          </span>
-          <span class="settings-index__action">展卷 →</span>
-        </button>
-        <button
-          class="settings-index__row"
-          type="button"
-          data-settings-progression
-          @click="progressionOpen = true"
-        >
-          <span class="settings-index__ordinal" aria-hidden="true">叁</span>
-          <span class="settings-index__copy">
-            <strong>数值体系</strong>
-            <span>复利倍率、净耗时与积余</span>
-          </span>
-          <span class="settings-index__action">展卷 →</span>
-        </button>
+          <div class="settings-archive__actions">
+            <button class="btn-seal !text-body" type="button" @click="onExport">导出存档</button>
+            <button class="btn-ghost !text-body" type="button" @click="triggerImport">
+              导入存档
+            </button>
+            <input
+              ref="fileInput"
+              type="file"
+              accept="application/json,.save"
+              class="hidden"
+              @change="onFilePicked"
+            />
+          </div>
+
+          <button
+            class="settings-archive__reset btn-ghost w-full !text-body"
+            type="button"
+            @click="openReset"
+          >
+            散尽修为，重入轮回（清空存档）
+          </button>
+        </section>
+      </section>
+
+      <!-- iOS 专属:装到主屏幕才躲得过系统清存储(非 iOS 不显示,见组件注释) -->
+      <InstallToHomeNotice permanent class="settings-afterword__notice" />
+
+      <div class="settings-afterword__side" data-settings-afterword-side>
+        <!--
+          诊断:异常留档。
+
+          从前全局异常只 toast 一句「出现异常,已记录」—— 手机上根本没有控制台,
+          那句「已记录」无处可查。这里把它坐实:最近 20 条、可复制、也随「导出存档」一起走。
+        -->
+        <section>
+          <SectionTitle title="留痕案" :hint="`异常最多留 ${DIAG_MAX} 条`" />
+          <section class="settings-trail" data-settings-trail :data-state="diagReadout.state">
+            <LedgerHeader :seal="diagReadout.mark" eyebrow="本机留痕" title="异常记录">
+              <template #meta>
+                <p
+                  class="folio-ledger-head__meta tabular"
+                  :class="diagReadout.state === 'clear' ? 'text-qing' : 'text-cinnabar'"
+                >
+                  {{ diagReadout.label }}
+                </p>
+              </template>
+            </LedgerHeader>
+
+            <div class="settings-trail__body">
+              <p class="settings-trail__copy">
+                <template v-if="diag.errors.length">
+                  最近记录了 {{ diag.errors.length }} 条异常（最多留 {{ DIAG_MAX }} 条）。
+                </template>
+                <template v-else>
+                  未记录到异常。真出问题时这里会自动留一条，可连同「导出存档」一起发给我们。
+                </template>
+              </p>
+
+              <p v-if="latestError" class="settings-trail__latest">
+                <span class="tabular text-ink-faint">{{ formatClock(latestError.at) }}</span>
+                <span v-if="latestError.count > 1" class="ml-1 text-ink-faint"
+                  >×{{ latestError.count }}</span
+                >
+                <span class="ml-1 break-all">{{ latestError.message }}</span>
+                <span v-if="latestError.route" class="ml-1 text-ink-faint">{{
+                  latestError.route
+                }}</span>
+              </p>
+
+              <div v-if="diag.errors.length" class="settings-trail__actions">
+                <button class="btn-ghost !text-body" type="button" @click="copyDiag">
+                  复制异常记录
+                </button>
+                <button class="btn-ghost !text-body" type="button" @click="diag.clear()">
+                  清空记录
+                </button>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section>
+          <SectionTitle title="卷末索引" hint="关于、隐私与数值来路" />
+          <div class="settings-index" data-settings-index>
+            <button
+              class="settings-index__row"
+              type="button"
+              data-settings-about
+              @click="aboutOpen = true"
+            >
+              <span class="settings-index__ordinal" aria-hidden="true">壹</span>
+              <span class="settings-index__copy">
+                <strong>关于此作</strong>
+                <span>版本、作者与开源致谢</span>
+              </span>
+              <span class="settings-index__action">展卷 →</span>
+            </button>
+            <button
+              class="settings-index__row"
+              type="button"
+              data-settings-privacy
+              @click="privacyOpen = true"
+            >
+              <span class="settings-index__ordinal" aria-hidden="true">贰</span>
+              <span class="settings-index__copy">
+                <strong>隐私政策</strong>
+                <span>本地存档与零外域请求</span>
+              </span>
+              <span class="settings-index__action">展卷 →</span>
+            </button>
+            <button
+              class="settings-index__row"
+              type="button"
+              data-settings-progression
+              @click="progressionOpen = true"
+            >
+              <span class="settings-index__ordinal" aria-hidden="true">叁</span>
+              <span class="settings-index__copy">
+                <strong>数值体系</strong>
+                <span>复利倍率、净耗时与积余</span>
+              </span>
+              <span class="settings-index__action">展卷 →</span>
+            </button>
+          </div>
+        </section>
       </div>
-    </section>
+    </div>
 
     <!-- 关于我们 -->
     <AboutDialog :open="aboutOpen" @close="aboutOpen = false" />

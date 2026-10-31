@@ -158,4 +158,30 @@ describe("天机案 · 设置卷首与三案同读此刻", () => {
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,2600}\.settings-segment\s*\{[\s\S]{0,100}flex-basis:\s*100%/,
     );
   });
+
+  it("桌面把存续案与留痕、卷末索引并成一张后案,手机仍按原顺序单列", () => {
+    const view = source("src/views/SettingsView.vue");
+    const css = source("src/style.css");
+    const layout = source("scripts/layout-check.mjs");
+    const start = css.indexOf("/*\n   * 天机案");
+    const end = css.indexOf("/*\n * 开关(.toggle-ink)", start);
+    const settingsCss = css.slice(start, end);
+
+    expect(view).toContain("data-settings-afterword");
+    expect(view).toMatch(
+      /<div class="settings-afterword folio-span-all" data-settings-afterword>[\s\S]{0,600}<section class="settings-afterword__archive"/,
+    );
+    expect(view).toContain('class="settings-afterword__notice"');
+    expect(view).toContain('class="settings-afterword__side" data-settings-afterword-side');
+    expect(settingsCss).toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,900}\.settings-afterword\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(0, 1\.08fr\) minmax\(0, 0\.92fr\)/,
+    );
+    expect(settingsCss).toMatch(
+      /\.settings-afterword__archive\s*\{[\s\S]{0,100}grid-column:\s*1;[\s\S]{0,100}grid-row:\s*1/,
+    );
+    expect(settingsCss).toMatch(
+      /\.settings-afterword__side\s*\{[\s\S]{0,100}grid-column:\s*2;[\s\S]{0,100}grid-row:\s*1 \/ span 2/,
+    );
+    expect(layout).toContain("存续案与留痕、索引没有在桌面上并读");
+  });
 });

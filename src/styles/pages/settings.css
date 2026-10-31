@@ -522,6 +522,20 @@
   .settings-trail__actions {
     padding: 0.58rem 0 0;
   }
+  .settings-afterword,
+  .settings-afterword__archive,
+  .settings-afterword__side {
+    min-width: 0;
+  }
+  .settings-afterword {
+    display: grid;
+    gap: 1rem;
+  }
+  .settings-afterword__side {
+    display: grid;
+    align-content: start;
+    gap: 1rem;
+  }
   .settings-index {
     overflow: hidden;
     margin-top: 0.5rem;
@@ -631,6 +645,26 @@
       grid-column: auto;
       border-top: 0;
       border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    }
+
+    .settings-afterword {
+      grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+      align-items: start;
+    }
+
+    .settings-afterword__archive {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .settings-afterword__notice {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .settings-afterword__side {
+      grid-column: 2;
+      grid-row: 1 / span 2;
     }
   }
   @media (max-width: 220px) {
