@@ -270,6 +270,7 @@ const CATEGORIES = [
       "folioIndexRail",
       "folioOpening",
       "folioChrome",
+      "folioTurner",
       "folioSpread",
       "ledgerHeader",
       "ledgerPulse",

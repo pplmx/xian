@@ -122,13 +122,14 @@
     --font-song: "Noto Serif SC", "Source Han Serif SC", STSong, SimSun, "Kaiti SC", serif;
 
     /*
-   * 阅读字阶 —— 手机是原刻度,桌面整体抬一档。
+   * 阅读字阶 —— 手机是原刻度,桌面分两档随书桌一起展开。
    *
    * 只给「行文」的五个名字,外加卷首题字 display。模板不再写裸像素:
    * text-note / text-body / text-title / text-section / text-heading / text-display
-   * 都指向这里。960px 以上的手机壳已展开成书桌,若字号仍停在 10~18px,
-   * 1280 宽屏上会像一张放大的手机截图;故桌面统一改成 11~20px,题字 28px。
-   * 200% 缩放档仍在 960px 以下,继续用手机刻度,不受这轮影响。
+   * 都指向这里。960px 是书桌骨架出现的门槛,此时先沿用紧凑一档;到 1100px
+   * 完整书脊展开、正文也有了两侧余量,阅读字阶再整体抬到 12~24px,题字 34px。
+   * 12px 注脚与 14px 正文是宽屏的最低阅读线,不再把手机上的 10/11px 直接放大
+   * 一份交差。200% 缩放档仍在 960px 以下,继续用手机刻度。
    */
     --type-note: 10px;
     --type-body: 11px;
@@ -168,6 +169,16 @@
       --type-section: 16px;
       --type-heading: 20px;
       --type-display: 28px;
+    }
+  }
+  @media (min-width: 1100px) {
+    :root {
+      --type-note: 12px;
+      --type-body: 14px;
+      --type-title: 16px;
+      --type-section: 18px;
+      --type-heading: 24px;
+      --type-display: 34px;
     }
   }
   @keyframes rise-in {
@@ -1366,6 +1377,156 @@
       inset 0 1px 0 rgb(255 255 255 / 0.36),
       inset 0 -2px 0 rgb(var(--color-cinnabar-rgb) / 0.06);
     transform: translateY(-1px);
+  }
+  /*
+   * 卷末翻页签 —— 长册读到底之后，不必退回顶栏或打开玄枢图再找下一册。
+   *
+   * 两侧仍是 RouterLink，中央只留枚「翻」印与册序；缺前册/后册时写明
+   * 卷首/卷终，而不是把空位伪装成可点控件。手机与桌面共用同一份册序，
+   * 桌面宽度也只跟当前是单叶还是双页走。
+   */
+  .folio-turner {
+    width: 100%;
+    max-width: 48rem;
+    margin-inline: auto;
+    padding: 0 1rem 1.5rem;
+  }
+  .app-shell[data-folio-layout="spread"] .folio-turner {
+    max-width: 66rem;
+  }
+  .folio-turner__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 2.4rem minmax(0, 1fr);
+    align-items: stretch;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    background:
+      linear-gradient(
+        90deg,
+        rgb(var(--color-ink-rgb) / 0.018),
+        transparent 22%,
+        transparent 78%,
+        rgb(var(--color-ink-rgb) / 0.018)
+      ),
+      rgb(var(--color-paper-rgb) / 0.34);
+  }
+  .folio-turner__link,
+  .folio-turner__edge {
+    min-height: 4.25rem;
+    padding: 0.58rem 0.75rem;
+  }
+  .folio-turner__link {
+    display: grid;
+    align-content: center;
+    color: inherit;
+    text-decoration: none;
+    transition:
+      background-color 0.16s ease,
+      transform 0.12s ease;
+  }
+  .folio-turner__link:active {
+    transform: translateY(1px);
+  }
+  .folio-turner__link--previous {
+    text-align: left;
+  }
+  .folio-turner__link--next {
+    text-align: right;
+  }
+  .folio-turner__direction,
+  .folio-turner__title,
+  .folio-turner__meta {
+    display: block;
+    min-width: 0;
+  }
+  .folio-turner__direction {
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.14em;
+    line-height: 1.2;
+  }
+  .folio-turner__title {
+    margin-top: 0.16rem;
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    letter-spacing: 0.16em;
+    line-height: 1.35;
+  }
+  .folio-turner__meta {
+    margin-top: 0.12rem;
+    overflow: hidden;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .folio-turner__edge {
+    display: grid;
+    place-items: center;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.18em;
+  }
+  .folio-turner__spine {
+    display: grid;
+    place-content: center;
+    border-inline: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    color: rgb(var(--color-qing-rgb));
+    text-align: center;
+  }
+  .folio-turner__spine > span {
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    line-height: 1;
+  }
+  .folio-turner__spine > small {
+    margin-top: 0.22rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .folio-turner__link:hover {
+      background: rgb(var(--color-paper-deep-rgb) / 0.5);
+    }
+  }
+  @media (min-width: 960px) {
+    .folio-turner {
+      padding: 0 2rem 2rem;
+    }
+    .folio-turner__link,
+    .folio-turner__edge {
+      min-height: 4.75rem;
+      padding: 0.7rem 1rem;
+    }
+  }
+  @media (max-width: 220px) {
+    .folio-turner {
+      padding-inline: 0.75rem;
+    }
+    .folio-turner__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .folio-turner__spine {
+      display: none;
+    }
+    .folio-turner__link--next,
+    .folio-turner__link--next .folio-turner__meta {
+      text-align: left;
+    }
+    .folio-turner__link,
+    .folio-turner__edge {
+      min-height: 3.6rem;
+      padding: 0.55rem 0.65rem;
+    }
+    .folio-turner__edge {
+      min-height: 2rem;
+      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.06);
+    }
   }
   .atlas-current {
     background:

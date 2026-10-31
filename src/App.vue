@@ -69,6 +69,7 @@
           <component :is="Component" />
         </Transition>
       </RouterView>
+      <FolioTurner v-if="game.started" />
     </main>
 
     <BottomNavigation v-if="game.started && route.name !== 'create'" />
@@ -127,6 +128,7 @@ import { useMediaQuery } from "@/composables/useMediaQuery";
 import DesktopSpine from "@/components/common/DesktopSpine.vue";
 import TopStatusBar from "@/components/common/TopStatusBar.vue";
 import BottomNavigation from "@/components/common/BottomNavigation.vue";
+import FolioTurner from "@/components/common/FolioTurner.vue";
 import ToastHost from "@/components/common/ToastHost.vue";
 import WorldTransitionVeil from "@/components/common/WorldTransitionVeil.vue";
 

@@ -2057,9 +2057,12 @@ async function taskPageTour(vp) {
     });
     checked += 1;
     const desktop = vp.width >= 960;
-    const expected = desktop
-      ? { note: 11, body: 12, title: 15, section: 16, heading: 20, display: 28 }
-      : { note: 10, body: 11, title: 14, section: 15, heading: 18, display: 24 };
+    const expected =
+      vp.width >= 1100
+        ? { note: 12, body: 14, title: 16, section: 18, heading: 24, display: 34 }
+        : desktop
+          ? { note: 11, body: 12, title: 15, section: 16, heading: 20, display: 28 }
+          : { note: 10, body: 11, title: 14, section: 15, heading: 18, display: 24 };
     for (const [tier, want] of Object.entries(expected)) {
       if (type.vars[tier] !== want) {
         failures.push(`[${vp.tag}] 阅读字阶 --type-${tier} 是 ${type.vars[tier]},应为 ${want}px`);
@@ -2123,6 +2126,27 @@ async function taskPageTour(vp) {
     controlHostsSeen += info.nestedControls?.hosts ?? 0;
     const problems = problemsOf(info);
     if (problems.length) failures.push(`[${vp.tag}] ${route} → ${problems.join(" / ")}`);
+    const turnerIndex = NAVIGATION_ENTRIES.findIndex((entry) => entry.to === route);
+    const expectedTurner = [
+      NAVIGATION_ENTRIES[turnerIndex - 1]?.to,
+      NAVIGATION_ENTRIES[turnerIndex + 1]?.to,
+    ].filter(Boolean);
+    const turner = await page.evaluate(() => {
+      const root = document.querySelector("[data-folio-turner]");
+      return {
+        label: root?.getAttribute("aria-label") || "",
+        links: [...(root?.querySelectorAll("a[href]") ?? [])].map((el) =>
+          String(el.getAttribute("href") || "").replace(/^#/, ""),
+        ),
+      };
+    });
+    checked += 1;
+    if (turnerIndex < 0 || !turner.label || turner.links.join(",") !== expectedTurner.join(",")) {
+      failures.push(
+        `[${vp.tag}] ${route} 卷末翻页签不对:` +
+          `应 ${expectedTurner.join(" / ") || "无"},实见 ${turner.links.join(" / ") || "无"}`,
+      );
+    }
     if (route === "/settings") {
       const settingsDesk = await page.evaluate(() => {
         const current = document.querySelector("[data-settings-current]");

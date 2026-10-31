@@ -10,7 +10,8 @@ const TAILWIND = readFileSync(resolve(ROOT, "tailwind.config.js"), "utf8");
 
 const TIERS = ["note", "body", "title", "section", "heading"] as const;
 const MOBILE = { note: 10, body: 11, title: 14, section: 15, heading: 18 };
-const DESKTOP = { note: 11, body: 12, title: 15, section: 16, heading: 20 };
+const DESKTOP_COMPACT = { note: 11, body: 12, title: 15, section: 16, heading: 20 };
+const DESKTOP_READING = { note: 12, body: 14, title: 16, section: 18, heading: 24 };
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
@@ -33,13 +34,16 @@ function tierValues(block: string): Record<(typeof TIERS)[number], number> {
 }
 
 describe("桌面阅读字阶 · 手机与宽屏共用一套语义刻度", () => {
-  it("手机维持原五档，960px 以上整体抬一档", () => {
+  it("手机维持原五档；书桌先紧凑，完整书脊展开后再抬到阅读档", () => {
     const mobile = /:root \{([\s\S]*?)\n\}/.exec(STYLE)?.[1] ?? "";
-    const desktop =
+    const compact =
       /@media \(min-width: 960px\) \{\s*:root \{([\s\S]*?)\n  \}\s*\}/.exec(STYLE)?.[1] ?? "";
+    const reading =
+      /@media \(min-width: 1100px\) \{\s*:root \{([\s\S]*?)\n  \}\s*\}/.exec(STYLE)?.[1] ?? "";
 
     expect(tierValues(mobile), "手机阅读档被改了").toEqual(MOBILE);
-    expect(tierValues(desktop), "桌面阅读档没有整体抬升").toEqual(DESKTOP);
+    expect(tierValues(compact), "960px 紧凑桌面档被改了").toEqual(DESKTOP_COMPACT);
+    expect(tierValues(reading), "1100px 完整书桌没有切到阅读档").toEqual(DESKTOP_READING);
   });
 
   it("六个语义字号都由 Tailwind 转发到同一组变量", () => {
