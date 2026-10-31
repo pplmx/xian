@@ -60,7 +60,7 @@
  *   二十七 顶栏底栏钉死:滚一遍窗口,两栏一步都不许动,文档层不许有纵向可滚余量。
  *      外加一条构建产物判据:外壳高度得认 dvh —— 无头浏览器的 100vh 恰好等于可视
  *      高度,把外壳换回 vh 它照样全绿,只有查产物这一条拦得住。
- *   二十八 页签栏吸顶:背包四册、图鉴、名号、界域志、天界、坊市的页签栏,滚过之后要贴在
+ *   二十八 页签栏吸顶:背包四册、图鉴、界域志、天界、坊市的页签栏,滚过之后要贴在
  *      内容区顶、且铺满内容区宽度(空档滚不动,判据自己往容器里垫占位造余量)。
  *   二十九 不是手机竖屏的两档:横屏 844×390 与桌面 1280×800 也各巡一遍全量路由 ——
  *      自适应断点(高度 short:、大屏的册页留白)就在这两档上现形。
@@ -1811,7 +1811,7 @@ async function pixelContrastOf(page, sampler) {
 /**
  * 页签栏(InkTabs 的外壳 .tab-rail)要吸顶 —— 内容滚下去,它钉在内容区顶上。
  *
- * 这几册(背包四册、图鉴、名号、界域志、天界、坊市)都是越往下越长的列表,页签跟着滚走
+ * 这几册(背包四册、图鉴、界域志、天界、坊市)都是越往下越长的列表,页签跟着滚走
  * 就得先滚回顶才能换一册。判据两条:滚过之后它还贴在内容区顶;盒子铺满**当前页叶**宽度
  * (两侧留缝的话,内容会从缝里明晃晃地穿过去)。桌面单叶居中后,不能拿整块书桌去比 ——
  * 那会把设计好的页边误报成缝。
@@ -11845,6 +11845,114 @@ async function taskTitlePetOverflow() {
       }
     }
 
+    async function checkNameBeastOverview(label, expectedColumns) {
+      const layout = await page.evaluate(() => {
+        const box = (el) => {
+          if (!el) return null;
+          const r = el.getBoundingClientRect();
+          return {
+            left: r.left,
+            right: r.right,
+            top: r.top,
+            bottom: r.bottom,
+            width: r.width,
+            height: r.height,
+            scrollWidth: el.scrollWidth,
+            clientWidth: el.clientWidth,
+          };
+        };
+        const masthead = document.querySelector("[data-folio-masthead]");
+        const switcher = document.querySelector("[data-name-beast-switch]");
+        const tabs = [...document.querySelectorAll("[data-name-beast-tab]")];
+        const dock = document.querySelector("[data-folio-dock]");
+        const dockBox = dock?.getBoundingClientRect();
+        const dockTop =
+          dockBox && dockBox.width > 0 && dockBox.height > 0 && dockBox.top > window.innerHeight / 2
+            ? dockBox.top
+            : window.innerHeight;
+        return {
+          viewport: { width: window.innerWidth, height: window.innerHeight },
+          masthead: box(masthead),
+          switcher: box(switcher),
+          tabs: tabs.map((tab) => ({
+            box: box(tab),
+            kind: tab.getAttribute("data-kind"),
+            selected: tab.getAttribute("aria-selected") === "true",
+            text: (tab.textContent || "").replace(/\s+/g, " ").trim(),
+          })),
+          current: box(document.querySelector("[data-title-current]")),
+          guide: box(document.querySelector("[data-title-guide]")),
+          firstAction: box(document.querySelector("[data-title-row] button")),
+          dockTop,
+          documentOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
+        };
+      });
+      checked += 1;
+      const sameRow =
+        layout.tabs.length === 2 && Math.abs(layout.tabs[0].box.top - layout.tabs[1].box.top) <= 2;
+      const stacked =
+        layout.tabs.length === 2 && layout.tabs[1].box.top >= layout.tabs[0].box.bottom - 1;
+      const tabFits = layout.tabs.every(
+        ({ box }) =>
+          box.left >= -1 &&
+          box.right <= layout.viewport.width + 1 &&
+          box.scrollWidth <= box.clientWidth + 1 &&
+          box.width >= 100,
+      );
+      const columnsOk = expectedColumns === 2 ? sameRow : stacked;
+      const followsMasthead =
+        layout.masthead &&
+        layout.switcher &&
+        layout.switcher.top >= layout.masthead.bottom - 1 &&
+        layout.switcher.top - layout.masthead.bottom <= 24;
+      const overviewFits =
+        layout.switcher &&
+        layout.switcher.left >= -1 &&
+        layout.switcher.right <= layout.viewport.width + 1 &&
+        layout.switcher.scrollWidth <= layout.switcher.clientWidth + 1;
+      const firstScreen =
+        expectedColumns !== 2 ||
+        (layout.switcher?.bottom <= layout.viewport.height + 1 &&
+          layout.current?.bottom <= layout.dockTop + 1 &&
+          layout.guide?.bottom <= layout.dockTop + 1 &&
+          layout.firstAction?.top < layout.dockTop);
+      const readable =
+        layout.tabs.some(
+          (tab) =>
+            tab.kind === "title" &&
+            tab.text.includes(`${TITLES.length}/${TITLES.length}`) &&
+            tab.text.includes("名号尽收"),
+        ) &&
+        layout.tabs.some(
+          (tab) =>
+            tab.kind === "pet" &&
+            tab.text.includes(`${PETS.length}/${PETS.length}`) &&
+            tab.text.includes("灵兽尽收"),
+        );
+      if (
+        !columnsOk ||
+        !tabFits ||
+        !followsMasthead ||
+        !overviewFits ||
+        !firstScreen ||
+        !readable ||
+        layout.documentOverflow
+      ) {
+        failures.push(
+          `[${label}] 双契总览没有把两册、首屏与极窄档同时收好:` +
+            `列=${expectedColumns} 实见 ${sameRow ? "并排" : stacked ? "上下" : "不正"} / ` +
+            `卷首间距=${Math.round((layout.switcher?.top ?? 0) - (layout.masthead?.bottom ?? 0))}px / ` +
+            `总览=${layout.switcher?.left ?? "-"}..${layout.switcher?.right ?? "-"} / ` +
+            `当前底=${Math.round(layout.current?.bottom ?? -1)} ` +
+            `下一印底=${Math.round(layout.guide?.bottom ?? -1)} ` +
+            `首行动作顶=${Math.round(layout.firstAction?.top ?? -1)} ` +
+            `底栏顶=${Math.round(layout.dockTop)} / ` +
+            `读数=${layout.tabs.map((tab) => `«${tab.text}»`).join(" | ") || "无"} / ` +
+            `文档横向溢出=${layout.documentOverflow}`,
+        );
+      }
+    }
+
     async function exerciseList({ kind, label, unit, total, sortedIds }) {
       const initial = await readList(kind);
       const more = page.locator(`[data-${kind}-more]`).first();
@@ -11995,8 +12103,50 @@ async function taskTitlePetOverflow() {
       );
     }
 
+    await page.setViewportSize({ width: 390, height: 844 });
+    await settleVisuals(page);
+    await checkNameBeastOverview("390", 2);
+
+    const titleSwitchTab = page.locator('[data-name-beast-tab][data-kind="title"]');
+    await titleSwitchTab.focus();
+    await page.keyboard.press("ArrowRight");
+    await page.locator("#pet-panel").waitFor({ state: "visible", timeout: 3000 });
+    const petByArrow = await page.evaluate(() => ({
+      focused: document.activeElement?.getAttribute("data-kind"),
+      selected: document
+        .querySelector('[data-name-beast-tab][data-kind="pet"]')
+        ?.getAttribute("aria-selected"),
+    }));
+    checked += 1;
+    if (petByArrow.focused !== "pet" || petByArrow.selected !== "true") {
+      failures.push(
+        `[390] 双契总览右方向键没有把焦点与选中一起移到灵兽:` +
+          `焦点=${petByArrow.focused ?? "无"} / aria-selected=${petByArrow.selected ?? "无"}`,
+      );
+    }
+    await page.keyboard.press("Home");
+    await page.locator("#title-panel").waitFor({ state: "visible", timeout: 3000 });
+    const titleByHome = await page.evaluate(() => ({
+      focused: document.activeElement?.getAttribute("data-kind"),
+      selected: document
+        .querySelector('[data-name-beast-tab][data-kind="title"]')
+        ?.getAttribute("aria-selected"),
+    }));
+    checked += 1;
+    if (titleByHome.focused !== "title" || titleByHome.selected !== "true") {
+      failures.push(
+        `[390] 双契总览 Home 没有回到名号:` +
+          `焦点=${titleByHome.focused ?? "无"} / aria-selected=${titleByHome.selected ?? "无"}`,
+      );
+    }
+
+    await page.setViewportSize({ width: 320, height: 568 });
+    await settleVisuals(page);
+    await checkNameBeastOverview("320", 1);
+
     await page.setViewportSize({ width: 1280, height: 800 });
     await settleVisuals(page);
+    await checkNameBeastOverview("1280", 2);
     await nameBeastDeskSpread("title", "名号册");
 
     await petTab.click({ timeout: 5000 });
@@ -13477,7 +13627,7 @@ if (failures.length === 0) {
     "✓ 无横向溢出、无越界元素、底部导航五项齐全、控件有名且不小于 28px、选择项有选中态、没有「念出来是按钮却按不动」的假控件、没有套在按钮里的控件",
   );
   console.log("✓ 顶栏底栏钉死(文档层没有可滚余量,滚窗两栏不动),外壳高度认 dvh");
-  console.log("✓ 六处页签栏吸顶(背包四册 / 图鉴 / 名号 / 界域志 / 天界 / 坊市),且铺满内容区宽度");
+  console.log("✓ 五处页签栏吸顶(背包四册 / 图鉴 / 界域志 / 天界 / 坊市),且铺满内容区宽度");
   console.log("✓ 顶栏一格一行(320 窄屏与横屏、桌面都不折行)");
   console.log(`✓ 桌面书桌(${desktopFolioSeen} 页:四册双页、十二册宽案、设置读卷)`);
   console.log(`✓ 桌面书脊(${desktopSpineSeen} 页:十七册齐全、当前册唯一、手机底栏退场)`);

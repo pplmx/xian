@@ -19,6 +19,21 @@ export interface NameBeastEntryState {
   label: string;
 }
 
+/** 双契总览的一册:当前选择、收藏刻度与下一程都走同一份读数。 */
+export interface NameBeastChoice<T extends string = string> {
+  id: T;
+  label: string;
+  mark: string;
+  eyebrow: string;
+  currentName: string;
+  count: number;
+  total: number;
+  ratio: number;
+  note: string;
+  complete: boolean;
+  dot?: boolean;
+}
+
 function finiteCount(value: number): number {
   return Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0;
 }

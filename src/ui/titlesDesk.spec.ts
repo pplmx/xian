@@ -11,7 +11,7 @@ function source(rel: string): string {
   return readFileSync(resolve(ROOT, rel), "utf8");
 }
 
-describe("名兽案 · 名号与灵兽各成一册,卷首先报此刻", () => {
+describe("名兽案 · 双契总览直接接卷首,当前、可追与全谱各归一处", () => {
   it("两册进度只做同一把尺:夹取坏数、全收才圆满", () => {
     expect(nameBeastMeter(0, 0)).toEqual({
       owned: 0,
@@ -75,20 +75,41 @@ describe("名兽案 · 名号与灵兽各成一册,卷首先报此刻", () => {
     });
   });
 
-  it("卷首走双印谱,两册总案先摊当前与来路,清单仍只循环当前窗口", () => {
+  it("卷首后直接接可读双契总览,不再用页签和重复主视觉占两层", () => {
     const view = source("src/views/TitlesView.vue");
-    const atlas = source("src/components/common/NameBeastAtlas.vue");
+    const switcher = source("src/components/common/NameBeastSwitch.vue");
 
     expect(view, "名号页进入 featured 开卷版式").toMatch(
       /<FolioPageHeader[\s\S]{0,360}\bfeatured\b/,
     );
-    expect(view, "卷首主视觉读同一份佩印与灵契").toMatch(
-      /<template #visual>[\s\S]{0,220}<NameBeastAtlas/,
+    expect(view, "卷首不再塞一块会重复报数的纯装饰主视觉").not.toContain("<template #visual>");
+    expect(view, "独立页签退场，双契总览本身承担切册").not.toContain("<InkTabs");
+    expect(view, "双契总览紧随卷首，并继续驱动同一条路由页签").toMatch(
+      /<FolioPageHeader[\s\S]{0,900}<NameBeastSwitch[\s\S]{0,240}v-model="tab"/,
     );
+    expect(view).toContain(':choices="nameBeastChoices"');
     expect(view).toContain("nameBeastMeter(ownedCount.value, TITLES.length)");
     expect(view).toContain("nameBeastMeter(ownedPetCount.value, PETS.length)");
     expect(view).toContain("titleEntryState({ owned, worn })");
     expect(view).toContain("petEntryState({ owned, active })");
+    expect(switcher, "双契总览要真的是两个可键盘漫游的页签").toContain('role="tablist"');
+    expect(switcher).toContain('role="tab"');
+    expect(switcher).toContain(':aria-selected="model === choice.id"');
+    expect(switcher).toContain("data-name-beast-tab");
+    expect(switcher).toContain("ArrowRight");
+    expect(switcher).toContain("ArrowLeft");
+    expect(switcher).toContain("Home");
+    expect(switcher).toContain("End");
+    expect(switcher).toContain(':aria-controls="`${choice.id}-panel`"');
+    expect(view).toContain('id="title-panel"');
+    expect(view).toContain('id="pet-panel"');
+    expect(view).toContain('aria-labelledby="title-tab"');
+    expect(view).toContain('aria-labelledby="pet-tab"');
+    expect(switcher, "总览里的当前名、计数与下一步要直接进入读屏").toContain(
+      "{{ choice.currentName }}",
+    );
+    expect(switcher).toContain("{{ choice.count }}/{{ choice.total }}");
+    expect(switcher).toContain("{{ choice.note }}");
     expect(view).toContain("data-title-ledger");
     expect(view).toContain("data-pet-ledger");
     expect(view).toContain("data-title-current");
@@ -99,10 +120,10 @@ describe("名兽案 · 名号与灵兽各成一册,卷首先报此刻", () => {
     expect(view).toContain("结缘册");
     expect(view).toContain('v-for="row in titlePage.visible"');
     expect(view).toContain('v-for="row in petPage.visible"');
-    expect(atlas, "双印谱是重复信息的视觉摘要,不重复进入读屏").toContain('aria-hidden="true"');
+    expect(view, "名号谱与灵兽谱继续只循环当前窗口").not.toContain('v-for="row in titleRows"');
   });
 
-  it("手机单列、620 起当前与来路并读、1100 起总案与全谱并读,220 以下动作退整行", () => {
+  it("390 双契并读、小屏退回单册、620 聚焦双栏、1100 总览与全谱摊成两页", () => {
     const css = source("src/style.css");
     const start = css.indexOf("/*\n   * 名兽案");
     const end = css.indexOf("/*\n   * 道躯案", start);
@@ -111,19 +132,25 @@ describe("名兽案 · 名号与灵兽各成一册,卷首先报此刻", () => {
     expect(start, "名兽样式段要能定位到").toBeGreaterThan(-1);
     expect(end, "名兽样式段要有明确结尾").toBeGreaterThan(start);
     expect(titleCss).toMatch(
-      /\.name-beast-ledger__grid\s*\{[\s\S]{0,160}grid-template-columns:\s*minmax\(0, 1fr\)/,
+      /\.name-beast-switch__grid\s*\{[\s\S]{0,180}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
     );
     expect(titleCss).toMatch(
-      /@media \(min-width: 620px\)\s*\{[\s\S]{0,260}\.name-beast-ledger__grid\s*\{[\s\S]{0,120}repeat\(2, minmax\(0, 1fr\)\)/,
+      /@media \(max-width: 359px\)\s*\{[\s\S]{0,220}\.name-beast-switch__grid\s*\{[\s\S]{0,120}minmax\(0, 1fr\)/,
+    );
+    expect(titleCss).toMatch(
+      /\.name-beast-focus__panels\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(titleCss).toMatch(
+      /@media \(min-width: 620px\)\s*\{[\s\S]{0,260}\.name-beast-focus__panels\s*\{[\s\S]{0,120}repeat\(2, minmax\(0, 1fr\)\)/,
     );
     expect(titleCss).toMatch(
       /@media \(min-width: 1100px\)\s*\{[\s\S]{0,360}\.name-beast-tab\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(18rem, 0\.74fr\) minmax\(0, 1\.26fr\)/,
     );
     expect(titleCss).toMatch(
-      /@media \(min-width: 1100px\)\s*\{[\s\S]{0,700}\.name-beast-tab > \.name-beast-ledger:first-child \.name-beast-ledger__grid\s*\{[\s\S]{0,120}minmax\(0, 1fr\)/,
+      /@media \(min-width: 1100px\)\s*\{[\s\S]{0,700}\.name-beast-tab\s*>\s*\.name-beast-focus \.name-beast-focus__panels\s*\{[\s\S]{0,120}minmax\(0, 1fr\)/,
     );
     expect(titleCss).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.name-beast-ledger__grid\s*\{[\s\S]{0,100}minmax\(0, 1fr\)/,
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,700}\.name-beast-switch__grid\s*\{[\s\S]{0,100}minmax\(0, 1fr\)/,
     );
     expect(titleCss).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,2400}\.name-ledger__action,[\s\S]{0,120}width:\s*100%/,
