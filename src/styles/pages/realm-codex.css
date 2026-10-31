@@ -1,5 +1,16 @@
 @layer reset, shared, page, app-utilities;
 @layer page {
+  .realm-codex-desk,
+  .realm-codex-desk__lead,
+  .realm-codex-desk__volumes {
+    display: grid;
+    min-width: 0;
+    gap: 0.72rem;
+  }
+  .realm-codex-desk__lead > .realm-world-index,
+  .realm-codex-desk__volumes > .realm-volume {
+    margin-top: 0;
+  }
   /*
    * 界域案 —— 卷首一枚四界谱,正文先把此刻摊开,再把四界收成卷目与可展开的境界格。
    *
@@ -452,6 +463,40 @@
 
     .realm-ledger {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  /*
+   * 1100 起把此刻与卷目留在一页，境界谱直接翻到右页。
+   *
+   * 界域志的主角仍是「我现在在哪」与「下一境是什么」；若右页必须先滚过四界卷目，
+   * 桌面首屏就只能看到目录。左页内把四界卷目收成一列，给当前境与梯尺留足宽度；
+   * 右页继续沿用境界格的两列谱。手机与窄桌面不切页。
+   */
+  @media (min-width: 1100px) {
+    .realm-codex-desk {
+      grid-template-columns: minmax(21rem, 0.9fr) minmax(0, 1.1fr);
+      align-items: start;
+      column-gap: 1.5rem;
+    }
+
+    .realm-codex-desk__lead,
+    .realm-codex-desk__volumes {
+      gap: 0.5rem;
+    }
+
+    .realm-codex-desk__lead .realm-world-index__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .realm-codex-desk__lead .realm-world-index__cell,
+    .realm-codex-desk__lead .realm-world-index__cell:nth-child(2n),
+    .realm-codex-desk__lead .realm-world-index__cell:nth-child(n + 2) {
+      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+      border-right: 0;
+    }
+
+    .realm-codex-desk__lead .realm-world-index__cell:first-child {
+      border-top: 0;
     }
   }
   @media (max-width: 220px) {

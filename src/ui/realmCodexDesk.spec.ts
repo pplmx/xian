@@ -101,6 +101,9 @@ describe("界域案 · 四界先成谱,境界再逐格展开", () => {
     expect(view).toContain("realmCodexOverview(currentRealm.value, worldRows.value)");
     expect(view).toContain("realmCodexAtlasRows(worldRows.value)");
     expect(view).toContain("realmCodexRealmEntries(row, player.major)");
+    expect(view, "界域册给左右两页留稳定落点").toContain("data-realm-codex-desk");
+    expect(view, "当前境与四界卷目归左页").toContain("realm-codex-desk__lead");
+    expect(view, "境界谱归右页").toContain("realm-codex-desk__volumes");
     expect(view).toContain("data-realm-world-index");
     expect(view).toContain(':data-world-toggle="row.world.id"');
     expect(view).toContain(':data-world-state="row.state"');
@@ -119,6 +122,12 @@ describe("界域案 · 四界先成谱,境界再逐格展开", () => {
     );
     expect(css).toMatch(
       /@media \(min-width: 620px\)\s*\{[\s\S]{0,1000}\.realm-world-index__grid\s*\{[\s\S]{0,120}repeat\(4, minmax\(0, 1fr\)\)[\s\S]{0,400}\.realm-ledger\s*\{[\s\S]{0,120}repeat\(2, minmax\(0, 1fr\)\)/,
+    );
+    expect(css).toMatch(
+      /@media \(min-width: 1100px\)\s*\{[\s\S]{0,500}\.realm-codex-desk\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(21rem, 0\.9fr\) minmax\(0, 1\.1fr\)/,
+    );
+    expect(css).toMatch(
+      /@media \(min-width: 1100px\)\s*\{[\s\S]{0,900}\.realm-codex-desk__lead \.realm-world-index__grid\s*\{[\s\S]{0,120}minmax\(0, 1fr\)/,
     );
     expect(css).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,1400}\.realm-world-index__grid\s*\{[\s\S]{0,120}minmax\(0, 1fr\)/,

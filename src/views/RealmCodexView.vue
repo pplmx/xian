@@ -24,203 +24,209 @@
     -->
     <InkTabs v-model="codexTab" :tabs="codexTabRows" />
 
-    <template v-if="codexTab === 'realm'">
-      <!--
+    <div v-if="codexTab === 'realm'" class="realm-codex-desk" data-realm-codex-desk>
+      <div class="realm-codex-desk__lead">
+        <!--
         卷首先报此刻:当前境、所在界、全路序号、前后境与四界刻度同屏。
         四界卷目与境界谱格只负责展开与查阅,不再把一整条仙路铺成没有层次的清单。
       -->
-      <section
-        data-realm-current
-        :data-current-realm-id="currentRealm.def.id"
-        :data-current-world-id="currentRealm.world.id"
-        :data-world="currentRealm.world.id"
-        class="realm-now"
-      >
-        <LedgerHeader
-          :seal="realmCodexWorldMark(currentRealm.world.id)"
-          :title="currentRealm.def.name"
-          score-label="全路"
-          :score-value="currentRealm.globalPosition"
-          :score-suffix="`/ ${realmOverview.total}`"
+        <section
+          data-realm-current
+          :data-current-realm-id="currentRealm.def.id"
+          :data-current-world-id="currentRealm.world.id"
+          :data-world="currentRealm.world.id"
+          class="realm-now"
         >
-          <template #eyebrow>
-            <span class="world-label">{{ currentRealm.world.name }}</span>
-            <span>第 {{ realmOverview.worldIndex }} / {{ realmOverview.worldCount }} 界</span>
-            <span>此刻在此</span>
-          </template>
-          <template #title>
-            <span data-current-realm-name>{{ currentRealm.def.name }}</span>
-            <span class="realm-now__basis">{{ currentRealm.def.basis }}</span>
-            <span class="realm-now__now">此刻</span>
-          </template>
-          <template #description>{{ currentRealm.def.desc }}</template>
-        </LedgerHeader>
-
-        <div class="realm-now__ladder">
-          <RealmLadder :major="player.major" />
-        </div>
-
-        <div class="realm-now__steps">
-          <button
-            v-if="currentRealm.previous"
-            data-realm-step="prev"
-            class="realm-now__step tap-row min-h-[28px] text-qing active:opacity-60"
-            @click="gotoRealm(currentRealm.previous.def.id)"
+          <LedgerHeader
+            :seal="realmCodexWorldMark(currentRealm.world.id)"
+            :title="currentRealm.def.name"
+            score-label="全路"
+            :score-value="currentRealm.globalPosition"
+            :score-suffix="`/ ${realmOverview.total}`"
           >
-            ← 前境 · {{ currentRealm.previous.def.name }}
-          </button>
-          <span v-else class="realm-now__step text-ink-faint">仙路起笔</span>
-          <span data-current-world-position class="realm-now__position text-ink-faint tabular">
-            {{ currentRealm.world.name }} {{ currentRealm.worldPosition }}/{{
-              currentRealm.worldTotal
-            }}
-          </span>
-          <button
-            v-if="currentRealm.next"
-            data-realm-step="next"
-            class="realm-now__step tap-row min-h-[28px] text-qing active:opacity-60"
-            @click="gotoRealm(currentRealm.next.def.id)"
-          >
-            后境 · {{ currentRealm.next.def.name }} →
-          </button>
-          <span v-else class="realm-now__step text-ink-faint">已至此卷末</span>
-        </div>
-      </section>
+            <template #eyebrow>
+              <span class="world-label">{{ currentRealm.world.name }}</span>
+              <span>第 {{ realmOverview.worldIndex }} / {{ realmOverview.worldCount }} 界</span>
+              <span>此刻在此</span>
+            </template>
+            <template #title>
+              <span data-current-realm-name>{{ currentRealm.def.name }}</span>
+              <span class="realm-now__basis">{{ currentRealm.def.basis }}</span>
+              <span class="realm-now__now">此刻</span>
+            </template>
+            <template #description>{{ currentRealm.def.desc }}</template>
+          </LedgerHeader>
 
-      <section data-realm-world-index class="realm-world-index">
-        <header class="realm-world-index__head">
-          <div>
-            <p class="text-note text-ink-faint">四界卷目</p>
-            <h2 class="text-title text-ink">先看身在何处，再翻境界谱</h2>
+          <div class="realm-now__ladder">
+            <RealmLadder :major="player.major" />
           </div>
-          <span class="text-note text-ink-faint tabular">
-            {{ WORLDS.length }} 界 · {{ REALMS.length }} 境 · {{ realmOverview.passed }}/{{
-              realmOverview.total
-            }}
-            已渡
-          </span>
-        </header>
-        <div class="realm-world-index__grid">
-          <button
-            v-for="row in realmAtlasRows"
-            :key="row.world.id"
-            type="button"
-            class="realm-world-index__cell"
-            :data-world="row.world.id"
-            :data-world-toggle="row.world.id"
-            :data-world-state="row.state"
-            :aria-expanded="isWorldOpen(row.world.id)"
-            :aria-controls="worldBodyId(row.world.id)"
-            @click="toggleWorld(row.world.id)"
-          >
-            <span class="realm-world-index__mark" aria-hidden="true">{{ row.mark }}</span>
-            <span class="realm-world-index__copy">
-              <span class="realm-world-index__line">
-                <span class="world-seal font-kai">{{ row.world.name }}</span>
-                <span class="text-note text-ink-faint">{{ row.rangeLabel }}</span>
-              </span>
-              <ProgressBar
-                :value="row.ratio"
-                :color="row.state === 'past' ? 'var(--color-jade)' : 'var(--realm-accent)'"
-                :height="2"
-              />
-              <span class="realm-world-index__status">
-                <span :class="worldStateClass(row)">{{ row.status }}</span>
-                <span class="text-ink-faint">{{
-                  isWorldOpen(row.world.id) ? "收卷" : "展卷"
-                }}</span>
-              </span>
-            </span>
-          </button>
-        </div>
-      </section>
 
-      <section
-        v-for="row in realmAtlasRows"
-        :id="worldBodyId(row.world.id)"
-        v-show="isWorldOpen(row.world.id)"
-        :key="row.world.id"
-        class="realm-volume"
-        :data-world="row.world.id"
-      >
-        <header class="realm-volume__head">
-          <span class="realm-volume__mark" aria-hidden="true">{{ row.mark }}</span>
-          <div class="realm-volume__copy">
-            <p class="realm-volume__line">
-              <span class="world-seal font-kai text-section">{{ row.world.name }}</span>
-              <span class="text-note text-ink-faint">{{ row.rangeLabel }}</span>
-              <span class="text-note text-ink-faint">{{ row.status }}</span>
-            </p>
-            <p class="realm-volume__desc">{{ row.world.desc }}</p>
-          </div>
-          <span class="realm-volume__ordinal tabular"
-            >卷 {{ String(row.ordinal).padStart(2, "0") }}</span
-          >
-        </header>
-
-        <div class="realm-ledger">
-          <article
-            v-for="cell in realmEntries(row)"
-            :id="`realm-${cell.def.id}`"
-            :key="cell.def.id"
-            class="realm-entry"
-            :class="cell.state === 'current' ? 'codex-current' : ''"
-            :data-realm-state="cell.state"
-          >
+          <div class="realm-now__steps">
             <button
-              type="button"
-              data-realm-toggle
-              class="realm-entry__head"
-              :aria-expanded="isRealmOpen(cell.def.id)"
-              :aria-controls="realmBodyId(cell.def.id)"
-              @click="toggleRealm(cell.def.id)"
+              v-if="currentRealm.previous"
+              data-realm-step="prev"
+              class="realm-now__step tap-row min-h-[28px] text-qing active:opacity-60"
+              @click="gotoRealm(currentRealm.previous.def.id)"
             >
-              <span class="realm-entry__ordinal tabular">{{
-                String(cell.ordinal).padStart(2, "0")
-              }}</span>
-              <span class="realm-entry__copy">
-                <span class="realm-entry__line">
-                  <span class="realm-entry__name font-kai">{{ cell.def.name }}</span>
-                  <span class="realm-entry__basis">{{ cell.def.basis }}</span>
-                </span>
-                <span class="realm-entry__desc">{{ cell.def.desc }}</span>
-              </span>
-              <span class="realm-entry__state">
-                <span class="realm-entry__state-mark" aria-hidden="true">{{ cell.stateMark }}</span>
-                <span>{{ cell.stateLabel }}</span>
-              </span>
-              <span
-                class="realm-entry__chevron"
-                :class="isRealmOpen(cell.def.id) ? 'is-open' : ''"
-                aria-hidden="true"
-                >▾</span
-              >
+              ← 前境 · {{ currentRealm.previous.def.name }}
             </button>
-            <div
-              v-if="isRealmOpen(cell.def.id)"
-              :id="realmBodyId(cell.def.id)"
-              data-realm-detail
-              class="realm-entry__detail"
+            <span v-else class="realm-now__step text-ink-faint">仙路起笔</span>
+            <span data-current-world-position class="realm-now__position text-ink-faint tabular">
+              {{ currentRealm.world.name }} {{ currentRealm.worldPosition }}/{{
+                currentRealm.worldTotal
+              }}
+            </span>
+            <button
+              v-if="currentRealm.next"
+              data-realm-step="next"
+              class="realm-now__step tap-row min-h-[28px] text-qing active:opacity-60"
+              @click="gotoRealm(currentRealm.next.def.id)"
             >
-              <p>{{ cell.def.lore }}</p>
-              <p v-if="classicsOf(cell.def.id).length" class="realm-entry__classics">
-                <span>所据</span>
-                <button
-                  v-for="c in classicsOf(cell.def.id)"
-                  :key="c.id"
-                  type="button"
-                  class="realm-entry__classic"
-                  :aria-label="`查看典籍《${c.title}》`"
-                  @click="gotoClassic(c.id)"
-                >
-                  《{{ c.title }}》
-                </button>
-              </p>
+              后境 · {{ currentRealm.next.def.name }} →
+            </button>
+            <span v-else class="realm-now__step text-ink-faint">已至此卷末</span>
+          </div>
+        </section>
+
+        <section data-realm-world-index class="realm-world-index">
+          <header class="realm-world-index__head">
+            <div>
+              <p class="text-note text-ink-faint">四界卷目</p>
+              <h2 class="text-title text-ink">先看身在何处，再翻境界谱</h2>
             </div>
-          </article>
-        </div>
-      </section>
-    </template>
+            <span class="text-note text-ink-faint tabular">
+              {{ WORLDS.length }} 界 · {{ REALMS.length }} 境 · {{ realmOverview.passed }}/{{
+                realmOverview.total
+              }}
+              已渡
+            </span>
+          </header>
+          <div class="realm-world-index__grid">
+            <button
+              v-for="row in realmAtlasRows"
+              :key="row.world.id"
+              type="button"
+              class="realm-world-index__cell"
+              :data-world="row.world.id"
+              :data-world-toggle="row.world.id"
+              :data-world-state="row.state"
+              :aria-expanded="isWorldOpen(row.world.id)"
+              :aria-controls="worldBodyId(row.world.id)"
+              @click="toggleWorld(row.world.id)"
+            >
+              <span class="realm-world-index__mark" aria-hidden="true">{{ row.mark }}</span>
+              <span class="realm-world-index__copy">
+                <span class="realm-world-index__line">
+                  <span class="world-seal font-kai">{{ row.world.name }}</span>
+                  <span class="text-note text-ink-faint">{{ row.rangeLabel }}</span>
+                </span>
+                <ProgressBar
+                  :value="row.ratio"
+                  :color="row.state === 'past' ? 'var(--color-jade)' : 'var(--realm-accent)'"
+                  :height="2"
+                />
+                <span class="realm-world-index__status">
+                  <span :class="worldStateClass(row)">{{ row.status }}</span>
+                  <span class="text-ink-faint">{{
+                    isWorldOpen(row.world.id) ? "收卷" : "展卷"
+                  }}</span>
+                </span>
+              </span>
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <div class="realm-codex-desk__volumes">
+        <section
+          v-for="row in realmAtlasRows"
+          :id="worldBodyId(row.world.id)"
+          v-show="isWorldOpen(row.world.id)"
+          :key="row.world.id"
+          class="realm-volume"
+          :data-world="row.world.id"
+        >
+          <header class="realm-volume__head">
+            <span class="realm-volume__mark" aria-hidden="true">{{ row.mark }}</span>
+            <div class="realm-volume__copy">
+              <p class="realm-volume__line">
+                <span class="world-seal font-kai text-section">{{ row.world.name }}</span>
+                <span class="text-note text-ink-faint">{{ row.rangeLabel }}</span>
+                <span class="text-note text-ink-faint">{{ row.status }}</span>
+              </p>
+              <p class="realm-volume__desc">{{ row.world.desc }}</p>
+            </div>
+            <span class="realm-volume__ordinal tabular"
+              >卷 {{ String(row.ordinal).padStart(2, "0") }}</span
+            >
+          </header>
+
+          <div class="realm-ledger">
+            <article
+              v-for="cell in realmEntries(row)"
+              :id="`realm-${cell.def.id}`"
+              :key="cell.def.id"
+              class="realm-entry"
+              :class="cell.state === 'current' ? 'codex-current' : ''"
+              :data-realm-state="cell.state"
+            >
+              <button
+                type="button"
+                data-realm-toggle
+                class="realm-entry__head"
+                :aria-expanded="isRealmOpen(cell.def.id)"
+                :aria-controls="realmBodyId(cell.def.id)"
+                @click="toggleRealm(cell.def.id)"
+              >
+                <span class="realm-entry__ordinal tabular">{{
+                  String(cell.ordinal).padStart(2, "0")
+                }}</span>
+                <span class="realm-entry__copy">
+                  <span class="realm-entry__line">
+                    <span class="realm-entry__name font-kai">{{ cell.def.name }}</span>
+                    <span class="realm-entry__basis">{{ cell.def.basis }}</span>
+                  </span>
+                  <span class="realm-entry__desc">{{ cell.def.desc }}</span>
+                </span>
+                <span class="realm-entry__state">
+                  <span class="realm-entry__state-mark" aria-hidden="true">{{
+                    cell.stateMark
+                  }}</span>
+                  <span>{{ cell.stateLabel }}</span>
+                </span>
+                <span
+                  class="realm-entry__chevron"
+                  :class="isRealmOpen(cell.def.id) ? 'is-open' : ''"
+                  aria-hidden="true"
+                  >▾</span
+                >
+              </button>
+              <div
+                v-if="isRealmOpen(cell.def.id)"
+                :id="realmBodyId(cell.def.id)"
+                data-realm-detail
+                class="realm-entry__detail"
+              >
+                <p>{{ cell.def.lore }}</p>
+                <p v-if="classicsOf(cell.def.id).length" class="realm-entry__classics">
+                  <span>所据</span>
+                  <button
+                    v-for="c in classicsOf(cell.def.id)"
+                    :key="c.id"
+                    type="button"
+                    class="realm-entry__classic"
+                    :aria-label="`查看典籍《${c.title}》`"
+                    @click="gotoClassic(c.id)"
+                  >
+                    《{{ c.title }}》
+                  </button>
+                </p>
+              </div>
+            </article>
+          </div>
+        </section>
+      </div>
+    </div>
 
     <template v-if="codexTab === 'classics'">
       <!-- 典籍:境界名背后的原典 -->

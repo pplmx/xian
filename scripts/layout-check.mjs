@@ -7062,6 +7062,59 @@ async function taskCodexFold() {
     const pageErrors = [];
     watchPageErrors(page, pageErrors);
     const rendered = await openRoute(page, "/codex", 700);
+    async function realmCodexDeskSpread() {
+      const layout = await page.evaluate(() => {
+        const desk = document.querySelector("[data-realm-codex-desk]");
+        const lead = desk?.querySelector(".realm-codex-desk__lead");
+        const volumes = desk?.querySelector(".realm-codex-desk__volumes");
+        if (!desk || !lead || !volumes) return null;
+        const deskStyle = getComputedStyle(desk);
+        const leadBox = lead.getBoundingClientRect();
+        const volumesBox = volumes.getBoundingClientRect();
+        return {
+          display: deskStyle.display,
+          columns: deskStyle.gridTemplateColumns.split(" ").filter(Boolean),
+          lead: {
+            left: leadBox.left,
+            right: leadBox.right,
+            top: leadBox.top,
+            width: leadBox.width,
+          },
+          volumes: {
+            left: volumesBox.left,
+            right: volumesBox.right,
+            top: volumesBox.top,
+            width: volumesBox.width,
+          },
+          viewport: window.innerWidth,
+        };
+      });
+      checked += 1;
+      if (
+        !layout ||
+        layout.display !== "grid" ||
+        layout.columns.length !== 2 ||
+        Math.abs(layout.lead.top - layout.volumes.top) > 2 ||
+        layout.lead.right + 8 > layout.volumes.left ||
+        layout.lead.width < 300 ||
+        layout.volumes.width < 390 ||
+        layout.lead.left < -1 ||
+        layout.volumes.right > layout.viewport + 1
+      ) {
+        failures.push(
+          `[1280] 界域志当前卷与境界谱没有摊成左右两页:` +
+            (layout
+              ? `display=${layout.display} / columns=${layout.columns.join(" | ")} / ` +
+                `左 ${Math.round(layout.lead.left)}..${Math.round(layout.lead.right)} ` +
+                `(${Math.round(layout.lead.width)}) / ` +
+                `右 ${Math.round(layout.volumes.left)}..${Math.round(layout.volumes.right)} ` +
+                `(${Math.round(layout.volumes.width)}) / ` +
+                `顶差 ${Math.round(Math.abs(layout.lead.top - layout.volumes.top))}`
+              : "取不到左页或右页"),
+        );
+      }
+    }
+
     checked += 1;
     if (rendered === 0) {
       failures.push("[390-codex] 界域志没渲染出来,首屏判据没量到东西");
@@ -7184,6 +7237,10 @@ async function taskCodexFold() {
           failures.push("[390-codex] 未至界点开后没有铺出该界境界");
         }
       }
+
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await settleVisuals(page);
+      await realmCodexDeskSpread();
     }
     if (pageErrors.length)
       failures.push(`[390-codex] 界域志首屏页面异常:${[...new Set(pageErrors)].join(" | ")}`);
@@ -12979,6 +13036,7 @@ if (failures.length === 0) {
   console.log(`✓ 桌面书桌(${desktopFolioSeen} 页:五册双页、十一册宽案、设置读卷)`);
   console.log(`✓ 桌面书脊(${desktopSpineSeen} 页:十七册齐全、当前册唯一、手机底栏退场)`);
   console.log("✓ 桌面名兽案(名号 / 灵兽)总案与全谱并读");
+  console.log("✓ 桌面界域志当前卷与境界谱并读");
   console.log(`✓ 主值行一格一行(${valueRowsSeen} 处带 data-value-row 的行没被次要读数挤折)`);
   console.log(`✓ 两百档字号(${zoomSeen} 页在 200% 缩放下不溢出、主值行不折)`);
   console.log(`✓ 渐变与图片底上的字(${pixelTextsSeen} 处按屏幕像素采过,没有成片读不出来的)`);
