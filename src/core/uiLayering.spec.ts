@@ -3042,9 +3042,27 @@ describe("界面分层 · 浮层只有一个出处", () => {
     const css = readStyleCss();
     expect(css, "seal-breathe 的帧定义被删了 —— 归来印退回瞬显").toMatch(/@keyframes seal-breathe/);
     const tw = readFileSync(resolve(__dirname, "../../tailwind.config.js"), "utf-8");
-    expect(tw, "seal-breathe 的映射被拆了 —— 归来印失去呼吸").toContain(
-      `"seal-breathe": "seal-breathe`,
-    );
+    expect(
+      tw,
+      "seal-breathe 只许由伪元素承载 —— 同名 Tailwind 工具会把归来印本体也一起淡掉",
+    ).not.toContain(`"seal-breathe": "seal-breathe`);
+  });
+
+  it("呼吸辉光只动伪元素 —— 不许生成会盖掉 animation:none 的同名工具", () => {
+    const css = readStyleCss();
+    const tw = readFileSync(resolve(__dirname, "../../tailwind.config.js"), "utf-8");
+
+    for (const name of ["glow-pulse", "seal-breathe"]) {
+      expect(tw, `${name} 不该再生成同名 Tailwind animation 工具`).not.toMatch(
+        new RegExp(`"${name}"\\s*:\\s*"${name}`),
+      );
+      expect(css, `${name} 的宿主必须停掉本体动画`).toMatch(
+        new RegExp(`\\.animate-${name}\\s*\\{[^}]*animation:\\s*none;`),
+      );
+      expect(css, `${name} 的呼吸必须落在伪元素`).toMatch(
+        new RegExp(`\\.animate-${name}::before\\s*\\{[^}]*animation:\\s*${name}`),
+      );
+    }
   });
 
   it("离线卷轴收益列同列同缩写 —— 灵气/灵草/玄铁/悟道点/器灵尘也要 formatNum", () => {

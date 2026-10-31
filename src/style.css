@@ -465,8 +465,9 @@
  * 「蓄势/归属」辉光的呼吸:原为无限动画 box-shadow(非合成属性 → 逐帧重绘,
  * 低端移动端掉帧源)。现在辉光以静态 box-shadow 画在 .animate-glow-pulse::before /
  * .animate-seal-breathe::before 上,这边只把 opacity 淡入淡出(GPU 合成层)。
- * 元素本身 animation:none,不再逐帧重绘 —— 下方两个 .animate-* 覆盖规则负责
- * 把辉光挪到伪元素(未分层规则压过 tailwind 工具类生成的 animation)。
+ * 元素本身 animation:none,不再逐帧重绘 —— 下方两个自定义 .animate-* 规则
+ * 只把辉光挂在伪元素上。tailwind.config.js 不再生成同名工具类:同名 animation
+ * 工具会盖住这里的 none,让整个按钮/卡片本体一起淡出。
  */
   @keyframes glow-pulse {
     0%,

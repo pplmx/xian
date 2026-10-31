@@ -105,8 +105,13 @@ export default {
         7: "0.07",
         8: "0.08",
       },
-      /* @keyframes 本体保留在 style.css(标准 CSS,v3 直接识别),这里只做
-         「工具类名 → animation 简写」的映射,避免同一份帧定义两处维护 */
+      /*
+       * @keyframes 本体保留在 style.css(标准 CSS,v3 直接识别)。
+       *
+       * glow-pulse / seal-breathe 不在这里登记:它们由 style.css 的自定义类
+       * 只给 ::before 挂动画。若再生成同名 Tailwind 工具,元素本体也会一起
+       * 呼吸 —— 欢迎页主钮、破境卡与归来印会周期性地淡到近乎不可见。
+       */
       animation: {
         mist: "mist 26s ease-in-out infinite alternate",
         "mist-slow": "mist 40s ease-in-out infinite alternate-reverse",
@@ -115,8 +120,6 @@ export default {
         "float-crit": "float-crit 0.9s ease-out forwards",
         "ink-pop": "ink-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1)",
         "new-pop": "new-pop 0.42s cubic-bezier(0.22, 1, 0.36, 1) both",
-        "glow-pulse": "glow-pulse 2.4s ease-in-out infinite",
-        "seal-breathe": "seal-breathe 2.8s ease-in-out infinite",
       },
     },
   },

@@ -39,6 +39,16 @@ describe("开卷两页 · 先立山门,再问心定命", () => {
     expect(create).toContain('@click="begin"');
     expect(create).toContain("ui.worldEnter =");
     expect(create).not.toContain("card-ink");
+    expect(create, "灵根盘改自适应网格,五枚在 320+ 不再落单").toContain(
+      "grid-template-columns: repeat(auto-fit, minmax(2.75rem, 1fr));",
+    );
+    expect(create, "灵根圆盘由网格与视口共同定宽,不许再写死 h-16 w-16").not.toContain(
+      "grid h-16 w-16 place-items-center",
+    );
+    expect(create).toContain("width: clamp(2.8rem, 14vw, 3.4rem);");
+    expect(create, "320 以下收起纯装饰命印,把整行让给四字题名").toContain(
+      'class="opening-create__stamp compact:!hidden"',
+    );
   });
 
   it("桌面把开卷页放宽成双栏,极窄档仍收成单列且动作锁一行", () => {

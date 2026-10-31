@@ -21,7 +21,7 @@
             这一页只定两件事：此后别人如何称你，以及你带着怎样一副根骨入世。
           </p>
         </div>
-        <div class="opening-create__stamp" aria-hidden="true">命</div>
+        <div class="opening-create__stamp compact:!hidden" aria-hidden="true">命</div>
       </header>
 
       <div class="opening-create__sheet">
@@ -66,7 +66,7 @@
             <span class="opening-create__root-vein" aria-hidden="true" />
             <div v-for="root in profile.roots" :key="root.element" class="opening-create__root">
               <span
-                class="opening-create__root-disc grid h-16 w-16 place-items-center font-kai text-[26px] animate-breathe"
+                class="opening-create__root-disc grid place-items-center font-kai text-[26px] animate-breathe"
                 :style="{
                   borderColor: ELEMENTS[root.element].color,
                   color: ELEMENTS[root.element].color,
@@ -409,12 +409,12 @@ function begin(): void {
 
 .opening-create__root-stage {
   position: relative;
-  display: flex;
+  display: grid;
   min-width: 0;
-  flex-wrap: wrap;
+  grid-template-columns: repeat(auto-fit, minmax(2.75rem, 1fr));
   align-items: flex-start;
   justify-content: center;
-  gap: 0.9rem;
+  gap: 0.45rem 0.35rem;
   margin-top: 0.9rem;
   padding: 0.6rem 0 0.35rem;
 }
@@ -431,7 +431,7 @@ function begin(): void {
 .opening-create__root {
   position: relative;
   display: grid;
-  min-width: 4.2rem;
+  min-width: 0;
   justify-items: center;
   gap: 0.18rem;
 }
@@ -439,6 +439,8 @@ function begin(): void {
 .opening-create__root-disc {
   position: relative;
   z-index: 1;
+  width: clamp(2.8rem, 14vw, 3.4rem);
+  aspect-ratio: 1;
   border: 2px solid currentColor;
   border-radius: 50%;
   background:
@@ -653,10 +655,6 @@ function begin(): void {
     grid-column: 2;
     justify-self: start;
     text-align: left;
-  }
-
-  .opening-create__root {
-    min-width: 3.8rem;
   }
 }
 </style>
