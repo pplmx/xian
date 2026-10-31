@@ -1419,7 +1419,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 那一族无关),改它就得同时重测三档 —— 所以判据把两件事一起钉住。
      */
     const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
-    const grid = /<div class="(mt-2 grid[^"]*)">/.exec(souls?.src ?? "")?.[1];
+    const grid = /class="(soul-array__seats[^"]*)"/.exec(souls?.src ?? "")?.[1];
     expect(grid, "槽位网格要能定位到").toBeTruthy();
     expect(grid, "常态仍是三列").toContain("grid-cols-3");
     expect(grid, "极窄档要放开列数").toMatch(/tinylens:grid-cols-2/);

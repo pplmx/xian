@@ -1,34 +1,43 @@
 <template>
   <div class="folio-page folio-page--stack stagger-in soul-page">
     <FolioPageHeader
+      class="soul-masthead"
       title="器 魂"
       subtitle="形销意存 · 三席成阵"
       back-to="celestial"
       back-label="天界"
       featured
     >
-      <template v-if="unlocked" #visual>
-        <SoulForgeMap
-          :seats="soulSeats"
-          :idle-count="soulPulse.idleSouls.length"
-          :refinable-count="soulPulse.refinableCount"
-          :affordable-refines="soulPulse.affordableRefines"
-        />
-      </template>
-
-      <template v-if="unlocked" #action>
-        <div class="soul-source">
-          <span class="soul-source__label">道源</span>
-          <strong class="soul-source__value tabular">{{ formatNum(endgame.daoSource) }}</strong>
-          <button type="button" class="soul-source__button" @click="forgeOpen = true">开炉</button>
+      <template #backdrop>
+        <div class="soul-masthead__backdrop" aria-hidden="true">
+          <span class="soul-masthead__orbit soul-masthead__orbit--outer" />
+          <span class="soul-masthead__orbit soul-masthead__orbit--inner" />
+          <span class="soul-masthead__axis soul-masthead__axis--left" />
+          <span class="soul-masthead__axis soul-masthead__axis--right" />
+          <span class="soul-masthead__star soul-masthead__star--one" />
+          <span class="soul-masthead__star soul-masthead__star--two" />
+          <span class="soul-masthead__star soul-masthead__star--three" />
         </div>
       </template>
 
-      <!-- 卷首先报此刻:下一步、三席、闲置与可凝各有多少当下能动手 -->
+      <template v-if="unlocked" #action>
+        <div class="soul-source" data-soul-reserve>
+          <span class="soul-source__label">道源</span>
+          <strong class="soul-source__value tabular">{{ formatNum(endgame.daoSource) }}</strong>
+          <span class="soul-source__note tabular">一炉 {{ SOUL_REFINE_COST }}</span>
+        </div>
+      </template>
+    </FolioPageHeader>
+
+    <template v-if="unlocked">
+      <!--
+        三席阵账把总账、精确席位与先手收进同一张纸。
+        卷首不再另铺一张同义阵图，390 宽也能直接看到第一条可落子的席位。
+      -->
       <LedgerPulse
-        v-if="unlocked"
-        class="soul-pulse"
+        class="soul-pulse soul-array"
         data-soul-pulse
+        data-soul-array
         :seal="soulLead.mark"
         eyebrow="此刻器魂"
         :title="soulLead.title"
@@ -63,40 +72,33 @@
             @select="runSoulLedger(row.id)"
           />
         </template>
-      </LedgerPulse>
-    </FolioPageHeader>
 
-    <!-- 未至真仙:器魂随天门而启,不在凡境提前占行囊 -->
-    <UnopenedFolio
-      v-if="!unlocked"
-      title="器 魂"
-      eyebrow="形意未生"
-      lead="凡器未历天道,何来形意。器魂不是另一套背包,而是天门开启后从旧器留下的路数。"
-      :hint="`此册与天界同门。修至真仙后,才需要挑法器入炉、取舍 ${SOUL_SLOTS} 枚器魂。`"
-      :current-realm="player.realmName"
-      :current-major="player.major"
-      :gate-realm="realmDef(WORLD_BREAK_MAJOR).name"
-      :gate-major="WORLD_BREAK_MAJOR"
-    />
+        <div class="soul-array__rubric">
+          <span class="soul-array__rubric-mark" aria-hidden="true">阵</span>
+          <span>三席</span>
+          <span class="soul-array__rubric-note">
+            {{
+              activeModText
+                ? `${soulPulse.activeCount}/${soulPulse.slotTotal} 席 · 合计词条见下`
+                : `${soulPulse.activeCount}/${soulPulse.slotTotal} 席 · 尚无形意`
+            }}
+          </span>
+        </div>
 
-    <template v-else>
-      <!-- 三席:名字、词条与动作都在同一枚席位里读清 -->
-      <section class="soul-seats" data-soul-slots>
-        <SectionTitle
-          title="三席"
-          :hint="
-            activeModText
-              ? `${soulPulse.activeCount}/${soulPulse.slotTotal} 席`
-              : `${soulPulse.activeCount}/${soulPulse.slotTotal} 席 · 尚无形意`
-          "
-        />
-        <div class="mt-2 grid soul-seat-grid grid-cols-3 gap-2 tinylens:grid-cols-2">
+        <div
+          class="soul-array__seats grid grid-cols-3 gap-2 tinylens:grid-cols-2"
+          data-soul-slots
+          role="group"
+          aria-label="器魂三席"
+        >
           <div
             v-for="i in SOUL_SLOTS"
             :key="i"
-            class="card-ink soul-seat flex min-h-[104px] min-w-0 flex-col px-2 py-2"
+            class="card-ink soul-seat flex min-h-[112px] min-w-0 flex-col px-2 py-2"
             :class="soulAt(i) ? 'soul-seat--filled' : 'soul-seat--empty'"
+            :data-soul-seat-index="i"
           >
+            <span class="soul-seat__ordinal" aria-hidden="true">{{ seatOrdinal(i) }}席</span>
             <template v-if="soulAt(i)">
               <button
                 class="soul-seat__detail flex min-w-0 flex-1 flex-col items-center justify-center px-1 text-center active:scale-95"
@@ -140,7 +142,7 @@
           </div>
         </div>
         <p v-if="activeModText" class="soul-seat-total"><span>合计</span>{{ activeModText }}</p>
-      </section>
+      </LedgerPulse>
 
       <!-- 两处门径:闲置形意与凝炼台各报自己的真实账 -->
       <section class="soul-gateways" data-soul-gateways>
@@ -232,6 +234,19 @@
         </div>
       </section>
     </template>
+
+    <!-- 未至真仙:器魂随天门而启,不在凡境提前占行囊 -->
+    <UnopenedFolio
+      v-else
+      title="器 魂"
+      eyebrow="形意未生"
+      lead="凡器未历天道,何来形意。器魂不是另一套背包,而是天门开启后从旧器留下的路数。"
+      :hint="`此册与天界同门。修至真仙后,才需要挑法器入炉、取舍 ${SOUL_SLOTS} 枚器魂。`"
+      :current-realm="player.realmName"
+      :current-major="player.major"
+      :gate-realm="realmDef(WORLD_BREAK_MAJOR).name"
+      :gate-major="WORLD_BREAK_MAJOR"
+    />
 
     <!-- 已装配器魂详情:槽从"只看印章"升级为可点,全量读数同闲置行 soulModText -->
     <BaseModal
@@ -522,7 +537,6 @@ import LedgerTally from "@/components/common/LedgerTally.vue";
 import UnopenedFolio from "@/components/common/UnopenedFolio.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
-import SoulForgeMap from "@/components/celestial/SoulForgeMap.vue";
 
 const endgame = useEndgameStore();
 const inventory = useInventoryStore();
@@ -584,7 +598,7 @@ const emptySeats = computed(() =>
 
 type SoulLedgerId = "active" | "idle" | "refine";
 
-/** 卷首三枚账格与阵图、先手共读同一份 soulPulse。 */
+/** 三席阵账的三枚账格与先手共读同一份 soulPulse。 */
 const soulLedgerRows = computed(() => [
   {
     id: "active" as const,
@@ -875,24 +889,10 @@ function soulModText(soul: SoulInstance): string {
   return modsText(soulMods(soul));
 }
 
-const SOUL_SEAT_POSITIONS = [
-  { x: 52, y: 34 },
-  { x: 124, y: 34 },
-  { x: 88, y: 101 },
-] as const;
-
-/** 星图三席与正文共用 soulAt；空席只报序号，不另造一套占位数据。 */
-const soulSeats = computed(() =>
-  SOUL_SEAT_POSITIONS.map((position, index) => {
-    const soul = soulAt(index + 1);
-    return {
-      ...position,
-      filled: soul !== null,
-      mark: soul ? soulSeal(soul) : String(index + 1),
-      color: soul ? soulColor(soul) : "var(--color-ink-faint)",
-    };
-  }),
-);
+/** 席位序号只做方位提示；有无器魂仍只由 soulAt 判断。 */
+function seatOrdinal(i: number): string {
+  return ["一", "二", "三"][i - 1] ?? String(i);
+}
 
 /** 已装配器魂的合计词条 */
 const activeModText = computed(() => modsText(endgame.soulMods));

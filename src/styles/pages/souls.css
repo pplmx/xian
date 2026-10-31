@@ -1,15 +1,97 @@
 @layer reset, shared, page, app-utilities;
 @layer page {
   /*
-   * 器魂案 —— 卷首先给三席阵图，正文只留“此刻器魂”、三席与两处门径。
-   * 旧页把形意、可凝与章法摊成三张同权重的卡；现在阵图先报三席有没有落子，
-   * 总账再给一条先手，具体词条与不可逆代价仍回到席位和弹窗里读。
+   * 器魂案 —— 卷首只留题签与道源，三席阵账紧接着把总账、精确席位和先手收在一张纸。
+   * 旧页在卷首同时铺阵图、总账和三席卡，同一组数要读三遍；现在删掉装饰阵图，
+   * 让 390 宽的第一屏直接看见可落子的席位，词条与不可逆代价仍回到席位和弹窗里。
    */
+  .soul-masthead {
+    isolation: isolate;
+  }
   .soul-page .folio-masthead--featured {
     background:
       radial-gradient(circle at 80% 18%, rgb(var(--color-gold-ink-rgb) / 0.05), transparent 9rem),
       radial-gradient(circle at 70% 62%, rgb(var(--color-qing-rgb) / 0.035), transparent 7rem),
       linear-gradient(112deg, rgb(var(--color-paper-rgb) / 0.3), transparent 58%);
+  }
+  .soul-masthead__backdrop {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .soul-masthead__orbit {
+    position: absolute;
+    right: 3.5rem;
+    top: 50%;
+    width: 9.5rem;
+    height: 9.5rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.07);
+    border-radius: 50%;
+    transform: translateY(-46%);
+  }
+  .soul-masthead__orbit::before {
+    position: absolute;
+    inset: 0.7rem;
+    border: 1px dashed rgb(var(--color-qing-rgb) / 0.14);
+    border-radius: inherit;
+    content: "";
+  }
+  .soul-masthead__orbit--inner {
+    right: 5.15rem;
+    width: 6.2rem;
+    height: 6.2rem;
+    border-color: rgb(var(--color-gold-ink-rgb) / 0.13);
+    transform: translateY(-50%);
+  }
+  .soul-masthead__orbit--inner::before {
+    inset: 0.55rem;
+    border-style: solid;
+    border-color: rgb(var(--color-gold-ink-rgb) / 0.1);
+  }
+  .soul-masthead__axis {
+    position: absolute;
+    right: 1.2rem;
+    top: 50%;
+    width: 13.5rem;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(var(--color-qing-rgb) / 0.12) 38%,
+      rgb(var(--color-ink-rgb) / 0.07) 70%,
+      transparent
+    );
+  }
+  .soul-masthead__axis--left {
+    transform: rotate(28deg);
+  }
+  .soul-masthead__axis--right {
+    transform: rotate(-28deg);
+  }
+  .soul-masthead__star {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: rgb(var(--color-qing-rgb) / 0.42);
+    transform: rotate(45deg);
+  }
+  .soul-masthead__star--one {
+    right: 12.8rem;
+    top: 2.1rem;
+  }
+  .soul-masthead__star--two {
+    right: 1.9rem;
+    top: 4.7rem;
+    width: 3px;
+    height: 3px;
+    background: rgb(var(--color-gold-ink-rgb) / 0.36);
+  }
+  .soul-masthead__star--three {
+    right: 7.4rem;
+    bottom: 1.7rem;
+    width: 2px;
+    height: 2px;
   }
   .soul-page .folio-masthead__book {
     color: rgb(var(--color-ink-soft-rgb));
@@ -37,27 +119,75 @@
     font-weight: 500;
     line-height: 1.2;
   }
-  .soul-source__button {
-    min-height: 32px;
-    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.24);
-    border-radius: 1px;
-    padding: 0.28rem 0.62rem;
-    color: rgb(var(--color-cinnabar-rgb));
+  .soul-source__note {
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    padding-left: 0.5rem;
+    color: rgb(var(--color-ink-faint-rgb));
     font-size: var(--type-note);
-    letter-spacing: 0.08em;
+    line-height: 1.45;
   }
   .soul-pulse {
     --ledger-accent: var(--color-cinnabar);
   }
-  .soul-seats,
+  .soul-array {
+    margin-top: 0.72rem;
+  }
+  .soul-array__rubric {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.42rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    padding: 0.48rem 0.62rem 0;
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    letter-spacing: 0.12em;
+  }
+  .soul-array__rubric-mark {
+    display: grid;
+    width: 1.32rem;
+    height: 1.32rem;
+    flex: none;
+    place-items: center;
+    border: 1px solid rgb(var(--color-qing-rgb) / 0.28);
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  .soul-array__rubric-note {
+    min-width: 0;
+    margin-left: auto;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-body);
+    font-size: var(--type-note);
+    letter-spacing: 0;
+    line-height: 1.45;
+    text-align: right;
+  }
+  .soul-array__seats {
+    position: relative;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    padding: 0.48rem 0.62rem 0.62rem;
+  }
+  .soul-array__seats::before {
+    position: absolute;
+    top: 54%;
+    right: 9%;
+    left: 9%;
+    border-top: 1px dashed rgb(var(--color-qing-rgb) / 0.12);
+    content: "";
+    pointer-events: none;
+  }
   .soul-gateways,
   .soul-principle {
     min-width: 0;
   }
-  .soul-seat-grid {
-    align-items: stretch;
-  }
   .soul-seat {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
     border-color: rgb(var(--color-ink-rgb) / 0.13);
     background:
       linear-gradient(145deg, rgb(var(--color-paper-rgb) / 0.3), transparent 62%),
@@ -75,8 +205,18 @@
     border-style: dashed;
     background: rgb(var(--color-paper-rgb) / 0.12);
   }
+  .soul-seat__ordinal {
+    position: absolute;
+    top: 0.36rem;
+    left: 0.42rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    line-height: 1;
+  }
   .soul-seat__detail {
     width: 100%;
+    padding-top: 0.55rem;
   }
   .soul-seat__mark {
     font-size: var(--type-section);
@@ -102,8 +242,8 @@
   .soul-seat__empty {
     color: rgb(var(--color-ink-faint-rgb));
     font-family: var(--font-kai);
-    font-size: var(--type-note);
-    letter-spacing: 0.12em;
+    font-size: var(--type-body);
+    letter-spacing: 0.16em;
     text-align: center;
   }
   .soul-seat__wear {
@@ -118,7 +258,9 @@
     text-align: center;
   }
   .soul-seat-total {
-    margin-top: 0.5rem;
+    margin-top: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.07);
+    padding: 0.48rem 0.62rem 0.56rem;
     color: rgb(var(--color-gold-ink-rgb));
     font-size: var(--type-note);
     line-height: 1.6;
@@ -284,11 +426,48 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
+  @media (max-width: 359px) {
+    .soul-masthead__orbit {
+      right: -2.5rem;
+      opacity: 0.6;
+    }
+
+    .soul-masthead__orbit--inner {
+      right: -0.8rem;
+    }
+
+    .soul-masthead__axis {
+      right: -4rem;
+    }
+
+    .soul-array > .folio-ledger-head {
+      grid-template-columns: 2rem minmax(0, 1fr);
+      grid-template-areas:
+        "seal identity"
+        ". aside";
+    }
+
+    .soul-array > .folio-ledger-head .folio-ledger-head__aside {
+      width: 100%;
+      align-items: flex-start;
+    }
+
+    .soul-array > .folio-ledger-head .folio-ledger-pulse__action {
+      width: 100%;
+      text-align: center;
+    }
+  }
   @media (max-width: 220px) {
     .soul-source,
+    .soul-array__rubric,
+    .soul-array__seats,
     .soul-gateway,
     .soul-principle__sheet {
       padding-inline: 0.62rem;
+    }
+
+    .soul-masthead__backdrop {
+      display: none;
     }
 
     .soul-source {
@@ -298,6 +477,26 @@
       border-left: 0;
       padding-top: 0.42rem;
       padding-left: 0;
+    }
+
+    .soul-source__note {
+      border-left: 0;
+      padding-left: 0;
+    }
+
+    .soul-array__rubric {
+      flex-wrap: wrap;
+      row-gap: 0.24rem;
+    }
+
+    .soul-array__rubric-note {
+      width: 100%;
+      margin-left: 1.74rem;
+      text-align: left;
+    }
+
+    .soul-array__seats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .soul-gateway {

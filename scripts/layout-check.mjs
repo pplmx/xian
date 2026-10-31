@@ -11473,6 +11473,111 @@ async function taskSoulListOverflow() {
       }, kind);
     }
 
+    async function checkSoulArrayOverview(label, expectedColumns) {
+      const layout = await page.evaluate(() => {
+        const box = (el) => {
+          if (!el) return null;
+          const r = el.getBoundingClientRect();
+          return {
+            top: r.top,
+            bottom: r.bottom,
+            left: r.left,
+            right: r.right,
+            width: r.width,
+            height: r.height,
+            scrollWidth: el.scrollWidth,
+            clientWidth: el.clientWidth,
+          };
+        };
+        const masthead = document.querySelector("[data-folio-masthead]");
+        const pulse = document.querySelector("[data-soul-pulse]");
+        const seats = [...document.querySelectorAll("[data-soul-seat-index]")];
+        const identity = pulse?.querySelector(".folio-ledger-head__identity");
+        const action = pulse?.querySelector(".folio-ledger-pulse__action");
+        const dock = document.querySelector("[data-folio-dock]");
+        const dockBox = dock?.getBoundingClientRect();
+        const seatGrid = document.querySelector("[data-soul-slots]");
+        return {
+          viewport: { width: window.innerWidth, height: window.innerHeight },
+          masthead: box(masthead),
+          pulse: box(pulse),
+          identity: box(identity),
+          action: box(action),
+          seats: seats.map(box),
+          gridColumns: seatGrid
+            ? getComputedStyle(seatGrid).gridTemplateColumns.split(" ").filter(Boolean)
+            : [],
+          reserveButtons: document.querySelectorAll("[data-soul-reserve] button").length,
+          legacyMap: !!document.querySelector("[data-soul-forge-map]"),
+          dockTop:
+            dockBox &&
+            dockBox.width > 0 &&
+            dockBox.height > 0 &&
+            dockBox.top > window.innerHeight / 2
+              ? dockBox.top
+              : window.innerHeight,
+          documentOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
+        };
+      });
+      checked += 1;
+      const followsMasthead =
+        layout.masthead &&
+        layout.pulse &&
+        layout.pulse.top >= layout.masthead.bottom - 1 &&
+        layout.pulse.top - layout.masthead.bottom <= 24;
+      const sameRow =
+        layout.seats.length === 3 &&
+        new Set(layout.seats.map((seat) => Math.round(seat?.top ?? -1))).size === 1;
+      const twoColumnRows =
+        layout.seats.length === 3 &&
+        Math.abs(layout.seats[0].top - layout.seats[1].top) <= 1 &&
+        layout.seats[2].top >= layout.seats[0].bottom - 1;
+      const columnsOk = expectedColumns === 3 ? sameRow : twoColumnRows;
+      const actionStacked =
+        label !== "320" ||
+        (layout.action && layout.identity && layout.action.top >= layout.identity.bottom - 1);
+      const firstScreen =
+        label !== "390" ||
+        (layout.pulse?.bottom <= layout.dockTop + 1 &&
+          layout.action?.bottom <= layout.dockTop + 1 &&
+          layout.seats[0]?.top < layout.dockTop);
+      const fits =
+        layout.pulse &&
+        layout.pulse.left >= -1 &&
+        layout.pulse.right <= layout.viewport.width + 1 &&
+        layout.pulse.scrollWidth <= layout.pulse.clientWidth + 1 &&
+        layout.seats.every(
+          (seat) =>
+            seat &&
+            seat.left >= -1 &&
+            seat.right <= layout.viewport.width + 1 &&
+            seat.scrollWidth <= seat.clientWidth + 1 &&
+            seat.width >= (expectedColumns === 3 ? 78 : 68),
+        ) &&
+        layout.gridColumns.length === expectedColumns;
+      if (
+        !followsMasthead ||
+        !columnsOk ||
+        !actionStacked ||
+        !firstScreen ||
+        !fits ||
+        layout.reserveButtons !== 0 ||
+        layout.legacyMap ||
+        layout.documentOverflow
+      ) {
+        failures.push(
+          `[${label}] 器魂阵账没有把题签、三席与先手同时收好:` +
+            `紧随卷首=${followsMasthead} / 列=${expectedColumns} 实见 ${layout.gridColumns.length} ` +
+            `${sameRow ? "(三席并排)" : twoColumnRows ? "(两席一行)" : "(不正)"} / ` +
+            `先手另起=${actionStacked} / 首屏=${firstScreen} / ` +
+            `账盒=${layout.pulse?.left ?? "-"}..${layout.pulse?.right ?? "-"} / ` +
+            `席宽=${layout.seats.map((seat) => Math.round(seat?.width ?? 0)).join("|")} / ` +
+            `卷首动作键=${layout.reserveButtons} / 旧阵图=${layout.legacyMap} / ` +
+            `横向溢出=${layout.documentOverflow}`,
+        );
+      }
+    }
+
     async function exerciseList({
       kind,
       unit,
@@ -11622,6 +11727,20 @@ async function taskSoulListOverflow() {
       .filter({ hasText: /散置形意/ })
       .first();
     await idleEntry.waitFor({ state: "visible", timeout: 10000 }).catch(() => {});
+
+    await page.locator("[data-soul-pulse]").waitFor({ state: "visible", timeout: 10000 });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await settleVisuals(page);
+    await checkSoulArrayOverview("390", 3);
+
+    await page.setViewportSize({ width: 320, height: 568 });
+    await settleVisuals(page);
+    await checkSoulArrayOverview("320", 3);
+
+    await page.setViewportSize({ width: 195, height: 422 });
+    await settleVisuals(page);
+    await checkSoulArrayOverview("195", 2);
+
     checked += 1;
     if ((await idleEntry.count()) === 0) {
       failures.push("[320] 器魂页找不到「散置形意」入口 —— 闲置两册没有量到");

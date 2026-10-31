@@ -98,14 +98,13 @@ describe("开卷版式 · 全站册页基线外加一座游戏指挥台", () => 
     expect(character).not.toContain('<SectionTitle title="道躯"');
   });
 
-  it("坊市、门庭与器魂的此刻汇总收进卷首，不再另起同职责卡片", () => {
-    const pages = [
+  it("坊市与门庭的此刻汇总收进卷首，器魂阵账紧随题签且不再另起同职责卡片", () => {
+    const mastheadPages = [
       ["MarketView", "data-market-pulse"],
       ["ApprenticeView", "data-apprentice-pulse"],
-      ["SoulsView", "data-soul-pulse"],
     ] as const;
 
-    for (const [page, marker] of pages) {
+    for (const [page, marker] of mastheadPages) {
       const src = source(`src/views/${page}.vue`);
       const masthead = src.match(/<FolioPageHeader[\s\S]*?<\/FolioPageHeader>/)?.[0] ?? "";
 
@@ -115,6 +114,14 @@ describe("开卷版式 · 全站册页基线外加一座游戏指挥台", () => 
         `${page} 的汇总落点重复了`,
       ).toHaveLength(1);
     }
+
+    const souls = source("src/views/SoulsView.vue");
+    expect(souls, "器魂阵账缺少运行时落点").toContain("data-soul-pulse");
+    expect(souls.match(/data-soul-pulse(?![-\\w])/g), "器魂的阵账落点重复了").toHaveLength(1);
+    expect(souls, "器魂阵账仍要接在题签之后").toMatch(
+      /<\/FolioPageHeader>\s*<template v-if="unlocked">[\s\S]{0,500}<LedgerPulse/,
+    );
+    expect(souls, "器魂不再在题签里铺同义阵图").not.toContain("data-soul-forge-map");
   });
 
   it("册页语言清退大圆角 App 卡，只留纸页的小倒角", () => {

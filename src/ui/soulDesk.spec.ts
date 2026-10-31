@@ -10,31 +10,30 @@ function source(rel: string): string {
   return readFileSync(resolve(ROOT, rel), "utf8");
 }
 
-describe("器魂案 · 三席先立意,此刻再落到先手", () => {
-  it("卷首阵图读三席、闲置与可凝真值,整图不重复进入读屏", () => {
+describe("器魂案 · 题签只报道源,三席阵账紧随卷首", () => {
+  it("卷首收起同义阵图与重复开炉键,只留题签和道源", () => {
     const view = source("src/views/SoulsView.vue");
-    const map = source("src/components/celestial/SoulForgeMap.vue");
+    const action = view.slice(view.indexOf("#action"), view.indexOf("<LedgerPulse"));
 
     expect(view, "器魂卷首要走 featured 开卷版式").toMatch(
       /<FolioPageHeader[\s\S]{0,260}\bfeatured\b/,
     );
-    expect(view, "器魂阵图要进独立主视觉槽").toMatch(
-      /<template v-if="unlocked" #visual>[\s\S]{0,180}<SoulForgeMap/,
+    expect(view, "卷首不再铺与三席账同义的阵图").not.toContain("SoulForgeMap");
+    expect(view, "运行时也不该留下旧阵图").not.toContain("data-soul-forge-map");
+    expect(action, "道源读数要有独立落点").toContain("data-soul-reserve");
+    expect(action, "道源仍读同一份 endgame 数据").toContain("formatNum(endgame.daoSource)");
+    expect(action, "炉费仍读机制常量").toContain("SOUL_REFINE_COST");
+    expect(action, "卷首不重复承接开炉动作").not.toContain("<button");
+    expect(view, "三席阵账要作为卷首后的第一张纸").toMatch(
+      /<\/FolioPageHeader>\s*<template v-if="unlocked">[\s\S]{0,500}<LedgerPulse/,
     );
-    expect(view, "三席从唯一 soulAt 出口取").toContain("const soulSeats = computed");
-    expect(view, "阵图闲置数读卷首总账").toContain(':idle-count="soulPulse.idleSouls.length"');
-    expect(view, "阵图可凝数读卷首总账").toContain(':refinable-count="soulPulse.refinableCount"');
-    expect(view, "阵图可支付数读卷首总账").toContain(
-      ':affordable-refines="soulPulse.affordableRefines"',
-    );
-    expect(map, "纯视觉摘要不重复读屏正文").toContain('aria-hidden="true"');
-    expect(map, "阵图收在 390 卷首的一屏内").toMatch(/width:\s*154px;[\s\S]{0,60}height:\s*128px;/);
+    expect(view, "阵账有独立运行时落点").toContain("data-soul-array");
   });
 
-  it("此刻器魂只落一张总账,下一步按装配、取舍、开炉与回行囊带路", () => {
+  it("三席收进此刻总账,下一步按装配、取舍、开炉与回行囊带路", () => {
     const view = source("src/views/SoulsView.vue");
     const markers = view.match(/data-soul-pulse(?![-\\w])/g) ?? [];
-    const pulse = view.slice(view.indexOf("data-soul-pulse"), view.indexOf("</FolioPageHeader>"));
+    const pulse = view.slice(view.indexOf("data-soul-pulse"), view.indexOf("</LedgerPulse>"));
     const lead = view.slice(
       view.indexOf("const soulLead = computed"),
       view.indexOf("const SOUL_STEPS"),
@@ -47,6 +46,9 @@ describe("器魂案 · 三席先立意,此刻再落到先手", () => {
     expect(pulse, "三席账格由同一份行数据生成").toContain('v-for="row in soulLedgerRows"');
     expect(pulse, "账格由共享组件承担").toContain("<LedgerTally");
     expect(pulse, "器魂账格交三列").toContain(':tally-columns="3"');
+    expect(pulse, "精确三席与总账同处一张纸").toContain("data-soul-slots");
+    expect(pulse, "三席由同一份 SOUL_SLOTS 生成").toContain('v-for="i in SOUL_SLOTS"');
+    expect(pulse, "席位由唯一 soulAt 出口取").toContain("soulAt(i)");
     expect(pulse, "总账带三席运行时落点").toContain("data-soul-pulse-active");
     expect(pulse, "总账带闲置运行时落点").toContain("data-soul-pulse-idle");
     expect(pulse, "总账带可凝运行时落点").toContain("data-soul-pulse-refine");
@@ -63,16 +65,22 @@ describe("器魂案 · 三席先立意,此刻再落到先手", () => {
 
   it("三席仍由 soulAt 唯一判断,极窄档保持两列而非挤成竖排", () => {
     const view = source("src/views/SoulsView.vue");
-    const grid = /<div class="(mt-2 grid[^"]*)">/.exec(view)?.[1];
+    const grid = /class="(soul-array__seats[^"]*)"/.exec(view)?.[1];
+    const css = source("src/styles/pages/souls.css");
 
     expect(view, "有无器魂只留一处出口").toContain(
       "function soulAt(i: number): SoulInstance | null",
     );
-    expect(view, "阵图与正文共用 soulAt").toContain("const soul = soulAt(index + 1);");
-    expect(view, "正文三席仍从 SOUL_SLOTS 生成").toContain('v-for="i in SOUL_SLOTS"');
+    expect(view, "空席不再另造一套占位数据").not.toContain("SOUL_SEAT_POSITIONS");
     expect(grid, "三席网格要能定位到").toBeTruthy();
     expect(grid, "常态三列").toContain("grid-cols-3");
     expect(grid, "极窄档两列").toContain("tinylens:grid-cols-2");
+    expect(css).toMatch(
+      /\.soul-array__seats\s*\{[\s\S]{0,260}position:\s*relative;[\s\S]{0,260}grid-template-columns:\s*repeat\(3/,
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1600}\.soul-array__seats\s*\{[\s\S]{0,80}grid-template-columns:\s*repeat\(2/,
+    );
   });
 
   it("两处门径与器魂章法仍完整保留,章法退到页尾且数字读机制常量", () => {
@@ -87,7 +95,7 @@ describe("器魂案 · 三席先立意,此刻再落到先手", () => {
     expect(view, "章法仍可展开细读").toContain("soulIntroOpen");
   });
 
-  it("手机总账三栏,960 起两处门径并读,220 以下退单列", () => {
+  it("手机总账三栏,960 起两处门径并读,220 以下门径退单列", () => {
     const css = source("src/style.css");
     const start = css.indexOf(".soul-pulse {");
     const end = css.indexOf("/*\n * 开关", start);
