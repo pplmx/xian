@@ -1,318 +1,273 @@
 <template>
-  <div class="space-y-3">
-    <!-- 会话信息 -->
-    <div class="card-ink px-4 py-3">
-      <div class="flex items-center justify-between">
-        <p class="font-kai text-section tracking-widest text-ink">
-          {{ region?.name }}
-          <span class="text-body text-ink-faint">· {{ modeName }}</span>
+  <div class="combat-desk" data-combat-desk>
+    <section class="combat-session" data-combat-session>
+      <header class="combat-session__head">
+        <div class="combat-session__identity">
+          <span class="combat-session__seal" aria-hidden="true">战</span>
+          <div class="combat-session__copy">
+            <p class="combat-session__eyebrow">征途簿 · {{ modeName }}</p>
+            <h1 class="combat-session__region" data-combat-region>{{ region?.name }}</h1>
+          </div>
+        </div>
+        <p class="combat-session__clock" data-combat-clock>
+          <span>余</span>
+          <strong class="countdown-slot tabular">{{ formatCountdown(timeLeft) }}</strong>
         </p>
-        <!-- 每秒在走的倒计时同样要定宽:与状态面板同一类抖动,修就修干净 -->
-        <span class="tabular text-[12px] text-ink-soft">
-          余 <span class="countdown-slot">{{ formatCountdown(timeLeft) }}</span>
-        </span>
-      </div>
-      <!--
-        目标感:未靖的地界,打完十胜就该遇首领;不给提示的话玩家不知道还要打多久。
-        挪到读数之上、题头之下:它是这一趟的「下一步」,读数只是「走到哪了」。
-        竖笔按「将现 / 未到」分色(借 EventDialog 档位横幅的 idiom)。
-      -->
+      </header>
+
       <p
         v-if="bossHint"
-        class="mt-1 border-l-2 pl-2 text-note"
-        :class="bossSoon ? 'border-cinnabar/60 text-cinnabar' : 'border-gold-ink/60 text-gold-ink'"
+        class="combat-session__goal"
+        data-combat-goal
+        :class="bossSoon ? 'is-urgent' : ''"
       >
         {{ bossHint }}
       </p>
-      <!-- 战果四个读数各占一格:散文串里数字混在一句话中,读起来得先数逗号 -->
-      <div class="mt-1.5 grid grid-cols-4 gap-2">
-        <div>
-          <p class="text-note text-ink-faint">战绩</p>
-          <p class="tabular text-[13px] text-ink">
-            {{ session ? sessionRecordText(session) : "胜 0 场" }}
-          </p>
-        </div>
-        <div>
-          <p class="text-note text-ink-faint">际遇</p>
-          <p class="tabular text-[13px] text-ink">{{ session?.events ?? 0 }}</p>
-        </div>
-        <div>
-          <p class="text-note text-ink-faint">拾获</p>
-          <p class="tabular text-[13px] text-ink">{{ session?.itemGain ?? 0 }}</p>
-        </div>
-        <div>
-          <p class="text-note text-ink-faint">悟道</p>
-          <p class="tabular text-[13px] text-ink">{{ session?.wudaoGain ?? 0 }}</p>
+
+      <div class="combat-session__stats">
+        <div v-for="stat in sessionStats" :key="stat.id" :data-combat-stat="stat.id">
+          <span>{{ stat.label }}</span>
+          <strong class="tabular">{{ stat.value }}</strong>
         </div>
       </div>
-      <!--
-        连胜与本次所得并排一行:两者都是「这一趟的账」,各占半行、长短自定,
-        放不下就在同一个 flex 行里换行(两端对齐,不硬挤成两段)。
-      -->
-      <p
-        v-if="streakLine || gains"
-        class="mt-1 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-note"
-      >
-        <span v-if="streakLine" class="text-gold-ink tabular">{{ streakLine }}</span>
-        <!-- 本次所得:石头与修为此前只在挂机总结里出现,在线历练中玩家看不到这一趟赚了什么 -->
-        <span v-if="gains" class="text-ink-faint tabular">
-          本次所得 · 灵石 <span class="text-gold-ink">+{{ gains.stone }}</span> · 修为
-          <span class="text-jade">+{{ gains.exp }}</span>
-        </span>
-      </p>
-    </div>
 
-    <!-- 战斗面板 -->
-    <div class="card-ink relative overflow-hidden px-4 py-4">
-      <!-- 敌方 -->
-      <div
-        class="relative"
-        :class="[
-          shakeCls.e,
-          strikeCls.e,
-          flickerCls.e,
-          shieldCls.e,
-          defeated === 'e' ? 'foe-defeated' : '',
-        ]"
-      >
-        <!--
-          换敌入场:每场战罢新敌上台,前后两场长得未必一样,却没有任何「换了」的信号。
-          按 battle.at 键控重挂(换敌即重放入场动画);浮伤留在这层之外的锚点上,
-          不受重挂影响 —— 轻版淡入+上浮(enemy-enter),高速播放不闪眼。
-        -->
-        <div :key="battle?.at" class="enemy-enter">
-          <!-- 图标与首行文字顶部对齐:名字+标签换行时,图标不该跟着往下沉 -->
-          <div class="flex items-start gap-2">
+      <div v-if="streakLine || gains" class="combat-session__gains">
+        <p v-if="streakLine" class="is-gold tabular">{{ streakLine }}</p>
+        <p v-if="gains" class="tabular">
+          本次所得 <span>灵石</span>
+          <strong class="text-gold-ink">+{{ gains.stone }}</strong>
+          <span>修为</span>
+          <strong class="text-jade">+{{ gains.exp }}</strong>
+        </p>
+      </div>
+    </section>
+
+    <section class="combat-arena" data-combat-arena>
+      <header class="combat-arena__head">
+        <span>战局</span>
+        <small>敌我气血、最近一战与回放</small>
+      </header>
+
+      <div class="combat-arena__body">
+        <div class="combat-duel">
+          <div
+            class="combat-combatant combat-combatant--foe"
+            data-combat-foe
+            :class="[
+              shakeCls.e,
+              strikeCls.e,
+              flickerCls.e,
+              shieldCls.e,
+              defeated === 'e' ? 'foe-defeated' : '',
+            ]"
+          >
+            <div :key="battle?.at" class="enemy-enter">
+              <div class="combat-combatant__line">
+                <span
+                  class="combat-combatant__icon"
+                  :class="battle?.isBoss ? 'is-boss animate-glow-pulse' : ''"
+                >
+                  <GameIcon :name="battle?.enemyIcon ?? 'paw'" :size="18" />
+                </span>
+                <div class="combat-combatant__body">
+                  <p class="combat-combatant__name">
+                    <template v-if="battle">
+                      <span
+                        data-foe-name
+                        class="whitespace-nowrap"
+                        :class="battle?.isBoss ? 'text-cinnabar' : ''"
+                        >{{ battle.enemyName }}</span
+                      >
+                    </template>
+                    <template v-else>
+                      <span class="whitespace-nowrap">搜寻猎物中</span>
+                      <span class="ink-dots text-ink-faint">
+                        <span />
+                        <span />
+                        <span />
+                      </span>
+                    </template>
+                    <span v-if="foeAdaptation" class="combat-combatant__stars">
+                      <button
+                        type="button"
+                        class="tap-row -my-2 -ml-1 px-1 active:opacity-60"
+                        :aria-expanded="adaptTap === foeAdaptation.stars"
+                        @click="
+                          adaptTap = adaptTap === foeAdaptation.stars ? null : foeAdaptation.stars
+                        "
+                      >
+                        {{ starsText(foeAdaptation.stars) }}
+                      </button>
+                    </span>
+                  </p>
+                  <p v-if="adaptReveal" class="combat-combatant__reason tabular">
+                    {{ adaptReveal }}
+                  </p>
+                  <p
+                    v-if="battle && (battle.isBoss || isNemesisFoe || shownTraits.length)"
+                    class="combat-combatant__chips"
+                  >
+                    <span
+                      v-if="battle.isBoss"
+                      class="chip-ink border-cinnabar/60 text-note text-cinnabar"
+                      >首领</span
+                    >
+                    <span
+                      v-if="isNemesisFoe"
+                      class="chip-ink border-cinnabar/80 bg-cinnabar/6 text-note text-cinnabar"
+                      >宿敌</span
+                    >
+                    <span
+                      v-for="t in shownTraits"
+                      :key="t"
+                      class="chip-ink border-violet-ink/50 text-note text-violet-ink"
+                    >
+                      {{ TRAIT_NAMES[t] }}
+                    </span>
+                  </p>
+                  <ProgressBar
+                    :value="ehp"
+                    color="var(--color-cinnabar)"
+                    :height="7"
+                    class="combat-combatant__bar"
+                  />
+                </div>
+              </div>
+              <div
+                v-if="battle?.isBoss"
+                class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
+              >
+                <span class="boss-reveal combat-boss-reveal font-kai">此地之主 · 现身</span>
+              </div>
+            </div>
             <span
-              class="grid h-10 w-10 shrink-0 place-items-center rounded-full border"
+              v-for="f in floats.filter((x) => x.side === 'e')"
+              :key="f.id"
+              class="combat-float tabular font-kai"
               :class="
-                battle?.isBoss
-                  ? 'border-cinnabar/70 text-cinnabar bg-cinnabar/5 animate-glow-pulse'
-                  : 'border-ink/25 text-ink-soft bg-ink/4'
+                f.crit
+                  ? 'animate-float-crit combat-float--crit'
+                  : 'animate-float-dmg combat-float--foe'
               "
             >
-              <GameIcon :name="battle?.enemyIcon ?? 'paw'" :size="18" />
+              {{ f.text }}
             </span>
-            <div class="min-w-0 grow">
-              <!--
-              名字 + 适配星级一行,**标签另起一行**。
-
-              从前名字、首领/宿敌、特性、星级全挤在同一行 nowrap 的 flex 里:
-              名字最长 9 字(「残魂·堕落冰魄仙子」)、特性最多 3 个,窄屏上名字被挤成两行、
-              标签压在一起。标签数量不定,让它跟名字抢宽度就永远会有下一档挤法 ——
-              干脆分层:第一行只答「这是谁、我打它多合适」,第二行只答「它有什么路数」。
-            -->
-              <p class="flex flex-wrap items-center gap-x-2 gap-y-1 font-kai text-title text-ink">
-                <template v-if="battle">
-                  <span
-                    data-foe-name
-                    class="whitespace-nowrap"
-                    :class="battle?.isBoss ? 'text-cinnabar' : ''"
-                    >{{ battle.enemyName }}</span
-                  >
-                </template>
-                <template v-else>
-                  <span class="whitespace-nowrap">搜寻猎物中</span>
-                  <span class="ink-dots text-ink-faint">
-                    <span />
-                    <span />
-                    <span />
-                  </span>
-                </template>
-                <!--
-                适配星级:星是结果,「为什么」是原因 —— 手机没有 hover,原因此前只挂
-                :title 上(与方向理由同类死提示)。星级改可点,原因在名字行下直出。
-              -->
-                <span
-                  v-if="foeAdaptation"
-                  class="ml-auto shrink-0 text-note font-normal text-gold-ink tabular"
-                >
-                  <button
-                    type="button"
-                    class="tap-row -my-2 -ml-1 px-1 active:opacity-60"
-                    :aria-expanded="adaptTap === foeAdaptation.stars"
-                    @click="
-                      adaptTap = adaptTap === foeAdaptation.stars ? null : foeAdaptation.stars
-                    "
-                  >
-                    {{ starsText(foeAdaptation.stars) }}
-                  </button>
-                </span>
-              </p>
-              <p v-if="adaptReveal" class="mt-0.5 text-note leading-relaxed text-ink-faint tabular">
-                {{ adaptReveal }}
-              </p>
-              <!-- 标签行:首领 / 宿敌 / 敌人路数(特性)—— 有几个就排几个,放不下就在这一行里换行 -->
-              <p
-                v-if="battle && (battle.isBoss || isNemesisFoe || shownTraits.length)"
-                class="mt-1 flex flex-wrap items-center gap-1.5"
-              >
-                <span
-                  v-if="battle.isBoss"
-                  class="chip-ink border-cinnabar/60 text-[9px] text-cinnabar"
-                  >首领</span
-                >
-                <span
-                  v-if="isNemesisFoe"
-                  class="chip-ink border-cinnabar/80 bg-cinnabar/6 text-[9px] text-cinnabar"
-                  >宿敌</span
-                >
-                <span
-                  v-for="t in shownTraits"
-                  :key="t"
-                  class="chip-ink border-violet-ink/50 text-[9px] text-violet-ink"
-                >
-                  {{ TRAIT_NAMES[t] }}
-                </span>
-              </p>
-              <ProgressBar :value="ehp" color="var(--color-cinnabar)" :height="6" class="mt-1" />
-            </div>
           </div>
-          <!--
-          首领现身:此地之主登场那一声 —— 居中宣告淡入定住再散。
-          随外层 battle.at 键控重挂(每场首领战重放一遍),pointer-events-none 不挡操作、
-          absolute 不占几何;退场定在 opacity 0,采样量不到。
-        -->
+
+          <div class="combat-duel__axis" aria-hidden="true">
+            <span>敌</span>
+            <i />
+            <span>我</span>
+          </div>
+
           <div
-            v-if="battle?.isBoss"
-            class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
+            class="combat-combatant combat-combatant--player"
+            data-combat-player
+            :class="[
+              shakeCls.p,
+              strikeCls.p,
+              flickerCls.p,
+              shieldCls.p,
+              defeated === 'p' ? 'foe-defeated' : '',
+            ]"
           >
-            <span class="boss-reveal font-kai text-[16px] tracking-[0.35em] text-cinnabar"
-              >此地之主 · 现身</span
+            <div class="combat-combatant__line">
+              <span
+                class="combat-combatant__icon"
+                :class="defeated === 'e' ? 'foe-victorious' : ''"
+              >
+                <GameIcon name="user" :size="18" />
+              </span>
+              <div class="combat-combatant__body">
+                <p class="combat-combatant__name">{{ player.name }}</p>
+                <ProgressBar
+                  :value="php"
+                  color="var(--color-jade)"
+                  :height="7"
+                  class="combat-combatant__bar"
+                  :class="hpBelowLine ? 'ring-1 ring-cinnabar/40' : ''"
+                />
+                <p
+                  v-if="hpBelowLine"
+                  class="combat-combatant__warning"
+                  :class="lowHpGimmick ? 'text-cinnabar' : 'text-ink-faint'"
+                >
+                  {{ lowHpGimmick ? "三成以下 · 背水/破釜类效果此刻生效" : "气血已降至三成以下" }}
+                </p>
+              </div>
+            </div>
+            <span
+              v-for="f in floats.filter((x) => x.side === 'p')"
+              :key="f.id"
+              class="combat-float tabular font-kai"
+              :class="
+                f.crit
+                  ? 'animate-float-crit combat-float--crit'
+                  : 'animate-float-dmg combat-float--player'
+              "
             >
+              {{ f.text }}
+            </span>
           </div>
         </div>
-        <span
-          v-for="f in floats.filter((x) => x.side === 'e')"
-          :key="f.id"
-          class="pointer-events-none absolute right-2 top-0 tabular font-kai"
-          :class="
-            f.crit
-              ? 'animate-float-crit text-[17px] text-cinnabar'
-              : 'animate-float-dmg text-[13px] text-ink-soft'
-          "
-        >
-          {{ f.text }}
-        </span>
-      </div>
 
-      <!--
-        块序:敌 → 我 → 战报。
-        敌我在上、相邻,读的是「此刻谁占上风」;战报在下,是这一场的流水。
-        从前敌 → 战报 → 我:两条血条被一屏战报隔开,要对照得往上翻。
-      -->
-      <!-- 我方 -->
-      <div
-        class="relative mt-3"
-        :class="[
-          shakeCls.p,
-          strikeCls.p,
-          flickerCls.p,
-          shieldCls.p,
-          defeated === 'p' ? 'foe-defeated' : '',
-        ]"
-      >
-        <div class="flex items-center gap-2">
-          <span
-            class="grid h-10 w-10 place-items-center rounded-full border border-qing/50 bg-qing/5 text-qing"
-            :class="defeated === 'e' ? 'foe-victorious' : ''"
-          >
-            <GameIcon name="user" :size="18" />
-          </span>
-          <div class="grow">
-            <p class="font-kai text-title text-ink">{{ player.name }}</p>
-            <!--
-              两条血条的色各有单一用途:敌方恒为朱砂(威胁),我方恒为青玉(自身)。
-              危血不再改我方条的颜色(那会让「青玉」同时表示两种状态),改挂一圈朱砂描边 +
-              下面那行字 —— 颜色之外还有形状与文字两个信号。
-            -->
-            <ProgressBar
-              :value="php"
-              color="var(--color-jade)"
-              :height="6"
-              class="mt-1"
-              :class="hpBelowLine ? 'ring-1 ring-cinnabar/40' : ''"
-            />
-            <!-- 三成血线:跌过线血条挂朱砂描边;有背水/破釜类效果时把「正在生效」也摆出来 -->
-            <p
-              v-if="hpBelowLine"
-              class="mt-0.5 text-[9px] leading-none"
-              :class="lowHpGimmick ? 'text-cinnabar' : 'text-ink-faint'"
+        <div class="combat-report">
+          <header class="combat-report__head">
+            <div>
+              <span>战报</span>
+              <small v-if="battleLogTotal > 0" class="tabular">
+                {{ Math.min(displayed.length, battleLogTotal) }} / {{ battleLogTotal }} 行
+              </small>
+              <small v-else>山风掠过,四下无声</small>
+            </div>
+            <button
+              v-if="!playbackDone"
+              type="button"
+              class="combat-report__skip tap-row"
+              @click="skipPlayback"
             >
-              {{ lowHpGimmick ? "三成以下 · 背水/破釜类效果此刻生效" : "气血已降至三成以下" }}
+              跳过播放 »
+            </button>
+          </header>
+          <div
+            ref="logBox"
+            class="scroll-pane combat-report__scroll"
+            :class="playbackDone ? 'is-done' : 'is-playing'"
+            role="log"
+            aria-label="战斗回放"
+            aria-live="polite"
+            aria-relevant="additions text"
+          >
+            <p
+              v-for="(entry, i) in displayed"
+              :key="i"
+              data-battle-log
+              class="combat-report__line text-body"
+              :data-log-kind="entry.t"
+            >
+              <span>{{ entry.text }}</span>
+              <strong
+                v-if="entry.dmg"
+                class="combat-report__damage tabular"
+                :class="entry.t === 'crit' ? 'text-cinnabar' : ''"
+                >{{ entry.dmg }}</strong
+              >
+            </p>
+            <p v-if="displayed.length === 0" class="combat-report__empty text-body">
+              山风掠过,四下无声……
             </p>
           </div>
         </div>
-        <span
-          v-for="f in floats.filter((x) => x.side === 'p')"
-          :key="f.id"
-          class="pointer-events-none absolute right-2 top-0 tabular font-kai"
-          :class="
-            f.crit
-              ? 'animate-float-crit text-[17px] text-cinnabar'
-              : 'animate-float-dmg text-[13px] text-cinnabar'
-          "
-        >
-          {{ f.text }}
-        </span>
-      </div>
 
-      <div class="ink-divider my-2" aria-hidden="true" />
-
-      <!-- 战报 -->
-      <div class="relative">
-        <!--
-          「跳过播放」只在**还有得跳**的时候出现:播完还挂着它,等于留了个按下去
-          什么都不会发生的按钮 —— 战报框此时已经收成内容高,再没有可跳的东西。
-        -->
-        <button
-          v-if="!playbackDone"
-          class="tap-row absolute right-1 -top-0.5 z-10 -m-2 rounded-[2px] p-2 text-note text-ink-faint active:text-ink active:opacity-60"
-          @click="skipPlayback"
-        >
-          跳过播放 »
-        </button>
-        <div
-          ref="logBox"
-          class="scroll-pane space-y-1 overflow-y-auto rounded-[2px] bg-ink/4 px-3 py-2"
-          :class="playbackDone ? 'max-h-48' : 'h-48'"
-        >
-          <!--
-            data-battle-log 挂在**行**上(不是外面那层框):自检要数「这场到底出了几行」,
-            而框里还有一行占位文案「山风掠过,四下无声……」—— 挂在框上会把它一起数进去。
-            为什么要数行而不是数关键词:暴击那行只写「会心一击」,一击定胜负的战斗
-            五个关键词一个不沾,曾被误判成「回放没出内容」。
-          -->
-          <p
-            v-for="(entry, i) in displayed"
-            :key="i"
-            data-battle-log
-            class="text-[12px] leading-relaxed"
-            :class="KIND_COLOR[entry.t]"
-          >
-            {{ entry.text }}
-            <span
-              v-if="entry.dmg"
-              class="tabular"
-              :class="entry.t === 'crit' ? 'text-cinnabar' : ''"
-              >{{ entry.dmg }}</span
-            >
-          </p>
-          <p v-if="displayed.length === 0" class="pt-16 text-center text-[12px] text-ink-faint">
-            山风掠过,四下无声……
-          </p>
-        </div>
+        <BattleIntelPanel />
       </div>
-      <!--
-        战后统计/本战所得/此物所知/战斗分析 → BattleIntelPanel(拆分第六刀):
-        所知与分析只此一处消费,收进自家组件自取 store;宿主保留回放引擎与敌我半卡。
-      -->
-      <BattleIntelPanel />
+    </section>
+
+    <div class="combat-actions">
+      <button class="btn-ghost combat-actions__stop text-body" @click="stopExploration('manual')">
+        收兵回府
+      </button>
     </div>
-
-    <button class="btn-ghost w-full !py-2 !text-[13px]" @click="stopExploration('manual')">
-      收兵回府
-    </button>
   </div>
 </template>
 
@@ -340,7 +295,7 @@ import {
 } from "@/core/buildAdvisor";
 import { detectBuild } from "@/core/buildDetect";
 import { isNemesis } from "@/core/worldMemory";
-import { sessionRecordText } from "@/ui/adventureText";
+import { sessionStatRows } from "@/ui/adventureText";
 import { enemyDef } from "@/data/enemies";
 import { enemyLoreView } from "@/ui/enemyLore";
 import type { CombatLogEntry } from "@/types";
@@ -370,6 +325,7 @@ const playbackDone = computed(() => {
   // displayed 只留最近 100 行,长战斗的 total 会更大 —— 取两者的小值比较
   return total > 0 && displayed.value.length >= Math.min(total, 100);
 });
+const battleLogTotal = computed(() => Math.min(battle.value?.result.log.length ?? 0, 100));
 
 const php = ref(1);
 const ehp = ref(1);
@@ -397,6 +353,7 @@ const timeLeft = computed(() =>
   session.value ? Math.max(0, (session.value.endsAt - now.value) / 1000) : 0,
 );
 const modeName = computed(() => (session.value ? EXPLORE_MODES[session.value.mode].name : ""));
+const sessionStats = computed(() => sessionStatRows(session.value));
 
 /** 连胜与下一档赏赐:冲档要有距离感 —— 3/5/10 档的赏赐发给谁,先得让人看得见自己在几连胜 */
 const streakLine = computed(() => {
@@ -487,19 +444,6 @@ const foeAdaptation = computed(() => {
   for (const t of foeTraits.value) eco[t] = 2;
   return detectionAdaptation(build, eco, b.isBoss);
 });
-
-const KIND_COLOR: Record<CombatLogEntry["t"], string> = {
-  atk: "text-ink-soft",
-  skill: "text-qing",
-  crit: "text-cinnabar",
-  shield: "text-gold-ink",
-  heal: "text-jade",
-  dodge: "text-ink-faint",
-  proc: "text-violet-ink",
-  info: "text-ink-faint",
-  win: "text-jade font-kai",
-  lose: "text-cinnabar font-kai",
-};
 
 function stopPlayback(): void {
   if (playTimer !== undefined) {

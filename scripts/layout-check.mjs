@@ -6566,7 +6566,7 @@ async function taskCombatReplay() {
       const info = await page.evaluate(() => {
         const text = document.querySelector("main")?.innerText || "";
         return {
-          running: /余 \d+分\d+秒/.test(text),
+          running: document.querySelector("[data-combat-session]") !== null,
           /*
            * 战报行直接数回放框里的 <p>,不再拿关键词去猜文本。
            * 原来数的是 击中|施展|避开|打断|气血逆涌 五个词 —— 而暴击那行写的是
@@ -6617,6 +6617,28 @@ async function taskCombatReplay() {
       )
     ) {
       failures.push("[390] 战斗场景:战报里漏出占位符");
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    await quiesceOverlays(page);
+    await settleVisuals(page);
+    if (SHOTS) {
+      mkdirSync(SHOTS_DIR, { recursive: true });
+      await page.screenshot({
+        path: join(SHOTS_DIR, "390_battle.png"),
+        fullPage: true,
+        animations: "disabled",
+      });
+    }
+    for (const bad of await measureTextContrast(page)) {
+      contrastFails.push(
+        `[390] /adventure 战斗 ${bad.theme} ${bad.ratio}:1(需 ${bad.need})${bad.size}px «${bad.text}»`,
+      );
+    }
+    const sampler = await pixelSampler(ctx);
+    for (const bad of await pixelContrastOf(page, sampler)) {
+      pixelContrastFails.push(
+        `[390] /adventure 战斗 ${bad.theme} 5% 分位 ${bad.p05}:1 · 读不出来 ${bad.badPct}%(需 ${bad.need})${bad.size}px «${bad.text}» ${bad.cls}`,
+      );
     }
     if (pageErrors.length)
       failures.push(`[390] 战斗场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
@@ -6752,7 +6774,7 @@ async function taskEnemyCard() {
           endsAt: now + 3600000,
           nextBattleAt: now + 12000,
           wins: 4,
-          losses: 0,
+          losses: 1,
           events: 1,
           stoneGain: gn(1.2, 6),
           expGain: gn(3.4, 6),
@@ -6843,6 +6865,31 @@ async function taskEnemyCard() {
         );
       const info = await measurePage(page);
       for (const p of problemsOf(info)) failures.push(`[320-battle] /adventure → ${p}`);
+      /*
+       * 征途簿四格在宽叶上会从两列切四列。战绩是唯一会写「胜 N 场 · 负 N 场」
+       * 的长读数:390 的四分格曾只剩 69px 内容宽,后九字被 overflow:hidden 静默裁掉;
+       * 横向溢出判据量不到「盒内被裁」。这里把三档真机/缩放宽度都过一遍。
+       */
+      for (const vp of [
+        { width: 390, height: 844, tag: "390" },
+        { width: 320, height: 568, tag: "320" },
+        { width: 195, height: 422, tag: "195" },
+      ]) {
+        await page.setViewportSize({ width: vp.width, height: vp.height });
+        await page.waitForTimeout(180);
+        const clipped = await page.evaluate(() =>
+          [...document.querySelectorAll("[data-combat-stat] strong")]
+            .filter((el) => el.scrollWidth > el.clientWidth + 1)
+            .map(
+              (el) =>
+                `${el.closest("[data-combat-stat]")?.getAttribute("data-combat-stat") ?? "?"}` +
+                ` ${el.scrollWidth}>${el.clientWidth} «${(el.textContent || "").trim()}»`,
+            ),
+        );
+        checked += 1;
+        if (clipped.length)
+          failures.push(`[${vp.tag}-battle] 征途簿读数被盒内裁切:${clipped.join(" | ")}`);
+      }
     }
     if (pageErrors.length)
       failures.push(`[320-battle] 敌人卡场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);

@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { sessionRecordText } from "./adventureText";
+import { sessionRecordText, sessionStatRows } from "./adventureText";
 
 describe("历练战绩文案", () => {
   it("胜+负两本账并列;全胜只报胜场,不摆「负 0 场」", () => {
@@ -30,16 +30,41 @@ describe("历练战绩文案", () => {
       resolve(__dirname, "../components/adventure/CombatPanel.vue"),
       "utf8",
     );
-    expect(panel).toContain("sessionRecordText");
+    expect(panel).toContain("sessionStatRows");
   });
 
-  it("战斗面板四格都真有数:战绩、际遇、拾获、悟道", () => {
+  it("征途簿四格同源:战绩、际遇、拾获、悟道,坏数不落进界面", () => {
+    expect(
+      sessionStatRows({
+        wins: 2,
+        losses: 1,
+        events: 4,
+        itemGain: 3,
+        wudaoGain: 9,
+      }),
+    ).toEqual([
+      { id: "record", label: "战绩", value: "胜 2 场 · 负 1 场" },
+      { id: "events", label: "际遇", value: "4" },
+      { id: "loot", label: "拾获", value: "3" },
+      { id: "wudao", label: "悟道", value: "9" },
+    ]);
+    expect(
+      sessionStatRows({
+        wins: Number.NaN,
+        losses: -1,
+        events: Number.NaN,
+        itemGain: -3,
+        wudaoGain: 2.9,
+      }).map((row) => row.value),
+    ).toEqual(["胜 0 场", "0", "0", "2"]);
+
     const panel = readFileSync(
       resolve(__dirname, "../components/adventure/CombatPanel.vue"),
       "utf8",
     );
-    expect(panel, "网格声明了四列,就不能只放三格而空着一列").toContain("grid-cols-4");
-    expect(panel).toContain(">悟道</p>");
-    expect(panel, "第四格读会话里已累计的悟道,不另算一份").toContain("session?.wudaoGain");
+    expect(panel, "征途簿四格走同一份行数据").toContain(
+      'v-for="stat in sessionStats" :key="stat.id"',
+    );
+    expect(panel, "四格都要有稳定落点").toContain(':data-combat-stat="stat.id"');
   });
 });

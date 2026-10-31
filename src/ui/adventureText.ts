@@ -17,3 +17,25 @@ export function sessionRecordText(s: Pick<AdventureSession, "wins" | "losses">):
   if (losses <= 0) return `胜 ${wins} 场`;
   return `胜 ${wins} 场 · 负 ${losses} 场`;
 }
+
+export interface SessionStatRow {
+  id: "record" | "events" | "loot" | "wudao";
+  label: string;
+  value: string;
+}
+
+function countText(value: number): string {
+  return String(Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0);
+}
+
+/** 征途簿四格:战绩、际遇、拾获、悟道共用这一份坏值兜底。 */
+export function sessionStatRows(
+  s: Pick<AdventureSession, "wins" | "losses" | "events" | "itemGain" | "wudaoGain"> | null,
+): SessionStatRow[] {
+  return [
+    { id: "record", label: "战绩", value: s ? sessionRecordText(s) : "胜 0 场" },
+    { id: "events", label: "际遇", value: s ? countText(s.events) : "0" },
+    { id: "loot", label: "拾获", value: s ? countText(s.itemGain) : "0" },
+    { id: "wudao", label: "悟道", value: s ? countText(s.wudaoGain) : "0" },
+  ];
+}

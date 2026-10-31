@@ -1,121 +1,114 @@
 <template>
-  <!--
-    战斗情报面板 —— 战后统计行 / 本战所得 / 此物所知 / 战斗分析。
-    自 CombatPanel 拆分第六刀:所知(lore)与分析(analysis)只此一处消费,收进自家
-    组件自取 store(与 cultivation/RetreatCard 同族先例);宿主保留回放引擎
-    (逐行投入/血条/浮伤/因果环动画)、敌我半卡与适配星级(星级行仍挂敌名旁)。
-  -->
-  <!-- 战斗后统计 + 分析入口 -->
-  <p
-    v-if="battleSummary"
-    class="mt-2 flex items-center justify-center gap-2 text-center text-note text-ink-faint tabular"
-  >
-    {{ battleSummary }}
-    <!--
-      行内文字的按钮也得有 28px 触达区(见 layout-check 的判据):
-      它们此前只有一个字高(实测 15px),拇指点不着 —— 用 min-h 撑起来,
-      再用负外边距把这多出来的高度抵掉,视觉密度不变。
-    -->
-    <button
-      v-if="lore"
-      class="-my-2 inline-flex min-h-[28px] items-center px-1 text-violet-ink active:opacity-60"
-      :aria-expanded="showLore"
-      @click="showLore = !showLore"
-    >
-      {{ showLore ? "收起所知" : "此物所知 »" }}
-    </button>
-    <button
-      v-if="analysis"
-      class="-my-2 inline-flex min-h-[28px] items-center px-1 text-qing active:opacity-60"
-      :aria-expanded="showAnalysis"
-      @click="showAnalysis = !showAnalysis"
-    >
-      {{ showAnalysis ? "收起分析" : "战斗分析 »" }}
-    </button>
-  </p>
-  <!-- 本战拾获明细:战报里原本只进件数,「得了什么」全靠猜 -->
-  <p v-if="battleLoot.length" class="mt-1 text-center text-note leading-relaxed text-ink-faint">
-    <span class="text-gold-ink">本战所得</span>
-    {{ battleLoot.join(" · ") }}
-  </p>
-  <!-- 此物所知(Phase 32.5:交手越多,战前看得越清楚) -->
-  <div v-if="showLore && lore" class="mt-2 rounded-[2px] bg-ink/4 px-3 py-2.5">
-    <p class="flex items-center gap-2">
-      <span class="font-kai text-[12px] tracking-wider text-ink">{{ battle?.enemyName }}</span>
-      <span class="chip-ink border-violet-ink/50 text-[9px] text-violet-ink">{{
-        lore.stageName
-      }}</span>
-      <span v-if="lore.boosted" class="text-note text-gold-ink">宿慧照见</span>
-    </p>
-    <p v-if="lore.elementName || lore.frame.length" class="mt-1 text-body text-ink-soft">
-      <span v-if="lore.elementName" class="mr-1.5 text-qing">{{ lore.elementName }}属</span>
-      {{ lore.frame.join(" · ") }}
-    </p>
-    <p v-for="s in lore.skills" :key="s.name" class="mt-1 t-body text-ink-soft">
-      ·
-      <span class="text-ink">{{ s.name }}</span>
-      ——{{ s.note }}
-    </p>
-    <p v-for="ph in lore.phases" :key="ph.at" class="mt-1 text-body leading-relaxed text-cinnabar">
-      · {{ ph.at }}时{{ ph.label }}
-    </p>
-    <p v-if="lore.archetype" class="mt-1.5 text-body leading-relaxed text-gold-ink">
-      <span
-        v-if="lore.archetypeLabel"
-        class="mr-1 rounded-[2px] bg-gold-ink/6 px-1 py-0.5 text-note"
-      >
-        {{ lore.archetypeLabel }}
-      </span>
-      {{ lore.archetype }}
-    </p>
-    <p v-if="lore.hint" class="mt-1.5 text-note text-ink-faint">{{ lore.hint }}</p>
-  </div>
-  <!-- 战斗分析(战败自动展开;硬核数据供研究) -->
-  <div v-if="showAnalysis && analysis" class="mt-2 rounded-[2px] bg-ink/4 px-3 py-2.5">
-    <p
-      class="font-kai text-[12px] tracking-wider"
-      :class="battle?.result.win ? 'text-jade' : 'text-cinnabar'"
-    >
-      {{ analysis.headline }}
-    </p>
-    <template v-if="analysis.findings.length">
-      <p v-for="(f, i) in analysis.findings" :key="i" class="mt-1 t-body text-ink-soft">
-        · {{ f.text }}
-      </p>
-    </template>
-    <!--
-      可借力的方向:适配星级理由同款 —— 手机没有 hover,「为什么看好这个方向」
-      此前只挂在 :title 上,点了没反应 = 对触屏玩家死提示。方向名改可点、理由点开
-      直出(与「此物所知/战斗分析」同款行内按钮 idiom)。
-    -->
-    <p v-if="analysis.directions.length" class="mt-1.5 text-note text-ink-faint">
-      可借力的方向(非唯一解):
-      <span v-for="d in analysis.directions" :key="d.styleName" class="ml-1">
-        <button
-          type="button"
-          class="-my-2 inline-flex min-h-[28px] items-center px-1 text-violet-ink underline underline-offset-2 active:opacity-60"
-          :aria-expanded="directionTap === d.styleName"
-          @click="directionTap = directionTap === d.styleName ? null : d.styleName"
+  <section v-if="battleSummary && battle" class="combat-intel" data-battle-intel>
+    <header class="combat-intel__head">
+      <div class="combat-intel__verdict">
+        <span
+          class="combat-intel__seal"
+          :class="battle.result.win ? 'is-win' : 'is-loss'"
+          aria-hidden="true"
+          >{{ battle.result.win ? "胜" : "负" }}</span
         >
-          {{ d.styleName }}
+        <div class="combat-intel__summary">
+          <p class="combat-intel__eyebrow">最近一战</p>
+          <p class="combat-intel__line tabular">{{ battleSummary }}</p>
+          <p v-if="battleLoot.length" class="combat-intel__loot">
+            <span>本战所得</span>
+            {{ battleLoot.join(" · ") }}
+          </p>
+        </div>
+      </div>
+      <div class="combat-intel__toggles">
+        <button
+          v-if="lore"
+          type="button"
+          class="combat-intel__toggle combat-intel__toggle--lore tap-row"
+          :aria-expanded="showLore"
+          @click="showLore = !showLore"
+        >
+          {{ showLore ? "收起所知" : "此物所知 »" }}
         </button>
-        <span v-if="directionTap === d.styleName" class="text-violet-ink"> —— {{ d.reason }}</span>
-      </span>
-    </p>
-    <div
-      v-if="analysis.dataRows.length"
-      class="mt-2 grid grid-cols-2 gap-x-4 gap-y-0.5 border-t border-ink/10 pt-1.5"
-    >
-      <p
-        v-for="row in analysis.dataRows"
-        :key="row.label"
-        class="flex justify-between text-note tabular"
-      >
-        <span class="text-ink-faint">{{ row.label }}</span>
-        <span class="text-ink-soft">{{ row.value }}</span>
+        <button
+          v-if="analysis"
+          type="button"
+          class="combat-intel__toggle combat-intel__toggle--analysis tap-row"
+          :aria-expanded="showAnalysis"
+          @click="showAnalysis = !showAnalysis"
+        >
+          {{ showAnalysis ? "收起分析" : "战斗分析 »" }}
+        </button>
+      </div>
+    </header>
+
+    <section v-if="showLore && lore" class="combat-intel__paper" data-battle-lore>
+      <header class="combat-intel__paper-head">
+        <span class="font-kai text-body">{{ battle.enemyName }}</span>
+        <span class="chip-ink border-violet-ink/50 text-note text-violet-ink">{{
+          lore.stageName
+        }}</span>
+        <span v-if="lore.boosted" class="text-note text-gold-ink">宿慧照见</span>
+      </header>
+      <p v-if="lore.elementName || lore.frame.length" class="text-body text-ink-soft">
+        <span v-if="lore.elementName" class="mr-1.5 text-qing">{{ lore.elementName }}属</span>
+        {{ lore.frame.join(" · ") }}
       </p>
-    </div>
-  </div>
+      <p v-for="s in lore.skills" :key="s.name" class="text-body text-ink-soft">
+        <span class="combat-intel__bullet" aria-hidden="true">·</span>
+        <span class="text-ink">{{ s.name }}</span>
+        ——{{ s.note }}
+      </p>
+      <p v-for="ph in lore.phases" :key="ph.at" class="text-body text-cinnabar">
+        <span class="combat-intel__bullet" aria-hidden="true">·</span>
+        {{ ph.at }}时{{ ph.label }}
+      </p>
+      <p v-if="lore.archetype" class="text-body text-gold-ink">
+        <span v-if="lore.archetypeLabel" class="combat-intel__label text-note">
+          {{ lore.archetypeLabel }}
+        </span>
+        {{ lore.archetype }}
+      </p>
+      <p v-if="lore.hint" class="text-note text-ink-faint">{{ lore.hint }}</p>
+    </section>
+
+    <section v-if="showAnalysis && analysis" class="combat-intel__paper" data-battle-analysis>
+      <p class="text-body" :class="battle.result.win ? 'text-jade' : 'text-cinnabar'">
+        {{ analysis.headline }}
+      </p>
+      <template v-if="analysis.findings.length">
+        <p v-for="(f, i) in analysis.findings" :key="i" class="text-body text-ink-soft">
+          <span class="combat-intel__bullet" aria-hidden="true">·</span>
+          {{ f.text }}
+        </p>
+      </template>
+      <div v-if="analysis.directions.length" class="combat-intel__directions">
+        <p class="text-note text-ink-faint">可借力的方向(非唯一解):</p>
+        <div class="combat-intel__direction-list">
+          <span v-for="d in analysis.directions" :key="d.styleName">
+            <button
+              type="button"
+              class="combat-intel__direction tap-row text-body"
+              :aria-expanded="directionTap === d.styleName"
+              @click="directionTap = directionTap === d.styleName ? null : d.styleName"
+            >
+              {{ d.styleName }}
+            </button>
+            <span v-if="directionTap === d.styleName" class="text-note text-violet-ink">
+              —— {{ d.reason }}
+            </span>
+          </span>
+        </div>
+      </div>
+      <div v-if="analysis.dataRows.length" class="combat-intel__data">
+        <p
+          v-for="row in analysis.dataRows"
+          :key="row.label"
+          class="combat-intel__data-row text-note tabular"
+        >
+          <span>{{ row.label }}</span>
+          <strong>{{ row.value }}</strong>
+        </p>
+      </div>
+    </section>
+  </section>
 </template>
 
 <script setup lang="ts">
