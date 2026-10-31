@@ -68,7 +68,10 @@
         </p>
         <slot name="meta" />
       </div>
-      <div v-if="$slots.visual" class="ml-auto shrink-0 compact:hidden tinylens:hidden">
+      <div
+        v-if="$slots.visual"
+        class="folio-masthead__visual ml-auto shrink-0 compact:hidden tinylens:hidden"
+      >
         <slot name="visual" />
       </div>
       <div
@@ -79,7 +82,7 @@
       </div>
     </div>
 
-    <div v-if="$slots.default" class="relative z-10 mt-3">
+    <div v-if="$slots.default" class="relative z-10 mt-3" data-folio-default>
       <slot />
     </div>
   </header>

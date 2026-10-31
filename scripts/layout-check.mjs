@@ -311,6 +311,8 @@ let pixelTextsSeen = 0;
 let desktopFolioSeen = 0;
 /** 1280 桌面档逐页核过多少次书脊、当前册与底栏退场 */
 let desktopSpineSeen = 0;
+/** 844×390 横屏档逐页核过多少次卷首收缩与正文露头 */
+let landscapeMastheadSeen = 0;
 /** 拦掉的外域请求数 —— 打印出来,顺带证明这条拦截是活的 */
 // 外域请求拦截:计数在 context 层累积,收尾打印(见 auditContext)
 
@@ -2127,6 +2129,48 @@ async function taskPageTour(vp) {
     controlHostsSeen += info.nestedControls?.hosts ?? 0;
     const problems = problemsOf(info);
     if (problems.length) failures.push(`[${vp.tag}] ${route} → ${problems.join(" / ")}`);
+    if (vp.tag === "844x390") {
+      const landscape = await page.evaluate(() => {
+        const head = document.querySelector("[data-folio-masthead]");
+        if (!head) return null;
+        const visual = head.querySelector(".folio-masthead__visual");
+        const next = head.nextElementSibling;
+        const dock = document.querySelector(".bottom-dock-rail");
+        const headBox = head.getBoundingClientRect();
+        const nextBox = next?.getBoundingClientRect();
+        const dockBox = dock?.getBoundingClientRect();
+        return {
+          height: Math.round(headBox.height),
+          visual: visual ? getComputedStyle(visual).display : null,
+          hasDefault: !!head.querySelector("[data-folio-default]"),
+          nextTop: nextBox ? Math.round(nextBox.top) : null,
+          dockTop: dockBox ? Math.round(dockBox.top) : null,
+        };
+      });
+      landscapeMastheadSeen += 1;
+      checked += 1;
+      if (!landscape) {
+        failures.push(`[${vp.tag}] ${route} 横屏卷首没量到,判据空转`);
+      } else {
+        if (!landscape.hasDefault && landscape.height > 310) {
+          failures.push(`[${vp.tag}] ${route} 矮横屏卷首高 ${landscape.height}px,超过 310px 上限`);
+        }
+        if (landscape.visual && landscape.visual !== "none") {
+          failures.push(`[${vp.tag}] ${route} 矮横屏还在卷首重复铺主视觉`);
+        }
+        if (
+          !landscape.hasDefault &&
+          landscape.nextTop !== null &&
+          landscape.dockTop !== null &&
+          landscape.nextTop > landscape.dockTop - 40
+        ) {
+          failures.push(
+            `[${vp.tag}] ${route} 横屏卷首挡住正文:` +
+              `下一段在 ${landscape.nextTop}px,底栏在 ${landscape.dockTop}px`,
+          );
+        }
+      }
+    }
     const turnerIndex = NAVIGATION_ENTRIES.findIndex((entry) => entry.to === route);
     const expectedTurner = [
       NAVIGATION_ENTRIES[turnerIndex - 1]?.to,
@@ -13000,6 +13044,11 @@ if (desktopSpineSeen < ROUTES.length) {
     `桌面书脊只量了 ${desktopSpineSeen}/${ROUTES.length} 页 —— 1280 巡页没把新导航全部覆盖`,
   );
 }
+if (landscapeMastheadSeen < ROUTES.length) {
+  failures.push(
+    `矮横屏卷首只量了 ${landscapeMastheadSeen}/${ROUTES.length} 页 —— 844×390 巡页没覆盖全量路由`,
+  );
+}
 
 /**
  * 产物层静态判据:**首页不许引用任何外链**。
@@ -13035,6 +13084,7 @@ if (failures.length === 0) {
   console.log("✓ 顶栏一格一行(320 窄屏与横屏、桌面都不折行)");
   console.log(`✓ 桌面书桌(${desktopFolioSeen} 页:五册双页、十一册宽案、设置读卷)`);
   console.log(`✓ 桌面书脊(${desktopSpineSeen} 页:十七册齐全、当前册唯一、手机底栏退场)`);
+  console.log(`✓ 矮横屏卷首(${landscapeMastheadSeen} 页:重复主视觉收起、正文探出导航)`);
   console.log("✓ 桌面名兽案(名号 / 灵兽)总案与全谱并读");
   console.log("✓ 桌面界域志当前卷与境界谱并读");
   console.log(`✓ 主值行一格一行(${valueRowsSeen} 处带 data-value-row 的行没被次要读数挤折)`);

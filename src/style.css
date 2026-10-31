@@ -2222,6 +2222,42 @@
       user-select: none;
     }
   }
+  /*
+   * 矮横屏先让正文进首屏。
+   *
+   * 844×390 这类横屏手机有足够宽度、却没有足够高度;卷首右侧的法球、星图、
+   * 灵根印与正文里的同一份状态重复,留在那里会把正文推到导航后面。这里只收
+   * 重复主视觉与卷首留白,标题、说明、元数据与册目仍原样保留;竖屏和桌面不受
+   * 影响。判据见 folioMasthead.spec 与真浏览器巡页。
+   */
+  @media (min-width: 620px) and (max-height: 560px) {
+    .app-shell .folio-masthead {
+      padding-block: 0.5rem;
+    }
+
+    .app-shell .folio-masthead > .relative.z-10.mt-2 {
+      margin-top: 0.375rem;
+      gap: 0.5rem 0.75rem;
+    }
+
+    .app-shell .folio-masthead > .relative.z-10.mt-3 {
+      margin-top: 0.375rem;
+    }
+
+    .app-shell .folio-masthead__visual {
+      display: none;
+    }
+
+    .app-shell .folio-masthead .folio-seal {
+      width: 2.25rem;
+      height: 2.25rem;
+    }
+
+    .app-shell .folio-masthead h1 + p {
+      margin-top: 0.125rem;
+      line-height: 1.35;
+    }
+  }
   html[data-theme="dark"] .bottom-dock-rail {
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.05),

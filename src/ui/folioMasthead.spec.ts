@@ -51,6 +51,26 @@ describe("册页卷首 · 一页只讲清一件事", () => {
     );
   });
 
+  it("矮横屏把重复主视觉收起，卷首与正文一起进首屏", () => {
+    const masthead = source("src/components/common/FolioPageHeader.vue");
+    const css = source("src/style.css");
+    const layout = source("scripts/layout-check.mjs");
+
+    expect(masthead, "主视觉要有稳定落点供横屏收起").toContain("folio-masthead__visual");
+    expect(masthead, "卷首内嵌总账要有稳定落点").toContain("data-folio-default");
+    expect(css, "矮横屏要有独立断点，不与手机竖屏或桌面书桌混用").toMatch(
+      /@media \(min-width: 620px\) and \(max-height: 560px\)\s*\{[\s\S]{0,1600}?\.app-shell \.folio-masthead__visual\s*\{[\s\S]{0,100}?display:\s*none;/,
+    );
+    expect(css, "矮横屏卷首要收掉上下留白").toMatch(
+      /@media \(min-width: 620px\) and \(max-height: 560px\)\s*\{[\s\S]{0,700}?\.app-shell \.folio-masthead\s*\{[\s\S]{0,160}?padding-block:\s*0\.5rem;/,
+    );
+    expect(css, "题签与册目两行在矮横屏也要收紧").toMatch(
+      /@media \(min-width: 620px\) and \(max-height: 560px\)\s*\{[\s\S]{0,1200}?\.app-shell \.folio-masthead > \.relative\.z-10\.mt-2\s*\{[\s\S]{0,160}?margin-top:\s*0\.375rem;/,
+    );
+    expect(layout, "真浏览器要逐页守住矮横屏卷首").toContain("landscapeMastheadSeen");
+    expect(layout, "真浏览器要量到正文探出导航上沿").toContain("横屏卷首挡住正文");
+  });
+
   it("详情页族全部换用同一枚卷首，不再各手搓一条返回线与标题", () => {
     const pages = [
       "DongfuView",
