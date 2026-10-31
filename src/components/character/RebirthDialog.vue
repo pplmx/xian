@@ -1,246 +1,315 @@
 <template>
-  <!-- 轮回弹窗(自 CharacterView 迁入;逆旅契的「立契」入口在轮回弹窗内,两浮层同宿主不拆散) -->
-  <BaseModal :open="open" title="轮回" @close="emit('close')">
-    <!--
-      道果条:先给「有多少」,再给「这有多少用」。
+  <!-- 兵解往生:先把此世门槛、能带走什么与会失去什么摊开,再进入三步往生。 -->
+  <BaseModal :open="open" size="wide" title="兵解往生" @close="emit('close')">
+    <article v-if="open" class="rebirth-folio stagger-in" data-rebirth-folio>
+      <header class="rebirth-head">
+        <span class="rebirth-head__seal font-kai" aria-hidden="true">轮</span>
+        <div class="rebirth-head__identity">
+          <p class="rebirth-head__eyebrow">
+            第 {{ currentLife }} 世 · 此世收官
+            <span v-if="signedTrial">· 逆旅契在身</span>
+          </p>
+          <h2 class="rebirth-head__title">
+            {{ player.name }}
+            <span>{{ player.realmName }}</span>
+          </h2>
+          <p class="rebirth-head__brief">
+            行世
+            {{ yearsShown(player.age) }}
+            载。兵解不是清档:先回顾此生,再择来世的先天之姿与命题,三程走完才会落定。
+          </p>
+        </div>
+        <p
+          class="rebirth-head__gate"
+          data-rebirth-gate
+          :data-rebirth-gate-state="canRebirth ? 'open' : 'locked'"
+        >
+          {{ canRebirth ? `${gateRealm.name}门槛已过` : `尚差 ${gateGap} 境` }}
+        </p>
+      </header>
 
-      此前是一个 justify-between 的两端布局:左边一坨(名号 + 永久积累 + 每枚名义
-      + 软上限说明,四行),右边孤零零一个 12。读起来像「一段说明书配了个数字」——
-      而这一屏最该先看见的就是那个数。现在改成:数字与「有效收益」并排成一组读数,
-      每枚名义那句留作组下的一句注解。
-    -->
-    <div class="rounded-[2px] bg-violet-ink/[0.05] px-3 py-2.5">
-      <div class="flex items-baseline justify-between gap-2">
-        <span class="text-body text-ink-soft">
-          道果
-          <span class="ml-1 text-note text-violet-ink">【永久积累】</span>
-        </span>
-        <span class="flex items-baseline gap-2">
-          <span class="tabular font-kai text-heading leading-none text-cinnabar">{{
-            formatNum(player.reincarnation.daoFruit)
-          }}</span>
-          <span class="text-note text-ink-faint">枚</span>
-        </span>
+      <section class="rebirth-now" data-rebirth-now>
+        <header class="rebirth-now__head">
+          <span class="rebirth-now__mark font-kai" aria-hidden="true">此</span>
+          <div>
+            <p class="rebirth-now__title">此刻要决定的事</p>
+            <p class="rebirth-now__hint">这不是一次普通确认。先把底账核对清楚,再进往生三程。</p>
+          </div>
+        </header>
+
+        <p class="rebirth-now__contract">
+          下一屏只作回顾;真正不可撤回的落子,是末程的「踏入轮回」。此前都还来得及回到这一页。
+        </p>
+
+        <div class="rebirth-balance" data-rebirth-summary>
+          <p class="rebirth-balance__row is-keep">
+            <span>随魂</span>
+            <strong class="tabular">{{ keepCount }}</strong>
+            <small>项留下</small>
+          </p>
+          <p class="rebirth-balance__row is-partial">
+            <span>折损</span>
+            <strong class="tabular">{{ partialCount }}</strong>
+            <small>项只留一部分</small>
+          </p>
+          <p class="rebirth-balance__row is-reset">
+            <span>归尘</span>
+            <strong class="tabular">{{ resetCount }}</strong>
+            <small>项随皮囊散去</small>
+          </p>
+        </div>
+      </section>
+
+      <div class="rebirth-detail-grid">
+        <section class="rebirth-panel rebirth-dao" data-rebirth-dao-fruit>
+          <header class="rebirth-panel__head">
+            <div>
+              <p class="rebirth-panel__eyebrow">永久积累</p>
+              <p class="rebirth-panel__title">道果</p>
+            </div>
+            <p class="rebirth-dao__total tabular">
+              {{ formatNum(player.reincarnation.daoFruit) }}<small>枚</small>
+            </p>
+          </header>
+          <dl class="rebirth-dao__rows">
+            <div>
+              <dt>当前有效收益</dt>
+              <dd>{{ fruitInfo.effectiveText }} 枚</dd>
+            </div>
+            <div>
+              <dt>修行加成</dt>
+              <dd>{{ fruitInfo.cultBonusText }}</dd>
+            </div>
+            <div>
+              <dt>再凝一枚</dt>
+              <dd>
+                有效 {{ fruitInfo.nextEffectiveText }} 枚
+                <span class="tabular">· +{{ fruitInfo.deltaPct }}%</span>
+              </dd>
+            </div>
+          </dl>
+          <p class="rebirth-panel__note">
+            每枚名义:修行 +{{ formatPercent(DAO_FRUIT_CULT_BONUS, 0) }},道躯 +{{
+              formatPercent(DAO_FRUIT_COMBAT_BONUS, 0)
+            }}。
+          </p>
+          <p class="rebirth-panel__note">{{ softCapText }}</p>
+        </section>
+
+        <section class="rebirth-panel rebirth-talents" data-rebirth-talents>
+          <header class="rebirth-panel__head">
+            <div>
+              <p class="rebirth-panel__eyebrow">随魂不灭</p>
+              <p class="rebirth-panel__title">先天之姿</p>
+            </div>
+            <p class="rebirth-talents__total tabular">{{ ownedTalents.length }}<small>项</small></p>
+          </header>
+          <div v-if="ownedTalents.length" class="rebirth-talents__list">
+            <button
+              v-for="t in ownedTalents"
+              :key="t.id"
+              type="button"
+              class="rebirth-talent"
+              :style="{ color: TALENT_GRADE_COLORS[t.grade] }"
+              :aria-expanded="talentTap === t.id"
+              :aria-label="`${t.name}，${TALENT_GRADE_NAMES[t.grade]}，展开效果`"
+              @click="talentTap = talentTap === t.id ? null : t.id"
+            >
+              <span class="rebirth-talent__name">{{ t.name }}</span>
+              <span class="rebirth-talent__grade">{{ TALENT_GRADE_NAMES[t.grade] }}</span>
+            </button>
+          </div>
+          <p v-else class="rebirth-panel__empty">转世之后,才会觉醒第一项先天之姿。</p>
+          <div v-if="tappedTalent" class="rebirth-talent__detail" data-rebirth-talent-detail>
+            <p>
+              <span :style="{ color: TALENT_GRADE_COLORS[tappedTalent.grade] }">{{
+                tappedTalent.name
+              }}</span>
+              · {{ tappedTalent.desc }}
+            </p>
+            <p v-if="modsText(tappedTalent.mods)" class="is-qing">
+              {{ modsText(tappedTalent.mods) }}
+            </p>
+          </div>
+        </section>
       </div>
-      <!-- S3 道果收益:有效值(边际渐减后的真值)紧跟实数,两个数一起读 -->
-      <p class="mt-1 flex items-baseline justify-between text-body tabular">
-        <span class="text-ink-faint">有效收益</span>
-        <span>
-          <span class="text-gold-ink">{{ fruitInfo.effectiveText }} 枚</span>
-          <span class="ml-1 text-note text-ink-faint"
-            >(边际渐减){{
-              fruitInfo.total > 0 ? ` · 当前修行 ${fruitInfo.cultBonusText}` : ""
-            }}</span
-          >
-        </span>
-      </p>
-      <p class="mt-1 text-note leading-relaxed text-ink-faint">
-        每枚名义:修行 +{{ formatPercent(DAO_FRUIT_CULT_BONUS, 0) }},道躯 +{{
-          formatPercent(DAO_FRUIT_COMBAT_BONUS, 0)
-        }};合计受软上限,转世保留
-      </p>
-      <!--
-        软上限到底怎么递减、从多少开始 —— 上一句只说了"受软上限",玩家读完仍不知道
-        二十枚是个坎。白话出在 core/resourceGuidance 一处(与有效收益同模块),不在这里另写。
-      -->
-      <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
-        {{ softCapText }}
-      </p>
-    </div>
-    <!-- 逆旅契:道果的第一个消费出口。花道果换一世逆境,回报只有履历 -->
-    <div
-      class="mt-2 flex items-center justify-between gap-2 rounded-[2px] border border-ink/15 px-3 py-2"
-    >
-      <span class="min-w-0 text-body text-ink-soft">
-        逆旅契
-        <span class="ml-1 text-note text-violet-ink">【本世 · 消耗道果】</span>
-        <span class="block text-note text-ink-faint">
-          {{
-            signedTrial
-              ? `此生已立「${signedTrial.name}」·${signedTrial.ruleText}`
-              : "以道果换一世逆境,所得唯有履历一笔"
-          }}
-        </span>
-      </span>
-      <!-- 拇指够得着:纯文字按钮只有 18px 高,补成 30px(弹窗里的可点元素同样受 28px 那条约束) -->
-      <button
-        v-if="!signedTrial"
-        class="shrink-0 px-2 py-1.5 text-body text-gold-ink underline underline-offset-2 active:text-cinnabar"
-        @click="trialOpen = true"
-      >
-        立契
-      </button>
-      <span v-else class="shrink-0 font-kai text-section text-cinnabar">{{
-        signedTrial.seal
-      }}</span>
-    </div>
 
-    <!--
-      先天之姿要有自己的名字。
+      <section class="rebirth-ledger" data-rebirth-ledger>
+        <header class="rebirth-ledger__head">
+          <div>
+            <p class="rebirth-panel__eyebrow">去留同源</p>
+            <p class="rebirth-panel__title">此世交割</p>
+            <p class="rebirth-ledger__hint">
+              条目直接取轮回结算的同一份继承表。先看影响最大的几笔,再展开全账。
+            </p>
+          </div>
+          <p class="rebirth-ledger__count tabular">{{ totalCount }}<small>项</small></p>
+        </header>
 
-      截图里这排芯片直接接在逆旅契卡片下方,没有任何标题 —— 读者看到的是
-      「一张卡片后面冒出一串彩色词」,像是逆旅契的附录。而它们其实是转世
-      带得走的那批东西里最要紧的一样。
+        <div class="rebirth-critical" data-rebirth-critical>
+          <p class="rebirth-critical__caption">先看这些</p>
+          <div class="rebirth-critical__grid">
+            <p
+              v-for="row in criticalRows"
+              :key="row.id"
+              class="rebirth-critical__row"
+              :class="row.tone"
+              :data-rebirth-critical-row="row.id"
+            >
+              <span class="rebirth-critical__mark font-kai" aria-hidden="true">{{ row.mark }}</span>
+              <span class="rebirth-critical__name">{{ row.name }}</span>
+              <span class="rebirth-critical__group">{{ row.groupTitle }}</span>
+            </p>
+          </div>
+        </div>
 
-      「{n} 项」跟在标题后面:数目本身就是玩家想知道的一半。
-    -->
-    <div class="mt-3 flex items-baseline justify-between">
-      <span class="font-kai text-title tracking-[0.25em] text-ink">先天之姿</span>
-      <span v-if="ownedTalents.length" class="text-note text-ink-faint tabular"
-        >{{ ownedTalents.length }} 项</span
-      >
-    </div>
-    <div class="mt-1.5">
-      <div class="flex flex-wrap gap-1.5">
-        <!-- 天赋效果不再只藏 hover:点一下芯片,下面展开一行说明(手机上看得见才算数) -->
         <button
-          v-for="t in ownedTalents"
-          :key="t!.id"
-          class="chip-ink border-current bg-transparent text-left"
-          :style="{ color: TALENT_GRADE_COLORS[t!.grade] }"
-          :title="t!.desc"
-          :aria-expanded="talentTap === t!.id"
-          @click="talentTap = talentTap === t!.id ? null : t!.id"
+          type="button"
+          class="rebirth-ledger__toggle"
+          data-rebirth-heritage-toggle
+          :aria-expanded="heritageOpen"
+          @click="heritageOpen = !heritageOpen"
         >
-          {{ t!.name }}
+          <span>{{ heritageOpen ? "收起去留全账" : `展开去留全账（${totalCount} 项）` }}</span>
+          <span aria-hidden="true">{{ heritageOpen ? "▾" : "▸" }}</span>
         </button>
-        <span v-if="!ownedTalents.length" class="text-body text-ink-faint"
-          >转世后可觉醒先天之姿</span
-        >
-      </div>
-      <p v-if="talentTap && tappedTalent" class="mt-1.5 text-note leading-relaxed text-ink-faint">
-        <span :style="{ color: TALENT_GRADE_COLORS[tappedTalent.grade] }">{{
-          tappedTalent.name
-        }}</span>
-        ：{{ tappedTalent.desc }}
-        <span class="mt-0.5 block text-qing">{{ modsText(tappedTalent.mods) }}</span>
-      </p>
-    </div>
-    <p class="mt-3 t-body text-ink-faint">
-      兵解转世保留道果 / 先天之姿 /
-      称号等随魂之物;功法回一层,法宝归尘,余者随皮囊散去。金丹境方可自行兵解。
-    </p>
-    <!--
-      去留一览:兵解是不可逆的大事,一句「随皮囊散去」盖不住整本账 ——
-      哪一样去了哪、留下什么,读的就是 core/samsaraAudit 那份 HERITAGE(同表,不另写)。
-      默认收起:不压弹窗高度,按下前点开即可核对。
-    -->
-    <button
-      class="mt-2 flex w-full items-center justify-between px-2 py-2 text-left text-body text-ink-soft active:opacity-60"
-      :aria-expanded="heritageOpen"
-      @click="heritageOpen = !heritageOpen"
-    >
-      <span>转世去留一览({{ keepCount }} 留 · {{ resetCount }} 去)</span>
-      <span class="text-note text-qing">{{ heritageOpen ? "▾ 收 起" : "▸ 展 开" }}</span>
-    </button>
-    <!--
-      折叠态也要报出「打折的那几条」:光看「16 留 · 20 去」,玩家不知道留下的
-      有 4 条其实是折半 —— 「功法回一层」这种损失预期,不该等展开了才看见。
-    -->
-    <p
-      v-if="!heritageOpen && partialKeepRows.length"
-      class="mt-1 px-2 text-note leading-relaxed text-ink-faint"
-    >
-      其中 {{ partialKeepRows.length }} 条折半或部分保留:{{
-        partialKeepRows.map((r) => r.name).join(" · ")
-      }}
-    </p>
-    <!--
-      列表自带一个滚动区(max-h-64),而不是靠整块面板滚 —— 面板滚的话,列表尾
-      会被页脚按钮齐齐切掉,看起来像「列表到此为止」。外圈套 .scroll-fade
-      负责在底边淡出一层(见 style.css):还有下文时那一截是虚的。
-    -->
-    <div v-if="heritageOpen" class="scroll-fade mt-1.5">
-      <div class="scroll-pane max-h-64 overflow-y-auto rounded-[2px] bg-paper-deep/60 px-3 py-2">
-        <!--
-          两组各带一枚色点与自己的小标:一条细线分不开「留下」与「归尘」这两件相反的事。
-          上组(随魂)走玉色、下组(归尘)走淡墨 —— 颜色在这一屏就是结论。
-        -->
-        <p class="flex items-center gap-1.5 text-note text-jade">
-          <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-jade" aria-hidden="true" />
-          随魂留存
-        </p>
-        <div class="mt-1 space-y-1">
-          <p
-            v-for="row in heritageKeepRows"
-            :key="row.id"
-            class="flex items-baseline justify-between gap-2 text-note"
-          >
-            <span class="text-ink-soft">{{ row.name }}</span>
-            <!--
-              右侧只在**有例外**时才写字。
-              这一组本来就是「随魂留存」,十六行里十三行右侧印着同一句「随魂留存」——
-              重复的组名不提供任何信息,只把真正的例外(折半 / 部分保留)淹掉。
-              组名由上面的色点标题负责;这里只报「不是全额留下」的那几条。
-            -->
-            <span v-if="row.modeLabel !== FULL_KEEP_LABEL" class="shrink-0" :class="row.cls">{{
-              row.modeLabel
+
+        <div v-if="heritageOpen" class="scroll-fade rebirth-ledger__fold">
+          <div class="scroll-pane max-h-64 overflow-y-auto rebirth-ledger__scroll">
+            <section
+              v-for="group in heritageLedger"
+              :key="group.mode"
+              class="rebirth-group"
+              :class="group.tone"
+              :data-rebirth-group="group.mode"
+            >
+              <header class="rebirth-group__head">
+                <span class="rebirth-group__mark font-kai" aria-hidden="true">{{
+                  group.mark
+                }}</span>
+                <p>{{ group.title }}</p>
+                <span class="tabular">{{ group.count }} 项</span>
+              </header>
+              <div class="rebirth-group__rows">
+                <button
+                  v-for="row in group.rows"
+                  :key="row.id"
+                  type="button"
+                  class="rebirth-ledger-row"
+                  :data-rebirth-ledger-row="row.id"
+                  :data-rebirth-ledger-mode="row.mode"
+                  :aria-expanded="heritageTap === row.id"
+                  :aria-label="`${row.name}，${group.title}，${heritageTap === row.id ? '收起说明' : '展开说明'}`"
+                  @click="heritageTap = heritageTap === row.id ? null : row.id"
+                >
+                  <span class="rebirth-ledger-row__name">{{ row.name }}</span>
+                  <span class="rebirth-ledger-row__state">{{ group.title }}</span>
+                  <span class="rebirth-ledger-row__mark" aria-hidden="true">{{
+                    heritageTap === row.id ? "−" : "+"
+                  }}</span>
+                  <span v-if="heritageTap === row.id" class="rebirth-ledger-row__detail">
+                    {{ row.detail }}
+                  </span>
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="rebirth-last-call">
+        <div class="rebirth-trial" data-rebirth-trial>
+          <div class="rebirth-trial__head">
+            <div>
+              <p class="rebirth-panel__eyebrow">本世最后一笔</p>
+              <p class="rebirth-panel__title">逆旅契</p>
+            </div>
+            <span v-if="signedTrial" class="rebirth-trial__seal font-kai" aria-hidden="true">{{
+              signedTrial.seal
             }}</span>
+            <button v-else type="button" class="rebirth-trial__open" @click="trialOpen = true">
+              立一契
+            </button>
+          </div>
+          <p v-if="signedTrial" class="rebirth-trial__copy">
+            此生已立「{{ signedTrial.name }}」。{{ signedTrial.ruleText }}
+          </p>
+          <p v-else class="rebirth-trial__copy">
+            仍可花道果押下一世逆境。契只留履历,不添属性;转世时随皮囊散去。
           </p>
         </div>
-        <p class="mt-2.5 flex items-center gap-1.5 text-note text-ink-faint">
-          <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-ink/20" aria-hidden="true" />
-          归尘散去
-        </p>
-        <div class="mt-1 space-y-1">
-          <p
-            v-for="row in heritageResetRows"
-            :key="row.id"
-            class="flex items-baseline justify-between gap-2 text-note"
-          >
-            <span class="text-ink-faint">{{ row.name }}</span>
-            <span class="shrink-0" :class="row.cls">{{ row.modeLabel }}</span>
-          </p>
+
+        <div class="rebirth-departure">
+          <p class="rebirth-departure__mark font-kai" aria-hidden="true">诀</p>
+          <div>
+            <p class="rebirth-departure__title">此刻按下的，只是开卷</p>
+            <p class="rebirth-departure__copy">
+              先看清此生带得走什么、放得下什么：功法回一层，法宝归尘，余者随皮囊散去。往生三程里仍可停步，最后一步才会真正落定。
+            </p>
+          </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </article>
+
     <template #footer>
-      <button class="btn-ghost w-full !text-body" :disabled="!canRebirth" @click="rebirth">
-        {{
-          canRebirth ? "兵解转世" : `${REALMS[MANUAL_REBIRTH_MIN_MAJOR]?.name ?? ""}境方可自行兵解`
-        }}
-      </button>
+      <div class="rebirth-actions">
+        <p class="rebirth-actions__gate" :class="{ 'is-open': canRebirth }">
+          <template v-if="canRebirth">
+            {{ gateRealm.name }}门槛已过。下一步先回顾此生，不会立刻清空外物。
+          </template>
+          <template v-else> {{ gateRealm.name }}境方可自行兵解，尚差 {{ gateGap }} 境。 </template>
+        </p>
+        <button
+          type="button"
+          class="btn-seal rebirth-actions__button"
+          data-rebirth-enter
+          :disabled="!canRebirth"
+          @click="rebirth"
+        >
+          <span>{{ canRebirth ? "兵解转世" : `尚差 ${gateGap} 境` }}</span>
+          <small>{{
+            canRebirth ? "先回顾此生，再定来世" : `${gateRealm.name}境方可自行兵解`
+          }}</small>
+        </button>
+      </div>
     </template>
   </BaseModal>
 
-  <!-- 逆旅契弹窗:一世一份,签下不可解除;只加难度,不给任何属性或资源 -->
+  <!-- 逆旅契:一世一份,只加难度,不添属性;与往生帖同一宿主,免得立契入口失散。 -->
   <BaseModal :open="trialOpen" title="逆旅契" @close="trialOpen = false">
-    <p class="t-body text-ink-faint">
-      道果本是历世所积,却一向只堆在身上。立一份契,把它押在这一世的逆境里——
-      契不予你分毫气力,只把路走窄。走完了,它会留在你的履历上。
-    </p>
-    <div class="mt-3 space-y-2">
-      <button
-        v-for="t in LIFE_TRIALS"
-        :key="t.id"
-        class="card-ink w-full px-3 py-2 text-left active:scale-99"
-        :class="{ 'border-dashed border-ink/15': !canSignLifeTrial(t.id) }"
-        :disabled="!canSignLifeTrial(t.id)"
-        @click="signTrial(t.id)"
-      >
-        <span class="flex items-baseline justify-between">
-          <span class="font-kai text-title text-ink">{{ t.seal }} · {{ t.name }}</span>
-          <!--
-            哑巴灰的补齐:契签不下只有两个理由 —— 本世已签过 / 道果不足。
-            已签过整组都灰,报「此生已签」(此时再报尚差会指错方向);
-            道果不足照「尚差 N」报差数(与聚气丹/建筑同款纪律),不稳灰到底。
-          -->
-          <span v-if="signedTrial" class="shrink-0 tabular text-body text-ink-faint">此生已签</span>
-          <span v-else class="shrink-0 tabular text-body text-cinnabar">
-            {{
-              player.reincarnation.daoFruit >= t.cost
-                ? `${t.cost} 道果`
-                : `尚差 ${t.cost - player.reincarnation.daoFruit} 道果`
-            }}
+    <article class="rebirth-trial-folio" data-rebirth-trial-folio>
+      <p class="rebirth-trial-folio__intro">
+        道果本是历世所积,却一向只堆在身上。立一份契,把它押在这一世的逆境里——
+        契不予你分毫气力,只把路走窄。走完了,它会留在你的履历上。
+      </p>
+      <div class="rebirth-trial-folio__list">
+        <button
+          v-for="t in LIFE_TRIALS"
+          :key="t.id"
+          type="button"
+          class="rebirth-trial-choice active:scale-99"
+          :data-rebirth-trial-choice="t.id"
+          :disabled="!canSignLifeTrial(t.id)"
+          @click="signTrial(t.id)"
+        >
+          <span class="rebirth-trial-choice__head">
+            <span class="rebirth-trial-choice__name">
+              <span class="font-kai" aria-hidden="true">{{ t.seal }}</span>
+              {{ t.name }}
+            </span>
+            <span class="rebirth-trial-choice__cost tabular">{{ trialCostText(t) }}</span>
           </span>
-        </span>
-        <span class="mt-0.5 block t-body text-ink-soft">{{ t.desc }}</span>
-        <span class="mt-0.5 block text-note text-ink-faint">{{ t.ruleText }}</span>
-      </button>
-    </div>
-    <p class="mt-3 t-body text-ink-faint">
-      一世只可立一契,立下不可解。转世时契随皮囊散去,履历长存。
-    </p>
+          <span class="rebirth-trial-choice__desc">{{ t.desc }}</span>
+          <span class="rebirth-trial-choice__rule">{{ t.ruleText }}</span>
+        </button>
+      </div>
+      <p class="rebirth-trial-folio__foot">
+        一世只可立一契,立下不可解。转世时契随皮囊散去,履历长存。
+      </p>
+    </article>
+    <template #footer>
+      <button type="button" class="btn-ghost w-full" @click="trialOpen = false">再想想</button>
+    </template>
   </BaseModal>
 </template>
 
@@ -250,23 +319,22 @@ import { usePlayerStore } from "@/stores/player";
 import { useUiStore } from "@/stores/ui";
 import { LIFE_TRIALS } from "@/data/lifeTrials";
 import { activeLifeTrial, canSignLifeTrial, signLifeTrial } from "@/core/lifeTrialService";
-import { talentDef, TALENT_GRADE_COLORS } from "@/data/talents";
+import { talentDef, TALENT_GRADE_COLORS, TALENT_GRADE_NAMES } from "@/data/talents";
 import { REALMS } from "@/data/realms";
 import { prepareReincarnation, MANUAL_REBIRTH_MIN_MAJOR } from "@/core/reincarnation";
-import { HERITAGE } from "@/core/samsaraAudit";
+import { heritageGroups, type HeritageMode } from "@/core/samsaraAudit";
 import { DAO_FRUIT_COMBAT_BONUS, DAO_FRUIT_CULT_BONUS } from "@/data/constants";
 import { fruitMarginalInfo, fruitSoftCapText } from "@/core/resourceGuidance";
-import { formatNum, formatPercent } from "@/utils/format";
+import { formatNum, formatPercent, yearsShown } from "@/utils/format";
 import { modsText } from "@/data/statNames";
 import BaseModal from "@/components/common/BaseModal.vue";
 
 /**
- * 轮回弹窗(含逆旅契弹窗,同一宿主)。
+ * 兵解前的最后一张账。
  *
- * 自 CharacterView 迁入:轮回弹窗里的「立契」按钮是逆旅契弹窗的唯一出处,
- * 两个浮层拆到两处文件就成了「出处不在一起」—— 沿用 ReincarnationDialog
- * 一个文件宿多个 BaseModal 的先例,弹窗自己的状态(talentTap / heritageOpen /
- * trialOpen)也一并随迁,关弹窗复位的行为不变。
+ * 这不是"确认清档"那么一句话:道果与天赋仍在累积,功法只折层数,而境界、装备、
+ * 法宝、灵根等会随皮囊散去。页面按 core/samsaraAudit 的同一份继承表分组,
+ * 不另抄第二份去留口径。
  */
 const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
@@ -274,74 +342,953 @@ const emit = defineEmits<{ close: [] }>();
 const player = usePlayerStore();
 const ui = useUiStore();
 
-const ownedTalents = computed(() =>
-  player.reincarnation.talents.map((id) => talentDef(id)).filter((t) => t !== undefined),
+const currentLife = computed(() => player.reincarnation.count + 1);
+const canRebirth = computed(() => player.major >= MANUAL_REBIRTH_MIN_MAJOR);
+const gateGap = computed(() => Math.max(0, MANUAL_REBIRTH_MIN_MAJOR - player.major));
+const gateRealm = computed(
+  () => REALMS[MANUAL_REBIRTH_MIN_MAJOR] ?? { name: "金丹", short: "金丹" },
 );
 
-/** 天赋芯片点按展开(移动端无 hover,效果说明内联显示);关弹窗复位 */
+const MODE_MARK: Record<HeritageMode, string> = {
+  full: "留",
+  partial: "折",
+  reset: "散",
+};
+
+const heritageLedger = computed(() =>
+  heritageGroups().map((group) => ({
+    ...group,
+    count: group.rows.length,
+    mark: MODE_MARK[group.mode],
+    tone: `is-${group.mode}`,
+  })),
+);
+const totalCount = computed(() =>
+  heritageLedger.value.reduce((sum, group) => sum + group.count, 0),
+);
+const keepCount = computed(() =>
+  heritageLedger.value
+    .filter((group) => group.mode !== "reset")
+    .reduce((sum, group) => sum + group.count, 0),
+);
+const partialCount = computed(
+  () => heritageLedger.value.find((group) => group.mode === "partial")?.count ?? 0,
+);
+const resetCount = computed(
+  () => heritageLedger.value.find((group) => group.mode === "reset")?.count ?? 0,
+);
+const criticalRows = computed(() =>
+  heritageLedger.value.flatMap((group) =>
+    group.rows
+      .filter((row) => row.mode === "partial" || (row.mode === "reset" && row.power === "high"))
+      .map((row) => ({
+        id: row.id,
+        name: row.name,
+        mode: row.mode,
+        mark: group.mark,
+        groupTitle: group.title,
+        tone: group.tone,
+      })),
+  ),
+);
+
+/** 天赋展开:手机没有 hover,点一下就在帖内说明,关卷即复位。 */
 const talentTap = ref<string | null>(null);
+const ownedTalents = computed(() =>
+  player.reincarnation.talents
+    .map((id) => talentDef(id))
+    .filter((t): t is NonNullable<ReturnType<typeof talentDef>> => t !== undefined),
+);
 const tappedTalent = computed(() => (talentTap.value ? talentDef(talentTap.value) : undefined));
+
+/** 去留全账里点开的那一条;与天赋展开分开,免得两种说明抢同一行。 */
+const heritageOpen = ref(false);
+const heritageTap = ref<string | null>(null);
+
+/** 逆旅契是本世最后一笔,仍在转世前可补签。 */
+const signedTrial = computed(() => activeLifeTrial());
+const trialOpen = ref(false);
+
 watch(
   () => props.open,
   (open) => {
     if (!open) {
       talentTap.value = null;
       heritageOpen.value = false;
+      heritageTap.value = null;
+      trialOpen.value = false;
     }
   },
 );
-/**
- * 转世去留一览:兵解是不可逆的大事,一句「随皮囊散去」盖不住整本账。
- * 行取自 core/samsaraAudit 的 HERITAGE 同表(审计处核实过,非样设口径),按留/去分组。
- * 默认收起:不压弹窗高度,按下前点开即可核对。
- */
-const heritageOpen = ref(false);
-const MODE_LABEL: Record<string, string> = {
-  full: "随魂留存",
-  partial: "折半/部分保留",
-  reset: "归尘",
-};
-/** 「全额留下」的那一档 —— 组标题已说过,行内不必再说 */
-const FULL_KEEP_LABEL = MODE_LABEL.full;
-const heritageRows = computed(() =>
-  HERITAGE.map((r) => ({
-    id: r.id,
-    name: r.name,
-    mode: r.mode,
-    modeLabel: MODE_LABEL[r.mode] ?? r.mode,
-    /** 留=jade 色、归尘=淡墨 —— 一眼分得清哪些带得走 */
-    cls: r.mode === "reset" ? "text-ink-faint" : "text-jade",
-    detail: r.detail,
-  })),
-);
-const heritageKeepRows = computed(() => heritageRows.value.filter((r) => r.mode !== "reset"));
-const heritageResetRows = computed(() => heritageRows.value.filter((r) => r.mode === "reset"));
-const keepCount = computed(() => heritageKeepRows.value.length);
-const resetCount = computed(() => heritageResetRows.value.length);
-/**
- * 折叠态的例外摘要:「16 留」里有几条其实是折半/部分保留 —— 计数报不出这个打折,
- * 而「功法会掉回一层」恰是按兵解前最该提前知道的一条。展开态不需要(列表里现成)。
- */
-const partialKeepRows = computed(() => heritageKeepRows.value.filter((r) => r.mode === "partial"));
-/** 本世已立的逆旅契;未立为 null */
-const signedTrial = computed(() => activeLifeTrial());
-const trialOpen = ref(false);
+
+function trialCostText(t: (typeof LIFE_TRIALS)[number]): string {
+  if (signedTrial.value) return "此生已签";
+  return t.cost > player.reincarnation.daoFruit
+    ? `尚差 ${t.cost - player.reincarnation.daoFruit} 道果`
+    : `${t.cost} 道果`;
+}
+
 function signTrial(id: string): void {
   if (signLifeTrial(id)) trialOpen.value = false;
 }
-const canRebirth = computed(() => player.major >= MANUAL_REBIRTH_MIN_MAJOR);
 
-/** S3 道果链路:有效收益与软上限白话 */
 const fruitInfo = computed(() => fruitMarginalInfo());
-/** 软上限白话:同一份论断出在 core/resourceGuidance,界面不另写一套 */
 const softCapText = computed(() => fruitSoftCapText(fruitInfo.value.total));
 
 function rebirth(): void {
   if (!canRebirth.value) {
-    ui.toast(`至少金丹境方可自行兵解`, "warn");
+    ui.toast(`尚差 ${gateGap.value} 境 · ${gateRealm.value.name}境方可自行兵解`, "warn");
     return;
   }
   emit("close");
   prepareReincarnation();
 }
 </script>
+
+<style scoped>
+.rebirth-folio,
+.rebirth-trial-folio {
+  --rebirth-line: rgb(var(--color-ink-rgb) / 0.14);
+  --rebirth-line-strong: rgb(var(--color-ink-rgb) / 0.22);
+  --rebirth-paper: rgb(var(--color-paper-deep-rgb) / 0.34);
+  min-width: 0;
+}
+
+.rebirth-head {
+  display: grid;
+  grid-template-columns: 2.45rem minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.6rem 0.72rem;
+  border-bottom: 1px solid var(--rebirth-line);
+  padding-bottom: 0.8rem;
+}
+
+.rebirth-head__seal {
+  display: grid;
+  width: 2.45rem;
+  height: 2.45rem;
+  place-items: center;
+  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.44);
+  border-radius: 2px;
+  color: var(--color-cinnabar);
+  font-size: var(--type-title);
+  line-height: 1;
+}
+
+.rebirth-head__identity {
+  min-width: 0;
+}
+
+.rebirth-head__eyebrow {
+  color: var(--color-qing);
+  font-size: var(--type-note);
+  letter-spacing: 0.15em;
+  line-height: 1.5;
+}
+
+.rebirth-head__title {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.62rem;
+  margin-top: 0.12rem;
+  color: var(--color-ink);
+  font-family: var(--font-kai);
+  font-size: var(--type-section);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.rebirth-head__title span {
+  color: var(--color-ink-soft);
+  font-size: var(--type-body);
+  letter-spacing: 0.1em;
+}
+
+.rebirth-head__brief {
+  margin-top: 0.42rem;
+  color: var(--color-ink-soft);
+  font-size: var(--type-body);
+  line-height: 1.65;
+}
+
+.rebirth-head__gate {
+  align-self: start;
+  border: 1px solid rgb(var(--color-qing-rgb) / 0.3);
+  border-radius: 2px;
+  background: rgb(var(--color-qing-rgb) / 0.04);
+  padding: 0.2rem 0.42rem;
+  color: var(--color-qing);
+  font-size: var(--type-note);
+  letter-spacing: 0.08em;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.rebirth-head__gate[data-rebirth-gate-state="locked"] {
+  border-color: rgb(var(--color-amber-ink-rgb) / 0.34);
+  background: rgb(var(--color-amber-ink-rgb) / 0.04);
+  color: var(--color-amber-ink);
+}
+
+.rebirth-now {
+  margin-top: 0.9rem;
+  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.2);
+  border-top: 2px solid rgb(var(--color-cinnabar-rgb) / 0.72);
+  border-radius: 2px;
+  background:
+    linear-gradient(128deg, rgb(var(--color-cinnabar-rgb) / 0.045), transparent 52%),
+    rgb(var(--color-paper-lifted-rgb) / 0.45);
+  padding: 0.72rem 0.78rem 0.78rem;
+}
+
+.rebirth-now__head {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.55rem;
+}
+
+.rebirth-now__mark {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.38);
+  border-radius: 2px;
+  color: var(--color-cinnabar);
+  font-size: var(--type-title);
+  line-height: 1;
+}
+
+.rebirth-now__title {
+  color: var(--color-ink);
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+}
+
+.rebirth-now__hint {
+  margin-top: 0.12rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.55;
+}
+
+.rebirth-now__contract {
+  margin-top: 0.55rem;
+  border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.6);
+  padding-left: 0.55rem;
+  color: var(--color-ink-soft);
+  font-size: var(--type-body);
+  line-height: 1.65;
+}
+
+.rebirth-balance {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.32rem;
+  margin-top: 0.66rem;
+}
+
+.rebirth-balance__row {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.05rem 0.3rem;
+  border: 1px solid var(--rebirth-line);
+  border-radius: 2px;
+  padding: 0.42rem 0.5rem;
+}
+
+.rebirth-balance__row span {
+  color: var(--color-ink-soft);
+  font-size: var(--type-note);
+  letter-spacing: 0.1em;
+}
+
+.rebirth-balance__row strong {
+  color: var(--color-ink);
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.rebirth-balance__row small {
+  grid-column: 1 / -1;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.45;
+}
+
+.rebirth-balance__row.is-keep {
+  border-color: rgb(var(--color-jade-rgb) / 0.24);
+}
+
+.rebirth-balance__row.is-keep strong {
+  color: var(--color-jade);
+}
+
+.rebirth-balance__row.is-partial {
+  border-color: rgb(var(--color-gold-ink-rgb) / 0.28);
+}
+
+.rebirth-balance__row.is-partial strong {
+  color: var(--color-gold-ink);
+}
+
+.rebirth-balance__row.is-reset {
+  border-color: rgb(var(--color-ink-rgb) / 0.16);
+}
+
+.rebirth-balance__row.is-reset strong {
+  color: var(--color-ink-faint);
+}
+
+.rebirth-detail-grid {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.6rem;
+  margin-top: 0.68rem;
+}
+
+.rebirth-panel,
+.rebirth-ledger,
+.rebirth-trial,
+.rebirth-departure {
+  min-width: 0;
+  border: 1px solid var(--rebirth-line);
+  border-radius: 2px;
+  background: var(--rebirth-paper);
+}
+
+.rebirth-panel {
+  padding: 0.68rem 0.72rem 0.72rem;
+}
+
+.rebirth-dao {
+  border-top: 2px solid rgb(var(--color-violet-ink-rgb) / 0.54);
+}
+
+.rebirth-talents {
+  border-top: 2px solid rgb(var(--color-gold-ink-rgb) / 0.54);
+}
+
+.rebirth-panel__head,
+.rebirth-ledger__head,
+.rebirth-trial__head {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.rebirth-panel__eyebrow {
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  letter-spacing: 0.14em;
+  line-height: 1.45;
+}
+
+.rebirth-panel__title {
+  margin-top: 0.08rem;
+  color: var(--color-ink);
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+}
+
+.rebirth-dao__total,
+.rebirth-talents__total,
+.rebirth-ledger__count {
+  flex: none;
+  color: var(--color-cinnabar);
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  line-height: 1;
+}
+
+.rebirth-talents__total {
+  color: var(--color-gold-ink);
+}
+
+.rebirth-ledger__count {
+  color: var(--color-qing);
+}
+
+.rebirth-dao__total small,
+.rebirth-talents__total small,
+.rebirth-ledger__count small {
+  margin-left: 0.16rem;
+  color: var(--color-ink-faint);
+  font-family: inherit;
+  font-size: var(--type-note);
+}
+
+.rebirth-dao__rows {
+  margin-top: 0.55rem;
+  border-top: 1px solid var(--rebirth-line);
+}
+
+.rebirth-dao__rows > div {
+  display: grid;
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+  gap: 0.55rem;
+  border-bottom: 1px solid var(--rebirth-line);
+  padding: 0.34rem 0;
+}
+
+.rebirth-dao__rows dt {
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+}
+
+.rebirth-dao__rows dd {
+  color: var(--color-ink-soft);
+  font-size: var(--type-body);
+  line-height: 1.5;
+  text-align: right;
+}
+
+.rebirth-dao__rows dd span {
+  color: var(--color-ink-faint);
+}
+
+.rebirth-panel__note,
+.rebirth-panel__empty {
+  margin-top: 0.46rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.6;
+}
+
+.rebirth-panel__empty {
+  border-top: 1px solid var(--rebirth-line);
+  padding-top: 0.5rem;
+}
+
+.rebirth-talents__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+  margin-top: 0.55rem;
+  border-top: 1px solid var(--rebirth-line);
+  padding-top: 0.55rem;
+}
+
+.rebirth-talent {
+  display: inline-flex;
+  min-height: 1.8rem;
+  align-items: baseline;
+  gap: 0.28rem;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  background: transparent;
+  padding: 0.2rem 0.36rem;
+  text-align: left;
+}
+
+.rebirth-talent__name {
+  font-family: var(--font-kai);
+  font-size: var(--type-body);
+  line-height: 1.35;
+}
+
+.rebirth-talent__grade {
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.35;
+}
+
+.rebirth-talent__detail {
+  margin-top: 0.5rem;
+  border-left: 2px solid rgb(var(--color-gold-ink-rgb) / 0.52);
+  padding-left: 0.5rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.6;
+}
+
+.rebirth-talent__detail .is-qing {
+  color: var(--color-qing);
+}
+
+.rebirth-ledger {
+  margin-top: 0.68rem;
+  border-top: 2px solid rgb(var(--color-qing-rgb) / 0.52);
+  padding: 0.68rem 0.72rem 0.72rem;
+}
+
+.rebirth-ledger__head > div:first-child {
+  min-width: 0;
+}
+
+.rebirth-ledger__hint {
+  margin-top: 0.18rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.55;
+}
+
+.rebirth-critical {
+  margin-top: 0.6rem;
+  border-top: 1px solid var(--rebirth-line);
+  padding-top: 0.5rem;
+}
+
+.rebirth-critical__caption {
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  letter-spacing: 0.12em;
+}
+
+.rebirth-critical__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.24rem;
+  margin-top: 0.32rem;
+}
+
+.rebirth-critical__row {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 1.28rem minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.35rem;
+  border-bottom: 1px solid var(--rebirth-line);
+  padding: 0.26rem 0;
+}
+
+.rebirth-critical__mark {
+  display: grid;
+  width: 1.28rem;
+  height: 1.28rem;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  font-size: var(--type-note);
+  line-height: 1;
+}
+
+.rebirth-critical__name {
+  min-width: 0;
+  color: var(--color-ink-soft);
+  font-size: var(--type-body);
+  overflow-wrap: anywhere;
+}
+
+.rebirth-critical__group {
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.45;
+  text-align: right;
+}
+
+.rebirth-critical__row.is-partial .rebirth-critical__mark {
+  color: var(--color-gold-ink);
+}
+
+.rebirth-critical__row.is-reset .rebirth-critical__mark {
+  color: var(--color-cinnabar);
+}
+
+.rebirth-ledger__toggle {
+  display: flex;
+  width: 100%;
+  min-height: 2rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 0.52rem;
+  border: 1px solid var(--rebirth-line);
+  border-radius: 2px;
+  padding: 0.34rem 0.48rem;
+  color: var(--color-qing);
+  font-size: var(--type-body);
+  text-align: left;
+}
+
+.rebirth-ledger__toggle span:last-child {
+  flex: none;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+}
+
+.rebirth-ledger__fold {
+  margin-top: 0.4rem;
+}
+
+.rebirth-ledger__scroll {
+  border: 1px solid var(--rebirth-line);
+  border-radius: 2px;
+  background: rgb(var(--color-paper-rgb) / 0.3);
+  padding: 0.42rem 0.5rem;
+}
+
+.rebirth-group + .rebirth-group {
+  margin-top: 0.58rem;
+  border-top: 1px solid var(--rebirth-line);
+  padding-top: 0.5rem;
+}
+
+.rebirth-group__head {
+  display: grid;
+  grid-template-columns: 1.2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.rebirth-group__mark {
+  display: grid;
+  width: 1.2rem;
+  height: 1.2rem;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  font-size: var(--type-note);
+  line-height: 1;
+}
+
+.rebirth-group__head p {
+  color: var(--color-ink-soft);
+  font-size: var(--type-note);
+  letter-spacing: 0.08em;
+}
+
+.rebirth-group__head > span:last-child {
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+}
+
+.rebirth-group.is-full .rebirth-group__mark {
+  color: var(--color-jade);
+}
+
+.rebirth-group.is-partial .rebirth-group__mark {
+  color: var(--color-gold-ink);
+}
+
+.rebirth-group.is-reset .rebirth-group__mark {
+  color: var(--color-ink-faint);
+}
+
+.rebirth-group__rows {
+  margin-top: 0.26rem;
+}
+
+.rebirth-ledger-row {
+  display: grid;
+  width: 100%;
+  min-height: 1.8rem;
+  grid-template-columns: minmax(0, 1fr) auto 1rem;
+  gap: 0.28rem;
+  align-items: baseline;
+  border-bottom: 1px solid var(--rebirth-line);
+  padding: 0.22rem 0.16rem;
+  text-align: left;
+}
+
+.rebirth-ledger-row__name {
+  min-width: 0;
+  color: var(--color-ink-soft);
+  font-size: var(--type-note);
+  overflow-wrap: anywhere;
+}
+
+.rebirth-ledger-row__state {
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.4;
+  text-align: right;
+}
+
+.rebirth-ledger-row__mark {
+  color: var(--color-qing);
+  font-size: var(--type-note);
+  line-height: 1;
+  text-align: right;
+}
+
+.rebirth-ledger-row__detail {
+  grid-column: 1 / -1;
+  margin-top: 0.18rem;
+  border-left: 2px solid rgb(var(--color-qing-rgb) / 0.42);
+  padding-left: 0.42rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.6;
+}
+
+.rebirth-last-call {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.55rem;
+  margin-top: 0.68rem;
+}
+
+.rebirth-trial {
+  padding: 0.62rem 0.68rem;
+}
+
+.rebirth-trial__seal {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.38);
+  border-radius: 2px;
+  color: var(--color-cinnabar);
+  font-size: var(--type-title);
+  line-height: 1;
+}
+
+.rebirth-trial__open {
+  min-height: 1.8rem;
+  flex: none;
+  border-bottom: 1px solid currentColor;
+  color: var(--color-gold-ink);
+  font-size: var(--type-body);
+}
+
+.rebirth-trial__copy {
+  margin-top: 0.42rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.65;
+}
+
+.rebirth-departure {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.55rem;
+  border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.58);
+  padding: 0.62rem 0.68rem;
+}
+
+.rebirth-departure__mark {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid rgb(var(--color-ink-rgb) / 0.2);
+  border-radius: 2px;
+  color: var(--color-ink-soft);
+  font-size: var(--type-title);
+  line-height: 1;
+}
+
+.rebirth-departure__title {
+  color: var(--color-ink);
+  font-family: var(--font-kai);
+  font-size: var(--type-body);
+  letter-spacing: 0.06em;
+  line-height: 1.45;
+}
+
+.rebirth-departure__copy {
+  margin-top: 0.14rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.65;
+}
+
+.rebirth-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(11rem, auto);
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
+.rebirth-actions__gate {
+  align-self: center;
+  color: var(--color-amber-ink);
+  font-size: var(--type-note);
+  line-height: 1.55;
+}
+
+.rebirth-actions__gate.is-open {
+  color: var(--color-ink-faint);
+}
+
+.rebirth-actions__button {
+  display: grid;
+  min-height: 2.75rem;
+  align-content: center;
+  gap: 0.08rem;
+  padding: 0.38rem 0.7rem;
+}
+
+.rebirth-actions__button span {
+  font-family: var(--font-kai);
+  font-size: var(--type-body);
+  letter-spacing: 0.12em;
+}
+
+.rebirth-actions__button small {
+  color: inherit;
+  font-size: var(--type-note);
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+.rebirth-trial-folio {
+  min-width: 0;
+}
+
+.rebirth-trial-folio__intro {
+  color: var(--color-ink-soft);
+  font-size: var(--type-body);
+  line-height: 1.7;
+}
+
+.rebirth-trial-folio__list {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.72rem;
+}
+
+.rebirth-trial-choice {
+  display: grid;
+  width: 100%;
+  min-height: 2.8rem;
+  gap: 0.18rem;
+  border: 1px solid var(--rebirth-line);
+  border-left: 2px solid rgb(var(--color-gold-ink-rgb) / 0.54);
+  border-radius: 2px;
+  padding: 0.48rem 0.56rem;
+  text-align: left;
+}
+
+.rebirth-trial-choice:disabled {
+  border-left-color: var(--rebirth-line-strong);
+  background: rgb(var(--color-ink-rgb) / 0.025);
+}
+
+.rebirth-trial-choice__head {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.rebirth-trial-choice__name {
+  min-width: 0;
+  color: var(--color-ink);
+  font-size: var(--type-body);
+  overflow-wrap: anywhere;
+}
+
+.rebirth-trial-choice__cost {
+  flex: none;
+  color: var(--color-cinnabar);
+  font-size: var(--type-note);
+  line-height: 1.45;
+}
+
+.rebirth-trial-choice:disabled .rebirth-trial-choice__cost {
+  color: var(--color-ink-faint);
+}
+
+.rebirth-trial-choice__desc,
+.rebirth-trial-choice__rule {
+  color: var(--color-ink-soft);
+  font-size: var(--type-note);
+  line-height: 1.55;
+}
+
+.rebirth-trial-choice__rule {
+  color: var(--color-ink-faint);
+}
+
+.rebirth-trial-folio__foot {
+  margin-top: 0.65rem;
+  border-top: 1px solid var(--rebirth-line);
+  padding-top: 0.5rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.6;
+}
+
+@media (min-width: 620px) {
+  .rebirth-detail-grid {
+    grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.94fr);
+  }
+
+  .rebirth-critical__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 0.8rem;
+  }
+
+  .rebirth-last-call {
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+  }
+}
+
+@media (max-width: 260px) {
+  .rebirth-head {
+    grid-template-columns: 2.1rem minmax(0, 1fr);
+  }
+
+  .rebirth-head__seal {
+    width: 2.1rem;
+    height: 2.1rem;
+  }
+
+  .rebirth-head__gate {
+    grid-column: 2;
+    justify-self: start;
+    white-space: normal;
+  }
+
+  .rebirth-balance {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rebirth-critical__row {
+    grid-template-columns: 1.28rem minmax(0, 1fr);
+  }
+
+  .rebirth-critical__group {
+    grid-column: 2;
+    text-align: left;
+  }
+
+  .rebirth-ledger-row {
+    grid-template-columns: minmax(0, 1fr) 1rem;
+  }
+
+  .rebirth-ledger-row__state {
+    grid-column: 1;
+    text-align: left;
+  }
+
+  .rebirth-ledger-row__mark {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .rebirth-ledger-row__detail {
+    grid-column: 1 / -1;
+  }
+
+  .rebirth-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rebirth-actions__button {
+    width: 100%;
+  }
+}
+</style>

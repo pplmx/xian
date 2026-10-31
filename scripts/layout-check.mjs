@@ -198,6 +198,9 @@
  *   七十 道侣的同行帖先答此刻:她主动提的事与共同事件都排在关系刻度之前,
  *      每个选项先摊三项代价,殒落与离开要在落定前说穿;下一阶缺口读同一份门槛真值。
  *      390 与 195(200% 缩放)下选项正文、关系读数与三衡都不许横溢或挤成竖排。
+ *   七十一 兵解往生先核门槛与底账:道果、天赋、留折散计数与主要损失先于
+ *      去留全账;全账只读轮回结算的同一份继承表,功法回一层与法宝归尘说在落子前。
+ *      390 与 195(200% 缩放)下门槛、摘要与主按钮都不许横溢或挤成竖排。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -7223,6 +7226,254 @@ async function taskBondFolio() {
 
     if (pageErrors.length)
       failures.push(`[390] 同行帖场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/** 往生帖:门槛、道果、留折散与全账同源,并真量 390 与 195 两档。 */
+async function taskRebirthFolio() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    slices.player = {
+      ...slices.player,
+      reincarnation: {
+        ...slices.player.reincarnation,
+        talents: ["t_daogu", "t_jianxin", "t_hongyun"],
+      },
+    };
+    await seedSave(ctx, slices, "__rebirthFolioFixture");
+
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/character", 650);
+    if (!rendered) failures.push("[390] 往生帖场景:/character 没有渲染出来");
+    await clearOverlays(page);
+
+    const entry = page.locator("main button", { hasText: /轮\s*回/ }).first();
+    checked += 1;
+    if ((await entry.count()) === 0) {
+      failures.push("[390] 往生帖场景:人物页找不到「轮回」入口");
+    } else {
+      await entry.click({ timeout: 4000 }).catch(() => {});
+      const opened = await page
+        .locator("[data-rebirth-folio]")
+        .waitFor({ state: "visible", timeout: 5000 })
+        .then(() => true)
+        .catch(() => false);
+      if (!opened) failures.push("[390] 点「轮回」后没有打开往生帖");
+      if (opened) await settleVisuals(page);
+    }
+
+    const readRebirthFolio = () =>
+      page.evaluate(() => {
+        const root = document.querySelector("[data-rebirth-folio]");
+        const panel = root?.closest(".modal-panel");
+        if (!root || !panel) return null;
+        const summary = [...root.querySelectorAll("[data-rebirth-summary] .rebirth-balance__row")];
+        const critical = [...root.querySelectorAll("[data-rebirth-critical-row]")].map((el) => {
+          const name = el.querySelector(".rebirth-critical__name")?.getBoundingClientRect();
+          const group = el.querySelector(".rebirth-critical__group")?.getBoundingClientRect();
+          return {
+            id: el.getAttribute("data-rebirth-critical-row"),
+            text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+            overflow: el.scrollWidth > el.clientWidth + 1,
+            groupBelowName: !!name && !!group && group.top >= name.bottom - 1,
+          };
+        });
+        const rows = [...root.querySelectorAll("[data-rebirth-ledger-row]")];
+        const enter = panel.querySelector("[data-rebirth-enter]");
+        const summaryBox = root.querySelector("[data-rebirth-summary]");
+        const actions = panel.querySelector(".rebirth-actions");
+        const detail = root.querySelector(".rebirth-ledger-row__detail");
+        return {
+          text: (root.textContent || "").replace(/\s+/g, " ").trim(),
+          gateState: root
+            .querySelector("[data-rebirth-gate]")
+            ?.getAttribute("data-rebirth-gate-state"),
+          gateText: (root.querySelector("[data-rebirth-gate]")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+          summary: summary.map((el) => ({
+            text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+            overflow: el.scrollWidth > el.clientWidth + 1,
+          })),
+          summaryColumns: summaryBox ? getComputedStyle(summaryBox).gridTemplateColumns : "",
+          critical,
+          daoText: (root.querySelector("[data-rebirth-dao-fruit]")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+          talentChips: root.querySelectorAll(".rebirth-talent").length,
+          trialText: (root.querySelector("[data-rebirth-trial]")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+          groups: root.querySelectorAll("[data-rebirth-group]").length,
+          rows: rows.length,
+          rowOverflow: rows.some((el) => el.scrollWidth > el.clientWidth + 1),
+          rowNameWidths: rows.map(
+            (el) =>
+              el.querySelector(".rebirth-ledger-row__name")?.getBoundingClientRect().width ?? 0,
+          ),
+          detailText: (detail?.textContent || "").replace(/\s+/g, " ").trim(),
+          toggleExpanded:
+            root.querySelector("[data-rebirth-heritage-toggle]")?.getAttribute("aria-expanded") ===
+            "true",
+          enterDisabled: !!enter?.hasAttribute("disabled"),
+          enterText: (enter?.textContent || "").replace(/\s+/g, " ").trim(),
+          actionsColumns: actions ? getComputedStyle(actions).gridTemplateColumns : "",
+          panelWidth: panel.clientWidth,
+          panelScrollWidth: panel.scrollWidth,
+        };
+      });
+
+    if (await page.locator("[data-rebirth-folio]").count()) {
+      const folio = await readRebirthFolio();
+      const criticalIds = new Set(folio?.critical.map((row) => row.id));
+      checked += 1;
+      if (
+        !folio ||
+        folio.gateState !== "open" ||
+        !folio.gateText.includes("金丹门槛已过") ||
+        folio.summary.length !== 3 ||
+        !folio.text.includes("此刻要决定的事") ||
+        !folio.text.includes("先看这些") ||
+        !folio.text.includes("功法回一层") ||
+        !folio.text.includes("法宝归尘") ||
+        !criticalIds.has("gongfa") ||
+        !criticalIds.has("artifacts") ||
+        !criticalIds.has("linggen") ||
+        folio.talentChips !== 3 ||
+        !folio.daoText.includes("道果") ||
+        !folio.trialText.includes("逆旅契") ||
+        folio.enterDisabled ||
+        !folio.enterText.includes("兵解转世") ||
+        folio.groups !== 0 ||
+        folio.rows !== 0
+      ) {
+        failures.push(
+          `[390] 往生帖没有先摊门槛、留折散与主要损失:` +
+            `门槛 ${folio?.gateState || "无"}/«${folio?.gateText || "无"}» / ` +
+            `摘要 ${folio?.summary.map((row) => row.text).join(" | ") || "无"} / ` +
+            `主要损失 ${folio?.critical.map((row) => row.id).join(",") || "无"} / ` +
+            `天赋 ${folio?.talentChips ?? 0} / 道果 «${folio?.daoText.slice(0, 32) || "无"}» / ` +
+            `主按钮 «${folio?.enterText || "无"}»`,
+        );
+      }
+      checked += 1;
+      if (
+        folio?.summary.some((row) => row.overflow) ||
+        folio?.critical.some((row) => row.overflow) ||
+        folio?.panelScrollWidth > folio?.panelWidth + 1
+      ) {
+        failures.push(
+          `[390] 往生帖卷首横向溢出:` +
+            `面板 ${folio?.panelScrollWidth ?? 0}>${folio?.panelWidth ?? 0} / ` +
+            `摘要 ${folio?.summary.map((row) => row.overflow).join("/") || "无"} / ` +
+            `主要损失 ${folio?.critical.map((row) => row.overflow).join("/") || "无"}`,
+        );
+      }
+
+      const controls = await auditModalControls(page);
+      checked += 1;
+      if (!controls || controls.count === 0 || controls.unnamed.length || controls.small.length) {
+        failures.push(
+          `[390] 往生帖控件不合格:` +
+            `${controls?.count ?? 0} 枚 / 无名 ${controls?.unnamed.join(" | ") || "无"} / ` +
+            `过小 ${controls?.small.join(" | ") || "无"}`,
+        );
+      }
+
+      if (SHOTS) {
+        mkdirSync(SHOTS_DIR, { recursive: true });
+        await page.screenshot({ path: join(SHOTS_DIR, "rebirth-folio-390.png") });
+      }
+
+      await page.locator("[data-rebirth-heritage-toggle]").click({ timeout: 4000 });
+      await page
+        .locator("[data-rebirth-group='full']")
+        .waitFor({ state: "visible", timeout: 4000 })
+        .catch(() => {});
+      const expanded = await readRebirthFolio();
+      checked += 1;
+      if (
+        !expanded?.toggleExpanded ||
+        expanded.groups !== 3 ||
+        expanded.rows !== 36 ||
+        expanded.rowOverflow ||
+        expanded.panelScrollWidth > expanded.panelWidth + 1
+      ) {
+        failures.push(
+          `[390] 往生帖全账没有按同一份继承表铺开:` +
+            `展开 ${expanded?.toggleExpanded ?? false} / ${expanded?.groups ?? 0} 组 / ` +
+            `${expanded?.rows ?? 0} 项 / 行横溢 ${expanded?.rowOverflow ?? false}`,
+        );
+      }
+
+      const gongfa = page.locator("[data-rebirth-ledger-row='gongfa']");
+      await gongfa.click({ timeout: 4000 });
+      const detail = await readRebirthFolio();
+      checked += 1;
+      if (
+        (await gongfa.getAttribute("aria-expanded")) !== "true" ||
+        !detail?.detailText.includes("归零回一层")
+      ) {
+        failures.push(
+          `[390] 往生帖条目没有把真实交割说明摊开:` +
+            `aria=${await gongfa.getAttribute("aria-expanded")} / «${detail?.detailText || "无"}»`,
+        );
+      }
+      await gongfa.click({ timeout: 4000 });
+
+      zoomSeen += 1;
+      const zoomProblems = dialogZoomProblems(
+        await measureDialogZoom(page, { width: 390, height: 844 }),
+      );
+      checked += 1;
+      if (zoomProblems.length) failures.push(`[195] 往生帖 → ${zoomProblems.join(" / ")}`);
+
+      await page.setViewportSize({ width: 195, height: 422 });
+      await settleVisuals(page);
+      const narrow = await readRebirthFolio();
+      checked += 1;
+      if (
+        !narrow ||
+        narrow.panelScrollWidth > narrow.panelWidth + 1 ||
+        narrow.summaryColumns.split(" ").length !== 1 ||
+        narrow.actionsColumns.split(" ").length !== 1 ||
+        narrow.critical.some((row) => row.overflow || !row.groupBelowName) ||
+        narrow.rowOverflow ||
+        narrow.rowNameWidths.some((width) => width < 60)
+      ) {
+        failures.push(
+          `[195] 往生帖摘要、门槛或全账没有收成上下两段:` +
+            `面板 ${narrow?.panelScrollWidth ?? 0}>${narrow?.panelWidth ?? 0} / ` +
+            `摘要列 ${narrow?.summaryColumns || "无"} / 动作列 ${narrow?.actionsColumns || "无"} / ` +
+            `账目名宽 ${narrow?.rowNameWidths.map((width) => Math.round(width)).join(",") || "无"} / ` +
+            `主要损失 ${
+              narrow?.critical
+                .map(
+                  (row) =>
+                    `${row.id}:${row.overflow ? "溢" : "收"}/${row.groupBelowName ? "下" : "并"}`,
+                )
+                .join(" ") || "无"
+            }`,
+        );
+      }
+      if (SHOTS) await page.screenshot({ path: join(SHOTS_DIR, "rebirth-folio-195.png") });
+    }
+
+    if (pageErrors.length)
+      failures.push(`[390] 往生帖场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
   } finally {
     await ctx.close();
   }
@@ -14649,6 +14900,7 @@ const TASKS = [
   ["际遇帖的门限与去向", taskEventSlip],
   ["择师谱的两步定契", taskMentorLedger],
   ["同行帖的此刻与后果", taskBondFolio],
+  ["往生帖的门槛与去留", taskRebirthFolio],
   ["真打一场历练战斗", taskCombatReplay],
   ["敌人卡最挤的一档", taskEnemyCard],
   ["秘境卡在境中的窄屏一档", taskSecretRealm320],

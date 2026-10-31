@@ -175,4 +175,48 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
       /@media \(max-width: 220px\)[\s\S]{0,1800}\.bond-choice__read\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
   });
+
+  it("往生帖先报门槛与去留,整本账只读轮回结算的同一份继承表", () => {
+    const dialog = source("src/components/character/RebirthDialog.vue");
+
+    expect(dialog, "兵解要先落一张可定位的往生帖").toContain("data-rebirth-folio");
+    expect(dialog, "门槛与当前差境要在落子前可见").toContain("data-rebirth-gate");
+    expect(dialog, "卷首要先摊开此刻要决定的事").toContain("data-rebirth-now");
+    expect(dialog, "留、折、散三项要各有真实计数").toContain("data-rebirth-summary");
+    expect(dialog, "主要损失不能藏在折叠里").toContain("data-rebirth-critical");
+    expect(dialog, "全账仍可展开").toContain("data-rebirth-heritage-toggle");
+    expect(dialog, "去留分组只读 core/samsaraAudit").toContain("heritageGroups()");
+    expect(dialog, "界面不另抄一份 HERITAGE").not.toContain("HERITAGE.map(");
+    expect(dialog, "组名直接使用继承表的中文口径").toContain("group.title");
+    expect(dialog, "每条都带结算来源的明细").toContain("row.detail");
+    expect(dialog, "不可逆前仍要说清兵解不是直接清档").toContain("兵解不是清档");
+    expect(dialog, "门槛缺口由境差现算").toContain("尚差 ${gateGap}");
+    expect(dialog, "未达门槛时按钮置灰").toContain(':disabled="!canRebirth"');
+    expect(dialog, "置灰动作仍报出金丹门槛").toContain("境方可自行兵解");
+    expect(dialog, "功法损失要明说").toContain("功法回一层");
+    expect(dialog, "法宝损失要明说").toContain("法宝归尘");
+  });
+
+  it("往生帖 390 单列,620 起道果与天赋并读,260 以下门槛与动作上下收住", () => {
+    const dialog = source("src/components/character/RebirthDialog.vue");
+
+    expect(dialog, "往生帖要占满浮层可用宽").toContain('size="wide"');
+    expect(dialog, "全账仍用独立滚动区").toContain("max-h-64 overflow-y-auto");
+    expect(dialog, "全账滚动区仍有底边淡出").toContain("scroll-fade");
+    expect(dialog, "620 起道果与天赋并读").toMatch(
+      /@media \(min-width: 620px\)[\s\S]{0,500}\.rebirth-detail-grid\s*\{[\s\S]{0,140}grid-template-columns:\s*minmax\(0, 1\.06fr\) minmax\(0, 0\.94fr\)/,
+    );
+    expect(dialog, "260 以下门槛另起一行").toMatch(
+      /@media \(max-width: 260px\)[\s\S]{0,500}\.rebirth-head__gate\s*\{[\s\S]{0,100}grid-column:\s*2/,
+    );
+    expect(dialog, "260 以下留折散退单列").toMatch(
+      /@media \(max-width: 260px\)[\s\S]{0,1000}\.rebirth-balance\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(dialog, "260 以下动作退整行").toMatch(
+      /@media \(max-width: 260px\)[\s\S]{0,1500}\.rebirth-actions\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(dialog, "260 以下去留行把状态移到名称下一行").toMatch(
+      /@media \(max-width: 260px\)[\s\S]{0,1600}\.rebirth-ledger-row\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\) 1rem/,
+    );
+  });
 });
