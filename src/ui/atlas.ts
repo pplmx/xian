@@ -2,8 +2,19 @@ import {
   NAVIGATION_ENTRIES,
   NAVIGATION_SECTIONS,
   navigationPositionOf,
+  type NavigationChapter,
   type NavigationEntry,
 } from "./navigation";
+
+export interface AtlasSearchResult {
+  key: string;
+  entry: NavigationEntry;
+  /** 有值表示这是册内分册;没值表示整册入口 */
+  chapter?: NavigationChapter;
+  label: string;
+  description: string;
+  to: string;
+}
 
 /** 当前路由落在哪一卷；未入册时回第一卷，玄枢图打开后总有可跳之处。 */
 export function atlasSectionIdForRoute(name: string | symbol | null | undefined): string {
@@ -31,28 +42,61 @@ function searchText(value: string): string {
 }
 
 /**
- * 玄枢图寻册 —— 同一份十七册目录的另一种读法。
+ * 玄枢图寻册 —— 同一份十七册目录与册内分册的另一种读法。
  *
  * 玩家记不住正式册名:底栏叫「背包」,册页写「行囊」;人物页在玄枢图里叫「道躯」。
- * 因此关键词跟着册目一起维护,搜索只做归一化与逐词包含,不另建路由表。多个词以空格
- * 分开时要求全部命中,例如「天机 道果」仍能落到轮回录。
+ * 因此关键词跟着册目与分册一起维护,搜索只做归一化与逐词包含,不另建路由表。
+ * 分册命中优先落到 `?tab=`,没有分册命中时再落到整册;多个词以空格分开时要求
+ * 全部命中,例如「天机 道果」仍能落到轮回录。
  */
-export function atlasSearchEntries(query: string): NavigationEntry[] {
+export function atlasSearchResults(query: string): AtlasSearchResult[] {
   const tokens = searchText(query).split(" ").filter(Boolean);
   if (tokens.length === 0) return [];
-  return NAVIGATION_ENTRIES.filter((entry) => {
-    const haystack = searchText(
-      [
+  const matches = (parts: readonly string[]): boolean => {
+    const haystack = searchText(parts.join(" "));
+    return tokens.every((token) => haystack.includes(token));
+  };
+  const results: AtlasSearchResult[] = [];
+
+  for (const entry of NAVIGATION_ENTRIES) {
+    const chapterHits = entry.chapters.filter((chapter) =>
+      matches([chapter.id, chapter.label, chapter.description, ...chapter.keywords]),
+    );
+    if (chapterHits.length > 0) {
+      for (const chapter of chapterHits) {
+        results.push({
+          key: `${entry.name}:${chapter.id}`,
+          entry,
+          chapter,
+          label: chapter.label,
+          description: chapter.description,
+          to: `${entry.to}?tab=${encodeURIComponent(chapter.id)}`,
+        });
+      }
+      continue;
+    }
+
+    if (
+      matches([
         entry.name,
         entry.label,
         entry.shortLabel,
         entry.description,
         entry.sectionLabel,
         ...entry.keywords,
-      ].join(" "),
-    );
-    return tokens.every((token) => haystack.includes(token));
-  });
+      ])
+    ) {
+      results.push({
+        key: entry.name,
+        entry,
+        label: entry.label,
+        description: entry.description,
+        to: entry.to,
+      });
+    }
+  }
+
+  return results;
 }
 
 type AtlasShortcutEvent = Pick<KeyboardEvent, "key" | "ctrlKey" | "metaKey" | "altKey">;

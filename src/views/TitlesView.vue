@@ -418,17 +418,15 @@ import GameIcon from "@/components/common/GameIcon.vue";
 import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import NameBeastAtlas from "@/components/common/NameBeastAtlas.vue";
 import { nameBeastMeter, petEntryState, titleEntryState } from "@/ui/titlesDesk";
+import { useRouteTab } from "@/composables/useRouteTab";
+import { TITLES_CHAPTERS } from "@/ui/navigation";
 
 const player = usePlayerStore();
 const inventory = useInventoryStore();
 const quests = useQuestsStore();
 
-type Tab = "title" | "pet";
-const tab = ref<Tab>("title");
-const TABS: { id: Tab; label: string }[] = [
-  { id: "title", label: "名号" },
-  { id: "pet", label: "灵兽" },
-];
+const tab = useRouteTab(TITLES_CHAPTERS, "title");
+const TABS = TITLES_CHAPTERS;
 
 // ---- 名号 ----
 const ownedCount = computed(

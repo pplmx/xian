@@ -549,13 +549,14 @@ import SectionTitle from "@/components/common/SectionTitle.vue";
 import CollectionCabinet from "@/components/common/CollectionCabinet.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
+import { useRouteTab } from "@/composables/useRouteTab";
+import { COLLECTION_CHAPTERS } from "@/ui/navigation";
 
 const quests = useQuestsStore();
 const inventory = useInventoryStore();
 const player = usePlayerStore();
 
-type Tab = "achievement" | "collection";
-const tab = ref<Tab>("achievement");
+const tab = useRouteTab(COLLECTION_CHAPTERS, "achievement");
 // 「新得」清账时机 = 离开图鉴那一刻(与背包「新」同款:挂载清会把首帧「新」立刻抹掉)。
 // 但默认页签是「成就」,「新得」角标只画在「收藏」页签里 —— 只看成就就离开的人
 // 没看过收藏,界不该推进,否则收藏页从未亮过的「新」被整批抹平(评审 MEDIUM-1)。
@@ -567,10 +568,7 @@ watch(tab, (t) => {
 onUnmounted(() => {
   if (sawCollectionTab.value) quests.markCollectionSeen();
 });
-const TABS: { id: Tab; label: string }[] = [
-  { id: "achievement", label: "成就" },
-  { id: "collection", label: "收藏" },
-];
+const TABS = COLLECTION_CHAPTERS;
 
 type AchievementRow = AchievementProgressRow & { direction: string; rewardText: string };
 

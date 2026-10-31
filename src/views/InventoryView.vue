@@ -523,7 +523,6 @@
 <script setup lang="ts">
 import "@/styles/pages/inventory.css";
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
-import { useRoute } from "vue-router";
 import { useInventoryStore } from "@/stores/inventory";
 import { useResourcesStore } from "@/stores/resources";
 import { usePlayerStore } from "@/stores/player";
@@ -575,6 +574,8 @@ import SlotCandidatesDialog from "@/components/inventory/SlotCandidatesDialog.vu
 import DismantleDialog from "@/components/inventory/DismantleDialog.vue";
 import { useBrewing } from "@/composables/useBrewing";
 import { useNow } from "@/composables/useNow";
+import { useRouteTab } from "@/composables/useRouteTab";
+import { INVENTORY_CHAPTERS } from "@/ui/navigation";
 
 const inventory = useInventoryStore();
 // 「新」角标清账时机 = 离开背包那一刻(路由无 keep-alive,离开即卸载):
@@ -598,21 +599,10 @@ const { herbGradeHeld, recipes, pillFuncText } = useBrewing();
 const marketOpen = ref(false);
 const lore = useLoreStore();
 
-type Tab = "equip" | "pill" | "material" | "artifact";
-const route = useRoute();
+type Tab = (typeof INVENTORY_CHAPTERS)[number]["id"];
 
-function isInventoryTab(value: unknown): value is Tab {
-  return value === "equip" || value === "pill" || value === "material" || value === "artifact";
-}
-
-// 修行页的「另有 N 味」直达丹匣;浏览器前进/后退落到不同 query 时也跟同一处意图。
-const tab = ref<Tab>(isInventoryTab(route.query.tab) ? route.query.tab : "equip");
-watch(
-  () => route.query.tab,
-  () => {
-    if (isInventoryTab(route.query.tab)) tab.value = route.query.tab;
-  },
-);
+// 修行页与玄枢寻册都能带 `?tab=` 直达分册;页面内换签也把落点写回地址。
+const tab = useRouteTab(INVENTORY_CHAPTERS, "equip");
 
 /**
  * 丹药签的「现在能开炉」圆点:有一味方子门槛(blockers 空)且料钱两道账都付得起
@@ -625,12 +615,13 @@ const brewableNow = computed(
     recipes.value.some((r) => r.able.blockers.length === 0 && !r.shortHerb && !r.shortStone),
 );
 
-const TABS = computed<{ id: Tab; label: string; dot?: boolean }[]>(() => [
-  { id: "equip", label: "装备" },
-  { id: "pill", label: "丹药", dot: brewableNow.value },
-  { id: "material", label: "材料" },
-  { id: "artifact", label: "法宝" },
-]);
+const TABS = computed<{ id: Tab; label: string; dot?: boolean }[]>(() =>
+  INVENTORY_CHAPTERS.map((chapter) => ({
+    id: chapter.id,
+    label: chapter.label,
+    dot: chapter.id === "pill" && brewableNow.value,
+  })),
+);
 
 // ---- 装备:部位槽 + 部位候选列表 ----
 const SLOTS: EquipSlot[] = [

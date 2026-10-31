@@ -2269,9 +2269,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
 
     const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
-    expect(inv?.src, "背包要认 ?tab=pill，否则直达入口仍落在装备页").toMatch(
-      /route\.query\.tab[\s\S]{0,240}tab\.value\s*=\s*route\.query\.tab/,
+    expect(inv?.src, "背包要认 ?tab=pill，否则直达入口仍落在装备页").toContain(
+      'useRouteTab(INVENTORY_CHAPTERS, "equip")',
     );
+    const routeTab = readFileSync(resolve(SRC, "composables/useRouteTab.ts"), "utf8");
+    expect(routeTab, "分册 query 与选中态必须由同一处接线").toContain("route.query.tab");
+    expect(routeTab, "页面内换签也要把落点写回地址").toContain("router.replace");
   });
 
   it("构筑对照不许只给最近八则 —— 道痕余量可续开,旧构筑仍可达", () => {

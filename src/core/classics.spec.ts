@@ -11,6 +11,7 @@ import { resolve } from "node:path";
 import { CLASSICS, PLANNED_SCHOOLS, classicDef, classicsForRealm } from "@/data/classics";
 import { HEXAGRAMS, TRIGRAMS } from "@/data/yijing";
 import { GATES } from "@/data/qimen";
+import { CODEX_CHAPTERS } from "@/ui/navigation";
 import { REALMS } from "@/data/realms";
 
 const norm = (s: string): string => s.replace(/\s+/g, "");
@@ -128,10 +129,8 @@ describe("界域志 · 分册", () => {
     .replace(/\/\*[\s\S]*?\*\//g, "")
     .replace(/\/\/.*$/gm, "");
 
-  /** 分册表里声明的每一册 */
-  const tabIds = [...src.matchAll(/id: ["'](realm|classics|yi|ziwei|xiang|qimen|todo)["']/g)].map(
-    (m) => m[1]!,
-  );
+  /** 分册表与玄枢图共用同一份目录 */
+  const tabIds = CODEX_CHAPTERS.map((chapter) => chapter.id);
 
   it("六册俱全(界域/典籍/周易/紫微/星象/奇门)", () => {
     for (const id of ["realm", "classics", "yi", "ziwei", "xiang", "qimen"]) {

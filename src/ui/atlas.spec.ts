@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { readStyleCss } from "@/test/readStyleCss";
 import {
   atlasJumpIndex,
-  atlasSearchEntries,
+  atlasSearchResults,
   atlasSectionIdForRoute,
   atlasShortcutHintOf,
   isAtlasShortcut,
@@ -30,21 +30,38 @@ describe("玄枢图 · 五卷快引", () => {
     expect(atlasJumpIndex(2, "ArrowRight", 0)).toBe(-1);
   });
 
-  it("按册名、说明、分卷与日常叫法寻册，不另维护一份路径表", () => {
-    expect(atlasSearchEntries("器魂").map((entry) => entry.name)).toEqual(["souls"]);
-    expect(atlasSearchEntries("背包").map((entry) => entry.name)).toEqual(["inventory"]);
-    expect(atlasSearchEntries("人物").map((entry) => entry.name)).toEqual(["character"]);
-    expect(atlasSearchEntries("存档").map((entry) => entry.name)).toEqual(["settings"]);
-    expect(atlasSearchEntries("天机").map((entry) => entry.name)).toEqual([
+  it("按册名、说明、分卷、分册与日常叫法寻册，不另维护一份路径表", () => {
+    expect(atlasSearchResults("器魂").map((result) => result.entry.name)).toEqual([
+      "inventory",
+      "souls",
+    ]);
+    expect(atlasSearchResults("背包").map((result) => result.entry.name)).toEqual(["inventory"]);
+    expect(atlasSearchResults("人物").map((result) => result.entry.name)).toEqual(["character"]);
+    expect(atlasSearchResults("存档").map((result) => result.entry.name)).toEqual(["settings"]);
+    expect(atlasSearchResults("天机").map((result) => result.entry.name)).toEqual([
       "celestial",
       "build",
       "titles",
       "legacy",
       "settings",
     ]);
-    expect(atlasSearchEntries("  背 包  ").map((entry) => entry.name)).toEqual(["inventory"]);
-    expect(atlasSearchEntries("不存在的册")).toEqual([]);
-    expect(atlasSearchEntries("   ")).toEqual([]);
+    expect(atlasSearchResults("  背 包  ").map((result) => result.entry.name)).toEqual([
+      "inventory",
+    ]);
+    expect(atlasSearchResults("周易")).toMatchObject([
+      { entry: { name: "codex" }, chapter: { id: "yi" }, to: "/codex?tab=yi" },
+    ]);
+    expect(atlasSearchResults("问卦")).toMatchObject([
+      { entry: { name: "codex" }, chapter: { id: "yi" }, to: "/codex?tab=yi" },
+    ]);
+    expect(atlasSearchResults("交货")).toMatchObject([
+      { entry: { name: "market" }, chapter: { id: "bounty" }, to: "/market?tab=bounty" },
+    ]);
+    expect(atlasSearchResults("天机 道果")).toMatchObject([
+      { entry: { name: "legacy" }, to: "/legacy" },
+    ]);
+    expect(atlasSearchResults("不存在的册")).toEqual([]);
+    expect(atlasSearchResults("   ")).toEqual([]);
   });
 
   it("寻册快捷键与平台提示同源", () => {
@@ -82,6 +99,8 @@ describe("玄枢图 · 五卷快引", () => {
     expect(atlas, "五卷快引要支持键盘游标").toContain("atlasJumpIndex");
     expect(atlas, "总图要先给人一枚寻册口").toContain("data-atlas-search");
     expect(atlas, "检索结果仍落真实路由链接").toContain("data-atlas-result");
+    expect(atlas, "分册检索要带 tab 直落到册内页码").toContain("result.chapter");
+    expect(atlas, "分册检索仍读同一份册目").toContain("atlasSearchResults");
     expect(atlas, "检索为空要给出下一步，不只是一块空白").toContain("data-atlas-empty");
     expect(atlas, "中文输入法组合期间不许把回车当成翻册").toContain("event.isComposing");
     expect(atlas, "桌面总图要能比普通弹窗更宽").toContain('size="max"');

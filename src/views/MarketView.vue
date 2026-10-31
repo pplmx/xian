@@ -54,6 +54,8 @@ import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import MarketArcade from "@/components/market/MarketArcade.vue";
+import { useRouteTab } from "@/composables/useRouteTab";
+import { MARKET_CHAPTERS } from "@/ui/navigation";
 
 const market = useMarketStore();
 const bounty = useBountyStore();
@@ -95,13 +97,8 @@ onUnmounted(() => {
 
 const remainingSec = computed(() => marketRemainingSec(market.stockedAt, now.value));
 
-type MarketTab = "shelf" | "bounty" | "sell";
-const MARKET_TABS: { id: MarketTab; label: string }[] = [
-  { id: "shelf", label: "货架" },
-  { id: "bounty", label: "悬赏" },
-  { id: "sell", label: "售出" },
-];
-const marketTab = ref<MarketTab>("shelf");
+const MARKET_TABS = MARKET_CHAPTERS;
+const marketTab = useRouteTab(MARKET_CHAPTERS, "shelf");
 
 const bountyHoldings = computed(() => ({
   herbs: resources.herb,

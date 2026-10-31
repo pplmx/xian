@@ -14,7 +14,7 @@ function source(rel: string): string {
 
 describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
   it("常见两档品名在品阶晕染上仍有正文可读性，其余品阶不改字色", () => {
-    expect(qualityTextColor("mortal")).toBe("var(--color-ink-soft)");
+    expect(qualityTextColor("mortal")).toBe("var(--color-ink)");
     expect(qualityTextColor("fine")).toBe(
       `color-mix(in srgb, ${qualityDef("fine").color} 75%, var(--color-ink) 25%)`,
     );

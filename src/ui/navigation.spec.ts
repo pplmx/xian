@@ -5,6 +5,10 @@ import { NAVIGATION_ENTRIES, NAVIGATION_SECTIONS, navigationPositionOf } from ".
 
 const ROOT = resolve(__dirname, "../..");
 
+function chaptersOf(name: string) {
+  return NAVIGATION_ENTRIES.find((entry) => entry.name === name)?.chapters ?? [];
+}
+
 describe("玄枢图 · 全站册目", () => {
   it("把已开的十七册各归一处,不重名、不重路", () => {
     expect(NAVIGATION_SECTIONS).toHaveLength(5);
@@ -26,6 +30,45 @@ describe("玄枢图 · 全站册目", () => {
         `${entry.name} 有空关键词`,
       ).toBe(true);
     }
+  });
+
+  it("册内分册与册目同源,可被玄枢图直接寻到并写成 ?tab", () => {
+    const chaptered = NAVIGATION_ENTRIES.filter((entry) => entry.chapters.length > 0);
+    expect(chaptered.map((entry) => entry.name)).toEqual([
+      "market",
+      "codex",
+      "inventory",
+      "collection",
+      "celestial",
+      "titles",
+      "legacy",
+    ]);
+    for (const entry of chaptered) {
+      expect(
+        new Set(entry.chapters.map((chapter) => chapter.id)).size,
+        `${entry.name} 的分册 id 重复`,
+      ).toBe(entry.chapters.length);
+      for (const chapter of entry.chapters) {
+        expect(chapter.label.length, `${entry.name}/${chapter.id} 缺分册名`).toBeGreaterThan(0);
+        expect(
+          chapter.description.length,
+          `${entry.name}/${chapter.id} 缺一句说明`,
+        ).toBeGreaterThan(5);
+        expect(chapter.keywords.length, `${entry.name}/${chapter.id} 缺寻册词`).toBeGreaterThan(0);
+        expect(chapter.id, `${entry.name}/${chapter.id} 不能写进 query`).toMatch(
+          /^[a-z][a-z0-9-]*$/,
+        );
+      }
+    }
+    expect(chaptersOf("codex")).toHaveLength(6);
+    expect(chaptersOf("inventory").map((chapter) => chapter.id)).toEqual([
+      "equip",
+      "pill",
+      "material",
+      "artifact",
+    ]);
+    expect(chaptersOf("settings")).toEqual([]);
+    expect(chaptersOf("not-a-route")).toEqual([]);
   });
 
   it("按路由名能找回所在册与分卷", () => {
@@ -73,5 +116,22 @@ describe("玄枢图 · 全站册目", () => {
     expect(atlas, "玄枢图要复用全站弹窗的焦点与返回键纪律").toContain("<BaseModal");
     expect(atlas, "运行时判据要能定位册目").toContain("data-nav-atlas");
     expect(atlas, "玄枢图要给出五卷总图而不只列单册").toContain("data-atlas-compass");
+  });
+
+  it("七册的长页分册共用 useRouteTab,页面内换签也把落点写回地址", () => {
+    const cases = [
+      ["src/views/MarketView.vue", "MARKET_CHAPTERS"],
+      ["src/views/RealmCodexView.vue", "CODEX_CHAPTERS"],
+      ["src/views/InventoryView.vue", "INVENTORY_CHAPTERS"],
+      ["src/views/CollectionView.vue", "COLLECTION_CHAPTERS"],
+      ["src/views/CelestialView.vue", "CELESTIAL_CHAPTERS"],
+      ["src/views/TitlesView.vue", "TITLES_CHAPTERS"],
+      ["src/views/LegacyView.vue", "LEGACY_CHAPTERS"],
+    ] as const;
+    for (const [path, chapters] of cases) {
+      const source = readFileSync(resolve(ROOT, path), "utf8");
+      expect(source, `${path} 没有接到统一的分册地址`).toContain("useRouteTab");
+      expect(source, `${path} 另写了一份分册目录`).toContain(chapters);
+    }
   });
 });

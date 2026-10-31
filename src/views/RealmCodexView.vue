@@ -590,6 +590,8 @@ import ProgressBar from "@/components/common/ProgressBar.vue";
 import RealmAtlas from "@/components/common/RealmAtlas.vue";
 import RealmLadder from "@/components/cultivation/RealmLadder.vue";
 import { useGameNow } from "@/composables/useGameNow";
+import { useRouteTab } from "@/composables/useRouteTab";
+import { CODEX_CHAPTERS } from "@/ui/navigation";
 
 const player = usePlayerStore();
 const game = useGameStore();
@@ -606,16 +608,9 @@ const now = computed(() => {
 });
 
 /** 分册:六门各占一册 —— 页越长越该分,免得一路拉到底找不着北 */
-type CodexTab = "realm" | "classics" | "yi" | "ziwei" | "xiang" | "qimen" | "todo";
-const CODEX_TABS: { id: CodexTab; label: string }[] = [
-  { id: "realm", label: "界域" },
-  { id: "classics", label: "典籍" },
-  { id: "yi", label: "周易" },
-  { id: "ziwei", label: "紫微" },
-  { id: "xiang", label: "星象" },
-  { id: "qimen", label: "奇门" },
-];
-const codexTab = ref<CodexTab>("realm");
+type CodexTab = (typeof CODEX_CHAPTERS)[number]["id"];
+const CODEX_TABS = CODEX_CHAPTERS;
+const codexTab = useRouteTab(CODEX_CHAPTERS, "realm");
 /** 卦在身:周易那一册挂朱点 —— 时限制的一卦在跑,得让人看得见 */
 const codexTabRows = computed(() =>
   CODEX_TABS.map((t) => ({ ...t, dot: t.id === "yi" && !!player.activeDivination })),

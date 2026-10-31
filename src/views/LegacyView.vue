@@ -537,16 +537,12 @@ import LegacyWheel from "@/components/common/LegacyWheel.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
+import { useRouteTab } from "@/composables/useRouteTab";
+import { LEGACY_CHAPTERS } from "@/ui/navigation";
 
 /** 长卷分册:轮回(本世与历世)/ 征程(节点与宿敌)/ 缘迹(奇缘与行迹)/ 纪录 */
-type LegacyTab = "samsara" | "journey" | "fate" | "record";
-const TABS: { id: LegacyTab; label: string }[] = [
-  { id: "samsara", label: "轮回" },
-  { id: "journey", label: "征程" },
-  { id: "fate", label: "缘迹" },
-  { id: "record", label: "纪录" },
-];
-const tab = ref<LegacyTab>("samsara");
+const TABS = LEGACY_CHAPTERS;
+const tab = useRouteTab(LEGACY_CHAPTERS, "samsara");
 
 const endgame = useEndgameStore();
 const player = usePlayerStore();

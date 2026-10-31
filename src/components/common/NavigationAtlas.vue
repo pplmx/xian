@@ -11,7 +11,7 @@
         <span class="atlas-search__seal" aria-hidden="true">寻</span>
         <div class="atlas-search__field">
           <label id="atlas-search-label" for="atlas-search-input" class="sr-only">
-            按册名、用途或旧叫法寻册
+            按册名、分册、用途或旧叫法寻册
           </label>
           <input
             id="atlas-search-input"
@@ -21,7 +21,7 @@
             type="text"
             autocomplete="off"
             spellcheck="false"
-            placeholder="册名、用途或旧叫法，如「人物」「背包」「存档」"
+            placeholder="册名、分册或旧叫法，如「人物」「周易」「存档」"
             aria-describedby="atlas-search-status"
             @keydown="onSearchKeydown"
           />
@@ -29,11 +29,11 @@
             <span v-if="searching" aria-live="polite">
               {{
                 results.length > 0
-                  ? `找到 ${results.length} 册 · ↑↓ 选择，回车前往`
+                  ? `找到 ${results.length} 处 · ↑↓ 选择，回车前往`
                   : "没有这册 · 换个日常叫法试试"
               }}
             </span>
-            <span v-else>底栏叫「背包」，册页叫「行囊」—— 旧叫法也能寻</span>
+            <span v-else>旧叫法也能寻；「周易」「灵兽」可直达册内分册</span>
             <span class="atlas-search__key tabular">{{ shortcutHint }}</span>
           </p>
         </div>
@@ -199,7 +199,7 @@
           <div class="min-w-0">
             <p class="text-note tracking-[0.24em] text-cinnabar">寻册所得</p>
             <h4 id="atlas-results-title" class="mt-0.5 font-kai text-title tracking-[0.16em]">
-              「{{ query.trim() }}」{{ results.length }} 册
+              「{{ query.trim() }}」{{ results.length }} 处
             </h4>
           </div>
           <span class="atlas-results__hint">按玄枢册序排列</span>
@@ -207,31 +207,34 @@
 
         <div v-if="results.length" class="atlas-result-list">
           <RouterLink
-            v-for="(entry, index) in results"
-            :key="entry.name"
-            :to="entry.to"
+            v-for="(result, index) in results"
+            :key="result.key"
+            :to="result.to"
             data-atlas-result
             class="atlas-result"
             :class="{
               'atlas-result--active': index === activeResultIndex,
-              'atlas-result--current': route.name === entry.name,
+              'atlas-result--current': isCurrentResult(result),
             }"
             :data-atlas-result-active="index === activeResultIndex ? '' : undefined"
-            :data-atlas-result-current="route.name === entry.name ? '' : undefined"
+            :data-atlas-result-current="isCurrentResult(result) ? '' : undefined"
             @mouseenter="activeResultIndex = index"
             @click="emit('close')"
           >
             <span class="atlas-result__icon" aria-hidden="true">
-              <GameIcon :name="entry.icon" :size="15" />
+              <GameIcon :name="result.entry.icon" :size="15" />
             </span>
             <span class="atlas-result__copy">
               <span class="atlas-result__title">
-                {{ entry.label }}
-                <small>{{ entry.sectionLabel }}卷 · {{ entry.shortLabel }}</small>
+                {{ result.label }}
+                <small
+                  >{{ result.entry.sectionLabel }}卷 · {{ result.entry.label
+                  }}{{ result.chapter ? " · 分册" : "" }}</small
+                >
               </span>
-              <span class="atlas-result__description">{{ entry.description }}</span>
+              <span class="atlas-result__description">{{ result.description }}</span>
             </span>
-            <span v-if="route.name === entry.name" class="atlas-result__current">在</span>
+            <span v-if="isCurrentResult(result)" class="atlas-result__current">在</span>
             <span v-else class="atlas-result__arrow" aria-hidden="true">›</span>
           </RouterLink>
         </div>
@@ -239,7 +242,7 @@
         <div v-else data-atlas-empty class="atlas-results__empty">
           <span class="atlas-results__empty-mark" aria-hidden="true">空</span>
           <p>玄枢册里没有这个叫法。</p>
-          <p>可试：人物、背包、存档、转世；也可按分卷寻「天机」。</p>
+          <p>可试：人物、背包、存档；分册可寻「周易」「灵兽」。</p>
           <div class="atlas-results__suggestions" aria-label="寻册建议">
             <button
               v-for="term in SEARCH_SUGGESTIONS"
@@ -259,7 +262,7 @@
         <p class="shrink-0 text-center text-note text-ink-faint">
           {{
             searching
-              ? "只读同一份玄枢册目，不另造去处"
+              ? "只读同一份玄枢册目与分册，不另造去处"
               : `${NAVIGATION_SECTIONS.length} 卷 ${NAVIGATION_ENTRIES.length} 册 · 点一册即可前往`
           }}
         </p>
@@ -277,9 +280,10 @@ import { useSettingsStore } from "@/stores/settings";
 import { cnNumber } from "@/utils/format";
 import {
   atlasJumpIndex,
-  atlasSearchEntries,
+  atlasSearchResults,
   atlasSectionIdForRoute,
   atlasShortcutHintOf,
+  type AtlasSearchResult,
 } from "@/ui/atlas";
 import { NAVIGATION_ENTRIES, NAVIGATION_SECTIONS, navigationPositionOf } from "@/ui/navigation";
 import BaseModal from "./BaseModal.vue";
@@ -296,12 +300,12 @@ const atlasRoot = useTemplateRef<HTMLElement>("atlasRoot");
 const activeVolumeId = ref(atlasSectionIdForRoute(route.name));
 const query = ref("");
 const activeResultIndex = ref(0);
-const results = computed(() => atlasSearchEntries(query.value));
+const results = computed(() => atlasSearchResults(query.value));
 const searching = computed(() => query.value.trim().length > 0);
 const shortcutHint = atlasShortcutHintOf(
   typeof navigator === "undefined" ? "" : navigator.platform,
 );
-const SEARCH_SUGGESTIONS = ["人物", "背包", "存档", "转世", "天机"] as const;
+const SEARCH_SUGGESTIONS = ["人物", "背包", "存档", "周易", "灵兽", "天机"] as const;
 
 const currentPosition = computed(() => navigationPositionOf(route.name));
 const current = computed(() => currentPosition.value?.entry);
@@ -339,6 +343,12 @@ watch(results, () => {
 function focusVolume(index: number): void {
   const buttons = atlasRoot.value?.querySelectorAll<HTMLButtonElement>("[data-atlas-volume]");
   buttons?.[index]?.focus();
+}
+
+function isCurrentResult(result: AtlasSearchResult): boolean {
+  if (route.name !== result.entry.name) return false;
+  if (!result.chapter) return true;
+  return typeof route.query.tab === "string" && route.query.tab === result.chapter.id;
 }
 
 function onVolumeKeydown(event: KeyboardEvent, index: number): void {

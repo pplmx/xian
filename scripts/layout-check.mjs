@@ -12422,6 +12422,46 @@ async function taskAtlasNavigation() {
 
         await page.locator("[data-atlas-trigger]").click();
         await page.waitForSelector("[data-nav-atlas]", { timeout: 3000 }).catch(() => undefined);
+        await page.locator("[data-atlas-search]").fill("周易");
+        const chapterSearch = await page.locator("[data-atlas-result]").evaluateAll((rows) =>
+          rows.map((row) => ({
+            href: row.getAttribute("href"),
+            text: (row.textContent || "").replace(/\s+/g, " ").trim(),
+          })),
+        );
+        checked += 1;
+        if (
+          chapterSearch.length !== 1 ||
+          chapterSearch[0]?.href !== "#/codex?tab=yi" ||
+          !chapterSearch[0]?.text.includes("周易")
+        ) {
+          failures.push(`[390] 玄枢图按「周易」寻分册不对:实见 ${JSON.stringify(chapterSearch)}`);
+        }
+        await page.locator("[data-atlas-search]").press("Enter");
+        const chapterJumped = await page
+          .waitForFunction(
+            () => {
+              const selected = document.querySelector(
+                '[data-folio-tabs] [role="tab"][aria-selected="true"]',
+              );
+              return location.hash === "#/codex?tab=yi" && selected?.textContent?.includes("周易");
+            },
+            { timeout: 4000 },
+          )
+          .then(() => true)
+          .catch(() => false);
+        checked += 1;
+        if (!chapterJumped) failures.push("[390] 玄枢图寻到「周易」后没有落到对应分册");
+        await page.getByRole("tab", { name: "紫微" }).click();
+        const tabWroteQuery = await page
+          .waitForFunction(() => location.hash === "#/codex?tab=ziwei", { timeout: 3000 })
+          .then(() => true)
+          .catch(() => false);
+        checked += 1;
+        if (!tabWroteQuery) failures.push("[390] 上界域志换到「紫微」后地址没有跟着换册");
+
+        await page.locator("[data-atlas-trigger]").click();
+        await page.waitForSelector("[data-nav-atlas]", { timeout: 3000 }).catch(() => undefined);
         await page.locator('[data-atlas-volume="fate"]').click();
         const volumeJumped = await page
           .waitForFunction(
