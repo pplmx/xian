@@ -6750,6 +6750,255 @@ async function taskEventSlip() {
   return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
 }
 
+/** 择师谱:四脉同谱、点签只武装、确认才落定,并真量 390 与 195 两档。 */
+async function taskMentorLedger() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    await seedSave(ctx, showcaseSlices("light"), "__mentorLedger");
+
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/character", 650);
+    if (!rendered) failures.push("[390] 择师谱场景:/character 没有渲染出来");
+    await clearOverlays(page);
+
+    const entry = page.locator("main button", { hasText: /师\s*承/ }).first();
+    const openMentor = async () => {
+      if ((await entry.count()) === 0) return false;
+      await entry.click({ timeout: 3000 }).catch(() => {});
+      const opened = await page
+        .locator("[data-mentor-ledger], [data-mentor-view='chosen']")
+        .last()
+        .waitFor({ state: "visible", timeout: 4000 })
+        .then(() => true)
+        .catch(() => false);
+      if (opened) await settleVisuals(page);
+      return opened;
+    };
+
+    const readMentor = () =>
+      page.evaluate(() => {
+        const root = document.querySelector("[data-mentor-view]");
+        const panel = root?.closest(".modal-panel");
+        if (!root || !panel) return null;
+        const choices = [...root.querySelectorAll("[data-mentor-choice]")].map((el) => {
+          const choice = el.getBoundingClientRect();
+          const body = el.querySelector(".mentor-choice__body")?.getBoundingClientRect();
+          const action = el.querySelector(".mentor-choice__action")?.getBoundingClientRect();
+          return {
+            id: el.getAttribute("data-mentor-id"),
+            pressed: el.getAttribute("aria-pressed"),
+            label: (el.getAttribute("aria-label") || "").trim(),
+            mods: el.querySelectorAll("[data-mentor-mods] .mentor-choice__mod").length,
+            width: choice.width,
+            scrollWidth: el.scrollWidth,
+            clientWidth: el.clientWidth,
+            actionBelowBody: body && action ? action.top >= body.bottom - 1 : null,
+          };
+        });
+        const oathActions = root.closest(".modal-panel")?.querySelector(".mentor-oath__actions");
+        return {
+          view: root.getAttribute("data-mentor-view"),
+          text: (root.textContent || "").replace(/\s+/g, " ").trim(),
+          choices,
+          pressed: choices.filter((c) => c.pressed === "true").map((c) => c.id),
+          confirm: !!panel.querySelector("[data-mentor-confirm]"),
+          confirmText: (panel.querySelector("[data-mentor-confirm]")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+          panelWidth: panel.clientWidth,
+          panelScrollWidth: panel.scrollWidth,
+          footerDirection: oathActions ? getComputedStyle(oathActions).flexDirection : "",
+          mods: root.querySelectorAll("[data-mentor-mod]").length,
+        };
+      });
+
+    if (!(await openMentor())) {
+      failures.push("[390] 择师谱场景:点「师承」入口后没有打开择师谱");
+    } else {
+      const base = await readMentor();
+      checked += 1;
+      if (
+        !base ||
+        base.view !== "selection" ||
+        base.choices.length !== 4 ||
+        base.confirm ||
+        base.pressed.length !== 0 ||
+        !base.text.includes("不可改投") ||
+        base.choices.some(
+          (choice) =>
+            !choice.id ||
+            choice.mods !== 2 ||
+            !choice.label.includes("入门词条") ||
+            choice.scrollWidth > choice.clientWidth + 1,
+        )
+      ) {
+        failures.push(
+          `[390] 择师谱没有把四脉、永久代价与同源词条一次摊开:` +
+            `四脉 ${base?.choices.length ?? 0} / 已择 ${base?.pressed.length ?? 0} / ` +
+            `确认 ${base?.confirm ?? false} / 词条 ${base?.choices.map((c) => c.mods).join("/") || "无"}`,
+        );
+      }
+
+      const controls = await auditModalControls(page);
+      checked += 1;
+      if (!controls || controls.count === 0 || controls.unnamed.length || controls.small.length) {
+        failures.push(
+          `[390] 择师谱控件不合格:` +
+            `${controls?.count ?? 0} 枚 / 无名 ${controls?.unnamed.join(" | ") || "无"} / ` +
+            `过小 ${controls?.small.join(" | ") || "无"}`,
+        );
+      }
+
+      if (SHOTS) {
+        mkdirSync(SHOTS_DIR, { recursive: true });
+        await page.screenshot({ path: join(SHOTS_DIR, "mentor-ledger-390.png") });
+      }
+
+      await page.locator("[data-mentor-choice]").first().click({ timeout: 3000 });
+      await page
+        .locator("[data-mentor-confirm]")
+        .waitFor({ state: "visible", timeout: 3000 })
+        .catch(() => {});
+      await settleVisuals(page);
+      const armed = await readMentor();
+      checked += 1;
+      if (
+        !armed ||
+        armed.view !== "selection" ||
+        armed.pressed.join(",") !== "swordsman" ||
+        !armed.confirm ||
+        !armed.confirmText.includes("剑修") ||
+        !armed.confirmText.includes("不可改投")
+      ) {
+        failures.push(
+          `[390] 点签没有停在待确认态:` +
+            `视图 ${armed?.view || "无"} / 已择 ${armed?.pressed.join(",") || "无"} / ` +
+            `确认 ${armed?.confirm ?? false} «${armed?.confirmText || "无"}»`,
+        );
+      }
+
+      zoomSeen += 1;
+      const zoomProblems = dialogZoomProblems(
+        await measureDialogZoom(page, { width: 390, height: 844 }),
+      );
+      checked += 1;
+      if (zoomProblems.length) failures.push(`[195] 择师谱 → ${zoomProblems.join(" / ")}`);
+
+      await page.setViewportSize({ width: 195, height: 422 });
+      await settleVisuals(page);
+      const narrow = await readMentor();
+      checked += 1;
+      if (
+        !narrow ||
+        narrow.panelScrollWidth > narrow.panelWidth + 1 ||
+        narrow.choices.some(
+          (choice) =>
+            choice.scrollWidth > choice.clientWidth + 1 || choice.actionBelowBody !== true,
+        ) ||
+        narrow.footerDirection !== "column"
+      ) {
+        failures.push(
+          `[195] 择师谱签身或确认动作没有收成上下两段:` +
+            `面板 ${narrow?.panelScrollWidth ?? 0}>${narrow?.panelWidth ?? 0} / ` +
+            `签身 ${narrow?.choices.map((c) => `${c.actionBelowBody}`).join("/") || "无"} / ` +
+            `确认 ${narrow?.footerDirection || "无"}`,
+        );
+      }
+      if (SHOTS) await page.screenshot({ path: join(SHOTS_DIR, "mentor-ledger-195.png") });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await settleVisuals(page);
+
+      await page.keyboard.press("Escape");
+      await page
+        .locator("[data-mentor-ledger]")
+        .waitFor({ state: "detached", timeout: 3000 })
+        .catch(() => {});
+      if (!(await openMentor())) {
+        failures.push("[390] 择师谱场景:关闭后无法重新打开");
+      } else {
+        const reopened = await readMentor();
+        checked += 1;
+        if (
+          !reopened ||
+          reopened.view !== "selection" ||
+          reopened.confirm ||
+          reopened.pressed.length !== 0
+        ) {
+          failures.push("[390] 只点选未确认就被写进存档,重开不再出示四脉");
+        }
+
+        await page.locator("[data-mentor-choice]").first().click({ timeout: 3000 });
+        await page
+          .locator("[data-mentor-confirm] button", { hasText: /确认拜师/ })
+          .click({ timeout: 3000 });
+        const chosen = await page
+          .locator("[data-mentor-view='chosen']")
+          .waitFor({ state: "visible", timeout: 3000 })
+          .then(() => true)
+          .catch(() => false);
+        const chosenInfo = await readMentor();
+        const focusAfterConfirm = await page.evaluate(() => {
+          const active = document.activeElement;
+          const panel = active?.closest(".modal-panel");
+          return {
+            inside: !!panel,
+            text: (active?.textContent || "").replace(/\s+/g, " ").trim(),
+          };
+        });
+        checked += 1;
+        if (
+          !chosen ||
+          !chosenInfo ||
+          chosenInfo.view !== "chosen" ||
+          chosenInfo.mods !== 2 ||
+          !chosenInfo.text.includes("行为契合") ||
+          !chosenInfo.text.includes("不可改投") ||
+          !focusAfterConfirm.inside
+        ) {
+          failures.push(
+            `[390] 确认拜师后没有落成师承帖:` +
+              `师承帖 ${chosen} / 词条 ${chosenInfo?.mods ?? 0} / ` +
+              `焦点 ${focusAfterConfirm.inside ? `«${focusAfterConfirm.text}»` : "掉出弹窗"} / ` +
+              `«${chosenInfo?.text.slice(0, 50) || "无"}»`,
+          );
+        }
+        if (SHOTS) {
+          await page.screenshot({ path: join(SHOTS_DIR, "mentor-dossier-390.png") });
+        }
+
+        await page
+          .locator(".modal-panel button", { hasText: /收起师承帖/ })
+          .click({ timeout: 3000 })
+          .catch(() => {});
+        if (await openMentor()) {
+          const persisted = await readMentor();
+          checked += 1;
+          if (!persisted || persisted.view !== "chosen" || persisted.confirm) {
+            failures.push("[390] 已落定的师承重开后没有回到师承帖");
+          }
+        } else {
+          failures.push("[390] 落定后关闭师承帖,无法重新打开");
+        }
+      }
+    }
+
+    if (pageErrors.length)
+      failures.push(`[390] 择师谱场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
 /** 真打一场历练战斗 */
 async function taskCombatReplay() {
   const failures = [];
@@ -14168,6 +14417,7 @@ const TASKS = [
   ["闭关的跨页承诺", taskRetreat],
   ["背包里的账目", taskInventoryAccounting],
   ["际遇帖的门限与去向", taskEventSlip],
+  ["择师谱的两步定契", taskMentorLedger],
   ["真打一场历练战斗", taskCombatReplay],
   ["敌人卡最挤的一档", taskEnemyCard],
   ["秘境卡在境中的窄屏一档", taskSecretRealm320],

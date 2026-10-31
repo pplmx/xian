@@ -116,4 +116,36 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,2200}\.character-index__head\s*\{[\s\S]{0,120}flex-direction:\s*column/,
     );
   });
+
+  it("择师谱先横读四脉,再以两步定契摊开永久代价", () => {
+    const dialog = source("src/components/character/MentorDialog.vue");
+
+    expect(dialog, "四脉共用一张择师谱").toContain("data-mentor-ledger");
+    expect(dialog, "永久代价在择签前就要出现").toContain("data-mentor-permanent");
+    expect(dialog, "四位师尊仍从同一份候选表展开").toContain('v-for="(m, index) in choices"');
+    expect(dialog, "每脉都要有可定位的签位").toContain("data-mentor-choice");
+    expect(dialog, "点签只武装待确认项").toContain('@click="armMentor(m.id)"');
+    expect(dialog, "点签不得直接写存档").not.toContain('@click="player.adoptMentor');
+    expect(dialog, "卷尾确认才有落定动作").toContain('@click="confirmMentor"');
+    expect(dialog.match(/player\.adoptMentor\(/g)?.length, "全组件只有确认动作写存档").toBe(1);
+    expect(dialog, "取消词沿用全库口径").toContain("再想想");
+    expect(dialog, "永久不可改投要在确认前说穿").toContain("不可改投");
+    expect(dialog, "词条仍只走 modsPills 同一口径").toContain("modsPills(m.mods)");
+  });
+
+  it("择师谱 390 单列横读,195 把签身与印面动作上下收住", () => {
+    const dialog = source("src/components/character/MentorDialog.vue");
+
+    expect(dialog, "择师谱要占满浮层可用宽").toContain('size="wide"');
+    expect(dialog, "四项签身共用一条比较列").toMatch(
+      /\.mentor-choice\s*\{[\s\S]{0,220}grid-template-columns:\s*2\.25rem minmax\(0, 1fr\) auto/,
+    );
+    expect(dialog, "195 档要有独立收口").toContain("@media (max-width: 220px)");
+    expect(dialog, "195 档签身改上下两段").toMatch(
+      /@media \(max-width: 220px\)[\s\S]{0,1200}\.mentor-choice\s*\{[\s\S]{0,120}grid-template-columns:\s*1\.8rem minmax\(0, 1fr\)/,
+    );
+    expect(dialog, "195 档确认动作竖排").toMatch(
+      /@media \(max-width: 220px\)[\s\S]{0,2000}\.mentor-oath__actions\s*\{[\s\S]{0,120}flex-direction:\s*column/,
+    );
+  });
 });
