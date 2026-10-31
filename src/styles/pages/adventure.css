@@ -539,6 +539,433 @@
     line-height: 1.65;
   }
   /*
+   * 际遇帖 —— 路上撞见的事不再是一段正文加一排按钮。
+   *
+   * 卷首先报清这一档为何出现、多久来一次、还剩多久会替你选；正文单独成引文；
+   * 选项按「门限 → 代价 → 可能去向」展开，结算后同一张帖翻成清点账。
+   * 极窄档收掉序号与动作字，只留可读的正文与数字。
+   */
+  .event-slip {
+    display: grid;
+    min-width: 0;
+    gap: 0.66rem;
+    color: rgb(var(--color-ink-rgb));
+  }
+  .event-slip:focus {
+    outline: none;
+  }
+  .event-slip:focus-visible {
+    outline: 1px solid rgb(var(--color-qing-rgb) / 0.55);
+    outline-offset: 3px;
+  }
+  .event-slip__head {
+    display: grid;
+    min-width: 0;
+    gap: 0.4rem;
+    padding: 0.54rem 0.62rem 0.56rem;
+    border-left: 2px solid var(--event-tier);
+    background: linear-gradient(
+      90deg,
+      rgb(var(--color-paper-deep-rgb) / 0.4),
+      rgb(var(--color-paper-rgb) / 0.12)
+    );
+  }
+  .event-slip__origin {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    gap: 0.56rem;
+  }
+  .event-slip__seal {
+    display: grid;
+    width: 2.42rem;
+    height: 2.42rem;
+    flex: none;
+    place-items: center;
+    border: 1px solid var(--event-tier);
+    background: rgb(var(--color-paper-lifted-rgb) / 0.52);
+    color: var(--event-tier);
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    line-height: 1;
+  }
+  .event-slip__origin-copy {
+    min-width: 0;
+    flex: 1;
+  }
+  .event-slip__eyebrow {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.12rem 0.46rem;
+    line-height: 1.45;
+  }
+  .event-slip__eyebrow strong {
+    color: var(--event-tier);
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    font-weight: 500;
+    letter-spacing: 0.14em;
+  }
+  .event-slip__eyebrow span {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .event-slip__odds {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 0.16rem 0.58rem;
+    margin-top: 0.18rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .event-slip__odds span + span {
+    padding-left: 0.58rem;
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+  }
+  .event-slip__source {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .event-slip__narrative {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 0.54rem;
+    margin: 0;
+    padding: 0.56rem 0.62rem 0.62rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    border-radius: 2px;
+    background:
+      linear-gradient(112deg, rgb(var(--color-qing-rgb) / 0.025), transparent 44%),
+      rgb(var(--color-paper-lifted-rgb) / 0.56);
+  }
+  .event-slip__mark {
+    display: grid;
+    width: 1.72rem;
+    height: 1.72rem;
+    place-items: center;
+    border-right: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    line-height: 1;
+  }
+  .event-slip__narrative p {
+    min-width: 0;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    letter-spacing: 0.025em;
+    line-height: 1.75;
+    overflow-wrap: anywhere;
+  }
+  .event-slip__narrative.is-result p {
+    color: rgb(var(--color-ink-rgb));
+  }
+  .event-slip__marginal {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0.44rem;
+    padding: 0.38rem 0.56rem;
+    border-left: 2px solid rgb(var(--color-ink-rgb) / 0.16);
+    background: rgb(var(--color-paper-deep-rgb) / 0.3);
+  }
+  .event-slip__marginal.is-echo {
+    border-left-color: rgb(var(--color-qing-rgb) / 0.48);
+  }
+  .event-slip__marginal.is-aftermath {
+    border-left-color: rgb(var(--color-gold-ink-rgb) / 0.48);
+  }
+  .event-slip__marginal-label {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.14em;
+    white-space: nowrap;
+  }
+  .event-slip__marginal.is-echo p {
+    color: rgb(var(--color-qing-rgb));
+  }
+  .event-slip__marginal.is-aftermath p {
+    color: rgb(var(--color-gold-ink-rgb));
+  }
+  .event-slip__marginal p {
+    min-width: 0;
+    font-size: var(--type-body);
+    line-height: 1.58;
+    overflow-wrap: anywhere;
+  }
+  .event-slip__choices {
+    display: grid;
+    min-width: 0;
+    gap: 0.44rem;
+    padding-top: 0.12rem;
+  }
+  .event-slip__choices-head {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 0.34rem 0.58rem;
+    padding-bottom: 0.34rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.11);
+  }
+  .event-slip__choices-title {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    letter-spacing: 0.16em;
+    line-height: 1.4;
+  }
+  .event-slip__choices-note {
+    margin-top: 0.08rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .event-slip__choice-count {
+    display: flex;
+    align-items: baseline;
+    gap: 0.16rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    white-space: nowrap;
+  }
+  .event-slip__choice-count strong {
+    color: rgb(var(--color-qing-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    font-weight: 500;
+  }
+  .event-slip__choice-list {
+    display: grid;
+    min-width: 0;
+    gap: 0.46rem;
+  }
+  .event-choice {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.52rem;
+    padding: 0.58rem 0.56rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.16);
+    border-left: 2px solid rgb(var(--color-qing-rgb) / 0.42);
+    border-radius: 2px;
+    background: rgb(var(--color-paper-lifted-rgb) / 0.62);
+    color: rgb(var(--color-ink-rgb));
+    text-align: left;
+    transition:
+      transform 0.12s ease,
+      border-color 0.12s ease,
+      background-color 0.12s ease;
+  }
+  .event-choice.is-default {
+    border-left-color: rgb(var(--color-cinnabar-rgb) / 0.5);
+  }
+  @media (hover: hover) {
+    .event-choice:not(:disabled):hover {
+      border-color: rgb(var(--color-ink-rgb) / 0.28);
+      background: rgb(var(--color-paper-deep-rgb) / 0.3);
+    }
+  }
+  .event-choice:not(:disabled):active {
+    transform: scale(0.99);
+  }
+  .event-choice:focus-visible {
+    outline: 1px solid rgb(var(--color-cinnabar-rgb) / 0.62);
+    outline-offset: 1px;
+  }
+  .event-choice.is-blocked {
+    border-color: rgb(var(--color-ink-rgb) / 0.09);
+    border-left-color: rgb(var(--color-ink-rgb) / 0.14);
+    background: rgb(var(--color-paper-deep-rgb) / 0.2);
+    color: rgb(var(--color-ink-faint-rgb));
+  }
+  .event-choice__index {
+    display: grid;
+    width: 1.56rem;
+    height: 1.56rem;
+    place-items: center;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.13);
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  .event-choice__body {
+    display: grid;
+    min-width: 0;
+    gap: 0.28rem;
+  }
+  .event-choice__head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.22rem 0.42rem;
+  }
+  .event-choice__label {
+    min-width: 0;
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    letter-spacing: 0.07em;
+    line-height: 1.42;
+    overflow-wrap: anywhere;
+  }
+  .event-choice__tag {
+    display: inline-flex;
+    min-height: 1.16rem;
+    align-items: center;
+    padding-inline: 0.24rem;
+    border: 1px solid currentColor;
+    font-size: var(--type-note);
+    line-height: 1.25;
+    white-space: nowrap;
+  }
+  .event-choice__tag.is-default {
+    color: rgb(var(--color-qing-rgb));
+  }
+  .event-choice__tag.is-end {
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  .event-choice__hint {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+  .event-choice__blocked {
+    padding-left: 0.34rem;
+    border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.42);
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .event-slip__forecast {
+    display: grid;
+    min-width: 0;
+    gap: 0.12rem;
+    margin-top: 0.08rem;
+    padding-top: 0.26rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .event-outcome {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(2.18rem, auto) minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0.42rem;
+    padding-block: 0.12rem;
+    font-size: var(--type-note);
+    line-height: 1.52;
+  }
+  .event-outcome + .event-outcome {
+    border-top: 1px dotted rgb(var(--color-ink-rgb) / 0.11);
+  }
+  .event-outcome__chance {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .event-outcome__text {
+    min-width: 0;
+    color: rgb(var(--color-ink-soft-rgb));
+    overflow-wrap: anywhere;
+  }
+  .event-outcome.is-gain .event-outcome__text {
+    color: rgb(var(--color-qing-rgb));
+  }
+  .event-outcome.is-risk .event-outcome__chance,
+  .event-outcome.is-risk .event-outcome__text {
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  .event-outcome.is-neutral .event-outcome__text {
+    color: rgb(var(--color-ink-faint-rgb));
+  }
+  .event-choice__verb {
+    display: grid;
+    width: 1.45rem;
+    height: 1.45rem;
+    place-items: center;
+    border: 1px solid rgb(var(--color-qing-rgb) / 0.3);
+    color: rgb(var(--color-qing-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  .event-choice.is-blocked .event-choice__verb {
+    border-color: rgb(var(--color-ink-rgb) / 0.1);
+    color: rgb(var(--color-ink-faint-rgb));
+  }
+  .event-slip__rule {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .event-slip__result-choice {
+    margin-top: 0.16rem;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    line-height: 1.5;
+  }
+  .event-slip__result-end {
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  .event-slip__result-ledger {
+    min-width: 0;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    background: rgb(var(--color-paper-deep-rgb) / 0.22);
+  }
+  .event-slip__result-ledger > header {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.18rem 0.58rem;
+    padding: 0.4rem 0.54rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+  }
+  .event-slip__result-ledger > header span {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    letter-spacing: 0.14em;
+  }
+  .event-slip__result-ledger > header small {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .event-slip__result-ledger ul {
+    display: grid;
+    min-width: 0;
+    gap: 0.22rem;
+    padding: 0.46rem 0.54rem 0.52rem;
+  }
+  .event-slip__result-ledger li {
+    border-left: 2px solid rgb(var(--color-gold-ink-rgb) / 0.45);
+    overflow-wrap: anywhere;
+  }
+  .event-slip__empty {
+    padding: 0.48rem 0.56rem;
+    border-left: 2px solid rgb(var(--color-ink-rgb) / 0.14);
+    background: rgb(var(--color-paper-deep-rgb) / 0.22);
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-body);
+    line-height: 1.55;
+  }
+  /*
    * 战局谱 —— 历练中不再把「会话账」「敌我半卡」「战报」拆成三张同权卡片。
    * 卷首先是一张征途簿：地名、模式、余时、首领距离与四格行囊账同一处；
    * 其下才摊开最近一战、回放情报。桌面把敌我留在左页、战报与情报放右页，
@@ -1417,6 +1844,99 @@
     .combat-intel__paper {
       margin-inline: 0.34rem;
       padding-inline: 0.48rem;
+    }
+
+    .event-slip {
+      gap: 0.54rem;
+    }
+
+    .event-slip__head {
+      gap: 0.3rem;
+      padding: 0.46rem 0.5rem 0.48rem;
+    }
+
+    .event-slip__origin {
+      gap: 0.42rem;
+    }
+
+    .event-slip__seal {
+      width: 2rem;
+      height: 2rem;
+      font-size: var(--type-body);
+    }
+
+    .event-slip__eyebrow {
+      display: grid;
+      gap: 0.06rem;
+    }
+
+    .event-slip__odds {
+      display: grid;
+      gap: 0.06rem;
+    }
+
+    .event-slip__odds span + span {
+      padding-left: 0;
+      border-left: 0;
+    }
+
+    .event-slip__narrative {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.18rem;
+      padding: 0.48rem 0.5rem 0.54rem;
+    }
+
+    .event-slip__mark {
+      width: auto;
+      height: auto;
+      justify-content: start;
+      border-right: 0;
+    }
+
+    .event-slip__narrative p {
+      font-size: var(--type-body);
+      line-height: 1.68;
+    }
+
+    .event-slip__marginal {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.08rem;
+      padding-inline: 0.44rem;
+    }
+
+    .event-slip__choices-head {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.16rem;
+    }
+
+    .event-slip__choice-count {
+      justify-self: start;
+    }
+
+    .event-choice {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.24rem;
+      padding: 0.5rem 0.46rem;
+    }
+
+    .event-choice__index,
+    .event-choice__verb {
+      display: none;
+    }
+
+    .event-choice__label {
+      font-size: var(--type-body);
+    }
+
+    .event-outcome {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.04rem;
+    }
+
+    .event-slip__result-ledger > header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.06rem;
     }
   }
 }

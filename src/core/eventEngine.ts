@@ -25,6 +25,7 @@ import { PETS, petDef } from "@/data/pets";
 import { qualityDef } from "@/data/qualities";
 import { equipmentTemplate } from "@/data/equipment";
 import { artifactDef } from "@/data/artifacts";
+import { ELEMENTS } from "@/data/linggen";
 import { expFromSecs, stoneByTier } from "./formulas";
 import { generateEquipment } from "./equipGen";
 import { acquireArtifact, acquireEquipment, randomDropArtifact } from "./loot";
@@ -240,20 +241,37 @@ export function pickEventFor(region: RegionDef, rand: RandomService = rng): Even
   return drawn?.def ?? null;
 }
 
-/** 选项条件校验 */
-export function choiceAvailable(choice: EventChoice, tier: number): boolean {
+/**
+ * 选项为什么不能选。
+ *
+ * 置灰本身不是说明。灵石门槛要报还差多少，境界门槛要报还差几境，灵根门槛要说缺哪一系；
+ * 弹窗与 `choiceAvailable` 都读这一处，避免「能不能按」和「为什么不能按」各写一套判据。
+ */
+export function choiceUnavailableReason(choice: EventChoice, tier: number): string | null {
   const cond = choice.cond;
-  if (!cond) return true;
+  if (!cond) return null;
   const player = usePlayerStore();
   const resources = useResourcesStore();
   switch (cond.type) {
-    case "realm":
-      return player.major >= cond.min;
-    case "stone":
-      return resources.hasStone(stoneByTier(tier, cond.tierAmount));
-    case "element":
-      return player.linggen?.roots.some((r) => r.element === cond.el) ?? false;
+    case "realm": {
+      if (player.major >= cond.min) return null;
+      return `修为未至:需 ${realmDef(cond.min).name}期(尚差 ${cond.min - player.major} 境)`;
+    }
+    case "stone": {
+      const need = stoneByTier(tier, cond.tierAmount);
+      if (resources.hasStone(need)) return null;
+      return `尚差 ${formatGN(subClamp(need, resources.spiritStone))} 石`;
+    }
+    case "element": {
+      if (player.linggen?.roots.some((r) => r.element === cond.el)) return null;
+      return `未具 ${ELEMENTS[cond.el].name} 灵根`;
+    }
   }
+}
+
+/** 选项条件校验 —— 与不可选原因共用同一条判据 */
+export function choiceAvailable(choice: EventChoice, tier: number): boolean {
+  return choiceUnavailableReason(choice, tier) === null;
 }
 
 interface AppliedEventEffect {

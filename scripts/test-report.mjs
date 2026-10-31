@@ -380,6 +380,7 @@ const CATEGORIES = [
       "regionEvent",
       "eventTier",
       "eventEngine",
+      "eventDesk",
       "eventRealmBand",
       "weather",
       "boundaryTribulation",

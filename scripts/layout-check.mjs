@@ -6419,6 +6419,182 @@ async function taskInventoryAccounting() {
   return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
 }
 
+/** 际遇帖:门限与去向必须真的铺得开,结算后焦点不能掉回页面 */
+async function taskEventSlip() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    // 游方商人的买路恰好多分支；清空灵石后第一项必须置灰并报出缺口。
+    slices.resources = { ...slices.resources, spiritStone: { m: 0, e: 0 } };
+    slices.adventure = {
+      pendingEventId: "ev_merchant",
+      pendingEventSince: Date.now(),
+    };
+    await seedSave(ctx, slices, "__eventSlip");
+
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/adventure", 650);
+    await page.locator("[data-event-slip]").waitFor({ state: "visible", timeout: 5000 });
+    await settleVisuals(page);
+
+    const readSlip = () =>
+      page.evaluate(() => {
+        const slip = document.querySelector("[data-event-slip]");
+        const panel = slip?.closest(".modal-panel");
+        if (!slip || !panel) return null;
+        const p = panel.getBoundingClientRect();
+        const s = slip.getBoundingClientRect();
+        const choices = [...slip.querySelectorAll("[data-event-choice]")].map((el) => {
+          const r = el.getBoundingClientRect();
+          return {
+            disabled: el.hasAttribute("disabled"),
+            width: r.width,
+            scrollWidth: el.scrollWidth,
+            clientWidth: el.clientWidth,
+          };
+        });
+        return {
+          panel: {
+            left: p.left,
+            right: p.right,
+            width: p.width,
+            scrollWidth: panel.scrollWidth,
+            clientWidth: panel.clientWidth,
+          },
+          slip: {
+            left: s.left,
+            right: s.right,
+            width: s.width,
+            scrollWidth: slip.scrollWidth,
+            clientWidth: slip.clientWidth,
+          },
+          viewport: innerWidth,
+          choices,
+          outcomes: slip.querySelectorAll("[data-event-outcome]").length,
+          chanceText: [...slip.querySelectorAll(".event-outcome__chance")]
+            .map((el) => (el.textContent || "").trim())
+            .join("|"),
+          shortfall: (slip.querySelector("[data-event-shortfall]")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+          auto: (slip.querySelector("[data-event-auto]")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+        };
+      });
+
+    const assertBox = (label, info) => {
+      checked += 1;
+      if (!info) {
+        failures.push(`${label} 际遇帖没有出现`);
+        return;
+      }
+      if (
+        info.panel.left < -1 ||
+        info.panel.right > info.viewport + 1 ||
+        info.panel.scrollWidth > info.panel.clientWidth + 1 ||
+        info.slip.scrollWidth > info.slip.clientWidth + 1 ||
+        info.choices.some((row) => row.scrollWidth > row.clientWidth + 1)
+      ) {
+        failures.push(
+          `${label} 际遇帖横向挤出:` +
+            `面板 ${info.panel.scrollWidth}>${info.panel.clientWidth},` +
+            `帖 ${info.slip.scrollWidth}>${info.slip.clientWidth},` +
+            `选项 ${info.choices.map((row) => `${Math.round(row.scrollWidth)}>${Math.round(row.clientWidth)}`).join("/")}`,
+        );
+      }
+    };
+
+    const base = await readSlip();
+    assertBox("[390]", base);
+    checked += 1;
+    if (
+      !base ||
+      base.choices.length !== 2 ||
+      !base.choices[0]?.disabled ||
+      base.choices[1]?.disabled ||
+      base.outcomes !== 4 ||
+      base.chanceText !== "40%|35%|25%" ||
+      !base.shortfall.includes("尚差") ||
+      !base.auto.includes("逾时默选")
+    ) {
+      failures.push(
+        `[390] 际遇帖没有把「缺口 + 多分支概率」铺开:` +
+          `选项 ${base?.choices.length ?? 0} 条 / 去向 ${base?.outcomes ?? 0} 行 / ` +
+          `概率 ${base?.chanceText || "无"} / 缺口 ${base?.shortfall || "无"} / 逾时 ${base?.auto || "无"}`,
+      );
+    }
+
+    if (SHOTS) {
+      mkdirSync(SHOTS_DIR, { recursive: true });
+      await page.screenshot({ path: join(SHOTS_DIR, "event-choice-390.png") });
+    }
+
+    const zoom = await measureDialogZoom(page, { width: 390, height: 844 });
+    const zoomProblems = dialogZoomProblems(zoom);
+    checked += 1;
+    if (zoomProblems.length) failures.push(`[195] 际遇帖 → ${zoomProblems.join(" / ")}`);
+
+    if (SHOTS) {
+      await page.setViewportSize({ width: 195, height: 422 });
+      await settleVisuals(page);
+      assertBox("[195]", await readSlip());
+      await page.screenshot({ path: join(SHOTS_DIR, "event-choice-195.png") });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await settleVisuals(page);
+    }
+
+    await page.setViewportSize({ width: 320, height: 568 });
+    await settleVisuals(page);
+    assertBox("[320]", await readSlip());
+    if (SHOTS) await page.screenshot({ path: join(SHOTS_DIR, "event-choice-320.png") });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await settleVisuals(page);
+
+    await page.locator("[data-event-choice]:not([disabled])").first().click({ timeout: 3000 });
+    await page.locator("[data-event-result]").waitFor({ state: "visible", timeout: 3000 });
+    await settleVisuals(page);
+    const result = await page.evaluate(() => {
+      const slip = document.querySelector("[data-event-result]");
+      const panel = slip?.closest(".modal-panel");
+      return {
+        text: (slip?.textContent || "").replace(/\s+/g, " ").trim(),
+        focused: document.activeElement === slip,
+        scrollWidth: panel?.scrollWidth ?? 0,
+        clientWidth: panel?.clientWidth ?? 0,
+      };
+    });
+    checked += 1;
+    if (
+      !result.text.includes("你择「婉拒」") ||
+      !result.focused ||
+      result.scrollWidth > result.clientWidth + 1
+    ) {
+      failures.push(
+        `[390] 际遇结算卷不合格:选择回执=${result.text.includes("你择「婉拒」")} / ` +
+          `焦点=${result.focused} / 溢出 ${result.scrollWidth}>${result.clientWidth}`,
+      );
+    }
+    if (SHOTS) {
+      await page.screenshot({ path: join(SHOTS_DIR, "event-result-390.png") });
+    }
+    if (pageErrors.length)
+      failures.push(`[390] 际遇帖场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
 /** 真打一场历练战斗 */
 async function taskCombatReplay() {
   const failures = [];
@@ -13338,6 +13514,18 @@ async function taskReadOnlyTab() {
       checked += 1;
       if (!recovered)
         failures.push("[只读页 · 恢复] 按了「刷新本页」之后横幅还在 —— 没真正回到写者态");
+      // 刷新后新文档会先短暂没有横幅,main.ts 仍在申请 Web Lock;
+      // 必须等外壳回来且锁真的落手,不能拿这一瞬间的空窗当“已恢复”。
+      await reader
+        .waitForFunction(
+          async () => {
+            if (!document.querySelector("[data-game-shell]")) return false;
+            const state = await navigator.locks.query();
+            return (state.held || []).some((l) => l.name === "xuanshu.save-writer");
+          },
+          { timeout: 12000 },
+        )
+        .catch(() => undefined);
       const held = await reader.evaluate(async () => {
         const state = await navigator.locks.query();
         return (state.held || []).filter((l) => l.name === "xuanshu.save-writer").length;
@@ -13678,6 +13866,7 @@ const TASKS = [
   ["减少动效真的减到了", taskReduceMotion],
   ["闭关的跨页承诺", taskRetreat],
   ["背包里的账目", taskInventoryAccounting],
+  ["际遇帖的门限与去向", taskEventSlip],
   ["真打一场历练战斗", taskCombatReplay],
   ["敌人卡最挤的一档", taskEnemyCard],
   ["秘境卡在境中的窄屏一档", taskSecretRealm320],

@@ -14,14 +14,10 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it, beforeEach } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
-import { EVENTS } from "@/data/events";
-import type { EventChoice } from "@/types";
+import { EVENTS, eventDef } from "@/data/events";
 import { stoneByTier } from "@/core/formulas";
 import { formatGN } from "@/utils/format";
-import { useResourcesStore } from "@/stores/resources";
-import { gn } from "@/utils/gnum";
-import { choiceHintText, stoneShortHint } from "./eventText";
-import { eventDef } from "@/data/events";
+import { choiceHintText } from "./eventText";
 
 describe("choiceHintText", () => {
   beforeEach(() => {
@@ -49,35 +45,14 @@ describe("choiceHintText", () => {
 
   it("际遇弹窗用算出来的提示,不再直接渲染手写 hint", () => {
     const src = readFileSync(resolve(__dirname, "../components/adventure/EventDialog.vue"), "utf8");
-    expect(src).toContain("choiceHintText(choice, tier)");
+    expect(src).toContain("choiceHintText(choice, tier.value)");
     expect(src).not.toContain("choice.hint");
-  });
-
-  it("stoneShortHint:付不起列出灵石缺口,付得起/非石头门槛返回空", () => {
-    const pay = EVENTS.find((e) => e.id === "ev_border_stall")!.choices.find(
-      (c) => c.cond?.type === "stone",
-    )! as EventChoice & {
-      cond: { type: "stone"; tierAmount: number };
-    };
-    const resources = useResourcesStore();
-    const need = stoneByTier(2, pay.cond!.tierAmount);
-
-    // 余额为零:亮出「尚差 N 石」;N = 门槛 - 0
-    expect(stoneShortHint(pay, 2)).toBe(`尚差 ${formatGN(need)} 石`);
-
-    // 凑够门槛:不再报差
-    resources.addStone(gn(need));
-    expect(stoneShortHint(pay, 2)).toBe("");
-
-    // 非石头门槛(修行条件)不报差
-    const realmGate = EVENTS.find((e) => e.id === "ev_spring")!.choices[0]!;
-    expect(realmGate.cond?.type).not.toBe("stone");
-    expect(stoneShortHint(realmGate, 3)).toBe("");
   });
 
   it("际遇弹窗在置灰选项旁列出尚差(stone-gated),不只给「需备灵石」", () => {
     const src = readFileSync(resolve(__dirname, "../components/adventure/EventDialog.vue"), "utf8");
-    expect(src).toContain("stoneShortHint(choice, tier)");
+    expect(src).toContain("choiceUnavailableReason(choice, tier.value)");
+    expect(src).toContain("data-event-shortfall");
   });
 
   it("失传丹方在按之前摊开得方、掌握度与学尽后的保底", () => {
