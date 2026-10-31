@@ -3,9 +3,11 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { readStyleCss } from "@/test/readStyleCss";
 import {
+  atlasInitialFocusOf,
   atlasJumpIndex,
   atlasSearchResults,
   atlasSectionIdForRoute,
+  atlasSearchStatusOf,
   atlasShortcutHintOf,
   isAtlasShortcut,
 } from "./atlas";
@@ -28,6 +30,11 @@ describe("玄枢图 · 五卷快引", () => {
     expect(atlasJumpIndex(1, "End", 5)).toBe(4);
     expect(atlasJumpIndex(2, "Enter", 5)).toBe(2);
     expect(atlasJumpIndex(2, "ArrowRight", 0)).toBe(-1);
+  });
+
+  it("桌面首焦点落寻册口，触屏首焦点留当前卷签以免弹软键盘", () => {
+    expect(atlasInitialFocusOf(true)).toBe("[data-atlas-search]");
+    expect(atlasInitialFocusOf(false)).toBe('[data-atlas-volume][aria-selected="true"]');
   });
 
   it("按册名、说明、分卷、分册与日常叫法寻册，不另维护一份路径表", () => {
@@ -62,6 +69,19 @@ describe("玄枢图 · 五卷快引", () => {
     ]);
     expect(atlasSearchResults("不存在的册")).toEqual([]);
     expect(atlasSearchResults("   ")).toEqual([]);
+  });
+
+  it("寻册游标的播报带册次、卷名与分册，不只报一个总数", () => {
+    const fate = atlasSearchResults("天机");
+    expect(
+      atlasSearchStatusOf(fate[1], 1, fate.length),
+      "第二处要报出「构筑」与 2/5，读屏才知道方向键选中了谁",
+    ).toBe("找到 5 处 · 第 2/5 处：天机卷 · 构筑，回车前往");
+    const chapter = atlasSearchResults("周易")[0];
+    expect(atlasSearchStatusOf(chapter, 0, 1)).toBe(
+      "找到 1 处 · 第 1/1 处：行旅卷 · 界域志 · 周易，回车前往",
+    );
+    expect(atlasSearchStatusOf(undefined, 0, 0)).toBe("");
   });
 
   it("寻册快捷键与平台提示同源", () => {
@@ -99,6 +119,10 @@ describe("玄枢图 · 五卷快引", () => {
     expect(atlas, "每卷仍要完整铺出册目").toContain("data-atlas-section");
     expect(atlas, "当前卷要留可见落点").toContain("data-atlas-section-current");
     expect(atlas, "五卷快引要支持键盘游标").toContain("atlasJumpIndex");
+    expect(atlas, "切卷只换单卷册页，不再沿用旧长列表的滚动跳转").toContain(
+      "function activateVolume",
+    );
+    expect(atlas, "切卷不许把卷签与寻册口滚出视口").not.toContain("scrollTo({ top");
     expect(atlas, "总图要先给人一枚寻册口").toContain("data-atlas-search");
     expect(atlas, "检索结果仍落真实路由链接").toContain("data-atlas-result");
     expect(atlas, "分册检索要带 tab 直落到册内页码").toContain("result.chapter");
@@ -107,7 +131,9 @@ describe("玄枢图 · 五卷快引", () => {
     expect(atlas, "中文输入法组合期间不许把回车当成翻册").toContain("event.isComposing");
     expect(atlas, "桌面总图要能比普通弹窗更宽").toContain('size="max"');
     expect(atlas, "总图面板要挂独立案台样式").toContain("panel-class");
-    expect(atlas, "打开总图时焦点要直接落在寻册口").toContain("initial-focus");
+    expect(atlas, "总图首焦点要按输入设备分流").toContain(":initial-focus");
+    expect(atlas, "桌面焦点落寻册口、触屏留当前卷签").toContain("atlasInitialFocusOf");
+    expect(atlas, "搜索结果游标要由同一句播报").toContain("atlasSearchStatusOf");
     expect(modal, "弹窗原语要支持总图宽度").toContain('props.size === "max"');
     expect(modal, "弹窗原语要支持指定首焦点").toContain("initialFocus");
     expect(modal, "弹窗原语要允许调用方追加面板样式").toContain("panelClass");

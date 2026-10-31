@@ -12987,6 +12987,8 @@ async function taskAtlasNavigation() {
             (el) => el.getAttribute("data-atlas-volume-current") !== null,
           ).length,
           searchFocused: document.activeElement?.matches("[data-atlas-search]") ?? false,
+          volumeFocused:
+            document.activeElement?.matches('[data-atlas-volume][aria-selected="true"]') ?? false,
           current: (current?.textContent || "").replace(/\s+/g, " ").trim(),
           active: entries.filter((el) => el.getAttribute("aria-current") === "page").length,
           visibleSections: visibleSections.length,
@@ -13006,8 +13008,11 @@ async function taskAtlasNavigation() {
       if (state.currentVolumes !== 1) {
         failures.push(`[${vp.tag}] 玄枢图当前落卷标了 ${state.currentVolumes} 次(应恰为 1)`);
       }
-      if (!state.searchFocused) {
+      if (vp.tag === "1280" && !state.searchFocused) {
         failures.push(`[${vp.tag}] 玄枢图打开后焦点没有落到寻册口`);
+      }
+      if (vp.tag !== "1280" && !state.volumeFocused) {
+        failures.push(`[${vp.tag}] 触屏玄枢图打开后焦点没有留在当前卷签(会弹软键盘)`);
       }
       if (!state.current.includes("修行") || !state.current.includes("洞府总览")) {
         failures.push(`[${vp.tag}] 玄枢图卷首没有报出当前落点:${state.current}`);
@@ -13024,6 +13029,13 @@ async function taskAtlasNavigation() {
       for (const problem of problems) failures.push(`[${vp.tag}] 玄枢图:${problem}`);
 
       if (vp.tag === "390") {
+        await page.locator("[data-atlas-search]").fill("天机");
+        await page.locator("[data-atlas-search]").press("ArrowDown");
+        const announced = await page.locator("#atlas-search-status").innerText();
+        checked += 1;
+        if (!announced.includes("第 2/5 处") || !announced.includes("构筑")) {
+          failures.push(`[390] 玄枢图方向键没有把当前搜索结果报给读屏:${announced}`);
+        }
         await page.locator("[data-atlas-search]").fill("人物");
         const search = await page.locator("[data-atlas-result]").evaluateAll((rows) =>
           rows.map((row) => ({
@@ -13104,14 +13116,24 @@ async function taskAtlasNavigation() {
               const visible = [...document.querySelectorAll("[data-atlas-section]")].filter(
                 (el) => el.offsetParent !== null,
               );
+              const search = document.querySelector("[data-atlas-search]");
+              const compass = document.querySelector("[data-atlas-compass]");
               const viewport = scroller.getBoundingClientRect();
               const section = target.getBoundingClientRect();
+              const searchBox = search?.getBoundingClientRect();
+              const compassBox = compass?.getBoundingClientRect();
               return (
                 selected &&
                 visible.length === 1 &&
                 visible[0] === target &&
-                section.top >= viewport.top - 12 &&
-                section.top < viewport.bottom - 24
+                !!searchBox &&
+                searchBox.top >= viewport.top - 1 &&
+                searchBox.bottom <= viewport.bottom + 1 &&
+                !!compassBox &&
+                compassBox.top >= viewport.top - 1 &&
+                compassBox.bottom <= viewport.bottom + 1 &&
+                section.top >= viewport.top - 1 &&
+                section.top < viewport.bottom
               );
             },
             { timeout: 3000 },

@@ -4,7 +4,7 @@
     title="玄枢图"
     size="max"
     panel-class="folio-modal--atlas"
-    initial-focus="[data-atlas-search]"
+    :initial-focus="initialFocus"
     @close="emit('close')"
   >
     <div ref="atlasRoot" data-nav-atlas class="atlas-desk">
@@ -24,13 +24,14 @@
             spellcheck="false"
             placeholder="寻册名、旧称或分册"
             aria-describedby="atlas-search-status"
+            :aria-controls="searching && results.length > 0 ? 'atlas-result-list' : undefined"
             @keydown="onSearchKeydown"
           />
           <p id="atlas-search-status" class="atlas-search__hint">
             <span v-if="searching" aria-live="polite">
               {{
                 results.length > 0
-                  ? `找到 ${results.length} 处 · ↑↓ 选择，回车前往`
+                  ? atlasSearchStatusOf(activeSearchResult, activeResultIndex, results.length)
                   : "没有这册 · 换个日常叫法试试"
               }}
             </span>
@@ -99,7 +100,7 @@
               :aria-selected="activeVolumeId === group.id"
               :tabindex="activeVolumeId === group.id ? 0 : -1"
               :aria-label="`翻到${group.label}卷，${group.entries.length}册`"
-              @click="jumpToSection(group.id)"
+              @click="activateVolume(group.id)"
               @keydown="onVolumeKeydown($event, groupIndex)"
             >
               <span class="atlas-volume__number" aria-hidden="true">{{
@@ -203,10 +204,11 @@
           <span class="atlas-results__hint">按玄枢册序排列</span>
         </header>
 
-        <div v-if="results.length" class="atlas-result-list">
+        <div v-if="results.length" id="atlas-result-list" class="atlas-result-list">
           <RouterLink
             v-for="(result, index) in results"
             :key="result.key"
+            :id="`atlas-result-${index}`"
             :to="result.to"
             data-atlas-result
             class="atlas-result"
@@ -274,12 +276,14 @@
 import { computed, nextTick, ref, useTemplateRef, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { usePlayerStore } from "@/stores/player";
-import { useSettingsStore } from "@/stores/settings";
+import { useMediaQuery } from "@/composables/useMediaQuery";
 import { cnNumber } from "@/utils/format";
 import {
+  atlasInitialFocusOf,
   atlasJumpIndex,
   atlasSearchResults,
   atlasSectionIdForRoute,
+  atlasSearchStatusOf,
   atlasShortcutHintOf,
   type AtlasSearchResult,
 } from "@/ui/atlas";
@@ -293,13 +297,15 @@ const emit = defineEmits<{ close: [] }>();
 const route = useRoute();
 const router = useRouter();
 const player = usePlayerStore();
-const settings = useSettingsStore();
+const finePointer = useMediaQuery("(pointer: fine)");
 const atlasRoot = useTemplateRef<HTMLElement>("atlasRoot");
 const activeVolumeId = ref(atlasSectionIdForRoute(route.name));
 const query = ref("");
 const activeResultIndex = ref(0);
 const results = computed(() => atlasSearchResults(query.value));
 const searching = computed(() => query.value.trim().length > 0);
+const activeSearchResult = computed(() => results.value[activeResultIndex.value]);
+const initialFocus = computed(() => atlasInitialFocusOf(finePointer.value));
 const shortcutHint = atlasShortcutHintOf(
   typeof navigator === "undefined" ? "" : navigator.platform,
 );
@@ -355,25 +361,18 @@ function onVolumeKeydown(event: KeyboardEvent, index: number): void {
   event.preventDefault();
   focusVolume(next);
   const group = NAVIGATION_SECTIONS[next];
-  if (group) jumpToSection(group.id);
+  if (group) activateVolume(group.id);
 }
 
-function jumpToSection(id: string): void {
+/**
+ * 只换当前卷,不再把整张案台滚到卷宗起点。
+ *
+ * 旧版五卷同时铺在长列表里,快引必须负责滚到目标;现在只展开一卷,卷签就在
+ * 册页上方。沿用旧滚动会把手机上的寻册口与刚点过的卷签一起滚出视口,玩家
+ * 想再换一卷还得先滚回来。
+ */
+function activateVolume(id: string): void {
   activeVolumeId.value = id;
-  void nextTick(() => {
-    const root = atlasRoot.value;
-    const scroller = root?.closest<HTMLElement>("[data-folio-modal-scroll]");
-    const section = root?.querySelector<HTMLElement>(`[data-atlas-section="${id}"]`);
-    if (!scroller || !section) return;
-    const top = Math.max(
-      0,
-      scroller.scrollTop +
-        section.getBoundingClientRect().top -
-        scroller.getBoundingClientRect().top -
-        8,
-    );
-    scroller.scrollTo({ top, behavior: settings.reduceMotion ? "auto" : "smooth" });
-  });
 }
 
 async function moveSearchCursor(delta: number): Promise<void> {

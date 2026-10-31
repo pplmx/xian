@@ -22,6 +22,17 @@ export function atlasSectionIdForRoute(name: string | symbol | null | undefined)
 }
 
 /**
+ * 玄枢图打开后的首焦点。
+ *
+ * 桌面有实体指针与键盘,直接落到寻册口最省一步;触屏若也这么做,开图瞬间会弹起
+ * 软键盘并遮住五卷与当前卷册。触屏先落当前卷签,既保留可见焦点,也让寻册只隔一次
+ * Shift+Tab / 轻点。
+ */
+export function atlasInitialFocusOf(finePointer: boolean): string {
+  return finePointer ? "[data-atlas-search]" : '[data-atlas-volume][aria-selected="true"]';
+}
+
+/**
  * 五卷快引的键盘游标。
  *
  * 左/右循环，Home/End 落到两端；其余按键原样返回，交给浏览器处理。
@@ -97,6 +108,18 @@ export function atlasSearchResults(query: string): AtlasSearchResult[] {
   }
 
   return results;
+}
+
+/** 寻册结果的当前游标播报：视觉提示与 aria-live 共用同一句。 */
+export function atlasSearchStatusOf(
+  result: AtlasSearchResult | undefined,
+  index: number,
+  total: number,
+): string {
+  if (!result || total <= 0) return "";
+  const ordinal = `${Math.max(0, Math.min(total - 1, index)) + 1}/${total} 处`;
+  const chapter = result.chapter ? ` · ${result.chapter.label}` : "";
+  return `找到 ${total} 处 · 第 ${ordinal}：${result.entry.sectionLabel}卷 · ${result.entry.label}${chapter}，回车前往`;
 }
 
 type AtlasShortcutEvent = Pick<KeyboardEvent, "key" | "ctrlKey" | "metaKey" | "altKey">;
