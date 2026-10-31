@@ -2,8 +2,10 @@ import { describe, it, expect, beforeEach } from "vite-plus/test";
 import { setActivePinia, createPinia } from "pinia";
 import { GONGFA } from "@/data/gongfa";
 import {
+  gongfaUpgradeCost,
   learnGongfa,
   learnRandomGongfa,
+  planGongfaUpgradeAll,
   syncLearnedGongfa,
   upgradeGongfaAll,
 } from "./gongfaService";
@@ -76,10 +78,20 @@ describe("功法进修", () => {
     const pageBefore = 1_000_000;
     resources.wudao = wudaoBefore;
     resources.page = pageBefore;
+    const plan = planGongfaUpgradeAll(def.id);
+    expect(plan).toEqual({
+      fromLevel: 3,
+      toLevel: def.maxLevel,
+      count: def.maxLevel - 3,
+      wudao: expect.any(Number),
+      page: expect.any(Number),
+      ended: "max",
+    });
     const res = upgradeGongfaAll(def.id);
     expect(res.ended).toBe("max");
     expect(cultivation.learned[def.id]).toBe(def.maxLevel);
     expect(res.count).toBe(def.maxLevel - 3);
+    expect(res).toEqual(plan);
     // 花了账,但没有越权掏到负数
     expect(resources.wudao).toBeGreaterThanOrEqual(0);
     expect(resources.page).toBeGreaterThanOrEqual(0);
@@ -87,20 +99,31 @@ describe("功法进修", () => {
     expect(res.page).toBe(pageBefore - resources.page);
   });
 
-  it("修到顶料尽止:悟道点/残页只够几条就只修几条,不越权烧", () => {
+  it("修到顶料尽止:预告与实际都只修买得起的那层,不越权烧", () => {
     const cultivation = useCultivationStore();
     const resources = useResourcesStore();
     const def = GONGFA[0]!;
     cultivation.learn(def.id);
     cultivation.learned[def.id] = 2;
-    resources.wudao = 1; // 几乎不够
-    resources.page = 9999;
+    const first = gongfaUpgradeCost(def.id)!;
+    resources.wudao = first.wudao;
+    resources.page = first.page;
+    const plan = planGongfaUpgradeAll(def.id);
+    expect(plan).toEqual({
+      fromLevel: 2,
+      toLevel: 3,
+      count: 1,
+      wudao: first.wudao,
+      page: first.page,
+      ended: "broke",
+    });
     const res = upgradeGongfaAll(def.id);
     expect(res.ended).toBe("broke");
-    // 只够第一层就只修一层,余量不为负
-    expect(cultivation.learned[def.id]).toBe(2 + res.count);
-    expect(res.count).toBeGreaterThanOrEqual(0);
+    expect(res).toEqual(plan);
+    expect(cultivation.learned[def.id]).toBe(plan.toLevel);
     expect(resources.wudao).toBeGreaterThanOrEqual(0);
     expect(resources.page).toBeGreaterThanOrEqual(0);
+    expect(resources.wudao).toBe(0);
+    expect(resources.page).toBe(0);
   });
 });

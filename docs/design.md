@@ -197,6 +197,12 @@ CSS px 仍按单列阅读。底栏只放洞府、修炼、历练、背包、人�
 阅读顺序单列。结构由 `cultivationDesk.spec.ts`、阶段判据由
 `cultivationStage.spec.ts` 守住。
 
+功法「修到顶」与装备「连强到顶」共用一枚「本轮预算」纸签:修前先报本轮实际能走几层、
+共耗多少悟道点 / 残页或器灵尘 / 灵石,以及止于料尽还是可至圆满。层数、总耗与按钮文案
+分别由 `planGongfaUpgradeAll` / `planEquipmentUpgradeAll` 现算,结算也按同一份计划走;
+材料只够一截时按钮改口「修至料尽 / 连强料尽」,不再承诺一次到顶。195 CSS px 下纸签
+把止点落到下一行,预算读数仍完整可读;真渲染判据在 `layout-check.mjs` 的功法三册场景。
+
 历练卷首用一枚「行旅罗盘」只报今日值日之宿与所利界域,四界位置从 `WORLDS`
 现取,整盘同样 `aria-hidden`;本世路线、已行程数与眼下去处继续由
 `worldView` / `mortalStageStatuses` 驱动,不另算一套进度。正文先把星象、本世所钟、

@@ -12,7 +12,7 @@ import {
 } from "@/data/artifacts";
 import { EQUIP_MAX_LEVEL_BASE } from "@/data/constants";
 import { stoneByTier, upgradeCost } from "./formulas";
-import { add, gnZero, isZero } from "@/utils/gnum";
+import { add, gnZero, gte, isZero, sub } from "@/utils/gnum";
 import { formatGN } from "@/utils/format";
 import { refundRateText, salvageOf } from "./salvage";
 import { modOf } from "./statsCalc";
@@ -38,30 +38,51 @@ export function equipUpgradeCost(uid: string): { dust: number; stone: GNum } | n
   return upgradeCost(inst.level, inst.tier, q.rank, modOf(player.finalStats.mods, "forgeDiscount"));
 }
 
+export interface EquipmentUpgradePlan {
+  fromLevel: number;
+  toLevel: number;
+  count: number;
+  dust: number;
+  stone: GNum;
+  ended: "max" | "broke";
+}
+
 /**
- * 「连强到顶」的总账预览(纯读,不改任何状态):从当前级一路算到满级,
- * 与 upgradeEquipmentAll 的逐级累计同算法 —— 折扣取当前 forgeDiscount(批量内不变),
- * 让玩家按下前看清一次点到头究竟要吃多少,而不是只看下一级。已满级返回 "max"。
+ * 「连强」本轮总账(纯读,不改状态):按当前库存能连几档、总耗多少、停在料尽还是满级。
+ * 界面、动作和测试都读这一份计划;折扣取当前 forgeDiscount(批量内不变)。
  */
-export function upgradeRestCost(uid: string): { count: number; dust: number; stone: GNum } | "max" {
+export function planEquipmentUpgradeAll(uid: string): EquipmentUpgradePlan | null {
   const inventory = useInventoryStore();
   const player = usePlayerStore();
+  const resources = useResourcesStore();
   const inst = inventory.findItem(uid);
-  if (!inst) return "max";
+  if (!inst) return null;
   const cap = equipLevelCap();
-  if (inst.level >= cap) return "max";
+  if (inst.level >= cap) return null;
   const q = qualityDef(inst.quality);
   const discount = modOf(player.finalStats.mods, "forgeDiscount");
+  let dustLeft = Math.max(0, resources.dust);
+  let stoneLeft = resources.spiritStone;
   let count = 0;
   let dust = 0;
   let stone = gnZero();
   for (let lv = inst.level; lv < cap; lv += 1) {
     const c = upgradeCost(lv, inst.tier, q.rank, discount);
+    if (dustLeft < c.dust || !gte(stoneLeft, c.stone)) break;
     count += 1;
     dust += c.dust;
     stone = add(stone, c.stone);
+    dustLeft -= c.dust;
+    stoneLeft = sub(stoneLeft, c.stone);
   }
-  return { count, dust, stone };
+  return {
+    fromLevel: inst.level,
+    toLevel: inst.level + count,
+    count,
+    dust,
+    stone,
+    ended: inst.level + count >= cap ? "max" : "broke",
+  };
 }
 
 /**
@@ -122,25 +143,22 @@ export interface UpgradeBatchResult {
  * 合一条总账(与 decomposeBatch 同款:批量不逐档弹提示,免得连弹 10 条把位挤没)。
  */
 export function upgradeEquipmentAll(uid: string): UpgradeBatchResult {
+  const plan = planEquipmentUpgradeAll(uid);
+  if (!plan) {
+    notify("已达强化上限", "warn");
+    return { count: 0, dust: 0, stone: gnZero(), ended: "unchanged" };
+  }
   let count = 0;
   let dust = 0;
   let stone = gnZero();
-  let ended: UpgradeBatchResult["ended"] = "broke";
-  // 上限定死:每档必耗料或到顶,循环必然终止;给个安全闸防极端成本为 0 的病理档
-  for (let i = 0; i < 200; i += 1) {
+  for (let i = 0; i < plan.count; i += 1) {
     const res = applyOneUpgrade(uid);
-    if (res === "max") {
-      ended = "max";
-      break;
-    }
-    if (res === "broke") {
-      ended = "broke";
-      break;
-    }
+    if (typeof res === "string") break;
     count += 1;
     dust += res.dust;
     stone = add(stone, res.stone);
   }
+  const ended = count === plan.count ? plan.ended : "broke";
   if (count === 0) {
     // 一步都没强成(多半按钮被灰拦着,这里兜底防手滑空点):照单点那分支的措辞报
     notify(ended === "max" ? "已达强化上限" : "器灵尘或灵石不足", "warn");

@@ -171,7 +171,8 @@
  *      候选行、件数读数与两枚入口都不许把详情弹窗挤坏。
  *   六十 修行页主 / 辅 / 秘三册终局共 66 部。每门按 12 部一批、最多留 24 部,
  *      195 宽下逐门翻到末页再回翻;换门回首批、焦点留在页签,卸下辅修改序后
- *      详情关闭仍能把焦点还给同一部。
+ *      详情关闭仍能把焦点还给同一部。批量进修还要在按下前摊开本轮实际层数、
+ *      总耗与止点,回执里的数与那块预算同账。
  *   六十一 天界道痕满卷 60 则。道途册与道痕册必须互斥,marks 深链要真的落到履历;
  *      每 12 则一批、最多留 24 则,195 宽下逐批翻到末页再回翻,焦点跟住新批首则。
  *      每行的忆战 / 重写 / 旧纪入口也受 28px 触控下限约束。
@@ -6419,6 +6420,29 @@ async function taskInventoryAccounting() {
     const BAG_UID = "b_1";
     await page.locator(`main button[data-uid="${BAG_UID}"]`).first().click({ timeout: 3000 });
     await page.waitForTimeout(500);
+    const equipBatchPlan = await page.evaluate(() => {
+      const holder = document.querySelector("[data-equip-batch-plan]");
+      return {
+        count: Number(holder?.getAttribute("data-equip-batch-count")),
+        from: Number(holder?.getAttribute("data-equip-batch-from")),
+        to: Number(holder?.getAttribute("data-equip-batch-to")),
+        ended: holder?.getAttribute("data-equip-batch-ended"),
+        text: (holder?.textContent || "").replace(/\s+/g, " ").trim(),
+      };
+    });
+    checked += 1;
+    if (
+      equipBatchPlan.count <= 0 ||
+      equipBatchPlan.to <= equipBatchPlan.from ||
+      equipBatchPlan.ended !== "max" ||
+      !equipBatchPlan.text.includes("可至满级")
+    ) {
+      failures.push(
+        `[390] 锻造场景:连强预告没有摊开本轮档数与止点 —— ` +
+          `${equipBatchPlan.from}→${equipBatchPlan.to} ${equipBatchPlan.count} 档/` +
+          `${equipBatchPlan.ended} «${equipBatchPlan.text}»`,
+      );
+    }
     const costLine = await page.evaluate(() => {
       const p = document.querySelector(".modal-panel");
       const m = /器灵尘×(\d+)/.exec(p?.innerText || "");
@@ -10227,14 +10251,23 @@ async function taskGongfaListOverflow() {
     const seededSub =
       GONGFA.find((gongfa) => gongfa.type === "sub" && gongfa.quality === "mortal") ??
       GONGFA.find((gongfa) => gongfa.type === "sub");
-    if (!seededSub || counts.main === 0 || counts.sub === 0 || counts.secret === 0) {
+    const batchMain = GONGFA.find((gongfa) => gongfa.type === "main" && gongfa.maxLevel > 2);
+    if (!seededSub || !batchMain || counts.main === 0 || counts.sub === 0 || counts.secret === 0) {
       throw new Error("功法全习得夹具取不到三册内容");
     }
+    const batchFrom = batchMain.maxLevel - 2;
 
     const slices = showcaseSlices("light");
+    const learned = Object.fromEntries(GONGFA.map((gongfa) => [gongfa.id, gongfa.maxLevel]));
+    learned[batchMain.id] = batchFrom;
+    slices.resources = {
+      ...slices.resources,
+      wudao: 1_000_000,
+      page: 1_000_000,
+    };
     slices.cultivation = {
-      learned: Object.fromEntries(GONGFA.map((gongfa) => [gongfa.id, gongfa.maxLevel])),
-      mainGongfa: null,
+      learned,
+      mainGongfa: batchMain.id,
       subGongfa: [seededSub.id],
       buffs: [],
       gongfaBranch: {},
@@ -10479,6 +10512,68 @@ async function taskGongfaListOverflow() {
           `shown ${afterRemove.shown} / 焦点 ${afterRemove.focusRow ?? "无"}`,
       );
     }
+
+    await page.locator('[data-gongfa-cat="main"]').click({ timeout: 5000 });
+    await waitForList(counts.main, 12);
+    await page.locator(`[data-gongfa-row="${batchMain.id}"]`).click({ timeout: 5000 });
+    await page.locator("[data-gongfa-batch-plan]").waitFor({ state: "visible", timeout: 5000 });
+    const batchPlan = await page.evaluate(() => {
+      const holder = document.querySelector("[data-gongfa-batch-plan]");
+      const box = holder?.getBoundingClientRect();
+      return {
+        count: Number(holder?.getAttribute("data-gongfa-batch-count")),
+        from: Number(holder?.getAttribute("data-gongfa-batch-from")),
+        to: Number(holder?.getAttribute("data-gongfa-batch-to")),
+        wudao: Number(holder?.getAttribute("data-gongfa-batch-wudao")),
+        page: Number(holder?.getAttribute("data-gongfa-batch-page")),
+        ended: holder?.getAttribute("data-gongfa-batch-ended"),
+        text: (holder?.textContent || "").replace(/\s+/g, " ").trim(),
+        left: box?.left ?? -1,
+        right: box?.right ?? -1,
+      };
+    });
+    checked += 1;
+    if (
+      batchPlan.count !== 2 ||
+      batchPlan.from !== batchFrom ||
+      batchPlan.to !== batchMain.maxLevel ||
+      batchPlan.ended !== "max" ||
+      batchPlan.wudao <= 0 ||
+      batchPlan.page <= 0 ||
+      !batchPlan.text.includes("可至圆满") ||
+      batchPlan.left < -1 ||
+      batchPlan.right > 196
+    ) {
+      failures.push(
+        `[195] 批量进修预告不对:应 ${batchFrom}→${batchMain.maxLevel} 共 2 层/可至圆满,` +
+          `实见 ${batchPlan.from}→${batchPlan.to} 共 ${batchPlan.count} 层/${batchPlan.ended} · ` +
+          `耗 ${batchPlan.wudao} 悟道点 ${batchPlan.page} 残页 · 盒 ${batchPlan.left}..${batchPlan.right}`,
+      );
+    }
+    const batchDialogProblems = dialogZoomProblems(
+      await measureDialogZoom(page, { width: 390, height: 844 }),
+    );
+    checked += 1;
+    if (batchDialogProblems.length) {
+      failures.push(`[195] 批量进修总账在 200% 下坏了:${batchDialogProblems.join(" / ")}`);
+    }
+    await page.getByRole("button", { name: /修到顶/ }).click({ timeout: 5000 });
+    const batchToast = await page.locator("[data-toast]").last().textContent({ timeout: 5000 });
+    checked += 1;
+    if (
+      !batchToast?.includes(`第 ${batchMain.maxLevel} 层`) ||
+      !batchToast.includes(`耗 ${batchPlan.wudao} 悟道点 · ${batchPlan.page} 残页`)
+    ) {
+      failures.push(
+        `[195] 批量进修回执与预算不同账:预算 ${batchPlan.count} 层/` +
+          `${batchPlan.wudao} 悟道点 ${batchPlan.page} 残页,回执 «${batchToast || "无"}»`,
+      );
+    }
+    await page.keyboard.press("Escape");
+    await page
+      .locator(".modal-panel")
+      .waitFor({ state: "detached", timeout: 3000 })
+      .catch(() => {});
 
     checked += 1;
     const layoutProblems = problemsOf(await measurePage(page));

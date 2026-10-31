@@ -18,7 +18,7 @@ import {
   artifactDropWeight,
   randomDropArtifact,
 } from "./loot";
-import { upgradeEquipment, upgradeEquipmentAll, upgradeRestCost } from "./forge";
+import { planEquipmentUpgradeAll, upgradeEquipment, upgradeEquipmentAll } from "./forge";
 import { ARTIFACTS, artifactDef, artifactValue } from "@/data/artifacts";
 import type { ArtifactDef, StatMods } from "@/types";
 import { regionDef } from "@/data/regions";
@@ -28,6 +28,7 @@ import { useInventoryStore } from "@/stores/inventory";
 import { useResourcesStore } from "@/stores/resources";
 import { useSettingsStore } from "@/stores/settings";
 import { qualityDef } from "@/data/qualities";
+import { upgradeCost } from "./formulas";
 import { ARTIFACT_DROP_CHANCE, BAG_CAPACITY, DECOMPOSE_DUST } from "@/data/constants";
 import { useLoreStore } from "@/stores/lore";
 import { useQuestsStore } from "@/stores/quests";
@@ -453,12 +454,12 @@ describe("装备见闻 · 入账那一刻就记下成色", () => {
   });
 });
 
-describe("forge · 连强到顶总账预览与实付同账", () => {
+describe("forge · 连强本轮总账预览与实付同账", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
   });
 
-  it("upgradeRestCost 的累计恰好等于 upgradeEquipmentAll 实际扣掉的账(到顶)", () => {
+  it("料足时,预览的本轮累计恰好等于 upgradeEquipmentAll 实际扣掉的账(到顶)", () => {
     const inv = useInventoryStore();
     const res = useResourcesStore();
     const uid = "rest-1";
@@ -468,8 +469,8 @@ describe("forge · 连强到顶总账预览与实付同账", () => {
     // 料给足,连强不会中途 broke —— 这样预算与实付都该是「一路到顶」的同一笔
     res.addSmall("dust", 10_000_000);
     res.addStone(gn(1e15));
-    const preview = upgradeRestCost(uid);
-    if (preview === "max") throw new Error("当前未满级,应给出预算");
+    const preview = planEquipmentUpgradeAll(uid);
+    if (!preview) throw new Error("当前未满级,应给出预算");
     const batch = upgradeEquipmentAll(uid);
     expect(batch.ended, "料足应一路到顶").toBe("max");
     expect(batch.count).toBe(preview.count);
@@ -477,7 +478,26 @@ describe("forge · 连强到顶总账预览与实付同账", () => {
     expect(toNum(batch.stone)).toBe(toNum(preview.stone));
   });
 
-  it("已满级时 upgradeRestCost 报 max(无总账可给)", () => {
+  it("料只够本轮一部分时,预告与实付同样在料尽处止", () => {
+    const inv = useInventoryStore();
+    const res = useResourcesStore();
+    const uid = "rest-partial";
+    inv.items = [
+      { uid, templateId: "w_qingshuang", quality: "heaven", tier: 3, level: 1, affixes: [] },
+    ];
+    const first = upgradeCost(1, 3, qualityDef("heaven").rank, 0);
+    res.addSmall("dust", first.dust);
+    res.addStone(gn(1e15));
+    const plan = planEquipmentUpgradeAll(uid);
+    if (!plan) throw new Error("当前未满级,应给出本轮预算");
+    const batch = upgradeEquipmentAll(uid);
+    expect(plan).toMatchObject({ fromLevel: 1, count: 1, ended: "broke" });
+    expect(batch.count).toBe(plan.count);
+    expect(batch.dust).toBe(plan.dust);
+    expect(toNum(batch.stone)).toBe(toNum(plan.stone));
+  });
+
+  it("已满级时没有本轮预算可给", () => {
     const inv = useInventoryStore();
     inv.items = [
       {
@@ -489,7 +509,7 @@ describe("forge · 连强到顶总账预览与实付同账", () => {
         affixes: [],
       },
     ];
-    expect(upgradeRestCost("rest-full")).toBe("max");
+    expect(planEquipmentUpgradeAll("rest-full")).toBeNull();
   });
 });
 

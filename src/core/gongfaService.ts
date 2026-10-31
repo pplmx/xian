@@ -87,11 +87,9 @@ export function comprehendGongfa(): boolean {
   return false;
 }
 
-/** 功法升级消耗 */
-export function gongfaUpgradeCost(id: string): { wudao: number; page: number } | null {
-  const cultivation = useCultivationStore();
+/** 指定层数升到下一层的消耗。计划与实际共用这一处公式。 */
+function gongfaUpgradeCostAt(id: string, lv: number): { wudao: number; page: number } | null {
   const def = gongfaDef(id);
-  const lv = cultivation.learned[id];
   if (!def || !lv || lv >= def.maxLevel) return null;
   // 寒冥灵脉:参悟悟道点折扣(Phase 30.3)
   const discount = Math.min(0.5, useDongfuStore().insightDiscount);
@@ -101,6 +99,62 @@ export function gongfaUpgradeCost(id: string): { wudao: number; page: number } |
   return {
     wudao: costs.find((c) => c.key === "wudao")?.amount ?? 0,
     page: costs.find((c) => c.key === "page")?.amount ?? 0,
+  };
+}
+
+/** 功法升级消耗 */
+export function gongfaUpgradeCost(id: string): { wudao: number; page: number } | null {
+  return gongfaUpgradeCostAt(id, useCultivationStore().learned[id] ?? 0);
+}
+
+export interface GongfaUpgradePlan {
+  fromLevel: number;
+  toLevel: number;
+  count: number;
+  wudao: number;
+  page: number;
+  ended: "max" | "broke" | "notlearned";
+}
+
+/**
+ * 「修到顶」本轮总账(纯读):按现有悟道点与残页能修几层、共耗多少、停在料尽还是圆满。
+ * 预告与实际动作都只读这一份计划。
+ */
+export function planGongfaUpgradeAll(id: string): GongfaUpgradePlan {
+  const resources = useResourcesStore();
+  const def = gongfaDef(id);
+  const fromLevel = useCultivationStore().learned[id] ?? 0;
+  if (!def || fromLevel <= 0) {
+    return {
+      fromLevel,
+      toLevel: fromLevel,
+      count: 0,
+      wudao: 0,
+      page: 0,
+      ended: "notlearned",
+    };
+  }
+  let level = fromLevel;
+  let wudao = 0;
+  let page = 0;
+  let wudaoLeft = Math.max(0, resources.wudao);
+  let pageLeft = Math.max(0, resources.page);
+  while (level < def.maxLevel) {
+    const cost = gongfaUpgradeCostAt(id, level);
+    if (!cost || wudaoLeft < cost.wudao || pageLeft < cost.page) break;
+    level += 1;
+    wudao += cost.wudao;
+    page += cost.page;
+    wudaoLeft -= cost.wudao;
+    pageLeft -= cost.page;
+  }
+  return {
+    fromLevel,
+    toLevel: level,
+    count: level - fromLevel,
+    wudao,
+    page,
+    ended: level >= def.maxLevel ? "max" : "broke",
   };
 }
 
@@ -134,44 +188,40 @@ export function upgradeGongfa(id: string): boolean {
   return true;
 }
 
-export interface GongfaUpgradeBatch {
-  count: number;
-  wudao: number;
-  page: number;
-  ended: "max" | "broke" | "notlearned";
-}
+export type GongfaUpgradeBatch = GongfaUpgradePlan;
 
 /**
  * 修到顶:一次修到圆满或悟道点/残页见底,不再逐层点。
  * 合一条总账(与连强/连投同款:批量不逐层弹,免得把 toast 位挤没)。
  */
 export function upgradeGongfaAll(id: string): GongfaUpgradeBatch {
-  const cultivation = useCultivationStore();
+  const plan = planGongfaUpgradeAll(id);
   const def = gongfaDef(id);
   let count = 0;
   let wudao = 0;
   let page = 0;
-  let ended: GongfaUpgradeBatch["ended"] = "notlearned";
-  // 上限定死:每层必耗料或到顶,循环必然终止;安全闸防病理匀速为 0 的残页档
-  for (let i = 0; i < 200; i += 1) {
+  for (let i = 0; i < plan.count; i += 1) {
     const res = applyOneGongfaUpgrade(id);
-    if (res === "max") {
-      ended = "max";
-      break;
-    }
-    if (res === "broke") {
-      ended = "broke";
-      break;
-    }
+    if (typeof res === "string") break;
     count += 1;
     wudao += res.wudao;
     page += res.page;
   }
+  const ended = count === plan.count ? plan.ended : "broke";
+  const batch: GongfaUpgradeBatch = {
+    fromLevel: plan.fromLevel,
+    toLevel: plan.fromLevel + count,
+    count,
+    wudao,
+    page,
+    ended,
+  };
+  const cultivation = useCultivationStore();
   const lv = cultivation.learned[id] ?? 0;
   if (count > 0) {
     notify(`《${def?.name}》修至第 ${lv} 层,耗 ${wudao} 悟道点 · ${page} 残页`, "success");
   } else if (ended === "broke") {
     notify("悟道点或残页不足,修习中止", "warn");
   }
-  return { count, wudao, page, ended };
+  return batch;
 }

@@ -2536,8 +2536,28 @@ describe("界面分层 · 浮层只有一个出处", () => {
       resolve(__dirname, "../components/cultivation/GongfaDialog.vue"),
       "utf-8",
     );
-    expect(gf, "修到顶要有带差量的 aria-label").toMatch(/aria-label=.*修到顶/);
+    expect(gf, "修到顶的读屏名由同一份计划装配").toContain("const batchActionLabel");
+    expect(gf, "修到顶置灰时读屏名要列差量").toContain("修到顶 · 尚差 ${upShort.value}");
     expect(gf, "修到顶置灰时可见列出差量").toContain("尚差 {{ upShort }}");
+  });
+
+  it("批量进修与连强按下前摊开本轮实际层数、总耗与止点", () => {
+    const gf = readFileSync(
+      resolve(__dirname, "../components/cultivation/GongfaDialog.vue"),
+      "utf-8",
+    );
+    expect(gf, "功法修到顶读 core 的资源感知计划").toContain("planGongfaUpgradeAll");
+    expect(gf, "功法总账要有可量的稳定落点").toContain("data-gongfa-batch-plan");
+    expect(gf, "功法按钮要报本轮实际层数").toContain("修至料尽");
+
+    const equip = readFileSync(
+      resolve(__dirname, "../components/equipment/EquipUpgradePanel.vue"),
+      "utf-8",
+    );
+    expect(equip, "连强读 core 的资源感知计划").toContain("planEquipmentUpgradeAll");
+    expect(equip, "装备总账要有可量的稳定落点").toContain("data-equip-batch-plan");
+    expect(equip, "连强按钮要报本轮实际档数").toContain("连强料尽");
+    expect(equip, "旧的全到顶预算会骗过料不足的玩家").not.toContain("连强到顶共需");
   });
 
   it("机制数改常量要同源 —— 熔炉道源/收徒价/秘境悟道/变数上限/行程层数不手抄", () => {

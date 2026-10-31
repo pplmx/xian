@@ -165,15 +165,45 @@
             <template v-else>进修 · 尚差 {{ upShort }}</template>
           </button>
         </div>
-        <!-- 修到顶:一次修到圆满或悟道点/残页见底,不必逐层点(合一条总账) -->
+        <!--
+          修到顶不是「一直点单层」：本轮实际能修几层、吃多少、停在哪里，
+          按下前先摊开。按钮与结算同读 core 的 planGongfaUpgradeAll。
+        -->
+        <BatchSpendLedger
+          v-if="batchPlan.count > 0"
+          id="gongfa-batch-plan"
+          seal="修"
+          :status="batchPlan.ended === 'max' ? '可至圆满' : '料尽止'"
+          :tone="batchPlan.ended === 'max' ? 'qing' : 'cinnabar'"
+          data-gongfa-batch-plan
+          :data-gongfa-batch-count="batchPlan.count"
+          :data-gongfa-batch-from="batchPlan.fromLevel"
+          :data-gongfa-batch-to="batchPlan.toLevel"
+          :data-gongfa-batch-wudao="batchPlan.wudao"
+          :data-gongfa-batch-page="batchPlan.page"
+          :data-gongfa-batch-ended="batchPlan.ended"
+        >
+          <template #title>
+            本轮修至第 {{ batchPlan.toLevel }} 层，共 {{ batchPlan.count }} 层
+          </template>
+          <template #detail> 耗 悟道点×{{ batchPlan.wudao }} · 残页×{{ batchPlan.page }} </template>
+        </BatchSpendLedger>
         <button
           v-if="upCost"
           class="btn-ghost w-full !py-1.5 !text-body"
           :disabled="!upAffordable"
-          :aria-label="upAffordable ? '修到顶' : `修到顶 · 尚差 ${upShort}`"
+          :aria-label="batchActionLabel"
+          :aria-describedby="batchPlan.count > 0 ? 'gongfa-batch-plan' : undefined"
           @click="doUpgradeAll"
         >
-          修到顶<template v-if="!upAffordable"> · 尚差 {{ upShort }}</template>
+          <template v-if="upAffordable">
+            {{
+              batchPlan.ended === "broke"
+                ? `修至料尽 · ${batchPlan.count} 层`
+                : `修到顶 · ${batchPlan.count} 层`
+            }}
+          </template>
+          <template v-else>修到顶 · 尚差 {{ upShort }}</template>
         </button>
       </div>
     </template>
@@ -191,7 +221,12 @@ import { gongfaDef, GONGFA_TYPE_NAMES } from "@/data/gongfa";
 import { realmDef } from "@/data/realms";
 import { ELEMENTS } from "@/data/linggen";
 import { branchesFor, gongfaBranchDef } from "@/data/gongfaBranches";
-import { gongfaUpgradeCost, upgradeGongfa, upgradeGongfaAll } from "@/core/gongfaService";
+import {
+  gongfaUpgradeCost,
+  planGongfaUpgradeAll,
+  upgradeGongfa,
+  upgradeGongfaAll,
+} from "@/core/gongfaService";
 import { gongfaAffinity, rootElements } from "@/core/linggenAffinity";
 import { gongfaModsAt } from "@/stores/cultivation";
 import { formatSignedPercent } from "@/utils/format";
@@ -199,6 +234,7 @@ import { gongfaSkillLine } from "@/ui/itemText";
 import { STAT_NAMES, modsText } from "@/data/statNames";
 import type { AnyStatKey } from "@/types";
 import BaseModal from "@/components/common/BaseModal.vue";
+import BatchSpendLedger from "@/components/common/BatchSpendLedger.vue";
 import QualityTag from "@/components/common/QualityTag.vue";
 
 const ui = useUiStore();
@@ -226,6 +262,23 @@ const upShort = computed(() => {
   if (wudaoShort > 0 && pageShort > 0) return `${wudaoShort} 悟道点 · ${pageShort} 残页`;
   if (wudaoShort > 0) return `${wudaoShort} 悟道点`;
   return `${pageShort} 残页`;
+});
+const batchPlan = computed(() =>
+  def.value
+    ? planGongfaUpgradeAll(def.value.id)
+    : {
+        fromLevel: 0,
+        toLevel: 0,
+        count: 0,
+        wudao: 0,
+        page: 0,
+        ended: "notlearned" as const,
+      },
+);
+const batchActionLabel = computed(() => {
+  if (!upAffordable.value) return `修到顶 · 尚差 ${upShort.value}`;
+  const stop = batchPlan.value.ended === "broke" ? "修至料尽" : "修到顶";
+  return `${stop} · ${batchPlan.value.count} 层 · 耗 悟道点 ${batchPlan.value.wudao} · 残页 ${batchPlan.value.page}`;
 });
 
 /** 与灵根同源?判据直接取自参悟权重函数,标签与实际权重不可能分叉 */
