@@ -283,7 +283,7 @@ export function showcaseSlices(theme = "light") {
       equippedArtifacts: [],
     },
     endgame: { daoPath: "sword", daoSource: 1200, souls: [], equippedSouls: [] },
-    // 修行志早已推过前半程;资格名号也收了一批,免得首页还挂着开局的「主线 1/32」
+    // 长期道途早已推过前半程;资格名号也收了一批,免得首页还挂着开局的「主线 1/32」
     quests: {
       counters: {},
       achieved: [],

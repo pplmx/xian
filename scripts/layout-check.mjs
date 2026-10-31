@@ -246,7 +246,7 @@ const VIEWPORTS = [
   //   平板 620×900 —— 刚进入宽叶,检查页边、底栏与书脊边界;
   //   平板 768×1024 —— 620~959 应铺成宽单叶,不能一边触发多栏、一边锁死 430px;
   //   平板 959×1024 —— 宽叶上限,不能让桌面书脊或双页提前一像素出现;
-  //   桌面 1280×800 —— 游戏态展开成书桌:五册双页、多栏案卷放宽、设置仍按读卷居中。
+  //   桌面 1280×800 —— 游戏态展开成书桌:四册双页、首页自成指挥台、多栏案卷放宽、设置仍按读卷居中。
   // 安卓壳与桌面客户端都能转到这五档;PWA manifest 锁了竖屏,浏览器里随意缩窗。
   { width: 620, height: 900, tag: "620x900", dpr: 2 },
   { width: 844, height: 390, tag: "844x390", dpr: 2 },
@@ -2099,12 +2099,14 @@ async function taskPageTour(vp) {
           Number.parseFloat(style.getPropertyValue(`--type-${tier}`)),
         ]),
       );
+      const here = location.hash.replace(/^#/, "").split("?")[0] || "/";
       return {
         vars,
-        note: px("[data-folio-position]"),
-        body: px(".t-body"),
-        section: px(".section-title h2"),
+        note: px("[data-folio-position]") ?? px(".home-deck__eyebrow"),
+        body: px(".t-body") ?? px(".home-card__copy"),
+        section: px(".section-title h2") ?? px(".home-card__head h2"),
         display: px(".folio-masthead h1"),
+        homeDisplay: here === "/" ? px(".home-deck__identity h1") : null,
       };
     });
     checked += 1;
@@ -2126,8 +2128,17 @@ async function taskPageTour(vp) {
       ["章节题", type.section, expected.section],
       ["卷首题", type.display, expected.display],
     ]) {
+      if (name === "卷首题" && type.homeDisplay !== null) continue;
       if (got !== want) {
         failures.push(`[${vp.tag}] ${name}计算字号是 ${got},应为 ${want}px`);
+      }
+    }
+    if (type.homeDisplay !== null) {
+      if (type.homeDisplay < expected.display || type.homeDisplay > expected.display * 1.55) {
+        failures.push(
+          `[${vp.tag}] 首页主标题计算字号是 ${type.homeDisplay}px,` +
+            `应落在 ${expected.display}~${(expected.display * 1.55).toFixed(1)}px`,
+        );
       }
     }
   }
@@ -2180,10 +2191,15 @@ async function taskPageTour(vp) {
     if (problems.length) failures.push(`[${vp.tag}] ${route} → ${problems.join(" / ")}`);
     if (vp.tag === "844x390") {
       const landscape = await page.evaluate(() => {
-        const head = document.querySelector("[data-folio-masthead]");
+        const here = location.hash.replace(/^#/, "").split("?")[0] || "/";
+        const head =
+          here === "/"
+            ? document.querySelector("[data-home-hero]")
+            : document.querySelector("[data-folio-masthead]");
         if (!head) return null;
         const visual = head.querySelector(".folio-masthead__visual");
-        const next = head.nextElementSibling;
+        const next =
+          here === "/" ? head.querySelector("[data-home-focus]") : head.nextElementSibling;
         const dock = document.querySelector(".bottom-dock-rail");
         const headBox = head.getBoundingClientRect();
         const nextBox = next?.getBoundingClientRect();
@@ -2192,6 +2208,7 @@ async function taskPageTour(vp) {
           height: Math.round(headBox.height),
           visual: visual ? getComputedStyle(visual).display : null,
           hasDefault: !!head.querySelector("[data-folio-default]"),
+          commandDeck: here === "/",
           nextTop: nextBox ? Math.round(nextBox.top) : null,
           dockTop: dockBox ? Math.round(dockBox.top) : null,
         };
@@ -2201,20 +2218,20 @@ async function taskPageTour(vp) {
       if (!landscape) {
         failures.push(`[${vp.tag}] ${route} 横屏卷首没量到,判据空转`);
       } else {
-        if (!landscape.hasDefault && landscape.height > 310) {
+        if (!landscape.commandDeck && !landscape.hasDefault && landscape.height > 310) {
           failures.push(`[${vp.tag}] ${route} 矮横屏卷首高 ${landscape.height}px,超过 310px 上限`);
         }
-        if (landscape.visual && landscape.visual !== "none") {
+        if (!landscape.commandDeck && landscape.visual && landscape.visual !== "none") {
           failures.push(`[${vp.tag}] ${route} 矮横屏还在卷首重复铺主视觉`);
         }
         if (
-          !landscape.hasDefault &&
+          (!landscape.commandDeck ? !landscape.hasDefault : true) &&
           landscape.nextTop !== null &&
           landscape.dockTop !== null &&
           landscape.nextTop > landscape.dockTop - 40
         ) {
           failures.push(
-            `[${vp.tag}] ${route} 横屏卷首挡住正文:` +
+            `[${vp.tag}] ${route} 横屏首屏挡住下一步:` +
               `下一段在 ${landscape.nextTop}px,底栏在 ${landscape.dockTop}px`,
           );
         }
@@ -2265,26 +2282,10 @@ async function taskPageTour(vp) {
         }
       }
     }
-    const turnerIndex = NAVIGATION_ENTRIES.findIndex((entry) => entry.to === route);
-    const expectedTurner = [
-      NAVIGATION_ENTRIES[turnerIndex - 1]?.to,
-      NAVIGATION_ENTRIES[turnerIndex + 1]?.to,
-    ].filter(Boolean);
-    const turner = await page.evaluate(() => {
-      const root = document.querySelector("[data-folio-turner]");
-      return {
-        label: root?.getAttribute("aria-label") || "",
-        links: [...(root?.querySelectorAll("a[href]") ?? [])].map((el) =>
-          String(el.getAttribute("href") || "").replace(/^#/, ""),
-        ),
-      };
-    });
+    const bottomPagers = await page.locator("[data-folio-turner]").count();
     checked += 1;
-    if (turnerIndex < 0 || !turner.label || turner.links.join(",") !== expectedTurner.join(",")) {
-      failures.push(
-        `[${vp.tag}] ${route} 卷末翻页签不对:` +
-          `应 ${expectedTurner.join(" / ") || "无"},实见 ${turner.links.join(" / ") || "无"}`,
-      );
+    if (bottomPagers > 0) {
+      failures.push(`[${vp.tag}] ${route} 页面底部仍有册末翻页签(${bottomPagers} 处)`);
     }
     if (route === "/settings") {
       const settingsDesk = await page.evaluate(() => {
@@ -2377,8 +2378,9 @@ async function taskPageTour(vp) {
       }
     }
     /*
-     * 桌面不是「放大的手机」:960px 以上游戏外壳应展开成书桌,首页 / 修炼 / 行囊 /
-     * 道躯 / 藏珍五册走双页网格,多栏案卷放宽到 60rem,设置仍是一张 48rem 读卷。
+     * 桌面不是「放大的手机」:960px 以上游戏外壳应展开成书桌,修炼 / 行囊 /
+     * 道躯 / 藏珍四册走双页网格;首页在自己的宽案内排指挥台,多栏案卷放宽到
+     * 60rem,设置仍是一张 48rem 读卷。
      * 源码契约在 folioSpread.spec 里,这里量真实布局 —— 只改断点不改 App 数据属性、
      * 网格被页框压回单列,或案卷仍挤在单叶宽度里,都该红。
      */
@@ -12952,7 +12954,13 @@ async function taskAtlasNavigation() {
       hasTouch: vp.mobile,
     });
     try {
-      await seedSave(ctx, showcaseSlices("light"));
+      const fixture = showcaseSlices("light");
+      const worn = new Set(Object.values(fixture.inventory.equipped).filter(Boolean));
+      fixture.inventory.seenUids = fixture.inventory.items
+        .filter((item) => worn.has(item.uid))
+        .map((item) => item.uid);
+      fixture.inventory.seenSeeded = true;
+      await seedSave(ctx, fixture);
       const page = await ctx.newPage();
       const pageErrors = [];
       watchPageErrors(page, pageErrors);
@@ -12992,6 +13000,19 @@ async function taskAtlasNavigation() {
           current: (current?.textContent || "").replace(/\s+/g, " ").trim(),
           active: entries.filter((el) => el.getAttribute("aria-current") === "page").length,
           visibleSections: visibleSections.length,
+          bagVolumeCue:
+            volumes
+              .find((el) => el.getAttribute("data-atlas-volume") === "belongings")
+              ?.getAttribute("aria-label") ?? "",
+          bagEntryCue:
+            entries
+              .find((el) => el.getAttribute("href") === "#/inventory")
+              ?.querySelector("[data-atlas-entry-cue]")
+              ?.textContent?.trim() ?? "",
+          shortcutVisible: (() => {
+            const key = document.querySelector(".atlas-search__key");
+            return !!key && key.offsetParent !== null;
+          })(),
         };
       });
       checked += 1;
@@ -13022,6 +13043,19 @@ async function taskAtlasNavigation() {
       }
       if (state.visibleSections !== 1) {
         failures.push(`[${vp.tag}] 玄枢图同时展开了 ${state.visibleSections} 卷(应只展开当前一卷)`);
+      }
+      if (!state.bagVolumeCue.includes("6 件新物")) {
+        failures.push(
+          `[${vp.tag}] 玄枢图身外卷签没有汇总行囊新货:${state.bagVolumeCue || "无提醒"}`,
+        );
+      }
+      if (!state.bagEntryCue.includes("6 新")) {
+        failures.push(`[${vp.tag}] 玄枢图行囊册没有落新货章:${state.bagEntryCue || "无章"}`);
+      }
+      if (vp.tag === "1280" ? !state.shortcutVisible : state.shortcutVisible) {
+        failures.push(
+          `[${vp.tag}] 玄枢图快捷键提示与输入方式不符(visible=${state.shortcutVisible})`,
+        );
       }
 
       const problems = problemsOf(await measurePage(page));
@@ -13350,7 +13384,7 @@ if (failures.length === 0) {
   console.log("✓ 顶栏底栏钉死(文档层没有可滚余量,滚窗两栏不动),外壳高度认 dvh");
   console.log("✓ 六处页签栏吸顶(背包四册 / 图鉴 / 名号 / 界域志 / 天界 / 坊市),且铺满内容区宽度");
   console.log("✓ 顶栏一格一行(320 窄屏与横屏、桌面都不折行)");
-  console.log(`✓ 桌面书桌(${desktopFolioSeen} 页:五册双页、十一册宽案、设置读卷)`);
+  console.log(`✓ 桌面书桌(${desktopFolioSeen} 页:四册双页、十二册宽案、设置读卷)`);
   console.log(`✓ 桌面书脊(${desktopSpineSeen} 页:十七册齐全、当前册唯一、手机底栏退场)`);
   console.log(`✓ 矮横屏卷首(${landscapeMastheadSeen} 页:重复主视觉收起、正文探出导航)`);
   console.log(`✓ 宽叶四界(${tabletLeafSeen} 页:铺满余宽、底栏保留、书脊未提前挂出)`);

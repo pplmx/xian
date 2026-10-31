@@ -1,5 +1,5 @@
 <template>
-  <div class="folio-page folio-page--stack stagger-in">
+  <div class="home-deck folio-page stagger-in" data-page-rhythm="command-deck">
     <!-- 读屏起手句:创角踏入仙途后补念「你已入此世…」,只在那一趟有值(CreateView 交接、读完即清) -->
     <p aria-live="polite" class="sr-only">{{ bootLine }}</p>
     <!--
@@ -8,247 +8,250 @@
     -->
     <InstallToHomeNotice />
 
-    <FolioPageHeader data-home-hero title="洞府总览" subtitle="今日天时、主线与日课" featured>
-      <template #backdrop>
-        <!-- 远山:墨色随世界微染(异地即异色,仍 8% 极淡、只在氛围层) -->
-        <svg
-          class="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full text-[color:var(--world-mountain)] opacity-8"
-          viewBox="0 0 400 110"
-          preserveAspectRatio="none"
-          aria-hidden="true"
-        >
+    <!--
+      首页不再复读一张册页封面。上半屏是游戏指挥台:
+      当前身份 / 修行状态 / 今日天时 / 修为法球 / 今日一步,先让玩家知道“现在该做什么”。
+    -->
+    <section class="home-deck__hero" data-home-hero>
+      <div class="home-deck__hero-art" aria-hidden="true">
+        <span v-for="i in 11" :key="i" class="home-deck__star" :style="{ '--star': i }" />
+        <svg viewBox="0 0 420 160" preserveAspectRatio="none">
           <path
-            class="drift-far"
-            d="M0 110 L60 40 Q80 20 100 45 L150 95 L200 30 Q215 12 235 38 L300 100 L340 55 Q355 38 372 60 L400 90 L400 110 Z"
-            fill="currentColor"
+            class="home-deck__hero-mountain"
+            style="fill: var(--world-mountain)"
+            d="M0 160 L42 113 L86 137 L139 82 L196 139 L252 96 L312 146 L356 106 L420 145 L420 160 Z"
           />
-          <path
-            class="drift-near"
-            d="M0 110 L40 80 L110 105 L180 70 L260 108 L330 80 L400 105 L400 110 Z"
-            fill="currentColor"
-            opacity="0.6"
-          />
+          <path d="M0 160 L64 132 L126 153 L198 119 L270 157 L338 126 L420 150 L420 160 Z" />
         </svg>
-      </template>
-      <template #visual>
-        <div class="relative h-35 w-35">
-          <!-- 落地影:球浮着也得有个「歇脚处」 —— 远山同色的淡淡一痕,把球按回画里 -->
+      </div>
+
+      <header class="home-deck__hero-top">
+        <p class="home-deck__eyebrow">
+          <span>玄枢 · 洞府</span>
+          <span aria-hidden="true">/</span>
+          <span>{{ player.worldName }}</span>
+        </p>
+        <span class="home-deck__realm">{{ player.realmName }}</span>
+      </header>
+
+      <div class="home-deck__stage">
+        <div class="home-deck__identity">
+          <h1>洞府总览</h1>
+          <p
+            class="home-deck__status"
+            :class="{ 'is-alert': player.lifespanRatio < LIFESPAN_WARN_RATIO }"
+          >
+            <span class="home-deck__status-dot" aria-hidden="true" />
+            {{ statusText }}
+          </p>
+          <div class="home-deck__weather-line">
+            <GameIcon name="sparkles" :size="14" />
+            <strong>{{ weather.name }}</strong>
+            <span class="countdown-slot tabular">{{ weatherLeft }}</span>
+          </div>
+          <p class="home-deck__weather-copy">{{ weather.desc }}</p>
+          <p v-if="tomorrowWeather" class="home-deck__tomorrow">{{ tomorrowBrief }}</p>
+          <div v-if="weatherEffects.length || weatherTribulation" class="home-deck__effects">
+            <span v-for="effect in weatherEffects" :key="effect">{{ effect }}</span>
+            <span v-if="weatherTribulation" class="is-danger"
+              >今日渡劫 ×{{ weatherTribulation }}</span
+            >
+          </div>
+        </div>
+
+        <div class="home-deck__orb">
+          <span class="home-deck__orb-halo" aria-hidden="true" />
           <span
-            class="pointer-events-none absolute bottom-0 left-1/2 h-1.5 w-12 -translate-x-1/2 rounded-[50%] bg-[var(--world-mountain)] opacity-20"
+            class="home-deck__orb-shadow"
+            style="background: var(--world-mountain)"
             aria-hidden="true"
           />
           <CultivationOrb :active="true" :full="player.expFull" :progress="player.expProgress">
             <span class="text-[17px]">☯</span>
           </CultivationOrb>
-        </div>
-      </template>
-      <template #meta>
-        <p
-          class="mt-1 font-kai text-body"
-          :class="player.lifespanRatio < LIFESPAN_WARN_RATIO ? 'text-cinnabar' : 'text-ink-soft'"
-        >
-          {{ statusText }}
-        </p>
-      </template>
-
-      <!-- 今日天时:确定性环境,影响当日产出与渡劫 -->
-      <div class="border-t border-ink/10 pt-2.5">
-        <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-          <GameIcon name="sparkles" :size="13" class="shrink-0 text-gold-ink" />
-          <span class="shrink-0 whitespace-nowrap font-kai text-body tracking-widest text-ink">{{
-            weather.name
-          }}</span>
-          <span class="countdown-slot ml-1 shrink-0 text-note text-ink-faint tabular">{{
-            weatherLeft
-          }}</span>
-        </div>
-        <p class="mt-0.5 text-note leading-relaxed text-ink-soft [word-break:keep-all]">
-          {{ weather.desc }}<span v-if="tomorrowWeather">{{ tomorrowBrief }}</span>
-        </p>
-        <!--
-          天时的影响是确定性数值,却只写在散文里(「灵气恢复与修炼皆有裨益」) ——
-          渡劫前一天该不该等天时,靠一句「皆有裨益」算不出来。
-          效果行照 mods 真值摊开;渡劫倍率 >1 再挂一句险。
-        -->
-        <p v-if="weatherModText" class="mt-0.5 text-note text-ink-soft tabular">
-          {{ weatherModText
-          }}<span v-if="weatherTribulation"> · 今日渡劫 ×{{ weatherTribulation }}</span>
-        </p>
-      </div>
-    </FolioPageHeader>
-
-    <!--
-      首页案头 —— 先把「今天做什么」收成一张账,再把两处长期门径压成书签。
-
-      旧版把第一步 / 当前目标 / 天界 / 主线 / 日课 / 洞府各摆一张同权重卡,
-      第一眼没有主次,日课一长就把真正的下一步推得很远。现在:
-        壹 今日行止:只放系统递到眼前的那一步(第一步优先于常规目标);
-        贰 主线:长期方向、阶段进度与奖励;
-        叁 日课:今天的可结清事项,进度、奖励和完成态同格摊开。
-      三项仍读原来的事实源,没有新增存档字段,也没有替玩家改目标。
-    -->
-    <section class="folio-span-all">
-      <SectionTitle title="修行志" hint="今日先做一件,余下交给挂机" />
-      <div class="home-desk mt-2" data-home-desk>
-        <article class="home-desk__lead" data-home-focus>
-          <header class="home-desk__label">
-            <span class="home-desk__ordinal">壹</span>
-            <span>今日行止</span>
-            <span class="home-desk__rule" aria-hidden="true" />
-          </header>
-
-          <RouterLink
-            v-if="firstStep"
-            :to="firstStep.to"
-            class="home-desk__lead-link active:scale-99"
-          >
-            <span class="home-desk__lead-seal" aria-hidden="true">始</span>
-            <span class="min-w-0">
-              <span class="home-desk__lead-title">{{ firstStep.text }}</span>
-              <span class="home-desk__lead-copy">{{ firstStep.hint }}</span>
-            </span>
-            <span class="home-desk__lead-action">{{ firstStep.label }} →</span>
-          </RouterLink>
-
-          <component
-            :is="currentGoal?.to ? RouterLink : 'div'"
-            v-else-if="currentGoal"
-            :to="currentGoal?.to"
-            :class="currentGoal?.to ? 'active:scale-99' : ''"
-            class="home-desk__lead-link"
-            data-home-goal
-          >
-            <span class="home-desk__lead-seal" aria-hidden="true">向</span>
-            <span class="min-w-0">
-              <span class="home-desk__lead-title">{{ currentGoal.text }}</span>
-              <span v-if="currentGoal.hint" class="home-desk__lead-copy">{{
-                currentGoal.hint
-              }}</span>
-            </span>
-            <span class="home-desk__lead-action">
-              <template v-if="currentGoal.progress !== undefined">{{
-                formatPercent(currentGoal.progress, 0)
-              }}</template>
-              <template v-else-if="currentGoal.to">前往 →</template>
-            </span>
-          </component>
-
-          <div v-else class="home-desk__quiet">
-            <p>眼下没有系统递来的下一步。</p>
-            <p>修为、历练、行囊与人物都在底栏,按自己的路走。</p>
-          </div>
-
-          <p v-if="firstStep && currentGoal" class="home-desk__after">
-            <span>其后</span>
-            <span>{{ currentGoal.text }}</span>
-            <span v-if="currentGoal.progress !== undefined" class="tabular">{{
-              formatPercent(currentGoal.progress, 0)
+          <p class="home-deck__orb-caption">
+            <span>{{
+              player.expFull ? "修为圆满" : `修为 ${formatPercent(player.expProgress, 1)}`
             }}</span>
+            <span>{{ player.realmName }}</span>
           </p>
-        </article>
+        </div>
+      </div>
 
-        <article class="home-desk__main" data-home-mainquest>
-          <header class="home-desk__label">
-            <span class="home-desk__ordinal">贰</span>
-            <span>主线</span>
-            <span class="home-desk__rule" aria-hidden="true" />
-            <span class="home-desk__meta tabular"
-              >{{ quests.mainIdx + 1 }}/{{ MAIN_QUESTS.length }}</span
-            >
-          </header>
-          <template v-if="mainQuest">
-            <h3 class="home-desk__main-title">{{ mainQuest.name }}</h3>
-            <p class="home-desk__copy">{{ mainQuest.desc }}</p>
-            <div class="home-desk__reward">
-              <span>赏</span>
-              <span class="tabular">{{ rewardText(mainQuest.reward) }}</span>
-              <span>{{
-                mainQuest.cond.type === "realm"
-                  ? "达成时按新境界折灵石 · 自动领赏"
-                  : "达成后自动领赏"
-              }}</span>
-            </div>
-            <p v-if="mainProgress" class="home-desk__progress-line">
-              <span :class="mainProgress.done ? 'text-jade' : 'text-ink-soft'">{{
-                mainProgress.text
-              }}</span>
-              <span v-if="mainProgress.ratio !== null" class="tabular text-ink-faint">{{
-                formatPercent(mainProgress.ratio, 0)
-              }}</span>
-            </p>
-            <ProgressBar
-              v-if="mainProgress?.ratio !== null && mainProgress?.ratio !== undefined"
-              class="mt-1.5"
-              :value="mainProgress.ratio"
-              :height="4"
-              :color="mainProgress.done ? 'var(--color-jade)' : 'var(--color-cinnabar)'"
-            />
-          </template>
-          <p v-else class="home-desk__quiet">主线已尽,前路由你自己书写。</p>
-        </article>
+      <div class="home-deck__next-slot" data-home-focus>
+        <RouterLink v-if="firstStep" :to="firstStep.to" class="home-deck__next active:scale-99">
+          <span class="home-deck__next-tag">今日一步</span>
+          <span class="home-deck__next-body">
+            <span class="home-deck__next-title">{{ firstStep.text }}</span>
+            <span class="home-deck__next-copy">{{ firstStep.hint }}</span>
+          </span>
+          <span class="home-deck__next-action">{{ firstStep.label }} →</span>
+        </RouterLink>
 
-        <article class="home-desk__daily" data-home-daily>
-          <header class="home-desk__label">
-            <span class="home-desk__ordinal">叁</span>
-            <span>今日日课</span>
-            <span class="home-desk__rule" aria-hidden="true" />
-            <span class="home-desk__meta tabular">{{ dailyDoneCount }}/{{ dailyRows.length }}</span>
-          </header>
-          <ProgressBar
-            v-if="dailyRows.length"
-            class="mt-1.5"
-            :value="dailyRatio"
-            :height="3"
-            :color="dailyAllDone ? 'var(--color-jade)' : 'var(--color-cinnabar)'"
-          />
-          <ul v-if="dailyRows.length" class="home-desk__daily-list">
-            <li
-              v-for="(t, index) in dailyRows"
-              :key="t.id"
-              class="home-desk__daily-row"
-              :class="{ 'is-done': t.done }"
-              :data-daily-row="t.id"
-              :data-daily-done="t.done ? 'true' : 'false'"
-            >
-              <span class="home-desk__daily-mark" aria-hidden="true">{{
-                t.done ? "✓" : String(index + 1).padStart(2, "0")
-              }}</span>
-              <span class="min-w-0">
-                <span class="home-desk__daily-copy" :class="{ 'line-through': t.done }">{{
-                  keepNumberUnit(t.desc)
-                }}</span>
-                <span class="home-desk__daily-reward tabular">得 {{ rewardText(t.reward) }}</span>
-              </span>
-              <span
-                class="home-desk__daily-count tabular"
-                :class="t.done ? 'text-jade' : 'text-ink-soft'"
-              >
-                {{ t.done ? "已成" : `${t.progress}/${t.target}` }}
-              </span>
-              <span class="home-desk__daily-track" aria-hidden="true">
-                <span
-                  :style="{
-                    width: `${Math.min(100, (t.progress / Math.max(1, t.target)) * 100)}%`,
-                  }"
-                />
-              </span>
-            </li>
-          </ul>
-          <p v-else class="home-desk__quiet">今日没有排定日课。</p>
-          <p v-if="dailyAllDone" class="home-desk__all-done">
-            <span class="chip-ink border-jade/60 text-note text-jade">今日已毕</span>
-            日课全做完了,该收的都收了 —— 可安心挂机
-          </p>
-        </article>
+        <component
+          :is="currentGoal?.to ? RouterLink : 'div'"
+          v-else-if="currentGoal"
+          :to="currentGoal?.to"
+          :class="currentGoal?.to ? 'active:scale-99' : ''"
+          class="home-deck__next"
+          data-home-goal
+        >
+          <span class="home-deck__next-tag">当前道途</span>
+          <span class="home-deck__next-body">
+            <span class="home-deck__next-title">{{ currentGoal.text }}</span>
+            <span v-if="currentGoal.hint" class="home-deck__next-copy">{{ currentGoal.hint }}</span>
+          </span>
+          <span class="home-deck__next-action">
+            <template v-if="currentGoal.progress !== undefined">{{
+              formatPercent(currentGoal.progress, 0)
+            }}</template>
+            <template v-else-if="currentGoal.to">前往 →</template>
+          </span>
+        </component>
+
+        <div v-else class="home-deck__quiet">
+          <span>静</span>
+          <p>眼下没有系统递来的下一步。修为、历练、行囊与人物都在底栏,按自己的路走。</p>
+        </div>
+
+        <p v-if="firstStep && currentGoal" class="home-deck__after">
+          <span>其后</span>
+          <span>{{ currentGoal.text }}</span>
+          <span v-if="currentGoal.progress !== undefined" class="tabular">{{
+            formatPercent(currentGoal.progress, 0)
+          }}</span>
+        </p>
       </div>
     </section>
 
-    <section class="home-passages folio-span-all">
-      <SectionTitle title="门径" hint="家业与天界,各有下一步" />
-      <div class="home-passages__grid mt-2" data-home-passages>
+    <div class="home-deck__board">
+      <article class="home-card home-card--quest" data-home-mainquest>
+        <header class="home-card__head">
+          <span class="home-card__index">壹</span>
+          <h2>长期道途</h2>
+          <span class="home-card__rule" aria-hidden="true" />
+          <span class="home-card__count tabular"
+            >{{ quests.mainIdx + 1 }}/{{ MAIN_QUESTS.length }}</span
+          >
+        </header>
+        <template v-if="mainQuest">
+          <div class="home-card__body">
+            <p class="home-card__eyebrow">当前主线</p>
+            <h3 class="home-card__title">{{ mainQuest.name }}</h3>
+            <p class="home-card__copy">{{ mainQuest.desc }}</p>
+          </div>
+          <div v-if="mainProgress" class="home-quest__meter">
+            <div class="home-quest__meter-line">
+              <span :class="mainProgress.done ? 'text-jade' : 'text-ink-soft'">{{
+                mainProgress.text
+              }}</span>
+              <strong v-if="mainProgress.ratio !== null" class="tabular">{{
+                formatPercent(mainProgress.ratio, 0)
+              }}</strong>
+            </div>
+            <ProgressBar
+              v-if="mainProgress.ratio !== null && mainProgress.ratio !== undefined"
+              :value="mainProgress.ratio"
+              :height="6"
+              :color="mainProgress.done ? 'var(--color-jade)' : 'var(--color-cinnabar)'"
+            />
+          </div>
+          <div class="home-quest__reward">
+            <p class="home-card__eyebrow">过关赏格</p>
+            <p class="home-quest__reward-value tabular">{{ rewardText(mainQuest.reward) }}</p>
+            <p class="home-quest__reward-note">
+              {{
+                mainQuest.cond.type === "realm"
+                  ? "达成时按新境界折灵石 · 自动领赏"
+                  : "达成后自动领赏"
+              }}
+            </p>
+          </div>
+        </template>
+        <p v-else class="home-card__quiet">主线已尽,前路由你自己书写。</p>
+      </article>
+
+      <article
+        class="home-card home-card--daily"
+        :class="{ 'is-complete': dailyAllDone }"
+        data-home-daily
+      >
+        <header class="home-card__head">
+          <span class="home-card__index">贰</span>
+          <h2>今日日课</h2>
+          <span class="home-card__rule" aria-hidden="true" />
+          <span class="home-card__count tabular">{{ dailyDoneCount }}/{{ dailyRows.length }}</span>
+        </header>
+        <div class="home-daily__summary">
+          <div
+            class="home-daily__ring"
+            :style="{ '--home-daily-angle': `${dailyRatio * 360}deg` }"
+            aria-hidden="true"
+          >
+            <span>{{ dailyDoneCount }}</span>
+            <small>/{{ dailyRows.length }}</small>
+          </div>
+          <div>
+            <p class="home-daily__summary-title">
+              {{ dailyAllDone ? "今日功课已结" : dailyDoneCount ? "还差几笔" : "今日从头开账" }}
+            </p>
+            <p class="home-daily__summary-copy">
+              {{
+                dailyAllDone ? "该收的都收了,可安心挂机。" : "每笔进度与奖励同格摊开,做完自动入账。"
+              }}
+            </p>
+          </div>
+        </div>
+        <ul v-if="dailyRows.length" class="home-daily__list">
+          <li
+            v-for="(t, index) in dailyRows"
+            :key="t.id"
+            class="home-daily__row"
+            :class="{ 'is-done': t.done }"
+            :data-daily-row="t.id"
+            :data-daily-done="t.done ? 'true' : 'false'"
+          >
+            <span class="home-daily__mark" aria-hidden="true">{{
+              t.done ? "✓" : String(index + 1).padStart(2, "0")
+            }}</span>
+            <span class="home-daily__body">
+              <span class="home-daily__copy" :class="{ 'line-through': t.done }">{{
+                keepNumberUnit(t.desc)
+              }}</span>
+              <span class="home-daily__reward tabular">得 {{ rewardText(t.reward) }}</span>
+            </span>
+            <span class="home-daily__count tabular" :class="{ 'is-done': t.done }">
+              {{ t.done ? "已成" : `${t.progress}/${t.target}` }}
+            </span>
+            <span class="home-daily__track" aria-hidden="true">
+              <span
+                :style="{
+                  width: `${Math.min(100, (t.progress / Math.max(1, t.target)) * 100)}%`,
+                }"
+              />
+            </span>
+          </li>
+        </ul>
+        <p v-else class="home-card__quiet">今日没有排定日课。</p>
+        <p v-if="dailyAllDone" class="home-daily__all-done">
+          <span>今日已毕</span>
+          日课全做完了,该收的都收了 —— 可安心挂机
+        </p>
+      </article>
+    </div>
+
+    <section class="home-deck__passages" data-home-passages>
+      <header class="home-deck__section-head">
+        <div>
+          <span>叁</span>
+          <h2>门径</h2>
+        </div>
+        <p>家业与天界,各有下一步</p>
+      </header>
+      <div class="home-passages__grid">
         <RouterLink to="/dongfu" class="home-passage active:scale-99" data-home-dongfu>
           <span class="home-passage__seal" aria-hidden="true">府</span>
-          <span class="min-w-0">
+          <span class="home-passage__body">
             <span class="home-passage__eyebrow">家业</span>
             <span class="home-passage__title">洞府营造</span>
             <span class="home-passage__copy">经营家业,道途更稳</span>
@@ -270,7 +273,7 @@
           data-home-celestial
         >
           <span class="home-passage__seal animate-breathe" aria-hidden="true">天</span>
-          <span class="min-w-0">
+          <span class="home-passage__body">
             <span class="home-passage__eyebrow">天界已开</span>
             <span class="home-passage__title">
               天道与道途
@@ -315,8 +318,6 @@ import { isRetreating } from "@/core/earlyGameService";
 import { dailyRowsOf, dailyStateOf } from "@/core/engineDailies";
 import { todayChallenge } from "@/core/dailyChallenge";
 import { mainQuestAt } from "@/core/engineChain";
-import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
-import SectionTitle from "@/components/common/SectionTitle.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import CultivationOrb from "@/components/common/CultivationOrb.vue";
@@ -370,6 +371,8 @@ const statusText = computed(() =>
 const weather = computed(() => todayWeather());
 /** 天时的确定效果(照 mods 真值摊开;清和这类无词条的不显行) */
 const weatherModText = computed(() => modsText(weather.value.mods));
+/** 同一个 modsText 拆成可扫读的短签,不另造第二套天时说明。 */
+const weatherEffects = computed(() => weatherModText.value.split(" · ").filter(Boolean));
 /** 渡劫倍率 >1 才挂"更险"(仅雷鸣/仙劫日等) */
 const weatherTribulation = computed(() =>
   weather.value.tribulationMult > 1 ? weather.value.tribulationMult : null,

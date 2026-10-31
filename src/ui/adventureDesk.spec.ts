@@ -86,7 +86,7 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
   });
 
   it("今日账把三档落成连续概率行,手机不靠三列硬挤,极窄档再拆行", () => {
-    const css = source("src/style.css");
+    const css = source("src/styles/pages/adventure.css");
     const view = source("src/views/AdventureView.vue");
 
     expect(css, "卷首法球收在 124px,给 390 首屏的出发键留出安全间距").toMatch(

@@ -3,14 +3,17 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { readStyleCss } from "@/test/readStyleCss";
 import {
+  atlasEntryCueOf,
   atlasInitialFocusOf,
   atlasJumpIndex,
   atlasSearchResults,
   atlasSectionIdForRoute,
   atlasSearchStatusOf,
   atlasShortcutHintOf,
+  atlasVolumeCuesOf,
   isAtlasShortcut,
 } from "./atlas";
+import { NAVIGATION_SECTIONS } from "./navigation";
 
 const ROOT = resolve(__dirname, "../..");
 
@@ -81,7 +84,45 @@ describe("玄枢图 · 五卷快引", () => {
     expect(atlasSearchStatusOf(chapter, 0, 1)).toBe(
       "找到 1 处 · 第 1/1 处：行旅卷 · 界域志 · 周易，回车前往",
     );
+    expect(
+      atlasSearchStatusOf(
+        atlasSearchResults("背包")[0],
+        0,
+        1,
+        atlasEntryCueOf("inventory", 6, false),
+      ),
+      "寻册播报也要带上跨页待办",
+    ).toBe("找到 1 处 · 第 1/1 处：身外卷 · 行囊，6 件新物，回车前往");
     expect(atlasSearchStatusOf(undefined, 0, 0)).toBe("");
+  });
+
+  it("新货与可破境只在对应册上落章，卷签汇总同一份提醒", () => {
+    expect(atlasEntryCueOf("inventory", 0, false)).toBeNull();
+    expect(atlasEntryCueOf("inventory", 1, false)).toEqual({
+      tone: "bag",
+      label: "1 新",
+      spoken: "1 件新物",
+    });
+    expect(atlasEntryCueOf("inventory", 12, false)).toMatchObject({
+      label: "9+ 新",
+      spoken: "12 件新物",
+    });
+    expect(atlasEntryCueOf("cultivation", 0, true)).toEqual({
+      tone: "breakthrough",
+      label: "可破境",
+      spoken: "可破境",
+    });
+    expect(atlasEntryCueOf("character", 6, true)).toBeNull();
+
+    const belongings = NAVIGATION_SECTIONS.find((section) => section.id === "belongings")!;
+    const practice = NAVIGATION_SECTIONS.find((section) => section.id === "practice")!;
+    expect(atlasVolumeCuesOf(belongings.entries, 6, false)).toMatchObject([
+      { tone: "bag", spoken: "6 件新物" },
+    ]);
+    expect(atlasVolumeCuesOf(practice.entries, 0, true)).toMatchObject([
+      { tone: "breakthrough", spoken: "可破境" },
+    ]);
+    expect(atlasVolumeCuesOf(practice.entries, 0, false)).toEqual([]);
   });
 
   it("寻册快捷键与平台提示同源", () => {
@@ -134,6 +175,11 @@ describe("玄枢图 · 五卷快引", () => {
     expect(atlas, "总图首焦点要按输入设备分流").toContain(":initial-focus");
     expect(atlas, "桌面焦点落寻册口、触屏留当前卷签").toContain("atlasInitialFocusOf");
     expect(atlas, "搜索结果游标要由同一句播报").toContain("atlasSearchStatusOf");
+    expect(atlas, "寻册口与卷宗要接底栏、书脊同一份跨页提醒").toContain("useNavigationSignals");
+    expect(atlas, "卷签要汇总本卷待办而不只靠点开后才看见").toContain("data-atlas-volume-cue");
+    expect(atlas, "册目条要在对应册上直接落章").toContain("data-atlas-entry-cue");
+    expect(atlas, "寻册结果保留同一枚待办章").toContain("data-atlas-result-cue");
+    expect(atlas, "触屏不再展示按不出的键盘快捷键").toContain('v-if="finePointer"');
     expect(modal, "弹窗原语要支持总图宽度").toContain('props.size === "max"');
     expect(modal, "弹窗原语要支持指定首焦点").toContain("initialFocus");
     expect(modal, "弹窗原语要允许调用方追加面板样式").toContain("panelClass");

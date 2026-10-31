@@ -16,6 +16,14 @@ export interface AtlasSearchResult {
   to: string;
 }
 
+export interface AtlasCue {
+  tone: "bag" | "breakthrough";
+  /** 册目条与搜索结果里的短章 */
+  label: string;
+  /** 读屏与卷签汇总用的完整说法 */
+  spoken: string;
+}
+
 /** 当前路由落在哪一卷；未入册时回第一卷，玄枢图打开后总有可跳之处。 */
 export function atlasSectionIdForRoute(name: string | symbol | null | undefined): string {
   return navigationPositionOf(name)?.section.id ?? NAVIGATION_SECTIONS[0]!.id;
@@ -110,16 +118,56 @@ export function atlasSearchResults(query: string): AtlasSearchResult[] {
   return results;
 }
 
+/**
+ * 导航层跨页提醒在玄枢图里的同一枚章。
+ *
+ * 手机底栏与桌面书脊已经报「行囊有新货」「此刻可破境」;玄枢图是另外
+ * 十二册在手机上的唯一入口,不能点开前一言不发。文案只读这两个既有判据,
+ * 不另造「大概有新东西」的启发式。
+ */
+export function atlasEntryCueOf(
+  entryName: string,
+  bagNewCount: number,
+  canBreakthrough: boolean,
+): AtlasCue | null {
+  if (entryName === "inventory") {
+    const count = Math.max(0, Math.floor(Number.isFinite(bagNewCount) ? bagNewCount : 0));
+    if (count <= 0) return null;
+    return {
+      tone: "bag",
+      label: count > 9 ? "9+ 新" : `${count} 新`,
+      spoken: `${count} 件新物`,
+    };
+  }
+  if (entryName === "cultivation" && canBreakthrough) {
+    return { tone: "breakthrough", label: "可破境", spoken: "可破境" };
+  }
+  return null;
+}
+
+/** 卷签只汇总本卷册目上的章,顺序与册目阅读顺序一致。 */
+export function atlasVolumeCuesOf(
+  entries: readonly Pick<NavigationEntry, "name">[],
+  bagNewCount: number,
+  canBreakthrough: boolean,
+): AtlasCue[] {
+  return entries
+    .map((entry) => atlasEntryCueOf(entry.name, bagNewCount, canBreakthrough))
+    .filter((cue): cue is AtlasCue => cue !== null);
+}
+
 /** 寻册结果的当前游标播报：视觉提示与 aria-live 共用同一句。 */
 export function atlasSearchStatusOf(
   result: AtlasSearchResult | undefined,
   index: number,
   total: number,
+  cue?: AtlasCue | null,
 ): string {
   if (!result || total <= 0) return "";
   const ordinal = `${Math.max(0, Math.min(total - 1, index)) + 1}/${total} 处`;
   const chapter = result.chapter ? ` · ${result.chapter.label}` : "";
-  return `找到 ${total} 处 · 第 ${ordinal}：${result.entry.sectionLabel}卷 · ${result.entry.label}${chapter}，回车前往`;
+  const pending = cue ? `，${cue.spoken}` : "";
+  return `找到 ${total} 处 · 第 ${ordinal}：${result.entry.sectionLabel}卷 · ${result.entry.label}${chapter}${pending}，回车前往`;
 }
 
 type AtlasShortcutEvent = Pick<KeyboardEvent, "key" | "ctrlKey" | "metaKey" | "altKey">;

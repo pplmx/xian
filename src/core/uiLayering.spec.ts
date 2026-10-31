@@ -1222,11 +1222,16 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 下方的次要天时反而 font-kai 披金 —— 层级倒挂。提一档 ink-soft 并配楷体,
     // 寿元告急那一路仍走朱砂;退回 faint 或拆掉 kai,下面红。
     const home = FILES.find((f) => f.path === "views/HomeView.vue");
-    expect(home?.src, "状态行要配楷体与对位主角比肩").toMatch(
-      /class="[^"]*font-kai text-body[^"]*"/,
+    const css = readStyleCss();
+    expect(home?.src, "状态行仍要有独立运行时落点").toContain('class="home-deck__status"');
+    expect(css, "状态行要配楷体与对位主角比肩").toMatch(
+      /\.home-deck__status \{[\s\S]{0,180}?font-family: var\(--font-kai\)/,
     );
-    expect(home?.src, "非告急那一路不许退回最弱档(ink-faint)").toMatch(
-      /text-cinnabar' : 'text-ink-soft'/,
+    expect(css, "非告急那一路用可读的中亮墨,不许再降成 faint").toMatch(
+      /\.home-deck__status \{[\s\S]{0,160}?color: rgb\(var\(--chrome-muted-rgb\)\)/,
+    );
+    expect(css, "寿元告急那一路仍转朱砂").toMatch(
+      /\.home-deck__status\.is-alert \{[\s\S]{0,80}?color: rgb\(var\(--chrome-accent-rgb\)\)/,
     );
   });
 
@@ -1276,7 +1281,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
       /-my-1\.5 shrink-0 py-1\.5 whitespace-nowrap active:text-ink-soft/,
     );
     const home = FILES.find((f) => f.path === "views/HomeView.vue");
-    expect(home?.src, "法球要有同世界色的落地影").toMatch(/bg-\[var\(--world-mountain\)\]/);
+    expect(home?.src, "法球要有同世界色的落地影").toContain(
+      'style="background: var(--world-mountain)"',
+    );
+    expect(style, "落地影要柔而不糊成一枚按钮").toMatch(
+      /\.home-deck__orb-shadow \{[\s\S]{0,240}?filter: blur\(10px\)/,
+    );
   });
 
   it("全库弹窗标题统一笔杆 —— 页面每节有世界色书脊,弹窗标题不许孤悬", () => {
@@ -1654,7 +1664,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(appr?.src, "弟子行极窄档要允许换行").toMatch(/flex flex-wrap items-center gap-2/);
   });
 
-  it("极窄档的阈值只住一处 —— 不许各处再手写 max-[Npx]", () => {
+  it("极窄档与紧凑档的阈值只住一处 —— 不许各处再手写 max-[Npx]", () => {
     /*
      * 阈值一旦各处各写一遍,就是两本账:改一处另一处不动,同一台 200% 的机器上一处
      * 放开一处不放开,而排版自检只判溢出/越界,看不出这是"两本账"而不是"没坏"。
@@ -1666,9 +1676,11 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(strays, "极窄档放开列数一律走 tinylens:,不许各处手写阈值").toEqual([]);
     const cfg = readFileSync(resolve(SRC, "../tailwind.config.js"), "utf-8");
     const declared = [
-      ...cfg.matchAll(/addVariant\(\s*"tinylens",\s*"@media \(max-width: *(\d+)px\)"/g),
+      ...cfg.matchAll(/addVariant\(\s*"(?:tinylens|compact)",\s*"@media \(max-width: *(\d+)px\)"/g),
     ].map((m) => m[1]!);
-    expect(declared, "配置里要能找到那条阈值声明(改名/删掉时这条会空转)").toHaveLength(1);
+    expect(declared, "配置里要能找到极窄与紧凑两档阈值").toEqual(
+      expect.arrayContaining(["220", "359"]),
+    );
     const users = FILES.filter((f) => /tinylens:grid-cols-/.test(f.src)).map((f) => f.path);
     expect(users.length, "至少有一处在用这个变体").toBeGreaterThan(0);
     /*
@@ -1679,7 +1691,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     const css = readStyleCss();
     const cssThresholds = [...css.matchAll(/@media \(max-width: *(\d+)px\)/g)].map((m) => m[1]!);
     for (const t of cssThresholds) {
-      expect(declared, `style.css 里的 ${t}px 与 tinylens 的阈值不是同一个数`).toContain(t);
+      expect(declared, `样式表里的 ${t}px 没有对应的具名阈值`).toContain(t);
     }
   });
 
@@ -2796,17 +2808,16 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 修炼球(overlap=true)。修法:整行 flex-wrap 让倒计时装不下就换行,天时名 shrink-0
     // 不折 —— 既消竖排又不撞球。退化成只 nowrap 不 wrap 的写法,倒计时照样盖到球上。
     const home = FILES.find((f) => f.path === "views/HomeView.vue");
-    const row =
-      home?.src.match(
-        /<div class="flex flex-wrap items-center gap-x-1\.5 gap-y-0\.5">[\s\S]{0,400}/,
-      )?.[0] ?? "";
-    expect(row).toContain("flex flex-wrap");
-    // 只钉「不折」这件事(whitespace-nowrap + shrink-0 + 楷体),字号不进判据 ——
-    // 字阶归「主巡页 · 字阶同一套」管,一条判据只管一件事,改字号不该打红布局判据。
-    expect(row).toMatch(
-      /shrink-0 whitespace-nowrap font-kai text-(?:note|body|title|section|heading) tracking-widest/,
-    );
+    const css = readStyleCss();
+    const row = home?.src.match(/<div class="home-deck__weather-line">[\s\S]{0,420}/)?.[0] ?? "";
+    expect(row, "天气行要有独立运行时落点").not.toBe("");
     expect(row).toContain("countdown-slot");
+    expect(css, "天气行必须允许倒计时换行,不能撞上右侧法球").toMatch(
+      /\.home-deck__weather-line \{[\s\S]{0,180}?display: flex;[\s\S]{0,80}?flex-wrap: wrap;/,
+    );
+    expect(css, "天时名本身不许被压成竖排").toMatch(
+      /\.home-deck__weather-line strong \{[\s\S]{0,160}?white-space: nowrap;/,
+    );
   });
 
   it("破坏性二次确认话术统一 —— 确认前缀 + 再想想,不许各说各话", () => {
@@ -3988,6 +3999,10 @@ describe("主巡页 · 字阶同一套", () => {
           FILES.find((f) => f.path === "components/dongfu/DongfuGatewayRow.vue")?.src ?? "",
           css.slice(start, end),
         ].join("\n");
+      }
+      if (path === "views/HomeView.vue") {
+        // 首页字阶已随独立指挥台迁入页面分片；结构与字号仍要一起吃同一套判据。
+        src += readFileSync(resolve(SRC, "styles/pages/home.css"), "utf8");
       }
       if (src.includes("@/components/common/LedgerHeader.vue")) {
         /*

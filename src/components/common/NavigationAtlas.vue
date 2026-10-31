@@ -31,12 +31,17 @@
             <span v-if="searching" aria-live="polite">
               {{
                 results.length > 0
-                  ? atlasSearchStatusOf(activeSearchResult, activeResultIndex, results.length)
+                  ? atlasSearchStatusOf(
+                      activeSearchResult,
+                      activeResultIndex,
+                      results.length,
+                      activeSearchCue,
+                    )
                   : "没有这册 · 换个日常叫法试试"
               }}
             </span>
             <span v-else>人物、存档、周易、灵兽皆可寻</span>
-            <span class="atlas-search__key tabular">{{ shortcutHint }}</span>
+            <span v-if="finePointer" class="atlas-search__key tabular">{{ shortcutHint }}</span>
           </p>
         </div>
         <button
@@ -99,7 +104,7 @@
               :aria-controls="`atlas-volume-${group.id}`"
               :aria-selected="activeVolumeId === group.id"
               :tabindex="activeVolumeId === group.id ? 0 : -1"
-              :aria-label="`翻到${group.label}卷，${group.entries.length}册`"
+              :aria-label="volumeAriaLabel(group)"
               @click="activateVolume(group.id)"
               @keydown="onVolumeKeydown($event, groupIndex)"
             >
@@ -107,7 +112,22 @@
                 sectionNumber(groupIndex)
               }}</span>
               <span class="atlas-volume__label tinylens:tracking-[0.06em]">{{ group.label }}</span>
-              <span class="atlas-volume__count tabular">{{ group.entries.length }}册</span>
+              <span class="atlas-volume__count tabular">
+                {{ group.entries.length }}册
+                <span
+                  v-if="volumeCues(group.entries).length"
+                  class="atlas-volume__cues"
+                  aria-hidden="true"
+                >
+                  <span
+                    v-for="cue in volumeCues(group.entries)"
+                    :key="cue.tone"
+                    class="atlas-volume__cue"
+                    :data-atlas-volume-cue="cue.tone"
+                    :data-tone="cue.tone"
+                  />
+                </span>
+              </span>
             </button>
           </div>
         </section>
@@ -181,6 +201,17 @@
                   }}</span>
                 </span>
                 <span
+                  v-if="entryCue(entry.name)"
+                  class="atlas-entry__cue shrink-0"
+                  :data-atlas-entry-cue="entryCue(entry.name)?.tone"
+                  :data-tone="entryCue(entry.name)?.tone"
+                  aria-hidden="true"
+                  >{{ entryCue(entry.name)?.label }}</span
+                >
+                <span v-if="entryCue(entry.name)" class="sr-only"
+                  >（{{ entryCue(entry.name)?.spoken }}）</span
+                >
+                <span
                   v-if="route.name === entry.name"
                   class="shrink-0 border border-cinnabar/40 px-1 py-0.5 font-kai text-note leading-none text-cinnabar"
                   aria-hidden="true"
@@ -234,6 +265,17 @@
               </span>
               <span class="atlas-result__description">{{ result.description }}</span>
             </span>
+            <span
+              v-if="resultCue(result)"
+              class="atlas-result__cue"
+              :data-atlas-result-cue="resultCue(result)?.tone"
+              :data-tone="resultCue(result)?.tone"
+              aria-hidden="true"
+              >{{ resultCue(result)?.label }}</span
+            >
+            <span v-if="resultCue(result)" class="sr-only"
+              >（{{ resultCue(result)?.spoken }}）</span
+            >
             <span v-if="isCurrentResult(result)" class="atlas-result__current">在</span>
             <span v-else class="atlas-result__arrow" aria-hidden="true">›</span>
           </RouterLink>
@@ -277,17 +319,26 @@ import { computed, nextTick, ref, useTemplateRef, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { usePlayerStore } from "@/stores/player";
 import { useMediaQuery } from "@/composables/useMediaQuery";
+import { useNavigationSignals } from "@/composables/useNavigationSignals";
 import { cnNumber } from "@/utils/format";
 import {
+  atlasEntryCueOf,
   atlasInitialFocusOf,
   atlasJumpIndex,
   atlasSearchResults,
   atlasSectionIdForRoute,
   atlasSearchStatusOf,
   atlasShortcutHintOf,
+  atlasVolumeCuesOf,
   type AtlasSearchResult,
 } from "@/ui/atlas";
-import { NAVIGATION_ENTRIES, NAVIGATION_SECTIONS, navigationPositionOf } from "@/ui/navigation";
+import {
+  NAVIGATION_ENTRIES,
+  NAVIGATION_SECTIONS,
+  navigationPositionOf,
+  type NavigationEntry,
+  type NavigationSection,
+} from "@/ui/navigation";
 import BaseModal from "./BaseModal.vue";
 import GameIcon from "./GameIcon.vue";
 
@@ -298,6 +349,7 @@ const route = useRoute();
 const router = useRouter();
 const player = usePlayerStore();
 const finePointer = useMediaQuery("(pointer: fine)");
+const { bagNewCount, canBreakthrough } = useNavigationSignals();
 const atlasRoot = useTemplateRef<HTMLElement>("atlasRoot");
 const activeVolumeId = ref(atlasSectionIdForRoute(route.name));
 const query = ref("");
@@ -305,6 +357,9 @@ const activeResultIndex = ref(0);
 const results = computed(() => atlasSearchResults(query.value));
 const searching = computed(() => query.value.trim().length > 0);
 const activeSearchResult = computed(() => results.value[activeResultIndex.value]);
+const activeSearchCue = computed(() =>
+  activeSearchResult.value ? resultCue(activeSearchResult.value) : null,
+);
 const initialFocus = computed(() => atlasInitialFocusOf(finePointer.value));
 const shortcutHint = atlasShortcutHintOf(
   typeof navigator === "undefined" ? "" : navigator.platform,
@@ -323,6 +378,24 @@ const currentOrdinal = computed(() => {
     : "未入册";
 });
 const sectionNumber = (index: number): string => cnNumber(index + 1);
+
+function entryCue(entryName: string) {
+  return atlasEntryCueOf(entryName, bagNewCount.value, canBreakthrough.value);
+}
+
+function volumeCues(entries: readonly NavigationEntry[]) {
+  return atlasVolumeCuesOf(entries, bagNewCount.value, canBreakthrough.value);
+}
+
+function volumeAriaLabel(group: NavigationSection): string {
+  const cues = volumeCues(group.entries);
+  const pending = cues.length ? `，${cues.map((cue) => cue.spoken).join("，")}` : "";
+  return `翻到${group.label}卷，${group.entries.length}册${pending}`;
+}
+
+function resultCue(result: AtlasSearchResult) {
+  return result.chapter ? null : entryCue(result.entry.name);
+}
 
 watch(
   () => props.open,

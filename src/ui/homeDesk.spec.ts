@@ -14,11 +14,11 @@ function homeTemplate(): string {
   return source("src/views/HomeView.vue").split("<script setup")[0] ?? "";
 }
 
-describe("首页案头 · 先给今日一步，再摊长期账", () => {
-  it("三栏案头与两处门径各有唯一运行时落点", () => {
+describe("首页指挥台 · 先给今日一步，再摊长期账", () => {
+  it("暗场主舞台、长期道途、日课与门径各有唯一运行时落点", () => {
     const home = homeTemplate();
     const markers = [
-      "data-home-desk",
+      "data-home-hero",
       "data-home-focus",
       "data-home-mainquest",
       "data-home-daily",
@@ -30,9 +30,10 @@ describe("首页案头 · 先给今日一步，再摊长期账", () => {
     for (const marker of markers) {
       expect(home.match(new RegExp(marker, "g")), `${marker} 应只出现一次`).toHaveLength(1);
     }
+    expect(home, "旧案头别名不该继续漂在 DOM 里").not.toContain("data-home-desk");
   });
 
-  it("第一步优先，当前目标只在第一步退场后接管", () => {
+  it("今日一步优先，当前目标只在今日一步退场后接管", () => {
     const home = homeTemplate();
 
     expect(home).toMatch(/<RouterLink\s+v-if="firstStep"/);
@@ -40,6 +41,24 @@ describe("首页案头 · 先给今日一步，再摊长期账", () => {
     expect(home).toContain("data-home-goal");
     expect(home).toMatch(/v-if="firstStep && currentGoal"[\s\S]{0,260}currentGoal\.text/);
     expect(home).toContain("{{ firstStep.label }} →");
+    expect(home).toContain("今日一步");
+  });
+
+  it("主舞台身份、天时与修为法球同屏，天时读 mods 真值且倒数走定宽槽", () => {
+    const view = source("src/views/HomeView.vue");
+    const home = homeTemplate();
+
+    expect(home).toContain("<h1>洞府总览</h1>");
+    expect(home).toContain("{{ player.realmName }}");
+    expect(home).toContain("{{ statusText }}");
+    expect(home).toContain("<CultivationOrb");
+    expect(home).toContain("formatPercent(player.expProgress, 1)");
+    expect(view).toContain("const weatherModText = computed(() => modsText(weather.value.mods));");
+    expect(view).toContain('weatherModText.value.split(" · ").filter(Boolean)');
+    expect(home).toContain('v-for="effect in weatherEffects"');
+    expect(view).toContain("formatCountdown(weatherRemainingSec())");
+    expect(home).toContain("countdown-slot");
+    expect(view).not.toContain("formatDuration(weatherRemainingSec())");
   });
 
   it("日课完成数、比例、逐项奖励与进度都从同一组 dailyRows 现算", () => {
@@ -74,29 +93,25 @@ describe("首页案头 · 先给今日一步，再摊长期账", () => {
     expect(home).not.toContain("<button");
   });
 
-  it("桌面让日课横跨整张案头，不再把长账塞进右半页", () => {
-    const css = source("src/style.css");
-    const homeStart = css.indexOf(".home-desk {");
-    const homeCss = css.slice(homeStart, css.indexOf("  /*\n   * 开关", homeStart));
-    const desktop = /@media \(min-width: 960px\) \{([\s\S]*?)\n  \}/.exec(homeCss)?.[1] ?? "";
+  it("620px 起道途与日课并读，今日一步横排报签，359px 以下先收装饰法球", () => {
+    const css = source("src/styles/pages/home.css");
 
-    expect(desktop).toMatch(
-      /\.home-desk \{[\s\S]{0,180}?grid-template-columns: minmax\(0, 1\.04fr\) minmax\(0, 0\.96fr\)/,
+    expect(css).toMatch(
+      /\.home-deck\s*\{[\s\S]{0,100}?display:\s*flex;[\s\S]{0,100}?flex-direction:\s*column/,
     );
-    expect(desktop).toMatch(/\.home-desk__daily \{[\s\S]{0,100}?grid-column: 1 \/ -1/);
-    expect(desktop).toMatch(
-      /\.home-desk__daily-list \{[\s\S]{0,120}?repeat\(auto-fit, minmax\(11rem, 1fr\)\)/,
+    expect(css).toMatch(
+      /\.home-deck__next\s*\{[\s\S]{0,220}?grid-template-areas:\s*"tag action"\s*"body body"/,
     );
-    expect(desktop).not.toMatch(/\.home-desk__lead \{[\s\S]{0,120}grid-row: 1 \/ span 2/);
-  });
-
-  it("320 小屏收起纯装饰法球，390 仍保留同排主视觉", () => {
-    const masthead = source("src/components/common/FolioPageHeader.vue");
-    const tailwind = source("tailwind.config.js");
-
-    expect(masthead).toContain("min-w-28 flex-1 compact:min-w-0");
-    expect(masthead).toContain("compact:hidden tinylens:hidden");
-    expect(tailwind).toContain('addVariant("compact", "@media (max-width: 359px)")');
+    expect(css).not.toContain("writing-mode: vertical-rl");
+    expect(css).toMatch(
+      /@media \(min-width: 620px\) \{[\s\S]{0,900}?\.home-deck__board \{[\s\S]{0,120}?grid-template-columns: minmax\(0, 1\.03fr\) minmax\(0, 0\.97fr\)/,
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 359px\) \{[\s\S]{0,900}?\.home-deck__stage \{[\s\S]{0,100}?grid-template-columns: minmax\(0, 1fr\)/,
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 359px\) \{[\s\S]{0,900}?\.home-deck__orb \{[\s\S]{0,60}?display: none/,
+    );
   });
 
   it("门径眉题不借装饰青压字，夜间也保持正文可读", () => {

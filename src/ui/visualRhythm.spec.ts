@@ -18,6 +18,7 @@ const COMPONENTS = resolve(__dirname, "../components");
 const SHELL_EXEMPT = new Set(["CreateView.vue", "WelcomeView.vue", "InventoryView.vue"]);
 const SHELL = /class="[^"]*\bfolio-page\b[^"]*"/;
 const STACK = /class="[^"]*\bfolio-page--stack\b[^"]*"/;
+const COMMAND_DECK = /data-page-rhythm="command-deck"/;
 
 /** 两处裸色都有明确理由:canvas 画不了 CSS 变量;传送门是独立艺术块(见各自注释) */
 const HEX_EXEMPT: Array<{ file: string; why: string }> = [
@@ -41,8 +42,21 @@ describe("视觉节奏 · 页面外壳与配色来源", () => {
   it("常规页的纵向节奏也走同一个页框,不再逐页手拼 space-y", () => {
     const bad = readdirSync(VIEWS)
       .filter((f) => f.endsWith(".vue") && !SHELL_EXEMPT.has(f))
-      .filter((f) => !STACK.test(readFileSync(resolve(VIEWS, f), "utf8")));
+      .filter((f) => {
+        const src = readFileSync(resolve(VIEWS, f), "utf8");
+        return !STACK.test(src) && !COMMAND_DECK.test(src);
+      });
     expect(bad, "这些页面没接页框纵向节奏").toEqual([]);
+  });
+
+  it("首页指挥台自排节奏,但必须显式标记并由页面样式承担间隔", () => {
+    const home = readFileSync(resolve(VIEWS, "HomeView.vue"), "utf8");
+    const css = readFileSync(resolve(__dirname, "../styles/pages/home.css"), "utf8");
+
+    expect(home).toContain('data-page-rhythm="command-deck"');
+    expect(css, "首页不能用标记逃过节奏,实际间隔仍要在样式里成立").toMatch(
+      /\.home-deck \{[\s\S]{0,120}?display: flex;[\s\S]{0,80}?flex-direction: column;[\s\S]{0,80}?gap: 1rem;/,
+    );
   });
 
   it("组件里不写裸十六进制色(两处已注明的例外除外)", () => {

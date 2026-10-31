@@ -1415,159 +1415,6 @@
       inset 0 -2px 0 rgb(var(--color-cinnabar-rgb) / 0.06);
     transform: translateY(-1px);
   }
-  /*
-   * 卷末翻页签 —— 长册读到底之后，不必退回顶栏或打开玄枢图再找下一册。
-   *
-   * 两侧仍是 RouterLink，中央只留枚「翻」印与册序；缺前册/后册时写明
-   * 卷首/卷终，而不是把空位伪装成可点控件。手机与桌面共用同一份册序，
-   * 桌面宽度也只跟当前是单叶还是双页走。
-   */
-  .folio-turner {
-    width: 100%;
-    max-width: 48rem;
-    margin-inline: auto;
-    padding: 0 1rem 1.5rem;
-  }
-  .app-shell[data-folio-layout="wide"] .folio-turner {
-    max-width: 60rem;
-  }
-  .app-shell[data-folio-layout="spread"] .folio-turner {
-    max-width: 66rem;
-  }
-  .folio-turner__grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 2.4rem minmax(0, 1fr);
-    align-items: stretch;
-    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
-    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-    background:
-      linear-gradient(
-        90deg,
-        rgb(var(--color-ink-rgb) / 0.018),
-        transparent 22%,
-        transparent 78%,
-        rgb(var(--color-ink-rgb) / 0.018)
-      ),
-      rgb(var(--color-paper-rgb) / 0.34);
-  }
-  .folio-turner__link,
-  .folio-turner__edge {
-    min-height: 4.25rem;
-    padding: 0.58rem 0.75rem;
-  }
-  .folio-turner__link {
-    display: grid;
-    align-content: center;
-    color: inherit;
-    text-decoration: none;
-    transition:
-      background-color 0.16s ease,
-      transform 0.12s ease;
-  }
-  .folio-turner__link:active {
-    transform: translateY(1px);
-  }
-  .folio-turner__link--previous {
-    text-align: left;
-  }
-  .folio-turner__link--next {
-    text-align: right;
-  }
-  .folio-turner__direction,
-  .folio-turner__title,
-  .folio-turner__meta {
-    display: block;
-    min-width: 0;
-  }
-  .folio-turner__direction {
-    color: rgb(var(--color-cinnabar-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    letter-spacing: 0.14em;
-    line-height: 1.2;
-  }
-  .folio-turner__title {
-    margin-top: 0.16rem;
-    color: rgb(var(--color-ink-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-title);
-    letter-spacing: 0.16em;
-    line-height: 1.35;
-  }
-  .folio-turner__meta {
-    margin-top: 0.12rem;
-    overflow: hidden;
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-    line-height: 1.4;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .folio-turner__edge {
-    display: grid;
-    place-items: center;
-    color: rgb(var(--color-ink-faint-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    letter-spacing: 0.18em;
-  }
-  .folio-turner__spine {
-    display: grid;
-    place-content: center;
-    border-inline: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-    color: rgb(var(--color-qing-rgb));
-    text-align: center;
-  }
-  .folio-turner__spine > span {
-    font-family: var(--font-kai);
-    font-size: var(--type-title);
-    line-height: 1;
-  }
-  .folio-turner__spine > small {
-    margin-top: 0.22rem;
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-    line-height: 1;
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .folio-turner__link:hover {
-      background: rgb(var(--color-paper-deep-rgb) / 0.5);
-    }
-  }
-  @media (min-width: 960px) {
-    .folio-turner {
-      padding: 0 2rem 2rem;
-    }
-    .folio-turner__link,
-    .folio-turner__edge {
-      min-height: 4.75rem;
-      padding: 0.7rem 1rem;
-    }
-  }
-  @media (max-width: 220px) {
-    .folio-turner {
-      padding-inline: 0.75rem;
-    }
-    .folio-turner__grid {
-      grid-template-columns: minmax(0, 1fr);
-    }
-    .folio-turner__spine {
-      display: none;
-    }
-    .folio-turner__link--next,
-    .folio-turner__link--next .folio-turner__meta {
-      text-align: left;
-    }
-    .folio-turner__link,
-    .folio-turner__edge {
-      min-height: 3.6rem;
-      padding: 0.55rem 0.65rem;
-    }
-    .folio-turner__edge {
-      min-height: 2rem;
-      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.06);
-    }
-  }
   .atlas-search {
     display: grid;
     grid-template-columns: 2.6rem minmax(0, 1fr) auto;
@@ -4809,6 +4656,23 @@
     color: rgb(var(--color-ink-faint-rgb));
     font-size: var(--type-note);
   }
+  .atlas-volume__cues {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.16rem;
+    margin-left: 0.22rem;
+    vertical-align: middle;
+  }
+  .atlas-volume__cue {
+    width: 4px;
+    height: 4px;
+    flex: none;
+    border-radius: 999px;
+    background: rgb(var(--color-cinnabar-rgb));
+  }
+  .atlas-volume__cue[data-tone="breakthrough"] {
+    background: rgb(var(--color-jade-rgb));
+  }
   .atlas-index {
     display: grid;
     gap: 0;
@@ -4861,6 +4725,34 @@
     border: 1px solid;
     background: transparent;
   }
+  .atlas-entry__cue,
+  .atlas-result__cue {
+    display: inline-flex;
+    min-height: 1.25rem;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.08rem 0.28rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.15);
+    background: rgb(var(--color-paper-rgb) / 0.3);
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+  .atlas-entry__cue::before,
+  .atlas-result__cue::before {
+    content: "";
+    width: 4px;
+    height: 4px;
+    flex: none;
+    border-radius: 999px;
+    background: rgb(var(--color-cinnabar-rgb));
+  }
+  .atlas-entry__cue[data-tone="breakthrough"]::before,
+  .atlas-result__cue[data-tone="breakthrough"]::before {
+    background: rgb(var(--color-jade-rgb));
+  }
   .atlas-results {
     border: 0;
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.13);
@@ -4871,6 +4763,7 @@
     background: linear-gradient(90deg, rgb(var(--color-paper-deep-rgb) / 0.28), transparent 78%);
   }
   .atlas-result {
+    grid-template-columns: 2rem minmax(0, 1fr) auto auto;
     padding-inline: 0.55rem;
   }
   .atlas-result__icon {

@@ -43,6 +43,19 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     expect(css).toContain(".folio-turn-cross-enter-from");
   });
 
+  it("游戏页不铺线性册末翻页签，跨册去向只交给游戏导航", () => {
+    const app = source("src/App.vue");
+    const css = source("src/style.css");
+    const layout = source("scripts/layout-check.mjs");
+
+    expect(app, "底部不再挂全站前后翻页").not.toContain("<FolioTurner");
+    expect(app, "不再加载册末翻页组件").not.toContain("FolioTurner.vue");
+    expect(css, "册末翻页样式一并删除").not.toContain(".folio-turner");
+    expect(layout, "真浏览器门要确认底部没有伪装成游戏导航的翻页签").toContain(
+      "页面底部仍有册末翻页签",
+    );
+  });
+
   it("翻页后由玄枢册目同源播报落点，键盘可越过导航直入正文", () => {
     const app = source("src/App.vue");
     const css = source("src/style.css");

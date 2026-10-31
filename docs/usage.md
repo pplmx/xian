@@ -8,7 +8,7 @@
 | 首页 · 下一步 | 修行 · 突破 | 历练 · 派遣 | 背包 · 装备 |
 | :-: | :-: | :-: | :-: |
 | ![首页](../images/app/home.webp) | ![修行](../images/app/cultivation.webp) | ![历练](../images/app/adventure.webp) | ![背包](../images/app/inventory.webp) |
-| 天时、修行志与入口 | 闭关、突破与渡劫 | 秘境、地界与镇压 | 九部位与全部藏品 |
+| 天时、今日一步与门径 | 闭关、突破与渡劫 | 秘境、地界与镇压 | 九部位与全部藏品 |
 
 更多界面见 [README 的「界面一览」](../README.md#界面一览)。
 

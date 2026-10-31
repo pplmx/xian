@@ -18,10 +18,9 @@ function vueFiles(dir: string): string[] {
   });
 }
 
-describe("开卷版式 · 全站十七册共用一条书页基线", () => {
-  it("主五册与人间也接共同卷首，不再各留一套旧页头", () => {
+describe("开卷版式 · 全站册页基线外加一座游戏指挥台", () => {
+  it("修炼、历练、行囊、道躯与人间接共同卷首，首页改用自己的指挥台", () => {
     const pages = [
-      "HomeView",
       "CultivationView",
       "CharacterView",
       "AdventureView",
@@ -37,11 +36,13 @@ describe("开卷版式 · 全站十七册共用一条书页基线", () => {
       );
       expect(src, `${page} 的主册卷首要走开卷版式`).toContain("featured");
     }
+    const home = source("src/views/HomeView.vue");
+    expect(home, "首页不再复读册页封面").not.toContain("<FolioPageHeader");
+    expect(home, "首页必须有独立的游戏主舞台").toContain("data-home-hero");
   });
 
-  it("主册页面不再自己另写一枚 h1 —— 一页只能有一个主标题", () => {
+  it("共享卷首的主册不自写 h1；首页自己恰好保留一枚可访问主标题", () => {
     const pages = [
-      "HomeView",
       "CultivationView",
       "CharacterView",
       "AdventureView",
@@ -52,6 +53,9 @@ describe("开卷版式 · 全站十七册共用一条书页基线", () => {
     for (const page of pages) {
       expect(source(`src/views/${page}.vue`), `${page} 仍在模板里手写 h1`).not.toContain("<h1");
     }
+    const home = source("src/views/HomeView.vue");
+    expect(home.match(/<h1>/g), "首页只能有一枚 h1").toHaveLength(1);
+    expect(home, "首页 h1 必须说清这一屏是什么").toContain("<h1>洞府总览</h1>");
   });
 
   it("开卷版式给图景、读数与正文留独立位置，极窄档仍把动作落整行", () => {
@@ -66,12 +70,22 @@ describe("开卷版式 · 全站十七册共用一条书页基线", () => {
     expect(masthead, "极窄档动作仍独占整行").toContain("tinylens:w-full");
   });
 
-  it("首页法球按组件实尺寸留位，不裁掉旋转外环", () => {
+  it("首页法球按组件实尺寸留位，不裁掉旋转外环与落地影", () => {
     const home = source("src/views/HomeView.vue");
+    const homeCss = source("src/styles/pages/home.css");
     const orb = source("src/components/common/CultivationOrb.vue");
 
     expect(orb, "法球根节点仍是 140×140").toMatch(/\.orb-root \{[\s\S]{0,200}width: 140px;/);
-    expect(home, "首页主视觉槽位要和法球同宽高").toContain('<div class="relative h-35 w-35">');
+    expect(home, "首页主视觉要有独立法球座").toContain('class="home-deck__orb"');
+    expect(home, "法球落地影要读当前世界山色").toContain(
+      'style="background: var(--world-mountain)"',
+    );
+    expect(homeCss, "法球座按组件实尺寸留位").toMatch(
+      /\.home-deck__orb \{[\s\S]{0,160}width: 140px;/,
+    );
+    expect(homeCss, "法球落地影不能被裁掉").toMatch(
+      /\.home-deck__orb-shadow \{[\s\S]{0,240}filter: blur\(10px\)/,
+    );
   });
 
   it("同页栏目不再重复页面主标题", () => {

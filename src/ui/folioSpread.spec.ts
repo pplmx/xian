@@ -14,12 +14,12 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
   it("只有信息能成对阅读的主册展开,其余页仍是一张较窄的单叶", async () => {
     const { folioLayoutOf } = await import("./folioSpread");
 
-    expect(folioLayoutOf("home")).toBe("spread");
     expect(folioLayoutOf("cultivation")).toBe("spread");
     expect(folioLayoutOf("character")).toBe("spread");
     expect(folioLayoutOf("inventory")).toBe("spread");
     expect(folioLayoutOf("collection")).toBe("spread");
     for (const route of [
+      "home",
       "adventure",
       "world",
       "celestial",
@@ -86,9 +86,14 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
     expect(css).toContain(".folio-span-all");
   });
 
-  it("首页修行志、人物页道躯总案与卷末目录跨两栏,不再留半页空白", () => {
-    expect(source("src/views/HomeView.vue")).toMatch(
-      /<section class="folio-span-all">\s*<SectionTitle title="修行志"/,
+  it("首页在宽案内自排双列仪表盘；人物页道躯总案与卷末目录跨两栏", () => {
+    const home = source("src/views/HomeView.vue");
+    const homeCss = source("src/styles/pages/home.css");
+
+    expect(home).toContain('<div class="home-deck__board">');
+    expect(home).not.toContain('class="folio-page--stack');
+    expect(homeCss).toMatch(
+      /@media \(min-width: 620px\) \{[\s\S]{0,900}?\.home-deck__board \{[\s\S]{0,120}?grid-template-columns: minmax\(0, 1\.03fr\) minmax\(0, 0\.97fr\)/,
     );
     expect(source("src/views/CharacterView.vue")).toMatch(
       /<section class="folio-span-all">\s*<SectionTitle title="道躯总案"/,

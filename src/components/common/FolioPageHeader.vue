@@ -104,7 +104,7 @@ const props = withDefaults(
     subtitle?: string;
     backTo?: string;
     backLabel?: string;
-    /** 主五册的开卷版式:更大的册名、印章和可铺开的卷首正文 */
+    /** 主册与人间共用的开卷版式:更大的册名、印章和可铺开的卷首正文 */
     featured?: boolean;
   }>(),
   { subtitle: "", backTo: "", backLabel: "返回", featured: false },

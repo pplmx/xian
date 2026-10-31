@@ -68,7 +68,7 @@ describe("册页卷首 · 一页只讲清一件事", () => {
       /@media \(min-width: 620px\) and \(max-height: 560px\)\s*\{[\s\S]{0,1200}?\.app-shell \.folio-masthead > \.relative\.z-10\.mt-2\s*\{[\s\S]{0,160}?margin-top:\s*0\.375rem;/,
     );
     expect(layout, "真浏览器要逐页守住矮横屏卷首").toContain("landscapeMastheadSeen");
-    expect(layout, "真浏览器要量到正文探出导航上沿").toContain("横屏卷首挡住正文");
+    expect(layout, "真浏览器要量到正文探出导航上沿").toContain("横屏首屏挡住下一步");
   });
 
   it("详情页族全部换用同一枚卷首，不再各手搓一条返回线与标题", () => {
@@ -95,18 +95,21 @@ describe("册页卷首 · 一页只讲清一件事", () => {
     }
   });
 
-  it("卷首渐变纸上的说明改用中墨，不再用最低墨档勉强压线", () => {
-    const home = source("src/views/HomeView.vue");
+  it("共享卷首用中墨；首页暗场主舞台把天时说明与效果摊成可读层级", () => {
     const world = source("src/views/MortalWorldView.vue");
+    const home = source("src/views/HomeView.vue");
+    const homeCss = source("src/styles/pages/home.css");
 
-    expect(home, "天时说明与影响行要能在渐变卷首上稳定读到").toMatch(
-      /class="[^"]*text-ink-soft[^"]*"[^>]*>\s*\{\{ weather\.desc/,
-    );
-    expect(home, "天时影响行不再把石青小字压在渐变纸上").toMatch(
-      /weatherModText[\s\S]{0,100}class="[^"]*text-ink-soft/,
-    );
     expect(world, "换界代价要在渐变卷首上稳定读到").toMatch(
       /换界即换路[\s\S]{0,160}class="[^"]*text-ink-soft/,
+    );
+    expect(home, "首页天时说明保留独立文本").toContain("{{ weather.desc }}");
+    expect(home, "影响行仍从 modsText 拆签").toContain('v-for="effect in weatherEffects"');
+    expect(homeCss, "暗场说明用可读的中亮墨而非最弱档").toMatch(
+      /\.home-deck__weather-copy,[\s\S]{0,160}color:\s*rgb\(var\(--chrome-muted-rgb\)\)/,
+    );
+    expect(homeCss, "效果签用石青信息色并允许换行").toMatch(
+      /\.home-deck__effects span \{[\s\S]{0,220}color:\s*rgb\(var\(--chrome-qing-rgb\)\)/,
     );
   });
 
