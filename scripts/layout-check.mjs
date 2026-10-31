@@ -222,6 +222,7 @@ import { EVENTS } from "../src/data/events.ts";
 import { GONGFA } from "../src/data/gongfa.ts";
 import { qualityDef } from "../src/data/qualities.ts";
 import { NAVIGATION_ENTRIES } from "../src/ui/navigation.ts";
+import { folioLayoutOf } from "../src/ui/folioSpread.ts";
 import { mkdirSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
 import { cpus } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -242,7 +243,7 @@ const VIEWPORTS = [
   { width: 320, height: 568, tag: "320", dpr: 2 },
   // 两档「不是手机竖屏」的设备。它们各自暴露过一类毛病,故各占一档:
   //   横屏 844×390 —— 上下两栏吃掉 22% 的高度(改前 26%),而宽度只用掉一半;
-  //   桌面 1280×800 —— 游戏态展开成书桌:首页 / 修炼 / 行囊 / 道躯 / 藏珍双页,其余页单叶居中。
+  //   桌面 1280×800 —— 游戏态展开成书桌:五册双页、多栏案卷放宽、设置仍按读卷居中。
   // 安卓壳与桌面客户端都能转到这两档;PWA manifest 锁了竖屏,浏览器里随意缩窗。
   { width: 844, height: 390, tag: "844x390", dpr: 2 },
   { width: 1280, height: 800, tag: "1280x800", dpr: 1 },
@@ -2239,8 +2240,9 @@ async function taskPageTour(vp) {
     }
     /*
      * 桌面不是「放大的手机」:960px 以上游戏外壳应展开成书桌,首页 / 修炼 / 行囊 /
-     * 道躯 / 藏珍五册走双页网格,其余页是一张 48rem 的单叶。源码契约在 folioSpread.spec 里,
-     * 这里量真实布局 —— 只改断点不改 App 数据属性、或网格被页框压回单列,都该红。
+     * 道躯 / 藏珍五册走双页网格,多栏案卷放宽到 60rem,设置仍是一张 48rem 读卷。
+     * 源码契约在 folioSpread.spec 里,这里量真实布局 —— 只改断点不改 App 数据属性、
+     * 网格被页框压回单列,或案卷仍挤在单叶宽度里,都该红。
      */
     if (vp.tag === "1280x800") {
       const desk = await page.evaluate(() => {
@@ -2371,8 +2373,14 @@ async function taskPageTour(vp) {
             `[${vp.tag}] ${route} 游戏态外壳只有 ${desk.shellWidth}px —— 桌面仍是一条手机屏`,
           );
         }
-        if (["/", "/cultivation", "/inventory", "/character", "/collection"].includes(route)) {
-          if (desk.layout !== "spread" || desk.display !== "grid" || desk.columns < 2) {
+        const expectedLayout = folioLayoutOf(route === "/" ? "home" : route.slice(1));
+        if (desk.layout !== expectedLayout) {
+          failures.push(
+            `[${vp.tag}] ${route} 桌面版式应为 ${expectedLayout},实际为 ${desk.layout}`,
+          );
+        }
+        if (expectedLayout === "spread") {
+          if (desk.display !== "grid" || desk.columns < 2) {
             failures.push(
               `[${vp.tag}] ${route} 双页册没有真的展开(${desk.layout} / ${desk.display} / ${desk.columns} 栏)`,
             );
@@ -2426,13 +2434,20 @@ async function taskPageTour(vp) {
               )})`,
             );
           }
+        } else if (expectedLayout === "wide") {
+          if (desk.display === "grid") {
+            failures.push(`[${vp.tag}] ${route} 宽案不该冒充双页网格(${desk.display})`);
+          }
+          if (desk.pageWidth < 840) {
+            failures.push(`[${vp.tag}] ${route} 案卷没有铺开(${desk.pageWidth}px,应至少 840px)`);
+          }
         } else {
-          if (desk.layout !== "single" || desk.display === "grid") {
-            failures.push(`[${vp.tag}] ${route} 不该展开成双页(${desk.layout} / ${desk.display})`);
+          if (desk.display === "grid") {
+            failures.push(`[${vp.tag}] ${route} 读卷不该铺成网格(${desk.display})`);
           }
           if (desk.pageWidth > 800) {
             failures.push(
-              `[${vp.tag}] ${route} 单叶册在桌面上拉得过宽(${desk.pageWidth}px,应不超过 800px)`,
+              `[${vp.tag}] ${route} 读卷册在桌面上拉得过宽(${desk.pageWidth}px,应不超过 800px)`,
             );
           }
         }
@@ -12816,7 +12831,7 @@ if (failures.length === 0) {
   console.log("✓ 顶栏底栏钉死(文档层没有可滚余量,滚窗两栏不动),外壳高度认 dvh");
   console.log("✓ 六处页签栏吸顶(背包四册 / 图鉴 / 名号 / 界域志 / 天界 / 坊市),且铺满内容区宽度");
   console.log("✓ 顶栏一格一行(320 窄屏与横屏、桌面都不折行)");
-  console.log(`✓ 桌面书桌(${desktopFolioSeen} 页:五册双页、其余单叶)`);
+  console.log(`✓ 桌面书桌(${desktopFolioSeen} 页:五册双页、十一册宽案、设置读卷)`);
   console.log(`✓ 桌面书脊(${desktopSpineSeen} 页:十七册齐全、当前册唯一、手机底栏退场)`);
   console.log(`✓ 主值行一格一行(${valueRowsSeen} 处带 data-value-row 的行没被次要读数挤折)`);
   console.log(`✓ 两百档字号(${zoomSeen} 页在 200% 缩放下不溢出、主值行不折)`);

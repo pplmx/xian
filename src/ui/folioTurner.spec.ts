@@ -47,9 +47,12 @@ describe("卷末翻页签 · 每册都有前后去处", () => {
     expect(turner).not.toContain('role="button"');
   });
 
-  it("窄屏退一列,桌面沿用单叶与双页的同一份宽度", () => {
+  it("窄屏退一列,桌面沿用读卷、案卷与双页的同一份宽度", () => {
     const css = readStyleCss();
     expect(css).toContain(".folio-turner");
+    expect(css).toMatch(
+      /\.app-shell\[data-folio-layout="wide"\]\s+\.folio-turner\s*\{[\s\S]{0,120}?max-width:\s*60rem/,
+    );
     expect(css).toMatch(
       /\.app-shell\[data-folio-layout="spread"\]\s+\.folio-turner\s*\{[\s\S]{0,120}?max-width:\s*66rem/,
     );

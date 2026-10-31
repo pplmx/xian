@@ -1391,6 +1391,9 @@
     margin-inline: auto;
     padding: 0 1rem 1.5rem;
   }
+  .app-shell[data-folio-layout="wide"] .folio-turner {
+    max-width: 60rem;
+  }
   .app-shell[data-folio-layout="spread"] .folio-turner {
     max-width: 66rem;
   }
@@ -2640,6 +2643,10 @@
       max-width: 48rem;
       margin-inline: auto;
       padding: 1.5rem 2rem 2rem;
+    }
+
+    .app-shell[data-folio-layout="wide"] .folio-page {
+      max-width: 60rem;
     }
 
     .app-shell[data-folio-layout="spread"] .folio-page--stack {
