@@ -64,6 +64,30 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
     expect(pulse, "门庭总账不再手搓账格骨架").not.toContain('class="apprentice-pulse__tallies"');
   });
 
+  it("四门存底摊开调度依据,目标与同分都从 core 同一份方案来", () => {
+    const view = source("src/views/ApprenticeView.vue");
+    const pulse = view.slice(
+      view.indexOf("data-apprentice-pulse"),
+      view.indexOf("</FolioPageHeader>"),
+    );
+
+    expect(view, "调度案只走 core 的唯一一份计划").toContain(
+      "apprenticeDispatchPlan(dispatchStock.value)",
+    );
+    expect(view, "页面不另算目标门").not.toContain("needTargetDoor(");
+    expect(view, "四门读数由计划行现算").toContain('v-for="row in dispatchNeedRows"');
+    expect(pulse, "四门存底落在总账内").toContain("data-apprentice-depot");
+    expect(pulse, "每门都有稳定运行时落点").toContain(':data-apprentice-need="row.spec"');
+    expect(pulse, "唯一目标与并列态分开报").toContain(
+      ":data-dispatch-target=\"dispatchPlan.target === row.spec ? '' : undefined\"",
+    );
+    expect(pulse, "同分门也要可见").toContain(":data-dispatch-tied=\"row.tied ? '' : undefined\"");
+    expect(pulse, "数值直接读计划行").toContain("{{ row.stock }}");
+    expect(pulse, "水位直接读计划行").toContain("{{ row.waterline }}");
+    expect(pulse, "灵石兜底不伪装成器尘库存").toContain("row.resource === null");
+    expect(pulse, "寻机缘为何不参与自动调拨要说清").toContain("寻机缘不参与自动调拨");
+  });
+
   it("值日簿候差在前、在途按归期续列,身份与羁绊都从数据源现读", () => {
     const view = source("src/views/ApprenticeView.vue");
 
@@ -89,7 +113,7 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
     );
   });
 
-  it("在途行只报一条真实任务进度,候差行仍先展开说明再二次派出", () => {
+  it("在途行只报一条真实任务进度,候差行先选签再确认遣往", () => {
     const view = source("src/views/ApprenticeView.vue");
 
     expect(view, "任务进度只挂在在途行").toContain(
@@ -101,10 +125,17 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
     expect(view, "归来预览按出发时境界结算").toContain(
       "taskYield(a, a.task.spec, a.task.rewardMajor ?? player.major)",
     );
-    expect(view, "派活点按仍走两步").toContain('@click="tapTask(a.uid, t.spec)"');
+    expect(view, "差事签先选中,不第一下就锁人").toContain('@click="selectTask(a.uid, t.spec)"');
     expect(view, "展开态报给读屏").toContain(':aria-expanded="isTaskOpen(a.uid, t.spec)"');
-    expect(view, "第二下才真的派出").toContain("send(uid, spec)");
-    expect(view, "任务说明点开后直出").toContain("taskDef(tappedTask.spec).desc");
+    expect(view, "选中态要指向详情案").toContain(
+      ':aria-controls="`apprentice-task-ticket-${a.uid}`"',
+    );
+    expect(view, "确认动作单独落成一枚按钮").toContain('@click="dispatchSelected(a)"');
+    expect(view, "确认前不暗派").toMatch(/function selectTask\([\s\S]{0,260}taskTap\.value =/);
+    expect(view, "任务详情直出说明").toContain("selectedTask.def.desc");
+    expect(view, "任务详情直出真实所得").toContain("taskYield(a, selectedTask.spec)");
+    expect(view, "锁定时长也现身").toContain("apprenticeTaskSeconds(pick.spec)");
+    expect(view, "票面时长由同一枚差事常数换算").toContain("selectedTask.minutes");
   });
 
   it("门规只读机制常量,收徒价与天赋、等级、真传门槛不另写一遍", () => {
@@ -146,6 +177,24 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
     );
     expect(apprenticeCss).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,1400}\.apprentice-rules__item\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(apprenticeCss, "四门存底默认两列").toMatch(
+      /\.apprentice-depot__rows\s*\{[\s\S]{0,120}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
+    );
+    expect(apprenticeCss, "620 起四门存底并成一排").toMatch(
+      /@media \(min-width: 620px\)\s*\{[\s\S]{0,1400}\.apprentice-depot__rows\s*\{[\s\S]{0,120}repeat\(4, minmax\(0, 1fr\)\)/,
+    );
+    expect(apprenticeCss, "极窄档差事签退成单列").toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.apprentice-task-choice-grid\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(apprenticeCss, "差事名不许被本命与时长挤成省略号").toMatch(
+      /\.apprentice-task-choice__top\s*\{[\s\S]{0,160}flex-wrap:\s*wrap/,
+    );
+    expect(apprenticeCss, "差事名要允许换行").toMatch(
+      /\.apprentice-task-choice__name\s*\{[\s\S]{0,180}white-space:\s*normal/,
+    );
+    expect(apprenticeCss, "手机末枚差事签补齐整行").toMatch(
+      /\.apprentice-task-choice:last-child:nth-child\(odd\)\s*\{[\s\S]{0,80}grid-column:\s*1 \/ -1/,
     );
   });
 });

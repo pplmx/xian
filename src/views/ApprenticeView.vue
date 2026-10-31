@@ -23,6 +23,7 @@ import {
   type ApprenticeSpec,
 } from "@/data/apprentices";
 import {
+  apprenticeDispatchPlan,
   apprenticeOverview,
   apprenticeRoster,
   apprenticeRecruitCost,
@@ -30,12 +31,12 @@ import {
   apprenticeTaskProgress,
   apprenticeTaskSeconds,
   apprenticeReapText,
-  needTargetDoor,
   type DispatchNeedStock,
   type OwnedApprentice,
 } from "@/core/apprenticeService";
 import { pillDef } from "@/data/pills";
 import { qualityDef } from "@/data/qualities";
+import { RESOURCE_LABELS } from "@/data/resourceNames";
 import { formatCountdown, formatGN } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import { notify } from "@/core/notify";
@@ -116,8 +117,8 @@ const courtNodes = computed(() =>
 function secondsLeft(finishAt: number): number {
   return Math.max(0, Math.ceil((finishAt - now.value) / 1000));
 }
-function send(uid: string, spec: (typeof APPRENTICE_TASKS)[number]["spec"]): void {
-  appr.dispatch(uid, spec, Date.now());
+function send(uid: string, spec: (typeof APPRENTICE_TASKS)[number]["spec"]): boolean {
+  return appr.dispatch(uid, spec, Date.now());
 }
 
 /**
@@ -176,19 +177,45 @@ function doRecruit(): void {
   else if (r === "poor") notify("灵石不足,收徒不成", "warn");
 }
 
-/** 给「各尽其长」的库存快照 —— 与派发实际入账同一份数(needTargetDoor 只读快照、无随机) */
-function dispatchStock(): DispatchNeedStock {
-  return {
-    herb: resources.herb,
-    ore: resources.ore,
-    wudao: resources.wudao,
-    dust: resources.dust,
-  };
-}
+/** 一键派发的库存快照；计划与落库同一拍读取,不另留第二份缺度。 */
+const dispatchStock = computed<DispatchNeedStock>(() => ({
+  herb: resources.herb,
+  ore: resources.ore,
+  wudao: resources.wudao,
+  dust: resources.dust,
+}));
+const dispatchPlan = computed(() => apprenticeDispatchPlan(dispatchStock.value));
+
+const DISPATCH_MARKS = {
+  herb: "药",
+  ore: "矿",
+  study: "悟",
+  adventure: "历",
+} as const;
+
+/** 四门存底的行只铺 core 给的分数;相对缺度与并列态不在这里重判目标。 */
+const dispatchNeedRows = computed(() => {
+  const top = Math.max(dispatchPlan.value.topScore, Number.EPSILON);
+  return dispatchPlan.value.rows.map((row) => ({
+    ...row,
+    mark: DISPATCH_MARKS[row.spec],
+    name: taskDef(row.spec).name,
+    tied: dispatchPlan.value.tiedSpecs.includes(row.spec),
+    ratio: Math.max(0, Math.min(1, row.score / top)) * 100,
+    sourceText: row.resource ? RESOURCE_LABELS[row.resource] : "灵石",
+  }));
+});
+
+const dispatchLead = computed(() => {
+  const target = dispatchPlan.value.target;
+  if (target) return `本令调往「${taskDef(target).name}」`;
+  const tied = dispatchPlan.value.tiedSpecs.map((spec) => taskDef(spec).name).join("、");
+  return tied ? `${tied}同分 · 各就本职` : "各门无差 · 各就本职";
+});
 
 /**
  * 「各尽其长」一键派发 —— 按库存读最缺的门,把闲置弟子都派过去。
- * 报结果要照实说:门有分晓就说派去哪个门(needTargetDoor 同源),无单门胜出(并列)
+ * 报结果要照实说:门有分晓就说派去哪个门(调度案同源),无单门胜出(并列)
  * 就退回「各就本职」—— 不许按钮喊「最缺的门」、实际却各自专职,两句话对不上。
  */
 function doDispatchAll(): void {
@@ -197,8 +224,8 @@ function doDispatchAll(): void {
     notify("弟子都在路上,无需再派", "info");
     return;
   }
-  const target = needTargetDoor(dispatchStock());
-  const n = appr.dispatchAllToNeed(Date.now(), dispatchStock());
+  const target = dispatchPlan.value.target;
+  const n = appr.dispatchAllToNeed(Date.now(), dispatchStock.value);
   if (n <= 0) {
     notify("暂无闲置弟子可派", "info");
     return;
@@ -211,7 +238,7 @@ function doDispatchAll(): void {
 const hasIdle = computed(() => pulse.value.idle > 0);
 /** 按钮文案与派发判定同源:有单门胜出报「派去最缺的门」,并列退回「各就本职」 */
 const dispatchLabel = computed(() => {
-  const target = needTargetDoor(dispatchStock());
+  const target = dispatchPlan.value.target;
   const idle = pulse.value.idle;
   return target
     ? `派闲置 ${idle} 人 · 去「${taskDef(target).name}」`
@@ -285,11 +312,11 @@ function talentText(a: OwnedApprentice): string {
 }
 
 /**
- * 派活任务说明点按展开 —— 与适配理由/天赋芯片同族(「点一下展开一行」)。
+ * 差事签只负责选中与展开,真正派出要再按票尾的确认钮。
  *
- * 任务描述此前只挂在 :title 上,手机没有 hover,那是谁也看不见的死提示;而派出
- * 又是把弟子锁走 30~90 分钟的半承诺。故同一枚按钮改两步:第一下展开说明
- * (aria-expanded 报给读屏),再点一下才真派出 —— 说明看得见,误触也不再直接锁人。
+ * 旧版第二下点同一枚小签就锁人:选中态、任务名与确认动作挤在同一处,换签时
+ * 手指一偏就可能把弟子送走。现在说明、真实所得与锁定分钟数都摊在票面上,
+ * 确认钮单独一枚;第一次点错只是换签,不会改变在途人数。
  */
 const taskTap = ref<string | null>(null); // `${uid}:${spec}`
 
@@ -301,13 +328,9 @@ function isTaskOpen(uid: string, spec: ApprenticeSpec): boolean {
   return taskTap.value === taskKey(uid, spec);
 }
 
-function tapTask(uid: string, spec: ApprenticeSpec): void {
-  if (isTaskOpen(uid, spec)) {
-    taskTap.value = null;
-    send(uid, spec);
-  } else {
-    taskTap.value = taskKey(uid, spec);
-  }
+function selectTask(uid: string, spec: ApprenticeSpec): void {
+  const key = taskKey(uid, spec);
+  taskTap.value = taskTap.value === key ? null : key;
 }
 
 /** 当前展开说明的那一单(跨弟子只开一份;拆 key 是为了让说明行能读回任务名) */
@@ -316,6 +339,28 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
   const i = taskTap.value.indexOf(":");
   return { uid: taskTap.value.slice(0, i), spec: taskTap.value.slice(i + 1) as ApprenticeSpec };
 });
+
+const selectedTask = computed(() => {
+  const pick = tappedTask.value;
+  if (!pick) return null;
+  const def = taskDef(pick.spec);
+  return {
+    ...pick,
+    def,
+    minutes: Math.round(apprenticeTaskSeconds(pick.spec) / 60),
+  };
+});
+
+function dispatchSelected(a: OwnedApprentice): void {
+  const pick = tappedTask.value;
+  if (!pick || pick.uid !== a.uid) return;
+  if (!send(a.uid, pick.spec)) {
+    taskTap.value = null;
+    notify("这名弟子已不在候差,或差事已变,请再看一眼值日簿", "warn");
+    return;
+  }
+  taskTap.value = null;
+}
 </script>
 
 <template>
@@ -333,7 +378,7 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
 
       <template #action>
         <button
-          class="btn-seal min-h-[28px] !px-2 !py-1 whitespace-nowrap text-body tinylens:w-full"
+          class="btn-ghost min-h-[28px] !px-2 !py-1 whitespace-nowrap text-body tinylens:w-full"
           :disabled="slotsFull || recruitShort > 0"
           @click="doRecruit"
         >
@@ -379,8 +424,53 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
           />
         </template>
 
+        <section class="apprentice-depot" data-apprentice-depot>
+          <header class="apprentice-depot__head">
+            <span class="apprentice-depot__kicker">四门存底</span>
+            <span class="apprentice-depot__lead">{{ dispatchLead }}</span>
+          </header>
+          <div class="apprentice-depot__rows">
+            <article
+              v-for="row in dispatchNeedRows"
+              :key="row.spec"
+              class="apprentice-depot__row"
+              :class="{ 'is-target': dispatchPlan.target === row.spec, 'is-tied': row.tied }"
+              :data-apprentice-need="row.spec"
+              :data-dispatch-target="dispatchPlan.target === row.spec ? '' : undefined"
+              :data-dispatch-tied="row.tied ? '' : undefined"
+            >
+              <span class="apprentice-depot__mark" aria-hidden="true">{{ row.mark }}</span>
+              <span class="apprentice-depot__identity">
+                <strong class="apprentice-depot__name">{{ row.name }}</strong>
+                <span class="apprentice-depot__source">
+                  {{ row.resource === null ? "灵石兜底" : row.sourceText }}
+                </span>
+              </span>
+              <span
+                class="apprentice-depot__value tabular"
+                :class="{ 'is-fallback': row.resource === null }"
+              >
+                <template v-if="row.resource === null">保底</template>
+                <template v-else
+                  >{{ row.stock }}<small>/{{ row.waterline }}</small></template
+                >
+              </span>
+              <span class="apprentice-depot__meter" aria-hidden="true">
+                <span :style="{ width: `${row.ratio}%` }" />
+              </span>
+              <span class="apprentice-depot__state">
+                {{ dispatchPlan.target === row.spec ? "本令往此" : row.tied ? "同分" : "待调" }}
+              </span>
+            </article>
+          </div>
+          <p class="apprentice-depot__note">
+            缺度按「水位 ÷（存量 + 1）」现算；寻机缘不参与自动调拨,只能在值日簿逐人点选。
+          </p>
+        </section>
+
         <button
           class="btn-seal apprentice-pulse__dispatch"
+          data-apprentice-dispatch-all
           :disabled="!hasIdle"
           :aria-label="hasIdle ? dispatchLabel : '弟子都在路上'"
           @click="doDispatchAll"
@@ -499,20 +589,24 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
               </div>
 
               <div v-else class="apprentice-roster__dispatch">
-                <p class="apprentice-roster__dispatch-note">遣往 · 先看说明,再点同一门一次即派出</p>
-                <div class="grid grid-cols-2 gap-1.5 tinylens:grid-cols-1">
+                <p class="apprentice-roster__dispatch-note">
+                  遣往 · 先选一枚差事签,看完票面所得再确认
+                </p>
+                <div class="apprentice-task-choice-grid">
                   <button
                     v-for="t in APPRENTICE_TASKS"
                     :key="t.spec"
-                    class="apprentice-task-choice flex min-h-[44px] w-full items-center gap-1.5 border px-1.5 py-1 text-left transition-colors active:scale-[0.98]"
+                    class="apprentice-task-choice"
                     :class="
                       isTaskOpen(a.uid, t.spec)
                         ? 'border-cinnabar/35 bg-cinnabar/4'
                         : 'border-ink/10 bg-paper/35 hoverable:hover:border-cinnabar'
                     "
                     :aria-expanded="isTaskOpen(a.uid, t.spec)"
+                    :aria-controls="`apprentice-task-ticket-${a.uid}`"
                     :data-apprentice-talent="taskTalent(a, t.spec) ? '' : undefined"
-                    @click="tapTask(a.uid, t.spec)"
+                    :data-apprentice-task-choice="`${a.uid}:${t.spec}`"
+                    @click="selectTask(a.uid, t.spec)"
                   >
                     <span
                       class="apprentice-task-choice__icon shrink-0"
@@ -534,16 +628,59 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
                       </span>
                       <span class="apprentice-task-choice__yield">{{ taskYield(a, t.spec) }}</span>
                     </span>
+                    <span class="apprentice-task-choice__arrow" aria-hidden="true">›</span>
                   </button>
                 </div>
-                <!-- 手机没有 hover:任务说明必须第一下点开,第二次才真的锁人出发。 -->
-                <p
-                  v-if="tappedTask && tappedTask.uid === a.uid"
-                  class="apprentice-roster__task-note"
+
+                <div
+                  v-if="selectedTask && selectedTask.uid === a.uid"
+                  :id="`apprentice-task-ticket-${a.uid}`"
+                  class="apprentice-task-ticket"
+                  data-apprentice-task-ticket
                 >
-                  「{{ taskDef(tappedTask.spec).name }}」{{ taskDef(tappedTask.spec).desc }} ——
-                  再点一次「{{ taskDef(tappedTask.spec).name }}」即派出
-                </p>
+                  <header class="apprentice-task-ticket__head">
+                    <span class="apprentice-task-ticket__seal" aria-hidden="true">
+                      <GameIcon :name="selectedTask.def.icon" :size="15" />
+                    </span>
+                    <span class="apprentice-task-ticket__identity">
+                      <strong class="apprentice-task-ticket__name font-kai">
+                        {{ selectedTask.def.name }}
+                      </strong>
+                      <span class="apprentice-task-ticket__desc">
+                        {{ selectedTask.def.desc }}
+                      </span>
+                    </span>
+                    <span class="apprentice-task-ticket__time tabular">
+                      锁 {{ selectedTask.minutes }} 分
+                    </span>
+                  </header>
+                  <div class="apprentice-task-ticket__ledger">
+                    <p>
+                      <span>归来可得</span>
+                      <strong>{{ taskYield(a, selectedTask.spec) }}</strong>
+                    </p>
+                    <p>
+                      <span>本命</span>
+                      <strong :class="taskTalent(a, selectedTask.spec) ? 'text-cinnabar' : ''">
+                        {{
+                          taskTalent(a, selectedTask.spec)
+                            ? `产额 ×${APPRENTICE_TALENT_BONUS}`
+                            : "非本命 · 按基础"
+                        }}
+                      </strong>
+                    </p>
+                  </div>
+                  <button
+                    class="btn-seal apprentice-task-ticket__confirm w-full"
+                    data-apprentice-dispatch-confirm
+                    @click="dispatchSelected(a)"
+                  >
+                    遣往「{{ selectedTask.def.name }}」
+                  </button>
+                  <p class="apprentice-task-ticket__foot">
+                    确认后这名弟子会离门 {{ selectedTask.minutes }} 分钟；归期按墙钟走,关页照算。
+                  </p>
+                </div>
               </div>
             </article>
           </div>

@@ -1750,27 +1750,34 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(appr?.src, "门庭要接共同卷首").toContain("<FolioPageHeader");
     expect(appr?.src, "卷首册名要写「门庭有徒」").toContain('title="门庭有徒"');
     expect(appr?.src, "收徒按钮要进独立动作槽").toContain("<template #action>");
+    expect(appr?.src, "收徒是次动作,不抢一令齐发的朱砂主位").toContain(
+      'class="btn-ghost min-h-[28px]',
+    );
     expect(appr?.src, "极窄档收徒按钮独占整行").toContain("tinylens:w-full");
     expect(appr?.src, "洞府返回兜底要写清").toContain('back-to="dongfu"');
   });
 
-  it("门庭派活卡排成等高两列 —— 五个产出项目前靠内容宽窄拼成 3+2 的锯齿", () => {
+  it("门庭差事签排成稳定网格 —— 选签只展开票面,确认钮才真的锁人", () => {
     /*
      * 派活是这一页唯一的分支动作,五枚任务原先走 flex-wrap:按钮宽度由文案决定,
      * 390 宽下第一行 3 枚、第二行 2 枚且逐枚不等宽,像一组没对齐的标签。
-     * 两列等宽让五枚产出在同一把尺上比较;200% 缩放(195 CSS px)再收一列,
-     * 不把产出文案挤成窄胶囊。图标取任务数据里的 icon,选中态用淡朱砂边底报出。
+     * 稳定网格让五枚产出在同一把尺上比较;200% 缩放(195 CSS px)再收一列,
+     * 不把产出文案挤成窄胶囊。图标取任务数据里的 icon,选中态用淡朱砂边底报出,
+     * 但选中本身不再派出 —— 票面上的确认钮才是唯一落库动作。
      */
     const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
-    expect(appr?.src, "派活卡要排成稳定的两列网格").toMatch(
-      /grid grid-cols-2 gap-1\.5 tinylens:grid-cols-1/,
+    const apprCss = readStyleCss();
+    expect(appr?.src, "派活卡要排成稳定网格").toContain('class="apprentice-task-choice-grid"');
+    expect(apprCss, "每枚任务卡占满单元格并留足触达高度").toMatch(
+      /\.apprentice-task-choice\s*\{[\s\S]{0,180}min-height:\s*44px;[\s\S]{0,100}width:\s*100%/,
     );
-    expect(appr?.src, "每枚任务卡占满单元格并留足触达高度").toContain("min-h-[44px] w-full");
     expect(appr?.src, "任务图标读 APPRENTICE_TASKS 的 icon,不另抄一套").toContain(':name="t.icon"');
     expect(appr?.src, "选中态用 4% 朱砂底与可读边框,不用实心彩胶囊").toContain(
       "'border-cinnabar/35 bg-cinnabar/4'",
     );
-    expect(appr?.src, "展开态与派发判定共用同一个任务 key 谓词").toContain(
+    expect(appr?.src, "选签只展开票面").toContain('@click="selectTask(a.uid, t.spec)"');
+    expect(appr?.src, "票尾确认才派出").toContain('@click="dispatchSelected(a)"');
+    expect(appr?.src, "展开态与选中判定共用同一个任务 key 谓词").toContain(
       ':aria-expanded="isTaskOpen(a.uid, t.spec)"',
     );
   });
@@ -1891,7 +1898,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
       ["components/adventure/BattleIntelPanel.vue", ':aria-expanded="showAnalysis"'],
       // 转世交割清单里点开的那一条(heritageTap)—— 只换措辞不报状态,读屏分不清
       ["components/character/ReincarnationDialog.vue", ':aria-expanded="heritageTap === r.id"'],
-      // 门庭派活的两步钮:第一下展开任务说明、再点同枚才派出 —— 新登的 disclosure
+      // 门庭派活:先选签展开票面,再由票尾确认钮派出 —— 新登的 disclosure
       ["views/ApprenticeView.vue", ':aria-expanded="isTaskOpen(a.uid, t.spec)"'],
       // 秘境整卡先收成一行;这张卡与卡内名录各有一层 disclosure
       ["components/adventure/SecretRealmCard.vue", ':aria-expanded="cardExpanded"'],
@@ -2675,11 +2682,11 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("「各尽其长」按钮与回执要照实说门 —— 并列退回本职时不许喊「最缺的门」", () => {
     // 一键派发把全部闲置弟子派走,是玩家能做的几件「一锤子」事之一;可按钮原话
     // 「派闲置弟子去最缺的门」与回执「已派往最缺的门」在**并列**时是假的 ——
-    // needTargetDoor 无单门胜出会退回各自专职,两句文案却没换口。判定与文案必须
-    // 同源(needTargetDoor / taskDef),并列、单门两种话术都钉在这里,不许只报一种。
+    // 调度案无单门胜出会退回各自专职,两句文案却没换口。判定与文案必须
+    // 同源(apprenticeDispatchPlan / taskDef),并列、单门两种话术都钉在这里,不许只报一种。
     const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
-    expect(appr?.src, "派发文案要读 needTargetDoor(单门/并列的唯一判据)").toContain(
-      "needTargetDoor",
+    expect(appr?.src, "派发文案要读 apprenticeDispatchPlan(单门/并列的唯一判据)").toContain(
+      "apprenticeDispatchPlan",
     );
     expect(appr?.src, "回执要说清派去了哪一门或各就本职(与判定同源)").toContain(
       "taskDef(target).name",

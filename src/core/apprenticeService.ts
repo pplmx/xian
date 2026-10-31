@@ -201,33 +201,78 @@ function needScore(amount: number, water: number): number {
   return water / (Math.max(0, Math.floor(amount)) + 1);
 }
 
+export type DispatchNeedSpec = "herb" | "ore" | "study" | "adventure";
+
+export interface DispatchNeedRow {
+  spec: DispatchNeedSpec;
+  /** 分数对应的库存来源；null 表示历练走灵石兜底分,不是器尘库存。 */
+  resource: "herb" | "ore" | "wudao" | "dust" | null;
+  stock: number;
+  waterline: number;
+  score: number;
+}
+
+export interface ApprenticeDispatchPlan {
+  target: ApprenticeSpec | null;
+  topScore: number;
+  /** 与 topScore 同分的门；唯一目标时为空。 */
+  tiedSpecs: DispatchNeedSpec[];
+  rows: DispatchNeedRow[];
+}
+
 /**
- * 取当前最缺的门:各资源短缺分最高者;历练取「器尘短缺分与灵石兜底分之较高」;
- * 并列最高(或无单门胜出)返回 null → 各自专职。确定性:只读快照、无随机。
+ * 一键派发的完整依据。按钮目标、四门存底展示与商店派发都只读这一份计划,
+ * 免得界面另减一遍 score: 玩家看见的最高门,必须就是按钮会派去的门。
  */
-export function needTargetDoor(stock: DispatchNeedStock): ApprenticeSpec | null {
-  const scores: Array<[ApprenticeSpec, number]> = [
-    ["herb", needScore(stock.herb, DISPATCH_NEED_TARGET.herb)],
-    ["ore", needScore(stock.ore, DISPATCH_NEED_TARGET.ore)],
-    ["study", needScore(stock.wudao, DISPATCH_NEED_TARGET.wudao)],
-    [
-      "adventure",
-      Math.max(needScore(stock.dust, DISPATCH_NEED_TARGET.dust), DISPATCH_ADVENTURE_FIXED_SCORE),
-    ],
+export function apprenticeDispatchPlan(stock: DispatchNeedStock): ApprenticeDispatchPlan {
+  const herb = Math.max(0, Math.floor(stock.herb));
+  const ore = Math.max(0, Math.floor(stock.ore));
+  const wudao = Math.max(0, Math.floor(stock.wudao));
+  const dust = Math.max(0, Math.floor(stock.dust));
+  const herbScore = needScore(herb, DISPATCH_NEED_TARGET.herb);
+  const oreScore = needScore(ore, DISPATCH_NEED_TARGET.ore);
+  const studyScore = needScore(wudao, DISPATCH_NEED_TARGET.wudao);
+  const dustScore = needScore(dust, DISPATCH_NEED_TARGET.dust);
+  const adventureUsesDust = dustScore >= DISPATCH_ADVENTURE_FIXED_SCORE;
+  const adventureScore = adventureUsesDust ? dustScore : DISPATCH_ADVENTURE_FIXED_SCORE;
+  const rows: DispatchNeedRow[] = [
+    {
+      spec: "herb",
+      resource: "herb",
+      stock: herb,
+      waterline: DISPATCH_NEED_TARGET.herb,
+      score: herbScore,
+    },
+    {
+      spec: "ore",
+      resource: "ore",
+      stock: ore,
+      waterline: DISPATCH_NEED_TARGET.ore,
+      score: oreScore,
+    },
+    {
+      spec: "study",
+      resource: "wudao",
+      stock: wudao,
+      waterline: DISPATCH_NEED_TARGET.wudao,
+      score: studyScore,
+    },
+    {
+      spec: "adventure",
+      resource: adventureUsesDust ? "dust" : null,
+      stock: adventureUsesDust ? dust : 0,
+      waterline: adventureUsesDust ? DISPATCH_NEED_TARGET.dust : 0,
+      score: adventureScore,
+    },
   ];
-  let best: ApprenticeSpec | null = null;
-  let bestScore = -Infinity;
-  let unique = true;
-  for (const [spec, s] of scores) {
-    if (s > bestScore) {
-      best = spec;
-      bestScore = s;
-      unique = true;
-    } else if (s === bestScore) {
-      unique = false;
-    }
-  }
-  return unique ? best : null;
+  const topScore = Math.max(...rows.map((row) => row.score));
+  const leaders = rows.filter((row) => row.score === topScore);
+  return {
+    target: leaders.length === 1 ? leaders[0]!.spec : null,
+    topScore,
+    tiedSpecs: leaders.length > 1 ? leaders.map((row) => row.spec) : [],
+    rows,
+  };
 }
 
 /**
@@ -239,7 +284,7 @@ export function dispatchAllToNeed(
   stock: DispatchNeedStock,
 ): Array<{ uid: string; spec: ApprenticeSpec }> {
   if (idle.length === 0) return [];
-  const target = needTargetDoor(stock);
+  const target = apprenticeDispatchPlan(stock).target;
   if (target) return idle.map((x) => ({ uid: x.uid, spec: target }));
   return idle.map((x) => ({ uid: x.uid, spec: x.talent }));
 }

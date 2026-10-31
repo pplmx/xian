@@ -31,6 +31,154 @@
     font-size: var(--type-note);
     line-height: 1.55;
   }
+  /*
+   * 四门存底不是第二套「今日读数」,而是一把调拨尺:
+   * 存量、水位与相对缺度都来自 apprenticeDispatchPlan,被朱砂点中的那一门
+   * 必须就是下方一令齐发会派去的门;并列则只点石青,不伪造唯一目标。
+   */
+  .apprentice-depot {
+    position: relative;
+    z-index: 1;
+    margin-top: 0.48rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    padding: 0.5rem 0.62rem 0.58rem;
+  }
+  .apprentice-depot__head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.12rem 0.5rem;
+    margin-bottom: 0.38rem;
+  }
+  .apprentice-depot__kicker {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.14em;
+  }
+  .apprentice-depot__lead {
+    color: rgb(var(--color-cinnabar-rgb));
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .apprentice-depot__rows {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    overflow: hidden;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    background: rgb(var(--color-ink-rgb) / 0.075);
+  }
+  .apprentice-depot__row {
+    position: relative;
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.18rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.08rem 0.36rem;
+    padding: 0.38rem 0.46rem 0.34rem;
+    background:
+      linear-gradient(112deg, rgb(var(--color-paper-rgb) / 0.24), transparent 72%),
+      rgb(var(--color-paper-lifted-rgb) / 0.92);
+  }
+  .apprentice-depot__row.is-target {
+    background:
+      linear-gradient(112deg, rgb(var(--color-cinnabar-rgb) / 0.048), transparent 76%),
+      rgb(var(--color-paper-lifted-rgb) / 0.96);
+    box-shadow:
+      inset 2px 0 0 rgb(var(--color-cinnabar-rgb) / 0.68),
+      inset 0 0 0 1px rgb(var(--color-cinnabar-rgb) / 0.18);
+  }
+  .apprentice-depot__row.is-tied {
+    background:
+      linear-gradient(112deg, rgb(var(--color-qing-rgb) / 0.04), transparent 76%),
+      rgb(var(--color-paper-lifted-rgb) / 0.94);
+    box-shadow: inset 2px 0 0 rgb(var(--color-qing-rgb) / 0.5);
+  }
+  .apprentice-depot__mark {
+    display: grid;
+    width: 1.18rem;
+    height: 1.18rem;
+    place-items: center;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  .apprentice-depot__row.is-target .apprentice-depot__mark {
+    border-color: rgb(var(--color-cinnabar-rgb) / 0.42);
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  .apprentice-depot__identity {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.04rem 0.3rem;
+  }
+  .apprentice-depot__name {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    font-weight: 400;
+    letter-spacing: 0.05em;
+  }
+  .apprentice-depot__source {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .apprentice-depot__value {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+    white-space: nowrap;
+  }
+  .apprentice-depot__value small {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .apprentice-depot__value.is-fallback {
+    color: rgb(var(--color-qing-rgb));
+    font-family: var(--font-kai);
+  }
+  .apprentice-depot__meter {
+    grid-column: 2 / -1;
+    display: block;
+    height: 3px;
+    overflow: hidden;
+    margin-top: 0.12rem;
+    background: rgb(var(--color-ink-rgb) / 0.07);
+  }
+  .apprentice-depot__meter > span {
+    display: block;
+    height: 100%;
+    background: rgb(var(--color-qing-rgb) / 0.46);
+  }
+  .apprentice-depot__row.is-target .apprentice-depot__meter > span {
+    background: rgb(var(--color-cinnabar-rgb) / 0.62);
+  }
+  .apprentice-depot__state {
+    grid-column: 2 / -1;
+    margin-top: 0.04rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.35;
+  }
+  .apprentice-depot__row.is-target .apprentice-depot__state {
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  .apprentice-depot__row.is-tied .apprentice-depot__state {
+    color: rgb(var(--color-qing-rgb));
+  }
+  .apprentice-depot__note {
+    margin-top: 0.34rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
   .apprentice-roster {
     overflow: hidden;
     margin-top: 0.5rem;
@@ -265,22 +413,50 @@
     font-size: var(--type-note);
     line-height: 1.5;
   }
-  .apprentice-task-choice {
+  .apprentice-task-choice-grid {
+    display: grid;
     min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.38rem;
+  }
+  .apprentice-task-choice {
+    display: flex;
+    min-width: 0;
+    min-height: 44px;
+    width: 100%;
+    align-items: center;
+    gap: 0.42rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.1);
     border-radius: 1px;
+    padding: 0.4rem 0.46rem;
+    text-align: left;
+    transition:
+      border-color 0.16s ease,
+      background-color 0.16s ease,
+      transform 0.16s ease;
+  }
+  .apprentice-task-choice:active {
+    transform: scale(0.985);
+  }
+  .apprentice-task-choice__icon {
+    display: grid;
+    flex: none;
+    place-items: center;
   }
   .apprentice-task-choice__top {
+    display: flex;
     min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.06rem 0.28rem;
   }
   .apprentice-task-choice__name {
     min-width: 0;
-    overflow: hidden;
     color: rgb(var(--color-ink-rgb));
     font-size: var(--type-body);
     letter-spacing: 0.04em;
     line-height: 1.35;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
   }
   .apprentice-task-choice__talent {
     color: rgb(var(--color-qing-rgb));
@@ -299,14 +475,118 @@
     line-height: 1.48;
     overflow-wrap: anywhere;
   }
-  .apprentice-roster__task-note {
-    margin-top: 0.4rem;
-    padding: 0.38rem 0.46rem;
+  .apprentice-task-choice__arrow {
+    flex: none;
+    margin-left: auto;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    line-height: 1;
+  }
+  .apprentice-task-choice:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+  .apprentice-task-choice[aria-expanded="true"] .apprentice-task-choice__arrow {
+    color: rgb(var(--color-cinnabar-rgb));
+    transform: rotate(90deg);
+  }
+  .apprentice-task-ticket {
+    position: relative;
+    margin-top: 0.46rem;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.18);
     border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.38);
-    background: rgb(var(--color-cinnabar-rgb) / 0.025);
-    color: rgb(var(--color-ink-soft-rgb));
+    padding: 0.52rem 0.56rem 0.56rem;
+    background:
+      linear-gradient(105deg, rgb(var(--color-cinnabar-rgb) / 0.034), transparent 68%),
+      rgb(var(--color-paper-rgb) / 0.2);
+  }
+  .apprentice-task-ticket::after {
+    position: absolute;
+    top: 0.36rem;
+    right: 0.38rem;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.22);
+    padding: 0.02rem 0.18rem;
+    color: rgb(var(--color-cinnabar-rgb));
+    content: "差";
+    font-family: var(--font-kai);
     font-size: var(--type-note);
-    line-height: 1.6;
+    line-height: 1.25;
+  }
+  .apprentice-task-ticket__head {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.18rem 0.42rem;
+    padding-right: 1.3rem;
+  }
+  .apprentice-task-ticket__seal {
+    display: grid;
+    width: 1.5rem;
+    height: 1.5rem;
+    place-items: center;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.28);
+    background: rgb(var(--color-cinnabar-rgb) / 0.04);
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  .apprentice-task-ticket__identity {
+    display: grid;
+    min-width: 0;
+    gap: 0.05rem;
+  }
+  .apprentice-task-ticket__name {
+    color: rgb(var(--color-ink-rgb));
+    font-size: var(--type-body);
+    letter-spacing: 0.08em;
+    line-height: 1.4;
+  }
+  .apprentice-task-ticket__desc {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .apprentice-task-ticket__time {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    white-space: nowrap;
+  }
+  .apprentice-task-ticket__ledger {
+    display: grid;
+    min-width: 0;
+    margin-top: 0.42rem;
+    border-block: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .apprentice-task-ticket__ledger p {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.12rem 0.5rem;
+    padding: 0.3rem 0;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .apprentice-task-ticket__ledger p + p {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.06);
+  }
+  .apprentice-task-ticket__ledger strong {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-weight: 400;
+    overflow-wrap: anywhere;
+    text-align: right;
+  }
+  .apprentice-task-ticket__confirm {
+    min-height: 40px;
+    margin-top: 0.42rem;
+    border-radius: 1px;
+  }
+  .apprentice-task-ticket__foot {
+    margin-top: 0.3rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
   }
   .apprentice-rules {
     display: grid;
@@ -367,6 +647,22 @@
       border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
     }
 
+    .apprentice-depot__rows {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .apprentice-task-choice-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .apprentice-task-choice:last-child:nth-child(odd) {
+      grid-column: auto;
+    }
+
+    .apprentice-task-choice:last-child:nth-child(3n - 1) {
+      grid-column: span 2;
+    }
+
     .apprentice-rules {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -382,10 +678,38 @@
   }
   @media (max-width: 220px) {
     .apprentice-pulse__foot,
+    .apprentice-depot,
     .apprentice-roster__group-head,
     .apprentice-roster__row,
     .apprentice-rules__item {
       padding-inline: 0.62rem;
+    }
+
+    .apprentice-depot__rows,
+    .apprentice-task-choice-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .apprentice-task-choice:last-child:nth-child(odd),
+    .apprentice-task-choice:last-child:nth-child(3n - 1) {
+      grid-column: 1 / -1;
+    }
+
+    .apprentice-depot__head {
+      align-items: flex-start;
+    }
+
+    .apprentice-depot__lead {
+      width: 100%;
+    }
+
+    .apprentice-task-ticket__head {
+      grid-template-columns: 1.5rem minmax(0, 1fr);
+      padding-right: 1.1rem;
+    }
+
+    .apprentice-task-ticket__time {
+      grid-column: 2;
     }
 
     .apprentice-roster__status {

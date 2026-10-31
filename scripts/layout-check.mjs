@@ -5234,7 +5234,7 @@ async function taskInventoryAttention() {
   return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
 }
 
-/** 门庭先报今日:在途、闲置、最近归期与差事进度 */
+/** 门庭先报今日:四门存底、选签确认、在途进度与一令齐发 */
 async function taskApprenticePulse() {
   const failures = [];
   let checked = 0;
@@ -5253,6 +5253,7 @@ async function taskApprenticePulse() {
     slices.apprentice = {
       apprentices: [
         { uid: "pulse_idle", archId: "ap_luanniao", level: 2, bond: 4, task: null },
+        { uid: "pulse_idle_2", archId: "ap_daotong", level: 1, bond: 0, task: null },
         {
           uid: "pulse_away",
           archId: "ap_kuangtou",
@@ -5280,9 +5281,20 @@ async function taskApprenticePulse() {
     const read = () =>
       page.evaluate(() => {
         const pulse = document.querySelector("[data-apprentice-pulse]");
-        const dispatch = pulse?.querySelector("button");
+        const dispatch = pulse?.querySelector("[data-apprentice-dispatch-all]");
         const taskRows = [...document.querySelectorAll("[data-apprentice-task-progress]")];
         const bars = [...document.querySelectorAll('[role="progressbar"]')];
+        const needs = [...document.querySelectorAll("[data-apprentice-need]")].map((row) => ({
+          spec: row.getAttribute("data-apprentice-need"),
+          name: (row.querySelector(".apprentice-depot__name")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+          value: (row.querySelector(".apprentice-depot__value")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+          target: row.hasAttribute("data-dispatch-target"),
+          tied: row.hasAttribute("data-dispatch-tied"),
+        }));
         return {
           total: Number(pulse?.getAttribute("data-apprentice-total")),
           idle: Number(pulse?.getAttribute("data-apprentice-idle")),
@@ -5296,14 +5308,15 @@ async function taskApprenticePulse() {
           aria: bars.map((bar) => Number(bar.getAttribute("aria-valuenow"))),
           dispatchDisabled: dispatch?.hasAttribute("disabled") ?? true,
           dispatchText: (dispatch?.textContent || "").replace(/\s+/g, " ").trim(),
+          needs,
         };
       });
 
     const initial = await read();
     checked += 1;
-    if (initial.total !== 2 || initial.idle !== 1 || initial.away !== 1) {
+    if (initial.total !== 3 || initial.idle !== 2 || initial.away !== 1) {
       failures.push(
-        `[390] 门庭场景:卷首应为 2 名 / 在途 1 / 闲置 1,实见 ` +
+        `[390] 门庭场景:卷首应为 3 名 / 在途 1 / 闲置 2,实见 ` +
           `${initial.total} / ${initial.away} / ${initial.idle}`,
       );
     }
@@ -5324,11 +5337,70 @@ async function taskApprenticePulse() {
           `与可视进度 ${initial.progress.join(",") || "无"} 不同源`,
       );
     }
-    if (initial.dispatchDisabled || !initial.dispatchText.includes("派闲置 1 人")) {
-      failures.push(`[390] 门庭场景:派发按钮没有报出这次会派走 1 人(«${initial.dispatchText}»)`);
+    if (initial.needs.length !== 4) {
+      failures.push(`[390] 门庭场景:四门存底应列 4 门,实见 ${initial.needs.length} 门`);
+    }
+    const targetNeeds = initial.needs.filter((row) => row.target);
+    const tiedNeeds = initial.needs.filter((row) => row.tied);
+    if (targetNeeds.length === 0 && tiedNeeds.length < 2) {
+      failures.push("[390] 门庭场景:四门既没有唯一目标,也没有至少两门同分");
+    }
+    if (targetNeeds.length > 0 && !initial.dispatchText.includes(targetNeeds[0].name)) {
+      failures.push(
+        `[390] 门庭场景:存底目标 «${targetNeeds[0].name}» 与一令齐发 «${initial.dispatchText}» 不同源`,
+      );
+    }
+    if (initial.dispatchDisabled || !initial.dispatchText.includes("派闲置 2 人")) {
+      failures.push(`[390] 门庭场景:派发按钮没有报出这次会派走 2 人(«${initial.dispatchText}»)`);
     }
 
-    await page.locator("[data-apprentice-pulse] button").click({ timeout: 3000 });
+    await page
+      .locator('[data-apprentice-task-choice="pulse_idle_2:seek"]')
+      .click({ timeout: 3000 });
+    await settleVisuals(page);
+    const picked = await read();
+    const ticketText = ((await page.locator("[data-apprentice-task-ticket]").textContent()) || "")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (picked.progress.length !== 1 || picked.idle !== 2) {
+      failures.push(
+        `[390] 门庭场景:只选差事签就改变了在途人数(进度 ${picked.progress.length} / 候差 ${picked.idle})`,
+      );
+    }
+    if (
+      !ticketText.includes("寻机缘") ||
+      !ticketText.includes("锁 60 分") ||
+      !ticketText.includes("归来可得")
+    ) {
+      failures.push(`[390] 门庭场景:差事票面没有摊开名称、时长与所得(«${ticketText}»)`);
+    }
+
+    await page.locator("[data-apprentice-dispatch-confirm]").click({ timeout: 3000 });
+    await page.waitForFunction(
+      () =>
+        document.querySelector("[data-apprentice-pulse]")?.getAttribute("data-apprentice-idle") ===
+        "1",
+      { timeout: 3000 },
+    );
+    await settleVisuals(page);
+    const afterManual = await read();
+    checked += 1;
+    if (afterManual.total !== 3 || afterManual.idle !== 1 || afterManual.away !== 2) {
+      failures.push(
+        `[390] 门庭场景:确认单签后应为在途 2 / 闲置 1,实见 ` +
+          `${afterManual.away} / ${afterManual.idle}`,
+      );
+    }
+    if (
+      afterManual.progress.length !== 2 ||
+      !afterManual.progress.some((value) => value > 0 && value < 1)
+    ) {
+      failures.push(
+        `[390] 门庭场景:确认单签后应有 2 条在途进度,实见 ${afterManual.progress.join(",")}`,
+      );
+    }
+
+    await page.locator("[data-apprentice-dispatch-all]").click({ timeout: 3000 });
     await page.waitForFunction(
       () =>
         document.querySelector("[data-apprentice-pulse]")?.getAttribute("data-apprentice-idle") ===
@@ -5338,16 +5410,16 @@ async function taskApprenticePulse() {
     await settleVisuals(page);
     const after = await read();
     checked += 1;
-    if (after.total !== 2 || after.idle !== 0 || after.away !== 2) {
+    if (after.total !== 3 || after.idle !== 0 || after.away !== 3) {
       failures.push(
-        `[390] 门庭场景:一键派发后应为在途 2 / 闲置 0,实见 ` + `${after.away} / ${after.idle}`,
+        `[390] 门庭场景:一键派发后应为在途 3 / 闲置 0,实见 ` + `${after.away} / ${after.idle}`,
       );
     }
     if (
       !after.dispatchDisabled ||
       after.dispatchText !== "弟子都在路上" ||
-      after.progress.length !== 2 ||
-      after.aria.length !== 2
+      after.progress.length !== 3 ||
+      after.aria.length !== 3
     ) {
       failures.push(
         `[390] 门庭场景:派完后按钮«${after.dispatchText}» / 进度 ${after.progress.length} 条,` +
@@ -5358,8 +5430,10 @@ async function taskApprenticePulse() {
     if (pageErrors.length)
       failures.push(`[390] 门庭场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
     console.log(
-      `\n门庭今日:在途 ${initial.away} / 闲置 ${initial.idle} · ` +
-        `最近 ${initial.next} · 一键派发后 ${after.away} / ${after.idle}`,
+      `\n门庭今日:在途 ${initial.away} / 闲置 ${initial.idle} · 最近 ${initial.next} · ` +
+        `四门 ${initial.needs.map((row) => `${row.name} ${row.value}`).join(" / ")} · ` +
+        `单签确认后 ${afterManual.away} / ${afterManual.idle} · ` +
+        `一键派发后 ${after.away} / ${after.idle}`,
     );
   } finally {
     await ctx.close();
