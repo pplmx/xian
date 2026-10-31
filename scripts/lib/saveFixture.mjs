@@ -12,6 +12,7 @@
 import CryptoJS from "crypto-js";
 import { SAVE_PREFIX } from "../../src/utils/storage.ts";
 import { RULESET_VERSION } from "../../src/data/ruleset.ts";
+import { ACHIEVEMENTS } from "../../src/data/achievements.ts";
 
 const SAVE_SECRET = "yunyin-xiuxian::dao-in-the-clouds::v1";
 
@@ -162,6 +163,39 @@ const af = (...ids) => ids.map((id) => ({ id, roll: 1 }));
 /** 道痕满卷夹具:60 则都带忆战快照,把每行的动作与旧纪标记一起逼出来。 */
 export const FULL_MARKS_COUNT = 60;
 
+/**
+ * 展品档已解锁的成就与名号。
+ *
+ * 真仙九层、三亿灵石、天品以上装备与过万寿元已经满足这些累计事实;若仍把
+ * achieved/titlesOwned 留空,启动补扫会当场改档,截图还会出现「尚差 0 · 未获得」
+ * 这种只属于坏夹具的死路。这里只列当前存档实际满足的条目,不伪造全成就。
+ */
+const SHOWCASE_MAJOR = 9;
+const SHOWCASE_ACHIEVED = [
+  ...ACHIEVEMENTS.filter(
+    (achievement) => achievement.cond.type === "realm" && achievement.cond.major <= SHOWCASE_MAJOR,
+  ).map((achievement) => achievement.id),
+  "a_lianqi_full",
+  "a_lifespan",
+  "a_rich",
+  "a_q4",
+  "a_q6",
+  "a_q7",
+];
+
+const SHOWCASE_TITLES = ACHIEVEMENTS.filter(
+  (achievement) => SHOWCASE_ACHIEVED.includes(achievement.id) && achievement.reward?.titleId,
+).map((achievement) => achievement.reward.titleId);
+
+const SHOWCASE_TIERS = Object.fromEntries(
+  SHOWCASE_ACHIEVED.map((id) => {
+    const achievement = ACHIEVEMENTS.find((row) => row.id === id);
+    if (achievement?.cond.type === "realm") return [id, achievement.cond.major * 2 + 1];
+    if (achievement?.cond.type === "custom" && achievement.cond.key === "realm_0_9") return [id, 2];
+    return [id, SHOWCASE_MAJOR * 2 + 1];
+  }),
+);
+
 export function makeFullMarks(now = Date.now()) {
   return Array.from({ length: FULL_MARKS_COUNT }, (_, i) => ({
     life: 80 - i,
@@ -286,10 +320,11 @@ export function showcaseSlices(theme = "light") {
     // 长期道途早已推过前半程;资格名号也收了一批,免得首页还挂着开局的「主线 1/32」
     quests: {
       counters: {},
-      achieved: [],
+      achieved: SHOWCASE_ACHIEVED,
+      achievedTiers: SHOWCASE_TIERS,
       mainIdx: 22,
       daily: { date: "", base: {}, done: [] },
-      titlesOwned: [],
+      titlesOwned: SHOWCASE_TITLES,
       collections: {
         equip: [],
         gongfa: [],

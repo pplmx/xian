@@ -17,7 +17,7 @@ function source(rel: string): string {
   return readFileSync(resolve(ROOT, rel), "utf8");
 }
 
-describe("藏珍案 · 一枚藏珍格先报九册,功名与藏珍再各翻一卷", () => {
+describe("藏珍案 · 九册总印紧随页签,眼下可追与眼下新得各翻一卷", () => {
   it("九册各有单字印,藏珍格只搬运汇总读数而不重数条目", () => {
     const overview = collectionProgressOverview([
       { key: "equip", name: "装备图鉴", known: 3, total: 10, newCount: 1 },
@@ -46,16 +46,20 @@ describe("藏珍案 · 一枚藏珍格先报九册,功名与藏珍再各翻一�
     expect(collectionCabinetCells(overview.rows)).toEqual([
       {
         key: "equip",
+        name: "装备图鉴",
         mark: "器",
         known: 3,
+        total: 10,
         ratio: 0.3,
         complete: false,
         newCount: 1,
       },
       {
         key: "pet",
+        name: "灵兽册",
         mark: "兽",
         known: 2,
+        total: 4,
         ratio: 0.5,
         complete: false,
         newCount: 0,
@@ -63,16 +67,19 @@ describe("藏珍案 · 一枚藏珍格先报九册,功名与藏珍再各翻一�
     ]);
   });
 
-  it("卷首换成一枚藏珍格,功名与藏珍总进度都从正文同一份汇总读", () => {
+  it("九册总印接在页签后,不再借卷首主视觉复写一份总案", () => {
     const view = source("src/views/CollectionView.vue");
     const cabinet = source("src/components/common/CollectionCabinet.vue");
+    const tabs = view.indexOf("<InkTabs");
+    const cabinetAfterTabs = view.indexOf("<CollectionCabinet", tabs);
+    const achievementTarget = view.indexOf("data-achievement-jump");
 
     expect(view, "藏珍卷首要走 featured 开卷版式").toMatch(
       /<FolioPageHeader[\s\S]{0,300}\bfeatured\b/,
     );
-    expect(view, "藏珍格要进独立主视觉槽").toMatch(
-      /<template #visual>[\s\S]{0,180}<CollectionCabinet/,
-    );
+    expect(view, "卷首不再放一块会推高手机首屏的主视觉").not.toContain("<template #visual>");
+    expect(cabinetAfterTabs, "九册总印要落在页签之后").toBeGreaterThan(tabs);
+    expect(achievementTarget, "最近的功名目标要直接接在总印之后").toBeGreaterThan(cabinetAfterTabs);
     expect(view, "格内九册直接读卷首汇总").toContain(
       "buildCollectionCabinetCells(collectionOverview.value.rows)",
     );
@@ -80,16 +87,27 @@ describe("藏珍案 · 一枚藏珍格先报九册,功名与藏珍再各翻一�
     expect(view, "藏珍总进度读同一份九册汇总").toContain(
       ':collection-known="collectionOverview.known"',
     );
-    expect(cabinet, "纯视觉摘要不重复进入读屏").toContain('aria-hidden="true"');
-    expect(cabinet, "九册按三乘三排布").toMatch(
-      /\.collection-cabinet__grid\s*\{[\s\S]{0,140}grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/,
+    expect(view, "重复的成就总案标题已退场").not.toContain('title="成就谱"');
+    expect(view, "重复的藏珍总案标题已退场").not.toContain('title="藏珍谱"');
+    expect(cabinet, "总印本身要成为可读的总账,不能再整块藏出读屏").not.toContain(
+      'data-collection-cabinet aria-hidden="true"',
+    );
+    expect(cabinet, "九册在手机上压成一条索引").toMatch(
+      /\.collection-cabinet__grid\s*\{[\s\S]{0,180}grid-template-columns:\s*repeat\(9, minmax\(0, 1fr\)\)/,
+    );
+    expect(cabinet, "九册格内同时报册名与收录数").toContain("{{ cell.name }}");
+    expect(cabinet, "九册格内同时报册名与收录数").toContain("{{ cell.known }}/{{ cell.total }}");
+    expect(cabinet, "195px 档退回三列仍可读").toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,500}\.collection-cabinet__grid\s*\{[\s\S]{0,120}repeat\(3, minmax\(0, 1fr\)\)/,
     );
   });
 
-  it("功名状只报最近三枚,名称、条件与进度全摊开,方向卷目仍按需展开", () => {
+  it("功名状只报最近三枚,动作标题取代重复总案,名称、条件与进度全摊开", () => {
     const view = source("src/views/CollectionView.vue");
 
     expect(view).toContain("data-achievement-hero");
+    expect(view, "卷首主标题改为下一步动作").toContain('title="眼下可追"');
+    expect(view, "不再复写功名总账").not.toContain(':score-value="doneCount"');
     expect(view).toContain("nearestAchievementRows(achievementRows.value, 3)");
     expect(view).toContain('v-for="(row, index) in nearestAchievements"');
     expect(view).toContain(':data-achievement-jump="row.def.id"');
@@ -106,13 +124,15 @@ describe("藏珍案 · 一枚藏珍格先报九册,功名与藏珍再各翻一�
     );
   });
 
-  it("藏珍谱先报新得或将满,三册入口、余册收展与九册正文共用同一份汇总", () => {
+  it("藏珍谱先报新得或将满,动作标题取代重复总案,三册入口共用同一份汇总", () => {
     const view = source("src/views/CollectionView.vue");
 
     expect(view).toContain("data-collection-hero");
     expect(view).toContain("collectionProgressOverviewFromCodex(");
     expect(view).toContain("眼下新得");
     expect(view).toContain("将满之册");
+    expect(view, "九册尽收也要有自己的下一步").toContain("九册尽收");
+    expect(view, "九册未开时不能假报将满").toContain("九册待启");
     expect(view).toContain("枚待看");
     expect(view).toContain('v-for="row in collectionHighlights"');
     expect(view).toContain(':data-collection-jump="row.key"');
@@ -149,8 +169,9 @@ describe("藏珍案 · 一枚藏珍格先报九册,功名与藏珍再各翻一�
     expect(unknownLoop).toBeGreaterThan(moreButton);
   });
 
-  it("手机单列,620 起三枚最近成就并读,220 以下不把格架挤成竖排", () => {
+  it("手机先读最近一枚,620 起三枚最近成就并读,220 以下不把格架挤成竖排", () => {
     const css = source("src/style.css");
+    const cabinet = source("src/components/common/CollectionCabinet.vue");
     const start = css.indexOf("/*\n   * 藏珍案");
     const end = css.indexOf("/*\n   * 器魂案", start);
     const collectionCss = css.slice(start, end);
@@ -159,6 +180,9 @@ describe("藏珍案 · 一枚藏珍格先报九册,功名与藏珍再各翻一�
     expect(end, "藏珍样式段要有明确结尾").toBeGreaterThan(start);
     expect(collectionCss).toMatch(
       /\.achievement-briefing__targets\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)|\.achievement-briefing__targets\s*\{[\s\S]{0,120}display:\s*grid/,
+    );
+    expect(collectionCss, "手机的目标条件要完整换行,不能省略成半句").toMatch(
+      /\.achievement-target__desc\s*\{[\s\S]{0,180}white-space:\s*normal/,
     );
     expect(collectionCss).toMatch(
       /@media \(min-width: 620px\)\s*\{[\s\S]{0,260}\.achievement-briefing__targets\s*\{[\s\S]{0,120}repeat\(3, minmax\(0, 1fr\)\)/,
@@ -169,6 +193,7 @@ describe("藏珍案 · 一枚藏珍格先报九册,功名与藏珍再各翻一�
     expect(collectionCss).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,2200}\.collection-token\s*\{[\s\S]{0,80}max-width:\s*100%/,
     );
+    expect(cabinet, "总印在 390 是单行,195 才退三列").toContain("@media (max-width: 220px)");
   });
 
   it("桌面把总谱与卷目分成两页,两册页签共用同一张藏珍书桌", () => {

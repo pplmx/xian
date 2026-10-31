@@ -131,6 +131,8 @@ const CATEGORIES = [
       "realPacing",
       "gongfaService",
       "gongfaStartupSelfHeal",
+      "achievementStartupSelfHeal",
+      "showcaseFixtureConsistency",
       "breakthrough",
       "inflationAudit",
       "samsaraAudit",

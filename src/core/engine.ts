@@ -68,6 +68,21 @@ class GameEngine {
     } catch (err) {
       this.reportError("engine.offline", "离线结算异常", err);
     }
+    /**
+     * 老档/导入档的境界与计数可能早已满足成就,却停在旧版本没触发过补扫。
+     * 若等到首次周期检查,直接打开名号页会先看到「尚差 0」却仍「未获得」。
+     * 启动链路在首帧前补一次,名号与成就才有同一份当下事实。
+     *
+     * 单独兜底:进度补扫失败不该连心跳一起拦下 —— 玩家至少还能继续玩,
+     * 诊断里也才能留下准确的 engine.progress 来源。
+     */
+    if (game.started) {
+      try {
+        checkStateAchievements();
+      } catch (err) {
+        this.reportError("engine.progress", "启动进度补扫异常", err);
+      }
+    }
     game.stampActive(now);
     this.lastTickAt = now;
     this.lastStampAt = now;
