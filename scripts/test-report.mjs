@@ -269,6 +269,7 @@ const CATEGORIES = [
       "buildDesk",
       "worldDesk",
       "uiLayering",
+      "opportunityDesk",
       "folioMasthead",
       "folioIndexRail",
       "folioOpening",

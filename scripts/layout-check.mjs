@@ -406,15 +406,26 @@ async function clearOverlays(page) {
    * 坑在这里:引擎掷出顿悟(每秒一拍)与弹窗自己每秒一次的轮询是两个独立定时器,
    * 事件已经产生、窗还没画出来 —— 这时数 .modal-panel 是 0,当场就收工,
    * 一秒后那扇窗才浮上来,正好盖住要点的入口。故这里固定转六圈(≈2.1 秒):
-   * 有窗就按 Esc 收掉,没窗就等着 —— 反正随机源已钉死,等到的只会是**之前那一扇**。
+   * 有窗就收掉,没窗就等着 —— 反正随机源已钉死,等到的只会是**之前那一扇**。
+   * 机缘卷刻意不吃 Esc,收它必须点卷尾的显式舍签动作;否则遮罩会一直留着,
+   * 后面的按钮全被挡住(冷启动返回场景就是这么假红过一次)。
    */
   for (let i = 0; i < 6; i += 1) {
-    if ((await page.locator(".modal-panel").count()) > 0) await page.keyboard.press("Escape");
+    if ((await page.locator(".modal-panel").count()) > 0) {
+      const leave = page.locator(".modal-panel").last().locator("[data-opportunity-leave]");
+      if ((await leave.count()) > 0) await leave.click({ timeout: 1500 }).catch(() => {});
+      else await page.keyboard.press("Escape");
+    }
     await page.waitForTimeout(350);
   }
   return page.evaluate(() =>
     [...document.querySelectorAll(".modal-panel")].map((p) =>
-      (p.querySelector("h3")?.textContent || p.getAttribute("aria-label") || "?").trim(),
+      (
+        p.querySelector("[data-opportunity-title]")?.textContent ||
+        p.querySelector("h3")?.textContent ||
+        p.getAttribute("aria-label") ||
+        "?"
+      ).trim(),
     ),
   );
 }
@@ -3304,15 +3315,26 @@ async function taskEngineModals() {
       Math.random = () => 0;
     });
     const seen = new Map();
-    for (let i = 0; i < 40 && seen.size < 2; i += 1) {
+    const requiredKinds = new Set(["enlightenment", "cave"]);
+    for (let i = 0; i < 40 && [...requiredKinds].some((kind) => !seen.has(kind)); i += 1) {
       await page.waitForTimeout(500);
       const info = await page.evaluate(() => {
-        const panel = document.querySelector(".modal-panel");
+        const panel = [...document.querySelectorAll(".modal-panel")].at(-1);
         if (!panel) return null;
+        const scroll = panel.querySelector("[data-opportunity-scroll]");
+        if (!scroll) return null;
         return {
-          title: (panel.querySelector("h3")?.textContent || "").trim() || "(无标题)",
+          kind: scroll.getAttribute("data-opportunity-kind"),
+          title:
+            (panel.querySelector("[data-opportunity-title]")?.textContent || "").trim() ||
+            "(无标题)",
           label: panel.getAttribute("aria-label"),
           role: panel.getAttribute("role"),
+          scrollCount: panel.querySelectorAll("[data-opportunity-scroll]").length,
+          choiceCount: panel.querySelectorAll("[data-opportunity-choice]").length,
+          effectCount: panel.querySelectorAll("[data-opportunity-effect]").length,
+          timer: (panel.querySelector("[data-opportunity-timer]")?.textContent || "").trim(),
+          hasLeave: !!panel.querySelector("[data-opportunity-leave]"),
           controls: [...panel.querySelectorAll("button, a, [role=button]")]
             .map((el) => {
               const r = el.getBoundingClientRect();
@@ -3330,11 +3352,11 @@ async function taskEngineModals() {
             .filter((c) => c.h > 0),
         };
       });
-      if (info && !seen.has(info.title)) {
-        seen.set(info.title, info);
+      if (info?.kind && !seen.has(info.kind)) {
+        seen.set(info.kind, info);
         /*
          * 顿悟与洞府巡游也只在概率掷中时出现 —— 巡页与缩放档都碰不到它们。
-         * 洞府巡游里那几行选项与代价正是 195 宽上最容易折的,故在按 Esc 之前量一遍。
+         * 洞府巡游里那几行选项与代价正是 195 宽上最容易折的,故在收卷之前量一遍。
          */
         zoomSeen += 1;
         const evZoom = dialogZoomProblems(
@@ -3342,17 +3364,52 @@ async function taskEngineModals() {
         );
         if (evZoom.length)
           failures.push(`[375] 「${info.title}」在 200% 下坏了:${evZoom.join(" / ")}`);
+        /*
+         * 机缘卷刻意不响应 Esc/背板:舍签必须由卷尾写明后果的动作落定。
+         * 这里先按一次 Esc,证明卷不会被静默收走,再点「舍此机缘/离开」。
+         */
         await page.keyboard.press("Escape");
-        await page.waitForTimeout(600);
+        await page.waitForTimeout(250);
+        const stillOpen = await page
+          .locator("[data-opportunity-scroll]")
+          .last()
+          .isVisible()
+          .catch(() => false);
+        if (!stillOpen)
+          failures.push(`[375] 「${info.title}」被 Esc 静默收走 —— 舍签必须是显式动作`);
+        await page
+          .locator("[data-opportunity-scroll]")
+          .last()
+          .locator("[data-opportunity-leave]")
+          .click({ timeout: 3000 })
+          .catch(() => {});
+        await page
+          .locator("[data-opportunity-scroll]")
+          .last()
+          .waitFor({ state: "detached", timeout: 3000 })
+          .catch(() => {});
+        await page.waitForTimeout(400);
       }
     }
     checked += 1;
-    if (seen.size === 0)
-      failures.push("[375] 引擎事件场景:概率钉成必中之后,两扇弹窗一扇都没浮出来(触发接线断了?)");
-    for (const [title, info] of seen) {
+    const missingKinds = [...requiredKinds].filter((kind) => !seen.has(kind));
+    if (missingKinds.length)
+      failures.push(
+        `[375] 引擎事件场景:概率钉成必中之后,缺少 ${missingKinds.join(" / ")} 两类机缘(触发接线断了?)`,
+      );
+    for (const info of seen.values()) {
+      const title = info.title;
       if (info.role !== "dialog")
         failures.push(`[375] 「${title}」没有 dialog 语义(role=${info.role})`);
       if (!info.label) failures.push(`[375] 「${title}」没有可访问名`);
+      if (info.scrollCount !== 1)
+        failures.push(`[375] 「${title}」应恰好有一张机缘卷,实得 ${info.scrollCount}`);
+      if (info.choiceCount !== 3)
+        failures.push(`[375] 「${title}」应摊开 3 签,实得 ${info.choiceCount}`);
+      if (info.effectCount !== 3)
+        failures.push(`[375] 「${title}」应逐签写明得失,实得 ${info.effectCount}`);
+      if (!info.timer) failures.push(`[375] 「${title}」没有剩余时机读数`);
+      if (!info.hasLeave) failures.push(`[375] 「${title}」没有显式舍签动作`);
       const bad = info.controls.filter((c) => !c.name || !c.ok);
       if (bad.length)
         failures.push(

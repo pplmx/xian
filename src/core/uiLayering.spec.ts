@@ -279,13 +279,16 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("顿悟/巡游临散前转朱砂 —— 限时增益不许静默自散", () => {
-    // 两扇引擎弹窗都有倒计时,但临散前若还是金色,读长文案的玩家会白丢这份
+    // 两扇引擎弹窗共用一张机缘卷,临散前若还是金色,读长文案的玩家会白丢这份
     // 增益(巡游关掉当天就没了)。阈值单源(URGENT_COUNTDOWN_SEC),颜色就是「快选」;
-    // 阈值双写或改回金身,下面这条都红。
+    // 阈值或急色只许落在共享卷里,宿主双写、组件改回金身,下面这条都红。
+    const sheet = FILES.find((f) => f.path === "components/earlygame/OpportunityScroll.vue");
+    expect(sheet?.src).toContain("props.remainingSec <= URGENT_COUNTDOWN_SEC");
+    expect(sheet?.src.match(/'is-urgent': urgent/g)).toHaveLength(2);
     const cave = FILES.find((f) => f.path === "components/dongfu/CaveEventModal.vue");
-    expect(cave?.src).toContain(`remaining <= URGENT_COUNTDOWN_SEC ? 'text-cinnabar'`);
     const enlighten = FILES.find((f) => f.path === "components/cultivation/EnlightenmentModal.vue");
-    expect(enlighten?.src).toContain(`remaining <= URGENT_COUNTDOWN_SEC ? 'text-cinnabar'`);
+    expect(cave?.src).not.toContain("URGENT_COUNTDOWN_SEC");
+    expect(enlighten?.src).not.toContain("URGENT_COUNTDOWN_SEC");
     const constants = readFileSync(resolve(__dirname, "../data/constants.ts"), "utf-8");
     expect(constants).toMatch(/URGENT_COUNTDOWN_SEC = 10/);
   });
@@ -437,13 +440,27 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 秒针照样会 5 秒跳 5 格。前一版把闭关/状态/问卦三处从 totalPlaySec(引擎只在
     // ACTIVE_STAMP_MS=5s 才 addPlayTime)换到 useGameNow,却漏了破境卡里的「调息中 ·
     // 03分00秒」—— 那枚槽挂在 btInfo(只随 totalPlaySec 变)上,盯着看就是纹丝不动。
-    // 逐文件判据:凡渲染 countdown-slot 的组件,自身必须起一条 ≤1s 的心跳
-    // (useNow / useGameNow / useGameClock / gameClock / 手写 setInterval 墙钟域)。
-    // 只要心跳源在文件里,秒针才会走;没有的那一版当场红。
+    // 逐文件判据:凡渲染 countdown-slot 的组件,自身或登记过的事件宿主必须起一条
+    // ≤1s 的心跳(useNow / useGameNow / useGameClock / gameClock / 手写 setInterval
+    // 墙钟域)。共享卷只负责呈现,事件倒计时由顿悟/巡游宿主轮询后传进来。
     const HEARTBEAT = /useNow\(|useGameNow\(|useGameClock\(|gameClock\(|setInterval\(/;
+    const TIMER_HOSTS: Record<string, string[]> = {
+      "components/earlygame/OpportunityScroll.vue": [
+        "components/cultivation/EnlightenmentModal.vue",
+        "components/dongfu/CaveEventModal.vue",
+      ],
+    };
     const bare = FILES.filter((f) => f.src.includes("countdown-slot"))
       .filter((f) => !HEARTBEAT.test(f.src))
-      .map((f) => f.path);
+      .flatMap((f) => {
+        const hosts = TIMER_HOSTS[f.path];
+        if (!hosts) return [`${f.path}: 自身没有秒级心跳`];
+        const missing = hosts.filter((path) => {
+          const host = FILES.find((candidate) => candidate.path === path);
+          return !host || !HEARTBEAT.test(host.src);
+        });
+        return missing.length ? [`${f.path}: 宿主缺心跳 ${missing.join(", ")}`] : [];
+      });
     expect(bare, "这些文件渲染了秒级倒计时,却没有 1s 心跳 —— 槽里的秒针不会走").toEqual([]);
   });
 
@@ -2897,10 +2914,13 @@ describe("界面分层 · 浮层只有一个出处", () => {
 
   it("洞府巡游的离开键只留动作,后果单独说 —— 195px 下短标签不许被括号挤折", () => {
     const cave = FILES.find((f) => f.path === "components/dongfu/CaveEventModal.vue");
+    const sheet = FILES.find((f) => f.path === "components/earlygame/OpportunityScroll.vue");
     expect(cave?.src, "离开后的后果要单独成行").toContain("离开后,今日不再巡游");
-    expect(cave?.src, "按钮只留短动作并锁一行").toMatch(
-      /class="btn-ghost tap-row w-full"[^>]*>离 开<\/button>/,
+    expect(cave?.src, "按钮只留短动作").toContain('leave-label="离 开"');
+    expect(sheet?.src, "共享卷尾动作锁满一行").toContain(
+      'class="btn-ghost tap-row w-full !text-body"',
     );
+    expect(sheet?.src, "共享卷尾渲染宿主给的短动作").toContain("{{ leaveLabel }}");
     expect(cave?.src, "后果句不许再塞回按钮标签").not.toContain("离 开(今日不再巡游)");
   });
 
