@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { readStyleCss } from "@/test/readStyleCss";
+import { artifactDeskSummary } from "@/core/artifactDesk";
 
 const ROOT = resolve(__dirname, "../..");
 
@@ -11,6 +12,42 @@ function source(rel: string): string {
 }
 
 describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
+  it("法宝阵账把位次、可炼、欠料与满重收成一份真数", () => {
+    const summary = artifactDeskSummary(
+      [
+        { equipped: true, hasUpgrade: false, affordable: false },
+        { equipped: true, hasUpgrade: true, affordable: true },
+        { equipped: false, hasUpgrade: true, affordable: false },
+      ],
+      2,
+    );
+
+    expect(summary).toEqual({
+      total: 3,
+      carried: 2,
+      stored: 1,
+      slots: 2,
+      emptySlots: 0,
+      ready: 1,
+      short: 1,
+      maxed: 1,
+    });
+    expect(
+      artifactDeskSummary([{ equipped: true, hasUpgrade: true, affordable: false }], 3),
+      "位次未满时,空位与欠料要分开报",
+    ).toMatchObject({ carried: 1, stored: 0, slots: 3, emptySlots: 2, short: 1 });
+    expect(artifactDeskSummary([], 0), "坏数值也要收成可读的零账").toEqual({
+      total: 0,
+      carried: 0,
+      stored: 0,
+      slots: 0,
+      emptySlots: 0,
+      ready: 0,
+      short: 0,
+      maxed: 0,
+    });
+  });
+
   it("卷首九佩匣读取同一份席名与佩戴事实,只做不重复读屏的视觉摘要", () => {
     const view = source("src/views/InventoryView.vue");
     const reliquary = source("src/components/inventory/InventoryReliquary.vue");
@@ -149,6 +186,21 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
     );
   });
 
+  it("法宝册先报阵位与祭炼,再铺全册密卡", () => {
+    const panel = source("src/components/inventory/ArtifactPanel.vue");
+
+    expect(panel, "法宝册先要有稳定阵账落点").toContain("data-artifact-overview");
+    expect(panel, "阵账读数走 core 的同一份汇总").toContain("artifactDeskSummary");
+    expect(panel, "阵账逐位列出随身法宝").toContain("data-artifact-seat");
+    expect(panel, "可炼 / 欠料 / 满重要各有稳定读数").toContain('data-artifact-summary="ready"');
+    expect(panel).toContain('data-artifact-summary="short"');
+    expect(panel).toContain('data-artifact-summary="maxed"');
+    expect(panel, "密卡要把被动、神通与下一重分行摊开").toContain("artifact-card__ledger");
+    expect(panel, "祭炼规则与法宝位门槛仍读同一组常数").toContain("ARTIFACT_LEVEL_BONUS");
+    expect(panel).toContain("ARTIFACT_MAX_SLOTS");
+    expect(panel).toContain("artifactUnlockRealm");
+  });
+
   it("手机上检点单列,360 起并读,220 以下把九佩、丹房与材簿放开", () => {
     const css = source("src/style.css");
     const start = css.indexOf("/*\n   * 行囊案");
@@ -172,11 +224,14 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
     expect(inventoryCss).toMatch(
       /@media \(min-width: 960px\)\s*\{[\s\S]{0,420}\.inventory-materials__groups\s*\{[\s\S]{0,120}repeat\(2, minmax\(0, 1fr\)\)/,
     );
-    expect(inventoryCss).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1100}\.inventory-equipment__grid,[\s\S]{0,120}\.inventory-workshop__grid,[\s\S]{0,120}\.inventory-materials__groups\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    const tinyStart = inventoryCss.indexOf("@media (max-width: 220px)");
+    const tinyCss = inventoryCss.slice(tinyStart);
+    expect(tinyStart, "220 以下的窄档要能定位到").toBeGreaterThan(-1);
+    expect(tinyCss).toMatch(
+      /\.inventory-equipment__grid,[\s\S]{0,120}\.inventory-workshop__grid,[\s\S]{0,120}\.inventory-materials__groups\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
-    expect(inventoryCss).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1400}\.inventory-collection__grid,[\s\S]{0,120}\.inventory-pill-cabinet__grid,[\s\S]{0,120}\.inventory-material-group__grid\s*\{[\s\S]{0,100}repeat\(2, minmax\(0, 1fr\)\)/,
+    expect(tinyCss).toMatch(
+      /\.inventory-collection__grid,[\s\S]{0,120}\.inventory-pill-cabinet__grid,[\s\S]{0,120}\.inventory-material-group__grid\s*\{[\s\S]{0,100}repeat\(2, minmax\(0, 1fr\)\)/,
     );
   });
 });

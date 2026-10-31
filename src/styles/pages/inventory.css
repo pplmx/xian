@@ -493,6 +493,261 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 0.625rem;
   }
+  /*
+   * 法宝阵账 —— 先报「谁在位上、哪几件能炼、几件已满重」,再铺全册。
+   * 原先三行裸读数没有行为落点;现在位次用席位、祭炼用总账、代价留在卡片。
+   */
+  .artifact-desk {
+    margin-top: 0.8rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+    border-top: 2px solid rgb(var(--color-qing-rgb));
+    background:
+      linear-gradient(135deg, rgb(var(--color-qing-rgb) / 0.045), transparent 58%),
+      rgb(var(--color-paper-lifted-rgb) / 0.72);
+  }
+  .artifact-desk__head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.78rem 0.82rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+  }
+  .artifact-desk__seal {
+    display: grid;
+    width: 3rem;
+    height: 3rem;
+    place-items: center;
+    border: 1px solid rgb(var(--color-qing-rgb) / 0.38);
+    background: rgb(var(--color-qing-rgb) / 0.06);
+    color: rgb(var(--color-qing-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    line-height: 1;
+  }
+  .artifact-desk__copy {
+    min-width: 0;
+  }
+  .artifact-desk__eyebrow {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    letter-spacing: 0.16em;
+  }
+  .artifact-desk__title {
+    margin-top: 0.12rem;
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-section);
+    line-height: 1.3;
+  }
+  .artifact-desk__detail {
+    margin-top: 0.18rem;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .artifact-desk__position {
+    display: flex;
+    align-items: baseline;
+    gap: 0.22rem;
+    padding-left: 0.75rem;
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .artifact-desk__position strong {
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    font-weight: 500;
+  }
+  .artifact-desk__seats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+    gap: 0.45rem;
+    padding: 0.62rem 0.82rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+  }
+  .artifact-desk__seat {
+    display: grid;
+    min-width: 0;
+    min-height: 4.3rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-content: center;
+    gap: 0.1rem 0.35rem;
+    padding: 0.5rem 0.58rem;
+    border: 1px dashed rgb(var(--color-ink-rgb) / 0.2);
+    background: rgb(var(--color-paper-rgb) / 0.38);
+  }
+  .artifact-desk__seat.is-filled {
+    border-style: solid;
+    border-color: rgb(var(--color-qing-rgb) / 0.34);
+    background:
+      linear-gradient(135deg, rgb(var(--color-qing-rgb) / 0.04), transparent 72%),
+      rgb(var(--color-paper-rgb) / 0.48);
+  }
+  .artifact-desk__seat-index {
+    grid-column: 1 / -1;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    letter-spacing: 0.12em;
+  }
+  .artifact-desk__seat-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+  }
+  .artifact-desk__seat-meta {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    white-space: nowrap;
+  }
+  .artifact-desk__seat.is-filled .artifact-desk__seat-meta {
+    color: rgb(var(--color-qing-rgb));
+  }
+  .artifact-desk__ledger {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+  }
+  .artifact-desk__reading {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.08rem 0.38rem;
+    padding: 0.55rem 0.75rem;
+  }
+  .artifact-desk__reading + .artifact-desk__reading {
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .artifact-desk__reading > span {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .artifact-desk__reading strong {
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-section);
+    font-weight: 500;
+  }
+  .artifact-desk__reading small {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .artifact-desk__rule {
+    padding: 0.5rem 0.82rem 0.58rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .artifact-ledger {
+    margin-top: 0.9rem;
+  }
+  .artifact-ledger__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.12rem 0.55rem;
+    padding: 0 0.12rem 0.5rem;
+  }
+  .artifact-ledger__title {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-section);
+    letter-spacing: 0.08em;
+  }
+  .artifact-ledger__hint,
+  .artifact-ledger__count {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .artifact-ledger__count {
+    margin-left: auto;
+  }
+  .artifact-card {
+    min-width: 0;
+  }
+  .artifact-card__head {
+    padding-right: 1.25rem;
+  }
+  .artifact-card__description {
+    margin-top: 0.35rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .artifact-card__ledger {
+    margin-top: 0.55rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .artifact-card__fact {
+    display: grid;
+    grid-template-columns: 4.8rem minmax(0, 1fr);
+    gap: 0.5rem;
+    padding: 0.38rem 0;
+  }
+  .artifact-card__fact + .artifact-card__fact {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+  }
+  .artifact-card__fact dt {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .artifact-card__fact dd {
+    min-width: 0;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-body);
+    line-height: 1.55;
+  }
+  .artifact-card__fact:nth-child(1) dd {
+    color: rgb(var(--color-qing-rgb));
+  }
+  .artifact-card__fact:nth-child(2) dd {
+    color: rgb(var(--color-violet-ink-rgb));
+  }
+  .artifact-card__fact:nth-child(3) dd {
+    color: rgb(var(--color-ink-faint-rgb));
+  }
+  .artifact-card__actions {
+    margin-top: 0.65rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+  }
+  .artifact-empty {
+    display: grid;
+    max-width: 30rem;
+    margin: 2.5rem auto 0;
+    justify-items: center;
+    padding: 1.15rem 1rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    text-align: center;
+  }
+  .artifact-empty__seal {
+    display: grid;
+    width: 2.4rem;
+    height: 2.4rem;
+    place-items: center;
+    border: 1px dashed rgb(var(--color-ink-rgb) / 0.26);
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+  }
+  .artifact-empty__title {
+    margin-top: 0.55rem;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-section);
+  }
+  .artifact-empty__copy {
+    margin-top: 0.25rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.6;
+  }
   .inventory-materials__groups {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -827,6 +1082,39 @@
     }
   }
   @media (max-width: 220px) {
+    .artifact-desk__head {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .artifact-desk__position {
+      grid-column: 1 / -1;
+      justify-content: space-between;
+      padding-top: 0.5rem;
+      padding-left: 0;
+      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+      border-left: 0;
+    }
+
+    .artifact-desk__seats,
+    .artifact-desk__ledger {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .artifact-desk__reading + .artifact-desk__reading {
+      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+      border-left: 0;
+    }
+
+    .artifact-ledger__count {
+      flex-basis: 100%;
+      margin-left: 0;
+    }
+
+    .artifact-card__fact {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.08rem;
+    }
+
     .equip-dossier__hero {
       grid-template-columns: auto minmax(0, 1fr);
     }

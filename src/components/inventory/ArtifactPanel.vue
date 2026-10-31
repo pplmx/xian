@@ -1,31 +1,86 @@
 <template>
-  <!--
-    主值行只留读数;「几境开下一格」是**次要信息**,自己占一行 ——
-    挤在同一行里,窄屏上会被顶成两行(与修炼页那两行同一类)。
-  -->
-  <p class="mt-3 px-1 text-body text-ink-faint tabular">
-    法宝位 {{ inventory.equippedArtifacts.length }}/{{ artifactSlots }}
-  </p>
-  <p v-if="artifactSlots < ARTIFACT_MAX_SLOTS" class="mt-0.5 px-1 text-note text-ink-faint">
-    {{ artifactUnlockRealm }}境开启第{{ cnNumber(ARTIFACT_MAX_SLOTS) }}法宝位
-  </p>
-  <!-- 祭炼到底给什么:数值都从上界常数来,不在界面里再写一份 -->
-  <p class="mt-1 px-1 text-note text-ink-faint">
-    祭炼一重,被动与神通各强 {{ formatPercent(ARTIFACT_LEVEL_BONUS) }},至多
-    {{ cnNumber(ARTIFACT_MAX_LEVEL) }} 重 —— 顶到封顶的不再涨,卡片上标着
-  </p>
+  <section
+    class="artifact-desk"
+    data-artifact-overview
+    :data-artifact-owned="artifactSummary.total"
+    :data-artifact-carried="artifactSummary.carried"
+    :data-artifact-slots-count="artifactSummary.slots"
+    :data-artifact-ready="artifactSummary.ready"
+    :data-artifact-short="artifactSummary.short"
+    :data-artifact-maxed="artifactSummary.maxed"
+  >
+    <div class="artifact-desk__head">
+      <span class="artifact-desk__seal" aria-hidden="true">{{ artifactDeskSeal }}</span>
+      <div class="artifact-desk__copy">
+        <p class="artifact-desk__eyebrow">法宝阵位</p>
+        <p class="artifact-desk__title">{{ artifactDeskLead.title }}</p>
+        <p class="artifact-desk__detail">{{ artifactDeskLead.detail }}</p>
+      </div>
+      <p class="artifact-desk__position tabular">
+        <span>随身</span>
+        <strong>{{ artifactSummary.carried }}</strong>
+        <span>/ {{ artifactSummary.slots }}</span>
+      </p>
+    </div>
+
+    <div class="artifact-desk__seats" role="list" aria-label="法宝位">
+      <div
+        v-for="(seat, index) in equippedSeatRows"
+        :key="seat.defId ?? `empty-${index}`"
+        class="artifact-desk__seat"
+        :class="{ 'is-filled': seat.def && seat.owned }"
+        role="listitem"
+        data-artifact-seat
+        :data-artifact-seat-filled="seat.def && seat.owned ? 'true' : 'false'"
+      >
+        <span class="artifact-desk__seat-index">法 {{ index + 1 }}</span>
+        <span class="artifact-desk__seat-name">{{ seat.def?.name ?? "空悬" }}</span>
+        <span class="artifact-desk__seat-meta tabular">
+          {{ seat.owned ? artifactLevelLabel(seat.owned.level) : "待入位" }}
+        </span>
+      </div>
+    </div>
+
+    <div class="artifact-desk__ledger">
+      <div class="artifact-desk__reading" data-artifact-summary="ready">
+        <span>可炼</span>
+        <strong class="tabular">{{ artifactSummary.ready }}</strong>
+        <small>{{ artifactSummary.ready ? "料已备齐" : "暂无一件" }}</small>
+      </div>
+      <div class="artifact-desk__reading" data-artifact-summary="short">
+        <span>欠料</span>
+        <strong class="tabular">{{ artifactSummary.short }}</strong>
+        <small>{{ artifactSummary.short ? "卡片列差额" : "无待补" }}</small>
+      </div>
+      <div class="artifact-desk__reading" data-artifact-summary="maxed">
+        <span>满重</span>
+        <strong class="tabular">{{ artifactSummary.maxed }}</strong>
+        <small>共 {{ artifactSummary.total }} 件</small>
+      </div>
+    </div>
+
+    <p class="artifact-desk__rule">
+      祭炼一重,被动与神通各强 {{ formatPercent(ARTIFACT_LEVEL_BONUS) }},至多
+      {{ cnNumber(ARTIFACT_MAX_LEVEL) }} 重;封顶后不再涨,卡片会标明只涨哪一部分。
+      <span v-if="artifactSlots < ARTIFACT_MAX_SLOTS">
+        {{ artifactUnlockRealm }}境开启第{{ cnNumber(ARTIFACT_MAX_SLOTS) }}法宝位。
+      </span>
+    </p>
+  </section>
   <div
     v-if="artifactRows.length"
-    class="mt-2"
+    class="artifact-ledger"
     :data-artifact-total="artifactRows.length"
     :data-artifact-shown="artifactPage.shown"
     :data-artifact-start="artifactPage.start"
   >
-    <p class="pb-1 text-center text-note text-ink-faint tabular">
-      法宝共 {{ artifactRows.length }} 件 · 现看 {{ artifactPage.start + 1 }}–{{
-        artifactPage.shown
-      }}
-    </p>
+    <div class="artifact-ledger__head">
+      <span class="artifact-ledger__title">法宝全册</span>
+      <span class="artifact-ledger__hint">按品阶降序 · 祭炼高者在前</span>
+      <span class="artifact-ledger__count tabular">
+        现看 {{ artifactPage.start + 1 }}–{{ artifactPage.shown }} / 共 {{ artifactRows.length }}
+      </span>
+    </div>
     <div class="inventory-artifact-list">
       <!--
       法宝行卡的品阶晕染:边框随档加深(qualityTier 同源),天/仙/神另有角章。
@@ -38,7 +93,7 @@
         :key="row.def.id"
         :data-artifact-row="row.def.id"
         tabindex="-1"
-        class="card-ink relative px-4 py-3"
+        class="card-ink artifact-card relative px-4 py-3"
         :style="{
           borderColor: colorWithAlpha(
             qualityDef(row.def.quality).color,
@@ -57,7 +112,7 @@
         <span v-if="isRareQuality(row.def.quality)" class="absolute right-2 top-2 leading-none">
           <QualitySeal :quality="row.def.quality" :size="16" />
         </span>
-        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <div class="artifact-card__head flex flex-wrap items-center gap-x-2 gap-y-1">
           <GameIcon
             :name="row.def.icon"
             :size="18"
@@ -79,29 +134,31 @@
           color="var(--color-gold-ink)"
           :height="2"
         />
-        <p class="mt-1.5 t-body text-ink-faint">{{ row.def.desc }}</p>
-        <p class="mt-1 text-body text-qing">
-          {{ passiveLines(row.def.id, row.owned.level).join(" · ") }}
-        </p>
-        <!--
-        神通说明按品阶与祭炼等级现算:效果随「品阶 × (1+0.08×重数)」走,
-        文案不能停在基线那一句
-        (见 data/artifacts.artifactActiveText —— 战斗与这句话读的是同一个函数)
-      -->
-        <p class="mt-1 text-body text-violet-ink">
-          神通「{{ row.def.active.name }}」:{{ artifactActiveText(row.def, row.owned.level) }}
-        </p>
-        <!--
-        下一重给多少:按钮只报代价,玩家得自己按 ×1.08 心算 —— 而「值不值」
-        正是按下之前要想清楚的事(数值由 artifactNextLevelGain 算,含封顶提示)。
-      -->
-        <p
-          v-if="nextGainText(row.def.id, row.owned.level)"
-          class="mt-1 text-note leading-relaxed text-ink-faint tabular"
-        >
-          下一重:{{ nextGainText(row.def.id, row.owned.level) }}
-        </p>
-        <div class="mt-2.5 flex gap-2 tinylens:flex-col">
+        <p class="artifact-card__description">{{ row.def.desc }}</p>
+        <dl class="artifact-card__ledger">
+          <div class="artifact-card__fact">
+            <dt>被动</dt>
+            <dd>{{ passiveLines(row.def.id, row.owned.level).join(" · ") }}</dd>
+          </div>
+          <!--
+            神通说明按品阶与祭炼等级现算:效果随「品阶 × (1+0.08×重数)」走,
+            文案不能停在基线那一句
+            (见 data/artifacts.artifactActiveText —— 战斗与这句话读的是同一个函数)
+          -->
+          <div class="artifact-card__fact">
+            <dt>神通「{{ row.def.active.name }}」</dt>
+            <dd>{{ artifactActiveText(row.def, row.owned.level) }}</dd>
+          </div>
+          <!--
+            下一重给多少:按钮只报代价,玩家得自己按 ×1.08 心算 —— 而「值不值」
+            正是按下之前要想清楚的事(数值由 artifactNextLevelGain 算,含封顶提示)。
+          -->
+          <div v-if="nextGainText(row.def.id, row.owned.level)" class="artifact-card__fact">
+            <dt>下一重</dt>
+            <dd class="tabular">{{ nextGainText(row.def.id, row.owned.level) }}</dd>
+          </div>
+        </dl>
+        <div class="artifact-card__actions flex gap-2 tinylens:flex-col">
           <button
             class="btn-seal flex-1 !py-1.5 !text-body"
             :class="{ '!bg-ink-faint': row.equipped }"
@@ -151,11 +208,13 @@
       </button>
     </div>
   </div>
-  <p v-else class="empty-note mt-16 text-center text-body text-ink-faint">
-    尚无法宝随身
-    <br />
-    <span class="text-body">法宝多出自际遇与强敌之手</span>
-  </p>
+  <div v-else class="artifact-empty" data-artifact-empty>
+    <span class="artifact-empty__seal" aria-hidden="true">空</span>
+    <p class="artifact-empty__title">尚无法宝随身</p>
+    <p class="artifact-empty__copy">
+      法宝多出自际遇与强敌之手。得到第一件后,这里会摊开随身位、祭炼下一重与两种代价。
+    </p>
+  </div>
   <p v-if="player.petId" class="mt-4 text-center text-body text-ink-faint">
     灵兽相伴,可在「名号」页更替
   </p>
@@ -187,6 +246,7 @@ import {
   artifactSlotsFor,
 } from "@/data/artifacts";
 import { artifactSlotBonus } from "@/core/heritageEffects";
+import { artifactDeskSummary } from "@/core/artifactDesk";
 import { REALMS } from "@/data/realms";
 import { artifactUpCost, upgradeArtifact } from "@/core/forge";
 import {
@@ -237,6 +297,52 @@ const artifactRows = computed(() =>
         a.def.name.localeCompare(b.def.name),
     ),
 );
+
+const artifactSummary = computed(() =>
+  artifactDeskSummary(
+    artifactRows.value.map((row) => ({
+      equipped: row.equipped,
+      hasUpgrade: row.upCost !== null,
+      affordable: row.upAffordable,
+    })),
+    artifactSlots.value,
+  ),
+);
+
+const equippedSeatRows = computed(() =>
+  Array.from({ length: artifactSlots.value }, (_, index) => {
+    const defId = inventory.equippedArtifacts[index] ?? null;
+    return {
+      defId,
+      def: defId ? artifactDef(defId) : undefined,
+      owned: defId ? inventory.artifacts.find((artifact) => artifact.defId === defId) : undefined,
+    };
+  }),
+);
+
+const artifactDeskSeal = computed(() =>
+  artifactSummary.value.total === 0 ? "空" : artifactSummary.value.emptySlots > 0 ? "悬" : "满",
+);
+
+const artifactDeskLead = computed(() => {
+  const summary = artifactSummary.value;
+  if (summary.total === 0) {
+    return {
+      title: "尚无一件法宝随身",
+      detail: "先认位次与祭炼;得到第一件后,全册会在这里摊开随身取舍与下一重收益。",
+    };
+  }
+  if (summary.emptySlots > 0) {
+    return {
+      title: `还有 ${summary.emptySlots} 个法宝位空悬`,
+      detail: `全册存 ${summary.stored} 件;从下方选一件随身,或先把已在位者炼高一重。`,
+    };
+  }
+  return {
+    title: "法宝位已满",
+    detail: `随身 ${summary.carried} 件,另存 ${summary.stored} 件;换入新法宝会替下最早随身的一件。`,
+  };
+});
 
 const ARTIFACT_RENDER_BATCH = 6;
 const ARTIFACT_RENDER_WINDOW = ARTIFACT_RENDER_BATCH * 2;

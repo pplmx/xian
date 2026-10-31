@@ -12654,6 +12654,7 @@ async function taskArtifactListOverflow() {
     const artifactFixture = await vite.ssrLoadModule("/scripts/lib/fullArtifactFixture.ts");
     const artifactRows = artifactFixture.fullArtifactRows();
     const sortedIds = artifactRows.map((artifact) => artifact.defId);
+    const equippedIds = sortedIds.slice(0, 2);
     const total = artifactRows.length;
 
     const slices = showcaseSlices("light");
@@ -12667,7 +12668,7 @@ async function taskArtifactListOverflow() {
       items: [],
       equipped: {},
       artifacts: artifactRows.map(({ defId, level }) => ({ defId, level })),
-      equippedArtifacts: [],
+      equippedArtifacts: equippedIds,
     };
     await seedSave(ctx, slices, "__artifactListFixture");
 
@@ -12682,7 +12683,53 @@ async function taskArtifactListOverflow() {
       .getByRole("tab", { name: /法\s*宝/ })
       .first()
       .click({ timeout: 5000 });
+    await page.locator("[data-artifact-overview]").waitFor({ state: "visible", timeout: 10000 });
     await page.locator("[data-artifact-total]").waitFor({ state: "visible", timeout: 10000 });
+    const overview = await page.evaluate(() => {
+      const holder = document.querySelector("[data-artifact-overview]");
+      const seats = [...document.querySelectorAll("[data-artifact-seat]")];
+      const values = Object.fromEntries(
+        [...document.querySelectorAll("[data-artifact-summary]")].map((node) => [
+          node.getAttribute("data-artifact-summary"),
+          Number(node.querySelector("strong")?.textContent),
+        ]),
+      );
+      return {
+        owned: Number(holder?.getAttribute("data-artifact-owned")),
+        carried: Number(holder?.getAttribute("data-artifact-carried")),
+        slots: Number(holder?.getAttribute("data-artifact-slots-count")),
+        ready: Number(holder?.getAttribute("data-artifact-ready")),
+        short: Number(holder?.getAttribute("data-artifact-short")),
+        maxed: Number(holder?.getAttribute("data-artifact-maxed")),
+        seats: seats.length,
+        filled: seats.filter((seat) => seat.getAttribute("data-artifact-seat-filled") === "true")
+          .length,
+        values,
+      };
+    });
+    checked += 1;
+    if (
+      overview.owned !== total ||
+      overview.carried !== equippedIds.length ||
+      overview.slots !== 2 ||
+      overview.seats !== 2 ||
+      overview.filled !== equippedIds.length ||
+      overview.ready !== overview.values.ready ||
+      overview.short !== overview.values.short ||
+      overview.maxed !== overview.values.maxed ||
+      overview.ready + overview.short + overview.maxed !== total
+    ) {
+      failures.push(
+        `[320] 法宝阵账与全册不同源:` +
+          `应 ${total} 件 / 随身 ${equippedIds.length} / 2 位 / 3 项读数合计 ${total},` +
+          `实见 ${overview.owned} 件 / 随身 ${overview.carried} / ${overview.slots} 位 / ` +
+          `席位 ${overview.filled}/${overview.seats} / ` +
+          `可炼 ${overview.ready} · 欠料 ${overview.short} · 满重 ${overview.maxed}`,
+      );
+    }
+    if (SHOTS) {
+      await page.screenshot({ path: join(SHOTS_DIR, "320_artifact.png") });
+    }
     await page.setViewportSize({ width: 195, height: 422 });
     await settleVisuals(page);
 
