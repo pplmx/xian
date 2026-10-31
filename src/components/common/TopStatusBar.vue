@@ -86,20 +86,23 @@
       </div>
     </div>
 
-    <!-- 卷目栏:只报「我在哪一卷」与「此世何界」,不重复页面里的大标题。 -->
+    <!--
+      位置签:只报「我在哪一卷、哪一册」与「此世何界」。
+
+      五卷入口已由左上玄枢印与玄枢图承担;这里再放一排卷签,会让同一屏出现
+      「顶栏卷签 / 卷首册签 / 底栏主册」三层导航。第二行因此只留一条不可点的
+      阅读路径,把方向感交给眼睛,把跳转留给明确的导航入口。
+    -->
     <div
       :data-folio-position="positionKey"
+      data-folio-trail
       class="masthead-route mt-1.5 flex min-w-0 items-center gap-1.5 border-t border-ink/10 pt-1 text-note text-ink-faint short:hidden"
     >
       <span class="masthead-route__position compact:hidden">{{ positionMark }}</span>
-      <FolioIndexRail
-        :items="volumeItems"
-        kind="volume"
-        label="五卷快引"
-        class="masthead-route__rail"
-      />
+      <span class="masthead-route__joint compact:hidden" aria-hidden="true">/</span>
       <span class="masthead-route__book min-w-0 truncate">{{ entryMark }}</span>
-      <span class="masthead-route__world ml-auto min-w-0 truncate text-right tinylens:hidden">
+      <span class="masthead-route__rule" aria-hidden="true" />
+      <span class="masthead-route__world min-w-0 truncate text-right tinylens:hidden">
         {{ player.worldName }}
         <template v-if="player.reincarnation.count > 0">
           · {{ player.reincarnation.count }} 世
@@ -120,9 +123,7 @@ import { cnNumber, formatGN, formatNum, lifespanPair } from "@/utils/format";
 import { LIFESPAN_WARN_RATIO } from "@/data/constants";
 import { Capacitor } from "@capacitor/core";
 import { useNativeInsets } from "@/composables/useNativeInsets";
-import { volumeRailItems } from "@/ui/folioIndexRail";
 import { navigationPositionOf } from "@/ui/navigation";
-import FolioIndexRail from "./FolioIndexRail.vue";
 import GameIcon from "./GameIcon.vue";
 import NavigationAtlas from "./NavigationAtlas.vue";
 
@@ -131,7 +132,6 @@ const resources = useResourcesStore();
 const route = useRoute();
 const atlasOpen = ref(false);
 const position = computed(() => navigationPositionOf(route.name));
-const volumeItems = computed(() => volumeRailItems(route.name));
 const positionKey = computed(() =>
   position.value ? `${position.value.sectionIndex + 1}-${position.value.entryIndex + 1}` : "",
 );

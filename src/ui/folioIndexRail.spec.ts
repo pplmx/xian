@@ -2,7 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { readStyleCss } from "@/test/readStyleCss";
-import { chapterRailItems, volumeRailItems } from "./folioIndexRail";
+import { chapterRailItems } from "./folioIndexRail";
 
 const ROOT = resolve(__dirname, "../..");
 
@@ -11,22 +11,7 @@ function source(rel: string): string {
   return readFileSync(resolve(ROOT, rel), "utf8");
 }
 
-describe("书口签 · 五卷与同卷诸册都能直接翻", () => {
-  it("五卷签读全站目录，当前卷留落点，各卷落到首册", () => {
-    const items = volumeRailItems("souls");
-
-    expect(items.map((item) => item.mark)).toEqual(["修", "道", "行", "身", "天"]);
-    expect(items.map((item) => item.shortLabel)).toEqual(["修行", "道场", "行旅", "身外", "天机"]);
-    expect(items.filter((item) => item.active).map((item) => item.key)).toEqual(["belongings"]);
-    expect(items.map((item) => item.to)).toEqual([
-      "/",
-      "/dongfu",
-      "/adventure",
-      "/inventory",
-      "/celestial",
-    ]);
-  });
-
+describe("书口签 · 同卷诸册都能直接翻", () => {
   it("册口签只列当前一卷，当前册唯一，未知路由不臆造册目", () => {
     expect(chapterRailItems("souls").map((item) => item.key)).toEqual([
       "inventory",
@@ -46,7 +31,7 @@ describe("书口签 · 五卷与同卷诸册都能直接翻", () => {
     expect(chapterRailItems("welcome")).toEqual([]);
   });
 
-  it("顶栏与卷首共用同一枚书口签，不各抄一份册目", () => {
+  it("顶栏只报当前位置，卷首保留同卷册签，跳转不再叠成第三层", () => {
     const component = source("src/components/common/FolioIndexRail.vue");
     const top = source("src/components/common/TopStatusBar.vue");
     const masthead = source("src/components/common/FolioPageHeader.vue");
@@ -56,8 +41,9 @@ describe("书口签 · 五卷与同卷诸册都能直接翻", () => {
     expect(component, "读屏落点要用 location 语义").toContain("'location'");
     expect(component, "每枚签要有完整读屏名").toContain(":aria-label");
     expect(component, "书口签可容纳时要露出短册名").toContain("folio-index-rail__label");
-    expect(top, "顶栏五卷签读共享构造器").toContain("volumeRailItems");
-    expect(top, "顶栏要挂五卷签").toContain('kind="volume"');
+    expect(top, "顶栏要有单一位置签").toContain("data-folio-trail");
+    expect(top, "顶栏不再挂五卷跳转").not.toContain("volumeRailItems");
+    expect(top, "顶栏不再渲染第二排书口签").not.toContain("<FolioIndexRail");
     expect(masthead, "卷首册签读共享构造器").toContain("chapterRailItems");
     expect(masthead, "卷首要挂本卷册签").toContain('label="本卷册目"');
   });

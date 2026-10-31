@@ -295,42 +295,48 @@
   .adventure-briefing__tier-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 0.35rem;
-    margin-top: 0.45rem;
+    margin-top: 0.38rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
   }
   .adventure-briefing__tier {
     position: relative;
     display: grid;
     min-width: 0;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 0.1rem 0.42rem;
-    padding: 0.42rem 0.48rem 0.42rem 0.62rem;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.1);
-    background: rgb(var(--color-paper-rgb) / 0.22);
+    grid-template-areas: "name brief odds";
+    grid-template-columns: 2.35rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.12rem 0.5rem;
+    padding: 0.38rem 0.1rem 0.38rem 0.62rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    background: linear-gradient(90deg, rgb(var(--color-paper-rgb) / 0.18), transparent 72%);
   }
   .adventure-briefing__tier-mark {
     position: absolute;
-    top: 0.38rem;
-    bottom: 0.38rem;
+    top: 0.34rem;
+    bottom: 0.34rem;
     left: 0;
     width: 2px;
     background: var(--tier-color);
   }
   .adventure-briefing__tier-name {
+    grid-area: name;
     color: var(--tier-color);
     font-family: var(--font-kai);
     font-size: var(--type-body);
     letter-spacing: 0.08em;
+    white-space: nowrap;
   }
   .adventure-briefing__tier strong {
+    grid-area: odds;
     align-self: center;
     justify-self: end;
     color: rgb(var(--color-ink-soft-rgb));
     font-size: var(--type-note);
     font-weight: 500;
+    white-space: nowrap;
   }
   .adventure-briefing__tier-brief {
-    grid-column: 1 / -1;
+    grid-area: brief;
     color: rgb(var(--color-ink-faint-rgb));
     font-size: var(--type-note);
     line-height: 1.45;
@@ -427,10 +433,6 @@
     .adventure-briefing__notices {
       grid-column: 1 / -1;
     }
-
-    .adventure-briefing__tier-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
   }
   @media (min-width: 960px) {
     .adventure-briefing__sheet {
@@ -440,10 +442,6 @@
     .adventure-briefing__tiers {
       border-top: 0;
       border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-    }
-
-    .adventure-briefing__tier-grid {
-      grid-template-columns: minmax(0, 1fr);
     }
 
     .adventure-briefing__notices {
@@ -495,6 +493,19 @@
 
     .adventure-briefing__tier-grid {
       grid-template-columns: minmax(0, 1fr);
+    }
+
+    .adventure-briefing__tier {
+      grid-template-areas:
+        "name"
+        "odds"
+        "brief";
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.08rem;
+    }
+
+    .adventure-briefing__tier strong {
+      justify-self: start;
     }
   }
 }

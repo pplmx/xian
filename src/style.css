@@ -1191,24 +1191,36 @@
   .masthead-route {
     position: relative;
   }
-  .masthead-route::before {
-    content: "";
-    width: 3px;
-    height: 3px;
-    flex: none;
-    border-radius: 999px;
-    background: rgb(var(--color-ink-rgb) / 0.2);
-  }
   .masthead-route__position {
     flex: none;
     color: rgb(var(--color-cinnabar-rgb));
     font-family: var(--font-kai);
     letter-spacing: 0.16em;
   }
+  .masthead-route__joint {
+    flex: none;
+    color: rgb(var(--color-ink-rgb) / 0.24);
+    font-family: var(--font-kai);
+  }
   .masthead-route__book {
+    flex: none;
     color: rgb(var(--color-ink-soft-rgb));
     font-family: var(--font-kai);
     letter-spacing: 0.1em;
+  }
+  .masthead-route__rule {
+    height: 1px;
+    min-width: 0.5rem;
+    flex: 1;
+    background: linear-gradient(
+      90deg,
+      rgb(var(--color-ink-rgb) / 0.12),
+      rgb(var(--color-ink-rgb) / 0.02)
+    );
+  }
+  .masthead-route__world {
+    flex: none;
+    letter-spacing: 0.04em;
   }
   /*
    * 书口签 —— 全站导航的第二层。

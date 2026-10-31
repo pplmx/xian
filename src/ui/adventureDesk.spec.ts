@@ -85,8 +85,9 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
     expect(view.slice(rulesAt), "规则仍读同一份镇压阈值").toContain("SUPPRESS_THRESHOLDS.minWins");
   });
 
-  it("今日账在手机先单列,390 起三档并读,极窄档把路线与数值放开", () => {
+  it("今日账把三档落成连续概率行,手机不靠三列硬挤,极窄档再拆行", () => {
     const css = source("src/style.css");
+    const view = source("src/views/AdventureView.vue");
 
     expect(css, "卷首法球收在 124px,给 390 首屏的出发键留出安全间距").toMatch(
       /\.adventure-compass\s*\{[\s\S]{0,160}width:\s*124px/,
@@ -94,9 +95,14 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
     expect(css).toMatch(
       /\.adventure-briefing__sheet\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
-    expect(css).toMatch(
-      /@media \(min-width: 360px\)\s*\{[\s\S]{0,700}\.adventure-briefing__tier-grid\s*\{[\s\S]{0,100}repeat\(3, minmax\(0, 1fr\)\)/,
+    expect(view, "每一档都要留运行时落点").toContain(':data-event-tier="t.id"');
+    expect(css, "三档常态是一条连续概率账,不再并成三列").toMatch(
+      /\.adventure-briefing__tier\s*\{[\s\S]{0,260}?grid-template-areas:\s*"name brief odds"/,
     );
+    expect(css, "概率读数不许折行").toMatch(
+      /\.adventure-briefing__tier strong\s*\{[\s\S]{0,220}?white-space:\s*nowrap/,
+    );
+    expect(css, "320/375/390 共用同一条连续概率行").not.toContain("@media (max-width: 359px)");
     expect(css).toMatch(
       /\.adventure-region--next\s*\{[\s\S]{0,120}border-left-color:\s*rgb\(var\(--color-qing-rgb\)/,
     );
@@ -104,7 +110,7 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,1200}\.adventure-route__body\s*\{[\s\S]{0,120}flex-direction:\s*column/,
     );
     expect(css).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1600}\.adventure-briefing__tier-grid\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.adventure-briefing__tier\s*\{[\s\S]{0,160}?grid-template-areas:\s*"name"\s*"odds"\s*"brief"/,
     );
     expect(css).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.adventure-route__head\s*\{[\s\S]{0,120}grid-template-columns:\s*auto minmax\(0, 1fr\)/,

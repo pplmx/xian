@@ -49,13 +49,14 @@
                 <div
                   v-for="t in EVENT_TIERS"
                   :key="t.id"
+                  :data-event-tier="t.id"
                   class="adventure-briefing__tier"
                   :style="{ '--tier-color': t.color }"
                 >
                   <span class="adventure-briefing__tier-mark" aria-hidden="true" />
                   <span class="adventure-briefing__tier-name">{{ t.name }}</span>
-                  <strong class="tabular">{{ tierOddsText(t.id, chainPending) }}</strong>
                   <span class="adventure-briefing__tier-brief">{{ t.brief }}</span>
+                  <strong class="tabular">{{ tierOddsText(t.id, chainPending) }}</strong>
                 </div>
               </div>
             </div>
