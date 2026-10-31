@@ -41,7 +41,8 @@ describe("书口签 · 同卷诸册都能直接翻", () => {
     expect(component, "读屏落点要用 location 语义").toContain("'location'");
     expect(component, "每枚签要有完整读屏名").toContain(":aria-label");
     expect(component, "书口签可容纳时要露出短册名").toContain("folio-index-rail__label");
-    expect(top, "顶栏要有单一位置签").toContain("data-folio-trail");
+    expect(top, "顶栏要有单一位置签").toContain("data-folio-position");
+    expect(top, "顶栏位置已经收进书口带，不再另起第二行").not.toContain("data-folio-trail");
     expect(top, "顶栏不再挂五卷跳转").not.toContain("volumeRailItems");
     expect(top, "顶栏不再渲染第二排书口签").not.toContain("<FolioIndexRail");
     expect(masthead, "卷首册签读共享构造器").toContain("chapterRailItems");

@@ -7,7 +7,7 @@
   <nav
     data-folio-dock
     aria-label="主册导航"
-    class="bottom-dock relative z-20 shrink-0 border-t border-transparent bg-paper-deep/95 backdrop-blur"
+    class="bottom-dock folio-dock relative z-20 shrink-0 border-t border-transparent"
     :style="`padding-bottom: max(env(safe-area-inset-bottom), ${navInset}px)`"
   >
     <div class="ink-divider absolute -top-px inset-x-0" />
@@ -15,9 +15,7 @@
       手机宽度仍铺满栏底；620px 以上的宽叶不再把五册拉成一条长栏。
       收在 40rem 并居中后，每枚书脚签仍有 96~128px 触达宽度，像一列真的书脚索引。
     -->
-    <div
-      class="bottom-dock-rail mx-auto mt-1.5 grid w-[calc(100%_-_1rem)] max-w-[40rem] grid-cols-5 border-y border-ink/15 bg-paper/70"
-    >
+    <div class="bottom-dock-rail mx-auto grid w-[calc(100%_-_1rem)] max-w-[40rem] grid-cols-5">
       <!--
         当前在哪一页交给 RouterLink:它在 exact-active 时自己渲染 aria-current="page"
         (vue-router 的 aria-current-value 默认值就是 page)。这里不再手写一份 ——
@@ -28,8 +26,7 @@
         v-for="tab in TABS"
         :key="tab.name"
         :to="tab.to"
-        class="bottom-dock-tab bottom-dock-slip relative flex min-h-[46px] flex-col items-center justify-center gap-0.5 border-l border-ink/10 px-0.5 py-1 transition-[transform,background-color,color,box-shadow] first:border-l-0 short:min-h-[40px] short:gap-0 short:py-0.5"
-        :class="route.name === tab.name ? 'text-cinnabar' : 'text-ink-faint active:text-ink-soft'"
+        class="bottom-dock-tab bottom-dock-slip relative flex min-h-[46px] flex-col items-center justify-center gap-0.5 px-0.5 py-1 transition-[transform,background-color,color,box-shadow] short:min-h-[40px] short:gap-0 short:py-0.5"
         :data-dock-current="route.name === tab.name ? '' : undefined"
       >
         <!--
@@ -44,8 +41,7 @@
           aria-hidden="true"
         />
         <span
-          class="relative grid h-7 w-8 place-items-center transition-transform duration-200"
-          :class="route.name === tab.name ? '-translate-y-0.5 scale-105' : ''"
+          class="bottom-dock-tab__glyph relative grid h-7 w-8 place-items-center transition-transform duration-200"
         >
           <span
             v-if="route.name === tab.name"
@@ -86,10 +82,9 @@
             aria-hidden="true"
           />
         </span>
-        <span
-          class="relative font-kai text-body tracking-[0.2em] short:text-note tinylens:text-note tinylens:tracking-normal"
-          >{{ tab.label }}</span
-        >
+        <span class="bottom-dock-tab__label relative font-kai short:text-note tinylens:text-note">{{
+          tab.label
+        }}</span>
         <!--
           视觉上说得清、读屏里也要说得出。
 

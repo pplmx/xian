@@ -1596,9 +1596,16 @@ async function measurePixelContrast(page, sampler, dpr) {
           ) {
             top = Math.max(top, railBox.bottom);
           }
+          /*
+           * 滚动井边缘会把一行只切出两三像素。那不是一段能读的正文，下一帧继续滚动
+           * 就会离开边缘；拿这点残片去算底色只会随机撞上边框或装饰线。故只量至少露出
+           * 半行高的文字块；真正贴着吸顶栏、但仍完整可见的字仍照常量。
+           */
+          const visibleHeightRatio = (bottom - top) / Math.max(1, box.height);
           if (
             right - left > 1 &&
             bottom - top > 1 &&
+            visibleHeightRatio >= 0.5 &&
             top >= 0 &&
             bottom <= innerHeight &&
             left >= 0 &&
@@ -9240,6 +9247,24 @@ async function taskBuildArtifacts() {
       failures.push("外壳高度没走 dvh(手机浏览器地址栏挂在外面时,底栏会被压住)");
     }
     /*
+     * 样式表要先于模块预载排队。
+     *
+     * Vite 默认把入口 CSS 放在几十条 modulepreload 后面,4G 冷启动时预载 JS
+     * 会先把连接池占满,FCP 只能等样式最后一个到。插件只调换标签顺序;这条
+     * 直接查构建产物,避免以后换构建器或插件顺序时静默退回。
+     */
+    checked += 1;
+    const indexHtml = readFileSync(join(ROOT, "dist/index.html"), "utf8");
+    const stylesheetAt = indexHtml.search(/<link\b[^>]*\brel="stylesheet"/);
+    const moduleAt = indexHtml.search(
+      /<(?:script\b[^>]*\btype="module"|link\b[^>]*\brel="modulepreload")/,
+    );
+    if (stylesheetAt < 0) {
+      failures.push("构建产物没有入口样式表");
+    } else if (moduleAt >= 0 && stylesheetAt > moduleAt) {
+      failures.push("入口样式表仍排在模块预载之后 —— 冷启动首帧会先等几十个 JS 请求");
+    }
+    /*
      * 楷体栈:内置那份必须**排第一**。
      *
      * 这条只能查产物,查运行时没有意义:无头容器里没有系统楷体,排在第四位也一样会被
@@ -12947,7 +12972,10 @@ async function taskAtlasNavigation() {
         const atlas = document.querySelector("[data-nav-atlas]");
         const entries = [...document.querySelectorAll("[data-atlas-entry]")];
         const volumes = [...document.querySelectorAll("[data-atlas-volume]")];
-        const current = document.querySelector(".atlas-current");
+        const current = document.querySelector("[data-atlas-location]");
+        const visibleSections = [...document.querySelectorAll("[data-atlas-section]")].filter(
+          (el) => el.offsetParent !== null,
+        );
         return {
           present: !!atlas,
           entries: entries.length,
@@ -12961,6 +12989,7 @@ async function taskAtlasNavigation() {
           searchFocused: document.activeElement?.matches("[data-atlas-search]") ?? false,
           current: (current?.textContent || "").replace(/\s+/g, " ").trim(),
           active: entries.filter((el) => el.getAttribute("aria-current") === "page").length,
+          visibleSections: visibleSections.length,
         };
       });
       checked += 1;
@@ -12985,6 +13014,9 @@ async function taskAtlasNavigation() {
       }
       if (state.active !== 1) {
         failures.push(`[${vp.tag}] 玄枢图当前册标了 ${state.active} 次(应恰为 1)`);
+      }
+      if (state.visibleSections !== 1) {
+        failures.push(`[${vp.tag}] 玄枢图同时展开了 ${state.visibleSections} 卷(应只展开当前一卷)`);
       }
 
       const problems = problemsOf(await measurePage(page));
@@ -13065,9 +13097,22 @@ async function taskAtlasNavigation() {
               const scroller = document.querySelector("[data-folio-modal-scroll]");
               const target = document.querySelector('[data-atlas-section="fate"]');
               if (!scroller || !target) return false;
+              const selected =
+                document
+                  .querySelector('[data-atlas-volume="fate"]')
+                  ?.getAttribute("aria-selected") === "true";
+              const visible = [...document.querySelectorAll("[data-atlas-section]")].filter(
+                (el) => el.offsetParent !== null,
+              );
               const viewport = scroller.getBoundingClientRect();
               const section = target.getBoundingClientRect();
-              return section.top >= viewport.top - 12 && section.top < viewport.bottom - 24;
+              return (
+                selected &&
+                visible.length === 1 &&
+                visible[0] === target &&
+                section.top >= viewport.top - 12 &&
+                section.top < viewport.bottom - 24
+              );
             },
             { timeout: 3000 },
           )
@@ -13076,6 +13121,7 @@ async function taskAtlasNavigation() {
         checked += 1;
         if (!volumeJumped) failures.push("[390] 玄枢图点「天机」快引没有翻到末卷");
 
+        await page.locator('[data-atlas-volume="belongings"]').click();
         const souls = page.locator('[data-atlas-entry][href="#/souls"]');
         await souls.click();
         const jumped = await page

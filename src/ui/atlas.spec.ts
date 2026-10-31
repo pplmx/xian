@@ -94,6 +94,8 @@ describe("玄枢图 · 五卷快引", () => {
     expect(atlas, "顶栏的玄枢图要有五卷快引").toContain("data-atlas-compass");
     expect(atlas, "每一卷要有可点击的快引").toContain("data-atlas-volume");
     expect(atlas, "快引要有明确的目标关系").toContain(":aria-controls");
+    expect(atlas, "五卷快引要被读屏认成一组卷签").toContain('role="tablist"');
+    expect(atlas, "当前卷要报出选中状态").toContain(":aria-selected");
     expect(atlas, "每卷仍要完整铺出册目").toContain("data-atlas-section");
     expect(atlas, "当前卷要留可见落点").toContain("data-atlas-section-current");
     expect(atlas, "五卷快引要支持键盘游标").toContain("atlasJumpIndex");
@@ -104,14 +106,16 @@ describe("玄枢图 · 五卷快引", () => {
     expect(atlas, "检索为空要给出下一步，不只是一块空白").toContain("data-atlas-empty");
     expect(atlas, "中文输入法组合期间不许把回车当成翻册").toContain("event.isComposing");
     expect(atlas, "桌面总图要能比普通弹窗更宽").toContain('size="max"');
+    expect(atlas, "总图面板要挂独立案台样式").toContain("panel-class");
     expect(atlas, "打开总图时焦点要直接落在寻册口").toContain("initial-focus");
     expect(modal, "弹窗原语要支持总图宽度").toContain('props.size === "max"');
     expect(modal, "弹窗原语要支持指定首焦点").toContain("initialFocus");
+    expect(modal, "弹窗原语要允许调用方追加面板样式").toContain("panelClass");
     expect(css, "五卷快引要有独立样式").toContain(".atlas-compass");
     expect(css, "寻册口要有独立样式").toContain(".atlas-search");
     expect(css, "书脊寻册入口要有独立样式").toContain(".desktop-spine__lookup");
-    expect(css, "桌面总图要铺成两列卷宗").toMatch(
-      /@media \(min-width: 720px\)[\s\S]*?\.atlas-index[\s\S]*?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/,
+    expect(css, "桌面总图要把卷目与当前卷宗并读").toMatch(
+      /@media \(min-width: 720px\)[\s\S]{0,1600}?\.atlas-browser[\s\S]{0,220}?grid-template-columns:/,
     );
     expect(css, "195px 档五卷快引改两列，末卷跨满整行").toMatch(
       /@media \(max-width: 220px\)[\s\S]*?\.atlas-compass\s*\{[\s\S]{0,180}?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);[\s\S]{0,900}?\.atlas-volume:last-child\s*\{[\s\S]{0,100}?grid-column:\s*1\s*\/\s*-1;/,

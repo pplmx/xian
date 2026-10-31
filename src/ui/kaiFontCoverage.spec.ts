@@ -31,6 +31,7 @@ import { join, resolve } from "node:path";
 const ROOT = resolve(__dirname, "../..");
 const CHARS_FILE = resolve(ROOT, "scripts/fonts/kai-subset.chars.txt");
 const META_FILE = resolve(ROOT, "scripts/fonts/kai-subset.meta.json");
+const BUILD_SCRIPT = resolve(ROOT, "scripts/fonts/build-kai-font.py");
 const FONT_DIR = resolve(ROOT, "src/assets/fonts");
 const CSS_FILE = join(FONT_DIR, "kai-subset.css");
 
@@ -63,6 +64,15 @@ function sourceChars(): Set<string> {
   walk(resolve(ROOT, "src"));
   eat(readFileSync(resolve(ROOT, "index.html"), "utf-8"));
   return chars;
+}
+
+function inUnicodeRange(char: string, range: string): boolean {
+  const point = char.codePointAt(0) ?? 0;
+  return range.split(",").some((part) => {
+    const value = part.trim().replace(/^U\+/i, "");
+    const [start, end = start] = value.split("-").map((hex) => Number.parseInt(hex, 16));
+    return point >= start! && point <= end!;
+  });
 }
 
 describe("楷体子集 · 覆盖", () => {
@@ -134,5 +144,17 @@ describe("楷体子集 · 覆盖", () => {
       files.filter((f) => !known.has(f)),
       "有切片没进记账",
     ).toEqual([]);
+  });
+
+  it("欢迎页真正用到的楷体字都留在第一片", () => {
+    // 首屏只有 31 个 font-kai 字符;若按全站频次排序会散进七片,多拉约 300KB。
+    // 生成脚本把这一组固定前置,这里从脚本读同一份清单,避免另抄一份。
+    const script = readFileSync(BUILD_SCRIPT, "utf-8");
+    const boot = /BOOT_FONT_CHARS = set\("([^"]+)"\)/.exec(script)?.[1] ?? "";
+    expect(boot.length, "生成脚本里找不到首屏楷体字清单").toBeGreaterThan(0);
+    const meta = JSON.parse(readFileSync(META_FILE, "utf-8")) as { chunks: ChunkMeta[] };
+    const firstRange = meta.chunks[0]?.unicode_range ?? "";
+    const strays = Array.from(boot).filter((char) => !inUnicodeRange(char, firstRange));
+    expect(strays.join(""), `这些首屏楷体字被挤出第一片:${strays.join("")}`).toBe("");
   });
 });

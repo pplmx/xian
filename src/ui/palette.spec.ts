@@ -249,6 +249,29 @@ describe("调色板 · 承载文字的色都过 AA", () => {
   });
 });
 
+describe("调色板 · 书口带", () => {
+  it("固定深墨上的每一档字色都过 AA，且夜间不再另换一套书口", () => {
+    const colors = new Map(
+      [
+        ...bodyOf(/:root \{([\s\S]*?)\n\}/).matchAll(
+          /--chrome(?:-([a-z0-9-]+))?-rgb:\s*(\d+)\s+(\d+)\s+(\d+);/g,
+        ),
+      ].map((m) => [m[1] ?? "base", [Number(m[2]), Number(m[3]), Number(m[4])] as const]),
+    );
+    const bands = ["base", "deep"].map((name) => colors.get(name)!);
+    const bad: string[] = [];
+    for (const name of ["ink", "muted", "accent", "gold", "qing"]) {
+      for (const [index, band] of bands.entries()) {
+        const ratio = contrast(colors.get(name)!, band);
+        if (ratio < 4.5)
+          bad.push(`chrome-${name}@${index === 0 ? "带" : "深带"} ${ratio.toFixed(2)}:1`);
+      }
+    }
+    expect(bad, "书口带上的奶油字、淡墨与资源色也要扛得住 10-14px 小字").toEqual([]);
+    expect(bodyOf(/html\[data-theme=["']dark["']\] \{([\s\S]*?)\n\}/)).not.toContain("--chrome-");
+  });
+});
+
 describe("调色板 · 印面", () => {
   it("深朱当底时,上面那行奶油字照样 ≥4.5:1(两套主题)", () => {
     // 奶油字是 .btn-seal 里写死的字面量:改了色号却忘了这一处,判据要能喊住

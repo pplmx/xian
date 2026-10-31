@@ -46,6 +46,7 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
   it("翻页后由玄枢册目同源播报落点，键盘可越过导航直入正文", () => {
     const app = source("src/App.vue");
     const css = source("src/style.css");
+    const index = source("index.html");
 
     expect(folioArrivalTextOf("settings")).toBe("已翻至第五卷「天机」第五册「设置」");
     expect(folioArrivalTextOf("welcome")).toBe("");
@@ -60,6 +61,9 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     );
     expect(app, "入卷后要把顺序焦点起点交还正文起始处").toMatch(
       /from\.name === "create"[\s\S]{0,160}document\.body\.focus\(\{ preventScroll: true \}\)/,
+    );
+    expect(index, "body 要能被程序化聚焦，body.focus() 才不会静默失败").toContain(
+      '<body tabindex="-1">',
     );
     expect(css, "跳读入口只在键盘聚焦时展开").toContain(".folio-skip-link:focus-visible");
     expect(css, "跳读入口要有独立书签形制").toContain(".folio-skip-link");
@@ -127,18 +131,67 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     expect(layout, "收束后的书脚索引必须居中").toContain("平板底栏书脚索引没有居中");
   });
 
-  it("玄枢图是五卷快引加卷宗分册，而不是一条没有总目的长列表", () => {
+  it("手机外壳是一册连续卷面：深色书口夹住正文，不再叠两张浅色导航卡", () => {
+    const app = source("src/App.vue");
+    const top = source("src/components/common/TopStatusBar.vue");
+    const dock = source("src/components/common/BottomNavigation.vue");
+    const toast = source("src/components/common/ToastHost.vue");
+    const css = source("src/style.css");
+
+    expect(app, "外壳不再把手机宽度交给通用投影卡工具类").not.toContain(
+      "shadow-[0_0_60px_rgba(0,0,0,0.45)]",
+    );
+    expect(top, "书首用独立的书口带结构").toContain("folio-head--ribbon");
+    expect(top, "位置仍读同一份玄枢落点").toContain("data-folio-position");
+    expect(top, "手机书首不再保留第二行位置签").not.toContain("data-folio-trail");
+    expect(dock, "书脚导航要有同一套书口带结构").toContain("folio-dock");
+    expect(css, "书口带颜色只从设计变量取").toContain("--chrome-rgb");
+    expect(css, "书首落深色书口").toContain(".folio-head--ribbon");
+    expect(css, "底栏落深色书口").toContain(".folio-dock");
+    expect(css, "手机外壳贴满阅读面，不再像浮在桌面上的卡片").toMatch(
+      /\.app-shell\s*\{[\s\S]{0,400}?isolation:\s*isolate;[\s\S]{0,160}?box-shadow:\s*none;/,
+    );
+    expect(toast, "全局提示条要跳出书壳 isolation，打开弹窗时仍能点击").toContain(
+      '<Teleport to="body">',
+    );
+    expect(css, "620px 起才把外壳当独立宽叶托起").toMatch(
+      /@media \(min-width: 620px\)[\s\S]{0,200}?\.app-shell\s*\{[\s\S]{0,200}?box-shadow:/,
+    );
+    for (const [selector, label] of [
+      [".folio-head--ribbon", "书首"],
+      [".folio-dock", "书脚"],
+    ] as const) {
+      const block =
+        new RegExp(`${selector.replaceAll(".", "\\.")}\\s*\\{([\\s\\S]*?)\\n  \\}`).exec(
+          css,
+        )?.[1] ?? "";
+      expect(block, `${label}要有带内压线`).toMatch(/box-shadow:\s*inset 0 1px 0/);
+      expect(block, `${label}不许向正文投外影，免得压暗贴着书口的小字`).not.toMatch(
+        /box-shadow:[\s\S]*?\n\s*0\s+-?\d+(?:\.\d+)?px/,
+      );
+    }
+  });
+
+  it("玄枢图是一张可翻的五卷案台，而不是三层总目卡片叠在一起", () => {
     const atlas = source("src/components/common/NavigationAtlas.vue");
     const css = source("src/style.css");
 
+    expect(atlas, "五卷与卷宗要收进同一张案台").toContain("atlas-browser");
     expect(atlas, "五卷要有总目快引").toContain("atlas-compass");
     expect(atlas, "快引要逐卷落点").toContain("data-atlas-volume");
     expect(atlas, "册目仍要完整铺成卷宗").toContain("atlas-index");
     expect(atlas, "每一卷要有卷次标记").toContain("atlas-section__number");
     expect(atlas, "每一册改为单列目录行").toContain("atlas-entry-list");
-    expect(atlas, "当前册要留一枚在册印").toContain("atlas-current__seal");
+    expect(atlas, "当前落点要压成一条册口签").toContain("data-atlas-location");
+    expect(atlas, "当前册要有读屏可辨认的页签面板").toContain('role="tabpanel"');
+    expect(atlas, "只展开当前卷，其余卷宗保留在 DOM 中供检索").toContain(
+      'v-show="activeVolumeId === group.id"',
+    );
     expect(css, "五卷总目要有独立样式").toContain(".atlas-compass");
     expect(css, "卷宗分册要有独立样式").toContain(".atlas-index");
+    expect(css, "桌面案台把卷目与册页并成两栏").toMatch(
+      /@media \(min-width: 720px\)[\s\S]{0,1600}?\.atlas-browser\s*\{[\s\S]{0,160}?grid-template-columns:/,
+    );
   });
 
   it("书首、卷首与弹窗共用同一套卷次册次，不再各算各的序号", () => {

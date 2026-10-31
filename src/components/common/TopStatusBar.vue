@@ -1,114 +1,84 @@
 <template>
   <header
     data-folio-head
-    class="app-masthead folio-head relative z-20 shrink-0 border-b border-transparent bg-paper-deep/90 px-4 py-2 backdrop-blur short:py-1 tinylens:px-2"
+    :data-folio-position="positionKey"
+    class="app-masthead folio-head folio-head--ribbon relative z-20 shrink-0 border-b border-transparent"
     :style="`padding-top: max(env(safe-area-inset-top), ${statusTopPad})`"
   >
     <!--
-      底缘那道渐隐墨线 —— 与底栏上缘同一句写法,两栏因此成一对「书页的上下切口」。
-
-      这里只换画法、不动边框职责:border-b 的宽度与颜色原先一起承担「一条实线」的职责,
-      现在让宽度留着(transparent)、线交给 .ink-divider 画 —— 线的两头收了口,
-      不再是齐着屏幕边的框线;卷目栏的高度由下方那一行自己承担。
+      书口带的底缘仍由同一道渐隐线收口。border-b 保留透明宽度，
+      避免实线再叠一条线；深色带上的线改用奶油墨，夜间与日间都看得见。
     -->
     <div class="ink-divider absolute inset-x-0 -bottom-px" aria-hidden="true" />
-    <!--
-      窄屏不许折行:320 宽时右组的「9 兆」「25.33 亿」与左组的「3000/1000 亿载」
-      曾被压成两行,顶栏从 46px 涨到 58px,数字看着像乱码。故右组 shrink-0(整组
-      不参与收缩)、每格 whitespace-nowrap(数不许断行),让左组先让位:
-      名字 truncate、境界行 overflow-hidden,被裁掉的尾巴只能是卷目/世界这类闲格。
-    -->
-    <div
-      class="folio-head__body relative flex min-w-0 items-center justify-between gap-2 overflow-hidden"
-    >
-      <div class="flex min-w-0 items-center gap-2 overflow-hidden">
+
+    <div class="folio-head__body relative flex min-w-0 items-center gap-2 overflow-hidden">
+      <div class="folio-head__identity-wrap flex min-w-0 items-center gap-2 overflow-hidden">
         <button
           type="button"
           data-atlas-trigger
-          class="atlas-trigger flex h-8 w-8 shrink-0 flex-col items-center justify-center gap-0.5 border border-ink/20 font-kai text-ink-soft active:scale-90"
+          class="atlas-trigger flex h-9 w-9 shrink-0 items-center justify-center font-kai active:scale-90"
           aria-label="打开玄枢图寻册"
           aria-haspopup="dialog"
           @click="emit('openAtlas')"
         >
-          <span class="atlas-trigger__char text-title leading-none">玄</span>
-          <span class="atlas-trigger__mark text-note leading-none">枢</span>
+          <span class="atlas-trigger__char" aria-hidden="true">玄</span>
+          <span class="atlas-trigger__volume tabular" aria-hidden="true">{{ volumeMark }}</span>
         </button>
-        <div class="folio-head__identity min-w-0 leading-tight">
-          <p class="truncate font-kai text-title tracking-[0.14em] text-ink">
-            {{ player.name }}
-          </p>
-          <p class="flex items-center gap-1.5 whitespace-nowrap text-note text-ink-faint">
-            <span class="min-w-0 flex-1 truncate">{{ player.realmName }}</span>
-            <span class="h-3 w-px shrink-0 bg-ink/15" aria-hidden="true" />
-            <!-- 年龄:寿元将尽时转朱砂,顶栏常驻便于随时察觉 -->
+        <div class="folio-head__identity min-w-0">
+          <p class="folio-head__name truncate font-kai">{{ player.name }}</p>
+          <p class="folio-head__meta">
+            <span class="folio-head__realm tinylens:hidden">{{ player.realmName }}</span>
             <span
-              class="tabular shrink-0"
-              :class="player.lifespanRatio < LIFESPAN_WARN_RATIO ? 'text-cinnabar' : ''"
+              class="folio-head__lifespan tabular compact:hidden"
+              :data-lifespan-warning="player.lifespanRatio < LIFESPAN_WARN_RATIO ? '' : undefined"
             >
               {{ lifespan.age }}/{{ lifespan.max }}载
             </span>
           </p>
         </div>
-        <div
-          data-desktop-context
-          class="folio-head__desktop-context min-w-0 items-center gap-2 whitespace-nowrap"
-        >
-          <span class="font-kai text-body tracking-[0.16em] text-cinnabar">{{ positionMark }}</span>
-          <span class="h-3 w-px shrink-0 bg-ink/15" aria-hidden="true" />
-          <span class="min-w-0 truncate font-kai text-title tracking-[0.12em] text-ink">{{
-            entryMark
-          }}</span>
-          <span class="text-note text-ink-faint">· {{ player.worldName }}</span>
-        </div>
       </div>
-      <div class="folio-head__ledger flex shrink-0 items-center text-body text-ink-soft tabular">
+
+      <div data-desktop-context class="folio-head__position min-w-0">
+        <span class="folio-head__position-volume">{{ positionMark }}</span>
+        <span class="folio-head__position-rule" aria-hidden="true" />
+        <span class="folio-head__position-entry truncate">{{ entryMark }}</span>
+        <span class="folio-head__position-world">· {{ player.worldName }}</span>
+      </div>
+
+      <div class="folio-head__ledger flex shrink-0 items-center tabular">
         <span
-          class="folio-head__ledger-entry flex items-center gap-1 whitespace-nowrap"
+          class="folio-head__ledger-entry flex items-center whitespace-nowrap compact:px-1"
           title="灵石"
+          :aria-label="`灵石 ${formatGN(resources.spiritStone)}`"
         >
-          <GameIcon name="gem" :size="13" class="text-gold-ink" />
-          {{ formatGN(resources.spiritStone) }}
+          <GameIcon
+            name="gem"
+            :size="13"
+            class="folio-head__resource-icon folio-head__resource-icon--stone"
+          />
+          <span>{{ formatGN(resources.spiritStone) }}</span>
         </span>
         <span
-          class="folio-head__ledger-entry flex items-center gap-1 whitespace-nowrap"
+          class="folio-head__ledger-entry flex items-center whitespace-nowrap compact:px-1"
           title="灵气"
+          :aria-label="`灵气 ${formatNum(Math.floor(resources.qi))}`"
         >
-          <GameIcon name="wind" :size="13" class="text-qing" />
-          {{ formatNum(Math.floor(resources.qi)) }}
+          <GameIcon
+            name="wind"
+            :size="13"
+            class="folio-head__resource-icon folio-head__resource-icon--qi"
+          />
+          <span>{{ formatNum(Math.floor(resources.qi)) }}</span>
         </span>
         <!-- 只有图标的入口必须自带名字:否则读屏只会念「链接」,自动化也点不着它 -->
         <RouterLink
           to="/settings"
           aria-label="设置"
-          class="folio-head__settings -my-2 -mr-2 flex min-h-[40px] min-w-[40px] items-center justify-center p-1.5 text-ink-faint active:scale-90 tinylens:hidden"
+          class="folio-head__settings flex min-h-[40px] min-w-[40px] items-center justify-center active:scale-90 tinylens:hidden"
         >
           <GameIcon name="settings" :size="15" />
         </RouterLink>
       </div>
-    </div>
-
-    <!--
-      位置签:只报「我在哪一卷、哪一册」与「此世何界」。
-
-      五卷入口已由左上玄枢印与玄枢图承担;这里再放一排卷签,会让同一屏出现
-      「顶栏卷签 / 卷首册签 / 底栏主册」三层导航。第二行因此只留一条不可点的
-      阅读路径,把方向感交给眼睛,把跳转留给明确的导航入口。
-    -->
-    <div
-      :data-folio-position="positionKey"
-      data-folio-trail
-      class="masthead-route mt-1.5 flex min-w-0 items-center gap-1.5 border-t border-ink/10 pt-1 text-note text-ink-faint short:hidden"
-    >
-      <span class="masthead-route__position compact:hidden">{{ positionMark }}</span>
-      <span class="masthead-route__joint compact:hidden" aria-hidden="true">/</span>
-      <span class="masthead-route__book min-w-0 truncate">{{ entryMark }}</span>
-      <span class="masthead-route__rule" aria-hidden="true" />
-      <span class="masthead-route__world min-w-0 truncate text-right tinylens:hidden">
-        {{ player.worldName }}
-        <template v-if="player.reincarnation.count > 0">
-          · {{ player.reincarnation.count }} 世
-        </template>
-      </span>
     </div>
   </header>
 </template>
@@ -137,6 +107,9 @@ const positionMark = computed(() =>
   position.value
     ? `卷${cnNumber(position.value.sectionIndex + 1)} · ${position.value.section.label}`
     : "玄枢",
+);
+const volumeMark = computed(() =>
+  position.value ? cnNumber(position.value.sectionIndex + 1) : "玄",
 );
 const entryMark = computed(() =>
   position.value

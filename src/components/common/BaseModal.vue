@@ -15,7 +15,7 @@
           tabindex="-1"
           data-folio-modal
           class="modal-panel folio-modal paper-grain relative flex max-h-[84vh] w-full flex-col overflow-hidden rounded-[3px] border border-ink/20 border-t-2 border-t-[var(--world-bar)] bg-paper shadow-2xl outline-none"
-          :class="panelSizeClass"
+          :class="[panelSizeClass, props.panelClass]"
           @keydown="onPanelKeydown"
         >
           <!-- 卷首题签:先报这一扇浮层落在哪一卷,再落册名。 -->
@@ -24,13 +24,12 @@
             class="folio-modal__head relative z-10 flex shrink-0 items-start justify-between gap-3 px-5 pb-2 pt-4 tinylens:px-3"
           >
             <div class="min-w-0">
-              <p
-                data-folio-modal-section
-                class="folio-modal__section text-note tracking-[0.3em] text-ink-faint"
-              >
+              <p data-folio-modal-section class="folio-modal__section text-note tracking-[0.3em]">
                 {{ modalPosition }} · 卷页
               </p>
-              <h3 class="mt-1 flex items-center gap-2 font-kai text-lg tracking-[0.2em] text-ink">
+              <h3
+                class="folio-modal__title mt-1 flex items-center gap-2 font-kai text-lg tracking-[0.2em]"
+              >
                 <span
                   v-if="props.title"
                   class="brush-bar h-3 w-0.75 rounded-[2px] bg-[var(--world-bar)]"
@@ -41,7 +40,7 @@
             </div>
             <button
               v-if="props.closable"
-              class="folio-modal__close grid h-8 w-8 shrink-0 place-items-center border border-ink/20 font-kai text-title leading-none text-ink-soft active:scale-90"
+              class="folio-modal__close grid h-8 w-8 shrink-0 place-items-center font-kai text-title leading-none active:scale-90"
               aria-label="关闭"
               @click="emit('close')"
             >
@@ -135,6 +134,8 @@ const props = withDefaults(
     top?: boolean;
     /** 打开后首选焦点的 CSS 选择器;缺省焦点仍是面板本身 */
     initialFocus?: string;
+    /** 调用方追加的面板样式,用于玄枢图这类需要独立案台形制的浮层 */
+    panelClass?: string;
   }>(),
   {
     title: "",
@@ -144,13 +145,14 @@ const props = withDefaults(
     ariaLabel: "",
     size: "default",
     initialFocus: "",
+    panelClass: "",
   },
 );
 
 const emit = defineEmits<{ close: [] }>();
 const route = useRoute();
 const panelSizeClass = computed(() => {
-  if (props.size === "max") return "max-w-[52rem]";
+  if (props.size === "max") return "max-w-[68rem]";
   if (props.size === "wide" || props.wide) return "max-w-100";
   return "max-w-90";
 });

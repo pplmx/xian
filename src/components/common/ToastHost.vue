@@ -1,35 +1,45 @@
 <template>
-  <!-- 稀有天降:全屏金光一闪 -->
-  <div v-if="flashId !== null" :key="flashId" class="rare-flash" />
   <!--
-    外框不吃事件(留出底下页面的点击),但**提示条本身要吃** ——
-    它挂着 @click 关掉自己,也写着 cursor-pointer 与按下反馈。
-    此前只有外框写了 pointer-events-none,按钮继承成 none:
-    dismissToast 从来没有被触发过,提示条只能等超时自己消失。
+    提示条必须挂在 body 顶层。
+
+    书壳用 isolation:isolate 收住自己的书口层，弹窗又 Teleport 到 body；若 toast
+    仍留在书壳里，它的 z-70 只是层内最高，整层依旧会被 z-50 的弹窗盖住。
+    玩家会看见一条读得到、却点不到的动作回执。Teleport 后它与弹窗同一层竞争，
+    z-70 才真正代表「提示始终压在浮层上」。
   -->
-  <!--
-    aria-live=polite:toast 承载了几乎每一下动作的结果(得了什么/缺了什么/成了与否),
-    它前面却没有任何 live region —— 视觉玩家有滑入音画,读屏玩家点完只听个静默。
-    TransitionGroup + :key=id 保证新 toast 只新增一个节点,念出的就是新条;
-    旧条移除不发声,不会成片重读。
-  -->
-  <div
-    aria-live="polite"
-    class="pointer-events-none fixed inset-x-0 top-[max(env(safe-area-inset-top),2.5rem)] z-70 flex flex-col items-center gap-1.5 px-6"
-  >
-    <TransitionGroup name="toast-slide" :duration="TOAST_ANIM_MS">
-      <button
-        v-for="t in ui.toasts"
-        :key="t.id"
-        type="button"
-        class="pointer-events-auto max-w-90 cursor-pointer rounded-sm border px-4 py-2 text-left text-[13px] shadow-md font-kai tracking-wide active:opacity-60 whitespace-pre-line"
-        :class="KIND_CLASS[t.kind]"
-        @click="ui.dismissToast(t.id)"
-      >
-        {{ t.text }}
-      </button>
-    </TransitionGroup>
-  </div>
+  <Teleport to="body">
+    <!-- 稀有天降:全屏金光一闪 -->
+    <div v-if="flashId !== null" :key="flashId" class="rare-flash" />
+    <!--
+      外框不吃事件(留出底下页面的点击),但**提示条本身要吃** ——
+      它挂着 @click 关掉自己,也写着 cursor-pointer 与按下反馈。
+      此前只有外框写了 pointer-events-none,按钮继承成 none:
+      dismissToast 从来没有被触发过,提示条只能等超时自己消失。
+    -->
+    <!--
+      aria-live=polite:toast 承载了几乎每一下动作的结果(得了什么/缺了什么/成了与否),
+      它前面却没有任何 live region —— 视觉玩家有滑入音画,读屏玩家点完只听个静默。
+      TransitionGroup + :key=id 保证新 toast 只新增一个节点,念出的就是新条;
+      旧条移除不发声,不会成片重读。
+    -->
+    <div
+      aria-live="polite"
+      class="pointer-events-none fixed inset-x-0 top-[max(env(safe-area-inset-top),2.5rem)] z-70 flex flex-col items-center gap-1.5 px-6"
+    >
+      <TransitionGroup name="toast-slide" :duration="TOAST_ANIM_MS">
+        <button
+          v-for="t in ui.toasts"
+          :key="t.id"
+          type="button"
+          class="pointer-events-auto max-w-90 cursor-pointer rounded-sm border px-4 py-2 text-left text-[13px] shadow-md font-kai tracking-wide active:opacity-60 whitespace-pre-line"
+          :class="KIND_CLASS[t.kind]"
+          @click="ui.dismissToast(t.id)"
+        >
+          {{ t.text }}
+        </button>
+      </TransitionGroup>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">

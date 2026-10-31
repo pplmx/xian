@@ -1,7 +1,7 @@
 <template>
   <!-- 桌面端外框:居中手机区域 -->
   <div
-    class="app-shell mx-auto overflow-hidden bg-paper shadow-[0_0_60px_rgba(0,0,0,0.45)] relative paper-grain"
+    class="app-shell relative paper-grain"
     :class="{ 'reduce-motion': settings.reduceMotion }"
     :data-game-shell="game.started ? 'desk' : 'leaf'"
     :data-opening="!game.started"

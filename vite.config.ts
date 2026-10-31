@@ -196,6 +196,37 @@ export default defineConfig({
       },
     }),
     /**
+     * 全局样式必须先于模块预载排队。
+     *
+     * Vite 默认把入口 CSS 的 <link> 排在几十条 modulepreload 之后。4G 冷启动时,
+     * 预载 JS 会先把连接池占满,首帧只能等样式表最后一个到达(实测 FCP 多等约
+     * 80ms)。样式是首帧的渲染阻塞资源,脚本不是;这里只调整标签顺序,不删预载,
+     * 也不改变任何模块依赖。
+     */
+    {
+      name: "xuanshu:stylesheet-before-modulepreload",
+      apply: "build",
+      transformIndexHtml: {
+        order: "post",
+        handler(html) {
+          const styles = [
+            ...html.matchAll(/^[ \t]*<link\b[^>]*\brel="stylesheet"[^>]*>[ \t]*$/gm),
+          ].map((match) => match[0].trim());
+          if (styles.length === 0) return html;
+          const withoutStyles = html.replace(
+            /^[ \t]*<link\b[^>]*\brel="stylesheet"[^>]*>[ \t]*\n?/gm,
+            "",
+          );
+          const anchor = withoutStyles.search(
+            /^[ \t]*<(?:script\b[^>]*\btype="module"|link\b[^>]*\brel="modulepreload")/m,
+          );
+          if (anchor < 0) return html;
+          const block = `${styles.map((tag) => `    ${tag}`).join("\n")}\n`;
+          return `${withoutStyles.slice(0, anchor)}${block}${withoutStyles.slice(anchor)}`;
+        },
+      },
+    },
+    /**
      * 把「这一版有哪些产物」写进 Service Worker 的预缓存清单。
      *
      * 由来:首访(第一次打开、玩一会儿、关掉、断网再打开)会白屏。根因是 SW 在

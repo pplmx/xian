@@ -75,11 +75,11 @@ const BUDGETS = {
   /**
    * 楷体**子集**总字节上限:KB —— 反「整份打进来」的硬判据。
    *
-   * 当前子集 5 片 ~236KB;整份字体 ~1.8MB。600KB 上限给足合法生长空间(字形
-   * 加字只长一半也放行),十倍于头的量级回归当场红。这一条**确定性**、
+   * 欢迎页现在只取第一片 ~30KB;整份字体 ~1.8MB。160KB 上限仍给约四倍生长
+   * 空间,但首屏字若重新散回三、四片会当场红。这一条**确定性**、
    * 与机器快慢无关 —— 时序预算可以松,它不能松。
    */
-  fontBytes: Number(process.env.FIRST_PAINT_BUDGET_FONT_KB ?? 600),
+  fontBytes: Number(process.env.FIRST_PAINT_BUDGET_FONT_KB ?? 160),
 };
 
 const args = process.argv.slice(2);
