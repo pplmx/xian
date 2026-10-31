@@ -3038,7 +3038,80 @@ async function taskTabFocus() {
       .getByRole("button", { name: /踏\s*入\s*仙\s*途/ })
       .first()
       .click();
-    await page.waitForTimeout(1200);
+    /*
+     * 灵根定格演出约 2.6 秒,路由随后才交回首页。只等 1.2 秒会在建号页上数
+     * Tab —— 那时跳读链接还没挂载,失败原因会被误读成「链接没展开」。
+     * 先等入口真的出现,再收掉首拍随机浮出的引擎弹窗,最后从 body 重新起数。
+     */
+    await page.waitForSelector("[data-folio-skip-link]", { timeout: 5000 });
+    await clearOverlays(page);
+    await page.evaluate(() => document.body.focus());
+
+    /*
+     * 第一次 Tab 不该先掉进玄枢图、书脊或底栏。跳读链接展开后按回车，
+     * 焦点必须落到正文滚动宿主，且 hash 路由不能因为 href="#folio-main"
+     * 被带离当前册。三件事缺一，键盘用户仍在十七册目录里绕路。
+     */
+    await page.keyboard.press("Tab");
+    const skipVisible = await page
+      .waitForFunction(
+        () => {
+          const link = document.activeElement;
+          if (!link?.matches("[data-folio-skip-link]")) return false;
+          const style = getComputedStyle(link);
+          const rect = link.getBoundingClientRect();
+          return (
+            Number.parseFloat(style.opacity) > 0.99 &&
+            rect.top >= -1 &&
+            rect.left >= -1 &&
+            rect.bottom <= innerHeight + 1
+          );
+        },
+        { timeout: 1200 },
+      )
+      .then(() => true)
+      .catch(() => false);
+    checked += 1;
+    if (!skipVisible) {
+      const skipState = await page.evaluate(() => {
+        const active = document.activeElement;
+        const link = document.querySelector("[data-folio-skip-link]");
+        const style = link ? getComputedStyle(link) : null;
+        const rect = link?.getBoundingClientRect();
+        return {
+          active: active
+            ? `${active.tagName.toLowerCase()}.${String(active.className || "").slice(0, 48)}`
+            : "(none)",
+          focusVisible: active?.matches(":focus-visible") ?? false,
+          opacity: style?.opacity ?? "(missing)",
+          rect: rect
+            ? `${Math.round(rect.left)},${Math.round(rect.top)} ${Math.round(rect.width)}×${Math.round(rect.height)}`
+            : "(missing)",
+          modals: document.querySelectorAll(".modal-panel").length,
+        };
+      });
+      failures.push(
+        `[375] 第一次 Tab 没有展开「直入正文」，或入口落在视口外:${JSON.stringify(skipState)}`,
+      );
+    }
+    const beforeSkipHash = await page.evaluate(() => location.hash);
+    await page.keyboard.press("Enter");
+    const skipLanded = await page.evaluate(
+      () => document.activeElement?.matches("#folio-main") ?? false,
+    );
+    checked += 1;
+    if (!skipLanded) {
+      const landedState = await page.evaluate(() => ({
+        active: document.activeElement
+          ? `${document.activeElement.tagName.toLowerCase()}.${String(document.activeElement.className || "").slice(0, 48)}`
+          : "(none)",
+        main: document.querySelector("#folio-main")?.tabIndex,
+      }));
+      failures.push(`[375] 按「直入正文」后焦点没有落到正文:${JSON.stringify(landedState)}`);
+    }
+    if ((await page.evaluate(() => location.hash)) !== beforeSkipHash) {
+      failures.push("[375] 「直入正文」误改了 hash 路由地址");
+    }
     checked += 1;
 
     for (const route of ["/cultivation", "/settings"]) {
@@ -3072,6 +3145,14 @@ async function taskTabFocus() {
       // 落点一个没数到 = 这段判据没跑到东西,也要红
       if (seen.filter((s) => s !== "(body)").length === 0)
         failures.push(`[375] ${route} 的 Tab 落点一个都没数到`);
+      const arrival = (await page.locator("[data-folio-arrival]").textContent()) ?? "";
+      checked += 1;
+      if (
+        !arrival.includes(route === "/cultivation" ? "修炼" : "设置") ||
+        !arrival.includes("已翻至")
+      ) {
+        failures.push(`[375] ${route} 翻页后读屏落点没有更新:${arrival.trim()}`);
+      }
     }
     if (pageErrors.length)
       failures.push(`[375] 焦点可见场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);

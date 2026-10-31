@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { readStyleCss } from "@/test/readStyleCss";
+import { folioArrivalTextOf } from "./folioArrival";
 import { folioTurnDirectionOf } from "./folioTurn";
 
 const ROOT = resolve(__dirname, "../..");
@@ -40,6 +41,32 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     expect(css).toContain(".folio-turn-forward-enter-from");
     expect(css).toContain(".folio-turn-back-enter-from");
     expect(css).toContain(".folio-turn-cross-enter-from");
+  });
+
+  it("翻页后由玄枢册目同源播报落点，键盘可越过导航直入正文", () => {
+    const app = source("src/App.vue");
+    const css = source("src/style.css");
+
+    expect(folioArrivalTextOf("settings")).toBe("已翻至第五卷「天机」第五册「设置」");
+    expect(folioArrivalTextOf("welcome")).toBe("");
+    expect(folioArrivalTextOf(undefined)).toBe("");
+    expect(app, "路由落点要交给 polite 播报区").toContain("data-folio-arrival");
+    expect(app, "播报区不能抢读屏当前操作").toContain('aria-live="polite"');
+    expect(app, "翻页后要更新同一份玄枢报词").toContain("folioArrivalTextOf(to.name)");
+    expect(app, "键盘要先能越过书脊与底栏").toContain("data-folio-skip-link");
+    expect(app, "直入正文要落到真实滚动宿主").toContain('id="folio-main"');
+    expect(app, "正文焦点不能触发浏览器滚动").toContain(
+      "scrollHost.value?.focus({ preventScroll: true })",
+    );
+    expect(app, "入卷后要把顺序焦点起点交还正文起始处").toMatch(
+      /from\.name === "create"[\s\S]{0,160}document\.body\.focus\(\{ preventScroll: true \}\)/,
+    );
+    expect(css, "跳读入口只在键盘聚焦时展开").toContain(".folio-skip-link:focus-visible");
+    expect(css, "跳读入口要有独立书签形制").toContain(".folio-skip-link");
+    expect(
+      css.match(/\.folio-skip-link \{[\s\S]*?\}/)?.[0],
+      "键盘焦点提示不能等过渡跑完才出现",
+    ).not.toContain("transition:");
   });
 
   it("事件浮层不抢首屏带宽：正文与楷体落定后才按需装载", () => {

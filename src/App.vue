@@ -9,6 +9,29 @@
     :data-world="player.world.id"
   >
     <!--
+      键盘跳读入口。
+
+      hash 路由本身占用 #，故这里只管把焦点交给正文，不让浏览器把地址改成
+      #folio-main；鼠标用户看不见它，第一次按 Tab 时才会从书页上缘展开。
+    -->
+    <a
+      v-if="game.started && route.name !== 'create'"
+      data-folio-skip-link
+      class="folio-skip-link"
+      href="#folio-main"
+      @click.prevent="focusFolioMain"
+      >直入正文</a
+    >
+    <p
+      v-if="game.started && route.name !== 'create'"
+      data-folio-arrival
+      class="sr-only"
+      aria-live="polite"
+    >
+      {{ routeAnnouncement }}
+    </p>
+
+    <!--
       云雾装饰 —— 必须关在自己的一层裁剪盒里。
 
       这两团雾是**故意越界**画的(左上 -64px、右下 -96px)才好看,但它们若直接挂在
@@ -64,6 +87,10 @@
 
     <main
       ref="scrollHost"
+      id="folio-main"
+      data-folio-main
+      tabindex="-1"
+      aria-label="正文"
       class="folio-surface relative z-10 min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
       :data-folio-turn="turnDirection"
     >
@@ -137,6 +164,7 @@ import NavigationAtlas from "@/components/common/NavigationAtlas.vue";
 import ToastHost from "@/components/common/ToastHost.vue";
 import WorldTransitionVeil from "@/components/common/WorldTransitionVeil.vue";
 import { isAtlasShortcut } from "@/ui/atlas";
+import { folioArrivalTextOf } from "@/ui/folioArrival";
 import { hasOpenModal } from "@/ui/modalStack";
 
 /*
@@ -180,6 +208,7 @@ const router = useRouter();
 const folioLayout = computed(() => folioLayoutOf(route.name));
 const turnDirection = ref<FolioTurnDirection>("cross");
 const turnName = computed(() => `folio-turn-${turnDirection.value}`);
+const routeAnnouncement = ref(folioArrivalTextOf(route.name));
 /**
  * 浮层等正文所用楷体落定后再开始下载。
  *
@@ -192,7 +221,19 @@ const overlaysReady = ref(false);
 const desktopSpineVisible = useMediaQuery("(min-width: 960px)");
 const stopAfterEach = router.afterEach((to, from) => {
   turnDirection.value = folioTurnDirectionOf(from.name, to.name);
+  routeAnnouncement.value = folioArrivalTextOf(to.name);
   atlasOpen.value = false;
+  /*
+   * 建号页的「踏入仙途」被路由卸下后,浏览器的顺序焦点起点仍停在那枚旧按钮上。
+   * 若只等 activeElement 自然回到 body,下一次 Tab 会从旧位置继续,越过书页
+   * 最前面的「直入正文」。入卷完成后把起点明确交还 body;已有弹窗时让弹窗
+   * 的焦点陷阱接管,不能把焦点抢回来。
+   */
+  if (from.name === "create" && to.name === "home") {
+    requestAnimationFrame(() => {
+      if (!hasOpenModal()) document.body.focus({ preventScroll: true });
+    });
+  }
 });
 
 /** 内容区滚动宿主(滚动条挂在这个常驻的 main 上,不是 window) */
@@ -208,6 +249,11 @@ const scrollHost = useTemplateRef<HTMLElement>("scrollHost");
  */
 function resetScroll(): void {
   if (scrollHost.value) scrollHost.value.scrollTop = 0;
+}
+
+/** 跳读只移动焦点，不替玩家改动当前阅读位置。 */
+function focusFolioMain(): void {
+  scrollHost.value?.focus({ preventScroll: true });
 }
 
 let unsubscribeTheme: () => void = () => undefined;

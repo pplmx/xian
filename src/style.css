@@ -647,6 +647,52 @@
     height: var(--app-shell-height);
     flex-direction: column;
   } /*
+ * 键盘跳读 —— 让第一次 Tab 能越过玄枢图、书脊与底栏，直接进入正文。
+ *
+ * 它平时缩在书页上缘之外，只有获得键盘焦点时才展开成一张朱砂书签。
+ * 不复用 btn-seal：这不是一枚要玩家频繁按的行动，而是一条只在需要时出现的
+ * 阅读捷径；纸面、墨框与左缘朱线才和书页同族。
+ */
+  .folio-skip-link {
+    position: absolute;
+    top: max(0.5rem, env(safe-area-inset-top));
+    left: max(0.5rem, env(safe-area-inset-left));
+    z-index: 70;
+    display: inline-flex;
+    min-height: 2rem;
+    align-items: center;
+    padding: 0.25rem 0.75rem 0.25rem 0.625rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.24);
+    border-left: 3px solid var(--color-cinnabar);
+    background: var(--color-paper);
+    box-shadow:
+      inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.3),
+      2px 2px 0 rgb(var(--color-ink-rgb) / 0.05);
+    color: var(--color-ink);
+    font-size: var(--type-note);
+    letter-spacing: 0.12em;
+    line-height: 1;
+    text-decoration: none;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(calc(-100% - 0.75rem));
+  }
+  /*
+   * 焦点提示不做过渡:无头浏览器放在后台时 CSS 过渡可能停住,量到 opacity 0;
+   * 真机上 180ms 的空白同样没有必要 —— 键盘用户按下 Tab 的当帧就该看见入口。
+   */
+  .folio-skip-link:focus-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  } /*
+ * 跳进来以后，焦点落在整块正文而不是某个按钮上。只描内缘，免得一圈外框
+ * 越出书页；这一圈也证明焦点真的从导航交到了正文。
+ */
+  .folio-surface:focus-visible {
+    outline: 2px solid rgb(var(--color-cinnabar-rgb) / 0.58);
+    outline-offset: -2px;
+  } /*
  * 平板与横屏:仍是单叶,但不该继续锁在 430px 手机栏里。
  *
  * 620px 起页面内部已有两栏硬账,而外壳此前到 960px 才展开 —— 中间这一段
