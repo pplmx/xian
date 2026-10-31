@@ -59,6 +59,20 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
     expect(css).toContain("max-width: 66rem");
   });
 
+  it("620~959 铺成一张留出页边的平装单叶,底栏留到 960 才退场", () => {
+    const css = source("src/style.css");
+
+    expect(css, "平板与横屏不再把正文锁在 430px 手机栏里").toMatch(
+      /@media \(min-width: 620px\) and \(max-width: 959px\)\s*\{[\s\S]{0,180}?\.app-shell\s*\{[\s\S]{0,140}?width:\s*calc\(100% - 2rem\);[\s\S]{0,80}?max-width:\s*60rem;/,
+    );
+    expect(css, "高屏平板仍要给上下书口留白,矮横屏才让高度优先").toMatch(
+      /@media \(min-width: 620px\) and \(min-height: 561px\)\s*\{[\s\S]{0,180}?\.app-shell\s*\{[\s\S]{0,120}?height:\s*calc\(var\(--app-shell-height\) - 2rem\);/,
+    );
+    expect(css, "底栏仍由 960 的桌面书脊断点收走").toMatch(
+      /@media \(min-width: 960px\)[\s\S]*?\.app-shell\[data-game-shell="desk"\] \[data-folio-dock\][\s\S]{0,120}?display:\s*none;/,
+    );
+  });
+
   it("双页是真正的两栏网格,中缝只画一道装饰线,窄屏仍退回单列", () => {
     const css = source("src/style.css");
 
@@ -107,6 +121,11 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
   it("真浏览器门在 1280 档核外壳宽度、双栏、宽案与读卷宽度,避免只靠源码自证", () => {
     const layout = source("scripts/layout-check.mjs");
 
+    expect(layout, "768 宽要单独成为一档真浏览器视口").toContain(
+      '{ width: 768, height: 1024, tag: "768x1024", dpr: 1 }',
+    );
+    expect(layout, "平板宽叶必须逐页计数,不能只改 CSS").toContain("tabletLeafSeen");
+    expect(layout, "平板仍是一条手机窄栏要当场报红").toContain("平板宽叶仍收成手机窄栏");
     expect(layout).toContain("desktopFolioSeen");
     expect(layout).toContain("双页册没有真的展开");
     expect(layout).toContain("案卷没有铺开");

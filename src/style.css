@@ -647,6 +647,18 @@
     height: var(--app-shell-height);
     flex-direction: column;
   } /*
+ * 平板与横屏:仍是单叶,但不该继续锁在 430px 手机栏里。
+ *
+ * 620px 起页面内部已有两栏硬账,而外壳此前到 960px 才展开 —— 中间这一段
+ * 一边触发多栏排版,一边只给 430px 容器,平板与横屏都像把书页塞进手机框。
+ * 这里只放宽单叶与页边,导航仍是底栏五册;真正的书脊与双页仍从 960px 开始。
+ */
+  @media (min-width: 620px) and (max-width: 959px) {
+    .app-shell {
+      width: calc(100% - 2rem);
+      max-width: 60rem;
+    }
+  } /*
  * 玄枢图的入口与卷目栏。
  *
  * 这是全站第一处「跨页」入口:底栏只放最常用的五册,其余页面从顶栏这枚小印进入。
@@ -2301,7 +2313,7 @@
  * 留白要从高度里扣:1rem + (100dvh - 2rem) + 1rem 恰好一屏,文档层依旧没有可滚
  * 余量,顶栏底栏照旧钉死(判据见 scripts/layout-check.mjs 第二十七件事)。
  */ /* 矮屏(横屏手机)例外:那里高度比气度要紧,1rem 的上下留白正是内容区缺的 32px */
-  @media (min-width: 768px) and (min-height: 561px) {
+  @media (min-width: 620px) and (min-height: 561px) {
     .app-shell {
       height: calc(var(--app-shell-height) - 2rem);
       margin-block: 1rem;

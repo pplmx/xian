@@ -112,5 +112,9 @@ describe("开卷两页 · 先立山门,再问心定命", () => {
       "取消入山契后再次开契,上次勾选仍残留",
     );
     expect(layout, "隐私总账也要在 200% 档量过").toContain("隐私总账在 200% 下坏了");
+    expect(layout, "开局页在 768 宽也要从手机窄栏展开").toContain(
+      "page.setViewportSize({ width: 768, height: 1024 })",
+    );
+    expect(layout, "开局宽叶仍是一条手机窄栏要当场报红").toContain("开局宽叶仍收成手机窄栏");
   });
 });
