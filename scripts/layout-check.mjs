@@ -195,6 +195,9 @@
  *      195 宽下新得卷首、分页入口与从可动槽打开的候选弹窗都不许被挤坏。
  *   六十九 门庭先报今日:在途 / 闲置 / 最近归期来自同一份弟子汇总;在途差事
  *      要有可见进度与读屏进度值。一键派发后卷首与按钮必须同步换口。
+ *   七十 道侣的同行帖先答此刻:她主动提的事与共同事件都排在关系刻度之前,
+ *      每个选项先摊三项代价,殒落与离开要在落定前说穿;下一阶缺口读同一份门槛真值。
+ *      390 与 195(200% 缩放)下选项正文、关系读数与三衡都不许横溢或挤成竖排。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -6993,6 +6996,233 @@ async function taskMentorLedger() {
 
     if (pageErrors.length)
       failures.push(`[390] 择师谱场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/** 同行帖:此刻先答、代价先摊、下一阶缺口同源,并真量 390 与 195 两档。 */
+async function taskBondFolio() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    slices.player = {
+      ...slices.player,
+      bond: {
+        daoluId: "dl_qingli",
+        stage: "confidant",
+        fate: 58,
+        trust: 20,
+        accord: 16,
+        shared: 2,
+        metAt: Date.now() - 86400000,
+        fallen: false,
+        departed: false,
+        doneEvents: ["be_lead", "be_spare"],
+        pendingEventId: "be_jie",
+        opportunities: 12,
+        nextEventAt: 18,
+        lastKind: "risk",
+        intent: {
+          daoluId: "dl_qingli",
+          wish: "寻找十年前失踪的师尊",
+          line: "她忽然停下:「往北那条路……我想去看看。」",
+          ripeness: 1,
+          sparks: ["shared", "supported"],
+          raised: 1,
+          responses: ["ignore"],
+          settled: false,
+        },
+        intentPending: true,
+      },
+    };
+    await seedSave(ctx, slices, "__bondFolioFixture");
+
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/character", 650);
+    if (!rendered) failures.push("[390] 同行帖场景:/character 没有渲染出来");
+    await clearOverlays(page);
+
+    const entry = page.locator("main button", { hasText: /道\s*侣/ }).first();
+    checked += 1;
+    if ((await entry.count()) === 0) {
+      failures.push("[390] 同行帖场景:人物页找不到「道侣」入口");
+    } else {
+      await entry.click({ timeout: 4000 }).catch(() => {});
+      const opened = await page
+        .locator("[data-bond-view='active']")
+        .waitFor({ state: "visible", timeout: 5000 })
+        .then(() => true)
+        .catch(() => false);
+      if (!opened) failures.push("[390] 点「道侣」后没有打开同行的那一扇帖");
+      if (opened) await settleVisuals(page);
+    }
+
+    const readBondFolio = () =>
+      page.evaluate(() => {
+        const root = document.querySelector("[data-bond-view='active']");
+        const panel = root?.closest(".modal-panel");
+        if (!root || !panel) return null;
+        const readChoices = (selector) =>
+          [...root.querySelectorAll(selector)].map((el) => {
+            const box = el.getBoundingClientRect();
+            const copy = el.querySelector(".bond-choice__copy")?.getBoundingClientRect();
+            const read = el.querySelector(".bond-choice__read");
+            const readBox = read?.getBoundingClientRect();
+            const warning = el.querySelector(".bond-choice__warning");
+            return {
+              id: el.getAttribute("data-bond-choice-id"),
+              label: (el.getAttribute("aria-label") || "").trim(),
+              text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+              deltas: el.querySelectorAll(".bond-delta").length,
+              overflow: el.scrollWidth > el.clientWidth + 1,
+              readInside:
+                !readBox || (readBox.left >= box.left - 1 && readBox.right <= box.right + 1),
+              readBelowCopy: !readBox || !copy || readBox.top >= copy.bottom - 1,
+              warning: (warning?.textContent || "").replace(/\s+/g, " ").trim(),
+            };
+          });
+        const now = root.querySelector("[data-bond-now]")?.getBoundingClientRect();
+        const meters = root.querySelector("[data-bond-meters]")?.getBoundingClientRect();
+        const gate = root.querySelector("[data-bond-next-gate]");
+        const meterRows = Object.fromEntries(
+          [...root.querySelectorAll("[data-bond-meter]")].map((el) => [
+            el.getAttribute("data-bond-meter"),
+            {
+              text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+              overflow: el.scrollWidth > el.clientWidth + 1,
+              headDirection: getComputedStyle(el.querySelector(".bond-meter__head") || el)
+                .flexDirection,
+            },
+          ]),
+        );
+        return {
+          text: (root.textContent || "").replace(/\s+/g, " ").trim(),
+          nowBeforeMeters: !!now && !!meters && now.top < meters.top,
+          intentChoices: readChoices("[data-bond-intent-choice]"),
+          eventChoices: readChoices("[data-bond-event-choice]"),
+          nextStage: gate?.getAttribute("data-bond-next-stage"),
+          gateText: (gate?.textContent || "").replace(/\s+/g, " ").trim(),
+          meterRows,
+          panelWidth: panel.clientWidth,
+          panelScrollWidth: panel.scrollWidth,
+        };
+      });
+
+    if (await page.locator("[data-bond-view='active']").count()) {
+      const folio = await readBondFolio();
+      const share = folio?.eventChoices.find((c) => c.id === "share");
+      const send = folio?.eventChoices.find((c) => c.id === "send");
+      checked += 1;
+      if (
+        !folio ||
+        !folio.nowBeforeMeters ||
+        !folio.text.includes("此刻要答的事") ||
+        folio.intentChoices.length !== 3 ||
+        folio.eventChoices.length !== 3 ||
+        [...folio.intentChoices, ...folio.eventChoices].some(
+          (choice) => choice.deltas !== 3 || choice.overflow || !choice.readInside,
+        ) ||
+        !share?.warning.includes("她会殒落") ||
+        !send?.warning.includes("她会就此离开") ||
+        !share.label.includes("缘分+8") ||
+        !share.label.includes("信任+10") ||
+        !share.label.includes("契合+8")
+      ) {
+        failures.push(
+          `[390] 同行帖没有先摊此刻与逐项代价:` +
+            `此刻先于三衡 ${folio?.nowBeforeMeters ?? false} / ` +
+            `主动提议 ${folio?.intentChoices.length ?? 0} 项 / 共同事件 ${folio?.eventChoices.length ?? 0} 项 / ` +
+            `殒落预告 ${share?.warning.includes("她会殒落") ?? false} / ` +
+            `离开预告 ${send?.warning.includes("她会就此离开") ?? false} / ` +
+            `代价 ${share?.label || "无"}`,
+        );
+      }
+      checked += 1;
+      if (
+        folio?.nextStage !== "pledged" ||
+        !folio.gateText.includes("下一阶 · 结契") ||
+        !folio.meterRows.fate?.text.includes("尚差 7") ||
+        !folio.meterRows.trust?.text.includes("尚差 40") ||
+        !folio.meterRows.accord?.text.includes("尚差 39") ||
+        !folio.gateText.includes("下一阶尚差 1 次")
+      ) {
+        failures.push(
+          `[390] 同行帖的下一阶缺口没有读同一份门槛真值:` +
+            `阶 ${folio?.nextStage || "无"} / ` +
+            `缘 ${folio?.meterRows.fate?.text || "无"} / ` +
+            `信 ${folio?.meterRows.trust?.text || "无"} / ` +
+            `契 ${folio?.meterRows.accord?.text || "无"} / ` +
+            `共历 ${folio?.gateText.slice(-40) || "无"}`,
+        );
+      }
+
+      const controls = await auditModalControls(page);
+      checked += 1;
+      if (!controls || controls.count === 0 || controls.unnamed.length || controls.small.length) {
+        failures.push(
+          `[390] 同行帖控件不合格:` +
+            `${controls?.count ?? 0} 枚 / 无名 ${controls?.unnamed.join(" | ") || "无"} / ` +
+            `过小 ${controls?.small.join(" | ") || "无"}`,
+        );
+      }
+
+      if (SHOTS) {
+        mkdirSync(SHOTS_DIR, { recursive: true });
+        await page.screenshot({ path: join(SHOTS_DIR, "bond-folio-390.png") });
+      }
+
+      zoomSeen += 1;
+      const zoomProblems = dialogZoomProblems(
+        await measureDialogZoom(page, { width: 390, height: 844 }),
+      );
+      checked += 1;
+      if (zoomProblems.length) failures.push(`[195] 同行帖 → ${zoomProblems.join(" / ")}`);
+
+      await page.setViewportSize({ width: 195, height: 422 });
+      await settleVisuals(page);
+      const narrow = await readBondFolio();
+      checked += 1;
+      if (
+        !narrow ||
+        narrow.panelScrollWidth > narrow.panelWidth + 1 ||
+        [...narrow.intentChoices, ...narrow.eventChoices].some(
+          (choice) => choice.overflow || !choice.readInside || !choice.readBelowCopy,
+        ) ||
+        Object.values(narrow.meterRows).some(
+          (row) => row.overflow || row.headDirection !== "column",
+        )
+      ) {
+        failures.push(
+          `[195] 同行帖选项与关系读数没有上下收住:` +
+            `面板 ${narrow?.panelScrollWidth ?? 0}>${narrow?.panelWidth ?? 0} / ` +
+            `选项 ${
+              [...(narrow?.intentChoices ?? []), ...(narrow?.eventChoices ?? [])]
+                .map((c) => `${c.id}:${c.overflow ? "溢" : "收"}/${c.readBelowCopy ? "下" : "并"}`)
+                .join(" ") || "无"
+            } / ` +
+            `三衡 ${
+              Object.entries(narrow?.meterRows ?? {})
+                .map(([key, row]) => `${key}:${row.overflow ? "溢" : "收"}/${row.headDirection}`)
+                .join(" ") || "无"
+            }`,
+        );
+      }
+      if (SHOTS) await page.screenshot({ path: join(SHOTS_DIR, "bond-folio-195.png") });
+    }
+
+    if (pageErrors.length)
+      failures.push(`[390] 同行帖场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
   } finally {
     await ctx.close();
   }
@@ -14418,6 +14648,7 @@ const TASKS = [
   ["背包里的账目", taskInventoryAccounting],
   ["际遇帖的门限与去向", taskEventSlip],
   ["择师谱的两步定契", taskMentorLedger],
+  ["同行帖的此刻与后果", taskBondFolio],
   ["真打一场历练战斗", taskCombatReplay],
   ["敌人卡最挤的一档", taskEnemyCard],
   ["秘境卡在境中的窄屏一档", taskSecretRealm320],

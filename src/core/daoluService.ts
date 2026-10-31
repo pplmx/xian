@@ -31,6 +31,7 @@ import {
 } from "@/data/daolu";
 import {
   BOND_EVENTS,
+  type BondChoice,
   type BondEventDef,
   bondEventDef,
   type BondTrigger,
@@ -239,8 +240,15 @@ export function highestReachable(b: BondState): BondStage {
   return out;
 }
 
+export interface BondGateHint {
+  stage: BondStage;
+  lacking: string[];
+  target: { fate: number; trust: number; accord: number; shared: number };
+  shortfall: { fate: number; trust: number; accord: number; shared: number };
+}
+
 /** 距离下一阶还差什么(供界面提示,不给数值奖励) */
-export function nextGateHint(): { stage: BondStage; lacking: string[] } | null {
+export function nextGateHint(): BondGateHint | null {
   const b = currentBond();
   if (!b) return null;
   const i = stageIndex(b.stage);
@@ -251,7 +259,17 @@ export function nextGateHint(): { stage: BondStage; lacking: string[] } | null {
   if (b.trust < next.trust) lacking.push("信任未足");
   if (b.accord < next.accord) lacking.push("道心未契");
   if (b.shared < next.shared) lacking.push("共历太少");
-  return { stage: next.stage, lacking };
+  return {
+    stage: next.stage,
+    lacking,
+    target: { fate: next.fate, trust: next.trust, accord: next.accord, shared: next.shared },
+    shortfall: {
+      fate: Math.max(0, next.fate - b.fate),
+      trust: Math.max(0, next.trust - b.trust),
+      accord: Math.max(0, next.accord - b.accord),
+      shared: Math.max(0, next.shared - b.shared),
+    },
+  };
 }
 
 // ============ 分离与结局 ============
@@ -441,6 +459,68 @@ export interface ChoiceResult {
 export const PERIL_SAFE_TRUST = 55;
 export const PERIL_SAFE_ACCORD = 45;
 
+export interface BondChoicePreview {
+  outcome: ReturnType<typeof resolveChoice>;
+  after: Pick<BondState, "fate" | "trust" | "accord" | "shared" | "stage">;
+  leaves: boolean;
+  perishes: boolean;
+  perilSafe: boolean | null;
+  reaction: ChoiceResult["reaction"];
+}
+
+/**
+ * 选项落定前的纯投影。
+ *
+ * 界面只许读这一份预演,真正结算也走同一段,避免「按钮说 +8,按下去只加 3」。
+ * 这里不写存档;事件是否已历、人物是否还能继续同行仍按结算时的同一道门判。
+ */
+export function previewBondChoice(eventId: string, choiceId: string): BondChoicePreview | null {
+  const b = currentBond();
+  const def = currentDaolu();
+  if (!b || !def || b.fallen || b.departed) return null;
+  const ev = bondEventDef(eventId);
+  const ch = ev?.choices.find((x): x is BondChoice => x.id === choiceId);
+  if (!ev || !ch || b.doneEvents.includes(ev.id)) return null;
+
+  const outcome = resolveChoice(def, ch, playerLean());
+  const projected = {
+    ...b,
+    fate: clamp(b.fate + outcome.fate),
+    trust: clamp(b.trust + outcome.trust),
+    accord: clamp(b.accord + outcome.accord),
+    shared: b.shared + 1,
+  };
+  const stage = highestReachable(projected);
+  const perilSafe = ch.peril
+    ? projected.trust >= PERIL_SAFE_TRUST && projected.accord >= PERIL_SAFE_ACCORD
+    : null;
+  const perishes = ch.peril === true && perilSafe === false;
+  const leaves =
+    !perishes && (outcome.leaves === true || (projected.trust < 15 && projected.accord < 20));
+  const reaction: ChoiceResult["reaction"] =
+    perishes || leaves
+      ? "broken"
+      : outcome.trust + outcome.accord >= 10
+        ? "closer"
+        : outcome.trust + outcome.accord <= -10
+          ? "strained"
+          : "neutral";
+  return {
+    outcome,
+    after: {
+      fate: projected.fate,
+      trust: projected.trust,
+      accord: projected.accord,
+      shared: projected.shared,
+      stage,
+    },
+    leaves,
+    perishes,
+    perilSafe,
+    reaction,
+  };
+}
+
 /**
  * 玩家做出选择。
  *
@@ -454,10 +534,10 @@ export function chooseBondEvent(eventId: string, choiceId: string): ChoiceResult
   const ev = bondEventDef(eventId);
   const ch = ev?.choices.find((x) => x.id === choiceId);
   if (!ev || !ch) return null;
-  // 一世一事:同一段经历不重复发生
-  if (b.doneEvents.includes(ev.id)) return null;
+  const preview = previewBondChoice(eventId, choiceId);
+  if (!preview) return null;
 
-  const out = resolveChoice(def, ch, playerLean());
+  const out = preview.outcome;
   // 记事件已历、清待决、记本次冲突类型,并把下一次机会点推远
   // —— 事件是人生节点,不是每日任务
   player.setBond({
@@ -475,7 +555,7 @@ export function chooseBondEvent(eventId: string, choiceId: string): ChoiceResult
 
   const after = player.bond!;
   // 共命之险:关系够深则同生,不够则她殒落(唯一会死人的一条路,且玩家事先被 warning 过)
-  if (ch.peril && !(after.trust >= PERIL_SAFE_TRUST && after.accord >= PERIL_SAFE_ACCORD)) {
+  if (preview.perishes) {
     fall();
     return {
       text: `${out.text}——可你回头时,劫云里已经没有第二个人了。`,
@@ -484,24 +564,11 @@ export function chooseBondEvent(eventId: string, choiceId: string): ChoiceResult
       reaction: "broken",
     };
   }
-  let left = false;
-  // 她离开:选项直接导致,或信任与契合双双崩塌
-  if (out.leaves || (after.trust < 15 && after.accord < 20)) {
-    left = true;
-  }
-  const reaction: ChoiceResult["reaction"] = left
-    ? "broken"
-    : out.trust + out.accord >= 10
-      ? "closer"
-      : out.trust + out.accord <= -10
-        ? "strained"
-        : "neutral";
-
-  if (left) {
+  if (preview.leaves) {
     notify(`${def.name}离你而去`, "warn");
     player.setBond({ ...after, departed: true });
   }
-  return { text: out.text, left, reaction };
+  return { text: out.text, left: preview.leaves, reaction: preview.reaction };
 }
 
 // ============ 她自己的意图(Phase 34.1) ============

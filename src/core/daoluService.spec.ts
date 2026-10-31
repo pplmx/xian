@@ -31,6 +31,7 @@ import {
   advanceBond,
   archiveBond,
   candidatesFor,
+  chooseBondEvent,
   currentBond,
   destinedCandidate,
   fall,
@@ -38,6 +39,7 @@ import {
   meet,
   nextGateHint,
   part,
+  previewBondChoice,
 } from "./daoluService";
 import { usePlayerStore } from "@/stores/player";
 import { MAX_MAJOR } from "@/data/realms";
@@ -206,6 +208,41 @@ describe("道侣 · 三:改变的是关系,不是战力", () => {
     const b = currentBond()!;
     expect(stageIndex(b.stage)).toBeGreaterThanOrEqual(stageIndex("pledged"));
     console.log(`\n三维齐备 + 共历 ${b.shared} 次 → 「${STAGE_NAMES[b.stage]}」`);
+  });
+
+  it("下一阶把四项缺口摊成同一份数字,界面不必再猜", () => {
+    meet("dl_qingli");
+    advanceBond({ fate: 48, trust: 47, accord: 11, shared: true });
+    advanceBond({ shared: true });
+
+    const hint = nextGateHint()!;
+    expect(hint.stage).toBe("pledged");
+    expect(hint.target).toEqual({ fate: 65, trust: 60, accord: 55, shared: 3 });
+    expect(hint.shortfall).toEqual({ fate: 7, trust: 8, accord: 14, shared: 1 });
+    expect(hint.lacking).toEqual(["缘分尚浅", "信任未足", "道心未契", "共历太少"]);
+  });
+
+  it("事件选项预览与真正结算逐项同源,预览本身不写存档", () => {
+    const player = usePlayerStore();
+    meet("dl_qingli");
+    advanceBond({ fate: 45, trust: 40, accord: 12, shared: true });
+    const before = currentBond()!;
+    player.setBond({ ...before, pendingEventId: "be_lead" });
+
+    const preview = previewBondChoice("be_lead", "accompany")!;
+    expect(preview).not.toBeNull();
+    expect(preview.outcome).toMatchObject({ fate: 8, trust: 19, accord: 4 });
+    expect(preview.after).toMatchObject({
+      fate: 63,
+      trust: 64,
+      accord: 46,
+      shared: before.shared + 1,
+    });
+    expect(currentBond()).toEqual({ ...before, pendingEventId: "be_lead" });
+
+    const result = chooseBondEvent("be_lead", "accompany")!;
+    expect(result.text).toBe(preview.outcome.text);
+    expect(currentBond()).toMatchObject(preview.after);
   });
 });
 

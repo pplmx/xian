@@ -148,4 +148,31 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
       /@media \(max-width: 220px\)[\s\S]{0,2000}\.mentor-oath__actions\s*\{[\s\S]{0,120}flex-direction:\s*column/,
     );
   });
+
+  it("同行帖先摊此刻要答的事,再把关系缺口与历世同行收成一张账", () => {
+    const dialog = source("src/components/character/BondDialog.vue");
+
+    expect(dialog, "道侣正文要有一张可定位的同行帖").toContain("data-bond-view");
+    expect(dialog, "她自己的提议要逐项预演").toContain("data-bond-intent-choice");
+    expect(dialog, "共同事件选项要逐个标出关系代价").toContain("data-bond-event-choice");
+    expect(dialog, "事件预览与结算共用同一个纯函数").toContain("previewBondChoice(");
+    expect(dialog, "提议预览与结算共用同一张后果表").toContain("respondTo(");
+    expect(dialog, "下一阶缺口要摊到界面").toContain("data-bond-next-gate");
+    expect(dialog, "缺口数字必须来自 nextGateHint").toContain("gateHint.shortfall");
+    expect(dialog, "危险选项要事先说穿永久后果").toContain("preview.perishes");
+    expect(dialog, "会离开的选项不能等按下去才说").toContain("preview.leaves");
+  });
+
+  it("同行帖 390 单列,195 把选项正文、关系账与回看动作上下收住", () => {
+    const dialog = source("src/components/character/BondDialog.vue");
+
+    expect(dialog, "同行帖要占满浮层可用宽").toContain('size="wide"');
+    expect(dialog, "620 起人物与三衡并读").toMatch(
+      /@media \(min-width: 620px\)[\s\S]{0,800}\.bond-detail-grid\s*\{[\s\S]{0,160}grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\)/,
+    );
+    expect(dialog, "195 档要有独立收口").toContain("@media (max-width: 220px)");
+    expect(dialog, "195 档选项动作与读数上下分栏").toMatch(
+      /@media \(max-width: 220px\)[\s\S]{0,1800}\.bond-choice__read\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+  });
 });

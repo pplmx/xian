@@ -1,168 +1,314 @@
 <template>
-  <!-- 道侣弹窗:这一世的关系与历世的同行(自 CharacterView 迁入) -->
+  <!-- 道侣弹窗:在世时读同行帖,无人时读历世同行。 -->
   <BaseModal
     :open="open"
-    :title="bondDef ? `道侣 · ${bondDef.name}` : '道侣'"
+    size="wide"
+    :title="modalTitle"
+    :aria-label="
+      bondDef && bond
+        ? `同行帖，${bondDef.name}，${STAGE_NAMES[bond.stage]}`
+        : '缘法，此生未遇同行，历世履历仍可回看'
+    "
     @close="emit('close')"
   >
-    <template v-if="bondDef && bond">
-      <p class="font-kai text-title text-ink">{{ bondDef.name }}</p>
-      <p class="mt-0.5 t-body text-ink-faint">{{ bondDef.brief }}</p>
-
-      <!--
-        「她此刻在等什么」提到三维条**之前**。
-
-        此前这块的顺序是:名 → 简介 → 性情 → 三维条 → 共历 → 她所求 → 底线
-        → 门槛 → 她开了口 → 共同事件。三维条(知交/信任/情意)排在第二屏,
-        而它是**关系状态的度量**,不是玩家打开这个弹窗要办的事。
-        打开道侣弹窗的人真正想问的是「她在等我说什么」和「她要不要什么」——
-        这两件事原本被压在最底下。
-
-        现在:先说事(她开了口 / 共同事件),再说人(性情 · 所求 · 底线),
-        最后才是关系刻度。三维条仍在,只是降到该在的位置。
-      -->
-
-      <!-- 她自己提出的事(Phase 34.1):不是世界安排的事件,是她开的口 -->
-      <template v-if="herIntent">
-        <div class="mt-3 rounded-[2px] border border-gold-ink/30 bg-gold-ink/[0.04] px-3 py-2.5">
-          <p class="text-body leading-relaxed text-gold-ink">{{ herIntent.line }}</p>
-          <p class="mt-1 text-note text-ink-faint">她所求:{{ herIntent.wish }}</p>
-          <!-- 意图由经历催生,不是凭空的:把「因何而起」摆出来 -->
-          <p v-if="herIntentSparks" class="text-note text-ink-faint">
-            因何而起:{{ herIntentSparks }}
+    <article v-if="bondDef && bond" class="bond-folio stagger-in" data-bond-view="active">
+      <header class="bond-head">
+        <span class="bond-head__seal font-kai" aria-hidden="true">{{
+          bondDef.name.slice(0, 1)
+        }}</span>
+        <div class="bond-head__identity">
+          <p class="bond-head__eyebrow">此世同行 · {{ STAGE_NAMES[bond.stage] }}</p>
+          <h2 class="bond-head__title">
+            <span>{{ bondDef.name }}</span>
+            <span class="bond-head__lean"
+              >{{ TEMPER_NAMES[bondDef.temper] }} · {{ LEAN_NAMES[bondDef.lean] }}道</span
+            >
+          </h2>
+          <p class="bond-head__brief">{{ bondDef.brief }}</p>
+          <p class="bond-head__meta">
+            共历 {{ bond.shared }} 次
+            <span v-if="bond.fallen" class="bond-head__state is-danger">已殁</span>
+            <span v-else-if="bond.departed" class="bond-head__state">已离</span>
+            <span v-else class="bond-head__state is-qing">仍在同行</span>
           </p>
-          <div class="mt-2.5 flex gap-2">
+        </div>
+      </header>
+
+      <section v-if="herIntent || pendingEvent || lastEventText" class="bond-now" data-bond-now>
+        <div class="bond-section-head">
+          <span class="bond-section-head__mark font-kai" aria-hidden="true">此</span>
+          <div>
+            <p class="bond-section-head__title">此刻要答的事</p>
+            <p class="bond-section-head__hint">先把她的话与后果摊开,再落子。</p>
+          </div>
+        </div>
+
+        <section v-if="herIntent" class="bond-intent" data-bond-intent>
+          <p class="bond-kicker">她开了口</p>
+          <blockquote class="bond-quote">{{ herIntent.line }}</blockquote>
+          <p class="bond-line"><span>她所求</span>{{ herIntent.wish }}</p>
+          <p v-if="herIntentSparks" class="bond-line bond-line--faint">
+            <span>因何而起</span>{{ herIntentSparks }}
+          </p>
+          <div class="bond-choice-list">
             <button
-              v-for="r in INTENT_CHOICES"
+              v-for="r in intentPreviews"
               :key="r.id"
-              class="card-ink grow px-2 py-2 text-center text-body text-ink-soft active:scale-99"
+              type="button"
+              class="bond-choice"
+              data-bond-intent-choice
+              :data-bond-choice-id="r.id"
+              :aria-label="intentChoiceLabel(r.label, r.preview)"
               @click="answerIntent(r.id)"
             >
-              {{ r.label }}
+              <span class="bond-choice__copy">
+                <span class="bond-choice__label">{{ r.label }}</span>
+                <span class="bond-choice__note">{{ intentPreviewNote(r.preview) }}</span>
+              </span>
+              <span class="bond-choice__read">
+                <span
+                  v-for="d in deltasOf(r.preview)"
+                  :key="d.key"
+                  class="bond-delta"
+                  :class="d.tone"
+                >
+                  {{ d.label }} {{ d.value }}
+                </span>
+              </span>
             </button>
           </div>
-        </div>
-      </template>
+        </section>
 
-      <!-- 共同事件:她的诉求与底线在此第一次被玩家看见并回应 -->
-      <template v-if="pendingEvent && !bond.fallen && !bond.departed">
-        <div class="mt-3 rounded-[2px] border border-ink/15 bg-paper-deep/50 px-3 py-2.5">
-          <p class="t-card">{{ pendingEvent.title }}</p>
-          <p class="text-note text-ink-faint">因何而来:{{ pendingEventTriggers }}</p>
-          <p class="mt-1 t-body text-ink-soft">{{ pendingEvent.text }}</p>
-          <!-- 她的诉求与底线并列成一对:先她要什么,再她不越什么 —— 回应之前必须都知道 -->
-          <div class="mt-1.5 space-y-0.5 border-l-2 border-qing/40 pl-2">
-            <p class="text-body text-qing">{{ pendingEvent.herWish }}</p>
-            <p class="text-note text-ink-faint">{{ pendingEvent.herLimit }}</p>
-          </div>
-          <p v-if="herLine" class="mt-1.5 text-body text-gold-ink">{{ herLine }}</p>
-          <div class="mt-2.5 space-y-1.5">
-            <button
-              v-for="ch in pendingEvent.choices"
-              :key="ch.id"
-              class="card-ink w-full px-3 py-2 text-left text-body text-ink-soft active:scale-99"
-              :class="{
-                '!border-cinnabar/50 text-cinnabar': ch.peril,
-                '!border-gold-ink/40': ch.risky && !ch.peril,
-              }"
-              @click="pickChoice(ch.id)"
-            >
-              {{ ch.label }}
-              <span v-if="ch.peril" class="ml-1 text-note text-cinnabar">〔共命之险〕</span>
-            </button>
-          </div>
-        </div>
-      </template>
-      <p
-        v-else-if="lastEventText"
-        class="mt-3 rounded-[2px] border border-ink/10 bg-paper-deep/40 px-3 py-2 t-body text-ink-soft"
-      >
-        {{ lastEventText }}
-      </p>
-
-      <!-- 人:性情与两句话 —— 她所求 / 她不越的线 -->
-      <!-- 花饰分隔(ink-divider-mark 的中腰墨点)是页面层专属 —— 弹窗用素分隔(ornament 判据;
-           迁出宿主前它一直靠 views/ 整目录豁免躲在判据外,拆出后照弹窗族先例归位) -->
-      <div class="mt-3 ink-divider" />
-      <p class="text-body text-ink-soft">
-        {{ TEMPER_NAMES[bondDef.temper] }} · {{ LEAN_NAMES[bondDef.lean] }}道
-        <span class="ml-1 text-qing">{{ STAGE_NAMES[bond.stage] }}</span>
-        <span v-if="bond.fallen" class="ml-1 text-cinnabar">已殁</span
-        ><span v-if="bond.departed" class="ml-1 text-qing">已离</span>
-      </p>
-      <p class="mt-1.5 t-body text-ink-soft">她所求:{{ bondDef.pursuit }}</p>
-      <p class="mt-0.5 t-body text-ink-faint">她不越的线:{{ bondDef.taboo }}</p>
-
-      <!-- 关系刻度:三维只影响关系推进,不进任何属性 -->
-      <div class="mt-3 space-y-1.5">
-        <p v-for="m in bondMeters" :key="m.label" class="flex items-center gap-2 text-body">
-          <span class="w-10 shrink-0 text-ink-faint">{{ m.label }}</span>
-          <ProgressBar :value="m.v / 100" class="grow" :height="4" color="var(--color-qing)" />
-          <span class="w-8 shrink-0 text-right tabular text-ink-soft">{{ m.v }}</span>
-        </p>
-      </div>
-      <p class="mt-1.5 text-note text-ink-faint">
-        共历 {{ bond.shared }} 次<span v-if="responseLine">
-          · 她开的口,你历次回应:{{ responseLine }}</span
+        <p
+          v-if="lastEventText"
+          ref="resultRegion"
+          tabindex="-1"
+          class="bond-result"
+          role="status"
+          aria-live="polite"
+          data-bond-result
         >
-      </p>
+          {{ lastEventText }}
+        </p>
 
-      <!-- 门槛:离下一段还差什么 —— 紧挨着刻度,因为差的正是这些刻度的值 -->
-      <p v-if="gateHint" class="mt-2 text-body text-gold-ink">
-        离「{{ STAGE_NAMES[gateHint.stage] }}」尚差:{{ gateHint.lacking.join("、") }}
-      </p>
-    </template>
-    <p v-else class="t-body text-ink-faint">
-      此生尚未遇见谁。人是在路上碰到的,不是挑出来的 —— 多走几处地界,或许自有相逢。
-    </p>
-    <!--
-      空态得给一条出路。此前这段只把「为什么没有」说清楚(人是在路上碰到的),
-      却没说「那就往哪走」—— 读完仍停在原地。历练页本来就是遇人的地方,
-      直接给一枚到那儿的按钮。
-    -->
-    <RouterLink
-      v-if="!bondDef"
-      to="/adventure"
-      class="btn-ghost mt-3 flex w-full items-center justify-center !text-body"
-      @click="emit('close')"
-    >
-      去 历 练
-    </RouterLink>
+        <section
+          v-if="pendingEvent && !bond.fallen && !bond.departed"
+          class="bond-event"
+          data-bond-event
+        >
+          <div class="bond-event__head">
+            <p class="bond-event__title font-kai">{{ pendingEvent.title }}</p>
+            <p class="bond-event__cause">因何而来 · {{ pendingEventTriggers }}</p>
+          </div>
+          <p class="bond-event__story">{{ pendingEvent.text }}</p>
+          <div class="bond-event__brief">
+            <p><span>她的诉求</span>{{ pendingEvent.herWish }}</p>
+            <p><span>她的底线</span>{{ pendingEvent.herLimit }}</p>
+          </div>
+          <p v-if="herLine" class="bond-event__stance">{{ herLine }}</p>
+          <div class="bond-choice-list">
+            <button
+              v-for="p in eventPreviews"
+              :key="p.choice.id"
+              type="button"
+              class="bond-choice"
+              :class="{
+                'is-taboo': p.choice.crossesTaboo,
+                'is-danger': p.preview?.perishes || p.preview?.leaves,
+              }"
+              data-bond-event-choice
+              :data-bond-choice-id="p.choice.id"
+              :disabled="!p.preview"
+              :aria-label="eventChoiceLabel(p.choice.label, p.preview)"
+              @click="pickChoice(p.choice.id)"
+            >
+              <span class="bond-choice__copy">
+                <span class="bond-choice__label">{{ p.choice.label }}</span>
+                <span v-if="eventFlags(p).length" class="bond-choice__flags">
+                  <span
+                    v-for="flag in eventFlags(p)"
+                    :key="flag.label"
+                    class="bond-flag"
+                    :class="flag.tone"
+                  >
+                    {{ flag.label }}
+                  </span>
+                </span>
+                <span v-if="p.preview?.perishes" class="bond-choice__warning">
+                  共命之险 · 落定后信 {{ p.preview.after.trust }} / 契
+                  {{ p.preview.after.accord }}， 门槛 {{ PERIL_SAFE_TRUST }} /
+                  {{ PERIL_SAFE_ACCORD }}：她会殒落。
+                </span>
+                <span v-else-if="p.preview?.leaves" class="bond-choice__warning">
+                  这一签落定后，她会就此离开。
+                </span>
+                <span v-else-if="p.preview?.perilSafe" class="bond-choice__assurance">
+                  共命之险 · 此刻信契够深，二人可一同生还。
+                </span>
+              </span>
+              <span v-if="p.preview" class="bond-choice__read">
+                <span
+                  v-for="d in deltasOf(p.preview.outcome)"
+                  :key="d.key"
+                  class="bond-delta"
+                  :class="d.tone"
+                >
+                  {{ d.label }} {{ d.value }}
+                </span>
+              </span>
+            </button>
+          </div>
+        </section>
+      </section>
 
-    <template v-if="pastBonds.length">
+      <section v-else class="bond-quiet" data-bond-quiet>
+        <span class="bond-quiet__seal font-kai" aria-hidden="true">宁</span>
+        <div>
+          <p class="bond-quiet__title">
+            {{ bond.fallen ? "此世同行已止" : bond.departed ? "此世已分道" : "此刻没有未了之言" }}
+          </p>
+          <p class="bond-quiet__copy">
+            {{
+              bond.fallen
+                ? "人不随转世回来，历世同行仍留在卷末。"
+                : bond.departed
+                  ? "关系停在此处，走远的人不会再追问。"
+                  : "多走几处地界，新的相遇会自己找上来。"
+            }}
+          </p>
+        </div>
+      </section>
+
+      <div class="bond-detail-grid">
+        <section class="bond-person" data-bond-person>
+          <p class="bond-panel-title">其人</p>
+          <dl class="bond-person__rows">
+            <div>
+              <dt>她所求</dt>
+              <dd>{{ bondDef.pursuit }}</dd>
+            </div>
+            <div>
+              <dt>她不越的线</dt>
+              <dd>{{ bondDef.taboo }}</dd>
+            </div>
+          </dl>
+          <p class="bond-person__note">
+            她开的口，你历次回应：{{ responseLine || "尚未回应过她。" }}
+          </p>
+        </section>
+
+        <section
+          class="bond-meters"
+          data-bond-meters
+          data-bond-next-gate
+          :data-bond-next-stage="gateHint?.stage ?? ''"
+        >
+          <div class="bond-meters__head">
+            <p class="bond-panel-title">三衡</p>
+            <p v-if="gateHint" class="bond-meters__next">
+              下一阶 · {{ STAGE_NAMES[gateHint.stage] }}
+            </p>
+            <p v-else class="bond-meters__next">已至此世最高阶</p>
+          </div>
+          <div class="bond-meter-list">
+            <div
+              v-for="m in bondMeterRows"
+              :key="m.key"
+              class="bond-meter"
+              :data-bond-meter="m.key"
+              :data-value="m.value"
+            >
+              <div class="bond-meter__head">
+                <span>{{ m.label }}</span>
+                <span class="tabular">
+                  {{ m.value }}<small>/100</small>
+                  <em v-if="gateHint && gateHint.shortfall[m.key] === 0" class="is-ready">已够</em>
+                  <em v-else-if="gateHint">尚差 {{ gateHint.shortfall[m.key] }}</em>
+                </span>
+              </div>
+              <div
+                class="bond-meter__track"
+                role="img"
+                :aria-label="meterAria(m.label, m.value, m.key)"
+              >
+                <span class="bond-meter__fill" :style="{ width: `${m.value}%` }" />
+                <span
+                  v-if="gateHint"
+                  class="bond-meter__goal"
+                  :style="{ left: meterGoalPercent(m.key) }"
+                  aria-hidden="true"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="bond-shared">
+            <span>共历</span>
+            <strong class="tabular">{{ bond.shared }} 次</strong>
+            <em v-if="gateHint">
+              {{
+                gateHint.shortfall.shared > 0
+                  ? `下一阶尚差 ${gateHint.shortfall.shared} 次`
+                  : "次数已够"
+              }}
+            </em>
+            <em v-else>此世已行至最高阶</em>
+          </div>
+        </section>
+      </div>
+    </article>
+
+    <article v-else class="bond-empty stagger-in" data-bond-view="empty">
+      <span class="bond-empty__seal font-kai" aria-hidden="true">缘</span>
+      <div>
+        <p class="bond-empty__eyebrow">缘法 · 此生</p>
+        <h2 class="bond-empty__title">尚未遇见同行</h2>
+        <p class="bond-empty__copy">
+          人是在路上碰到的，不是从名单里挑出来的。多走几处地界，或许自有相逢。
+        </p>
+        <p v-if="pastBonds.length" class="bond-empty__history">
+          此世仍空着，历世已有 {{ pastBonds.length }} 段同行留在卷末。
+        </p>
+        <RouterLink
+          to="/adventure"
+          class="btn-ghost tap-row mt-3 flex w-full items-center justify-center !text-body"
+          data-bond-empty-action
+          @click="emit('close')"
+        >
+          去 历 练
+        </RouterLink>
+      </div>
+    </article>
+
+    <section v-if="pastBonds.length" class="bond-history" data-bond-history>
       <div
-        class="mt-4"
         :data-bond-history-total="pastBondRows.length"
         :data-bond-history-shown="pastBondPage.shown"
         :data-bond-history-start="pastBondPage.start"
       >
-        <p class="flex flex-wrap items-baseline justify-between gap-1">
-          <span class="font-kai text-title tracking-widest text-ink-soft">历世同行</span>
-          <span class="text-note text-ink-faint tabular">共 {{ pastBondRows.length }} 段</span>
-        </p>
-        <div class="scroll-pane mt-2 max-h-40 space-y-1.5 overflow-y-auto">
+        <div class="bond-history__head">
+          <span class="bond-history__title font-kai">历世同行</span>
+          <span class="bond-history__count tabular">共 {{ pastBondRows.length }} 段</span>
+        </div>
+        <div class="bond-history__rows scroll-pane">
           <p
             v-for="(r, i) in pastBondPage.visible"
             :key="`${r.daoluId}-${r.shared}-${r.ending}-${pastBondPage.start + i}`"
             :data-bond-history-row="r.name"
             tabindex="-1"
-            class="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-body"
+            class="bond-history__row"
           >
-            <span class="shrink-0 whitespace-nowrap text-ink-soft">{{ r.name }}</span>
-            <span class="ml-auto shrink-0 whitespace-nowrap text-ink-faint"
-              >{{ STAGE_NAMES[r.stage] }} · {{ ENDING_NAMES[r.ending] }}</span
-            >
+            <span class="bond-history__name">{{ r.name }}</span>
+            <span class="bond-history__read">
+              {{ STAGE_NAMES[r.stage] }} · {{ ENDING_NAMES[r.ending] }} · 共历 {{ r.shared }} 次
+            </span>
           </p>
         </div>
-        <div
-          v-if="pastBondPage.start > 0 || pastBondPage.hidden > 0"
-          class="mt-1.5 flex flex-wrap gap-1"
-        >
+        <div v-if="pastBondPage.start > 0 || pastBondPage.hidden > 0" class="bond-history__actions">
           <button
             v-if="pastBondPage.start > 0"
             type="button"
             data-bond-history-prev
-            class="chip-ink min-h-[28px] !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
+            class="bond-history__action"
             :aria-label="previousPastBondText()"
             @click="showPreviousPastBonds"
           >
@@ -172,7 +318,7 @@
             v-if="pastBondPage.hidden > 0"
             type="button"
             data-bond-history-more
-            class="chip-ink min-h-[28px] !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
+            class="bond-history__action is-accent"
             :aria-label="morePastBondText()"
             :data-promised="Math.min(BOND_HISTORY_RENDER_BATCH, pastBondPage.hidden)"
             @click="showMorePastBonds"
@@ -181,6 +327,12 @@
           </button>
         </div>
       </div>
+    </section>
+
+    <template #footer>
+      <button type="button" class="btn-ghost tap-row w-full !text-body" @click="emit('close')">
+        {{ bondDef && bond ? "收起同行帖" : "收起" }}
+      </button>
     </template>
   </BaseModal>
 </template>
@@ -188,9 +340,24 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
 import { ENDING_NAMES, LEAN_NAMES, STAGE_NAMES, TEMPER_NAMES } from "@/data/daolu";
-import { chooseBondEvent, herStance, nextGateHint, respondIntent } from "@/core/daoluService";
-import { RESPONSE_NAMES, SPARK_NAMES } from "@/data/bondIntent";
-import { TRIGGER_NAMES } from "@/data/bondEvents";
+import {
+  chooseBondEvent,
+  herStance,
+  nextGateHint,
+  PERIL_SAFE_ACCORD,
+  PERIL_SAFE_TRUST,
+  previewBondChoice,
+  respondIntent,
+  type BondChoicePreview,
+} from "@/core/daoluService";
+import {
+  RESPONSE_NAMES,
+  SPARK_NAMES,
+  respondTo,
+  type IntentAftermath,
+  type IntentResponse,
+} from "@/data/bondIntent";
+import { TRIGGER_NAMES, type BondChoice } from "@/data/bondEvents";
 import {
   firstNewVisibleIndex,
   listWindow,
@@ -200,20 +367,17 @@ import {
 } from "@/core/listRender";
 import { useBondOverview } from "@/composables/useBondOverview";
 import BaseModal from "@/components/common/BaseModal.vue";
-import ProgressBar from "@/components/common/ProgressBar.vue";
 
-/**
- * 道侣弹窗(自 CharacterView 迁入)。
- *
- * 关系状态的本体投影(bond/bondDef/pastBonds/pendingEvent/herIntent/hasBondWord)
- * 收在 composables/useBondOverview.ts —— 入口卡与这里共用同一份定义;
- * 本组件只留弹窗自己的交互态:回应后的尾账(lastEventText)、三维条、
- * 门槛提示、回应史。
- */
 const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 
 const { bond, bondDef, pastBonds, pendingEvent, herIntent } = useBondOverview();
+
+const modalTitle = computed(() => {
+  if (bondDef.value) return `同行帖 · ${bondDef.value.name}`;
+  return pastBonds.value.length ? "历世同行" : "缘法";
+});
+
 const pastBondRows = computed(() => [...pastBonds.value].reverse());
 const BOND_HISTORY_RENDER_BATCH = 12;
 const BOND_HISTORY_RENDER_WINDOW = BOND_HISTORY_RENDER_BATCH * 2;
@@ -221,6 +385,7 @@ const bondHistoryLimit = ref(BOND_HISTORY_RENDER_BATCH);
 const pastBondPage = computed(() =>
   listWindow(pastBondRows.value, bondHistoryLimit.value, BOND_HISTORY_RENDER_WINDOW),
 );
+const resultRegion = ref<HTMLElement | null>(null);
 
 function morePastBondText(): string {
   const next = Math.min(BOND_HISTORY_RENDER_BATCH, pastBondPage.value.hidden);
@@ -263,25 +428,110 @@ function showPreviousPastBonds(): void {
   focusPastBond();
 }
 
-const bondMeters = computed(() =>
-  bond.value
-    ? [
-        { label: "缘分", v: bond.value.fate },
-        { label: "信任", v: bond.value.trust },
-        { label: "契合", v: bond.value.accord },
-      ]
-    : [],
-);
 const gateHint = computed(() => nextGateHint());
-/** 这件事因何而来(触发名取自 bondEvents,不在视图里手写) */
 const pendingEventTriggers = computed(() =>
   (pendingEvent.value?.triggers ?? [])
     .map((t) => TRIGGER_NAMES[t])
     .filter(Boolean)
     .join("、"),
 );
-const lastEventText = ref("");
 const herLine = computed(() => (pendingEvent.value ? herStance(pendingEvent.value) : null));
+const lastEventText = ref("");
+
+const bondMeterRows = computed(() => [
+  { key: "fate" as const, label: "缘分", value: bond.value?.fate ?? 0 },
+  { key: "trust" as const, label: "信任", value: bond.value?.trust ?? 0 },
+  { key: "accord" as const, label: "契合", value: bond.value?.accord ?? 0 },
+]);
+
+const INTENT_CHOICES: ReadonlyArray<{ id: IntentResponse; label: string }> = [
+  { id: "accept", label: "与她同去" },
+  { id: "refuse", label: "婉言谢绝" },
+  { id: "ignore", label: "不作声" },
+];
+
+const intentPreviews = computed(() => {
+  const def = bondDef.value;
+  const intent = herIntent.value;
+  if (!def || !intent) return [];
+  return INTENT_CHOICES.map((choice) => ({
+    ...choice,
+    preview: respondTo(def, intent, choice.id),
+  }));
+});
+
+const eventPreviews = computed(() => {
+  const event = pendingEvent.value;
+  if (!event) return [];
+  return event.choices.map((choice) => ({
+    choice,
+    preview: previewBondChoice(event.id, choice.id),
+  }));
+});
+
+function signed(value: number): string {
+  return value > 0 ? `+${value}` : `${value}`;
+}
+
+function deltaTone(value: number): string {
+  if (value > 0) return "is-up";
+  if (value < 0) return "is-down";
+  return "is-flat";
+}
+
+function deltasOf(outcome: { fate: number; trust: number; accord: number }) {
+  return [
+    { key: "fate", label: "缘", value: signed(outcome.fate), tone: deltaTone(outcome.fate) },
+    { key: "trust", label: "信", value: signed(outcome.trust), tone: deltaTone(outcome.trust) },
+    { key: "accord", label: "契", value: signed(outcome.accord), tone: deltaTone(outcome.accord) },
+  ];
+}
+
+function intentPreviewNote(preview: IntentAftermath): string {
+  return preview.settled ? "这一回应会了结此事。" : "此事未了，她还会再提。";
+}
+
+function intentChoiceLabel(label: string, preview: IntentAftermath): string {
+  return `${label}。缘分${signed(preview.fate)}，信任${signed(preview.trust)}，契合${signed(preview.accord)}。${intentPreviewNote(preview)}`;
+}
+
+function eventChoiceLabel(label: string, preview: BondChoicePreview | null): string {
+  if (!preview) return `${label}。当前不可选。`;
+  const outcomes = `缘分${signed(preview.outcome.fate)}，信任${signed(preview.outcome.trust)}，契合${signed(preview.outcome.accord)}`;
+  if (preview.perishes) return `${label}。${outcomes}。共命之险，她会殒落。`;
+  if (preview.leaves) return `${label}。${outcomes}。落定后她会离开。`;
+  return `${label}。${outcomes}。`;
+}
+
+function eventFlags(p: { choice: BondChoice; preview: BondChoicePreview | null }) {
+  const flags: Array<{ label: string; tone: string }> = [];
+  if (p.choice.supportsHer) flags.push({ label: "站在她那边", tone: "is-qing" });
+  if (p.choice.crossesTaboo) flags.push({ label: "触碰底线", tone: "is-danger" });
+  if (p.choice.risky) flags.push({ label: "涉险", tone: "is-ink" });
+  if (p.preview?.perishes) flags.push({ label: "她会殒落", tone: "is-danger" });
+  else if (p.preview?.leaves) flags.push({ label: "她会离开", tone: "is-danger" });
+  else if (p.preview?.perilSafe) flags.push({ label: "可同生", tone: "is-qing" });
+  return flags;
+}
+
+function meterGoalPercent(key: "fate" | "trust" | "accord"): string {
+  const target = gateHint.value?.target[key] ?? 100;
+  return `${Math.max(0, Math.min(100, target))}%`;
+}
+
+function meterAria(label: string, value: number, key: "fate" | "trust" | "accord"): string {
+  if (!gateHint.value) return `${label} ${value}，已至此世最高阶`;
+  const shortfall = gateHint.value.shortfall[key];
+  return shortfall
+    ? `${label} ${value}，距下一阶尚差 ${shortfall}`
+    : `${label} ${value}，已够下一阶`;
+}
+
+function reportResult(text: string): void {
+  lastEventText.value = text;
+  void nextTick(() => resultRegion.value?.focus());
+}
+
 watch(
   () => props.open,
   (open) => {
@@ -291,29 +541,789 @@ watch(
     }
   },
 );
+
 function pickChoice(choiceId: string): void {
   if (!pendingEvent.value) return;
-  const r = chooseBondEvent(pendingEvent.value.id, choiceId);
-  lastEventText.value = r?.text ?? "";
+  const result = chooseBondEvent(pendingEvent.value.id, choiceId);
+  if (result) reportResult(result.text);
 }
 
-/** 这份心意因何而起(经历名取自 bondIntent) */
 const herIntentSparks = computed(() => {
   const sparks = herIntent.value?.sparks ?? [];
-  return [...new Set(sparks)].map((s) => SPARK_NAMES[s]).join("、");
+  return [...new Set(sparks)].map((spark) => SPARK_NAMES[spark]).join("、");
 });
-/** 她记得你怎么答的 —— 回应名取自 bondIntent,视图不另写一份 */
+
 const responseLine = computed(() => {
-  const rs = bond.value?.intent?.responses ?? [];
-  return rs.length ? rs.map((r) => RESPONSE_NAMES[r]).join(" · ") : "";
+  const responses = bond.value?.intent?.responses ?? [];
+  return responses.length ? responses.map((response) => RESPONSE_NAMES[response]).join(" · ") : "";
 });
-const INTENT_CHOICES = [
-  { id: "accept" as const, label: "与她同去" },
-  { id: "refuse" as const, label: "婉言谢绝" },
-  { id: "ignore" as const, label: "不作声" },
-];
-function answerIntent(r: "accept" | "refuse" | "ignore"): void {
-  const a = respondIntent(r);
-  lastEventText.value = a?.text ?? "";
+
+function answerIntent(response: IntentResponse): void {
+  const result = respondIntent(response);
+  if (result) reportResult(result.text);
 }
 </script>
+
+<style scoped>
+.bond-folio,
+.bond-empty,
+.bond-history {
+  --bond-line: rgb(var(--color-ink-rgb) / 0.14);
+  --bond-line-strong: rgb(var(--color-ink-rgb) / 0.24);
+  --bond-paper: rgb(var(--color-paper-deep-rgb) / 0.34);
+  min-width: 0;
+}
+
+.bond-head {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.72rem;
+}
+
+.bond-head__seal,
+.bond-empty__seal {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border: 1px solid rgb(var(--color-qing-rgb) / 0.4);
+  border-radius: 2px;
+  background: rgb(var(--color-qing-rgb) / 0.04);
+  color: rgb(var(--color-qing-rgb));
+  font-size: var(--type-section);
+  line-height: 1;
+}
+
+.bond-head__identity {
+  min-width: 0;
+}
+
+.bond-head__eyebrow,
+.bond-empty__eyebrow {
+  color: rgb(var(--color-qing-rgb));
+  font-size: var(--type-note);
+  letter-spacing: 0.18em;
+  line-height: 1.5;
+}
+
+.bond-head__title,
+.bond-empty__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.12rem 0.56rem;
+  margin-top: 0.08rem;
+  color: rgb(var(--color-ink-rgb));
+  font-family: var(--font-kai);
+  font-size: var(--type-section);
+  letter-spacing: 0.07em;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.bond-head__lean {
+  color: rgb(var(--color-qing-rgb));
+  font-size: var(--type-title);
+}
+
+.bond-head__brief,
+.bond-empty__copy {
+  margin-top: 0.18rem;
+  color: rgb(var(--color-ink-soft-rgb));
+  font-size: var(--type-body);
+  line-height: 1.65;
+}
+
+.bond-head__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.22rem 0.48rem;
+  margin-top: 0.28rem;
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: var(--type-note);
+  line-height: 1.55;
+}
+
+.bond-head__state {
+  padding: 0 0.24rem;
+  border: 1px solid var(--bond-line);
+  border-radius: 2px;
+  color: rgb(var(--color-ink-soft-rgb));
+  white-space: nowrap;
+}
+
+.bond-head__state.is-qing {
+  border-color: rgb(var(--color-qing-rgb) / 0.28);
+  color: rgb(var(--color-qing-rgb));
+}
+
+.bond-head__state.is-danger {
+  border-color: rgb(var(--color-cinnabar-rgb) / 0.28);
+  color: rgb(var(--color-cinnabar-rgb));
+}
+
+.bond-now {
+  margin-top: 0.78rem;
+  padding-top: 0.58rem;
+  border-top: 1px solid var(--bond-line);
+}
+
+.bond-section-head {
+  display: grid;
+  grid-template-columns: 1.65rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.5rem;
+}
+
+.bond-section-head__mark {
+  display: grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.36);
+  border-radius: 2px;
+  color: rgb(var(--color-cinnabar-rgb));
+  font-size: var(--type-note);
+  line-height: 1;
+}
+
+.bond-section-head__title {
+  color: rgb(var(--color-ink-rgb));
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  letter-spacing: 0.06em;
+  line-height: 1.45;
+}
+
+.bond-section-head__hint {
+  margin-top: 0.06rem;
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: var(--type-note);
+  line-height: 1.55;
+}
+
+.bond-intent,
+.bond-event {
+  margin-top: 0.46rem;
+  padding: 0.58rem;
+  border: 1px solid var(--bond-line);
+  border-left: 2px solid rgb(var(--color-qing-rgb) / 0.58);
+  border-radius: 2px;
+  background:
+    linear-gradient(105deg, rgb(var(--color-qing-rgb) / 0.025), transparent 52%), var(--bond-paper);
+}
+
+.bond-kicker {
+  color: rgb(var(--color-qing-rgb));
+  font-size: var(--type-note);
+  letter-spacing: 0.12em;
+  line-height: 1.5;
+}
+
+.bond-quote {
+  margin-top: 0.2rem;
+  padding: 0.38rem 0;
+  border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  color: rgb(var(--color-ink-rgb));
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  line-height: 1.72;
+  overflow-wrap: anywhere;
+}
+
+.bond-line {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.55rem;
+  margin-top: 0.22rem;
+  color: rgb(var(--color-ink-soft-rgb));
+  font-size: var(--type-body);
+  line-height: 1.6;
+}
+
+.bond-line > span {
+  color: rgb(var(--color-qing-rgb));
+  font-family: var(--font-kai);
+  font-size: var(--type-note);
+  white-space: nowrap;
+}
+
+.bond-line--faint {
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: var(--type-note);
+}
+
+.bond-choice-list {
+  display: grid;
+  gap: 0.38rem;
+  margin-top: 0.48rem;
+}
+
+.bond-choice {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.5rem 0.54rem;
+  border: 1px solid var(--bond-line);
+  border-left: 2px solid rgb(var(--color-qing-rgb) / 0.3);
+  border-radius: 2px;
+  background: rgb(var(--color-paper-rgb) / 0.62);
+  color: rgb(var(--color-ink-soft-rgb));
+  text-align: left;
+  transition:
+    border-color 0.14s ease,
+    background-color 0.14s ease;
+}
+
+.bond-choice:hover {
+  border-color: rgb(var(--color-qing-rgb) / 0.38);
+  background: rgb(var(--color-qing-rgb) / 0.035);
+}
+
+.bond-choice:focus-visible {
+  outline: 2px solid rgb(var(--color-cinnabar-rgb) / 0.68);
+  outline-offset: 2px;
+}
+
+.bond-choice.is-taboo {
+  border-left-color: rgb(var(--color-cinnabar-rgb) / 0.52);
+}
+
+.bond-choice.is-danger {
+  border-color: rgb(var(--color-cinnabar-rgb) / 0.3);
+  border-left-color: rgb(var(--color-cinnabar-rgb) / 0.76);
+}
+
+.bond-choice:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.bond-choice__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.16rem;
+}
+
+.bond-choice__label {
+  color: rgb(var(--color-ink-rgb));
+  font-size: var(--type-body);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.bond-choice__note,
+.bond-choice__warning,
+.bond-choice__assurance {
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: var(--type-note);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.bond-choice__warning {
+  color: rgb(var(--color-cinnabar-rgb));
+}
+
+.bond-choice__assurance {
+  color: rgb(var(--color-qing-rgb));
+}
+
+.bond-choice__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.22rem;
+}
+
+.bond-flag {
+  padding: 0 0.22rem;
+  border: 1px solid var(--bond-line);
+  border-radius: 2px;
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: var(--type-note);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.bond-flag.is-qing {
+  border-color: rgb(var(--color-qing-rgb) / 0.26);
+  color: rgb(var(--color-qing-rgb));
+}
+
+.bond-flag.is-danger {
+  border-color: rgb(var(--color-cinnabar-rgb) / 0.28);
+  color: rgb(var(--color-cinnabar-rgb));
+}
+
+.bond-choice__read {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.bond-delta {
+  padding: 0 0.22rem;
+  border: 1px solid var(--bond-line);
+  border-radius: 2px;
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: var(--type-note);
+  line-height: 1.55;
+  white-space: nowrap;
+}
+
+.bond-delta.is-up {
+  border-color: rgb(var(--color-qing-rgb) / 0.26);
+  color: rgb(var(--color-qing-rgb));
+}
+
+.bond-delta.is-down {
+  border-color: rgb(var(--color-cinnabar-rgb) / 0.28);
+  color: rgb(var(--color-cinnabar-rgb));
+}
+
+.bond-result {
+  margin-top: 0.42rem;
+  padding: 0.48rem 0.56rem;
+  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.2);
+  border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.62);
+  border-radius: 2px;
+  background: rgb(var(--color-cinnabar-rgb) / 0.035);
+  color: rgb(var(--color-ink-soft-rgb));
+  font-size: var(--type-body);
+  line-height: 1.68;
+  overflow-wrap: anywhere;
+}
+
+.bond-result:focus-visible {
+  outline: 2px solid rgb(var(--color-cinnabar-rgb) / 0.64);
+  outline-offset: 2px;
+}
+
+.bond-event {
+  border-left-color: rgb(var(--color-cinnabar-rgb) / 0.58);
+}
+
+.bond-event__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.14rem 0.6rem;
+}
+
+.bond-event__title {
+  color: rgb(var(--color-ink-rgb));
+  font-size: var(--type-title);
+  letter-spacing: 0.1em;
+  line-height: 1.45;
+}
+
+.bond-event__cause {
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: var(--type-note);
+  line-height: 1.55;
+}
+
+.bond-event__story {
+  margin-top: 0.24rem;
+  color: rgb(var(--color-ink-soft-rgb));
+  font-size: var(--type-body);
+  line-height: 1.72;
+  overflow-wrap: anywhere;
+}
+
+.bond-event__brief {
+  display: grid;
+  gap: 0.14rem;
+  margin-top: 0.34rem;
+  padding-left: 0.48rem;
+  border-left: 2px solid rgb(var(--color-qing-rgb) / 0.4);
+}
+
+.bond-event__brief p {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.46rem;
+  color: rgb(var(--color-ink-soft-rgb));
+  font-size: var(--type-note);
+  line-height: 1.6;
+}
+
+.bond-event__brief span {
+  color: rgb(var(--color-qing-rgb));
+  font-family: var(--font-kai);
+  white-space: nowrap;
+}
+
+.bond-event__stance {
+  margin-top: 0.28rem;
+  color: rgb(var(--color-cinnabar-rgb));
+  font-size: var(--type-body);
+  line-height: 1.62;
+}
+
+.bond-quiet {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.54rem;
+  margin-top: 0.72rem;
+  padding: 0.54rem 0.58rem;
+  border: 1px solid var(--bond-line);
+  border-radius: 2px;
+  background: var(--bond-paper);
+}
+
+.bond-quiet__seal {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid rgb(var(--color-qing-rgb) / 0.34);
+  border-radius: 2px;
+  color: rgb(var(--color-qing-rgb));
+  font-size: var(--type-title);
+  line-height: 1;
+}
+
+.bond-quiet__title {
+  color: rgb(var(--color-ink-rgb));
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  line-height: 1.45;
+}
+
+.bond-quiet__copy {
+  margin-top: 0.1rem;
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: var(--type-note);
+  line-height: 1.6;
+}
+
+.bond-detail-grid {
+  display: grid;
+  gap: 0.62rem;
+  margin-top: 0.66rem;
+}
+
+.bond-person,
+.bond-meters {
+  min-width: 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--bond-line);
+}
+
+.bond-panel-title {
+  color: rgb(var(--color-ink-soft-rgb));
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  letter-spacing: 0.1em;
+  line-height: 1.45;
+}
+
+.bond-person__rows {
+  display: grid;
+  gap: 0.34rem;
+  margin-top: 0.3rem;
+}
+
+.bond-person__rows > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.48rem;
+}
+
+.bond-person__rows dt {
+  color: rgb(var(--color-qing-rgb));
+  font-size: var(--type-note);
+  white-space: nowrap;
+}
+
+.bond-person__rows dd {
+  color: rgb(var(--color-ink-soft-rgb));
+  font-size: var(--type-body);
+  line-height: 1.62;
+  overflow-wrap: anywhere;
+}
+
+.bond-person__note {
+  margin-top: 0.4rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: var(--type-note);
+  line-height: 1.6;
+}
+
+.bond-meters__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.14rem 0.48rem;
+}
+
+.bond-meters__next {
+  color: rgb(var(--color-qing-rgb));
+  font-size: var(--type-note);
+  line-height: 1.55;
+}
+
+.bond-meter-list {
+  display: grid;
+  gap: 0.36rem;
+  margin-top: 0.32rem;
+}
+
+.bond-meter__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem;
+  color: rgb(var(--color-ink-soft-rgb));
+  font-size: var(--type-note);
+  line-height: 1.55;
+}
+
+.bond-meter__head > span:last-child {
+  color: rgb(var(--color-ink-rgb));
+  white-space: nowrap;
+}
+
+.bond-meter__head small {
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: inherit;
+}
+
+.bond-meter__head em {
+  margin-left: 0.28rem;
+  color: rgb(var(--color-ink-faint-rgb));
+  font-style: normal;
+}
+
+.bond-meter__head em.is-ready {
+  color: rgb(var(--color-qing-rgb));
+}
+
+.bond-meter__track {
+  position: relative;
+  height: 4px;
+  margin-top: 0.2rem;
+  background: rgb(var(--color-ink-rgb) / 0.1);
+}
+
+.bond-meter__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: rgb(var(--color-qing-rgb));
+}
+
+.bond-meter__goal {
+  position: absolute;
+  top: -0.2rem;
+  bottom: -0.2rem;
+  width: 1px;
+  background: rgb(var(--color-ink-rgb) / 0.38);
+}
+
+.bond-shared {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.12rem 0.42rem;
+  margin-top: 0.38rem;
+  padding-top: 0.32rem;
+  border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: var(--type-note);
+  line-height: 1.55;
+}
+
+.bond-shared strong {
+  color: rgb(var(--color-ink-soft-rgb));
+  font-weight: 500;
+}
+
+.bond-shared em {
+  color: rgb(var(--color-qing-rgb));
+  font-style: normal;
+}
+
+.bond-empty {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.72rem;
+  padding: 0.72rem;
+  border: 1px solid var(--bond-line);
+  border-radius: 2px;
+  background: var(--bond-paper);
+}
+
+.bond-empty__history {
+  margin-top: 0.3rem;
+  color: rgb(var(--color-qing-rgb));
+  font-size: var(--type-note);
+  line-height: 1.6;
+}
+
+.bond-history {
+  margin-top: 0.74rem;
+  padding-top: 0.54rem;
+  border-top: 1px solid var(--bond-line);
+}
+
+.bond-history__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.12rem 0.48rem;
+}
+
+.bond-history__title {
+  color: rgb(var(--color-ink-soft-rgb));
+  font-size: var(--type-title);
+  letter-spacing: 0.1em;
+  line-height: 1.45;
+}
+
+.bond-history__count {
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: var(--type-note);
+}
+
+.bond-history__rows.scroll-pane {
+  max-height: 10rem;
+  margin-top: 0.3rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.bond-history__row {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.08rem 0.48rem;
+  padding: 0.26rem 0;
+  border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.07);
+  font-size: var(--type-body);
+  line-height: 1.55;
+}
+
+.bond-history__row:focus-visible {
+  outline: 2px solid rgb(var(--color-cinnabar-rgb) / 0.58);
+  outline-offset: 1px;
+}
+
+.bond-history__name {
+  color: rgb(var(--color-ink-soft-rgb));
+  white-space: nowrap;
+}
+
+.bond-history__read {
+  color: rgb(var(--color-ink-faint-rgb));
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.bond-history__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.32rem;
+  margin-top: 0.34rem;
+}
+
+.bond-history__action {
+  min-height: 28px;
+  padding: 0.18rem 0.36rem;
+  border: 1px solid var(--bond-line);
+  border-radius: 2px;
+  background: transparent;
+  color: rgb(var(--color-ink-soft-rgb));
+  font-size: var(--type-note);
+  line-height: 1.5;
+  white-space: normal;
+}
+
+.bond-history__action.is-accent {
+  border-color: rgb(var(--color-cinnabar-rgb) / 0.3);
+  color: rgb(var(--color-cinnabar-rgb));
+}
+
+@media (min-width: 620px) {
+  .bond-detail-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.8rem;
+  }
+
+  .bond-person,
+  .bond-meters {
+    padding-top: 0.5rem;
+  }
+}
+
+@media (max-width: 220px) {
+  .bond-choice__read {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+    width: 100%;
+  }
+
+  .bond-choice {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .bond-head,
+  .bond-empty,
+  .bond-quiet {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bond-head__seal,
+  .bond-empty__seal,
+  .bond-quiet__seal {
+    width: 2.35rem;
+    height: 2.35rem;
+  }
+
+  .bond-line,
+  .bond-event__brief p,
+  .bond-person__rows > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.06rem;
+  }
+
+  .bond-line > span,
+  .bond-event__brief span,
+  .bond-person__rows dt {
+    white-space: normal;
+  }
+
+  .bond-meter__head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.06rem;
+  }
+
+  .bond-meter__head > span:last-child {
+    white-space: normal;
+  }
+
+  .bond-history__read {
+    text-align: left;
+  }
+}
+</style>
