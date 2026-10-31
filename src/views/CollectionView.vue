@@ -19,7 +19,7 @@
     </FolioPageHeader>
 
     <!-- 页签(看过的「收藏」才挂新得点,见 tabRows) -->
-    <InkTabs v-model="tab" :tabs="tabRows" />
+    <InkTabs v-model="tab" :tabs="tabRows" class="collection-tabs folio-span-all" />
 
     <!-- 功名:一张卷首账 + 按方向收起的功名卷 -->
     <template v-if="tab === 'achievement'">
@@ -78,7 +78,7 @@
         </footer>
       </section>
 
-      <section class="achievement-volumes">
+      <section class="achievement-volumes" data-achievement-volumes>
         <SectionTitle title="功名卷目" hint="按方向收卷 · 条件全开" />
         <div class="achievement-volumes__list">
           <section
@@ -300,7 +300,7 @@
         </footer>
       </section>
 
-      <section class="collection-shelves">
+      <section class="collection-shelves" data-collection-shelves>
         <SectionTitle
           title="九册藏珍"
           :hint="`${collectionOverview.known}/${collectionOverview.total} 已录`"

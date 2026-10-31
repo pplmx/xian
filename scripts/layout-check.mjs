@@ -242,7 +242,7 @@ const VIEWPORTS = [
   { width: 320, height: 568, tag: "320", dpr: 2 },
   // 两档「不是手机竖屏」的设备。它们各自暴露过一类毛病,故各占一档:
   //   横屏 844×390 —— 上下两栏吃掉 22% 的高度(改前 26%),而宽度只用掉一半;
-  //   桌面 1280×800 —— 游戏态展开成书桌:洞府 / 修炼 / 道躯双页,其余页单叶居中。
+  //   桌面 1280×800 —— 游戏态展开成书桌:首页 / 修炼 / 行囊 / 道躯 / 藏珍双页,其余页单叶居中。
   // 安卓壳与桌面客户端都能转到这两档;PWA manifest 锁了竖屏,浏览器里随意缩窗。
   { width: 844, height: 390, tag: "844x390", dpr: 2 },
   { width: 1280, height: 800, tag: "1280x800", dpr: 1 },
@@ -2239,7 +2239,7 @@ async function taskPageTour(vp) {
     }
     /*
      * 桌面不是「放大的手机」:960px 以上游戏外壳应展开成书桌,首页 / 修炼 / 行囊 /
-     * 道躯四册走双页网格,其余页是一张 48rem 的单叶。源码契约在 folioSpread.spec 里,
+     * 道躯 / 藏珍五册走双页网格,其余页是一张 48rem 的单叶。源码契约在 folioSpread.spec 里,
      * 这里量真实布局 —— 只改断点不改 App 数据属性、或网格被页框压回单列,都该红。
      */
     if (vp.tag === "1280x800") {
@@ -2274,6 +2274,10 @@ async function taskPageTour(vp) {
         );
         const equipmentRect = inventoryEquipment?.getBoundingClientRect();
         const collectionRect = inventoryCollection?.getBoundingClientRect();
+        const achievementBriefing = document.querySelector("[data-achievement-hero]");
+        const achievementVolumes = document.querySelector("[data-achievement-volumes]");
+        const achievementRect = achievementBriefing?.getBoundingClientRect();
+        const achievementVolumesRect = achievementVolumes?.getBoundingClientRect();
         return {
           layout: shell.getAttribute("data-folio-layout"),
           shellWidth: Math.round(shell.getBoundingClientRect().width),
@@ -2329,6 +2333,15 @@ async function taskPageTour(vp) {
                   collectionWidth: Math.round(collectionRect.width),
                 }
               : null,
+          collectionPair:
+            achievementRect && achievementVolumesRect
+              ? {
+                  sameRow: Math.abs(achievementRect.top - achievementVolumesRect.top) <= 2,
+                  volumesOnRight: achievementVolumesRect.left >= achievementRect.right - 1,
+                  briefingWidth: Math.round(achievementRect.width),
+                  volumesWidth: Math.round(achievementVolumesRect.width),
+                }
+              : null,
         };
       });
       desktopFolioSeen += 1;
@@ -2358,7 +2371,7 @@ async function taskPageTour(vp) {
             `[${vp.tag}] ${route} 游戏态外壳只有 ${desk.shellWidth}px —— 桌面仍是一条手机屏`,
           );
         }
-        if (["/", "/cultivation", "/inventory", "/character"].includes(route)) {
+        if (["/", "/cultivation", "/inventory", "/character", "/collection"].includes(route)) {
           if (desk.layout !== "spread" || desk.display !== "grid" || desk.columns < 2) {
             failures.push(
               `[${vp.tag}] ${route} 双页册没有真的展开(${desk.layout} / ${desk.display} / ${desk.columns} 栏)`,
@@ -2396,6 +2409,20 @@ async function taskPageTour(vp) {
             failures.push(
               `[${vp.tag}] /inventory 行囊九佩与藏品没有并读(${JSON.stringify(
                 desk.inventoryPair,
+              )})`,
+            );
+          }
+          if (
+            route === "/collection" &&
+            (!desk.collectionPair ||
+              !desk.collectionPair.sameRow ||
+              !desk.collectionPair.volumesOnRight ||
+              desk.collectionPair.briefingWidth < 360 ||
+              desk.collectionPair.volumesWidth < 320)
+          ) {
+            failures.push(
+              `[${vp.tag}] /collection 藏珍总谱与卷目没有并读(${JSON.stringify(
+                desk.collectionPair,
               )})`,
             );
           }
@@ -2462,6 +2489,36 @@ async function taskPageTour(vp) {
             failures.push(`[${vp.tag}] /inventory 行囊丹药册没有并读(${JSON.stringify(pillPair)})`);
           }
           await page.getByRole("tab", { name: "装备" }).click();
+          await settleVisuals(page);
+        }
+        if (route === "/collection") {
+          await page.getByRole("tab", { name: "收藏" }).click();
+          await settleVisuals(page);
+          const shelfPair = await page.evaluate(() => {
+            const briefing = document.querySelector("[data-collection-hero]");
+            const shelves = document.querySelector("[data-collection-shelves]");
+            if (!briefing || !shelves) return null;
+            const briefingRect = briefing.getBoundingClientRect();
+            const shelvesRect = shelves.getBoundingClientRect();
+            return {
+              sameRow: Math.abs(briefingRect.top - shelvesRect.top) <= 2,
+              shelvesOnRight: shelvesRect.left >= briefingRect.right - 1,
+              briefingWidth: Math.round(briefingRect.width),
+              shelvesWidth: Math.round(shelvesRect.width),
+            };
+          });
+          if (
+            !shelfPair ||
+            !shelfPair.sameRow ||
+            !shelfPair.shelvesOnRight ||
+            shelfPair.briefingWidth < 360 ||
+            shelfPair.shelvesWidth < 320
+          ) {
+            failures.push(
+              `[${vp.tag}] /collection 藏珍谱与九册没有并读(${JSON.stringify(shelfPair)})`,
+            );
+          }
+          await page.getByRole("tab", { name: "成就" }).click();
           await settleVisuals(page);
         }
       }
@@ -12759,7 +12816,7 @@ if (failures.length === 0) {
   console.log("✓ 顶栏底栏钉死(文档层没有可滚余量,滚窗两栏不动),外壳高度认 dvh");
   console.log("✓ 六处页签栏吸顶(背包四册 / 图鉴 / 名号 / 界域志 / 天界 / 坊市),且铺满内容区宽度");
   console.log("✓ 顶栏一格一行(320 窄屏与横屏、桌面都不折行)");
-  console.log(`✓ 桌面书桌(${desktopFolioSeen} 页:四册双页、其余单叶)`);
+  console.log(`✓ 桌面书桌(${desktopFolioSeen} 页:五册双页、其余单叶)`);
   console.log(`✓ 桌面书脊(${desktopSpineSeen} 页:十七册齐全、当前册唯一、手机底栏退场)`);
   console.log(`✓ 主值行一格一行(${valueRowsSeen} 处带 data-value-row 的行没被次要读数挤折)`);
   console.log(`✓ 两百档字号(${zoomSeen} 页在 200% 缩放下不溢出、主值行不折)`);

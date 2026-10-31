@@ -170,4 +170,23 @@ describe("藏珍案 · 一枚藏珍格先报九册,功名与藏珍再各翻一�
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,2200}\.collection-token\s*\{[\s\S]{0,80}max-width:\s*100%/,
     );
   });
+
+  it("桌面把总谱与卷目分成两页,两册页签共用同一张藏珍书桌", () => {
+    const view = source("src/views/CollectionView.vue");
+
+    expect(view, "藏珍根页本就走双页网格").toContain(
+      '<div class="folio-page folio-page--stack stagger-in collection-page">',
+    );
+    expect(view, "页签跨两栏且保留成就 / 收藏同一份状态").toContain(
+      'class="collection-tabs folio-span-all"',
+    );
+    expect(view, "功名状与功名卷目分据左右").toContain(
+      'class="achievement-briefing" data-achievement-hero',
+    );
+    expect(view).toContain('class="achievement-volumes" data-achievement-volumes');
+    expect(view, "藏珍谱与九册藏珍分据左右").toContain(
+      'class="collection-briefing" data-collection-hero',
+    );
+    expect(view).toContain('class="collection-shelves" data-collection-shelves');
+  });
 });

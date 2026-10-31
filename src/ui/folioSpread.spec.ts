@@ -18,6 +18,7 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
     expect(folioLayoutOf("cultivation")).toBe("spread");
     expect(folioLayoutOf("character")).toBe("spread");
     expect(folioLayoutOf("inventory")).toBe("spread");
+    expect(folioLayoutOf("collection")).toBe("spread");
     expect(folioLayoutOf("market")).toBe("single");
     expect(folioLayoutOf("settings")).toBe("single");
     expect(folioLayoutOf(undefined)).toBe("single");
@@ -95,5 +96,6 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
     expect(layout).toContain("卷末目录没有三组并读");
     expect(layout).toContain("行囊九佩与藏品没有并读");
     expect(layout).toContain("行囊丹药册没有并读");
+    expect(layout).toContain("藏珍总谱与卷目没有并读");
   });
 });
