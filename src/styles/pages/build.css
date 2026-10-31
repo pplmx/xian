@@ -5,7 +5,7 @@
    *
    * 旧页把当前流派、五维评级、韧性、对局、快照与旧构筑都塞进同一种 card-ink，
    * 玩家看到的是连续卡片，不是一张有先后的铸道案。现在卷首同报当前路与六路契合，
-   * 正文按「这条路走到哪 / 它是什么形状 / 下一步补什么 / 实战短板在哪」展开；
+   * 正文按「这条路走到哪 / 下一步补什么 / 它是什么形状 / 实战短板在哪」展开；
    * 快照与旧构筑仍各自成账，所有数值继续读 buildDetect / powerRating / playerMatchup。
    */
   .build-page .folio-masthead--featured {
@@ -37,6 +37,25 @@
     display: grid;
     min-width: 0;
     gap: 0.58rem;
+  }
+  /*
+   * 手机上铸道盘不占第二个栏位：390 宽时它会将正文推过首屏，
+   * 让「下一步」一直躲在五维之后。盘退成右缘水印，六路仍由正文读数报全。
+   * 320 与 195 由 compact / tinylens 规则整枚收起。
+   */
+  .build-page .folio-masthead__visual {
+    position: absolute;
+    z-index: 0;
+    top: 3.55rem;
+    right: -2.8rem;
+    margin: 0;
+    opacity: 0.34;
+    transform: scale(0.82);
+    transform-origin: top right;
+    pointer-events: none;
+  }
+  .build-masthead__meta {
+    max-width: 72%;
   }
   .build-atlas {
     width: 9.2rem;
@@ -666,6 +685,19 @@
     flex: 1;
   }
   @media (min-width: 620px) {
+    .build-page .folio-masthead__visual {
+      position: static;
+      z-index: auto;
+      margin: 0;
+      opacity: 1;
+      transform: none;
+      pointer-events: auto;
+    }
+
+    .build-masthead__meta {
+      max-width: none;
+    }
+
     .build-ledger__grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -675,9 +707,19 @@
       border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
     }
 
-    .build-ledger__grid--three .build-panel:nth-child(3) {
+    .build-ledger__grid--three > .build-panel + .build-panel {
+      border-top: 0;
+      border-left: 0;
+    }
+
+    .build-ledger__grid--three > [data-build-next] {
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    }
+
+    .build-ledger__grid--three > [data-build-shape] {
       border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
       border-left: 0;
+      grid-column: 1 / -1;
     }
   }
   @media (min-width: 960px) {
@@ -688,10 +730,21 @@
 
     .build-ledger__grid--three {
       grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-areas: "stage shape next";
     }
 
-    .build-ledger__grid--three .build-panel:nth-child(3) {
+    .build-ledger__grid--three > [data-build-stage] {
+      grid-area: stage;
+    }
+
+    .build-ledger__grid--three > [data-build-shape] {
+      grid-area: shape;
       border-top: 0;
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    }
+
+    .build-ledger__grid--three > [data-build-next] {
+      grid-area: next;
       border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
     }
   }
@@ -715,7 +768,9 @@
     }
 
     .build-panel + .build-panel,
-    .build-ledger__grid--three .build-panel:nth-child(3) {
+    .build-ledger__grid--three > .build-panel + .build-panel,
+    .build-ledger__grid--three > [data-build-shape],
+    .build-ledger__grid--three > [data-build-next] {
       border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
       border-left: 0;
     }

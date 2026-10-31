@@ -10694,6 +10694,10 @@ async function taskBuildFormed() {
         const text = (selector) =>
           (document.querySelector(selector)?.innerText || "").replace(/\s+/g, " ").trim();
         const root = document.querySelector("[data-build-formed]");
+        const topOf = (selector) => {
+          const el = document.querySelector(selector);
+          return el ? Math.round(el.getBoundingClientRect().top) : null;
+        };
         return {
           current: text("[data-build-current]"),
           atlasHidden: document.querySelector("[data-build-atlas]")?.getAttribute("aria-hidden"),
@@ -10709,6 +10713,9 @@ async function taskBuildFormed() {
           matchupRows:
             document.querySelector("[data-build-battle]")?.querySelectorAll("[data-build-matchup]")
               .length ?? 0,
+          nextTop: topOf("[data-build-next]"),
+          shapeTop: topOf("[data-build-shape]"),
+          viewportBottom: innerHeight,
           body: (root?.innerText || "").replace(/\s+/g, " ").trim(),
         };
       });
@@ -10736,6 +10743,16 @@ async function taskBuildFormed() {
       }
       if (formed.matchupRows <= 0) {
         failures.push("[390] 成路总案的实战短板没有列出任何对局");
+      }
+      if (formed.nextTop === null || formed.shapeTop === null) {
+        failures.push("[390] 成路总案的下一步 / 五维位置没量到");
+      } else {
+        if (formed.nextTop >= formed.shapeTop) {
+          failures.push("[390] 成路总案仍把五维展开挡在下一步之前");
+        }
+        if (formed.nextTop + 44 > formed.viewportBottom) {
+          failures.push(`[390] 成路总案的下一步不在首屏内(top=${formed.nextTop})`);
+        }
       }
       if (/NaN|undefined|Infinity/.test(formed.body)) {
         failures.push(`[390] 成路总案漏出占位符:«${formed.body.slice(0, 120)}»`);

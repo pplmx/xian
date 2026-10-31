@@ -62,6 +62,9 @@ describe("铸道案 · 六路、形状与下一步同读此刻", () => {
     const view = source("src/views/BuildView.vue");
     const atlas = source("src/components/build/BuildAtlas.vue");
     const layout = source("scripts/layout-check.mjs");
+    const stageAt = view.indexOf("data-build-stage");
+    const nextAt = view.indexOf("data-build-next");
+    const shapeAt = view.indexOf("data-build-shape");
 
     expect(view).toMatch(/<FolioPageHeader[\s\S]{0,520}\bfeatured\b/);
     expect(view).toMatch(/<template #visual>[\s\S]{0,220}<BuildAtlas/);
@@ -79,7 +82,14 @@ describe("铸道案 · 六路、形状与下一步同读此刻", () => {
     expect(view).toContain("data-compare-result");
     expect(atlas).toContain("data-build-atlas");
     expect(atlas).toContain('aria-hidden="true"');
+    expect(stageAt, "道途阶梯要能定位").toBeGreaterThan(-1);
+    expect(nextAt, "下一步要能定位").toBeGreaterThan(-1);
+    expect(shapeAt, "五维形状要能定位").toBeGreaterThan(-1);
+    expect(stageAt, "手机先读当前阶段").toBeLessThan(nextAt);
+    expect(nextAt, "下一步要排在五维展开之前").toBeLessThan(shapeAt);
     expect(layout).toContain('document.querySelector("[data-build-atlas]")');
+    expect(layout).toContain("nextTop");
+    expect(layout).toContain("shapeTop");
     expect(layout).toContain('"__buildFormedFixture"');
   });
 
@@ -116,6 +126,19 @@ describe("铸道案 · 六路、形状与下一步同读此刻", () => {
     );
     expect(buildCss).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,2600}\.build-matchup__rate\s*\{[\s\S]{0,100}grid-column:\s*2/,
+    );
+    expect(buildCss).toMatch(
+      /\.build-page \.folio-masthead__visual\s*\{[\s\S]{0,220}position:\s*absolute/,
+    );
+    expect(buildCss, "390 的铸道盘要退成卷首水印").toContain("right: -2.8rem");
+    expect(buildCss, "桌面要恢复铸道盘栏位").toMatch(
+      /@media \(min-width: 620px\)\s*\{[\s\S]{0,220}\.build-page \.folio-masthead__visual\s*\{[\s\S]{0,100}position:\s*static/,
+    );
+    expect(buildCss, "两列时下一步先于五维").toMatch(
+      /@media \(min-width: 620px\)\s*\{[\s\S]{0,1400}\[data-build-shape\]\s*\{[\s\S]{0,100}grid-column:\s*1 \/ -1/,
+    );
+    expect(buildCss, "三列时恢复阶梯 / 五维 / 下一步").toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,900}\.build-ledger__grid--three\s*\{[\s\S]{0,220}grid-template-areas:\s*"stage shape next"/,
     );
   });
 });

@@ -77,6 +77,34 @@
             </p>
           </article>
 
+          <article class="build-panel" data-build-next>
+            <p class="build-panel__label">
+              下一步
+              <span>{{ coreGaps.length ? `${coreGaps.length} 条缺口` : "核心已满" }}</span>
+            </p>
+            <p class="build-panel__line">
+              <strong>{{ nextActionTitle }}</strong>
+            </p>
+            <p class="build-panel__copy">{{ nextActionCopy }}</p>
+            <ul v-if="nextCoreGaps.length" class="build-core">
+              <li v-for="gap in nextCoreGaps" :key="gap.key">
+                <span class="build-core__name">{{ STAT_NAMES[gap.key] }}</span>
+                <span class="build-core__track" aria-hidden="true">
+                  <span :style="{ width: `${gap.ratio * 100}%` }" />
+                </span>
+                <span class="build-core__value tabular">
+                  {{ formatPercent(gap.value, 0) }} / {{ formatPercent(gap.reference, 0) }}
+                </span>
+                <span class="build-core__gap tabular">尚差 {{ formatPercent(gap.gap, 0) }}</span>
+              </li>
+            </ul>
+            <p v-else class="build-panel__aside">此路核心词条已全部留下，后续只看实战面与相性。</p>
+            <div class="build-panel__actions">
+              <RouterLink to="/cultivation" class="btn-ghost min-h-9">去修行配功法</RouterLink>
+              <RouterLink to="/inventory" class="btn-ghost min-h-9">看行囊装备</RouterLink>
+            </div>
+          </article>
+
           <article class="build-panel" data-build-shape>
             <p class="build-panel__label">
               {{ cnNumber(powerRating.labels.length) }}维形状
@@ -119,34 +147,6 @@
                   <span class="build-rating__note">贡献之和就是得分，星级只看得分跨过哪一档。</span>
                 </span>
               </button>
-            </div>
-          </article>
-
-          <article class="build-panel" data-build-next>
-            <p class="build-panel__label">
-              下一步
-              <span>{{ coreGaps.length ? `${coreGaps.length} 条缺口` : "核心已满" }}</span>
-            </p>
-            <p class="build-panel__line">
-              <strong>{{ nextActionTitle }}</strong>
-            </p>
-            <p class="build-panel__copy">{{ nextActionCopy }}</p>
-            <ul v-if="nextCoreGaps.length" class="build-core">
-              <li v-for="gap in nextCoreGaps" :key="gap.key">
-                <span class="build-core__name">{{ STAT_NAMES[gap.key] }}</span>
-                <span class="build-core__track" aria-hidden="true">
-                  <span :style="{ width: `${gap.ratio * 100}%` }" />
-                </span>
-                <span class="build-core__value tabular">
-                  {{ formatPercent(gap.value, 0) }} / {{ formatPercent(gap.reference, 0) }}
-                </span>
-                <span class="build-core__gap tabular">尚差 {{ formatPercent(gap.gap, 0) }}</span>
-              </li>
-            </ul>
-            <p v-else class="build-panel__aside">此路核心词条已全部留下，后续只看实战面与相性。</p>
-            <div class="build-panel__actions">
-              <RouterLink to="/cultivation" class="btn-ghost min-h-9">去修行配功法</RouterLink>
-              <RouterLink to="/inventory" class="btn-ghost min-h-9">看行囊装备</RouterLink>
             </div>
           </article>
         </div>
