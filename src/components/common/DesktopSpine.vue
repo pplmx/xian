@@ -22,6 +22,21 @@
           {{ lifespan.age }}/{{ lifespan.max }} 载
         </span>
       </div>
+
+      <button
+        type="button"
+        data-spine-atlas-trigger
+        class="desktop-spine__lookup"
+        :aria-label="`打开玄枢图寻册（${shortcutHint}）`"
+        aria-haspopup="dialog"
+        @click="emit('openAtlas')"
+      >
+        <span class="desktop-spine__lookup-mark" aria-hidden="true">寻</span>
+        <span class="desktop-spine__lookup-copy">
+          <span>寻册</span>
+          <span class="desktop-spine__lookup-key tabular">{{ shortcutHint }}</span>
+        </span>
+      </button>
     </div>
 
     <nav class="desktop-spine__index scroll-pane" aria-label="全站册目">
@@ -102,12 +117,17 @@ import { useNavigationSignals } from "@/composables/useNavigationSignals";
 import { LIFESPAN_WARN_RATIO } from "@/data/constants";
 import { usePlayerStore } from "@/stores/player";
 import { cnNumber, lifespanPair } from "@/utils/format";
+import { atlasShortcutHintOf } from "@/ui/atlas";
 import { NAVIGATION_ENTRIES, NAVIGATION_SECTIONS } from "@/ui/navigation";
 import GameIcon from "./GameIcon.vue";
 
+const emit = defineEmits<{ openAtlas: [] }>();
 const route = useRoute();
 const player = usePlayerStore();
 const { bagNewCount, canBreakthrough } = useNavigationSignals();
 const lifespan = computed(() => lifespanPair(player.age, player.lifespanMax));
+const shortcutHint = atlasShortcutHintOf(
+  typeof navigator === "undefined" ? "" : navigator.platform,
+);
 const sectionNumber = (index: number): string => cnNumber(index + 1);
 </script>

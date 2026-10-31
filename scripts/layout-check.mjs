@@ -12318,16 +12318,17 @@ async function taskAtlasNavigation() {
   const pixelContrastFails = [];
   const zoomFails = [];
   const cases = [
-    { width: 390, height: 844, dpr: 3, tag: "390" },
-    { width: 195, height: 422, dpr: 1, tag: "195" },
+    { width: 1280, height: 800, dpr: 1, tag: "1280", mobile: false },
+    { width: 390, height: 844, dpr: 3, tag: "390", mobile: true },
+    { width: 195, height: 422, dpr: 1, tag: "195", mobile: true },
   ];
 
   for (const vp of cases) {
     const ctx = await auditContext({
       viewport: { width: vp.width, height: vp.height },
       deviceScaleFactor: vp.dpr,
-      isMobile: true,
-      hasTouch: true,
+      isMobile: vp.mobile,
+      hasTouch: vp.mobile,
     });
     try {
       await seedSave(ctx, showcaseSlices("light"));
@@ -12338,7 +12339,13 @@ async function taskAtlasNavigation() {
       if (textLength === 0) failures.push(`[${vp.tag}] 玄枢图场景:首页没有渲染出来`);
       await clearOverlays(page);
 
-      await page.locator("[data-atlas-trigger]").click();
+      if (vp.tag === "1280") {
+        await page.locator("[data-spine-atlas-trigger]").click();
+      } else if (vp.tag === "195") {
+        await page.keyboard.press("Control+K");
+      } else {
+        await page.locator("[data-atlas-trigger]").click();
+      }
       await page.waitForSelector("[data-nav-atlas]", { timeout: 3000 }).catch(() => undefined);
       const state = await page.evaluate(() => {
         const atlas = document.querySelector("[data-nav-atlas]");
@@ -12355,6 +12362,7 @@ async function taskAtlasNavigation() {
           currentVolumes: volumes.filter(
             (el) => el.getAttribute("data-atlas-volume-current") !== null,
           ).length,
+          searchFocused: document.activeElement?.matches("[data-atlas-search]") ?? false,
           current: (current?.textContent || "").replace(/\s+/g, " ").trim(),
           active: entries.filter((el) => el.getAttribute("aria-current") === "page").length,
         };
@@ -12373,6 +12381,9 @@ async function taskAtlasNavigation() {
       if (state.currentVolumes !== 1) {
         failures.push(`[${vp.tag}] 玄枢图当前落卷标了 ${state.currentVolumes} 次(应恰为 1)`);
       }
+      if (!state.searchFocused) {
+        failures.push(`[${vp.tag}] 玄枢图打开后焦点没有落到寻册口`);
+      }
       if (!state.current.includes("修行") || !state.current.includes("洞府总览")) {
         failures.push(`[${vp.tag}] 玄枢图卷首没有报出当前落点:${state.current}`);
       }
@@ -12385,6 +12396,32 @@ async function taskAtlasNavigation() {
       for (const problem of problems) failures.push(`[${vp.tag}] 玄枢图:${problem}`);
 
       if (vp.tag === "390") {
+        await page.locator("[data-atlas-search]").fill("人物");
+        const search = await page.locator("[data-atlas-result]").evaluateAll((rows) =>
+          rows.map((row) => ({
+            href: row.getAttribute("href"),
+            active: row.hasAttribute("data-atlas-result-active"),
+          })),
+        );
+        checked += 1;
+        if (search.length !== 1 || search[0]?.href !== "#/character" || !search[0]?.active) {
+          failures.push(`[390] 玄枢图按「人物」寻册不对:实见 ${JSON.stringify(search)}`);
+        }
+        await page.locator("[data-atlas-search]").press("Enter");
+        const searchJumped = await page
+          .waitForFunction(() => location.hash === "#/character", { timeout: 4000 })
+          .then(() => true)
+          .catch(() => false);
+        checked += 1;
+        if (!searchJumped) failures.push("[390] 玄枢图寻到「人物」后回车没有跳转");
+        const searchClosed = await page
+          .waitForFunction(() => !document.querySelector("[data-nav-atlas]"), { timeout: 2000 })
+          .then(() => true)
+          .catch(() => false);
+        if (!searchClosed) failures.push("[390] 玄枢图寻册跳转后没有收起");
+
+        await page.locator("[data-atlas-trigger]").click();
+        await page.waitForSelector("[data-nav-atlas]", { timeout: 3000 }).catch(() => undefined);
         await page.locator('[data-atlas-volume="fate"]').click();
         const volumeJumped = await page
           .waitForFunction(
@@ -12423,6 +12460,21 @@ async function taskAtlasNavigation() {
         if (!atlasClosed) {
           failures.push("[390] 玄枢图点选后没有收起");
         }
+      }
+      if (vp.tag === "1280") {
+        await page.keyboard.press("Escape");
+        const firstClosed = await page
+          .waitForFunction(() => !document.querySelector("[data-nav-atlas]"), { timeout: 2000 })
+          .then(() => true)
+          .catch(() => false);
+        if (!firstClosed) failures.push("[1280] 玄枢图按 Esc 没有收起");
+        await page.keyboard.press("Control+K");
+        const shortcutOpened = await page
+          .waitForSelector("[data-nav-atlas]", { timeout: 3000 })
+          .then(() => true)
+          .catch(() => false);
+        checked += 1;
+        if (!shortcutOpened) failures.push("[1280] Ctrl+K 没有打开玄枢图");
       }
       if (pageErrors.length) {
         failures.push(`[${vp.tag}] 玄枢图场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);

@@ -28,8 +28,11 @@
       />
     </div>
 
-    <DesktopSpine v-if="game.started && route.name !== 'create' && desktopSpineVisible" />
-    <TopStatusBar v-if="game.started && route.name !== 'create'" />
+    <DesktopSpine
+      v-if="game.started && route.name !== 'create' && desktopSpineVisible"
+      @open-atlas="atlasOpen = true"
+    />
+    <TopStatusBar v-if="game.started && route.name !== 'create'" @open-atlas="atlasOpen = true" />
 
     <!--
       只读页(多标签后来者)的常驻说明。
@@ -77,6 +80,7 @@
     <!-- 全局浮层 -->
     <UpdatePrompt :visible="updateReady" @refresh="swHandle?.reload()" />
     <ToastHost />
+    <NavigationAtlas v-if="game.started" :open="atlasOpen" @close="atlasOpen = false" />
     <template v-if="overlaysReady">
       <OfflineRewardDialog />
       <BreakthroughResultDialog />
@@ -129,8 +133,11 @@ import DesktopSpine from "@/components/common/DesktopSpine.vue";
 import TopStatusBar from "@/components/common/TopStatusBar.vue";
 import BottomNavigation from "@/components/common/BottomNavigation.vue";
 import FolioTurner from "@/components/common/FolioTurner.vue";
+import NavigationAtlas from "@/components/common/NavigationAtlas.vue";
 import ToastHost from "@/components/common/ToastHost.vue";
 import WorldTransitionVeil from "@/components/common/WorldTransitionVeil.vue";
+import { isAtlasShortcut } from "@/ui/atlas";
+import { hasOpenModal } from "@/ui/modalStack";
 
 /*
  * 浮层按需装载。它们不参与首屏构图，却合计带着归来、战报、装备与转世的整条数据链；
@@ -166,6 +173,7 @@ const player = usePlayerStore();
 const ui = useUiStore();
 const settings = useSettingsStore();
 const updateReady = ref(false);
+const atlasOpen = ref(false);
 let swHandle: ServiceWorkerUpdateHandle | undefined;
 const route = useRoute();
 const router = useRouter();
@@ -184,6 +192,7 @@ const overlaysReady = ref(false);
 const desktopSpineVisible = useMediaQuery("(min-width: 960px)");
 const stopAfterEach = router.afterEach((to, from) => {
   turnDirection.value = folioTurnDirectionOf(from.name, to.name);
+  atlasOpen.value = false;
 });
 
 /** 内容区滚动宿主(滚动条挂在这个常驻的 main 上,不是 window) */
@@ -209,6 +218,24 @@ let unsubscribeBlockedWrite: () => void = () => undefined;
 function onPointerDown(e: PointerEvent): void {
   unlockAudio();
   if ((e.target as HTMLElement | null)?.closest("button")) playSfx("click");
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  const element = target instanceof HTMLElement ? target : null;
+  return !!element?.closest("input, textarea, select, [contenteditable='true']");
+}
+
+/** 全站寻册:有别的浮层时让位,正在输入时不抢浏览器快捷键。 */
+function onGlobalKeydown(event: KeyboardEvent): void {
+  if (!isAtlasShortcut(event)) return;
+  if (atlasOpen.value) {
+    event.preventDefault();
+    atlasOpen.value = false;
+    return;
+  }
+  if (!game.started || hasOpenModal() || event.repeat || isEditableTarget(event.target)) return;
+  event.preventDefault();
+  atlasOpen.value = true;
 }
 
 // 音频偏好实时同步(音量 0~100 → 0~1)
@@ -299,6 +326,7 @@ onMounted(() => {
     }, WRITER_WATCH_MS);
   }
   window.addEventListener("pointerdown", onPointerDown);
+  window.addEventListener("keydown", onGlobalKeydown);
   const revealOverlays = (): void => {
     requestAnimationFrame(() => {
       overlaysReady.value = true;
@@ -318,5 +346,6 @@ onUnmounted(() => {
   engine.stop();
   stopBgm();
   window.removeEventListener("pointerdown", onPointerDown);
+  window.removeEventListener("keydown", onGlobalKeydown);
 });
 </script>

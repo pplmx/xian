@@ -94,7 +94,7 @@ EXTRA = (
 # 生成时会核对:凡是不在字体里、又不在这份名单里的字,一律让脚本**报错退出** ——
 # 换母体、加内容时最容易发生的就是「某个字悄悄没了」,而它在界面上只表现为
 # 一个字形突然换成衬线,没人会报 bug。
-SYMBOLS_FROM_SYSTEM = set("✧◈▸▾▬✅")
+SYMBOLS_FROM_SYSTEM = set("✧◈▸▾▬✅⌘")
 
 
 def sha256_of(path: pathlib.Path) -> str:

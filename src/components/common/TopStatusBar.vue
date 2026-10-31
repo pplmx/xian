@@ -26,8 +26,9 @@
           type="button"
           data-atlas-trigger
           class="atlas-trigger flex h-8 w-8 shrink-0 flex-col items-center justify-center gap-0.5 border border-ink/20 font-kai text-ink-soft active:scale-90"
-          aria-label="打开玄枢图"
-          @click="atlasOpen = true"
+          aria-label="打开玄枢图寻册"
+          aria-haspopup="dialog"
+          @click="emit('openAtlas')"
         >
           <span class="atlas-trigger__char text-title leading-none">玄</span>
           <span class="atlas-trigger__mark text-note leading-none">枢</span>
@@ -109,13 +110,11 @@
         </template>
       </span>
     </div>
-
-    <NavigationAtlas :open="atlasOpen" @close="atlasOpen = false" />
   </header>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import { useRoute } from "vue-router";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
@@ -125,12 +124,11 @@ import { Capacitor } from "@capacitor/core";
 import { useNativeInsets } from "@/composables/useNativeInsets";
 import { navigationPositionOf } from "@/ui/navigation";
 import GameIcon from "./GameIcon.vue";
-import NavigationAtlas from "./NavigationAtlas.vue";
 
+const emit = defineEmits<{ openAtlas: [] }>();
 const player = usePlayerStore();
 const resources = useResourcesStore();
 const route = useRoute();
-const atlasOpen = ref(false);
 const position = computed(() => navigationPositionOf(route.name));
 const positionKey = computed(() =>
   position.value ? `${position.value.sectionIndex + 1}-${position.value.entryIndex + 1}` : "",

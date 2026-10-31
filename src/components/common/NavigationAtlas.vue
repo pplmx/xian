@@ -1,8 +1,56 @@
 <template>
-  <BaseModal :open="open" title="玄枢图" size="max" @close="emit('close')">
+  <BaseModal
+    :open="open"
+    title="玄枢图"
+    size="max"
+    initial-focus="[data-atlas-search]"
+    @close="emit('close')"
+  >
     <div ref="atlasRoot" data-nav-atlas class="space-y-3">
+      <section class="atlas-search" aria-labelledby="atlas-search-label">
+        <span class="atlas-search__seal" aria-hidden="true">寻</span>
+        <div class="atlas-search__field">
+          <label id="atlas-search-label" for="atlas-search-input" class="sr-only">
+            按册名、用途或旧叫法寻册
+          </label>
+          <input
+            id="atlas-search-input"
+            v-model="query"
+            data-atlas-search
+            class="atlas-search__input text-[16px]"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="册名、用途或旧叫法，如「人物」「背包」「存档」"
+            aria-describedby="atlas-search-status"
+            @keydown="onSearchKeydown"
+          />
+          <p id="atlas-search-status" class="atlas-search__hint">
+            <span v-if="searching" aria-live="polite">
+              {{
+                results.length > 0
+                  ? `找到 ${results.length} 册 · ↑↓ 选择，回车前往`
+                  : "没有这册 · 换个日常叫法试试"
+              }}
+            </span>
+            <span v-else>底栏叫「背包」，册页叫「行囊」—— 旧叫法也能寻</span>
+            <span class="atlas-search__key tabular">{{ shortcutHint }}</span>
+          </p>
+        </div>
+        <button
+          v-if="query"
+          type="button"
+          class="atlas-search__clear"
+          aria-label="清空寻册条件"
+          @click="query = ''"
+        >
+          清
+        </button>
+      </section>
+
       <!-- 当前落点:一枚「在」印压在册口,先回答「我在哪一册」。 -->
       <div
+        v-if="!searching"
         class="atlas-current relative overflow-hidden border border-ink/15 bg-paper-deep/60 py-3 pl-14 pr-3"
       >
         <span
@@ -32,7 +80,7 @@
         这里把五卷压成一排快引,点哪卷就把下方卷宗卷到眼前;所有册目仍完整留在
         DOM 里,不靠隐藏页签省空间,读屏与键盘也能一次读到全站。
       -->
-      <section class="atlas-compass-shell" aria-labelledby="atlas-compass-title">
+      <section v-if="!searching" class="atlas-compass-shell" aria-labelledby="atlas-compass-title">
         <div class="atlas-compass-head">
           <div class="min-w-0">
             <p id="atlas-compass-title" class="font-kai text-title tracking-[0.22em] text-ink">
@@ -71,7 +119,7 @@
         </div>
       </section>
 
-      <div class="atlas-index">
+      <div v-if="!searching" class="atlas-index">
         <section
           v-for="(group, groupIndex) in NAVIGATION_SECTIONS"
           :id="`atlas-volume-${group.id}`"
@@ -146,10 +194,74 @@
         </section>
       </div>
 
+      <section v-else class="atlas-results" aria-labelledby="atlas-results-title">
+        <header class="atlas-results__head">
+          <div class="min-w-0">
+            <p class="text-note tracking-[0.24em] text-cinnabar">寻册所得</p>
+            <h4 id="atlas-results-title" class="mt-0.5 font-kai text-title tracking-[0.16em]">
+              「{{ query.trim() }}」{{ results.length }} 册
+            </h4>
+          </div>
+          <span class="atlas-results__hint">按玄枢册序排列</span>
+        </header>
+
+        <div v-if="results.length" class="atlas-result-list">
+          <RouterLink
+            v-for="(entry, index) in results"
+            :key="entry.name"
+            :to="entry.to"
+            data-atlas-result
+            class="atlas-result"
+            :class="{
+              'atlas-result--active': index === activeResultIndex,
+              'atlas-result--current': route.name === entry.name,
+            }"
+            :data-atlas-result-active="index === activeResultIndex ? '' : undefined"
+            :data-atlas-result-current="route.name === entry.name ? '' : undefined"
+            @mouseenter="activeResultIndex = index"
+            @click="emit('close')"
+          >
+            <span class="atlas-result__icon" aria-hidden="true">
+              <GameIcon :name="entry.icon" :size="15" />
+            </span>
+            <span class="atlas-result__copy">
+              <span class="atlas-result__title">
+                {{ entry.label }}
+                <small>{{ entry.sectionLabel }}卷 · {{ entry.shortLabel }}</small>
+              </span>
+              <span class="atlas-result__description">{{ entry.description }}</span>
+            </span>
+            <span v-if="route.name === entry.name" class="atlas-result__current">在</span>
+            <span v-else class="atlas-result__arrow" aria-hidden="true">›</span>
+          </RouterLink>
+        </div>
+
+        <div v-else data-atlas-empty class="atlas-results__empty">
+          <span class="atlas-results__empty-mark" aria-hidden="true">空</span>
+          <p>玄枢册里没有这个叫法。</p>
+          <p>可试：人物、背包、存档、转世；也可按分卷寻「天机」。</p>
+          <div class="atlas-results__suggestions" aria-label="寻册建议">
+            <button
+              v-for="term in SEARCH_SUGGESTIONS"
+              :key="term"
+              type="button"
+              data-atlas-suggestion
+              @click="query = term"
+            >
+              {{ term }}
+            </button>
+          </div>
+        </div>
+      </section>
+
       <div class="flex items-center gap-2 border-t border-ink/10 pt-2">
         <span class="h-px min-w-1 flex-1 bg-gradient-to-r from-transparent to-ink/15" />
         <p class="shrink-0 text-center text-note text-ink-faint">
-          {{ NAVIGATION_SECTIONS.length }} 卷 {{ NAVIGATION_ENTRIES.length }} 册 · 点一册即可前往
+          {{
+            searching
+              ? "只读同一份玄枢册目，不另造去处"
+              : `${NAVIGATION_SECTIONS.length} 卷 ${NAVIGATION_ENTRIES.length} 册 · 点一册即可前往`
+          }}
         </p>
         <span class="h-px min-w-1 flex-1 bg-gradient-to-l from-transparent to-ink/15" />
       </div>
@@ -159,11 +271,16 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, useTemplateRef, watch } from "vue";
-import { RouterLink, useRoute } from "vue-router";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 import { usePlayerStore } from "@/stores/player";
 import { useSettingsStore } from "@/stores/settings";
 import { cnNumber } from "@/utils/format";
-import { atlasJumpIndex, atlasSectionIdForRoute } from "@/ui/atlas";
+import {
+  atlasJumpIndex,
+  atlasSearchEntries,
+  atlasSectionIdForRoute,
+  atlasShortcutHintOf,
+} from "@/ui/atlas";
 import { NAVIGATION_ENTRIES, NAVIGATION_SECTIONS, navigationPositionOf } from "@/ui/navigation";
 import BaseModal from "./BaseModal.vue";
 import GameIcon from "./GameIcon.vue";
@@ -172,10 +289,19 @@ const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 
 const route = useRoute();
+const router = useRouter();
 const player = usePlayerStore();
 const settings = useSettingsStore();
 const atlasRoot = useTemplateRef<HTMLElement>("atlasRoot");
 const activeVolumeId = ref(atlasSectionIdForRoute(route.name));
+const query = ref("");
+const activeResultIndex = ref(0);
+const results = computed(() => atlasSearchEntries(query.value));
+const searching = computed(() => query.value.trim().length > 0);
+const shortcutHint = atlasShortcutHintOf(
+  typeof navigator === "undefined" ? "" : navigator.platform,
+);
+const SEARCH_SUGGESTIONS = ["人物", "背包", "存档", "转世", "天机"] as const;
 
 const currentPosition = computed(() => navigationPositionOf(route.name));
 const current = computed(() => currentPosition.value?.entry);
@@ -193,7 +319,11 @@ const sectionNumber = (index: number): string => cnNumber(index + 1);
 watch(
   () => props.open,
   (open) => {
-    if (open) activeVolumeId.value = atlasSectionIdForRoute(route.name);
+    if (open) {
+      activeVolumeId.value = atlasSectionIdForRoute(route.name);
+      query.value = "";
+      activeResultIndex.value = 0;
+    }
   },
 );
 watch(
@@ -202,6 +332,9 @@ watch(
     activeVolumeId.value = atlasSectionIdForRoute(route.name);
   },
 );
+watch(results, () => {
+  activeResultIndex.value = 0;
+});
 
 function focusVolume(index: number): void {
   const buttons = atlasRoot.value?.querySelectorAll<HTMLButtonElement>("[data-atlas-volume]");
@@ -229,5 +362,36 @@ function jumpToSection(id: string): void {
       8;
     scroller.scrollTo({ top, behavior: settings.reduceMotion ? "auto" : "smooth" });
   });
+}
+
+async function moveSearchCursor(delta: number): Promise<void> {
+  if (results.value.length === 0) return;
+  const count = results.value.length;
+  activeResultIndex.value = (activeResultIndex.value + delta + count) % count;
+  await nextTick();
+  atlasRoot.value
+    ?.querySelector<HTMLElement>("[data-atlas-result-active]")
+    ?.scrollIntoView({ block: "nearest" });
+}
+
+function onSearchKeydown(event: KeyboardEvent): void {
+  // 中文输入法选字时的回车/方向键属于组合输入,不能拿来翻册。
+  if (event.isComposing) return;
+  if (event.key === "ArrowDown") {
+    event.preventDefault();
+    void moveSearchCursor(1);
+    return;
+  }
+  if (event.key === "ArrowUp") {
+    event.preventDefault();
+    void moveSearchCursor(-1);
+    return;
+  }
+  if (event.key !== "Enter" || !searching.value) return;
+  const target = results.value[activeResultIndex.value];
+  if (!target) return;
+  event.preventDefault();
+  void router.push(target.to);
+  emit("close");
 }
 </script>

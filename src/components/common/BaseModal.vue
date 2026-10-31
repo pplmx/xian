@@ -133,6 +133,8 @@ const props = withDefaults(
     ariaLabel?: string;
     /** 顶层弹窗:叠在普通弹窗(z-50)之上,用于详情盖列表等场景 */
     top?: boolean;
+    /** 打开后首选焦点的 CSS 选择器;缺省焦点仍是面板本身 */
+    initialFocus?: string;
   }>(),
   {
     title: "",
@@ -141,6 +143,7 @@ const props = withDefaults(
     top: false,
     ariaLabel: "",
     size: "default",
+    initialFocus: "",
   },
 );
 
@@ -214,7 +217,14 @@ watch(
       pushModal(entry);
       // 记住是谁打开的,关闭后把焦点还回去(键盘用户不会"掉到页面顶端")
       lastFocused = document.activeElement as HTMLElement | null;
-      void nextTick(() => panelRef.value?.focus());
+      void nextTick(() => {
+        const panel = panelRef.value;
+        if (!panel) return;
+        const preferred = props.initialFocus
+          ? panel.querySelector<HTMLElement>(props.initialFocus)
+          : null;
+        (preferred ?? panel).focus();
+      });
     } else {
       removeModal(entry);
       const back = lastFocused;

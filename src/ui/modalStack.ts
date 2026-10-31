@@ -28,6 +28,11 @@ export function removeModal(entry: ModalEntry): void {
   if (i >= 0) activeModals.splice(i, 1);
 }
 
+/** 是否已有浮层占着屏幕 —— 全局快捷键据此让位给当前弹窗。 */
+export function hasOpenModal(): boolean {
+  return activeModals.length > 0;
+}
+
 /** 关掉最上面那层;关到了返回 true。栈空、或顶层不可关时返回 false */
 export function closeTopModal(): boolean {
   const top = activeModals[activeModals.length - 1];

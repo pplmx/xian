@@ -7,7 +7,7 @@
  * 把栈挪成独立模块,返回键才问得出「上面还有一层吗」。
  */
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import { closeTopModal, pushModal, removeModal, type ModalEntry } from "./modalStack";
+import { closeTopModal, hasOpenModal, pushModal, removeModal, type ModalEntry } from "./modalStack";
 
 const pushed: ModalEntry[] = [];
 
@@ -33,11 +33,13 @@ describe("弹窗栈 · 只关最上面那一层", () => {
   });
 
   it("栈空时没人可关:返回 false,调用方接着走自己的返回逻辑", () => {
+    expect(hasOpenModal()).toBe(false);
     expect(closeTopModal()).toBe(false);
   });
 
   it("不可关的顶层挡住下面的层 —— 不跳过它去关下一层", () => {
     const lower = push(true);
+    expect(hasOpenModal(), "有弹窗时全局命令要让位").toBe(true);
     const blocked = push(false);
     expect(closeTopModal(), "不可关的弹窗在顶层时,这一下返回不该被吃掉").toBe(false);
     expect(blocked.close).not.toHaveBeenCalled();

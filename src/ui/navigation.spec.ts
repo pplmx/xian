@@ -20,6 +20,11 @@ describe("玄枢图 · 全站册目", () => {
       expect(entry.shortLabel.length, `${entry.name} 的书口短名过长`).toBeLessThanOrEqual(2);
       expect(entry.description.length, `${entry.name} 缺一句说明`).toBeGreaterThan(5);
       expect(entry.icon.length, `${entry.name} 缺图标`).toBeGreaterThan(0);
+      expect(entry.keywords.length, `${entry.name} 缺寻册旧叫法`).toBeGreaterThan(0);
+      expect(
+        entry.keywords.every((word) => word.trim().length > 0),
+        `${entry.name} 有空关键词`,
+      ).toBe(true);
     }
   });
 
@@ -59,9 +64,10 @@ describe("玄枢图 · 全站册目", () => {
 
   it("新壳层真的接上玄枢图,而不是只造了一份死数据", () => {
     const top = readFileSync(resolve(ROOT, "src/components/common/TopStatusBar.vue"), "utf8");
+    const app = readFileSync(resolve(ROOT, "src/App.vue"), "utf8");
     const atlas = readFileSync(resolve(ROOT, "src/components/common/NavigationAtlas.vue"), "utf8");
     expect(top, "顶栏缺打开玄枢图的入口").toContain("data-atlas-trigger");
-    expect(top, "顶栏要挂玄枢图").toContain("<NavigationAtlas");
+    expect(app, "应用外壳要统一挂载玄枢图").toContain("<NavigationAtlas");
     expect(atlas, "玄枢图要读同一份册目").toContain("NAVIGATION_SECTIONS");
     expect(atlas, "玄枢图要能直接去各页").toContain("<RouterLink");
     expect(atlas, "玄枢图要复用全站弹窗的焦点与返回键纪律").toContain("<BaseModal");

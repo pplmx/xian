@@ -41,8 +41,8 @@ describe("桌面书脊 · 宽屏从手机底栏改为整册目录", () => {
     expect(css, "手机册宽由 .app-shell 自己兜底").toMatch(
       /\.app-shell\s*\{[\s\S]{0,180}?max-width:\s*26\.875rem;/,
     );
-    expect(app, "手机不挂载整份桌面目录,不能只靠 CSS 藏起来").toContain(
-      "<DesktopSpine v-if=\"game.started && route.name !== 'create' && desktopSpineVisible\"",
+    expect(app, "手机不挂载整份桌面目录,不能只靠 CSS 藏起来").toMatch(
+      /<DesktopSpine\s+v-if="game\.started && route\.name !== 'create' && desktopSpineVisible"/,
     );
     expect(app, "书脊结构断点与样式共用 960px 口径").toContain(
       'useMediaQuery("(min-width: 960px)")',

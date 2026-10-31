@@ -20,6 +20,8 @@ export interface NavigationEntry {
   to: string;
   /** 所属分卷 */
   sectionLabel: string;
+  /** 玩家会怎么说这一册 —— 只供玄枢图寻册,不另造导航事实 */
+  keywords: readonly string[];
 }
 
 export interface NavigationSection {
@@ -54,6 +56,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       description: "今日天时、主线与日课",
       icon: "mountain",
       to: "/",
+      keywords: ["首页", "总览", "今日", "主线", "日课"],
     },
     {
       name: "cultivation",
@@ -62,6 +65,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       description: "吐纳、破境与渡劫",
       icon: "flame",
       to: "/cultivation",
+      keywords: ["修行", "练功", "境界", "突破", "破境", "渡劫", "功法"],
     },
     {
       name: "character",
@@ -70,6 +74,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       description: "属性、灵根与传承",
       icon: "circle-user",
       to: "/character",
+      keywords: ["人物", "属性", "灵根", "战斗", "战力", "成就"],
     },
   ]),
   section("estate", "道场", "家业、人事与周转", [
@@ -80,6 +85,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       description: "建筑、灵脉与家底",
       icon: "home",
       to: "/dongfu",
+      keywords: ["洞府", "建筑", "灵脉", "家", "离线"],
     },
     {
       name: "apprentice",
@@ -88,6 +94,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       description: "弟子差事与归来",
       icon: "user",
       to: "/apprentice",
+      keywords: ["弟子", "门人", "差事", "派遣"],
     },
     {
       name: "market",
@@ -96,6 +103,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       description: "灵石、药材与寄卖",
       icon: "gem",
       to: "/market",
+      keywords: ["交易", "商店", "货架", "悬赏", "寄卖", "买", "卖"],
     },
   ]),
   section("journey", "行旅", "山河、地界与所往", [
@@ -106,6 +114,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       description: "地界、秘境与战斗",
       icon: "swords",
       to: "/adventure",
+      keywords: ["战斗", "秘境", "地图", "出发", "历练"],
     },
     {
       name: "world",
@@ -114,6 +123,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       description: "本世山河与路线",
       icon: "trees",
       to: "/world",
+      keywords: ["山河", "凡界", "人间", "地界", "换界", "路线"],
     },
     {
       name: "codex",
@@ -122,6 +132,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       description: "境界、典籍与术数",
       icon: "scroll",
       to: "/codex",
+      keywords: ["图鉴", "境界", "典籍", "周易", "紫微", "星象", "奇门"],
     },
   ]),
   section("belongings", "身外", "器、药、魂与藏珍", [
@@ -132,6 +143,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       description: "装备、丹药与材料",
       icon: "backpack",
       to: "/inventory",
+      keywords: ["背包", "行囊", "装备", "丹药", "材料", "物品", "道具"],
     },
     {
       name: "collection",
@@ -140,6 +152,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       description: "法宝、灵兽与成就",
       icon: "book",
       to: "/collection",
+      keywords: ["图鉴", "法宝", "灵兽", "宠物", "成就", "收藏"],
     },
     {
       name: "souls",
@@ -148,6 +161,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       description: "凝炼、装配与形意",
       icon: "sparkles",
       to: "/souls",
+      keywords: ["器灵", "法宝", "魂魄", "凝炼", "装备"],
     },
   ]),
   section("fate", "天机", "跨世的道途与选择", [
@@ -158,6 +172,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       description: "道途、远征与试炼",
       icon: "cloud",
       to: "/celestial",
+      keywords: ["天界", "远征", "试炼", "道途", "天道", "神仙"],
     },
     {
       name: "build",
@@ -166,6 +181,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       description: "流派、词条与模拟",
       icon: "hammer",
       to: "/build",
+      keywords: ["流派", "配置", "build", "契合", "词条", "构筑"],
     },
     {
       name: "titles",
@@ -174,6 +190,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       description: "身份、称号与灵兽",
       icon: "crown",
       to: "/titles",
+      keywords: ["称号", "身份", "头衔", "灵兽", "宠物", "名号"],
     },
     {
       name: "legacy",
@@ -182,6 +199,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       description: "历世、道果与遗产",
       icon: "watch",
       to: "/legacy",
+      keywords: ["转世", "轮回", "道果", "宿慧", "前世", "历世"],
     },
     {
       name: "settings",
@@ -190,6 +208,7 @@ export const NAVIGATION_SECTIONS: readonly NavigationSection[] = [
       description: "声音、主题与存档",
       icon: "settings",
       to: "/settings",
+      keywords: ["存档", "音乐", "音效", "主题", "隐私", "导入", "导出"],
     },
   ]),
 ] as const;
