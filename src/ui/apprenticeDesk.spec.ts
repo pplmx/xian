@@ -40,6 +40,17 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
     );
 
     expect(markers, "总账运行时落点只能有一个").toHaveLength(1);
+    expect(view, "门庭总账接共享此刻账").toContain(
+      'import LedgerPulse from "@/components/common/LedgerPulse.vue"',
+    );
+    expect(view, "门庭读数接共享账格").toContain(
+      'import LedgerTally from "@/components/common/LedgerTally.vue"',
+    );
+    expect(view, "门庭不再手搭账首").not.toContain(
+      'import LedgerHeader from "@/components/common/LedgerHeader.vue"',
+    );
+    expect(pulse, "三格都由同一份行数据生成").toContain('v-for="row in apprenticeLedgerRows"');
+    expect(pulse, "静态读数不落成按钮").toContain(':interactive="false"');
     expect(view, "汇总走 service 唯一一份").toContain("apprenticeOverview(appr.apprentices)");
     expect(view, "总账带总数").toContain(':data-apprentice-total="pulse.total"');
     expect(view, "总账带候差数").toContain(':data-apprentice-idle="pulse.idle"');
@@ -50,6 +61,7 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
     expect(pulse.match(/<button/g), "总账里的第一枚按钮必须是一键派发").toHaveLength(1);
     expect(pulse, "一键派发要有独立动作位").toContain("apprentice-pulse__dispatch");
     expect(pulse, "无人在家时动作换口").toContain('"弟子都在路上"');
+    expect(pulse, "门庭总账不再手搓账格骨架").not.toContain('class="apprentice-pulse__tallies"');
   });
 
   it("值日簿候差在前、在途按归期续列,身份与羁绊都从数据源现读", () => {
@@ -106,7 +118,7 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
     expect(view, "不许手抄天赋倍率").not.toContain("×1.25");
   });
 
-  it("手机总账单列,620 起三栏并读,220 以下读数与门规退成单列", () => {
+  it("手机两格并读、最近归来跨行,620 起三栏并读,220 以下门规退成单列", () => {
     const css = source("src/style.css");
     const start = css.indexOf(".apprentice-pulse {");
     const end = css.indexOf("/*\n   * 道躯案", start);
@@ -115,13 +127,16 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
     expect(start, "门庭样式段要能定位到").toBeGreaterThan(-1);
     expect(end, "门庭样式段要有明确结尾").toBeGreaterThan(start);
     expect(apprenticeCss).toMatch(
-      /\.apprentice-pulse__tallies\s*\{[\s\S]{0,120}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
+      /@media \(min-width: 620px\)\s*\{[\s\S]{0,500}\.apprentice-pulse \.folio-ledger-pulse__tallies\s*\{[\s\S]{0,120}--folio-tally-columns:\s*3/,
     );
-    expect(apprenticeCss).toMatch(
-      /@media \(min-width: 620px\)\s*\{[\s\S]{0,500}\.apprentice-pulse__tallies\s*\{[\s\S]{0,160}minmax\(5rem, 0\.55fr\)/,
+    expect(apprenticeCss, "手机最近归来独占整行，长读数不挤成竖排").toMatch(
+      /\.apprentice-pulse \.folio-ledger-pulse__tallies > \*:nth-child\(3\)\s*\{[\s\S]{0,80}grid-column:\s*1 \/ -1/,
     );
-    expect(apprenticeCss).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,900}\.apprentice-pulse__tallies\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    expect(apprenticeCss, "620 起三格各归其位").toMatch(
+      /@media \(min-width: 620px\)\s*\{[\s\S]{0,500}\.apprentice-pulse \.folio-ledger-pulse__tallies > \*:nth-child\(3\)\s*\{[\s\S]{0,80}grid-column:\s*auto/,
+    );
+    expect(apprenticeCss, "账格纸边与 220 退行交给共享层").not.toContain(
+      ".apprentice-pulse__tally {",
     );
     expect(apprenticeCss).toMatch(
       /\.apprentice-rules\s*\{[\s\S]{0,140}grid-template-columns:\s*minmax\(0, 1fr\)/,

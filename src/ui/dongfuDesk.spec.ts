@@ -28,9 +28,16 @@ describe("洞府案 · 山门图先立意,总账再摊开七作", () => {
   it("营造总账把合府加成、每时藏收、弟子与离线上限收在同一处", () => {
     const view = source("src/views/DongfuView.vue");
     const ledger =
-      view.match(/<div class="dongfu-ledger"[\s\S]*?data-dongfu-perfect[\s\S]*?<\/div>/)?.[0] ?? "";
+      view.match(/<LedgerPulse[\s\S]*?data-dongfu-perfect[\s\S]*?<\/LedgerPulse>/)?.[0] ?? "";
 
     expect(view, "总账要有稳定落点").toContain("data-dongfu-ledger");
+    expect(view, "营造总账接共享此刻账").toContain(
+      'import LedgerPulse from "@/components/common/LedgerPulse.vue"',
+    );
+    expect(view, "营造总账不再直接搭账首").not.toContain(
+      'import LedgerHeader from "@/components/common/LedgerHeader.vue"',
+    );
+    expect(ledger, "共享此刻账要真的包住总账").toContain('class="dongfu-ledger"');
     expect(view, "已营座数读 store 唯一一份").toContain("dongfu.builtCount");
     expect(view, "合府加成走引擎合并结果").toContain("modsText(dongfu.buildingMods)");
     expect(view, "每时藏收走结算同一份产出").toContain("hourlyYieldText({ ...dongfu.levels })");
@@ -83,6 +90,12 @@ describe("洞府案 · 山门图先立意,总账再摊开七作", () => {
 
     expect(start, "洞府样式段要能定位到").toBeGreaterThan(-1);
     expect(end, "洞府样式段要有明确结尾").toBeGreaterThan(start);
+    expect(dongfuCss, "纸边由此刻账统一维护").not.toMatch(
+      /\.dongfu-ledger\s*\{[\s\S]{0,240}inset:\s*4px/,
+    );
+    expect(dongfuCss, "洞府只交一枚强调色").toMatch(
+      /\.dongfu-ledger\s*\{[\s\S]{0,140}--ledger-accent:\s*var\(--world-bar\)/,
+    );
     expect(dongfuCss).toMatch(
       /\.dongfu-ledger__grid\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );

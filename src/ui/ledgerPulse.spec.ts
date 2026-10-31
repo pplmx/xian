@@ -70,19 +70,52 @@ describe("此刻账 · 同一张纸边、同一枚动作键", () => {
     }
   });
 
+  it("洞府与门庭也走共享此刻账，只交纸边、账首与正文", () => {
+    for (const file of ["src/views/DongfuView.vue", "src/views/ApprenticeView.vue"]) {
+      const view = source(file);
+
+      expect(view, `${file} 没接共享此刻账`).toContain(
+        'import LedgerPulse from "@/components/common/LedgerPulse.vue"',
+      );
+      expect(view.match(/<LedgerPulse\b/g), `${file} 的共享此刻账数量不对`).toHaveLength(1);
+      expect(view, `${file} 不该再直接搭账首`).not.toContain(
+        'import LedgerHeader from "@/components/common/LedgerHeader.vue"',
+      );
+    }
+  });
+
   it("账格只留一套读数骨架,选中态直接报给读屏", () => {
     const tally = source("src/components/common/LedgerTally.vue");
 
     expect(tally).toContain('class="folio-ledger-tally"');
-    expect(tally).toContain(":class=\"{ 'is-active': active }\"");
-    expect(tally).toContain(":aria-current=\"active ? 'page' : undefined\"");
+    expect(tally).toContain(":class=\"{ 'is-active': active, 'is-interactive': interactive }\"");
+    expect(tally).toContain(":is=\"interactive ? 'button' : 'div'\"");
+    expect(tally).toContain(":type=\"interactive ? 'button' : undefined\"");
+    expect(tally).toContain(":aria-current=\"interactive && active ? 'page' : undefined\"");
     expect(tally).toContain('class="folio-ledger-tally__mark"');
     expect(tally).toContain('class="folio-ledger-tally__label"');
     expect(tally).toContain('class="folio-ledger-tally__value"');
     expect(tally).toContain('class="folio-ledger-tally__total"');
     expect(tally).toContain('class="folio-ledger-tally__unit"');
     expect(tally).toContain('class="folio-ledger-tally__detail"');
-    expect(tally).toContain("@click=\"emit('select')\"");
+    expect(tally).toContain("@click=\"interactive && emit('select')\"");
+    expect(tally).toContain("interactive?: boolean");
+    expect(tally).toContain("interactive: false");
+  });
+
+  it("只有切页账格落成按钮，纯读数不被伪造成可点语义", () => {
+    const css = source("src/style.css");
+
+    for (const file of ["src/views/MarketView.vue", "src/views/SoulsView.vue"]) {
+      expect(source(file), `${file} 的账格要显式可选`).toContain("            interactive");
+    }
+    expect(source("src/views/CelestialView.vue")).toContain("            interactive");
+    expect(css).toMatch(
+      /@media \(hover: hover\)\s*\{\s*\.folio-ledger-tally\.is-interactive:hover\s*\{/,
+    );
+    expect(css, "静态账格不该继承按钮悬停").not.toMatch(
+      /@media \(hover: hover\)\s*\{\s*\.folio-ledger-tally:hover\s*\{/,
+    );
   });
 
   it("三页共用同一套账格,页面只交行列与选中项", () => {

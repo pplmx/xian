@@ -1,10 +1,11 @@
 <template>
-  <button
-    type="button"
+  <component
+    :is="interactive ? 'button' : 'div'"
     class="folio-ledger-tally"
-    :class="{ 'is-active': active }"
-    :aria-current="active ? 'page' : undefined"
-    @click="emit('select')"
+    :class="{ 'is-active': active, 'is-interactive': interactive }"
+    :type="interactive ? 'button' : undefined"
+    :aria-current="interactive && active ? 'page' : undefined"
+    @click="interactive && emit('select')"
   >
     <span class="folio-ledger-tally__mark" aria-hidden="true">{{ mark }}</span>
     <span class="folio-ledger-tally__label">{{ label }}</span>
@@ -14,7 +15,7 @@
     </span>
     <span class="folio-ledger-tally__unit">{{ unit }}</span>
     <span v-if="detail" class="folio-ledger-tally__detail">{{ detail }}</span>
-  </button>
+  </component>
 </template>
 
 <script setup lang="ts">
@@ -29,12 +30,15 @@ const props = withDefaults(
     unit?: string;
     detail?: string;
     active?: boolean;
+    /** 只有需要切换页签的账格才落成按钮；纯读数保持 div，不伪造可点语义。 */
+    interactive?: boolean;
   }>(),
   {
     total: "",
     unit: "",
     detail: "",
     active: false,
+    interactive: false,
   },
 );
 

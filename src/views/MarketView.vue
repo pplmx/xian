@@ -567,6 +567,7 @@ function bountyReady(o: BountySlot): boolean {
             :unit="row.unit"
             :detail="row.detail"
             :active="marketTab === row.id"
+            interactive
             :data-market-pulse-goods="row.id === 'shelf' ? row.value : undefined"
             :data-market-pulse-bounties="row.id === 'bounty' ? row.value : undefined"
             :data-market-pulse-consign="row.id === 'sell' ? row.value : undefined"
@@ -579,7 +580,7 @@ function bountyReady(o: BountySlot): boolean {
     <InkTabs v-model="marketTab" :tabs="marketTabRows" />
 
     <!-- 货架：每一格都是一张摊签，名称、品阶、价格与买不买得起同屏。 -->
-    <section v-show="marketTab === 'shelf'" class="market-book" data-market-book="shelf">
+    <section v-if="marketTab === 'shelf'" class="market-book" data-market-book="shelf">
       <div class="market-book__head">
         <SectionTitle title="货架" hint="时辰一到自会换新" />
         <span class="market-book__clock">换货 {{ formatCountdown(remainingSec) }}</span>
@@ -664,7 +665,7 @@ function bountyReady(o: BountySlot): boolean {
     </section>
 
     <!-- 悬赏板：先看总账，再逐单摊开要什么、缺多少、交得掉多少。 -->
-    <section v-show="marketTab === 'bounty'" class="market-book" data-market-book="bounty">
+    <section v-if="marketTab === 'bounty'" class="market-book" data-market-book="bounty">
       <div
         class="market-book__head market-book__head--bounty justify-between pr-1 tinylens:flex-col tinylens:items-start tinylens:gap-1"
       >
@@ -813,7 +814,7 @@ function bountyReady(o: BountySlot): boolean {
     </BaseModal>
 
     <!-- 售出：寄卖架先看在架，即时柜再处理丹药与材料。 -->
-    <section v-show="marketTab === 'sell'" class="market-book" data-market-book="sell">
+    <section v-if="marketTab === 'sell'" class="market-book" data-market-book="sell">
       <div class="market-book__head">
         <SectionTitle title="售出" hint="寄卖到时自售 · 即时售即入账" />
         <span class="market-book__clock"

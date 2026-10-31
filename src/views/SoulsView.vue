@@ -56,6 +56,7 @@
             :total="row.total"
             :unit="row.unit"
             :detail="row.detail"
+            interactive
             :data-soul-pulse-active="row.id === 'active' ? row.value : undefined"
             :data-soul-pulse-idle="row.id === 'idle' ? row.value : undefined"
             :data-soul-pulse-refine="row.id === 'refine' ? row.value : undefined"

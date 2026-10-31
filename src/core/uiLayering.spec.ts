@@ -3986,8 +3986,13 @@ describe("主巡页 · 字阶同一套", () => {
           extra ? `(本页已放行:${extra.why})` : ""
         }`,
       ).toEqual([]);
-      // 防空转:这页真在写字号,不是被整页清空换了一张绿
-      expect(usedTypeSizes(src).length).toBeGreaterThanOrEqual(5);
+      /*
+       * 防空转:这页真在写字号,不是被整页清空换了一张绿。
+       * 门庭把总账壳与账首交给共享组件后,页面自身仍保留四档真实字阶
+       * (body / section / title / note);共享组件由各自的契约另守,
+       * 不能为了凑数在页面里重复挂同一档 class。
+       */
+      expect(usedTypeSizes(src).length).toBeGreaterThanOrEqual(4);
     });
   }
 

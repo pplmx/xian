@@ -64,6 +64,7 @@
             :unit="row.unit"
             :detail="row.detail"
             :active="celTab === row.id"
+            interactive
             :data-celestial-pulse-dao="row.id === 'dao' ? row.value : undefined"
             :data-celestial-pulse-exped="row.id === 'exped' ? row.value : undefined"
             :data-celestial-pulse-trial="row.id === 'trial' ? row.value : undefined"

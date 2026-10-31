@@ -29,16 +29,16 @@
         title="营造"
         :hint="`已营 ${dongfu.builtCount}/${BUILDINGS.length} · 各司其职,日夜不辍`"
       />
-      <div class="dongfu-ledger" data-dongfu-ledger>
-        <LedgerHeader
-          seal="府"
-          eyebrow="山门总账"
-          title="七作营造"
-          score-label="已营"
-          :score-value="dongfu.builtCount"
-          :score-suffix="`/ ${BUILDINGS.length}`"
-        />
-
+      <LedgerPulse
+        class="dongfu-ledger"
+        data-dongfu-ledger
+        seal="府"
+        eyebrow="山门总账"
+        title="七作营造"
+        score-label="已营"
+        :score-value="dongfu.builtCount"
+        :score-suffix="`/ ${BUILDINGS.length}`"
+      >
         <div class="dongfu-ledger__grid">
           <section class="dongfu-ledger__progress">
             <div class="dongfu-ledger__label-row">
@@ -150,7 +150,7 @@
         <p v-else-if="!nextBuild" class="dongfu-ledger__blocked">
           眼下无可动工 · {{ firstBlockedReason }}
         </p>
-      </div>
+      </LedgerPulse>
     </section>
 
     <!-- 七作按「基业 / 修行 / 丹器 / 生计」分组，不再让七张同形卡平铺成账本。 -->
@@ -242,7 +242,7 @@ import { buildingUpgradeInfo, upgradeBuilding } from "@/core/buildingService";
 import { hourlyYieldText } from "@/core/engineFacilities";
 import { cnNumber, formatGN } from "@/utils/format";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
-import LedgerHeader from "@/components/common/LedgerHeader.vue";
+import LedgerPulse from "@/components/common/LedgerPulse.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import BuildingCard from "@/components/dongfu/BuildingCard.vue";

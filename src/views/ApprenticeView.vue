@@ -40,7 +40,8 @@ import { formatCountdown, formatGN } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import { notify } from "@/core/notify";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
-import LedgerHeader from "@/components/common/LedgerHeader.vue";
+import LedgerPulse from "@/components/common/LedgerPulse.vue";
+import LedgerTally from "@/components/common/LedgerTally.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
@@ -236,6 +237,31 @@ const nextReturnText = computed(() =>
     ? nextReturn.value.countdown
     : `${nextReturn.value.route} ${nextReturn.value.countdown}`,
 );
+const apprenticeLedgerRows = computed(() => [
+  {
+    id: "idle",
+    mark: "待",
+    label: "候差",
+    value: pulse.value.idle,
+    unit: "人",
+    detail: hasIdle.value ? "可即刻派发" : "无人在家",
+  },
+  {
+    id: "away",
+    mark: "途",
+    label: "在途",
+    value: pulse.value.away,
+    unit: "人",
+    detail: pulse.value.away > 0 ? "各按归期回门" : "无人在途",
+  },
+  {
+    id: "next",
+    mark: "归",
+    label: "最近归来",
+    value: nextReturn.value.countdown,
+    detail: nextReturn.value.route || "候差者可先派一单",
+  },
+]);
 
 function taskProgress(a: OwnedApprentice): number {
   return a.task ? apprenticeTaskProgress(a.task, now.value) : 0;
@@ -322,67 +348,49 @@ const tappedTask = computed<{ uid: string; spec: ApprenticeSpec } | null>(() => 
       </template>
 
       <!-- 卷首先总账,值日簿随后逐人摊开;一键派发必须是这一块里的第一枚按钮。 -->
-      <div
+      <LedgerPulse
         class="apprentice-pulse"
         data-apprentice-pulse
         :data-apprentice-total="pulse.total"
         :data-apprentice-idle="pulse.idle"
         :data-apprentice-away="pulse.away"
+        seal="庭"
+        eyebrow="今日门庭"
+        title="一册值日"
+        :score-value="`${pulse.total} / ${slots}`"
+        score-suffix="席"
+        :tally-columns="2"
+        :tally-wide-columns="3"
       >
-        <LedgerHeader
-          seal="庭"
-          eyebrow="今日门庭"
-          title="一册值日"
-          :score-value="`${pulse.total} / ${slots}`"
-          score-suffix="席"
-        />
+        <template #tallies>
+          <LedgerTally
+            v-for="row in apprenticeLedgerRows"
+            :key="row.id"
+            :mark="row.mark"
+            :label="row.label"
+            :value="row.value"
+            :unit="row.unit"
+            :detail="row.detail"
+            :interactive="false"
+            :aria-label="row.id === 'next' ? `最近归来 ${nextReturnText}` : undefined"
+            :data-apprentice-idle="row.id === 'idle' ? row.value : undefined"
+            :data-apprentice-away="row.id === 'away' ? row.value : undefined"
+            :data-apprentice-next-return="row.id === 'next' ? row.value : undefined"
+          />
+        </template>
 
-        <div class="apprentice-pulse__body">
-          <div class="apprentice-pulse__tallies">
-            <div class="apprentice-pulse__tally">
-              <span class="apprentice-pulse__label">候差</span>
-              <strong class="apprentice-pulse__value tabular" data-apprentice-idle>{{
-                pulse.idle
-              }}</strong>
-              <span class="apprentice-pulse__unit">人</span>
-            </div>
-            <div class="apprentice-pulse__tally">
-              <span class="apprentice-pulse__label">在途</span>
-              <strong class="apprentice-pulse__value tabular" data-apprentice-away>{{
-                pulse.away
-              }}</strong>
-              <span class="apprentice-pulse__unit">人</span>
-            </div>
-            <div class="apprentice-pulse__next">
-              <span class="apprentice-pulse__label">最近归来</span>
-              <strong
-                class="apprentice-pulse__next-value tabular"
-                data-apprentice-next-return
-                :aria-label="`最近归来 ${nextReturnText}`"
-              >
-                <template v-if="nextReturn.at !== null">
-                  <span class="apprentice-pulse__next-route">{{ nextReturn.route }}</span>
-                  <span class="apprentice-pulse__next-countdown">{{ nextReturn.countdown }}</span>
-                </template>
-                <template v-else>{{ nextReturn.countdown }}</template>
-              </strong>
-            </div>
-          </div>
-
-          <button
-            class="btn-seal apprentice-pulse__dispatch"
-            :disabled="!hasIdle"
-            :aria-label="hasIdle ? dispatchLabel : '弟子都在路上'"
-            @click="doDispatchAll"
-          >
-            {{ hasIdle ? dispatchLabel : "弟子都在路上" }}
-          </button>
-        </div>
-
+        <button
+          class="btn-seal apprentice-pulse__dispatch"
+          :disabled="!hasIdle"
+          :aria-label="hasIdle ? dispatchLabel : '弟子都在路上'"
+          @click="doDispatchAll"
+        >
+          {{ hasIdle ? dispatchLabel : "弟子都在路上" }}
+        </button>
         <p class="apprentice-pulse__foot">
           候差者可按库存一令齐发；各自的本命门类与逐单进度,都摊在下面值日簿里。
         </p>
-      </div>
+      </LedgerPulse>
     </FolioPageHeader>
 
     <section class="folio-span-all apprentice-roster-section" data-apprentice-roster>

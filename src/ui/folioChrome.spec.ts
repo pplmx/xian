@@ -42,6 +42,22 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     expect(css).toContain(".folio-turn-cross-enter-from");
   });
 
+  it("事件浮层不抢首屏带宽：正文与楷体落定后才按需装载", () => {
+    const app = source("src/App.vue");
+
+    expect(app, "重浮层要按需拆块").toContain("defineAsyncComponent");
+    expect(app, "浮层组等正文与字体落定后再挂").toMatch(
+      /<template v-if="overlaysReady">[\s\S]{0,1200}<OfflineRewardDialog/,
+    );
+    expect(app, "挂载时机读浏览器字体就绪").toContain("document.fonts?.ready");
+    expect(app, "装备详情不再随 App 静态进首屏").not.toContain(
+      'import EquipmentDetailDialog from "@/components/equipment/EquipmentDetailDialog.vue"',
+    );
+    expect(app, "归来卷轴不再随 App 静态进首屏").not.toContain(
+      'import OfflineRewardDialog from "@/components/offline/OfflineRewardDialog.vue"',
+    );
+  });
+
   it("弹窗是带卷目题签的册页，关闭动作写成合卷而不是通用图标", () => {
     const modal = source("src/components/common/BaseModal.vue");
     const css = source("src/style.css");

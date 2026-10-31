@@ -75,6 +75,17 @@ describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
     expect(view, "售铁不足也要列差").toContain("尚差 ${oreSellShort} 玄铁");
   });
 
+  it("三册只挂当前一册，隐藏页不把整份货架与赏单留在 DOM", () => {
+    const view = source("src/views/MarketView.vue");
+
+    for (const tab of ["shelf", "bounty", "sell"]) {
+      expect(view, `${tab} 册按需挂载`).toContain(
+        `v-if="marketTab === '${tab}'" class="market-book" data-market-book="${tab}"`,
+      );
+    }
+    expect(view, "不再用 v-show 常驻三册").not.toContain('v-show="marketTab ===');
+  });
+
   it("售罄与已领只换底和划记，不用整行透明度把文字压到读不清", () => {
     const css = source("src/styles/pages/market.css");
 

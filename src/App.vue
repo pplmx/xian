@@ -76,23 +76,33 @@
     <!-- 全局浮层 -->
     <UpdatePrompt :visible="updateReady" @refresh="swHandle?.reload()" />
     <ToastHost />
-    <OfflineRewardDialog />
-    <BreakthroughResultDialog />
-    <EventDialog v-if="game.started" />
-    <ReincarnationDialog />
-    <EquipmentDetailDialog />
-    <NumberDetailDialog />
-    <ExitConfirmDialog />
-    <!-- 修炼中偶发事件浮层(引擎触发、组件轮询展示;挂在全局才不会漏掉窗口期) -->
-    <EnlightenmentModal v-if="game.started" />
-    <CaveEventModal v-if="game.started" />
+    <template v-if="overlaysReady">
+      <OfflineRewardDialog />
+      <BreakthroughResultDialog />
+      <EventDialog v-if="game.started" />
+      <ReincarnationDialog />
+      <EquipmentDetailDialog />
+      <NumberDetailDialog />
+      <ExitConfirmDialog />
+      <!-- 修炼中偶发事件浮层(引擎触发、组件轮询展示;挂在全局才不会漏掉窗口期) -->
+      <EnlightenmentModal v-if="game.started" />
+      <CaveEventModal v-if="game.started" />
+    </template>
     <!-- 世界变迁宣告:人间→仙界→神界→混沌,越界那一瞬的仪式(判据见 core/worldRite) -->
     <WorldTransitionVeil />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from "vue";
+import {
+  computed,
+  defineAsyncComponent,
+  onMounted,
+  onUnmounted,
+  ref,
+  useTemplateRef,
+  watch,
+} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useGameStore } from "@/stores/game";
 import { usePlayerStore } from "@/stores/player";
@@ -118,16 +128,36 @@ import DesktopSpine from "@/components/common/DesktopSpine.vue";
 import TopStatusBar from "@/components/common/TopStatusBar.vue";
 import BottomNavigation from "@/components/common/BottomNavigation.vue";
 import ToastHost from "@/components/common/ToastHost.vue";
-import OfflineRewardDialog from "@/components/offline/OfflineRewardDialog.vue";
-import BreakthroughResultDialog from "@/components/cultivation/BreakthroughResultDialog.vue";
-import EventDialog from "@/components/adventure/EventDialog.vue";
-import ReincarnationDialog from "@/components/character/ReincarnationDialog.vue";
-import EquipmentDetailDialog from "@/components/equipment/EquipmentDetailDialog.vue";
-import NumberDetailDialog from "@/components/common/NumberDetailDialog.vue";
-import ExitConfirmDialog from "@/components/common/ExitConfirmDialog.vue";
-import EnlightenmentModal from "@/components/cultivation/EnlightenmentModal.vue";
-import CaveEventModal from "@/components/dongfu/CaveEventModal.vue";
 import WorldTransitionVeil from "@/components/common/WorldTransitionVeil.vue";
+
+/*
+ * 浮层按需装载。它们不参与首屏构图，却合计带着归来、战报、装备与转世的整条数据链；
+ * 若随 App 静态导入，所有玩家打开首页都得先下完这些代码。这里先把它们拆出入口静态图，
+ * 等正文与楷体落定后再由 overlaysReady 拉取分块；首屏关键路径只保留顶栏、正文与底栏。
+ */
+const OfflineRewardDialog = defineAsyncComponent(
+  () => import("@/components/offline/OfflineRewardDialog.vue"),
+);
+const BreakthroughResultDialog = defineAsyncComponent(
+  () => import("@/components/cultivation/BreakthroughResultDialog.vue"),
+);
+const EventDialog = defineAsyncComponent(() => import("@/components/adventure/EventDialog.vue"));
+const ReincarnationDialog = defineAsyncComponent(
+  () => import("@/components/character/ReincarnationDialog.vue"),
+);
+const EquipmentDetailDialog = defineAsyncComponent(
+  () => import("@/components/equipment/EquipmentDetailDialog.vue"),
+);
+const NumberDetailDialog = defineAsyncComponent(
+  () => import("@/components/common/NumberDetailDialog.vue"),
+);
+const ExitConfirmDialog = defineAsyncComponent(
+  () => import("@/components/common/ExitConfirmDialog.vue"),
+);
+const EnlightenmentModal = defineAsyncComponent(
+  () => import("@/components/cultivation/EnlightenmentModal.vue"),
+);
+const CaveEventModal = defineAsyncComponent(() => import("@/components/dongfu/CaveEventModal.vue"));
 
 const game = useGameStore();
 const player = usePlayerStore();
@@ -140,6 +170,14 @@ const router = useRouter();
 const folioLayout = computed(() => folioLayoutOf(route.name));
 const turnDirection = ref<FolioTurnDirection>("cross");
 const turnName = computed(() => `folio-turn-${turnDirection.value}`);
+/**
+ * 浮层等正文所用楷体落定后再开始下载。
+ *
+ * 异步组件本身不会进入入口静态图，但若一挂载就全部发起请求，慢网下仍会和首条路由、
+ * 字体切片抢带宽。浮层状态都保存在 store 里，晚一拍挂载不会丢事件；先让玩家看见正文，
+ * 再补齐这些“用到才出现”的册页。
+ */
+const overlaysReady = ref(false);
 /** 书脊只属于桌面两列骨架；手机即便 CSS 已隐藏，也不该把整份十七册目录留在 DOM。 */
 const desktopSpineVisible = useMediaQuery("(min-width: 960px)");
 const stopAfterEach = router.afterEach((to, from) => {
@@ -259,6 +297,13 @@ onMounted(() => {
     }, WRITER_WATCH_MS);
   }
   window.addEventListener("pointerdown", onPointerDown);
+  const revealOverlays = (): void => {
+    requestAnimationFrame(() => {
+      overlaysReady.value = true;
+    });
+  };
+  if (document.fonts?.ready) void document.fonts.ready.then(revealOverlays, revealOverlays);
+  else revealOverlays();
 });
 
 onUnmounted(() => {

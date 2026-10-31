@@ -956,7 +956,7 @@
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.06);
   }
   @media (hover: hover) {
-    .folio-ledger-tally:hover {
+    .folio-ledger-tally.is-interactive:hover {
       background-color: rgb(var(--color-ink-rgb) / 0.025);
     }
   }

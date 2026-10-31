@@ -10,98 +10,14 @@
   */
   .apprentice-pulse {
     --ledger-accent: var(--color-cinnabar);
-    position: relative;
-    overflow: hidden;
-    margin-top: 0.5rem;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
-    border-top: 2px solid rgb(var(--color-cinnabar-rgb) / 0.48);
-    border-radius: 2px;
-    background:
-      linear-gradient(
-        116deg,
-        rgb(var(--color-paper-rgb) / 0.34),
-        transparent 48%,
-        rgb(var(--color-cinnabar-rgb) / 0.018)
-      ),
-      rgb(var(--color-paper-lifted-rgb) / 0.72);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.36),
-      2px 2px 0 rgb(var(--color-ink-rgb) / 0.02);
   }
-  .apprentice-pulse::before {
-    position: absolute;
-    inset: 4px;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.03);
-    content: "";
-    pointer-events: none;
-  }
-  .apprentice-pulse__body {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    gap: 0;
-  }
-  .apprentice-pulse__tallies {
-    display: grid;
-    min-width: 0;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .apprentice-pulse__tally,
-  .apprentice-pulse__next {
-    min-width: 0;
-    padding: 0.54rem 0.7rem 0.58rem;
-  }
-  .apprentice-pulse__tally {
-    display: flex;
-    align-items: baseline;
-    gap: 0.25rem;
-  }
-  .apprentice-pulse__tally + .apprentice-pulse__tally {
-    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-  }
-  .apprentice-pulse__next {
+  .apprentice-pulse .folio-ledger-pulse__tallies > *:nth-child(3) {
     grid-column: 1 / -1;
-    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-    background: rgb(var(--color-qing-rgb) / 0.018);
-  }
-  .apprentice-pulse__label {
-    color: rgb(var(--color-ink-faint-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    letter-spacing: 0.12em;
-  }
-  .apprentice-pulse__value {
-    color: rgb(var(--color-cinnabar-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-title);
-    font-weight: 500;
-    line-height: 1;
-  }
-  .apprentice-pulse__unit {
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-  }
-  .apprentice-pulse__next-value {
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    gap: 0.02rem 0.34rem;
-    margin-top: 0.2rem;
-    color: rgb(var(--color-ink-soft-rgb));
-    font-size: var(--type-note);
-    font-weight: 400;
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-  }
-  .apprentice-pulse__next-route {
-    min-width: 0;
-  }
-  .apprentice-pulse__next-countdown {
-    white-space: nowrap;
   }
   .apprentice-pulse .apprentice-pulse__dispatch {
     width: 100%;
     min-height: 42px;
+    border-top: 1px solid rgb(var(--color-cinnabar-rgb) / 0.16);
     border-radius: 1px;
     padding: 0.58rem 0.78rem;
     white-space: normal;
@@ -435,13 +351,19 @@
     line-height: 1.62;
   }
   @media (min-width: 620px) {
-    .apprentice-pulse__tallies {
-      grid-template-columns: minmax(5rem, 0.55fr) minmax(5rem, 0.55fr) minmax(0, 1.9fr);
+    .apprentice-pulse .folio-ledger-pulse__tallies {
+      --folio-tally-columns: 3;
     }
 
-    .apprentice-pulse__next {
+    .apprentice-pulse .folio-ledger-pulse__tallies > *:nth-child(3) {
       grid-column: auto;
+    }
+
+    .apprentice-pulse .folio-ledger-pulse__tallies > *:nth-child(n + 3) {
       border-top: 0;
+    }
+
+    .apprentice-pulse .folio-ledger-pulse__tallies > * + * {
       border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
     }
 
@@ -459,8 +381,6 @@
     }
   }
   @media (max-width: 220px) {
-    .apprentice-pulse__tally,
-    .apprentice-pulse__next,
     .apprentice-pulse__foot,
     .apprentice-roster__group-head,
     .apprentice-roster__row,
@@ -471,19 +391,6 @@
     .apprentice-roster__status {
       width: 100%;
       margin-left: 0;
-    }
-
-    .apprentice-pulse__tallies {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .apprentice-pulse__tally + .apprentice-pulse__tally {
-      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-      border-left: 0;
-    }
-
-    .apprentice-pulse__next {
-      grid-column: auto;
     }
 
     .apprentice-roster__group-count {

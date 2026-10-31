@@ -21,31 +21,7 @@
     font-weight: 500;
   }
   .dongfu-ledger {
-    --ledger-accent: var(--color-cinnabar);
-    position: relative;
-    overflow: hidden;
-    margin-top: 0.5rem;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.15);
-    border-top: 2px solid var(--world-bar);
-    border-radius: 2px;
-    background:
-      linear-gradient(
-        118deg,
-        rgb(var(--color-paper-rgb) / 0.34),
-        transparent 46%,
-        rgb(var(--color-ink-rgb) / 0.015)
-      ),
-      rgb(var(--color-paper-lifted-rgb));
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.44),
-      3px 3px 0 rgb(var(--color-ink-rgb) / 0.024);
-  }
-  .dongfu-ledger::before {
-    position: absolute;
-    inset: 4px;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.03);
-    content: "";
-    pointer-events: none;
+    --ledger-accent: var(--world-bar);
   }
   .dongfu-ledger__grid {
     position: relative;
