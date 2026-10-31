@@ -114,31 +114,7 @@
     <AboutDialog :open="aboutOpen" @close="aboutOpen = false" />
     <PrivacyDialog :open="privacyOpen" @close="privacyOpen = false" />
 
-    <BaseModal :open="agreeOpen" title="进入前请确认" :closable="false">
-      <p class="t-body text-ink-faint">
-        游戏数据仅保存在你的浏览器本地,不上传服务器,也不接入任何第三方服务——页面不加载外部脚本、不发任何外部请求(详见隐私政策)。继续游玩前,请阅读并同意隐私政策。
-      </p>
-      <label class="mt-3 flex items-center gap-2">
-        <input v-model="agreed" type="checkbox" class="h-4 w-4 accent-cinnabar" />
-        <span class="flex flex-wrap items-center gap-x-1 text-body text-ink-soft">
-          我已阅读并同意
-          <button
-            class="flex min-h-[28px] items-center text-qing active:opacity-60"
-            @click.prevent="privacyOpen = true"
-          >
-            《隐私政策》
-          </button>
-        </span>
-      </label>
-      <template #footer>
-        <div class="flex gap-2">
-          <button class="btn-ghost flex-1" @click="agreeOpen = false">再想想</button>
-          <button class="btn-seal flex-1" :disabled="!agreed" @click="confirmStart">
-            同意并开始
-          </button>
-        </div>
-      </template>
-    </BaseModal>
+    <OpeningPact :open="agreeOpen" @close="agreeOpen = false" @confirm="confirmStart" />
 
     <WarpPortal ref="warpRef" />
   </div>
@@ -156,6 +132,7 @@ import PrivacyDialog from "@/components/common/PrivacyDialog.vue";
 import AboutDialog from "@/components/common/AboutDialog.vue";
 import WarpPortal from "@/components/common/WarpPortal.vue";
 import OpeningBackdrop from "@/components/opening/OpeningBackdrop.vue";
+import OpeningPact from "@/components/opening/OpeningPact.vue";
 import { REALMS, WORLDS } from "@/data/realms";
 import { cnNumber } from "@/utils/format";
 
@@ -165,7 +142,6 @@ const ui = useUiStore();
 
 const privacyOpen = ref(false);
 const agreeOpen = ref(false);
-const agreed = ref(false);
 const importOpen = ref(false);
 const aboutOpen = ref(false);
 const fileInput = useTemplateRef<HTMLInputElement>("fileInput");

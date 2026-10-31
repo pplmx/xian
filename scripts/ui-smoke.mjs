@@ -273,7 +273,7 @@ async function runRoute(route) {
         .click({ timeout: 5000 });
       await page.locator("input[type=checkbox]").first().check({ timeout: 5000 });
       await page
-        .getByRole("button", { name: /同意并开始/ })
+        .getByRole("button", { name: /署印入山/ })
         .first()
         .click({ timeout: 5000 });
       await page.waitForTimeout(3200);

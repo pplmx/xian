@@ -142,7 +142,7 @@ async function clean(page) {
     .click();
   await page.locator("input[type=checkbox]").first().check();
   await page
-    .getByRole("button", { name: /同意并开始/ })
+    .getByRole("button", { name: /署印入山/ })
     .first()
     .click();
   await page.waitForTimeout(3400);

@@ -122,7 +122,7 @@
  *   四十六 开局前两页(欢迎 / 建号):它们是唯二**没有存档才看得见**的页面 ——
  *      路由守卫见存档已开就把 #/welcome、#/create 重定向回首页,所以巡页 ROUTES
  *      永远巡不到它们(硬塞进 ROUTES 只会把首页重复量一遍)。故另开一个无存档的
- *      context:先量欢迎页,再走「启封入山 → 同意并开始」落到建号页量一遍。
+ *      context:先量欢迎页,再走「启封入山 → 署印入山」落到建号页量一遍。
  *      只查基础档(横向溢出 / 外壳偏移 / 越界元素 / 无名控件 / 可点过小 / 正文对比度),
  *      不查底部导航项数 —— 这两页本来就没有导航(开局前不该有)。
  *      两页也各过一遍 200% 缩放档:旧欢迎页曾在 195 宽下把主钮折成两行、
@@ -2001,7 +2001,7 @@ async function taskPageTour(vp) {
   }
   await page.locator("input[type=checkbox]").first().check();
   await page
-    .getByRole("button", { name: /同意并开始/ })
+    .getByRole("button", { name: /署印入山/ })
     .first()
     .click();
   await page.waitForTimeout(3200);
@@ -2407,7 +2407,7 @@ async function taskSaveUnwritable() {
       .click();
     await page.locator("input[type=checkbox]").first().check();
     await page
-      .getByRole("button", { name: /同意并开始/ })
+      .getByRole("button", { name: /署印入山/ })
       .first()
       .click();
     await page.waitForTimeout(3200);
@@ -2460,7 +2460,7 @@ async function taskModalFocus() {
       .click();
     await page.locator("input[type=checkbox]").first().check();
     await page
-      .getByRole("button", { name: /同意并开始/ })
+      .getByRole("button", { name: /署印入山/ })
       .first()
       .click();
     await page.waitForTimeout(3200);
@@ -2604,7 +2604,7 @@ async function taskTabFocus() {
       .click();
     await page.locator("input[type=checkbox]").first().check();
     await page
-      .getByRole("button", { name: /同意并开始/ })
+      .getByRole("button", { name: /署印入山/ })
       .first()
       .click();
     await page.waitForTimeout(3200);
@@ -2676,7 +2676,7 @@ async function taskToastDismiss() {
       .click();
     await page.locator("input[type=checkbox]").first().check();
     await page
-      .getByRole("button", { name: /同意并开始/ })
+      .getByRole("button", { name: /署印入山/ })
       .first()
       .click();
     await page.waitForTimeout(3200);
@@ -2755,7 +2755,7 @@ async function taskEngineModals() {
       .click();
     await page.locator("input[type=checkbox]").first().check();
     await page
-      .getByRole("button", { name: /同意并开始/ })
+      .getByRole("button", { name: /署印入山/ })
       .first()
       .click();
     await page.waitForTimeout(3200);
@@ -2857,7 +2857,7 @@ async function taskColdStartBack() {
       .click();
     await boot.locator("input[type=checkbox]").first().check();
     await boot
-      .getByRole("button", { name: /同意并开始/ })
+      .getByRole("button", { name: /署印入山/ })
       .first()
       .click();
     await boot.waitForTimeout(3200);
@@ -8731,7 +8731,7 @@ async function taskBuildArtifacts() {
  * /welcome 与 /create 是「没有存档才看得见」的页面:路由守卫见存档已开就把它们
  * 重定向回首页,巡页 ROUTES 永远巡不到 —— 此前这两页从未被量过,而它们恰是
  * 每个新玩家的第一屏(字体最大的一屏、表单页)。这里开一个**无存档**的 context:
- * 直接落在欢迎页量一遍,再走「启封入山 → 同意并开始」落到建号页量一遍。
+ * 直接落在欢迎页量一遍,再走「启封入山 → 署印入山」落到建号页量一遍。
  *
  * 判据只取基础档,且是 measurePage 的**子集**:底部导航项数、顶栏折行、页签栏
  * 这些判据以「游戏内页面」为前提,开局前两页没有导航与顶栏,硬套只会量出假红。
@@ -8901,15 +8901,50 @@ async function taskPreGameTour() {
       failures.push(`[开局前] /welcome 在 200% 下坏了:${welcomeZoom.join(" / ")}`);
   }
 
-  // ---- 建号页:同意隐私后由欢迎页进来(传送门约 2.5s) ----
+  // ---- 入山契:未勾选不可署印,取消后重开必须回到未勾选 ----
   await page
     .getByRole("button", { name: /启封入山/ })
     .first()
     .click();
   await page.waitForTimeout(600);
-  await page.locator("input[type=checkbox]").first().check();
+  {
+    const pact = page.locator("[data-opening-pact]");
+    const agree = page.locator("[data-opening-pact-agree]");
+    const seal = page.getByRole("button", { name: /署印入山/ }).first();
+    if (!(await pact.isVisible())) failures.push("[开局前] 启封入山后没有摊开入山契");
+    if (!(await seal.isDisabled())) failures.push("[开局前] 入山契尚未勾选,署印键却已可用");
+    await agree.check();
+    if (await seal.isDisabled()) failures.push("[开局前] 已勾选入山契,署印键仍不可用");
+    const modalAudit = await auditModalControls(page);
+    if (!modalAudit || modalAudit.count === 0)
+      failures.push("[开局前] 入山契里一个控件都没数到,判据没跑到东西");
+    if (modalAudit?.unnamed.length)
+      failures.push(`[开局前] 入山契里有 ${modalAudit.unnamed.length} 个无名控件`);
+    if (modalAudit?.small.length)
+      failures.push(`[开局前] 入山契里可点元素过小:${modalAudit.small.join(" | ")}`);
+    if (SHOTS) {
+      mkdirSync(SHOTS_DIR, { recursive: true });
+      await page.screenshot({ path: join(SHOTS_DIR, "390_welcome_pact.png"), fullPage: true });
+    }
+    zoomSeen += 1;
+    const pactZoom = dialogZoomProblems(await measureDialogZoom(page, { width: 390, height: 844 }));
+    if (pactZoom.length) failures.push(`[开局前] 入山契在 200% 下坏了:${pactZoom.join(" / ")}`);
+    await page.getByRole("button", { name: /再想想/ }).click();
+    await page.waitForTimeout(350);
+    await page
+      .getByRole("button", { name: /启封入山/ })
+      .first()
+      .click();
+    await page.waitForTimeout(600);
+    if (await agree.isChecked()) failures.push("[开局前] 取消入山契后再次开契,上次勾选仍残留");
+    if (!(await seal.isDisabled())) failures.push("[开局前] 重开入山契后未勾选,署印键却已可用");
+    checked += 1;
+  }
+
+  // ---- 建号页:署印后由欢迎页进来(传送门约 2.5s) ----
+  await page.locator("[data-opening-pact-agree]").check();
   await page
-    .getByRole("button", { name: /同意并开始/ })
+    .getByRole("button", { name: /署印入山/ })
     .first()
     .click();
   await page.waitForTimeout(3200);

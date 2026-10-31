@@ -3867,6 +3867,10 @@ describe("修炼页 · 字号收六档", () => {
         sizes: [18],
         why: "道果主读数 —— 整张轮回弹窗的第一眼就是它,量的是读数不是行文",
       },
+      "components/opening/OpeningPact.vue": {
+        sizes: [18],
+        why: "入山契的朱砂契印单字 —— 量的是印面标识,不是行文",
+      },
     };
     const dialogs = FILES.filter(
       (f) =>
