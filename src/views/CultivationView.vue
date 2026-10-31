@@ -1,23 +1,84 @@
 <template>
-  <div class="folio-page folio-page--stack stagger-in">
-    <FolioPageHeader :title="player.realm.name" :subtitle="player.realm.desc" featured>
+  <div
+    class="cultivation-page folio-page folio-page--stack stagger-in"
+    data-page-rhythm="inner-view"
+  >
+    <FolioPageHeader
+      class="cultivation-masthead"
+      data-cultivation-stage
+      :data-cultivation-phase="stage.key"
+      :title="player.realm.name"
+      :subtitle="player.realm.desc"
+      featured
+    >
+      <template #backdrop>
+        <div class="cultivation-masthead__backdrop" aria-hidden="true">
+          <span
+            v-for="i in 14"
+            :key="i"
+            class="cultivation-masthead__star"
+            :style="{ '--star': i }"
+          />
+          <span class="cultivation-masthead__ring cultivation-masthead__ring--outer" />
+          <span class="cultivation-masthead__ring cultivation-masthead__ring--inner" />
+          <svg viewBox="0 0 440 160" preserveAspectRatio="none">
+            <path
+              class="cultivation-masthead__mountain"
+              d="M0 160 L42 118 L84 142 L128 96 L176 145 L228 84 L276 137 L326 108 L372 142 L408 116 L440 150 L440 160 Z"
+            />
+            <path d="M0 160 L62 138 L126 154 L194 126 L268 158 L340 136 L440 150 L440 160 Z" />
+          </svg>
+        </div>
+      </template>
       <template #meta>
-        <p class="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-body">
-          <span class="world-label font-kai tracking-[0.28em]">{{ player.worldName }}</span>
-          <span class="text-ink-faint" aria-hidden="true">·</span>
-          <span class="font-kai tracking-[0.22em] text-cinnabar">{{ player.subName }}</span>
-          <span class="ml-auto tabular text-ink-faint"
+        <div class="cultivation-masthead__meta">
+          <span class="cultivation-masthead__world world-label"
+            >{{ player.worldName }} · {{ player.subName }}</span
+          >
+          <span class="cultivation-masthead__phase" :data-phase="stage.key">
+            <span aria-hidden="true" />
+            {{ stage.label }}
+          </span>
+          <span class="cultivation-masthead__ordinal tabular"
             >第 {{ player.major + 1 }} / {{ REALMS.length }} 境</span
           >
-        </p>
-        <!-- 可解释性:这一境取自何处、因何承接(典籍 / 网文常用 / 道家本源) -->
-        <p class="mt-1.5 border-t border-ink/10 pt-1.5 text-note leading-relaxed text-ink-faint">
-          「{{ player.realm.basis }}」{{ player.realm.lore }}
-        </p>
+        </div>
+        <p class="cultivation-masthead__state">{{ stage.hint }}</p>
+        <details class="cultivation-masthead__lore">
+          <summary>典籍所据 · {{ player.realm.basis }}</summary>
+          <p>「{{ player.realm.basis }}」{{ player.realm.lore }}</p>
+        </details>
       </template>
       <template #visual>
-        <CultivationDial />
+        <CultivationDial tone="chrome" />
       </template>
+      <div class="cultivation-masthead__readout" data-cultivation-stage-readout>
+        <div class="cultivation-masthead__readout-cell">
+          <span class="cultivation-masthead__readout-label">本境余程</span>
+          <strong class="cultivation-masthead__readout-value tabular">
+            {{ player.expFull ? "圆满" : formatPercent(1 - player.expProgress, 0) }}
+          </strong>
+          <span class="cultivation-masthead__readout-note">{{ expEtaText }}</span>
+        </div>
+        <div class="cultivation-masthead__readout-cell">
+          <span class="cultivation-masthead__readout-label">此刻行速</span>
+          <strong class="cultivation-masthead__readout-value tabular">{{
+            formatRate(player.cultPerSec)
+          }}</strong>
+          <span class="cultivation-masthead__readout-note tabular"
+            >基础 {{ formatRate(cultBase) }} · 加成 {{ formatPercent(cultMultiplier) }}</span
+          >
+        </div>
+        <div class="cultivation-masthead__readout-cell">
+          <span class="cultivation-masthead__readout-label">灵气</span>
+          <strong class="cultivation-masthead__readout-value tabular">{{
+            formatPercent(qiFillRatio, 0)
+          }}</strong>
+          <span class="cultivation-masthead__readout-note tabular"
+            >+{{ formatRate(player.qiRegenPerSec) }} · {{ qiRichInfo.on ? "充盈" : "未充盈" }}</span
+          >
+        </div>
+      </div>
     </FolioPageHeader>
 
     <!--
@@ -34,7 +95,7 @@
       </SectionTitle>
 
       <!-- 仙路 21 境全景:已至/当前/未至一眼可辨,界门立界,四界分列 -->
-      <div class="cultivation-ledger__ladder">
+      <div class="cultivation-ledger__ladder" data-cultivation-route>
         <RealmLadder :major="player.major" />
       </div>
 
@@ -121,11 +182,7 @@
               >
             </span>
           </div>
-          <ProgressBar
-            :value="Math.min(1, resources.qi / Math.max(1, player.qiCapValue))"
-            color="var(--color-qing)"
-            :height="8"
-          />
+          <ProgressBar :value="qiFillRatio" color="var(--color-qing)" :height="8" />
           <p
             class="cultivation-ledger__meter-copy"
             :class="qiRichInfo.on ? 'text-qing' : 'text-ink-faint'"
@@ -308,11 +365,13 @@ import { useInventoryStore } from "@/stores/inventory";
 import { useUiStore } from "@/stores/ui";
 import { buffOverflowOf, buffStackSize } from "@/core/engineBuffs";
 import { breakthroughInfo } from "@/core/breakthrough";
+import { cultivationStageOf } from "@/core/cultivationStage";
 import { subClamp, toNum } from "@/utils/gnum";
 import { baseCultPerSec } from "@/core/formulas";
 import { modOf } from "@/core/statsCalc";
 import { usePill } from "@/core/pillService";
 import { qiRepairView, repairWithQi } from "@/core/qiRepair";
+import { isRetreating } from "@/core/earlyGameService";
 import { useNow } from "@/composables/useNow";
 import { useProgressEta } from "@/composables/useProgressEta";
 import { REALMS } from "@/data/realms";
@@ -369,6 +428,15 @@ const now = useNow();
  * 破境增益/准备选项/突破钮/短差行)已随本体迁入 BreakthroughCard,不再两份。
  */
 const btInfo = computed(() => breakthroughInfo());
+const stage = computed(() =>
+  cultivationStageOf({
+    expFull: player.expFull,
+    breakthroughReady: btInfo.value.ready,
+    breakthroughReason: btInfo.value.reason,
+    retreating: isRetreating(),
+    injured: cultivation.hasBuff("injury"),
+  }),
+);
 
 /**
  * 修为数值详情的两行 + 一句人话。
@@ -459,6 +527,9 @@ const qiRichInfo = computed(() => {
   const gap = Math.max(0, threshold - resources.qi);
   return { on, threshold, gap };
 });
+const qiFillRatio = computed(() =>
+  Math.max(0, Math.min(1, resources.qi / Math.max(1, player.qiCapValue))),
+);
 /** 标称容量之外还攒了多少 —— 主行只挂一个「+」,精确值在点开的详情里(行骨架走 useProgressEta) */
 const { rows: qiDetailRows, note: qiDetailNote } = useProgressEta({
   cap: () => player.qiCapValue,

@@ -276,6 +276,7 @@ const CATEGORIES = [
       "ledgerPulse",
       "openingDesk",
       "homeDesk",
+      "cultivationStage",
       "cultivationDesk",
       "legacyDesk",
       "inventoryDesk",

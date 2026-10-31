@@ -11,24 +11,33 @@ function source(rel: string): string {
 }
 
 describe("修炼案 · 主读数先行,破境与闭关收成下一步", () => {
-  it("卷首用周天盘承接境界与修为进度,不再留一块空主视觉", () => {
+  it("卷首改成内观台,用暗场周天盘承接境界、阶段与修为进度", () => {
     const view = source("src/views/CultivationView.vue");
     const dial = source("src/components/cultivation/CultivationDial.vue");
+    const css = source("src/styles/pages/cultivation.css");
 
     expect(view, "修炼卷首要有稳定的周天盘落点").toMatch(
-      /<template #visual>[\s\S]{0,160}<CultivationDial\s*\/>/,
+      /<template #visual>[\s\S]{0,160}<CultivationDial\s+tone="chrome"\s*\/>/,
     );
     expect(view, "周天盘必须真的接进修炼页").toContain(
       'import CultivationDial from "@/components/cultivation/CultivationDial.vue"',
     );
+    expect(view, "卷首运行时要能定位修行阶段").toContain("data-cultivation-stage");
+    expect(view, "阶段标签要能按状态换色").toContain(':data-phase="stage.key"');
+    expect(view, "内观台先给余程、行速与灵气").toContain("data-cultivation-stage-readout");
+    expect(view, "阶段判据必须住在 core").toContain('from "@/core/cultivationStage"');
     expect(dial, "周天盘刻度与界域志共用 realmLadderPoints").toContain("realmLadderPoints");
     expect(dial, "内圈进度必须读真实修为进度").toContain("player.expProgress");
     expect(dial, "境数由刻度现算,不许手写 21").toContain("points.length");
     expect(dial, "正进度不许被一位小数抹成 0%").toContain('"<0.1%"');
+    expect(dial, "暗场与纸面共用一枚盘,只切换已定义的色组").toContain(':data-tone="tone"');
     expect(dial, "周天盘按 140px 实尺寸留位").toMatch(
-      /\.cultivation-dial\s*\{[\s\S]{0,120}width:\s*140px;[\s\S]{0,80}height:\s*140px;/,
+      /\.cultivation-dial\s*\{[\s\S]{0,1000}?width:\s*140px;[\s\S]{0,80}?height:\s*140px;/,
     );
     expect(dial, "纯视觉不重复读屏正文").toContain('aria-hidden="true"');
+    expect(css, "内观台使用固定书口色组,不随纸面昼夜翻转").toContain(
+      "--color-ink-rgb: var(--chrome-ink-rgb);",
+    );
   });
 
   it("修行读数收成一张有主次的行功账,主值、余程与灵气不再同权重排队", () => {

@@ -1,6 +1,516 @@
 @layer reset, shared, page, app-utilities;
 @layer page {
   /*
+   * 内观台 —— 修炼页不再从一张纸面封面开卷。
+   *
+   * 玩家打开修炼，第一眼只需要知道三件事：我在哪一境、修为走到多远、此刻能做什么。
+   * 暗场只承担这三件事；行速来源、灵气盈亏与破境账仍落在下方纸面，不在这里再铺
+   * 一套同权卡片。仪表颜色使用固定的书口色组，昼夜主题都不会把奶油字压进深纸里。
+   */
+  .cultivation-masthead {
+    --color-ink-rgb: var(--chrome-ink-rgb);
+    --color-ink-soft-rgb: var(--chrome-muted-rgb);
+    --color-ink-faint-rgb: var(--chrome-muted-rgb);
+    --color-cinnabar-rgb: var(--chrome-accent-rgb);
+    --color-qing-rgb: var(--chrome-qing-rgb);
+    --color-paper-rgb: var(--chrome-rgb);
+    --color-paper-deep-rgb: var(--chrome-deep-rgb);
+    --color-paper-dark-rgb: var(--chrome-deep-rgb);
+    --color-paper-lifted-rgb: var(--chrome-deep-rgb);
+    --color-paper: rgb(var(--chrome-rgb));
+    --color-paper-deep: rgb(var(--chrome-deep-rgb));
+    --color-ink: rgb(var(--chrome-ink-rgb));
+    --color-ink-soft: rgb(var(--chrome-muted-rgb));
+    --color-ink-faint: rgb(var(--chrome-muted-rgb));
+    --color-cinnabar: rgb(var(--chrome-accent-rgb));
+    --color-qing: rgb(var(--chrome-qing-rgb));
+
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-color: rgb(var(--chrome-muted-rgb) / 0.22);
+    border-left: 3px solid var(--world-bar);
+    border-radius: 2px;
+    background:
+      radial-gradient(circle at 82% 28%, rgb(var(--chrome-gold-rgb) / 0.17), transparent 25%),
+      radial-gradient(circle at 13% 8%, rgb(var(--chrome-qing-rgb) / 0.12), transparent 31%),
+      linear-gradient(124deg, rgb(var(--chrome-rgb)), rgb(var(--chrome-deep-rgb)));
+    background-color: rgb(var(--chrome-rgb));
+    box-shadow:
+      inset 1px 0 0 rgb(var(--chrome-ink-rgb) / 0.08),
+      inset 0 0 0 1px rgb(var(--chrome-ink-rgb) / 0.025),
+      4px 5px 0 rgb(var(--color-ink-rgb) / 0.055);
+    color: rgb(var(--chrome-ink-rgb));
+  }
+
+  .cultivation-masthead::before {
+    inset: 5px;
+    border: 1px solid rgb(var(--chrome-muted-rgb) / 0.09);
+  }
+
+  .cultivation-masthead::after {
+    top: 18%;
+    right: -84px;
+    width: 288px;
+    height: 288px;
+    border: 1px solid rgb(var(--chrome-gold-rgb) / 0.13);
+    border-radius: 50%;
+    background:
+      radial-gradient(
+        circle,
+        transparent 56%,
+        rgb(var(--chrome-gold-rgb) / 0.06) 57%,
+        transparent 58%
+      ),
+      radial-gradient(
+        circle,
+        transparent 40%,
+        rgb(var(--chrome-qing-rgb) / 0.06) 41%,
+        transparent 42%
+      );
+    box-shadow:
+      inset 0 0 0 7px rgb(var(--chrome-deep-rgb) / 0.2),
+      0 0 42px rgb(var(--chrome-gold-rgb) / 0.05);
+  }
+
+  .cultivation-masthead__backdrop {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .cultivation-masthead__backdrop::after {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgb(var(--chrome-muted-rgb) / 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--chrome-muted-rgb) / 0.035) 1px, transparent 1px);
+    background-size: 32px 32px;
+    content: "";
+    mask-image: linear-gradient(102deg, black, transparent 74%);
+  }
+
+  .cultivation-masthead__backdrop svg {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 42%;
+    fill: rgb(var(--chrome-qing-rgb) / 0.07);
+    opacity: 0.72;
+  }
+
+  .cultivation-masthead__backdrop svg path:last-child {
+    fill: rgb(var(--chrome-deep-rgb) / 0.86);
+  }
+
+  .cultivation-masthead__mountain {
+    fill: var(--world-mountain);
+    opacity: 0.1;
+  }
+
+  .cultivation-masthead__star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: rgb(var(--chrome-gold-rgb) / 0.76);
+    box-shadow: 0 0 8px rgb(var(--chrome-gold-rgb) / 0.62);
+    animation: cultivation-stage-star 5.2s ease-in-out infinite;
+    animation-delay: calc(var(--star) * -0.31s);
+  }
+
+  .cultivation-masthead__star:nth-child(1) {
+    top: 15%;
+    left: 4%;
+  }
+  .cultivation-masthead__star:nth-child(2) {
+    top: 46%;
+    left: 11%;
+  }
+  .cultivation-masthead__star:nth-child(3) {
+    top: 24%;
+    left: 20%;
+  }
+  .cultivation-masthead__star:nth-child(4) {
+    top: 70%;
+    left: 28%;
+  }
+  .cultivation-masthead__star:nth-child(5) {
+    top: 12%;
+    left: 39%;
+  }
+  .cultivation-masthead__star:nth-child(6) {
+    top: 42%;
+    left: 48%;
+  }
+  .cultivation-masthead__star:nth-child(7) {
+    top: 21%;
+    left: 59%;
+  }
+  .cultivation-masthead__star:nth-child(8) {
+    top: 64%;
+    left: 67%;
+  }
+  .cultivation-masthead__star:nth-child(9) {
+    top: 14%;
+    left: 76%;
+  }
+  .cultivation-masthead__star:nth-child(10) {
+    top: 45%;
+    left: 84%;
+  }
+  .cultivation-masthead__star:nth-child(11) {
+    top: 26%;
+    left: 92%;
+  }
+  .cultivation-masthead__star:nth-child(12) {
+    top: 78%;
+    left: 16%;
+  }
+  .cultivation-masthead__star:nth-child(13) {
+    top: 8%;
+    left: 68%;
+  }
+  .cultivation-masthead__star:nth-child(14) {
+    top: 57%;
+    left: 36%;
+  }
+
+  @keyframes cultivation-stage-star {
+    0%,
+    100% {
+      opacity: 0.2;
+      transform: scale(0.7);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.25);
+    }
+  }
+
+  .cultivation-masthead__ring {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .cultivation-masthead__ring--outer {
+    top: -104px;
+    right: -96px;
+    width: 360px;
+    height: 360px;
+    border: 1px solid rgb(var(--chrome-qing-rgb) / 0.11);
+    background: radial-gradient(circle, transparent 58%, rgb(var(--chrome-qing-rgb) / 0.04));
+  }
+
+  .cultivation-masthead__ring--inner {
+    top: -57px;
+    right: -48px;
+    width: 270px;
+    height: 270px;
+    border: 1px dashed rgb(var(--chrome-gold-rgb) / 0.13);
+  }
+
+  .cultivation-masthead > .relative.z-10 {
+    z-index: 1;
+  }
+
+  .cultivation-masthead .folio-masthead__position {
+    border-right-color: rgb(var(--chrome-muted-rgb) / 0.2);
+  }
+
+  .cultivation-masthead .folio-masthead__book {
+    color: rgb(var(--chrome-muted-rgb));
+  }
+
+  .cultivation-masthead .folio-index-rail__tab {
+    border-color: rgb(var(--chrome-muted-rgb) / 0.24);
+    background: rgb(var(--chrome-deep-rgb) / 0.4);
+  }
+
+  .cultivation-masthead .folio-index-rail__tab[data-folio-rail-current] {
+    border-color: rgb(var(--chrome-accent-rgb) / 0.48);
+    background: rgb(var(--chrome-accent-rgb) / 0.1);
+    color: rgb(var(--chrome-accent-rgb));
+  }
+
+  .cultivation-masthead .folio-seal {
+    border-color: rgb(var(--chrome-gold-rgb) / 0.34);
+    background:
+      linear-gradient(145deg, rgb(var(--chrome-ink-rgb) / 0.07), transparent 58%),
+      rgb(var(--chrome-deep-rgb) / 0.52);
+    box-shadow: inset 0 0 0 3px rgb(var(--chrome-deep-rgb) / 0.45);
+    color: rgb(var(--chrome-gold-rgb));
+  }
+
+  .cultivation-masthead h1 {
+    color: rgb(var(--chrome-ink-rgb));
+    font-size: clamp(calc(var(--type-display) * 1.28), 10vw, 3.2rem);
+    letter-spacing: 0.2em;
+    line-height: 1;
+    text-indent: 0.2em;
+    text-shadow: 0 2px 22px rgb(var(--chrome-gold-rgb) / 0.11);
+  }
+
+  .cultivation-masthead h1 + p {
+    max-width: 26rem;
+    color: rgb(var(--chrome-muted-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    line-height: 1.6;
+    letter-spacing: 0.04em;
+  }
+
+  .cultivation-masthead__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.32rem 0.55rem;
+    margin-top: 0.7rem;
+  }
+
+  .cultivation-masthead__world {
+    color: rgb(var(--chrome-qing-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.14em;
+  }
+
+  .cultivation-masthead__phase {
+    display: inline-flex;
+    min-height: 1.35rem;
+    align-items: center;
+    gap: 0.28rem;
+    padding: 0.1rem 0.38rem;
+    border: 1px solid rgb(var(--chrome-qing-rgb) / 0.32);
+    background: rgb(var(--chrome-qing-rgb) / 0.07);
+    color: rgb(var(--chrome-qing-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+    line-height: 1.25;
+  }
+
+  .cultivation-masthead__phase > span {
+    width: 0.3rem;
+    height: 0.3rem;
+    border-radius: 50%;
+    background: currentcolor;
+    box-shadow: 0 0 0 3px rgb(var(--chrome-qing-rgb) / 0.12);
+  }
+
+  .cultivation-masthead__phase[data-phase="gate"],
+  .cultivation-masthead__phase[data-phase="injured"] {
+    border-color: rgb(var(--chrome-accent-rgb) / 0.45);
+    background: rgb(var(--chrome-accent-rgb) / 0.08);
+    color: rgb(var(--chrome-accent-rgb));
+  }
+
+  .cultivation-masthead__phase[data-phase="retreat"] {
+    border-color: rgb(var(--chrome-gold-rgb) / 0.42);
+    background: rgb(var(--chrome-gold-rgb) / 0.07);
+    color: rgb(var(--chrome-gold-rgb));
+  }
+
+  .cultivation-masthead__ordinal {
+    margin-left: auto;
+    color: rgb(var(--chrome-muted-rgb));
+    font-size: var(--type-note);
+    white-space: nowrap;
+  }
+
+  .cultivation-masthead__state {
+    max-width: 28rem;
+    margin-top: 0.32rem;
+    color: rgb(var(--chrome-muted-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+
+  .cultivation-masthead__lore {
+    max-width: 29rem;
+    margin-top: 0.35rem;
+    color: rgb(var(--chrome-muted-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+
+  .cultivation-masthead__lore summary {
+    display: inline-flex;
+    min-height: 28px;
+    align-items: center;
+    color: rgb(var(--chrome-qing-rgb));
+    cursor: pointer;
+    letter-spacing: 0.04em;
+  }
+
+  .cultivation-masthead__lore[open] summary {
+    color: rgb(var(--chrome-gold-rgb));
+  }
+
+  .cultivation-masthead__lore p {
+    padding-top: 0.18rem;
+    border-top: 1px solid rgb(var(--chrome-muted-rgb) / 0.14);
+  }
+
+  .cultivation-masthead .folio-masthead__visual {
+    /*
+     * 手机上不把周天盘当第二个栏位：390 宽时它会和标题挤成上下两段，留下
+     * 一大块空场。改为右上的星盘水印，盘心读数收起（余程与灵气已在下栏），
+     * 只留环、刻度与当前境的呼吸感；320 仍由 compact 规则整枚收起。
+     */
+    position: absolute;
+    z-index: 0;
+    top: 4.2rem;
+    right: -2.7rem;
+    margin: 0;
+    opacity: 0.52;
+    transform: scale(1.08);
+    transform-origin: top right;
+    pointer-events: none;
+  }
+
+  .cultivation-masthead .cultivation-dial__core {
+    opacity: 0;
+  }
+
+  @media (min-width: 620px) {
+    .cultivation-masthead .folio-masthead__visual {
+      position: static;
+      margin-top: 0.25rem;
+      margin-right: 0.2rem;
+      opacity: 1;
+      transform: none;
+      pointer-events: auto;
+    }
+
+    .cultivation-masthead .cultivation-dial__core {
+      opacity: 1;
+    }
+  }
+
+  .cultivation-masthead [data-folio-default] {
+    margin-top: 0.8rem;
+  }
+
+  .cultivation-masthead__readout {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: hidden;
+    border-top: 1px solid rgb(var(--chrome-muted-rgb) / 0.16);
+    border-bottom: 1px solid rgb(var(--chrome-muted-rgb) / 0.1);
+    background: rgb(var(--chrome-deep-rgb) / 0.24);
+  }
+
+  .cultivation-masthead__readout-cell {
+    min-width: 0;
+    padding: 0.55rem 0.15rem;
+  }
+
+  .cultivation-masthead__readout-cell:first-child {
+    grid-column: 1 / -1;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid rgb(var(--chrome-muted-rgb) / 0.12);
+  }
+
+  .cultivation-masthead__readout-cell:nth-child(2n) {
+    padding-left: 0.7rem;
+    border-left: 1px solid rgb(var(--chrome-muted-rgb) / 0.12);
+  }
+
+  .cultivation-masthead__readout-cell:nth-child(3) {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .cultivation-masthead__readout-label {
+    display: block;
+    color: rgb(var(--chrome-muted-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.13em;
+    line-height: 1.35;
+  }
+
+  .cultivation-masthead__readout-value {
+    display: block;
+    margin-top: 0.18rem;
+    color: rgb(var(--chrome-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-section);
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  .cultivation-masthead__readout-note {
+    display: block;
+    min-height: 1.2em;
+    margin-top: 0.16rem;
+    color: rgb(var(--chrome-muted-rgb));
+    font-size: max(9px, calc(var(--type-note) - 1px));
+    line-height: 1.45;
+  }
+
+  @media (min-width: 620px) {
+    .cultivation-masthead__readout {
+      grid-template-columns: 1.18fr 1fr 1fr;
+    }
+
+    .cultivation-masthead__readout-cell:first-child {
+      grid-column: auto;
+      padding-bottom: 0.55rem;
+      border-bottom: 0;
+    }
+
+    .cultivation-masthead__readout-cell + .cultivation-masthead__readout-cell {
+      padding-left: 0.85rem;
+      border-left: 1px solid rgb(var(--chrome-muted-rgb) / 0.12);
+    }
+  }
+
+  @media (min-width: 960px) {
+    .cultivation-masthead {
+      border-top: 1px solid rgb(var(--chrome-muted-rgb) / 0.16);
+      border-right: 0;
+      border-bottom: 1px solid rgb(var(--chrome-muted-rgb) / 0.18);
+      border-left: 3px solid var(--world-bar);
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .cultivation-masthead::before,
+    .cultivation-masthead::after {
+      display: none;
+    }
+
+    .cultivation-masthead .folio-masthead__ordinal {
+      color: rgb(var(--chrome-ink-rgb) / 0.055);
+    }
+  }
+
+  @media (max-width: 220px) {
+    .cultivation-masthead__readout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .cultivation-masthead__readout-cell:first-child {
+      grid-column: auto;
+      border-bottom: 1px solid rgb(var(--chrome-muted-rgb) / 0.12);
+    }
+
+    .cultivation-masthead__readout-cell + .cultivation-masthead__readout-cell {
+      padding-left: 0.15rem;
+      border-top: 1px solid rgb(var(--chrome-muted-rgb) / 0.12);
+      border-left: 0;
+    }
+  }
+
+  /*
    * 修炼案 —— 周天盘在卷首报方向,正文只留一张行功账。
    *
    * 旧版把「修行 / 破境 / 闭关」排成三张同权重卡,玩家先读到的是三套边框;
