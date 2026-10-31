@@ -39,6 +39,9 @@ describe("开卷两页 · 先立山门,再问心定命", () => {
     expect(pact, "极窄档收起契印时要用 important 压过组件自身的 display:grid").toContain(
       "tinylens:!hidden",
     );
+    expect(pact, "隐私政策入口要实打实过 28px 触达下限").toMatch(
+      /\.opening-pact__policy\s*\{[\s\S]{0,160}min-height:\s*30px/,
+    );
   });
 
   it("隐私政策先给本机、零请求、不接第三方三项结论,再逐条展开原文", () => {

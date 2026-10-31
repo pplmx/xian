@@ -77,6 +77,44 @@ export function equippablePower(i: EquipmentInstance): number {
   return base * (1 + pct);
 }
 
+export type EquipPowerVerdict = "empty" | "up" | "down" | "even";
+
+export interface EquipPowerComparison {
+  candidatePower: number;
+  incumbentPower: number | null;
+  delta: number | null;
+  verdict: EquipPowerVerdict;
+}
+
+/**
+ * 候选与详情共用的一张换装账。
+ *
+ * 空槽不拿 0 冒充「涨了 N」；同件是持平而不是涨幅。页面只翻译 verdict，
+ * 不再自己减一遍两件装备的战力。
+ */
+export function equipPowerComparison(
+  candidate: EquipmentInstance,
+  incumbent?: EquipmentInstance,
+): EquipPowerComparison {
+  const candidatePower = equippablePower(candidate);
+  if (!incumbent) {
+    return {
+      candidatePower,
+      incumbentPower: null,
+      delta: null,
+      verdict: "empty",
+    };
+  }
+  const incumbentPower = equippablePower(incumbent);
+  const delta = candidatePower - incumbentPower;
+  return {
+    candidatePower,
+    incumbentPower,
+    delta,
+    verdict: delta > 0 ? "up" : delta < 0 ? "down" : "even",
+  };
+}
+
 /** a 是否严格强于 b(真实战力为主,同分回退到粗排 —— 不两败打转) */
 function stronger(a: EquipmentInstance, b: EquipmentInstance): boolean {
   const pa = equippablePower(a);

@@ -533,6 +533,267 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.5rem;
   }
+  /*
+   * 器评帖 —— 装备详情不再从一排标签直接跳进三围表。
+   * 先用品阶色托出器形、本件战力与换装结论，再把器性、词条、炼器进度与
+   * 工坊逐层摊开；长账回到可滚正文，页脚只留随身动作。
+   */
+  .equip-dossier {
+    min-width: 0;
+  }
+  .equip-dossier__hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.68rem;
+    overflow: hidden;
+    padding: 0.72rem 0.78rem;
+    border: 1px solid var(--equip-edge);
+    border-left: 3px solid var(--equip-tone);
+    background:
+      radial-gradient(circle at 12% 18%, var(--equip-wash), transparent 34%),
+      linear-gradient(
+        135deg,
+        rgb(var(--color-paper-lifted-rgb)),
+        rgb(var(--color-paper-rgb) / 0.42)
+      );
+  }
+  .equip-dossier__hero::after {
+    position: absolute;
+    right: 0.45rem;
+    bottom: 0.4rem;
+    width: 1.4rem;
+    height: 1.4rem;
+    border-right: 1px solid var(--equip-edge);
+    border-bottom: 1px solid var(--equip-edge);
+    content: "";
+    pointer-events: none;
+  }
+  .equip-dossier__sigil {
+    position: relative;
+    display: grid;
+    width: 3.35rem;
+    aspect-ratio: 1;
+    place-items: center;
+    border: 1px solid var(--equip-edge);
+    background: var(--equip-wash);
+    color: var(--equip-tone);
+  }
+  .equip-dossier__sigil::before {
+    position: absolute;
+    inset: 3px;
+    border: 1px solid rgb(var(--color-paper-rgb) / 0.42);
+    content: "";
+    pointer-events: none;
+  }
+  .equip-dossier__quality-seal {
+    position: absolute;
+    top: -0.3rem;
+    right: -0.3rem;
+    background-color: rgb(var(--color-paper-lifted-rgb));
+  }
+  .equip-dossier__identity {
+    min-width: 0;
+    align-self: center;
+  }
+  .equip-dossier__eyebrow {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.08rem 0.45rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .equip-dossier__quality {
+    color: var(--equip-text);
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    letter-spacing: 0.16em;
+  }
+  .equip-dossier__desc {
+    margin-top: 0.28rem;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-body);
+    line-height: 1.55;
+  }
+  .equip-dossier__lock {
+    display: inline-flex;
+    min-width: 28px;
+    min-height: 28px;
+    align-items: center;
+    justify-content: center;
+    gap: 0.18rem;
+    padding: 0.2rem 0.34rem;
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+  }
+  .equip-dossier__power {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 0.55rem;
+    overflow: hidden;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+    background: rgb(var(--color-paper-lifted-rgb) / 0.72);
+  }
+  .equip-dossier__score,
+  .equip-dossier__verdict {
+    min-width: 0;
+    padding: 0.55rem 0.68rem 0.6rem;
+  }
+  .equip-dossier__verdict {
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    background:
+      linear-gradient(135deg, var(--equip-wash), transparent 72%), rgb(var(--color-paper-rgb) / 0.1);
+  }
+  .equip-dossier__caption {
+    display: block;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.14em;
+  }
+  .equip-dossier__score strong,
+  .equip-dossier__verdict strong {
+    display: block;
+    margin-top: 0.12rem;
+    color: var(--equip-text);
+    font-size: var(--type-title);
+    font-weight: 500;
+    line-height: 1.15;
+  }
+  .equip-dossier__verdict[data-verdict="up"] strong {
+    color: rgb(var(--color-jade-rgb));
+  }
+  .equip-dossier__verdict[data-verdict="down"] strong {
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  .equip-dossier__verdict[data-verdict="empty"] strong {
+    color: rgb(var(--color-qing-rgb));
+  }
+  .equip-dossier__score small,
+  .equip-dossier__verdict small {
+    display: block;
+    margin-top: 0.14rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .equip-dossier__note {
+    margin-top: 0.5rem;
+  }
+  .equip-dossier__resonance {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.1rem 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.4rem 0.55rem;
+    border-left: 2px solid rgb(var(--color-violet-ink-rgb) / 0.48);
+    background: rgb(var(--color-violet-ink-rgb) / 0.04);
+    font-size: var(--type-body);
+    line-height: 1.55;
+  }
+  .equip-dossier__sheet {
+    margin-top: 0.6rem;
+    overflow: hidden;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+    background: rgb(var(--color-paper-lifted-rgb) / 0.7);
+  }
+  .equip-dossier__sheet--affix {
+    border-left: 2px solid rgb(var(--color-violet-ink-rgb) / 0.32);
+  }
+  .equip-dossier__section-head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.08rem 0.65rem;
+    padding: 0.42rem 0.58rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    background: rgb(var(--color-paper-deep-rgb) / 0.42);
+  }
+  .equip-dossier__section-head > span {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    letter-spacing: 0.18em;
+  }
+  .equip-dossier__section-head small {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .equip-dossier__stat-list {
+    padding: 0.42rem 0.58rem 0.5rem;
+  }
+  .equip-dossier__stat {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding-block: 0.24rem;
+    font-size: var(--type-body);
+    line-height: 1.45;
+  }
+  .equip-dossier__stat + .equip-dossier__stat {
+    border-top: 1px dashed rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .equip-dossier__affixes {
+    overflow: hidden;
+    background: rgb(var(--color-violet-ink-rgb) / 0.055);
+  }
+  .equip-dossier__affix {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.42rem 0.48rem;
+  }
+  .equip-dossier__affix--divided {
+    border-top: 1px solid rgb(var(--color-violet-ink-rgb) / 0.15);
+  }
+  .equip-dossier__footnote {
+    padding: 0.34rem 0.58rem 0.44rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .equip-dossier__line-ledger {
+    margin-top: 0.6rem;
+    padding: 0.5rem 0.62rem 0.58rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    background: rgb(var(--color-paper-lifted-rgb) / 0.58);
+  }
+  .equip-dossier__line-ledger .equip-dossier__section-head {
+    margin: -0.5rem -0.62rem 0.48rem;
+  }
+  .equip-dossier__build-row {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-body);
+    line-height: 1.55;
+  }
+  .equip-dossier__workshop {
+    margin-top: 0.75rem;
+    padding: 0.55rem 0.65rem 0.65rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.13);
+    border-top: 2px solid var(--equip-edge);
+    background:
+      linear-gradient(180deg, var(--equip-wash), transparent 5.5rem),
+      rgb(var(--color-paper-lifted-rgb) / 0.62);
+  }
+  .equip-dossier__workshop > .equip-dossier__section-head {
+    margin: -0.55rem -0.65rem 0.5rem;
+  }
   @media (min-width: 360px) {
     .inventory-briefing__sheet {
       grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
@@ -566,6 +827,41 @@
     }
   }
   @media (max-width: 220px) {
+    .equip-dossier__hero {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .equip-dossier__lock {
+      grid-column: 1 / -1;
+      justify-self: end;
+      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+      border-left: 0;
+    }
+
+    .equip-dossier__power {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .equip-dossier__verdict {
+      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+      border-left: 0;
+    }
+
+    /*
+     * 工坊在极窄档不再向内再收一圈:详情页身已有 12px 边距,外面这层再
+     * 压 10px 后,「词条转移 · 移至别件」与候选续开读数都会被迫拆行。
+     * 去掉内边与左右框线,只留上缘的器色笔,动作仍与整张器评对齐。
+     */
+    .equip-dossier__workshop {
+      padding-inline: 0;
+      border-right: 0;
+      border-left: 0;
+    }
+
+    .equip-dossier__workshop > .equip-dossier__section-head {
+      margin-inline: 0;
+    }
+
     .inventory-briefing__counts {
       grid-template-columns: minmax(0, 1fr);
     }

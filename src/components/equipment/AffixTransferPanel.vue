@@ -148,7 +148,7 @@ function doTransfer(): void {
 </script>
 
 <template>
-  <div class="rounded-sm border border-ink/10 bg-paper-deep/60 p-3 text-[12px]">
+  <div class="rounded-sm border border-ink/10 bg-paper-deep/60 p-3 text-body tinylens:p-2">
     <div class="mb-2 flex flex-wrap items-center gap-2">
       <span class="shrink-0 font-medium text-ink tinylens:order-1">词条转移</span>
       <span class="text-note text-ink-faint tinylens:order-3 tinylens:basis-full"
@@ -269,7 +269,7 @@ function doTransfer(): void {
             v-if="candidatePage.start > 0"
             type="button"
             data-affix-candidate-prev
-            class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
+            class="chip-ink !whitespace-nowrap text-center text-note leading-relaxed text-ink-soft active:scale-95"
             :aria-label="previousCandidateText"
             @click="showPreviousCandidates"
           >
@@ -279,7 +279,7 @@ function doTransfer(): void {
             v-if="candidatePage.hidden > 0"
             type="button"
             data-affix-candidate-more
-            class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
+            class="chip-ink !whitespace-nowrap text-center text-note leading-relaxed text-cinnabar active:scale-95"
             :aria-label="moreCandidateText"
             :data-promised="Math.min(AFFIX_CANDIDATE_RENDER_BATCH, candidatePage.hidden)"
             @click="showMoreCandidates"

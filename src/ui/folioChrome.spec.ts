@@ -345,15 +345,20 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     expect(souls, "器魂槽位数不手抄，读 SOUL_SLOTS").toContain("${SOUL_SLOTS}");
   });
 
-  it("像素对比度采样不许替换会每秒刷新的文本节点", () => {
+  it("像素对比度采样不依赖会每秒刷新的文本节点", () => {
     const layout = source("scripts/layout-check.mjs");
 
-    expect(layout, "采样要按元素挂 data-pixel-probe").toContain('el.dataset.pixelProbe = "1"');
-    expect(layout, "隐藏文字要用透明填色,不能换掉 Vue 的文本节点").not.toContain(
+    expect(layout, "采样用全局透明字形,重建后的文本节点也会被藏住").toContain(
+      "-webkit-text-fill-color: transparent !important",
+    );
+    expect(layout, "别再往会被 Vue 重建的元素上挂一次性标记").not.toContain(
+      'el.dataset.pixelProbe = "1"',
+    );
+    expect(layout, "隐藏文字不能换掉 Vue 的文本节点").not.toContain(
       "node.parentNode.replaceChild(span, node)",
     );
-    expect(layout, "截图后要撤掉采样标记").toContain(
-      'document.querySelectorAll("[data-pixel-probe]")',
+    expect(layout, "截图后要撤掉全局隐藏样式").toContain(
+      'document.querySelector("style[data-pixel-probe-style]")?.remove()',
     );
   });
 });

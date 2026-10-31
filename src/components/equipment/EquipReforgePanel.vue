@@ -222,7 +222,7 @@ function triesOf(id: string, minRoll = 0): number | null {
         @click="toggleAutoTarget(af.id)"
       >
         {{ af.name
-        }}<span v-if="triesOf(af.id)" class="mt-0.5 block text-[9px] text-ink-soft"
+        }}<span v-if="triesOf(af.id)" class="mt-0.5 block text-note text-ink-soft"
           >约 {{ triesOf(af.id) }} 次</span
         >
       </button>
@@ -246,7 +246,7 @@ function triesOf(id: string, minRoll = 0): number | null {
           >
         </p>
         <p
-          class="pl-12 text-[9px] tabular"
+          class="pl-12 text-note tabular"
           :class="autoTriesOf(t) === null ? 'text-cinnabar' : 'text-ink-soft'"
         >
           <template v-if="autoTriesOf(t) === null">不会命中</template>
@@ -364,7 +364,7 @@ function triesOf(id: string, minRoll = 0): number | null {
     </p>
     <button
       v-if="reforgeCostVal"
-      class="btn-ghost min-h-[28px] w-full !py-1 !text-body"
+      class="btn-ghost min-h-[28px] w-full whitespace-nowrap !py-1 !text-body"
       :aria-expanded="autoOpen"
       :title="autoOpen ? undefined : '洗到指定词条即停'"
       @click="autoOpen = !autoOpen"
@@ -372,7 +372,7 @@ function triesOf(id: string, minRoll = 0): number | null {
       {{ autoOpen ? "收起自动重铸" : "自动重铸" }}
     </button>
     <button
-      class="btn-ghost min-h-[28px] w-full !py-1 !text-body"
+      class="btn-ghost min-h-[28px] w-full whitespace-nowrap !py-1 !text-body"
       :aria-expanded="transferOpen"
       @click="transferOpen = !transferOpen"
     >

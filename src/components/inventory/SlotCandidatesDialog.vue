@@ -127,7 +127,7 @@ import { useUiStore } from "@/stores/ui";
 import { qualityDef } from "@/data/qualities";
 import { isRareQuality } from "@/ui/qualityTier";
 import { EQUIP_SLOT_NAMES, equipmentTemplate } from "@/data/equipment";
-import { equippablePower } from "@/core/equipBest";
+import { equipPowerComparison } from "@/core/equipBest";
 import { formatGN } from "@/utils/format";
 import {
   firstNewVisibleIndex,
@@ -136,7 +136,7 @@ import {
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
-import type { EquipSlot, EquipmentInstance } from "@/types";
+import type { EquipSlot } from "@/types";
 
 const props = defineProps<{ slotName: EquipSlot | null }>();
 // pickerSlot(页面状态)留 InventoryView,这里只回传 close —— 弹窗不许越手改别人的账。
@@ -150,12 +150,8 @@ const pickerRows = computed(() => {
   const slot = props.slotName;
   if (!slot) return [];
   const equippedUid = inventory.equipped[slot];
-  // 这一槽当下的佩戴件 —— 每个候选的「战 ±N」都与它比(powerScore 是线性合计,
-  // 换装的战力差 = 新件三围分 − 旧件三围分,与人物页战力同一个数,无需重算总属性)
+  // 这一槽当下的佩戴件 —— 每个候选的「战 ±N」都与它比。
   const occupant = equippedUid ? inventory.items.find((i) => i.uid === equippedUid) : undefined;
-  // 战力差要走真实战力(平铺 × 词条%、会心联乘),与「一键穿最强」equippablePower 同源;
-  // 只比三围会让一件平铺高、零词条的件压过满掷暴击/吸血的件,列表数字与实穿打架
-  const powerOf = (i: EquipmentInstance): number => equippablePower(i);
   return inventory.items
     .map((item) => ({ item, template: equipmentTemplate(item.templateId) }))
     .filter(
@@ -169,7 +165,8 @@ const pickerRows = computed(() => {
     .map((row) => {
       const equipped = row.item.uid === equippedUid;
       // 佩戴中底行不报差(它自己就是基线);空槽的候选也不报(皆收益,无对比对象)
-      const delta = !equipped && occupant ? powerOf(row.item) - powerOf(occupant) : null;
+      const comparison = equipPowerComparison(row.item, occupant);
+      const delta = !equipped && occupant ? comparison.delta : null;
       const deltaText =
         delta === null
           ? ""

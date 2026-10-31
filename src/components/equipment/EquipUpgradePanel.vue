@@ -53,7 +53,7 @@ function doUpgradeAll(): void {
 <template>
   <template v-if="inst && upCost">
     <div class="ink-divider my-3" />
-    <p class="flex items-center justify-between text-[12px] text-ink-faint">
+    <p class="flex items-center justify-between text-body text-ink-faint">
       <span>强化 +{{ inst.level + 1 }} / 上限 {{ equipLevelCap() }}</span>
       <span class="tabular">器灵尘×{{ upCost.dust }} · 灵石 {{ formatGN(upCost.stone) }}</span>
     </p>
@@ -77,7 +77,7 @@ function doUpgradeAll(): void {
       {{ formatGN(restUpgrade.stone) }}
     </p>
     <button
-      class="btn-ghost mt-2 w-full !py-1.5 !text-[12px]"
+      class="btn-ghost mt-2 w-full !py-1.5 !text-body"
       :disabled="!upAffordable"
       @click="doUpgradeAll"
     >

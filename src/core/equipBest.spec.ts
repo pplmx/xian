@@ -18,6 +18,7 @@ import {
   equipAllBest,
   bestEquipFor,
   betterEquip,
+  equipPowerComparison,
   equipUpgrades,
   equipSetCombo,
   equippablePower,
@@ -106,6 +107,36 @@ describe("equippablePower —— 真实战斗价值", () => {
     const withGrowth = item("weapon", "heaven", 17, 0, [{ id: "cult1", roll: 0.9 }]);
     expect(resolveEquipStats(withGrowth).mods.cultivationSpeed ?? 0).toBeGreaterThan(0);
     expect(equippablePower(withGrowth) - equippablePower(bare)).toBeCloseTo(0, 9);
+  });
+});
+
+describe("equipPowerComparison —— 详情与候选共用同一张换装账", () => {
+  it("空槽只报本件战力,不伪造一个 0 的涨幅", () => {
+    const candidate = item("weapon", "heaven", 12, 3);
+    const comparison = equipPowerComparison(candidate);
+
+    expect(comparison.verdict).toBe("empty");
+    expect(comparison.candidatePower).toBeCloseTo(equippablePower(candidate), 9);
+    expect(comparison.incumbentPower).toBeNull();
+    expect(comparison.delta).toBeNull();
+  });
+
+  it("强件报涨幅、弱件报跌幅,同件报持平 —— 三档都不靠界面另算", () => {
+    const worn = item("weapon", "heaven", 12, 2);
+    const stronger = item("weapon", "heaven", 13, 4);
+    const weaker = item("weapon", "heaven", 10);
+
+    const up = equipPowerComparison(stronger, worn);
+    expect(up.verdict).toBe("up");
+    expect(up.delta).toBeCloseTo(equippablePower(stronger) - equippablePower(worn), 9);
+
+    const down = equipPowerComparison(weaker, worn);
+    expect(down.verdict).toBe("down");
+    expect(down.delta).toBeCloseTo(equippablePower(weaker) - equippablePower(worn), 9);
+
+    const even = equipPowerComparison(worn, worn);
+    expect(even.verdict).toBe("even");
+    expect(even.delta).toBe(0);
   });
 });
 

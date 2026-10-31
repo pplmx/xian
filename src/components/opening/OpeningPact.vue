@@ -276,7 +276,8 @@ function confirmPact(): void {
 
 .opening-pact__policy {
   display: inline-flex;
-  min-height: 28px;
+  /* 28px 名义下限在 3x 屏的 flex 行里会落成 27px;抬到 30 才真的点得着。 */
+  min-height: 30px;
   align-items: center;
   color: var(--color-qing);
   font-size: var(--type-body);

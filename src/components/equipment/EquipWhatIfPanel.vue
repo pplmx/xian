@@ -48,11 +48,11 @@ watch(inst, () => {
   <!-- 修士实验室:反事实换装推演(真仙可用) -->
   <template v-if="inst && canWhatIf">
     <div class="ink-divider my-3" />
-    <button v-if="!whatIf" class="btn-ghost w-full !py-1.5 !text-[12px]" @click="runWhatIf">
+    <button v-if="!whatIf" class="btn-ghost w-full !py-1.5 !text-body" @click="runWhatIf">
       天机推演 · 若换此装,四天局面如何?
     </button>
     <template v-else>
-      <p class="mb-1.5 font-kai text-[12px] tracking-[0.3em] text-ink-faint">天机推演</p>
+      <p class="mb-1.5 font-kai text-note tracking-[0.3em] text-ink-faint">天机推演</p>
       <p class="text-body text-ink-soft tabular">
         构筑:{{ whatIf.buildBefore?.displayName ?? "未成路" }}
         <span class="text-ink-faint">→</span>

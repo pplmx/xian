@@ -1636,10 +1636,10 @@ async function measurePixelContrast(page, sampler, dpr) {
   /*
    * 把字藏起来再拍:剩下的像素就是字底下的底色。
    *
-   * 这里不能替换文本节点 —— 坊市倒计时每秒会触发 Vue 更新,替换掉的隐藏节点会被
-   * 新文本顶回去,截图时字又出现了,采样便把字芯算成 1:1(实测 /market 红过一次)。
-   * 改为给目标元素挂 data 标记,再用一条样式把文字填色置透明:盒子、背景与布局都
-   * 原样保留,响应式更新也不会把「隐藏」这件事撤掉。
+   * 这里不能替换文本节点,也不能只靠元素上的 data 标记 —— 坊市倒计时、历练地界
+   * 每秒都会触发 Vue 更新;节点一旦被换掉,标记就没了,截图里字会重新出现。
+   * 改用全局 -webkit-text-fill-color 只抹掉字形:color 不变,SVG 图标与 currentColor
+   * 装饰仍照原样参与采样,重建的文本节点也无处逃。
    */
   const hidden = await page.evaluate(() => {
     let n = 0;
@@ -1650,14 +1650,13 @@ async function measurePixelContrast(page, sampler, dpr) {
       if (!texts.length) continue;
       const cs = getComputedStyle(el);
       if (cs.visibility === "hidden" || cs.display === "none") continue;
-      el.dataset.pixelProbe = "1";
       n += 1;
     }
     if (n > 0) {
       const style = document.createElement("style");
       style.dataset.pixelProbeStyle = "1";
       style.textContent =
-        '[data-pixel-probe="1"] { color: transparent !important; -webkit-text-fill-color: transparent !important; text-shadow: none !important; }';
+        "body *, body *::before, body *::after { -webkit-text-fill-color: transparent !important; text-shadow: none !important; }";
       document.head.appendChild(style);
     }
     return n;
@@ -1669,8 +1668,6 @@ async function measurePixelContrast(page, sampler, dpr) {
    */
   const shot = await page.screenshot({ animations: "disabled", caret: "hide" });
   await page.evaluate(() => {
-    for (const el of document.querySelectorAll("[data-pixel-probe]"))
-      el.removeAttribute("data-pixel-probe");
     document.querySelector("style[data-pixel-probe-style]")?.remove();
   });
   if (!hidden) return [];
@@ -1887,6 +1884,25 @@ async function openRoute(page, route, settleMs) {
     })
     .catch(() => undefined);
   if (settleMs > 0) await page.waitForTimeout(settleMs);
+  /*
+   * 并发跑时，固定等待偶尔仍会撞上翻卷入场的 16px 位移：320 后期档的
+   * /inventory 曾因此被量成 337px 宽。等到主视图真正回到 opacity 1 / 无位移，
+   * 再交给 measurePage；稳态页面这一等通常只花一帧。
+   */
+  await page
+    .waitForFunction(
+      () => {
+        const view = document.querySelector("main > :first-child");
+        if (!view) return true;
+        const style = getComputedStyle(view);
+        return (
+          style.opacity === "1" &&
+          (style.transform === "none" || style.transform === "matrix(1, 0, 0, 1, 0, 0)")
+        );
+      },
+      { timeout: 1500 },
+    )
+    .catch(() => undefined);
   /*
    * 量之前等两帧:路由切换的入场过渡是**内联样式**(Vue 的 Transition 直接改
    * style.opacity),而这里注入了 transition:none —— transitionend 因此永远不会来,

@@ -382,8 +382,9 @@
                 描述归末:它是这一行里唯一的散文,却排在 chips 之前 ——
                 先读一段描写再看见「能不能打、打得合不合路数」,判断被夹在中间。
                 移到判据与 chips 之后、适配理由展开之前,字号收到 10px 一档。
+                首项卡又铺了石青渐变,ink-faint 只剩贴着 AA 的余量,正文改用 ink-soft。
               -->
-                    <p v-if="row.canEnter" class="mt-2 text-note leading-relaxed text-ink-faint">
+                    <p v-if="row.canEnter" class="mt-2 text-note leading-relaxed text-ink-soft">
                       {{ row.def.desc }}
                     </p>
                     <div v-if="adaptExpand === row.def.id && row.adaptation" class="mt-1">

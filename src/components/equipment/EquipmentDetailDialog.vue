@@ -1,94 +1,116 @@
 <template>
   <BaseModal :open="inst !== undefined" :title="template?.name ?? ''" top @close="close">
-    <div v-if="inst && template && resolved">
-      <div class="flex items-center gap-2">
-        <QualityTag :quality="inst.quality" />
-        <!-- 界域 + 阶位:同一句「23 阶」在人间界与仙界完全不是一回事,故写清是哪一界 -->
-        <span class="text-body text-ink-faint">
-          {{ EQUIP_SLOT_NAMES[template.slot] }} · {{ worldNameOfTier(inst.tier) }} ·
-          {{ inst.tier }} 阶
+    <div
+      v-if="inst && template && resolved"
+      class="equip-dossier"
+      data-equipment-dossier
+      :style="dossierStyle"
+    >
+      <header class="equip-dossier__hero" data-equipment-hero>
+        <span class="equip-dossier__sigil" aria-hidden="true">
+          <GameIcon :name="template.icon" :size="30" />
+          <QualitySeal
+            v-if="rare"
+            :quality="inst.quality"
+            :size="17"
+            class="equip-dossier__quality-seal"
+          />
         </span>
-        <span v-if="inst.level > 0" class="text-body text-gold-ink tabular">+{{ inst.level }}</span>
+        <div class="equip-dossier__identity">
+          <p class="equip-dossier__eyebrow">
+            <span class="equip-dossier__quality">{{ qualityName }}</span>
+            <span>{{ EQUIP_SLOT_NAMES[template.slot] }}</span>
+            <span>{{ worldNameOfTier(inst.tier) }}</span>
+            <span class="tabular">{{ inst.tier }} 阶</span>
+            <span v-if="inst.level > 0" class="text-gold-ink tabular">+{{ inst.level }}</span>
+            <span>{{ isEquipped ? "本槽在佩" : "收在行囊" }}</span>
+          </p>
+          <p class="equip-dossier__desc">{{ template.desc }}</p>
+        </div>
         <button
-          class="-m-1.5 flex min-h-[28px] min-w-[28px] items-center justify-center p-1.5 text-ink-faint active:scale-90"
+          class="equip-dossier__lock"
           :aria-label="inst.locked ? '解锁' : '锁定'"
+          :aria-pressed="inst.locked"
           @click="toggleLock"
         >
           <GameIcon :name="inst.locked ? 'lock' : 'unlock'" :size="15" />
+          <span>{{ inst.locked ? "已锁" : "未锁" }}</span>
         </button>
-      </div>
-      <p class="mt-2 t-body text-ink-faint">{{ template.desc }}</p>
-      <!-- 备注子面板:标记输入/清除随面板走(EquipNotePanel,自读同一份 inst) -->
-      <EquipNotePanel />
-      <!--
-        共鸣是机制而非数值,但装备卡片此前一个字都不提:玩家在「要不要换掉这件」时,
-        看不到它身上拴着一条会断的机制(见 core/equipSet)。
-      -->
-      <p v-if="setInfo" class="mt-1.5 text-body leading-relaxed">
+      </header>
+
+      <section class="equip-dossier__power" data-equipment-power>
+        <div class="equip-dossier__score">
+          <span class="equip-dossier__caption">本件战力</span>
+          <strong class="font-kai tabular">{{ candidatePowerText }}</strong>
+          <small>平铺三围 + 词条折算</small>
+        </div>
+        <div class="equip-dossier__verdict" :data-verdict="powerComparison?.verdict">
+          <span class="equip-dossier__caption">{{ powerVerdictLabel }}</span>
+          <strong class="font-kai tabular">{{ powerDeltaText }}</strong>
+          <small v-if="compareTarget">
+            当前「{{ compareTarget.name }}」{{ incumbentPowerText }}
+          </small>
+          <small v-else-if="isEquipped">此槽当前穿的就是这一件</small>
+          <small v-else>空槽可直接补位</small>
+        </div>
+      </section>
+
+      <EquipNotePanel class="equip-dossier__note" />
+
+      <p v-if="setInfo" class="equip-dossier__resonance">
         <span class="font-kai" :class="setInfo.active ? 'text-jade' : 'text-violet-ink'">
           共鸣「{{ setInfo.def.name }}」{{ setInfo.count }}/{{ setInfo.def.required }}
         </span>
-        <span class="ml-1 text-ink-faint"
-          >{{ setInfo.def.effectDesc
+        <span class="text-ink-faint">
+          {{ setInfo.def.effectDesc
           }}<template v-if="setInfo.def.hook === 'astral'">
             · 开战护盾 +{{ formatPercent(ASTRAL_SET_SHIELD) }} 最大气血</template
-          ></span
-        >
+          >
+        </span>
       </p>
-      <div class="ink-divider my-3" />
-      <p v-if="compareTarget" class="mb-1.5 text-note text-ink-faint tabular">
-        对比当前佩戴:「{{ compareTarget.name }}」(绿升红降)
-      </p>
-      <div class="space-y-1.5">
-        <p v-for="row in flatRows" :key="row.label" class="flex justify-between text-title">
-          <span class="text-ink-soft">{{ row.label }}</span>
-          <span class="tabular text-ink">
-            {{ row.value }}
-            <span
-              v-if="row.diff"
-              class="ml-1 text-body"
-              :class="row.up ? 'text-jade' : 'text-cinnabar'"
-              >({{ row.diff }})</span
-            >
-          </span>
-        </p>
-        <p v-for="row in fixedModRows" :key="row.label" class="flex justify-between text-title">
-          <span class="text-ink-soft">{{ row.label }}</span>
-          <span class="tabular text-qing">{{ row.value }}</span>
-        </p>
-      </div>
-      <template v-if="resolved.affixLines.length">
-        <div class="ink-divider my-3" />
-        <!--
-          条数上限按品质给(凡品 0~1 · 神品 6~9),这是玩家最该看见的一件事:
-          一件装备的"上限"就在它的品质里,而重铸可以重掷条数 —— 只有把它摊在明面上,
-          「要不要为这件洗下去」才算得清。
-        -->
-        <p
-          class="mb-1.5 flex items-baseline justify-between font-kai text-title tracking-[0.3em] text-ink-faint"
-        >
-          <span>词 条</span>
-          <span class="text-note tracking-normal tabular">
-            {{ inst.affixes.length }} / {{ affixCap }} 条
-            <span class="ml-1 text-ink-faint">({{ qualityName }}上限)</span>
-          </span>
-        </p>
-        <!--
-          词条一条一行:名目与稀有度在左、效果在右、**数值单独加粗**(见 resolveEquipStats
-          的 before/value/after)。一件神品能挂九条,所以这一列要能扫:
-          左边一列名目对齐、右边一列数字对齐,行与行之间不夹长度不一的句子。
 
-          分成九行之后,原来「一条一个色块」的排法会把整张卡片压塌 ——
-          色块摞起来,装备本身的层次反而看不见。改成整体一块底 + 行间细分隔线,
-          稀有度交给左侧那道色边(与名目同色):一眼看得出哪条是撞上的大运,
-          又不至于九块颜色抢戏。
-        -->
-        <ul class="overflow-hidden rounded-[2px] bg-violet-ink/6">
+      <section class="equip-dossier__sheet" data-equipment-stats>
+        <header class="equip-dossier__section-head">
+          <span>器性</span>
+          <small>{{ compareTarget ? "括号内为此件相对当前佩戴的增减" : "本件直接并入道躯" }}</small>
+        </header>
+        <div class="equip-dossier__stat-list">
+          <p v-for="row in flatRows" :key="row.label" class="equip-dossier__stat">
+            <span class="text-ink-soft">{{ row.label }}</span>
+            <span class="tabular text-ink">
+              {{ row.value }}
+              <span
+                v-if="row.diff"
+                class="ml-1 text-body"
+                :class="row.up ? 'text-jade' : 'text-cinnabar'"
+                >({{ row.diff }})</span
+              >
+            </span>
+          </p>
+          <p v-for="row in fixedModRows" :key="row.label" class="equip-dossier__stat">
+            <span class="text-ink-soft">{{ row.label }}</span>
+            <span class="tabular text-qing">{{ row.value }}</span>
+          </p>
+        </div>
+      </section>
+
+      <section
+        v-if="resolved.affixLines.length"
+        class="equip-dossier__sheet equip-dossier__sheet--affix"
+        data-equipment-affixes
+      >
+        <header class="equip-dossier__section-head">
+          <span>词条</span>
+          <small class="tabular">
+            {{ inst.affixes.length }} / {{ affixCap }} 条 · {{ qualityName }}上限
+          </small>
+        </header>
+        <ul class="equip-dossier__affixes">
           <li
             v-for="(line, i) in resolved.affixLines"
             :key="line.id"
-            class="flex flex-wrap items-center gap-2 py-1.5 pl-2 pr-1.5"
-            :class="i > 0 ? 'border-t border-violet-ink/15' : ''"
+            class="equip-dossier__affix"
+            :class="i > 0 ? 'equip-dossier__affix--divided' : ''"
             :style="{ borderLeft: `2px solid ${AFFIX_RARITY_META[line.rarity].color}` }"
           >
             <span
@@ -98,7 +120,7 @@
               「{{ line.name }}」
             </span>
             <span
-              class="shrink-0 text-[9px]"
+              class="shrink-0 text-note"
               :style="{ color: AFFIX_RARITY_META[line.rarity].color }"
             >
               {{ AFFIX_RARITY_META[line.rarity].name }}
@@ -109,18 +131,18 @@
               {{ line.before }}<span class="tabular font-medium text-ink">{{ line.value }}</span
               >{{ line.after }}
             </span>
-            <!-- 封存/解除操作组随面板走(EquipSealPanel,自读同一份 inst) -->
             <EquipSealPanel class="tinylens:order-2" :affix-id="line.id" :name="line.name" />
           </li>
         </ul>
-        <p class="mt-1 text-note leading-relaxed text-ink-faint">
-          排序:稀有度(传世 → 常见)→ 掷点;左侧色边即这一条的成色
-        </p>
-      </template>
-      <template v-if="buildPreview">
-        <div class="ink-divider my-3" />
-        <p class="flex items-center justify-between text-title">
-          <span class="text-ink-faint">装备后流派</span>
+        <p class="equip-dossier__footnote">排序:稀有度(传世 → 常见)→ 掷点;左侧色边即这一条的成色</p>
+      </section>
+
+      <section v-if="buildPreview" class="equip-dossier__line-ledger">
+        <header class="equip-dossier__section-head">
+          <span>换装后的流派</span>
+          <small>此件会改写的构筑形状</small>
+        </header>
+        <p class="equip-dossier__build-row">
           <span class="tabular">
             <template v-if="buildPreview.before">
               <span class="text-ink-soft"
@@ -146,52 +168,55 @@
             <template v-else><span class="text-cinnabar">流派散去</span></template>
           </span>
         </p>
-      </template>
-      <!--
-        炼器技艺的进度就该露在铁砧前:锻打/铭纹的经验正是在这里(强化/重铸)长的,
-        此前却只在炼丹弹窗的全局技艺表里看得到 —— 在炼器的地方看不见自己在长,
-        等于没长。两行小进度,与技艺表同源(skillLevel/skillStageName/skillStageProgress),
-        不做第二份出处的判定。
-      -->
-      <div v-if="forgeSkills.length" class="ink-divider my-3" />
-      <div v-if="forgeSkills.length" class="space-y-1">
-        <p
-          v-for="s in forgeSkills"
-          :key="s.id"
-          class="flex items-center gap-2 text-note text-ink-faint"
-        >
-          <span class="w-10 shrink-0 font-kai text-ink-soft">{{ s.name }}</span>
-          <span class="w-12 shrink-0 tabular" :class="s.active ? 'text-jade' : ''">{{
-            s.stage
-          }}</span>
-          <ProgressBar
-            :value="s.progress"
-            :color="s.active ? 'var(--color-jade)' : 'var(--color-ink-faint)'"
-            :height="3"
-            class="flex-1"
-          />
-          <span class="w-7 shrink-0 text-right tabular">{{ formatPercent(s.progress, 0) }}</span>
-        </p>
-      </div>
-      <!-- 强化子面板:价签/加成/短差/连强总账随面板走(EquipUpgradePanel,自读同一份 inst) -->
+      </section>
+
+      <section v-if="forgeSkills.length" class="equip-dossier__line-ledger">
+        <header class="equip-dossier__section-head">
+          <span>炼器进度</span>
+          <small>在铁砧前看得见它怎么长</small>
+        </header>
+        <div class="space-y-1">
+          <p
+            v-for="s in forgeSkills"
+            :key="s.id"
+            class="flex items-center gap-2 text-note text-ink-faint"
+          >
+            <span class="w-10 shrink-0 font-kai text-ink-soft">{{ s.name }}</span>
+            <span class="w-12 shrink-0 tabular" :class="s.active ? 'text-jade' : ''">{{
+              s.stage
+            }}</span>
+            <ProgressBar
+              :value="s.progress"
+              :color="s.active ? 'var(--color-jade)' : 'var(--color-ink-faint)'"
+              :height="3"
+              class="flex-1"
+            />
+            <span class="w-7 shrink-0 text-right tabular">{{ formatPercent(s.progress, 0) }}</span>
+          </p>
+        </div>
+      </section>
+
       <EquipUpgradePanel />
-      <p v-if="salvage" class="mt-1 flex items-center justify-between text-body text-ink-faint">
-        <span>分解返还{{ inst.level > 0 ? `(${refundRateText()})` : "" }}</span>
-        <span class="tabular">
-          器灵尘×{{ salvage.dust }}
-          <template v-if="!isZero(salvage.stone)"> · 灵石 {{ formatGN(salvage.stone) }}</template>
-        </span>
-      </p>
-      <!-- 天机推演子面板:入口/四界局面/主要变化随面板走(EquipWhatIfPanel,自读同一份 inst) -->
       <EquipWhatIfPanel />
-    </div>
-    <template #footer>
-      <div class="flex flex-col gap-2">
-        <!--
-          重铸与封存子面板:两步武装/封存价签/自动重铸/词条转移入口,整块随面板走
-          (EquipReforgePanel,自读同一份 inst;武装态互斥,分家只会造出跨面板接线)。
-        -->
+
+      <section class="equip-dossier__workshop" data-equipment-workshop>
+        <header class="equip-dossier__section-head">
+          <span>工坊</span>
+          <small>重铸、封存与词条转移</small>
+        </header>
         <EquipReforgePanel />
+      </section>
+    </div>
+
+    <template #footer>
+      <div class="flex flex-col gap-2" data-equipment-actions>
+        <p v-if="salvage" class="flex items-center justify-between text-body text-ink-faint">
+          <span>分解返还{{ inst?.level ? `(${refundRateText()})` : "" }}</span>
+          <span class="tabular">
+            器灵尘×{{ salvage.dust }}
+            <template v-if="!isZero(salvage.stone)"> · 灵石 {{ formatGN(salvage.stone) }}</template>
+          </span>
+        </p>
         <div class="flex gap-2 tinylens:flex-col">
           <button class="btn-seal flex-1" @click="toggleEquip">
             {{ isEquipped ? "卸 下" : "装 备" }}
@@ -204,7 +229,6 @@
           >
             强 化
           </button>
-          <!-- 分解二步确认子面板:武装→确认/再想想随面板走(EquipDecomposePanel);分解成功由面板 emit,宿主关弹窗 -->
           <EquipDecomposePanel @decomposed="close" />
         </div>
       </div>
@@ -218,6 +242,7 @@ import { useUiStore } from "@/stores/ui";
 import { useInventoryStore } from "@/stores/inventory";
 import { equipmentTemplate, EQUIP_SLOT_NAMES } from "@/data/equipment";
 import { equipSetDef, setCounts, ASTRAL_SET_SHIELD } from "@/core/equipSet";
+import { equipPowerComparison } from "@/core/equipBest";
 import { worldNameOfTier } from "@/core/formulas";
 import { resolveEquipStats } from "@/core/equipGen";
 import { equipUpgradeCost, upgradeEquipment } from "@/core/forge";
@@ -231,7 +256,7 @@ import { isZero, sub } from "@/utils/gnum";
 import type { AnyStatKey, GNum } from "@/types";
 import { AFFIX_RARITY_META, STAT_NAMES } from "@/data/statNames";
 import BaseModal from "@/components/common/BaseModal.vue";
-import QualityTag from "@/components/common/QualityTag.vue";
+import QualitySeal from "@/components/common/QualitySeal.vue";
 import EquipNotePanel from "./EquipNotePanel.vue";
 import EquipSealPanel from "./EquipSealPanel.vue";
 import EquipUpgradePanel from "./EquipUpgradePanel.vue";
@@ -243,6 +268,8 @@ import ProgressBar from "@/components/common/ProgressBar.vue";
 import { useLoreStore } from "@/stores/lore";
 import { SKILLS, skillStageName, skillStageProgress } from "@/data/crafting";
 import { isBlueprintMastered } from "@/core/blueprintMastery";
+import { colorWithAlpha } from "@/ui/colorVar";
+import { isRareQuality, qualityTextColor, qualityTierStyle } from "@/ui/qualityTier";
 
 const ui = useUiStore();
 const inventory = useInventoryStore();
@@ -290,6 +317,50 @@ const resolved = computed(() => (inst.value ? resolveEquipStats(inst.value) : nu
 const isEquipped = computed(() =>
   inst.value && template.value ? inventory.equipped[template.value.slot] === inst.value.uid : false,
 );
+
+/** 对比对象:同部位当前佩戴件。已穿着本件或空槽时不造对照。 */
+const compareTarget = computed(() => {
+  if (!inst.value || !template.value || isEquipped.value) return null;
+  const curUid = inventory.equipped[template.value.slot];
+  if (!curUid || curUid === inst.value.uid) return null;
+  const item = inventory.findItem(curUid);
+  if (!item) return null;
+  return { item, name: equipmentTemplate(item.templateId)?.name ?? "当前佩戴" };
+});
+
+/**
+ * 器评总账 —— 候选列表、详情卷首与页脚动作都认同一份真实战力差。
+ * 空槽不拿 0 冒充涨幅；已穿本件则明确报在佩。
+ */
+const powerComparison = computed(() =>
+  inst.value ? equipPowerComparison(inst.value, compareTarget.value?.item) : null,
+);
+const candidatePowerText = computed(() =>
+  powerComparison.value ? formatGN(Math.round(powerComparison.value.candidatePower)) : "—",
+);
+const incumbentPowerText = computed(() =>
+  powerComparison.value?.incumbentPower !== null &&
+  powerComparison.value?.incumbentPower !== undefined
+    ? formatGN(Math.round(powerComparison.value.incumbentPower))
+    : "—",
+);
+const powerVerdictLabel = computed(() => {
+  if (isEquipped.value) return "在本槽";
+  const verdict = powerComparison.value?.verdict;
+  if (verdict === "empty") return "空槽可补";
+  if (verdict === "up") return "换装后更强";
+  if (verdict === "down") return "换装后更弱";
+  if (verdict === "even") return "两件持平";
+  return "换装对比";
+});
+const powerDeltaText = computed(() => {
+  const delta = powerComparison.value?.delta;
+  if (delta === null || delta === undefined) return isEquipped.value ? "在佩" : "可补位";
+  if (delta === 0) return "持平";
+  const amount = formatGN(Math.round(Math.abs(delta)));
+  return `${delta > 0 ? "+" : "-"}${amount}`;
+});
+
 const upCost = computed(() => (inst.value ? equipUpgradeCost(inst.value.uid) : null));
 /** 付不起即灰:强化要器灵尘与灵石两道账,缺一不可(与 forge.upgradeEquipment 同口径)。
  *  页脚「强 化」钮专用;主文的价签/连强账在 EquipUpgradePanel(同一核心函数,两处必同账) */
@@ -316,7 +387,21 @@ const setInfo = computed(() => {
 
 /** 这一件按品质能有多少条词条:上限来自品质表,不在界面里另写一份 */
 const affixCap = computed(() => (inst.value ? qualityDef(inst.value.quality).affixes[1] : 0));
-const qualityName = computed(() => (inst.value ? qualityDef(inst.value.quality).name : ""));
+const quality = computed(() => (inst.value ? qualityDef(inst.value.quality) : null));
+const qualityName = computed(() => quality.value?.name ?? "");
+const rare = computed(() => (inst.value ? isRareQuality(inst.value.quality) : false));
+const dossierStyle = computed<Record<string, string>>(() => {
+  const q = quality.value;
+  const item = inst.value;
+  if (!q || !item) return {} as Record<string, string>;
+  const tier = qualityTierStyle(item.quality);
+  return {
+    "--equip-tone": q.color,
+    "--equip-text": qualityTextColor(item.quality),
+    "--equip-wash": colorWithAlpha(q.color, tier.bg),
+    "--equip-edge": colorWithAlpha(q.color, tier.border),
+  };
+});
 
 // ---- 装备标记子面板见 EquipNotePanel.vue(草稿/写回随面板走,宿主不再持状态) ----
 
@@ -365,16 +450,6 @@ const flatRows = computed(() => {
   push("防御", r.flats.defense, curFlats?.defense ?? null);
   push("气血", r.flats.maxHp, curFlats?.maxHp ?? null);
   return rows;
-});
-
-/** 对比对象:同部位当前佩戴件 */
-const compareTarget = computed(() => {
-  if (!inst.value || !template.value || isEquipped.value) return null;
-  const curUid = inventory.equipped[template.value.slot];
-  if (!curUid || curUid === inst.value.uid) return null;
-  const item = inventory.findItem(curUid);
-  if (!item) return null;
-  return { item, name: equipmentTemplate(item.templateId)?.name ?? "当前佩戴" };
 });
 
 const fixedModRows = computed(() => {

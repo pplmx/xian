@@ -282,6 +282,7 @@ const CATEGORIES = [
       "cultivationDesk",
       "legacyDesk",
       "inventoryDesk",
+      "equipmentDossier",
       "characterDossier",
       "dongfuDesk",
       "desktopSpine",

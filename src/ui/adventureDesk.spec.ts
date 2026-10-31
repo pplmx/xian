@@ -69,6 +69,18 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
     );
   });
 
+  it("石青渐变托出的首个地界用正文墨色,10px 地点描述不贴着 AA 线", () => {
+    const view = source("src/views/AdventureView.vue");
+    const css = source("src/styles/pages/adventure.css");
+
+    expect(css, "首个地界确实铺了一层石青渐变").toMatch(
+      /\.adventure-region--next\s*\{[\s\S]{0,150}linear-gradient\(115deg,\s*rgb\(var\(--color-qing-rgb\) \/ 0\.045\)/,
+    );
+    expect(view, "地点描述在渐变卡上必须用 ink-soft;ink-faint 只剩贴着 4.5:1 的余量").toMatch(
+      /<p v-if="row\.canEnter" class="mt-2 text-note leading-relaxed text-ink-soft">\s*\{\{\s*row\.def\.desc\s*\}\}/,
+    );
+  });
+
   it("主线地界先落地,秘境退到主线之后,规则留在页尾", () => {
     const view = source("src/views/AdventureView.vue");
 
