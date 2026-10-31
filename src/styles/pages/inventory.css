@@ -712,6 +712,15 @@
   .artifact-card__fact:nth-child(3) dd {
     color: rgb(var(--color-ink-faint-rgb));
   }
+  .artifact-card__swap {
+    margin-top: 0.55rem;
+    padding-left: 0.48rem;
+    border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.5);
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
   .artifact-card__actions {
     margin-top: 0.65rem;
     padding-top: 0.6rem;

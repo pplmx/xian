@@ -12741,6 +12741,9 @@ async function taskArtifactListOverflow() {
           total: Number(holder?.getAttribute("data-artifact-total")),
           shown: Number(holder?.getAttribute("data-artifact-shown")),
           start: Number(holder?.getAttribute("data-artifact-start")),
+          seats: [...document.querySelectorAll("[data-artifact-seat-id]")].map((seat) =>
+            seat.getAttribute("data-artifact-seat-id"),
+          ),
           count: rows.length,
           ids: rows.map((row) => row.getAttribute("data-artifact-row")),
           focus: document.activeElement?.getAttribute("data-artifact-row"),
@@ -12905,17 +12908,42 @@ async function taskArtifactListOverflow() {
 
     const toggledId = back.ids[0];
     if (toggledId) {
+      const displaced = artifactRows.find((artifact) => artifact.defId === equippedIds[0]);
+      const swapText = (
+        (await page
+          .locator(`[data-artifact-row="${toggledId}"] [data-artifact-swap]`)
+          .textContent()) || ""
+      )
+        .replace(/\s+/g, " ")
+        .trim();
+      checked += 1;
+      if (!displaced?.name || !swapText.includes(displaced.name)) {
+        failures.push(
+          `[195] 法宝满位换入前没点名将替下的法 1:` +
+            `应「${displaced?.name ?? "无"}」,实见 «${swapText}»`,
+        );
+      }
       await page.locator(`[data-artifact-row="${toggledId}"] button`).first().click({
         timeout: 5000,
       });
       await waitForFocus(toggledId);
       const toggled = await readList();
+      const toast = ((await page.locator("[data-toast]").last().textContent()) || "")
+        .replace(/\s+/g, " ")
+        .trim();
       checked += 1;
-      if (toggled.focus !== toggledId || !toggled.ids.includes(toggledId)) {
+      if (
+        toggled.focus !== toggledId ||
+        !toggled.ids.includes(toggledId) ||
+        toggled.seats[0] !== equippedIds[1] ||
+        toggled.seats[1] !== toggledId ||
+        !displaced?.name ||
+        !toast.includes(displaced.name)
+      ) {
         failures.push(
-          `[195] 法宝随身后焦点没有留在原卡:` +
-            `应 ${toggledId},实见焦点 ${toggled.focus ?? "无"} / ` +
-            `当前窗口 ${toggled.ids.join(",")}`,
+          `[195] 法宝满位换入没有按法 1 让位:` +
+            `应法 1 ${equippedIds[1]} / 法 2 ${toggledId}、焦点留在原卡并点名替下「${displaced?.name ?? "无"}」,` +
+            `实见席位 ${toggled.seats.join(",")} / 焦点 ${toggled.focus ?? "无"} / 回执 «${toast}»`,
         );
       }
     }

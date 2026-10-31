@@ -326,6 +326,7 @@ const CATEGORIES = [
       "fatePreview",
       "goBack",
       "inventorySeen",
+      "inventoryArtifacts",
       "storeResilience",
       "cultivation.spec",
       "diag.spec",

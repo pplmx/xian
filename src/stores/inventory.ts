@@ -9,6 +9,7 @@ import { resolveEquipStats } from "@/core/equipGen";
 import { mergeMods } from "@/core/statsCalc";
 import { useLoreStore } from "@/stores/lore";
 import { artifactDef, artifactValue } from "@/data/artifacts";
+import { planArtifactPlacement } from "@/core/artifactDesk";
 import { EQUIP_SLOT_NAMES, equipmentTemplate } from "@/data/equipment";
 import { pillDef } from "@/data/pills";
 import { asArray, asNumberRecord, asRecord, asStringArray } from "@/utils/saveShape";
@@ -217,21 +218,20 @@ export const useInventoryStore = defineStore(
       );
     }
 
-    /** 祭炼/收回法宝;槽满时替换最早佩戴的一件 */
+    /** 祭炼/收回法宝;槽满时替换最早随身的一件 */
     function toggleArtifact(
       defId: string,
       maxSlots: number,
-    ): "equipped" | "unequipped" | "replaced" {
-      if (equippedArtifacts.value.includes(defId)) {
+    ): "equipped" | "unequipped" | "replaced" | "blocked" {
+      const plan = planArtifactPlacement(equippedArtifacts.value, defId, maxSlots);
+      if (plan.action === "unequipped") {
         equippedArtifacts.value = equippedArtifacts.value.filter((id) => id !== defId);
-        return "unequipped";
-      }
-      if (equippedArtifacts.value.length < maxSlots) {
+      } else if (plan.action === "equipped") {
         equippedArtifacts.value = [...equippedArtifacts.value, defId];
-        return "equipped";
+      } else if (plan.action === "replaced" && plan.removedIndex !== null) {
+        equippedArtifacts.value = [...equippedArtifacts.value.slice(plan.removedIndex + 1), defId];
       }
-      equippedArtifacts.value = [...equippedArtifacts.value.slice(1), defId];
-      return "replaced";
+      return plan.action;
     }
 
     return {

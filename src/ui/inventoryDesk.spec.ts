@@ -2,7 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { readStyleCss } from "@/test/readStyleCss";
-import { artifactDeskSummary } from "@/core/artifactDesk";
+import { artifactDeskSummary, planArtifactPlacement } from "@/core/artifactDesk";
 
 const ROOT = resolve(__dirname, "../..");
 
@@ -45,6 +45,29 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
       ready: 0,
       short: 0,
       maxed: 0,
+    });
+  });
+
+  it("法宝满位时先把会让位的那一件算清", () => {
+    expect(planArtifactPlacement(["af_a", "af_b"], "af_c", 2)).toEqual({
+      action: "replaced",
+      removedId: "af_a",
+      removedIndex: 0,
+    });
+    expect(planArtifactPlacement(["af_a"], "af_c", 2)).toEqual({
+      action: "equipped",
+      removedId: null,
+      removedIndex: null,
+    });
+    expect(planArtifactPlacement(["af_a", "af_b"], "af_b", 2)).toEqual({
+      action: "unequipped",
+      removedId: "af_b",
+      removedIndex: 1,
+    });
+    expect(planArtifactPlacement([], "af_c", 0)).toEqual({
+      action: "blocked",
+      removedId: null,
+      removedIndex: null,
     });
   });
 
@@ -192,6 +215,7 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
     expect(panel, "法宝册先要有稳定阵账落点").toContain("data-artifact-overview");
     expect(panel, "阵账读数走 core 的同一份汇总").toContain("artifactDeskSummary");
     expect(panel, "阵账逐位列出随身法宝").toContain("data-artifact-seat");
+    expect(panel, "席位要带出可核对的法宝 id").toContain("data-artifact-seat-id");
     expect(panel, "可炼 / 欠料 / 满重要各有稳定读数").toContain('data-artifact-summary="ready"');
     expect(panel).toContain('data-artifact-summary="short"');
     expect(panel).toContain('data-artifact-summary="maxed"');
@@ -199,6 +223,9 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
     expect(panel, "祭炼规则与法宝位门槛仍读同一组常数").toContain("ARTIFACT_LEVEL_BONUS");
     expect(panel).toContain("ARTIFACT_MAX_SLOTS");
     expect(panel).toContain("artifactUnlockRealm");
+    expect(panel, "满位换入必须走与 store 同一份让位计划").toContain("planArtifactPlacement");
+    expect(panel, "按下前要先点名会被替下的法宝").toContain("data-artifact-swap");
+    expect(panel, "成功回执同样点名已替下的法宝").toContain("已替下 法");
   });
 
   it("手机上检点单列,360 起并读,220 以下把九佩、丹房与材簿放开", () => {

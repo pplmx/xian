@@ -32,6 +32,7 @@
         role="listitem"
         data-artifact-seat
         :data-artifact-seat-filled="seat.def && seat.owned ? 'true' : 'false'"
+        :data-artifact-seat-id="seat.defId ?? ''"
       >
         <span class="artifact-desk__seat-index">法 {{ index + 1 }}</span>
         <span class="artifact-desk__seat-name">{{ seat.def?.name ?? "空悬" }}</span>
@@ -158,10 +159,19 @@
             <dd class="tabular">{{ nextGainText(row.def.id, row.owned.level) }}</dd>
           </div>
         </dl>
+        <p
+          v-if="row.replaced"
+          :id="`artifact-swap-${row.def.id}`"
+          class="artifact-card__swap"
+          data-artifact-swap
+        >
+          满位换入 · 将替下 法 {{ row.replaced.seat }}「{{ row.replaced.def.name }}」
+        </p>
         <div class="artifact-card__actions flex gap-2 tinylens:flex-col">
           <button
             class="btn-seal flex-1 !py-1.5 !text-body"
             :class="{ '!bg-ink-faint': row.equipped }"
+            :aria-describedby="row.replaced ? `artifact-swap-${row.def.id}` : undefined"
             @click="toggleArtifact(row.def.id)"
           >
             {{ row.equipped ? "收回法宝" : "祭炼随身" }}
@@ -246,7 +256,7 @@ import {
   artifactSlotsFor,
 } from "@/data/artifacts";
 import { artifactSlotBonus } from "@/core/heritageEffects";
-import { artifactDeskSummary } from "@/core/artifactDesk";
+import { artifactDeskSummary, planArtifactPlacement } from "@/core/artifactDesk";
 import { REALMS } from "@/data/realms";
 import { artifactUpCost, upgradeArtifact } from "@/core/forge";
 import {
@@ -278,6 +288,12 @@ const artifactRows = computed(() =>
       const def = artifactDef(a.defId);
       if (!def) return null;
       const upCost = artifactUpCost(a.defId);
+      const placement = planArtifactPlacement(
+        inventory.equippedArtifacts,
+        a.defId,
+        artifactSlots.value,
+      );
+      const replacedDef = placement.removedId ? artifactDef(placement.removedId) : undefined;
       return {
         owned: a,
         def,
@@ -286,6 +302,10 @@ const artifactRows = computed(() =>
         upAffordable:
           !upCost || (resources.wudao >= upCost.wudao && resources.hasStone(upCost.stone)),
         equipped: inventory.equippedArtifacts.includes(a.defId),
+        replaced:
+          placement.action === "replaced" && replacedDef
+            ? { def: replacedDef, seat: (placement.removedIndex ?? 0) + 1 }
+            : null,
       };
     })
     .filter((row): row is NonNullable<typeof row> => row !== null)
@@ -405,8 +425,17 @@ function showPreviousArtifacts(): void {
 }
 
 function toggleArtifact(defId: string): void {
+  const plan = planArtifactPlacement(inventory.equippedArtifacts, defId, artifactSlots.value);
+  const replaced = plan.removedId ? artifactDef(plan.removedId) : undefined;
   const result = inventory.toggleArtifact(defId, artifactSlots.value);
-  if (result === "replaced") ui.toast("法宝位已满,替换了最早祭炼的一件", "info");
+  if (result === "replaced") {
+    ui.toast(
+      replaced
+        ? `法宝位已满,已替下 法 ${(plan.removedIndex ?? 0) + 1}「${replaced.name}」`
+        : "法宝位已满,已替下最早随身的一件",
+      "info",
+    );
+  }
   focusArtifactRowById(defId);
 }
 
