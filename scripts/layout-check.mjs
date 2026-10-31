@@ -321,8 +321,8 @@ let desktopSpineSeen = 0;
  * 内外边距加起来 26px,每个弹窗都有它)、纯文字按钮「立契」(18px)、
  * 行内链接(命中区只有字体那 14px)。故这里量弹窗自己。
  */
-async function auditModalControls(page) {
-  return page.evaluate(() => {
+async function auditModalControls(page, selector = ".modal-panel") {
+  return page.evaluate((rootSelector) => {
     // 测量标准化与 measurePage 同一口径:弹窗的入场过渡(page-fade/modal 过渡)
     // 进行中量几何,量到的是动画中间帧 —— 「进入前请确认」弹窗里的《隐私政策》
     // 按钮(块级 flex + min-h 28px)曾在 1280×800 档被量出 26.3px,三档视口反复
@@ -331,7 +331,8 @@ async function auditModalControls(page) {
     const st = document.createElement("style");
     st.textContent = "*,*::before,*::after{animation:none!important;transition:none!important}";
     document.head.appendChild(st);
-    const panel = document.querySelector(".modal-panel");
+    const target = [...document.querySelectorAll(rootSelector)].at(-1);
+    const panel = target?.matches(".modal-panel") ? target : target?.closest(".modal-panel");
     if (!panel) return null;
     const rows = [...panel.querySelectorAll("button, a, [role=button]")]
       .map((el) => {
@@ -368,7 +369,7 @@ async function auditModalControls(page) {
         .filter((r) => !r.ok)
         .map((r) => `${r.w}×${r.h}px«${r.name || "无名"}» [${r.cls}]`),
     };
-  });
+  }, selector);
 }
 
 /**
@@ -1364,15 +1365,16 @@ function dialogZoomProblems(info) {
 }
 
 /** 把视口压到 195 量一扇正开着的弹窗,量完还原(量法与 dialogZoomProblems 同源) */
-async function measureDialogZoom(page, vp) {
+async function measureDialogZoom(page, vp, selector = ".modal-panel") {
   const before = { width: vp.width, height: vp.height };
   await page.setViewportSize({
     width: Math.round(before.width / 2),
     height: Math.round(before.height / 2),
   });
   await page.waitForTimeout(420);
-  const info = await page.evaluate(() => {
-    const panel = document.querySelector(".modal-panel");
+  const info = await page.evaluate((rootSelector) => {
+    const target = [...document.querySelectorAll(rootSelector)].at(-1);
+    const panel = target?.matches(".modal-panel") ? target : target?.closest(".modal-panel");
     if (!panel) return null;
     const pr = panel.getBoundingClientRect();
     /** 与 measurePage 的越界口径同源:纯装饰层(不吃事件)不算事故 */
@@ -1438,7 +1440,7 @@ async function measureDialogZoom(page, vp) {
         folded.push(`${lines} 行 «${(value.textContent || "").trim().slice(0, 12)}»`);
     }
     return { wide, vertical, wrapped, folded, w: Math.round(pr.width) };
-  });
+  }, selector);
   await page.setViewportSize(before);
   await page.waitForTimeout(300);
   return info;
@@ -8913,6 +8915,36 @@ async function taskPreGameTour() {
     const seal = page.getByRole("button", { name: /署印入山/ }).first();
     if (!(await pact.isVisible())) failures.push("[开局前] 启封入山后没有摊开入山契");
     if (!(await seal.isDisabled())) failures.push("[开局前] 入山契尚未勾选,署印键却已可用");
+
+    await page
+      .getByRole("button", { name: /《隐私政策》/ })
+      .first()
+      .click();
+    await page.waitForTimeout(450);
+    if (!(await page.locator("[data-privacy-ledger]").isVisible()))
+      failures.push("[开局前] 入山契里的《隐私政策》没有摊开隐私总账");
+    const privacyAudit = await auditModalControls(page, "[data-privacy-ledger]");
+    if (!privacyAudit || privacyAudit.count === 0)
+      failures.push("[开局前] 隐私总账里一个控件都没数到,判据没跑到东西");
+    if (privacyAudit?.unnamed.length)
+      failures.push(`[开局前] 隐私总账里有 ${privacyAudit.unnamed.length} 个无名控件`);
+    if (privacyAudit?.small.length)
+      failures.push(`[开局前] 隐私总账里可点元素过小:${privacyAudit.small.join(" | ")}`);
+    if (SHOTS) {
+      mkdirSync(SHOTS_DIR, { recursive: true });
+      await page.screenshot({ path: join(SHOTS_DIR, "390_privacy_ledger.png"), fullPage: true });
+    }
+    zoomSeen += 1;
+    const privacyZoom = dialogZoomProblems(
+      await measureDialogZoom(page, { width: 390, height: 844 }, "[data-privacy-ledger]"),
+    );
+    if (privacyZoom.length)
+      failures.push(`[开局前] 隐私总账在 200% 下坏了:${privacyZoom.join(" / ")}`);
+    await page.getByRole("button", { name: /知道了/ }).click();
+    await page.waitForTimeout(450);
+    if (!(await pact.isVisible())) failures.push("[开局前] 合上隐私总账后没有回到入山契");
+    checked += 1;
+
     await agree.check();
     if (await seal.isDisabled()) failures.push("[开局前] 已勾选入山契,署印键仍不可用");
     const modalAudit = await auditModalControls(page);

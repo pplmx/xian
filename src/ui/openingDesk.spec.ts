@@ -41,6 +41,17 @@ describe("开卷两页 · 先立山门,再问心定命", () => {
     );
   });
 
+  it("隐私政策先给本机、零请求、不接第三方三项结论,再逐条展开原文", () => {
+    const privacy = source("src/components/common/PrivacyDialog.vue");
+
+    expect(privacy, "隐私政策要有独立的账页契约").toContain("data-privacy-ledger");
+    expect(privacy.match(/data-privacy-fact/g), "卷首三项结论不能缺项").toHaveLength(3);
+    expect(privacy.match(/data-privacy-section/g), "七则正文要逐条保留").toHaveLength(7);
+    expect(privacy, "极窄档把三项结论改成单列").toContain("tinylens:!grid-cols-1");
+    expect(privacy, "系统备份与换机路径仍要写清").toContain("系统自动备份已关闭");
+    expect(privacy, "外部反馈入口仍是真链接").toContain("https://github.com/pplmx/xian/issues");
+  });
+
   it("建号页把留名、验根与定卷排成一张命书,重掷与踏入仙途仍走原动作", () => {
     const create = source("src/views/CreateView.vue");
 
@@ -91,6 +102,7 @@ describe("开卷两页 · 先立山门,再问心定命", () => {
     expect(layout).toContain("[data-opening-enter], [data-opening-reroll]");
     expect(layout).toContain("390_welcome.png");
     expect(layout).toContain("390_welcome_pact.png");
+    expect(layout).toContain("390_privacy_ledger.png");
     expect(layout).toContain("390_create.png");
     expect(layout).toContain("1280x800_welcome.png");
     expect(layout).toContain("1280x800_create.png");
@@ -99,5 +111,6 @@ describe("开卷两页 · 先立山门,再问心定命", () => {
     expect(layout, "取消入山契后要重开并证明勾选没有残留").toContain(
       "取消入山契后再次开契,上次勾选仍残留",
     );
+    expect(layout, "隐私总账也要在 200% 档量过").toContain("隐私总账在 200% 下坏了");
   });
 });
