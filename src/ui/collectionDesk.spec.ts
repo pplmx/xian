@@ -207,16 +207,13 @@ describe("藏珍案 · 九册总印紧随页签,眼下可追与眼下新得各�
     const start = css.indexOf("/*\n   * 藏珍案");
     const end = css.indexOf("/*\n   * 器魂案", start);
     const collectionCss = css.slice(start, end);
-    const briefing =
-      /\.achievement-briefing,\s*\n\s*\.collection-briefing\s*\{([\s\S]*?)\n\s*\}/.exec(
-        collectionCss,
-      )?.[1];
     const volumes = /\.achievement-volume,\s*\n\s*\.collection-volume\s*\{([\s\S]*?)\n\s*\}/.exec(
       collectionCss,
     )?.[1];
 
-    expect(briefing, "功名与藏珍卷首要共用一条开页规则").toMatch(/border:\s*0;/);
-    expect(briefing, "卷首不再复制整块纸底").toContain("background: transparent;");
+    expect(rule(collectionCss, ".collection-register__chapter"), "两章只做续卷分章").toMatch(
+      /border:\s*0;[\s\S]*?background:\s*transparent;/,
+    );
     expect(collectionCss, "卷首不再画四边内框").not.toContain(".achievement-briefing::before");
     expect(volumes, "方向卷目与九册册目只靠账线分组").toMatch(/border:\s*0;[\s\S]*?border-top:/);
     expect(
@@ -243,13 +240,58 @@ describe("藏珍案 · 九册总印紧随页签,眼下可追与眼下新得各�
     expect(view, "页签跨两栏且保留成就 / 收藏同一份状态").toContain(
       'class="collection-tabs folio-span-all"',
     );
-    expect(view, "功名状与功名卷目分据左右").toContain(
-      'class="achievement-briefing" data-achievement-hero',
+    expect(view, "功名状与功名卷目同住一册").toContain(
+      'class="collection-register__chapter achievement-briefing"',
     );
-    expect(view).toContain('class="achievement-volumes" data-achievement-volumes');
+    expect(view).toContain('class="collection-register__chapter achievement-volumes"');
     expect(view, "藏珍谱与九册藏珍分据左右").toContain(
-      'class="collection-briefing" data-collection-hero',
+      'class="collection-register__chapter collection-briefing"',
     );
-    expect(view).toContain('class="collection-shelves" data-collection-shelves');
+    expect(view).toContain('class="collection-register__chapter collection-shelves"');
+  });
+
+  it("功名与藏珍各收成一册两章,章首统一章号、题名、读法与章内读数", () => {
+    const view = source("src/views/CollectionView.vue");
+    const head = source("src/components/collection/CollectionChapterHead.vue");
+    const css = source("src/style.css");
+    const start = css.indexOf("/*\n   * 藏珍案");
+    const end = css.indexOf("/*\n   * 器魂案", start);
+    const collectionCss = css.slice(start, end);
+
+    expect(view, "两章必须先落进同一册").toContain(
+      '<article class="collection-register folio-span-all" data-collection-register>',
+    );
+    expect(view, "不再借共享案头另起一章").not.toContain("<LedgerHeader");
+    expect(view, "不再借通用节题另起一层卡壳").not.toContain("<SectionTitle");
+    expect(view).toContain('class="collection-register__chapter achievement-briefing"');
+    expect(view).toContain('class="collection-register__chapter achievement-volumes"');
+    expect(view).toContain('class="collection-register__chapter collection-briefing"');
+    expect(view).toContain('class="collection-register__chapter collection-shelves"');
+    expect(view.match(/<CollectionChapterHead\b/g)).toHaveLength(4);
+    expect(view).toContain('index="壹"');
+    expect(view).toContain('index="贰"');
+
+    expect(head).toContain("data-collection-chapter-head");
+    expect(head).toContain("collection-chapter-head__index");
+    expect(head).toContain("collection-chapter-head__eyebrow");
+    expect(head).toContain("collection-chapter-head__title");
+    expect(head).toContain("collection-chapter-head__hint");
+    expect(head).toContain("collection-chapter-head__fact");
+
+    expect(collectionCss).toMatch(
+      /\.collection-register\s*\{[\s\S]{0,360}grid-template-areas:\s*\n?\s*"lead"\s*\n?\s*"volumes"/,
+    );
+    expect(collectionCss).toMatch(
+      /\.collection-register__chapter \+ \.collection-register__chapter\s*\{[\s\S]{0,120}border-top:/,
+    );
+    expect(collectionCss).toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,500}\.collection-register\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(0, 1\.08fr\) minmax\(0, 0\.92fr\)/,
+    );
+    expect(collectionCss).toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1500}\.collection-chapter-head\s*\{[\s\S]{0,180}grid-template-columns:\s*1\.35rem minmax\(0, 1fr\)/,
+    );
+    expect(collectionCss).toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1900}\.collection-chapter-head__fact\s*\{[\s\S]{0,180}grid-column:\s*2/,
+    );
   });
 });

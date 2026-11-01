@@ -33,7 +33,6 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
       { file: "src/components/build/BuildDiscovery.vue", count: 1 },
       { file: "src/views/MortalWorldView.vue", count: 2 },
       { file: "src/views/RealmCodexView.vue", count: 1 },
-      { file: "src/views/CollectionView.vue", count: 2 },
       { file: "src/views/CharacterView.vue", count: 1 },
     ];
 
@@ -109,8 +108,8 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
       /\.world-ledger\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--world-accent\)/,
     );
     expect(realm).toMatch(/\.realm-now\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--realm-accent\)/);
-    expect(collection).toMatch(
-      /\.achievement-briefing,\s*\.collection-briefing\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--color-gold-ink\)/,
+    expect(collection, "藏珍两章不再借共享案头").not.toContain(
+      ".achievement-briefing > .folio-ledger-head",
     );
     expect(dongfu).toMatch(
       /\.dongfu-ledger\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--world-bar\)/,

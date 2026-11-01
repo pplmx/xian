@@ -211,6 +211,8 @@
  *   七十四 设置六章共用一张开口续卷:声息、观照、行止、存续、留痕、卷末按序续排,
  *      章首不得重叠或横向溢出,章内不得重新套四边卡;1280 宽量存续占左、留痕与
  *      卷末叠右的并读几何,195 宽量章态与动作退行后仍无挤压。
+ *   七十五 藏珍两章同住一册:总印落在行动章之首,章首统一章号、题名、读法与章内真值;
+ *      390 / 620 单列续读,1280 才让行动章与卷目章左右并读,195 把章内读数退到章名下方。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -10575,6 +10577,297 @@ async function taskCollectionFold() {
 }
 
 /**
+ * 藏珍两章续卷 —— 总印、行动章与卷目章同住一张开口纸面。
+ *
+ * 390 与 620 单列续读，1280 才让行动章与卷目章左右并读，195（200% 缩放）
+ * 把章内读数退到章名下方。两页签都要量同一套章号、章名、事实源与册目落点。
+ */
+async function taskCollectionRegister() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    slices.quests.counters = { kills: 48, explores: 9 };
+    await seedSave(ctx, slices, "__collectionRegister");
+
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/collection", 700);
+    checked += 1;
+    if (rendered === 0) {
+      failures.push("[collection-register] 藏珍页没有渲染，两章续卷无从量起");
+      return {
+        failures,
+        checked,
+        contrastFails: [],
+        pixelContrastFails: [],
+        zoomFails: [],
+      };
+    }
+
+    const read = () =>
+      page.evaluate(() => {
+        const box = (el) => {
+          if (!el) return null;
+          const rect = el.getBoundingClientRect();
+          return {
+            top: Math.round(rect.top),
+            right: Math.round(rect.right),
+            bottom: Math.round(rect.bottom),
+            left: Math.round(rect.left),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+            scrollWidth: el.scrollWidth,
+            clientWidth: el.clientWidth,
+          };
+        };
+        const register = document.querySelector("[data-collection-register]");
+        const registerStyle = register ? getComputedStyle(register) : null;
+        const chapters = [...document.querySelectorAll("[data-collection-chapter]")].map(
+          (chapter) => {
+            const style = getComputedStyle(chapter);
+            const head = chapter.querySelector("[data-collection-chapter-head]");
+            return {
+              key: chapter.getAttribute("data-collection-chapter") || "",
+              title:
+                head?.querySelector(".collection-chapter-head__title")?.textContent?.trim() || "",
+              index:
+                head?.querySelector(".collection-chapter-head__index")?.textContent?.trim() || "",
+              fact:
+                head?.querySelector(".collection-chapter-head__fact")?.textContent?.trim() || "",
+              hasHead: Boolean(head),
+              borderWidths: [
+                style.borderTopWidth,
+                style.borderRightWidth,
+                style.borderBottomWidth,
+                style.borderLeftWidth,
+              ].map((width) => Number.parseFloat(width)),
+              radius: Number.parseFloat(style.borderTopLeftRadius),
+              shadow: style.boxShadow,
+              background: style.backgroundColor,
+              rect: box(chapter),
+            };
+          },
+        );
+        const firstHead = chapters[0]
+          ? document.querySelectorAll("[data-collection-chapter-head]")[0]
+          : null;
+        const firstTitle = firstHead?.querySelector(".collection-chapter-head__title");
+        const firstFact = firstHead?.querySelector(".collection-chapter-head__fact");
+        const targets = document.querySelector(".achievement-briefing__targets");
+        return {
+          viewport: { width: window.innerWidth, height: window.innerHeight },
+          register: registerStyle
+            ? {
+                borderTop: Number.parseFloat(registerStyle.borderTopWidth),
+                borderRight: Number.parseFloat(registerStyle.borderRightWidth),
+                borderBottom: Number.parseFloat(registerStyle.borderBottomWidth),
+                borderLeft: Number.parseFloat(registerStyle.borderLeftWidth),
+                radius: Number.parseFloat(registerStyle.borderTopLeftRadius),
+                shadow: registerStyle.boxShadow,
+                columns: registerStyle.gridTemplateColumns.split(/\s+/).filter(Boolean).length,
+                rect: box(register),
+                cardShells: register?.querySelectorAll(".card-ink").length ?? 0,
+              }
+            : null,
+          chapters,
+          cabinetInLead: Boolean(
+            document
+              .querySelector('[data-collection-chapter="lead"]')
+              ?.contains(document.querySelector("[data-collection-cabinet]")),
+          ),
+          categories: document.querySelectorAll("[data-collection-category]").length,
+          targetColumns: targets
+            ? getComputedStyle(targets).gridTemplateColumns.split(/\s+/).filter(Boolean).length
+            : 0,
+          factColumn: firstFact ? getComputedStyle(firstFact).gridColumnStart : "",
+          titleTop: firstTitle ? Math.round(firstTitle.getBoundingClientRect().top) : null,
+          factTop: firstFact ? Math.round(firstFact.getBoundingClientRect().top) : null,
+          documentOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
+        };
+      });
+
+    const assertRegister = async (label, expected) => {
+      const layout = await read();
+      checked += 1;
+      const chapterKeys = layout.chapters.map((chapter) => chapter.key).join(",");
+      const chapterIndices = layout.chapters.map((chapter) => chapter.index).join(",");
+      const brokenChapters = layout.chapters.filter(
+        (chapter) =>
+          !chapter.hasHead ||
+          chapter.radius !== 0 ||
+          chapter.shadow !== "none" ||
+          chapter.background !== "rgba(0, 0, 0, 0)" ||
+          chapter.borderWidths.every((width) => width > 0),
+      );
+      const registerOk =
+        layout.register &&
+        layout.register.borderTop >= 1 &&
+        layout.register.borderBottom >= 1 &&
+        layout.register.borderLeft === 0 &&
+        layout.register.borderRight === 0 &&
+        layout.register.radius === 0 &&
+        layout.register.shadow === "none" &&
+        layout.register.cardShells === 0 &&
+        layout.register.rect.left >= -1 &&
+        layout.register.rect.right <= layout.viewport.width + 1 &&
+        layout.register.rect.scrollWidth <= layout.register.rect.clientWidth + 1;
+      const oneColumn =
+        layout.chapters.length === 2 &&
+        layout.chapters[0].rect.bottom <= layout.chapters[1].rect.top + 1;
+      const twoColumns =
+        layout.chapters.length === 2 &&
+        Math.abs(layout.chapters[0].rect.top - layout.chapters[1].rect.top) <= 2 &&
+        layout.chapters[0].rect.right <= layout.chapters[1].rect.left + 1;
+      const columnOk = expected.columns === 2 ? twoColumns : oneColumn;
+      const leadTitleOk = Array.isArray(expected.leadTitle)
+        ? expected.leadTitle.includes(layout.chapters[0]?.title)
+        : layout.chapters[0]?.title === expected.leadTitle;
+      const titlesOk =
+        leadTitleOk &&
+        layout.chapters[1]?.title === expected.volumesTitle &&
+        chapterIndices === "壹,贰" &&
+        layout.chapters.every((chapter) => chapter.fact);
+      const factOk =
+        expected.factBelowTitle !== true ||
+        (layout.titleTop !== null &&
+          layout.factTop !== null &&
+          layout.factTop >= layout.titleTop &&
+          layout.factColumn === "2");
+      if (
+        chapterKeys !== "lead,volumes" ||
+        !layout.cabinetInLead ||
+        !titlesOk ||
+        !columnOk ||
+        !registerOk ||
+        brokenChapters.length > 0 ||
+        layout.documentOverflow ||
+        !factOk
+      ) {
+        failures.push(
+          `[${label}] 藏珍两章没有收成一册:` +
+            `章=${chapterKeys} / 章号=${chapterIndices} / ` +
+            `章名=${JSON.stringify(layout.chapters.map((chapter) => chapter.title))} / ` +
+            `总印在行动章=${layout.cabinetInLead} / 列=${layout.register?.columns ?? "-"} ` +
+            `期望 ${expected.columns} / 单列=${oneColumn} / 双列=${twoColumns} / ` +
+            `章内读数下移=${factOk} / 横向溢出=${layout.documentOverflow} / ` +
+            `散章=${JSON.stringify(brokenChapters)} / 续卷=${JSON.stringify(layout.register)}`,
+        );
+      }
+      return layout;
+    };
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await settleVisuals(page);
+    const fold = await assertRegister("390", {
+      columns: 1,
+      leadTitle: "眼下可追",
+      volumesTitle: "功名卷目",
+    });
+    checked += 1;
+    if (fold.targetColumns !== 1) {
+      failures.push(`[390] 眼下可追应单列,实见 ${fold.targetColumns} 列`);
+    }
+    if (SHOTS) {
+      mkdirSync(SHOTS_DIR, { recursive: true });
+      await page.screenshot({
+        path: join(SHOTS_DIR, "390_collection-register.png"),
+        fullPage: true,
+      });
+    }
+
+    await page.getByRole("tab", { name: "收藏" }).click({ timeout: 3000 });
+    await settleVisuals(page);
+    const collectionFold = await assertRegister("390-收藏", {
+      columns: 1,
+      leadTitle: ["眼下新得", "将满之册", "九册尽收", "九册待启"],
+      volumesTitle: "九册藏珍",
+    });
+    checked += 1;
+    if (collectionFold.categories !== 9) {
+      failures.push(`[390-收藏] 九册藏珍应列 9 册,实见 ${collectionFold.categories} 册`);
+    }
+    if (SHOTS) {
+      await page.screenshot({
+        path: join(SHOTS_DIR, "390_collection-register-collection.png"),
+        fullPage: true,
+      });
+    }
+
+    await page.getByRole("tab", { name: "成就" }).click({ timeout: 3000 });
+    await settleVisuals(page);
+    await page.setViewportSize({ width: 620, height: 900 });
+    await settleVisuals(page);
+    const tablet = await assertRegister("620", {
+      columns: 1,
+      leadTitle: "眼下可追",
+      volumesTitle: "功名卷目",
+    });
+    checked += 1;
+    if (tablet.targetColumns !== 3) {
+      failures.push(`[620] 眼下可追应三枚并读,实见 ${tablet.targetColumns} 列`);
+    }
+    if (SHOTS) {
+      await page.screenshot({
+        path: join(SHOTS_DIR, "620_collection-register.png"),
+        fullPage: true,
+      });
+    }
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await settleVisuals(page);
+    await assertRegister("1280", {
+      columns: 2,
+      leadTitle: "眼下可追",
+      volumesTitle: "功名卷目",
+    });
+    if (SHOTS) {
+      await page.screenshot({
+        path: join(SHOTS_DIR, "1280_collection-register.png"),
+        fullPage: true,
+      });
+    }
+
+    await page.setViewportSize({ width: 195, height: 422 });
+    await settleVisuals(page);
+    await assertRegister("195", {
+      columns: 1,
+      leadTitle: "眼下可追",
+      volumesTitle: "功名卷目",
+      factBelowTitle: true,
+    });
+    if (SHOTS) {
+      await page.screenshot({
+        path: join(SHOTS_DIR, "195_collection-register.png"),
+        fullPage: true,
+      });
+    }
+
+    if (pageErrors.length) {
+      failures.push(
+        `[collection-register] 藏珍两章场景页面异常:${[...new Set(pageErrors)].join(" | ")}`,
+      );
+    }
+  } finally {
+    await ctx.close();
+  }
+  return {
+    failures,
+    checked,
+    contrastFails: [],
+    pixelContrastFails: [],
+    zoomFails: [],
+  };
+}
+
+/**
  * 前尘山河 —— 跨世历史在 320 与 195 宽下必须真的画得出来。
  *
  * 空档与后期档都只有当前这一世,`data-world-history` 永远不会出现;历史行里的
@@ -17366,6 +17659,7 @@ const TASKS = [
   ["界域志首屏的此刻优先", taskCodexFold],
   ["成就谱首屏的眼下可追", taskAchievementFold],
   ["藏珍谱首屏的新得优先", taskCollectionFold],
+  ["藏珍两章续卷与桌面并读", taskCollectionRegister],
   ["减少动效真的减到了", taskReduceMotion],
   ["闭关的跨页承诺", taskRetreat],
   ["背包里的账目", taskInventoryAccounting],

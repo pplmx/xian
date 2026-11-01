@@ -369,8 +369,11 @@ error: Failed to resolve vite command: GenericFailure, Expected
 不再借卷首主视觉复写大标题,也不再在行动席重复整体总量;两侧仍共用
 `collectionProgressOverviewFromCodex` 与 `nearestAchievementRows`,
 九册单字印与格内读数由 `ui/collectionDesk` 搬运,不在组件里重数条目。
-九册正文继续保留来源、尽收、分批窗口与回翻;结构与事实源由
-`src/ui/collectionDesk.spec.ts` 守住。
+功名与藏珍各收成一册两章:总印落在行动章之首,`CollectionChapterHead` 统一章号、
+眉题、题名、读法与章内真值,卷目章沿同一卷面续排。390 / 620 宽单列续读,
+960 宽才让行动章与卷目章左右并读,195 宽把章内读数退到章名下方。九册正文继续
+保留来源、尽收、分批窗口与回翻;结构与事实源由 `src/ui/collectionDesk.spec.ts`
+守住,真浏览器排版由 `taskCollectionRegister` 的 390 / 620 / 1280 / 195 四档复核。
 
 历练页的「今日行旅」「眼下可往」「秘境」与「行旅之则」共用一张四章开口续卷:
 整册只留上下账线与分段线,秘境以嵌入态去掉自己的四边卡;每处地界的身份 / 主行动、
