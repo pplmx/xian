@@ -148,6 +148,17 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
     expect(ledger, "主卷、对照与空态不再套卡壳").not.toContain("card-ink");
   });
 
+  it("天道熔炉只在卷身续账,熔材行不再套第二张纸卡", () => {
+    const furnace = source("src/components/celestial/FurnaceDialog.vue");
+    const layout = source("scripts/layout-check.mjs");
+
+    expect(furnace, "熔炉正文要有稳定落点").toContain("data-furnace-ledger");
+    expect(furnace, "熔材行不再借通用纸卡").not.toContain("card-ink");
+    expect(furnace, "熔炉动作行在 200% 档上下续排").toContain("tinylens:flex-col");
+    expect(furnace, "熔炉动作键在 200% 档吃满整行").toContain("tinylens:w-full");
+    expect(layout, "真浏览器要核熔炉浮层没有内层卡壳").toContain("data-furnace-ledger");
+  });
+
   it("远征、试炼与道痕面板仍按当前册互斥挂载,不把未激活状态混进页面", () => {
     const view = source("src/views/CelestialView.vue");
 

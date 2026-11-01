@@ -12890,7 +12890,7 @@ async function taskDialogZoom() {
           templateId: "w_hanfeng",
           quality: "immortal",
           tier: 20,
-          level: 0,
+          level: 3,
           affixes: [{ id: "low2", roll: 0.6 }],
         },
         ...extraWeaponCandidates,
@@ -12988,6 +12988,65 @@ async function taskDialogZoom() {
       };
     }, selector);
 
+  const assertLedgerWithoutCard = async (label, selector, bordered = true) => {
+    checked += 1;
+    const ledger = await readOpenLedger(selector);
+    const blockOk = bordered
+      ? ledger?.borderTop === 1 && ledger?.borderBottom === 1
+      : ledger?.borderTop === 0 && ledger?.borderBottom === 0;
+    if (
+      !ledger ||
+      !blockOk ||
+      ledger.borderRight !== 0 ||
+      ledger.borderLeft !== 0 ||
+      ledger.radius !== 0 ||
+      ledger.background !== "rgba(0, 0, 0, 0)"
+    ) {
+      failures.push(`[195] ${label}又套回内层卡壳:${JSON.stringify(ledger)}`);
+    }
+  };
+
+  const readEquipmentFigureLines = () =>
+    page.evaluate(() => {
+      const figures = [
+        ...document.querySelectorAll(
+          "[data-equipment-compare-value], [data-equipment-salvage-cost] [data-value-nowrap]",
+        ),
+      ].map((el) => {
+        const rect = el.getBoundingClientRect();
+        const lineHeight = Number.parseFloat(getComputedStyle(el).lineHeight) || 16;
+        return {
+          kind: el.matches("[data-equipment-compare-value]") ? "compare" : "cost",
+          text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+          height: Math.round(rect.height * 10) / 10,
+          lineHeight: Math.round(lineHeight * 10) / 10,
+          lines: Math.round(rect.height / lineHeight),
+        };
+      });
+      return {
+        count: figures.length,
+        compare: figures.filter((row) => row.kind === "compare").length,
+        cost: figures.filter((row) => row.kind === "cost").length,
+        figures,
+      };
+    });
+
+  const readVeinRows = () =>
+    page.evaluate(() => ({
+      costs: [...document.querySelectorAll("[data-vein-cost]")].map((el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        return {
+          text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+          lines: new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size,
+        };
+      }),
+      names: [...document.querySelectorAll("[data-vein-name]")].map((el) => ({
+        text: el.textContent,
+        clipped: el.scrollWidth > el.clientWidth + 1,
+      })),
+    }));
+
   /** 一扇弹窗:点开 → 量 → 关掉。点不开直接报红(判据没量到东西) */
   const probe = async (label, route, click) => {
     await page.goto(INDEX + "#" + route, { waitUntil: "load" });
@@ -13054,6 +13113,44 @@ async function taskDialogZoom() {
         failures.push(`[195] 封存价签又长回按钮样:${JSON.stringify(sealPrice)}`);
       }
     }
+    if (label === "装备详情 · 同槽对比") {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.waitForTimeout(420);
+      checked += 1;
+      const figures = await readEquipmentFigureLines();
+      if (
+        figures.compare !== 1 ||
+        figures.cost < 2 ||
+        figures.figures.some((row) => row.lines > 1)
+      ) {
+        failures.push(`[1280] 器评帖的换装对比或分解代价被拆行:${JSON.stringify(figures)}`);
+      }
+      await page.setViewportSize({ width: 195, height: 422 });
+      await page.waitForTimeout(300);
+    }
+    if (label === "灵脉投资") {
+      await assertLedgerWithoutCard("灵脉浮层", "[data-vein-ledger]", false);
+      checked += 1;
+      const rows = await readVeinRows();
+      if (
+        !rows.costs.length ||
+        rows.costs.some((row) => row.lines > 1) ||
+        rows.names.some((row) => row.clipped)
+      ) {
+        failures.push(`[195] 灵脉投资行被拆行或截名:${JSON.stringify(rows)}`);
+      }
+    }
+    if (label === "天道熔炉") {
+      await assertLedgerWithoutCard("天道熔炉", "[data-furnace-ledger]");
+    }
+    if (label === "关于此作") {
+      await assertLedgerWithoutCard("关于浮层外框", "[data-about-surface]", false);
+      await assertLedgerWithoutCard("关于浮层账线", "[data-about-ledger]");
+    }
+    if (label === "数值体系") {
+      await assertLedgerWithoutCard("数值体系外框", "[data-progression-surface]", false);
+      await assertLedgerWithoutCard("数值体系账线", "[data-progression-ledger]");
+    }
     if (label === "装备详情 · 词条转移落位") {
       checked += 1;
       const transfer = await readOpenLedger("[data-equipment-affix-transfer]");
@@ -13083,6 +13180,12 @@ async function taskDialogZoom() {
   // 点的是藏品卡(带 data-uid),不是上面的槽位行;槽位行打开的是候选册。
   await probe("装备详情", "/inventory", async () => {
     await page.locator("main button[data-uid]").first().click({ timeout: 3000 });
+  });
+  await probe("装备详情 · 同槽对比", "/inventory", async () => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(INDEX + "#/inventory", { waitUntil: "load" });
+    await page.waitForTimeout(1100);
+    await page.locator('main button[data-uid="dlg_w2"]').first().click({ timeout: 3000 });
   });
   /*
    * 部位候选在大行囊里也会长到几十条。195px 下既要能读分页读数与两枚入口,
@@ -13155,6 +13258,18 @@ async function taskDialogZoom() {
       .first()
       .click({ timeout: 3000 });
   });
+  await probe("天道熔炉", "/celestial", async () => {
+    for (let i = 0; i < 3 && (await page.locator(".modal-panel").count()) > 0; i += 1) {
+      const know = page.getByRole("button", { name: "知道了" }).last();
+      if (await know.count()) await know.click();
+      else await page.keyboard.press("Escape");
+      await page.waitForTimeout(250);
+    }
+    await page
+      .locator("main button", { hasText: /天道熔炉/ })
+      .first()
+      .click({ timeout: 3000 });
+  });
   // 人物页的详情浮层(点第一枚读数卡)与设置页的两份长文 —— 长文是 195 宽下最挤的一类
   await probe("人物读数详情", "/character", async () => {
     await page.locator("main button").first().click({ timeout: 3000 });
@@ -13170,6 +13285,9 @@ async function taskDialogZoom() {
       .locator("main button", { hasText: /关于/ })
       .first()
       .click({ timeout: 3000 });
+  });
+  await probe("数值体系", "/settings", async () => {
+    await page.locator("[data-settings-progression]").click({ timeout: 3000 });
   });
   await probe("隐私政策", "/settings", async () => {
     await page

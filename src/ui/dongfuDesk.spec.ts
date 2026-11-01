@@ -142,6 +142,27 @@ describe("洞府案 · 山门图先立意,总账再摊开七作", () => {
     expect(row, "账行不再借通用卡片壳").not.toContain("card-ink");
   });
 
+  it("灵脉浮层只沿卷身账线,不再在弹窗内套第二张纸卡", () => {
+    const view = source("src/views/DongfuView.vue");
+    const vein = source("src/components/dongfu/VeinInvestCard.vue");
+    const layout = source("scripts/layout-check.mjs");
+
+    expect(view, "灵脉仍由洞府门径打开同一扇浮层").toMatch(
+      /<BaseModal[\s\S]{0,120}aria-label="灵脉"[\s\S]{0,180}<VeinInvestCard/,
+    );
+    expect(vein, "灵脉正文要有稳定落点").toContain("data-vein-ledger");
+    expect(vein, "灵脉代价要有稳定落点").toContain("data-vein-cost");
+    expect(vein, "灵脉名要有稳定落点").toContain("data-vein-name");
+    expect(vein, "灵脉代价在 200% 档不许拆行").toContain("tinylens:whitespace-nowrap");
+    expect(vein, "灵脉行在 200% 档收住列距与内边距").toContain("tinylens:gap-1");
+    expect(vein, "灵脉主键在 200% 档收住左右内边距").toContain("tinylens:!px-1.5");
+    expect(vein, "主脉印记在 200% 档收住左右内边距").toContain("tinylens:!px-0.5");
+    expect(vein, "灵脉代价必须带灵石量词").toContain("{{ formatGN(investCost) }} 石");
+    expect(vein, "灵脉不再借通用纸卡").not.toContain("card-ink");
+    expect(layout, "真浏览器要核灵脉浮层没有内层卡壳").toContain("data-vein-ledger");
+    expect(layout, "真浏览器要核灵脉行不被拆行或截名").toContain("data-vein-name");
+  });
+
   it("账行只把真动作染朱砂 —— 主键短笔淡底,等级与进度归石青", () => {
     // 七作同时可升时,若整行与整宽按钮都铺朱砂,七条会叠成同一层重的行动带。
     // 可动的那一下只留在行内短笔按钮上;等级、进度与已营计数都属信息层。

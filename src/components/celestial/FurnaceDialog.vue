@@ -2,15 +2,17 @@
   <!-- 天道熔炉 -->
   <BaseModal :open="open" title="天道熔炉" @close="emit('close')">
     <p class="mb-2 t-body text-ink-faint">前尘俗物,皆可熔作道源。</p>
-    <div class="card-ink divide-y divide-ink/7 px-4">
+    <div class="mt-1 divide-y divide-ink/10 border-y border-ink/10" data-furnace-ledger>
       <div v-for="row in furnaceRows" :key="row.rate.resource" class="py-2.5">
-        <div class="flex items-center justify-between gap-2">
+        <div
+          class="flex items-center justify-between gap-2 tinylens:flex-col tinylens:items-stretch"
+        >
           <span class="text-body text-ink-soft"
             >{{ row.rate.name }}(存 {{ formatNum(row.have) }})</span
           >
           <!-- 全熔防误触:文案亮出『整包』与可得道源(不再是『按 25:1 换』的可兑换暗示),再按一下才熔 -->
           <button
-            class="btn-ghost !px-3 !py-1 !text-body tabular"
+            class="btn-ghost !px-3 !py-1 !text-body tabular tinylens:w-full"
             :disabled="furnacePreview(row.rate) <= 0"
             @click="furnaceConfirm = row.rate.resource"
           >
@@ -46,11 +48,13 @@
           </div>
         </div>
       </div>
-      <div class="flex items-center justify-between py-2.5">
+      <div
+        class="flex items-center justify-between py-2.5 tinylens:flex-col tinylens:items-stretch"
+      >
         <span class="text-body text-ink-soft">灵石(存 {{ formatGN(resources.spiritStone) }})</span>
         <!-- 灵石不足置灰+列差:值与差异都现算(与熔尽本包/其余消费点同款纪律) -->
         <button
-          class="btn-ghost !px-3 !py-1 !text-body tabular"
+          class="btn-ghost !px-3 !py-1 !text-body tabular tinylens:w-full"
           :disabled="stoneShort > 0"
           @click="furnaceConvertStone()"
         >
@@ -61,11 +65,11 @@
         </button>
       </div>
       <div class="py-2.5">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between tinylens:flex-col tinylens:items-stretch">
           <span class="text-body text-ink-soft">道源凝道果(跨世保留)</span>
           <!-- 道源不足置灰+列差:差多少现算(与灵石行同款) -->
           <button
-            class="btn-ghost !px-3 !py-1 !text-body tabular"
+            class="btn-ghost !px-3 !py-1 !text-body tabular tinylens:w-full"
             :disabled="daoShort > 0"
             @click="doCondense()"
           >

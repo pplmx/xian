@@ -94,6 +94,24 @@ describe("器评帖 · 装备详情先给身份与换装结论", () => {
     expect(css, "器评帖样式入口保留").toContain(".equip-dossier__workshop");
   });
 
+  it("换装对比与分解返还只在语义边界换行,数字和量词不拆两行", () => {
+    const dialog = source("src/components/equipment/EquipmentDetailDialog.vue");
+    const layout = source("scripts/layout-check.mjs");
+
+    expect(dialog, "换装对照要有稳定落点").toContain("data-equipment-compare");
+    expect(dialog, "当前同槽战力要整段不折").toMatch(
+      /data-equipment-compare-value[\s\S]{0,80}whitespace-nowrap/,
+    );
+    expect(dialog, "分解返还行要允许在标签与代价之间换行").toMatch(
+      /data-equipment-salvage[\s\S]{0,180}flex-wrap/,
+    );
+    expect(dialog, "分解代价按器灵尘与灵石分段,段内不折").toMatch(
+      /data-equipment-salvage-cost[\s\S]{0,160}whitespace-nowrap/,
+    );
+    expect(layout, "1280 桌面要真量这些数字的渲染行数").toContain("data-equipment-compare-value");
+    expect(layout).toContain("data-equipment-salvage-cost");
+  });
+
   it("候选与详情共用同一份战力判据", () => {
     const candidates = source("src/components/inventory/SlotCandidatesDialog.vue");
     expect(candidates).toContain("equipPowerComparison");

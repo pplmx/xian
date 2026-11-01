@@ -1,6 +1,6 @@
 <template>
-  <div class="card-ink px-4 py-3">
-    <div class="mb-2 flex items-center justify-between">
+  <div class="min-w-0 px-0.5" data-vein-ledger>
+    <div class="mb-2 flex items-center justify-between border-b border-ink/10 pb-2">
       <h3 class="font-kai text-title tracking-[0.25em] text-ink">灵脉投资</h3>
       <span class="text-body text-ink-faint tabular">
         {{ veinTotal }}/{{ VEIN_TOTAL_CAPACITY }}
@@ -15,24 +15,27 @@
 
     <div class="space-y-2.5">
       <div v-for="v in VEINS" :key="v.id" class="space-y-1">
-        <div class="flex items-stretch gap-1.5">
+        <div class="flex items-stretch gap-1.5 tinylens:gap-1">
           <button
-            class="btn-ghost flex min-w-0 flex-1 items-center justify-between !py-1.5 !text-[12px]"
+            class="btn-ghost flex min-w-0 flex-1 items-center justify-between !py-1.5 !text-[12px] tinylens:flex-wrap tinylens:!px-1.5"
             :disabled="!canInvest(v.id)"
             @click="doInvest(v.id)"
           >
-            <span class="flex min-w-0 items-center gap-1.5">
-              <span class="truncate">{{ v.name }}</span>
+            <span class="flex min-w-0 items-center gap-1.5 tinylens:w-full">
+              <span class="truncate" data-vein-name>{{ v.name }}</span>
               <span
                 v-if="isMain(v.id)"
-                class="shrink-0 rounded-[2px] bg-cinnabar/6 px-1 py-0.5 text-note leading-none text-cinnabar"
+                class="shrink-0 rounded-[2px] bg-cinnabar/6 px-1 py-0.5 text-note leading-none text-cinnabar tinylens:!px-0.5"
                 >主脉</span
               >
               <span v-else-if="dongfu.veinMain === null" class="shrink-0 text-note text-ink-faint"
                 >首投成主</span
               >
             </span>
-            <span class="tabular text-body">
+            <span
+              class="tabular text-body tinylens:w-full tinylens:whitespace-nowrap"
+              data-vein-cost
+            >
               <span :class="atCap(v.id) ? 'text-jade' : 'text-ink-faint'">
                 {{ currentLevel(v.id) }}/{{ cap(v.id) }}
               </span>
@@ -45,13 +48,13 @@
               <span v-else-if="stoneShort > 0" class="ml-1.5 text-ink-faint"
                 >尚差 {{ formatGN(stoneShort) }} 石</span
               >
-              <span v-else class="ml-1.5 text-ink-faint">{{ formatGN(investCost) }}</span>
+              <span v-else class="ml-1.5 text-ink-faint">{{ formatGN(investCost) }} 石</span>
             </span>
           </button>
           <!-- 连投:主脉 70 点一次一点要点半天,给个批量 —— 点到批量/满/料尽为止,合一条账。
                批量数读 VEIN_BATCH(单源),不许手写「+5」当常量改了只顾一头。 -->
           <button
-            class="btn-ghost shrink-0 !px-2.5 !py-1.5 !text-body"
+            class="btn-ghost shrink-0 !px-2.5 !py-1.5 !text-body tinylens:!px-2"
             :aria-label="`连投 ${VEIN_BATCH} 点`"
             :disabled="!canInvest(v.id)"
             @click="doInvestBatch(v.id)"

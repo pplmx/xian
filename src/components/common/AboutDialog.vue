@@ -1,22 +1,24 @@
 <template>
   <BaseModal :open="open" title="关于此作" @close="$emit('close')">
-    <div class="space-y-3 text-body leading-relaxed">
+    <div class="text-body leading-relaxed" data-about-surface>
       <p class="text-ink-faint">《玄枢录》—— 玄之又玄,众妙之门。</p>
-      <div class="card-ink px-3 py-2">
-        <p class="text-note text-ink-faint">当前版本</p>
-        <p class="font-kai text-title text-ink tabular">v{{ version }}</p>
-      </div>
-      <div class="card-ink px-3 py-2">
-        <p class="text-note text-ink-faint">开源仓库</p>
-        <!-- 行内链接的实际命中区只有字体那 14px 高;补成内联块给拇指一个 30px 的靶面 -->
-        <a
-          href="https://github.com/pplmx/xian"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-block py-1.5 text-qing underline break-all"
-        >
-          github.com/pplmx/xian
-        </a>
+      <div class="mt-3 divide-y divide-ink/10 border-y border-ink/10" data-about-ledger>
+        <div class="py-2">
+          <p class="text-note text-ink-faint">当前版本</p>
+          <p class="font-kai text-title text-ink tabular">v{{ version }}</p>
+        </div>
+        <div class="py-2">
+          <p class="text-note text-ink-faint">开源仓库</p>
+          <!-- 行内链接的实际命中区只有字体那 14px 高;补成内联块给拇指一个 30px 的靶面 -->
+          <a
+            href="https://github.com/pplmx/xian"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-block py-1.5 text-qing underline break-all"
+          >
+            github.com/pplmx/xian
+          </a>
+        </div>
       </div>
     </div>
     <template #footer>

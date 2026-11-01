@@ -219,6 +219,23 @@ describe("天机案 · 设置卷首与三案同读此刻", () => {
     expect(layout).toContain("存续、留痕与卷末没有在桌面上并读");
   });
 
+  it("说明类浮层只留卷身分段线,关于与数值体系不再各铺一摞纸卡", () => {
+    const about = source("src/components/common/AboutDialog.vue");
+    const progression = source("src/components/common/ProgressionDialog.vue");
+    const layout = source("scripts/layout-check.mjs");
+
+    expect(about, "关于浮层外框要有独立落点").toContain("data-about-surface");
+    expect(about, "关于浮层要有稳定落点").toContain("data-about-ledger");
+    expect(progression, "数值体系外框要有独立落点").toContain("data-progression-surface");
+    expect(progression, "数值体系浮层要有稳定落点").toContain("data-progression-ledger");
+    expect(about, "关于浮层不再借通用纸卡").not.toContain("card-ink");
+    expect(progression, "数值体系不再逐段借通用纸卡").not.toContain("card-ink");
+    expect(layout, "真浏览器要核关于浮层没有内层卡壳").toContain("data-about-ledger");
+    expect(layout, "真浏览器要核关于外框没有纸卡壳").toContain("data-about-surface");
+    expect(layout, "真浏览器要核数值体系没有内层卡壳").toContain("data-progression-ledger");
+    expect(layout, "真浏览器要核数值体系外框没有纸卡壳").toContain("data-progression-surface");
+  });
+
   it("整册收成一张开口长账,六章只共用章首与分段线", () => {
     const view = source("src/views/SettingsView.vue");
     const css = source("src/styles/pages/settings.css");

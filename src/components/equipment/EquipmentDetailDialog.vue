@@ -47,8 +47,11 @@
         <div class="equip-dossier__verdict" :data-verdict="powerComparison?.verdict">
           <span class="equip-dossier__caption">{{ powerVerdictLabel }}</span>
           <strong class="font-kai tabular">{{ powerDeltaText }}</strong>
-          <small v-if="compareTarget">
-            当前「{{ compareTarget.name }}」{{ incumbentPowerText }}
+          <small v-if="compareTarget" data-equipment-compare>
+            当前「{{ compareTarget.name }}」
+            <span data-equipment-compare-value class="whitespace-nowrap tabular">{{
+              incumbentPowerText
+            }}</span>
           </small>
           <small v-else-if="isEquipped">此槽当前穿的就是这一件</small>
           <small v-else>空槽可直接补位</small>
@@ -210,11 +213,19 @@
 
     <template #footer>
       <div class="flex flex-col gap-2" data-equipment-actions>
-        <p v-if="salvage" class="flex items-center justify-between text-body text-ink-faint">
-          <span>分解返还{{ inst?.level ? `(${refundRateText()})` : "" }}</span>
-          <span class="tabular">
-            器灵尘×{{ salvage.dust }}
-            <template v-if="!isZero(salvage.stone)"> · 灵石 {{ formatGN(salvage.stone) }}</template>
+        <p
+          v-if="salvage"
+          data-equipment-salvage
+          class="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 text-body text-ink-faint"
+        >
+          <span data-value-nowrap class="whitespace-nowrap"
+            >分解返还{{ inst?.level ? `(${refundRateText()})` : "" }}</span
+          >
+          <span data-equipment-salvage-cost class="flex flex-wrap justify-end gap-x-1.5 tabular">
+            <span data-value-nowrap class="whitespace-nowrap">器灵尘×{{ salvage.dust }}</span>
+            <span v-if="!isZero(salvage.stone)" data-value-nowrap class="whitespace-nowrap"
+              >· 灵石 {{ formatGN(salvage.stone) }}</span
+            >
           </span>
         </p>
         <div class="flex gap-2 tinylens:flex-col">
