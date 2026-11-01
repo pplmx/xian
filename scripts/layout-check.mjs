@@ -217,6 +217,8 @@
  *      390 / 195 单列续读,960 宽起左右并读;运行时门核对章序、章号、真值与非空章首。
  *   七十七 界域志六册共用章首:卷次、题名、读法与章内真值逐册齐全,390 / 195
  *      先让真值落到题名下方,620 起回到右侧;1280 再核章内真值与正文并读。
+ *   七十八 天界内层三册同用开口续卷:道途两章、远征两章与道痕一册的章序、
+ *      章内真值和卡壳归零;390 单列,960 起门径与世界账行两两并读,195 读数不竖排。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -4305,8 +4307,17 @@ async function taskLateTour() {
       (await pickNode.count()) > 0
         ? pickNode
         : page.locator("main button", { hasText: /决\s*战/ }).first();
-    if (!/远征 ·/.test(runBefore)) {
-      failures.push("[390-late] 天界页:在途远征没有渲染出来(夹具的 worldRun 没被读出来?)");
+    const runShown = await page.evaluate(() => {
+      const chapter = document.querySelector("[data-celestial-run]");
+      const fact = chapter?.querySelector(".celestial-chapter-head__fact");
+      return {
+        found: Boolean(chapter),
+        empty: Boolean(chapter?.querySelector("[data-celestial-run-empty]")),
+        fact: (fact?.textContent || "").trim(),
+      };
+    });
+    if (!runShown.found || runShown.empty || !runShown.fact.includes("赤炎天")) {
+      failures.push(`[390-late] 天界页:在途远征没有按章首真值渲染:${JSON.stringify(runShown)}`);
     } else if ((await runEntry.count()) === 0) {
       failures.push("[390-late] 天界页:在途远征没有可推进一步的入口(既无择路也无决战)");
     } else {
@@ -10084,6 +10095,379 @@ async function taskCelestialTrialFold() {
     }
     if (pageErrors.length) {
       failures.push(`[390-trial] 试炼续卷页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return {
+    failures,
+    checked,
+    contrastFails: [],
+    pixelContrastFails: [],
+    zoomFails: [],
+  };
+}
+
+/**
+ * 天界内层三册:道途两章、远征两章与道痕一册都沿同一套开口续卷语法。
+ *
+ * 390 核对章序、章首真值与单列账行；1280 核对门径与世界账行两两并读；
+ * 195(200% 缩放)核对章内读数退到题名下方但不挤成竖排，整页仍无横向可滚。
+ */
+async function taskCelestialInnerVolumes() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    slices.endgame = {
+      ...slices.endgame,
+      endgameTutorialSeen: true,
+      resourceDialogSeen: true,
+      marks: makeFullMarks().slice(0, 7),
+    };
+    await seedSave(ctx, slices, "__celestialInnerVolumes");
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    async function openCelestial(tab) {
+      await page.setViewportSize({ width: 390, height: 844 });
+      const rendered = await openRoute(page, `/celestial?tab=${tab}`, 700);
+      checked += 1;
+      if (rendered === 0) {
+        failures.push(`[390-${tab}] 天界内层册没渲染出来,续卷判据没量到东西`);
+        return false;
+      }
+      const tutorialClose = page.getByRole("button", { name: "知道了" }).first();
+      if ((await tutorialClose.count()) > 0) await tutorialClose.click().catch(() => {});
+      const leftover = await clearOverlays(page);
+      if (leftover.length) {
+        failures.push(`[390-${tab}] 量内层续卷前还开着浮层:${leftover.join("、")}`);
+      }
+      return true;
+    }
+
+    async function readLedger(ledgerSelector) {
+      return page.evaluate((selector) => {
+        const ledger = document.querySelector(selector);
+        const chapters = ledger
+          ? [
+              ...(ledger.matches("[data-celestial-chapter]") ? [ledger] : []),
+              ...ledger.querySelectorAll("[data-celestial-chapter]"),
+            ]
+          : [];
+        const heads = [...(ledger?.querySelectorAll(".celestial-chapter-head") ?? [])];
+        const overlaps = (a, b) =>
+          Boolean(
+            a &&
+            b &&
+            Math.min(a.right, b.right) > Math.max(a.left, b.left) + 1 &&
+            Math.min(a.bottom, b.bottom) > Math.max(a.top, b.top) + 1,
+          );
+        const style = ledger ? getComputedStyle(ledger) : null;
+        return {
+          found: Boolean(ledger),
+          chapterKeys: chapters.map((chapter) => chapter.getAttribute("data-celestial-chapter")),
+          chapterTitles: heads.map((head) =>
+            (head.querySelector(".celestial-chapter-head__title")?.textContent || "").trim(),
+          ),
+          chapterFacts: heads.map((head) =>
+            (head.querySelector(".celestial-chapter-head__fact")?.textContent || "").trim(),
+          ),
+          cardShells: ledger?.querySelectorAll(".card-ink").length ?? -1,
+          ledgerChrome: {
+            sideBorders: style ? [style.borderLeftWidth, style.borderRightWidth] : [],
+            radius: style ? Number.parseFloat(style.borderRadius) : null,
+            background: style?.backgroundColor ?? "missing",
+            shadow: style?.boxShadow ?? "missing",
+          },
+          heads: heads.map((head) => {
+            const headRect = head.getBoundingClientRect();
+            const copy = head.querySelector(".celestial-chapter-head__copy");
+            const fact = head.querySelector(".celestial-chapter-head__fact");
+            const copyRect = copy?.getBoundingClientRect();
+            const factRect = fact?.getBoundingClientRect();
+            const lineHeight = fact
+              ? Number.parseFloat(getComputedStyle(fact).lineHeight) ||
+                Number.parseFloat(getComputedStyle(fact).fontSize) ||
+                1
+              : 1;
+            return {
+              overflow: head.scrollWidth > head.clientWidth + 1,
+              factInside: factRect
+                ? factRect.left >= headRect.left - 2 &&
+                  factRect.right <= headRect.right + 2 &&
+                  factRect.top >= headRect.top - 2 &&
+                  factRect.bottom <= headRect.bottom + 2
+                : true,
+              copyFactOverlap: overlaps(copyRect, factRect),
+              factLineRatio: factRect ? factRect.height / lineHeight : 0,
+            };
+          }),
+        };
+      }, ledgerSelector);
+    }
+
+    async function gridColumns(selector) {
+      return page.evaluate((target) => {
+        const el = document.querySelector(target);
+        return el
+          ? getComputedStyle(el).gridTemplateColumns.split(/\s+/).filter(Boolean).length
+          : -1;
+      }, selector);
+    }
+
+    function auditLedgerChrome(label, ledger) {
+      if (!ledger.found) {
+        failures.push(`[${label}] 续卷外壳没量到,判据空转`);
+        return;
+      }
+      if (ledger.cardShells !== 0) {
+        failures.push(`[${label}] 续卷正文仍套着 ${ledger.cardShells} 张同权卡纸`);
+      }
+      if (
+        ledger.ledgerChrome.sideBorders.some((width) => Number.parseFloat(width) !== 0) ||
+        ledger.ledgerChrome.radius !== 0 ||
+        ledger.ledgerChrome.background !== "rgba(0, 0, 0, 0)" ||
+        ledger.ledgerChrome.shadow !== "none"
+      ) {
+        failures.push(`[${label}] 续卷外壳又长出卡壳:${JSON.stringify(ledger.ledgerChrome)}`);
+      }
+      if (ledger.heads.some((head) => head.overflow || !head.factInside || head.copyFactOverlap)) {
+        failures.push(`[${label}] 章首与章内读数互相挤压:${JSON.stringify(ledger.heads)}`);
+      }
+    }
+
+    async function auditZoom(label, ledgerSelector) {
+      await page.setViewportSize({ width: 195, height: 422 });
+      await settleVisuals(page);
+      checked += 1;
+      const problems = problemsOf(await measurePage(page));
+      if (problems.length) failures.push(`[195-${label}] → ${problems.join(" / ")}`);
+      const ledger = await readLedger(ledgerSelector);
+      if (
+        ledger.heads.some(
+          (head) =>
+            head.overflow || !head.factInside || head.copyFactOverlap || head.factLineRatio > 2.2,
+        )
+      ) {
+        failures.push(
+          `[195-${label}] 章内读数被挤成竖排或越出章首:${JSON.stringify(ledger.heads)}`,
+        );
+      }
+    }
+
+    async function snapLedger(name, ledgerSelector) {
+      if (!SHOTS) return;
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await settleVisuals(page);
+      await page
+        .locator(ledgerSelector)
+        .screenshot({ path: join(SHOTS_DIR, `1280-celestial-${name}.png`) });
+      await page.setViewportSize({ width: 390, height: 2600 });
+      await settleVisuals(page);
+      await page
+        .locator(ledgerSelector)
+        .screenshot({ path: join(SHOTS_DIR, `390-celestial-${name}.png`) });
+    }
+
+    if (await openCelestial("dao")) {
+      const dao = await readLedger("[data-celestial-dao-ledger]");
+      checked += 1;
+      if (
+        dao.chapterKeys.join("|") !== "dao|gateways" ||
+        dao.chapterTitles.join("|") !== "道途与门径|两处门径"
+      ) {
+        failures.push(
+          `[390-dao] 两章顺序或章名漂了:${dao.chapterKeys.join(" / ")} · ` +
+            dao.chapterTitles.join(" / "),
+        );
+      }
+      const daoFacts = await page.evaluate(() => {
+        const name = document
+          .querySelector('[data-celestial-chapter="dao"] .celestial-dao__name p')
+          ?.textContent?.trim();
+        const soulNote = document.querySelector(
+          "[data-celestial-gateways] .celestial-gateway:nth-child(2) .celestial-gateway__note",
+        );
+        const pair = (soulNote?.textContent || "").match(/已凝\s*(\d+)\/(\d+)/);
+        return { name: name || "", soulPair: pair ? `${pair[1]}/${pair[2]}` : "" };
+      });
+      if (!daoFacts.name) {
+        failures.push("[390-dao] 道途真值没量到,章首同源判据空转");
+      } else if (
+        !dao.chapterFacts[0].includes(daoFacts.name) ||
+        !dao.chapterFacts[0].includes("已定")
+      ) {
+        failures.push(`[390-dao] 道途章首没有报道途真值:${dao.chapterFacts[0]}`);
+      }
+      if (!daoFacts.soulPair) {
+        failures.push("[390-dao] 器魂槽位真值没量到,章首同源判据空转");
+      } else if (!dao.chapterFacts[1].includes(daoFacts.soulPair)) {
+        failures.push(
+          `[390-dao] 门径章首 ${dao.chapterFacts[1]} 没有读到器魂槽位 ${daoFacts.soulPair}`,
+        );
+      }
+      auditLedgerChrome("390-dao", dao);
+      const mobileGatewayColumns = await gridColumns(".celestial-gateway-rows");
+      checked += 1;
+      if (mobileGatewayColumns !== 1) {
+        failures.push(`[390-dao] 两处门径应为单列,实见 ${mobileGatewayColumns} 列`);
+      }
+
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await settleVisuals(page);
+      const desktopGatewayColumns = await gridColumns(".celestial-gateway-rows");
+      checked += 1;
+      if (desktopGatewayColumns !== 2) {
+        failures.push(`[1280-dao] 两处门径应并读为两列,实见 ${desktopGatewayColumns} 列`);
+      }
+
+      await snapLedger("dao-ledger", "[data-celestial-dao-ledger]");
+      await auditZoom("dao", "[data-celestial-dao-ledger]");
+    }
+
+    if (await openCelestial("exped")) {
+      const expedition = await readLedger("[data-celestial-expedition-ledger]");
+      checked += 1;
+      if (
+        expedition.chapterKeys.join("|") !== "run|worlds" ||
+        expedition.chapterTitles.join("|") !== "在途远征|特殊规则世界"
+      ) {
+        failures.push(
+          `[390-exped] 两章顺序或章名漂了:${expedition.chapterKeys.join(" / ")} · ` +
+            expedition.chapterTitles.join(" / "),
+        );
+      }
+      const worldState = await page.evaluate(() => {
+        const worlds = [
+          ...document.querySelectorAll("[data-celestial-worlds] .celestial-world-row"),
+        ];
+        const regular = worlds.filter(
+          (row) => !row.classList.contains("celestial-world-row--void"),
+        );
+        const voidRow = worlds.find((row) => row.classList.contains("celestial-world-row--void"));
+        return {
+          emptyVisible: Boolean(document.querySelector("[data-celestial-run-empty]")),
+          regularCount: regular.length,
+          hasVoidWorld: Boolean(voidRow?.querySelector(".btn-seal")),
+          rows: worlds.map((row) => {
+            const style = getComputedStyle(row);
+            return {
+              top: Math.round(row.getBoundingClientRect().top),
+              radius: Number.parseFloat(style.borderRadius),
+              shadow: style.boxShadow,
+              background: style.backgroundColor,
+            };
+          }),
+        };
+      });
+      const expectedWorlds = worldState.regularCount + (worldState.hasVoidWorld ? 1 : 0);
+      const expectedVoidText = worldState.hasVoidWorld ? "虚门可窥" : "虚门待窥";
+      if (!worldState.emptyVisible) {
+        failures.push("[390-exped] 没有在途远征时首章空态没露出来");
+      }
+      if (expedition.chapterFacts[1] !== `${expectedWorlds} 界 · ${expectedVoidText}`) {
+        failures.push(
+          `[390-exped] 世界章首 ${expedition.chapterFacts[1]} 与真实世界数 ` +
+            `${expectedWorlds} / ${expectedVoidText} 不同源`,
+        );
+      }
+      if (
+        worldState.rows.some(
+          (row) =>
+            row.radius !== 0 || row.shadow !== "none" || row.background !== "rgba(0, 0, 0, 0)",
+        )
+      ) {
+        failures.push(`[390-exped] 世界账行又长出卡壳:${JSON.stringify(worldState.rows)}`);
+      }
+      auditLedgerChrome("390-exped", expedition);
+      const mobileWorldColumns = await gridColumns(".celestial-world-ledger");
+      checked += 1;
+      if (mobileWorldColumns !== 1) {
+        failures.push(`[390-exped] 世界账行应为单列,实见 ${mobileWorldColumns} 列`);
+      }
+
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await settleVisuals(page);
+      const desktopWorld = await page.evaluate(() => {
+        const grid = document.querySelector(".celestial-world-ledger");
+        const rows = [...document.querySelectorAll("[data-celestial-worlds] .celestial-world-row")];
+        return {
+          columns: grid
+            ? getComputedStyle(grid).gridTemplateColumns.split(/\s+/).filter(Boolean).length
+            : -1,
+          tops: rows.map((row) => Math.round(row.getBoundingClientRect().top)),
+        };
+      });
+      checked += 1;
+      if (desktopWorld.columns !== 2) {
+        failures.push(`[1280-exped] 世界账行应并读为两列,实见 ${desktopWorld.columns} 列`);
+      }
+      if (
+        desktopWorld.tops.length < 2 ||
+        desktopWorld.tops[0] !== desktopWorld.tops[1] ||
+        (desktopWorld.tops[2] !== undefined && desktopWorld.tops[2] <= desktopWorld.tops[0])
+      ) {
+        failures.push(`[1280-exped] 世界账行没有两两并读:${desktopWorld.tops.join(" / ")}`);
+      }
+
+      await snapLedger("expedition-ledger", "[data-celestial-expedition-ledger]");
+      await auditZoom("exped", "[data-celestial-expedition-ledger]");
+    }
+
+    if (await openCelestial("marks")) {
+      const marks = await readLedger("[data-celestial-marks-ledger]");
+      checked += 1;
+      if (marks.chapterKeys.join("|") !== "marks" || marks.chapterTitles.join("|") !== "道痕") {
+        failures.push(
+          `[390-marks] 道痕章序或章名漂了:${marks.chapterKeys.join(" / ")} · ` +
+            marks.chapterTitles.join(" / "),
+        );
+      }
+      const markState = await page.evaluate(() => {
+        const holder = document.querySelector("[data-marks-total]");
+        return {
+          total: Number(holder?.getAttribute("data-marks-total")),
+          shown: Number(holder?.getAttribute("data-marks-shown")),
+          rows: document.querySelectorAll("[data-mark-row]").length,
+        };
+      });
+      if (
+        !Number.isFinite(markState.total) ||
+        markState.total <= 0 ||
+        !marks.chapterFacts[0].startsWith(`${markState.total} / `) ||
+        !marks.chapterFacts[0].endsWith(" 则")
+      ) {
+        failures.push(
+          `[390-marks] 章首 ${marks.chapterFacts[0]} 没有读到卷内 ${markState.total} 则`,
+        );
+      }
+      if (markState.shown !== markState.total || markState.rows !== markState.total) {
+        failures.push(`[390-marks] 卷内真值与可见行不一致:${JSON.stringify(markState)}`);
+      }
+      auditLedgerChrome("390-marks", marks);
+
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await settleVisuals(page);
+      const desktopMarks = await readLedger("[data-celestial-marks-ledger]");
+      auditLedgerChrome("1280-marks", desktopMarks);
+
+      await snapLedger("marks-ledger", "[data-celestial-marks-ledger]");
+      await auditZoom("marks", "[data-celestial-marks-ledger]");
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390-celestial] 内层续卷页面异常:${[...new Set(pageErrors)].join(" | ")}`);
     }
   } finally {
     await ctx.close();
@@ -18319,6 +18703,7 @@ const TASKS = [
   ["修行续卷的四章与行动层", taskCultivationFold],
   ["道躯三章与行藏拆卷", taskCharacterFold],
   ["天界试炼续卷的四章与八行", taskCelestialTrialFold],
+  ["天界内层三册的章节与并读", taskCelestialInnerVolumes],
   ["界域志首屏的此刻优先", taskCodexFold],
   ["成就谱首屏的眼下可追", taskAchievementFold],
   ["藏珍谱首屏的新得优先", taskCollectionFold],

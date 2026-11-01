@@ -95,127 +95,143 @@
       <div class="celestial-book" :data-celestial-book="celTab">
         <template v-if="celTab === 'dao'">
           <!-- 道途:此世已定则摊开代价、章法与剑意；未定则先列七道 -->
-          <section class="celestial-dao">
-            <div class="celestial-dao__head">
-              <SectionTitle title="道途与门径" hint="此生一诺，炉魂另启" />
-              <span class="celestial-dao__state">{{ currentDao ? "此世已定" : "七道待择" }}</span>
-            </div>
+          <article class="celestial-dao-ledger" data-celestial-dao-ledger>
+            <section class="celestial-dao" data-celestial-chapter="dao" data-celestial-dao>
+              <CelestialChapterHead
+                index="壹"
+                title="道途与门径"
+                hint="此生一诺，炉魂另启"
+                :fact="currentDao ? `${currentDao.name} · 已定` : `${DAO_PATHS.length} 道待择`"
+              />
 
-            <article v-if="currentDao" class="celestial-dao__card">
-              <header class="celestial-dao__identity">
-                <span class="celestial-dao__seal" aria-hidden="true">{{ currentDao.seal }}</span>
-                <div class="celestial-dao__name">
-                  <p>{{ currentDao.name }}</p>
-                  <span>此世道途 · 转世另择</span>
+              <article v-if="currentDao" class="celestial-dao__card">
+                <header class="celestial-dao__identity">
+                  <span class="celestial-dao__seal" aria-hidden="true">{{ currentDao.seal }}</span>
+                  <div class="celestial-dao__name">
+                    <p>{{ currentDao.name }}</p>
+                    <span>此世道途 · 转世另择</span>
+                  </div>
+                </header>
+                <p class="celestial-dao__desc">{{ currentDao.desc }}</p>
+
+                <div class="celestial-dao__columns">
+                  <section class="celestial-dao__rules">
+                    <p class="celestial-dao__caption">行此道的代价与所得</p>
+                    <p v-for="(r, i) in currentDao.ruleText" :key="i" class="celestial-dao__line">
+                      <span aria-hidden="true">·</span>
+                      <span>{{ r }}</span>
+                    </p>
+                  </section>
+                  <section v-if="currentDao.deepText.length" class="celestial-dao__deep">
+                    <p class="celestial-dao__caption">此道的章法</p>
+                    <p
+                      v-for="(r, i) in currentDao.deepText"
+                      :key="`d${i}`"
+                      class="celestial-dao__line"
+                    >
+                      <span aria-hidden="true">◇</span>
+                      <span>{{ r }}</span>
+                    </p>
+                  </section>
                 </div>
-              </header>
-              <p class="celestial-dao__desc">{{ currentDao.desc }}</p>
 
-              <div class="celestial-dao__columns">
-                <section class="celestial-dao__rules">
-                  <p class="celestial-dao__caption">行此道的代价与所得</p>
-                  <p v-for="(r, i) in currentDao.ruleText" :key="i" class="celestial-dao__line">
-                    <span aria-hidden="true">·</span>
-                    <span>{{ r }}</span>
+                <div v-if="swordInfo" class="celestial-dao__purity">
+                  <p>
+                    <span>当前剑意</span>
+                    <strong class="tabular"
+                      >{{ swordInfo.layers }}/{{ SWORD_PURITY_MAX_LAYERS }} 层</strong
+                    >
                   </p>
-                </section>
-                <section v-if="currentDao.deepText.length" class="celestial-dao__deep">
-                  <p class="celestial-dao__caption">此道的章法</p>
-                  <p
-                    v-for="(r, i) in currentDao.deepText"
-                    :key="`d${i}`"
-                    class="celestial-dao__line"
-                  >
-                    <span aria-hidden="true">◇</span>
-                    <span>{{ r }}</span>
+                  <span class="celestial-dao__track" aria-hidden="true">
+                    <span
+                      :style="{
+                        width: `${(swordInfo.layers / SWORD_PURITY_MAX_LAYERS) * 100}%`,
+                      }"
+                    />
+                  </span>
+                  <p class="celestial-dao__purity-note">
+                    {{
+                      swordInfo.checks
+                        .filter((c) => c.ok)
+                        .map((c) => c.name)
+                        .join("、") || "尚无一纯"
+                    }}
                   </p>
-                </section>
-              </div>
+                </div>
+                <p v-if="daoStory" class="celestial-dao__story">「{{ daoStory }}」</p>
+              </article>
 
-              <div v-if="swordInfo" class="celestial-dao__purity">
-                <p>
-                  <span>当前剑意</span>
-                  <strong class="tabular"
-                    >{{ swordInfo.layers }}/{{ SWORD_PURITY_MAX_LAYERS }} 层</strong
-                  >
-                </p>
-                <span class="celestial-dao__track" aria-hidden="true">
-                  <span
-                    :style="{
-                      width: `${(swordInfo.layers / SWORD_PURITY_MAX_LAYERS) * 100}%`,
-                    }"
-                  />
-                </span>
-                <p class="celestial-dao__purity-note">
-                  {{
-                    swordInfo.checks
-                      .filter((c) => c.ok)
-                      .map((c) => c.name)
-                      .join("、") || "尚无一纯"
-                  }}
-                </p>
-              </div>
-              <p v-if="daoStory" class="celestial-dao__story">「{{ daoStory }}」</p>
-            </article>
-
-            <div v-else class="celestial-dao__choices">
-              <button
-                v-for="dao in DAO_PATHS"
-                :key="dao.id"
-                type="button"
-                class="celestial-dao__choice hoverable:hover:border-cinnabar"
-                @click="pickDao(dao.id)"
-              >
-                <span class="celestial-dao__choice-head">
-                  <span class="celestial-dao__seal" aria-hidden="true">{{ dao.seal }}</span>
-                  <span class="celestial-dao__choice-name">{{ dao.name }}</span>
-                </span>
-                <span class="celestial-dao__choice-desc">{{ dao.desc }}</span>
-                <span v-for="(r, i) in dao.ruleText" :key="i" class="celestial-dao__choice-rule">
-                  · {{ r }}
-                </span>
-                <span
-                  v-for="(r, i) in dao.deepText"
-                  :key="`d${i}`"
-                  class="celestial-dao__choice-deep"
+              <div v-else class="celestial-dao__choices">
+                <button
+                  v-for="dao in DAO_PATHS"
+                  :key="dao.id"
+                  type="button"
+                  class="celestial-dao__choice hoverable:hover:border-cinnabar"
+                  @click="pickDao(dao.id)"
                 >
-                  ◇ {{ r }}
-                </span>
-              </button>
-            </div>
-          </section>
+                  <span class="celestial-dao__choice-head">
+                    <span class="celestial-dao__seal" aria-hidden="true">{{ dao.seal }}</span>
+                    <span class="celestial-dao__choice-name">{{ dao.name }}</span>
+                  </span>
+                  <span class="celestial-dao__choice-desc">{{ dao.desc }}</span>
+                  <span v-for="(r, i) in dao.ruleText" :key="i" class="celestial-dao__choice-rule">
+                    · {{ r }}
+                  </span>
+                  <span
+                    v-for="(r, i) in dao.deepText"
+                    :key="`d${i}`"
+                    class="celestial-dao__choice-deep"
+                  >
+                    ◇ {{ r }}
+                  </span>
+                </button>
+              </div>
+            </section>
 
-          <!-- 天道熔炉 / 器魂:两处门径 -->
-          <section class="celestial-gateways">
-            <button
-              type="button"
-              class="celestial-gateway hoverable:hover:border-cinnabar"
-              @click="furnaceOpen = true"
+            <!-- 天道熔炉 / 器魂:两处门径 -->
+            <section
+              class="celestial-gateways"
+              data-celestial-chapter="gateways"
+              data-celestial-gateways
             >
-              <span class="celestial-gateway__mark" aria-hidden="true">炉</span>
-              <span class="celestial-gateway__copy">
-                <span class="celestial-gateway__name">天道熔炉</span>
-                <span class="celestial-gateway__note">前尘俗物，皆可熔作道源</span>
-              </span>
-              <span class="celestial-gateway__arrow" aria-hidden="true">›</span>
-            </button>
+              <CelestialChapterHead
+                index="贰"
+                title="两处门径"
+                hint="熔作道源 · 器魂成阵"
+                :fact="`器魂 ${soulPulse.activeCount}/${soulPulse.slotTotal}`"
+              />
+              <div class="celestial-gateway-rows">
+                <button
+                  type="button"
+                  class="celestial-gateway hoverable:hover:border-cinnabar"
+                  @click="furnaceOpen = true"
+                >
+                  <span class="celestial-gateway__mark" aria-hidden="true">炉</span>
+                  <span class="celestial-gateway__copy">
+                    <span class="celestial-gateway__name">天道熔炉</span>
+                    <span class="celestial-gateway__note">前尘俗物，皆可熔作道源</span>
+                  </span>
+                  <span class="celestial-gateway__arrow" aria-hidden="true">›</span>
+                </button>
 
-            <button
-              type="button"
-              class="celestial-gateway hoverable:hover:border-cinnabar"
-              @click="goSouls()"
-            >
-              <span class="celestial-gateway__mark is-soul" aria-hidden="true">魂</span>
-              <span class="celestial-gateway__copy">
-                <span class="celestial-gateway__name">器魂</span>
-                <span class="celestial-gateway__note">
-                  凡器承不住天道，只余形意 · 已凝
-                  {{ soulPulse.activeCount }}/{{ soulPulse.slotTotal }}
-                </span>
-              </span>
-              <span class="celestial-gateway__arrow" aria-hidden="true">›</span>
-            </button>
-          </section>
+                <button
+                  type="button"
+                  class="celestial-gateway hoverable:hover:border-cinnabar"
+                  @click="goSouls()"
+                >
+                  <span class="celestial-gateway__mark is-soul" aria-hidden="true">魂</span>
+                  <span class="celestial-gateway__copy">
+                    <span class="celestial-gateway__name">器魂</span>
+                    <span class="celestial-gateway__note">
+                      凡器承不住天道，只余形意 · 已凝
+                      {{ soulPulse.activeCount }}/{{ soulPulse.slotTotal }}
+                    </span>
+                  </span>
+                  <span class="celestial-gateway__arrow" aria-hidden="true">›</span>
+                </button>
+              </div>
+            </section>
+          </article>
         </template>
 
         <!--
@@ -370,11 +386,11 @@ import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LedgerPulse from "@/components/common/LedgerPulse.vue";
 import LedgerTally from "@/components/common/LedgerTally.vue";
 import UnopenedFolio from "@/components/common/UnopenedFolio.vue";
-import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GauntletPanel from "@/components/celestial/GauntletPanel.vue";
 import CelestialGateMap from "@/components/celestial/CelestialGateMap.vue";
+import CelestialChapterHead from "@/components/celestial/CelestialChapterHead.vue";
 import FurnaceDialog from "@/components/celestial/FurnaceDialog.vue";
 import TutorialDialog from "@/components/celestial/TutorialDialog.vue";
 import MarksPanel from "@/components/celestial/MarksPanel.vue";

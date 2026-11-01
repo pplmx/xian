@@ -75,19 +75,29 @@
   .celestial-book > section + section {
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
   }
-  .celestial-dao__head {
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.3rem 0.7rem;
+  .celestial-dao-ledger,
+  .celestial-expedition-ledger,
+  .celestial-marks-ledger {
+    margin-top: 0.35rem;
+    overflow: hidden;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.2);
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.11);
+    border-inline: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
-  .celestial-dao__state {
-    color: rgb(var(--color-cinnabar-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    letter-spacing: 0.12em;
+  .celestial-dao-ledger > section,
+  .celestial-expedition-chapter {
+    min-width: 0;
+    padding: 0 0.08rem 0.72rem;
+  }
+  .celestial-dao-ledger > section + section,
+  .celestial-expedition-chapter + .celestial-expedition-chapter {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+  }
+  .celestial-marks-ledger {
+    padding: 0 0.08rem 0.72rem;
   }
   .celestial-dao__card {
     margin-top: 0.52rem;
@@ -279,6 +289,9 @@
     color: rgb(var(--color-cinnabar-rgb));
   }
   .celestial-gateways {
+    min-width: 0;
+  }
+  .celestial-gateway-rows {
     display: grid;
     min-width: 0;
     grid-template-columns: minmax(0, 1fr);
@@ -336,6 +349,52 @@
   }
   .celestial-route-choice {
     border-block: 1px solid rgb(var(--color-ink-rgb) / 0.14);
+  }
+  .celestial-expedition-run {
+    padding: 0.58rem 0.1rem 0.08rem;
+  }
+  .celestial-expedition-empty {
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    padding: 0.7rem 0.2rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-body);
+    line-height: 1.65;
+  }
+  .celestial-world-ledger {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+  }
+  .celestial-world-row {
+    min-width: 0;
+    border: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 0.62rem 0.1rem 0.66rem;
+  }
+  .celestial-world-row--void {
+    border-top-color: rgb(var(--color-violet-ink-rgb) / 0.24);
+  }
+  .celestial-marks-compare {
+    margin-top: 0.52rem;
+    border-block: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    background: transparent;
+    padding: 0.52rem 0.1rem;
+  }
+  .celestial-marks-list {
+    margin-top: 0.5rem;
+    border-block: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    background: transparent;
+    padding-inline: 0.1rem;
+  }
+  .celestial-marks-empty {
+    margin-top: 0.5rem;
+    border-block: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    background: transparent;
+    padding: 0.86rem 0.1rem;
   }
   /*
    * 试炼续卷 —— 今日题、变数、八场试炼与挑战书同住一册。
@@ -778,8 +837,18 @@
     }
 
     .celestial-dao__choices,
-    .celestial-gateways {
+    .celestial-gateway-rows {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .celestial-world-ledger {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 1.1rem;
+    }
+
+    .celestial-world-row:nth-child(even) {
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+      padding-left: 0.92rem;
     }
 
     .celestial-trial-roster {
@@ -795,6 +864,9 @@
   @media (max-width: 220px) {
     .celestial-source,
     .celestial-book > section,
+    .celestial-dao-ledger > section,
+    .celestial-expedition-chapter,
+    .celestial-marks-ledger,
     .celestial-dao__card,
     .celestial-dao__choice,
     .celestial-gateway,

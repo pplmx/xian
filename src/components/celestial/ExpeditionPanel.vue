@@ -1,282 +1,302 @@
 <template>
-  <!-- 进行中的远征 -->
-  <section v-if="run && runWorld">
-    <SectionTitle
-      :title="`远征 · ${runWorld.name}`"
-      :hint="runPact ? `契约「${runPact.name}」` : '未立契约'"
-    />
-    <div class="card-ink mt-2 px-4 py-3">
-      <!-- 行程点列:走到哪一重,一目了然 -->
-      <div class="mb-2 flex items-center gap-1.5">
-        <template v-for="(s, i) in RUN_STAGES" :key="s">
-          <span
-            v-if="i > 0"
-            class="h-px min-w-3 grow transition-colors"
-            :class="i <= run.layer ? 'bg-cinnabar/45' : 'bg-ink/15'"
-          />
-          <span
-            class="flex items-center gap-1 text-note"
-            :class="
-              i < run.layer
-                ? 'text-ink-soft'
-                : i === run.layer
-                  ? 'font-kai text-cinnabar'
-                  : 'text-ink-faint'
-            "
-          >
+  <div class="celestial-expedition-ledger" data-celestial-expedition-ledger>
+    <!-- 进行中的远征 -->
+    <section class="celestial-expedition-chapter" data-celestial-chapter="run" data-celestial-run>
+      <CelestialChapterHead
+        index="壹"
+        title="在途远征"
+        :hint="
+          runPact ? `契约「${runPact.name}」 · 走到哪重，下一步就在此` : '走到哪重，下一步就在此'
+        "
+        :fact="run && runWorld ? `${runWorld.name} · ${run.rows.length} 战` : '未启程'"
+      />
+      <div v-if="run && runWorld" class="celestial-expedition-run">
+        <!-- 行程点列:走到哪一重,一目了然 -->
+        <div class="mb-2 flex items-center gap-1.5">
+          <template v-for="(s, i) in RUN_STAGES" :key="s">
             <span
-              class="inline-block h-1.5 w-1.5 rounded-full"
+              v-if="i > 0"
+              class="h-px min-w-3 grow transition-colors"
+              :class="i <= run.layer ? 'bg-cinnabar/45' : 'bg-ink/15'"
+            />
+            <span
+              class="flex items-center gap-1 text-note"
               :class="
                 i < run.layer
-                  ? 'bg-ink-soft/70'
+                  ? 'text-ink-soft'
                   : i === run.layer
-                    ? 'bg-cinnabar animate-breathe'
-                    : 'border border-ink/30'
+                    ? 'font-kai text-cinnabar'
+                    : 'text-ink-faint'
               "
-            />
-            {{ s }}
-          </span>
-        </template>
-      </div>
-      <p class="text-body text-ink-faint tabular">
-        已历 {{ run.rows.length }} 战 · 沿途道源 +{{ run.bonus }} · 携血
-        {{ formatPercent(run.carriedHpPct, 0) }}
-        <template
-          v-if="run.winStacks && (endgame.daoPath === 'sword' || endgame.daoPath === 'slaughter')"
-        >
-          · {{ endgame.daoPath === "sword" ? "剑意" : "杀意" }} {{ run.winStacks }} 层
-        </template>
-      </p>
-      <div class="mt-1.5 space-y-1">
-        <p v-for="(row, i) in run.rows" :key="i" class="flex justify-between text-body">
-          <span :class="row.win ? 'text-ink-soft' : 'text-cinnabar'">
-            第{{ i + 1 }}战 {{ row.foeName }} · {{ row.win ? "胜" : "负" }}
-          </span>
-          <span class="tabular text-ink-faint"
-            >{{ row.rounds }}回合 · 余血{{ formatPercent(row.hpLeftPct, 0) }}</span
+            >
+              <span
+                class="inline-block h-1.5 w-1.5 rounded-full"
+                :class="
+                  i < run.layer
+                    ? 'bg-ink-soft/70'
+                    : i === run.layer
+                      ? 'bg-cinnabar animate-breathe'
+                      : 'border border-ink/30'
+                "
+              />
+              {{ s }}
+            </span>
+          </template>
+        </div>
+        <p class="text-body text-ink-faint tabular">
+          已历 {{ run.rows.length }} 战 · 沿途道源 +{{ run.bonus }} · 携血
+          {{ formatPercent(run.carriedHpPct, 0) }}
+          <template
+            v-if="run.winStacks && (endgame.daoPath === 'sword' || endgame.daoPath === 'slaughter')"
           >
+            · {{ endgame.daoPath === "sword" ? "剑意" : "杀意" }} {{ run.winStacks }} 层
+          </template>
         </p>
-      </div>
-      <div class="ink-divider-mark my-2.5" />
-      <!-- 择路 -->
-      <template v-if="run.layer < EXPEDITION_ROUTE_LAYERS && currentNodes">
-        <p class="mb-1.5 text-body text-ink-faint">
-          第 {{ run.layer + 1 }} 重 · 两径择一(层间可回凡界换构筑)
-        </p>
-        <!--
+        <div class="mt-1.5 space-y-1">
+          <p v-for="(row, i) in run.rows" :key="i" class="flex justify-between text-body">
+            <span :class="row.win ? 'text-ink-soft' : 'text-cinnabar'">
+              第{{ i + 1 }}战 {{ row.foeName }} · {{ row.win ? "胜" : "负" }}
+            </span>
+            <span class="tabular text-ink-faint"
+              >{{ row.rounds }}回合 · 余血{{ formatPercent(row.hpLeftPct, 0) }}</span
+            >
+          </p>
+        </div>
+        <div class="ink-divider-mark my-2.5" />
+        <!-- 择路 -->
+        <template v-if="run.layer < EXPEDITION_ROUTE_LAYERS && currentNodes">
+          <p class="mb-1.5 text-body text-ink-faint">
+            第 {{ run.layer + 1 }} 重 · 两径择一(层间可回凡界换构筑)
+          </p>
+          <!--
           极窄档(195 CSS px)单列:两径并排时每格内宽只剩 ~52px,节点说明
           「巨魔守关,一锤定音」被压成三行竖排(自检在后期档量到)。单列后每格 137px。
         -->
-        <div class="stagger-in grid grid-cols-2 gap-2 tinylens:grid-cols-1">
+          <div class="stagger-in grid grid-cols-2 gap-2 tinylens:grid-cols-1">
+            <button
+              v-for="(node, i) in currentNodes"
+              :key="node.id"
+              class="celestial-route-choice rounded-[2px] border-0 bg-transparent px-2.5 py-2 text-left active:scale-97 hoverable:hover:border-cinnabar"
+              @click="pickNode(i as 0 | 1)"
+            >
+              <p class="font-kai text-title text-ink">{{ node.name }}</p>
+              <p class="mt-0.5 text-note text-ink-faint">{{ node.desc }}</p>
+              <p class="mt-1 text-note text-cinnabar">险:{{ node.riskText }}</p>
+              <p class="text-note text-gold-ink tabular">道源 +{{ node.bonus }}</p>
+              <p v-if="nodePreviews[i]" class="mt-0.5 text-note text-violet-ink">
+                天机:{{ nodePreviews[i]!.winText }}
+              </p>
+            </button>
+          </div>
+        </template>
+        <!-- 界主 -->
+        <template v-else-if="run.layer === EXPEDITION_GUARDIAN_LAYER">
+          <p class="mb-1.5 text-body text-ink-faint">
+            {{ cnNumber(EXPEDITION_ROUTE_LAYERS) }}重已过,界主临阵。可先回凡界整备,再来决战。
+          </p>
+          <p v-if="guardianPreview" class="mb-1.5 text-note text-violet-ink">
+            天机:{{ guardianPreview.winText }} · {{ guardianPreview.skillLines.join(" / ") }}
+          </p>
           <button
-            v-for="(node, i) in currentNodes"
-            :key="node.id"
-            class="celestial-route-choice rounded-[2px] border-0 bg-transparent px-2.5 py-2 text-left active:scale-97 hoverable:hover:border-cinnabar"
-            @click="pickNode(i as 0 | 1)"
+            class="btn-seal w-full !py-2 !text-title pulse-ready animate-glow-pulse"
+            @click="fightBoss"
           >
-            <p class="font-kai text-title text-ink">{{ node.name }}</p>
-            <p class="mt-0.5 text-note text-ink-faint">{{ node.desc }}</p>
-            <p class="mt-1 text-note text-cinnabar">险:{{ node.riskText }}</p>
-            <p class="text-note text-gold-ink tabular">道源 +{{ node.bonus }}</p>
-            <p v-if="nodePreviews[i]" class="mt-0.5 text-note text-violet-ink">
-              天机:{{ nodePreviews[i]!.winText }}
-            </p>
+            决战 · {{ runWorld.guardian.name }}
           </button>
-        </div>
-      </template>
-      <!-- 界主 -->
-      <template v-else-if="run.layer === EXPEDITION_GUARDIAN_LAYER">
-        <p class="mb-1.5 text-body text-ink-faint">
-          {{ cnNumber(EXPEDITION_ROUTE_LAYERS) }}重已过,界主临阵。可先回凡界整备,再来决战。
-        </p>
-        <p v-if="guardianPreview" class="mb-1.5 text-note text-violet-ink">
-          天机:{{ guardianPreview.winText }} · {{ guardianPreview.skillLines.join(" / ") }}
-        </p>
+        </template>
+        <template v-if="abandonArmed">
+          <p
+            class="mt-2 rounded-[2px] bg-cinnabar/6 px-2.5 py-1.5 text-note leading-relaxed text-cinnabar"
+          >
+            此行 {{ runWorld.entryCost }} 道源与已攒的沿途道源
+            {{ run.bonus > 0 ? `+${run.bonus}` : "" }}尽付东流,战果与纪录不保。
+          </p>
+          <div class="mt-1.5 flex gap-2">
+            <button class="btn-ghost flex-1 !py-1.5 !text-body" @click="abandonArmed = false">
+              再想想
+            </button>
+            <button class="btn-seal flex-1 !py-1.5 !text-body" @click="abandonRun">
+              确认中道而返
+            </button>
+          </div>
+        </template>
         <button
-          class="btn-seal w-full !py-2 !text-title pulse-ready animate-glow-pulse"
-          @click="fightBoss"
+          v-else
+          class="btn-ghost mt-2 w-full !py-1.5 !text-body !text-ink-faint"
+          @click="abandonArmed = true"
         >
-          决战 · {{ runWorld.guardian.name }}
+          中道而返(道源不退)
         </button>
-      </template>
-      <template v-if="abandonArmed">
-        <p
-          class="mt-2 rounded-[2px] bg-cinnabar/6 px-2.5 py-1.5 text-note leading-relaxed text-cinnabar"
-        >
-          此行 {{ runWorld.entryCost }} 道源与已攒的沿途道源
-          {{ run.bonus > 0 ? `+${run.bonus}` : "" }}尽付东流,战果与纪录不保。
-        </p>
-        <div class="mt-1.5 flex gap-2">
-          <button class="btn-ghost flex-1 !py-1.5 !text-body" @click="abandonArmed = false">
-            再想想
-          </button>
-          <button class="btn-seal flex-1 !py-1.5 !text-body" @click="abandonRun">
-            确认中道而返
-          </button>
-        </div>
-      </template>
-      <button
-        v-else
-        class="btn-ghost mt-2 w-full !py-1.5 !text-body !text-ink-faint"
-        @click="abandonArmed = true"
-      >
-        中道而返(道源不退)
-      </button>
-    </div>
-  </section>
+      </div>
+      <p v-else class="celestial-expedition-empty" data-celestial-run-empty>
+        此刻没有在途远征。从下一章择一界，立契启程；途中每一重都可回凡界换构筑。
+      </p>
+    </section>
 
-  <!-- 特殊世界 -->
-  <section>
-    <SectionTitle title="特殊规则世界" hint="择契而入,逐层择路" />
-    <div class="mt-2 space-y-2.5">
-      <div v-for="world in CELESTIAL_WORLDS" :key="world.id" class="card-ink px-4 py-3">
-        <p class="celestial-world__head flex flex-wrap items-center gap-2">
-          <span
-            class="grid h-8 w-8 shrink-0 place-items-center rounded-[2px] bg-indigo-ink/85 font-kai text-section text-paper"
-          >
-            {{ world.seal }}
-          </span>
-          <span class="shrink-0 font-kai text-title tracking-[0.2em] text-ink">{{
-            world.name
-          }}</span>
-          <span
-            v-if="endgame.worldClears[world.id]"
-            class="chip-ink shrink-0 border-jade/60 text-note text-jade"
-          >
-            已破 ×{{ endgame.worldClears[world.id] }}
-          </span>
-          <span class="ml-auto tabular text-body text-ink-faint tinylens:ml-0 tinylens:basis-full"
-            >入界+{{ cnNumber(EXPEDITION_ROUTE_LAYERS) }}重+界主</span
-          >
-        </p>
-        <!--
+    <!-- 特殊世界 -->
+    <section
+      class="celestial-expedition-chapter"
+      data-celestial-chapter="worlds"
+      data-celestial-worlds
+    >
+      <CelestialChapterHead
+        index="贰"
+        title="特殊规则世界"
+        hint="择契而入，逐层择路"
+        :fact="`${CELESTIAL_WORLDS.length + (endgame.voidWorld ? 1 : 0)} 界 · ${
+          endgame.voidWorld ? '虚门可窥' : '虚门待窥'
+        }`"
+      />
+      <div class="celestial-world-ledger">
+        <article v-for="world in CELESTIAL_WORLDS" :key="world.id" class="celestial-world-row">
+          <p class="celestial-world__head flex flex-wrap items-center gap-2">
+            <span
+              class="grid h-8 w-8 shrink-0 place-items-center rounded-[2px] bg-indigo-ink/85 font-kai text-section text-paper"
+            >
+              {{ world.seal }}
+            </span>
+            <span class="shrink-0 font-kai text-title tracking-[0.2em] text-ink">{{
+              world.name
+            }}</span>
+            <span
+              v-if="endgame.worldClears[world.id]"
+              class="chip-ink shrink-0 border-jade/60 text-note text-jade"
+            >
+              已破 ×{{ endgame.worldClears[world.id] }}
+            </span>
+            <span class="ml-auto tabular text-body text-ink-faint tinylens:ml-0 tinylens:basis-full"
+              >入界+{{ cnNumber(EXPEDITION_ROUTE_LAYERS) }}重+界主</span
+            >
+          </p>
+          <!--
             这一界「该有的境界」:敌人按本界锚点层级定标(见 gauntlet.celestialAnchor),
             未至此境者会被**境界压制**(守关者额外增伤)。名字从境界表取,不手写 ——
             哪天梯子挪了,这句自己跟上。
           -->
-        <p
-          class="mt-0.5 text-note"
-          :class="
-            player.major < anchorMajorOf(world.anchorTier) ? 'text-cinnabar' : 'text-ink-faint'
-          "
-        >
-          此界宜 {{ REALMS[anchorMajorOf(world.anchorTier)]?.name ?? "" }} 及以上
-          <template v-if="player.major < anchorMajorOf(world.anchorTier)">
-            · 你尚在此境之下,受境界压制</template
-          >
-        </p>
-        <p class="mt-1.5 t-body text-ink-faint">{{ world.desc }}</p>
-        <p class="mt-1 flex flex-wrap gap-x-3 text-note text-violet-ink">
-          <span v-for="(r, i) in world.ruleText" :key="i">{{ r }}</span>
-        </p>
-        <p
-          v-if="world.starTied"
-          class="mt-1 tabular text-note"
-          :class="starTieFavorOn(world) ? 'text-qing' : 'text-ink-faint'"
-        >
-          {{ starTieLine(world) }}
-        </p>
-        <button
-          class="btn-seal mt-2.5 w-full !py-2 !text-title"
-          :disabled="run !== null || daoEntryShort(world.entryCost) > 0"
-          @click="openPrep(world.id)"
-        >
-          {{
-            run
-              ? "远征在途"
-              : daoEntryShort(world.entryCost) > 0
-                ? `尚差 ${daoEntryShort(world.entryCost)} 道源`
-                : `启 程(道源 ${world.entryCost} · 破界底赏 ${world.rewardDaoSource})`
-          }}
-        </button>
-      </div>
-
-      <!-- 虚界之门:程序化生成 + 裁判过审 -->
-      <div class="card-ink border border-violet-ink/25 px-4 py-3">
-        <p class="celestial-world__head flex flex-wrap items-center gap-2">
-          <span
-            class="grid h-8 w-8 shrink-0 place-items-center rounded-[2px] bg-violet-ink/85 font-kai text-section text-paper"
-          >
-            {{ endgame.voidWorld?.seal ?? "虚" }}
-          </span>
-          <span class="min-w-0 font-kai text-title tracking-[0.2em] text-ink">
-            虚界之门
-            <template v-if="endgame.voidWorld">· {{ endgame.voidWorld.name }}</template>
-          </span>
-          <span
-            v-if="endgame.worldClears['void']"
-            class="chip-ink shrink-0 border-jade/60 text-note text-jade"
-          >
-            已破 ×{{ endgame.worldClears["void"] }}
-          </span>
-        </p>
-        <template v-if="endgame.voidWorld">
-          <p class="mt-1.5 t-body text-ink-faint">
-            {{ endgame.voidWorld.desc }}
-          </p>
-          <p class="mt-1 flex flex-wrap gap-x-3 text-note text-violet-ink">
-            <span v-for="(r, i) in endgame.voidWorld.ruleText" :key="i">{{ r }}</span>
-          </p>
-          <p class="mt-1 text-note text-ink-faint">
-            盘踞:{{ endgame.voidWorld.foes.map((f) => f.name).join("、") }} · 界主「{{
-              endgame.voidWorld.guardian.name
-            }}」
-          </p>
-          <!-- 与普通天界同款边界行:虚界同样按锚点层次定标、同样有境界压制,别把这条只埋在 prep 里 -->
           <p
             class="mt-0.5 text-note"
             :class="
-              player.major < anchorMajorOf(endgame.voidWorld.anchorTier)
-                ? 'text-cinnabar'
-                : 'text-ink-faint'
+              player.major < anchorMajorOf(world.anchorTier) ? 'text-cinnabar' : 'text-ink-faint'
             "
           >
-            此界宜
-            {{ REALMS[anchorMajorOf(endgame.voidWorld.anchorTier)]?.name ?? "" }} 及以上
-            <template v-if="player.major < anchorMajorOf(endgame.voidWorld.anchorTier)">
+            此界宜 {{ REALMS[anchorMajorOf(world.anchorTier)]?.name ?? "" }} 及以上
+            <template v-if="player.major < anchorMajorOf(world.anchorTier)">
               · 你尚在此境之下,受境界压制</template
             >
           </p>
-          <div class="mt-2.5 flex gap-2">
-            <button
-              class="btn-seal flex-1 !py-2 !text-title"
-              :disabled="run !== null || daoEntryShort(endgame.voidWorld.entryCost) > 0"
-              @click="openPrep('void')"
+          <p class="mt-1.5 t-body text-ink-faint">{{ world.desc }}</p>
+          <p class="mt-1 flex flex-wrap gap-x-3 text-note text-violet-ink">
+            <span v-for="(r, i) in world.ruleText" :key="i">{{ r }}</span>
+          </p>
+          <p
+            v-if="world.starTied"
+            class="mt-1 tabular text-note"
+            :class="starTieFavorOn(world) ? 'text-qing' : 'text-ink-faint'"
+          >
+            {{ starTieLine(world) }}
+          </p>
+          <button
+            class="btn-seal mt-2.5 w-full !py-2 !text-title"
+            :disabled="run !== null || daoEntryShort(world.entryCost) > 0"
+            @click="openPrep(world.id)"
+          >
+            {{
+              run
+                ? "远征在途"
+                : daoEntryShort(world.entryCost) > 0
+                  ? `尚差 ${daoEntryShort(world.entryCost)} 道源`
+                  : `启 程(道源 ${world.entryCost} · 破界底赏 ${world.rewardDaoSource})`
+            }}
+          </button>
+        </article>
+
+        <!-- 虚界之门:程序化生成 + 裁判过审 -->
+        <article class="celestial-world-row celestial-world-row--void">
+          <p class="celestial-world__head flex flex-wrap items-center gap-2">
+            <span
+              class="grid h-8 w-8 shrink-0 place-items-center rounded-[2px] bg-violet-ink/85 font-kai text-section text-paper"
             >
-              {{
-                run
-                  ? "远征在途"
-                  : daoEntryShort(endgame.voidWorld.entryCost) > 0
-                    ? `尚差 ${daoEntryShort(endgame.voidWorld.entryCost)} 道源`
-                    : `启 程(道源 ${endgame.voidWorld.entryCost} · 破界底赏 ${endgame.voidWorld.rewardDaoSource})`
-              }}
-            </button>
+              {{ endgame.voidWorld?.seal ?? "虚" }}
+            </span>
+            <span class="min-w-0 font-kai text-title tracking-[0.2em] text-ink">
+              虚界之门
+              <template v-if="endgame.voidWorld">· {{ endgame.voidWorld.name }}</template>
+            </span>
+            <span
+              v-if="endgame.worldClears['void']"
+              class="chip-ink shrink-0 border-jade/60 text-note text-jade"
+            >
+              已破 ×{{ endgame.worldClears["void"] }}
+            </span>
+          </p>
+          <template v-if="endgame.voidWorld">
+            <p class="mt-1.5 t-body text-ink-faint">
+              {{ endgame.voidWorld.desc }}
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 text-note text-violet-ink">
+              <span v-for="(r, i) in endgame.voidWorld.ruleText" :key="i">{{ r }}</span>
+            </p>
+            <p class="mt-1 text-note text-ink-faint">
+              盘踞:{{ endgame.voidWorld.foes.map((f) => f.name).join("、") }} · 界主「{{
+                endgame.voidWorld.guardian.name
+              }}」
+            </p>
+            <!-- 与普通天界同款边界行:虚界同样按锚点层次定标、同样有境界压制,别把这条只埋在 prep 里 -->
+            <p
+              class="mt-0.5 text-note"
+              :class="
+                player.major < anchorMajorOf(endgame.voidWorld.anchorTier)
+                  ? 'text-cinnabar'
+                  : 'text-ink-faint'
+              "
+            >
+              此界宜
+              {{ REALMS[anchorMajorOf(endgame.voidWorld.anchorTier)]?.name ?? "" }} 及以上
+              <template v-if="player.major < anchorMajorOf(endgame.voidWorld.anchorTier)">
+                · 你尚在此境之下,受境界压制</template
+              >
+            </p>
+            <div class="mt-2.5 flex gap-2">
+              <button
+                class="btn-seal flex-1 !py-2 !text-title"
+                :disabled="run !== null || daoEntryShort(endgame.voidWorld.entryCost) > 0"
+                @click="openPrep('void')"
+              >
+                {{
+                  run
+                    ? "远征在途"
+                    : daoEntryShort(endgame.voidWorld.entryCost) > 0
+                      ? `尚差 ${daoEntryShort(endgame.voidWorld.entryCost)} 道源`
+                      : `启 程(道源 ${endgame.voidWorld.entryCost} · 破界底赏 ${endgame.voidWorld.rewardDaoSource})`
+                }}
+              </button>
+              <button
+                class="btn-ghost !px-3 !text-body"
+                :disabled="voidRerollShort > 0"
+                @click="rerollVoidWorld()"
+              >
+                <template v-if="voidRerollShort > 0">尚差 {{ voidRerollShort }} 道源</template>
+                <template v-else>再窥({{ VOID_REROLL_COST }})</template>
+              </button>
+            </div>
+          </template>
+          <template v-else>
+            <p class="mt-1.5 t-body text-ink-faint">
+              天道以变数织界:随机规则、随机敌阵、随机路线,经天机推演过审方能成形——每一座虚界都独一无二。
+            </p>
             <button
-              class="btn-ghost !px-3 !text-body"
+              class="btn-ghost mt-2.5 w-full !py-2 !text-body"
               :disabled="voidRerollShort > 0"
               @click="rerollVoidWorld()"
             >
               <template v-if="voidRerollShort > 0">尚差 {{ voidRerollShort }} 道源</template>
-              <template v-else>再窥({{ VOID_REROLL_COST }})</template>
+              <template v-else>窥探虚界(道源 {{ VOID_REROLL_COST }})</template>
             </button>
-          </div>
-        </template>
-        <template v-else>
-          <p class="mt-1.5 t-body text-ink-faint">
-            天道以变数织界:随机规则、随机敌阵、随机路线,经天机推演过审方能成形——每一座虚界都独一无二。
-          </p>
-          <button
-            class="btn-ghost mt-2.5 w-full !py-2 !text-body"
-            :disabled="voidRerollShort > 0"
-            @click="rerollVoidWorld()"
-          >
-            <template v-if="voidRerollShort > 0">尚差 {{ voidRerollShort }} 道源</template>
-            <template v-else>窥探虚界(道源 {{ VOID_REROLL_COST }})</template>
-          </button>
-        </template>
+          </template>
+        </article>
       </div>
-    </div>
-  </section>
+    </section>
+  </div>
 
   <!-- 远征准备:择契 -->
   <BaseModal
@@ -479,7 +499,7 @@ import { detectBuild } from "@/core/buildDetect";
 import { BUILD_PROFILES } from "@/core/buildSim";
 import { cnNumber, formatPercent } from "@/utils/format";
 import { useDaoEntry } from "@/composables/useDaoEntry";
-import SectionTitle from "@/components/common/SectionTitle.vue";
+import CelestialChapterHead from "@/components/celestial/CelestialChapterHead.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 
 /**

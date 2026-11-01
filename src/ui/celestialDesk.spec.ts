@@ -77,7 +77,21 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
   it("道途正文摊开代价、章法与剑意,七道选择仍读同一份数据源", () => {
     const view = source("src/views/CelestialView.vue");
 
-    expect(view, "页签已报道途，章头改报道途与门径").toContain('<SectionTitle title="道途与门径"');
+    expect(view, "道途册收成一册两章续卷").toContain(
+      'class="celestial-dao-ledger" data-celestial-dao-ledger',
+    );
+    expect(
+      [...view.matchAll(/data-celestial-chapter="([^"]+)"/g)].map((match) => match[1]),
+      "道途、门径两章必须依次续排",
+    ).toEqual(["dao", "gateways"]);
+    expect(view, "两章共用统一章首").toMatch(/<CelestialChapterHead[\s\S]*<CelestialChapterHead/);
+    expect(view, "道途章首报道此世真实道途").toContain(
+      ':fact="currentDao ? `${currentDao.name} · 已定` : `${DAO_PATHS.length} 道待择`"',
+    );
+    expect(view, "门径章首报到器魂槽位真值").toContain(
+      ':fact="`器魂 ${soulPulse.activeCount}/${soulPulse.slotTotal}`"',
+    );
+    expect(view, "正文不再另起通用节题").not.toContain("<SectionTitle");
     expect(view, "道途正文按已定与待择分流").toContain('<article v-if="currentDao"');
     expect(view, "规则与章法分栏").toContain('class="celestial-dao__columns"');
     expect(view, "剑意层数读纯函数").toContain("swordInfo.layers");
@@ -86,6 +100,52 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
     expect(view, "选择仍走二次确认").toContain('@click="pickDao(dao.id)"');
     expect(view, "熔炉与器魂仍是两处门径").toContain('class="celestial-gateway');
     expect(view, "器魂入口继续读同一份槽位账").toContain("soulPulse.activeCount");
+  });
+
+  it("远征册两章常在,空途先报未启程,世界行不再套卡壳", () => {
+    const expedition = source("src/components/celestial/ExpeditionPanel.vue");
+    const ledger = expedition.slice(0, expedition.indexOf("<BaseModal"));
+
+    expect(expedition, "远征册收成一册续卷").toContain(
+      'class="celestial-expedition-ledger" data-celestial-expedition-ledger',
+    );
+    expect(
+      [...expedition.matchAll(/data-celestial-chapter="([^"]+)"/g)].map((match) => match[1]),
+      "在途远征与特殊世界必须常驻并按序续排",
+    ).toEqual(["run", "worlds"]);
+    expect(expedition, "没有在途远征时首章仍要在场").toContain(
+      '<section class="celestial-expedition-chapter" data-celestial-chapter="run" data-celestial-run>',
+    );
+    expect(expedition, "空途要给出可见的空态").toContain("data-celestial-run-empty");
+    expect(expedition, "世界章首读世界数据源,不再另算可启程判据").toContain(
+      "CELESTIAL_WORLDS.length + (endgame.voidWorld ? 1 : 0)",
+    );
+    expect(expedition).toContain("'虚门可窥' : '虚门待窥'");
+    expect(expedition, "可启程界数只留总账一处判据").not.toContain("affordableWorldCount");
+    expect(expedition, "世界候选不再另组一份账").not.toContain("worldCandidates");
+    expect(expedition, "特殊世界逐界成开口账行").toContain('class="celestial-world-row"');
+    expect(expedition, "虚界也沿同一组世界账行").toContain(
+      'class="celestial-world-row celestial-world-row--void"',
+    );
+    expect(ledger, "远征正文不再套同权卡壳").not.toContain("card-ink");
+  });
+
+  it("道痕册用统一章首报卷内则数,主卷与今昔对照撤掉卡壳", () => {
+    const marks = source("src/components/celestial/MarksPanel.vue");
+    const ledger = marks.slice(0, marks.indexOf("<BaseModal"));
+
+    expect(marks, "道痕正文收成一册续卷").toContain(
+      'class="celestial-marks-ledger"\n    data-celestial-marks-ledger',
+    );
+    expect(marks, "道痕册只留一章真实落点").toContain('data-celestial-chapter="marks"');
+    expect(marks, "章首走统一组件").toContain("<CelestialChapterHead");
+    expect(marks, "章首报卷内则数与上限同源").toContain(
+      ':fact="`${endgame.marks.length} / ${MAX_MARKS} 则`"',
+    );
+    expect(marks, "今昔对照改开口账行").toContain('class="celestial-marks-compare"');
+    expect(marks, "主卷改开口账行").toContain("celestial-marks-list");
+    expect(marks, "空态也沿同一册面").toContain("celestial-marks-empty");
+    expect(ledger, "主卷、对照与空态不再套卡壳").not.toContain("card-ink");
   });
 
   it("远征、试炼与道痕面板仍按当前册互斥挂载,不把未激活状态混进页面", () => {
@@ -162,6 +222,15 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
     );
     expect(celestialCss).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,1400}\.celestial-gateway\s*\{[\s\S]{0,120}grid-template-columns:\s*2rem minmax\(0, 1fr\)/,
+    );
+    expect(celestialCss, "世界账行手机与窄桌面先单列续读").toMatch(
+      /\.celestial-world-ledger\s*\{[\s\S]{0,140}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(celestialCss, "960 起世界账行两栏并读").toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,1200}\.celestial-world-ledger\s*\{[\s\S]{0,120}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
+    );
+    expect(celestialCss, "220 以下章内读数退到题名下方").toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.celestial-chapter-head__fact\s*\{[\s\S]{0,80}grid-column:\s*2;[\s\S]{0,100}justify-self:\s*start;/,
     );
   });
 

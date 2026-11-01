@@ -1,7 +1,17 @@
 <template>
   <!-- 道痕 -->
-  <section>
-    <SectionTitle title="道痕" :hint="`历代修行履历 · ${endgame.marks.length} 则`" />
+  <section
+    class="celestial-marks-ledger"
+    data-celestial-marks-ledger
+    data-celestial-chapter="marks"
+    data-celestial-marks
+  >
+    <CelestialChapterHead
+      index="壹"
+      title="道痕"
+      hint="历代修行履历"
+      :fact="`${endgame.marks.length} / ${MAX_MARKS} 则`"
+    />
     <!-- 卷满六十则:最古之痕将被覆去 —— 该给一句,不然玩家不知道自己最早的履历会无声消失 -->
     <p v-if="endgame.marksFull" class="mt-1.5 px-1 text-note text-amber-ink">
       卷已写满 {{ MAX_MARKS }} 则 —— 后续每一战,都会覆去最古的一道痕
@@ -21,7 +31,7 @@
       </button>
     </div>
     <!-- 今昔之比:与过去的自己对话 -->
-    <div v-if="legacy.length" class="card-ink mt-2 px-4 py-3">
+    <div v-if="legacy.length" class="celestial-marks-compare">
       <p class="mb-1.5 font-kai text-body tracking-[0.3em] text-ink-faint">今昔之比</p>
       <div v-for="lc in legacy" :key="lc.targetName" class="mb-2 last:mb-0">
         <p class="text-body text-ink-soft tabular">
@@ -37,7 +47,7 @@
     </div>
     <template v-if="endgame.marks.length">
       <div
-        class="scroll-pane card-ink mt-2 max-h-64 divide-y divide-ink/6 overflow-y-auto px-4"
+        class="scroll-pane celestial-marks-list max-h-64 divide-y divide-ink/6 overflow-y-auto"
         :data-marks-total="endgame.marks.length"
         :data-marks-shown="marksPage.shown"
         :data-marks-start="marksPage.start"
@@ -145,7 +155,7 @@
         </button>
       </div>
     </template>
-    <p v-else class="empty-note card-ink mt-2 px-4 py-4 text-center text-body text-ink-faint">
+    <p v-else class="empty-note celestial-marks-empty text-center text-body text-ink-faint">
       此页尚白。你在天界的每一战,都会留下痕迹。
     </p>
   </section>
@@ -193,7 +203,7 @@ import {
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
-import SectionTitle from "@/components/common/SectionTitle.vue";
+import CelestialChapterHead from "@/components/celestial/CelestialChapterHead.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import type { ReportView } from "@/components/celestial/reportView";
 
