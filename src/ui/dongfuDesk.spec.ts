@@ -35,6 +35,10 @@ describe("洞府案 · 山门图先立意,总账再摊开七作", () => {
     expect(view, "营造总账接共享此刻账").toContain(
       'import LedgerPulse from "@/components/common/LedgerPulse.vue"',
     );
+    expect(view, "首章章首由洞府专用组件接管").toContain(
+      'import DongfuChapterHead from "@/components/dongfu/DongfuChapterHead.vue"',
+    );
+    expect(view, "共享此刻账只留总账正文").toMatch(/<LedgerPulse\b[\s\S]{0,100}\bheadless\b/);
     expect(view, "营造总账不再直接搭账首").not.toContain(
       'import LedgerHeader from "@/components/common/LedgerHeader.vue"',
     );
@@ -47,6 +51,42 @@ describe("洞府案 · 山门图先立意,总账再摊开七作", () => {
     expect(ledger, "三行家底都落在总账里").toContain("门庭弟子");
     expect(ledger, "离线阶梯仍读常数表").toContain('v-for="(h, i) in OFFLINE_CAP_HOURS"');
     expect(ledger, "当前离线档仍要实底点亮").toContain("bg-cinnabar text-paper font-kai");
+  });
+
+  it("山门总账与续账收成一册两章,专用章首同报章号、读法与真值", () => {
+    const view = source("src/views/DongfuView.vue");
+    const head = source("src/components/dongfu/DongfuChapterHead.vue");
+    const dongfuCss = source("src/styles/pages/dongfu.css");
+
+    expect(view, "旧通用节题退场").not.toContain("<SectionTitle");
+    expect(view).toContain(
+      '<article class="dongfu-ledger-register folio-span-all" data-dongfu-ledger-register>',
+    );
+    expect(view, "总账是续卷第一章").toContain('data-dongfu-ledger-chapter="summary"');
+    expect(view, "山门续账是同一册第二章").toContain('data-dongfu-ledger-chapter="register"');
+    expect(view.match(/<DongfuChapterHead\b/g), "两章各用一枚洞府章首").toHaveLength(2);
+    expect(view).toContain('index="壹"');
+    expect(view).toContain('index="贰"');
+    expect(view, "总账章内真值读同一条 store 汇总").toContain(
+      ':fact="`已营 ${dongfu.builtCount}/${BUILDINGS.length}`"',
+    );
+    expect(view, "续账章内真值也读 store").toContain(
+      ':fact="`${dongfu.builtCount}/${BUILDINGS.length} 已营 · ${offlineCapHours} 时离线`"',
+    );
+    expect(head).toContain("data-dongfu-chapter-head");
+    expect(head).toContain("dongfu-chapter-head__index");
+    expect(head).toContain("dongfu-chapter-head__eyebrow");
+    expect(head).toContain("dongfu-chapter-head__hint");
+    expect(head).toContain("dongfu-chapter-head__fact");
+    expect(dongfuCss).toMatch(
+      /\.dongfu-ledger-register\s*\{[\s\S]{0,260}border-top:\s*1px solid[\s\S]{0,160}border-bottom:\s*1px solid/,
+    );
+    expect(dongfuCss).toMatch(
+      /\.dongfu-ledger-register__chapter \+ \.dongfu-ledger-register__chapter\s*\{[\s\S]{0,100}border-top:\s*1px solid/,
+    );
+    expect(dongfuCss, "内层续账不再重复上下账线").toMatch(
+      /\.dongfu-ledger-register__chapter \.dongfu-register\s*\{[\s\S]{0,180}border:\s*0;/,
+    );
   });
 
   it("眼前一锤同走 buildingService 的判定、造价与动作,不再另算一套", () => {
@@ -137,7 +177,7 @@ describe("洞府案 · 山门图先立意,总账再摊开七作", () => {
 
   it("手机总账单列,山门续账只留上下账线,220 以下账行也退成单列", () => {
     const css = source("src/style.css");
-    const start = css.indexOf(".dongfu-ledger {");
+    const start = css.indexOf(".dongfu-ledger-register {");
     const end = css.indexOf("/*\n   * 道躯案", start);
     const dongfuCss = css.slice(start, end);
 
@@ -153,7 +193,7 @@ describe("洞府案 · 山门图先立意,总账再摊开七作", () => {
       /\.dongfu-ledger__grid\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
     expect(dongfuCss).toMatch(
-      /\.dongfu-register\s*\{[\s\S]{0,180}border-top:\s*1px solid[\s\S]{0,180}border-bottom:\s*1px solid/,
+      /\.dongfu-ledger-register\s*\{[\s\S]{0,180}border-top:\s*1px solid[\s\S]{0,180}border-bottom:\s*1px solid/,
     );
     expect(dongfuCss).toContain(".dongfu-register__chapter + .dongfu-register__chapter");
     expect(dongfuCss).toContain(".dongfu-building__body");

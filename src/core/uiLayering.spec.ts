@@ -1228,9 +1228,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 洞府页的第一任务是把材料变成建筑等级;七作、家业与灵脉都沿续账后置。
     // 390 首屏里家业入口曾把首座建筑的升级键整个推到折线以下,故顺序本身要钉住。
     const dv = FILES.find((f) => f.path === "views/DongfuView.vue");
-    const buildAt = dv?.src.indexOf('title="营造"') ?? -1;
+    const buildAt = dv?.src.indexOf('data-dongfu-ledger-chapter="summary"') ?? -1;
     const registerAt = dv?.src.indexOf("data-dongfu-register") ?? -1;
-    expect(buildAt, "营造题头要定位得到").toBeGreaterThan(-1);
+    expect(buildAt, "营造总账首章要定位得到").toBeGreaterThan(-1);
     expect(registerAt, "山门续账要定位得到").toBeGreaterThan(-1);
     expect(buildAt, "营造必须排在山门续账之前,先露可执行的升级键").toBeLessThan(registerAt);
   });

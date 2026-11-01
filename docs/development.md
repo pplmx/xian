@@ -396,15 +396,18 @@ error: Failed to resolve vite command: GenericFailure, Expected
 进度夹取与「佩 / 藏 / 未」「伴 / 契 / 未」行态由 `ui/titlesDesk` 统一搬运,结构与
 事实源由 `src/ui/titlesDesk.spec.ts` 守住。
 
-洞府下半页收成一册「山门续账」:七作按四章逐行续排,家业与灵脉接在同一张账页,
-不再各自套入口卡。每条建筑账行只露当前首项、下一级首项和一枚行内主升级键;
-等级、进度与已营计数走石青信息层,主键只用朱砂短笔与淡底标出真正可动的那一下,
-完整效果、灵兽/藏经阁联动与连升总账仍由同一个 `aria-expanded` 详情展开;
-`BuildingLedgerRow` 继续直读 `buildingUpgradeInfo`、`buildingUpgradeBatchCost`
-与 `upgradeBuilding`,不另算一套可升或价格。章序从 `ui/dongfuDesk` 的同一份
-建筑表装配,结构与事实源由 `src/ui/dongfuDesk.spec.ts` 守住;390 真渲染门
-同时核对至少五章、恰好七条账行、续账里零 `card-ink`,主键不宽于账行 72%、
-建筑行不整行铺色,以及首枚可用营造键仍在底栏以上。
+洞府正文收成一册两章:壹「七作营造」只走 `headless` 共享此刻账,家底、眼前一锤与
+离线存续都在章首之下;贰「山门续账」接七作四章、家业与灵脉,不再各自套入口卡。
+两章共用 `DongfuChapterHead` 的章号、眉题、题名、读法与章内真值,整册只留上下账线
+和章间线,旧通用节题与首章共享账首都已撤掉。每条建筑账行只露当前首项、下一级首项
+和一枚行内主升级键;等级、进度与已营计数走石青信息层,主键只用朱砂短笔与淡底标出
+真正可动的那一下,完整效果、灵兽/藏经阁联动与连升总账仍由同一个 `aria-expanded`
+详情展开。`BuildingLedgerRow` 继续直读 `buildingUpgradeInfo`、
+`buildingUpgradeBatchCost` 与 `upgradeBuilding`,不另算一套可升或价格。章序从
+`ui/dongfuDesk` 的同一份建筑表装配,结构与事实源由 `src/ui/dongfuDesk.spec.ts`
+守住;390 真渲染门同时核对两章顺序、壹 / 贰章首与章内真值、首章无共享账首、
+零 `.section-title`、续账至少五章、恰好七条账行、续账里零 `card-ink`,主键不宽于
+账行 72%、建筑行不整行铺色,以及首枚可用营造键仍在底栏以上。
 
 基线(2026-11-01 实测,本机 + 无头 chromium,后期档,`--seconds 3`):
 

@@ -51,7 +51,7 @@ import LedgerHeader from "./LedgerHeader.vue";
 
 withDefaults(
   defineProps<{
-    title: string;
+    title?: string;
     seal?: string;
     eyebrow?: string;
     description?: string;
@@ -65,6 +65,7 @@ withDefaults(
     headless?: boolean;
   }>(),
   {
+    title: "",
     seal: "",
     eyebrow: "",
     description: "",

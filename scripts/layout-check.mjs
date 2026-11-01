@@ -9051,9 +9051,26 @@ async function taskDongfuFold() {
     } else {
       const fold = await page.evaluate(() => {
         const nav = document.querySelector("[data-folio-dock]")?.getBoundingClientRect();
-        const buildTitle = [...document.querySelectorAll("h2")].find(
-          (el) => (el.textContent || "").trim() === "营造",
+        const ledgerRegister = document.querySelector("[data-dongfu-ledger-register]");
+        const ledgerChapters = [
+          ...(ledgerRegister?.querySelectorAll("[data-dongfu-ledger-chapter]") ?? []),
+        ];
+        const summaryChapter = ledgerRegister?.querySelector(
+          '[data-dongfu-ledger-chapter="summary"]',
         );
+        const registerChapter = ledgerRegister?.querySelector(
+          '[data-dongfu-ledger-chapter="register"]',
+        );
+        const ledgerHeads = [
+          ...(ledgerRegister?.querySelectorAll("[data-dongfu-chapter-head]") ?? []),
+        ].map((head) => ({
+          chapter: head
+            .closest("[data-dongfu-ledger-chapter]")
+            ?.getAttribute("data-dongfu-ledger-chapter"),
+          index: (head.querySelector(".dongfu-chapter-head__index")?.textContent || "").trim(),
+          title: (head.querySelector(".dongfu-chapter-head__title")?.textContent || "").trim(),
+          fact: (head.querySelector(".dongfu-chapter-head__fact")?.textContent || "").trim(),
+        }));
         const register = document.querySelector("[data-dongfu-register]");
         const registerChapters = register?.querySelectorAll("[data-dongfu-chapter]") ?? [];
         const buildingRows = register?.querySelectorAll("[data-dongfu-building-row]") ?? [];
@@ -9084,8 +9101,16 @@ async function taskDongfuFold() {
         probe.remove();
         return {
           navTop: nav?.top ?? innerHeight,
-          buildTitleTop: buildTitle?.getBoundingClientRect().top ?? null,
-          registerTop: register?.getBoundingClientRect().top ?? null,
+          hasLedgerRegister: Boolean(ledgerRegister),
+          ledgerChapters: ledgerChapters.map((chapter) => ({
+            id: chapter.getAttribute("data-dongfu-ledger-chapter"),
+            top: Math.round(chapter.getBoundingClientRect().top),
+          })),
+          ledgerHeads,
+          pulseHasLedgerHead: Boolean(summaryChapter?.querySelector("[data-folio-ledger-head]")),
+          sectionTitles: ledgerRegister?.querySelectorAll(".section-title").length ?? -1,
+          buildTitleTop: summaryChapter?.getBoundingClientRect().top ?? null,
+          registerTop: registerChapter?.getBoundingClientRect().top ?? null,
           registerChapters: registerChapters.length,
           buildingRows: buildingRows.length,
           rowWidths: [...buildingRows].map((el) => el.getBoundingClientRect().width),
@@ -9113,10 +9138,33 @@ async function taskDongfuFold() {
         };
       });
       checked += 1;
-      if (fold.buildTitleTop === null || fold.registerTop === null) {
-        failures.push("[390-dongfu] 首屏找不到「营造」或山门续账");
+      if (!fold.hasLedgerRegister || fold.buildTitleTop === null || fold.registerTop === null) {
+        failures.push("[390-dongfu] 首屏找不到洞府一册两章");
       } else if (fold.buildTitleTop >= fold.registerTop) {
-        failures.push("[390-dongfu] 「营造」没有排在山门续账之前");
+        failures.push("[390-dongfu] 营造总账没有排在山门续账之前");
+      }
+      checked += 1;
+      if (
+        fold.ledgerChapters.length !== 2 ||
+        fold.ledgerChapters.map((chapter) => chapter.id).join(",") !== "summary,register" ||
+        fold.ledgerChapters[1].top <= fold.ledgerChapters[0].top
+      ) {
+        failures.push(
+          `[390-dongfu] 洞府没有沿总账、续账两章续排:${JSON.stringify(fold.ledgerChapters)}`,
+        );
+      }
+      checked += 1;
+      if (
+        fold.ledgerHeads.length !== 2 ||
+        fold.ledgerHeads.map((head) => head.chapter).join(",") !== "summary,register" ||
+        fold.ledgerHeads.map((head) => head.index).join(",") !== "壹,贰" ||
+        fold.ledgerHeads.map((head) => head.title).join(",") !== "七作营造,山门续账" ||
+        !/^已营 \d+\/7$/.test(fold.ledgerHeads[0]?.fact || "") ||
+        !/^\d+\/7 已营 · \d+ 时离线$/.test(fold.ledgerHeads[1]?.fact || "") ||
+        fold.pulseHasLedgerHead ||
+        fold.sectionTitles !== 0
+      ) {
+        failures.push(`[390-dongfu] 洞府两章没有共用专用章首:${JSON.stringify(fold.ledgerHeads)}`);
       }
       if (fold.registerChapters < 5) {
         failures.push(
@@ -9170,7 +9218,7 @@ async function taskDongfuFold() {
         await page.setViewportSize({ width: 390, height: 1600 });
         await page.waitForTimeout(120);
         await page
-          .locator("[data-dongfu-register]")
+          .locator("[data-dongfu-ledger-register]")
           .screenshot({ path: join(SHOTS_DIR, "390-dongfu-register.png") });
       }
 
