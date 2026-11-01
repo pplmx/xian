@@ -44,6 +44,10 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
     expect(view, "门庭读数接共享账格").toContain(
       'import LedgerTally from "@/components/common/LedgerTally.vue"',
     );
+    expect(view, "首章章首由门庭专用组件接管").toContain(
+      'import ApprenticeChapterHead from "@/components/apprentice/ApprenticeChapterHead.vue"',
+    );
+    expect(view, "共享此刻账只留正文账格").toMatch(/<LedgerPulse\b[\s\S]{0,100}\bheadless\b/);
     expect(view, "门庭不再手搭账首").not.toContain(
       'import LedgerHeader from "@/components/common/LedgerHeader.vue"',
     );
@@ -71,15 +75,46 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
 
     expect(start, "门庭正文要收进同一册").toBeGreaterThan(-1);
     expect(register, "今日门庭是续卷第一章").toMatch(
-      /data-apprentice-chapter="pulse"[\s\S]{0,360}<LedgerPulse/,
+      /data-apprentice-chapter="pulse"[\s\S]{0,420}<ApprenticeChapterHead[\s\S]{0,320}<LedgerPulse/,
     );
     expect(register, "值日簿紧随总账续排").toMatch(
-      /data-apprentice-chapter="roster"[\s\S]{0,520}<SectionTitle[\s\S]{0,120}title="值日簿"/,
+      /data-apprentice-chapter="roster"[\s\S]{0,320}<ApprenticeChapterHead[\s\S]{0,220}title="值日簿"/,
     );
     expect(register, "门规是同一册的末章").toMatch(
-      /data-apprentice-chapter="rules"[\s\S]{0,420}<SectionTitle[\s\S]{0,120}title="门规"/,
+      /data-apprentice-chapter="rules"[\s\S]{0,320}<ApprenticeChapterHead[\s\S]{0,220}title="门规"/,
     );
     expect(register.match(/data-apprentice-chapter=/g), "续卷只列三章").toHaveLength(3);
+  });
+
+  it("门庭三章共用专用章首,章号、读法与章内真值各归其位", () => {
+    const view = source("src/views/ApprenticeView.vue");
+    const head = source("src/components/apprentice/ApprenticeChapterHead.vue");
+    const apprenticeCss = source("src/styles/pages/apprentice.css");
+
+    expect(view, "旧通用节题退场").not.toContain("<SectionTitle");
+    expect(view.match(/<ApprenticeChapterHead\b/g), "三章各用一枚门庭章首").toHaveLength(3);
+    expect(view).toContain('index="壹"');
+    expect(view).toContain('index="贰"');
+    expect(view).toContain('index="叁"');
+    expect(view).toContain('eyebrow="今日门庭"');
+    expect(view, "值日簿真值仍读同一份 roster").toContain(':fact="`${roster.length} 名弟子`"');
+    expect(view, "门规真值仍读机制常量").toContain(
+      ':fact="`${slots} 席 · ${APPRENTICE_MAX_LEVEL} 级封顶`"',
+    );
+    expect(head).toContain("data-apprentice-chapter-head");
+    expect(head).toContain("apprentice-chapter-head__index");
+    expect(head).toContain("apprentice-chapter-head__eyebrow");
+    expect(head).toContain("apprentice-chapter-head__hint");
+    expect(head).toContain("apprentice-chapter-head__fact");
+    expect(apprenticeCss).toMatch(
+      /\.apprentice-chapter-head\s*\{[\s\S]{0,260}grid-template-columns:\s*1\.45rem minmax\(0, 1fr\) auto/,
+    );
+    expect(apprenticeCss).toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,900}\.apprentice-chapter-head\s*\{[\s\S]{0,100}grid-template-columns:\s*1\.35rem minmax\(0, 1fr\)/,
+    );
+    expect(apprenticeCss).toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1200}\.apprentice-chapter-head__fact\s*\{[\s\S]{0,160}grid-column:\s*2/,
+    );
   });
 
   it("四门存底摊开调度依据,目标与同分都从 core 同一份方案来", () => {
@@ -165,7 +200,7 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
     expect(view, "不许手抄天赋倍率").not.toContain("×1.25");
   });
 
-  it("手机两格并读、最近归来跨行,620 起三栏并读,220 以下门规退成单列", () => {
+  it("手机两格并读、最近归来跨行,960 把值日簿与门规摊成两页,220 以下退单列", () => {
     const css = source("src/style.css");
     const start = css.indexOf(".apprentice-register {");
     const end = css.indexOf("/*\n   * 道躯案", start);
@@ -214,6 +249,15 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
     );
     expect(apprenticeCss).toMatch(
       /@media \(min-width: 620px\)\s*\{[\s\S]{0,3000}\.apprentice-rules\s*\{[\s\S]{0,120}repeat\(2, minmax\(0, 1fr\)\)/,
+    );
+    expect(apprenticeCss, "960 起正文与门规左右并读").toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,900}\.apprentice-register\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(0, 1\.55fr\) minmax\(17rem, 0\.75fr\)/,
+    );
+    expect(apprenticeCss, "桌面只在正文与边注之间留一道中缝").toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,1200}\.apprentice-register__chapter--roster\s*\{[\s\S]{0,180}border-right:\s*1px solid/,
+    );
+    expect(apprenticeCss, "门规到边注后退回单列").toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,1600}\.apprentice-rules\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
     expect(apprenticeCss).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,3000}\.apprentice-rules__item\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,

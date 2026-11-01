@@ -7,10 +7,12 @@
    * 旧页把卷首读数、弟子身份、羁绊说明与五枚任务按钮挤在同一张卡上，重复的
    * “等级 / 羁绊 / 真传”说明又把真正要点的差事进度与产出压到后面。现在总账
    * 只回答“几个人能派、最近谁回来”，值日簿再回答“这个人适合去哪、归来拿什么”；
-   * 三层不再各套一张卡纸，只沿同一组上下账线续排。
+   * 三层共用门庭章首，只沿同一组上下账线续排；960 起值日簿作正文、门规作边注。
   */
   .apprentice-register {
+    display: grid;
     min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
     margin-top: 0.65rem;
     border: 0;
     border-top: 1px solid color-mix(in srgb, var(--color-cinnabar) 36%, transparent);
@@ -26,11 +28,69 @@
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
   }
   .apprentice-register__chapter--pulse {
+    grid-column: 1 / -1;
     padding-top: 0;
   }
   .apprentice-register__chapter--pulse > .apprentice-pulse {
     margin-top: 0;
     border-top: 0;
+  }
+  .apprentice-chapter-head {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.45rem minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.24rem 0.55rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    padding: 0.64rem 0.05rem 0.5rem;
+  }
+  .apprentice-chapter-head__index {
+    display: grid;
+    width: 1.35rem;
+    height: 1.35rem;
+    place-items: center;
+    border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.7);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  .apprentice-chapter-head__copy {
+    display: grid;
+    min-width: 0;
+    gap: 0.04rem;
+  }
+  .apprentice-chapter-head__eyebrow {
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.12em;
+    line-height: 1.35;
+  }
+  .apprentice-chapter-head__title {
+    margin: 0;
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-section);
+    font-weight: 400;
+    letter-spacing: 0.13em;
+    line-height: 1.35;
+  }
+  .apprentice-chapter-head__hint {
+    min-width: 0;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.52;
+    overflow-wrap: anywhere;
+  }
+  .apprentice-chapter-head__fact {
+    justify-self: end;
+    color: rgb(var(--color-qing-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1.45;
+    text-align: right;
+    white-space: nowrap;
   }
   .apprentice-pulse {
     --ledger-accent: var(--color-cinnabar);
@@ -707,7 +767,52 @@
       border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
     }
   }
+  @media (min-width: 960px) {
+    .apprentice-register {
+      grid-template-columns: minmax(0, 1.55fr) minmax(17rem, 0.75fr);
+      align-items: start;
+    }
+
+    .apprentice-register__chapter--pulse {
+      border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    }
+
+    .apprentice-register__chapter--roster {
+      border-top: 0;
+      border-right: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+      padding-right: 1.45rem;
+    }
+
+    .apprentice-register__chapter--rules {
+      border-top: 0;
+      padding-left: 1.45rem;
+    }
+
+    .apprentice-rules {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .apprentice-rules__item:nth-child(2) {
+      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+      border-left: 0;
+    }
+
+    .apprentice-rules__item:nth-child(4) {
+      border-left: 0;
+    }
+  }
   @media (max-width: 220px) {
+    .apprentice-chapter-head {
+      grid-template-columns: 1.35rem minmax(0, 1fr);
+    }
+
+    .apprentice-chapter-head__fact {
+      grid-column: 2;
+      justify-self: start;
+      text-align: left;
+      white-space: normal;
+    }
+
     .apprentice-pulse .apprentice-pulse__dispatch {
       padding-inline: 0.36rem;
       font-size: var(--type-note);

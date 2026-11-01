@@ -1,6 +1,7 @@
 <template>
   <section class="folio-ledger-pulse" data-folio-ledger-pulse>
     <LedgerHeader
+      v-if="!headless"
       :title="title"
       :seal="seal"
       :eyebrow="eyebrow"
@@ -61,6 +62,7 @@ withDefaults(
     variant?: "ledger" | "index";
     tallyColumns?: 1 | 2 | 3 | 4;
     tallyWideColumns?: 1 | 2 | 3 | 4;
+    headless?: boolean;
   }>(),
   {
     seal: "",
@@ -73,6 +75,7 @@ withDefaults(
     variant: "ledger",
     tallyColumns: 3,
     tallyWideColumns: 3,
+    headless: false,
   },
 );
 </script>

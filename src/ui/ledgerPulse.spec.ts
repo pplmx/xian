@@ -26,6 +26,14 @@ describe("此刻账 · 同一张纸边、同一枚动作键", () => {
     expect(pulse).toContain("<slot />");
   });
 
+  it("专用章首可以接管账首,共享此刻账只留账格", () => {
+    const pulse = source("src/components/common/LedgerPulse.vue");
+
+    expect(pulse).toContain('v-if="!headless"');
+    expect(pulse).toContain("headless?: boolean");
+    expect(pulse).toContain("headless: false");
+  });
+
   it("坊市、器魂与天界只交账格和强调色，不再各写纸边与动作键", () => {
     const cases = [
       "src/views/MarketView.vue",

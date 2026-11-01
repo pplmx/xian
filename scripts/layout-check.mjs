@@ -5998,6 +5998,9 @@ async function taskApprenticePulse() {
         const roster = register?.querySelector("[data-apprentice-roster]");
         const rules = register?.querySelector(".apprentice-rules");
         const chapters = [...(register?.querySelectorAll("[data-apprentice-chapter]") ?? [])];
+        const chapterHeads = [
+          ...(register?.querySelectorAll("[data-apprentice-chapter-head]") ?? []),
+        ];
         const choiceGrid = roster?.querySelector(".apprentice-task-choice-grid");
         const choices = [...(register?.querySelectorAll(".apprentice-task-choice") ?? [])];
         const depot = register?.querySelector(".apprentice-depot__rows");
@@ -6020,11 +6023,31 @@ async function taskApprenticePulse() {
         };
         return {
           found: Boolean(register && pulse && roster && rules),
-          chapters: chapters.map((chapter) => ({
-            id: chapter.getAttribute("data-apprentice-chapter"),
-            top: Math.round(chapter.getBoundingClientRect().top),
-            borderTop: getComputedStyle(chapter).borderTopWidth,
+          chapters: chapters.map((chapter) => {
+            const rect = chapter.getBoundingClientRect();
+            return {
+              id: chapter.getAttribute("data-apprentice-chapter"),
+              top: Math.round(rect.top),
+              bottom: Math.round(rect.bottom),
+              left: Math.round(rect.left),
+              right: Math.round(rect.right),
+              borderTop: getComputedStyle(chapter).borderTopWidth,
+            };
+          }),
+          heads: chapterHeads.map((head) => ({
+            chapter: head
+              .closest("[data-apprentice-chapter]")
+              ?.getAttribute("data-apprentice-chapter"),
+            index: (
+              head.querySelector(".apprentice-chapter-head__index")?.textContent || ""
+            ).trim(),
+            title: (
+              head.querySelector(".apprentice-chapter-head__title")?.textContent || ""
+            ).trim(),
+            fact: (head.querySelector(".apprentice-chapter-head__fact")?.textContent || "").trim(),
           })),
+          pulseHasLedgerHead: Boolean(pulse?.querySelector("[data-folio-ledger-head]")),
+          sectionTitles: register?.querySelectorAll(".section-title").length ?? -1,
           register: chrome(register),
           roster: chrome(roster),
           rules: chrome(rules),
@@ -6059,6 +6082,17 @@ async function taskApprenticePulse() {
       fold.chapters.slice(1).some((chapter) => width(chapter.borderTop) < 1)
     ) {
       failures.push(`[390] 门庭续卷没有按总账、值日簿、门规三章续排:${JSON.stringify(fold)}`);
+    }
+    checked += 1;
+    if (
+      fold.heads.map((head) => head.chapter).join(",") !== "pulse,roster,rules" ||
+      fold.heads.map((head) => head.index).join(",") !== "壹,贰,叁" ||
+      fold.heads.map((head) => head.title).join(",") !== "一册值日,值日簿,门规" ||
+      fold.heads.some((head) => head.fact.length === 0) ||
+      fold.pulseHasLedgerHead ||
+      fold.sectionTitles !== 0
+    ) {
+      failures.push(`[390] 门庭三章没有共用专用章首:${JSON.stringify(fold.heads)}`);
     }
     checked += 1;
     if (
@@ -6108,8 +6142,24 @@ async function taskApprenticePulse() {
     await settleVisuals(page);
     const wide = await readRegister();
     checked += 1;
-    if (wide.columns.depot !== 4 || wide.columns.choices !== 3 || wide.columns.rules !== 2) {
+    if (wide.columns.depot !== 4 || wide.columns.choices !== 3 || wide.columns.rules !== 1) {
       failures.push(`[1280] 门庭续卷没有按桌面档并读:${JSON.stringify({ columns: wide.columns })}`);
+    }
+    checked += 1;
+    const [widePulse, wideRoster, wideRules] = wide.chapters;
+    if (
+      !widePulse ||
+      !wideRoster ||
+      !wideRules ||
+      Math.abs(wideRoster.top - wideRules.top) > 2 ||
+      wideRoster.right > wideRules.left ||
+      widePulse.left > wideRoster.left ||
+      widePulse.right < wideRules.right
+    ) {
+      failures.push(
+        `[1280] 门庭续卷没有摊成“首章通栏、正文与门规左右并读”:` +
+          `${JSON.stringify(wide.chapters)}`,
+      );
     }
 
     await page.setViewportSize({ width: 390, height: 844 });

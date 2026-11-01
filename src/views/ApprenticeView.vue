@@ -43,9 +43,9 @@ import { notify } from "@/core/notify";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LedgerPulse from "@/components/common/LedgerPulse.vue";
 import LedgerTally from "@/components/common/LedgerTally.vue";
-import SectionTitle from "@/components/common/SectionTitle.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
+import ApprenticeChapterHead from "@/components/apprentice/ApprenticeChapterHead.vue";
 import ApprenticeCourt from "@/components/apprentice/ApprenticeCourt.vue";
 
 const appr = useApprenticeStore();
@@ -405,17 +405,21 @@ function dispatchSelected(a: OwnedApprentice): void {
         class="apprentice-register__chapter apprentice-register__chapter--pulse"
         data-apprentice-chapter="pulse"
       >
+        <ApprenticeChapterHead
+          index="壹"
+          eyebrow="今日门庭"
+          title="一册值日"
+          hint="候差、在途与四门存底同读一册"
+          :fact="`${pulse.total} / ${slots} 席`"
+        />
         <LedgerPulse
           class="apprentice-pulse"
+          headless
           data-apprentice-pulse
           :data-apprentice-total="pulse.total"
           :data-apprentice-idle="pulse.idle"
           :data-apprentice-away="pulse.away"
-          seal="庭"
-          eyebrow="今日门庭"
           title="一册值日"
-          :score-value="`${pulse.total} / ${slots}`"
-          score-suffix="席"
           :tally-columns="2"
           :tally-wide-columns="3"
         >
@@ -506,12 +510,14 @@ function dispatchSelected(a: OwnedApprentice): void {
       </section>
 
       <section
-        class="apprentice-register__chapter apprentice-roster-section"
+        class="apprentice-register__chapter apprentice-register__chapter--roster apprentice-roster-section"
         data-apprentice-chapter="roster"
       >
-        <SectionTitle
+        <ApprenticeChapterHead
+          index="贰"
           title="值日簿"
           :hint="`候差 ${idleRows.length} · 在途 ${awayRows.length} · 在途按归期先后`"
+          :fact="`${roster.length} 名弟子`"
         />
 
         <div class="apprentice-roster" data-apprentice-roster>
@@ -717,10 +723,15 @@ function dispatchSelected(a: OwnedApprentice): void {
       </section>
 
       <section
-        class="apprentice-register__chapter apprentice-rules-section"
+        class="apprentice-register__chapter apprentice-register__chapter--rules apprentice-rules-section"
         data-apprentice-chapter="rules"
       >
-        <SectionTitle title="门规" hint="界面读数与结算同源" />
+        <ApprenticeChapterHead
+          index="叁"
+          title="门规"
+          hint="界面读数与结算同源"
+          :fact="`${slots} 席 · ${APPRENTICE_MAX_LEVEL} 级封顶`"
+        />
         <div class="apprentice-rules">
           <article class="apprentice-rules__item">
             <span class="apprentice-rules__index tabular" aria-hidden="true">壹</span>

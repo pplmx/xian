@@ -464,7 +464,7 @@
   }
   .build-core__gap {
     grid-column: 1 / -1;
-    color: color-mix(in srgb, var(--color-cinnabar) 72%, var(--color-ink) 28%);
+    color: color-mix(in srgb, var(--color-cinnabar) 64%, var(--color-ink) 36%);
     font-size: var(--type-note);
   }
   .build-matchup-list {
