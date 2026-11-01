@@ -219,4 +219,49 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
       /@media \(max-width: 260px\)[\s\S]{0,1600}\.rebirth-ledger-row\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\) 1rem/,
     );
   });
+
+  it("往生三程先辞世再回照,末程才摊落子与不可撤回", () => {
+    const dialog = source("src/components/character/ReincarnationDialog.vue");
+
+    expect(dialog, "三扇窗都要带同一枚往生三程路签").toContain("data-reincarnation-stage-rail");
+    expect(dialog, "三程要各有稳定落点").toContain('data-reincarnation-stage="death"');
+    expect(dialog).toContain('data-reincarnation-stage="review"');
+    expect(dialog).toContain('data-reincarnation-stage="choice"');
+    expect(dialog, "三程名与状态只读同一份装配").toContain("REINCARNATION_STAGES");
+    expect(dialog, "每程当前态也要有可量测的稳定标记").toContain("data-reincarnation-stage-state");
+    expect(dialog, "辞世屏要说明尚未落子").toContain("尚未写入轮回");
+    expect(dialog, "回照屏去留账只读同一份继承表").toContain("samsaraLedger(");
+    expect(dialog, "回照屏仍可展开 36 项全账").toContain("data-reincarnation-heritage-toggle");
+    expect(dialog, "全账展开态要报给读屏").toContain(':aria-expanded="heritageOpen"');
+    expect(dialog, "择生屏先把不可撤回写在落子旁").toContain("不可撤回");
+    expect(dialog, "留白道号要按核心契约沿用旧号").toContain("留白不填，便沿用旧号");
+    expect(dialog, "不许把留白写成核心并未实现的无名散修").not.toContain("便以「无名散修」入卷");
+    expect(dialog, "先天之姿未择时主按钮置灰").toContain(':disabled="confirmGate.disabled"');
+    expect(dialog, "置灰原因要直接来自同一份 confirmGate").toContain("confirmGate.short");
+    expect(dialog, "踏入轮回仍是唯一最终落子动作").toContain("data-reincarnation-confirm");
+  });
+
+  it("往生三程手机单列,620 起回照两账并读,220 以下路签与动作收成上下段", () => {
+    const dialog = source("src/components/character/ReincarnationDialog.vue");
+
+    expect(dialog, "往生三程要占满浮层可用宽").toContain('size="wide"');
+    expect(dialog, "620 起回照两账并读").toMatch(
+      /@media \(min-width: 620px\)[\s\S]{0,700}\.reincarnation-review__grid\s*\{[\s\S]{0,140}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
+    );
+    expect(dialog, "220 以下路签收成竖排").toMatch(
+      /@media \(max-width: 220px\)[\s\S]{0,1600}\.reincarnation-stages\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(dialog, "220 以下末程动作上下收住").toMatch(
+      /@media \(max-width: 220px\)[\s\S]{0,2200}\.reincarnation-actions\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(dialog, "手机页脚默认就收成一列").toMatch(
+      /\.reincarnation-actions\s*\{[\s\S]{0,140}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(dialog, "620 起页脚才让说明与动作并读").toMatch(
+      /@media \(min-width: 620px\)[\s\S]{0,220}\.reincarnation-actions\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\) auto/,
+    );
+    expect(dialog, "主按钮里的动作名与说明上下分栏").toMatch(
+      /\.reincarnation-actions__button\s*\{[\s\S]{0,140}display:\s*grid/,
+    );
+  });
 });

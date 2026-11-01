@@ -1,284 +1,648 @@
 <template>
-  <!-- 死亡提示 -->
-  <BaseModal :open="ui.deathDialog && !view" :closable="false" aria-label="寿元将尽">
-    <div class="text-center">
-      <p class="mt-2 font-kai text-2xl tracking-[0.4em] text-ink">寿元将尽</p>
-      <p class="mt-3 text-title leading-relaxed text-ink-soft">
-        {{ player.name }}枯坐于蒲团之上,油尽灯枯。
-        <br />
-        此生行至 {{ yearsShown(player.age) }} 载,止步于{{ player.realmName }}。
-        <br />
-        所幸神魂不灭,尚可入轮回,再启仙途。
-      </p>
-    </div>
-    <template #footer>
-      <button class="btn-seal w-full" @click="beginRebirth">兵解转世</button>
-    </template>
-  </BaseModal>
-
-  <!-- 第一程:回顾上一世 -->
-  <BaseModal :open="view !== null && step === 'review'" :closable="false" title="此生已矣">
-    <div v-if="view">
-      <p class="t-body text-ink-soft">
-        第
-        <span class="font-kai text-ink tabular">{{ view.review.index }}</span>
-        世,你行至{{ view.review.realmLabel }},寿终于
-        <span class="tabular">{{ view.review.age }}</span>
-        载。
-      </p>
-
-      <!-- 这一世立的题 -->
-      <div v-if="reviewTheme" class="mt-3 rounded-sm border border-ink/15 px-3 py-2">
-        <p class="flex items-center justify-between">
-          <span class="font-kai text-title text-ink">「{{ reviewTheme.vow }}」</span>
-          <span class="text-body" :class="RESULT_COLORS[view.review.themeResult ?? 'unfinished']">
-            {{ RESULT_NAMES[view.review.themeResult ?? "unfinished"] }}
-          </span>
-        </p>
-        <p class="mt-1 text-body text-ink-faint">
-          {{ reviewTheme.goal }}
-          <span v-if="view.review.themeResult === 'unfinished'" class="tabular">
-            ({{ Math.floor(view.review.themeCur) }} / {{ view.review.themeNeed }})
-          </span>
-        </p>
-        <p
-          v-if="view.review.themeResult === 'done'"
-          class="mt-1 text-body leading-relaxed text-gold-ink"
+  <!-- 第一程:寿终辞世。此处只开卷,不改存档。 -->
+  <BaseModal :open="ui.deathDialog && !view" size="wide" title="往生 · 辞世" :closable="false">
+    <article
+      class="reincarnation-folio reincarnation-folio--death stagger-in"
+      data-reincarnation-stage="death"
+    >
+      <nav class="reincarnation-stages" data-reincarnation-stage-rail aria-label="往生三程">
+        <div
+          v-for="(stage, index) in REINCARNATION_STAGES"
+          :key="stage.id"
+          class="reincarnation-stage"
+          :class="`is-${reincarnationStageState(index + 1, 1)}`"
+          :data-reincarnation-stage-state="reincarnationStageState(index + 1, 1)"
+          :aria-current="reincarnationStageState(index + 1, 1) === 'current' ? 'step' : undefined"
         >
-          {{ reviewTheme.legacy }}
-        </p>
-        <p v-else-if="view.review.themeResult === 'broken'" class="mt-1 text-body text-ink-faint">
-          你{{ TABOO_NAMES[reviewTheme.taboo ?? "pill"] }}了。这一世的话,没能说到底。
-        </p>
-      </div>
-      <p v-else class="mt-3 text-body text-ink-faint">此生不曾为自己立下什么题目。</p>
+          <span class="reincarnation-stage__ordinal" aria-hidden="true">{{ stage.ordinal }}</span>
+          <span class="reincarnation-stage__copy">
+            <strong>{{ stage.name }}</strong>
+            <small>{{ stage.note }}</small>
+          </span>
+        </div>
+      </nav>
 
-      <!-- 宿慧与阶段 -->
-      <div class="mt-3 rounded-sm border border-ink/15 px-3 py-2">
-        <p class="flex items-center justify-between text-body">
-          <span class="text-ink-soft">此生所历,化作宿慧</span>
-          <span class="font-kai text-cinnabar tabular">+{{ view.review.insightGained }}</span>
-        </p>
-        <p class="mt-1.5 flex items-center justify-between text-body">
-          <span class="text-ink-soft">宿慧共计</span>
-          <span class="tabular text-ink">{{ view.insightAfter }}</span>
-        </p>
-        <p class="mt-2 flex items-center gap-2">
-          <span
-            class="font-kai text-title"
-            :class="view.stageAdvanced ? 'text-cinnabar' : 'text-ink'"
-            >{{ view.stageName }}</span
-          >
-          <span
-            v-if="view.stageAdvanced"
-            class="rounded-[2px] bg-cinnabar/6 px-1.5 py-0.5 text-note text-cinnabar"
-            >境地已迁</span
-          >
-        </p>
-        <p class="mt-1 t-body text-ink-faint">{{ view.stageDesc }}</p>
-        <p v-if="view.toNextStage !== null" class="mt-1 text-body text-ink-faint tabular">
-          再积 {{ view.toNextStage }} 宿慧,可入下一境地。
-        </p>
-      </div>
-
-      <!--
-        功法层数会掉回一层 —— 这是转世里最容易被低估的一笔损失(练满一部要 125 点悟道点)。
-        顶阶宿慧能保住一门、大乘道统能全带,故按玩家真实状态说清「这一世是哪一种」,
-        而不是只写在交割清单那条可展开的说明里。
-      -->
-      <p v-if="view.gongfaKeep.total > 0" data-gongfa-keep class="mt-1.5 t-body text-ink-faint">
-        功法 {{ view.gongfaKeep.total }} 部记得住,层数回到一层<template
-          v-if="view.gongfaKeep.keepAll"
-          >;大乘道统在身,已练的层数原样带走</template
-        ><template v-else-if="view.gongfaKeep.keepOneId"
-          >;唯有「{{ gongfaName(view.gongfaKeep.keepOneId) }}」保留
-          {{ view.gongfaKeep.keepOneLevel }} 层</template
-        >。
-      </p>
-
-      <p class="mt-3 t-body text-ink-faint">
-        丹方、药性、铭纹、器谱、敌手的路数——这些所知不随皮囊腐朽。 来世睁眼,你累计认得
-        <span class="text-ink tabular">{{ view.knownMaterials }}</span>
-        味灵材。
-      </p>
-
-      <!-- 交割清单:带走什么、放下什么 —— 与 core/samsaraAudit 的继承表同源,不另写一份 -->
-      <div class="mt-3 rounded-sm border border-ink/15 px-3 py-2">
-        <p class="text-note text-ink-faint">
-          此生交割 —— 留下的是「我是谁」,放下的是「我拥有多少」
-        </p>
-        <div v-for="g in heritageGroups()" :key="g.mode" class="mt-1.5">
-          <p class="text-body" :class="g.mode === 'reset' ? 'text-ink-faint' : 'text-ink-soft'">
-            {{ g.title }}
-            <span class="ml-1 text-note text-ink-faint">{{ g.rows.length }} 项</span>
-          </p>
-          <!--
-            交割清单的每一条 chip 都点得开 —— 机制说明(r.detail,30+ 条)原先只挂在
-            :title 上,而手机没有 hover:触屏玩家看得到「哪些带走了」,却一条原因都读不到。
-            改按 CharacterView 的 talentTap / AdventureView 的 adaptExpand 同一套范式:
-            chip 是 button + :aria-expanded(读屏也知道展开了),展开后在分组下方出一行。
-            min-h-[28px] 是排版自检那条触达下限 —— chip-ink 自然高只有 22 上下,
-            变成按钮之后就得对得起拇指。
-          -->
-          <p class="mt-0.5 flex flex-wrap gap-1">
-            <button
-              v-for="r in g.rows"
-              :key="r.id"
-              class="chip-ink min-h-[28px] !text-note text-left"
-              :class="
-                g.mode === 'full'
-                  ? 'border-jade/50 text-jade'
-                  : g.mode === 'partial'
-                    ? 'border-gold-ink/50 text-gold-ink'
-                    : 'border-ink/20 text-ink-faint'
-              "
-              :title="r.detail"
-              :aria-expanded="heritageTap === r.id"
-              @click="heritageTap = heritageTap === r.id ? null : r.id"
-            >
-              {{ r.name }}
-            </button>
-          </p>
-          <p
-            v-if="tappedHeritage && tappedHeritage.mode === g.mode"
-            class="mt-1 text-note leading-relaxed text-ink-faint"
-          >
-            <span class="text-ink-soft">{{ tappedHeritage.name }}</span>
-            ：{{ tappedHeritage.detail }}
+      <header class="reincarnation-head">
+        <span class="reincarnation-head__seal font-kai" aria-hidden="true">终</span>
+        <div class="reincarnation-head__identity">
+          <p class="reincarnation-head__eyebrow">第 {{ currentLife }} 世 · 寿数已尽</p>
+          <h2 class="reincarnation-head__title">{{ player.name }}</h2>
+          <p class="reincarnation-head__brief">
+            行世 {{ yearsShown(player.age) }} 载，止步于{{
+              player.realmName
+            }}。皮囊坐化，神魂仍可再启一程。
           </p>
         </div>
-      </div>
-    </div>
+        <p class="reincarnation-score tabular">
+          <span>道果</span>
+          <strong>{{ formatNum(player.reincarnation.daoFruit) }}</strong>
+          <small>枚</small>
+        </p>
+      </header>
+
+      <section class="reincarnation-callout" data-reincarnation-death-summary>
+        <span class="reincarnation-callout__mark font-kai" aria-hidden="true">别</span>
+        <div>
+          <p class="reincarnation-callout__title">这不是清档，是开卷</p>
+          <p class="reincarnation-callout__copy">
+            下一屏只作回照，核对此生带得走什么、放得下什么；尚未写入轮回。真正不可撤回的落子，是三程末的「踏入轮回」。
+          </p>
+        </div>
+      </section>
+
+      <dl class="reincarnation-death-grid">
+        <div>
+          <dt>今生</dt>
+          <dd>第 {{ currentLife }} 世</dd>
+        </div>
+        <div>
+          <dt>止步</dt>
+          <dd>{{ player.realmName }}</dd>
+        </div>
+        <div>
+          <dt>随身先天之姿</dt>
+          <dd>{{ ownedTalents.length }} 项</dd>
+        </div>
+      </dl>
+
+      <p class="reincarnation-footnote">
+        功法只折层数，道果、天赋与所知随神魂留下；境界、灵根、法宝与外物随皮囊散去。
+      </p>
+    </article>
+
     <template #footer>
-      <button class="btn-seal w-full" @click="step = 'next'">往生</button>
+      <div class="reincarnation-actions">
+        <p class="reincarnation-actions__gate" data-reincarnation-death-gate>
+          <strong>下一屏只作回照</strong>
+          <span>尚未登账，也还没有换掉这一世。</span>
+        </p>
+        <button
+          type="button"
+          class="btn-seal reincarnation-actions__button"
+          data-reincarnation-begin
+          @click="beginRebirth"
+        >
+          <span>兵解转世</span>
+          <small>进入第二程 · 回照</small>
+        </button>
+      </div>
     </template>
   </BaseModal>
 
-  <!-- 第二程:择姿立题 -->
-  <BaseModal :open="view !== null && step === 'next'" :closable="false" title="轮回">
-    <div v-if="view">
-      <p class="t-body text-ink-soft">
-        此番轮回凝得道果
-        <span class="text-cinnabar tabular">{{ view.daoFruitGained }}</span>
-        枚,来世修行更进一步。
-      </p>
-
-      <!-- 来世灵根:所见即所得 —— 此行/此根与确认后落账的是同一roll,绝非另掷一卦 -->
-      <p class="mt-0.5 t-body text-ink-faint">
-        来世灵根:<span class="font-kai text-ink">{{ view.nextLinggen.gradeName }}</span> · 修炼 ×{{
-          view.nextLinggen.growthMult
-        }}
-      </p>
-
-      <!-- 新一世的道号:每世一换,确认页可改回(玩家反馈「转世名字没重随机」) -->
-      <p class="mt-3 font-kai text-title tracking-widest text-ink">新一世的道号</p>
-      <p class="mt-1 text-body text-ink-faint">道号属「这一世如何自报家门」,随皮囊一同换过。</p>
-      <div class="mt-2 flex items-center gap-2">
-        <input
-          v-model="nameDraft"
-          maxlength="8"
-          aria-label="新一世的道号"
-          class="w-full rounded-[2px] border border-ink/20 bg-paper-deep/60 px-3 py-2 font-kai text-[16px] tracking-widest text-ink outline-none focus:border-cinnabar/50"
-          :placeholder="view.nameDraft"
-        />
-        <button class="btn-ghost shrink-0 !px-3" aria-label="随机取一个道号" @click="reRollName">
-          <GameIcon name="refresh" :size="15" />
-        </button>
-      </div>
-
-      <p class="mt-3 font-kai text-title tracking-widest text-ink">择一先天之姿</p>
-      <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
-        只取其一,余者本世无缘 —— 下一世才会重抽。
-      </p>
-      <p v-if="view.talentChoices.length === 0" class="mt-2 t-body text-ink-faint">
-        先天之姿已尽数为你所有,此番再无可择——直取轮回便是。
-      </p>
-      <div class="mt-2 space-y-2">
-        <button
-          v-for="id in view.talentChoices"
-          :key="id"
-          class="w-full rounded-sm border px-3 py-2 text-left transition-[transform,background-color] active:scale-98"
-          :class="chosen === id ? 'border-cinnabar bg-cinnabar/5' : 'border-ink/20'"
-          @click="chosen = id"
+  <!-- 第二程:回顾此生与去留全账。此处仍只读。 -->
+  <BaseModal
+    :open="view !== null && step === 'review'"
+    size="wide"
+    title="往生 · 回照"
+    :closable="false"
+  >
+    <article
+      v-if="view"
+      class="reincarnation-folio stagger-in"
+      data-reincarnation-stage="review"
+      data-reincarnation-review
+    >
+      <nav class="reincarnation-stages" data-reincarnation-stage-rail aria-label="往生三程">
+        <div
+          v-for="(stage, index) in REINCARNATION_STAGES"
+          :key="stage.id"
+          class="reincarnation-stage"
+          :class="`is-${reincarnationStageState(index + 1, 2)}`"
+          :data-reincarnation-stage-state="reincarnationStageState(index + 1, 2)"
+          :aria-current="reincarnationStageState(index + 1, 2) === 'current' ? 'step' : undefined"
         >
-          <p class="flex items-center gap-2">
+          <span class="reincarnation-stage__ordinal" aria-hidden="true">{{ stage.ordinal }}</span>
+          <span class="reincarnation-stage__copy">
+            <strong>{{ stage.name }}</strong>
+            <small>{{ stage.note }}</small>
+          </span>
+        </div>
+      </nav>
+
+      <header class="reincarnation-head">
+        <span class="reincarnation-head__seal font-kai" aria-hidden="true">照</span>
+        <div class="reincarnation-head__identity">
+          <p class="reincarnation-head__eyebrow">第二程 · 回照 · 第 {{ view.review.index }} 世</p>
+          <h2 class="reincarnation-head__title">
+            {{ view.review.realmLabel }}
+            <span>{{ view.review.age }} 载</span>
+          </h2>
+          <p class="reincarnation-head__brief">
+            先把此生的题、宿慧与交割账摊开。此程只读，不改动任何存档。
+          </p>
+        </div>
+        <p class="reincarnation-score tabular">
+          <span>宿慧</span>
+          <strong>+{{ formatNum(view.review.insightGained) }}</strong>
+          <small>此生</small>
+        </p>
+      </header>
+
+      <div class="reincarnation-review__grid">
+        <section
+          class="reincarnation-sheet"
+          :class="{ 'is-quiet': !reviewTheme }"
+          data-reincarnation-theme
+        >
+          <header class="reincarnation-sheet__head">
+            <span class="reincarnation-sheet__mark font-kai" aria-hidden="true">题</span>
+            <div>
+              <p class="reincarnation-sheet__eyebrow">此生命题</p>
+              <p class="reincarnation-sheet__title">
+                {{ reviewTheme ? `「${reviewTheme.vow}」` : "此世未立命题" }}
+              </p>
+            </div>
             <span
-              class="font-kai text-title"
-              :style="{ color: TALENT_GRADE_COLORS[talentDef(id)?.grade ?? 1] }"
+              v-if="reviewTheme"
+              class="reincarnation-sheet__state"
+              :class="RESULT_COLORS[view.review.themeResult ?? 'unfinished']"
             >
-              {{ talentDef(id)?.name }}
+              {{ RESULT_NAMES[view.review.themeResult ?? "unfinished"] }}
             </span>
-            <span class="text-note text-ink-faint">{{
-              TALENT_GRADE_NAMES[talentDef(id)?.grade ?? 1]
+          </header>
+          <template v-if="reviewTheme">
+            <p class="reincarnation-sheet__copy">{{ reviewTheme.goal }}</p>
+            <p
+              v-if="view.review.themeResult === 'unfinished'"
+              class="reincarnation-sheet__read tabular"
+            >
+              {{ Math.floor(view.review.themeCur) }} / {{ view.review.themeNeed }} · 未竟不给宿慧
+            </p>
+            <p
+              v-else-if="view.review.themeResult === 'done'"
+              class="reincarnation-sheet__read is-gold"
+            >
+              {{ reviewTheme.legacy }}
+            </p>
+            <p v-else class="reincarnation-sheet__read is-amber">
+              此生破了「{{ TABOO_NAMES[reviewTheme.taboo ?? "pill"] }}」之戒，题的所得没有兑现。
+            </p>
+          </template>
+          <p v-else class="reincarnation-sheet__copy">
+            这一世没有立题，便没有命题宿慧；阅历所得仍会计入下一阶。
+          </p>
+        </section>
+
+        <section class="reincarnation-sheet" data-reincarnation-insight>
+          <header class="reincarnation-sheet__head">
+            <span class="reincarnation-sheet__mark font-kai is-qing" aria-hidden="true">慧</span>
+            <div>
+              <p class="reincarnation-sheet__eyebrow">随神魂所积</p>
+              <p class="reincarnation-sheet__title">{{ view.stageName }}</p>
+            </div>
+            <span v-if="view.stageAdvanced" class="reincarnation-sheet__state text-cinnabar">
+              境地已迁
+            </span>
+          </header>
+          <p class="reincarnation-sheet__copy">{{ view.stageDesc }}</p>
+          <dl class="reincarnation-insight-rows">
+            <div>
+              <dt>此生入账</dt>
+              <dd class="tabular">+{{ formatNum(view.review.insightGained) }} 宿慧</dd>
+            </div>
+            <div>
+              <dt>回照后共有</dt>
+              <dd class="tabular">{{ formatNum(view.insightAfter) }} 宿慧</dd>
+            </div>
+            <div>
+              <dt>下一阶</dt>
+              <dd class="tabular">
+                {{
+                  view.toNextStage !== null
+                    ? `尚差 ${formatNum(view.toNextStage)} 宿慧`
+                    : "已至此阶尽头"
+                }}
+              </dd>
+            </div>
+          </dl>
+        </section>
+      </div>
+
+      <section class="reincarnation-ledger" data-reincarnation-ledger>
+        <header class="reincarnation-ledger__head">
+          <div>
+            <p class="reincarnation-sheet__eyebrow">去留同源</p>
+            <p class="reincarnation-ledger__title">此世交割</p>
+            <p class="reincarnation-ledger__copy">
+              条目直接取轮回结算的同一份继承表；先看影响最大的几笔，再展开全账。
+            </p>
+          </div>
+          <p class="reincarnation-ledger__count tabular">{{ balance.total }}<small>项</small></p>
+        </header>
+
+        <div class="reincarnation-balance" data-reincarnation-balance>
+          <p class="reincarnation-balance__row is-full">
+            <span>随魂</span>
+            <strong class="tabular">{{ balance.full }}</strong>
+            <small>项完整留下</small>
+          </p>
+          <p class="reincarnation-balance__row is-partial">
+            <span>折损</span>
+            <strong class="tabular">{{ balance.partial }}</strong>
+            <small>项只留一部分</small>
+          </p>
+          <p class="reincarnation-balance__row is-reset">
+            <span>归尘</span>
+            <strong class="tabular">{{ balance.reset }}</strong>
+            <small>项随皮囊散去</small>
+          </p>
+        </div>
+
+        <p class="reincarnation-ledger__caption">先看这些</p>
+        <div class="reincarnation-critical">
+          <p
+            v-for="row in criticalRows"
+            :key="row.id"
+            class="reincarnation-critical__row"
+            :class="row.tone"
+            :data-reincarnation-critical-row="row.id"
+          >
+            <span class="reincarnation-critical__mark font-kai" aria-hidden="true">{{
+              row.mark
             }}</span>
+            <span class="reincarnation-critical__name">{{ row.name }}</span>
+            <span class="reincarnation-critical__group">{{ row.groupTitle }}</span>
           </p>
-          <p class="mt-0.5 text-body text-ink-faint">{{ talentDef(id)?.desc }}</p>
-          <!-- 具体效果不再只藏在名字后面:抽的时候就看得到数字(手机上没 hover) -->
-          <p v-if="modsText(talentDef(id)?.mods ?? {})" class="mt-0.5 text-body text-qing">
-            {{ modsText(talentDef(id)?.mods ?? {}) }}
-          </p>
+        </div>
+
+        <p v-if="view.gongfaKeep.total > 0" class="reincarnation-keep" data-gongfa-keep>
+          <span class="reincarnation-keep__mark font-kai" aria-hidden="true">功</span>
+          <span>
+            功法 {{ view.gongfaKeep.total }} 部记得住，层数回到一层<template
+              v-if="view.gongfaKeep.keepAll"
+              >；大乘道统在身，已练的层数原样带走</template
+            ><template v-else-if="view.gongfaKeep.keepOneId"
+              >；唯有「{{ gongfaName(view.gongfaKeep.keepOneId) }}」保留
+              {{ view.gongfaKeep.keepOneLevel }} 层</template
+            >。
+          </span>
+        </p>
+
+        <button
+          type="button"
+          class="reincarnation-ledger__toggle"
+          data-reincarnation-heritage-toggle
+          :aria-expanded="heritageOpen"
+          @click="heritageOpen = !heritageOpen"
+        >
+          <span>{{ heritageOpen ? "收起去留全账" : `展开去留全账（${balance.total} 项）` }}</span>
+          <span aria-hidden="true">{{ heritageOpen ? "▾" : "▸" }}</span>
+        </button>
+
+        <div v-if="heritageOpen" class="scroll-fade reincarnation-ledger__fold">
+          <div class="scroll-pane max-h-64 overflow-y-auto reincarnation-ledger__scroll">
+            <section
+              v-for="group in ledger"
+              :key="group.mode"
+              class="reincarnation-ledger-group"
+              :class="group.tone"
+              :data-reincarnation-heritage-group="group.mode"
+            >
+              <header class="reincarnation-ledger-group__head">
+                <span class="reincarnation-ledger-group__mark font-kai" aria-hidden="true">{{
+                  group.mark
+                }}</span>
+                <p>{{ group.title }}</p>
+                <span class="tabular">{{ group.count }} 项</span>
+              </header>
+              <div class="reincarnation-ledger-group__rows">
+                <button
+                  v-for="r in group.rows"
+                  :key="r.id"
+                  type="button"
+                  class="reincarnation-ledger-row"
+                  :data-reincarnation-heritage-row="r.id"
+                  :aria-expanded="heritageTap === r.id"
+                  :aria-label="`${r.name}，${group.title}，${heritageTap === r.id ? '收起说明' : '展开说明'}`"
+                  @click="heritageTap = heritageTap === r.id ? null : r.id"
+                >
+                  <span class="reincarnation-ledger-row__name">{{ r.name }}</span>
+                  <span class="reincarnation-ledger-row__state">{{ group.title }}</span>
+                  <span class="reincarnation-ledger-row__mark" aria-hidden="true">{{
+                    heritageTap === r.id ? "−" : "+"
+                  }}</span>
+                  <span v-if="heritageTap === r.id" class="reincarnation-ledger-row__detail">
+                    {{ r.detail }}
+                  </span>
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <p class="reincarnation-footnote">
+        丹方、药性、铭纹、器谱与敌手路数都不随皮囊腐朽；来世睁眼即认得
+        <span class="tabular">{{ view.knownMaterials }}</span> 味灵材。
+      </p>
+    </article>
+
+    <template #footer>
+      <div class="reincarnation-actions">
+        <p class="reincarnation-actions__gate" data-reincarnation-review-gate>
+          <strong>回照不落账</strong>
+          <span>下一程才择道号、灵根与先天之姿。</span>
+        </p>
+        <button
+          type="button"
+          class="btn-seal reincarnation-actions__button"
+          data-reincarnation-review-next
+          @click="step = 'choice'"
+        >
+          <span>往生 · 择生</span>
+          <small>进入第三程 · 尚未落子</small>
         </button>
       </div>
-      <p v-if="view.extraTalents.length" class="mt-3 text-body text-ink-faint">
-        另有先天之姿自开:
-        <span v-for="id in view.extraTalents" :key="id" class="mr-2 font-kai text-gold-ink">{{
-          talentDef(id)?.name
-        }}</span>
-      </p>
+    </template>
+  </BaseModal>
 
-      <!-- 这一世锻得的宿命传承(ISS-302):深修的「我是谁」,随神魂不灭 -->
-      <div
-        v-if="view.heritageGained && heritageDef(view.heritageGained)"
-        class="mt-4 rounded-sm border border-gold-ink/30 bg-gold-ink/5 px-3 py-2"
-      >
-        <p class="font-kai text-title tracking-widest text-gold-ink">
-          道统传承 · {{ heritageDef(view.heritageGained)!.name }}
+  <!-- 第三程:择来世底账。按下「踏入轮回」才真正不可撤回。 -->
+  <BaseModal
+    :open="view !== null && step === 'choice'"
+    size="wide"
+    title="往生 · 择生"
+    :closable="false"
+  >
+    <article
+      v-if="view"
+      class="reincarnation-folio stagger-in"
+      data-reincarnation-stage="choice"
+      data-reincarnation-choice
+    >
+      <nav class="reincarnation-stages" data-reincarnation-stage-rail aria-label="往生三程">
+        <div
+          v-for="(stage, index) in REINCARNATION_STAGES"
+          :key="stage.id"
+          class="reincarnation-stage"
+          :class="`is-${reincarnationStageState(index + 1, 3)}`"
+          :data-reincarnation-stage-state="reincarnationStageState(index + 1, 3)"
+          :aria-current="reincarnationStageState(index + 1, 3) === 'current' ? 'step' : undefined"
+        >
+          <span class="reincarnation-stage__ordinal" aria-hidden="true">{{ stage.ordinal }}</span>
+          <span class="reincarnation-stage__copy">
+            <strong>{{ stage.name }}</strong>
+            <small>{{ stage.note }}</small>
+          </span>
+        </div>
+      </nav>
+
+      <header class="reincarnation-head">
+        <span class="reincarnation-head__seal font-kai" aria-hidden="true">生</span>
+        <div class="reincarnation-head__identity">
+          <p class="reincarnation-head__eyebrow">第三程 · 择生 · 落子前</p>
+          <h2 class="reincarnation-head__title">为第 {{ view.review.index + 1 }} 世定底</h2>
+          <p class="reincarnation-head__brief">
+            道号与灵根所见即所得；先天之姿只取其一，命题可不立。此页仍可反复改选。
+          </p>
+        </div>
+        <p class="reincarnation-score tabular">
+          <span>道果</span>
+          <strong>+{{ formatNum(view.daoFruitGained) }}</strong>
+          <small>今生</small>
         </p>
-        <p class="mt-1 t-body text-ink-soft">
-          {{ heritageDef(view.heritageGained)!.desc }}
-        </p>
-        <p class="mt-1 text-note leading-relaxed text-ink-faint">
-          效果：{{ heritageDef(view.heritageGained)!.effectDesc }}
-        </p>
+      </header>
+
+      <div class="reincarnation-choice__grid">
+        <section class="reincarnation-sheet reincarnation-destiny" data-reincarnation-destiny>
+          <header class="reincarnation-sheet__head">
+            <span class="reincarnation-sheet__mark font-kai" aria-hidden="true">根</span>
+            <div>
+              <p class="reincarnation-sheet__eyebrow">来世根本</p>
+              <p class="reincarnation-sheet__title">{{ view.nextLinggen.gradeName }}</p>
+            </div>
+            <span class="reincarnation-sheet__state text-qing">
+              修行 ×{{ view.nextLinggen.growthMult }}
+            </span>
+          </header>
+          <div class="reincarnation-roots" aria-label="来世灵根资质">
+            <span
+              v-for="root in view.nextLinggen.roots"
+              :key="root.element"
+              class="reincarnation-root"
+            >
+              <strong class="font-kai">{{ ELEMENTS[root.element].name }}</strong>
+              <span class="tabular">{{ root.aptitude }}</span>
+            </span>
+          </div>
+        </section>
+
+        <section class="reincarnation-sheet" data-reincarnation-dao-fruit>
+          <header class="reincarnation-sheet__head">
+            <span class="reincarnation-sheet__mark font-kai is-gold" aria-hidden="true">果</span>
+            <div>
+              <p class="reincarnation-sheet__eyebrow">永生积累</p>
+              <p class="reincarnation-sheet__title">道果落账</p>
+            </div>
+            <span class="reincarnation-sheet__state tabular text-cinnabar">
+              +{{ formatNum(view.daoFruitGained) }}
+            </span>
+          </header>
+          <dl class="reincarnation-insight-rows">
+            <div>
+              <dt>今生凝得</dt>
+              <dd class="tabular">{{ formatNum(view.daoFruitGained) }} 枚</dd>
+            </div>
+            <div>
+              <dt>落账后共有</dt>
+              <dd class="tabular">{{ formatNum(nextFruitTotal) }} 枚</dd>
+            </div>
+            <div>
+              <dt>跨世用途</dt>
+              <dd>修行与道躯的永久底账</dd>
+            </div>
+          </dl>
+        </section>
       </div>
 
-      <!-- 这一世的命题 -->
-      <template v-if="view.themeChoices.length">
-        <p class="mt-4 font-kai text-title tracking-widest text-ink">
-          这一世要做什么
-          <span v-if="view.themeFree" class="ml-1 text-note font-normal text-gold-ink"
-            >(百世老修,任你自择)</span
+      <section class="reincarnation-sheet reincarnation-name" data-reincarnation-name>
+        <header class="reincarnation-sheet__head">
+          <span class="reincarnation-sheet__mark font-kai" aria-hidden="true">名</span>
+          <div>
+            <p class="reincarnation-sheet__eyebrow">新一世如何自报家门</p>
+            <p class="reincarnation-sheet__title">新一世的道号</p>
+          </div>
+        </header>
+        <p class="reincarnation-sheet__copy">
+          道号随这一副皮囊可重拟，最多八字；留白不填，便沿用旧号。
+        </p>
+        <div class="reincarnation-name__row">
+          <input
+            v-model="nameDraft"
+            maxlength="8"
+            aria-label="新一世的道号"
+            class="reincarnation-name__input text-[16px]"
+            :placeholder="view.nameDraft"
+          />
+          <button
+            type="button"
+            class="btn-ghost reincarnation-name__reroll"
+            data-reincarnation-name-reroll
+            aria-label="随机取一个道号"
+            @click="reRollName"
           >
+            <GameIcon name="refresh" :size="15" />
+            <span>另掷一号</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="reincarnation-sheet reincarnation-talent-section">
+        <header class="reincarnation-section-head">
+          <div>
+            <p class="reincarnation-sheet__eyebrow">随魂不灭 · 本世只取其一</p>
+            <p class="reincarnation-section-head__title">择一先天之姿</p>
+          </div>
+          <span class="reincarnation-section-head__state" :class="{ 'is-blocked': !chosen }">
+            {{ view.talentChoices.length ? (chosen ? "已择定" : "待择") : "池已尽" }}
+          </span>
+        </header>
+        <p class="reincarnation-sheet__copy">
+          只取其一，余者本世无缘；具体数字与效果先摊在这里，不靠猜名字。
         </p>
-        <p class="mt-1 text-body text-ink-faint">
-          立题不给属性。走到底了,所得的是随神魂不灭的一份所知。
+        <p v-if="view.talentChoices.length === 0" class="reincarnation-empty">
+          先天之姿已尽数为你所有，此番再无可择，可直取轮回。
         </p>
-        <div class="mt-2 space-y-2">
+        <div v-else class="reincarnation-talent-grid">
+          <button
+            v-for="id in view.talentChoices"
+            :key="id"
+            type="button"
+            class="reincarnation-talent-choice"
+            :class="{ 'is-chosen': chosen === id }"
+            :aria-pressed="chosen === id"
+            :data-reincarnation-talent-choice="id"
+            @click="chosen = id"
+          >
+            <span class="reincarnation-talent-choice__head">
+              <span
+                class="reincarnation-talent-choice__name font-kai"
+                :style="{ color: TALENT_GRADE_COLORS[talentDef(id)?.grade ?? 1] }"
+              >
+                {{ talentDef(id)?.name ?? id }}
+              </span>
+              <span class="reincarnation-talent-choice__grade">
+                {{ TALENT_GRADE_NAMES[talentDef(id)?.grade ?? 1] }}
+              </span>
+              <span class="reincarnation-talent-choice__mark" aria-hidden="true">{{
+                chosen === id ? "已" : "择"
+              }}</span>
+            </span>
+            <span class="reincarnation-talent-choice__desc">{{ talentDef(id)?.desc }}</span>
+            <span
+              v-if="modsText(talentDef(id)?.mods ?? {})"
+              class="reincarnation-talent-choice__mods"
+            >
+              {{ modsText(talentDef(id)?.mods ?? {}) }}
+            </span>
+          </button>
+        </div>
+        <p v-if="view.extraTalents.length" class="reincarnation-extra">
+          <span>另有先天之姿自开</span>
+          <strong v-for="id in view.extraTalents" :key="id">
+            {{ talentDef(id)?.name ?? id }}
+          </strong>
+        </p>
+      </section>
+
+      <section class="reincarnation-sheet reincarnation-theme-section">
+        <header class="reincarnation-section-head">
+          <div>
+            <p class="reincarnation-sheet__eyebrow">只判这一世 · 可立可不立</p>
+            <p class="reincarnation-section-head__title">这一世要做什么</p>
+          </div>
+          <span class="reincarnation-section-head__state" :class="{ 'is-qing': theme }">
+            {{ theme ? "已择题" : "可不立" }}
+          </span>
+        </header>
+        <p class="reincarnation-sheet__copy">
+          立题不给属性；走到底才得一份宿慧与来路。破戒或未竟都不会倒扣。
+        </p>
+        <p v-if="view.themeFree" class="reincarnation-theme-free">
+          百世老修，此阶可在已开命题中任取一题。
+        </p>
+        <div v-if="themeDefs.length" class="reincarnation-theme-list">
           <button
             v-for="t in themeDefs"
             :key="t.id"
-            class="w-full rounded-sm border px-3 py-2 text-left transition-[transform,background-color] active:scale-98"
-            :class="theme === t.id ? 'border-cinnabar bg-cinnabar/5' : 'border-ink/20'"
+            type="button"
+            class="reincarnation-theme-choice"
+            :class="{ 'is-chosen': theme === t.id }"
+            :aria-pressed="theme === t.id"
+            :data-reincarnation-theme-choice="t.id"
             @click="theme = theme === t.id ? null : t.id"
           >
-            <p class="flex items-center justify-between">
-              <span class="font-kai text-title text-ink">{{ t.name }}</span>
-              <span class="text-note text-ink-faint tabular">宿慧 +{{ t.insight }}</span>
-            </p>
-            <p class="mt-0.5 t-body text-ink-soft">{{ t.vow }}</p>
-            <p class="mt-0.5 text-body text-ink-faint">
-              {{ t.goal }}
-              <span v-if="t.taboo" class="ml-1 text-amber-ink"
-                >忌:{{ TABOO_NAMES[t.taboo] }} —— 一世守之,破之题废,无所得</span
+            <span class="reincarnation-theme-choice__head">
+              <span class="reincarnation-theme-choice__name font-kai">{{ t.name }}</span>
+              <span class="reincarnation-theme-choice__gain tabular"
+                >做到 +{{ t.insight }} 宿慧</span
               >
-            </p>
+            </span>
+            <span class="reincarnation-theme-choice__vow">{{ t.vow }}</span>
+            <span class="reincarnation-theme-choice__goal">{{ t.goal }}</span>
+            <span v-if="t.taboo" class="reincarnation-theme-choice__taboo">
+              忌：{{ TABOO_NAMES[t.taboo] }} —— 一世守之，破之题废，无所得
+            </span>
           </button>
         </div>
-        <p class="mt-2 text-body text-ink-faint">不选亦可——无题的一世,不过是少一份所得。</p>
-      </template>
-    </div>
+        <p v-else class="reincarnation-empty">此阶没有可立命题，不立题并不影响转世。</p>
+        <p class="reincarnation-theme-skip">不选亦可 —— 无题的一世，只是少一份命题宿慧。</p>
+      </section>
+
+      <section
+        v-if="view.heritageGained && heritageDef(view.heritageGained)"
+        class="reincarnation-sheet reincarnation-heritage-gained"
+        data-reincarnation-heritage-gained
+      >
+        <header class="reincarnation-sheet__head">
+          <span class="reincarnation-sheet__mark font-kai is-gold" aria-hidden="true">传</span>
+          <div>
+            <p class="reincarnation-sheet__eyebrow">深修所悟 · 随神魂不灭</p>
+            <p class="reincarnation-sheet__title">
+              道统传承 · {{ heritageDef(view.heritageGained)!.name }}
+            </p>
+          </div>
+        </header>
+        <p class="reincarnation-sheet__copy">{{ heritageDef(view.heritageGained)!.desc }}</p>
+        <p class="reincarnation-heritage-gained__effect">
+          效果：{{ heritageDef(view.heritageGained)!.effectDesc }}
+        </p>
+      </section>
+
+      <section class="reincarnation-final" data-reincarnation-final-warning>
+        <span class="reincarnation-final__seal font-kai" aria-hidden="true">印</span>
+        <div>
+          <p class="reincarnation-final__title">最后一程，只在按下「踏入轮回」后落定</p>
+          <p class="reincarnation-final__copy">
+            落印即刻归档此生：灵根、境界与天地换新，道号可按上页重拟；资源、装备、法宝与外物随皮囊散去。此前所有点选都还可改。
+          </p>
+        </div>
+      </section>
+    </article>
+
     <template #footer>
-      <button class="btn-seal w-full" :disabled="!canConfirm" @click="confirm">踏入轮回</button>
+      <div class="reincarnation-actions">
+        <p
+          class="reincarnation-actions__gate"
+          data-reincarnation-confirm-gate
+          :data-reincarnation-confirm-state="confirmGate.state"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <strong>{{ confirmGate.short }}</strong>
+          <span>{{ confirmGate.detail }}</span>
+        </p>
+        <button
+          type="button"
+          class="btn-seal reincarnation-actions__button"
+          data-reincarnation-confirm
+          :disabled="confirmGate.disabled"
+          @click="confirm"
+        >
+          <span>踏入轮回</span>
+          <small>{{ confirmGate.short }}</small>
+        </button>
+      </div>
     </template>
   </BaseModal>
 </template>
@@ -298,9 +662,18 @@ import { modsText } from "@/data/statNames";
 import { heritageDef } from "@/data/heritage";
 import { gongfaDef } from "@/data/gongfa";
 import { lifeThemeDef, TABOO_NAMES } from "@/data/lifeThemes";
+import { ELEMENTS } from "@/data/linggen";
 import { heritageGroups } from "@/core/samsaraAudit";
+import {
+  REINCARNATION_STAGES,
+  criticalSamsaraRows,
+  reincarnationConfirmGate,
+  reincarnationStageState,
+  samsaraBalance,
+  samsaraLedger,
+} from "@/ui/reincarnationDesk";
 import { engine } from "@/core/engine";
-import { yearsShown } from "@/utils/format";
+import { formatNum, yearsShown } from "@/utils/format";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 
@@ -322,68 +695,1187 @@ const RESULT_COLORS: Record<"done" | "unfinished" | "broken", string> = {
 const chosen = ref<string | null>(null);
 const theme = ref<string | null>(null);
 const nameDraft = ref("");
-const step = ref<"review" | "next">("review");
-/**
- * 交割清单里点开的那一条(heritageTap)。与 CharacterView 的 talentTap、
- * AdventureView 的 adaptExpand 同形:一个 string|null,点同一条即收起。
- * 存 id 而非整行,免得 heat-of-moment 的引用跟着重算走样。
- */
+const step = ref<"review" | "choice">("review");
+const heritageOpen = ref(false);
 const heritageTap = ref<string | null>(null);
-const tappedHeritage = computed(() =>
-  heritageGroups()
-    .flatMap((g) => g.rows)
-    .find((r) => r.id === heritageTap.value),
-);
-
-/** 功法名:层数预告要说出「哪一门」,不能只给 id */
-function gongfaName(id: string): string {
-  return gongfaDef(id)?.name ?? id;
-}
 
 const view = computed(() => ui.reincarnation);
+const currentLife = computed(() => player.reincarnation.count + 1);
+const ownedTalents = computed(() =>
+  player.reincarnation.talents
+    .map((id) => talentDef(id))
+    .filter((t): t is NonNullable<ReturnType<typeof talentDef>> => t !== undefined),
+);
 const reviewTheme = computed(() =>
   view.value?.review.themeId ? lifeThemeDef(view.value.review.themeId) : undefined,
 );
 const themeDefs = computed(() =>
   (view.value?.themeChoices ?? []).flatMap((id) => lifeThemeDef(id) ?? []),
 );
-
-/**
- * 天赋池会被抽空(可选天赋有限,多周目后 talentChoices 可能为空)。
- * 那种情况下没有可选项,却仍要能踏入轮回——否则玩家被永久卡死在此弹窗。
- * 只有「确有天赋可选却尚未择定」时才拦
- */
-const canConfirm = computed(
-  () => (view.value?.talentChoices.length ?? 0) === 0 || chosen.value !== null,
+const ledger = computed(() => samsaraLedger(heritageGroups()));
+const balance = computed(() => samsaraBalance(ledger.value));
+const criticalRows = computed(() => criticalSamsaraRows(ledger.value));
+const confirmGate = computed(() =>
+  reincarnationConfirmGate(view.value?.talentChoices.length ?? 0, chosen.value),
+);
+const nextFruitTotal = computed(
+  () => player.reincarnation.daoFruit + (view.value?.daoFruitGained ?? 0),
 );
 
-// 每次新开轮回界面都从"回顾"这一程重新走起,名号草稿随新一世重掷
-watch(view, (v) => {
-  if (v) {
-    step.value = "review";
-    nameDraft.value = v.nameDraft;
-    chosen.value = null;
-    theme.value = null;
-    // 上一世点开的交割说明不该带进这一世
-    heritageTap.value = null;
-  }
-});
+function gongfaName(id: string): string {
+  return gongfaDef(id)?.name ?? id;
+}
 
 function beginRebirth(): void {
   prepareReincarnation();
 }
 
-/** 对名号草稿不满意就再掷一次 */
 function reRollName(): void {
   nameDraft.value = rollReincarnateName();
 }
 
 function confirm(): void {
+  if (confirmGate.value.disabled) return;
   confirmReincarnation(chosen.value, theme.value, nameDraft.value);
   chosen.value = null;
   theme.value = null;
   nameDraft.value = "";
+  heritageOpen.value = false;
+  heritageTap.value = null;
   engine.resetDeathFlag();
   void router.push("/");
 }
+
+watch(view, (next) => {
+  if (!next) return;
+  step.value = "review";
+  nameDraft.value = next.nameDraft;
+  chosen.value = null;
+  theme.value = null;
+  heritageOpen.value = false;
+  heritageTap.value = null;
+});
 </script>
+
+<style scoped>
+.reincarnation-folio {
+  --reincarnation-line: rgb(var(--color-ink-rgb) / 0.14);
+  --reincarnation-line-strong: rgb(var(--color-ink-rgb) / 0.23);
+  --reincarnation-paper: rgb(var(--color-paper-deep-rgb) / 0.34);
+  min-width: 0;
+}
+
+.reincarnation-stages {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 0 0.9rem;
+  border: 1px solid var(--reincarnation-line);
+  background: rgb(var(--color-paper-deep-rgb) / 0.18);
+}
+
+.reincarnation-stage {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 1.2rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.4rem 0.35rem;
+  color: var(--color-ink-faint);
+}
+
+.reincarnation-stage + .reincarnation-stage {
+  border-left: 1px solid var(--reincarnation-line);
+}
+
+.reincarnation-stage.is-current {
+  background: rgb(var(--color-cinnabar-rgb) / 0.045);
+  color: var(--color-ink);
+}
+
+.reincarnation-stage.is-done {
+  color: var(--color-ink-soft);
+}
+
+.reincarnation-stage__ordinal {
+  display: grid;
+  width: 1.2rem;
+  height: 1.2rem;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  font-family: var(--font-kai);
+  font-size: var(--type-note);
+  line-height: 1;
+}
+
+.reincarnation-stage.is-current .reincarnation-stage__ordinal {
+  border-color: rgb(var(--color-cinnabar-rgb) / 0.46);
+  color: var(--color-cinnabar);
+}
+
+.reincarnation-stage.is-upcoming .reincarnation-stage__ordinal {
+  border-style: dashed;
+}
+
+.reincarnation-stage__copy {
+  display: grid;
+  min-width: 0;
+  gap: 0.08rem;
+}
+
+.reincarnation-stage__copy strong {
+  overflow-wrap: anywhere;
+  color: inherit;
+  font-family: var(--font-kai);
+  font-size: var(--type-body);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+}
+
+.reincarnation-stage__copy small {
+  overflow-wrap: anywhere;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.35;
+}
+
+.reincarnation-head {
+  display: grid;
+  grid-template-columns: 2.45rem minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.6rem 0.72rem;
+  border-bottom: 1px solid var(--reincarnation-line);
+  padding-bottom: 0.8rem;
+}
+
+.reincarnation-head__seal {
+  display: grid;
+  width: 2.45rem;
+  height: 2.45rem;
+  place-items: center;
+  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.44);
+  border-radius: 2px;
+  color: var(--color-cinnabar);
+  font-size: var(--type-title);
+  line-height: 1;
+}
+
+.reincarnation-head__identity {
+  min-width: 0;
+}
+
+.reincarnation-head__eyebrow {
+  color: var(--color-qing);
+  font-size: var(--type-note);
+  letter-spacing: 0.15em;
+  line-height: 1.5;
+}
+
+.reincarnation-head__title {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.62rem;
+  margin-top: 0.12rem;
+  overflow-wrap: anywhere;
+  color: var(--color-ink);
+  font-family: var(--font-kai);
+  font-size: var(--type-section);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+}
+
+.reincarnation-head__title span {
+  color: var(--color-ink-soft);
+  font-size: var(--type-body);
+  letter-spacing: 0.08em;
+}
+
+.reincarnation-head__brief {
+  margin-top: 0.42rem;
+  color: var(--color-ink-soft);
+  font-size: var(--type-body);
+  line-height: 1.65;
+}
+
+.reincarnation-score {
+  display: grid;
+  min-width: 3.8rem;
+  justify-items: end;
+  gap: 0.05rem;
+  color: var(--color-ink-soft);
+}
+
+.reincarnation-score span,
+.reincarnation-score small {
+  font-size: var(--type-note);
+}
+
+.reincarnation-score strong {
+  color: var(--color-cinnabar);
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.reincarnation-callout {
+  display: grid;
+  grid-template-columns: 2.1rem minmax(0, 1fr);
+  gap: 0.62rem;
+  margin-top: 0.8rem;
+  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.25);
+  background: rgb(var(--color-cinnabar-rgb) / 0.035);
+  padding: 0.72rem;
+}
+
+.reincarnation-callout__mark {
+  display: grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  place-items: center;
+  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.4);
+  border-radius: 2px;
+  color: var(--color-cinnabar);
+  font-size: var(--type-title);
+}
+
+.reincarnation-callout__title {
+  color: var(--color-ink);
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  letter-spacing: 0.06em;
+}
+
+.reincarnation-callout__copy {
+  margin-top: 0.3rem;
+  color: var(--color-ink-soft);
+  font-size: var(--type-body);
+  line-height: 1.7;
+}
+
+.reincarnation-death-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 0.8rem;
+  border: 1px solid var(--reincarnation-line);
+}
+
+.reincarnation-death-grid > div {
+  min-width: 0;
+  padding: 0.62rem;
+}
+
+.reincarnation-death-grid > div + div {
+  border-left: 1px solid var(--reincarnation-line);
+}
+
+.reincarnation-death-grid dt {
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.4;
+}
+
+.reincarnation-death-grid dd {
+  margin-top: 0.22rem;
+  overflow-wrap: anywhere;
+  color: var(--color-ink);
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  line-height: 1.4;
+}
+
+.reincarnation-footnote {
+  margin-top: 0.72rem;
+  border-top: 1px solid var(--reincarnation-line);
+  padding-top: 0.58rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.65;
+}
+
+.reincarnation-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0.52rem;
+}
+
+.reincarnation-actions__gate {
+  display: grid;
+  min-width: 0;
+  gap: 0.14rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.5;
+}
+
+.reincarnation-actions__gate strong {
+  overflow-wrap: anywhere;
+  color: var(--color-ink-soft);
+  font-size: var(--type-body);
+  font-weight: 400;
+}
+
+.reincarnation-actions__gate span {
+  overflow-wrap: anywhere;
+}
+
+.reincarnation-actions__gate[data-reincarnation-confirm-state="blocked"] strong {
+  color: var(--color-cinnabar);
+}
+
+.reincarnation-actions__gate[data-reincarnation-confirm-state="ready"] strong {
+  color: var(--color-qing);
+}
+
+.reincarnation-actions__button {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  justify-items: center;
+  gap: 0.08rem;
+}
+
+.reincarnation-actions__button small {
+  display: block;
+  font-size: var(--type-note);
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.reincarnation-review__grid,
+.reincarnation-choice__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.62rem;
+  margin-top: 0.8rem;
+}
+
+.reincarnation-sheet {
+  min-width: 0;
+  border: 1px solid var(--reincarnation-line);
+  background: var(--reincarnation-paper);
+  padding: 0.7rem;
+}
+
+.reincarnation-sheet.is-quiet {
+  background: transparent;
+}
+
+.reincarnation-sheet__head,
+.reincarnation-section-head {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 2rem minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.55rem;
+}
+
+.reincarnation-sheet__mark {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid rgb(var(--color-ink-rgb) / 0.22);
+  border-radius: 2px;
+  color: var(--color-ink-soft);
+  font-size: var(--type-title);
+  line-height: 1;
+}
+
+.reincarnation-sheet__mark.is-qing {
+  border-color: rgb(var(--color-qing-rgb) / 0.35);
+  color: var(--color-qing);
+}
+
+.reincarnation-sheet__mark.is-gold {
+  border-color: rgb(var(--color-gold-rgb) / 0.38);
+  color: var(--color-gold-ink);
+}
+
+.reincarnation-sheet__eyebrow {
+  overflow-wrap: anywhere;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.45;
+}
+
+.reincarnation-sheet__title,
+.reincarnation-section-head__title {
+  margin-top: 0.08rem;
+  overflow-wrap: anywhere;
+  color: var(--color-ink);
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  line-height: 1.45;
+}
+
+.reincarnation-sheet__state {
+  align-self: start;
+  font-size: var(--type-note);
+  line-height: 1.5;
+  text-align: right;
+}
+
+.reincarnation-sheet__copy {
+  margin-top: 0.52rem;
+  overflow-wrap: anywhere;
+  color: var(--color-ink-soft);
+  font-size: var(--type-body);
+  line-height: 1.65;
+}
+
+.reincarnation-sheet__read {
+  margin-top: 0.45rem;
+  overflow-wrap: anywhere;
+  border-top: 1px solid var(--reincarnation-line);
+  padding-top: 0.45rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.65;
+}
+
+.reincarnation-sheet__read.is-gold {
+  color: var(--color-gold-ink);
+}
+
+.reincarnation-sheet__read.is-amber {
+  color: var(--color-amber-ink);
+}
+
+.reincarnation-insight-rows {
+  margin-top: 0.55rem;
+  border-top: 1px solid var(--reincarnation-line);
+}
+
+.reincarnation-insight-rows > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  border-bottom: 1px solid var(--reincarnation-line);
+  padding: 0.34rem 0;
+}
+
+.reincarnation-insight-rows dt {
+  flex: 0 0 auto;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+}
+
+.reincarnation-insight-rows dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-ink-soft);
+  font-size: var(--type-body);
+  text-align: right;
+}
+
+.reincarnation-ledger {
+  margin-top: 0.8rem;
+  border: 1px solid var(--reincarnation-line);
+  padding: 0.72rem;
+}
+
+.reincarnation-ledger__head {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.reincarnation-ledger__head > div {
+  min-width: 0;
+}
+
+.reincarnation-ledger__title {
+  margin-top: 0.08rem;
+  color: var(--color-ink);
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  letter-spacing: 0.06em;
+}
+
+.reincarnation-ledger__copy {
+  margin-top: 0.2rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.55;
+}
+
+.reincarnation-ledger__count {
+  flex: 0 0 auto;
+  color: var(--color-cinnabar);
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  line-height: 1;
+}
+
+.reincarnation-ledger__count small {
+  margin-left: 0.18rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+}
+
+.reincarnation-balance {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 0.58rem;
+  border: 1px solid var(--reincarnation-line);
+}
+
+.reincarnation-balance__row {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.12rem 0.4rem;
+  padding: 0.48rem 0.55rem;
+}
+
+.reincarnation-balance__row + .reincarnation-balance__row {
+  border-left: 1px solid var(--reincarnation-line);
+}
+
+.reincarnation-balance__row span {
+  color: var(--color-ink-soft);
+  font-size: var(--type-body);
+}
+
+.reincarnation-balance__row strong {
+  color: var(--color-ink);
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  font-weight: 400;
+  line-height: 1;
+}
+
+.reincarnation-balance__row small {
+  grid-column: 1 / -1;
+  overflow-wrap: anywhere;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.35;
+}
+
+.reincarnation-balance__row.is-full strong {
+  color: var(--color-jade);
+}
+
+.reincarnation-balance__row.is-partial strong {
+  color: var(--color-gold-ink);
+}
+
+.reincarnation-balance__row.is-reset strong {
+  color: var(--color-ink-faint);
+}
+
+.reincarnation-ledger__caption {
+  margin-top: 0.56rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  letter-spacing: 0.12em;
+}
+
+.reincarnation-critical {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+}
+
+.reincarnation-critical__row {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 1.6rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
+  border-bottom: 1px solid var(--reincarnation-line);
+  padding: 0.28rem 0;
+}
+
+.reincarnation-critical__mark {
+  display: grid;
+  width: 1.6rem;
+  height: 1.6rem;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  font-size: var(--type-note);
+  line-height: 1;
+}
+
+.reincarnation-critical__row.is-partial {
+  color: var(--color-gold-ink);
+}
+
+.reincarnation-critical__row.is-reset {
+  color: var(--color-ink-faint);
+}
+
+.reincarnation-critical__name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-ink-soft);
+  font-size: var(--type-body);
+}
+
+.reincarnation-critical__group {
+  max-width: 7.2rem;
+  overflow-wrap: anywhere;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.35;
+  text-align: right;
+}
+
+.reincarnation-keep {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+  border-top: 1px solid var(--reincarnation-line);
+  padding-top: 0.5rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.65;
+}
+
+.reincarnation-keep__mark {
+  display: grid;
+  width: 1.6rem;
+  height: 1.6rem;
+  place-items: center;
+  border: 1px solid rgb(var(--color-gold-rgb) / 0.38);
+  border-radius: 2px;
+  color: var(--color-gold-ink);
+}
+
+.reincarnation-ledger__toggle {
+  display: flex;
+  width: 100%;
+  min-height: 2rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+  border-top: 1px solid var(--reincarnation-line);
+  padding: 0.45rem 0 0;
+  color: var(--color-qing);
+  font-size: var(--type-body);
+  text-align: left;
+}
+
+.reincarnation-ledger__fold {
+  margin-top: 0.45rem;
+}
+
+.reincarnation-ledger__scroll {
+  padding-right: 0.15rem;
+}
+
+.reincarnation-ledger-group {
+  border: 1px solid var(--reincarnation-line);
+  padding: 0.45rem;
+}
+
+.reincarnation-ledger-group + .reincarnation-ledger-group {
+  margin-top: 0.42rem;
+}
+
+.reincarnation-ledger-group__head {
+  display: grid;
+  grid-template-columns: 1.45rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.4rem;
+  border-bottom: 1px solid var(--reincarnation-line);
+  padding-bottom: 0.32rem;
+}
+
+.reincarnation-ledger-group__mark {
+  display: grid;
+  width: 1.45rem;
+  height: 1.45rem;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  font-size: var(--type-note);
+  line-height: 1;
+}
+
+.reincarnation-ledger-group.is-full {
+  color: var(--color-jade);
+}
+
+.reincarnation-ledger-group.is-partial {
+  color: var(--color-gold-ink);
+}
+
+.reincarnation-ledger-group.is-reset {
+  color: var(--color-ink-faint);
+}
+
+.reincarnation-ledger-group__head p {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-ink-soft);
+  font-size: var(--type-body);
+}
+
+.reincarnation-ledger-group__head > span:last-child {
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+}
+
+.reincarnation-ledger-group__rows {
+  margin-top: 0.18rem;
+}
+
+.reincarnation-ledger-row {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto 1rem;
+  align-items: center;
+  gap: 0.35rem;
+  border-bottom: 1px solid var(--reincarnation-line);
+  padding: 0.32rem 0;
+  color: var(--color-ink-soft);
+  text-align: left;
+}
+
+.reincarnation-ledger-row__name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--type-body);
+}
+
+.reincarnation-ledger-row__state {
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  text-align: right;
+}
+
+.reincarnation-ledger-row__mark {
+  color: var(--color-ink-faint);
+  font-size: var(--type-body);
+  text-align: center;
+}
+
+.reincarnation-ledger-row__detail {
+  grid-column: 1 / -1;
+  overflow-wrap: anywhere;
+  border-top: 1px dashed var(--reincarnation-line);
+  padding-top: 0.28rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.6;
+}
+
+.reincarnation-roots {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+}
+
+.reincarnation-root {
+  display: inline-flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.28rem;
+  border: 1px solid var(--reincarnation-line);
+  padding: 0.2rem 0.4rem;
+  color: var(--color-ink-soft);
+}
+
+.reincarnation-root strong {
+  color: var(--color-qing);
+  font-size: var(--type-title);
+  font-weight: 400;
+}
+
+.reincarnation-root span {
+  font-size: var(--type-note);
+}
+
+.reincarnation-name__row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.42rem;
+  margin-top: 0.55rem;
+}
+
+.reincarnation-name__input {
+  min-width: 0;
+  flex: 1 1 auto;
+  border: 1px solid rgb(var(--color-ink-rgb) / 0.22);
+  border-radius: 2px;
+  background: rgb(var(--color-paper-deep-rgb) / 0.58);
+  padding: 0.48rem 0.6rem;
+  color: var(--color-ink);
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  letter-spacing: 0.14em;
+  outline: none;
+}
+
+.reincarnation-name__input:focus {
+  border-color: rgb(var(--color-cinnabar-rgb) / 0.5);
+}
+
+.reincarnation-name__reroll {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: normal;
+}
+
+.reincarnation-talent-section,
+.reincarnation-theme-section,
+.reincarnation-heritage-gained {
+  margin-top: 0.65rem;
+}
+
+.reincarnation-section-head {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.reincarnation-section-head__state {
+  align-self: start;
+  border: 1px solid rgb(var(--color-ink-rgb) / 0.18);
+  border-radius: 2px;
+  padding: 0.15rem 0.42rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.4;
+  text-align: right;
+}
+
+.reincarnation-section-head__state.is-blocked {
+  border-color: rgb(var(--color-cinnabar-rgb) / 0.34);
+  color: var(--color-cinnabar);
+}
+
+.reincarnation-section-head__state.is-qing {
+  border-color: rgb(var(--color-qing-rgb) / 0.32);
+  color: var(--color-qing);
+}
+
+.reincarnation-empty {
+  margin-top: 0.55rem;
+  border: 1px dashed var(--reincarnation-line-strong);
+  padding: 0.55rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-body);
+  line-height: 1.6;
+}
+
+.reincarnation-talent-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.42rem;
+  margin-top: 0.55rem;
+}
+
+.reincarnation-talent-choice,
+.reincarnation-theme-choice {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: 0.35rem;
+  border: 1px solid var(--reincarnation-line);
+  background: rgb(var(--color-paper-deep-rgb) / 0.22);
+  padding: 0.55rem;
+  text-align: left;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 120ms ease;
+}
+
+.reincarnation-talent-choice:active,
+.reincarnation-theme-choice:active {
+  transform: scale(0.99);
+}
+
+.reincarnation-talent-choice.is-chosen,
+.reincarnation-theme-choice.is-chosen {
+  border-color: rgb(var(--color-cinnabar-rgb) / 0.58);
+  background: rgb(var(--color-cinnabar-rgb) / 0.04);
+}
+
+.reincarnation-talent-choice__head,
+.reincarnation-theme-choice__head {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.5rem;
+}
+
+.reincarnation-talent-choice__name,
+.reincarnation-theme-choice__name {
+  font-size: var(--type-title);
+  line-height: 1.35;
+}
+
+.reincarnation-talent-choice__grade,
+.reincarnation-theme-choice__gain {
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+}
+
+.reincarnation-talent-choice__mark {
+  margin-left: auto;
+  color: var(--color-cinnabar);
+  font-size: var(--type-note);
+}
+
+.reincarnation-talent-choice__desc,
+.reincarnation-theme-choice__vow {
+  overflow-wrap: anywhere;
+  color: var(--color-ink-soft);
+  font-size: var(--type-body);
+  line-height: 1.55;
+}
+
+.reincarnation-talent-choice__mods {
+  overflow-wrap: anywhere;
+  border-top: 1px solid var(--reincarnation-line);
+  padding-top: 0.28rem;
+  color: var(--color-qing);
+  font-size: var(--type-note);
+  line-height: 1.55;
+}
+
+.reincarnation-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem 0.6rem;
+  margin-top: 0.55rem;
+  border-top: 1px solid var(--reincarnation-line);
+  padding-top: 0.45rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+}
+
+.reincarnation-extra strong {
+  color: var(--color-gold-ink);
+  font-family: var(--font-kai);
+  font-weight: 400;
+}
+
+.reincarnation-theme-free {
+  margin-top: 0.45rem;
+  color: var(--color-gold-ink);
+  font-size: var(--type-note);
+  line-height: 1.5;
+}
+
+.reincarnation-theme-list {
+  display: grid;
+  gap: 0.42rem;
+  margin-top: 0.55rem;
+}
+
+.reincarnation-theme-choice__goal {
+  overflow-wrap: anywhere;
+  border-top: 1px solid var(--reincarnation-line);
+  padding-top: 0.3rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.6;
+}
+
+.reincarnation-theme-choice__taboo {
+  overflow-wrap: anywhere;
+  color: var(--color-amber-ink);
+  font-size: var(--type-note);
+  line-height: 1.55;
+}
+
+.reincarnation-theme-skip {
+  margin-top: 0.45rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.55;
+}
+
+.reincarnation-heritage-gained__effect {
+  margin-top: 0.45rem;
+  border-top: 1px solid var(--reincarnation-line);
+  padding-top: 0.42rem;
+  color: var(--color-gold-ink);
+  font-size: var(--type-note);
+  line-height: 1.6;
+}
+
+.reincarnation-final {
+  display: grid;
+  grid-template-columns: 2.1rem minmax(0, 1fr);
+  gap: 0.62rem;
+  margin-top: 0.72rem;
+  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.28);
+  background: rgb(var(--color-cinnabar-rgb) / 0.04);
+  padding: 0.68rem;
+}
+
+.reincarnation-final__seal {
+  display: grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  place-items: center;
+  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.42);
+  border-radius: 2px;
+  color: var(--color-cinnabar);
+  font-size: var(--type-title);
+}
+
+.reincarnation-final__title {
+  color: var(--color-ink);
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  letter-spacing: 0.04em;
+  line-height: 1.45;
+}
+
+.reincarnation-final__copy {
+  margin-top: 0.3rem;
+  color: var(--color-ink-soft);
+  font-size: var(--type-note);
+  line-height: 1.65;
+}
+
+@media (min-width: 620px) {
+  .reincarnation-actions {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .reincarnation-actions__button {
+    width: auto;
+    min-width: 9.2rem;
+  }
+
+  .reincarnation-review__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reincarnation-choice__grid {
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  }
+
+  .reincarnation-critical {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 0.55rem;
+  }
+
+  .reincarnation-talent-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 260px) {
+  .reincarnation-head {
+    grid-template-columns: 2.2rem minmax(0, 1fr);
+  }
+
+  .reincarnation-head__seal {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+
+  .reincarnation-score {
+    grid-column: 2;
+    justify-items: start;
+  }
+
+  .reincarnation-death-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .reincarnation-death-grid > div + div {
+    border-top: 1px solid var(--reincarnation-line);
+    border-left: 0;
+  }
+
+  .reincarnation-balance {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .reincarnation-balance__row + .reincarnation-balance__row {
+    border-top: 1px solid var(--reincarnation-line);
+    border-left: 0;
+  }
+
+  .reincarnation-sheet__head {
+    grid-template-columns: 1.8rem minmax(0, 1fr);
+  }
+
+  .reincarnation-sheet__state {
+    grid-column: 2;
+    text-align: left;
+  }
+
+  .reincarnation-critical__row {
+    grid-template-columns: 1.45rem minmax(0, 1fr);
+  }
+
+  .reincarnation-critical__group {
+    grid-column: 2;
+    max-width: none;
+    text-align: left;
+  }
+}
+
+@media (max-width: 220px) {
+  .reincarnation-stages {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .reincarnation-stage + .reincarnation-stage {
+    border-top: 1px solid var(--reincarnation-line);
+    border-left: 0;
+  }
+
+  .reincarnation-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .reincarnation-actions__button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .reincarnation-name__row {
+    flex-direction: column;
+  }
+
+  .reincarnation-name__reroll {
+    justify-content: center;
+  }
+
+  .reincarnation-ledger-row {
+    grid-template-columns: minmax(0, 1fr) 1rem;
+  }
+
+  .reincarnation-ledger-row__state {
+    grid-column: 1;
+    text-align: left;
+  }
+
+  .reincarnation-ledger-row__mark {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+</style>

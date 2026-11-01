@@ -38,7 +38,7 @@
  *      再巡一遍 —— 空档量不出长数字与满屏内容,而归来卷轴那屏每几天就见一次。
  *   十一 渡劫突破真打一次:结果弹窗必须写清成败与雷数、成功要与页面境界对得上
  *      (每个玩家反复看的那一屏,此前从没被渲染过)。
- *   十二 走完一次转世(寿元将尽 → 此生已矣 → 轮回 → 新的一世):唯一会把存档
+ *   十二 走完一次转世(往生·辞世 → 往生·回照 → 往生·择生 → 新的一世):唯一会把存档
  *      推倒重来的仪式,此前一步都没被真浏览器走过。
  *   十三 挂机玩法真的在挂着跑:顶栏灵气只给 1 点,真等两轮看它自己涨不涨 ——
  *      「应用启动后引擎有没有跑起来」只有真浏览器能答。
@@ -3322,7 +3322,12 @@ async function taskEngineModals() {
     });
     const seen = new Map();
     const requiredKinds = new Set(["enlightenment", "cave"]);
-    for (let i = 0; i < 40 && [...requiredKinds].some((kind) => !seen.has(kind)); i += 1) {
+    /*
+     * 洞府巡游挂在引擎 30 秒周期检查上,而这条夹具从 load 到此处只过了数秒。
+     * 旧上限 20 秒会在冷机器/并发忙时卡在首轮周期前，误报「触发接线断了」；
+     * 给足 40 秒，让首轮周期一定有机会跑到。
+     */
+    for (let i = 0; i < 80 && [...requiredKinds].some((kind) => !seen.has(kind)); i += 1) {
       await page.waitForTimeout(500);
       const info = await page.evaluate(() => {
         const panel = [...document.querySelectorAll(".modal-panel")].at(-1);
@@ -4311,10 +4316,11 @@ async function taskReincarnation() {
   const contrastFails = [];
   const pixelContrastFails = [];
   const zoomFails = [];
-  // ---- 第十二件事:走完一次转世(寿元将尽 → 此生已矣 → 轮回 → 新的一世) ----
+  // ---- 第十二件事:走完一次转世(往生·辞世 → 往生·回照 → 往生·择生 → 新的一世) ----
   /*
    * 转世是每一世收官的那套仪式,也是**唯一会把存档推倒重来**的流程 ——
-   * 三步弹窗 + 择姿立题 + 新的一世,此前一步都没被真浏览器走过。
+   * 三程弹窗 + 择姿立题 + 新的一世:先辞世、再回照去留全账,末程才落子。
+   * 此前一步都没被真浏览器走过。
    * 夹具把寿元写尽(一读档引擎就判定身故),然后一路点下去。
    */
   {
@@ -4395,7 +4401,7 @@ async function taskReincarnation() {
     await page.goto(INDEX, { waitUntil: "load" });
     await page.waitForTimeout(2600);
     /*
-     * 钉死随机源、收掉提示条 —— 但**不要**去关弹窗:这一屏正开着「寿元将尽」,
+     * 钉死随机源、收掉提示条 —— 但**不要**去关弹窗:这一屏正开着「往生 · 辞世」,
      * 它就是本场景的起点(而且它故意不可关)。钉随机的用意是免得引擎在转世途中
      * 掷出一个顿悟/巡游浮层,把「关没关干净」的判据搅红(实测偶发)。
      */
@@ -4414,6 +4420,50 @@ async function taskReincarnation() {
           title: (p.querySelector("h3")?.textContent || p.getAttribute("aria-label") || "").trim(),
           text: (p.innerText || "").replace(/\n+/g, " "),
           buttons: [...p.querySelectorAll("button")].map((b) => (b.textContent || "").trim()),
+          stage: p
+            .querySelector("[data-reincarnation-stage]")
+            ?.getAttribute("data-reincarnation-stage"),
+          stages: [...p.querySelectorAll("[data-reincarnation-stage-state]")].map((el) =>
+            el.getAttribute("data-reincarnation-stage-state"),
+          ),
+          stageNoteLines: [...p.querySelectorAll(".reincarnation-stage__copy small")].map((el) => {
+            const range = document.createRange();
+            range.selectNodeContents(el);
+            return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+          }),
+          balanceRows: p.querySelectorAll(
+            "[data-reincarnation-balance] .reincarnation-balance__row",
+          ).length,
+          criticalRows: [...p.querySelectorAll("[data-reincarnation-critical-row]")].map((el) =>
+            el.getAttribute("data-reincarnation-critical-row"),
+          ),
+          ledgerGroups: p.querySelectorAll("[data-reincarnation-heritage-group]").length,
+          ledgerRows: p.querySelectorAll("[data-reincarnation-heritage-row]").length,
+          talentChoices: p.querySelectorAll("[data-reincarnation-talent-choice]").length,
+          ledgerOpen:
+            p
+              .querySelector("[data-reincarnation-heritage-toggle]")
+              ?.getAttribute("aria-expanded") === "true",
+          detailText: (p.querySelector(".reincarnation-ledger-row__detail")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+          confirmState: p
+            .querySelector("[data-reincarnation-confirm-gate]")
+            ?.getAttribute("data-reincarnation-confirm-state"),
+          confirmDisabled: !!p
+            .querySelector("[data-reincarnation-confirm]")
+            ?.hasAttribute("disabled"),
+          actionsColumns: (() => {
+            const actions = p.querySelector(".reincarnation-actions");
+            return actions ? getComputedStyle(actions).gridTemplateColumns : "";
+          })(),
+          actionButtonStacked: (() => {
+            const button = p.querySelector(".reincarnation-actions__button");
+            const label = button?.querySelector("span")?.getBoundingClientRect();
+            const hint = button?.querySelector("small")?.getBoundingClientRect();
+            return !!label && !!hint && hint.top >= label.bottom - 1;
+          })(),
+          panelOverflow: p.scrollWidth > p.clientWidth + 1,
         };
       });
     const step = async (label, expect) => {
@@ -4427,6 +4477,15 @@ async function taskReincarnation() {
         failures.push(`[390] 转世场景:${label}的窗标题是「${p.title}」,不是预期的${expect}`);
       if (/NaN|undefined|Infinity/.test(p.text))
         failures.push(`[390] 转世场景:${label}漏出占位符 —— ${p.text.slice(0, 50)}`);
+      if (p.panelOverflow) failures.push(`[390] 转世场景:${label}的弹窗内容横向溢出`);
+      if (p.stageNoteLines.some((lines) => lines !== 1))
+        failures.push(`[390] 转世场景:${label}的三程路签被挤折行(${p.stageNoteLines.join("/")})`);
+      if (p.actionsColumns.split(/\s+/).filter(Boolean).length !== 1)
+        failures.push(
+          `[390] 转世场景:${label}的动作区没有在手机上收成上下段(${p.actionsColumns || "无"})`,
+        );
+      if (p.actionsColumns && !p.actionButtonStacked)
+        failures.push(`[390] 转世场景:${label}的主按钮说明没有落到动作名下一行`);
       /*
        * 三步都要过 200% 那一档:转世是**唯一会把存档推倒重来**的仪式,而这三扇窗
        * 只在这条流程里出现 —— 主巡页与缩放档都碰不到,版面坏了也不会有人知道。
@@ -4440,33 +4499,145 @@ async function taskReincarnation() {
       return p;
     };
 
-    const death = await step("读档后(身故)", /寿元将尽/);
-    if (death && !/兵解转世/.test(death.buttons.join(" ")))
-      failures.push("[390] 转世场景:身故那屏没有「兵解转世」");
+    const death = await step("读档后(辞世)", /往生 · 辞世/);
+    if (death) {
+      checked += 1;
+      if (
+        death.stage !== "death" ||
+        death.stages.join(",") !== "current,upcoming,upcoming" ||
+        !death.text.includes("这不是清档，是开卷") ||
+        !death.text.includes("尚未写入轮回") ||
+        !/兵解转世/.test(death.buttons.join(" "))
+      ) {
+        failures.push(
+          `[390] 转世场景:辞世屏没有先开卷再落子:` +
+            `阶段 ${death.stage}/${death.stages.join(",")} / 按钮 «${death.buttons.join(" | ")}»`,
+        );
+      }
+    }
+    if (SHOTS) {
+      mkdirSync(SHOTS_DIR, { recursive: true });
+      await page.screenshot({ path: join(SHOTS_DIR, "reincarnation-death-390.png") });
+    }
     await page
-      .locator(".modal-panel button", { hasText: /兵\s*解\s*转\s*世/ })
-      .first()
+      .locator("[data-reincarnation-begin]")
       .click({ timeout: 3000 })
       .catch(() => {});
     await page.waitForTimeout(900);
 
-    const review = await step("兵解后(回顾)", /此生已矣/);
-    if (review && !/宿慧/.test(review.text)) failures.push("[390] 转世场景:回顾那一程没有交代宿慧");
+    const review = await step("兵解后(回照)", /往生 · 回照/);
+    if (review) {
+      const critical = new Set(review.criticalRows);
+      checked += 1;
+      if (
+        review.stage !== "review" ||
+        review.stages.join(",") !== "done,current,upcoming" ||
+        !/宿慧/.test(review.text) ||
+        review.balanceRows !== 3 ||
+        !critical.has("gongfa") ||
+        !critical.has("artifacts") ||
+        !critical.has("realm") ||
+        !critical.has("linggen") ||
+        review.ledgerOpen ||
+        review.ledgerGroups !== 0 ||
+        review.ledgerRows !== 0
+      ) {
+        failures.push(
+          `[390] 转世场景:回照没有先摊三账与主要损失:` +
+            `阶段 ${review.stage}/${review.stages.join(",")} / ` +
+            `三账 ${review.balanceRows} / 主损 ${review.criticalRows.join(",")} / ` +
+            `全账 ${review.ledgerGroups} 组 ${review.ledgerRows} 项`,
+        );
+      }
+    }
+    if (SHOTS) await page.screenshot({ path: join(SHOTS_DIR, "reincarnation-review-390.png") });
+
+    const ledgerToggle = page.locator("[data-reincarnation-heritage-toggle]");
+    if ((await ledgerToggle.count()) === 0) {
+      failures.push("[390] 转世场景:回照没有去留全账入口");
+    } else {
+      await ledgerToggle.click({ timeout: 3000 }).catch(() => {});
+      await page
+        .locator('[data-reincarnation-heritage-row="gongfa"]')
+        .waitFor({ state: "attached", timeout: 3000 })
+        .catch(() => {});
+      const expanded = await readPanel();
+      checked += 1;
+      if (!expanded?.ledgerOpen || expanded.ledgerGroups !== 3 || expanded.ledgerRows !== 36) {
+        failures.push(
+          `[390] 转世场景:去留全账没有铺开同一份 36 项继承表:` +
+            `展开 ${expanded?.ledgerOpen ?? false} / ${expanded?.ledgerGroups ?? 0} 组 / ` +
+            `${expanded?.ledgerRows ?? 0} 项`,
+        );
+      }
+
+      const gongfaRow = page.locator('[data-reincarnation-heritage-row="gongfa"]');
+      if ((await gongfaRow.count()) === 0) {
+        failures.push("[390] 转世场景:去留全账里没有功法那条");
+      } else {
+        await gongfaRow.click({ timeout: 3000 }).catch(() => {});
+        const detail = await readPanel();
+        checked += 1;
+        if (
+          (await gongfaRow.getAttribute("aria-expanded")) !== "true" ||
+          !detail?.detailText.includes("归零回一层")
+        ) {
+          failures.push(
+            `[390] 转世场景:功法交割说明没有摊开:` +
+              `aria=${await gongfaRow.getAttribute("aria-expanded")} / «${detail?.detailText || "无"}»`,
+          );
+        }
+
+        zoomSeen += 1;
+        const ledgerZoom = dialogZoomProblems(
+          await measureDialogZoom(page, { width: 390, height: 844 }),
+        );
+        if (ledgerZoom.length)
+          failures.push(`[390] 转世「回照 · 去留全账」在 200% 下坏了:${ledgerZoom.join(" / ")}`);
+        if (SHOTS) await page.screenshot({ path: join(SHOTS_DIR, "reincarnation-ledger-390.png") });
+      }
+    }
+
     await page
-      .locator(".modal-panel button", { hasText: /往\s*生/ })
-      .first()
+      .locator("[data-reincarnation-review-next]")
       .click({ timeout: 3000 })
       .catch(() => {});
     await page.waitForTimeout(800);
 
-    const next = await step("往生后(择姿立题)", /轮回/);
-    if (next && !/道果/.test(next.text)) failures.push("[390] 转世场景:轮回那一程没有交代道果");
-    // 有先天之姿就先择一个(不择则「踏入轮回」是灰的)。
-    // 按「赋」拣天赋卡,别按第一个按钮:轮回页上新晋了「道号重拟」的「换一个」
-    // (在天赋区之前),抓第一个按钮会点偏到改名上,天赋没选上、按钮一直是灰的。
-    const talent = page.locator(".modal-panel button", { hasText: /天赋|道赋|灵赋|凡赋/ }).first();
-    if (next && next.buttons.some((b) => /赋|姿/.test(b)))
-      await talent.click({ timeout: 3000 }).catch(() => {});
+    const next = await step("往生后(择生)", /往生 · 择生/);
+    if (next) {
+      checked += 1;
+      if (
+        next.stage !== "choice" ||
+        next.stages.join(",") !== "done,done,current" ||
+        !/道果/.test(next.text) ||
+        !next.text.includes("不可撤回") ||
+        (next.talentChoices > 0 && (!next.confirmDisabled || next.confirmState !== "blocked"))
+      ) {
+        failures.push(
+          `[390] 转世场景:择生屏没有把末次落子说清:` +
+            `阶段 ${next.stage}/${next.stages.join(",")} / 天姿 ${next.talentChoices} / ` +
+            `确认 ${next.confirmState}/${next.confirmDisabled ? "灰" : "亮"}`,
+        );
+      }
+    }
+    if (SHOTS) await page.screenshot({ path: join(SHOTS_DIR, "reincarnation-choice-390.png") });
+
+    // 有先天之姿就先择一个(不择则「踏入轮回」是灰的)。用稳定的数据契约,
+    // 不按按钮文案猜:道号重拟、命题与天赋都会出现在同一扇窗里。
+    const talentChoice = page.locator("[data-reincarnation-talent-choice]").first();
+    const hasTalentChoices = (await talentChoice.count()) > 0;
+    if (hasTalentChoices) {
+      await talentChoice.click({ timeout: 3000 }).catch(() => {});
+      const chosenGate = await readPanel();
+      checked += 1;
+      if (chosenGate?.confirmState !== "ready" || chosenGate.confirmDisabled) {
+        failures.push(
+          `[390] 转世场景:择定先天之姿后确认门仍没放行:` +
+            `${chosenGate?.confirmState}/${chosenGate?.confirmDisabled ? "灰" : "亮"}`,
+        );
+      }
+    }
     const confirm = page.locator(".modal-panel button", { hasText: /踏\s*入\s*轮\s*回/ }).first();
     if ((await confirm.count()) === 0) failures.push("[390] 转世场景:轮回那程没有「踏入轮回」");
     else {
@@ -4481,7 +4652,7 @@ async function taskReincarnation() {
           .map((p) =>
             (p.querySelector("h3")?.textContent || p.getAttribute("aria-label") || "").trim(),
           )
-          .filter((t) => /寿元将尽|此生已矣|轮回/.test(t)),
+          .filter((t) => /往生\s*·\s*(辞世|回照|择生)/.test(t)),
         text: (document.querySelector("main")?.innerText || "").replace(/\n+/g, " ").slice(0, 200),
       }));
       if (after.rebirthStillOpen.length)

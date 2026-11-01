@@ -1915,6 +1915,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
       ["components/adventure/BattleIntelPanel.vue", ':aria-expanded="showAnalysis"'],
       // 转世交割清单里点开的那一条(heritageTap)—— 只换措辞不报状态,读屏分不清
       ["components/character/ReincarnationDialog.vue", ':aria-expanded="heritageTap === r.id"'],
+      // 去留全账本身也是 disclosure:36 项收合后仍要把展开态报给读屏
+      ["components/character/ReincarnationDialog.vue", ':aria-expanded="heritageOpen"'],
       // 门庭派活:先选签展开票面,再由票尾确认钮派出 —— 新登的 disclosure
       ["views/ApprenticeView.vue", ':aria-expanded="isTaskOpen(a.uid, t.spec)"'],
       // 秘境整卡先收成一行;这张卡与卡内名录各有一层 disclosure

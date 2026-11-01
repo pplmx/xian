@@ -322,11 +322,12 @@ import { activeLifeTrial, canSignLifeTrial, signLifeTrial } from "@/core/lifeTri
 import { talentDef, TALENT_GRADE_COLORS, TALENT_GRADE_NAMES } from "@/data/talents";
 import { REALMS } from "@/data/realms";
 import { prepareReincarnation, MANUAL_REBIRTH_MIN_MAJOR } from "@/core/reincarnation";
-import { heritageGroups, type HeritageMode } from "@/core/samsaraAudit";
+import { heritageGroups } from "@/core/samsaraAudit";
 import { DAO_FRUIT_COMBAT_BONUS, DAO_FRUIT_CULT_BONUS } from "@/data/constants";
 import { fruitMarginalInfo, fruitSoftCapText } from "@/core/resourceGuidance";
 import { formatNum, formatPercent, yearsShown } from "@/utils/format";
 import { modsText } from "@/data/statNames";
+import { criticalSamsaraRows, samsaraBalance, samsaraLedger } from "@/ui/reincarnationDesk";
 import BaseModal from "@/components/common/BaseModal.vue";
 
 /**
@@ -349,48 +350,13 @@ const gateRealm = computed(
   () => REALMS[MANUAL_REBIRTH_MIN_MAJOR] ?? { name: "金丹", short: "金丹" },
 );
 
-const MODE_MARK: Record<HeritageMode, string> = {
-  full: "留",
-  partial: "折",
-  reset: "散",
-};
-
-const heritageLedger = computed(() =>
-  heritageGroups().map((group) => ({
-    ...group,
-    count: group.rows.length,
-    mark: MODE_MARK[group.mode],
-    tone: `is-${group.mode}`,
-  })),
-);
-const totalCount = computed(() =>
-  heritageLedger.value.reduce((sum, group) => sum + group.count, 0),
-);
-const keepCount = computed(() =>
-  heritageLedger.value
-    .filter((group) => group.mode !== "reset")
-    .reduce((sum, group) => sum + group.count, 0),
-);
-const partialCount = computed(
-  () => heritageLedger.value.find((group) => group.mode === "partial")?.count ?? 0,
-);
-const resetCount = computed(
-  () => heritageLedger.value.find((group) => group.mode === "reset")?.count ?? 0,
-);
-const criticalRows = computed(() =>
-  heritageLedger.value.flatMap((group) =>
-    group.rows
-      .filter((row) => row.mode === "partial" || (row.mode === "reset" && row.power === "high"))
-      .map((row) => ({
-        id: row.id,
-        name: row.name,
-        mode: row.mode,
-        mark: group.mark,
-        groupTitle: group.title,
-        tone: group.tone,
-      })),
-  ),
-);
+const heritageLedger = computed(() => samsaraLedger(heritageGroups()));
+const heritageBalance = computed(() => samsaraBalance(heritageLedger.value));
+const totalCount = computed(() => heritageBalance.value.total);
+const keepCount = computed(() => heritageBalance.value.keep);
+const partialCount = computed(() => heritageBalance.value.partial);
+const resetCount = computed(() => heritageBalance.value.reset);
+const criticalRows = computed(() => criticalSamsaraRows(heritageLedger.value));
 
 /** 天赋展开:手机没有 hover,点一下就在帖内说明,关卷即复位。 */
 const talentTap = ref<string | null>(null);

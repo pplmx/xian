@@ -377,6 +377,7 @@ const CATEGORIES = [
       "legacy",
       "identity",
       "samsara",
+      "reincarnationDesk",
       "fortune",
       "worldEcho",
       "regionEvent",
