@@ -98,19 +98,18 @@ describe("开卷版式 · 全站册页基线外加一座游戏指挥台", () => 
     expect(character).not.toContain('<SectionTitle title="道躯"');
   });
 
-  it("门庭此刻汇总收进卷首，坊市行市与三摊册口同住续卷", () => {
-    const mastheadPages = [["ApprenticeView", "data-apprentice-pulse"]] as const;
+  it("门庭与坊市都把此刻汇总接进正文续卷", () => {
+    const apprentice = source("src/views/ApprenticeView.vue");
+    const apprenticeMasthead =
+      apprentice.match(/<FolioPageHeader[\s\S]*?<\/FolioPageHeader>/)?.[0] ?? "";
+    expect(apprenticeMasthead, "门庭总账不该继续塞在卷首").not.toContain("data-apprentice-pulse");
+    expect(apprentice.match(/data-apprentice-pulse(?![-\\w])/g), "门庭总账落点重复了").toHaveLength(
+      1,
+    );
+    expect(apprentice, "今日门庭、值日簿与门规没有收进同一续卷").toMatch(
+      /<article class="apprentice-register folio-span-all" data-apprentice-register>[\s\S]{0,600}<LedgerPulse[\s\S]*data-apprentice-chapter="rules"/,
+    );
 
-    for (const [page, marker] of mastheadPages) {
-      const src = source(`src/views/${page}.vue`);
-      const masthead = src.match(/<FolioPageHeader[\s\S]*?<\/FolioPageHeader>/)?.[0] ?? "";
-
-      expect(masthead, `${page} 的此刻汇总仍在卷首之外`).toContain(marker);
-      expect(
-        src.match(new RegExp(`${marker}(?![-\\w])`, "g")),
-        `${page} 的汇总落点重复了`,
-      ).toHaveLength(1);
-    }
     const market = source("src/views/MarketView.vue");
     expect(market.match(/data-market-pulse(?![-\\w])/g), "坊市总账落点重复了").toHaveLength(1);
     expect(market, "坊市行市与册口没有收进同一续卷").toMatch(

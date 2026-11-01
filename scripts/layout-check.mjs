@@ -5775,6 +5775,129 @@ async function taskApprenticePulse() {
       failures.push(`[390] 门庭场景:派发按钮没有报出这次会派走 2 人(«${initial.dispatchText}»)`);
     }
 
+    const readRegister = () =>
+      page.evaluate(() => {
+        const register = document.querySelector("[data-apprentice-register]");
+        const pulse = register?.querySelector("[data-apprentice-pulse]");
+        const roster = register?.querySelector("[data-apprentice-roster]");
+        const rules = register?.querySelector(".apprentice-rules");
+        const chapters = [...(register?.querySelectorAll("[data-apprentice-chapter]") ?? [])];
+        const choiceGrid = roster?.querySelector(".apprentice-task-choice-grid");
+        const choices = [...(register?.querySelectorAll(".apprentice-task-choice") ?? [])];
+        const depot = register?.querySelector(".apprentice-depot__rows");
+        const columnsOf = (el) =>
+          el ? getComputedStyle(el).gridTemplateColumns.split(/\s+/).filter(Boolean).length : 0;
+        const chrome = (el) => {
+          const style = el ? getComputedStyle(el) : null;
+          return style
+            ? {
+                borders: [
+                  style.borderTopWidth,
+                  style.borderRightWidth,
+                  style.borderBottomWidth,
+                  style.borderLeftWidth,
+                ],
+                background: style.backgroundColor,
+                shadow: style.boxShadow,
+              }
+            : null;
+        };
+        return {
+          found: Boolean(register && pulse && roster && rules),
+          chapters: chapters.map((chapter) => ({
+            id: chapter.getAttribute("data-apprentice-chapter"),
+            top: Math.round(chapter.getBoundingClientRect().top),
+            borderTop: getComputedStyle(chapter).borderTopWidth,
+          })),
+          register: chrome(register),
+          roster: chrome(roster),
+          rules: chrome(rules),
+          choice: choices[0]
+            ? {
+                ...chrome(choices[0]),
+                count: choices.length,
+                radius: getComputedStyle(choices[0]).borderRadius,
+                selected: choices.filter((choice) =>
+                  choice.hasAttribute("data-apprentice-selected"),
+                ).length,
+              }
+            : null,
+          columns: {
+            depot: columnsOf(depot),
+            choices: columnsOf(choiceGrid),
+            rules: columnsOf(rules),
+          },
+        };
+      });
+
+    const fold = await readRegister();
+    const width = (value) => parseFloat(value);
+    checked += 1;
+    if (
+      !fold.found ||
+      fold.chapters.map((chapter) => chapter.id).join(",") !== "pulse,roster,rules" ||
+      fold.chapters.some(
+        (chapter, index) => index > 0 && chapter.top <= fold.chapters[index - 1].top,
+      ) ||
+      width(fold.chapters[0]?.borderTop) !== 0 ||
+      fold.chapters.slice(1).some((chapter) => width(chapter.borderTop) < 1)
+    ) {
+      failures.push(`[390] 门庭续卷没有按总账、值日簿、门规三章续排:${JSON.stringify(fold)}`);
+    }
+    checked += 1;
+    if (
+      !fold.register ||
+      width(fold.register.borders[0]) < 1 ||
+      width(fold.register.borders[2]) < 1 ||
+      width(fold.register.borders[1]) !== 0 ||
+      width(fold.register.borders[3]) !== 0 ||
+      fold.register.background !== "rgba(0, 0, 0, 0)" ||
+      fold.register.shadow !== "none" ||
+      !fold.roster ||
+      fold.roster.borders.some((value) => width(value) !== 0) ||
+      fold.roster.background !== "rgba(0, 0, 0, 0)" ||
+      fold.roster.shadow !== "none" ||
+      !fold.rules ||
+      fold.rules.borders.some((value) => width(value) !== 0) ||
+      fold.rules.background !== "rgba(0, 0, 0, 0)" ||
+      fold.rules.shadow !== "none"
+    ) {
+      failures.push(`[390] 门庭续卷又套回了卡壳:${JSON.stringify(fold)}`);
+    }
+    checked += 1;
+    if (
+      !fold.choice ||
+      fold.choice.count !== 10 ||
+      fold.choice.radius !== "0px" ||
+      fold.choice.borders.some((value) => width(value) !== 0) ||
+      fold.choice.background !== "rgba(0, 0, 0, 0)" ||
+      fold.choice.shadow !== "none" ||
+      fold.choice.selected !== 0
+    ) {
+      failures.push(`[390] 候差差事签没有收成连续账行:${JSON.stringify(fold.choice)}`);
+    }
+
+    await page.setViewportSize({ width: 195, height: 422 });
+    await settleVisuals(page);
+    const zoom = await readRegister();
+    checked += 1;
+    if (zoom.columns.depot !== 1 || zoom.columns.choices !== 1 || zoom.columns.rules !== 1) {
+      failures.push(`[195] 门庭续卷没有退成单列:${JSON.stringify({ columns: zoom.columns })}`);
+    }
+    const zoomProblems = problemsOf(await measurePage(page));
+    checked += 1;
+    if (zoomProblems.length) failures.push(`[195] 门庭续卷 → ${zoomProblems.join(" / ")}`);
+
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await settleVisuals(page);
+    const wide = await readRegister();
+    checked += 1;
+    if (wide.columns.depot !== 4 || wide.columns.choices !== 3 || wide.columns.rules !== 2) {
+      failures.push(`[1280] 门庭续卷没有按桌面档并读:${JSON.stringify({ columns: wide.columns })}`);
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await settleVisuals(page);
     await page
       .locator('[data-apprentice-task-choice="pulse_idle_2:seek"]')
       .click({ timeout: 3000 });

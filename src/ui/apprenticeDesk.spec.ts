@@ -34,10 +34,8 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
   it("今日门庭把候差、在途、最近归期与一令齐发收成一张总账", () => {
     const view = source("src/views/ApprenticeView.vue");
     const markers = view.match(/data-apprentice-pulse(?![-\\w])/g) ?? [];
-    const pulse = view.slice(
-      view.indexOf("data-apprentice-pulse"),
-      view.indexOf("</FolioPageHeader>"),
-    );
+    const pulseStart = view.indexOf("data-apprentice-pulse");
+    const pulse = view.slice(pulseStart, view.indexOf("</LedgerPulse>", pulseStart));
 
     expect(markers, "总账运行时落点只能有一个").toHaveLength(1);
     expect(view, "门庭总账接共享此刻账").toContain(
@@ -60,16 +58,34 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
     expect(view, "一键派发仍读汇总里的候差数").toContain("pulse.value.idle");
     expect(pulse.match(/<button/g), "总账里的第一枚按钮必须是一键派发").toHaveLength(1);
     expect(pulse, "一键派发要有独立动作位").toContain("apprentice-pulse__dispatch");
-    expect(pulse, "无人在家时动作换口").toContain('"弟子都在路上"');
+    expect(pulse, "极窄档的短文案不抢走完整读屏说明").toContain("dispatchShortLabel");
+    expect(pulse, "无人在家时读屏动作换口").toContain("'弟子都在路上'");
+    expect(pulse, "无人在家时可见动作换口").toContain("<span v-else>弟子都在路上</span>");
     expect(pulse, "门庭总账不再手搓账格骨架").not.toContain('class="apprentice-pulse__tallies"');
+  });
+
+  it("今日门庭、值日簿与门规同住一张开口续卷", () => {
+    const view = source("src/views/ApprenticeView.vue");
+    const start = view.indexOf('<article class="apprentice-register folio-span-all"');
+    const register = view.slice(start, view.lastIndexOf("</article>") + "</article>".length);
+
+    expect(start, "门庭正文要收进同一册").toBeGreaterThan(-1);
+    expect(register, "今日门庭是续卷第一章").toMatch(
+      /data-apprentice-chapter="pulse"[\s\S]{0,360}<LedgerPulse/,
+    );
+    expect(register, "值日簿紧随总账续排").toMatch(
+      /data-apprentice-chapter="roster"[\s\S]{0,520}<SectionTitle[\s\S]{0,120}title="值日簿"/,
+    );
+    expect(register, "门规是同一册的末章").toMatch(
+      /data-apprentice-chapter="rules"[\s\S]{0,420}<SectionTitle[\s\S]{0,120}title="门规"/,
+    );
+    expect(register.match(/data-apprentice-chapter=/g), "续卷只列三章").toHaveLength(3);
   });
 
   it("四门存底摊开调度依据,目标与同分都从 core 同一份方案来", () => {
     const view = source("src/views/ApprenticeView.vue");
-    const pulse = view.slice(
-      view.indexOf("data-apprentice-pulse"),
-      view.indexOf("</FolioPageHeader>"),
-    );
+    const pulseStart = view.indexOf("data-apprentice-pulse");
+    const pulse = view.slice(pulseStart, view.indexOf("</LedgerPulse>", pulseStart));
 
     expect(view, "调度案只走 core 的唯一一份计划").toContain(
       "apprenticeDispatchPlan(dispatchStock.value)",
@@ -151,12 +167,36 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
 
   it("手机两格并读、最近归来跨行,620 起三栏并读,220 以下门规退成单列", () => {
     const css = source("src/style.css");
-    const start = css.indexOf(".apprentice-pulse {");
+    const start = css.indexOf(".apprentice-register {");
     const end = css.indexOf("/*\n   * 道躯案", start);
     const apprenticeCss = css.slice(start, end);
 
     expect(start, "门庭样式段要能定位到").toBeGreaterThan(-1);
     expect(end, "门庭样式段要有明确结尾").toBeGreaterThan(start);
+    expect(apprenticeCss, "续卷只留上下账线").toMatch(
+      /\.apprentice-register\s*\{[\s\S]{0,300}border-top: 1px solid[\s\S]{0,180}border-bottom: 1px solid/,
+    );
+    expect(apprenticeCss, "续卷不套四边卡与投影").toMatch(
+      /\.apprentice-register\s*\{[\s\S]{0,420}background: transparent;[\s\S]{0,100}box-shadow: none;/,
+    );
+    expect(apprenticeCss, "三章由同一组章间线续排").toMatch(
+      /\.apprentice-register__chapter \+ \.apprentice-register__chapter\s*\{[\s\S]{0,100}border-top: 1px solid/,
+    );
+    expect(apprenticeCss, "值日簿撤掉独立卡壳").toMatch(
+      /\.apprentice-roster\s*\{[\s\S]{0,260}border: 0;[\s\S]{0,100}background: transparent;[\s\S]{0,100}box-shadow: none;/,
+    );
+    const rulesRule = apprenticeCss.match(/\.apprentice-rules\s*\{[\s\S]*?\}/)?.[0] ?? "";
+    expect(rulesRule, "门规撤掉独立卡壳").toContain("border: 0;");
+    expect(rulesRule, "门规章线只由续卷承担").not.toMatch(/border-(?:top|right|bottom|left):/);
+    expect(rulesRule, "门规不另铺纸底或投影").toMatch(
+      /background: transparent;[\s\S]{0,100}box-shadow: none;/,
+    );
+    expect(apprenticeCss, "差事签只剩行线与选中短笔").toMatch(
+      /\.apprentice-task-choice\s*\{[\s\S]{0,340}border: 0;[\s\S]{0,260}border-top: 1px solid/,
+    );
+    expect(apprenticeCss).toMatch(
+      /\.apprentice-task-choice\[data-apprentice-selected\]\s*\{[\s\S]{0,180}box-shadow: inset 2px 0 0/,
+    );
     expect(apprenticeCss).toMatch(
       /@media \(min-width: 620px\)\s*\{[\s\S]{0,500}\.apprentice-pulse \.folio-ledger-pulse__tallies\s*\{[\s\S]{0,120}--folio-tally-columns:\s*3/,
     );
@@ -173,10 +213,10 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
       /\.apprentice-rules\s*\{[\s\S]{0,140}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
     expect(apprenticeCss).toMatch(
-      /@media \(min-width: 620px\)\s*\{[\s\S]{0,900}\.apprentice-rules\s*\{[\s\S]{0,120}repeat\(2, minmax\(0, 1fr\)\)/,
+      /@media \(min-width: 620px\)\s*\{[\s\S]{0,3000}\.apprentice-rules\s*\{[\s\S]{0,120}repeat\(2, minmax\(0, 1fr\)\)/,
     );
     expect(apprenticeCss).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1400}\.apprentice-rules__item\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,3000}\.apprentice-rules__item\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
     expect(apprenticeCss, "四门存底默认两列").toMatch(
       /\.apprentice-depot__rows\s*\{[\s\S]{0,120}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
@@ -185,10 +225,13 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
       /@media \(min-width: 620px\)\s*\{[\s\S]{0,1400}\.apprentice-depot__rows\s*\{[\s\S]{0,120}repeat\(4, minmax\(0, 1fr\)\)/,
     );
     expect(apprenticeCss, "极窄档差事签退成单列").toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.apprentice-task-choice-grid\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,4000}\.apprentice-task-choice-grid\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
     expect(apprenticeCss, "差事名不许被本命与时长挤成省略号").toMatch(
       /\.apprentice-task-choice__top\s*\{[\s\S]{0,160}flex-wrap:\s*wrap/,
+    );
+    expect(apprenticeCss, "极窄档派发签只换短文案且不折行").toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,260}\.apprentice-pulse \.apprentice-pulse__dispatch\s*\{[\s\S]{0,160}white-space:\s*nowrap/,
     );
     expect(apprenticeCss, "差事名要允许换行").toMatch(
       /\.apprentice-task-choice__name\s*\{[\s\S]{0,180}white-space:\s*normal/,

@@ -1,13 +1,37 @@
 @layer reset, shared, page, app-utilities;
 @layer page {
   /*
-   * 门庭案 —— 门庭图先给“谁在家、谁在路上”的方位，今日总账再收拢派发决策，
-   * 值日簿按候差在前、归期先后逐人摊开。
+   * 门庭案 —— 门庭图先给“谁在家、谁在路上”的方位，今日总账、值日簿与门规
+   * 同住一张开口续卷，值日簿按候差在前、归期先后逐人摊开。
    *
    * 旧页把卷首读数、弟子身份、羁绊说明与五枚任务按钮挤在同一张卡上，重复的
    * “等级 / 羁绊 / 真传”说明又把真正要点的差事进度与产出压到后面。现在总账
-   * 只回答“几个人能派、最近谁回来”，值日簿再回答“这个人适合去哪、归来拿什么”。
+   * 只回答“几个人能派、最近谁回来”，值日簿再回答“这个人适合去哪、归来拿什么”；
+   * 三层不再各套一张卡纸，只沿同一组上下账线续排。
   */
+  .apprentice-register {
+    min-width: 0;
+    margin-top: 0.65rem;
+    border: 0;
+    border-top: 1px solid color-mix(in srgb, var(--color-cinnabar) 36%, transparent);
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    background: transparent;
+    box-shadow: none;
+  }
+  .apprentice-register__chapter {
+    min-width: 0;
+    padding: 0.72rem 0 0.82rem;
+  }
+  .apprentice-register__chapter + .apprentice-register__chapter {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+  }
+  .apprentice-register__chapter--pulse {
+    padding-top: 0;
+  }
+  .apprentice-register__chapter--pulse > .apprentice-pulse {
+    margin-top: 0;
+    border-top: 0;
+  }
   .apprentice-pulse {
     --ledger-accent: var(--color-cinnabar);
   }
@@ -21,6 +45,9 @@
     border-radius: 1px;
     padding: 0.58rem 0.78rem;
     white-space: normal;
+  }
+  .apprentice-pulse__dispatch-label--short {
+    display: none;
   }
   .apprentice-pulse__foot {
     position: relative;
@@ -180,17 +207,11 @@
     line-height: 1.55;
   }
   .apprentice-roster {
-    overflow: hidden;
-    margin-top: 0.5rem;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
-    border-top: 2px solid rgb(var(--color-qing-rgb) / 0.44);
-    border-radius: 2px;
-    background:
-      linear-gradient(108deg, rgb(var(--color-qing-rgb) / 0.018), transparent 42%),
-      rgb(var(--color-paper-lifted-rgb));
-    box-shadow:
-      inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.12),
-      2px 2px 0 rgb(var(--color-ink-rgb) / 0.018);
+    min-width: 0;
+    margin-top: 0.48rem;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
   }
   .apprentice-roster__empty {
     display: flex;
@@ -216,7 +237,8 @@
     font-size: var(--type-title);
   }
   .apprentice-roster__group + .apprentice-roster__group {
-    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+    margin-top: 0.5rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.14);
   }
   .apprentice-roster__group-head {
     display: flex;
@@ -224,10 +246,9 @@
     flex-wrap: wrap;
     align-items: baseline;
     gap: 0.16rem 0.5rem;
-    padding: 0.62rem 0.8rem 0.48rem;
-    background:
-      linear-gradient(90deg, rgb(var(--color-paper-rgb) / 0.34), transparent 58%),
-      rgb(var(--color-paper-rgb) / 0.12);
+    padding: 0.58rem 0.1rem 0.42rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    background: transparent;
   }
   .apprentice-roster__group-index {
     display: grid;
@@ -258,11 +279,11 @@
     white-space: nowrap;
   }
   .apprentice-roster__list {
-    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    border-top: 0;
   }
   .apprentice-roster__row {
     min-width: 0;
-    padding: 0.76rem 0.8rem 0.82rem;
+    padding: 0.72rem 0.1rem 0.78rem;
   }
   .apprentice-roster__row + .apprentice-roster__row {
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
@@ -417,7 +438,8 @@
     display: grid;
     min-width: 0;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.38rem;
+    gap: 0;
+    border-block: 1px solid rgb(var(--color-ink-rgb) / 0.09);
   }
   .apprentice-task-choice {
     display: flex;
@@ -426,14 +448,23 @@
     width: 100%;
     align-items: center;
     gap: 0.42rem;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.1);
-    border-radius: 1px;
+    border: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    border-radius: 0;
     padding: 0.4rem 0.46rem;
+    background: transparent;
     text-align: left;
     transition:
-      border-color 0.16s ease,
       background-color 0.16s ease,
+      box-shadow 0.16s ease,
       transform 0.16s ease;
+  }
+  .apprentice-task-choice:first-child {
+    border-top: 0;
+  }
+  .apprentice-task-choice[data-apprentice-selected] {
+    background: rgb(var(--color-cinnabar-rgb) / 0.035);
+    box-shadow: inset 2px 0 0 rgb(var(--color-cinnabar-rgb) / 0.62);
   }
   .apprentice-task-choice:active {
     transform: scale(0.985);
@@ -591,21 +622,17 @@
   .apprentice-rules {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    margin-top: 0.5rem;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.13);
-    border-top: 2px solid rgb(var(--color-cinnabar-rgb) / 0.34);
-    border-radius: 2px;
-    background:
-      linear-gradient(102deg, rgb(var(--color-paper-rgb) / 0.28), transparent 46%),
-      rgb(var(--color-paper-lifted-rgb) / 0.72);
-    box-shadow: inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.12);
+    margin-top: 0.48rem;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
   }
   .apprentice-rules__item {
     display: grid;
     min-width: 0;
     grid-template-columns: 1.4rem minmax(0, 1fr);
     gap: 0.55rem;
-    padding: 0.62rem 0.74rem;
+    padding: 0.58rem 0.1rem;
   }
   .apprentice-rules__item + .apprentice-rules__item {
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
@@ -663,6 +690,10 @@
       grid-column: span 2;
     }
 
+    .apprentice-task-choice:not(:nth-child(3n + 1)) {
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.07);
+    }
+
     .apprentice-rules {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -677,6 +708,20 @@
     }
   }
   @media (max-width: 220px) {
+    .apprentice-pulse .apprentice-pulse__dispatch {
+      padding-inline: 0.36rem;
+      font-size: var(--type-note);
+      white-space: nowrap;
+    }
+
+    .apprentice-pulse__dispatch-label--full {
+      display: none;
+    }
+
+    .apprentice-pulse__dispatch-label--short {
+      display: inline;
+    }
+
     .apprentice-pulse__foot,
     .apprentice-depot,
     .apprentice-roster__group-head,

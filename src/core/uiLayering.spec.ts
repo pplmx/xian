@@ -1805,8 +1805,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
       /\.apprentice-task-choice\s*\{[\s\S]{0,180}min-height:\s*44px;[\s\S]{0,100}width:\s*100%/,
     );
     expect(appr?.src, "任务图标读 APPRENTICE_TASKS 的 icon,不另抄一套").toContain(':name="t.icon"');
-    expect(appr?.src, "选中态用 4% 朱砂底与可读边框,不用实心彩胶囊").toContain(
-      "'border-cinnabar/35 bg-cinnabar/4'",
+    expect(appr?.src, "选中态用续卷行标,不用实心彩胶囊").toContain(
+      ":data-apprentice-selected=\"isTaskOpen(a.uid, t.spec) ? '' : undefined\"",
     );
     expect(appr?.src, "选签只展开票面").toContain('@click="selectTask(a.uid, t.spec)"');
     expect(appr?.src, "票尾确认才派出").toContain('@click="dispatchSelected(a)"');
