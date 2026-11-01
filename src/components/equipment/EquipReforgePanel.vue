@@ -207,7 +207,8 @@ function triesOf(id: string, minRoll = 0): number | null {
   -->
   <div
     v-if="autoOpen && reforgeCostVal"
-    class="mt-3 rounded-[2px] border border-ink/15 bg-paper-deep/50 px-3 py-2"
+    data-equipment-auto-reforge
+    class="mt-3 border-t border-ink/10 pt-2.5"
   >
     <p class="mb-1 text-body text-ink-soft">洗到这些词条出现就停(任一命中即停,至多 3 条)</p>
     <div class="scroll-pane grid max-h-36 grid-cols-3 gap-1 overflow-y-auto tinylens:grid-cols-2">
@@ -313,12 +314,9 @@ function triesOf(id: string, minRoll = 0): number | null {
       </button>
       <div
         v-if="sealCostVal"
-        class="flex flex-1 items-center justify-center rounded-[2px] border px-2 py-1"
-        :class="
-          sealAffordable
-            ? 'border-qing/20 bg-qing/5 text-qing'
-            : 'border-ink/10 bg-ink/4 text-ink-faint'
-        "
+        data-equipment-seal-price
+        class="flex flex-1 items-center justify-center border-l px-2 py-1 tinylens:border-l-0 tinylens:border-t"
+        :class="sealAffordable ? 'border-qing/40 text-qing' : 'border-ink/15 text-ink-faint'"
       >
         封存一词 {{ formatGN(sealCostVal) }}
       </div>

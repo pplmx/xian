@@ -31,11 +31,12 @@ withDefaults(
   align-items: center;
   gap: 0.35rem 0.6rem;
   margin-top: 0.45rem;
-  padding: 0.45rem 0.6rem;
-  border: 1px solid rgb(var(--color-ink-rgb) / 0.13);
+  padding: 0.42rem 0.55rem;
+  border: 0;
+  border-block: 1px solid rgb(var(--color-ink-rgb) / 0.12);
   border-left: 2px solid rgb(var(--color-qing-rgb) / 0.62);
-  border-radius: 2px;
-  background: rgb(var(--color-paper-deep-rgb) / 0.42);
+  border-radius: 0;
+  background: linear-gradient(90deg, rgb(var(--color-paper-deep-rgb) / 0.28), transparent);
 }
 
 .batch-spend-ledger[data-tone="cinnabar"] {

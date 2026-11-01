@@ -61,6 +61,39 @@ describe("器评帖 · 装备详情先给身份与换装结论", () => {
     expect(layout, "真浏览器要核器评帖不再逐段套框").toContain("[data-equipment-dossier]");
   });
 
+  it("工坊展开的重铸、自动重铸与词条转移都沿账线续排,不再套第二层四边卡", () => {
+    const css = source("src/styles/pages/inventory.css");
+    const reforge = source("src/components/equipment/EquipReforgePanel.vue");
+    const transfer = source("src/components/equipment/AffixTransferPanel.vue");
+    const batch = source("src/components/common/BatchSpendLedger.vue");
+    const layout = source("scripts/layout-check.mjs");
+
+    expect(reforge, "自动重铸要有稳定落点供真浏览器复核").toContain("data-equipment-auto-reforge");
+    expect(reforge, "自动重铸不再自成一张四边卡").not.toMatch(
+      /data-equipment-auto-reforge[\s\S]{0,120}rounded-\[2px\] border border-ink\/15/,
+    );
+    expect(reforge, "封存价签是账栏,不再伪装成一枚按钮").toContain("data-equipment-seal-price");
+    expect(reforge, "封存价签只留分隔线,不铺圆角方底").not.toMatch(
+      /data-equipment-seal-price[\s\S]{0,180}rounded-\[2px\] border px-2/,
+    );
+    expect(transfer, "词条转移要有稳定落点供真浏览器复核").toContain(
+      "data-equipment-affix-transfer",
+    );
+    expect(transfer, "词条转移不再自成一张四边卡").not.toMatch(
+      /data-equipment-affix-transfer[\s\S]{0,160}rounded-sm border border-ink\/10/,
+    );
+
+    const batchRule = batch.match(/\.batch-spend-ledger\s*\{[\s\S]*?\}/)?.[0] ?? "";
+    expect(batchRule, "连强预算只留上下账线与左侧短笔").toMatch(/border:\s*0;/);
+    expect(batchRule).toMatch(/border-block:\s*1px solid/);
+    expect(batchRule).toMatch(/border-left:\s*2px solid/);
+    expect(batchRule).toMatch(/border-radius:\s*0;/);
+
+    expect(layout, "真浏览器要核工坊展开区不再套四边卡").toContain("data-equipment-auto-reforge");
+    expect(layout).toContain("data-equipment-affix-transfer");
+    expect(css, "器评帖样式入口保留").toContain(".equip-dossier__workshop");
+  });
+
   it("候选与详情共用同一份战力判据", () => {
     const candidates = source("src/components/inventory/SlotCandidatesDialog.vue");
     expect(candidates).toContain("equipPowerComparison");
@@ -131,7 +164,7 @@ describe("器评帖 · 装备详情先给身份与换装结论", () => {
     expect(reforge).toContain(
       'class="btn-ghost min-h-[28px] w-full whitespace-nowrap !py-1 !text-body"',
     );
-    expect(transfer).toContain("tinylens:p-2");
+    expect(transfer).toContain("tinylens:pt-2");
     expect(transfer).toContain("chip-ink !whitespace-nowrap");
   });
 });

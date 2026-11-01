@@ -12973,6 +12973,21 @@ async function taskDialogZoom() {
       };
     });
 
+  const readOpenLedger = (selector) =>
+    page.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      if (!el) return null;
+      const style = getComputedStyle(el);
+      return {
+        borderTop: Number.parseFloat(style.borderTopWidth),
+        borderRight: Number.parseFloat(style.borderRightWidth),
+        borderBottom: Number.parseFloat(style.borderBottomWidth),
+        borderLeft: Number.parseFloat(style.borderLeftWidth),
+        radius: Number.parseFloat(style.borderRadius),
+        background: style.backgroundColor,
+      };
+    }, selector);
+
   /** 一扇弹窗:点开 → 量 → 关掉。点不开直接报红(判据没量到东西) */
   const probe = async (label, route, click) => {
     await page.goto(INDEX + "#" + route, { waitUntil: "load" });
@@ -13007,6 +13022,51 @@ async function taskDialogZoom() {
         dossier.frames.some((frame) => frame.borders[1] !== 0)
       ) {
         failures.push(`[195] 器评帖又逐段套回四边框:${JSON.stringify(dossier)}`);
+      }
+      checked += 1;
+      const batch = await readOpenLedger(".batch-spend-ledger");
+      if (!batch || batch.borderRight !== 0 || batch.radius !== 0) {
+        failures.push(`[195] 连强预算又长回四边卡:${JSON.stringify(batch)}`);
+      }
+    }
+    if (label === "装备详情 · 自动重铸") {
+      checked += 1;
+      const auto = await readOpenLedger("[data-equipment-auto-reforge]");
+      if (
+        !auto ||
+        auto.borderTop !== 1 ||
+        auto.borderRight !== 0 ||
+        auto.borderBottom !== 0 ||
+        auto.borderLeft !== 0 ||
+        auto.radius !== 0 ||
+        auto.background !== "rgba(0, 0, 0, 0)"
+      ) {
+        failures.push(`[195] 自动重铸又套回内层卡壳:${JSON.stringify(auto)}`);
+      }
+      checked += 1;
+      const sealPrice = await readOpenLedger("[data-equipment-seal-price]");
+      if (
+        !sealPrice ||
+        sealPrice.borderRight !== 0 ||
+        sealPrice.radius !== 0 ||
+        sealPrice.background !== "rgba(0, 0, 0, 0)"
+      ) {
+        failures.push(`[195] 封存价签又长回按钮样:${JSON.stringify(sealPrice)}`);
+      }
+    }
+    if (label === "装备详情 · 词条转移落位") {
+      checked += 1;
+      const transfer = await readOpenLedger("[data-equipment-affix-transfer]");
+      if (
+        !transfer ||
+        transfer.borderTop !== 1 ||
+        transfer.borderRight !== 0 ||
+        transfer.borderBottom !== 0 ||
+        transfer.borderLeft !== 0 ||
+        transfer.radius !== 0 ||
+        transfer.background !== "rgba(0, 0, 0, 0)"
+      ) {
+        failures.push(`[195] 词条转移又套回内层卡壳:${JSON.stringify(transfer)}`);
       }
     }
     const problems = dialogZoomProblems(await measureDialogZoom(page, { width: 390, height: 844 }));
