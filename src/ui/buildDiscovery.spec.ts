@@ -73,4 +73,25 @@ describe("道途未成 · 六路发现页", () => {
     );
     expect(tiny).toMatch(/\.build-discovery__path-score \{[\s\S]{0,160}?grid-column: 1 \/ -1/);
   });
+
+  it("发现页收成一张开口续卷，六路沿账线续排而不各套纸卡", () => {
+    const css = source("src/styles/pages/build.css");
+
+    expect(css).toMatch(
+      /\.build-discovery\s*\{[\s\S]{0,420}border:\s*0;[\s\S]{0,220}border-block:\s*1px solid rgb\(var\(--color-ink-rgb\) \/ 0\.11\)/,
+    );
+    expect(css).toMatch(/\.build-discovery\s*\{[\s\S]{0,560}border-top-color:\s*color-mix\(/);
+    expect(css).toMatch(/\.build-discovery\s*\{[\s\S]{0,640}background:\s*transparent;/);
+    expect(css).toMatch(/\.build-discovery\s*\{[\s\S]{0,720}box-shadow:\s*none;/);
+    expect(css).not.toContain(".build-discovery::before");
+    expect(css).not.toContain(".build-discovery__hero");
+    expect(css).not.toContain(".build-discovery__wheel");
+
+    expect(css).toMatch(
+      /\.build-discovery__path\s*\{[\s\S]{0,260}border:\s*0;[\s\S]{0,180}background:\s*transparent;/,
+    );
+    expect(css).toMatch(
+      /\.build-discovery__path \+ \.build-discovery__path\s*\{[\s\S]{0,120}border-top:\s*1px solid/,
+    );
+  });
 });

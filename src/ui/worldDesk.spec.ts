@@ -140,4 +140,21 @@ describe("本世山河案 · 卷首山图与路线账同读一份阶段结果", 
     );
     expect(worldCss).toMatch(/\.world-stage__depart\s*\{[\s\S]{0,120}min-width:\s*3rem/);
   });
+
+  it("本世与前尘都收成开口账页，不再套四边卡与第二道内框", () => {
+    const css = source("src/style.css");
+    const start = css.indexOf("/*\n   * 本世山河案");
+    const end = css.indexOf("/*\n   * 铸道案", start);
+    const worldCss = css.slice(start, end);
+
+    expect(worldCss).toMatch(
+      /\.world-ledger\s*\{[\s\S]{0,520}border:\s*0;[\s\S]{0,420}border-block:\s*1px solid rgb\(var\(--color-ink-rgb\) \/ 0\.11\)/,
+    );
+    expect(worldCss).toMatch(/\.world-ledger\s*\{[\s\S]{0,680}border-top-color:\s*color-mix\(/);
+    expect(worldCss).toMatch(/\.world-ledger\s*\{[\s\S]{0,880}border-radius:\s*0;/);
+    expect(worldCss).toMatch(/\.world-ledger\s*\{[\s\S]{0,980}background:\s*transparent;/);
+    expect(worldCss).toMatch(/\.world-ledger\s*\{[\s\S]{0,1080}box-shadow:\s*none;/);
+    expect(worldCss).not.toContain(".world-ledger::before");
+    expect(worldCss).not.toContain(".world-route-map::before");
+  });
 });

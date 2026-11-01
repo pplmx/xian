@@ -11948,10 +11948,14 @@ async function taskWorldDesk() {
         const root = document.querySelector("[data-world-desk]");
         const current = document.querySelector("[data-world-current]");
         const currentRect = current?.getBoundingClientRect();
+        const rootStyle = root ? getComputedStyle(root) : null;
+        const rootBefore = root ? getComputedStyle(root, "::before") : null;
+        const routeMap = document.querySelector("[data-world-route-map]");
+        const routeMapBefore = routeMap ? getComputedStyle(routeMap, "::before") : null;
         return {
           shapeRows: document.querySelectorAll("[data-world-shape] > span").length,
           atlasHidden: document.querySelector("[data-world-atlas]")?.getAttribute("aria-hidden"),
-          routeMap: !!document.querySelector("[data-world-route-map]"),
+          routeMap: !!routeMap,
           stages: document.querySelectorAll("[data-stage-index]").length,
           currentRows: document.querySelectorAll("[data-world-current]").length,
           currentText: (current?.innerText || "").replace(/\s+/g, " ").trim(),
@@ -11960,6 +11964,21 @@ async function taskWorldDesk() {
           rerollNote: text(".world-masthead__reroll p"),
           body: (root?.innerText || "").replace(/\s+/g, " ").trim(),
           viewportHeight: window.innerHeight,
+          chrome: rootStyle
+            ? {
+                borderTop: Number.parseFloat(rootStyle.borderTopWidth),
+                borderRight: Number.parseFloat(rootStyle.borderRightWidth),
+                borderBottom: Number.parseFloat(rootStyle.borderBottomWidth),
+                borderLeft: Number.parseFloat(rootStyle.borderLeftWidth),
+                radius: Number.parseFloat(rootStyle.borderTopLeftRadius),
+                shadow: rootStyle.boxShadow,
+                background: rootStyle.backgroundColor,
+                beforeContent: rootBefore?.content ?? "",
+                beforeBorderTop: Number.parseFloat(rootBefore?.borderTopWidth ?? "0"),
+                mapBeforeContent: routeMapBefore?.content ?? "",
+                mapBeforeBorderTop: Number.parseFloat(routeMapBefore?.borderTopWidth ?? "0"),
+              }
+            : null,
         };
       });
 
@@ -11991,6 +12010,22 @@ async function taskWorldDesk() {
         failures.push(
           `[390] 眼下路线首屏不可见:top ${Math.round(desk.currentTop)} / viewport ${desk.viewportHeight}`,
         );
+      }
+      if (
+        !desk.chrome ||
+        desk.chrome.borderTop < 1 ||
+        desk.chrome.borderBottom < 1 ||
+        desk.chrome.borderLeft !== 0 ||
+        desk.chrome.borderRight !== 0 ||
+        desk.chrome.radius !== 0 ||
+        desk.chrome.shadow !== "none" ||
+        desk.chrome.background !== "rgba(0, 0, 0, 0)" ||
+        desk.chrome.beforeContent !== "none" ||
+        desk.chrome.beforeBorderTop !== 0 ||
+        desk.chrome.mapBeforeContent !== "none" ||
+        desk.chrome.mapBeforeBorderTop !== 0
+      ) {
+        failures.push(`[390] 本世山河案又套回四边卡或内框:${JSON.stringify(desk.chrome)}`);
       }
     }
 
@@ -14548,6 +14583,19 @@ async function taskBuildDiscovery() {
       ? await page.evaluate(() => {
           const root = document.querySelector("[data-build-discovery]");
           if (!root) return null;
+          const rootStyle = getComputedStyle(root);
+          const rootBefore = getComputedStyle(root, "::before");
+          const pathStyles = [...root.querySelectorAll("[data-build-path]")].map((path) => {
+            const style = getComputedStyle(path);
+            return {
+              borderTop: Number.parseFloat(style.borderTopWidth),
+              borderRight: Number.parseFloat(style.borderRightWidth),
+              borderBottom: Number.parseFloat(style.borderBottomWidth),
+              borderLeft: Number.parseFloat(style.borderLeftWidth),
+              radius: Number.parseFloat(style.borderTopLeftRadius),
+              background: style.backgroundColor,
+            };
+          });
           return {
             declaredPaths: Number(root.getAttribute("data-build-path-count")),
             paths: root.querySelectorAll("[data-build-path]").length,
@@ -14558,6 +14606,18 @@ async function taskBuildDiscovery() {
             atlasHidden: document.querySelector("[data-build-atlas]")?.getAttribute("aria-hidden"),
             cultivation: root.querySelector('a[href="#/cultivation"]')?.textContent?.trim() || "",
             inventory: root.querySelector('a[href="#/inventory"]')?.textContent?.trim() || "",
+            chrome: {
+              borderTop: Number.parseFloat(rootStyle.borderTopWidth),
+              borderRight: Number.parseFloat(rootStyle.borderRightWidth),
+              borderBottom: Number.parseFloat(rootStyle.borderBottomWidth),
+              borderLeft: Number.parseFloat(rootStyle.borderLeftWidth),
+              radius: Number.parseFloat(rootStyle.borderTopLeftRadius),
+              shadow: rootStyle.boxShadow,
+              background: rootStyle.backgroundColor,
+              beforeContent: rootBefore.content,
+              beforeBorderTop: Number.parseFloat(rootBefore.borderTopWidth),
+            },
+            pathStyles,
           };
         })
       : null;
@@ -14588,6 +14648,33 @@ async function taskBuildDiscovery() {
       }
       if (!discovery.cultivation.includes("去修行") || !discovery.inventory.includes("看行囊")) {
         failures.push("[390] /build 道途发现页的两条真实入口不齐");
+      }
+      if (
+        discovery.chrome.borderTop < 1 ||
+        discovery.chrome.borderBottom < 1 ||
+        discovery.chrome.borderLeft !== 0 ||
+        discovery.chrome.borderRight !== 0 ||
+        discovery.chrome.radius !== 0 ||
+        discovery.chrome.shadow !== "none" ||
+        discovery.chrome.background !== "rgba(0, 0, 0, 0)" ||
+        discovery.chrome.beforeContent !== "none" ||
+        discovery.chrome.beforeBorderTop !== 0
+      ) {
+        failures.push(
+          `[390] /build 道途发现页又套回四边卡或内框:${JSON.stringify(discovery.chrome)}`,
+        );
+      }
+      if (
+        discovery.pathStyles.some(
+          (path) =>
+            path.borderRight !== 0 ||
+            path.borderBottom !== 0 ||
+            path.borderLeft !== 0 ||
+            path.radius !== 0 ||
+            path.background !== "rgba(0, 0, 0, 0)",
+        )
+      ) {
+        failures.push(`[390] /build 六路又分别套回纸卡:${JSON.stringify(discovery.pathStyles)}`);
       }
     }
 

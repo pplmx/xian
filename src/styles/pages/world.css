@@ -148,27 +148,12 @@
     position: relative;
     min-width: 0;
     overflow: hidden;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
-    border-top: 2px solid var(--world-accent);
-    border-radius: 2px;
-    background:
-      linear-gradient(
-        116deg,
-        rgb(var(--world-accent-rgb) / 0.045),
-        transparent 44%,
-        rgb(var(--color-ink-rgb) / 0.014)
-      ),
-      rgb(var(--color-paper-lifted-rgb) / 0.74);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.42),
-      3px 3px 0 rgb(var(--color-ink-rgb) / 0.022);
-  }
-  .world-ledger::before {
-    position: absolute;
-    inset: 4px;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.028);
-    content: "";
-    pointer-events: none;
+    border: 0;
+    border-block: 1px solid rgb(var(--color-ink-rgb) / 0.11);
+    border-top-color: color-mix(in srgb, var(--world-accent) 42%, transparent);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
   .world-ledger--history {
     --world-accent: var(--color-gold-ink);
@@ -186,16 +171,7 @@
     position: relative;
     min-width: 0;
     border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-    background:
-      linear-gradient(180deg, rgb(var(--color-paper-rgb) / 0.18), transparent 76%),
-      rgb(var(--color-paper-rgb) / 0.08);
-  }
-  .world-route-map::before {
-    position: absolute;
-    inset: 5px;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.025);
-    content: "";
-    pointer-events: none;
+    background: linear-gradient(180deg, rgb(var(--color-paper-rgb) / 0.16), transparent 76%);
   }
   .world-route-map__legend {
     display: flex;
