@@ -125,6 +125,9 @@ describe("铸道案 · 六路、形状与下一步同读此刻", () => {
     expect(buildCss).toMatch(
       /\.build-page \.folio-masthead__book\s*\{[\s\S]{0,80}color:\s*rgb\(var\(--color-ink-soft-rgb\)\)/,
     );
+    expect(buildCss, "卷首眉读要升到第二档墨,别在渐变纸上贴着 AA 下限").toMatch(
+      /\.build-masthead__meta\s*\{[\s\S]{0,180}color:\s*var\(--color-ink-soft\)/,
+    );
     expect(buildCss).toMatch(
       /\.build-register\s*\{[\s\S]{0,360}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );

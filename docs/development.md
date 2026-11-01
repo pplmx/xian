@@ -231,14 +231,17 @@ error: Failed to resolve vite command: GenericFailure, Expected
 在 1280 核验四列并读及轮回主账 / 旧世归档的并读几何;结构与响应式契约由
 `src/ui/legacyDesk.spec.ts` 守住。
 
-界域志六册现在共用一张开口长账:外层只留上下账线,`data-realm-codex-folio` 只换
-`data-chapter`,典籍、周易、紫微、星象与奇门不再逐段套 `card-ink`;章节头后以
-`realm-codex-section` 和分段线续排,重复条目退成账行。620px 起典籍题名与释文、
-八卦三栏、奇门两列并读,220 CSS px 以下谱格、宫位、宿名、门位与命格长读数全部
-退单列;两处长表展开键仍守 28px 触达下限。真浏览器巡页会逐册核对连续账的边框、
-圆角、投影与 `card-ink` 已清干净,并在 390 / 195 两档展开六十四卦与二十八宿后再量
-一次溢出。结构与事实源由 `src/ui/realmCodexDesk.spec.ts`、
-`src/core/uiLayering.spec.ts` 与 `scripts/layout-check.mjs` 守住。
+界域志六册现在共用一张开口长账与一枚 `RealmCodexChapterHead`:卷次、题名和读法由
+`realmCodexChapters()` 沿导航顺序装配,章内真值仍直读页面原有数据表、store 与 core
+派生值。`data-realm-codex-folio` 只换 `data-chapter`,典籍、周易、紫微、星象与奇门
+不再导入 `SectionTitle`,也不再逐段套 `card-ink`;章首后以 `realm-codex-section`
+和分段线续排,重复条目退成账行。390 / 195 先把真值放到题名下方,620px 起回到右侧;
+典籍题名与释文、八卦三栏、奇门两列在 620px 起并读,220 CSS px 以下谱格、宫位、宿名、
+门位与命格长读数全部退单列;两处长表展开键仍守 28px 触达下限。真浏览器巡页逐册核对
+章序、章号、题名、读法、真值、连续账边框与 `card-ink`,在 390 / 195 / 1280 三档分别
+核单列、极窄档与右侧真值,并展开六十四卦与二十八宿后再量一次溢出。结构与事实源由
+`src/ui/realmCodexDesk.spec.ts`、`src/core/uiLayering.spec.ts` 与
+`scripts/layout-check.mjs` 守住。
 
 设置页现在只有一张 `data-settings-register` 开口续卷,六章依次为
 `sound / sight / conduct / archive / trail / index`。每章共用同一枚序印、眉题、标题、

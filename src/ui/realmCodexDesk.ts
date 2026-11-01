@@ -4,6 +4,48 @@ import {
   type RealmCodexWorldRow,
   type RealmWorldState,
 } from "@/core/realmCodex";
+import { CODEX_CHAPTERS } from "@/ui/navigation";
+
+export type RealmCodexTab = (typeof CODEX_CHAPTERS)[number]["id"];
+
+export interface RealmCodexChapter {
+  tab: RealmCodexTab;
+  index: string;
+  title: string;
+  hint: string;
+}
+
+const CHAPTER_INDEXES = ["壹", "贰", "叁", "肆", "伍", "陆"] as const;
+
+const CHAPTER_HINTS = {
+  realm: "四界成卷，先看此刻，再翻境界谱",
+  classics: "境界名背后的原典，点相涉之境可回望",
+  yi: "八卦为体，重卦为用，一卦在身则过时自散",
+  ziwei: "一时之机在卦，一世之格在命",
+  xiang: "值日之宿只利一方，先看今日所利",
+  qimen: "依洛书排布，择门只改这一趟打法",
+} satisfies Record<RealmCodexTab, string>;
+
+/**
+ * 六册的卷次、题名与读法只装配一次。
+ *
+ * 题名直接读导航册目，章序也沿用导航顺序；各册的具体事实仍由页面直读
+ * 原有数据表、store 与 core 派生值，这里不另记一份会漂的读数。
+ */
+export function realmCodexChapters(): RealmCodexChapter[] {
+  return CODEX_CHAPTERS.map((chapter, index) => ({
+    tab: chapter.id,
+    index: CHAPTER_INDEXES[index] ?? String(index + 1),
+    title: chapter.label,
+    hint: CHAPTER_HINTS[chapter.id],
+  }));
+}
+
+export function realmCodexChapter(tab: RealmCodexTab): RealmCodexChapter {
+  const chapter = realmCodexChapters().find((candidate) => candidate.tab === tab);
+  if (!chapter) throw new Error(`unknown realm codex chapter: ${tab}`);
+  return chapter;
+}
 
 /** 四界的单字印。界名仍从 WORLDS 读，这里只给卷目与谱图一枚可扫读的记号。 */
 export const REALM_WORLD_MARKS: Record<string, string> = {

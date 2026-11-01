@@ -24,7 +24,7 @@
     align-items: baseline;
     gap: 0.18rem 0.56rem;
     margin-top: 0.34rem;
-    color: var(--color-ink-faint);
+    color: var(--color-ink-soft);
     font-size: var(--type-note);
     line-height: 1.5;
   }

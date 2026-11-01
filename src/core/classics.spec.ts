@@ -144,9 +144,20 @@ describe("界域志 · 分册", () => {
     }
   });
 
-  it("六门各自的标题都在页面上(分册只是分组,不删内容)", () => {
-    for (const title of ["界域志", "典籍", "周易", "紫微", "星象", "奇门"]) {
-      expect(src, `页面上找不到「${title}」`).toContain(`title="${title}"`);
+  it("六门各自的题名由同一份册目与章首渲染(分册只是分组,不删内容)", () => {
+    const chapterHead = readFileSync(
+      resolve(__dirname, "../components/codex/RealmCodexChapterHead.vue"),
+      "utf8",
+    );
+
+    expect(src.match(/<RealmCodexChapterHead\b/g), "六册每册都要起章首").toHaveLength(6);
+    for (const id of tabIds) {
+      expect(src, `分册 ${id} 的题名没有读统一装配`).toContain(`realmCodexChapter("${id}")`);
     }
+    expect(chapterHead, "章首题名必须来自装配后的 title").toContain("{{ title }}");
+    expect(
+      CODEX_CHAPTERS.map((chapter) => chapter.label),
+      "六册题名仍全在页目录里",
+    ).toEqual(["界域", "典籍", "周易", "紫微", "星象", "奇门"]);
   });
 });

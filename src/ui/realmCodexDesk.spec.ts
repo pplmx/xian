@@ -6,6 +6,8 @@ import { readStyleCss } from "@/test/readStyleCss";
 import {
   REALM_WORLD_MARKS,
   realmCodexAtlasRows,
+  realmCodexChapter,
+  realmCodexChapters,
   realmCodexOverview,
   realmCodexRealmEntries,
   realmCodexRealmState,
@@ -28,6 +30,36 @@ function latestRule(css: string, selector: string): string {
 }
 
 describe("界域案 · 四界先成谱,境界再逐格展开", () => {
+  it("六册沿导航顺序共用一套卷次、题名与读法", () => {
+    const chapters = realmCodexChapters();
+
+    expect(chapters.map((chapter) => chapter.tab)).toEqual([
+      "realm",
+      "classics",
+      "yi",
+      "ziwei",
+      "xiang",
+      "qimen",
+    ]);
+    expect(chapters.map((chapter) => chapter.index)).toEqual(["壹", "贰", "叁", "肆", "伍", "陆"]);
+    expect(chapters.map((chapter) => chapter.title)).toEqual([
+      "界域",
+      "典籍",
+      "周易",
+      "紫微",
+      "星象",
+      "奇门",
+    ]);
+    expect(chapters.every((chapter) => chapter.hint.length > 0)).toBe(true);
+    expect(realmCodexChapter("xiang")).toEqual({
+      tab: "xiang",
+      index: "伍",
+      title: "星象",
+      hint: "值日之宿只利一方，先看今日所利",
+    });
+    expect(() => realmCodexChapter("unknown" as never)).toThrow("unknown realm codex chapter");
+  });
+
   it("四界各有一枚单字印,未知界退回首字而不另造分类", () => {
     expect(Object.keys(REALM_WORLD_MARKS)).toEqual(["mortal", "immortal", "god", "chaos"]);
     expect(new Set(Object.values(REALM_WORLD_MARKS)).size).toBe(4);
@@ -211,5 +243,60 @@ describe("界域案 · 四界先成谱,境界再逐格展开", () => {
       /\.realm-codex-disclosure\s*\{[\s\S]{0,180}min-(?:block-size|height):\s*28px;/,
     );
     expect(layout, "真浏览器门要逐册量连续账与极窄档").toContain("realmCodexChapterSheets");
+  });
+
+  it("六册各起同一枚章首,卷次、读法与章内真值同源", () => {
+    const view = source("src/views/RealmCodexView.vue");
+    const head = source("src/components/codex/RealmCodexChapterHead.vue");
+    const css = source("src/styles/pages/realm-codex.css");
+    const layout = source("scripts/layout-check.mjs");
+
+    expect(view.match(/<RealmCodexChapterHead\b/g), "六册每册只起一枚章首").toHaveLength(6);
+    for (const chapter of ["realm", "classics", "yi", "ziwei", "xiang", "qimen"]) {
+      expect(view, `${chapter} 册章首直读同一份卷次装配`).toContain(`v-bind="${chapter}Chapter"`);
+      expect(view, `${chapter} 册章首必须报本册真值`).toContain(`:fact="${chapter}ChapterFact"`);
+      expect(view, `${chapter} 册卷次来自统一装配`).toContain(`realmCodexChapter("${chapter}")`);
+    }
+    expect(view, "通用节题已从界域志退场").not.toMatch(
+      /<SectionTitle\b|SectionTitle from "@\/components\/common\/SectionTitle.vue"/,
+    );
+
+    expect(view).toMatch(
+      /const realmChapterFact = computed\([\s\S]{0,300}realmOverview\.value\.worldCount[\s\S]{0,180}realmOverview\.value\.total[\s\S]{0,180}realmOverview\.value\.passed/,
+    );
+    expect(view).toMatch(/const classicsChapterFact = computed\([\s\S]{0,180}CLASSICS\.length/);
+    expect(view).toMatch(
+      /const yiChapterFact = computed\([\s\S]{0,320}TRIGRAMS\.length[\s\S]{0,180}HEXAGRAMS\.length[\s\S]{0,220}currentReading\.value/,
+    );
+    expect(view).toMatch(
+      /const ziweiChapterFact = computed\([\s\S]{0,300}PALACES\.length[\s\S]{0,160}STARS\.length[\s\S]{0,180}fateModsText\.value/,
+    );
+    expect(view).toMatch(
+      /const xiangChapterFact = computed\([\s\S]{0,300}MANSIONS\.length[\s\S]{0,180}favoredWorldName\.value[\s\S]{0,180}MANSION_EVENT_LUCK/,
+    );
+    expect(view).toMatch(
+      /const qimenChapterFact = computed\([\s\S]{0,180}GATES\.length[\s\S]{0,120}QIMEN_PALACE_COUNT/,
+    );
+
+    expect(head).toContain("data-realm-codex-chapter-head");
+    expect(head).toContain(':data-chapter="tab"');
+    expect(head).toContain("realm-codex-chapter-head__index");
+    expect(head).toContain("realm-codex-chapter-head__title");
+    expect(head).toContain("realm-codex-chapter-head__hint");
+    expect(head).toContain("realm-codex-chapter-head__fact");
+
+    expect(css, "390 先让章号与题名并读,真值落到题名下方").toMatch(
+      /\.realm-codex-chapter-head\s*\{[\s\S]{0,360}grid-template-columns:\s*1\.45rem minmax\(0, 1fr\)/,
+    );
+    expect(css).toMatch(/\.realm-codex-chapter-head__fact\s*\{[\s\S]{0,180}grid-column:\s*2;/);
+    expect(css, "620 起章内真值回到题名右侧").toMatch(
+      /@media \(min-width: 620px\)[\s\S]{0,2600}\.realm-codex-chapter-head\s*\{[\s\S]{0,120}1\.45rem minmax\(0, 1fr\) auto/,
+    );
+    expect(layout, "真浏览器门逐册量章号、题名、读法与真值").toContain(
+      "[data-realm-codex-chapter-head]",
+    );
+    expect(layout, "真浏览器门在 1280 再核章内真值回到右侧").toContain(
+      "realmCodexChapterSheets(1280)",
+    );
   });
 });

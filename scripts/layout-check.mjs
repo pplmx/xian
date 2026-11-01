@@ -215,6 +215,8 @@
  *      390 / 620 单列续读,1280 才让行动章与卷目章左右并读,195 把章内读数退到章名下方。
  *   七十六 名号与灵兽各收成一册两章:此刻章与全谱章共用章号、读法与章内真值,
  *      390 / 195 单列续读,960 宽起左右并读;运行时门核对章序、章号、真值与非空章首。
+ *   七十七 界域志六册共用章首:卷次、题名、读法与章内真值逐册齐全,390 / 195
+ *      先让真值落到题名下方,620 起回到右侧;1280 再核章内真值与正文并读。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -10095,7 +10097,7 @@ async function taskCelestialTrialFold() {
   };
 }
 
-/** 界域志首屏的此刻优先:当前境先到眼前,四界卷目按需展开 */
+/** 界域志首屏的此刻优先;六册共用章首、卷次与章内真值 */
 async function taskCodexFold() {
   const failures = [];
   let checked = 0;
@@ -10166,12 +10168,12 @@ async function taskCodexFold() {
 
     async function realmCodexChapterSheets(width) {
       const chapters = [
-        ["realm", "界域"],
-        ["classics", "典籍"],
-        ["yi", "周易"],
-        ["ziwei", "紫微"],
-        ["xiang", "星象"],
-        ["qimen", "奇门"],
+        ["realm", "界域", "壹", /\d+\s*界\s*·\s*\d+\s*境\s*·\s*\d+\/\d+\s*已渡/],
+        ["classics", "典籍", "贰", /\d+\s*部原典/],
+        ["yi", "周易", "叁", /\d+\s*卦为体\s*·\s*\d+\s*卦为用\s*·\s*(?:在身|无卦)/],
+        ["ziwei", "紫微", "肆", /\d+\s*宫\s*·\s*\d+\s*主星\s*·\s*命格之力/],
+        ["xiang", "星象", "伍", /\d+\s*宿\s*·\s*今日利\s*.+\s*\+\d+%/],
+        ["qimen", "奇门", "陆", /\d+\s*门\s*·\s*洛书\s*\d+\s*宫/],
       ];
       const disclosures = {
         yi: "hexagrams",
@@ -10180,7 +10182,7 @@ async function taskCodexFold() {
       const height = width <= 220 ? 422 : 844;
       await page.setViewportSize({ width, height });
 
-      for (const [chapter, label] of chapters) {
+      for (const [chapter, label, index, factPattern] of chapters) {
         await openRoute(page, chapter === "realm" ? "/codex" : `/codex?tab=${chapter}`, 120);
         await page
           .waitForSelector(`[data-realm-codex-folio][data-chapter="${chapter}"]`, {
@@ -10191,7 +10193,15 @@ async function taskCodexFold() {
         const current = await page.evaluate((chapterId) => {
           const folio = document.querySelector("[data-realm-codex-folio]");
           const chapterEl = folio?.querySelector(`[data-realm-codex-chapter="${chapterId}"]`);
+          const head = chapterEl?.querySelector("[data-realm-codex-chapter-head]");
+          const headCopy = head?.querySelector(".realm-codex-chapter-head__copy");
+          const headFact = head?.querySelector(".realm-codex-chapter-head__fact");
           const style = folio ? getComputedStyle(folio) : null;
+          const headStyle = head ? getComputedStyle(head) : null;
+          const headRect = head?.getBoundingClientRect();
+          const copyRect = headCopy?.getBoundingClientRect();
+          const factRect = headFact?.getBoundingClientRect();
+          const readText = (el) => (el?.textContent || "").replace(/\s+/g, " ").trim();
           const sections = [...(folio?.querySelectorAll(".realm-codex-section") ?? [])];
           const rows = [
             ...(folio?.querySelectorAll(
@@ -10200,14 +10210,26 @@ async function taskCodexFold() {
           ].filter((row) => row.getClientRects().length > 0);
           return {
             chapter: folio?.getAttribute("data-chapter") ?? null,
-            label: (
-              chapterEl?.querySelector(".folio-chapter-head__title")?.textContent ??
-              document.querySelector('[data-folio-tabs] [role="tab"][aria-selected="true"]')
-                ?.textContent ??
-              ""
-            )
-              .replace(/\s+/g, " ")
-              .trim(),
+            label: readText(head?.querySelector(".realm-codex-chapter-head__title")),
+            headIndex: readText(head?.querySelector(".realm-codex-chapter-head__index")),
+            headHint: readText(head?.querySelector(".realm-codex-chapter-head__hint")),
+            headFact: readText(headFact),
+            head: headRect
+              ? {
+                  count: chapterEl?.querySelectorAll("[data-realm-codex-chapter-head]").length,
+                  chapter: head?.getAttribute("data-chapter") ?? null,
+                  first: chapterEl?.firstElementChild === head,
+                  sectionTitles: chapterEl?.querySelectorAll(".section-title").length ?? -1,
+                  columns: headStyle?.gridTemplateColumns.split(" ").filter(Boolean) ?? [],
+                  factBelowCopy: copyRect && factRect ? factRect.top >= copyRect.bottom - 1 : false,
+                  factRightOfCopy:
+                    copyRect && factRect ? factRect.left >= copyRect.right - 1 : false,
+                  boxOverflow:
+                    headRect && factRect
+                      ? factRect.left < headRect.left - 1 || factRect.right > headRect.right + 1
+                      : true,
+                }
+              : null,
             chapterVisible:
               Boolean(chapterEl?.getClientRects().length) &&
               (chapterEl?.getBoundingClientRect().height ?? 0) > 0,
@@ -10246,6 +10268,17 @@ async function taskCodexFold() {
         if (
           current.chapter !== chapter ||
           current.label !== label ||
+          current.headIndex !== index ||
+          !current.headHint ||
+          !factPattern.test(current.headFact) ||
+          !current.head ||
+          current.head.count !== 1 ||
+          current.head.chapter !== chapter ||
+          !current.head.first ||
+          current.head.sectionTitles !== 0 ||
+          current.head.columns.length !== (width >= 620 ? 3 : 2) ||
+          current.head.boxOverflow ||
+          (width >= 620 ? !current.head.factRightOfCopy : !current.head.factBelowCopy) ||
           !current.chapterVisible ||
           !current.folio ||
           current.folio.borderTop < 1 ||
@@ -10256,7 +10289,7 @@ async function taskCodexFold() {
           current.folio.shadow !== "none"
         ) {
           failures.push(
-            `[${width}-codex-${chapter}] 六册没有共用一张开口长账:${JSON.stringify(current)}`,
+            `[${width}-codex-${chapter}] 章首或开口长账没有统一落位:${JSON.stringify(current)}`,
           );
         }
         if (
@@ -10316,6 +10349,17 @@ async function taskCodexFold() {
               );
             }
           }
+        }
+
+        if (SHOTS && (width === 390 || width === 1280)) {
+          await page.evaluate(() => {
+            window.scrollTo(0, 0);
+            document.querySelector("main")?.scrollTo(0, 0);
+          });
+          await settleVisuals(page);
+          await page.screenshot({
+            path: join(SHOTS_DIR, `${width}-codex-${chapter}-chapter.png`),
+          });
         }
 
         const problems = problemsOf(await measurePage(page));
@@ -10454,6 +10498,7 @@ async function taskCodexFold() {
       await realmCodexDeskSpread();
       await realmCodexChapterSheets(390);
       await realmCodexChapterSheets(195);
+      await realmCodexChapterSheets(1280);
     }
     if (pageErrors.length)
       failures.push(`[390-codex] 界域志首屏页面异常:${[...new Set(pageErrors)].join(" | ")}`);
@@ -18318,7 +18363,7 @@ if (failures.length === 0) {
   console.log(`✓ 宽叶四界(${tabletLeafSeen} 页:铺满余宽、底栏保留、书脊未提前挂出)`);
   console.log(`✓ 宽叶书脚索引(${tabletDockSeen} 页:40rem 收束、居中)`);
   console.log("✓ 桌面名兽案(名号 / 灵兽)总案与全谱并读");
-  console.log("✓ 桌面界域志当前卷与境界谱并读");
+  console.log("✓ 桌面界域志当前卷与境界谱并读,六册章号与真值同源");
   console.log(`✓ 主值行一格一行(${valueRowsSeen} 处带 data-value-row 的行没被次要读数挤折)`);
   console.log(`✓ 两百档字号(${zoomSeen} 页在 200% 缩放下不溢出、主值行不折)`);
   console.log(`✓ 渐变与图片底上的字(${pixelTextsSeen} 处按屏幕像素采过,没有成片读不出来的)`);

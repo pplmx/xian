@@ -17,6 +17,9 @@ import type { CombatRules } from "@/types";
 
 export type GateId = "xiu" | "sheng" | "shang" | "du" | "jing9" | "si" | "jing7" | "kai";
 
+/** 洛书九宫的宫位数；中五无门，但仍在宫图里占位。 */
+export const QIMEN_PALACE_COUNT = 9;
+
 export interface GateDef {
   id: GateId;
   /** 门名:休、生、伤、杜、景、死、惊、开 */
