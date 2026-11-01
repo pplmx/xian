@@ -26,7 +26,7 @@
       </template>
     </FolioPageHeader>
 
-    <div class="legacy-page folio-span-all">
+    <article class="legacy-register folio-span-all" data-legacy-register>
       <section
         class="legacy-profile"
         data-legacy-profile
@@ -68,13 +68,14 @@
         </div>
       </section>
 
-      <InkTabs v-model="tab" :tabs="TABS" />
+      <LegacyChapterRail v-model="tab" :tabs="legacyRailTabs" />
 
       <section
         v-if="tab === 'samsara'"
-        class="legacy-tab"
+        id="legacy-panel-samsara"
+        class="legacy-tab legacy-tab--split"
         role="tabpanel"
-        aria-label="轮回"
+        aria-labelledby="legacy-tab-samsara"
         data-legacy-tab="samsara"
       >
         <section class="legacy-ledger" data-legacy-samsara>
@@ -258,9 +259,10 @@
 
       <section
         v-else-if="tab === 'journey'"
+        id="legacy-panel-journey"
         class="legacy-tab"
         role="tabpanel"
-        aria-label="征程"
+        aria-labelledby="legacy-tab-journey"
         data-legacy-tab="journey"
       >
         <section class="legacy-ledger" data-legacy-journey>
@@ -335,9 +337,10 @@
 
       <section
         v-else-if="tab === 'fate'"
-        class="legacy-tab"
+        id="legacy-panel-fate"
+        class="legacy-tab legacy-tab--split"
         role="tabpanel"
-        aria-label="缘迹"
+        aria-labelledby="legacy-tab-fate"
         data-legacy-tab="fate"
       >
         <section class="legacy-ledger" data-legacy-fate>
@@ -444,7 +447,14 @@
         </section>
       </section>
 
-      <section v-else class="legacy-tab" role="tabpanel" aria-label="纪录" data-legacy-tab="record">
+      <section
+        v-else
+        id="legacy-panel-record"
+        class="legacy-tab"
+        role="tabpanel"
+        aria-labelledby="legacy-tab-record"
+        data-legacy-tab="record"
+      >
         <section class="legacy-ledger" data-legacy-record>
           <LedgerHeader
             seal="极"
@@ -493,7 +503,7 @@
           </footer>
         </section>
       </section>
-    </div>
+    </article>
   </div>
 </template>
 
@@ -534,14 +544,13 @@ import { legacyCoverage, legacyMeter, legacyStageMeter } from "@/ui/legacyDesk";
 import { formatDate } from "@/utils/time";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LegacyWheel from "@/components/common/LegacyWheel.vue";
-import InkTabs from "@/components/common/InkTabs.vue";
 import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
+import LegacyChapterRail from "@/components/legacy/LegacyChapterRail.vue";
 import { useRouteTab } from "@/composables/useRouteTab";
 import { LEGACY_CHAPTERS } from "@/ui/navigation";
 
 /** 长卷分册:轮回(本世与历世)/ 征程(节点与宿敌)/ 缘迹(奇缘与行迹)/ 纪录 */
-const TABS = LEGACY_CHAPTERS;
 const tab = useRouteTab(LEGACY_CHAPTERS, "samsara");
 
 const endgame = useEndgameStore();
@@ -786,4 +795,20 @@ const overviewStats = computed(() => [
   { key: "nemesis", label: "宿敌", value: activeNemeses.value },
   { key: "chains", label: "未了缘", value: unfinishedChains.value },
 ]);
+
+const LEGACY_RAIL_MARKS = ["轮", "程", "缘", "极"] as const;
+const legacyRailTabs = computed(() =>
+  LEGACY_CHAPTERS.map((chapter, index) => ({
+    ...chapter,
+    mark: LEGACY_RAIL_MARKS[index] ?? chapter.label.slice(0, 1),
+    fact:
+      chapter.id === "samsara"
+        ? `第 ${currentLife.value} 世`
+        : chapter.id === "journey"
+          ? `${milestoneRows.value.length}/${MILESTONE_DEFS.length}`
+          : chapter.id === "fate"
+            ? `${unfinishedChains.value} 未了`
+            : `${recordCount.value}/${RECORD_DEFS.length}`,
+  })),
+);
 </script>

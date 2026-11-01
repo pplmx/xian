@@ -205,6 +205,9 @@
  *   七十二 天界试炼收成一册四章:今日天道、变数、八场试炼与挑战书沿同一卷面续排。
  *      八场试炼各成一条账行,不再套同权卡;挑战书按择界 / 叠变数 / 立契 / 命名
  *      四步摊开,不裸排两行芯片。960px 起八行并成两栏,390 仍单列读全。
+ *   七十三 三生录的画像、四册册口与当前正文同住一册:册口先报各册真值,
+ *      手机 2×2、620px 起四列、220px 以下单列;方向键 / Home / End 要联动焦点、
+ *      选中态、地址与唯一 tabpanel。1280 宽才把两本账并读,避免三案主账被压窄。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -13207,6 +13210,342 @@ async function taskBuildFormed() {
 }
 
 /**
+ * 三生录的册口与当前正文同住一册。
+ *
+ * 390 量 2×2、195 量单列、1280 量四列与双账并读；四处册口报出的真值必须与
+ * 本页账首 / 卷首一致。方向键、Home、End 要同时移动选中态、焦点和唯一 tabpanel。
+ */
+async function taskLegacyRegisterFold() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    await seedSave(ctx, showcaseSlices("light"), "__legacyRegisterFold");
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/legacy", 700);
+    checked += 1;
+    if (rendered === 0) {
+      failures.push("[390-legacy] 三生录没有渲染出来,续卷判据没量到东西");
+    }
+
+    async function readFold() {
+      return page.evaluate(() => {
+        const register = document.querySelector("[data-legacy-register]");
+        const profile = register?.querySelector("[data-legacy-profile]");
+        const rail = register?.querySelector(".legacy-chapter-rail");
+        const tabsRoot = rail?.querySelector(".legacy-chapter-rail__tabs");
+        const panel = document.querySelector("[data-legacy-tab]");
+        const tabs = [...(tabsRoot?.querySelectorAll('[role="tab"]') ?? [])];
+        const rectOf = (el) => {
+          if (!el) return null;
+          const rect = el.getBoundingClientRect();
+          return {
+            top: Math.round(rect.top),
+            right: Math.round(rect.right),
+            bottom: Math.round(rect.bottom),
+            left: Math.round(rect.left),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+          };
+        };
+        const registerRect = rectOf(register);
+        const profileRect = rectOf(profile);
+        const railRect = rectOf(rail);
+        const panelRect = rectOf(panel);
+        const within =
+          registerRect &&
+          profileRect &&
+          railRect &&
+          panelRect &&
+          [profileRect, railRect, panelRect].every(
+            (rect) =>
+              rect.left >= registerRect.left - 2 &&
+              rect.right <= registerRect.right + 2 &&
+              rect.top >= registerRect.top - 2 &&
+              rect.bottom <= registerRect.bottom + 2,
+          );
+        const ledgers = [...(panel?.querySelectorAll(":scope > .legacy-ledger") ?? [])].map(rectOf);
+        const registerStyle = register ? getComputedStyle(register) : null;
+        const profileStyle = profile ? getComputedStyle(profile) : null;
+        const ledger = panel?.querySelector(".legacy-ledger");
+        const ledgerStyle = ledger ? getComputedStyle(ledger) : null;
+        return {
+          found: Boolean(register && profile && rail && tabsRoot && panel),
+          within,
+          ordered: Boolean(profileRect && railRect && panelRect),
+          order: [profileRect, railRect, panelRect].filter(Boolean),
+          panelCount: document.querySelectorAll("[data-legacy-tab]").length,
+          panelId: panel?.id ?? "",
+          panelLabelledby: panel?.getAttribute("aria-labelledby") ?? "",
+          tabColumns: tabsRoot
+            ? getComputedStyle(tabsRoot).gridTemplateColumns.split(/\s+/).filter(Boolean).length
+            : 0,
+          tabs: tabs.map((tab) => ({
+            id: tab.getAttribute("data-legacy-rail-tab"),
+            top: rectOf(tab)?.top ?? null,
+            left: rectOf(tab)?.left ?? null,
+            width: rectOf(tab)?.width ?? null,
+            selected: tab.getAttribute("aria-selected"),
+            controls: tab.getAttribute("aria-controls"),
+            fact: (tab.querySelector("[data-legacy-rail-fact]")?.textContent || "")
+              .replace(/\s+/g, " ")
+              .trim(),
+          })),
+          active: tabs
+            .filter((tab) => tab.getAttribute("aria-selected") === "true")
+            .map((tab) => tab.getAttribute("data-legacy-rail-tab")),
+          ledgers,
+          chrome: {
+            registerBorders: registerStyle
+              ? [registerStyle.borderTopWidth, registerStyle.borderBottomWidth]
+              : [],
+            registerSideBorders: registerStyle
+              ? [registerStyle.borderLeftWidth, registerStyle.borderRightWidth]
+              : [],
+            registerBackground: registerStyle?.backgroundColor ?? "",
+            registerShadow: registerStyle?.boxShadow ?? "",
+            profileBorder: profileStyle?.borderTopWidth ?? "",
+            profileBackground: profileStyle?.backgroundColor ?? "",
+            ledgerBorder: ledgerStyle?.borderTopWidth ?? "",
+            ledgerBackground: ledgerStyle?.backgroundColor ?? "",
+          },
+        };
+      });
+    }
+
+    const mobile = await readFold();
+    checked += 1;
+    if (
+      !mobile.found ||
+      !mobile.within ||
+      mobile.panelCount !== 1 ||
+      mobile.panelId !== "legacy-panel-samsara" ||
+      mobile.panelLabelledby !== "legacy-tab-samsara"
+    ) {
+      failures.push(`[390-legacy] 画像、册口与正文没有收进同一册:${JSON.stringify(mobile)}`);
+    }
+    checked += 1;
+    if (
+      mobile.order.length !== 3 ||
+      mobile.order[0].bottom > mobile.order[1].top + 1 ||
+      mobile.order[1].bottom > mobile.order[2].top + 1
+    ) {
+      failures.push(`[390-legacy] 画像、册口与正文没有按序续排:${JSON.stringify(mobile.order)}`);
+    }
+    checked += 1;
+    if (
+      mobile.tabColumns !== 2 ||
+      mobile.tabs.length !== 4 ||
+      mobile.tabs[0].top !== mobile.tabs[1].top ||
+      mobile.tabs[2].top <= mobile.tabs[0].top ||
+      mobile.tabs[0].left !== mobile.tabs[2].left
+    ) {
+      failures.push(
+        `[390-legacy] 四册册口没有铺成 2×2:${JSON.stringify({
+          columns: mobile.tabColumns,
+          tabs: mobile.tabs,
+        })}`,
+      );
+    }
+    checked += 1;
+    if (mobile.ledgers.length !== 2 || mobile.ledgers[1].top < mobile.ledgers[0].bottom - 2) {
+      failures.push(`[390-legacy] 轮回两本账在手机上应上下续排:${JSON.stringify(mobile.ledgers)}`);
+    }
+    checked += 1;
+    if (
+      mobile.chrome.registerBorders.some((width) => parseFloat(width) < 1) ||
+      mobile.chrome.registerSideBorders.some((width) => parseFloat(width) !== 0) ||
+      mobile.chrome.registerBackground !== "rgba(0, 0, 0, 0)" ||
+      mobile.chrome.registerShadow !== "none" ||
+      mobile.chrome.profileBorder !== "0px" ||
+      mobile.chrome.profileBackground !== "rgba(0, 0, 0, 0)" ||
+      mobile.chrome.ledgerBorder !== "0px" ||
+      mobile.chrome.ledgerBackground !== "rgba(0, 0, 0, 0)"
+    ) {
+      failures.push(`[390-legacy] 三生续卷又套回了卡壳:${JSON.stringify(mobile.chrome)}`);
+    }
+
+    async function readTabTruth(id) {
+      return page.evaluate((tabId) => {
+        const tab = document.querySelector(`[data-legacy-rail-tab="${tabId}"]`);
+        const panel = document.querySelector(`#legacy-panel-${tabId}`);
+        const fact = (tab?.querySelector("[data-legacy-rail-fact]")?.textContent || "")
+          .replace(/\s+/g, " ")
+          .trim();
+        const score = (
+          panel?.querySelector(".folio-ledger-head__score")?.textContent || ""
+        ).replace(/\s+/g, " ");
+        const current = (
+          document.querySelector("[data-legacy-current]")?.textContent || ""
+        ).replace(/\s+/g, " ");
+        let expected = "";
+        if (tabId === "samsara") {
+          const life = /第\s*(\d+)\s*世/.exec(current);
+          expected = life ? `第 ${life[1]} 世` : "";
+        } else if (tabId === "fate") {
+          const count = /(\d+)\s*条/.exec(score);
+          expected = count ? `${count[1]} 未了` : "";
+        } else {
+          const pair = /(\d+)\s*\/\s*(\d+)/.exec(score);
+          expected = pair ? `${pair[1]}/${pair[2]}` : "";
+        }
+        return {
+          fact,
+          expected,
+          selected: tab?.getAttribute("aria-selected"),
+          controls: tab?.getAttribute("aria-controls"),
+          panelCount: document.querySelectorAll("[data-legacy-tab]").length,
+          panelLabelledby: panel?.getAttribute("aria-labelledby"),
+          score,
+        };
+      }, id);
+    }
+
+    for (const id of ["samsara", "journey", "fate", "record"]) {
+      await page.locator(`[data-legacy-rail-tab="${id}"]`).click();
+      await page.waitForSelector(`#legacy-panel-${id}`, { timeout: 3000 });
+      await settleVisuals(page);
+      const truth = await readTabTruth(id);
+      checked += 1;
+      if (
+        !truth.expected ||
+        truth.fact !== truth.expected ||
+        truth.selected !== "true" ||
+        truth.controls !== `legacy-panel-${id}` ||
+        truth.panelCount !== 1 ||
+        truth.panelLabelledby !== `legacy-tab-${id}`
+      ) {
+        failures.push(`[390-legacy] ${id} 册口与当前正文不同源:${JSON.stringify(truth)}`);
+      }
+    }
+
+    await page.locator('[data-legacy-rail-tab="samsara"]').click();
+    await page.waitForSelector("#legacy-panel-samsara", { timeout: 3000 });
+    await settleVisuals(page);
+    await page.locator('[data-legacy-rail-tab="samsara"]').focus();
+    async function pressRailKey(key, expected) {
+      await page.keyboard.press(key);
+      await page.waitForFunction(
+        (tabId) =>
+          document.activeElement?.getAttribute("data-legacy-rail-tab") === tabId &&
+          document
+            .querySelector(`[data-legacy-rail-tab="${tabId}"]`)
+            ?.getAttribute("aria-selected") === "true" &&
+          Boolean(document.querySelector(`#legacy-panel-${tabId}`)),
+        expected,
+        { timeout: 3000 },
+      );
+      return page.evaluate(() => ({
+        focus: document.activeElement?.getAttribute("data-legacy-rail-tab") ?? "",
+        selected: document
+          .querySelector('[data-legacy-rail-tab][aria-selected="true"]')
+          ?.getAttribute("data-legacy-rail-tab"),
+        panel: document.querySelector("[data-legacy-tab]")?.id ?? "",
+      }));
+    }
+
+    for (const [key, expected] of [
+      ["ArrowRight", "journey"],
+      ["ArrowLeft", "samsara"],
+      ["End", "record"],
+      ["Home", "samsara"],
+      ["ArrowLeft", "record"],
+    ]) {
+      const moved = await pressRailKey(key, expected);
+      checked += 1;
+      if (
+        moved.focus !== expected ||
+        moved.selected !== expected ||
+        moved.panel !== `legacy-panel-${expected}`
+      ) {
+        failures.push(
+          `[390-legacy] ${key} 没有同步册口焦点、选中态与正文:${JSON.stringify(moved)}`,
+        );
+      }
+    }
+
+    await page.locator('[data-legacy-rail-tab="samsara"]').click();
+    await page.setViewportSize({ width: 195, height: 422 });
+    await settleVisuals(page);
+    const zoom = await readFold();
+    checked += 1;
+    if (
+      zoom.tabColumns !== 1 ||
+      zoom.tabs.length !== 4 ||
+      zoom.tabs.some((tab, index) => index > 0 && tab.top <= zoom.tabs[index - 1].top)
+    ) {
+      failures.push(
+        `[195-legacy] 200% 缩放档册口没有退成单列:${JSON.stringify({
+          columns: zoom.tabColumns,
+          tabs: zoom.tabs,
+        })}`,
+      );
+    }
+    const zoomProblems = problemsOf(await measurePage(page));
+    checked += 1;
+    if (zoomProblems.length) {
+      failures.push(`[195-legacy] 三生续卷 → ${zoomProblems.join(" / ")}`);
+    }
+
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await settleVisuals(page);
+    const desktop = await readFold();
+    checked += 1;
+    if (
+      desktop.tabColumns !== 4 ||
+      desktop.tabs.length !== 4 ||
+      desktop.tabs.some((tab) => tab.top !== desktop.tabs[0].top)
+    ) {
+      failures.push(
+        `[1280-legacy] 桌面四册册口没有并读:${JSON.stringify({
+          columns: desktop.tabColumns,
+          tabs: desktop.tabs,
+        })}`,
+      );
+    }
+    checked += 1;
+    if (
+      desktop.ledgers.length !== 2 ||
+      Math.abs(desktop.ledgers[0].top - desktop.ledgers[1].top) > 2 ||
+      desktop.ledgers[1].left < desktop.ledgers[0].right - 2
+    ) {
+      failures.push(
+        `[1280-legacy] 轮回的两本账没有并读,主账仍被压窄:${JSON.stringify(desktop.ledgers)}`,
+      );
+    }
+
+    if (SHOTS) {
+      mkdirSync(SHOTS_DIR, { recursive: true });
+      await page
+        .locator("[data-legacy-register]")
+        .screenshot({ path: join(SHOTS_DIR, "1280-legacy-register.png") });
+      await page.setViewportSize({ width: 390, height: 2400 });
+      await settleVisuals(page);
+      await page
+        .locator("[data-legacy-register]")
+        .screenshot({ path: join(SHOTS_DIR, "390-legacy-register.png") });
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[legacy-register] 三生续卷页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 修仙录的两部历史:历世履历与行迹录。
  *
  * 30 世验证履历按 12 世一批、同时只留 24 行 DOM,最后一批会滑窗,回翻能回首批;
@@ -16062,6 +16401,7 @@ const TASKS = [
   ["构筑对照的道痕余量入口", taskBuildCompareOverflow],
   ["道途未成的逐路发现账", taskBuildDiscovery],
   ["成路后的铸道总案", taskBuildFormed],
+  ["三生录的册口与当前正文同册", taskLegacyRegisterFold],
   ["修仙录的历世与行迹回看", taskLegacyHistoryOverflow],
   ["道侣的历世同行回看", taskBondHistoryOverflow],
   ["器魂两册的分批回看", taskSoulListOverflow],

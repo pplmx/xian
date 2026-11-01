@@ -220,6 +220,13 @@ error: Failed to resolve vite command: GenericFailure, Expected
 四步挑战书与开口选项;1280 再核对八行确实两两并读。结构判据由
 `src/ui/celestialDesk.spec.ts` 守住。
 
+三生录的画像、四册册口与当前正文现在同住一张开口续卷,`LegacyChapterRail`
+在每枚册口先报本世、节点、未了与纪录真值,方向键 / Home / End 同步移动焦点、
+选中态、地址和唯一 tabpanel。真浏览器门 `taskLegacyRegisterFold` 在 390 核验
+2×2 册口、续卷顺序、两本账上下续排与四处读数同源,在 195 核验单列和整页无挤压,
+在 1280 核验四列并读及轮回主账 / 旧世归档的并读几何;结构与响应式契约由
+`src/ui/legacyDesk.spec.ts` 守住。
+
 界域志六册现在共用一张开口长账:外层只留上下账线,`data-realm-codex-folio` 只换
 `data-chapter`,典籍、周易、紫微、星象与奇门不再逐段套 `card-ink`;章节头后以
 `realm-codex-section` 和分段线续排,重复条目退成账行。620px 起典籍题名与释文、

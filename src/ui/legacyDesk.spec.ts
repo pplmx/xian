@@ -127,6 +127,51 @@ describe("三生案 · 本世、所知与旧缘同读此刻", () => {
     expect(layout).toContain('document.querySelector("[data-legacy-samsara]")');
   });
 
+  it("画像、四册册口与当前旧卷收进同一册,册口先报本册真值", () => {
+    const view = source("src/views/LegacyView.vue");
+    const rail = source("src/components/legacy/LegacyChapterRail.vue");
+    const css = source("src/styles/pages/legacy.css");
+
+    expect(view).toContain('<article class="legacy-register folio-span-all" data-legacy-register>');
+    expect(view).toContain("<LegacyChapterRail");
+    expect(view).toContain(':tabs="legacyRailTabs"');
+    expect(view).not.toContain("<InkTabs");
+    expect(view).toContain("const legacyRailTabs = computed");
+    expect(view).toContain("第 ${currentLife.value} 世");
+    expect(view).toContain("`${milestoneRows.value.length}/${MILESTONE_DEFS.length}`");
+    expect(view).toContain("`${unfinishedChains.value} 未了`");
+    expect(view).toContain("`${recordCount.value}/${RECORD_DEFS.length}`");
+    for (const tab of ["samsara", "journey", "fate", "record"]) {
+      expect(view).toContain(`id="legacy-panel-${tab}"`);
+      expect(view).toContain(`aria-labelledby="legacy-tab-${tab}"`);
+    }
+
+    expect(rail).toContain('role="tablist"');
+    expect(rail).toContain(':aria-controls="`legacy-panel-${tab.id}`"');
+    expect(rail).toContain(':id="`legacy-tab-${tab.id}`"');
+    expect(rail).toContain('@keydown="onKeydown"');
+    expect(rail).toContain("data-legacy-rail-fact");
+
+    expect(css).toMatch(
+      /\.legacy-register\s*\{[\s\S]{0,220}?border-top: 1px solid[\s\S]{0,160}?border-bottom: 1px solid/,
+    );
+    expect(css).toMatch(
+      /\.legacy-profile\s*\{[\s\S]{0,260}?border: 0;[\s\S]{0,180}?background: transparent;/,
+    );
+    expect(css).toMatch(
+      /\.legacy-ledger\s*\{[\s\S]{0,240}?border: 0;[\s\S]{0,180}?background: transparent;/,
+    );
+    expect(css).toMatch(
+      /\.legacy-chapter-rail__tabs\s*\{[\s\S]{0,180}?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/,
+    );
+    expect(css).toMatch(
+      /@media \(min-width: 620px\)\s*\{[\s\S]{0,900}?\.legacy-chapter-rail__tabs\s*\{[\s\S]{0,100}?repeat\(4, minmax\(0, 1fr\)\)/,
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1400}?\.legacy-chapter-rail__tabs\s*\{[\s\S]{0,100}?minmax\(0, 1fr\)/,
+    );
+  });
+
   it("手机单列、620 两列、960 三列,220 以下行尾读数退到下一行", () => {
     const css = source("src/style.css");
     const start = css.indexOf("/*\n   * 三生案");
