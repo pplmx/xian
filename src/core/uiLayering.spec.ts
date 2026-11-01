@@ -1426,28 +1426,30 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
-  it("器魂槽位在极窄档放开成两列 —— 名字不许被挤成竖排", () => {
+  it("器魂槽位常态三列,极窄档退成一列账行 —— 名字不许被挤成竖排", () => {
     /*
-     * 200% 缩放档(390 的机型把字放大一倍,布局视口只剩 195 CSS px)实测:三列下每格
-     * 只有 49px,「显形·锋魂」折成两截、「卸下」一字一行 —— 名字与动作键都读不出来。
-     * 极窄时放开成两列(实测格宽 78px:名字一行、动作键 36×32 一行,无越界无横向溢出),
-     * 320 / 390 两档仍是三列(阈值 220px,量在两者之间)。
+     * 200% 缩放档(390 的机型把字放大一倍,布局视口只剩 195 CSS px)若仍三列,每格
+     * 只有 49px,「显形·锋魂」与动作键都会挤成竖排。器魂阵谱在这一档改成三行账,
+     * 序号、名字与动作沿同一行续排;320 / 390 两档仍是三列(阈值 220px)。
      *
      * 阈值写成数字是刻意的:它是**排版档位**而不是会被常数改动的数值(与「写常量即撒谎」
      * 那一族无关),改它就得同时重测三档 —— 所以判据把两件事一起钉住。
      */
     const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
     const grid = /class="(soul-array__seats[^"]*)"/.exec(souls?.src ?? "")?.[1];
+    const css = readStyleCss();
     expect(grid, "槽位网格要能定位到").toBeTruthy();
-    expect(grid, "常态仍是三列").toContain("grid-cols-3");
-    expect(grid, "极窄档要放开列数").toMatch(/tinylens:grid-cols-2/);
+    expect(grid, "列数只由页面样式表决定").not.toMatch(/grid-cols-/);
+    expect(css).toMatch(/\.soul-array__seats\s*\{[\s\S]{0,260}grid-template-columns:\s*repeat\(3/);
+    expect(css).toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.soul-array__seats\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
     /*
      * 「动作标签不许折行」不再是逐处手写的装饰,而是 tap-row 这条角色的语义
      * (src/style.css):挂它的 8 处调用点全是 2~6 字短动作标签。此前有两处各写了一遍
      * whitespace-nowrap,其余各处靠运气 —— 200% 档实测坊市「← 返回」被挤成三行。
      * 判据只钉角色本体:各调用点不许再抄一遍(两本账),也不许被删掉。
      */
-    const css = readStyleCss();
     const tapRow = /\.tap-row \{([^}]*)\}/.exec(css)?.[1];
     expect(tapRow, "tap-row 角色要能定位到 —— 定位不到这条就是空转").toBeTruthy();
     expect(tapRow, "短动作标签不许折行(角色的语义,不是某处的装饰)").toContain(

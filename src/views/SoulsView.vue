@@ -32,7 +32,8 @@
     <template v-if="unlocked">
       <!--
         三席阵账把总账、精确席位与先手收进同一张纸。
-        卷首不再另铺一张同义阵图，390 宽也能直接看到第一条可落子的席位。
+        席位不再各套一张卡，而是沿同一条阵谱续排：390 宽三席并读，
+        195 宽退成三行，先看见可落子的位置，再决定装配或卸下。
       -->
       <LedgerPulse
         class="soul-pulse soul-array"
@@ -85,23 +86,18 @@
           </span>
         </div>
 
-        <div
-          class="soul-array__seats grid grid-cols-3 gap-2 tinylens:grid-cols-2"
-          data-soul-slots
-          role="group"
-          aria-label="器魂三席"
-        >
+        <div class="soul-array__seats" data-soul-slots role="group" aria-label="器魂三席">
           <div
             v-for="i in SOUL_SLOTS"
             :key="i"
-            class="card-ink soul-seat flex min-h-[112px] min-w-0 flex-col px-2 py-2"
+            class="soul-seat"
             :class="soulAt(i) ? 'soul-seat--filled' : 'soul-seat--empty'"
             :data-soul-seat-index="i"
           >
             <span class="soul-seat__ordinal" aria-hidden="true">{{ seatOrdinal(i) }}席</span>
             <template v-if="soulAt(i)">
               <button
-                class="soul-seat__detail flex min-w-0 flex-1 flex-col items-center justify-center px-1 text-center active:scale-95"
+                class="soul-seat__detail active:scale-95"
                 :aria-label="detailLabel(soulAt(i)!)"
                 @click="openSoulDetail(i)"
               >
@@ -111,16 +107,13 @@
                 >
                   {{ soulSeal(soulAt(i)!) }}
                 </span>
-                <span class="soul-seat__name mt-1 text-note leading-tight text-ink-soft">{{
-                  soulLabel(soulAt(i)!)
-                }}</span>
-                <span
-                  class="soul-seat__mods mt-0.5 w-full text-note leading-tight text-ink-faint"
-                  >{{ soulModText(soulAt(i)!) }}</span
-                >
+                <span class="soul-seat__copy">
+                  <span class="soul-seat__name">{{ soulLabel(soulAt(i)!) }}</span>
+                  <span class="soul-seat__mods">{{ soulModText(soulAt(i)!) }}</span>
+                </span>
               </button>
               <button
-                class="tap-row soul-seat__remove mt-1 min-w-[28px] px-2 py-1.5 text-note text-ink-faint active:opacity-60"
+                class="tap-row soul-seat__remove"
                 :aria-label="`卸下 ${soulLabel(soulAt(i)!)}`"
                 @click="removeSoul(soulAt(i)!.uid)"
               >
@@ -128,16 +121,20 @@
               </button>
             </template>
             <template v-else>
-              <span class="soul-seat__empty">空席</span>
+              <span class="soul-seat__empty-copy">
+                <span class="soul-seat__empty">空席</span>
+                <span class="soul-seat__hint">{{
+                  soulPulse.idleSouls.length > 0 ? "可择一缕入席" : "待凝形意"
+                }}</span>
+              </span>
               <button
                 v-if="soulPulse.idleSouls.length > 0"
-                class="tap-row soul-seat__wear mt-1 min-w-[28px] px-2 py-1.5 text-note text-cinnabar active:opacity-60"
+                class="tap-row soul-seat__wear"
                 aria-label="空槽 · 挑一缕装配"
                 @click="idleOpen = true"
               >
                 装配
               </button>
-              <span v-else class="soul-seat__hint">待凝形意</span>
             </template>
           </div>
         </div>
@@ -150,7 +147,7 @@
         <div class="soul-gateway-grid mt-2">
           <button
             type="button"
-            class="soul-gateway hoverable:hover:border-cinnabar"
+            class="soul-gateway"
             data-soul-gateway="idle"
             @click="idleOpen = true"
           >
@@ -172,7 +169,7 @@
 
           <button
             type="button"
-            class="soul-gateway hoverable:hover:border-cinnabar"
+            class="soul-gateway"
             data-soul-gateway="forge"
             @click="forgeOpen = true"
           >

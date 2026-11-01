@@ -167,18 +167,17 @@
   }
   .soul-array__seats {
     position: relative;
+    display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     align-items: stretch;
-    padding: 0.48rem 0.62rem 0.62rem;
-  }
-  .soul-array__seats::before {
-    position: absolute;
-    top: 54%;
-    right: 9%;
-    left: 9%;
-    border-top: 1px dashed rgb(var(--color-qing-rgb) / 0.12);
-    content: "";
-    pointer-events: none;
+    border-block: 1px solid rgb(var(--color-ink-rgb) / 0.13);
+    background: linear-gradient(
+      100deg,
+      rgb(var(--color-qing-rgb) / 0.025),
+      transparent 46%,
+      rgb(var(--color-gold-ink-rgb) / 0.018)
+    );
+    padding: 0.12rem 0.12rem 0.18rem;
   }
   .soul-gateways,
   .soul-principle {
@@ -187,57 +186,88 @@
   .soul-seat {
     position: relative;
     z-index: 1;
-    overflow: hidden;
-    border-color: rgb(var(--color-ink-rgb) / 0.13);
-    background:
-      linear-gradient(145deg, rgb(var(--color-paper-rgb) / 0.3), transparent 62%),
-      rgb(var(--color-paper-lifted-rgb) / 0.58);
+    display: grid;
+    min-width: 0;
+    align-content: start;
+    gap: 0.32rem;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    padding: 0.42rem 0.5rem 0.5rem;
+  }
+  .soul-seat + .soul-seat {
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.1);
   }
   .soul-seat--filled {
-    border-color: rgb(var(--color-qing-rgb) / 0.22);
-    background:
-      linear-gradient(145deg, rgb(var(--color-qing-rgb) / 0.045), transparent 58%),
-      rgb(var(--color-paper-lifted-rgb) / 0.64);
+    background: linear-gradient(180deg, rgb(var(--color-qing-rgb) / 0.035), transparent 72%);
   }
   .soul-seat--empty {
-    align-items: center;
-    justify-content: center;
-    border-style: dashed;
-    background: rgb(var(--color-paper-rgb) / 0.12);
+    align-content: center;
+    justify-items: center;
+    background: linear-gradient(180deg, rgb(var(--color-paper-rgb) / 0.18), transparent 76%);
   }
   .soul-seat__ordinal {
-    position: absolute;
-    top: 0.36rem;
-    left: 0.42rem;
     color: rgb(var(--color-ink-faint-rgb));
     font-size: 0.62rem;
     letter-spacing: 0.08em;
     line-height: 1;
   }
   .soul-seat__detail {
+    display: grid;
     width: 100%;
-    padding-top: 0.55rem;
+    min-width: 0;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.38rem;
+    padding: 0.16rem 0 0.12rem;
+    text-align: left;
   }
   .soul-seat__mark {
     font-size: var(--type-section);
     line-height: 1;
   }
+  .soul-seat__copy {
+    display: grid;
+    min-width: 0;
+    gap: 0.08rem;
+  }
   .soul-seat__name,
   .soul-seat__mods {
+    display: block;
     max-width: 100%;
     min-width: 0;
     overflow-wrap: anywhere;
   }
   .soul-seat__name {
     color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    line-height: 1.35;
   }
   .soul-seat__mods {
     color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .soul-seat__remove,
+  .soul-seat__wear {
+    min-inline-size: 28px;
+    justify-content: center;
+    padding-inline: 0.3rem;
   }
   .soul-seat__remove {
-    align-self: stretch;
-    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.07);
+    justify-self: start;
     color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .soul-seat__empty-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.12rem;
   }
   .soul-seat__empty {
     color: rgb(var(--color-ink-faint-rgb));
@@ -247,11 +277,10 @@
     text-align: center;
   }
   .soul-seat__wear {
-    align-self: center;
+    justify-self: center;
     color: rgb(var(--color-cinnabar-rgb));
   }
   .soul-seat__hint {
-    margin-top: 0.12rem;
     color: rgb(var(--color-ink-faint-rgb));
     font-size: var(--type-note);
     line-height: 1.4;
@@ -260,7 +289,7 @@
   .soul-seat-total {
     margin-top: 0;
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.07);
-    padding: 0.48rem 0.62rem 0.56rem;
+    padding: 0.48rem 0.12rem 0.56rem;
     color: rgb(var(--color-gold-ink-rgb));
     font-size: var(--type-note);
     line-height: 1.6;
@@ -276,7 +305,14 @@
     display: grid;
     min-width: 0;
     grid-template-columns: minmax(0, 1fr);
-    gap: 0.44rem;
+    gap: 0;
+    border-block: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+    background: linear-gradient(
+      110deg,
+      rgb(var(--color-paper-rgb) / 0.16),
+      transparent 52%,
+      rgb(var(--color-cinnabar-rgb) / 0.016)
+    );
   }
   .soul-gateway {
     display: grid;
@@ -284,12 +320,20 @@
     grid-template-columns: 2rem minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.56rem;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.12);
-    background:
-      linear-gradient(120deg, rgb(var(--color-paper-rgb) / 0.24), transparent 58%),
-      rgb(var(--color-paper-lifted-rgb) / 0.46);
-    padding: 0.58rem 0.62rem;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    padding: 0.62rem 0.5rem;
     text-align: left;
+  }
+  .soul-gateway + .soul-gateway {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .soul-gateway:hover {
+      background: linear-gradient(90deg, rgb(var(--color-cinnabar-rgb) / 0.025), transparent 68%);
+    }
   }
   .soul-gateway__mark {
     display: grid;
@@ -331,11 +375,13 @@
   }
   .soul-principle__sheet {
     margin-top: 0.5rem;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.11);
+    border-block: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+    border-radius: 0;
+    box-shadow: none;
     background:
       linear-gradient(120deg, rgb(var(--color-gold-ink-rgb) / 0.025), transparent 48%),
-      rgb(var(--color-paper-rgb) / 0.16);
-    padding: 0.72rem;
+      rgb(var(--color-paper-rgb) / 0.1);
+    padding: 0.72rem 0.12rem;
   }
   .soul-principle__lead {
     display: flex;
@@ -425,6 +471,11 @@
     .soul-gateway-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .soul-gateway + .soul-gateway {
+      border-top: 0;
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    }
   }
   @media (max-width: 359px) {
     .soul-masthead__orbit {
@@ -463,7 +514,7 @@
     .soul-array__seats,
     .soul-gateway,
     .soul-principle__sheet {
-      padding-inline: 0.62rem;
+      padding-inline: 0.1rem;
     }
 
     .soul-masthead__backdrop {
@@ -496,7 +547,32 @@
     }
 
     .soul-array__seats {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .soul-seat {
+      grid-template-columns: 2.2rem minmax(0, 1fr) auto;
+      align-items: center;
+      align-content: center;
+      gap: 0.38rem;
+      padding-block: 0.48rem;
+    }
+
+    .soul-seat + .soul-seat {
+      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+      border-left: 0;
+    }
+
+    .soul-seat--empty {
+      justify-items: stretch;
+    }
+
+    .soul-seat__empty-copy {
+      align-items: flex-start;
+    }
+
+    .soul-seat__wear {
+      justify-self: end;
     }
 
     .soul-gateway {

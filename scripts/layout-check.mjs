@@ -12925,7 +12925,12 @@ async function taskSoulListOverflow() {
         layout.seats.length === 3 &&
         Math.abs(layout.seats[0].top - layout.seats[1].top) <= 1 &&
         layout.seats[2].top >= layout.seats[0].bottom - 1;
-      const columnsOk = expectedColumns === 3 ? sameRow : twoColumnRows;
+      const oneColumnRows =
+        layout.seats.length === 3 &&
+        layout.seats[0].top < layout.seats[1].top &&
+        layout.seats[1].top < layout.seats[2].top;
+      const columnsOk =
+        expectedColumns === 3 ? sameRow : expectedColumns === 2 ? twoColumnRows : oneColumnRows;
       const actionStacked =
         label !== "320" ||
         (layout.action && layout.identity && layout.action.top >= layout.identity.bottom - 1);
@@ -12961,7 +12966,15 @@ async function taskSoulListOverflow() {
         failures.push(
           `[${label}] 器魂阵账没有把题签、三席与先手同时收好:` +
             `紧随卷首=${followsMasthead} / 列=${expectedColumns} 实见 ${layout.gridColumns.length} ` +
-            `${sameRow ? "(三席并排)" : twoColumnRows ? "(两席一行)" : "(不正)"} / ` +
+            `${
+              sameRow
+                ? "(三席并排)"
+                : twoColumnRows
+                  ? "(两席一行)"
+                  : oneColumnRows
+                    ? "(三席三行)"
+                    : "(不正)"
+            } / ` +
             `先手另起=${actionStacked} / 首屏=${firstScreen} / ` +
             `账盒=${layout.pulse?.left ?? "-"}..${layout.pulse?.right ?? "-"} / ` +
             `席宽=${layout.seats.map((seat) => Math.round(seat?.width ?? 0)).join("|")} / ` +
@@ -13132,7 +13145,7 @@ async function taskSoulListOverflow() {
 
     await page.setViewportSize({ width: 195, height: 422 });
     await settleVisuals(page);
-    await checkSoulArrayOverview("195", 2);
+    await checkSoulArrayOverview("195", 1);
 
     checked += 1;
     if ((await idleEntry.count()) === 0) {

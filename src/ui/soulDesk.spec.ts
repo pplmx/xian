@@ -63,7 +63,7 @@ describe("器魂案 · 题签只报道源,三席阵账紧随卷首", () => {
     );
   });
 
-  it("三席仍由 soulAt 唯一判断,极窄档保持两列而非挤成竖排", () => {
+  it("三席仍由 soulAt 唯一判断,常态三列、195 宽退成一列账行", () => {
     const view = source("src/views/SoulsView.vue");
     const grid = /class="(soul-array__seats[^"]*)"/.exec(view)?.[1];
     const css = source("src/styles/pages/souls.css");
@@ -73,13 +73,12 @@ describe("器魂案 · 题签只报道源,三席阵账紧随卷首", () => {
     );
     expect(view, "空席不再另造一套占位数据").not.toContain("SOUL_SEAT_POSITIONS");
     expect(grid, "三席网格要能定位到").toBeTruthy();
-    expect(grid, "常态三列").toContain("grid-cols-3");
-    expect(grid, "极窄档两列").toContain("tinylens:grid-cols-2");
+    expect(grid, "列数只由页面样式表决定").not.toMatch(/grid-cols-/);
     expect(css).toMatch(
       /\.soul-array__seats\s*\{[\s\S]{0,260}position:\s*relative;[\s\S]{0,260}grid-template-columns:\s*repeat\(3/,
     );
     expect(css).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1600}\.soul-array__seats\s*\{[\s\S]{0,80}grid-template-columns:\s*repeat\(2/,
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.soul-array__seats\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
   });
 
@@ -107,7 +106,38 @@ describe("器魂案 · 题签只报道源,三席阵账紧随卷首", () => {
       /@media \(min-width: 960px\)\s*\{[\s\S]{0,160}\.soul-gateway-grid\s*\{[\s\S]{0,100}repeat\(2, minmax\(0, 1fr\)\)/,
     );
     expect(soulCss).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1200}\.soul-gateway__arrow\s*\{[\s\S]{0,80}display:\s*none/,
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,2600}\.soul-gateway__arrow\s*\{[\s\S]{0,80}display:\s*none/,
+    );
+  });
+
+  it("三席与两处门径共成开口阵谱,不再逐席套卡", () => {
+    const view = source("src/views/SoulsView.vue");
+    const css = source("src/styles/pages/souls.css");
+    const folio = view.slice(
+      view.indexOf('<template v-if="unlocked">'),
+      view.indexOf("<!-- 未至真仙"),
+    );
+
+    expect(folio, "正文阵谱不再借通用卡片皮").not.toContain("card-ink");
+    expect(folio, "器魂行要有独立的详情副本层").toContain("soul-seat__copy");
+    expect(folio, "空席的读法与动作共用同一行").toContain("soul-seat__empty-copy");
+    expect(css, "三席只用上下账线围合").toMatch(
+      /\.soul-array__seats\s*\{[\s\S]{0,260}border-block:\s*1px solid/,
+    );
+    expect(css, "席列不再画第二层卡框").toMatch(
+      /\.soul-seat\s*\{[\s\S]{0,420}border:\s*0;[\s\S]{0,420}border-radius:\s*0;[\s\S]{0,420}box-shadow:\s*none;/,
+    );
+    expect(css, "三席之间只留账线").toMatch(
+      /\.soul-seat \+ \.soul-seat\s*\{[\s\S]{0,120}border-left:\s*1px solid/,
+    );
+    expect(css, "两处门径是账行而不是两张按钮卡").toMatch(
+      /\.soul-gateway\s*\{[\s\S]{0,420}border:\s*0;[\s\S]{0,420}background:\s*transparent;/,
+    );
+    expect(css, "章法只留上下账线与分段线").toMatch(
+      /\.soul-principle__sheet\s*\{[\s\S]{0,320}border-block:\s*1px solid[\s\S]{0,320}border-radius:\s*0;[\s\S]{0,320}box-shadow:\s*none;/,
+    );
+    expect(css, "195 宽三席退成一列账行").toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.soul-array__seats\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
   });
 });
