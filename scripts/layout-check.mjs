@@ -1936,7 +1936,12 @@ async function openRoute(page, route, settleMs) {
           (style.transform === "none" || style.transform === "matrix(1, 0, 0, 1, 0, 0)")
         );
       },
-      { timeout: 1500 },
+      /*
+       * 并发 + --shots 时一帧可能被主线程拖到几百毫秒;1.5s 曾把 959×1024 的
+       * /cultivation 量在翻卷入场中段:页面右移 20px、禁用态透明度还是 0。
+       * 翻卷本身只有 240ms,这里留到 5s 是防量尺误红,不是放宽版面判据。
+       */
+      { timeout: 5000 },
     )
     .catch(() => undefined);
   /*
@@ -12905,6 +12910,9 @@ async function taskDialogZoom() {
       daoSource: 1200,
       souls: [{ uid: "dlg_s1", type: "fengmang", grade: 1, fromName: "旧剑" }],
       equippedSouls: ["dlg_s1"],
+      marks: makeFullMarks().slice(0, 7),
+      endgameTutorialSeen: true,
+      resourceDialogSeen: true,
     },
     dongfu: {
       levels: { mansion: 4, field: 5, alchemy: 5, forge: 4, library: 4 },
@@ -13047,6 +13055,26 @@ async function taskDialogZoom() {
       })),
     }));
 
+  const readEraLedger = () =>
+    page.evaluate(() => {
+      const ledger = document.querySelector("[data-era-ledger]");
+      const panel = ledger?.closest(".modal-panel");
+      const panelRect = panel?.getBoundingClientRect();
+      const ledgerRect = ledger?.getBoundingClientRect();
+      return {
+        found: Boolean(ledger),
+        entries: ledger?.querySelectorAll(":scope > div").length ?? 0,
+        cards: ledger?.querySelectorAll(".card-ink").length ?? -1,
+        text: (ledger?.textContent || "").replace(/\s+/g, " ").trim(),
+        insidePanel: Boolean(
+          panelRect &&
+          ledgerRect &&
+          ledgerRect.left >= panelRect.left - 2 &&
+          ledgerRect.right <= panelRect.right + 2,
+        ),
+      };
+    });
+
   /** 一扇弹窗:点开 → 量 → 关掉。点不开直接报红(判据没量到东西) */
   const probe = async (label, route, click) => {
     await page.goto(INDEX + "#" + route, { waitUntil: "load" });
@@ -13150,6 +13178,34 @@ async function taskDialogZoom() {
     if (label === "数值体系") {
       await assertLedgerWithoutCard("数值体系外框", "[data-progression-surface]", false);
       await assertLedgerWithoutCard("数值体系账线", "[data-progression-ledger]");
+    }
+    if (label === "道痕纪元变迁") {
+      await assertLedgerWithoutCard("道痕纪元变迁", "[data-era-ledger]");
+      checked += 1;
+      const mobileEra = await readEraLedger();
+      if (
+        !mobileEra.found ||
+        mobileEra.entries < 1 ||
+        mobileEra.cards !== 0 ||
+        !mobileEra.text.includes("纪元 19.0") ||
+        !mobileEra.insidePanel
+      ) {
+        failures.push(`[195] 道痕纪元变迁账没读全或又套回卡壳:${JSON.stringify(mobileEra)}`);
+      }
+      if (SHOTS) {
+        mkdirSync(SHOTS_DIR, { recursive: true });
+        await page.screenshot({ path: join(SHOTS_DIR, "195-celestial-era-ledger.png") });
+      }
+      await page.setViewportSize({ width: 390, height: 844 });
+      await settleVisuals(page);
+      checked += 1;
+      const wideEra = await readEraLedger();
+      if (!wideEra.found || wideEra.entries < 1 || wideEra.cards !== 0 || !wideEra.insidePanel) {
+        failures.push(`[390] 道痕纪元变迁账没有沿卷身续排:${JSON.stringify(wideEra)}`);
+      }
+      if (SHOTS) {
+        await page.screenshot({ path: join(SHOTS_DIR, "390-celestial-era-ledger.png") });
+      }
     }
     if (label === "装备详情 · 词条转移落位") {
       checked += 1;
@@ -13288,6 +13344,9 @@ async function taskDialogZoom() {
   });
   await probe("数值体系", "/settings", async () => {
     await page.locator("[data-settings-progression]").click({ timeout: 3000 });
+  });
+  await probe("道痕纪元变迁", "/celestial?tab=marks", async () => {
+    await page.getByRole("button", { name: /纪元变迁史/ }).click({ timeout: 3000 });
   });
   await probe("隐私政策", "/settings", async () => {
     await page
@@ -16649,6 +16708,8 @@ async function taskSoulListOverflow() {
       return page.evaluate((key) => {
         const holder = document.querySelector(`[data-soul-${key}-total]`);
         const rows = [...document.querySelectorAll(`[data-soul-${key}-row]`)];
+        const ledger = document.querySelector(`[data-soul-${key}-ledger]`);
+        const ledgerStyle = ledger ? getComputedStyle(ledger) : null;
         return {
           total: Number(holder?.getAttribute(`data-soul-${key}-total`)),
           shown: Number(holder?.getAttribute(`data-soul-${key}-shown`)),
@@ -16656,6 +16717,17 @@ async function taskSoulListOverflow() {
           count: rows.length,
           ids: rows.map((row) => row.getAttribute(`data-soul-${key}-row`)),
           focus: document.activeElement?.getAttribute(`data-soul-${key}-row`),
+          ledger: ledgerStyle
+            ? {
+                borderTop: Number.parseFloat(ledgerStyle.borderTopWidth),
+                borderRight: Number.parseFloat(ledgerStyle.borderRightWidth),
+                borderBottom: Number.parseFloat(ledgerStyle.borderBottomWidth),
+                borderLeft: Number.parseFloat(ledgerStyle.borderLeftWidth),
+                radius: Number.parseFloat(ledgerStyle.borderRadius),
+                background: ledgerStyle.backgroundColor,
+                cards: ledger.querySelectorAll(".card-ink").length,
+              }
+            : null,
         };
       }, kind);
     }
@@ -16955,6 +17027,15 @@ async function taskSoulListOverflow() {
         ? ((await more.textContent()) || "").replace(/\s+/g, " ").trim()
         : "";
       const initial = await readList(kind);
+      const ledgerOk =
+        initial.ledger &&
+        initial.ledger.borderTop === 1 &&
+        initial.ledger.borderBottom === 1 &&
+        initial.ledger.borderLeft === 0 &&
+        initial.ledger.borderRight === 0 &&
+        initial.ledger.radius === 0 &&
+        initial.ledger.background === "rgba(0, 0, 0, 0)" &&
+        initial.ledger.cards === 0;
       checked += 1;
       if (
         initial.total !== 30 ||
@@ -16963,6 +17044,7 @@ async function taskSoulListOverflow() {
         initial.count !== 12 ||
         initial.ids[0] !== firstId ||
         initial.ids.at(-1) !== initialLastId ||
+        !ledgerOk ||
         moreCount === 0 ||
         !new RegExp(`再看\\s*12\\s*${unit}\\s*·\\s*余\\s*18`).test(moreText)
       ) {
@@ -16970,7 +17052,8 @@ async function taskSoulListOverflow() {
           `[320] 器魂${kind === "idle" ? "散置形意" : "凝炼台"}首批应 12/30 ` +
             `(${firstId} → ${initialLastId})并可再看 12 ${unit},` +
             `实见 ${initial.ids[0] ?? "无"} → ${initial.ids.at(-1) ?? "无"} / ${initial.count} 行` +
-            `(shown ${initial.shown} / total ${initial.total}) «${moreText}»`,
+            `(shown ${initial.shown} / total ${initial.total}) «${moreText}» / ` +
+            `浮层账=${JSON.stringify(initial.ledger)}`,
         );
       }
 

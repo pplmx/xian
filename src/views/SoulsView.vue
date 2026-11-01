@@ -324,7 +324,10 @@
           <span class="text-ink-faint">品阶高者在前</span>
           <span class="tabular text-ink-faint">共 {{ idleSoulRows.length }} 缕</span>
         </p>
-        <div class="scroll-pane card-ink max-h-64 divide-y divide-ink/7 overflow-y-auto px-4">
+        <div
+          class="scroll-pane max-h-64 divide-y divide-ink/10 border-y border-ink/10 overflow-y-auto"
+          data-soul-idle-ledger
+        >
           <div
             v-for="soul in idleSoulPage.visible"
             :key="soul.uid"
@@ -425,7 +428,10 @@
           <span class="text-ink-faint">品质高者在前</span>
           <span class="tabular text-ink-faint">共 {{ refinableRows.length }} 件</span>
         </p>
-        <div class="scroll-pane card-ink max-h-64 divide-y divide-ink/7 overflow-y-auto px-4">
+        <div
+          class="scroll-pane max-h-64 divide-y divide-ink/10 border-y border-ink/10 overflow-y-auto"
+          data-soul-forge-ledger
+        >
           <div
             v-for="row in refinablePage.visible"
             :key="row.inst.uid"

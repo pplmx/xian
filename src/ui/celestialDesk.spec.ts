@@ -148,6 +148,19 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
     expect(ledger, "主卷、对照与空态不再套卡壳").not.toContain("card-ink");
   });
 
+  it("天道已变浮层把纪元变迁收成开口长账", () => {
+    const marks = source("src/components/celestial/MarksPanel.vue");
+    const layout = source("scripts/layout-check.mjs");
+    const era = marks.slice(marks.indexOf("<BaseModal"), marks.indexOf("</BaseModal>"));
+
+    expect(era, "纪元变迁要有稳定运行时落点").toContain("data-era-ledger");
+    expect(era, "纪元变迁沿卷身上下账线续排").toContain(
+      'class="mt-2.5 divide-y divide-ink/10 border-y border-ink/10"',
+    );
+    expect(era, "纪元条目与空态不再借通用纸卡").not.toContain("card-ink");
+    expect(layout, "真浏览器要核纪元变迁浮层没有内层卡壳").toContain("data-era-ledger");
+  });
+
   it("天道熔炉只在卷身续账,熔材行不再套第二张纸卡", () => {
     const furnace = source("src/components/celestial/FurnaceDialog.vue");
     const layout = source("scripts/layout-check.mjs");

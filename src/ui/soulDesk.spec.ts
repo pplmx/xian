@@ -160,4 +160,27 @@ describe("器魂案 · 题签只报道源,三席阵账紧随卷首", () => {
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.soul-array__seats\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
   });
+
+  it("散置形意与凝炼台浮层只沿卷身续账,不再各套一张纸卡", () => {
+    const view = source("src/views/SoulsView.vue");
+    const layout = source("scripts/layout-check.mjs");
+    const idleStart = view.indexOf("<!-- 散置形意 -->");
+    const forgeStart = view.indexOf("<!-- 凝炼台 -->");
+    const idle = view.slice(idleStart, forgeStart);
+    const forge = view.slice(forgeStart, view.indexOf("</BaseModal>", forgeStart));
+
+    expect(idleStart, "散置形意浮层要能定位到").toBeGreaterThan(-1);
+    expect(forgeStart, "凝炼台浮层要能定位到").toBeGreaterThan(idleStart);
+    expect(idle, "闲置形意要有稳定运行时落点").toContain("data-soul-idle-ledger");
+    expect(forge, "凝炼台要有稳定运行时落点").toContain("data-soul-forge-ledger");
+    for (const [name, block] of [
+      ["散置形意", idle],
+      ["凝炼台", forge],
+    ] as const) {
+      expect(block, `${name}沿卷身上下账线续排`).toContain("border-y border-ink/10");
+      expect(block, `${name}行间只留分段线`).toContain("divide-y divide-ink/10");
+      expect(block, `${name}不再借通用纸卡`).not.toContain("card-ink");
+    }
+    expect(layout, "真浏览器要核器魂两册浮层没有内层卡壳").toContain("data-soul-${key}-ledger");
+  });
 });

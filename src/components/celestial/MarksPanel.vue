@@ -170,12 +170,12 @@
     <p v-else class="t-body text-ink-soft">
       纪元变迁史只记改变战斗规则本身的变更,内容增删不入此列。
     </p>
-    <div class="mt-2.5 space-y-2">
-      <div v-for="c in eraChanges" :key="c.version" class="card-ink px-3 py-2">
+    <div class="mt-2.5 divide-y divide-ink/10 border-y border-ink/10" data-era-ledger>
+      <div v-for="c in eraChanges" :key="c.version" class="py-2">
         <p class="font-kai text-body tabular text-cinnabar">纪元 {{ c.version }}</p>
         <p class="mt-0.5 t-body text-ink-soft">{{ c.note }}</p>
       </div>
-      <p v-if="!eraChanges.length" class="card-ink px-3 py-3 text-center text-body text-ink-faint">
+      <p v-if="!eraChanges.length" class="py-3 text-center text-body text-ink-faint">
         {{ eraMark ? "此后天道未再改过规矩 —— 当年的打法,今日依旧算数。" : "尚无变更记录。" }}
       </p>
     </div>
