@@ -10,7 +10,9 @@
  * ENGINE_SYNC_REMOTE / ENGINE_SYNC_REF if you are not using the public repo.
  */
 import { execFileSync } from "node:child_process";
-import { resolve } from "node:path";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import assert from "node:assert/strict";
 
 const ROOT = resolve(import.meta.dirname, "..");
@@ -34,7 +36,23 @@ try {
   );
 }
 
-const local = git(["rev-parse", "HEAD:packages/engine"]);
+/*
+ * 比工作树,不比 HEAD:pre-commit 跑在提交落盘之前,若只看 HEAD,修好
+ * engine 树的下一次提交仍会被上一版 HEAD 拦住。临时索引只用来求树哈希,
+ * 不污染开发者正在准备的暂存区。
+ */
+const tempRoot = mkdtempSync(join(tmpdir(), "xian-engine-sync-"));
+const tempIndex = join(tempRoot, "index");
+const tempEnv = { ...process.env, GIT_INDEX_FILE: tempIndex };
+let local;
+try {
+  git(["read-tree", "HEAD"], { env: tempEnv });
+  git(["add", "-A", "--", "packages/engine"], { env: tempEnv });
+  const workingTree = git(["write-tree"], { env: tempEnv });
+  local = git(["rev-parse", `${workingTree}:packages/engine`]);
+} finally {
+  rmSync(tempRoot, { recursive: true, force: true });
+}
 const remote = git(["rev-parse", "FETCH_HEAD^{tree}"]);
 assert.equal(
   local,
