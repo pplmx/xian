@@ -146,14 +146,43 @@ describe("名兽案 · 双契总览直接接卷首,当前、可追与全谱各�
     );
     expect(titleCss).toMatch(/\.name-beast-ledger::before\s*\{[\s\S]{0,80}display:\s*none;/);
     expect(titleCss, "桌面双页由中缝收口,不靠两张卡分隔").toMatch(
-      /@media \(min-width: 1100px\)[\s\S]{0,900}\.name-beast-tab > \.name-beast-focus\s*\{[\s\S]{0,180}border-right:\s*1px solid/,
+      /@media \(min-width: 960px\)[\s\S]{0,900}\.name-beast-tab > \.name-beast-focus\s*\{[\s\S]{0,180}border-right:\s*1px solid/,
     );
     expect(titleCss).not.toMatch(
       /\.name-beast-ledger\s*\{[\s\S]{0,360}border:\s*1px solid rgb\(var\(--color-ink-rgb\) \/ 0\.14\)/,
     );
   });
 
-  it("390 双契并读、小屏退回单册、620 聚焦双栏、1100 总览与全谱摊成两页", () => {
+  it("名号与灵兽各收成一册两章,章首同报章号、读法与章内真值", () => {
+    const view = source("src/views/TitlesView.vue");
+    const head = source("src/components/titles/NameBeastChapterHead.vue");
+    const titleCss = source("src/styles/pages/titles.css");
+
+    expect(view).toContain(
+      '<article class="name-beast-register folio-span-all" data-name-beast-register>',
+    );
+    expect(view).toContain('data-name-beast-chapter="focus"');
+    expect(view).toContain('data-name-beast-chapter="index"');
+    expect(view).toContain("<NameBeastChapterHead");
+    expect(view).toContain('index="壹"');
+    expect(view).toContain('index="贰"');
+    expect(view, "章首接管标题后旧总账头应退场").not.toContain("<LedgerHeader");
+    expect(head).toContain("data-name-beast-chapter-head");
+    expect(head).toContain("name-beast-chapter-head__index");
+    expect(head).toContain("name-beast-chapter-head__hint");
+    expect(head).toContain("name-beast-chapter-head__fact");
+    expect(titleCss).toMatch(
+      /\.name-beast-register\s*\{[\s\S]{0,320}border-top:\s*1px solid[\s\S]{0,160}border-bottom:\s*1px solid/,
+    );
+    expect(titleCss).toMatch(
+      /\.name-beast-register__chapter \+ \.name-beast-register__chapter\s*\{[\s\S]{0,100}border-top:/,
+    );
+    expect(titleCss).toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,700}\.name-beast-tab\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(18rem, 0\.74fr\) minmax\(0, 1\.26fr\)/,
+    );
+  });
+
+  it("390 双契并读、小屏退回单册、620 聚焦双栏、960 总览与全谱摊成两页", () => {
     const css = source("src/style.css");
     const start = css.indexOf("/*\n   * 名兽案");
     const end = css.indexOf("/*\n   * 道躯案", start);
@@ -177,10 +206,10 @@ describe("名兽案 · 双契总览直接接卷首,当前、可追与全谱各�
       /@media \(min-width: 620px\)\s*\{[\s\S]{0,260}\.name-beast-focus__panels\s*\{[\s\S]{0,120}repeat\(2, minmax\(0, 1fr\)\)/,
     );
     expect(titleCss).toMatch(
-      /@media \(min-width: 1100px\)\s*\{[\s\S]{0,360}\.name-beast-tab\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(18rem, 0\.74fr\) minmax\(0, 1\.26fr\)/,
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,360}\.name-beast-tab\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(18rem, 0\.74fr\) minmax\(0, 1\.26fr\)/,
     );
     expect(titleCss).toMatch(
-      /@media \(min-width: 1100px\)\s*\{[\s\S]{0,700}\.name-beast-tab\s*>\s*\.name-beast-focus \.name-beast-focus__panels\s*\{[\s\S]{0,120}minmax\(0, 1fr\)/,
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,700}\.name-beast-tab\s*>\s*\.name-beast-focus \.name-beast-focus__panels\s*\{[\s\S]{0,120}minmax\(0, 1fr\)/,
     );
     expect(titleCss).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,700}\.name-beast-switch__grid\s*\{[\s\S]{0,100}minmax\(0, 1fr\)/,

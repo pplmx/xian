@@ -29,7 +29,6 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
   it("深页与流派未成卷全部改读共享案头,不再各手搓一套章首", () => {
     const cases = [
       { file: "src/views/LegacyView.vue", count: 6 },
-      { file: "src/views/TitlesView.vue", count: 4 },
       { file: "src/components/build/BuildDiscovery.vue", count: 1 },
       { file: "src/views/MortalWorldView.vue", count: 2 },
       { file: "src/views/RealmCodexView.vue", count: 1 },
@@ -43,6 +42,12 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
       );
       expect(view.match(/<LedgerHeader\b/g), `${file} 的共享案头数量不对`).toHaveLength(count);
     }
+
+    const titles = source("src/views/TitlesView.vue");
+    expect(titles, "名兽两册改读专用章首").toContain(
+      'import NameBeastChapterHead from "@/components/titles/NameBeastChapterHead.vue"',
+    );
+    expect(titles.match(/<NameBeastChapterHead\b/g), "名兽两册应各两章").toHaveLength(4);
 
     for (const file of [
       "src/views/BuildView.vue",

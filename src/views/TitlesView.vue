@@ -11,7 +11,7 @@
 
     <NameBeastSwitch v-model="tab" :choices="nameBeastChoices" class="folio-span-all" />
 
-    <div class="name-beast-page folio-span-all">
+    <article class="name-beast-register folio-span-all" data-name-beast-register>
       <section
         v-show="tab === 'title'"
         id="title-panel"
@@ -20,13 +20,20 @@
         aria-labelledby="title-tab"
       >
         <section
-          class="name-beast-ledger name-beast-focus"
+          class="name-beast-register__chapter name-beast-ledger name-beast-focus"
+          data-name-beast-chapter="focus"
           data-title-ledger
           data-name-beast-focus
           data-name-beast-book="title-focus"
           data-kind="title"
         >
-          <LedgerHeader seal="名" eyebrow="名号 · 当前与可追" title="此刻佩印" />
+          <NameBeastChapterHead
+            index="壹"
+            eyebrow="名号 · 当前与可追"
+            title="此刻佩印"
+            hint="佩印一枚入行藏 · 下一印按成就进度"
+            :fact="`已藏 ${titleMeter.owned}/${titleMeter.total}`"
+          />
 
           <div class="name-beast-focus__panels">
             <article class="name-beast-focus__panel" data-title-current>
@@ -92,18 +99,20 @@
         </section>
 
         <section
-          class="name-beast-ledger name-ledger"
+          class="name-beast-register__chapter name-beast-ledger name-ledger"
+          data-name-beast-chapter="index"
           data-name-beast-book="title-index"
           data-kind="title"
           :data-title-total="titleRows.length"
           :data-title-shown="titlePage.shown"
           :data-title-start="titlePage.start"
         >
-          <LedgerHeader
-            variant="index"
+          <NameBeastChapterHead
+            index="贰"
             eyebrow="佩印与旧藏"
             title="名号谱"
-            :meta="`现看 ${titlePage.start + 1}–${titlePage.shown} · 共 ${titleRows.length} 顶`"
+            hint="佩印置顶 · 已藏次之 · 未得照写来路"
+            :fact="`现看 ${titlePage.start + 1}–${titlePage.shown} · 共 ${titleRows.length} 顶`"
           />
 
           <div class="name-ledger__list">
@@ -185,13 +194,20 @@
         aria-labelledby="pet-tab"
       >
         <section
-          class="name-beast-ledger name-beast-focus"
+          class="name-beast-register__chapter name-beast-ledger name-beast-focus"
+          data-name-beast-chapter="focus"
           data-pet-ledger
           data-name-beast-focus
           data-name-beast-book="pet-focus"
           data-kind="pet"
         >
-          <LedgerHeader seal="兽" eyebrow="灵兽 · 同行与结缘" title="此刻相伴" />
+          <NameBeastChapterHead
+            index="壹"
+            eyebrow="灵兽 · 同行与结缘"
+            title="此刻相伴"
+            hint="相伴一只入总案 · 加成取人物明细真值"
+            :fact="`已契 ${petMeter.owned}/${petMeter.total}`"
+          />
 
           <div class="name-beast-focus__panels">
             <article class="name-beast-focus__panel" data-pet-current>
@@ -254,18 +270,20 @@
         </section>
 
         <section
-          class="name-beast-ledger name-ledger"
+          class="name-beast-register__chapter name-beast-ledger name-ledger"
+          data-name-beast-chapter="index"
           data-name-beast-book="pet-index"
           data-kind="pet"
           :data-pet-total="petRows.length"
           :data-pet-shown="petPage.shown"
           :data-pet-start="petPage.start"
         >
-          <LedgerHeader
-            variant="index"
+          <NameBeastChapterHead
+            index="贰"
             eyebrow="已契与未逢"
             title="灵兽谱"
-            :meta="`现看 ${petPage.start + 1}–${petPage.shown} · 共 ${petRows.length} 只`"
+            hint="相伴置顶 · 已契次之 · 品阶降序"
+            :fact="`现看 ${petPage.start + 1}–${petPage.shown} · 共 ${petRows.length} 只`"
           />
 
           <div class="name-ledger__list">
@@ -361,7 +379,7 @@
           </div>
         </section>
       </section>
-    </div>
+    </article>
   </div>
 </template>
 
@@ -396,8 +414,8 @@ import {
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
-import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import NameBeastSwitch from "@/components/common/NameBeastSwitch.vue";
+import NameBeastChapterHead from "@/components/titles/NameBeastChapterHead.vue";
 import {
   nameBeastMeter,
   petEntryState,

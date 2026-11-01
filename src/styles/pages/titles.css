@@ -1,15 +1,15 @@
 @layer reset, shared, page, app-utilities;
 @layer page {
   /*
-   * 名兽案 —— 双契先落成一条纸面索引,此刻、来路与全谱共用一本开口账。
+   * 名兽案 —— 双契先落成一条纸面索引,每册两章共用一张开口续卷。
    *
    * 旧版把双契总览、当前与全谱各装进一张带内外框的卡:一屏里三层同权容器,
    * 名字、进度和下一步都被框线切开。现在总览只留册次、契约印与一条墨线;
-   * 正文用纸面边栏区分「今 / 次 / 伴 / 谱」,长谱直接沿同一道账线展开。
+   * 当前章与全谱章共用章号、读法与章内真值,长谱沿同一道账线展开。
    * 所有数字仍来自 titleProgress、PETS、玩家当前选择与 finalStats。
    */
   .name-beast-switch,
-  .name-beast-page,
+  .name-beast-register,
   .name-beast-tab {
     min-width: 0;
   }
@@ -176,10 +176,93 @@
     font-size: var(--type-note);
     line-height: 1.35;
   }
-  .name-beast-page,
+  .name-beast-register {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 0.72rem;
+    border: 0;
+    border-top: 1px solid color-mix(in srgb, var(--color-cinnabar) 42%, transparent);
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.11);
+    border-radius: 0;
+    background:
+      linear-gradient(105deg, rgb(var(--color-cinnabar-rgb) / 0.025), transparent 38%),
+      linear-gradient(180deg, rgb(var(--color-paper-rgb) / 0.14), transparent 72%);
+    box-shadow: none;
+  }
   .name-beast-tab {
     display: grid;
-    gap: 0.72rem;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .name-beast-register__chapter {
+    min-width: 0;
+    padding: 0 0 0.82rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .name-beast-register__chapter + .name-beast-register__chapter {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+  }
+  .name-beast-chapter-head {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.45rem minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.24rem 0.55rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    padding: 0.64rem 0.05rem 0.5rem;
+  }
+  .name-beast-chapter-head__index {
+    display: grid;
+    width: 1.35rem;
+    height: 1.35rem;
+    place-items: center;
+    border-left: 2px solid var(--name-beast-accent);
+    color: var(--name-beast-accent);
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  .name-beast-chapter-head__copy {
+    display: grid;
+    min-width: 0;
+    gap: 0.04rem;
+  }
+  .name-beast-chapter-head__eyebrow {
+    color: var(--name-beast-accent);
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.12em;
+    line-height: 1.35;
+  }
+  .name-beast-chapter-head__title {
+    margin: 0;
+    color: var(--color-ink);
+    font-family: var(--font-kai);
+    font-size: var(--type-section);
+    font-weight: 400;
+    letter-spacing: 0.13em;
+    line-height: 1.35;
+  }
+  .name-beast-chapter-head__hint {
+    min-width: 0;
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    line-height: 1.52;
+    overflow-wrap: anywhere;
+  }
+  .name-beast-chapter-head__fact {
+    justify-self: end;
+    color: var(--color-qing);
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1.45;
+    text-align: right;
+    white-space: nowrap;
   }
   .name-beast-ledger {
     --name-beast-accent: var(--color-cinnabar);
@@ -189,12 +272,8 @@
     min-width: 0;
     overflow: visible;
     border: 0;
-    border-top: 1px solid color-mix(in srgb, var(--name-beast-accent) 46%, transparent);
-    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
     border-radius: 0;
-    background:
-      linear-gradient(116deg, rgb(var(--name-beast-accent-rgb) / 0.028), transparent 34%),
-      transparent;
+    background: transparent;
     box-shadow: none;
   }
   .name-beast-ledger[data-kind="pet"] {
@@ -210,7 +289,6 @@
     display: grid;
     min-width: 0;
     grid-template-columns: minmax(0, 1fr);
-    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
   }
   .name-beast-focus__panel {
     display: grid;
@@ -322,7 +400,6 @@
   .name-ledger__list {
     position: relative;
     z-index: 1;
-    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
   }
   .name-ledger__entry {
     position: relative;
@@ -553,19 +630,23 @@
     }
   }
   /*
-   * 1100 起把「此刻与来路」和「全谱」摊成左右两页。
+   * 960 起把「此刻与来路」和「全谱」摊成左右两页。
    * 左页仍按先后读当前与下一印,不把半页再切成两枚窄签;右页直接进长谱。
    */
-  @media (min-width: 1100px) {
+  @media (min-width: 960px) {
     .name-beast-tab {
       grid-template-columns: minmax(18rem, 0.74fr) minmax(0, 1.26fr);
       align-items: start;
-      column-gap: 2rem;
+      column-gap: 0;
+    }
+
+    .name-beast-tab > .name-beast-register__chapter + .name-beast-register__chapter {
+      border-top: 0;
     }
 
     .name-beast-tab > .name-beast-focus {
       border-right: 1px solid rgb(var(--color-ink-rgb) / 0.1);
-      padding-right: 2rem;
+      padding-right: 1.6rem;
     }
 
     .name-beast-tab > .name-beast-focus .name-beast-focus__panels {
@@ -585,6 +666,17 @@
     .name-beast-switch__tab {
       min-height: 0;
       padding-inline: 0.58rem;
+    }
+
+    .name-beast-chapter-head {
+      grid-template-columns: 1.35rem minmax(0, 1fr);
+    }
+
+    .name-beast-chapter-head__fact {
+      grid-column: 2;
+      justify-self: start;
+      text-align: left;
+      white-space: normal;
     }
 
     .name-beast-focus__panel,

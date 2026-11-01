@@ -213,6 +213,8 @@
  *      卷末叠右的并读几何,195 宽量章态与动作退行后仍无挤压。
  *   七十五 藏珍两章同住一册:总印落在行动章之首,章首统一章号、题名、读法与章内真值;
  *      390 / 620 单列续读,1280 才让行动章与卷目章左右并读,195 把章内读数退到章名下方。
+ *   七十六 名号与灵兽各收成一册两章:此刻章与全谱章共用章号、读法与章内真值,
+ *      390 / 195 单列续读,960 宽起左右并读;运行时门核对章序、章号、真值与非空章首。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -15900,7 +15902,7 @@ async function taskTitlePetOverflow() {
         layout.display !== "grid" ||
         layout.columns.length !== 2 ||
         Math.abs(layout.summary.top - layout.index.top) > 2 ||
-        layout.summary.right + 8 > layout.index.left ||
+        layout.summary.right > layout.index.left + 1 ||
         layout.summary.width < 270 ||
         layout.index.width < 390 ||
         layout.summary.left < -1 ||
@@ -15916,6 +15918,117 @@ async function taskTitlePetOverflow() {
                 `(${Math.round(layout.index.width)}) / ` +
                 `顶差 ${Math.round(Math.abs(layout.summary.top - layout.index.top))}`
               : "取不到总案或全谱"),
+        );
+      }
+    }
+
+    async function checkNameBeastRegister(label, expectedLayout) {
+      const layout = await page.evaluate(() => {
+        const box = (el) => {
+          if (!el) return null;
+          const r = el.getBoundingClientRect();
+          return {
+            left: r.left,
+            right: r.right,
+            top: r.top,
+            bottom: r.bottom,
+            width: r.width,
+            height: r.height,
+            scrollWidth: el.scrollWidth,
+            clientWidth: el.clientWidth,
+          };
+        };
+        const register = document.querySelector("[data-name-beast-register]");
+        const panel = [...document.querySelectorAll(".name-beast-tab")].find(
+          (el) => getComputedStyle(el).display !== "none",
+        );
+        const chapters = panel
+          ? [...panel.querySelectorAll(":scope > [data-name-beast-chapter]")]
+          : [];
+        const registerStyle = register ? getComputedStyle(register) : null;
+        return {
+          viewport: { width: window.innerWidth, height: window.innerHeight },
+          register: box(register),
+          registerBorderTop: registerStyle?.borderTopWidth ?? "0px",
+          registerBorderBottom: registerStyle?.borderBottomWidth ?? "0px",
+          chapters: chapters.map((chapter) => {
+            const head = chapter.querySelector("[data-name-beast-chapter-head]");
+            return {
+              key: chapter.getAttribute("data-name-beast-chapter"),
+              box: box(chapter),
+              head: {
+                box: box(head),
+                index: (head?.querySelector(".name-beast-chapter-head__index")?.textContent || "")
+                  .replace(/\s+/g, "")
+                  .trim(),
+                title: (head?.querySelector(".name-beast-chapter-head__title")?.textContent || "")
+                  .replace(/\s+/g, " ")
+                  .trim(),
+                hint: (head?.querySelector(".name-beast-chapter-head__hint")?.textContent || "")
+                  .replace(/\s+/g, " ")
+                  .trim(),
+                fact: (head?.querySelector(".name-beast-chapter-head__fact")?.textContent || "")
+                  .replace(/\s+/g, " ")
+                  .trim(),
+              },
+            };
+          }),
+        };
+      });
+      checked += 1;
+      const [first, second] = layout.chapters;
+      const sameRow =
+        first &&
+        second &&
+        Math.abs(first.box.top - second.box.top) <= 2 &&
+        first.box.right <= second.box.left + 1;
+      const stacked =
+        first && second && second.box.top >= first.box.bottom - 2 && second.box.top > first.box.top;
+      const arranged = expectedLayout === "columns" ? sameRow : stacked;
+      const chapterOrder =
+        first?.key === "focus" &&
+        second?.key === "index" &&
+        first.head.index === "壹" &&
+        second.head.index === "贰";
+      const headsReadable =
+        layout.chapters.length === 2 &&
+        layout.chapters.every(
+          (chapter) =>
+            chapter.head.box &&
+            chapter.head.box.width > 0 &&
+            chapter.head.box.scrollWidth <= chapter.head.box.clientWidth + 1 &&
+            chapter.head.title.length > 0 &&
+            chapter.head.hint.length > 0 &&
+            chapter.head.fact.length > 0,
+        );
+      const insideRegister =
+        layout.register &&
+        layout.chapters.length === 2 &&
+        layout.chapters.every(
+          (chapter) =>
+            chapter.box.left >= layout.register.left - 1 &&
+            chapter.box.right <= layout.register.right + 1,
+        ) &&
+        layout.registerBorderTop !== "0px" &&
+        layout.registerBorderBottom !== "0px";
+      if (
+        !arranged ||
+        !chapterOrder ||
+        !headsReadable ||
+        !insideRegister ||
+        layout.register.scrollWidth > layout.register.clientWidth + 1
+      ) {
+        failures.push(
+          `[${label}] 名兽续卷没有按两章收好:` +
+            `排布=${expectedLayout} 实见 ${sameRow ? "左右" : stacked ? "上下" : "不正"} / ` +
+            `章序=${layout.chapters.map((chapter) => chapter.key || "无").join("→") || "无"} / ` +
+            `章号=${layout.chapters.map((chapter) => chapter.head.index || "无").join("→") || "无"} / ` +
+            `章首=${layout.chapters
+              .map((chapter) => `«${chapter.head.title || "无"}»/${chapter.head.fact || "无真值"}`)
+              .join(" | ")} / ` +
+            `续卷=${layout.register?.left ?? "-"}..${layout.register?.right ?? "-"} / ` +
+            `上下账线=${layout.registerBorderTop}/${layout.registerBorderBottom} / ` +
+            `内容 ${layout.register?.scrollWidth ?? 0}>${layout.register?.clientWidth ?? 0}`,
         );
       }
     }
@@ -16182,6 +16295,7 @@ async function taskTitlePetOverflow() {
     await page.setViewportSize({ width: 390, height: 844 });
     await settleVisuals(page);
     await checkNameBeastOverview("390", 2);
+    await checkNameBeastRegister("390", "stacked");
 
     const titleSwitchTab = page.locator('[data-name-beast-tab][data-kind="title"]');
     await titleSwitchTab.focus();
@@ -16223,6 +16337,7 @@ async function taskTitlePetOverflow() {
     await page.setViewportSize({ width: 1280, height: 800 });
     await settleVisuals(page);
     await checkNameBeastOverview("1280", 2);
+    await checkNameBeastRegister("1280", "columns");
     await nameBeastDeskSpread("title", "名号册");
 
     await petTab.click({ timeout: 5000 });
@@ -16234,6 +16349,7 @@ async function taskTitlePetOverflow() {
     await titleTab.click({ timeout: 5000 });
     await page.locator("[data-title-total]").waitFor({ state: "visible", timeout: 5000 });
     await settleVisuals(page);
+    await checkNameBeastRegister("195", "stacked");
     await exerciseList({
       kind: "title",
       label: "名号册",

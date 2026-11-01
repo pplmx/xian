@@ -154,7 +154,7 @@ describe("铸道案 · 六路、形状与下一步同读此刻", () => {
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,1400}\.build-chapter-head\s*\{[\s\S]{0,220}grid-template-columns:\s*auto minmax\(0, 1fr\)/,
     );
     expect(buildCss, "核心缺口的小字要在渐变纸上与墨色混合后仍读得清").toMatch(
-      /\.build-core__gap\s*\{[\s\S]{0,120}color:\s*color-mix\(in srgb,\s*var\(--color-cinnabar\)\s*82%,\s*var\(--color-ink\)\s*18%\)/,
+      /\.build-core__gap\s*\{[\s\S]{0,120}color:\s*color-mix\(in srgb,\s*var\(--color-cinnabar\)\s*72%,\s*var\(--color-ink\)\s*28%\)/,
     );
   });
 });
