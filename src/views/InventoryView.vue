@@ -28,7 +28,11 @@
         今日检点先答「这一批新得什么、哪几席能换」,九席与藏品沿同一册续读;
         所有读数仍直读原核心清单,这里只重排阅读层级。
       -->
-      <article class="inventory-register folio-span-all" data-inventory-register>
+      <article
+        class="inventory-register folio-span-all"
+        data-inventory-register
+        data-inventory-register-tab="equip"
+      >
         <section
           class="inventory-register__chapter inventory-briefing"
           data-inventory-overview
@@ -285,86 +289,118 @@
 
     <!-- 丹药 -->
     <template v-else-if="tab === 'pill'">
-      <section class="inventory-workshop" data-inventory-workshop>
-        <SectionTitle title="丹房" hint="开炉、购草与成丹去处" />
-        <div class="inventory-workshop__grid">
-          <!-- 开炉炼丹:入口置顶,点开弹窗 -->
-          <button
-            class="inventory-workshop__card inventory-workshop__card--brew"
-            @click="craftOpen = true"
+      <article
+        class="inventory-register folio-span-all"
+        data-inventory-register
+        data-inventory-register-tab="pill"
+      >
+        <div class="inventory-register__lower">
+          <section
+            class="inventory-register__chapter inventory-workshop"
+            data-inventory-workshop
+            data-inventory-chapter="workshop"
           >
-            <span class="inventory-workshop__seal inventory-workshop__seal--cinnabar">炉</span>
-            <span class="inventory-workshop__copy">
-              <span class="inventory-workshop__name">开炉炼丹</span>
-              <span class="inventory-workshop__detail">
-                {{
-                  recipes.length > 0
-                    ? `已知丹方 ${recipes.length} 种 · ${HERB_GRADE_SHORT[herbGradeOfMajor(player.major)]}灵草 ${resources.herbOf(herbGradeOfMajor(player.major))}`
-                    : "尚不知任何丹方"
-                }}
-              </span>
-            </span>
-            <span class="inventory-workshop__go">入炉 →</span>
-          </button>
+            <InventoryChapterHead
+              :index="pillWorkshopChapter.index"
+              :title="pillWorkshopChapter.title"
+              :hint="pillWorkshopChapter.hint"
+              :fact="pillWorkshopFact"
+            />
+            <div class="inventory-workshop__grid">
+              <!-- 开炉炼丹:入口置顶,点开弹窗 -->
+              <button
+                class="inventory-workshop__entry inventory-workshop__entry--brew"
+                data-inventory-workshop-entry="brew"
+                @click="craftOpen = true"
+              >
+                <span class="inventory-workshop__seal" aria-hidden="true">炉</span>
+                <span class="inventory-workshop__copy">
+                  <span class="inventory-workshop__name">开炉炼丹</span>
+                  <span class="inventory-workshop__detail">
+                    {{ recipes.length > 0 ? "按现有丹方开炉,缺料会逐项摊开" : "尚不知任何丹方" }}
+                  </span>
+                </span>
+                <span class="inventory-workshop__go">入炉 →</span>
+              </button>
 
-          <!-- 灵草坊(ISS-306):灵石购草 —— 草比石贵,想补哪一品,明码标价(极贵) -->
-          <button
-            class="inventory-workshop__card inventory-workshop__card--shop"
-            @click="marketOpen = true"
+              <!-- 灵草坊(ISS-306):灵石购草 —— 草比石贵,想补哪一品,明码标价(极贵) -->
+              <button
+                class="inventory-workshop__entry inventory-workshop__entry--shop"
+                data-inventory-workshop-entry="shop"
+                @click="marketOpen = true"
+              >
+                <span class="inventory-workshop__seal" aria-hidden="true">坊</span>
+                <span class="inventory-workshop__copy">
+                  <span class="inventory-workshop__name">灵草坊</span>
+                  <span class="inventory-workshop__detail">
+                    灵石买草 · 凡品 {{ formatGN(herbBuyPrice(1)) }} 灵石一株,道品
+                    {{ formatGN(herbBuyPrice(5)) }} 灵石一株
+                  </span>
+                </span>
+                <span class="inventory-workshop__go">问价 →</span>
+              </button>
+            </div>
+          </section>
+
+          <section
+            class="inventory-register__chapter inventory-pill-cabinet"
+            data-inventory-pill-cabinet
+            data-inventory-chapter="cabinet"
           >
-            <span class="inventory-workshop__seal inventory-workshop__seal--jade">坊</span>
-            <span class="inventory-workshop__copy">
-              <span class="inventory-workshop__name">灵草坊</span>
-              <span class="inventory-workshop__detail">
-                灵石买草 · 凡品 {{ formatGN(herbBuyPrice(1)) }} 灵石一株,道品
-                {{ formatGN(herbBuyPrice(5)) }} 灵石一株
-              </span>
-            </span>
-            <span class="inventory-workshop__go">问价 →</span>
-          </button>
+            <InventoryChapterHead
+              :index="pillCabinetChapter.index"
+              :title="pillCabinetChapter.title"
+              :hint="pillCabinetChapter.hint"
+              :fact="pillCabinetFact"
+            />
+            <!-- 丹匣:格子只给图标、名号与存量,详情看弹窗 -->
+            <div v-if="pillRows.length" class="inventory-pill-cabinet__grid">
+              <ItemCell
+                v-for="row in pillRows"
+                :key="row.def!.id"
+                :icon="row.def!.icon"
+                :name="row.def!.name"
+                :tone="qualityDef(row.def!.quality).color"
+                :quality="row.def!.quality"
+                :foot="`×${row.count}`"
+                :label="`${qualityDef(row.def!.quality).name}·${row.def!.name} · 存 ${row.count}`"
+                ledger
+                @open="pillDetail = row.def!.id"
+              />
+            </div>
+            <p v-else class="empty-note mt-4 text-center text-body text-ink-faint">
+              丹匣空空,去藏经阁参悟丹方,或去坊市收购几株灵草
+            </p>
+          </section>
         </div>
-      </section>
-
-      <section class="inventory-pill-cabinet" data-inventory-pill-cabinet>
-        <SectionTitle title="丹匣" :hint="`${pillRows.length} 味 · 点一格看火候`" />
-        <!-- 丹匣:格子只给图标、名号与存量,详情看弹窗 -->
-        <div v-if="pillRows.length" class="inventory-pill-cabinet__grid mt-2">
-          <ItemCell
-            v-for="row in pillRows"
-            :key="row.def!.id"
-            :icon="row.def!.icon"
-            :name="row.def!.name"
-            :tone="qualityDef(row.def!.quality).color"
-            :quality="row.def!.quality"
-            :foot="`×${row.count}`"
-            :label="`${qualityDef(row.def!.quality).name}·${row.def!.name} · 存 ${row.count}`"
-            @open="pillDetail = row.def!.id"
-          />
-        </div>
-        <p v-else class="empty-note mt-4 text-center text-body text-ink-faint">
-          丹匣空空,去藏经阁参悟丹方,或去坊市收购几株灵草
-        </p>
-      </section>
+      </article>
     </template>
 
     <!-- 材料 -->
     <template v-else-if="tab === 'material'">
       <!--
         六格材料原先混成一排:灵草/玄铁/残页/器灵尘/悟道点/灵石,彼此的用途
-        差得很远(前三样进炉子,后三样进账本)。分两组,各带一行说明 ——
-        找「炼丹要什么」与「我还有多少底子」是两件事。
+        差得很远(前四样进炉子,后两样进账本)。炉材与账材各占一章 ——
+        找「炼制要什么」与「我还有多少底子」是两件事。
       -->
-      <section class="inventory-materials folio-span-all" data-inventory-materials>
-        <SectionTitle title="材簿" hint="炼制与账本,两类去处" />
-        <div class="inventory-materials__groups">
-          <section class="inventory-material-group" data-inventory-material-group="craft">
-            <div class="inventory-material-group__head">
-              <span class="inventory-material-group__title">炼制之材</span>
-              <span class="inventory-material-group__hint">进炉子</span>
-              <span class="inventory-material-group__count tabular"
-                >{{ craftMaterials.length }} 类</span
-              >
-            </div>
+      <article
+        class="inventory-register folio-span-all"
+        data-inventory-register
+        data-inventory-register-tab="material"
+        data-inventory-materials
+      >
+        <div class="inventory-register__lower inventory-register__lower--material">
+          <section
+            class="inventory-register__chapter inventory-material-group"
+            data-inventory-material-group="craft"
+            data-inventory-chapter="craft"
+          >
+            <InventoryChapterHead
+              :index="craftChapter.index"
+              :title="craftChapter.title"
+              :hint="craftChapter.hint"
+              :fact="`${craftMaterials.length} 类`"
+            />
             <div class="inventory-material-group__grid">
               <ItemCell
                 v-for="m in craftMaterials"
@@ -372,6 +408,7 @@
                 :icon="m.icon"
                 :name="m.name"
                 plain
+                ledger
                 :icon-class="m.color"
                 :foot="m.display"
                 :label="`${m.name} ${m.display}`"
@@ -379,14 +416,17 @@
               />
             </div>
           </section>
-          <section class="inventory-material-group" data-inventory-material-group="stock">
-            <div class="inventory-material-group__head">
-              <span class="inventory-material-group__title">修行所积</span>
-              <span class="inventory-material-group__hint">进账本</span>
-              <span class="inventory-material-group__count tabular"
-                >{{ stockMaterials.length }} 类</span
-              >
-            </div>
+          <section
+            class="inventory-register__chapter inventory-material-group"
+            data-inventory-material-group="stock"
+            data-inventory-chapter="stock"
+          >
+            <InventoryChapterHead
+              :index="stockChapter.index"
+              :title="stockChapter.title"
+              :hint="stockChapter.hint"
+              :fact="`${stockMaterials.length} 类`"
+            />
             <div class="inventory-material-group__grid">
               <ItemCell
                 v-for="m in stockMaterials"
@@ -394,6 +434,7 @@
                 :icon="m.icon"
                 :name="m.name"
                 plain
+                ledger
                 :icon-class="m.color"
                 :foot="m.display"
                 :label="`${m.name} ${m.display}`"
@@ -402,15 +443,30 @@
             </div>
           </section>
         </div>
-      </section>
+      </article>
     </template>
 
     <!-- 法宝:面板不是弹窗,整段在 ArtifactPanel(祭炼的账随面板走) -->
     <template v-else>
-      <section class="inventory-artifacts folio-span-all" data-inventory-artifacts>
-        <SectionTitle title="法宝" hint="位次、祭炼与随身取舍" />
-        <ArtifactPanel />
-      </section>
+      <article
+        class="inventory-register folio-span-all"
+        data-inventory-register
+        data-inventory-register-tab="artifact"
+      >
+        <section
+          class="inventory-register__chapter inventory-artifacts"
+          data-inventory-artifacts
+          data-inventory-chapter="artifact"
+        >
+          <InventoryChapterHead
+            :index="artifactChapter.index"
+            :title="artifactChapter.title"
+            :hint="artifactChapter.hint"
+            :fact="artifactChapterFact"
+          />
+          <ArtifactPanel />
+        </section>
+      </article>
     </template>
 
     <!-- 丹药详情 -->
@@ -584,7 +640,6 @@ import { formatGN, formatExact, formatNum, formatPercent } from "@/utils/format"
 import { colorWithAlpha } from "@/ui/colorVar";
 import type { EquipSlot } from "@/types";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
-import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ArtifactPanel from "@/components/inventory/ArtifactPanel.vue";
@@ -601,7 +656,7 @@ import { useBrewing } from "@/composables/useBrewing";
 import { useNow } from "@/composables/useNow";
 import { useRouteTab } from "@/composables/useRouteTab";
 import { INVENTORY_CHAPTERS } from "@/ui/navigation";
-import { inventoryChapter } from "@/ui/inventoryDesk";
+import { inventoryChapter, type InventoryTab } from "@/ui/inventoryDesk";
 
 const inventory = useInventoryStore();
 // 「新」角标清账时机 = 离开背包那一刻(路由无 keep-alive,离开即卸载):
@@ -625,8 +680,6 @@ const { herbGradeHeld, recipes, pillFuncText } = useBrewing();
 const marketOpen = ref(false);
 const lore = useLoreStore();
 
-type Tab = (typeof INVENTORY_CHAPTERS)[number]["id"];
-
 // 修行页与玄枢寻册都能带 `?tab=` 直达分册;页面内换签也把落点写回地址。
 const tab = useRouteTab(INVENTORY_CHAPTERS, "equip");
 
@@ -641,7 +694,7 @@ const brewableNow = computed(
     recipes.value.some((r) => r.able.blockers.length === 0 && !r.shortHerb && !r.shortStone),
 );
 
-const TABS = computed<{ id: Tab; label: string; dot?: boolean }[]>(() =>
+const TABS = computed<{ id: InventoryTab; label: string; dot?: boolean }[]>(() =>
   INVENTORY_CHAPTERS.map((chapter) => ({
     id: chapter.id,
     label: chapter.label,
@@ -664,6 +717,11 @@ const SLOTS: EquipSlot[] = [
 const briefingChapter = inventoryChapter("briefing");
 const seatsChapter = inventoryChapter("seats");
 const collectionChapter = inventoryChapter("collection");
+const pillWorkshopChapter = inventoryChapter("workshop");
+const pillCabinetChapter = inventoryChapter("cabinet");
+const craftChapter = inventoryChapter("craft");
+const stockChapter = inventoryChapter("stock");
+const artifactChapter = inventoryChapter("artifact");
 const pickerSlot = ref<EquipSlot | null>(null);
 type ItemScope = "all" | "new";
 const itemScope = ref<ItemScope>("all");
@@ -807,6 +865,17 @@ const pillRows = computed(() =>
     .map(([id, count]) => ({ def: pillDef(id), count }))
     .filter((x) => x.def !== undefined && x.count > 0)
     .sort((a, b) => qualityDef(b.def!.quality).rank - qualityDef(a.def!.quality).rank),
+);
+const pillTotal = computed(() => pillRows.value.reduce((sum, row) => sum + row.count, 0));
+const majorHerbGrade = computed(() => herbGradeOfMajor(player.major));
+const majorHerbHeld = computed(() => herbGradeHeld(majorHerbGrade.value));
+const pillWorkshopFact = computed(
+  () =>
+    `${recipes.value.length} 方 · ${HERB_GRADE_SHORT[majorHerbGrade.value]}灵草 ${majorHerbHeld.value}`,
+);
+const pillCabinetFact = computed(() => `${pillRows.value.length} 味 · ${pillTotal.value} 枚`);
+const artifactChapterFact = computed(
+  () => `${inventory.artifacts.length} 件 · ${inventory.equippedArtifacts.length} 随身`,
 );
 
 // 修行 store:丹药详情的服前判定(buffOverflowOf)与增益叠数要读当前 buff;

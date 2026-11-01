@@ -5871,6 +5871,301 @@ async function taskInventoryAttention() {
   return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
 }
 
+/**
+ * 行囊四签续卷 —— 装备、丹药、材料与法宝共用同一张开口账页。
+ *
+ * 390 核对四签各自的章序、章号、题名与章内真值,丹房/丹匣、炉材/账材
+ * 在单列下依次续读;1280 才让两章左右并读;195(200% 缩放)要求章内读数
+ * 退到章名下方、整页不横向溢出。四签都不许退回通用节题、旧分组小标题或
+ * 四边卡壳。
+ */
+async function taskInventoryTabRegisters() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    await seedSave(ctx, showcaseSlices("light"), "__inventoryTabRegisters");
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/inventory", 700);
+    checked += 1;
+    if (!rendered) {
+      failures.push("[390] 行囊四签续卷:页面没有渲染出来");
+      return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+    }
+    await clearOverlays(page);
+
+    const read = () =>
+      page.evaluate(() => {
+        const box = (el) => {
+          if (!el) return null;
+          const rect = el.getBoundingClientRect();
+          return {
+            top: Math.round(rect.top),
+            right: Math.round(rect.right),
+            bottom: Math.round(rect.bottom),
+            left: Math.round(rect.left),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+            scrollWidth: el.scrollWidth,
+            clientWidth: el.clientWidth,
+          };
+        };
+        const register = document.querySelector("[data-inventory-register]");
+        const registerStyle = register ? getComputedStyle(register) : null;
+        const chapters = register
+          ? [...register.querySelectorAll("[data-inventory-chapter]")].map((chapter) => {
+              const style = getComputedStyle(chapter);
+              const head = chapter.querySelector("[data-inventory-chapter-head]");
+              const title = head?.querySelector(".inventory-chapter-head__title");
+              const fact = head?.querySelector(".inventory-chapter-head__fact");
+              return {
+                key: chapter.getAttribute("data-inventory-chapter") || "",
+                index:
+                  head?.querySelector(".inventory-chapter-head__index")?.textContent?.trim() || "",
+                title: (title?.textContent || "").trim(),
+                fact: (fact?.textContent || "").replace(/\s+/g, " ").trim(),
+                hasHead: Boolean(head),
+                titleTop: title ? Math.round(title.getBoundingClientRect().top) : null,
+                factTop: fact ? Math.round(fact.getBoundingClientRect().top) : null,
+                radius: Number.parseFloat(style.borderTopLeftRadius),
+                shadow: style.boxShadow,
+                background: style.backgroundColor,
+                borderWidths: [
+                  style.borderTopWidth,
+                  style.borderRightWidth,
+                  style.borderBottomWidth,
+                  style.borderLeftWidth,
+                ].map((width) => Number.parseFloat(width)),
+                rect: box(chapter),
+              };
+            })
+          : [];
+        const lowerChapters = register
+          ? [
+              ...register.querySelectorAll(
+                ":scope > .inventory-register__lower > .inventory-register__chapter",
+              ),
+            ]
+          : [];
+        return {
+          tab: register?.getAttribute("data-inventory-register-tab") || "",
+          register: registerStyle
+            ? {
+                borderTop: Number.parseFloat(registerStyle.borderTopWidth),
+                borderRight: Number.parseFloat(registerStyle.borderRightWidth),
+                borderBottom: Number.parseFloat(registerStyle.borderBottomWidth),
+                borderLeft: Number.parseFloat(registerStyle.borderLeftWidth),
+                radius: Number.parseFloat(registerStyle.borderTopLeftRadius),
+                shadow: registerStyle.boxShadow,
+                background: registerStyle.backgroundColor,
+                rect: box(register),
+                sectionTitles: register.querySelectorAll(".section-title").length,
+                oldShells: register.querySelectorAll(
+                  ".inventory-workshop__card, .inventory-materials__groups, .inventory-material-group__head",
+                ).length,
+                workshopEntries: register.querySelectorAll("[data-inventory-workshop-entry]")
+                  .length,
+                ledgerCells: register.querySelectorAll(".inventory-cell--ledger").length,
+                artifactPanel: Boolean(register.querySelector("[data-artifact-overview]")),
+              }
+            : null,
+          chapters,
+          lower: lowerChapters.map((chapter) => box(chapter)),
+          viewport: { width: window.innerWidth, height: window.innerHeight },
+          documentOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
+        };
+      });
+
+    const assertRegister = async (label, expected) => {
+      const layout = await read();
+      checked += 1;
+      const keys = layout.chapters.map((chapter) => chapter.key);
+      const indices = layout.chapters.map((chapter) => chapter.index);
+      const titles = layout.chapters.map((chapter) => chapter.title);
+      const facts = layout.chapters.map((chapter) => chapter.fact);
+      const brokenChapters = layout.chapters.filter(
+        (chapter) =>
+          !chapter.hasHead ||
+          chapter.radius !== 0 ||
+          chapter.shadow !== "none" ||
+          chapter.background !== "rgba(0, 0, 0, 0)" ||
+          chapter.borderWidths.every((width) => width > 0),
+      );
+      const registerOk =
+        layout.register &&
+        layout.register.borderTop >= 1 &&
+        layout.register.borderBottom >= 1 &&
+        layout.register.borderLeft === 0 &&
+        layout.register.borderRight === 0 &&
+        layout.register.radius === 0 &&
+        layout.register.shadow === "none" &&
+        layout.register.background === "rgba(0, 0, 0, 0)" &&
+        layout.register.sectionTitles === 0 &&
+        layout.register.oldShells === 0 &&
+        layout.register.rect?.scrollWidth <= layout.register.rect?.clientWidth + 1;
+      const factsOk = expected.facts.every((pattern, index) => pattern.test(facts[index] || ""));
+      const stacked =
+        layout.lower.length <= 1 ||
+        layout.lower.every(
+          (rect, index) => index === 0 || layout.lower[index - 1].bottom <= rect.top + 1,
+        );
+      if (
+        layout.tab !== expected.tab ||
+        keys.join(",") !== expected.keys.join(",") ||
+        indices.join(",") !== expected.indices.join(",") ||
+        titles.join(",") !== expected.titles.join(",") ||
+        !factsOk ||
+        !registerOk ||
+        brokenChapters.length > 0 ||
+        layout.documentOverflow ||
+        (expected.stacked && !stacked)
+      ) {
+        failures.push(
+          `[${label}] 行囊四签没有收成同一册:` +
+            `页签=${layout.tab} / 章=${keys.join(",")} / 章号=${indices.join(",")} / ` +
+            `章名=${JSON.stringify(titles)} / 章内真值=${JSON.stringify(facts)} / ` +
+            `续排=${stacked} / 散章=${JSON.stringify(brokenChapters)} / ` +
+            `账页=${JSON.stringify(layout.register)}`,
+        );
+      }
+      return layout;
+    };
+
+    const equip = await assertRegister("390-装备", {
+      tab: "equip",
+      keys: ["briefing", "seats", "collection"],
+      indices: ["壹", "贰", "叁"],
+      titles: ["今日检点", "九佩", "藏品"],
+      facts: [/^$/, /^\d+ \/ 9 已佩$/, /^$/],
+      stacked: true,
+    });
+    if (equip.register?.ledgerCells !== 0 || equip.register?.artifactPanel) {
+      failures.push("[390-装备] 行囊装备签混进了丹药/材料格或法宝面板");
+    }
+
+    await page.getByRole("tab", { name: "丹药" }).click({ timeout: 3000 });
+    await settleVisuals(page);
+    const pill = await assertRegister("390-丹药", {
+      tab: "pill",
+      keys: ["workshop", "cabinet"],
+      indices: ["壹", "贰"],
+      titles: ["丹房", "丹匣"],
+      facts: [/^\d+ 方 · .+灵草 \d+$/, /^\d+ 味 · \d+ 枚$/],
+      stacked: true,
+    });
+    if (pill.register?.workshopEntries !== 2 || pill.register?.ledgerCells < 1) {
+      failures.push(`[390-丹药] 丹房入口或丹匣账格没有落齐(${JSON.stringify(pill.register)})`);
+    }
+    if (SHOTS) {
+      mkdirSync(SHOTS_DIR, { recursive: true });
+      await page.screenshot({ path: join(SHOTS_DIR, "390-inventory-pill-register.png") });
+    }
+
+    await page.getByRole("tab", { name: "材料" }).click({ timeout: 3000 });
+    await settleVisuals(page);
+    const material = await assertRegister("390-材料", {
+      tab: "material",
+      keys: ["craft", "stock"],
+      indices: ["壹", "贰"],
+      titles: ["炉材", "账材"],
+      facts: [/^\d+ 类$/, /^\d+ 类$/],
+      stacked: true,
+    });
+    if (material.register?.ledgerCells !== 6) {
+      failures.push(`[390-材料] 材簿应摊开 6 类,实见 ${material.register?.ledgerCells} 格`);
+    }
+    if (SHOTS) {
+      await page.screenshot({ path: join(SHOTS_DIR, "390-inventory-material-register.png") });
+    }
+
+    await page.getByRole("tab", { name: "法宝" }).click({ timeout: 3000 });
+    await settleVisuals(page);
+    const artifact = await assertRegister("390-法宝", {
+      tab: "artifact",
+      keys: ["artifact"],
+      indices: ["壹"],
+      titles: ["法宝"],
+      facts: [/^\d+ 件 · \d+ 随身$/],
+      stacked: true,
+    });
+    if (!artifact.register?.artifactPanel) {
+      failures.push("[390-法宝] 法宝章节里没有法宝阵账面板");
+    }
+    if (SHOTS) {
+      await page.screenshot({ path: join(SHOTS_DIR, "390-inventory-artifact-register.png") });
+    }
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    for (const [name, label] of [
+      ["丹药", "pill"],
+      ["材料", "material"],
+    ]) {
+      await page.getByRole("tab", { name }).click({ timeout: 3000 });
+      await settleVisuals(page);
+      const pair = await read();
+      checked += 1;
+      const sameRow =
+        pair.lower.length === 2 &&
+        Math.abs(pair.lower[0].top - pair.lower[1].top) <= 2 &&
+        pair.lower[1].left >= pair.lower[0].right - 1;
+      if (!sameRow || pair.documentOverflow) {
+        failures.push(`[1280-${label}] 行囊两章没有左右并读(${JSON.stringify(pair.lower)})`);
+      }
+    }
+    if (SHOTS) {
+      await page.getByRole("tab", { name: "丹药" }).click({ timeout: 3000 });
+      await settleVisuals(page);
+      await page.screenshot({ path: join(SHOTS_DIR, "1280-inventory-pill-register.png") });
+    }
+
+    await page.setViewportSize({ width: 195, height: 422 });
+    for (const [name, label] of [
+      ["装备", "equip"],
+      ["丹药", "pill"],
+      ["材料", "material"],
+      ["法宝", "artifact"],
+    ]) {
+      await page.getByRole("tab", { name }).click({ timeout: 3000 });
+      await settleVisuals(page);
+      const narrow = await read();
+      checked += 1;
+      const factsBelow = narrow.chapters
+        .filter((chapter) => chapter.fact)
+        .every(
+          (chapter) =>
+            chapter.titleTop !== null &&
+            chapter.factTop !== null &&
+            chapter.factTop >= chapter.titleTop,
+        );
+      const chapterProblems = [...(await Promise.resolve(problemsOf(await measurePage(page))))];
+      if (narrow.documentOverflow || !factsBelow || chapterProblems.length > 0) {
+        failures.push(
+          `[195-${label}] 行囊续卷的章内读数或窄屏排版不合格:` +
+            `横向溢出=${narrow.documentOverflow} / 真值下移=${factsBelow} / ` +
+            `页面=${chapterProblems.join(" / ") || "无"}`,
+        );
+      }
+      if (SHOTS) {
+        await page.screenshot({ path: join(SHOTS_DIR, `195-inventory-${label}-register.png`) });
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[行囊四签] 页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
 /** 门庭先报今日:四门存底、选签确认、在途进度与一令齐发 */
 async function taskApprenticePulse() {
   const failures = [];
@@ -17862,6 +18157,7 @@ const TASKS = [
   ["存档导出 / 导入往返", taskSaveRoundTrip],
   ["智能收纳不扔有投入的件", taskSmartKeep],
   ["背包先报新得与可换槽位", taskInventoryAttention],
+  ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
   ["一键分解先勾后点", taskDecompose],
   ["法宝炼化的两笔账", taskArtifactRefine],

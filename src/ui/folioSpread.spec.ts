@@ -120,14 +120,25 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
 
     expect(view).toContain('<div class="folio-page folio-page--stack stagger-in">');
     expect(view).toContain('class="inventory-tabs folio-span-all mt-3"');
-    expect(view).toContain('<article class="inventory-register folio-span-all"');
+    expect(view).toMatch(
+      /<article\s+class="inventory-register folio-span-all"[\s\S]{0,120}?data-inventory-register\b/,
+    );
+    expect(view.match(/data-inventory-register-tab=/g)).toHaveLength(4);
     expect(view).toContain('class="inventory-register__lower"');
     expect(view).toMatch(
       /class="inventory-register__chapter inventory-equipment"[\s\S]{0,100}?data-inventory-equipment/,
     );
     expect(view).toContain('class="inventory-register__chapter inventory-collection"');
-    expect(view).toContain('class="inventory-materials folio-span-all"');
-    expect(view).toContain('class="inventory-artifacts folio-span-all"');
+    expect(view).toMatch(
+      /class="inventory-register folio-span-all"[\s\S]{0,160}?data-inventory-register-tab="pill"/,
+    );
+    expect(view).toMatch(
+      /class="inventory-register folio-span-all"[\s\S]{0,160}?data-inventory-register-tab="material"/,
+    );
+    expect(view).toMatch(
+      /class="inventory-register folio-span-all"[\s\S]{0,160}?data-inventory-register-tab="artifact"/,
+    );
+    expect(view).toContain('class="inventory-register__chapter inventory-artifacts"');
   });
 
   it("真浏览器门在 1280 档核外壳宽度、双栏、宽案与读卷宽度,避免只靠源码自证", () => {

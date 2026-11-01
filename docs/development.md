@@ -299,13 +299,16 @@ error: Failed to resolve vite command: GenericFailure, Expected
 运行时门从 300 件后期背包点开武器槽,逐批核到末页再回翻;195 宽下另把候选续到第二批,
 检查分页读数、入口与整扇弹窗没有挤压或溢出。
 
-行囊装备签现在是一册「行囊续卷」:今日检点、九佩、藏品三章由
-`src/ui/inventoryDesk.ts` 的同一份章序装配,检点主账、九席阵账与藏品行不再各套
-一层卡纸。九席仍是九个真实的 `data-equip-slot`,藏品仍走原来的 `inventoryWindow`
-分批窗口、`data-inventory-prev` 回翻与焦点链;换装候选和数量仍分别直读
-`equipUpgrades` 与同一份行囊事实。卷首容量只留视觉总印,精确件数只在检点账出现一次。
-运行时门在 390 与 1280 两档核对三章顺序、九席齐全、零旧卡壳、数据属性同源、主行动
-不宽于账行 72%;195 CSS px 下整册退单列后再过横向溢出与挤压判据。结构与事实源由
+行囊四签现在同住一册「行囊续卷」:装备三章(今日检点、九佩、藏品)、丹药两章
+(丹房、丹匣)、材料两章(炉材、账材)与法宝一章由 `src/ui/inventoryDesk.ts` 的
+同一份章序装配。八章共用 `InventoryChapterHead` 的章号、题名、读法与章内真值;
+丹药和材料格走 `ItemCell` 的 `ledger` 模式,只留账页分栏线,不再另套四边卡与底色。
+九席仍是九个真实的 `data-equip-slot`,藏品仍走原来的 `inventoryWindow` 分批窗口、
+`data-inventory-prev` 回翻与焦点链;换装候选和数量仍分别直读 `equipUpgrades` 与同一份
+行囊事实。丹方数、丹味与总枚数、两组材料类数、法宝库存与随身数也都直读当前汇总。
+卷首容量只留视觉总印,精确件数只在检点账出现一次。运行时门在 390、1280 与 195
+三档核对四签八章的章序、题名及真值,九席齐全、零旧卡壳、数据属性同源、主行动不宽于
+账行 72%,以及两章并读、章内真值下移与横向溢出。结构与事实源由
 `src/ui/inventoryDesk.spec.ts` 与 `src/ui/folioSpread.spec.ts` 守住。
 
 法宝全册共 45 张密卡,按 6 件一批、最多保留 12 件。卷首先用 `artifactDeskSummary`

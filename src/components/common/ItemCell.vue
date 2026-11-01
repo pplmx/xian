@@ -1,9 +1,12 @@
 <template>
   <button
-    class="relative aspect-square rounded-[2px] border transition-transform active:scale-95"
-    :class="plain ? 'border-ink/15 bg-ink/[0.03]' : ''"
+    class="relative transition-transform active:scale-95"
+    :class="[
+      ledger ? 'inventory-cell--ledger' : 'aspect-square rounded-[2px] border',
+      !ledger && plain ? 'border-ink/15 bg-ink/[0.03]' : '',
+    ]"
     :style="
-      plain
+      plain || ledger
         ? undefined
         : {
             borderColor: colorWithAlpha(tone, intensity.border),
@@ -88,6 +91,8 @@ const props = withDefaults(
     foot?: string;
     /** 走墨色中性底(材料这类无品质的) */
     plain?: boolean;
+    /** 账页式格:由页面只留分栏线,不再自带四边卡与底色 */
+    ledger?: boolean;
     /** 图标色 class(plain 时用,如 "text-jade") */
     iconClass?: string;
     /** 图标尺寸 */
@@ -95,7 +100,16 @@ const props = withDefaults(
     /** 读屏用的完整说明(名字会被截断) */
     label?: string;
   }>(),
-  { tone: "", quality: undefined, foot: "", plain: false, iconClass: "", size: 20, label: "" },
+  {
+    tone: "",
+    quality: undefined,
+    foot: "",
+    plain: false,
+    ledger: false,
+    iconClass: "",
+    size: 20,
+    label: "",
+  },
 );
 const emit = defineEmits<{ open: [] }>();
 

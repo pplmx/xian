@@ -3,9 +3,8 @@
   /*
    * 行囊续卷 —— 先盘九佩，再问本批新得与可换。
    *
-   * 卷首只留容量弧,正文三章同住一张开口纸面:今日检点先摊新得与可换,
-   * 九佩用九席阵账续排,藏品再以连续清单收尾。旧卡纸规则已清掉,这里只看
-   * 账线、章首与行动层级。
+   * 卷首只留容量弧,四签八章同住一类开口纸面:装备沿检点、九佩与藏品续排,
+   * 丹药、材料与法宝也只用账线、章首与行动层级。旧卡纸规则已清掉。
    */
   .inventory-masthead__meta {
     display: flex;
@@ -89,45 +88,47 @@
   }
   .inventory-workshop__grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.55rem;
-    margin-top: 0.55rem;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    margin-top: 0.48rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
   }
-  .inventory-workshop__card {
+  .inventory-workshop__entry {
     display: grid;
     min-width: 0;
+    min-height: 4.2rem;
     grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
     gap: 0.5rem;
-    padding: 0.68rem 0.72rem;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.13);
-    background: linear-gradient(
-      125deg,
-      rgb(var(--color-paper-lifted-rgb)),
-      rgb(var(--color-paper-rgb) / 0.34)
-    );
+    padding: 0.58rem 0.2rem;
+    border: 0;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    border-radius: 0;
+    background: transparent;
     text-align: left;
   }
-  .inventory-workshop__card--brew {
-    border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.58);
+  .inventory-workshop__entry--brew {
+    box-shadow: inset 2px 0 0 rgb(var(--color-cinnabar-rgb) / 0.58);
   }
-  .inventory-workshop__card--shop {
-    border-left: 2px solid rgb(var(--color-jade-rgb) / 0.58);
+  .inventory-workshop__entry--shop {
+    box-shadow: inset 2px 0 0 rgb(var(--color-qing-rgb) / 0.58);
   }
   .inventory-workshop__seal {
     display: grid;
-    width: 2rem;
-    height: 2rem;
+    width: 1.8rem;
+    height: 1.8rem;
+    margin-left: 0.42rem;
     place-items: center;
-    color: rgb(var(--color-paper-rgb));
+    border: 1px solid currentColor;
+    background: transparent;
     font-family: var(--font-kai);
     font-size: var(--type-title);
   }
-  .inventory-workshop__seal--cinnabar {
-    background: rgb(var(--color-cinnabar-rgb) / 0.9);
+  .inventory-workshop__entry--brew .inventory-workshop__seal {
+    color: rgb(var(--color-cinnabar-rgb));
   }
-  .inventory-workshop__seal--jade {
-    background: rgb(var(--color-jade-rgb) / 0.9);
+  .inventory-workshop__entry--shop .inventory-workshop__seal {
+    color: rgb(var(--color-qing-rgb));
   }
   .inventory-workshop__copy {
     display: flex;
@@ -155,7 +156,24 @@
   .inventory-pill-cabinet__grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.5rem;
+    gap: 0;
+    margin-top: 0.48rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+  }
+  .inventory-cell--ledger {
+    min-height: 5.2rem;
+    border: 0;
+    border-right: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .inventory-cell--ledger:nth-child(4n) {
+    border-right: 0;
+  }
+  .inventory-cell--ledger > span:first-child {
+    padding: 0.55rem 0.25rem;
   }
   .inventory-artifact-list {
     display: grid;
@@ -426,45 +444,18 @@
     font-size: var(--type-note);
     line-height: 1.6;
   }
-  .inventory-materials__groups {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.65rem;
-    margin-top: 0.55rem;
-  }
   .inventory-material-group {
     min-width: 0;
-    padding: 0.65rem 0.72rem 0.75rem;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.12);
-    background:
-      linear-gradient(135deg, rgb(var(--color-qing-rgb) / 0.035), transparent 58%),
-      rgb(var(--color-paper-lifted-rgb));
-  }
-  .inventory-material-group__head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.12rem 0.55rem;
-    margin-bottom: 0.5rem;
-  }
-  .inventory-material-group__title {
-    color: rgb(var(--color-ink-soft-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-body);
-    letter-spacing: 0.12em;
-  }
-  .inventory-material-group__hint,
-  .inventory-material-group__count {
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-  }
-  .inventory-material-group__count {
-    margin-left: auto;
   }
   .inventory-material-group__grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.5rem;
+    gap: 0;
+    margin-top: 0.48rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+  }
+  .inventory-material-group__grid .inventory-cell--ledger:nth-child(4n) {
+    border-right: 0;
   }
   /*
    * 器评帖 —— 装备详情不再从一排标签直接跳进三围表。
@@ -727,13 +718,32 @@
   .equip-dossier__workshop > .equip-dossier__section-head {
     margin: -0.55rem -0.65rem 0.5rem;
   }
+  @media (min-width: 620px) {
+    .inventory-workshop__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .inventory-workshop__entry:nth-child(2) {
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    }
+  }
   @media (min-width: 960px) {
-    .inventory-materials__groups {
+    .inventory-register__lower--material {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .app-shell[data-folio-layout="spread"] .inventory-pill-cabinet__grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .app-shell[data-folio-layout="spread"] .inventory-pill-cabinet__grid .inventory-cell--ledger {
+      border-right: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    }
+
+    .app-shell[data-folio-layout="spread"]
+      .inventory-pill-cabinet__grid
+      .inventory-cell--ledger:nth-child(3n) {
+      border-right: 0;
     }
 
     .app-shell[data-folio-layout="spread"] .inventory-artifact-list {
@@ -845,14 +855,21 @@
       margin-inline: 0;
     }
 
-    .inventory-workshop__grid,
-    .inventory-materials__groups {
+    .inventory-workshop__grid {
       grid-template-columns: minmax(0, 1fr);
     }
 
     .inventory-pill-cabinet__grid,
     .inventory-material-group__grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .inventory-cell--ledger:nth-child(4n) {
+      border-right: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    }
+
+    .inventory-cell--ledger:nth-child(2n) {
+      border-right: 0;
     }
 
     .inventory-collection__pager > button {
@@ -864,8 +881,8 @@
   /*
    * 行囊续卷的最终版式。
    *
-   * 三章同住一张开口纸面:检点是总账，九佩是九席阵账，藏品是连续清单。
-   * 章节之间只靠账线和章首分层，不再让三块各套边框、底色与投影。
+   * 四签八章共用同一张开卷版式:章节之间只靠账线和章首分层，
+   * 不再让每一块各套边框、底色与投影。
    */
   .inventory-register {
     margin-top: 0.35rem;
@@ -895,6 +912,13 @@
 
   .inventory-register__lower > .inventory-register__chapter {
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+  }
+
+  .inventory-artifacts > .artifact-desk {
+    margin-top: 0.48rem;
+    border: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    background: transparent;
   }
 
   .inventory-chapter-head {
@@ -1438,6 +1462,10 @@
       grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
     }
 
+    .inventory-register__lower--material {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .inventory-register__lower > .inventory-register__chapter + .inventory-register__chapter {
       border-top: 0;
       border-left: 1px solid rgb(var(--color-ink-rgb) / 0.12);
@@ -1490,8 +1518,7 @@
     .inventory-briefing__summary,
     .inventory-register__lower,
     .inventory-equipment__grid,
-    .inventory-workshop__grid,
-    .inventory-materials__groups {
+    .inventory-workshop__grid {
       grid-template-columns: minmax(0, 1fr);
     }
 

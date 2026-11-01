@@ -13,12 +13,27 @@ function source(rel: string): string {
 }
 
 describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
-  it("行囊续卷的三章只由装配表给出顺序与章名", () => {
+  it("行囊四册只由同一份装配表给出顺序与章名", () => {
     expect(inventoryChapters().map(({ key, index, title }) => ({ key, index, title }))).toEqual([
       { key: "briefing", index: "壹", title: "今日检点" },
       { key: "seats", index: "贰", title: "九佩" },
       { key: "collection", index: "叁", title: "藏品" },
     ]);
+    expect(
+      inventoryChapters("pill").map(({ key, index, title }) => ({ key, index, title })),
+    ).toEqual([
+      { key: "workshop", index: "壹", title: "丹房" },
+      { key: "cabinet", index: "贰", title: "丹匣" },
+    ]);
+    expect(
+      inventoryChapters("material").map(({ key, index, title }) => ({ key, index, title })),
+    ).toEqual([
+      { key: "craft", index: "壹", title: "炉材" },
+      { key: "stock", index: "贰", title: "账材" },
+    ]);
+    expect(
+      inventoryChapters("artifact").map(({ key, index, title }) => ({ key, index, title })),
+    ).toEqual([{ key: "artifact", index: "壹", title: "法宝" }]);
     expect(inventoryChapter("seats")).toMatchObject({
       index: "贰",
       hint: "九席随身,空悬与可换各归其位",
@@ -160,46 +175,105 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
     expect(view, "穿齐一组仍调用核心动作").toContain("const n = equipSetCombo(inventory, setId);");
   });
 
-  it("阅读顺序从今日检点、九佩走到藏品;丹房先于丹匣,材簿按用途分两组", () => {
+  it("装备签从今日检点、九佩走到藏品", () => {
     const view = source("src/views/InventoryView.vue");
+    const equipmentStart = view.indexOf('data-inventory-register-tab="equip"');
+    const pillStart = view.indexOf('data-inventory-register-tab="pill"');
+    const equipmentView = view.slice(equipmentStart, pillStart);
 
-    expect(view).toContain('<article class="inventory-register folio-span-all"');
-    expect(view).toContain("data-inventory-register");
-    const briefingAt = view.indexOf("data-inventory-overview");
-    const equipmentAt = view.indexOf("data-inventory-equipment");
-    const collectionAt = view.indexOf("data-inventory-total");
+    expect(equipmentStart).toBeGreaterThan(-1);
+    expect(pillStart).toBeGreaterThan(equipmentStart);
+    expect(equipmentView).toContain('class="inventory-register folio-span-all"');
+    expect(equipmentView).toContain("data-inventory-register");
+    const briefingAt = equipmentView.indexOf("data-inventory-overview");
+    const equipmentAt = equipmentView.indexOf("data-inventory-equipment");
+    const collectionAt = equipmentView.indexOf("data-inventory-total");
     expect(briefingAt, "检点账要有稳定落点").toBeGreaterThan(-1);
     expect(equipmentAt, "九佩要有稳定落点").toBeGreaterThan(briefingAt);
     expect(collectionAt, "全部藏品要排在九佩之后").toBeGreaterThan(equipmentAt);
-    expect(view.slice(equipmentAt, collectionAt), "九佩要报真实已佩数").toContain(
+    expect(equipmentView.slice(equipmentAt, collectionAt), "九佩要报真实已佩数").toContain(
       ':fact="`${equippedCount} / ${SLOTS.length} 已佩`"',
     );
     expect(
-      [...view.matchAll(/data-inventory-chapter="([^"]+)"/g)].map((match) => match[1]),
+      [...equipmentView.matchAll(/data-inventory-chapter="([^"]+)"/g)].map((match) => match[1]),
       "三章必须按检点、九佩、藏品续排",
     ).toEqual(["briefing", "seats", "collection"]);
-    expect(view.slice(collectionAt), "藏品仍保留分批窗口与回翻").toContain(
+    expect(equipmentView.slice(collectionAt), "藏品仍保留分批窗口与回翻").toContain(
       'v-for="row in itemPage.visible"',
     );
-    expect(view, "藏品不再套回独立装备卡").toContain("InventoryCollectionRow");
-    expect(view, "藏品行仍接收同一份新得判据").toContain(':is-new="row.isNew"');
+    expect(equipmentView, "藏品不再套回独立装备卡").toContain("InventoryCollectionRow");
+    expect(equipmentView, "藏品行仍接收同一份新得判据").toContain(':is-new="row.isNew"');
+  });
 
-    const workshopAt = view.indexOf("data-inventory-workshop");
-    const pillCabinetAt = view.indexOf('class="inventory-pill-cabinet"');
-    expect(workshopAt, "丹房要有稳定落点").toBeGreaterThan(collectionAt);
-    expect(pillCabinetAt, "丹匣要排在丹房之后").toBeGreaterThan(workshopAt);
-    expect(view.slice(workshopAt, pillCabinetAt), "丹房仍直通开炉与灵草坊").toContain(
-      'class="inventory-workshop__grid"',
+  it("丹药、材料与法宝签也收进同一张行囊续卷,不再借通用节题或旧卡壳", () => {
+    const view = source("src/views/InventoryView.vue");
+    const layout = source("scripts/layout-check.mjs");
+    const pillStart = view.indexOf('data-inventory-register-tab="pill"');
+    const materialStart = view.indexOf('data-inventory-register-tab="material"');
+    const artifactStart = view.indexOf('data-inventory-register-tab="artifact"');
+    const detailStart = view.indexOf("<!-- 丹药详情 -->");
+    const pill = view.slice(pillStart, materialStart);
+    const material = view.slice(materialStart, artifactStart);
+    const artifact = view.slice(artifactStart, detailStart);
+
+    expect(pillStart).toBeGreaterThan(-1);
+    expect(materialStart).toBeGreaterThan(pillStart);
+    expect(artifactStart).toBeGreaterThan(materialStart);
+    expect(detailStart).toBeGreaterThan(artifactStart);
+    expect(view, "通用章节题头已从行囊页退场").not.toContain("<SectionTitle");
+    expect(view, "通用章节题头 import 也已撤掉").not.toContain(
+      'import SectionTitle from "@/components/common/SectionTitle.vue"',
     );
-    expect(view.slice(pillCabinetAt), "丹匣仍逐味读取持有数").toContain(':foot="`×${row.count}`"');
+    expect(
+      view.match(/data-inventory-register-tab="(?:equip|pill|material|artifact)"/g),
+    ).toHaveLength(4);
+    expect(view.match(/<InventoryChapterHead\b/g), "四签八章各用同一枚章首").toHaveLength(8);
 
-    const craftAt = view.indexOf('data-inventory-material-group="craft"');
-    const stockAt = view.indexOf('data-inventory-material-group="stock"');
-    expect(craftAt, "炼制之材要有稳定落点").toBeGreaterThan(pillCabinetAt);
-    expect(stockAt, "修行所积要排在炼制之后").toBeGreaterThan(craftAt);
+    expect(
+      [...pill.matchAll(/data-inventory-chapter="([^"]+)"/g)].map((match) => match[1]),
+    ).toEqual(["workshop", "cabinet"]);
+    expect(
+      [...material.matchAll(/data-inventory-chapter="([^"]+)"/g)].map((match) => match[1]),
+    ).toEqual(["craft", "stock"]);
+    expect(
+      [...artifact.matchAll(/data-inventory-chapter="([^"]+)"/g)].map((match) => match[1]),
+    ).toEqual(["artifact"]);
+
+    expect(pill, "丹房章真值读丹方与当前主修灵草持有").toContain(':fact="pillWorkshopFact"');
+    expect(pill, "丹匣章真值读同一份丹味与总枚数").toContain(':fact="pillCabinetFact"');
+    expect(pill, "丹房仍直通开炉与灵草坊").toContain('class="inventory-workshop__grid"');
+    expect(pill, "丹房入口不重报章首已有的丹方与灵草数").not.toContain(
+      "已知丹方 ${recipes.length}",
+    );
+    expect(pill, "丹匣仍逐味读取持有数").toContain(':foot="`×${row.count}`"');
+    expect(pill, "丹药格子改用账页式格").toContain("ledger");
+    expect(pill, "旧丹房卡片壳已撤").not.toContain("inventory-workshop__card");
+
+    expect(material, "炉材章真值读同一份材料分组").toContain(
+      ':fact="`${craftMaterials.length} 类`"',
+    );
+    expect(material, "账材章真值读同一份材料分组").toContain(
+      ':fact="`${stockMaterials.length} 类`"',
+    );
     expect(view, "材簿分组键继续读资源事实源").toContain("RESOURCE_LABELS.herb");
     expect(view, "材簿按同一组键分为两组").toContain(
       "materialGrid.value.filter((m) => CRAFT_KEYS.includes(m.name))",
+    );
+    expect(material, "旧分组卡与重复小标题已撤").not.toContain("inventory-material-group__head");
+
+    expect(artifact, "法宝章真值直读库存与随身数").toContain(':fact="artifactChapterFact"');
+    expect(artifact, "法宝面板仍挂在章内").toContain("<ArtifactPanel />");
+    expect(view, "丹匣总枚数由同一份丹味清单归总").toContain(
+      "const pillTotal = computed(() => pillRows.value.reduce((sum, row) => sum + row.count, 0));",
+    );
+    expect(view, "丹匣章真值不另造一份持有数").toContain(
+      "const pillCabinetFact = computed(() => `${pillRows.value.length} 味 · ${pillTotal.value} 枚`);",
+    );
+    expect(layout, "真浏览器门要逐签核对同一册续卷").toContain(
+      "async function taskInventoryTabRegisters()",
+    );
+    expect(layout, "新门要挂进排版自检清单").toContain(
+      '["背包四签同住一册续卷", taskInventoryTabRegisters]',
     );
   });
 
@@ -238,17 +312,15 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
     expect(view, "藏品有稳定落点").toMatch(
       /class="inventory-register__chapter inventory-collection"/,
     );
-    expect(view, "丹房与丹匣同排双页").toContain('class="inventory-workshop"');
-    expect(view, "丹匣与丹房同排且仍读同一份持有数").toContain(
-      'class="inventory-pill-cabinet" data-inventory-pill-cabinet',
+    expect(view, "丹房与丹匣同排双页").toContain("inventory-workshop");
+    expect(view, "丹匣与丹房同排且仍读同一份持有数").toMatch(
+      /class="inventory-register__chapter inventory-pill-cabinet"[\s\S]{0,100}?data-inventory-pill-cabinet/,
     );
-    expect(view, "材簿两组成跨栏总账").toContain(
-      'class="inventory-materials folio-span-all" data-inventory-materials',
-    );
+    expect(view, "材簿两章同住一件续卷").toContain('data-inventory-register-tab="material"');
     expect(view, "法宝册要有统一章节头与跨栏落点").toContain(
-      '<section class="inventory-artifacts folio-span-all" data-inventory-artifacts>',
+      'class="inventory-register__chapter inventory-artifacts"',
     );
-    expect(view).toContain('<SectionTitle title="法宝" hint="位次、祭炼与随身取舍" />');
+    expect(view).toContain(':title="artifactChapter.title"');
     expect(artifacts, "法宝卡改挂可响应的语义清单").toContain(
       '<div class="inventory-artifact-list">',
     );
@@ -260,6 +332,12 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
     );
     expect(css).toMatch(
       /@media \(min-width: 960px\)\s*\{[\s\S]*\.inventory-artifact-list\s*\{[\s\S]{0,100}repeat\(2, minmax\(0, 1fr\)\)/,
+    );
+    expect(css).toMatch(
+      /\.app-shell\[data-folio-layout="spread"\]\s+\.inventory-pill-cabinet__grid\s+\.inventory-cell--ledger:nth-child\(3n\)\s*\{\s*border-right:\s*0;/,
+    );
+    expect(css).toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]*\.inventory-register__lower--material\s*\{[\s\S]{0,120}repeat\(2, minmax\(0, 1fr\)\)/,
     );
   });
 
@@ -303,23 +381,35 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
     expect(inventoryCss, "主行动只占账行一段").toMatch(
       /\.inventory-briefing__wear\s*\{[\s\S]{0,260}max-width:\s*72%/,
     );
+    expect(inventoryCss, "丹房入口退成账行而非四边卡").toMatch(
+      /\.inventory-workshop__entry\s*\{[\s\S]{0,420}border-radius:\s*0;[\s\S]{0,180}background:\s*transparent/,
+    );
+    expect(inventoryCss, "材簿分组不再套第二层卡壳").toMatch(
+      /\.inventory-material-group\s*\{\s*min-width:\s*0;\s*\}/,
+    );
+    expect(inventoryCss, "丹药与材料格只用账页分栏线").toMatch(
+      /\.inventory-cell--ledger\s*\{[\s\S]{0,360}border-radius:\s*0;[\s\S]{0,160}background:\s*transparent/,
+    );
     expect(inventoryCss).toMatch(
       /@media \(min-width: 360px\)\s*\{[\s\S]{0,260}\.inventory-briefing__summary\s*\{[\s\S]{0,150}repeat\(3, minmax\(0, 1fr\)\)/,
     );
     expect(inventoryCss).toMatch(
-      /@media \(min-width: 960px\)\s*\{[\s\S]{0,420}\.inventory-materials__groups\s*\{[\s\S]{0,120}repeat\(2, minmax\(0, 1fr\)\)/,
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,420}\.inventory-register__lower--material\s*\{[\s\S]{0,120}repeat\(2, minmax\(0, 1fr\)\)/,
     );
     const tinyStart = inventoryCss.indexOf("@media (max-width: 220px)");
     const tinyCss = inventoryCss.slice(tinyStart);
     expect(tinyStart, "220 以下的窄档要能定位到").toBeGreaterThan(-1);
     expect(tinyCss).toMatch(
-      /\.inventory-briefing__summary,[\s\S]{0,180}\.inventory-register__lower,[\s\S]{0,180}\.inventory-equipment__grid,[\s\S]{0,120}\.inventory-workshop__grid,[\s\S]{0,120}\.inventory-materials__groups\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
+      /\.inventory-briefing__summary,[\s\S]{0,180}\.inventory-register__lower,[\s\S]{0,180}\.inventory-equipment__grid,[\s\S]{0,120}\.inventory-workshop__grid\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
     expect(tinyCss).toMatch(
       /\.inventory-pill-cabinet__grid,[\s\S]{0,120}\.inventory-material-group__grid\s*\{[\s\S]{0,100}repeat\(2, minmax\(0, 1fr\)\)/,
     );
     expect(tinyCss, "藏品行在极窄档仍是一列清单").toMatch(
       /\.inventory-collection__grid\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(tinyCss, "章内真值在 200% 缩放下退到章名下方").toMatch(
+      /\.inventory-chapter-head__tail\s*\{[\s\S]{0,120}grid-column:\s*1/,
     );
   });
 });
