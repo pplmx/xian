@@ -147,7 +147,7 @@ describe("楷体子集 · 覆盖", () => {
   });
 
   it("欢迎页真正用到的楷体字都留在第一片", () => {
-    // 首屏只有 31 个 font-kai 字符;若按全站频次排序会散进七片,多拉约 300KB。
+    // 首屏只有几十个 font-kai 字符;若按全站频次排序会散进多片,多拉几百 KB。
     // 生成脚本把这一组固定前置,这里从脚本读同一份清单,避免另抄一份。
     const script = readFileSync(BUILD_SCRIPT, "utf-8");
     const boot = /BOOT_FONT_CHARS = set\("([^"]+)"\)/.exec(script)?.[1] ?? "";

@@ -92,11 +92,14 @@ EXTRA = (
 """
 首屏楷体字。取的是欢迎页真正落在 `font-kai` 上、并会触发内置字体下载的字符。
 
-这些字若按全站语料频次参与排序,会散落到六、七个切片里:首屏明明只有 31 个字,
-却要为每片里的一两个字各拉一整份字体。把它们固定放进第一片,欢迎页只取一份即可;
-其余页面按需再取后面的片,覆盖不变。
+这些字若按全站语料频次参与排序,会散落到六、七个切片里:首屏明明只有几十个字,
+却要为每片里的一两个字各拉一整份字体。清单里的字永远留在第一片(再补一档高频字),
+欢迎页只取一份即可;其余页面按需再取后面的片,覆盖不变。
+
+**改开卷页的 `font-kai` 文案时,同步补这里。** 漏一个中频字,浏览器就会为它拉下
+一整片;`scripts/first-paint.mjs` 的 160KB 硬预算会把这个回归当场打红。
 """
-BOOT_FONT_CHARS = set("道玄枢录从一介凡身，走入万象之四方二十重可轮回启封山本作所守三")
+BOOT_FONT_CHARS = set("道玄枢录从一介凡身，走入万象之枢四界·二十壹贰叁境重可轮回启封山本作所守三则零外域请求")
 
 # 允许「由系统符号/emoji 字体去画」的字符 —— 它们不是汉字,楷体里也没有,
 # 混排时由系统字体补上(▾ 之类的箭头、✧ 之类的装饰),这是正常的回退,不是缺字。
@@ -188,13 +191,16 @@ def split_chunks(chars: set[str], corpus: str, per_band: int, per_cold: int) -> 
     docs/development.md 的首屏一节,量法是 scripts/first-paint.mjs。
     """
     weight = {c: corpus.count(c) for c in chars if c in corpus}
+    # 第一片始终由首屏字打底,再补一档高频字;后续片只从非首屏字里切。
+    # 这样新增一个开卷字只会让第一片长大一点,不会把后面每一片都推着换位。
+    boot = sorted(c for c in chars if c in BOOT_FONT_CHARS)
     hot = sorted(
-        [c for c in chars if weight.get(c, 0) > 0],
-        # 首屏字先于频次排序,确保欢迎页只碰第一片;组内仍按频次稳定排列。
-        key=lambda c: (c not in BOOT_FONT_CHARS, -weight[c], c),
+        [c for c in chars if c not in BOOT_FONT_CHARS and weight.get(c, 0) > 0],
+        key=lambda c: (-weight[c], c),
     )
-    cold = sorted([c for c in chars if weight.get(c, 0) == 0])
-    bands: list[list[str]] = [hot[i : i + per_band] for i in range(0, len(hot), per_band)]
+    cold = sorted(c for c in chars if c not in BOOT_FONT_CHARS and weight.get(c, 0) == 0)
+    bands: list[list[str]] = [boot + hot[:per_band]] if boot else []
+    bands += [hot[i : i + per_band] for i in range(per_band, len(hot), per_band)]
     # 储备那一段(GB2312 里语料没用到的那几千字)按码位切:它们只在「玩家起了个生僻名字」
     # 时才用得上,整段一千多 KB 一份太贵 —— 切小之后,那一个名字只拽下来一小片。
     bands += [cold[i : i + per_cold] for i in range(0, len(cold), per_cold)]

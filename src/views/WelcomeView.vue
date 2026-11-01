@@ -15,13 +15,15 @@
         <span class="opening-gate__folio">卷一 · 入世</span>
       </header>
 
-      <div class="opening-gate__layout">
-        <section class="opening-gate__threshold">
-          <p class="opening-gate__kicker">
-            <span aria-hidden="true" />
-            山门未闭
-          </p>
-          <h2>从一介凡身，走入万象之枢</h2>
+      <div class="opening-gate__register" data-opening-gate-register>
+        <section class="opening-gate__threshold" data-opening-chapter="gate" data-opening-gate-main>
+          <OpeningChapterHead
+            index="壹"
+            eyebrow="山门未闭"
+            title="一介凡身，入万象之枢"
+            hint="先看此世能走多远，再决定是否落印。"
+            :fact="`${cnNumber(WORLDS.length)} 界 · ${cnNumber(REALMS.length)} 境`"
+          />
           <p class="opening-gate__lead">
             此世没有开局即定的天命。你从引气一层起，择功法、铸道途、渡天劫；
             每一次转世都带走一点前世的答案。
@@ -42,25 +44,27 @@
             </div>
           </dl>
 
-          <button
-            class="btn-seal animate-glow-pulse opening-gate__enter tracking-[0.3em] whitespace-nowrap tinylens:tracking-normal"
-            data-opening-enter
-            @click="onStart"
-          >
-            <span>启封入山</span>
-            <span class="opening-gate__enter-mark" aria-hidden="true">入</span>
-          </button>
-          <p class="opening-gate__oath">无需账号 · 进度只在本机 · 不加载外部脚本</p>
+          <div class="opening-gate__call">
+            <button
+              class="btn-seal animate-glow-pulse opening-gate__enter tracking-[0.3em] whitespace-nowrap tinylens:tracking-normal"
+              data-opening-enter
+              @click="onStart"
+            >
+              <span>启封入山</span>
+              <span class="opening-gate__enter-mark" aria-hidden="true">入</span>
+            </button>
+            <p class="opening-gate__oath">无需账号 · 进度只在本机 · 不加载外部脚本</p>
+          </div>
         </section>
 
-        <aside class="opening-gate__ledger">
-          <header>
-            <div>
-              <p>本作所守</p>
-              <span>三则</span>
-            </div>
-            <span class="opening-gate__ledger-seal" aria-hidden="true">枢</span>
-          </header>
+        <aside class="opening-gate__ledger" data-opening-chapter="rules" data-opening-gate-rules>
+          <OpeningChapterHead
+            index="贰"
+            eyebrow="本作所守"
+            title="入山三则"
+            hint="只订本机、断网与去留三件事。"
+            fact="零外域请求"
+          />
           <ol>
             <li v-for="(line, index) in highlights" :key="line">
               <span class="opening-gate__ordinal tabular">{{ cnNumber(index + 1) }}</span>
@@ -132,6 +136,7 @@ import PrivacyDialog from "@/components/common/PrivacyDialog.vue";
 import AboutDialog from "@/components/common/AboutDialog.vue";
 import WarpPortal from "@/components/common/WarpPortal.vue";
 import OpeningBackdrop from "@/components/opening/OpeningBackdrop.vue";
+import OpeningChapterHead from "@/components/opening/OpeningChapterHead.vue";
 import OpeningPact from "@/components/opening/OpeningPact.vue";
 import { REALMS, WORLDS } from "@/data/realms";
 import { cnNumber } from "@/utils/format";
@@ -247,10 +252,7 @@ function onFilePicked(e: Event): void {
 .opening-gate__eyebrow,
 .opening-gate__folio,
 .opening-gate__motto,
-.opening-gate__kicker,
 .opening-gate__oath,
-.opening-gate__ledger header p,
-.opening-gate__ledger header span,
 .opening-gate__ledger footer {
   font-size: var(--type-note);
 }
@@ -280,47 +282,31 @@ function onFilePicked(e: Event): void {
   white-space: nowrap;
 }
 
-.opening-gate__layout {
+.opening-gate__register {
   display: grid;
   min-width: 0;
   grid-template-columns: minmax(0, 1fr);
-  gap: 1.35rem;
+  gap: 0.55rem;
   margin-top: 1.35rem;
 }
 
 .opening-gate__threshold {
   min-width: 0;
-  padding: 0.15rem 0 0.35rem;
+  padding: 0 0 0.7rem;
 }
 
-.opening-gate__kicker {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--color-cinnabar);
-  letter-spacing: 0.18em;
-}
-
-.opening-gate__kicker span {
-  width: 1.8rem;
-  height: 1px;
-  background: currentColor;
-}
-
-.opening-gate__threshold h2 {
+.opening-gate__threshold :deep(.opening-chapter-head__title) {
   max-width: 18em;
-  margin-top: 0.72rem;
-  color: var(--color-ink);
-  font-family: var(--font-kai);
-  font-size: var(--type-heading);
-  font-weight: 400;
-  letter-spacing: 0.08em;
-  line-height: 1.42;
+  margin-top: 0.12rem;
+  font-size: clamp(1.45rem, 6.5vw, var(--type-display));
+  letter-spacing: 0.04em;
+  line-height: 1.38;
+  text-wrap: balance;
 }
 
 .opening-gate__lead {
   max-width: 34rem;
-  margin-top: 0.62rem;
+  margin-top: 0.66rem;
   color: var(--color-ink-soft);
   font-size: var(--type-body);
   line-height: 1.8;
@@ -357,13 +343,16 @@ function onFilePicked(e: Event): void {
   line-height: 1.35;
 }
 
+.opening-gate__call {
+  margin-top: 1rem;
+}
+
 .opening-gate__enter {
   display: flex;
   width: min(100%, 22rem);
   min-height: 3.4rem;
   align-items: center;
   justify-content: space-between;
-  margin-top: 1.1rem;
   padding: 0.65rem 0.7rem 0.65rem 1.1rem;
   text-align: left;
 }
@@ -379,7 +368,7 @@ function onFilePicked(e: Event): void {
 }
 
 .opening-gate__oath {
-  margin-top: 0.55rem;
+  margin-top: 0.5rem;
   color: var(--color-ink-faint);
   letter-spacing: 0.04em;
   line-height: 1.6;
@@ -388,56 +377,22 @@ function onFilePicked(e: Event): void {
 .opening-gate__ledger {
   align-self: start;
   min-width: 0;
-  border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
-  border-top: 2px solid var(--color-qing);
-  background:
-    linear-gradient(145deg, rgb(var(--color-qing-rgb) / 0.045), transparent 48%),
-    rgb(var(--color-paper-lifted-rgb) / 0.72);
-  box-shadow: 0.28rem 0.28rem 0 rgb(var(--color-ink-rgb) / 0.025);
-}
-
-.opening-gate__ledger > header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.8rem;
-  border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.1);
-  padding: 0.85rem 0.9rem 0.72rem;
-}
-
-.opening-gate__ledger header p {
-  color: var(--color-ink);
-  font-family: var(--font-kai);
-  font-size: var(--type-title);
-  letter-spacing: 0.14em;
-}
-
-.opening-gate__ledger header span {
-  color: var(--color-ink-faint);
-}
-
-.opening-gate__ledger-seal {
-  display: grid;
-  width: 2.1rem;
-  height: 2.1rem;
-  place-items: center;
-  border: 1px solid rgb(var(--color-qing-rgb) / 0.34);
-  color: var(--color-qing);
-  font-family: var(--font-kai);
-  font-size: var(--type-section);
-  line-height: 1;
+  border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  background: transparent;
+  padding-top: 0.2rem;
 }
 
 .opening-gate__ledger ol {
   display: grid;
+  border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
 }
 
 .opening-gate__ledger li {
   display: grid;
   grid-template-columns: 2rem minmax(0, 1fr);
   gap: 0.62rem;
-  border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
-  padding: 0.72rem 0.9rem;
+  border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+  padding: 0.68rem 0.12rem;
 }
 
 .opening-gate__ledger li:first-child {
@@ -467,7 +422,7 @@ function onFilePicked(e: Event): void {
   align-items: center;
   gap: 0.35rem 0.55rem;
   border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
-  padding: 0.72rem 0.9rem 0.82rem;
+  padding: 0.72rem 0.12rem 0;
   color: var(--color-ink-faint);
 }
 
@@ -476,15 +431,21 @@ function onFilePicked(e: Event): void {
 }
 
 @media (min-width: 820px) {
-  .opening-gate__layout {
+  .opening-gate__register {
     grid-template-columns: minmax(0, 1.16fr) minmax(18rem, 0.84fr);
     align-items: start;
-    gap: 2rem;
+    gap: 0;
     margin-top: 1.8rem;
   }
 
   .opening-gate__threshold {
-    padding-top: 0.45rem;
+    padding: 0 2rem 0 0;
+  }
+
+  .opening-gate__ledger {
+    border-top-color: transparent;
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    padding: 0 0 0 2rem;
   }
 }
 
@@ -530,12 +491,6 @@ function onFilePicked(e: Event): void {
   .opening-gate__measure div + div {
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
     border-left: 0;
-  }
-
-  .opening-gate__ledger > header,
-  .opening-gate__ledger li,
-  .opening-gate__ledger footer {
-    padding-inline: 0.62rem;
   }
 }
 </style>

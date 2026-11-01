@@ -11,13 +11,18 @@ function source(rel: string): string {
 }
 
 describe("开卷两页 · 先立山门,再问心定命", () => {
-  it("欢迎页把题字、境界总账与三则守则收成一页,主入口仍在首屏", () => {
+  it("欢迎页把山门与三则收成一册两章,主入口仍在首屏", () => {
     const welcome = source("src/views/WelcomeView.vue");
     const pact = source("src/components/opening/OpeningPact.vue");
+    const chapterHead = source("src/components/opening/OpeningChapterHead.vue");
 
     expect(welcome).toContain("data-opening-gate");
+    expect(welcome).toContain("data-opening-gate-register");
     expect(welcome).toContain(
       'import OpeningBackdrop from "@/components/opening/OpeningBackdrop.vue"',
+    );
+    expect(welcome).toContain(
+      'import OpeningChapterHead from "@/components/opening/OpeningChapterHead.vue"',
     );
     expect(welcome).toContain('<OpeningBackdrop variant="gate" />');
     expect(welcome).toContain("data-opening-enter");
@@ -26,6 +31,18 @@ describe("开卷两页 · 先立山门,再问心定命", () => {
     expect(welcome).toContain('v-for="(line, index) in highlights"');
     expect(welcome).toContain("btn-seal animate-glow-pulse");
     expect(welcome).not.toContain("card-ink");
+    expect(welcome, "两章共用一个章首组件").toContain("<OpeningChapterHead");
+    expect(
+      [...welcome.matchAll(/data-opening-chapter="([^"]+)"/g)].map((match) => match[1]),
+      "先立山门，再读三则",
+    ).toEqual(["gate", "rules"]);
+    expect(welcome, "旧山门版式壳已撤").not.toContain("opening-gate__layout");
+    expect(welcome, "大标题折两行时要均分，不许把末字孤悬").toContain("text-wrap: balance;");
+    expect(chapterHead, "章首要同时报卷次、眉题、题名、读法与真值").toContain(
+      'class="opening-chapter-head__index"',
+    );
+    expect(chapterHead).toContain('class="opening-chapter-head__eyebrow"');
+    expect(chapterHead).toContain("opening-chapter-head__fact");
     expect(welcome, "欢迎页要接独立入山契,不再把隐私确认塞回通用说明框").toMatch(
       /<OpeningPact[\s\S]{0,120}:open="agreeOpen"/,
     );
@@ -55,14 +72,29 @@ describe("开卷两页 · 先立山门,再问心定命", () => {
     expect(privacy, "外部反馈入口仍是真链接").toContain("https://github.com/pplmx/xian/issues");
   });
 
-  it("建号页把留名、验根与定卷排成一张命书,重掷与踏入仙途仍走原动作", () => {
+  it("建号页把留名、验根与定卷排成一册三章,重掷与踏入仙途仍走原动作", () => {
     const create = source("src/views/CreateView.vue");
 
     expect(create).toContain("data-opening-create");
     expect(create).toContain('<OpeningBackdrop variant="create" />');
     expect(create).toContain("data-opening-roots");
     expect(create).toContain("data-opening-reroll");
-    expect(create).toContain('class="opening-create__sheet"');
+    expect(create).toContain("data-opening-create-register");
+    expect(create).toContain(
+      'import OpeningChapterHead from "@/components/opening/OpeningChapterHead.vue"',
+    );
+    expect(
+      [...create.matchAll(/data-opening-chapter="([^"]+)"/g)].map((match) => match[1]),
+      "留名、验根、定卷按命书顺序续排",
+    ).toEqual(["name", "roots", "vow"]);
+    expect(create.match(/<OpeningChapterHead\b/g), "三章各用同一枚章首").toHaveLength(3);
+    expect(create, "旧命书卡壳已撤").not.toContain("opening-create__sheet");
+    expect(create, "旧分区题头已撤").not.toContain("opening-create__section-head");
+    expect(create, "道号实时报本页字数").toContain(':fact="nameFact"');
+    expect(create, "灵根章首直读同一份鉴定结果").toContain(':fact="profile.gradeName"');
+    expect(create, "定卷章首随落印状态改口").toContain(
+      ":fact=\"starting ? '正在定卷' : '未落印'\"",
+    );
     expect(create).toContain('@click="reroll"');
     expect(create).toContain('@click="begin"');
     expect(create).toContain("ui.worldEnter =");
@@ -88,15 +120,21 @@ describe("开卷两页 · 先立山门,再问心定命", () => {
     expect(app).toContain(':data-opening="!game.started"');
     expect(css).toMatch(/\.app-shell\[data-opening="true"\]\s*\{[\s\S]{0,120}max-width:\s*72rem/);
     expect(welcome).toMatch(
-      /@media \(min-width: 820px\)\s*\{[\s\S]{0,220}\.opening-gate__layout\s*\{[\s\S]{0,160}grid-template-columns:/,
+      /@media \(min-width: 820px\)\s*\{[\s\S]{0,220}\.opening-gate__register\s*\{[\s\S]{0,160}grid-template-columns:/,
     );
     expect(create).toMatch(
-      /@media \(min-width: 760px\)\s*\{[\s\S]{0,180}\.opening-create__sheet\s*\{[\s\S]{0,140}grid-template-columns:/,
+      /@media \(min-width: 760px\)\s*\{[\s\S]{0,180}\.opening-create__register\s*\{[\s\S]{0,140}grid-template-columns:/,
+    );
+    expect(create).toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,220}\.opening-create__register\s*\{[\s\S]{0,160}grid-template-columns:[\s\S]{0,180}minmax\(12rem, 0\.58fr\)/,
+    );
+    expect(create, "定卷列较窄时真值退到题下").toMatch(
+      /\.opening-create__vow :deep\(\.opening-chapter-head__fact\)\s*\{[\s\S]{0,120}grid-column:\s*2/,
     );
     expect(welcome).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,500}\.opening-gate__measure\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
-    expect(create).toMatch(/\.opening-create__reroll\s*\{[\s\S]{0,240}white-space:\s*nowrap/);
+    expect(create).toMatch(/\.opening-create__reroll\s*\{[\s\S]{0,620}white-space:\s*nowrap/);
   });
 
   it("真浏览器门从 390 首屏量到 1280 双栏,并保留两页截图", () => {
@@ -111,6 +149,9 @@ describe("开卷两页 · 先立山门,再问心定命", () => {
     expect(layout).toContain("1280x800_create.png");
     expect(layout).toContain("首屏主入口被推到折线以下");
     expect(layout).toContain("桌面上没有并读山门与三则");
+    expect(layout, "真浏览器门要核对两页章序与章首").toContain("data-opening-chapter");
+    expect(layout, "建号页桌面双栏改名后仍要真量").toContain("[data-opening-create-register]");
+    expect(layout, "建号页宽桌面要量三章并读").toContain("宽桌面没有并读留名 / 验根 / 定卷");
     expect(layout, "取消入山契后要重开并证明勾选没有残留").toContain(
       "取消入山契后再次开契,上次勾选仍残留",
     );

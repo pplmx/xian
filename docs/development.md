@@ -128,12 +128,12 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 读数 | 改前 | 现在 | 上限 |
 | --- | --- | --- | --- |
-| 冷启动解码字节 | 2681KB(楷体 1783KB) | 1153KB(楷体 30KB) | 1500KB |
-| FCP | 692ms | 1360ms | 1400ms |
-| 楷体换上(swap 那一刻) | 2255ms | 2858ms | 3400ms |
-| 首屏楷体请求 | — | 30KB(1 片) | 160KB |
+| 冷启动解码字节 | 2681KB(楷体 1783KB) | 1161KB(楷体 41KB) | 1500KB |
+| FCP | 692ms | 1304ms | 1400ms |
+| 楷体换上(swap 那一刻) | 2255ms | 2937ms | 3400ms |
+| 首屏楷体请求 | — | 41KB(1 片) | 160KB |
 | 最大 JS 单块 | — | 397KB(`player`) | 500KB |
-| 构建时长 | 32s | 24s | 90s |
+| 构建时长 | 32s | 26s | 90s |
 
 > 2026-10-06 重校准:楷体换上上限 2800 → 3400 —— 旧值按"本机无 preload 2159ms"
 > 定的,而 CI 量的是随代码量增长的排版,迁移前后稳定落在
@@ -146,8 +146,9 @@ error: Failed to resolve vite command: GenericFailure, Expected
 1. **楷体按需分片**。原先一份 1.8MB 的子集在冷启动时整份下载,而首屏真正用到的字不过
    一两百个。现在按**用法频次**切成二十来片(每片一段 `unicode-range`,声明由
    `scripts/fonts/build-kai-font.py` 生成到 `src/assets/fonts/kai-subset.css`),
-   浏览器只取「页面上真出现的字」所落的那几片。欢迎页真正落在 `font-kai` 上的
-   31 个字被固定放进第一片,首屏只取 1 片 / 30KB;而「玩家起了个生僻名」
+   浏览器只取「页面上真出现的字」所落的那几片。开卷页真正落在 `font-kai` 上的
+   42 个字(含紧接的建号章号)固定放进第一片,再补一档高频字;首屏只取 1 片 / 41KB;
+   而「玩家起了个生僻名」
    这种时候也只多拽一小片,不是一千多 KB 的储备整段。片多大是取舍(片越小越省字节、
    请求越多),取 180 字/片是实测的口径。`kaiFontCoverage.spec.ts` 会核这组首屏字
    没有掉出第一片。
@@ -254,6 +255,17 @@ error: Failed to resolve vite command: GenericFailure, Expected
 每章零圆角 / 零投影 / 透明底、四边不同时成框,并量桌面存续与右侧两章的并读几何;
 结构与事实源由 `src/ui/settingsDesk.spec.ts`、`src/core/uiLayering.spec.ts` 与
 `scripts/layout-check.mjs` 守住。
+
+开卷两页现在也收进同一套章首语法。欢迎页的 `data-opening-gate-register` 只有
+`gate / rules` 两章,建号页的 `data-opening-create-register` 只有
+`name / roots / vow` 三章,五章共用 `OpeningChapterHead` 的序印、眉题、题名、读法与
+章内真值;道号实时报 `N / 8 字`,灵根章首直读当前等级,定卷章首随落印状态改口。
+旧 `opening-gate__layout`、`opening-create__sheet` 与分区题头已撤,外层最多留一条
+上下账线,章内不再套卡。390 真浏览器门核对两册章序、章首五项齐全、章内零四边框 /
+零圆角 / 零投影、主入口仍在山门章、验根盘仍在验根章;1280 核对欢迎双栏与建号
+留名 / 验根 / 定卷三章并读、定卷主入口在首屏,200% 档继续沿既有缩放门量重掷入口与
+横向溢出。结构与事实源由
+`src/ui/openingDesk.spec.ts` 与 `scripts/layout-check.mjs` 守住。
 
 续开后的键盘焦点也走同一条账:核心函数按「续开前已看到哪件 / 续开后开到哪件」算出
 新露出第一件在当前窗口里的索引,背包、坊市、图鉴统一按它聚焦;回翻则落到当前页首件。

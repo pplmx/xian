@@ -12847,6 +12847,44 @@ async function taskPreGameTour() {
     return problems;
   };
 
+  /**
+   * 开局两页同读一枚章首：这里量 DOM 里真实出现的章序、章首文字与卡壳，
+   * 不靠源码字符串猜。`register` 自己可以留上下账线，但章与章不该再各包四边。
+   */
+  const chapterAudit = (selector) =>
+    page.evaluate((rootSelector) => {
+      const register = document.querySelector(rootSelector);
+      const chapters = [...(register?.querySelectorAll(":scope > [data-opening-chapter]") ?? [])];
+      const borderSides = (el) => {
+        const style = getComputedStyle(el);
+        return [
+          style.borderTopWidth,
+          style.borderRightWidth,
+          style.borderBottomWidth,
+          style.borderLeftWidth,
+        ]
+          .map((value) => parseFloat(value) || 0)
+          .filter((value) => value > 0).length;
+      };
+      return {
+        ids: chapters.map((el) => el.getAttribute("data-opening-chapter")),
+        heads: chapters.map((chapter) => ({
+          id: chapter.getAttribute("data-opening-chapter"),
+          index: (chapter.querySelector(".opening-chapter-head__index")?.textContent || "").trim(),
+          eyebrow: (
+            chapter.querySelector(".opening-chapter-head__eyebrow")?.textContent || ""
+          ).trim(),
+          title: (chapter.querySelector(".opening-chapter-head__title")?.textContent || "").trim(),
+          hint: (chapter.querySelector(".opening-chapter-head__hint")?.textContent || "").trim(),
+          fact: (chapter.querySelector(".opening-chapter-head__fact")?.textContent || "").trim(),
+          borderSides: borderSides(chapter),
+          radius: getComputedStyle(chapter).borderRadius,
+          shadow: getComputedStyle(chapter).boxShadow,
+        })),
+        registerBorderSides: register ? borderSides(register) : -1,
+      };
+    }, selector);
+
   // ---- 欢迎页:无存档冷启动就该落在这里 ----
   await page.goto(INDEX, { waitUntil: "load" });
   await page.waitForTimeout(900);
@@ -12869,6 +12907,28 @@ async function taskPreGameTour() {
         `[开局前] /welcome 首屏主入口被推到折线以下(${info.firstScreenAction.top}..${info.firstScreenAction.bottom} / ${info.firstScreenAction.viewport})`,
       );
     }
+    const gate = await chapterAudit("[data-opening-gate-register]");
+    if (gate.ids.join("|") !== "gate|rules") {
+      failures.push(`[开局前] /welcome 章序不是山门 → 三则:${gate.ids.join(" → ")}`);
+    }
+    if (
+      gate.heads.length !== 2 ||
+      gate.heads.some(
+        (head) => !head.index || !head.eyebrow || !head.title || !head.hint || !head.fact,
+      )
+    ) {
+      failures.push(`[开局前] /welcome 章首读数缺项:${JSON.stringify(gate.heads)}`);
+    }
+    const gateFramed = gate.heads.filter(
+      (head) => head.borderSides >= 4 || head.radius !== "0px" || head.shadow !== "none",
+    );
+    if (gateFramed.length) {
+      failures.push(`[开局前] /welcome 山门与三则又套回了卡壳:${JSON.stringify(gateFramed)}`);
+    }
+    const gateCta = await page
+      .locator('[data-opening-chapter="gate"] [data-opening-enter]')
+      .count();
+    if (gateCta !== 1) failures.push("[开局前] /welcome 主入口没有留在山门章内");
     await quiesceOverlays(page);
     for (const bad of await measureTextContrast(page)) {
       contrastFails.push(
@@ -12987,6 +13047,30 @@ async function taskPreGameTour() {
         `[开局前] /create 首屏重掷入口被推到折线以下(${info.firstScreenAction.top}..${info.firstScreenAction.bottom} / ${info.firstScreenAction.viewport})`,
       );
     }
+    const create = await chapterAudit("[data-opening-create-register]");
+    if (create.ids.join("|") !== "name|roots|vow") {
+      failures.push(`[开局前] /create 章序不是留名 → 验根 → 定卷:${create.ids.join(" → ")}`);
+    }
+    if (
+      create.heads.length !== 3 ||
+      create.heads.some(
+        (head) => !head.index || !head.eyebrow || !head.title || !head.hint || !head.fact,
+      )
+    ) {
+      failures.push(`[开局前] /create 章首读数缺项:${JSON.stringify(create.heads)}`);
+    }
+    const createFramed = create.heads.filter(
+      (head) => head.borderSides >= 4 || head.radius !== "0px" || head.shadow !== "none",
+    );
+    if (createFramed.length) {
+      failures.push(`[开局前] /create 三章又套回了卡壳:${JSON.stringify(createFramed)}`);
+    }
+    if (create.registerBorderSides > 2) {
+      failures.push(`[开局前] /create 命书外层又成四面框(${create.registerBorderSides} 边)`);
+    }
+    if (!(await page.locator('[data-opening-chapter="roots"][data-opening-roots]').count())) {
+      failures.push("[开局前] /create 验根章里没有真实灵根盘");
+    }
     await quiesceOverlays(page);
     for (const bad of await measureTextContrast(page)) {
       contrastFails.push(
@@ -13032,11 +13116,35 @@ async function taskPreGameTour() {
   await page.setViewportSize({ width: 1280, height: 800 });
   await settleVisuals(page);
   {
-    const columns = await page.locator(".opening-create__sheet").evaluate((el) => {
+    const columns = await page.locator("[data-opening-create-register]").evaluate((el) => {
       const value = getComputedStyle(el).gridTemplateColumns;
       return value.split(/\s+/).filter(Boolean).length;
     });
-    if (columns < 2) failures.push(`[开局前] /create 桌面上没有并读留名与验根(${columns} 列)`);
+    if (columns !== 3)
+      failures.push(`[开局前] /create 宽桌面没有并读留名 / 验根 / 定卷(${columns} 列)`);
+    const createColumns = await page
+      .locator("[data-opening-create-register] > [data-opening-chapter]")
+      .evaluateAll((chapters) =>
+        chapters.map((chapter) => ({
+          id: chapter.getAttribute("data-opening-chapter"),
+          left: Math.round(chapter.getBoundingClientRect().left),
+          width: Math.round(chapter.getBoundingClientRect().width),
+        })),
+      );
+    const nameColumn = createColumns.find((chapter) => chapter.id === "name");
+    const rootsColumn = createColumns.find((chapter) => chapter.id === "roots");
+    const vowColumn = createColumns.find((chapter) => chapter.id === "vow");
+    if (
+      !nameColumn ||
+      !rootsColumn ||
+      !vowColumn ||
+      !(nameColumn.left < rootsColumn.left && rootsColumn.left < vowColumn.left)
+    ) {
+      failures.push(`[开局前] /create 宽桌面三章没有按留名 → 验根 → 定卷并读`);
+    }
+    if (!(await page.locator('[data-opening-chapter="vow"] .opening-create__begin').isVisible())) {
+      failures.push("[开局前] /create 宽桌面首屏看不见定卷主入口");
+    }
     const problems = problemsOfBasic(await measureBasic());
     if (problems.length) failures.push(`[开局前] /create 桌面 → ${problems.join(" / ")}`);
     if (SHOTS) {
@@ -13052,7 +13160,7 @@ async function taskPreGameTour() {
   await page.waitForTimeout(500);
   await settleVisuals(page);
   {
-    const columns = await page.locator(".opening-gate__layout").evaluate((el) => {
+    const columns = await page.locator("[data-opening-gate-register]").evaluate((el) => {
       const value = getComputedStyle(el).gridTemplateColumns;
       return value.split(/\s+/).filter(Boolean).length;
     });

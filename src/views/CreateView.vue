@@ -24,15 +24,18 @@
         <div class="opening-create__stamp compact:!hidden" aria-hidden="true">命</div>
       </header>
 
-      <div class="opening-create__sheet">
-        <section class="opening-create__identity">
-          <header class="opening-create__section-head">
-            <span class="opening-create__ordinal tabular">一</span>
-            <div>
-              <p>留名</p>
-              <h2>道号</h2>
-            </div>
-          </header>
+      <article class="opening-create__register" data-opening-create-register>
+        <section
+          class="opening-create__chapter opening-create__identity"
+          data-opening-chapter="name"
+        >
+          <OpeningChapterHead
+            index="壹"
+            eyebrow="留名"
+            title="道号"
+            hint="最多八字。留白不填，便以「无名散修」入卷。"
+            :fact="nameFact"
+          />
           <div class="opening-create__name-row">
             <input
               v-model="name"
@@ -49,20 +52,26 @@
               <GameIcon name="refresh" :size="15" />
             </button>
           </div>
-          <p class="opening-create__note">最多八字。留白不填，便以「无名散修」入卷。</p>
         </section>
 
-        <section class="opening-create__roots" data-opening-roots>
-          <header class="opening-create__section-head">
-            <span class="opening-create__ordinal tabular">二</span>
-            <div>
-              <p>验根</p>
-              <h2>灵根</h2>
-            </div>
-            <strong class="opening-create__grade">{{ profile.gradeName }}</strong>
-          </header>
+        <section
+          class="opening-create__chapter opening-create__roots"
+          data-opening-chapter="roots"
+          data-opening-roots
+        >
+          <OpeningChapterHead
+            index="贰"
+            eyebrow="验根"
+            title="灵根"
+            hint="同一枚灵根决定资质与修行倍率，重掷会换掉整副根骨。"
+            :fact="profile.gradeName"
+          />
 
-          <div :key="rollSeq" class="opening-create__root-stage stagger-in">
+          <div
+            :key="rollSeq"
+            class="opening-create__root-stage stagger-in"
+            :data-root-count="profile.roots.length"
+          >
             <span class="opening-create__root-vein" aria-hidden="true" />
             <div v-for="root in profile.roots" :key="root.element" class="opening-create__root">
               <span
@@ -112,27 +121,33 @@
               data-opening-reroll
               @click="reroll"
             >
-              {{ rerollLabel }}
+              <span class="opening-create__reroll-mark" aria-hidden="true">逆</span>
+              <span>{{ rerollLabel }}</span>
             </button>
             <p v-if="unlimitedReroll">不满意就一直改，改到掷中你认的那副牌为止</p>
           </div>
         </section>
 
-        <section class="opening-create__vow">
-          <div>
-            <p>定卷</p>
-            <h2>按下之后，灵根将就此定格</h2>
-            <span>这一世的修行之路，由它决定。</span>
+        <section class="opening-create__vow" data-opening-chapter="vow">
+          <OpeningChapterHead
+            index="叁"
+            eyebrow="定卷"
+            title="一印定此世"
+            hint="按下之后，灵根将就此定格；转世才会另起根骨。"
+            :fact="starting ? '正在定卷' : '未落印'"
+          />
+          <div class="opening-create__vow-body">
+            <p>这一世的修行之路，由它决定。</p>
+            <button
+              class="btn-seal opening-create__begin text-[16px]"
+              :disabled="starting"
+              @click="begin"
+            >
+              {{ starting ? "灵 根 鉴 定 中……" : "踏 入 仙 途" }}
+            </button>
           </div>
-          <button
-            class="btn-seal opening-create__begin text-[16px]"
-            :disabled="starting"
-            @click="begin"
-          >
-            {{ starting ? "灵 根 鉴 定 中……" : "踏 入 仙 途" }}
-          </button>
         </section>
-      </div>
+      </article>
     </div>
 
     <SpiritRootReveal ref="revealRef" />
@@ -161,6 +176,7 @@ import { useUiStore } from "@/stores/ui";
 import GameIcon from "@/components/common/GameIcon.vue";
 import SpiritRootReveal from "@/components/common/SpiritRootReveal.vue";
 import OpeningBackdrop from "@/components/opening/OpeningBackdrop.vue";
+import OpeningChapterHead from "@/components/opening/OpeningChapterHead.vue";
 
 const router = useRouter();
 const game = useGameStore();
@@ -172,6 +188,10 @@ const ui = useUiStore();
 const name = ref(randomDaoName(rng));
 if (!game.createProfile) game.setCreateProfile(rollLinggen(rng));
 const profile = computed(() => game.createProfile!);
+const nameFact = computed(() => {
+  const length = [...name.value.trim()].length;
+  return length > 0 ? `${length} / 8 字` : "可留白";
+});
 const rerollsLeft = computed(() => game.createRerolls);
 const unlimitedReroll = computed(() => rerollsLeft.value === null);
 const rerollLabel = computed(() =>
@@ -301,69 +321,28 @@ function begin(): void {
   line-height: 1;
 }
 
-.opening-create__sheet {
+.opening-create__register {
   display: grid;
   min-width: 0;
   grid-template-columns: minmax(0, 1fr);
-  border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
-  border-top: 2px solid var(--color-qing);
-  background:
-    linear-gradient(132deg, rgb(var(--color-qing-rgb) / 0.04), transparent 48%),
-    rgb(var(--color-paper-lifted-rgb) / 0.76);
-  box-shadow: 0.3rem 0.3rem 0 rgb(var(--color-ink-rgb) / 0.025);
+  border-top: 1px solid rgb(var(--color-qing-rgb) / 0.32);
+  border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.11);
+  background: transparent;
+  box-shadow: none;
+}
+
+.opening-create__chapter {
+  min-width: 0;
 }
 
 .opening-create__identity,
 .opening-create__roots {
   min-width: 0;
-  padding: 0.9rem 0.92rem 1rem;
+  padding: 0 0.1rem 0.9rem;
 }
 
 .opening-create__identity {
   border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.09);
-}
-
-.opening-create__section-head {
-  display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.55rem;
-}
-
-.opening-create__ordinal {
-  display: grid;
-  width: 1.65rem;
-  height: 1.65rem;
-  place-items: center;
-  border: 1px solid rgb(var(--color-qing-rgb) / 0.34);
-  color: var(--color-qing);
-  font-family: var(--font-kai);
-  font-size: var(--type-note);
-}
-
-.opening-create__section-head p {
-  color: var(--color-ink-faint);
-  font-size: var(--type-note);
-  letter-spacing: 0.12em;
-}
-
-.opening-create__section-head h2 {
-  color: var(--color-ink);
-  font-family: var(--font-kai);
-  font-size: var(--type-title);
-  font-weight: 400;
-  letter-spacing: 0.12em;
-  line-height: 1.35;
-}
-
-.opening-create__grade {
-  justify-self: end;
-  color: var(--color-cinnabar);
-  font-family: var(--font-kai);
-  font-size: var(--type-title);
-  font-weight: 400;
-  letter-spacing: 0.08em;
-  text-align: right;
 }
 
 .opening-create__name-row {
@@ -371,7 +350,7 @@ function begin(): void {
   min-width: 0;
   align-items: stretch;
   gap: 0.5rem;
-  margin-top: 0.8rem;
+  margin-top: 0.62rem;
 }
 
 .opening-create__name-input {
@@ -400,13 +379,6 @@ function begin(): void {
   padding: 0.4rem;
 }
 
-.opening-create__note {
-  margin-top: 0.42rem;
-  color: var(--color-ink-faint);
-  font-size: var(--type-note);
-  line-height: 1.55;
-}
-
 .opening-create__root-stage {
   position: relative;
   display: grid;
@@ -417,6 +389,23 @@ function begin(): void {
   gap: 0.45rem 0.35rem;
   margin-top: 0.9rem;
   padding: 0.6rem 0 0.35rem;
+}
+
+.opening-create__root-stage::before {
+  position: absolute;
+  top: 0.12rem;
+  right: 18%;
+  bottom: 0.72rem;
+  left: 18%;
+  border: 1px dashed rgb(var(--color-qing-rgb) / 0.12);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.opening-create__root-stage[data-root-count="1"]::before {
+  right: 33%;
+  left: 33%;
 }
 
 .opening-create__root-vein {
@@ -502,13 +491,38 @@ function begin(): void {
 }
 
 .opening-create__reroll {
+  display: grid;
   width: 100%;
   min-height: 2.65rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.62rem;
+  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.24);
+  background: rgb(var(--color-cinnabar-rgb) / 0.035);
   padding-block: 0.55rem;
+  padding-inline: 0.68rem;
+  color: var(--color-cinnabar);
   font-family: var(--font-kai);
   font-size: var(--type-body);
   letter-spacing: 0.18em;
   white-space: nowrap;
+}
+
+.opening-create__reroll:disabled {
+  border-color: rgb(var(--color-ink-rgb) / 0.12);
+  background: transparent;
+  color: var(--color-ink-faint);
+}
+
+.opening-create__reroll-mark {
+  display: grid;
+  width: 1.45rem;
+  height: 1.45rem;
+  place-items: center;
+  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.35);
+  font-size: var(--type-note);
+  letter-spacing: 0;
+  line-height: 1;
 }
 
 .opening-create__reroll-row p {
@@ -520,38 +534,28 @@ function begin(): void {
 }
 
 .opening-create__vow {
+  min-width: 0;
+  border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+  padding: 0.15rem 0.1rem 0.9rem;
+  background: transparent;
+}
+
+.opening-create__vow-body {
   display: grid;
   min-width: 0;
   grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  gap: 0.8rem;
-  border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
-  padding: 0.9rem 0.92rem 1rem;
-  background: rgb(var(--color-paper-rgb) / 0.16);
+  gap: 0.72rem;
+  padding-top: 0.3rem;
 }
 
-.opening-create__vow p {
-  color: var(--color-cinnabar);
-  font-size: var(--type-note);
-  letter-spacing: 0.14em;
-}
-
-.opening-create__vow h2 {
-  margin-top: 0.16rem;
-  color: var(--color-ink);
+.opening-create__vow-body p {
+  border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.64);
+  padding-left: 0.62rem;
+  color: var(--color-ink-soft);
   font-family: var(--font-kai);
-  font-size: var(--type-title);
-  font-weight: 400;
-  letter-spacing: 0.08em;
-  line-height: 1.4;
-}
-
-.opening-create__vow span {
-  display: block;
-  margin-top: 0.16rem;
-  color: var(--color-ink-faint);
-  font-size: var(--type-note);
-  line-height: 1.55;
+  font-size: var(--type-body);
+  line-height: 1.62;
 }
 
 .opening-create__begin {
@@ -580,11 +584,11 @@ function begin(): void {
   }
 
   .opening-create__identity {
-    padding-block: 0.72rem 0.78rem;
+    padding-block: 0 0.72rem;
   }
 
   .opening-create__name-row {
-    margin-top: 0.62rem;
+    margin-top: 0.5rem;
   }
 
   .opening-create__root-stage {
@@ -608,18 +612,67 @@ function begin(): void {
 }
 
 @media (min-width: 760px) {
-  .opening-create__sheet {
+  .opening-create__register {
     grid-template-columns: minmax(15rem, 0.74fr) minmax(0, 1.26fr);
   }
 
   .opening-create__identity {
     border-right: 1px solid rgb(var(--color-ink-rgb) / 0.09);
     border-bottom: 0;
+    padding-right: 1.3rem;
+  }
+
+  .opening-create__roots {
+    padding-left: 1.3rem;
   }
 
   .opening-create__vow {
     grid-column: 1 / -1;
-    grid-template-columns: minmax(0, 1fr) minmax(13rem, 0.46fr);
+  }
+
+  .opening-create__vow-body {
+    grid-template-columns: minmax(0, 1fr) minmax(14rem, 0.46fr);
+    gap: 1.4rem;
+  }
+
+  .opening-create__vow-body p {
+    max-width: 31rem;
+  }
+}
+
+@media (min-width: 960px) {
+  .opening-create__register {
+    grid-template-columns: minmax(12rem, 0.58fr) minmax(0, 1.35fr) minmax(12rem, 0.58fr);
+  }
+
+  .opening-create__roots {
+    padding-right: 1.3rem;
+  }
+
+  .opening-create__vow {
+    grid-column: auto;
+    border-top: 0;
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    padding: 0 0.1rem 0.9rem 1.3rem;
+  }
+
+  .opening-create__vow :deep(.opening-chapter-head) {
+    grid-template-columns: 1.35rem minmax(0, 1fr);
+  }
+
+  .opening-create__vow :deep(.opening-chapter-head__fact) {
+    grid-column: 2;
+    justify-self: start;
+    text-align: left;
+  }
+
+  .opening-create__vow-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.72rem;
+  }
+
+  .opening-create__vow-body p {
+    max-width: none;
   }
 }
 
@@ -644,17 +697,7 @@ function begin(): void {
   .opening-create__identity,
   .opening-create__roots,
   .opening-create__vow {
-    padding-inline: 0.62rem;
-  }
-
-  .opening-create__section-head {
-    grid-template-columns: 1.65rem minmax(0, 1fr);
-  }
-
-  .opening-create__grade {
-    grid-column: 2;
-    justify-self: start;
-    text-align: left;
+    padding-inline: 0;
   }
 }
 </style>
