@@ -538,6 +538,36 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(shop?.src).not.toMatch(/:disabled="!row\.affordable"[\s\S]{0,40}buyTen/);
   });
 
+  it("灵草坊收成一册卷身长账 —— 逐品行不再套纸卡,极窄档品名与动作各守一行", () => {
+    // 五品各包一张 bg-paper-deep 纸卡时,195 CSS px 下印章、正文与两枚动作仍横向
+    // 硬排:品名被挤成逐字竖排,买十还越出面板右界。长账去掉行内卡壳;极窄档让
+    // 品阶印与品名独占一层,读数续排,两枚动作落到独立动作区等宽并排。
+    const shop = FILES.find((f) => f.path === "components/inventory/HerbShopDialog.vue");
+    expect(shop?.src, "灵草坊要收成一册连续长账").toContain("data-herb-shop-ledger");
+    expect(shop?.src, "灵草账只留上下账线与行间线").toMatch(
+      /class="[^"]*divide-y[^"]*border-y[^"]*"[\s\S]{0,120}?data-herb-shop-ledger/,
+    );
+    expect(shop?.src, "逐品不再套内层纸卡").not.toContain("bg-paper-deep/70");
+    expect(shop?.src, "每品行要有稳定指纹").toContain(":data-herb-shop-row=");
+    expect(shop?.src, "品名在极窄档也不许被挤成竖排").toMatch(
+      /class="[^"]*whitespace-nowrap[^"]*"[\s\S]{0,100}?data-herb-shop-name/,
+    );
+    expect(shop?.src, "两枚动作要有独立动作区").toContain("data-herb-shop-actions");
+    expect(shop?.src, "极窄档动作区要退成整宽").toMatch(
+      /class="[^"]*tinylens:w-full[^"]*"[\s\S]{0,100}?data-herb-shop-actions/,
+    );
+    expect(shop?.src, "极窄档存量与单价各占完整账行").toMatch(
+      /class="[^"]*tinylens:flex-col[^"]*"[\s\S]{0,100}?data-herb-shop-figures/,
+    );
+    expect(shop?.src, "买一买十的短标签不许折行").toMatch(
+      /class="[^"]*whitespace-nowrap[^"]*"[\s\S]{0,180}?买1/,
+    );
+    const layout = readFileSync(resolve(__dirname, "../../scripts/layout-check.mjs"), "utf8");
+    expect(layout, "真浏览器 390/195 两档都要量灵草坊账").toContain(
+      'await probe("灵草坊", "/inventory"',
+    );
+  });
+
   it("炼丹/材料读数的灵草必须逐品列出 —— 不许退回单标量的合计", () => {
     // 灵草分五品(凡→道)后,方子按品阶耗(cost.herbGrade)、灵草坊各品各标价,
     // 可修行页那两处总读数仍报 Σ 五品的合计 —— 一眼看不出持有哪一品、够不够

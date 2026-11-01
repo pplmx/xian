@@ -12805,7 +12805,7 @@ async function taskIosNotice() {
 }
 
 /**
- * 浮层在 200% 缩放档:页面上点得开的那些弹窗(装备详情 / 丹房 / 器魂 / 灵脉 /
+ * 浮层在 200% 缩放档:页面上点得开的那些弹窗(装备详情 / 丹房 / 灵草坊 / 器魂 / 灵脉 /
  * 人物读数详情 / 一键分解 / 关于此作 / 隐私政策)。
  *
  * 与「只在某一步出现的浮层」不同,这些是**点得开**的 —— 但巡页不会去点它们,
@@ -13075,6 +13075,99 @@ async function taskDialogZoom() {
       };
     });
 
+  const readHerbShopLedger = () =>
+    page.evaluate(() => {
+      const ledger = document.querySelector("[data-herb-shop-ledger]");
+      if (!ledger) return null;
+      const panel = ledger.closest(".modal-panel");
+      const panelRect = panel?.getBoundingClientRect();
+      const panelInner = panel?.querySelector("[data-folio-modal-scroll]");
+      const panelInnerRect = panelInner?.getBoundingClientRect();
+      const ledgerStyle = getComputedStyle(ledger);
+      const lineCount = (el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+      };
+      const rows = [...ledger.querySelectorAll("[data-herb-shop-row]")].map((row) => {
+        const rowRect = row.getBoundingClientRect();
+        const rowStyle = getComputedStyle(row);
+        const name = row.querySelector("[data-herb-shop-name]");
+        const nameRect = name?.getBoundingClientRect();
+        const facts = row.querySelector("[data-herb-shop-facts]");
+        const factsRect = facts?.getBoundingClientRect();
+        const actions = row.querySelector("[data-herb-shop-actions]");
+        const actionsRect = actions?.getBoundingClientRect();
+        return {
+          grade: row.getAttribute("data-herb-shop-row"),
+          width: rowRect.width,
+          height: rowRect.height,
+          background: rowStyle.backgroundColor,
+          radius: Number.parseFloat(rowStyle.borderRadius),
+          borderTop: Number.parseFloat(rowStyle.borderTopWidth),
+          borderRight: Number.parseFloat(rowStyle.borderRightWidth),
+          borderLeft: Number.parseFloat(rowStyle.borderLeftWidth),
+          name: name
+            ? {
+                text: (name.textContent || "").replace(/\s+/g, " ").trim(),
+                width: nameRect.width,
+                lines: lineCount(name),
+                clipped: name.scrollWidth > name.clientWidth + 1,
+              }
+            : null,
+          facts: facts
+            ? {
+                bottom: factsRect.bottom,
+                figures: [
+                  ...facts.querySelectorAll("[data-herb-shop-held], [data-herb-shop-price]"),
+                ].map((el) => ({
+                  text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+                  top: el.getBoundingClientRect().top,
+                  lines: lineCount(el),
+                  clipped: el.scrollWidth > el.clientWidth + 1,
+                })),
+              }
+            : null,
+          actions: actionsRect
+            ? {
+                top: actionsRect.top,
+                left: actionsRect.left,
+                right: actionsRect.right,
+              }
+            : null,
+          buttons: actions
+            ? [...actions.querySelectorAll("button")].map((button) => {
+                const rect = button.getBoundingClientRect();
+                return {
+                  text: (button.textContent || "").replace(/\s+/g, " ").trim(),
+                  lines: lineCount(button),
+                  clipped: button.scrollWidth > button.clientWidth + 1,
+                  left: rect.left,
+                  right: rect.right,
+                  height: rect.height,
+                };
+              })
+            : [],
+        };
+      });
+      return {
+        found: Boolean(ledger),
+        panelLeft: panelRect?.left ?? 0,
+        panelRight: panelRect?.right ?? 0,
+        panelWidth: panelRect?.width ?? 0,
+        innerWidth: panelInnerRect?.width ?? 0,
+        borderTop: Number.parseFloat(ledgerStyle.borderTopWidth),
+        borderRight: Number.parseFloat(ledgerStyle.borderRightWidth),
+        borderBottom: Number.parseFloat(ledgerStyle.borderBottomWidth),
+        borderLeft: Number.parseFloat(ledgerStyle.borderLeftWidth),
+        radius: Number.parseFloat(ledgerStyle.borderRadius),
+        background: ledgerStyle.backgroundColor,
+        cards: ledger.querySelectorAll('.card-ink, [class~="bg-paper-deep/70"]').length,
+        rows,
+        separators: rows.slice(1).filter((row) => row.borderTop === 1).length,
+      };
+    });
+
   /** 一扇弹窗:点开 → 量 → 关掉。点不开直接报红(判据没量到东西) */
   const probe = async (label, route, click) => {
     await page.goto(INDEX + "#" + route, { waitUntil: "load" });
@@ -13207,6 +13300,73 @@ async function taskDialogZoom() {
         await page.screenshot({ path: join(SHOTS_DIR, "390-celestial-era-ledger.png") });
       }
     }
+    if (label === "灵草坊") {
+      const checkHerbShop = async (tag, maxRowHeight) => {
+        checked += 1;
+        const shop = await readHerbShopLedger();
+        const insidePanel = (button) =>
+          button.left >= (shop?.panelLeft ?? 0) - 2 && button.right <= (shop?.panelRight ?? 0) + 2;
+        if (
+          !shop ||
+          shop.borderTop !== 1 ||
+          shop.borderBottom !== 1 ||
+          shop.borderRight !== 0 ||
+          shop.borderLeft !== 0 ||
+          shop.radius !== 0 ||
+          shop.background !== "rgba(0, 0, 0, 0)" ||
+          shop.cards !== 0 ||
+          shop.rows.length !== 5 ||
+          shop.separators !== 4
+        ) {
+          failures.push(`[${tag}] 灵草坊又套回逐行纸卡或账线没续满:${JSON.stringify(shop)}`);
+        }
+        const badRows = shop?.rows.filter(
+          (row) =>
+            row.background !== "rgba(0, 0, 0, 0)" ||
+            row.radius !== 0 ||
+            row.borderRight !== 0 ||
+            row.borderLeft !== 0 ||
+            row.height > maxRowHeight ||
+            !row.name ||
+            row.name.lines !== 1 ||
+            row.name.clipped ||
+            row.name.width < 40 ||
+            !row.facts ||
+            row.facts.figures.length !== 2 ||
+            row.facts.figures.some((figure) => figure.lines !== 1 || figure.clipped) ||
+            (tag === "195" &&
+              new Set(row.facts.figures.map((figure) => Math.round(figure.top))).size !== 2) ||
+            !row.actions ||
+            row.buttons.length !== 2 ||
+            row.buttons.some(
+              (button) =>
+                button.lines !== 1 ||
+                button.clipped ||
+                button.height < 27.5 ||
+                !insidePanel(button),
+            ) ||
+            (tag === "195" && row.actions.top < row.facts.bottom - 1),
+        );
+        if (badRows?.length) {
+          failures.push(`[${tag}] 灵草坊账行仍被挤成竖排、越界或折字:${JSON.stringify(badRows)}`);
+        }
+      };
+
+      await page.setViewportSize({ width: 195, height: 422 });
+      await settleVisuals(page);
+      await checkHerbShop("195", 240);
+      if (SHOTS) {
+        mkdirSync(SHOTS_DIR, { recursive: true });
+        await page.screenshot({ path: join(SHOTS_DIR, "195-xian-herb-shop-ledger.png") });
+      }
+
+      await page.setViewportSize({ width: 390, height: 844 });
+      await settleVisuals(page);
+      await checkHerbShop("390", 190);
+      if (SHOTS) {
+        await page.screenshot({ path: join(SHOTS_DIR, "390-xian-herb-shop-ledger.png") });
+      }
+    }
     if (label === "装备详情 · 词条转移落位") {
       checked += 1;
       const transfer = await readOpenLedger("[data-equipment-affix-transfer]");
@@ -13299,6 +13459,15 @@ async function taskDialogZoom() {
     await page.waitForTimeout(400);
     await page
       .locator("main button", { hasText: /开炉炼丹/ })
+      .first()
+      .click({ timeout: 3000 });
+  });
+  await probe("灵草坊", "/inventory", async () => {
+    const tab = page.getByRole("tab", { name: /丹/ }).first();
+    if (await tab.count()) await tab.click();
+    await page.waitForTimeout(400);
+    await page
+      .locator('main [data-inventory-workshop-entry="shop"]')
       .first()
       .click({ timeout: 3000 });
   });
