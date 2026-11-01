@@ -33,29 +33,32 @@
     </FolioPageHeader>
 
     <div class="build-page__body folio-span-all">
-      <section v-if="build" class="build-ledger" data-build-formed>
-        <LedgerHeader
-          :seal="build.style.seal"
-          :eyebrow="`已成之路 · ${build.stageName}`"
-          :title="build.displayName"
-          :description="build.style.desc"
-          score-label="契合"
-          :score-value="formatPercent(build.affinity, 0)"
-        />
-
-        <div class="build-ledger__grid build-ledger__grid--three">
-          <article class="build-panel" data-build-stage>
-            <p class="build-panel__label">
-              道途阶梯
-              <span>{{ build.stageName }}</span>
-            </p>
+      <article
+        v-if="build"
+        class="build-register folio-span-all"
+        data-build-register
+        data-build-formed
+      >
+        <section
+          class="build-register__chapter build-register__chapter--stage"
+          data-build-chapter="stage"
+          data-build-stage
+        >
+          <BuildChapterHead
+            index="壹"
+            :eyebrow="`已成之路 · ${build.displayName}`"
+            title="道途阶梯"
+            :hint="build.style.desc"
+            :fact="`契合 ${formatPercent(build.affinity, 0)}`"
+          />
+          <div class="build-register__body">
             <div class="build-stage">
               <p class="build-stage__line">
                 <strong>{{ build.stageName }}</strong>
                 <span class="tabular">{{ formatPercent(build.affinity, 0) }}</span>
               </p>
               <ProgressBar :value="stageMeter.ratio" color="var(--color-cinnabar)" :height="4" />
-              <p class="build-panel__copy">{{ stageGapText }}</p>
+              <p class="build-copy">{{ stageGapText }}</p>
               <div class="build-stage__marks" aria-label="成路识别线">
                 <span
                   v-for="step in stageSteps"
@@ -67,7 +70,7 @@
                 </span>
               </div>
             </div>
-            <p v-if="build.secondary" class="build-panel__aside">
+            <p v-if="build.secondary" class="build-aside">
               副体系「{{ build.secondary.style.name }}」
               {{ formatPercent(build.secondary.affinity, 0) }} · 修行无职业，道路可以不纯
             </p>
@@ -75,17 +78,22 @@
               <span>成路于</span>
               <strong v-for="name in buildSourceNames" :key="name">{{ name }}</strong>
             </p>
-          </article>
+          </div>
+        </section>
 
-          <article class="build-panel" data-build-next>
-            <p class="build-panel__label">
-              下一步
-              <span>{{ coreGaps.length ? `${coreGaps.length} 条缺口` : "核心已满" }}</span>
-            </p>
-            <p class="build-panel__line">
-              <strong>{{ nextActionTitle }}</strong>
-            </p>
-            <p class="build-panel__copy">{{ nextActionCopy }}</p>
+        <section
+          class="build-register__chapter build-register__chapter--next"
+          data-build-chapter="next"
+          data-build-next
+        >
+          <BuildChapterHead
+            index="贰"
+            title="下一步"
+            :hint="nextActionTitle"
+            :fact="coreGaps.length ? `${coreGaps.length} 条缺口` : '核心已满'"
+          />
+          <div class="build-register__body">
+            <p class="build-copy">{{ nextActionCopy }}</p>
             <ul v-if="nextCoreGaps.length" class="build-core">
               <li v-for="gap in nextCoreGaps" :key="gap.key">
                 <span class="build-core__name">{{ STAT_NAMES[gap.key] }}</span>
@@ -98,19 +106,25 @@
                 <span class="build-core__gap tabular">尚差 {{ formatPercent(gap.gap, 0) }}</span>
               </li>
             </ul>
-            <p v-else class="build-panel__aside">此路核心词条已全部留下，后续只看实战面与相性。</p>
-            <div class="build-panel__actions">
+            <div class="build-actions">
               <RouterLink to="/cultivation" class="btn-ghost min-h-9">去修行配功法</RouterLink>
               <RouterLink to="/inventory" class="btn-ghost min-h-9">看行囊装备</RouterLink>
             </div>
-          </article>
+          </div>
+        </section>
 
-          <article class="build-panel" data-build-shape>
-            <p class="build-panel__label">
-              {{ cnNumber(powerRating.labels.length) }}维形状
-              <span>{{ strongDims }} 维四星以上</span>
-            </p>
-            <p class="build-panel__copy">读的是构筑形状，不是战力名次；点一维看词条来路。</p>
+        <section
+          class="build-register__chapter build-register__chapter--shape"
+          data-build-chapter="shape"
+          data-build-shape
+        >
+          <BuildChapterHead
+            index="叁"
+            :title="`${cnNumber(powerRating.labels.length)}维形状`"
+            hint="读的是构筑形状，不是战力名次；点一维看词条来路。"
+            :fact="`${strongDims} 维四星以上`"
+          />
+          <div class="build-register__body">
             <div class="build-rating">
               <button
                 v-for="l in powerRating.labels"
@@ -148,245 +162,238 @@
                 </span>
               </button>
             </div>
-          </article>
-        </div>
+          </div>
+        </section>
 
-        <footer class="build-ledger__foot">
-          <p>
-            <span>主路</span><strong>{{ build.style.name }}</strong>
-          </p>
-          <p>
-            <span>副路</span><strong>{{ build.secondary?.style.name ?? "未成" }}</strong>
-          </p>
-          <p>
-            <span>核心词条</span><strong class="tabular">{{ build.coreValues.length }} 条</strong>
-          </p>
-          <p>
-            <span>四星维度</span
-            ><strong class="tabular">{{ strongDims }} / {{ powerRating.labels.length }}</strong>
-          </p>
-        </footer>
-      </section>
-
-      <BuildDiscovery v-else :rows="buildPaths" />
-
-      <section v-if="build" class="build-ledger build-ledger--field" data-build-battle>
-        <LedgerHeader
-          seal="战"
-          eyebrow="实战面 · 只报方向"
-          title="短板与第二套答案"
-          description="七类本世实敌各打一轮估算；再把主派核心封掉，看看还剩多少胜率。"
-          score-label="最弱"
-          :score-value="formatPercent(weakestMatchup?.winRate ?? 0, 0)"
-        />
-
-        <div class="build-ledger__grid">
-          <article class="build-panel build-matchups">
-            <p class="build-panel__label">
-              本世对局
-              <span>短板在前</span>
-            </p>
-            <div class="build-matchup-list">
-              <div
-                v-for="row in matchupSorted"
-                :key="row.id"
-                class="build-matchup"
-                :data-build-matchup="row.id"
-              >
-                <span class="build-matchup__name">
-                  {{ row.name }}
-                  <span v-if="row.wall" class="build-matchup__wall">墙</span>
-                </span>
-                <span class="build-matchup__track" aria-hidden="true">
-                  <span
-                    :class="winBarCls(row.winRate)"
-                    :style="{ width: `${row.winRate * 100}%` }"
-                  />
-                </span>
-                <span class="build-matchup__rate tabular" :class="winTextCls(row.winRate)">
-                  {{ formatPercent(row.winRate, 0) }}
-                </span>
+        <section
+          class="build-register__chapter build-register__chapter--battle"
+          data-build-chapter="battle"
+          data-build-battle
+        >
+          <BuildChapterHead
+            index="肆"
+            eyebrow="实战面 · 只报方向"
+            title="短板与第二套答案"
+            hint="七类本世实敌各打一轮估算；再把主派核心封掉，看看还剩多少胜率。"
+            :fact="`最弱 ${formatPercent(weakestMatchup?.winRate ?? 0, 0)}`"
+          />
+          <div class="build-register__split">
+            <article class="build-register__column build-matchups">
+              <p class="build-label">
+                本世对局
+                <span>短板在前</span>
+              </p>
+              <div class="build-matchup-list">
+                <div
+                  v-for="row in matchupSorted"
+                  :key="row.id"
+                  class="build-matchup"
+                  :data-build-matchup="row.id"
+                >
+                  <span class="build-matchup__name">
+                    {{ row.name }}
+                    <span v-if="row.wall" class="build-matchup__wall">墙</span>
+                  </span>
+                  <span class="build-matchup__track" aria-hidden="true">
+                    <span
+                      :class="winBarCls(row.winRate)"
+                      :style="{ width: `${row.winRate * 100}%` }"
+                    />
+                  </span>
+                  <span class="build-matchup__rate tabular" :class="winTextCls(row.winRate)">
+                    {{ formatPercent(row.winRate, 0) }}
+                  </span>
+                </div>
               </div>
-            </div>
-            <p class="build-panel__copy">
-              每类各打
-              {{ MATCHUP_SAMPLE_RUNS }} 场估算，读的是「哪面吃亏」的方向，不是精确胜率；四墙 (首领 /
-              高爆发 / 真伤 / 疾影)通吃，才称万金油。
-            </p>
-          </article>
-
-          <article class="build-panel build-proof">
-            <p class="build-panel__label">
-              第二套答案
-              <span>{{
-                resilience ? `${formatPercent(resilience.retention, 0)} 留存` : "待测"
-              }}</span>
-            </p>
-            <template v-if="resilience">
-              <p class="build-proof__line">
-                <strong>构筑韧性</strong>
-                <span
-                  class="tabular"
-                  :class="resilience.retention >= 0.45 ? 'text-jade' : 'text-cinnabar'"
-                >
-                  {{ formatPercent(resilience.normal, 0) }} →
-                  {{ formatPercent(resilience.sealed, 0) }}
-                </span>
+              <p class="build-copy">
+                每类各打
+                {{ MATCHUP_SAMPLE_RUNS }} 场估算，读的是「哪面吃亏」的方向，不是精确胜率；四墙 (首领
+                / 高爆发 / 真伤 / 疾影)通吃，才称万金油。
               </p>
-              <p class="build-panel__copy">{{ resilienceText(resilience) }}</p>
-            </template>
+            </article>
 
-            <div v-if="comboInfo" class="build-combo">
-              <p class="build-combo__title">
-                组合技「{{ comboInfo.art.name }}」
-                <span :class="comboInfo.active ? 'text-jade' : 'text-ink-faint'">
-                  {{
-                    comboInfo.active
-                      ? "已成"
-                      : `副体系至 ${formatPercent(COMBO_SECONDARY_MIN, 0)} 契合可成`
-                  }}
-                </span>
+            <article class="build-register__column build-proof">
+              <p class="build-label">
+                第二套答案
+                <span>{{
+                  resilience ? `${formatPercent(resilience.retention, 0)} 留存` : "待测"
+                }}</span>
               </p>
-              <p class="build-panel__copy">{{ comboInfo.art.desc }}</p>
-              <p class="build-combo__cost">代价：{{ comboInfo.art.costText }}</p>
-            </div>
-            <p v-else class="build-panel__aside">主副两路尚未成对，组合技会在这里显形。</p>
-          </article>
-        </div>
-      </section>
-
-      <section class="build-ledger" data-build-loadouts>
-        <LedgerHeader
-          seal="藏"
-          eyebrow="换装底账"
-          title="构筑快照"
-          description="把顺手的整套功法、法宝与装备存起来，按当前处境一键换装。"
-          score-label="已存"
-          :score-value="loadouts.list.length"
-          :score-suffix="`/ ${MAX_LOADOUTS}`"
-        />
-
-        <div class="build-loadout__toolbar">
-          <p>快照只记当前整套装配，不替你重算词条。</p>
-          <button
-            class="chip-ink border-cinnabar/40 text-cinnabar disabled:border-ink/15 disabled:text-ink-faint"
-            :disabled="loadoutsFull"
-            @click="openSave"
-          >
-            {{ loadoutsFull ? "快照已满" : "+ 存当前构筑" }}
-          </button>
-        </div>
-
-        <div v-if="loadouts.list.length" class="build-loadout__list">
-          <article v-for="lo in loadouts.list" :key="lo.id" class="build-loadout__row">
-            <span class="build-loadout__seal" aria-hidden="true">{{ lo.seal }}</span>
-            <div class="build-loadout__copy">
-              <strong>{{ lo.name }}</strong>
-              <span>整套功法 / 法宝 / 装备</span>
-            </div>
-            <div class="build-loadout__actions">
-              <button class="btn-ghost !px-2.5 !py-1 !text-body" @click="applyLoadout(lo.id)">
-                换装
-              </button>
-              <template v-if="confirmDelete !== lo.id">
-                <button
-                  class="build-loadout__delete"
-                  aria-label="删除构筑"
-                  @click="confirmDelete = lo.id"
-                >
-                  <GameIcon name="trash" :size="12" />
-                </button>
+              <template v-if="resilience">
+                <p class="build-proof__line">
+                  <strong>构筑韧性</strong>
+                  <span
+                    class="tabular"
+                    :class="resilience.retention >= 0.45 ? 'text-jade' : 'text-cinnabar'"
+                  >
+                    {{ formatPercent(resilience.normal, 0) }} →
+                    {{ formatPercent(resilience.sealed, 0) }}
+                  </span>
+                </p>
+                <p class="build-copy">{{ resilienceText(resilience) }}</p>
               </template>
-              <template v-else>
-                <button class="btn-seal !px-2 !py-0.5 !text-note" @click="doDeleteLoadout(lo.id)">
-                  确认删除
-                </button>
-                <button
-                  class="text-note text-ink-faint active:text-ink"
-                  @click="confirmDelete = null"
-                >
-                  再想想
-                </button>
-              </template>
-            </div>
-          </article>
-        </div>
-        <p v-else class="build-ledger__empty">尚无快照，存一套后可在此与各区域间从容切换。</p>
-      </section>
 
-      <section v-if="compareCandidates.length" class="build-ledger" data-build-compare>
-        <LedgerHeader
-          seal="照"
-          eyebrow="跨世校样"
-          title="构筑对照"
-          description="以当前构筑，对照道痕中冻结的一套过往构筑，看四天局面各有何异。"
-          score-label="旧样"
-          :score-value="compareRows.length"
-          score-suffix="则"
-        />
+              <div v-if="comboInfo" class="build-combo">
+                <p class="build-combo__title">
+                  组合技「{{ comboInfo.art.name }}」
+                  <span :class="comboInfo.active ? 'text-jade' : 'text-ink-faint'">
+                    {{
+                      comboInfo.active
+                        ? "已成"
+                        : `副体系至 ${formatPercent(COMBO_SECONDARY_MIN, 0)} 契合可成`
+                    }}
+                  </span>
+                </p>
+                <p class="build-copy">{{ comboInfo.art.desc }}</p>
+                <p class="build-combo__cost">代价：{{ comboInfo.art.costText }}</p>
+              </div>
+              <p v-else class="build-aside">主副两路尚未成对，组合技会在这里显形。</p>
+            </article>
+          </div>
+        </section>
 
-        <div class="build-compare__body">
-          <div
-            class="build-compare__choices"
-            :data-compare-total="compareRows.length"
-            :data-compare-shown="comparePage.shown"
-          >
+        <section
+          class="build-register__chapter build-register__chapter--loadouts"
+          data-build-chapter="loadouts"
+          data-build-loadouts
+        >
+          <BuildChapterHead
+            index="伍"
+            title="构筑快照"
+            hint="把顺手的整套功法、法宝与装备存起来，按当前处境一键换装。"
+            :fact="`已存 ${loadouts.list.length} / ${MAX_LOADOUTS}`"
+          />
+          <div class="build-loadout__toolbar">
+            <p>快照只记当前整套装配，不替你重算词条。</p>
             <button
-              v-for="c in compareCandidates"
-              :key="c.at"
-              type="button"
-              :data-compare-candidate="c.at"
-              class="chip-ink"
-              :class="
-                compareAt === c.at
-                  ? 'border-cinnabar text-cinnabar'
-                  : 'border-ink/25 text-ink-faint'
-              "
-              :aria-pressed="compareAt === c.at"
-              @click="pickCompare(c.at)"
+              class="chip-ink border-cinnabar/40 text-cinnabar disabled:border-ink/15 disabled:text-ink-faint"
+              :disabled="loadoutsFull"
+              @click="openSave"
             >
-              第{{ c.life }}世·{{ c.buildName }}
-            </button>
-            <button
-              v-if="comparePage.hidden > 0"
-              type="button"
-              data-compare-more
-              class="chip-ink border-cinnabar/50 text-note text-cinnabar active:scale-95"
-              :aria-label="compareMoreText"
-              @click="showMoreCompare"
-            >
-              {{ compareMoreText }}
+              {{ loadoutsFull ? "快照已满" : "+ 存当前构筑" }}
             </button>
           </div>
 
-          <template v-if="compareResult">
-            <div class="build-compare__result" :data-compare-result="compareAt">
-              <p v-for="row in compareResult.rows" :key="row.worldName" class="build-compare__row">
-                <span>{{ row.worldName }}</span>
-                <span class="tabular">
-                  <span>今 {{ row.aText }}</span>
-                  <span class="build-compare__divider">|</span>
-                  <span
-                    :class="
-                      row.trend === 'down'
-                        ? 'text-jade'
-                        : row.trend === 'up'
-                          ? 'text-cinnabar'
-                          : 'text-ink-faint'
-                    "
+          <div v-if="loadouts.list.length" class="build-loadout__list">
+            <article v-for="lo in loadouts.list" :key="lo.id" class="build-loadout__row">
+              <span class="build-loadout__seal" aria-hidden="true">{{ lo.seal }}</span>
+              <div class="build-loadout__copy">
+                <strong>{{ lo.name }}</strong>
+                <span>整套功法 / 法宝 / 装备</span>
+              </div>
+              <div class="build-loadout__actions">
+                <button class="btn-ghost !px-2.5 !py-1 !text-body" @click="applyLoadout(lo.id)">
+                  换装
+                </button>
+                <template v-if="confirmDelete !== lo.id">
+                  <button
+                    class="build-loadout__delete"
+                    aria-label="删除构筑"
+                    @click="confirmDelete = lo.id"
                   >
-                    彼 {{ row.bText }}
-                  </span>
-                </span>
-              </p>
+                    <GameIcon name="trash" :size="12" />
+                  </button>
+                </template>
+                <template v-else>
+                  <button class="btn-seal !px-2 !py-0.5 !text-note" @click="doDeleteLoadout(lo.id)">
+                    确认删除
+                  </button>
+                  <button
+                    class="text-note text-ink-faint active:text-ink"
+                    @click="confirmDelete = null"
+                  >
+                    再想想
+                  </button>
+                </template>
+              </div>
+            </article>
+          </div>
+          <p v-else class="build-empty">尚无快照，存一套后可在此与各区域间从容切换。</p>
+        </section>
+
+        <section
+          v-if="compareCandidates.length"
+          class="build-register__chapter build-register__chapter--compare"
+          data-build-chapter="compare"
+          data-build-compare
+        >
+          <BuildChapterHead
+            index="陆"
+            eyebrow="跨世校样"
+            title="旧筑对照"
+            hint="以当前构筑，对照道痕中冻结的一套过往构筑，看四天局面各有何异。"
+            :fact="`道痕 ${compareRows.length} 则`"
+          />
+
+          <div class="build-compare__body">
+            <div
+              class="build-compare__choices"
+              :data-compare-total="compareRows.length"
+              :data-compare-shown="comparePage.shown"
+            >
+              <button
+                v-for="c in compareCandidates"
+                :key="c.at"
+                type="button"
+                :data-compare-candidate="c.at"
+                class="chip-ink"
+                :class="
+                  compareAt === c.at
+                    ? 'border-cinnabar text-cinnabar'
+                    : 'border-ink/25 text-ink-faint'
+                "
+                :aria-pressed="compareAt === c.at"
+                @click="pickCompare(c.at)"
+              >
+                第{{ c.life }}世·{{ c.buildName }}
+              </button>
+              <button
+                v-if="comparePage.hidden > 0"
+                type="button"
+                data-compare-more
+                class="chip-ink border-cinnabar/50 text-note text-cinnabar active:scale-95"
+                :aria-label="compareMoreText"
+                @click="showMoreCompare"
+              >
+                {{ compareMoreText }}
+              </button>
             </div>
-            <p v-if="compareResult.diffLines.length" class="build-compare__diff tabular">
-              彼相对于今：{{ compareResult.diffLines.join(" · ") }}
-            </p>
-            <p class="build-compare__note">两套方案各有其境，取舍在你。</p>
-          </template>
-        </div>
-      </section>
+
+            <template v-if="compareResult">
+              <div class="build-compare__result" :data-compare-result="compareAt">
+                <p
+                  v-for="row in compareResult.rows"
+                  :key="row.worldName"
+                  class="build-compare__row"
+                >
+                  <span>{{ row.worldName }}</span>
+                  <span class="tabular">
+                    <span>今 {{ row.aText }}</span>
+                    <span class="build-compare__divider">|</span>
+                    <span
+                      :class="
+                        row.trend === 'down'
+                          ? 'text-jade'
+                          : row.trend === 'up'
+                            ? 'text-cinnabar'
+                            : 'text-ink-faint'
+                      "
+                    >
+                      彼 {{ row.bText }}
+                    </span>
+                  </span>
+                </p>
+              </div>
+              <p v-if="compareResult.diffLines.length" class="build-compare__diff tabular">
+                彼相对于今：{{ compareResult.diffLines.join(" · ") }}
+              </p>
+              <p class="build-compare__note">两套方案各有其境，取舍在你。</p>
+            </template>
+          </div>
+        </section>
+      </article>
+
+      <BuildDiscovery v-else :rows="buildPaths" />
     </div>
 
     <BaseModal :open="saveOpen" title="存为构筑" @close="saveOpen = false">
@@ -439,9 +446,9 @@ import { STAT_NAMES } from "@/data/statNames";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
-import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import BuildAtlas from "@/components/build/BuildAtlas.vue";
+import BuildChapterHead from "@/components/build/BuildChapterHead.vue";
 import BuildDiscovery from "@/components/build/BuildDiscovery.vue";
 
 const player = usePlayerStore();

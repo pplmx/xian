@@ -13389,11 +13389,11 @@ async function taskBuildDiscovery() {
 }
 
 /**
- * 成路后的流派页不是一串同权卡片,而是一张「铸道案」。
+ * 成路后的流派页不是一串同权卡片,而是一册「铸道续卷」。
  *
- * 用后期档稳定造出背水成形路:卷首铸道盘必须与当前路同报,正文六块账位
- * (道途阶梯 / 五维形状 / 下一步 / 实战短板 / 快照 / 旧构筑)要各自落位。
- * 390、320 与 200% 缩放档(195)同量;截图档另存一张 195 宽的成路总案。
+ * 用后期档稳定造出背水成形路:卷首铸道盘必须与当前路同报,正文沿
+ * 道途阶梯 / 下一步 / 五维形状 / 实战 / 快照 / 旧筑续排,不再逐段套四边卡。
+ * 390 量章序与首屏下一步,1280 量前三章并读和实战整行,195 量极窄档章态。
  */
 async function taskBuildFormed() {
   const failures = [];
@@ -13433,10 +13433,46 @@ async function taskBuildFormed() {
         const text = (selector) =>
           (document.querySelector(selector)?.innerText || "").replace(/\s+/g, " ").trim();
         const root = document.querySelector("[data-build-formed]");
+        const rectOf = (el) => {
+          if (!el) return null;
+          const rect = el.getBoundingClientRect();
+          return {
+            top: Math.round(rect.top),
+            right: Math.round(rect.right),
+            bottom: Math.round(rect.bottom),
+            left: Math.round(rect.left),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+          };
+        };
+        const register = document.querySelector("[data-build-register]");
+        const registerStyle = register ? getComputedStyle(register) : null;
         const topOf = (selector) => {
           const el = document.querySelector(selector);
           return el ? Math.round(el.getBoundingClientRect().top) : null;
         };
+        const chapters = [...(root?.querySelectorAll("[data-build-chapter]") ?? [])].map(
+          (chapter) => {
+            const style = getComputedStyle(chapter);
+            const head = chapter.querySelector("[data-build-chapter-head]");
+            return {
+              key: chapter.getAttribute("data-build-chapter") || "",
+              title: chapter.querySelector(".build-chapter-head__title")?.textContent?.trim() || "",
+              hasHead: Boolean(head),
+              fact: chapter.querySelector(".build-chapter-head__fact")?.textContent?.trim() || "",
+              borderWidths: [
+                style.borderTopWidth,
+                style.borderRightWidth,
+                style.borderBottomWidth,
+                style.borderLeftWidth,
+              ].map((width) => Number.parseFloat(width)),
+              radius: Number.parseFloat(style.borderTopLeftRadius),
+              shadow: style.boxShadow,
+              background: style.backgroundColor,
+              rect: rectOf(chapter),
+            };
+          },
+        );
         return {
           current: text("[data-build-current]"),
           atlasHidden: document.querySelector("[data-build-atlas]")?.getAttribute("aria-hidden"),
@@ -13452,6 +13488,18 @@ async function taskBuildFormed() {
           matchupRows:
             document.querySelector("[data-build-battle]")?.querySelectorAll("[data-build-matchup]")
               .length ?? 0,
+          register: registerStyle
+            ? {
+                borderTop: Number.parseFloat(registerStyle.borderTopWidth),
+                borderRight: Number.parseFloat(registerStyle.borderRightWidth),
+                borderBottom: Number.parseFloat(registerStyle.borderBottomWidth),
+                borderLeft: Number.parseFloat(registerStyle.borderLeftWidth),
+                radius: Number.parseFloat(registerStyle.borderTopLeftRadius),
+                shadow: registerStyle.boxShadow,
+              }
+            : null,
+          cardShells: root?.querySelectorAll(".card-ink").length ?? 0,
+          chapters,
           nextTop: topOf("[data-build-next]"),
           shapeTop: topOf("[data-build-shape]"),
           viewportBottom: innerHeight,
@@ -13467,6 +13515,51 @@ async function taskBuildFormed() {
       }
       if (formed.atlasHidden !== "true") {
         failures.push("[390] 成路总案的卷首铸道盘没有对读屏隐藏");
+      }
+      if (
+        !formed.register ||
+        formed.register.borderTop < 1 ||
+        formed.register.borderBottom < 1 ||
+        formed.register.borderLeft !== 0 ||
+        formed.register.borderRight !== 0 ||
+        formed.register.radius !== 0 ||
+        formed.register.shadow !== "none"
+      ) {
+        failures.push(`[390] 成路总案没有收成一册开口续卷:${JSON.stringify(formed.register)}`);
+      }
+      const expectedChapters = ["stage", "next", "shape", "battle", "loadouts"];
+      const actualChapters = formed.chapters.map((chapter) => chapter.key);
+      if (
+        actualChapters.slice(0, expectedChapters.length).join(",") !== expectedChapters.join(",") ||
+        actualChapters.some((key, index) => key !== expectedChapters[index] && key !== "compare")
+      ) {
+        failures.push(`[390] 成路总案章序不对:${actualChapters.join(" / ")}`);
+      }
+      const expectedTitles = ["道途阶梯", "下一步", "五维形状", "短板与第二套答案", "构筑快照"];
+      if (
+        formed.chapters
+          .slice(0, expectedTitles.length)
+          .map((chapter) => chapter.title)
+          .join(",") !== expectedTitles.join(",")
+      ) {
+        failures.push(
+          `[390] 成路总案章名不对:${formed.chapters.map((chapter) => chapter.title).join(" / ")}`,
+        );
+      }
+      const brokenChapters = formed.chapters.filter(
+        (chapter) =>
+          !chapter.hasHead ||
+          !chapter.fact ||
+          chapter.radius !== 0 ||
+          chapter.shadow !== "none" ||
+          chapter.background !== "rgba(0, 0, 0, 0)" ||
+          chapter.borderWidths.every((width) => width > 0),
+      );
+      if (brokenChapters.length) {
+        failures.push(`[390] 成路续卷里有章首缺字或重新套壳:${JSON.stringify(brokenChapters)}`);
+      }
+      if (formed.cardShells > 0) {
+        failures.push(`[390] 成路续卷里又套了 ${formed.cardShells} 张 card-ink`);
       }
       for (const [key, label] of [
         ["stage", "道途阶梯"],
@@ -13512,6 +13605,60 @@ async function taskBuildFormed() {
       if (problems.length) {
         failures.push(`[${tag}] /build 成路总案 → ${problems.join(" / ")}`);
       }
+    }
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await settleVisuals(page);
+    const wide = await page.evaluate(() => {
+      const rectOf = (selector) => {
+        const el = document.querySelector(selector);
+        if (!el) return null;
+        const rect = el.getBoundingClientRect();
+        return {
+          top: Math.round(rect.top),
+          right: Math.round(rect.right),
+          bottom: Math.round(rect.bottom),
+          left: Math.round(rect.left),
+          width: Math.round(rect.width),
+        };
+      };
+      const register = rectOf("[data-build-register]");
+      const borderTopOf = (selector) => {
+        const el = document.querySelector(selector);
+        return el ? Number.parseFloat(getComputedStyle(el).borderTopWidth) : null;
+      };
+      return {
+        register,
+        stage: rectOf("[data-build-stage]"),
+        next: rectOf("[data-build-next]"),
+        shape: rectOf("[data-build-shape]"),
+        battle: rectOf("[data-build-battle]"),
+        nextBorderTop: borderTopOf("[data-build-next]"),
+        shapeBorderTop: borderTopOf("[data-build-shape]"),
+      };
+    });
+    checked += 1;
+    if (
+      !wide.register ||
+      !wide.stage ||
+      !wide.next ||
+      !wide.shape ||
+      !wide.battle ||
+      Math.max(Math.abs(wide.stage.top - wide.next.top), Math.abs(wide.next.top - wide.shape.top)) >
+        2 ||
+      !(wide.stage.left < wide.next.left && wide.next.left < wide.shape.left) ||
+      wide.nextBorderTop !== 0 ||
+      wide.shapeBorderTop !== 0 ||
+      wide.battle.top < Math.max(wide.stage.bottom, wide.next.bottom, wide.shape.bottom) - 2 ||
+      wide.battle.left > wide.register.left + 2 ||
+      wide.battle.right < wide.register.right - 2
+    ) {
+      failures.push(`[1280] 成路续卷前三章没有并读或实战面没有整行接续:${JSON.stringify(wide)}`);
+    }
+    const wideProblems = problemsOf(await measurePage(page));
+    checked += 1;
+    if (wideProblems.length) {
+      failures.push(`[1280] /build 成路总案 → ${wideProblems.join(" / ")}`);
     }
 
     await page.setViewportSize({ width: 390, height: 844 });

@@ -277,6 +277,16 @@ error: Failed to resolve vite command: GenericFailure, Expected
 四组行藏、零卡壳、来源拆卷开合与 28px 触达高度,再切到 1280 核对前两组真的并排;
 结构与全属性键覆盖由 `src/ui/characterDesk.spec.ts`、`characterDossier.spec.ts` 守住。
 
+流派页成路后现在收成一册「铸道续卷」:道途阶梯、下一步、五维形状、实战面、
+构筑快照与可选旧筑对照沿同一组 `BuildChapterHead` 续排,原有的 `data-build-stage`
+/ `next` / `shape` / `battle` / `loadouts` / `compare` 运行时落点全部保留。390 档核对
+五章稳定章序、章名、章首读数、零 `card-ink` 与下一步首屏位置;620 档阶梯与下一步
+先并读、五维续整行;1280 档前三章同顶并读,实战章再以整行接续。旧案、实战、快照与
+旧筑的四边卡壳退役,阶段、缺口、星级、对局与留存仍分别直读
+`buildStageMeter`、`buildCoreGaps`、`ratePower`、`playerMatchups` 与
+`measureResilience`。结构由 `src/ui/buildDesk.spec.ts` /
+`src/ui/buildDiscovery.spec.ts` 守住,真浏览器排版由 `taskBuildFormed` 复核。
+
 名号与灵兽两册同样不再整册铺开:69 条终局清单各按 12 条一批、最多保留 24 条,
 续开、滑窗、回翻与焦点走同一套长列表规则。名号按「佩戴中 → 已拥有」排,灵兽按
 「当前相伴 → 已结缘 → 品阶」排;换佩或换伴会改变排序,因此窗口回到首批并聚焦新选,
