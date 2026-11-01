@@ -5,10 +5,12 @@
    *
    * 旧页把声音、主题、动效、存档、诊断和关于都做成同权重卡片:玩家要改一项,
    * 得逐块找;卷首也不报此刻到底听不听得见、备份安不安稳。现在卷首用一枚天机盘
-   * 同报声息 / 观照 / 存续,正文先摊三项即时设置,再把存档、留痕与卷末索引各归一案。
+   * 同报声息 / 观照 / 存续,正文先摊三项即时设置,再把存档、留痕与卷末索引续在同一
+   * 张开口长账里,不再逐案套四边卡。
    * 事实仍来自 settings、saveBackup、diag 与真实存档状态,这里只负责装配和可读性。
    */
   .settings-page,
+  .settings-folio,
   .settings-console,
   .settings-archive,
   .settings-trail,
@@ -134,6 +136,24 @@
     font-size: 18px;
     line-height: 1;
   }
+  .settings-folio {
+    position: relative;
+    min-width: 0;
+    margin-top: 0.5rem;
+    border: 0;
+    border-block: 1px solid rgb(var(--color-ink-rgb) / 0.15);
+    border-radius: 0;
+    background:
+      linear-gradient(
+        112deg,
+        rgb(var(--color-cinnabar-rgb) / 0.025),
+        transparent 36%,
+        rgb(var(--color-qing-rgb) / 0.018) 82%,
+        transparent
+      ),
+      rgb(var(--color-paper-lifted-rgb) / 0.34);
+    box-shadow: none;
+  }
   .settings-console,
   .settings-archive,
   .settings-trail {
@@ -141,22 +161,13 @@
     --settings-accent-rgb: var(--color-cinnabar-rgb);
     --ledger-accent: var(--settings-accent);
     position: relative;
-    overflow: hidden;
-    margin-top: 0.5rem;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.15);
-    border-top: 2px solid var(--settings-accent);
-    border-radius: 2px;
-    background:
-      linear-gradient(
-        116deg,
-        rgb(var(--settings-accent-rgb) / 0.052),
-        transparent 42%,
-        rgb(var(--color-ink-rgb) / 0.016)
-      ),
-      rgb(var(--color-paper-lifted-rgb));
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.44),
-      3px 3px 0 rgb(var(--color-ink-rgb) / 0.024);
+    min-width: 0;
+    overflow: visible;
+    margin-top: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
   .settings-archive {
     --settings-accent: var(--color-qing);
@@ -169,15 +180,6 @@
   .settings-trail[data-state="recorded"] {
     --settings-accent: var(--color-cinnabar);
     --settings-accent-rgb: var(--color-cinnabar-rgb);
-  }
-  .settings-console::before,
-  .settings-archive::before,
-  .settings-trail::before {
-    position: absolute;
-    inset: 4px;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.032);
-    content: "";
-    pointer-events: none;
   }
   .settings-group__eyebrow {
     display: block;
@@ -397,7 +399,7 @@
     gap: 0.25rem 0.8rem;
     padding: 0.52rem 0.92rem 0.6rem;
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-    background: rgb(var(--color-paper-rgb) / 0.22);
+    background: transparent;
     color: var(--color-ink-faint);
     font-size: var(--type-note);
     line-height: 1.5;
@@ -491,6 +493,13 @@
     gap: 0.42rem;
     padding: 0.76rem 0.92rem 0;
   }
+  .settings-archive__actions button,
+  .settings-trail__actions button,
+  .settings-archive__acknowledge,
+  .settings-archive__reset {
+    min-inline-size: 28px;
+    min-block-size: 28px;
+  }
   .settings-archive__reset {
     position: relative;
     z-index: 1;
@@ -529,22 +538,33 @@
   }
   .settings-afterword {
     display: grid;
-    gap: 1rem;
+    gap: 0;
+    margin-top: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.13);
+  }
+  .settings-afterword__archive,
+  .settings-afterword__side {
+    padding-top: 0.88rem;
   }
   .settings-afterword__side {
     display: grid;
     align-content: start;
-    gap: 1rem;
+    gap: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+  }
+  .settings-afterword__side > section + section {
+    margin-top: 0.88rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    padding-top: 0.88rem;
   }
   .settings-index {
-    overflow: hidden;
+    overflow: visible;
     margin-top: 0.5rem;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.15);
-    border-radius: 2px;
-    background: rgb(var(--color-paper-lifted-rgb) / 0.82);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.42),
-      2px 2px 0 rgb(var(--color-ink-rgb) / 0.022);
+    border: 0;
+    border-block: 1px solid rgb(var(--color-ink-rgb) / 0.13);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
   .settings-index__row {
     display: grid;
@@ -655,6 +675,7 @@
     .settings-afterword__archive {
       grid-column: 1;
       grid-row: 1;
+      padding-right: 1rem;
     }
 
     .settings-afterword__notice {
@@ -665,6 +686,9 @@
     .settings-afterword__side {
       grid-column: 2;
       grid-row: 1 / span 2;
+      border-top: 0;
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+      padding-left: 1rem;
     }
   }
   @media (max-width: 220px) {

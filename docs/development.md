@@ -212,6 +212,13 @@ error: Failed to resolve vite command: GenericFailure, Expected
 远征、试炼与道痕继续按激活册互斥挂载,逐项缺口与倒计时仍由各面板自报。总账由
 `core/celestialOverview` 一处汇总,结构与事实源由 `celestialDesk.spec` 守住。
 
+设置页的总案、存续案、留痕案与卷末索引现在同住一张开口长账:外层只留上下账线,
+内案去掉四边卡、底色、投影与第二层内框,存续和留痕只在账页里用分段线续排。960px
+仍把存续放左、留痕与索引叠右,220 CSS px 以下全部退单列;存续与留痕动作仍守
+28px 触达下限。真浏览器巡页同时核对外层左右边框为零、后半册仍在同一节点内;
+结构与事实源由 `src/ui/settingsDesk.spec.ts`、`src/core/uiLayering.spec.ts` 与
+`scripts/layout-check.mjs` 守住。
+
 续开后的键盘焦点也走同一条账:核心函数按「续开前已看到哪件 / 续开后开到哪件」算出
 新露出第一件在当前窗口里的索引,背包、坊市、图鉴统一按它聚焦;回翻则落到当前页首件。
 运行时门会核对 `document.activeElement` 确实属于新批 —— 焦点被旧批首件抢回同样报红。

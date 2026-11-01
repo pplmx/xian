@@ -2327,9 +2327,35 @@ async function taskPageTour(vp) {
       const settingsDesk = await page.evaluate(() => {
         const current = document.querySelector("[data-settings-current]");
         const consoleDesk = document.querySelector("[data-settings-console]");
+        const folio = document.querySelector("[data-settings-folio]");
+        const folioStyle = folio ? getComputedStyle(folio) : null;
+        const innerCards = [
+          ...document.querySelectorAll(".settings-console, .settings-archive, .settings-trail"),
+        ];
         return {
           current: (current?.textContent || "").replace(/\s+/g, " ").trim(),
           console: !!consoleDesk,
+          folio: folioStyle
+            ? {
+                sameNode: folio === consoleDesk,
+                borderTop: Number.parseFloat(folioStyle.borderTopWidth),
+                borderRight: Number.parseFloat(folioStyle.borderRightWidth),
+                borderBottom: Number.parseFloat(folioStyle.borderBottomWidth),
+                borderLeft: Number.parseFloat(folioStyle.borderLeftWidth),
+                radius: Number.parseFloat(folioStyle.borderTopLeftRadius),
+                shadow: folioStyle.boxShadow,
+                afterwordInside: Boolean(folio?.querySelector("[data-settings-afterword]")),
+                innerCardBorders: innerCards.map((card) => {
+                  const style = getComputedStyle(card);
+                  return [
+                    style.borderTopWidth,
+                    style.borderRightWidth,
+                    style.borderBottomWidth,
+                    style.borderLeftWidth,
+                  ].map((width) => Number.parseFloat(width));
+                }),
+              }
+            : null,
           groups: [...document.querySelectorAll("[data-settings-group]")].map(
             (el) => el.getAttribute("data-settings-group") || "",
           ),
@@ -2350,6 +2376,22 @@ async function taskPageTour(vp) {
       }
       if (!settingsDesk.archive || !settingsDesk.trail || !settingsDesk.index) {
         failures.push(`[${vp.tag}] /settings 存续案、留痕案或卷末索引缺了一案`);
+      }
+      if (
+        !settingsDesk.folio ||
+        !settingsDesk.folio.sameNode ||
+        !settingsDesk.folio.afterwordInside ||
+        settingsDesk.folio.borderTop < 1 ||
+        settingsDesk.folio.borderBottom < 1 ||
+        settingsDesk.folio.borderLeft !== 0 ||
+        settingsDesk.folio.borderRight !== 0 ||
+        settingsDesk.folio.radius !== 0 ||
+        settingsDesk.folio.shadow !== "none" ||
+        settingsDesk.folio.innerCardBorders.some((widths) => widths.some((width) => width !== 0))
+      ) {
+        failures.push(
+          `[${vp.tag}] /settings 没有收成一张连续账页:${JSON.stringify(settingsDesk.folio)}`,
+        );
       }
       if (vp.width >= 360 && !settingsDesk.compass) {
         failures.push(`[${vp.tag}] /settings 天机盘没有随卷首渲染`);

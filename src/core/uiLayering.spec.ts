@@ -2959,6 +2959,34 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("设置整册只有一张连续账页 —— 总案、存续与留痕不许逐层套四边卡", () => {
+    /*
+     * 设置页此前是「大卡里套三张小卡」:总案、存续案、留痕案各有一圈边框、底色、
+     * 内外投影,卷末索引再套第四张。问题不是某个颜色,而是同一页出现四套同权重
+     * 容器,读者每滚一段都要重新判断「这是一张新纸吗」。现在整册只由外层上下
+     * 账线围合,内案退成透明分段;故障注入 = 把任一圈四边卡加回来,下面必红。
+     */
+    const view = FILES.find((f) => f.path === "views/SettingsView.vue");
+    const css = readFileSync(resolve(__dirname, "../styles/pages/settings.css"), "utf8");
+    const folio = view?.src.slice(
+      view.src.indexOf("data-settings-console"),
+      view.src.indexOf("<AboutDialog"),
+    );
+
+    expect(folio, "整册要定位得到").toBeTruthy();
+    expect(folio, "正文不再借通用卡片皮").not.toContain("card-ink");
+    expect(view?.src, "存续案与留痕案必须在同一张长账内").toMatch(
+      /data-settings-console[\s\S]*data-settings-afterword[\s\S]*data-settings-archive[\s\S]*data-settings-trail/,
+    );
+    expect(css, "外层只留上下账线").toMatch(
+      /\.settings-folio\s*\{[\s\S]{0,320}border-block:\s*1px solid/,
+    );
+    expect(css, "内案全部退成透明分段").toMatch(
+      /\.settings-console,\s*\.settings-archive,\s*\.settings-trail\s*\{[\s\S]{0,620}border:\s*0;[\s\S]{0,620}background:\s*transparent;[\s\S]{0,620}box-shadow:\s*none;/,
+    );
+    expect(css, "内案不再留第二层内框").not.toMatch(/\.settings-(?:console|archive|trail)::before/);
+  });
+
   it("强色文字不叠透明度 —— 要淡是换 token,不许元素级 opacity", () => {
     // design.md「文字不叠透明度」:品阶名(整色)与 buff 叠数(继承强色)此前用元素级
     // opacity-80 淡化 —— 正好绕过 palette.spec 只扫「/80」斜杠语法的口子,浏览器照样

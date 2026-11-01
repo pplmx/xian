@@ -159,6 +159,20 @@ describe("天机案 · 设置卷首与三案同读此刻", () => {
     );
   });
 
+  it("存续与留痕动作守住 28px,极窄档仍逐枚占满整行", () => {
+    const css = source("src/styles/pages/settings.css");
+
+    expect(css, "存续、留痕与清档动作都要守住触控下限").toMatch(
+      /\.settings-archive__actions button,[\s\S]{0,180}\.settings-trail__actions button,[\s\S]{0,180}\.settings-archive__acknowledge,[\s\S]{0,180}\.settings-archive__reset\s*\{[\s\S]{0,180}min-(?:block-size|height):\s*28px;/,
+    );
+    expect(css, "触控下限不能只量高不量宽").toMatch(
+      /\.settings-archive__actions button,[\s\S]{0,220}min-inline-size:\s*28px;/,
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,2600}\.settings-archive__actions,[\s\S]{0,140}\.settings-trail__actions\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+  });
+
   it("桌面把存续案与留痕、卷末索引并成一张后案,手机仍按原顺序单列", () => {
     const view = source("src/views/SettingsView.vue");
     const css = source("src/style.css");
@@ -169,10 +183,13 @@ describe("天机案 · 设置卷首与三案同读此刻", () => {
 
     expect(view).toContain("data-settings-afterword");
     expect(view).toMatch(
-      /<div class="settings-afterword folio-span-all" data-settings-afterword>[\s\S]{0,600}<section class="settings-afterword__archive"/,
+      /<div class="settings-afterword" data-settings-afterword>[\s\S]{0,600}<section class="settings-afterword__archive"/,
     );
     expect(view).toContain('class="settings-afterword__notice"');
     expect(view).toContain('class="settings-afterword__side" data-settings-afterword-side');
+    expect(view, "存续与留痕必须同住整册连续账页").toMatch(
+      /<section class="settings-folio folio-span-all"[\s\S]{0,50000}<div class="settings-afterword" data-settings-afterword>[\s\S]{0,50000}<\/section>/,
+    );
     expect(settingsCss).toMatch(
       /@media \(min-width: 960px\)\s*\{[\s\S]{0,900}\.settings-afterword\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(0, 1\.08fr\) minmax\(0, 0\.92fr\)/,
     );
@@ -183,5 +200,34 @@ describe("天机案 · 设置卷首与三案同读此刻", () => {
       /\.settings-afterword__side\s*\{[\s\S]{0,100}grid-column:\s*2;[\s\S]{0,100}grid-row:\s*1 \/ span 2/,
     );
     expect(layout).toContain("存续案与留痕、索引没有在桌面上并读");
+  });
+
+  it("整册收成一张开口长账,总案、存续与留痕不再各套四边卡", () => {
+    const view = source("src/views/SettingsView.vue");
+    const css = source("src/styles/pages/settings.css");
+
+    expect(view, "整册外框要成为唯一连续账页").toMatch(
+      /<section\s+class="settings-folio folio-span-all"\s+data-settings-folio\s+data-settings-console\s*>/,
+    );
+    expect(view, "总案从连续账页里续排,不再另起卡壳").toMatch(
+      /data-settings-console>[\s\S]{0,900}<section class="settings-console">/,
+    );
+    expect(
+      view.match(/class="settings-archive__reset[^"]*"/)?.[0] ?? "",
+      "清档键不能再让 w-full 盖掉自身宽度,给账页多出一条横向滚动",
+    ).not.toContain("w-full");
+    expect(css, "连续账页只留上下账线").toMatch(
+      /\.settings-folio\s*\{[\s\S]{0,320}border-block:\s*1px solid/,
+    );
+    expect(css, "三个内案撤掉四边卡、圆角、底色与投影").toMatch(
+      /\.settings-console,\s*\.settings-archive,\s*\.settings-trail\s*\{[\s\S]{0,620}border:\s*0;[\s\S]{0,620}border-radius:\s*0;[\s\S]{0,620}background:\s*transparent;[\s\S]{0,620}box-shadow:\s*none;/,
+    );
+    expect(css, "内案不再画第二层内框").not.toMatch(/\.settings-(?:console|archive|trail)::before/);
+    expect(css, "后案只以分段线接续前账").toMatch(
+      /\.settings-afterword\s*\{[\s\S]{0,260}gap:\s*0;[\s\S]{0,260}border-top:\s*1px solid/,
+    );
+    expect(css, "卷末索引也摊成开口账行").toMatch(
+      /\.settings-index\s*\{[\s\S]{0,320}border:\s*0;[\s\S]{0,320}border-block:\s*1px solid[\s\S]{0,320}background:\s*transparent;[\s\S]{0,320}box-shadow:\s*none;/,
+    );
   });
 });
