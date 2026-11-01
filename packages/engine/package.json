@@ -82,7 +82,8 @@
     "@types/node": "^26.0.0",
     "publint": "^0.3.25",
     "typescript": "~6.0.3",
-    "vite-plus": "1.0.0"
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
   },
   "engines": {
     "node": ">=26"

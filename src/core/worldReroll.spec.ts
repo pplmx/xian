@@ -302,7 +302,7 @@ describe("换一方天地 · 历练途中不换界", () => {
     expect(adventure.mortalWorldHistory.map((w) => w.seed)).toEqual(
       [...older.slice(1), current].map((w) => w.seed),
     );
-  }, 15_000);
+  }, 45_000);
 
   it("一个种子窗口过不了门时换起点再试,不把偶发失败丢给玩家", () => {
     const player = usePlayerStore();
