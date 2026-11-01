@@ -208,74 +208,321 @@
     font-size: var(--type-note);
     line-height: 1.55;
   }
-  .dongfu-workshop {
-    display: grid;
-    gap: 0.8rem;
+  .dongfu-register {
     margin-top: 0.5rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.2);
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.11);
+    background:
+      linear-gradient(90deg, rgb(var(--color-ink-rgb) / 0.012), transparent 42%),
+      linear-gradient(180deg, transparent, rgb(var(--color-paper-rgb) / 0.08));
   }
-  .dongfu-workshop__group {
-    min-width: 0;
-  }
-  .dongfu-workshop__group-head {
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.2rem 0.48rem;
-    margin-bottom: 0.42rem;
-    padding-inline: 0.1rem;
-  }
-  .dongfu-workshop__group-index {
+  .dongfu-register__chapters {
     display: grid;
-    width: 1.32rem;
-    height: 1.32rem;
-    flex: none;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dongfu-register__chapter {
+    min-width: 0;
+  }
+  .dongfu-register__chapter + .dongfu-register__chapter {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+  }
+  .dongfu-register__chapter-head {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 0.18rem 0.55rem;
+    padding: 0.68rem 0.1rem 0.52rem;
+  }
+  .dongfu-register__chapter-index {
+    display: grid;
+    width: 1.38rem;
+    height: 1.38rem;
     place-items: center;
-    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.32);
+    border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.7);
     color: rgb(var(--color-cinnabar-rgb));
     font-family: var(--font-kai);
     font-size: var(--type-note);
     line-height: 1;
   }
-  .dongfu-workshop__group-title {
+  .dongfu-register__chapter-copy {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.08rem 0.5rem;
+  }
+  .dongfu-register__chapter-title {
     color: rgb(var(--color-ink-rgb));
     font-family: var(--font-kai);
     font-size: var(--type-title);
+    font-weight: 500;
     letter-spacing: 0.16em;
+    line-height: 1.35;
   }
-  .dongfu-workshop__group-hint {
+  .dongfu-register__chapter-hint {
     color: rgb(var(--color-ink-faint-rgb));
     font-size: var(--type-note);
+    line-height: 1.5;
   }
-  .dongfu-workshop__group-count {
-    margin-left: auto;
-    color: rgb(var(--color-ink-faint-rgb));
+  .dongfu-register__chapter-count {
+    justify-self: end;
+    color: rgb(var(--color-qing-rgb));
     font-size: var(--type-note);
+    line-height: 1.5;
     white-space: nowrap;
   }
-  .dongfu-workshop__grid {
+  .dongfu-register__rows {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.6rem;
-  }
-  .dongfu-workshop__group:first-child .dongfu-workshop__grid {
     grid-template-columns: minmax(0, 1fr);
+    padding-inline: 0.1rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
   }
-  .dongfu-workshop__group[data-dongfu-group="foundation"] .card-ink {
-    border-top-color: rgb(var(--color-cinnabar-rgb) / 0.48);
+  .dongfu-register__rows--gateway {
+    padding-inline: 0;
   }
-  .dongfu-gateways {
+  .dongfu-register__rows--gateway .dongfu-gateway {
+    padding-inline: 0.1rem;
+  }
+
+  /*
+   * 七作从独立卡片收成一条连续续账。每行只报现效、将至和一枚主键；
+   * 蓝本里的连升、联动与完整效果仍按需展开，不再让七张同权纸片切碎阅读。
+   */
+  .dongfu-building {
+    position: relative;
+    min-width: 0;
+    padding: 0.68rem 0.1rem 0.72rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    background: transparent;
+  }
+  .dongfu-building:first-child {
+    border-top: 0;
+  }
+  .dongfu-building.is-flashing {
+    animation: card-flash 0.85s ease-out;
+  }
+  .dongfu-building__head {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.75rem minmax(0, 1fr) 1.75rem;
+    align-items: center;
+    gap: 0.55rem;
+  }
+  .dongfu-building__mark {
+    display: grid;
+    width: 1.75rem;
+    height: 1.75rem;
+    place-items: center;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.16);
+    background: rgb(var(--color-paper-rgb) / 0.18);
+    color: rgb(var(--color-ink-faint-rgb));
+    transition:
+      border-color 0.16s ease,
+      color 0.16s ease,
+      background-color 0.16s ease;
+  }
+  .dongfu-building.is-built .dongfu-building__mark {
+    border-color: rgb(var(--color-qing-rgb) / 0.38);
+    background: rgb(var(--color-qing-rgb) / 0.025);
+    color: rgb(var(--color-qing-rgb));
+  }
+  .dongfu-building__identity {
+    min-width: 0;
+  }
+  .dongfu-building__name-row {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.08rem 0.55rem;
+  }
+  .dongfu-building__name {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    line-height: 1.35;
+  }
+  .dongfu-building__level {
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+    line-height: 1.45;
+    white-space: nowrap;
+  }
+  .dongfu-building__progress {
+    height: 3px;
+    margin-top: 0.34rem;
     overflow: hidden;
+    border-radius: 0;
+    background: rgb(var(--color-ink-rgb) / 0.06);
+  }
+  .dongfu-building__progress span {
+    display: block;
+    height: 100%;
+    background: rgb(var(--color-qing-rgb) / 0.66);
+    transition: width 0.2s ease;
+  }
+  .dongfu-building.is-ready .dongfu-building__progress span {
+    background: rgb(var(--color-qing-rgb) / 0.78);
+  }
+  .dongfu-building__toggle {
+    display: grid;
+    width: 1.75rem;
+    height: 1.75rem;
+    place-items: center;
+    border: 0;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  .dongfu-building__toggle:active {
+    color: rgb(var(--color-ink-soft-rgb));
+  }
+  .dongfu-building__body {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 0.52rem;
     margin-top: 0.5rem;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.13);
-    border-top: 2px solid rgb(var(--color-qing-rgb) / 0.55);
-    border-radius: 2px;
-    background:
-      linear-gradient(110deg, rgb(var(--color-qing-rgb) / 0.026), transparent 46%),
-      rgb(var(--color-paper-lifted-rgb));
-    box-shadow:
-      inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.18),
-      2px 2px 0 rgb(var(--color-ink-rgb) / 0.02);
+    padding-left: 2.3rem;
+  }
+  .dongfu-building__facts {
+    display: grid;
+    min-width: 0;
+    gap: 0.22rem;
+  }
+  .dongfu-building__fact {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.15rem minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0.35rem;
+    overflow-wrap: anywhere;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .dongfu-building__fact-mark {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    letter-spacing: 0.08em;
+  }
+  .dongfu-building__fact--next .dongfu-building__fact-mark,
+  .dongfu-building__next-label {
+    color: rgb(var(--color-qing-rgb));
+  }
+  .dongfu-building__action {
+    display: inline-flex;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 32px;
+    align-self: end;
+    justify-self: start;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.18rem 0.32rem;
+    padding: 0.28rem 0.5rem 0.28rem 0.46rem;
+    border: 0;
+    background: rgb(var(--color-cinnabar-rgb) / 0.035);
+    box-shadow: none;
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+    line-height: 1.35;
+    text-align: left;
+  }
+  .dongfu-building__action::before {
+    width: 0.72rem;
+    height: 2px;
+    flex: none;
+    background: currentColor;
+    content: "";
+  }
+  .dongfu-building__action:active:not(:disabled) {
+    background: rgb(var(--color-cinnabar-rgb) / 0.06);
+  }
+  .dongfu-building__action:disabled {
+    background: transparent;
+    box-shadow: none;
+    color: rgb(var(--color-ink-soft-rgb));
+  }
+  .dongfu-building__action-verb,
+  .dongfu-building__action-cost {
+    white-space: nowrap;
+  }
+  .dongfu-building__details {
+    margin-top: 0.55rem;
+    padding: 0.58rem 0 0 2.3rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.085);
+  }
+  .dongfu-building__detail-grid {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.52rem;
+  }
+  .dongfu-building__detail-column {
+    min-width: 0;
+  }
+  .dongfu-building__detail-label {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.18em;
+    line-height: 1.5;
+  }
+  .dongfu-building__detail-label--next {
+    color: rgb(var(--color-qing-rgb));
+  }
+  .dongfu-building__detail-copy {
+    margin-top: 0.08rem;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+    line-height: 1.58;
+  }
+  .dongfu-building__bond,
+  .dongfu-building__study {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.28rem;
+    margin-top: 0.42rem;
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .dongfu-building__bond {
+    color: rgb(var(--color-jade-rgb));
+  }
+  .dongfu-building__study {
+    color: rgb(var(--color-qing-rgb));
+  }
+  .dongfu-building__bond svg,
+  .dongfu-building__study svg {
+    flex: none;
+    margin-top: 0.16rem;
+  }
+  .dongfu-building__batch {
+    margin-top: 0.52rem;
+    padding-top: 0.46rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.07);
+  }
+  .dongfu-building__batch-action {
+    width: 100%;
+    min-height: 28px;
+    padding-block: 0.28rem;
+    font-size: var(--type-note);
+  }
+  .dongfu-building__batch-preview {
+    margin-top: 0.34rem;
+    color: rgb(var(--color-jade-rgb));
+    font-size: var(--type-note);
+    line-height: 1.58;
   }
   @media (min-width: 620px) {
     .dongfu-ledger__grid {
@@ -285,6 +532,19 @@
     .dongfu-ledger__accounts {
       border-top: 0;
       border-left: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    }
+
+    .dongfu-building__body {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .dongfu-building__detail-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dongfu-building__detail-column + .dongfu-building__detail-column {
+      padding-left: 0.82rem;
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.075);
     }
   }
   @media (max-width: 220px) {
@@ -309,13 +569,49 @@
       flex-direction: column;
     }
 
-    .dongfu-workshop__grid {
+    .dongfu-register__chapter-head {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .dongfu-register__chapter-count {
+      grid-column: 2;
+      justify-self: start;
+      white-space: normal;
+    }
+
+    .dongfu-building__head {
+      align-items: start;
+    }
+
+    .dongfu-building__name-row {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.04rem;
+    }
+
+    .dongfu-building__body,
+    .dongfu-building__details {
+      padding-left: 0;
+    }
+
+    .dongfu-building__body {
       grid-template-columns: minmax(0, 1fr);
     }
 
-    .dongfu-workshop__group-count {
-      width: 100%;
-      margin-left: 1.8rem;
+    .dongfu-building__detail-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .dongfu-building__action {
+      justify-content: flex-start;
+      text-align: left;
+    }
+
+    .dongfu-building__detail-column + .dongfu-building__detail-column {
+      padding-top: 0.46rem;
+      padding-left: 0;
+      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+      border-left: 0;
     }
   }
 }

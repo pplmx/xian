@@ -153,67 +153,95 @@
       </LedgerPulse>
     </section>
 
-    <!-- 七作按「基业 / 修行 / 丹器 / 生计」分组，不再让七张同形卡平铺成账本。 -->
     <section class="folio-span-all" data-dongfu-workshop>
-      <SectionTitle title="七作" hint="点开详情看完整效果与连升总账" />
-      <div class="dongfu-workshop">
+      <SectionTitle title="山门续账" hint="七作、家业与灵脉沿同一条账线续排" eyebrow="营造之后" />
+
+      <div class="dongfu-register" data-dongfu-register>
+        <div class="dongfu-register__chapters">
+          <section
+            v-for="group in buildingChapters"
+            :key="group.key"
+            class="dongfu-register__chapter"
+            :data-dongfu-chapter="group.key"
+            :data-dongfu-group="group.key"
+          >
+            <header class="dongfu-register__chapter-head">
+              <span class="dongfu-register__chapter-index tabular">{{ group.index }}</span>
+              <div class="dongfu-register__chapter-copy">
+                <h3 class="dongfu-register__chapter-title">{{ group.title }}</h3>
+                <p class="dongfu-register__chapter-hint">{{ group.hint }}</p>
+              </div>
+              <span class="dongfu-register__chapter-count tabular">
+                {{ groupBuiltCount(group.ids) }}/{{ group.ids.length }} 已营
+              </span>
+            </header>
+            <div class="dongfu-register__rows">
+              <BuildingLedgerRow v-for="def in group.defs" :key="def.id" :def="def" />
+            </div>
+          </section>
+        </div>
+
         <section
-          v-for="group in buildingGroups"
-          :key="group.key"
-          class="dongfu-workshop__group"
-          :data-dongfu-group="group.key"
+          class="dongfu-register__chapter dongfu-register__chapter--gateway"
+          data-dongfu-chapter="estate"
+          data-dongfu-gateways
         >
-          <header class="dongfu-workshop__group-head">
-            <span class="dongfu-workshop__group-index tabular">{{ group.index }}</span>
-            <span class="dongfu-workshop__group-title">{{ group.title }}</span>
-            <span class="dongfu-workshop__group-hint">{{ group.hint }}</span>
-            <span class="dongfu-workshop__group-count tabular">
-              {{ groupBuiltCount(group.ids) }}/{{ group.ids.length }} 已营
-            </span>
+          <header class="dongfu-register__chapter-head">
+            <span class="dongfu-register__chapter-index tabular">伍</span>
+            <div class="dongfu-register__chapter-copy">
+              <h3 class="dongfu-register__chapter-title">家业</h3>
+              <p class="dongfu-register__chapter-hint">灵石周转 · 弟子跑腿</p>
+            </div>
+            <span class="dongfu-register__chapter-count">两处门径</span>
           </header>
-          <div class="dongfu-workshop__grid">
-            <BuildingCard v-for="def in group.defs" :key="def.id" :def="def" />
+          <div class="dongfu-register__rows dongfu-register__rows--gateway">
+            <DongfuGatewayRow
+              to="/market"
+              icon="gem"
+              title="坊 市"
+              tone="gold"
+              action="往市"
+              sub="购丹续料、购兵刃,兼售寄卖"
+              :fact="`囊中 ${formatGN(stone)} 灵石`"
+            />
+            <DongfuGatewayRow
+              to="/apprentice"
+              icon="circle-user"
+              title="门庭有徒"
+              tone="jade"
+              action="看顾"
+              sub="弟子离线跑腿,归来带回资材"
+              :fact="apprenticeFact"
+            />
           </div>
         </section>
-      </div>
-    </section>
 
-    <section>
-      <SectionTitle title="家业 · 财与人" hint="灵石周转 · 弟子跑腿" />
-      <div class="dongfu-gateways" data-dongfu-gateways>
-        <DongfuGatewayRow
-          to="/market"
-          icon="gem"
-          title="坊 市"
-          tone="gold"
-          action="往市"
-          sub="购丹续料、购兵刃,兼售寄卖"
-          :fact="`囊中 ${formatGN(stone)} 灵石`"
-        />
-        <DongfuGatewayRow
-          to="/apprentice"
-          icon="circle-user"
-          title="门庭有徒"
-          tone="jade"
-          action="看顾"
-          sub="弟子离线跑腿,归来带回资材"
-          :fact="apprenticeFact"
-        />
-      </div>
-    </section>
-
-    <section v-if="player.major >= VEIN_UNLOCK_MAJOR">
-      <SectionTitle title="灵脉 · 引脉入府" hint="炼化灵石,永久强化" />
-      <div class="dongfu-gateways" data-dongfu-vein>
-        <DongfuGatewayRow
-          icon="wind"
-          title="灵脉投资"
-          tone="qing"
-          action="调理"
-          sub="择一主脉而修,投点立得全局加成"
-          :fact="veinFact"
-          @click="veinOpen = true"
-        />
+        <section
+          v-if="player.major >= VEIN_UNLOCK_MAJOR"
+          class="dongfu-register__chapter dongfu-register__chapter--gateway"
+          data-dongfu-chapter="vein"
+          data-dongfu-vein
+        >
+          <header class="dongfu-register__chapter-head">
+            <span class="dongfu-register__chapter-index tabular">陆</span>
+            <div class="dongfu-register__chapter-copy">
+              <h3 class="dongfu-register__chapter-title">灵脉</h3>
+              <p class="dongfu-register__chapter-hint">炼化灵石,永久强化</p>
+            </div>
+            <span class="dongfu-register__chapter-count">引脉入府</span>
+          </header>
+          <div class="dongfu-register__rows dongfu-register__rows--gateway">
+            <DongfuGatewayRow
+              icon="wind"
+              title="灵脉投资"
+              tone="qing"
+              action="调理"
+              sub="择一主脉而修,投点立得全局加成"
+              :fact="veinFact"
+              @click="veinOpen = true"
+            />
+          </div>
+        </section>
       </div>
     </section>
 
@@ -229,7 +257,7 @@
 <script setup lang="ts">
 import "@/styles/pages/dongfu.css";
 import { computed, ref } from "vue";
-import type { BuildingDef, BuildingId } from "@/types";
+import type { BuildingId } from "@/types";
 import { useDongfuStore } from "@/stores/dongfu";
 import { useResourcesStore } from "@/stores/resources";
 import { useApprenticeStore } from "@/stores/apprentice";
@@ -241,11 +269,12 @@ import { veinDef } from "@/data/veins";
 import { buildingUpgradeInfo, upgradeBuilding } from "@/core/buildingService";
 import { hourlyYieldText } from "@/core/engineFacilities";
 import { cnNumber, formatGN } from "@/utils/format";
+import { dongfuBuildingChapters } from "@/ui/dongfuDesk";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LedgerPulse from "@/components/common/LedgerPulse.vue";
 import SectionTitle from "@/components/common/SectionTitle.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
-import BuildingCard from "@/components/dongfu/BuildingCard.vue";
+import BuildingLedgerRow from "@/components/dongfu/BuildingLedgerRow.vue";
 import DongfuAtlas from "@/components/dongfu/DongfuAtlas.vue";
 import DongfuGatewayRow from "@/components/dongfu/DongfuGatewayRow.vue";
 import VeinInvestCard from "@/components/dongfu/VeinInvestCard.vue";
@@ -296,53 +325,7 @@ const atlasNodes = computed(() =>
   }),
 );
 
-type BuildingGroup = {
-  key: string;
-  index: string;
-  title: string;
-  hint: string;
-  ids: BuildingId[];
-  defs: BuildingDef[];
-};
-
-const GROUP_SPECS = [
-  {
-    key: "foundation",
-    index: "壹",
-    title: "基业",
-    hint: "洞府为诸作之枢",
-    ids: ["mansion"],
-  },
-  {
-    key: "cultivation",
-    index: "贰",
-    title: "修行",
-    hint: "聚气与藏经",
-    ids: ["array", "library"],
-  },
-  {
-    key: "craft",
-    index: "叁",
-    title: "丹器",
-    hint: "一炉一台",
-    ids: ["alchemy", "forge"],
-  },
-  {
-    key: "livelihood",
-    index: "肆",
-    title: "生计",
-    hint: "田畴与灵兽",
-    ids: ["field", "beast"],
-  },
-] satisfies Array<Omit<BuildingGroup, "defs">>;
-
-const buildingGroups: BuildingGroup[] = GROUP_SPECS.map((group) => ({
-  ...group,
-  ids: [...group.ids],
-  defs: group.ids
-    .map((id) => BUILDINGS.find((def) => def.id === id))
-    .filter((def): def is BuildingDef => Boolean(def)),
-}));
+const buildingChapters = dongfuBuildingChapters();
 
 function groupBuiltCount(ids: BuildingId[]): number {
   return ids.filter((id) => (dongfu.levels[id] ?? 0) > 0).length;

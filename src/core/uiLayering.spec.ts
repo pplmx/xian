@@ -1224,15 +1224,15 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
-  it("洞府营造先于家业入口 —— 首屏先给能动手的营造,再给财与人", () => {
-    // 洞府页的第一任务是把材料变成建筑等级;家业两案是去别页的入口。
-    // 390 首屏里家业双卡曾把首座建筑的升级键整个推到折线以下,故顺序本身要钉住。
+  it("洞府营造先于山门续账 —— 先给能动手的营造,再给七作与家业", () => {
+    // 洞府页的第一任务是把材料变成建筑等级;七作、家业与灵脉都沿续账后置。
+    // 390 首屏里家业入口曾把首座建筑的升级键整个推到折线以下,故顺序本身要钉住。
     const dv = FILES.find((f) => f.path === "views/DongfuView.vue");
     const buildAt = dv?.src.indexOf('title="营造"') ?? -1;
-    const estateAt = dv?.src.indexOf('title="家业 · 财与人"') ?? -1;
+    const registerAt = dv?.src.indexOf("data-dongfu-register") ?? -1;
     expect(buildAt, "营造题头要定位得到").toBeGreaterThan(-1);
-    expect(estateAt, "家业题头要定位得到").toBeGreaterThan(-1);
-    expect(buildAt, "营造必须排在家业之前,先露可执行的升级键").toBeLessThan(estateAt);
+    expect(registerAt, "山门续账要定位得到").toBeGreaterThan(-1);
+    expect(buildAt, "营造必须排在山门续账之前,先露可执行的升级键").toBeLessThan(registerAt);
   });
 
   it("首页状态行不许退回最弱档 —— 主角位「此刻状态」不该比次要天时还哑", () => {
@@ -1331,7 +1331,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("闭关开始有这一闪 —— 闭关是这张卡自己的事,不许只换文字", () => {
-    // 闭关开始只有 toast + 倒计时补上,卡片本身毫无反应(对照 BuildingCard 升级
+    // 闭关开始只有 toast + 倒计时补上,卡片本身毫无反应(对照洞府建筑账行升级
     // 有 card-flash)。「这件事发生在我这张卡上」的 idiom 对闭关同样成立 ——
     // 拆掉 card-flash、或把触发改成别的时机,下面红。
     // 拆分后闭关卡归 RetreatCard,判据随本体改指子面板
@@ -1528,7 +1528,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 同一批页面在神人境(九位数灵石 + 成套装备 + 在途秘境)的 195 CSS px 下,
      * 四处当场坏掉 —— 空档那一遍一页都量不到,故单列一条判据钉住:
      *   一 洞府七作两列时每卡内宽 ~51px,「连升×5 ·共 31.37万 石 400 铁」两段 nowrap
-     *      顶出卡片左右各 13px;分组工作台在极窄档改单列。
+     *      顶出卡片左右各 13px;现在七作直接收成单列续账,极窄档再拆开账行内部。
      *   二 在途秘境「再入一层 / 出秘境」两枚 flex-1 并排各剩 61px,五个字带字距放不下,
      *      折成三行、按钮涨到 84px;改极窄档上下叠。
      *   三 远征择路两径并排每格 ~52px,节点说明被压成三行竖排;改单列。
@@ -1537,12 +1537,13 @@ describe("界面分层 · 浮层只有一个出处", () => {
      */
     const dv = FILES.find((f) => f.path === "views/DongfuView.vue");
     const css = readStyleCss();
-    expect(dv?.src, "七作仍走自己的分组网格").toContain('class="dongfu-workshop__grid"');
-    expect(css, "七作常态是两列").toMatch(
-      /\.dongfu-workshop__grid\s*\{[\s\S]{0,120}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
+    expect(dv?.src, "七作与家业同住一条续账").toContain("data-dongfu-register");
+    expect(css, "七作续账常态单列").toMatch(
+      /\.dongfu-register__chapters\s*\{[\s\S]{0,140}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
-    expect(css, "极窄档七作改单列").toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,900}\.dongfu-workshop__grid\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    const tiny = css.slice(css.indexOf("@media (max-width: 220px)"));
+    expect(tiny, "极窄档账行内部也改单列").toMatch(
+      /\.dongfu-building__body\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
 
     const sr = FILES.find((f) => f.path === "components/adventure/SecretRealmCard.vue");
@@ -1931,8 +1932,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
       ["components/adventure/SecretRealmCard.vue", ':aria-expanded="cardExpanded"'],
       // 秘境名录是历练页的支线,默认只亮最近两处;展开/收起要把状态报给读屏
       ["components/adventure/SecretRealmCard.vue", ':aria-expanded="secretListExpanded"'],
-      // 建筑卡把完整效果与连升账收进详情,主键先露;展开态同样要报给读屏
-      ["components/dongfu/BuildingCard.vue", ':aria-expanded="detailsOpen"'],
+      // 建筑账行把完整效果与连升账收进详情,主键先露;展开态同样要报给读屏
+      ["components/dongfu/BuildingLedgerRow.vue", ':aria-expanded="detailsOpen"'],
     ];
     for (const [path, needle] of checks) {
       const f = FILES.find((x) => x.path === path);
@@ -2807,16 +2808,16 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 建筑卡的连升按钮文本与批量调用都读 BUILD_BATCH,唯一漏的是读屏
     // aria-label「连升 5 级」—— 批量指变了,按钮与调用跟着变,读名却停在 5,
     // 又是「写常量即撒谎」(与灵脉连投 / 仙路境数同族)。
-    const b = FILES.find((f) => f.path === "components/dongfu/BuildingCard.vue");
+    const b = FILES.find((f) => f.path === "components/dongfu/BuildingLedgerRow.vue");
     expect(b?.src, "建筑连升读屏名要插批量常量").toContain("`连升 ${BUILD_BATCH} 级`");
     expect(b?.src, "不许退回手写「连升 5 级」").not.toContain('aria-label="连升 5 级"');
   });
 
-  it("建筑卡默认收口详情,主升级键先露 —— 完整效果与连升账要点得开", () => {
-    // 一张卡同时铺当前效果、下一级、连升成本、连升净得与联动信息,390 双列时
-    // 卡面像账本,首屏只剩阅读没有行动。卡面只留「当前首项 + 下一级首项 + 主键」,
-    // 完整效果、联动与连升账收进 disclosure;展开态必须报给读屏。
-    const b = FILES.find((f) => f.path === "components/dongfu/BuildingCard.vue");
+  it("建筑账行默认收口详情,主升级键先露 —— 完整效果与连升账要点得开", () => {
+    // 一条账行同时铺当前效果、下一级、连升成本、连升净得与联动信息会失去轻重。
+    // 账面只留「当前首项 + 下一级首项 + 主键」,完整效果、联动与连升账收进
+    // disclosure;展开态必须报给读屏。
+    const b = FILES.find((f) => f.path === "components/dongfu/BuildingLedgerRow.vue");
     expect(b?.src, "主升级键要有稳定运行时指纹").toContain("data-building-action");
     expect(b?.src, "详情开关要有稳定运行时指纹").toContain("data-building-detail-toggle");
     expect(b?.src, "详情开关要把展开态报给读屏").toContain(':aria-expanded="detailsOpen"');
@@ -2832,6 +2833,14 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(layout, "运行时门要按稳定指纹找主升级键").toContain(
       'document.querySelectorAll("[data-building-action]:not([disabled])")',
     );
+    expect(layout, "运行时门要确认七作同住一条续账").toContain(
+      'document.querySelector("[data-dongfu-register]")',
+    );
+    expect(layout, "运行时门要数满七条建筑账行").toContain(
+      'querySelectorAll("[data-dongfu-building-row]")',
+    );
+    expect(layout, "运行时门要量主键相对账行的宽度").toContain("entry.ratio > 0.72");
+    expect(layout, "运行时门要拦住整行铺底的建筑行").toContain('entry.rowBackground !== "none"');
   });
 
   it("灵气充盈的阈值比率读常量 —— 不许手写「容量一半」当比例改了只顾一头", () => {

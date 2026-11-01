@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { readStyleCss } from "@/test/readStyleCss";
+import { dongfuBuildingChapters } from "./dongfuDesk";
 
 const ROOT = resolve(__dirname, "../..");
 
@@ -67,22 +68,74 @@ describe("洞府案 · 山门图先立意,总账再摊开七作", () => {
     );
   });
 
-  it("七作按基业、修行、丹器、生计分组,七座一座不少也不重复", () => {
-    const view = source("src/views/DongfuView.vue");
-    const groups = view.match(/const GROUP_SPECS = \[[\s\S]*?\] satisfies/)?.[0] ?? "";
+  it("七作按基业、修行、丹器、生计续账,七座一座不少也不重复", () => {
+    const chapters = dongfuBuildingChapters();
+    expect(chapters.map((chapter) => chapter.title)).toEqual(["基业", "修行", "丹器", "生计"]);
+    expect(chapters.flatMap((chapter) => chapter.defs.map((def) => def.id))).toEqual([
+      "mansion",
+      "array",
+      "library",
+      "alchemy",
+      "forge",
+      "field",
+      "beast",
+    ]);
 
-    expect(groups, "四组定义要能定位到").toContain('title: "基业"');
-    expect(groups, "四组定义要能定位到").toContain('title: "修行"');
-    expect(groups, "四组定义要能定位到").toContain('title: "丹器"');
-    expect(groups, "四组定义要能定位到").toContain('title: "生计"');
-    for (const id of ["mansion", "array", "library", "alchemy", "forge", "field", "beast"]) {
-      expect(groups, `${id} 必须恰好编入一组`).toContain(`"${id}"`);
-    }
-    expect((view.match(/<BuildingCard /g) ?? []).length, "只保留一组建筑卡循环").toBe(1);
-    expect(view, "建筑卡仍遍历分组内容").toContain('v-for="def in group.defs"');
+    const view = source("src/views/DongfuView.vue");
+    expect(view, "七作只走一趟循环").toContain('v-for="def in group.defs"');
+    expect((view.match(/<BuildingLedgerRow /g) ?? []).length, "只保留一组账行循环").toBe(1);
+    expect(view, "七作、家业与灵脉同住一条续账").toContain("data-dongfu-register");
+    expect(view, "每章带稳定运行时指纹").toContain("data-dongfu-chapter");
+    expect(view, "旧分组卡片网格不再出现").not.toContain("dongfu-workshop__grid");
   });
 
-  it("手机总账单列,220 以下建筑与快捷键都退成单列", () => {
+  it("建筑从独立卡收成可展开账行:现效、将至与主键先露,完整账再展开", () => {
+    const row = source("src/components/dongfu/BuildingLedgerRow.vue");
+
+    expect(row, "建筑要有稳定运行时指纹").toContain(':data-dongfu-building-row="props.def.id"');
+    expect(row, "主升级键仍要能按运行时找到").toContain("data-building-action");
+    expect(row, "默认只露当前首项").toContain("primaryCurrent");
+    expect(row, "默认只露下一级首项").toContain("primaryPreview");
+    expect(row, "详情展开态要报给读屏").toContain(':aria-expanded="detailsOpen"');
+    expect(row, "详情开关要关联正文").toContain(':aria-controls="detailId"');
+    expect(row, "详情正文默认收起").toMatch(/<div v-show="detailsOpen" :id="detailId"/);
+    expect(row, "账行不再借通用卡片壳").not.toContain("card-ink");
+  });
+
+  it("账行只把真动作染朱砂 —— 主键短笔淡底,等级与进度归石青", () => {
+    // 七作同时可升时,若整行与整宽按钮都铺朱砂,七条会叠成同一层重的行动带。
+    // 可动的那一下只留在行内短笔按钮上;等级、进度与已营计数都属信息层。
+    const css = source("src/style.css");
+    const start = css.indexOf(".dongfu-register {");
+    const end = css.indexOf("/*\n   * 道躯案", start);
+    const dongfuCss = css.slice(start, end);
+
+    expect(start, "洞府续账样式段要能定位到").toBeGreaterThan(-1);
+    expect(end, "洞府续账样式段要有明确结尾").toBeGreaterThan(start);
+    expect(dongfuCss, "已营等级走石青信息色").toMatch(
+      /\.dongfu-building__level\s*\{[\s\S]{0,160}color:\s*rgb\(var\(--color-qing-rgb\)\)/,
+    );
+    expect(dongfuCss, "章内已营进度也走石青").toMatch(
+      /\.dongfu-register__chapter-count\s*\{[\s\S]{0,180}color:\s*rgb\(var\(--color-qing-rgb\)\)/,
+    );
+    expect(dongfuCss, "建筑状态章不再整行铺朱砂底").not.toMatch(
+      /\.dongfu-building\.is-ready\s*\{[^}]*background:[^}]*cinnabar/,
+    );
+    expect(dongfuCss, "可升状态不许把建筑章也染成朱砂").not.toMatch(
+      /\.dongfu-building\.is-ready\s+\.dongfu-building__mark\s*\{[^}]*color:\s*rgb\(var\(--color-cinnabar-rgb\)\)/,
+    );
+    expect(dongfuCss, "主键不再拉满账行").toMatch(
+      /\.dongfu-building__action\s*\{[\s\S]{0,220}width:\s*fit-content/,
+    );
+    expect(dongfuCss, "主键前只留一小笔朱砂").toMatch(
+      /\.dongfu-building__action::before\s*\{[\s\S]{0,180}width:\s*0\.72rem[\s\S]{0,180}height:\s*2px[\s\S]{0,180}background:\s*currentColor/,
+    );
+    expect(dongfuCss, "淡底只铺短按钮自身").toMatch(
+      /\.dongfu-building__action\s*\{[\s\S]{0,520}background:\s*rgb\(var\(--color-cinnabar-rgb\) \/ 0\.035\)/,
+    );
+  });
+
+  it("手机总账单列,山门续账只留上下账线,220 以下账行也退成单列", () => {
     const css = source("src/style.css");
     const start = css.indexOf(".dongfu-ledger {");
     const end = css.indexOf("/*\n   * 道躯案", start);
@@ -100,13 +153,15 @@ describe("洞府案 · 山门图先立意,总账再摊开七作", () => {
       /\.dongfu-ledger__grid\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
     expect(dongfuCss).toMatch(
-      /\.dongfu-workshop__grid\s*\{[\s\S]{0,120}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
+      /\.dongfu-register\s*\{[\s\S]{0,180}border-top:\s*1px solid[\s\S]{0,180}border-bottom:\s*1px solid/,
     );
-    expect(dongfuCss).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,900}\.dongfu-workshop__grid\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    expect(dongfuCss).toContain(".dongfu-register__chapter + .dongfu-register__chapter");
+    expect(dongfuCss).toContain(".dongfu-building__body");
+    expect(dongfuCss, "旧卡片网格已撤").not.toContain(".dongfu-workshop__grid");
+    const tiny = dongfuCss.slice(dongfuCss.indexOf("@media (max-width: 220px)"));
+    expect(tiny).toMatch(
+      /\.dongfu-building__body\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
-    expect(dongfuCss).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,900}\.dongfu-ledger__quick\s*\{[\s\S]{0,100}flex-direction:\s*column/,
-    );
+    expect(tiny).toMatch(/\.dongfu-ledger__quick\s*\{[\s\S]{0,220}flex-direction:\s*column/);
   });
 });

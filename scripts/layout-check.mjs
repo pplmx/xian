@@ -181,9 +181,9 @@
  *      三世都在、顺序由近及远、世界名/段数来自同一份世界视图,标题不截断、行不越界。
  *   六十三 历练首屏的主线优先:未入秘境时整张秘境卡只露一行,「历练」标题先于
  *      支线;390 首屏里第一处地界的「出发」要完整露出,不能被支线卡推到折线以下。
- *   六十四 洞府首屏的营造优先:营造排在家业入口之前,建筑卡默认只露当前效果、
- *      下一级变化与主升级键;390 首屏里第一枚可用的升级/建造键要在底栏以上,
- *      完整效果与连升账由 aria-expanded 详情展开。
+ *   六十四 洞府首屏的营造优先:营造排在山门续账之前,七作各成一条账行,只露
+ *      当前首项、下一级首项与主升级键;390 首屏里第一枚可用的升级/建造键要在
+ *      底栏以上,完整效果与连升账由 aria-expanded 详情展开。
  *   六十五 界域志首屏的此刻优先:当前境、全路序号与前后境要先落在折线内;
  *      四界卷目默认只开当前界,其余收口,点开后要真的铺出该界境界。
  *   六十六 成就谱首屏的眼下可追:卷首先列最近三枚并写明条件/进度;方向卷目
@@ -6259,8 +6259,9 @@ async function taskDongfuBuild() {
     const oreBefore = await readOre();
     await page.goto(INDEX + "#" + "/dongfu", { waitUntil: "load" });
     await page.waitForTimeout(900);
-    // 正则留出空白余量:卡片上的代价换行(数 + 量词 nowrap)会在「·」后断行
-    const buildBtn = page.locator("main button", { hasText: /建\s*造\s*·|升\s*级\s*·/ }).first();
+    // 账行的现效、主键与代价各自成段;按稳定指纹找第一枚真可动的营造键,
+    // 不再依赖按钮文案里某个分隔符的排版。
+    const buildBtn = page.locator("main [data-building-action]:not([disabled])").first();
     if ((await buildBtn.count()) === 0) {
       failures.push("[390] 营造场景:洞府页没有可动工的建筑(判据没跑到东西)");
     } else {
@@ -8525,7 +8526,7 @@ async function taskAdventureFold() {
   };
 }
 
-/** 洞府首屏的营造优先:主升级键要在底栏以上,完整账要点得开 */
+/** 洞府首屏的营造优先:七作收成一条续账,主升级键要在底栏以上,完整账要点得开 */
 async function taskDongfuFold() {
   const failures = [];
   let checked = 0;
@@ -8550,9 +8551,9 @@ async function taskDongfuFold() {
         const buildTitle = [...document.querySelectorAll("h2")].find(
           (el) => (el.textContent || "").trim() === "营造",
         );
-        const estateTitle = [...document.querySelectorAll("h2")].find(
-          (el) => (el.textContent || "").trim() === "家业 · 财与人",
-        );
+        const register = document.querySelector("[data-dongfu-register]");
+        const registerChapters = register?.querySelectorAll("[data-dongfu-chapter]") ?? [];
+        const buildingRows = register?.querySelectorAll("[data-dongfu-building-row]") ?? [];
         const action =
           document.querySelector("[data-dongfu-quick-build]:not([disabled])") ??
           [...document.querySelectorAll("[data-building-action]:not([disabled])")].find((el) => {
@@ -8563,10 +8564,41 @@ async function taskDongfuFold() {
         const detailId = toggle?.getAttribute("aria-controls") || "";
         const detail = detailId ? document.getElementById(detailId) : null;
         const actionRect = action?.getBoundingClientRect();
+        const actions = [...buildingRows].map((row) => {
+          const button = row.querySelector("[data-building-action]");
+          const rowRect = row.getBoundingClientRect();
+          const buttonRect = button?.getBoundingClientRect();
+          return {
+            id: row.getAttribute("data-dongfu-building-row"),
+            ratio: buttonRect && rowRect.width > 0 ? buttonRect.width / rowRect.width : 1,
+            rowBackground: getComputedStyle(row).backgroundImage,
+          };
+        });
+        const probe = document.createElement("span");
+        probe.style.color = "rgb(var(--color-qing-rgb))";
+        document.body.append(probe);
+        const qing = getComputedStyle(probe).color;
+        probe.remove();
         return {
           navTop: nav?.top ?? innerHeight,
           buildTitleTop: buildTitle?.getBoundingClientRect().top ?? null,
-          estateTitleTop: estateTitle?.getBoundingClientRect().top ?? null,
+          registerTop: register?.getBoundingClientRect().top ?? null,
+          registerChapters: registerChapters.length,
+          buildingRows: buildingRows.length,
+          rowWidths: [...buildingRows].map((el) => el.getBoundingClientRect().width),
+          cardShells: register?.querySelectorAll(".card-ink").length ?? -1,
+          actions,
+          levelColors: [...buildingRows].map((row) => {
+            const level = row.querySelector(".dongfu-building__level");
+            return level ? getComputedStyle(level).color : "missing";
+          }),
+          chapterCountColors: [...(register?.querySelectorAll("[data-dongfu-chapter]") ?? [])].map(
+            (chapter) => {
+              const count = chapter.querySelector(".dongfu-register__chapter-count");
+              return count ? getComputedStyle(count).color : "missing";
+            },
+          ),
+          qing,
           actionTop: actionRect?.top ?? null,
           actionBottom: actionRect?.bottom ?? null,
           toggleExpanded: toggle?.getAttribute("aria-expanded") ?? null,
@@ -8578,10 +8610,46 @@ async function taskDongfuFold() {
         };
       });
       checked += 1;
-      if (fold.buildTitleTop === null || fold.estateTitleTop === null) {
-        failures.push("[390-dongfu] 首屏找不到「营造」或「家业 · 财与人」题头");
-      } else if (fold.buildTitleTop >= fold.estateTitleTop) {
-        failures.push("[390-dongfu] 「营造」没有排在家业入口之前");
+      if (fold.buildTitleTop === null || fold.registerTop === null) {
+        failures.push("[390-dongfu] 首屏找不到「营造」或山门续账");
+      } else if (fold.buildTitleTop >= fold.registerTop) {
+        failures.push("[390-dongfu] 「营造」没有排在山门续账之前");
+      }
+      if (fold.registerChapters < 5) {
+        failures.push(
+          `[390-dongfu] 山门续账章节不足(读到 ${fold.registerChapters} 章;七作四章 + 家业至少五章)`,
+        );
+      }
+      if (fold.buildingRows !== 7) {
+        failures.push(`[390-dongfu] 七作账行应为 7 条,实读 ${fold.buildingRows} 条`);
+      }
+      if (fold.rowWidths.some((width) => !(width > 0))) {
+        failures.push(`[390-dongfu] 七作有账行没铺开:${fold.rowWidths.join(" / ")}`);
+      }
+      if (fold.cardShells !== 0) {
+        failures.push(`[390-dongfu] 山门续账里仍套着 ${fold.cardShells} 张 card-ink`);
+      }
+      const wideActions = fold.actions.filter((entry) => entry.ratio > 0.72);
+      if (wideActions.length) {
+        failures.push(
+          `[390-dongfu] 主升级键又铺回整行账带:${wideActions
+            .map((entry) => `${entry.id} ${Math.round(entry.ratio * 100)}%`)
+            .join(" / ")}`,
+        );
+      }
+      const tintedRows = fold.actions.filter((entry) => entry.rowBackground !== "none");
+      if (tintedRows.length) {
+        failures.push(
+          `[390-dongfu] 可升建筑行仍在整行铺底:${tintedRows.map((entry) => entry.id).join(" / ")}`,
+        );
+      }
+      if (fold.levelColors.some((color) => color !== fold.qing)) {
+        failures.push(`[390-dongfu] 建筑等级没有回到石青:${fold.levelColors.join(" / ")}`);
+      }
+      if (fold.chapterCountColors.some((color) => color !== fold.qing)) {
+        failures.push(
+          `[390-dongfu] 章内已营进度没有回到石青:${fold.chapterCountColors.join(" / ")}`,
+        );
       }
       if (fold.actionTop === null || fold.actionBottom === null) {
         failures.push("[390-dongfu] 首屏找不到任何可用的建筑升级/建造键");
@@ -8594,6 +8662,13 @@ async function taskDongfuFold() {
         failures.push(
           `[390-dongfu] 建筑卡详情没有默认收口(aria-expanded=${fold.toggleExpanded}, visible=${fold.detailVisible})`,
         );
+      }
+      if (SHOTS) {
+        await page.setViewportSize({ width: 390, height: 1600 });
+        await page.waitForTimeout(120);
+        await page
+          .locator("[data-dongfu-register]")
+          .screenshot({ path: join(SHOTS_DIR, "390-dongfu-register.png") });
       }
 
       const toggle = page.locator("[data-building-detail-toggle]").first();

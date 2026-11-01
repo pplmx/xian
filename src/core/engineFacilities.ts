@@ -113,7 +113,7 @@ export function buildingRates(levels: Record<string, number>): Record<string, nu
 
 /** 会按小时产出的三种资源(顺序即展示顺序);名称走 RESOURCE_LABELS,不另起一套 */
 const HOUR_STREAMS = ["herb", "ore", "wudao"] as const;
-/** 灵田/玄铁用「株/块」,与 BuildingCard 的 effectText 同字(悟道点不嵌单位) */
+/** 灵田/玄铁用「株/块」,与 BuildingLedgerRow 的 effectText 同字(悟道点不嵌单位) */
 const HOUR_UNIT: Partial<Record<string, string>> = { herb: "株", ore: "块" };
 
 /**

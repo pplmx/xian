@@ -4,7 +4,7 @@
  * 纪律:「付不起置灰 + 列差多少」。此前 canUpgrade 只查境界/顶层/洞府辖限
  * (库的同一次判定),灵石玄铁够不够不进判定:升不起时按钮仍可点、点了才弹
  * 一句宽泛的「灵石或玄铁不足」。补资源检查,reason 改为「尚差 X 石 · 玄铁
- * Y 块」(双缺合并一句),BuildingCard 按钮直显,不再让玩家点下去才被教训。
+ * Y 块」(双缺合并一句),BuildingLedgerRow 按钮直显,不再让玩家点下去才被教训。
  */
 import { beforeEach, describe, expect, it } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";

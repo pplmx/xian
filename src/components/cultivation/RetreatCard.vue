@@ -5,7 +5,7 @@
     卡名读作「闭 关」两字一顿,与「修 行」「破 境」同一口气。
   -->
   <!-- Phase 28 闭关:5 分钟 +150% 修炼,期间禁止历练(数值唯一来源 = buffs.ts retreat + earlyGameService) -->
-  <!-- 开始那瞬整卡一闪(与 BuildingCard 升级同款 card-flash)——「这件事发生在我这张卡上」 -->
+  <!-- 开始那瞬整卡一闪(与洞府建筑账行升级同款 card-flash)——「这件事发生在我这张卡上」 -->
   <div
     class="card-ink px-4 py-3"
     :class="retreatFlash ? 'card-flash' : ''"
