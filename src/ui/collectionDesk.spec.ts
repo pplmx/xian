@@ -17,6 +17,11 @@ function source(rel: string): string {
   return readFileSync(resolve(ROOT, rel), "utf8");
 }
 
+function rule(css: string, selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?:^|\\n)\\s*${escaped}\\s*\\{([\\s\\S]*?)\\n\\s*\\}`).exec(css)?.[1] ?? "";
+}
+
 describe("藏珍案 · 九册总印紧随页签,眼下可追与眼下新得各翻一卷", () => {
   it("九册各有单字印,藏珍格只搬运汇总读数而不重数条目", () => {
     const overview = collectionProgressOverview([
@@ -194,6 +199,39 @@ describe("藏珍案 · 九册总印紧随页签,眼下可追与眼下新得各�
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,2200}\.collection-token\s*\{[\s\S]{0,80}max-width:\s*100%/,
     );
     expect(cabinet, "总印在 390 是单行,195 才退三列").toContain("@media (max-width: 220px)");
+  });
+
+  it("总印、行动席与九册卷目回到同一张开口账页,不再层层套框", () => {
+    const css = source("src/style.css");
+    const cabinet = source("src/components/common/CollectionCabinet.vue");
+    const start = css.indexOf("/*\n   * 藏珍案");
+    const end = css.indexOf("/*\n   * 器魂案", start);
+    const collectionCss = css.slice(start, end);
+    const briefing =
+      /\.achievement-briefing,\s*\n\s*\.collection-briefing\s*\{([\s\S]*?)\n\s*\}/.exec(
+        collectionCss,
+      )?.[1];
+    const volumes = /\.achievement-volume,\s*\n\s*\.collection-volume\s*\{([\s\S]*?)\n\s*\}/.exec(
+      collectionCss,
+    )?.[1];
+
+    expect(briefing, "功名与藏珍卷首要共用一条开页规则").toMatch(/border:\s*0;/);
+    expect(briefing, "卷首不再复制整块纸底").toContain("background: transparent;");
+    expect(collectionCss, "卷首不再画四边内框").not.toContain(".achievement-briefing::before");
+    expect(volumes, "方向卷目与九册册目只靠账线分组").toMatch(/border:\s*0;[\s\S]*?border-top:/);
+    expect(
+      rule(collectionCss, ".collection-highlight"),
+      "卷首三册入口改成并读的账格,不是三张方卡",
+    ).toMatch(/border:\s*0;[\s\S]*?border-left:/);
+    expect(rule(collectionCss, ".collection-briefing__more"), "余册入口也只留账线").toMatch(
+      /border:\s*0;[\s\S]*?border-top:/,
+    );
+    expect(rule(cabinet, ".collection-cabinet"), "九册总印只留上下账线").toMatch(
+      /border:\s*0;[\s\S]*?border-block:/,
+    );
+    expect(rule(cabinet, ".collection-cabinet__cell"), "九册格改竖线分栏,不再九张方框").toMatch(
+      /border:\s*0;[\s\S]*?border-left:/,
+    );
   });
 
   it("桌面把总谱与卷目分成两页,两册页签共用同一张藏珍书桌", () => {

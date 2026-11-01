@@ -73,21 +73,10 @@ defineProps<{
   min-width: 0;
   grid-template-rows: auto auto;
   gap: 0.34rem;
+  border: 0;
   border-block: 1px solid rgb(var(--color-ink-rgb) / 0.1);
-  background:
-    linear-gradient(112deg, rgb(var(--color-paper-rgb) / 0.3), transparent 58%),
-    rgb(var(--color-paper-lifted-rgb) / 0.18);
-  padding: 0.46rem 0.72rem 0.52rem;
-}
-
-.collection-cabinet::before {
-  position: absolute;
-  inset-block: 0.22rem;
-  right: 0.72rem;
-  left: 0.72rem;
-  border-block: 1px solid rgb(var(--color-ink-rgb) / 0.025);
-  content: "";
-  pointer-events: none;
+  background: transparent;
+  padding: 0.46rem 0 0.52rem;
 }
 
 .collection-cabinet__head {
@@ -136,7 +125,7 @@ defineProps<{
   display: grid;
   min-width: 0;
   grid-template-columns: repeat(9, minmax(0, 1fr));
-  gap: 0.16rem;
+  gap: 0;
 }
 
 .collection-cabinet__cell {
@@ -148,24 +137,26 @@ defineProps<{
   align-items: center;
   gap: 0.2rem;
   overflow: hidden;
-  border: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-  background: rgb(var(--color-paper-rgb) / 0.16);
+  border: 0;
+  border-left: 1px solid rgb(var(--color-ink-rgb) / 0.085);
+  background: transparent;
   padding: 0.24rem 0.08rem 0.2rem;
 }
 
+.collection-cabinet__cell:first-child {
+  border-left: 0;
+}
+
 .collection-cabinet__cell.is-lit {
-  border-color: rgb(var(--color-qing-rgb) / 0.22);
-  background: rgb(var(--color-qing-rgb) / 0.035);
+  border-left-color: rgb(var(--color-qing-rgb) / 0.24);
 }
 
 .collection-cabinet__cell.is-complete {
-  border-color: rgb(var(--color-jade-rgb) / 0.32);
-  background: rgb(var(--color-jade-rgb) / 0.045);
+  border-left-color: rgb(var(--color-jade-rgb) / 0.32);
 }
 
 .collection-cabinet__cell.is-new {
-  border-color: rgb(var(--color-cinnabar-rgb) / 0.34);
-  background: rgb(var(--color-cinnabar-rgb) / 0.04);
+  border-left-color: rgb(var(--color-cinnabar-rgb) / 0.34);
 }
 
 .collection-cabinet__cell-copy {
@@ -255,7 +246,7 @@ defineProps<{
 
 @media (max-width: 220px) {
   .collection-cabinet {
-    padding-inline: 0.58rem;
+    padding-inline: 0;
   }
 
   .collection-cabinet__head {
@@ -274,6 +265,15 @@ defineProps<{
 
   .collection-cabinet__cell {
     min-height: 2.35rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.085);
+  }
+
+  .collection-cabinet__cell:nth-child(-n + 3) {
+    border-top: 0;
+  }
+
+  .collection-cabinet__cell:nth-child(3n + 1) {
+    border-left: 0;
   }
 
   .collection-cabinet__reading {

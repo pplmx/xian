@@ -19,6 +19,14 @@ function source(rel: string): string {
   return readFileSync(resolve(ROOT, rel), "utf8");
 }
 
+function latestRule(css: string, selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const matches = [
+    ...css.matchAll(new RegExp(`(?:^|\\n)\\s*${escaped}\\s*\\{([\\s\\S]*?)\\n\\s*\\}`, "g")),
+  ];
+  return matches.at(-1)?.[1] ?? "";
+}
+
 describe("界域案 · 四界先成谱,境界再逐格展开", () => {
   it("四界各有一枚单字印,未知界退回首字而不另造分类", () => {
     expect(Object.keys(REALM_WORLD_MARKS)).toEqual(["mortal", "immortal", "god", "chaos"]);
@@ -132,5 +140,35 @@ describe("界域案 · 四界先成谱,境界再逐格展开", () => {
     expect(css).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,1400}\.realm-world-index__grid\s*\{[\s\S]{0,120}minmax\(0, 1fr\)/,
     );
+  });
+
+  it("此刻、四界卷目与境界谱摊在同一张开口账页,不把每层都包成方卡", () => {
+    const css = source("src/style.css");
+    const start = css.indexOf("/*\n   * 界域案");
+    const end = css.indexOf("\n  @media (min-width: 620px)", start);
+    const codexCss = css.slice(start, end);
+
+    expect(latestRule(codexCss, ".realm-atlas"), "页首四界谱只留谱线").toMatch(/border:\s*0;/);
+    expect(latestRule(codexCss, ".realm-now"), "当前境改成开口总账").toMatch(
+      /border:\s*0;[\s\S]*?border-top:/,
+    );
+    expect(latestRule(codexCss, ".realm-now"), "当前境不再复制一张实底卡片").toContain(
+      "background: transparent;",
+    );
+    expect(codexCss, "当前境不再画四边内框").not.toContain(".realm-now::before");
+    expect(latestRule(codexCss, ".realm-world-index"), "四界卷目只留上下账线").toMatch(
+      /border:\s*0;[\s\S]*?border-block:/,
+    );
+    expect(latestRule(codexCss, ".realm-volume"), "每界卷身不再套第二层方框").toMatch(
+      /border:\s*0;[\s\S]*?border-top:/,
+    );
+    expect(latestRule(codexCss, ".realm-ledger"), "境界谱改连续账列").toMatch(/gap:\s*0;/);
+    expect(latestRule(codexCss, ".realm-entry"), "境界格只留行间账线").toMatch(
+      /border:\s*0;[\s\S]*?border-bottom:/,
+    );
+    expect(
+      latestRule(codexCss, ".realm-entry__ordinal"),
+      "开口卷面不再托浅纸底,小序号要升到可读的第二档墨",
+    ).toContain("color: var(--color-ink-soft);");
   });
 });
