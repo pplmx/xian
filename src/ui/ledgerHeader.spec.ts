@@ -35,7 +35,6 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
       { file: "src/views/MortalWorldView.vue", count: 2 },
       { file: "src/views/RealmCodexView.vue", count: 1 },
       { file: "src/views/CollectionView.vue", count: 2 },
-      { file: "src/views/SettingsView.vue", count: 3 },
       { file: "src/views/CharacterView.vue", count: 1 },
     ];
 
@@ -91,7 +90,6 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
     const world = source("src/styles/pages/world.css");
     const realm = source("src/styles/pages/realm-codex.css");
     const collection = source("src/styles/pages/collection.css");
-    const settings = source("src/styles/pages/settings.css");
     const dongfu = source("src/styles/pages/dongfu.css");
     const character = source("src/styles/pages/character.css");
     const apprentice = source("src/styles/pages/apprentice.css");
@@ -114,9 +112,6 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
     expect(realm).toMatch(/\.realm-now\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--realm-accent\)/);
     expect(collection).toMatch(
       /\.achievement-briefing,\s*\.collection-briefing\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--color-gold-ink\)/,
-    );
-    expect(settings).toMatch(
-      /\.settings-console,\s*\.settings-archive,\s*\.settings-trail\s*\{[\s\S]{0,300}--ledger-accent:\s*var\(--settings-accent\)/,
     );
     expect(dongfu).toMatch(
       /\.dongfu-ledger\s*\{[\s\S]{0,260}--ledger-accent:\s*var\(--world-bar\)/,

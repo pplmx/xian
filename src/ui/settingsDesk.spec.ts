@@ -99,10 +99,13 @@ describe("天机案 · 设置卷首与三案同读此刻", () => {
     });
   });
 
-  it("卷首走天机盘,正文把声息、观照、行止、存续、留痕与索引收成同一册", () => {
+  it("卷首走天机盘,正文把声息、观照、行止、存续、留痕与索引收成六章续卷", () => {
     const view = source("src/views/SettingsView.vue");
     const compass = source("src/components/common/SettingsCompass.vue");
     const layout = source("scripts/layout-check.mjs");
+    const chapters = [...view.matchAll(/data-settings-chapter="([^"]+)"/g)].map(
+      ([, chapter]) => chapter,
+    );
 
     expect(view, "设置页进入 featured 开卷版式").toMatch(
       /<FolioPageHeader[\s\S]{0,520}\bfeatured\b/,
@@ -115,6 +118,7 @@ describe("天机案 · 设置卷首与三案同读此刻", () => {
     expect(view).toContain("backupDesk(settings.lastExportAt, now.value)");
     expect(view).toContain("diagDesk(diag.errors.length, DIAG_MAX)");
     expect(view).toContain("data-settings-current");
+    expect(view).toContain("data-settings-register");
     expect(view).toContain("data-settings-console");
     expect(view).toContain('data-settings-group="sound"');
     expect(view).toContain('data-settings-group="sight"');
@@ -127,14 +131,26 @@ describe("天机案 · 设置卷首与三案同读此刻", () => {
     expect(view).toContain("导出存档");
     expect(view).toContain("遇事勿扰");
     expect(view).toContain("整体替换");
+    expect(chapters, "六章顺序就是玩家从上往下读的顺序").toEqual([
+      "sound",
+      "sight",
+      "conduct",
+      "archive",
+      "trail",
+      "index",
+    ]);
+    expect(view, "旧的三层卡壳与通用案头都已退场").not.toMatch(
+      /<SectionTitle\b|<LedgerHeader\b|settings-console__grid/,
+    );
     expect(compass, "天机盘是重复信息的视觉摘要,不重复进入读屏").toContain('aria-hidden="true"');
-    expect(layout, "真浏览器要核卷首与总案确实落在设置页").toContain(
+    expect(layout, "真浏览器要核卷首与续卷确实落在设置页").toContain(
       'document.querySelector("[data-settings-current]")',
     );
+    expect(layout).toContain('document.querySelector("[data-settings-register]")');
     expect(layout).toContain('document.querySelector("[data-settings-console]")');
   });
 
-  it("手机单列、620 两列、960 三列,220 以下动作与选项退整行", () => {
+  it("手机逐章续排、620 两列、960 三列,220 以下章态、动作与选项退整行", () => {
     const css = source("src/style.css");
     const start = css.indexOf("/*\n   * 天机案");
     const end = css.indexOf("/*\n * 开关(.toggle-ink)", start);
@@ -143,19 +159,22 @@ describe("天机案 · 设置卷首与三案同读此刻", () => {
     expect(start, "天机样式段要能定位到").toBeGreaterThan(-1);
     expect(end, "天机样式段要有明确结尾").toBeGreaterThan(start);
     expect(settingsCss).toMatch(
-      /\.settings-console__grid\s*\{[\s\S]{0,160}grid-template-columns:\s*minmax\(0, 1fr\)/,
+      /\.settings-register\s*\{[\s\S]{0,260}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
     expect(settingsCss).toMatch(
-      /@media \(min-width: 620px\)\s*\{[\s\S]{0,300}\.settings-console__grid\s*\{[\s\S]{0,120}repeat\(2, minmax\(0, 1fr\)\)/,
+      /@media \(min-width: 620px\)\s*\{[\s\S]{0,380}\.settings-register\s*\{[\s\S]{0,140}repeat\(2, minmax\(0, 1fr\)\)/,
     );
     expect(settingsCss).toMatch(
-      /@media \(min-width: 960px\)\s*\{[\s\S]{0,360}\.settings-console__grid\s*\{[\s\S]{0,120}repeat\(3, minmax\(0, 1fr\)\)/,
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,480}\.settings-register\s*\{[\s\S]{0,140}repeat\(12, minmax\(0, 1fr\)\)/,
     );
     expect(settingsCss).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,2200}\.settings-archive__actions,[\s\S]{0,140}\.settings-trail__actions\s*\{[\s\S]{0,100}minmax\(0, 1fr\)/,
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,2400}\.settings-register__head\s*\{[\s\S]{0,220}grid-template-columns:\s*1\.7rem minmax\(0, 1fr\)/,
     );
     expect(settingsCss).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,2600}\.settings-segment\s*\{[\s\S]{0,100}flex-basis:\s*100%/,
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,3200}\.settings-archive__actions,[\s\S]{0,160}\.settings-trail__actions\s*\{[\s\S]{0,100}minmax\(0, 1fr\)/,
+    );
+    expect(settingsCss).toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,3600}\.settings-segment\s*\{[\s\S]{0,100}flex-basis:\s*100%/,
     );
   });
 
@@ -173,7 +192,7 @@ describe("天机案 · 设置卷首与三案同读此刻", () => {
     );
   });
 
-  it("桌面把存续案与留痕、卷末索引并成一张后案,手机仍按原顺序单列", () => {
+  it("桌面把存续、留痕与卷末并读,手机仍按原顺序单列", () => {
     const view = source("src/views/SettingsView.vue");
     const css = source("src/style.css");
     const layout = source("scripts/layout-check.mjs");
@@ -182,52 +201,60 @@ describe("天机案 · 设置卷首与三案同读此刻", () => {
     const settingsCss = css.slice(start, end);
 
     expect(view).toContain("data-settings-afterword");
-    expect(view).toMatch(
-      /<div class="settings-afterword" data-settings-afterword>[\s\S]{0,600}<section class="settings-afterword__archive"/,
-    );
-    expect(view).toContain('class="settings-afterword__notice"');
-    expect(view).toContain('class="settings-afterword__side" data-settings-afterword-side');
-    expect(view, "存续与留痕必须同住整册连续账页").toMatch(
-      /<section class="settings-folio folio-span-all"[\s\S]{0,50000}<div class="settings-afterword" data-settings-afterword>[\s\S]{0,50000}<\/section>/,
+    expect(view, "存续、留痕与索引同住续卷的后三章").toMatch(
+      /<div class="settings-register__afterword" data-settings-afterword>[\s\S]{0,50000}data-settings-chapter="archive"[\s\S]{0,50000}data-settings-chapter="trail"[\s\S]{0,50000}data-settings-chapter="index"/,
     );
     expect(settingsCss).toMatch(
-      /@media \(min-width: 960px\)\s*\{[\s\S]{0,900}\.settings-afterword\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(0, 1\.08fr\) minmax\(0, 0\.92fr\)/,
+      /\.settings-register__afterword\s*\{[\s\S]{0,120}display:\s*contents/,
     );
     expect(settingsCss).toMatch(
-      /\.settings-afterword__archive\s*\{[\s\S]{0,100}grid-column:\s*1;[\s\S]{0,100}grid-row:\s*1/,
+      /@media \(min-width: 620px\)\s*\{[\s\S]{0,1200}\.settings-register__chapter--archive\s*\{[\s\S]{0,120}grid-column:\s*1 \/ -1/,
     );
     expect(settingsCss).toMatch(
-      /\.settings-afterword__side\s*\{[\s\S]{0,100}grid-column:\s*2;[\s\S]{0,100}grid-row:\s*1 \/ span 2/,
+      /@media \(min-width: 620px\)\s*\{[\s\S]{0,1400}\.settings-register__chapter--trail\s*\{[\s\S]{0,120}grid-column:\s*1/,
     );
-    expect(layout).toContain("存续案与留痕、索引没有在桌面上并读");
+    expect(settingsCss).toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,1600}\.settings-register__chapter--archive\s*\{[\s\S]{0,120}grid-column:\s*1 \/ span 7;[\s\S]{0,120}grid-row:\s*2 \/ span 2/,
+    );
+    expect(layout).toContain("存续、留痕与卷末没有在桌面上并读");
   });
 
-  it("整册收成一张开口长账,总案、存续与留痕不再各套四边卡", () => {
+  it("整册收成一张开口长账,六章只共用章首与分段线", () => {
     const view = source("src/views/SettingsView.vue");
     const css = source("src/styles/pages/settings.css");
 
     expect(view, "整册外框要成为唯一连续账页").toMatch(
-      /<section\s+class="settings-folio folio-span-all"\s+data-settings-folio\s+data-settings-console\s*>/,
+      /<article\s+class="settings-register folio-span-all"\s+data-settings-register\s+data-settings-folio\s+data-settings-console\s*>/,
     );
-    expect(view, "总案从连续账页里续排,不再另起卡壳").toMatch(
-      /data-settings-console>[\s\S]{0,900}<section class="settings-console">/,
+    expect(view, "每章都从同一枚章首起笔").toMatch(
+      /data-settings-chapter="sound"[\s\S]{0,500}<header class="settings-register__head">/,
     );
     expect(
       view.match(/class="settings-archive__reset[^"]*"/)?.[0] ?? "",
       "清档键不能再让 w-full 盖掉自身宽度,给账页多出一条横向滚动",
     ).not.toContain("w-full");
     expect(css, "连续账页只留上下账线").toMatch(
-      /\.settings-folio\s*\{[\s\S]{0,320}border-block:\s*1px solid/,
+      /\.settings-register\s*\{[\s\S]{0,520}border:\s*0;[\s\S]{0,520}border-block:\s*1px solid/,
     );
-    expect(css, "三个内案撤掉四边卡、圆角、底色与投影").toMatch(
-      /\.settings-console,\s*\.settings-archive,\s*\.settings-trail\s*\{[\s\S]{0,620}border:\s*0;[\s\S]{0,620}border-radius:\s*0;[\s\S]{0,620}background:\s*transparent;[\s\S]{0,620}box-shadow:\s*none;/,
+    expect(css, "六章撤掉四边卡、圆角、底色与投影").toMatch(
+      /\.settings-register__chapter\s*\{[\s\S]{0,620}border:\s*0;[\s\S]{0,620}border-radius:\s*0;[\s\S]{0,620}background:\s*transparent;[\s\S]{0,620}box-shadow:\s*none;/,
     );
-    expect(css, "内案不再画第二层内框").not.toMatch(/\.settings-(?:console|archive|trail)::before/);
-    expect(css, "后案只以分段线接续前账").toMatch(
-      /\.settings-afterword\s*\{[\s\S]{0,260}gap:\s*0;[\s\S]{0,260}border-top:\s*1px solid/,
+    expect(css, "章间只以分段线接续前账").toMatch(
+      /\.settings-register__chapter \+ \.settings-register__chapter\s*\{[\s\S]{0,120}border-top:\s*1px solid/,
     );
     expect(css, "卷末索引也摊成开口账行").toMatch(
-      /\.settings-index\s*\{[\s\S]{0,320}border:\s*0;[\s\S]{0,320}border-block:\s*1px solid[\s\S]{0,320}background:\s*transparent;[\s\S]{0,320}box-shadow:\s*none;/,
+      /\.settings-index\s*\{[\s\S]{0,320}border:\s*0;[\s\S]{0,320}background:\s*transparent;[\s\S]{0,320}box-shadow:\s*none;/,
     );
+  });
+
+  it("上次备份只报一次,状态与时间各守自己的账格", () => {
+    const view = source("src/views/SettingsView.vue");
+    const exportRow = view.slice(
+      view.indexOf('data-settings-save-stat="export"'),
+      view.indexOf('data-settings-save-stat="backup"'),
+    );
+
+    expect(exportRow.match(/backupReadout\.detail/g)).toHaveLength(1);
+    expect(exportRow, "导出时间不拿状态标签再冒充一遍").not.toContain("backupReadout.label");
   });
 });

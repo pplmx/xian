@@ -240,10 +240,15 @@ error: Failed to resolve vite command: GenericFailure, Expected
 一次溢出。结构与事实源由 `src/ui/realmCodexDesk.spec.ts`、
 `src/core/uiLayering.spec.ts` 与 `scripts/layout-check.mjs` 守住。
 
-设置页的总案、存续案、留痕案与卷末索引现在同住一张开口长账:外层只留上下账线,
-内案去掉四边卡、底色、投影与第二层内框,存续和留痕只在账页里用分段线续排。960px
-仍把存续放左、留痕与索引叠右,220 CSS px 以下全部退单列;存续与留痕动作仍守
-28px 触达下限。真浏览器巡页同时核对外层左右边框为零、后半册仍在同一节点内;
+设置页现在只有一张 `data-settings-register` 开口续卷,六章依次为
+`sound / sight / conduct / archive / trail / index`。每章共用同一枚序印、眉题、标题、
+右侧状态与分段线,不再导入 `SectionTitle` 或 `LedgerHeader`,也不再套
+`settings-console__grid`;后三章由 `data-settings-afterword` 以 `display:contents`
+接回同一网格。620px 起声息与观照并读、行止跨栏,存续横跨整册、留痕与卷末并读;
+960px 起前三章各占四列,存续占七列并跨两行,留痕与卷末叠在右侧五列。220 CSS px
+以下章态、控制读数、选项、存续动作与留痕动作全部退单列,动作仍守 28px 触达下限。
+真浏览器巡页在 390 / 195 / 1280 同时核对六章顺序与章名、章首无重叠或横向溢出、
+每章零圆角 / 零投影 / 透明底、四边不同时成框,并量桌面存续与右侧两章的并读几何;
 结构与事实源由 `src/ui/settingsDesk.spec.ts`、`src/core/uiLayering.spec.ts` 与
 `scripts/layout-check.mjs` 守住。
 

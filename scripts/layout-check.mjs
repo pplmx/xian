@@ -208,6 +208,9 @@
  *   七十三 三生录的画像、四册册口与当前正文同住一册:册口先报各册真值,
  *      手机 2×2、620px 起四列、220px 以下单列;方向键 / Home / End 要联动焦点、
  *      选中态、地址与唯一 tabpanel。1280 宽才把两本账并读,避免三案主账被压窄。
+ *   七十四 设置六章共用一张开口续卷:声息、观照、行止、存续、留痕、卷末按序续排,
+ *      章首不得重叠或横向溢出,章内不得重新套四边卡;1280 宽量存续占左、留痕与
+ *      卷末叠右的并读几何,195 宽量章态与动作退行后仍无挤压。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -2334,35 +2337,67 @@ async function taskPageTour(vp) {
       const settingsDesk = await page.evaluate(() => {
         const current = document.querySelector("[data-settings-current]");
         const consoleDesk = document.querySelector("[data-settings-console]");
+        const register = document.querySelector("[data-settings-register]");
         const folio = document.querySelector("[data-settings-folio]");
-        const folioStyle = folio ? getComputedStyle(folio) : null;
-        const innerCards = [
-          ...document.querySelectorAll(".settings-console, .settings-archive, .settings-trail"),
-        ];
+        const afterword = document.querySelector("[data-settings-afterword]");
+        const registerStyle = register ? getComputedStyle(register) : null;
+        const chapters = [...document.querySelectorAll("[data-settings-chapter]")];
+        const chapterRows = chapters.map((chapter) => {
+          const style = getComputedStyle(chapter);
+          const head = chapter.querySelector(".settings-register__head");
+          const identity = head?.querySelector(".settings-register__identity");
+          const state = head?.querySelector(".settings-register__state");
+          const headRect = head?.getBoundingClientRect();
+          const identityRect = identity?.getBoundingClientRect();
+          const stateRect = state?.getBoundingClientRect();
+          return {
+            key: chapter.getAttribute("data-settings-chapter") || "",
+            title: chapter.querySelector(".settings-register__title")?.textContent?.trim() || "",
+            hasHead: Boolean(head),
+            headOverflow: head ? head.scrollWidth > head.clientWidth + 1 : true,
+            identityStateOverlap:
+              identityRect && stateRect
+                ? Math.min(identityRect.right, stateRect.right) >
+                    Math.max(identityRect.left, stateRect.left) + 1 &&
+                  Math.min(identityRect.bottom, stateRect.bottom) >
+                    Math.max(identityRect.top, stateRect.top) + 1
+                : false,
+            headInside:
+              headRect && identityRect && stateRect
+                ? identityRect.left >= headRect.left - 1 &&
+                  identityRect.right <= headRect.right + 1 &&
+                  stateRect.left >= headRect.left - 1 &&
+                  stateRect.right <= headRect.right + 1
+                : false,
+            borders: [
+              style.borderTopWidth,
+              style.borderRightWidth,
+              style.borderBottomWidth,
+              style.borderLeftWidth,
+            ].map((width) => Number.parseFloat(width)),
+            radius: Number.parseFloat(style.borderTopLeftRadius),
+            shadow: style.boxShadow,
+            background: style.backgroundColor,
+          };
+        });
         return {
           current: (current?.textContent || "").replace(/\s+/g, " ").trim(),
           console: !!consoleDesk,
-          folio: folioStyle
+          register: registerStyle
             ? {
-                sameNode: folio === consoleDesk,
-                borderTop: Number.parseFloat(folioStyle.borderTopWidth),
-                borderRight: Number.parseFloat(folioStyle.borderRightWidth),
-                borderBottom: Number.parseFloat(folioStyle.borderBottomWidth),
-                borderLeft: Number.parseFloat(folioStyle.borderLeftWidth),
-                radius: Number.parseFloat(folioStyle.borderTopLeftRadius),
-                shadow: folioStyle.boxShadow,
-                afterwordInside: Boolean(folio?.querySelector("[data-settings-afterword]")),
-                innerCardBorders: innerCards.map((card) => {
-                  const style = getComputedStyle(card);
-                  return [
-                    style.borderTopWidth,
-                    style.borderRightWidth,
-                    style.borderBottomWidth,
-                    style.borderLeftWidth,
-                  ].map((width) => Number.parseFloat(width));
-                }),
+                sameNode: register === folio && register === consoleDesk,
+                borderTop: Number.parseFloat(registerStyle.borderTopWidth),
+                borderRight: Number.parseFloat(registerStyle.borderRightWidth),
+                borderBottom: Number.parseFloat(registerStyle.borderBottomWidth),
+                borderLeft: Number.parseFloat(registerStyle.borderLeftWidth),
+                radius: Number.parseFloat(registerStyle.borderTopLeftRadius),
+                shadow: registerStyle.boxShadow,
+                background: registerStyle.backgroundColor,
+                afterwordInside: Boolean(register?.querySelector("[data-settings-afterword]")),
+                afterwordDisplay: afterword ? getComputedStyle(afterword).display : null,
               }
             : null,
+          chapters: chapterRows,
           groups: [...document.querySelectorAll("[data-settings-group]")].map(
             (el) => el.getAttribute("data-settings-group") || "",
           ),
@@ -2374,30 +2409,70 @@ async function taskPageTour(vp) {
       });
       checked += 1;
       if (!settingsDesk.current || !settingsDesk.console) {
-        failures.push(`[${vp.tag}] /settings 天机总案没有渲染出来(卷首与正文都没报此刻)`);
+        failures.push(`[${vp.tag}] /settings 天机匣没有渲染出来(卷首与续卷都没报此刻)`);
       }
       if (settingsDesk.groups.join(",") !== "sound,sight,conduct") {
         failures.push(
           `[${vp.tag}] /settings 三案顺序不对:${settingsDesk.groups.join(" / ") || "无"}`,
         );
       }
-      if (!settingsDesk.archive || !settingsDesk.trail || !settingsDesk.index) {
-        failures.push(`[${vp.tag}] /settings 存续案、留痕案或卷末索引缺了一案`);
-      }
       if (
-        !settingsDesk.folio ||
-        !settingsDesk.folio.sameNode ||
-        !settingsDesk.folio.afterwordInside ||
-        settingsDesk.folio.borderTop < 1 ||
-        settingsDesk.folio.borderBottom < 1 ||
-        settingsDesk.folio.borderLeft !== 0 ||
-        settingsDesk.folio.borderRight !== 0 ||
-        settingsDesk.folio.radius !== 0 ||
-        settingsDesk.folio.shadow !== "none" ||
-        settingsDesk.folio.innerCardBorders.some((widths) => widths.some((width) => width !== 0))
+        settingsDesk.chapters.map((chapter) => chapter.key).join(",") !==
+        "sound,sight,conduct,archive,trail,index"
       ) {
         failures.push(
-          `[${vp.tag}] /settings 没有收成一张连续账页:${JSON.stringify(settingsDesk.folio)}`,
+          `[${vp.tag}] /settings 六章顺序不对:${settingsDesk.chapters
+            .map((chapter) => chapter.key)
+            .join(" / ")}`,
+        );
+      }
+      if (
+        settingsDesk.chapters.map((chapter) => chapter.title).join(",") !==
+        "声息,观照,行止,存续,留痕,卷末"
+      ) {
+        failures.push(
+          `[${vp.tag}] /settings 六章章名不对:${settingsDesk.chapters
+            .map((chapter) => chapter.title)
+            .join(" / ")}`,
+        );
+      }
+      if (!settingsDesk.archive || !settingsDesk.trail || !settingsDesk.index) {
+        failures.push(`[${vp.tag}] /settings 存续、留痕或卷末缺了一章`);
+      }
+      if (
+        !settingsDesk.register ||
+        !settingsDesk.register.sameNode ||
+        !settingsDesk.register.afterwordInside ||
+        settingsDesk.register.afterwordDisplay !== "contents" ||
+        settingsDesk.register.borderTop < 1 ||
+        settingsDesk.register.borderBottom < 1 ||
+        settingsDesk.register.borderLeft !== 0 ||
+        settingsDesk.register.borderRight !== 0 ||
+        settingsDesk.register.radius !== 0 ||
+        settingsDesk.register.shadow !== "none"
+      ) {
+        failures.push(
+          `[${vp.tag}] /settings 没有收成一张连续账页:${JSON.stringify(settingsDesk.register)}`,
+        );
+      }
+      if (settingsDesk.chapters.length !== 6) {
+        failures.push(`[${vp.tag}] /settings 续卷实见 ${settingsDesk.chapters.length} 章(应为 6)`);
+      }
+      const brokenChapters = settingsDesk.chapters.filter(
+        (chapter) =>
+          !chapter.hasHead ||
+          chapter.headOverflow ||
+          chapter.identityStateOverlap ||
+          !chapter.headInside ||
+          chapter.radius !== 0 ||
+          chapter.shadow !== "none" ||
+          chapter.background !== "rgba(0, 0, 0, 0)" ||
+          chapter.borders.every((width) => width > 0) ||
+          (vp.width < 620 && chapter.borders.slice(1).some((width) => width !== 0)),
+      );
+      if (brokenChapters.length) {
+        failures.push(
+          `[${vp.tag}] /settings 续卷里有章首挤压或重新套壳:${JSON.stringify(brokenChapters)}`,
         );
       }
       if (vp.width >= 360 && !settingsDesk.compass) {
@@ -2495,12 +2570,14 @@ async function taskPageTour(vp) {
         const cultivationNext = document.querySelector("[data-cultivation-next]");
         const ledgerRect = cultivationLedger?.getBoundingClientRect();
         const nextRect = cultivationNext?.getBoundingClientRect();
-        const settingsAfterword = document.querySelector("[data-settings-afterword]");
-        const settingsArchive = document.querySelector(".settings-afterword__archive");
-        const settingsTrail = document.querySelector(".settings-afterword__side");
-        const settingsStyle = settingsAfterword ? getComputedStyle(settingsAfterword) : null;
+        const settingsRegister = document.querySelector("[data-settings-register]");
+        const settingsArchive = document.querySelector(".settings-register__chapter--archive");
+        const settingsTrail = document.querySelector(".settings-register__chapter--trail");
+        const settingsIndex = document.querySelector(".settings-register__chapter--index");
+        const settingsStyle = settingsRegister ? getComputedStyle(settingsRegister) : null;
         const archiveRect = settingsArchive?.getBoundingClientRect();
         const trailRect = settingsTrail?.getBoundingClientRect();
+        const indexRect = settingsIndex?.getBoundingClientRect();
         const characterCatalog = document.querySelector("[data-character-catalog]");
         const catalogStyle = characterCatalog ? getComputedStyle(characterCatalog) : null;
         const catalogGroups = characterCatalog
@@ -2602,13 +2679,19 @@ async function taskPageTour(vp) {
                   nextWidth: Math.round(nextRect.width),
                 }
               : null,
-          settingsPair: settingsAfterword
+          settingsPair: settingsRegister
             ? {
                 columns: settingsStyle.gridTemplateColumns.split(/\s+/).filter(Boolean).length,
                 sameRow:
                   archiveRect && trailRect ? Math.abs(archiveRect.top - trailRect.top) <= 2 : false,
+                indexBelow: trailRect && indexRect ? indexRect.top >= trailRect.bottom - 2 : false,
+                indexSameColumn:
+                  trailRect && indexRect
+                    ? Math.abs(indexRect.left - trailRect.left) <= 2 &&
+                      Math.abs(indexRect.width - trailRect.width) <= 2
+                    : false,
                 archiveWidth: archiveRect ? Math.round(archiveRect.width) : 0,
-                sideWidth: trailRect ? Math.round(trailRect.width) : 0,
+                trailWidth: trailRect ? Math.round(trailRect.width) : 0,
               }
             : null,
           characterCatalog:
@@ -2834,13 +2917,15 @@ async function taskPageTour(vp) {
         if (
           route === "/settings" &&
           (!desk.settingsPair ||
-            desk.settingsPair.columns < 2 ||
+            desk.settingsPair.columns < 12 ||
             !desk.settingsPair.sameRow ||
+            !desk.settingsPair.indexBelow ||
+            !desk.settingsPair.indexSameColumn ||
             desk.settingsPair.archiveWidth < 300 ||
-            desk.settingsPair.sideWidth < 260)
+            desk.settingsPair.trailWidth < 260)
         ) {
           failures.push(
-            `[${vp.tag}] /settings 存续案与留痕、索引没有在桌面上并读(${JSON.stringify(
+            `[${vp.tag}] /settings 存续、留痕与卷末没有在桌面上并读(${JSON.stringify(
               desk.settingsPair,
             )})`,
           );

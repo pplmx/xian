@@ -2978,30 +2978,37 @@ describe("界面分层 · 浮层只有一个出处", () => {
 
   it("设置整册只有一张连续账页 —— 总案、存续与留痕不许逐层套四边卡", () => {
     /*
-     * 设置页此前是「大卡里套三张小卡」:总案、存续案、留痕案各有一圈边框、底色、
-     * 内外投影,卷末索引再套第四张。问题不是某个颜色,而是同一页出现四套同权重
-     * 容器,读者每滚一段都要重新判断「这是一张新纸吗」。现在整册只由外层上下
-     * 账线围合,内案退成透明分段;故障注入 = 把任一圈四边卡加回来,下面必红。
+     * 设置页此前是「大卡里套三张小卡」,再用三层卷名把同一件事说三遍。
+     * 现在整册只有一个 data-settings-register,六章共用同一枚章首与分段线:
+     * 声息、观照、行止、存续、留痕、卷末按顺序续排。
+     * 故障注入 = 任一章重新套 SectionTitle / LedgerHeader / 四边卡,下面必红。
      */
     const view = FILES.find((f) => f.path === "views/SettingsView.vue");
     const css = readFileSync(resolve(__dirname, "../styles/pages/settings.css"), "utf8");
-    const folio = view?.src.slice(
+    const register = view?.src.slice(
       view.src.indexOf("data-settings-console"),
       view.src.indexOf("<AboutDialog"),
     );
 
-    expect(folio, "整册要定位得到").toBeTruthy();
-    expect(folio, "正文不再借通用卡片皮").not.toContain("card-ink");
-    expect(view?.src, "存续案与留痕案必须在同一张长账内").toMatch(
-      /data-settings-console[\s\S]*data-settings-afterword[\s\S]*data-settings-archive[\s\S]*data-settings-trail/,
+    expect(register, "整册要定位得到").toBeTruthy();
+    expect(register, "正文不再借通用卡片皮或两套案头").not.toMatch(
+      /card-ink|<SectionTitle\b|<LedgerHeader\b/,
+    );
+    expect(view?.src, "六章必须同住一张 data-settings-register").toMatch(
+      /data-settings-register[\s\S]*data-settings-chapter="sound"[\s\S]*data-settings-chapter="sight"[\s\S]*data-settings-chapter="conduct"[\s\S]*data-settings-chapter="archive"[\s\S]*data-settings-chapter="trail"[\s\S]*data-settings-chapter="index"/,
     );
     expect(css, "外层只留上下账线").toMatch(
-      /\.settings-folio\s*\{[\s\S]{0,320}border-block:\s*1px solid/,
+      /\.settings-register\s*\{[\s\S]{0,520}border-block:\s*1px solid/,
     );
-    expect(css, "内案全部退成透明分段").toMatch(
-      /\.settings-console,\s*\.settings-archive,\s*\.settings-trail\s*\{[\s\S]{0,620}border:\s*0;[\s\S]{0,620}background:\s*transparent;[\s\S]{0,620}box-shadow:\s*none;/,
+    expect(css, "六章全部退成透明分段").toMatch(
+      /\.settings-register__chapter\s*\{[\s\S]{0,620}border:\s*0;[\s\S]{0,620}background:\s*transparent;[\s\S]{0,620}box-shadow:\s*none;/,
     );
-    expect(css, "内案不再留第二层内框").not.toMatch(/\.settings-(?:console|archive|trail)::before/);
+    expect(css, "后三章不再另起视觉容器").toMatch(
+      /\.settings-register__afterword\s*\{[\s\S]{0,120}display:\s*contents/,
+    );
+    expect(css, "章内不再留第二层内框").not.toMatch(
+      /\.settings-register__chapter::before|\.settings-(?:archive|trail)::before/,
+    );
   });
 
   it("界域志六册共用一张连续账页 —— 典籍与术数四门不许各套一层纸卡", () => {
