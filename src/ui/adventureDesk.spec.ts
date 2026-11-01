@@ -36,7 +36,10 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
     const briefing =
       view.match(/<section[^>]*data-adventure-briefing[\s\S]*?<\/section>/)?.[0] ?? "";
 
-    expect(briefing, "今日行旅要有独立章节").toContain('title="今日行旅"');
+    expect(briefing, "今日行旅要是续卷的第一章").toContain('data-adventure-chapter="briefing"');
+    expect(briefing, "今日行旅章首仍写原名").toMatch(
+      /class="adventure-register__title">今日行旅<\/h2>/,
+    );
     expect(briefing, "今日行旅直接展示星象账").toContain("{{ mansionLine }}");
     expect(view, "星象仍从 todayMansion 现算").toContain("todayMansion(game.totalPlaySec)");
     expect(briefing, "利方概率由星象账直接摊开").toContain("{{ describeMansionLuck }}");
@@ -77,7 +80,7 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
       /\.adventure-region--next\s*\{[\s\S]{0,150}linear-gradient\(115deg,\s*rgb\(var\(--color-qing-rgb\) \/ 0\.045\)/,
     );
     expect(view, "地点描述在渐变卡上必须用 ink-soft;ink-faint 只剩贴着 4.5:1 的余量").toMatch(
-      /<p v-if="row\.canEnter" class="mt-2 text-note leading-relaxed text-ink-soft">\s*\{\{\s*row\.def\.desc\s*\}\}/,
+      /<p\s+v-if="row\.canEnter"\s+class="mt-2 text-note leading-relaxed text-ink-soft"\s*>\s*\{\{\s*row\.def\.desc\s*\}\}/,
     );
   });
 
@@ -90,9 +93,11 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
     expect(regionsAt, "主线地界要有稳定落点").toBeGreaterThan(-1);
     expect(secretAt, "旁路秘境要有稳定落点").toBeGreaterThan(regionsAt);
     expect(rulesAt, "行旅规则要收在页尾").toBeGreaterThan(secretAt);
-    expect(view.slice(regionsAt, secretAt), "主线章节要明说眼下可往").toContain('title="眼下可往"');
+    expect(view.slice(regionsAt, secretAt), "主线章节要明说眼下可往").toMatch(
+      /class="adventure-register__title">眼下可往<\/h2>/,
+    );
     expect(view.slice(secretAt, rulesAt), "支线仍在主线之后挂真入口").toContain(
-      "<SecretRealmCard />",
+      "<SecretRealmCard embedded />",
     );
     expect(view.slice(rulesAt), "规则仍读同一份镇压阈值").toContain("SUPPRESS_THRESHOLDS.minWins");
   });
@@ -131,6 +136,72 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
     );
   });
 
+  it("今日行旅、山河路账、秘境与行旅之则共成一张开口长卷", () => {
+    const view = source("src/views/AdventureView.vue");
+    const css = source("src/styles/pages/adventure.css");
+    const layout = source("scripts/layout-check.mjs");
+    const chapters = [...view.matchAll(/data-adventure-chapter="([^"]+)"/g)].map(
+      ([, chapter]) => chapter,
+    );
+
+    expect(view, "整册外框要成为唯一连续账页").toMatch(
+      /<article\s+class="adventure-register folio-span-all"\s+data-adventure-register\s+data-adventure-folio\s+data-adventure-console\s*>/,
+    );
+    expect(chapters, "四章按玩家阅读顺序续排").toEqual(["briefing", "regions", "secret", "rules"]);
+    expect(view, "两套案头与卡片皮都退出历练正文").not.toMatch(
+      /<SectionTitle\b|adventure-briefing__sheet/,
+    );
+    expect(view, "秘境卡要以嵌入态接入同一续卷").toMatch(/<SecretRealmCard\s+embedded\s*\/>/);
+    expect(css, "连续账页只留上下账线").toMatch(
+      /\.adventure-register\s*\{[\s\S]{0,520}border:\s*0;[\s\S]{0,520}border-block:\s*1px solid/,
+    );
+    expect(css, "四章撤掉四边卡、圆角、底色与投影").toMatch(
+      /\.adventure-register__chapter\s*\{[\s\S]{0,620}border:\s*0;[\s\S]{0,620}border-radius:\s*0;[\s\S]{0,620}background:\s*transparent;[\s\S]{0,620}box-shadow:\s*none;/,
+    );
+    expect(css, "章间只以分段线接续前账").toMatch(
+      /\.adventure-register__chapter \+ \.adventure-register__chapter\s*\{[\s\S]{0,160}border-top:\s*1px solid/,
+    );
+    expect(css, "秘境嵌入正文后不再另起四边卡").toMatch(
+      /\.adventure-secret__desk\s*\{[\s\S]{0,420}padding:\s*0;[\s\S]{0,420}border:\s*0;[\s\S]{0,420}border-radius:\s*0;[\s\S]{0,420}background:\s*transparent;[\s\S]{0,420}box-shadow:\s*none;/,
+    );
+    expect(layout, "真浏览器要核同一张历练续卷").toContain(
+      'document.querySelector("[data-adventure-register]")',
+    );
+    expect(layout, "真浏览器要逐章核章序与章首").toContain(
+      'document.querySelectorAll("[data-adventure-chapter]")',
+    );
+  });
+
+  it("历练续卷手机单列、620 两栏、960 左账右山河,220 以下章态退整行", () => {
+    const view = source("src/views/AdventureView.vue");
+    const css = source("src/styles/pages/adventure.css");
+
+    expect(css).toMatch(
+      /\.adventure-register\s*\{[\s\S]{0,260}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(css).toMatch(
+      /@media \(min-width: 620px\)\s*\{[\s\S]{0,700}\.adventure-register\s*\{[\s\S]{0,140}repeat\(2, minmax\(0, 1fr\)\)/,
+    );
+    expect(css).toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,900}\.adventure-register\s*\{[\s\S]{0,140}repeat\(12, minmax\(0, 1fr\)\)/,
+    );
+    expect(view, "390 先收起重复正文的装饰罗盘,把首屏让给首个出发键").toMatch(
+      /<template #visual>\s*<div class="phone:hidden">[\s\S]{0,260}<AdventureCompass/,
+    );
+    expect(css, "390 章首与卷间也要收薄,不能只靠藏一张图").toMatch(
+      /@media \(max-width: 430px\)\s*\{[\s\S]{0,700}\.adventure-register__head\s*\{[\s\S]{0,100}padding-block:\s*0\.62rem 0\.48rem/,
+    );
+    expect(css, "桌面让山河主册占右侧大栏,今日账与旁路留左栏").toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,1600}\.adventure-register__chapter--regions\s*\{[\s\S]{0,180}grid-column:\s*5 \/ -1;[\s\S]{0,120}grid-row:\s*1 \/ span 3/,
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,2600}\.adventure-register__head\s*\{[\s\S]{0,220}grid-template-columns:\s*1\.7rem minmax\(0, 1fr\)/,
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,3000}\.adventure-register__state\s*\{[\s\S]{0,220}grid-column:\s*2;[\s\S]{0,120}justify-self:\s*start;[\s\S]{0,120}text-align:\s*left/,
+    );
+  });
+
   it("今日行旅与山河路账共成开口长卷,地界不再逐张套卡", () => {
     const view = source("src/views/AdventureView.vue");
     const css = source("src/styles/pages/adventure.css");
@@ -146,9 +217,6 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
     expect(region).toContain("adventure-region__conditions");
     expect(region).toContain("adventure-region__reading");
 
-    expect(css, "今日行旅只用上下账线与世界色边线").toMatch(
-      /\.adventure-briefing__sheet\s*\{[\s\S]{0,360}border-block:\s*1px solid[\s\S]{0,360}border-radius:\s*0;[\s\S]{0,360}box-shadow:\s*none;/,
-    );
     expect(css, "界域之间首尾相接,不再用组间距假装分册").toMatch(
       /\.adventure-atlas\s*\{[\s\S]{0,220}gap:\s*0;/,
     );
@@ -170,9 +238,6 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
     expect(css, "卷首法球收在 124px,给 390 首屏的出发键留出安全间距").toMatch(
       /\.adventure-compass\s*\{[\s\S]{0,160}width:\s*124px/,
     );
-    expect(css).toMatch(
-      /\.adventure-briefing__sheet\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(0, 1fr\)/,
-    );
     expect(view, "每一档都要留运行时落点").toContain(':data-event-tier="t.id"');
     expect(css, "三档常态是一条连续概率账,不再并成三列").toMatch(
       /\.adventure-briefing__tier\s*\{[\s\S]{0,260}?grid-template-areas:\s*"name brief odds"/,
@@ -185,16 +250,16 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
       /\.adventure-region--next\s*\{[\s\S]{0,120}border-left-color:\s*rgb\(var\(--color-qing-rgb\)/,
     );
     expect(css).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1200}\.adventure-route__body\s*\{[\s\S]{0,120}flex-direction:\s*column/,
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.adventure-route__body\s*\{[\s\S]{0,120}flex-direction:\s*column/,
     );
     expect(css).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.adventure-briefing__tier\s*\{[\s\S]{0,160}?grid-template-areas:\s*"name"\s*"odds"\s*"brief"/,
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,2200}\.adventure-briefing__tier\s*\{[\s\S]{0,160}?grid-template-areas:\s*"name"\s*"odds"\s*"brief"/,
     );
     expect(css).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.adventure-route__head\s*\{[\s\S]{0,120}grid-template-columns:\s*auto minmax\(0, 1fr\)/,
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,2200}\.adventure-route__head\s*\{[\s\S]{0,120}grid-template-columns:\s*auto minmax\(0, 1fr\)/,
     );
     expect(css).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,2200}\.adventure-route__link\s*\{[\s\S]{0,100}justify-self:\s*end/,
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,2600}\.adventure-route__link\s*\{[\s\S]{0,100}justify-self:\s*end/,
     );
   });
 });

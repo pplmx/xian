@@ -7,12 +7,20 @@
   -->
   <section
     v-if="unlocked"
-    class="card-ink px-4 py-3"
-    :class="state ? 'border-l-2 border-l-qing/70' : ''"
+    :class="[
+      embedded ? 'adventure-secret__desk' : 'card-ink px-4 py-3',
+      {
+        'border-l-2 border-l-qing/70': state && !embedded,
+        'is-active': state && embedded,
+      },
+    ]"
+    :data-secret-realm-embedded="embedded ? '' : undefined"
     data-secret-realm-card
   >
     <p class="flex flex-wrap items-center gap-2">
-      <span class="font-kai text-section tracking-[0.2em] text-ink">秘境</span>
+      <span class="font-kai text-section tracking-[0.2em] text-ink">
+        {{ embedded ? (gate === "celestial" ? "天界册" : "凡境册") : "秘境" }}
+      </span>
       <span class="chip-ink !text-note"
         >{{ gate === "celestial" ? "天界" : "凡境" }} · {{ list.length }} 处 ·
         {{ cnNumber(SECRET_LAYERS) }}层 · 出则散</span
@@ -199,10 +207,17 @@
   <section
     v-else
     aria-hidden="true"
-    class="card-ink border-dashed border-ink/15 pointer-events-none select-none px-4 py-3"
+    :class="
+      embedded
+        ? 'adventure-secret__desk adventure-secret__desk--locked'
+        : 'card-ink border-dashed border-ink/15 pointer-events-none select-none px-4 py-3'
+    "
+    :data-secret-realm-embedded="embedded ? '' : undefined"
   >
     <p class="flex items-center gap-2">
-      <span class="font-kai text-section tracking-[0.2em] text-ink">秘境</span>
+      <span class="font-kai text-section tracking-[0.2em] text-ink">
+        {{ embedded ? (gate === "celestial" ? "天界册" : "凡境册") : "秘境" }}
+      </span>
       <span class="chip-ink !text-note">{{ gate === "celestial" ? "天界秘境" : "凡境秘境" }}</span>
     </p>
     <p class="mt-1.5 t-body text-ink-faint">
@@ -238,7 +253,14 @@ const player = usePlayerStore();
 const resources = useResourcesStore();
 const ui = useUiStore();
 
-const props = withDefaults(defineProps<{ gate?: "mortal" | "celestial" }>(), { gate: "mortal" });
+const props = withDefaults(
+  defineProps<{
+    gate?: "mortal" | "celestial";
+    /** 接进历练续卷时只留账行，不另起四边卡。 */
+    embedded?: boolean;
+  }>(),
+  { gate: "mortal", embedded: false },
+);
 const endgame = useEndgameStore();
 
 const unlocked = computed(() => realmUnlock(props.gate));

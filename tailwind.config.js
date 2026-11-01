@@ -160,6 +160,11 @@ export default {
    * 390 的常见机型仍能容下 140px 法球与四字册名;320 只能二选一。
    * 320 优先保住册名与今日行止,把纯装饰的主视觉收起,而不是把标题挤成四行。
    *
+   * phone: —— 「390 手机档」(布局视口 ≤430 CSS px)
+   *
+   * 390 上仍需把历练首屏让给第一个出发键。行旅罗盘只重复正文已有信息,
+   * 故手机档先收起它,不必等到 320 的 compact 档才收。
+   *
    * bookfold: —— 「双契折单档」(布局视口 ≤279 CSS px)
    *
    * 320 仍能把名号与灵兽两册并排;再窄到 279 以下,两份契约索引只剩相互挤压,
@@ -171,6 +176,7 @@ export default {
       addVariant("hoverable", "@media (hover: hover) and (pointer: fine)");
       addVariant("tinylens", "@media (max-width: 220px)");
       addVariant("compact", "@media (max-width: 359px)");
+      addVariant("phone", "@media (max-width: 430px)");
       addVariant("bookfold", "@media (max-width: 279px)");
     },
   ],

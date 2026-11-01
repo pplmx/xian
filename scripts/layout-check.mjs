@@ -2333,6 +2333,133 @@ async function taskPageTour(vp) {
     if (bottomPagers > 0) {
       failures.push(`[${vp.tag}] ${route} 页面底部仍有册末翻页签(${bottomPagers} 处)`);
     }
+    if (route === "/adventure") {
+      const adventureDesk = await page.evaluate(() => {
+        const register = document.querySelector("[data-adventure-register]");
+        const folio = document.querySelector("[data-adventure-folio]");
+        const consoleDesk = document.querySelector("[data-adventure-console]");
+        if (!register) return null;
+        const registerStyle = getComputedStyle(register);
+        const chapters = [...document.querySelectorAll("[data-adventure-chapter]")];
+        const chapterRows = chapters.map((chapter) => {
+          const style = getComputedStyle(chapter);
+          const head = chapter.querySelector(".adventure-register__head");
+          const identity = head?.querySelector(".adventure-register__identity");
+          const state = head?.querySelector(".adventure-register__state");
+          const headRect = head?.getBoundingClientRect();
+          const identityRect = identity?.getBoundingClientRect();
+          const stateRect = state?.getBoundingClientRect();
+          return {
+            key: chapter.getAttribute("data-adventure-chapter") || "",
+            title: chapter.querySelector(".adventure-register__title")?.textContent?.trim() || "",
+            hasHead: Boolean(head),
+            headOverflow: head ? head.scrollWidth > head.clientWidth + 1 : true,
+            identityStateOverlap:
+              identityRect && stateRect
+                ? Math.min(identityRect.right, stateRect.right) >
+                    Math.max(identityRect.left, stateRect.left) + 1 &&
+                  Math.min(identityRect.bottom, stateRect.bottom) >
+                    Math.max(identityRect.top, stateRect.top) + 1
+                : false,
+            headInside:
+              headRect && identityRect && stateRect
+                ? identityRect.left >= headRect.left - 1 &&
+                  identityRect.right <= headRect.right + 1 &&
+                  stateRect.left >= headRect.left - 1 &&
+                  stateRect.right <= headRect.right + 1
+                : false,
+            borders: [
+              style.borderTopWidth,
+              style.borderRightWidth,
+              style.borderBottomWidth,
+              style.borderLeftWidth,
+            ].map((width) => Number.parseFloat(width)),
+            radius: Number.parseFloat(style.borderTopLeftRadius),
+            shadow: style.boxShadow,
+            background: style.backgroundColor,
+          };
+        });
+        return {
+          register: {
+            sameNode: register === folio && register === consoleDesk,
+            borderTop: Number.parseFloat(registerStyle.borderTopWidth),
+            borderRight: Number.parseFloat(registerStyle.borderRightWidth),
+            borderBottom: Number.parseFloat(registerStyle.borderBottomWidth),
+            borderLeft: Number.parseFloat(registerStyle.borderLeftWidth),
+            radius: Number.parseFloat(registerStyle.borderTopLeftRadius),
+            shadow: registerStyle.boxShadow,
+            background: registerStyle.backgroundColor,
+          },
+          chapters: chapterRows,
+          cardShells: register.querySelectorAll(".card-ink").length,
+          embeddedSecret: Boolean(
+            register.querySelector("[data-adventure-secret] [data-secret-realm-embedded]"),
+          ),
+        };
+      });
+      checked += 1;
+      if (
+        !adventureDesk ||
+        !adventureDesk.register.sameNode ||
+        adventureDesk.register.borderTop < 1 ||
+        adventureDesk.register.borderBottom < 1 ||
+        adventureDesk.register.borderLeft !== 0 ||
+        adventureDesk.register.borderRight !== 0 ||
+        adventureDesk.register.radius !== 0 ||
+        adventureDesk.register.shadow !== "none"
+      ) {
+        failures.push(
+          `[${vp.tag}] /adventure 没有收成一张连续行旅续卷:${JSON.stringify(adventureDesk?.register ?? null)}`,
+        );
+      }
+      if (adventureDesk) {
+        if (
+          adventureDesk.chapters.map((chapter) => chapter.key).join(",") !==
+          "briefing,regions,secret,rules"
+        ) {
+          failures.push(
+            `[${vp.tag}] /adventure 四章顺序不对:${adventureDesk.chapters
+              .map((chapter) => chapter.key)
+              .join(" / ")}`,
+          );
+        }
+        if (
+          adventureDesk.chapters.map((chapter) => chapter.title).join(",") !==
+          "今日行旅,眼下可往,秘境,行旅之则"
+        ) {
+          failures.push(
+            `[${vp.tag}] /adventure 四章章名不对:${adventureDesk.chapters
+              .map((chapter) => chapter.title)
+              .join(" / ")}`,
+          );
+        }
+        const brokenChapters = adventureDesk.chapters.filter(
+          (chapter) =>
+            !chapter.hasHead ||
+            chapter.headOverflow ||
+            chapter.identityStateOverlap ||
+            !chapter.headInside ||
+            chapter.radius !== 0 ||
+            chapter.shadow !== "none" ||
+            chapter.background !== "rgba(0, 0, 0, 0)" ||
+            chapter.borders.every((width) => width > 0) ||
+            (vp.width < 620 && chapter.borders.slice(1).some((width) => width !== 0)),
+        );
+        if (brokenChapters.length) {
+          failures.push(
+            `[${vp.tag}] /adventure 续卷里有章首挤压或重新套壳:${JSON.stringify(brokenChapters)}`,
+          );
+        }
+        if (adventureDesk.cardShells > 0) {
+          failures.push(
+            `[${vp.tag}] /adventure 续卷里又套了 ${adventureDesk.cardShells} 张 card-ink`,
+          );
+        }
+        if (!adventureDesk.embeddedSecret) {
+          failures.push(`[${vp.tag}] /adventure 秘境没有接进同一续卷`);
+        }
+      }
+    }
     if (route === "/settings") {
       const settingsDesk = await page.evaluate(() => {
         const current = document.querySelector("[data-settings-current]");
