@@ -262,4 +262,40 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,2600}\.adventure-route__link\s*\{[\s\S]{0,100}justify-self:\s*end/,
     );
   });
+
+  it("战局谱收成一册连续战卷,会话、战局、战报与近战情报不再逐段套纸卡", () => {
+    const css = source("src/styles/pages/adventure.css");
+    const view = source("src/components/adventure/CombatPanel.vue");
+    const intel = source("src/components/adventure/BattleIntelPanel.vue");
+    const layout = source("scripts/layout-check.mjs");
+
+    expect(view, "战场正文要有稳定长卷落点").toContain("data-combat-ledger");
+    expect(css, "战卷只留上下账线,不铺侧框与圆角").toMatch(
+      /\.combat-desk\s*\{[\s\S]{0,260}border:\s*0;[\s\S]{0,180}border-block:\s*1px solid;[\s\S]{0,180}border-radius:\s*0;/,
+    );
+    for (const [name, selector] of [
+      ["征途簿", "\\.combat-session"],
+      ["战局", "\\.combat-arena"],
+    ] as const) {
+      expect(css, `${name}不再自成第二张纸卡`).toMatch(
+        new RegExp(
+          `${selector}\\s*\\{[\\s\\S]{0,300}border:\\s*0;[\\s\\S]{0,180}border-radius:\\s*0;[\\s\\S]{0,180}background:\\s*transparent;[\\s\\S]{0,180}box-shadow:\\s*none;`,
+        ),
+      );
+    }
+    expect(css, "战报框退成透明账页").toMatch(
+      /\.combat-report__scroll\.scroll-pane\s*\{[\s\S]{0,300}border:\s*0;[\s\S]{0,180}background:\s*transparent;/,
+    );
+    expect(intel, "近战情报仍保留稳定章节落点").toContain("data-battle-intel");
+    expect(css, "近战情报沿战卷续排").toMatch(
+      /\.combat-intel\s*\{[\s\S]{0,300}border:\s*0;[\s\S]{0,180}border-top:\s*1px solid;[\s\S]{0,180}background:\s*transparent;/,
+    );
+    expect(css, "所知与分析展开后仍是账页,不再套内层纸卡").toMatch(
+      /\.combat-intel__paper\s*\{[\s\S]{0,320}border:\s*0;[\s\S]{0,180}border-top:\s*1px solid;[\s\S]{0,180}background:\s*transparent;/,
+    );
+    expect(css, "390 首屏把战绩独占一行,其余三格并读").toMatch(
+      /\.combat-session__stats > div\[data-combat-stat="record"\]\s*\{[\s\S]{0,220}grid-column:\s*1 \/ -1;[\s\S]{0,160}display:\s*flex;/,
+    );
+    expect(layout, "真浏览器要核战卷不再逐段套卡").toContain("[data-combat-ledger]");
+  });
 });

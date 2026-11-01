@@ -8941,10 +8941,47 @@ async function taskEnemyCard() {
             win: true,
             rounds: 7,
             playerHpPct: 0.62,
+            firstMove: { playerFirst: true, playerSpeed: 1.07, enemySpeed: 0.7 },
+            stats: {
+              player: {
+                dealt: gn(2.6, 6),
+                taken: gn(8.2, 5),
+                pierceTaken: gn(1.1, 5),
+                biggestHitTaken: gn(2.4, 5),
+                healed: gn(0, 0),
+                shieldAbsorbed: gn(0, 0),
+                dodges: 1,
+                missedHits: 2,
+                hitsLanded: 9,
+                counters: 0,
+                combos: 2,
+                crits: 3,
+                skillCasts: 1,
+                artifactProcs: 0,
+                stunnedTurns: 0,
+              },
+              enemy: {
+                dealt: gn(8.2, 5),
+                taken: gn(2.6, 6),
+                pierceTaken: gn(0, 0),
+                biggestHitTaken: gn(2.6, 6),
+                healed: gn(0, 0),
+                shieldAbsorbed: gn(0, 0),
+                dodges: 0,
+                missedHits: 0,
+                hitsLanded: 6,
+                counters: 1,
+                combos: 0,
+                crits: 1,
+                skillCasts: 2,
+                artifactProcs: 0,
+                stunnedTurns: 0,
+              },
+            },
             log: [
-              { t: "atk", text: "你挥剑直取,", php: 1, ehp: 0.8 },
-              { t: "crit", text: "会心一击!", dmg: "12", php: 1, ehp: 0.4 },
-              { t: "win", text: "你胜了。", php: 0.62, ehp: 0 },
+              { t: "atk", side: "p", text: "你挥剑直取,", php: 1, ehp: 0.8 },
+              { t: "crit", side: "p", text: "会心一击!", dmg: "12", php: 1, ehp: 0.4 },
+              { t: "win", side: "sys", text: "你胜了。", php: 0.62, ehp: 0 },
             ],
           },
           at: now - 3000,
@@ -9015,10 +9052,20 @@ async function taskEnemyCard() {
       const info = await measurePage(page);
       for (const p of problemsOf(info)) failures.push(`[320-battle] /adventure → ${p}`);
       /*
-       * 征途簿四格在宽叶上会从两列切四列。战绩是唯一会写「胜 N 场 · 负 N 场」
-       * 的长读数:390 的四分格曾只剩 69px 内容宽,后九字被 overflow:hidden 静默裁掉;
-       * 横向溢出判据量不到「盒内被裁」。这里把三档真机/缩放宽度都过一遍。
+       * 战局谱收成一册连续战卷。这里不再只量「数字有没有被裁」:
+       * 外账若重新长出四边框、战绩又缩回四分格、战报或分析重新套内框,
+       * 都要在真浏览器里当场现形。390 另核战报在首屏探出,195 核三格仍横排。
        */
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(180);
+      const analysisButton = page.locator("main button", { hasText: /战斗分析/ }).first();
+      const analysisOpened = (await analysisButton.count()) > 0;
+      if (!analysisOpened) {
+        failures.push("[390-battle] 战卷场景:找不到战斗分析入口,无法核展开账页");
+      } else {
+        await analysisButton.click({ timeout: 3000 }).catch(() => {});
+        await page.waitForTimeout(260);
+      }
       for (const vp of [
         { width: 390, height: 844, tag: "390" },
         { width: 320, height: 568, tag: "320" },
@@ -9026,18 +9073,209 @@ async function taskEnemyCard() {
       ]) {
         await page.setViewportSize({ width: vp.width, height: vp.height });
         await page.waitForTimeout(180);
-        const clipped = await page.evaluate(() =>
-          [...document.querySelectorAll("[data-combat-stat] strong")]
-            .filter((el) => el.scrollWidth > el.clientWidth + 1)
-            .map(
-              (el) =>
-                `${el.closest("[data-combat-stat]")?.getAttribute("data-combat-stat") ?? "?"}` +
-                ` ${el.scrollWidth}>${el.clientWidth} «${(el.textContent || "").trim()}»`,
-            ),
-        );
+        const ledger = await page.evaluate(() => {
+          const style = (el) => {
+            if (!el) return null;
+            const s = getComputedStyle(el);
+            return {
+              top: parseFloat(s.borderTopWidth) || 0,
+              right: parseFloat(s.borderRightWidth) || 0,
+              bottom: parseFloat(s.borderBottomWidth) || 0,
+              left: parseFloat(s.borderLeftWidth) || 0,
+              radius: parseFloat(s.borderTopLeftRadius) || 0,
+              background: s.backgroundColor,
+              shadow: s.boxShadow,
+            };
+          };
+          const box = (el) => {
+            if (!el) return null;
+            const r = el.getBoundingClientRect();
+            return { top: r.top, right: r.right, bottom: r.bottom, left: r.left, width: r.width };
+          };
+          const stats = [...document.querySelectorAll("[data-combat-stat]")].map((el) => {
+            const strong = el.querySelector("strong");
+            return {
+              id: el.getAttribute("data-combat-stat") || "?",
+              box: box(el),
+              cellClip: el.scrollWidth > el.clientWidth + 1,
+              textClip: !!strong && strong.scrollWidth > strong.clientWidth + 1,
+              text: (strong?.textContent || "").trim(),
+            };
+          });
+          const ledgerEl = document.querySelector("[data-combat-ledger]");
+          const report = document.querySelector(".combat-report__scroll");
+          const paper = document.querySelector(".combat-intel__paper");
+          const ledgerBox = box(ledgerEl);
+          const logs = [...document.querySelectorAll("[data-battle-log]")].map((el) => ({
+            clip: el.scrollWidth > el.clientWidth + 1,
+            outside:
+              !!ledgerBox &&
+              (el.getBoundingClientRect().left < ledgerBox.left - 1 ||
+                el.getBoundingClientRect().right > ledgerBox.right + 1),
+            text: (el.textContent || "").trim(),
+          }));
+          const dataRows = [...document.querySelectorAll(".combat-intel__data-row")].map((el) => ({
+            clip: el.scrollWidth > el.clientWidth + 1,
+            text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+          }));
+          return {
+            found: !!ledgerEl,
+            ledger: style(ledgerEl),
+            session: style(document.querySelector("[data-combat-session]")),
+            arena: style(document.querySelector("[data-combat-arena]")),
+            report: style(report),
+            paper: style(paper),
+            reportBox: box(report),
+            stats,
+            logs,
+            dataRows,
+            viewportHeight: window.innerHeight,
+          };
+        });
         checked += 1;
-        if (clipped.length)
-          failures.push(`[${vp.tag}-battle] 征途簿读数被盒内裁切:${clipped.join(" | ")}`);
+        const transparent = (color) =>
+          color === "transparent" || color === "rgba(0, 0, 0, 0)" || color === "";
+        if (!ledger.found) {
+          failures.push(`[${vp.tag}-battle] 战卷稳定落点 [data-combat-ledger] 不存在`);
+        } else {
+          if (
+            !ledger.ledger ||
+            ledger.ledger.top < 0.9 ||
+            ledger.ledger.bottom < 0.9 ||
+            ledger.ledger.left > 0.1 ||
+            ledger.ledger.right > 0.1 ||
+            ledger.ledger.radius > 0.1
+          ) {
+            failures.push(
+              `[${vp.tag}-battle] 战卷不是只留上下账线:` +
+                `边框 ${ledger.ledger?.top}/${ledger.ledger?.right}/${ledger.ledger?.bottom}/${ledger.ledger?.left}px` +
+                ` · 圆角 ${ledger.ledger?.radius}px`,
+            );
+          }
+          if (
+            !ledger.session ||
+            ledger.session.top > 0.1 ||
+            ledger.session.right > 0.1 ||
+            ledger.session.bottom > 0.1 ||
+            ledger.session.left > 0.1 ||
+            ledger.session.radius > 0.1 ||
+            !transparent(ledger.session.background) ||
+            ledger.session.shadow !== "none"
+          ) {
+            failures.push(
+              `[${vp.tag}-battle] 征途簿又自成一张纸卡:${JSON.stringify(ledger.session)}`,
+            );
+          }
+          if (
+            !ledger.arena ||
+            ledger.arena.right > 0.1 ||
+            ledger.arena.bottom > 0.1 ||
+            ledger.arena.left > 0.1 ||
+            ledger.arena.radius > 0.1 ||
+            !transparent(ledger.arena.background) ||
+            ledger.arena.shadow !== "none"
+          ) {
+            failures.push(`[${vp.tag}-battle] 战局又自成一张纸卡:${JSON.stringify(ledger.arena)}`);
+          }
+          if (
+            !ledger.report ||
+            ledger.report.top > 0.1 ||
+            ledger.report.right > 0.1 ||
+            ledger.report.bottom > 0.1 ||
+            ledger.report.left > 0.1 ||
+            !transparent(ledger.report.background)
+          ) {
+            failures.push(
+              `[${vp.tag}-battle] 战报框没有退成透明账页:${JSON.stringify(ledger.report)}`,
+            );
+          }
+
+          const record = ledger.stats.find((row) => row.id === "record");
+          const sideStats = ledger.stats.filter((row) => row.id !== "record");
+          const clipped = ledger.stats.filter((row) => row.cellClip || row.textClip);
+          if (clipped.length) {
+            failures.push(
+              `[${vp.tag}-battle] 征途簿读数被盒内裁切:` +
+                clipped
+                  .map(
+                    (row) =>
+                      `${row.id} ${row.cellClip ? "格" : ""}${row.textClip ? "字" : ""} «${row.text}»`,
+                  )
+                  .join(" | "),
+            );
+          }
+          if (
+            !record?.box ||
+            sideStats.length !== 3 ||
+            !sideStats.every((row) => row.box) ||
+            record.box.bottom > Math.min(...sideStats.map((row) => row.box.top)) + 1
+          ) {
+            failures.push(
+              `[${vp.tag}-battle] 战绩没有独占整行:` +
+                `战绩底 ${record?.box?.bottom ?? "无"} / 三格顶 ${sideStats.map((row) => row.box?.top ?? "无").join(",")}`,
+            );
+          }
+          const sideTops = sideStats.map((row) => row.box?.top ?? -1);
+          if (Math.max(...sideTops) - Math.min(...sideTops) > 1) {
+            failures.push(`[${vp.tag}-battle] 际遇 / 拾获 / 悟道没有并读:${sideTops.join(",")}`);
+          }
+          if (
+            vp.tag === "390" &&
+            (!ledger.reportBox || ledger.reportBox.top >= ledger.viewportHeight - 76)
+          ) {
+            failures.push(
+              `[390-battle] 战报没有进入首屏:战报顶 ${ledger.reportBox?.top ?? "无"} / 屏高 ${ledger.viewportHeight}`,
+            );
+          }
+          if (ledger.logs.length === 0) {
+            failures.push(`[${vp.tag}-battle] 战报账行没有落进战卷`);
+          } else {
+            const badLogs = ledger.logs.filter((row) => row.clip || row.outside);
+            if (badLogs.length) {
+              failures.push(
+                `[${vp.tag}-battle] 战报行越出账页或被裁:${badLogs.map((row) => row.text).join(" | ")}`,
+              );
+            }
+          }
+          if (analysisOpened) {
+            if (
+              !ledger.paper ||
+              ledger.paper.top < 0.9 ||
+              ledger.paper.right > 0.1 ||
+              ledger.paper.bottom > 0.1 ||
+              ledger.paper.left > 0.1 ||
+              ledger.paper.radius > 0.1 ||
+              !transparent(ledger.paper.background)
+            ) {
+              failures.push(
+                `[${vp.tag}-battle] 战斗分析重新套了内层纸卡:${JSON.stringify(ledger.paper)}`,
+              );
+            }
+            if (ledger.dataRows.length === 0) {
+              failures.push(`[${vp.tag}-battle] 战斗分析展开后没有数据行`);
+            } else if (ledger.dataRows.some((row) => row.clip)) {
+              failures.push(
+                `[${vp.tag}-battle] 战斗分析读数被盒内裁切:` +
+                  ledger.dataRows
+                    .filter((row) => row.clip)
+                    .map((row) => row.text)
+                    .join(" | "),
+              );
+            }
+          }
+        }
+        for (const p of problemsOf(await measurePage(page))) {
+          failures.push(`[${vp.tag}-battle] /adventure → ${p}`);
+        }
+        if (SHOTS) {
+          await quiesceOverlays(page);
+          await settleVisuals(page);
+          await page.screenshot({
+            path: join(SHOTS_DIR, `${vp.tag}-combat-ledger.png`),
+            fullPage: true,
+            animations: "disabled",
+          });
+        }
       }
     }
     if (pageErrors.length)

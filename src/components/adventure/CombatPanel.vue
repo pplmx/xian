@@ -1,6 +1,6 @@
 <template>
-  <div class="combat-desk" data-combat-desk>
-    <section class="combat-session" data-combat-session>
+  <div class="combat-desk" data-combat-desk data-combat-ledger>
+    <section class="combat-session" data-combat-session aria-label="征途簿">
       <header class="combat-session__head">
         <div class="combat-session__identity">
           <span class="combat-session__seal" aria-hidden="true">战</span>
@@ -24,7 +24,7 @@
         {{ bossHint }}
       </p>
 
-      <div class="combat-session__stats">
+      <div class="combat-session__stats" data-combat-stats>
         <div v-for="stat in sessionStats" :key="stat.id" :data-combat-stat="stat.id">
           <span>{{ stat.label }}</span>
           <strong class="tabular">{{ stat.value }}</strong>
@@ -42,10 +42,10 @@
       </div>
     </section>
 
-    <section class="combat-arena" data-combat-arena>
+    <section class="combat-arena" data-combat-arena aria-label="战局">
       <header class="combat-arena__head">
         <span>战局</span>
-        <small>敌我气血、最近一战与回放</small>
+        <small>敌我 · 回放 · 近战情报</small>
       </header>
 
       <div class="combat-arena__body">
@@ -211,7 +211,7 @@
           </div>
         </div>
 
-        <div class="combat-report">
+        <div class="combat-report" data-combat-report>
           <header class="combat-report__head">
             <div>
               <span>战报</span>
