@@ -71,7 +71,7 @@
           <button
             v-for="(node, i) in currentNodes"
             :key="node.id"
-            class="rounded-[2px] border border-ink/15 bg-paper-deep/60 px-2.5 py-2 text-left active:scale-97"
+            class="celestial-route-choice rounded-[2px] border-0 bg-transparent px-2.5 py-2 text-left active:scale-97 hoverable:hover:border-cinnabar"
             @click="pickNode(i as 0 | 1)"
           >
             <p class="font-kai text-title text-ink">{{ node.name }}</p>

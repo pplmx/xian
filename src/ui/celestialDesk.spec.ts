@@ -104,6 +104,23 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
     expect(view, "远征世界从真实世界解析").toContain("resolveWorld(endgame.worldRun.worldId)");
   });
 
+  it("天界正文收成开口卷册:外层不套卡,道途与门径只留分栏线", () => {
+    const css = source("src/styles/pages/celestial.css");
+    const expedition = source("src/components/celestial/ExpeditionPanel.vue");
+    const book = css.match(/\.celestial-book\s*\{([\s\S]*?)\n  \}/)?.[1] ?? "";
+    const card = css.match(/\.celestial-dao__card\s*\{([\s\S]*?)\n  \}/)?.[1] ?? "";
+    const choice = css.match(/\.celestial-dao__choice\s*\{([\s\S]*?)\n  \}/)?.[1] ?? "";
+    const gateway = css.match(/\.celestial-gateway\s*\{([\s\S]*?)\n  \}/)?.[1] ?? "";
+
+    expect(book, "天界卷册又长回了四边框").toContain("border: 0;");
+    expect(book, "天界卷册又铺了一层实底").toContain("background: transparent;");
+    expect(book, "天界卷册又投出卡片阴影").toContain("box-shadow: none;");
+    expect(card, "道途卡仍是四面封口的盒子").toContain("border-block:");
+    expect(choice, "七道选项仍各套一只盒子").toContain("border-top:");
+    expect(gateway, "两处门径仍各套一只盒子").toContain("border-top:");
+    expect(expedition, "远征择路也改开口行").toContain('class="celestial-route-choice');
+  });
+
   it("手机总账两栏,960 起四栏并读,220 以下星图读数与门径退单列", () => {
     const css = source("src/style.css");
     const start = css.indexOf(".celestial-pulse {");

@@ -10,6 +10,7 @@ function source(rel: string): string {
 
 describe("器评帖 · 装备详情先给身份与换装结论", () => {
   const dialog = source("src/components/equipment/EquipmentDetailDialog.vue");
+  const candidates = source("src/components/inventory/SlotCandidatesDialog.vue");
 
   it("卷首摊开品阶、器形与战力差,不用自己从三围里心算", () => {
     expect(dialog).toContain("data-equipment-hero");
@@ -63,6 +64,29 @@ describe("器评帖 · 装备详情先给身份与换装结论", () => {
     );
     expect(css).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,1600}\.equip-dossier__hero\s*\{[\s\S]{0,220}grid-template-columns:\s*auto minmax\(0, 1fr\)/,
+    );
+    expect(css, "195px 下器印与锁钮占第一行,身份栏退到第二行整宽").toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,2600}\.equip-dossier__identity\s*\{[\s\S]{0,120}grid-column:\s*1 \/ -1;[\s\S]{0,80}grid-row:\s*2;/,
+    );
+  });
+
+  it("部位候选在 195px 下把正文、战差与换装动作分行,零宽正文不许再出现", () => {
+    const css = source("src/styles/pages/inventory.css");
+
+    expect(candidates).toContain("slot-candidate-row__body");
+    expect(candidates).toContain("slot-candidate-row__delta");
+    expect(candidates).toContain("slot-candidate-row__action");
+    expect(candidates, "正文在 195px 退出 grow 并占满图标右侧").toContain(
+      "tinylens:grow-0 tinylens:basis-[calc(100%_-_1.75rem)]",
+    );
+    expect(candidates, "战差在 195px 退到正文下一行").toContain(
+      "tinylens:basis-[calc(100%_-_1.75rem)]",
+    );
+    expect(css, "候选行在 195px 必须允许换行").toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,4000}\.slot-candidate-row\s*\{[\s\S]{0,80}flex-wrap:\s*wrap;/,
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,4400}\.slot-candidate-row__action\s*\{[\s\S]{0,120}width:\s*100%;/,
     );
   });
 

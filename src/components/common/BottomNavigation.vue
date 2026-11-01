@@ -7,20 +7,20 @@
   <nav
     data-folio-dock
     aria-label="主册导航"
-    class="bottom-dock folio-dock relative z-20 shrink-0 border-t border-transparent"
+    class="bottom-dock folio-dock folio-dock--seal-rail relative z-20 shrink-0"
     :style="`padding-bottom: max(env(safe-area-inset-bottom), ${navInset}px)`"
   >
-    <div class="ink-divider absolute -top-px inset-x-0" />
+    <div class="bottom-dock__aura absolute inset-x-0 -top-8" aria-hidden="true" />
     <!--
       手机宽度仍铺满栏底；620px 以上的宽叶不再把五册拉成一条长栏。
-      收在 40rem 并居中后，每枚书脚签仍有 96~128px 触达宽度，像一列真的书脚索引。
+      收在 40rem 并居中后，每枚章印签仍有 96~128px 触达宽度，像一列落在纸面的印痕。
     -->
     <div class="bottom-dock-rail mx-auto grid w-[calc(100%_-_1rem)] max-w-[40rem] grid-cols-5">
       <!--
         当前在哪一页交给 RouterLink:它在 exact-active 时自己渲染 aria-current="page"
         (vue-router 的 aria-current-value 默认值就是 page)。这里不再手写一份 ——
         同一个事实两套来源没有好处;哪天换成手写的 <a>,它就会跟着一起丢。
-        颜色、位移与那枚朱砂短笔只负责给眼睛看,判据在 layout-check 的逐页巡览里守着。
+        朱砂光晕与文字色只负责给眼睛看,判据在 layout-check 的逐页巡览里守着。
       -->
       <RouterLink
         v-for="tab in TABS"
@@ -29,25 +29,9 @@
         class="bottom-dock-tab bottom-dock-slip relative flex min-h-[46px] flex-col items-center justify-center gap-0.5 px-0.5 py-1 transition-[transform,background-color,color,box-shadow] short:min-h-[40px] short:gap-0 short:py-0.5"
         :data-dock-current="route.name === tab.name ? '' : undefined"
       >
-        <!--
-          落笔 —— 当前这栏顶上压一道朱砂短笔,像夹在书页间的那枚书签带。
-          图标的位移与变色已经说了「选中的是我」,但那是**脚下**的动静;视线扫过底栏
-          找「现在在哪」时,最短的路径是这排边缘 —— 一枚短笔贴着栏口,一眼就到。
-          absolute 放置:底栏高度被「两栏钉死」盯着,一分都不许长。
-        -->
-        <span
-          v-if="route.name === tab.name"
-          class="absolute inset-x-0 top-0 mx-auto h-0.5 w-3.5 rounded-full bg-cinnabar"
-          aria-hidden="true"
-        />
         <span
           class="bottom-dock-tab__glyph relative grid h-7 w-8 place-items-center transition-transform duration-200"
         >
-          <span
-            v-if="route.name === tab.name"
-            class="pointer-events-none absolute inset-0 border border-cinnabar/20 bg-cinnabar/6"
-            aria-hidden="true"
-          />
           <GameIcon :name="tab.icon" :size="20" class="relative" />
           <!--
             行囊有没看过的新件:从任何页都看得见「有新货」,开包即隐。量价分档 ——

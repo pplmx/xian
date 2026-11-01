@@ -2432,6 +2432,7 @@ async function taskPageTour(vp) {
         const spineStyle = spine ? getComputedStyle(spine) : null;
         const masthead = document.querySelector("[data-folio-masthead]");
         const mastheadStyle = masthead ? getComputedStyle(masthead) : null;
+        const mastheadSignature = masthead ? getComputedStyle(masthead, "::after") : null;
         const mastheadOrdinal = masthead?.querySelector(".folio-masthead__ordinal");
         const head = document.querySelector("[data-folio-head]");
         const ledger = document.querySelector("[data-desktop-ledger]");
@@ -2473,12 +2474,20 @@ async function taskPageTour(vp) {
           pageWidth: Math.round(page.getBoundingClientRect().width),
           masthead: mastheadStyle
             ? {
+                immersive: masthead.classList.contains("cultivation-masthead"),
                 borderTop: Number.parseFloat(mastheadStyle.borderTopWidth),
                 borderRight: Number.parseFloat(mastheadStyle.borderRightWidth),
                 borderBottom: Number.parseFloat(mastheadStyle.borderBottomWidth),
                 borderLeft: Number.parseFloat(mastheadStyle.borderLeftWidth),
                 shadow: mastheadStyle.boxShadow,
-                fold: getComputedStyle(masthead, "::after").display,
+                signature: mastheadSignature
+                  ? {
+                      width: Number.parseFloat(mastheadSignature.width),
+                      height: Number.parseFloat(mastheadSignature.height),
+                      backgroundImage: mastheadSignature.backgroundImage,
+                      backgroundColor: mastheadSignature.backgroundColor,
+                    }
+                  : null,
                 ordinal: mastheadOrdinal
                   ? {
                       display: getComputedStyle(mastheadOrdinal).display,
@@ -2629,14 +2638,35 @@ async function taskPageTour(vp) {
               `[${vp.tag}] ${route} 双页正文只有 ${desk.pageWidth}px —— 没有用上书桌宽度`,
             );
           }
-          if (
-            !desk.masthead ||
-            desk.masthead.borderLeft <= 0 ||
+          if (!desk.masthead) {
+            failures.push(`[${vp.tag}] ${route} 桌面卷首没量到`);
+          } else if (desk.masthead.immersive) {
+            /*
+             * 修炼卷首是一整块暗场主舞台,不是纸面题签:它不该留任何卡片外框,
+             * 也不该为「底缘 + 落款线」硬加一道线。只看它是否真的铺满、无框、无影。
+             */
+            if (
+              desk.masthead.borderTop !== 0 ||
+              desk.masthead.borderRight !== 0 ||
+              desk.masthead.borderBottom !== 0 ||
+              desk.masthead.borderLeft !== 0 ||
+              desk.masthead.shadow !== "none"
+            ) {
+              failures.push(`[${vp.tag}] ${route} 暗场卷首又长回了纸卡外框`);
+            }
+          } else if (
+            desk.masthead.borderTop !== 0 ||
             desk.masthead.borderRight !== 0 ||
+            desk.masthead.borderLeft !== 0 ||
+            Math.abs(desk.masthead.borderBottom - 1) > 0.25 ||
             desk.masthead.shadow !== "none" ||
-            desk.masthead.fold !== "none"
+            !desk.masthead.signature ||
+            desk.masthead.signature.width <= 0 ||
+            desk.masthead.signature.height > 1.5 ||
+            (desk.masthead.signature.backgroundImage === "none" &&
+              desk.masthead.signature.backgroundColor === "rgba(0, 0, 0, 0)")
           ) {
-            failures.push(`[${vp.tag}] ${route} 桌面卷首仍叠着厚卡片边框或角贴`);
+            failures.push(`[${vp.tag}] ${route} 桌面卷首没有收成「底缘 + 世界色落款线」`);
           }
           if (
             !desk.masthead?.ordinal ||
@@ -10483,12 +10513,9 @@ async function taskDialogZoom() {
     await page.waitForTimeout(200);
   };
 
-  // 点的是槽位行(「武器 雾隐长枪 +3」)—— 装备详情由它打开,不是背包列表
+  // 点的是藏品卡(带 data-uid),不是上面的槽位行;槽位行打开的是候选册。
   await probe("装备详情", "/inventory", async () => {
-    await page
-      .locator("main button", { hasText: /雾隐长枪/ })
-      .first()
-      .click({ timeout: 3000 });
+    await page.locator("main button[data-uid]").first().click({ timeout: 3000 });
   });
   /*
    * 部位候选在大行囊里也会长到几十条。195px 下既要能读分页读数与两枚入口,

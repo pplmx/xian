@@ -1128,11 +1128,47 @@
       grid-template-columns: auto minmax(0, 1fr);
     }
 
-    .equip-dossier__lock {
+    .equip-dossier__sigil {
+      grid-column: 1;
+      grid-row: 1;
+      width: 2.7rem;
+    }
+
+    /*
+     * 195 CSS px 下,器印占掉 54px、锁钮又占一行后,身份栏只剩约 66px:
+     * 「凡品 / 武器 / 人间界 / 9 阶」会被挤成两字一列的竖排。器印与锁钮先占
+     * 第一行,品阶与器名退到第二行整宽读。
+     */
+    .equip-dossier__identity {
       grid-column: 1 / -1;
+      grid-row: 2;
+    }
+
+    .equip-dossier__lock {
+      grid-column: 2;
+      grid-row: 1;
       justify-self: end;
-      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
-      border-left: 0;
+      align-self: start;
+      border-top: 0;
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    }
+
+    /*
+     * 部位候选不能把「品阶 · 阶数 · 词条」压进零宽正文:一枚图标、战差与
+     * 换装键同挤一行时,min-w-0 的正文发按钮会被压到 0。极窄档让名字先与
+     * 图标并读,战差退一行,换装动作再独占整行。
+     */
+    .slot-candidate-row {
+      flex-wrap: wrap;
+    }
+
+    .slot-candidate-row__delta {
+      margin-left: 1.75rem;
+    }
+
+    .slot-candidate-row__action {
+      width: 100%;
+      flex-basis: 100%;
     }
 
     .equip-dossier__power {

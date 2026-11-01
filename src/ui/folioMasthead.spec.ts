@@ -33,21 +33,25 @@ describe("册页卷首 · 一页只讲清一件事", () => {
     expect(css).toContain(".folio-masthead::after");
   });
 
-  it("桌面卷首改成开页题签，只留卷边与切口，不再叠一张厚卡", () => {
+  it("桌面卷首改成开页题签，只留底缘、落款与册次水印，不再叠一张厚卡", () => {
     const css = source("src/style.css");
 
     expect(css, "桌面卷首要有独立册次水印").toContain(".folio-masthead__ordinal");
-    expect(css, "宽屏题签要撤掉右侧框线").toMatch(
-      /\.app-shell\[data-game-shell="desk"\] \.folio-masthead \{[\s\S]{0,260}?border-right:\s*0;/,
+    expect(css, "宽屏题签只留底缘切口").toMatch(
+      /\.app-shell\[data-game-shell="desk"\] \.folio-masthead \{[\s\S]{0,160}?border:\s*0;[\s\S]{0,120}?border-bottom:/,
     );
-    expect(css, "宽屏题签要保留世界卷边").toMatch(
-      /\.app-shell\[data-game-shell="desk"\] \.folio-masthead \{[\s\S]{0,260}?border-left:\s*2px solid var\(--world-bar\);/,
+    const desktopMasthead =
+      css.match(
+        /\.app-shell\[data-game-shell="desk"\] \.folio-masthead \{([\s\S]*?)\n    \}/,
+      )?.[1] ?? "";
+    expect(desktopMasthead, "宽屏题签又长出左右或上缘框线").not.toMatch(
+      /border-(?:top|right|left):/,
     );
     expect(css, "宽屏题签不再投出卡片阴影").toMatch(
       /\.app-shell\[data-game-shell="desk"\] \.folio-masthead \{[\s\S]{0,300}?box-shadow:\s*none;/,
     );
-    expect(css, "桌面把角贴让给开页切口").toMatch(
-      /\.app-shell\[data-game-shell="desk"\] \.folio-masthead::after \{[\s\S]{0,80}?display:\s*none;/,
+    expect(css, "世界色落款线要在桌面卷首继续可见").toMatch(
+      /\.folio-masthead::after \{[\s\S]{0,260}?background:\s*linear-gradient\(90deg, transparent, var\(--world-bar\)\);/,
     );
   });
 

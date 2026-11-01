@@ -55,7 +55,7 @@ describe("视觉节奏 · 页面外壳与配色来源", () => {
 
     expect(home).toContain('data-page-rhythm="command-deck"');
     expect(css, "首页不能用标记逃过节奏,实际间隔仍要在样式里成立").toMatch(
-      /\.home-deck \{[\s\S]{0,120}?display: flex;[\s\S]{0,80}?flex-direction: column;[\s\S]{0,80}?gap: 1rem;/,
+      /\.home-deck \{[\s\S]{0,120}?display: flex;[\s\S]{0,80}?flex-direction: column;[\s\S]{0,80}?gap: 1\.35rem;/,
     );
   });
 

@@ -1266,9 +1266,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(rows.length, "修为/灵气/耗灵气主值行都要在 ink-soft 或更上").toBeGreaterThanOrEqual(3);
   });
 
-  it("全面墨感 · 触感与主位 —— 按压滑移、卷首框墨、首屏主钮辉光、法球落地影", () => {
+  it("全面墨感 · 触感与主位 —— 按压滑移、卷首落款、首屏主钮辉光、法球落地影", () => {
     // 全面美化批:btn-seal/ghost/chip 早已 0.12s 滑移,唯 card-ink 交互卡硬跳;
-    // 境界名加世界色横杆(匾额)、欢迎页主钮起朱砂柔辉、首页法球加远山同色落地影。
+    // 卷首用世界色落款、欢迎页主钮起朱砂柔辉、首页法球加远山同色落地影。
     // 四件各退一件,下面红 —— 不许拆回「卡一按就跳、主角字光秃秃」。
     const style = readStyleCss();
     expect(style, "card-ink 要带按压滑移").toMatch(
@@ -1278,8 +1278,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(cult?.src, "境界名要进主册开卷卷首").toMatch(
       /<FolioPageHeader[\s\S]{0,240}\bfeatured\b/,
     );
-    expect(style, "卷首要保留世界色左缘").toMatch(
-      /^[ \t]*\.folio-masthead \{[\s\S]{0,600}border-left: 2px solid var\(--world-bar\);/m,
+    expect(style, "卷首要撤掉四边框").toMatch(/^[ \t]*\.folio-masthead \{[\s\S]{0,600}border: 0;/m);
+    expect(style, "卷首仍要留世界色落款").toMatch(
+      /\.folio-masthead::after \{[\s\S]{0,260}var\(--world-bar\)/,
     );
     expect(style, "主册开卷版式要能加粗这道卷边").toContain(".folio-masthead--featured");
     const wel = FILES.find((f) => f.path === "views/WelcomeView.vue");
@@ -1642,11 +1643,14 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(cls, "极窄档锁一行(只去字距仍会因边界抖动折行)").toContain("tinylens:whitespace-nowrap");
   });
 
-  it("页签选中态走淡底墨字 + 朱砂小印,不压成实心墨块", () => {
+  it("页签选中态走极淡纸光 + 朱砂游标,不压成实心墨块", () => {
     const tabs = FILES.find((f) => f.path === "components/common/InkTabs.vue");
-    expect(tabs?.src, "选中态要有淡纸底").toContain("bg-paper-deep/70");
+    const css = readStyleCss();
+    expect(css, "选中态要留一档极淡纸光").toMatch(
+      /\.folio-tab-index__tab\[aria-selected="true"\] \{[\s\S]{0,180}?rgb\(var\(--color-ink-rgb\) \/ 0\.025\)/,
+    );
     expect(tabs?.src, "选中态文字仍是墨字").toContain("text-ink");
-    expect(tabs?.src, "选中态要留一枚朱砂小印").toContain("bg-cinnabar/70");
+    expect(tabs?.src, "选中态要留一道朱砂游标").toContain("bg-cinnabar/70");
     expect(tabs?.src, "不许退回实心墨块 + 反白字").not.toMatch(
       /rounded-md bg-ink shadow[\s\S]{0,120}text-paper/,
     );
@@ -1821,7 +1825,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
 
   it("洞府离线存续当前档要实底点亮 —— 不许退回淡染的哑当前态", () => {
     // 离线上限阶梯「现在第几档」曾只有 6% 底 + 50% 边框,是全库最哑的当前态
-    // 指示器(对照 InkTabs 淡纸底 + 朱砂小印 / 行程点实底呼吸)。当前档改实底 paper 字。
+    // 指示器(对照 InkTabs 极淡纸光 + 朱砂游标 / 行程点实底呼吸)。当前档改实底 paper 字。
     const dv = FILES.find((f) => f.path === "views/DongfuView.vue");
     expect(dv?.src, "当前档必须实底 + paper 字 + 楷体").toMatch(/bg-cinnabar text-paper font-kai/);
   });
@@ -4548,21 +4552,25 @@ describe("禁用态 —— 压色不压字", () => {
     );
   });
 
-  it("禁用态的底色与字色都不叠半透明 —— 对比度要算得出来", () => {
-    // 浅色那份用**不透明**的 ink-faint 打底 + 92% 白字;夜间那份用纸上墨 28% 压出来
-    // (夜间的 ink-faint 是浅墨,奶油字放上去只剩 2.0:1,不能照搬)。
+  it("禁用态压色不压字 —— 字色不叠透明度,印面只留可计算淡墨", () => {
+    // 新视觉把浅色禁用印面压成 4% 淡墨,字用不透明 ink-soft;夜间那份用纸上墨
+    // 6% 压出来,底比浅纸深,字必须再提到正文墨,否则「尚差多少」只剩 2.65:1。
     // 取**基类那条**(前面没有 html[...] 前缀):先出现的 `.btn-seal:disabled {` 是它
     // 取基类那条:先在源码里切掉所有 html[data-theme] 开头的规则,剩下的第一条才是它
     const baseOnly = STYLE.replace(/^[ \t]*html\[[^\]]+\][^{]*\{[\s\S]*?\n[ \t]*\}/gm, "");
     const seal = /^[ \t]*\.btn-seal:disabled \{([\s\S]*?)\n[ \t]*\}/m.exec(baseOnly)?.[1] ?? "";
-    expect(seal, ".btn-seal:disabled 该用不透明的 ink-faint 打底").toContain(
-      "background: var(--color-ink-faint)",
+    expect(seal, ".btn-seal:disabled 的字必须仍是不透明 ink-soft").toContain(
+      "color: var(--color-ink-soft)",
+    );
+    expect(seal, ".btn-seal:disabled 的印面缩回淡墨,不再是一块实心灰印").toMatch(
+      /background:\s*rgb\(var\(--color-ink-rgb\) \/ 0\.04\)/,
     );
     const dark =
       /html\[data-theme="dark"\] \.btn-seal:disabled \{([\s\S]*?)\}/.exec(STYLE)?.[1] ?? "";
-    expect(dark, "夜间禁用印面要取纸上墨,不用浅墨(浅墨托不住奶油字)").toMatch(
-      /background: rgb\(var\(--color-ink-rgb\) \/ 0\.\d+\)/,
+    expect(dark, "夜间禁用印面要取纸上墨,不用浅墨(浅墨托不住奶油字)").toContain(
+      "background: rgb(var(--color-ink-rgb) / 0.06)",
     );
+    expect(dark, "夜间禁用印面要把原因句提到正文墨才够 AA").toContain("color: var(--color-ink)");
   });
 });
 

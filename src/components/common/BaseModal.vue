@@ -14,7 +14,7 @@
           :aria-label="props.ariaLabel || props.title || undefined"
           tabindex="-1"
           data-folio-modal
-          class="modal-panel folio-modal paper-grain relative flex max-h-[84vh] w-full flex-col overflow-hidden rounded-[3px] border border-ink/20 border-t-2 border-t-[var(--world-bar)] bg-paper shadow-2xl outline-none"
+          class="modal-panel folio-modal paper-grain relative flex max-h-[84vh] w-full flex-col overflow-hidden bg-paper outline-none"
           :class="[panelSizeClass, props.panelClass]"
           @keydown="onPanelKeydown"
         >

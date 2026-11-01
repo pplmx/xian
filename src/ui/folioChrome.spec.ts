@@ -125,10 +125,16 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     expect(css, "索引签要有独立样式").toContain(".folio-tab-index");
   });
 
-  it("底栏是五枚书脚签：当前册抬为纸面，其余压回栏内", () => {
+  it("底栏是五枚章印签：当前册只留朱砂光晕，不抬成第二张纸片", () => {
     const dock = source("src/components/common/BottomNavigation.vue");
     const layout = source("scripts/layout-check.mjs");
     const css = source("src/style.css");
+    const currentDock =
+      css.match(/\.folio-dock \.bottom-dock-slip\[data-dock-current\]\s*\{([\s\S]*?)\}/)?.[1] ?? "";
+    const currentGlow =
+      css.match(
+        /\.folio-dock \.bottom-dock-slip\[data-dock-current\] \.bottom-dock-tab__glyph::before\s*\{([\s\S]*?)\}/,
+      )?.[1] ?? "";
 
     expect(dock, "底栏根节点要能被装帧判据定位").toContain("data-folio-dock");
     expect(dock, "每一册都要有书脚签结构").toContain("bottom-dock-slip");
@@ -137,14 +143,18 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     expect(dock, "收束后的书脚索引要在栏内居中").toContain("mx-auto");
     expect(dock, "底栏要有独立可访问名").toContain('aria-label="主册导航"');
     expect(css, "书脚签要有独立样式").toContain(".bottom-dock-slip");
-    expect(css, "当前书脚签要抬起纸面").toContain(".bottom-dock-slip[data-dock-current]");
+    expect(currentDock, "当前章印签仍有卡片投影").toContain("box-shadow: none;");
+    expect(currentDock, "当前章印签仍被抬离纸面").toContain("transform: none;");
+    expect(currentDock, "当前章印签又铺回一层矩形底色").toContain("background: transparent;");
+    expect(currentDock, "当前章印签不该再靠矩形渐变示位").not.toContain("linear-gradient");
+    expect(currentGlow, "当前章印签没有朱砂光晕").toContain("--color-cinnabar-rgb");
     expect(layout, "真浏览器要核平板底栏书脚索引没有拉满宽页").toContain(
       "平板底栏书脚索引没有按 40rem 上限与可用宽度收束",
     );
     expect(layout, "收束后的书脚索引必须居中").toContain("平板底栏书脚索引没有居中");
   });
 
-  it("手机外壳是一册连续卷面：深色书口夹住正文，不再叠两张浅色导航卡", () => {
+  it("手机外壳是一张连续纸面：天幕批注与章印底栏不再夹深墨书口", () => {
     const app = source("src/App.vue");
     const top = source("src/components/common/TopStatusBar.vue");
     const dock = source("src/components/common/BottomNavigation.vue");
@@ -154,13 +164,15 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     expect(app, "外壳不再把手机宽度交给通用投影卡工具类").not.toContain(
       "shadow-[0_0_60px_rgba(0,0,0,0.45)]",
     );
-    expect(top, "书首用独立的书口带结构").toContain("folio-head--ribbon");
+    expect(top, "书首要换成透明天幕批注带").toContain("folio-head--aether");
+    expect(top, "旧深墨书口不再留在模板里").not.toContain("folio-head--ribbon");
     expect(top, "位置仍读同一份玄枢落点").toContain("data-folio-position");
     expect(top, "手机书首不再保留第二行位置签").not.toContain("data-folio-trail");
-    expect(dock, "书脚导航要有同一套书口带结构").toContain("folio-dock");
-    expect(css, "书口带颜色只从设计变量取").toContain("--chrome-rgb");
-    expect(css, "书首落深色书口").toContain(".folio-head--ribbon");
-    expect(css, "底栏落深色书口").toContain(".folio-dock");
+    expect(top, "天幕带要有一道纸面星轨收口").toContain("folio-head__aether-thread");
+    expect(dock, "底栏要换成章印式导航").toContain("folio-dock--seal-rail");
+    expect(dock, "底栏不再留旧实线边框").not.toContain("border-t border-transparent");
+    expect(dock, "章印导航要有一层纸面aura").toContain("bottom-dock__aura");
+    expect(css, "旧深墨书口样式不再存在").not.toContain(".folio-head--ribbon");
     expect(css, "手机外壳贴满阅读面，不再像浮在桌面上的卡片").toMatch(
       /\.app-shell\s*\{[\s\S]{0,400}?isolation:\s*isolate;[\s\S]{0,160}?box-shadow:\s*none;/,
     );
@@ -171,17 +183,16 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
       /@media \(min-width: 620px\)[\s\S]{0,200}?\.app-shell\s*\{[\s\S]{0,200}?box-shadow:/,
     );
     for (const [selector, label] of [
-      [".folio-head--ribbon", "书首"],
-      [".folio-dock", "书脚"],
+      [".folio-head--aether", "天幕批注"],
+      [".folio-dock--seal-rail", "章印底栏"],
     ] as const) {
       const block =
         new RegExp(`${selector.replaceAll(".", "\\.")}\\s*\\{([\\s\\S]*?)\\n  \\}`).exec(
           css,
         )?.[1] ?? "";
-      expect(block, `${label}要有带内压线`).toMatch(/box-shadow:\s*inset 0 1px 0/);
-      expect(block, `${label}不许向正文投外影，免得压暗贴着书口的小字`).not.toMatch(
-        /box-shadow:[\s\S]*?\n\s*0\s+-?\d+(?:\.\d+)?px/,
-      );
+      expect(block, `${label}不再铺整条深色封皮`).toContain("background: transparent;");
+      expect(block, `${label}不再用内压线或卡片投影`).toContain("box-shadow: none;");
+      expect(block, `${label}不许抄深墨书口色`).not.toContain("--chrome-rgb");
     }
   });
 
@@ -224,8 +235,8 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     const css = source("src/style.css");
 
     expect(css, "常规页要有统一页框").toContain(".folio-page");
-    expect(css, "页框上缘要给首屏行动让出 10px，而不是层层加白").toMatch(
-      /\.folio-page\s*\{[\s\S]{0,180}?padding:\s*0\.625rem var\(--folio-page-gutter\) 1\.5rem;/,
+    expect(css, "页框上缘只留 4px，把首屏交给行动").toMatch(
+      /\.folio-page\s*\{[\s\S]{0,180}?padding:\s*0\.25rem var\(--folio-page-gutter\) 1\.75rem;/,
     );
     expect(css, "页框要承接纵向节奏").toContain(".folio-page--stack");
     expect(css, "章节要在页内自动编号").toContain(".folio-page .folio-section-mark::before");
@@ -329,6 +340,19 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
       '<div v-if="!unlocked" class="card-ink px-6 py-16 text-center">',
     );
     expect(layout, "真浏览器门要核封卷页真的渲染出来").toContain("封卷页没有渲染出来");
+  });
+
+  it("封卷页也走开口卷册，不在正文里再套一只四边框纸盒", () => {
+    const css = source("src/style.css");
+    const sealed = css.match(/\.unopened-folio\s*\{([\s\S]*?)\n  \}/)?.[1] ?? "";
+    const inner = css.match(/\.unopened-folio::before\s*\{([\s\S]*?)\n  \}/)?.[1] ?? "";
+    const ledger = css.match(/\.unopened-folio__ledger\s*\{([\s\S]*?)\n  \}/)?.[1] ?? "";
+
+    expect(sealed, "封卷页又长回了四边框").toContain("border: 0;");
+    expect(sealed, "封卷页又铺了一层实底").toContain("background: transparent;");
+    expect(sealed, "封卷页又投出卡片阴影").toContain("box-shadow: none;");
+    expect(inner, "封卷页又套了第二道内框").toContain("display: none;");
+    expect(ledger, "封卷页的三格门限又铺成一块实底").toContain("background: transparent;");
   });
 
   it("封卷页的门槛读数取境界事实源，不把「真仙境」与九重差各抄一份", () => {

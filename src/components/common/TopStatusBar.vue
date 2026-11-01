@@ -2,14 +2,14 @@
   <header
     data-folio-head
     :data-folio-position="positionKey"
-    class="app-masthead folio-head folio-head--ribbon relative z-20 shrink-0 border-b border-transparent"
+    class="app-masthead folio-head folio-head--aether relative z-20 shrink-0"
     :style="`padding-top: max(env(safe-area-inset-top), ${statusTopPad})`"
   >
     <!--
-      书口带的底缘仍由同一道渐隐线收口。border-b 保留透明宽度，
-      避免实线再叠一条线；深色带上的线改用奶油墨，夜间与日间都看得见。
+      天幕带只留一道极淡的星轨收口。它不再是一整条深墨书口，
+      正文从纸面直接向上延伸，资源与身份像浮在页眉上的一行批注。
     -->
-    <div class="ink-divider absolute inset-x-0 -bottom-px" aria-hidden="true" />
+    <div class="folio-head__aether-thread absolute inset-x-0 -bottom-px" aria-hidden="true" />
 
     <div class="folio-head__body relative flex min-w-0 items-center gap-2 overflow-hidden">
       <div class="folio-head__identity-wrap flex min-w-0 items-center gap-2 overflow-hidden">

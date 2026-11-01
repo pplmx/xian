@@ -290,6 +290,7 @@ const CATEGORIES = [
       "useMediaQuery",
       "navigation",
       "atlas.spec",
+      "visualLanguage",
       "visualRhythm",
       "typeScale",
       "itemText",

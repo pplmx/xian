@@ -2,7 +2,7 @@
   <!-- 吸顶外壳:滚到顶就钉住,内容从底下穿过(尺寸与遮罩见 .tab-rail) -->
   <div class="tab-rail" data-folio-tabs>
     <div
-      class="folio-tab-index relative flex overflow-hidden border-y border-ink/15 bg-paper/90"
+      class="folio-tab-index relative flex overflow-hidden"
       role="tablist"
       aria-label="页签"
       @keydown="onKeydown"
@@ -32,10 +32,8 @@
         role="tab"
         :aria-selected="model === t.id"
         :tabindex="model === t.id ? 0 : -1"
-        class="folio-tab-index__tab relative z-10 min-w-0 flex-1 border-r border-ink/10 py-2 font-kai text-title tracking-[0.2em] transition-colors duration-200 last:border-r-0 tinylens:text-body tinylens:tracking-normal tinylens:whitespace-nowrap"
-        :class="
-          model === t.id ? 'bg-paper-deep/70 text-ink' : 'text-ink-faint active:text-ink-soft'
-        "
+        class="folio-tab-index__tab relative z-10 min-w-0 flex-1 py-2 font-kai text-title tracking-[0.2em] transition-colors duration-200 tinylens:text-body tinylens:tracking-normal tinylens:whitespace-nowrap"
+        :class="model === t.id ? 'text-ink' : 'text-ink-faint active:text-ink-soft'"
         @click="model = t.id"
       >
         {{ t.label }}

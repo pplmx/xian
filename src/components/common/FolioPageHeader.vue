@@ -41,7 +41,7 @@
 
     <div class="relative z-10 mt-2 flex flex-wrap items-start gap-3">
       <span
-        class="folio-seal grid shrink-0 place-items-center border border-ink/20 text-ink-soft"
+        class="folio-seal grid shrink-0 place-items-center"
         :class="featured ? 'h-11 w-11 tinylens:h-9 tinylens:w-9' : 'h-9 w-9'"
         aria-hidden="true"
       >

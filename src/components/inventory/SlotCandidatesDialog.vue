@@ -25,15 +25,19 @@
         :key="row.item.uid"
         :data-slot-candidate="row.item.uid"
         tabindex="-1"
-        class="flex items-center gap-2.5 rounded-[2px] px-2.5 py-2"
+        class="slot-candidate-row flex items-center gap-2.5 rounded-[2px] px-2.5 py-2"
         :class="row.equipped ? 'bg-jade/10' : 'bg-paper-deep/70'"
       >
         <GameIcon
           :name="row.template.icon"
           :size="16"
+          class="slot-candidate-row__icon"
           :style="{ color: qualityDef(row.item.quality).color }"
         />
-        <button class="min-w-0 grow text-left active:opacity-70" @click="openDetail(row.item.uid)">
+        <button
+          class="slot-candidate-row__body min-w-0 grow text-left active:opacity-70 tinylens:grow-0 tinylens:basis-[calc(100%_-_1.75rem)]"
+          @click="openDetail(row.item.uid)"
+        >
           <span class="flex min-w-0 items-center gap-1">
             <!-- 天/仙/神名前盖品阶阴文章:稀有档的第二条线索,不靠颜色单打(见 qualityTier) -->
             <QualitySeal
@@ -62,21 +66,21 @@
         -->
         <span
           v-if="row.delta !== null"
-          class="shrink-0 text-note tabular"
+          class="slot-candidate-row__delta shrink-0 text-note tabular tinylens:basis-[calc(100%_-_1.75rem)]"
           :class="row.deltaCls"
           :title="`vs 当前佩戴:${row.deltaText}`"
           >{{ row.deltaText }}</span
         >
         <button
           v-if="row.equipped"
-          class="btn-ghost shrink-0 !px-2.5 !py-1 !text-body"
+          class="slot-candidate-row__action btn-ghost shrink-0 !px-2.5 !py-1 !text-body"
           @click="unequipSlot()"
         >
           卸下
         </button>
         <button
           v-else
-          class="btn-seal shrink-0 !px-2.5 !py-1 !text-body"
+          class="slot-candidate-row__action btn-seal shrink-0 !px-2.5 !py-1 !text-body"
           @click="equipItem(row.item.uid)"
         >
           换上

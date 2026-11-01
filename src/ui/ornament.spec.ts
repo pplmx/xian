@@ -13,7 +13,7 @@
  * 一遍扫掉之后,口径钉成一句话:**投影才用阴影墨,凡要在纸上被看见的取纸上墨**。
  *
  * 另有四件事单独核:
- *   卡片顶光与印面亮边 —— 夜间不许沿用浅色那份(会浮成灰塑料);
+ *   纸面段落与印面亮边 —— 纸片不再靠白顶光浮起,印面仍保留压印亮边;
  *   装饰墨的浓度上限 —— 背景里的墨不许浓到能当第二条边框;
  *   章节头的三件套 —— 栏号签随世界换色、副线走装饰档、尾线可让位;
  *   花饰分隔的位置 —— 只在页面层,弹窗是密集面板,一枚墨点会与数据争视线。
@@ -61,10 +61,6 @@ const DECLS = decls(CSS);
 /** 某一族选择器的全部声明(用于按主题分开核同一处装饰) */
 function declsOf(match: (selector: string) => boolean): Decl[] {
   return DECLS.filter((d) => match(d.selector));
-}
-
-function isDark(selector: string): boolean {
-  return selector.includes('data-theme="dark"') || selector.includes("data-theme='dark'");
 }
 
 /**
@@ -145,24 +141,25 @@ describe("装饰层 · 墨的浓度", () => {
   });
 });
 
-describe("装饰层 · 卡片顶光与印面压印", () => {
-  /** 取某选择器那条 box-shadow,并数出里面「白色 inset 顶光」的强度 */
-  function topSheen(match: (s: string) => boolean): number {
-    const shadow = declsOf(match).find((d) => d.prop === "box-shadow");
-    expect(shadow, "找不到那条 box-shadow,判据要跟着改").toBeTruthy();
-    const m = /inset 0 1px 0 rgb\(255 255 255 \/ ([\d.]+)\)/.exec(shadow!.value);
-    expect(m, "卡片顶上那道内高光没了 / 换了写法").toBeTruthy();
-    return Number(m![1]);
+describe("装饰层 · 纸面段落与印面压印", () => {
+  function blockOf(selector: string): string {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`${escaped}\\s*\\{([\\s\\S]*?)\\}`).exec(CSS)?.[1] ?? "";
   }
 
-  it("浅色卡片压一线 0.5 的白(纸的厚度)", () => {
-    expect(topSheen((s) => s === ".card-ink")).toBeCloseTo(0.5, 2);
+  it("通用纸片不再靠白顶光与投影浮起", () => {
+    const card = blockOf(".card-ink");
+
+    expect(card, "通用纸片仍保留四边框").toContain("border: 0;");
+    expect(card, "通用纸片仍有卡片投影").toContain("box-shadow: none;");
+    expect(card, "通用纸片又压回白顶光").not.toMatch(/inset 0 1px 0 rgb\(255 255 255/);
   });
 
-  it("暗色卡片另给一档,不许沿用浅色那份", () => {
-    // 暗色卡本就从底纸上浮一点,再压 0.5 的白会浮成一块灰塑料
-    const dark = topSheen((s) => isDark(s) && s.endsWith(".card-ink"));
-    expect(dark).toBeLessThanOrEqual(0.1);
+  it("暗色纸片沿用同一套无阴影纸面", () => {
+    const dark = blockOf('html[data-theme="dark"] .card-ink');
+
+    expect(dark, "暗色纸片又浮出第二层卡影").toContain("box-shadow: none;");
+    expect(dark, "暗色纸片又压回白顶光").not.toMatch(/inset 0 1px 0 rgb\(255 255 255/);
   });
 
   it("印面沿上缘也有一道亮边(压印感),不是一块平色", () => {
@@ -174,17 +171,26 @@ describe("装饰层 · 卡片顶光与印面压印", () => {
 describe("装饰层 · 章节头", () => {
   const TITLE = templateOf(vue("src/components/common/SectionTitle.vue"));
 
-  it("栏号签只有一处，编号、世界色书脊与墨色副线收在同一枚签上", () => {
+  it("栏号签只有一处，编号、世界色左线与大号章号收在同一枚签上", () => {
+    const mark = CSS.match(/\.folio-page \.folio-section-mark\s*\{([\s\S]*?)\}/)?.[1] ?? "";
+
     expect(TITLE).toContain("folio-section-mark");
     expect(TITLE.match(/class="[^"]*folio-section-mark/), "章节头只许留一枚栏号签").toBeTruthy();
     expect(TITLE.match(/data-folio-section-mark/g), "章节头只许留一枚栏号签").toHaveLength(1);
     expect(TITLE, "旧双笔不该继续挂在栏号签旁边").not.toContain('class="brush-bar');
-    expect(CSS, "主笔随世界换色 —— 不许写死朱砂").toContain("inset -2px 0 0 var(--world-bar)");
+    expect(mark, "主笔随世界换色 —— 不许写死朱砂").toContain(
+      "border-left: 2px solid var(--world-bar);",
+    );
     expect(TITLE, "章节笔杆写死了颜色,换界之后不跟").not.toMatch(/bg-cinnabar/);
   });
 
-  it("副线紧跟主笔，仍走装饰档(墨 20%)", () => {
-    expect(CSS).toContain("inset -3px 0 0 rgb(var(--color-ink-rgb) / 0.2)");
+  it("栏号签不再叠第二道墨笔或方框", () => {
+    const mark = CSS.match(/\.folio-page \.folio-section-mark\s*\{([\s\S]*?)\}/)?.[1] ?? "";
+
+    expect(mark, "章节签仍有四边框").toContain("border: 0;");
+    expect(mark, "章节签仍铺纸底").toContain("background: transparent;");
+    expect(mark, "章节签仍有内框或副线投影").toContain("box-shadow: none;");
+    expect(mark, "旧双笔副线仍在").not.toContain("inset -3px");
   });
 
   it("尾线拉满剩余宽度,但留得住 4px 的让位底线", () => {
@@ -207,21 +213,18 @@ describe("装饰层 · 两栏的上下切口", () => {
   const TOP = templateOf(vue("src/components/common/TopStatusBar.vue"));
   const BOTTOM = templateOf(vue("src/components/common/BottomNavigation.vue"));
 
-  it("顶栏与底栏都用同一道渐隐线画边", () => {
-    expect(TOP).toContain("ink-divider");
-    expect(BOTTOM).toContain("ink-divider");
+  it("顶栏与底栏各用纸面切口，不再套深墨带或渐隐实线", () => {
+    expect(TOP).toContain("folio-head__aether-thread");
+    expect(BOTTOM).toContain("bottom-dock__aura");
+    expect(TOP).not.toContain("folio-head--ribbon");
+    expect(TOP).not.toContain("ink-divider");
+    expect(BOTTOM).not.toContain("ink-divider");
+    expect(TOP).not.toContain("border-b border-transparent");
   });
 
-  it("顶栏的 border 让位成透明 —— 否则实线叠渐隐线,读作双线", () => {
-    expect(TOP).toMatch(/border-b border-transparent/);
-  });
-
-  it("底栏的落笔只给当前这一栏,且不占高度", () => {
-    expect(BOTTOM).toMatch(
-      /v-if="route\.name === tab\.name"[\s\S]{0,200}?class="[^"]*absolute[^"]*bg-cinnabar"/,
-    );
-    // absolute 是硬要求:底栏高度被「两栏钉死」盯着,长一分就报红
-    expect(BOTTOM).toMatch(/class="absolute[^"]*bg-cinnabar[^"]*"/);
+  it("底栏当前态交给数据标记与光晕，模板不再叠独立短笔", () => {
+    expect(BOTTOM).toContain(`:data-dock-current="route.name === tab.name ? '' : undefined"`);
+    expect(BOTTOM).not.toContain("inset-x-0 top-0");
   });
 });
 
