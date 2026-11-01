@@ -6314,6 +6314,9 @@ async function taskApprenticePulse() {
         const choiceGrid = roster?.querySelector(".apprentice-task-choice-grid");
         const choices = [...(register?.querySelectorAll(".apprentice-task-choice") ?? [])];
         const depot = register?.querySelector(".apprentice-depot__rows");
+        const depotAccent = register?.querySelector(
+          ".apprentice-depot__row.is-target, .apprentice-depot__row.is-tied",
+        );
         const columnsOf = (el) =>
           el ? getComputedStyle(el).gridTemplateColumns.split(/\s+/).filter(Boolean).length : 0;
         const chrome = (el) => {
@@ -6328,6 +6331,7 @@ async function taskApprenticePulse() {
                 ],
                 background: style.backgroundColor,
                 shadow: style.boxShadow,
+                radius: style.borderTopLeftRadius,
               }
             : null;
         };
@@ -6364,11 +6368,12 @@ async function taskApprenticePulse() {
           register: chrome(register),
           roster: chrome(roster),
           rules: chrome(rules),
+          depot: chrome(depot),
+          depotAccent: chrome(depotAccent),
           choice: choices[0]
             ? {
                 ...chrome(choices[0]),
                 count: choices.length,
-                radius: getComputedStyle(choices[0]).borderRadius,
                 selected: choices.filter((choice) =>
                   choice.hasAttribute("data-apprentice-selected"),
                 ).length,
@@ -6426,6 +6431,24 @@ async function taskApprenticePulse() {
       fold.rules.shadow !== "none"
     ) {
       failures.push(`[390] 门庭续卷又套回了卡壳:${JSON.stringify(fold)}`);
+    }
+    checked += 1;
+    if (
+      !fold.depot ||
+      width(fold.depot.borders[0]) < 1 ||
+      width(fold.depot.borders[2]) < 1 ||
+      width(fold.depot.borders[1]) !== 0 ||
+      width(fold.depot.borders[3]) !== 0 ||
+      fold.depot.background !== "rgba(0, 0, 0, 0)" ||
+      fold.depot.shadow !== "none" ||
+      fold.depot.radius !== "0px" ||
+      !fold.depotAccent ||
+      width(fold.depotAccent.borders[1]) !== 0 ||
+      fold.depotAccent.background !== "rgba(0, 0, 0, 0)" ||
+      !fold.depotAccent.shadow.includes("2px 0px 0px 0px inset") ||
+      fold.depotAccent.shadow.includes("0px 0px 0px 1px inset")
+    ) {
+      failures.push(`[390] 四门存底又套回四边表:${JSON.stringify(fold)}`);
     }
     checked += 1;
     if (
@@ -12916,6 +12939,40 @@ async function taskDialogZoom() {
   const pageErrors = [];
   watchPageErrors(page, pageErrors);
 
+  const readEquipmentFrames = () =>
+    page.evaluate(() => {
+      const root = document.querySelector("[data-equipment-dossier]");
+      const hero = root?.querySelector(".equip-dossier__hero");
+      const sectionClasses = new Set([
+        "equip-dossier__hero",
+        "equip-dossier__power",
+        "equip-dossier__sheet",
+        "equip-dossier__line-ledger",
+        "equip-dossier__workshop",
+      ]);
+      return {
+        found: Boolean(root && hero),
+        heroAfter: hero ? getComputedStyle(hero, "::after").content : "",
+        frames: root
+          ? [...root.children]
+              .filter((el) => [...el.classList].some((name) => sectionClasses.has(name)))
+              .map((el) => {
+                const style = getComputedStyle(el);
+                return {
+                  classes: [...el.classList],
+                  borders: [
+                    style.borderTopWidth,
+                    style.borderRightWidth,
+                    style.borderBottomWidth,
+                    style.borderLeftWidth,
+                  ].map((value) => Number.parseFloat(value)),
+                  background: style.backgroundColor,
+                };
+              })
+          : [],
+      };
+    });
+
   /** 一扇弹窗:点开 → 量 → 关掉。点不开直接报红(判据没量到东西) */
   const probe = async (label, route, click) => {
     await page.goto(INDEX + "#" + route, { waitUntil: "load" });
@@ -12933,6 +12990,25 @@ async function taskDialogZoom() {
     await page.waitForTimeout(700);
     checked += 1;
     zoomSeen += 1;
+    if (label === "装备详情") {
+      checked += 1;
+      const dossier = await readEquipmentFrames();
+      const seen = new Set(dossier.frames.flatMap((frame) => frame.classes));
+      const required = [
+        "equip-dossier__hero",
+        "equip-dossier__power",
+        "equip-dossier__sheet",
+        "equip-dossier__workshop",
+      ];
+      if (
+        !dossier.found ||
+        dossier.heroAfter !== "none" ||
+        required.some((name) => !seen.has(name)) ||
+        dossier.frames.some((frame) => frame.borders[1] !== 0)
+      ) {
+        failures.push(`[195] 器评帖又逐段套回四边框:${JSON.stringify(dossier)}`);
+      }
+    }
     const problems = dialogZoomProblems(await measureDialogZoom(page, { width: 390, height: 844 }));
     if (problems.length)
       failures.push(`[195] 浮层「${label}」在 200% 下坏了:${problems.join(" / ")}`);

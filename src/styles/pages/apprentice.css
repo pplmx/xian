@@ -154,10 +154,11 @@
     display: grid;
     min-width: 0;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1px;
+    gap: 0;
     overflow: hidden;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.1);
-    background: rgb(var(--color-ink-rgb) / 0.075);
+    border: 0;
+    border-block: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    background: transparent;
   }
   .apprentice-depot__row {
     position: relative;
@@ -166,23 +167,22 @@
     grid-template-columns: 1.18rem minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.08rem 0.36rem;
-    padding: 0.38rem 0.46rem 0.34rem;
-    background:
-      linear-gradient(112deg, rgb(var(--color-paper-rgb) / 0.24), transparent 72%),
-      rgb(var(--color-paper-lifted-rgb) / 0.92);
+    padding: 0.44rem 0.5rem 0.42rem;
+    border: 0;
+    background: transparent;
+  }
+  .apprentice-depot__row:nth-child(even) {
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+  }
+  .apprentice-depot__row:nth-child(n + 3) {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
   }
   .apprentice-depot__row.is-target {
-    background:
-      linear-gradient(112deg, rgb(var(--color-cinnabar-rgb) / 0.048), transparent 76%),
-      rgb(var(--color-paper-lifted-rgb) / 0.96);
-    box-shadow:
-      inset 2px 0 0 rgb(var(--color-cinnabar-rgb) / 0.68),
-      inset 0 0 0 1px rgb(var(--color-cinnabar-rgb) / 0.18);
+    background: linear-gradient(112deg, rgb(var(--color-cinnabar-rgb) / 0.048), transparent 76%);
+    box-shadow: inset 2px 0 0 rgb(var(--color-cinnabar-rgb) / 0.68);
   }
   .apprentice-depot__row.is-tied {
-    background:
-      linear-gradient(112deg, rgb(var(--color-qing-rgb) / 0.04), transparent 76%),
-      rgb(var(--color-paper-lifted-rgb) / 0.94);
+    background: linear-gradient(112deg, rgb(var(--color-qing-rgb) / 0.04), transparent 76%);
     box-shadow: inset 2px 0 0 rgb(var(--color-qing-rgb) / 0.5);
   }
   .apprentice-depot__mark {
@@ -738,6 +738,14 @@
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
+    .apprentice-depot__row:nth-child(n + 2) {
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    }
+
+    .apprentice-depot__row:nth-child(n + 3) {
+      border-top: 0;
+    }
+
     .apprentice-task-choice-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
@@ -838,6 +846,15 @@
     .apprentice-depot__rows,
     .apprentice-task-choice-grid {
       grid-template-columns: minmax(0, 1fr);
+    }
+
+    .apprentice-depot__row:nth-child(n) {
+      border-left: 0;
+      border-top: 0;
+    }
+
+    .apprentice-depot__row + .apprentice-depot__row {
+      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
     }
 
     .apprentice-task-choice:last-child:nth-child(odd),

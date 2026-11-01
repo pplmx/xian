@@ -31,6 +31,36 @@ describe("器评帖 · 装备详情先给身份与换装结论", () => {
     expect(dialog.slice(footerAt), "页脚仍要保留分解二步确认").toContain("<EquipDecomposePanel");
   });
 
+  it("器评帖在弹窗里收成一册开口长卷,器首、战力、器性与工坊不各套四边框", () => {
+    const css = source("src/styles/pages/inventory.css");
+    const layout = source("scripts/layout-check.mjs");
+    const rule = (selector: string) =>
+      css.match(new RegExp(`${selector.replaceAll(".", "\\.")}\\s*\\{[\\s\\S]*?\\}`))?.[0] ?? "";
+    const hero = rule(".equip-dossier__hero");
+    const power = rule(".equip-dossier__power");
+    const sheet = rule(".equip-dossier__sheet");
+    const ledger = rule(".equip-dossier__line-ledger");
+    const workshop = rule(".equip-dossier__workshop");
+
+    expect(hero, "器首撤掉四边框").toMatch(/border:\s*0;/);
+    expect(hero, "品阶只由左侧短笔落印").toMatch(/border-left:\s*3px solid/);
+    expect(css, "器首不再补第二道内角线").not.toContain(".equip-dossier__hero::after");
+    for (const [name, section] of [
+      ["战力", power],
+      ["器性", sheet],
+      ["流派旧账", ledger],
+      ["工坊", workshop],
+    ] as const) {
+      expect(section, `${name}撤掉四边框`).toMatch(/border:\s*0;/);
+      expect(section, `${name}不铺实底`).toMatch(/background:\s*(?:transparent|linear-gradient)/);
+    }
+    expect(power, "战力只留上下账线").toMatch(/border-block:\s*1px solid/);
+    expect(sheet, "器性沿上账线续排").toMatch(/border-top:\s*1px solid/);
+    expect(ledger, "流派旧账沿上账线续排").toMatch(/border-top:\s*1px solid/);
+    expect(workshop, "工坊只留器色上缘").toMatch(/border-top:\s*2px solid/);
+    expect(layout, "真浏览器要核器评帖不再逐段套框").toContain("[data-equipment-dossier]");
+  });
+
   it("候选与详情共用同一份战力判据", () => {
     const candidates = source("src/components/inventory/SlotCandidatesDialog.vue");
     expect(candidates).toContain("equipPowerComparison");

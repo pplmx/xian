@@ -473,26 +473,11 @@
     gap: 0.68rem;
     overflow: hidden;
     padding: 0.72rem 0.78rem;
-    border: 1px solid var(--equip-edge);
+    border: 0;
     border-left: 3px solid var(--equip-tone);
     background:
       radial-gradient(circle at 12% 18%, var(--equip-wash), transparent 34%),
-      linear-gradient(
-        135deg,
-        rgb(var(--color-paper-lifted-rgb)),
-        rgb(var(--color-paper-rgb) / 0.42)
-      );
-  }
-  .equip-dossier__hero::after {
-    position: absolute;
-    right: 0.45rem;
-    bottom: 0.4rem;
-    width: 1.4rem;
-    height: 1.4rem;
-    border-right: 1px solid var(--equip-edge);
-    border-bottom: 1px solid var(--equip-edge);
-    content: "";
-    pointer-events: none;
+      linear-gradient(90deg, rgb(var(--color-paper-lifted-rgb) / 0.22), transparent 72%);
   }
   .equip-dossier__sigil {
     position: relative;
@@ -562,8 +547,9 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     margin-top: 0.55rem;
     overflow: hidden;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.12);
-    background: rgb(var(--color-paper-lifted-rgb) / 0.72);
+    border: 0;
+    border-block: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+    background: transparent;
   }
   .equip-dossier__score,
   .equip-dossier__verdict {
@@ -627,8 +613,9 @@
   .equip-dossier__sheet {
     margin-top: 0.6rem;
     overflow: hidden;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.12);
-    background: rgb(var(--color-paper-lifted-rgb) / 0.7);
+    border: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+    background: transparent;
   }
   .equip-dossier__sheet--affix {
     border-left: 2px solid rgb(var(--color-violet-ink-rgb) / 0.32);
@@ -695,8 +682,9 @@
   .equip-dossier__line-ledger {
     margin-top: 0.6rem;
     padding: 0.5rem 0.62rem 0.58rem;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.1);
-    background: rgb(var(--color-paper-lifted-rgb) / 0.58);
+    border: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    background: transparent;
   }
   .equip-dossier__line-ledger .equip-dossier__section-head {
     margin: -0.5rem -0.62rem 0.48rem;
@@ -709,11 +697,9 @@
   .equip-dossier__workshop {
     margin-top: 0.75rem;
     padding: 0.55rem 0.65rem 0.65rem;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.13);
+    border: 0;
     border-top: 2px solid var(--equip-edge);
-    background:
-      linear-gradient(180deg, var(--equip-wash), transparent 5.5rem),
-      rgb(var(--color-paper-lifted-rgb) / 0.62);
+    background: linear-gradient(180deg, var(--equip-wash), transparent 5.5rem);
   }
   .equip-dossier__workshop > .equip-dossier__section-head {
     margin: -0.55rem -0.65rem 0.5rem;

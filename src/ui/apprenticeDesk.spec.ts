@@ -139,6 +139,23 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
     expect(pulse, "寻机缘为何不参与自动调拨要说清").toContain("寻机缘不参与自动调拨");
   });
 
+  it("四门存底沿续卷账线摊开,不再在总账里另套一张四边表", () => {
+    const css = source("src/styles/pages/apprentice.css");
+    const layout = source("scripts/layout-check.mjs");
+    const rows = css.match(/\.apprentice-depot__rows\s*\{[\s\S]*?\}/)?.[0] ?? "";
+    const row = css.match(/\.apprentice-depot__row\s*\{[\s\S]*?\}/)?.[0] ?? "";
+    const target = css.match(/\.apprentice-depot__row\.is-target\s*\{[\s\S]*?\}/)?.[0] ?? "";
+
+    expect(rows, "四门只留上下账线").toMatch(/border:\s*0;/);
+    expect(rows, "四门仍由上下账线收束").toMatch(/border-block:\s*1px solid/);
+    expect(rows, "四门不另铺实底").toContain("background: transparent;");
+    expect(row, "每门退回透明账行").toContain("border: 0;");
+    expect(row, "每门不另铺纸底").toContain("background: transparent;");
+    expect(target, "目标门只留朱砂左笔").toMatch(/inset 2px 0 0/);
+    expect(target, "目标门不再补第二道四边内框").not.toContain("inset 0 0 0 1px");
+    expect(layout, "真浏览器要核四门存底不是四边表").toMatch(/depot:\s*chrome\(depot\)/);
+  });
+
   it("值日簿候差在前、在途按归期续列,身份与羁绊都从数据源现读", () => {
     const view = source("src/views/ApprenticeView.vue");
 
