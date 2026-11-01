@@ -50,27 +50,47 @@ describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
     expect(arcade, "可交悬赏要有独立印面").toContain('v-if="bounties > 0"');
   });
 
-  it("今日行市把可买、可交、寄卖与最近归账收成一张总账", () => {
+  it("今日行市只留先手，三摊册口把可买、可交、寄卖与最近归账带进同一续卷", () => {
     const view = source("src/views/MarketView.vue");
+    const rail = source("src/components/market/MarketChapterRail.vue");
     const markers = view.match(/data-market-pulse(?![-\\w])/g) ?? [];
-    const pulse = view.slice(view.indexOf("data-market-pulse"), view.indexOf("</FolioPageHeader>"));
 
     expect(markers, "总账运行时落点只能有一个").toHaveLength(1);
     expect(view, "汇总仍走 core/marketOverview 唯一一份").toContain("marketOverview(");
     expect(view, "总账货架总数读同一份汇总").toContain("marketPulse.value.goodsTotal");
     expect(view, "总账悬赏总数读同一份汇总").toContain("marketPulse.value.openBounties");
     expect(view, "总账寄卖总数读机制常量").toContain("total: MARKET_CONSIGN_SLOTS");
-    expect(view, "总账三册可一键落位").toContain('v-for="row in marketLedgerRows"');
-    expect(view, "坊市账格交三列").toContain(':tally-columns="3"');
-    expect(view, "账格由共享组件承担").toContain("<LedgerTally");
+    expect(view, "三册册口由同一份行数据生成").toContain(':tabs="marketLedgerRows"');
+    expect(view, "账格由共享组件承担").toContain("<MarketChapterRail");
     expect(view, "最近归账只报最近一件").toContain("nextConsign.value.text");
     expect(view, "今日行市接共享此刻账").toContain("<LedgerPulse");
-    expect(pulse, "先手动作读共享动作键").toContain("folio-ledger-pulse__action");
-    expect(pulse, "总账带可买运行时落点").toContain(":data-market-pulse-goods=");
-    expect(pulse, "总账带可交运行时落点").toContain(":data-market-pulse-bounties=");
-    expect(pulse, "总账带寄卖运行时落点").toContain(":data-market-pulse-consign=");
-    expect(pulse, "今日行市必须给出一条先手").toContain("marketLead.title");
+    expect(view, "先手动作读共享动作键").toContain("folio-ledger-pulse__action");
+    expect(view, "今日行市必须给出一条先手").toContain("marketLead.title");
     expect(view, "先手仍读同一份市况").toContain("p.claimableBounties > 0");
+    expect(view).toContain('<article class="market-register folio-span-all" data-market-register>');
+    expect(view).toMatch(
+      /<article class="market-register folio-span-all" data-market-register>[\s\S]{0,420}<LedgerPulse/,
+    );
+    expect(view).toMatch(
+      /<\/LedgerPulse>[\s\S]{0,420}<MarketChapterRail[\s\S]{0,240}:tabs="marketLedgerRows"/,
+    );
+    expect(view, "独立页签退场，三摊册口本身承担切册").not.toContain("<InkTabs");
+
+    expect(rail, "册口仍在吸顶书口里").toContain('class="tab-rail market-chapter-rail"');
+    expect(rail).toContain('role="tablist"');
+    expect(rail).toContain('aria-label="坊市分册"');
+    expect(rail).toContain('@keydown="onKeydown"');
+    expect(rail).toContain("<LedgerTally");
+    expect(rail).toContain("tabbed");
+    expect(rail).toContain(':id="`market-tab-${tab.id}`"');
+    expect(rail).toContain(':aria-controls="`market-panel-${tab.id}`"');
+    expect(rail).toContain("data-market-chapter-tab");
+    expect(rail).toContain("data-market-chapter-fact");
+    expect(rail).toContain("data-market-chapter-value");
+    expect(rail).toContain("data-market-chapter-total");
+    expect(rail, "可买运行时落点跟册口走").toContain(":data-market-pulse-goods=");
+    expect(rail, "可交运行时落点跟册口走").toContain(":data-market-pulse-bounties=");
+    expect(rail, "寄卖运行时落点跟册口走").toContain(":data-market-pulse-consign=");
   });
 
   it("货架摊签先报物件与价格，买不起或行囊满都置灰并列因", () => {
@@ -89,10 +109,15 @@ describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
     const view = source("src/views/MarketView.vue");
 
     for (const tab of ["shelf", "bounty", "sell"]) {
-      expect(view, `${tab} 册按需挂载`).toContain(
-        `v-if="marketTab === '${tab}'" class="market-book" data-market-book="${tab}"`,
+      expect(view, `${tab} 册按需挂载`).toMatch(
+        new RegExp(
+          `v-if="marketTab === '${tab}'"[\\s\\S]{0,180}class="market-book"[\\s\\S]{0,220}data-market-book="${tab}"`,
+        ),
       );
+      expect(view, `${tab} 册要有 tabpanel 语义`).toContain(`id="market-panel-${tab}"`);
+      expect(view, `${tab} 册要由当前册口命名`).toContain(`aria-labelledby="market-tab-${tab}"`);
     }
+    expect(view.match(/role="tabpanel"/g), "当前只铺一个正文册").toHaveLength(3);
     expect(view, "不再用 v-show 常驻三册").not.toContain('v-show="marketTab ===');
   });
 
@@ -156,14 +181,23 @@ describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
     expect(view, "售丹每颗有回执").toContain("已售 1 颗");
   });
 
-  it("手机总账三栏，620 起货架与赏单并读，220 以下摊签退单列", () => {
+  it("册口总在卷内：手机三摊并读，220 以下退单列；正文只剩账线", () => {
     const css = source("src/style.css");
-    const start = css.indexOf(".market-pulse {");
+    const start = css.indexOf(".market-register {");
     const end = css.indexOf("/*\n   * 门庭案", start);
     const marketCss = css.slice(start, end);
 
     expect(start, "坊市样式段要能定位到").toBeGreaterThan(-1);
     expect(end, "坊市样式段要有明确结尾").toBeGreaterThan(start);
+    expect(marketCss).toMatch(
+      /\.market-register\s*\{[\s\S]{0,260}border-top: 1px solid[\s\S]{0,180}border-bottom: 1px solid/,
+    );
+    expect(marketCss).toMatch(
+      /\.market-register\s*\{[\s\S]{0,420}border-right: 0;[\s\S]{0,100}border-left: 0;[\s\S]{0,160}background: transparent;[\s\S]{0,100}box-shadow: none;/,
+    );
+    expect(marketCss).toMatch(
+      /\.market-chapter-rail__tabs\s*\{[\s\S]{0,180}grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/,
+    );
     expect(marketCss).toMatch(
       /@media \(min-width: 960px\)\s*\{[\s\S]{0,300}\.market-goods\s*\{[\s\S]{0,120}repeat\(2, minmax\(0, 1fr\)\)/,
     );
@@ -172,6 +206,9 @@ describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
     );
     expect(marketCss).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,1400}\.market-good\s*\{[\s\S]{0,100}grid-template-columns:\s*1\.82rem minmax\(0, 1fr\)/,
+    );
+    expect(marketCss).toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1600}\.market-chapter-rail__tabs\s*\{[\s\S]{0,100}grid-template-columns: minmax\(0, 1fr\)/,
     );
   });
 });

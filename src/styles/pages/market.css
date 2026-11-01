@@ -12,18 +12,58 @@
       radial-gradient(circle at 84% 16%, rgb(var(--color-cinnabar-rgb) / 0.045), transparent 9rem),
       linear-gradient(112deg, rgb(var(--color-paper-rgb) / 0.24), transparent 56%);
   }
+  /*
+   * 三摊不再是「总账一排、页签一排、正文再一张卡」。今日行市、可切册口与当前摊面
+   * 同住一册：外层只留上下两道账线，切册书口仍在 `.tab-rail` 里吸顶，正文只续账线。
+   */
+  .market-register {
+    min-width: 0;
+    border-top: 1px solid rgb(var(--color-qing-rgb) / 0.34);
+    border-right: 0;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    border-left: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .market-register > .market-pulse {
+    margin-top: 0;
+    border-top: 0;
+  }
   .market-pulse {
     --ledger-accent: var(--color-cinnabar);
   }
-  .market-book {
-    overflow: visible;
-    margin-top: 0.5rem;
-    border: 0;
-    border-top: 1px solid rgb(var(--color-qing-rgb) / 0.3);
-    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-    border-radius: 0;
+  .market-chapter-rail {
+    z-index: 30;
+  }
+  .market-chapter-rail__tabs {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.13);
     background:
-      linear-gradient(108deg, rgb(var(--color-qing-rgb) / 0.022), transparent 42%), transparent;
+      linear-gradient(104deg, rgb(var(--color-qing-rgb) / 0.022), transparent 68%), transparent;
+  }
+  .market-chapter-rail__tabs > * + * {
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .market-chapter-rail .folio-ledger-tally {
+    min-height: 4.35rem;
+  }
+  .market-chapter-rail .folio-ledger-tally.is-active::after {
+    inset: auto 0 0;
+    height: 2px;
+    background: rgb(var(--color-cinnabar-rgb) / 0.78);
+    box-shadow: none;
+  }
+  .market-book {
+    min-width: 0;
+    overflow: visible;
+    margin-top: 0;
+    border: 0;
+    border-top: 0;
+    border-bottom: 0;
+    border-radius: 0;
+    background: transparent;
     box-shadow: none;
   }
   .market-book__head {
@@ -405,12 +445,18 @@
     }
   }
   @media (max-width: 220px) {
-    .market-book__head,
-    .market-good,
-    .market-bounty,
-    .market-consign,
-    .market-counter {
-      padding-inline: 0.62rem;
+    .market-chapter-rail {
+      position: relative;
+      top: auto;
+    }
+
+    .market-chapter-rail__tabs {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .market-chapter-rail__tabs > * + * {
+      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+      border-left: 0;
     }
 
     .market-good {

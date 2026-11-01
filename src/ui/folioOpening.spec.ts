@@ -98,11 +98,8 @@ describe("开卷版式 · 全站册页基线外加一座游戏指挥台", () => 
     expect(character).not.toContain('<SectionTitle title="道躯"');
   });
 
-  it("坊市与门庭的此刻汇总收进卷首，器魂阵账紧随题签且不再另起同职责卡片", () => {
-    const mastheadPages = [
-      ["MarketView", "data-market-pulse"],
-      ["ApprenticeView", "data-apprentice-pulse"],
-    ] as const;
+  it("门庭此刻汇总收进卷首，坊市行市与三摊册口同住续卷", () => {
+    const mastheadPages = [["ApprenticeView", "data-apprentice-pulse"]] as const;
 
     for (const [page, marker] of mastheadPages) {
       const src = source(`src/views/${page}.vue`);
@@ -114,6 +111,11 @@ describe("开卷版式 · 全站册页基线外加一座游戏指挥台", () => 
         `${page} 的汇总落点重复了`,
       ).toHaveLength(1);
     }
+    const market = source("src/views/MarketView.vue");
+    expect(market.match(/data-market-pulse(?![-\\w])/g), "坊市总账落点重复了").toHaveLength(1);
+    expect(market, "坊市行市与册口没有收进同一续卷").toMatch(
+      /<article class="market-register folio-span-all" data-market-register>[\s\S]{0,5000}<MarketChapterRail/,
+    );
 
     const souls = source("src/views/SoulsView.vue");
     expect(souls, "器魂阵账缺少运行时落点").toContain("data-soul-pulse");

@@ -1,11 +1,14 @@
 <template>
   <component
-    :is="interactive ? 'button' : 'div'"
+    :is="interactive || tabbed ? 'button' : 'div'"
     class="folio-ledger-tally"
-    :class="{ 'is-active': active, 'is-interactive': interactive }"
-    :type="interactive ? 'button' : undefined"
-    :aria-current="interactive && active ? 'page' : undefined"
-    @click="interactive && emit('select')"
+    :class="{ 'is-active': active, 'is-interactive': interactive || tabbed }"
+    :type="interactive || tabbed ? 'button' : undefined"
+    :role="tabbed ? 'tab' : undefined"
+    :aria-selected="tabbed ? active : undefined"
+    :aria-current="interactive && !tabbed && active ? 'page' : undefined"
+    :tabindex="tabbed ? (active ? 0 : -1) : undefined"
+    @click="(interactive || tabbed) && emit('select')"
   >
     <span class="folio-ledger-tally__mark" aria-hidden="true">{{ mark }}</span>
     <span class="folio-ledger-tally__label">{{ label }}</span>
@@ -32,6 +35,8 @@ const props = withDefaults(
     active?: boolean;
     /** 只有需要切换页签的账格才落成按钮；纯读数保持 div，不伪造可点语义。 */
     interactive?: boolean;
+    /** 作为 tablist 的 roving tab 时，交给读屏的选中态用 aria-selected，不用 aria-current。 */
+    tabbed?: boolean;
   }>(),
   {
     total: "",
@@ -39,6 +44,7 @@ const props = withDefaults(
     detail: "",
     active: false,
     interactive: false,
+    tabbed: false,
   },
 );
 

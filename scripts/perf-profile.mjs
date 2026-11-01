@@ -874,7 +874,7 @@ for (const view of VIEWS) {
       }
     }
     if (bigbag > 0 && view.name === "market") {
-      const sellTab = page.getByRole("tab", { name: "售出", exact: true });
+      const sellTab = page.getByRole("tab", { name: /售出/ });
       if ((await sellTab.count()) === 0) throw new Error("坊市没有「售出」页签");
       await sellTab.click();
       await page.waitForTimeout(120);
@@ -895,7 +895,7 @@ for (const view of VIEWS) {
       );
       let candidates;
       try {
-        const bountyTab = page.getByRole("tab", { name: "悬赏", exact: true });
+        const bountyTab = page.getByRole("tab", { name: /悬赏/ });
         if ((await bountyTab.count()) === 0) throw new Error("坊市没有「悬赏」页签");
         await bountyTab.click();
         await page.waitForTimeout(120);

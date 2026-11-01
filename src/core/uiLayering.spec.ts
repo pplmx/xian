@@ -2217,20 +2217,21 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("坊市先报此刻,再把货架 / 悬赏 / 售出分成三册", () => {
     /*
      * 坊市此前把三件互不相干的事一路竖排:货架六格、悬赏四单、寄卖与即时售,
-     * 玩家想寄一件旧兵刃得先滚过整块卖货区。现在卷首先报「可买 / 可交 / 寄售」,
-     * 页签再带路;可交数与逐单缺口必须共用 core/marketOverview 的一份判据,
-     * 不许页签另算一遍「看起来能交」。
+     * 玩家想寄一件旧兵刃得先滚过整块卖货区。现在今日行市只报先手,三摊册口带着
+     * 可买 / 可交 / 寄售真值直接切册;可交数与逐单缺口必须共用
+     * core/marketOverview 的一份判据,不许册口另算一遍「看起来能交」。
      */
     const market = FILES.find((f) => f.path === "views/MarketView.vue");
     expect(market?.src, "卷首市况要走 core/marketOverview").toContain("marketOverview(");
     expect(market?.src, "逐单缺口与可交数要共用 bountyStatus").toContain(
       "bountyStatus(o, bountyHoldings.value)",
     );
-    expect(market?.src, "货架 / 悬赏 / 售出要收成吸顶页签").toContain(
-      '<InkTabs v-model="marketTab" :tabs="marketTabRows" />',
+    expect(market?.src, "货架 / 悬赏 / 售出要收成同一续卷里的吸顶册口").toContain(
+      '<MarketChapterRail v-model="marketTab" :tabs="marketLedgerRows" />',
     );
+    const rail = readFileSync(join(SRC, "components/market/MarketChapterRail.vue"), "utf-8");
     for (const marker of ["data-market-pulse-goods", "data-market-pulse-bounties"]) {
-      expect(market?.src, `卷首缺少 ${marker}`).toContain(marker);
+      expect(rail, `坊市册口缺少 ${marker}`).toContain(marker);
     }
     expect(market?.src, "寄售数要从同一份市况真值报出").toContain("marketPulse.consignCount");
     expect(market?.src, "切册后顶栏时钟要跟着当前册走").toContain("headerClock.title");

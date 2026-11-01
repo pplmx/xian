@@ -88,27 +88,37 @@ describe("此刻账 · 同一张纸边、同一枚动作键", () => {
     const tally = source("src/components/common/LedgerTally.vue");
 
     expect(tally).toContain('class="folio-ledger-tally"');
-    expect(tally).toContain(":class=\"{ 'is-active': active, 'is-interactive': interactive }\"");
-    expect(tally).toContain(":is=\"interactive ? 'button' : 'div'\"");
-    expect(tally).toContain(":type=\"interactive ? 'button' : undefined\"");
-    expect(tally).toContain(":aria-current=\"interactive && active ? 'page' : undefined\"");
+    expect(tally).toContain(
+      ":class=\"{ 'is-active': active, 'is-interactive': interactive || tabbed }\"",
+    );
+    expect(tally).toContain(":is=\"interactive || tabbed ? 'button' : 'div'\"");
+    expect(tally).toContain(":type=\"interactive || tabbed ? 'button' : undefined\"");
+    expect(tally).toContain(":role=\"tabbed ? 'tab' : undefined\"");
+    expect(tally).toContain(':aria-selected="tabbed ? active : undefined"');
+    expect(tally).toContain(
+      ":aria-current=\"interactive && !tabbed && active ? 'page' : undefined\"",
+    );
+    expect(tally).toContain(':tabindex="tabbed ? (active ? 0 : -1) : undefined"');
     expect(tally).toContain('class="folio-ledger-tally__mark"');
     expect(tally).toContain('class="folio-ledger-tally__label"');
     expect(tally).toContain('class="folio-ledger-tally__value"');
     expect(tally).toContain('class="folio-ledger-tally__total"');
     expect(tally).toContain('class="folio-ledger-tally__unit"');
     expect(tally).toContain('class="folio-ledger-tally__detail"');
-    expect(tally).toContain("@click=\"interactive && emit('select')\"");
+    expect(tally).toContain("@click=\"(interactive || tabbed) && emit('select')\"");
     expect(tally).toContain("interactive?: boolean");
     expect(tally).toContain("interactive: false");
+    expect(tally).toContain("tabbed?: boolean");
+    expect(tally).toContain("tabbed: false");
   });
 
   it("只有切页账格落成按钮，纯读数不被伪造成可点语义", () => {
     const css = source("src/style.css");
 
-    for (const file of ["src/views/MarketView.vue", "src/views/SoulsView.vue"]) {
+    for (const file of ["src/views/SoulsView.vue"]) {
       expect(source(file), `${file} 的账格要显式可选`).toContain("            interactive");
     }
+    expect(source("src/components/market/MarketChapterRail.vue")).toContain("\n        tabbed");
     expect(source("src/views/CelestialView.vue")).toContain("            interactive");
     expect(css).toMatch(
       /@media \(hover: hover\)\s*\{\s*\.folio-ledger-tally\.is-interactive:hover\s*\{/,
@@ -120,7 +130,6 @@ describe("此刻账 · 同一张纸边、同一枚动作键", () => {
 
   it("三页共用同一套账格,页面只交行列与选中项", () => {
     const cases = [
-      { file: "src/views/MarketView.vue", row: "marketLedgerRows", columns: "3" },
       { file: "src/views/SoulsView.vue", row: "soulLedgerRows", columns: "3" },
       { file: "src/views/CelestialView.vue", row: "celestialLedgerRows", columns: "2" },
     ];
@@ -136,6 +145,14 @@ describe("此刻账 · 同一张纸边、同一枚动作键", () => {
         /class="(?:market|soul|celestial)-pulse__(?:tallies|tally|mark|label|value|total|unit|detail)"/,
       );
     }
+
+    const marketRail = source("src/components/market/MarketChapterRail.vue");
+    expect(source("src/views/MarketView.vue")).toContain(':tabs="marketLedgerRows"');
+    expect(marketRail, "坊市册口仍走共享账格").toContain(
+      'import LedgerTally from "@/components/common/LedgerTally.vue"',
+    );
+    expect(marketRail).toContain('v-for="tab in tabs"');
+    expect(marketRail).toContain("tabbed");
 
     expect(source("src/views/CelestialView.vue")).toContain(':tally-wide-columns="4"');
   });
