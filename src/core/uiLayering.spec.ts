@@ -1686,7 +1686,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(appr?.src, "弟子行极窄档要允许换行").toMatch(/flex flex-wrap items-center gap-2/);
   });
 
-  it("极窄档与紧凑档的阈值只住一处 —— 不许各处再手写 max-[Npx]", () => {
+  it("极窄、紧凑与折册档的阈值只住一处 —— 不许各处再手写 max-[Npx]", () => {
     /*
      * 阈值一旦各处各写一遍,就是两本账:改一处另一处不动,同一台 200% 的机器上一处
      * 放开一处不放开,而排版自检只判溢出/越界,看不出这是"两本账"而不是"没坏"。
@@ -1698,10 +1698,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(strays, "极窄档放开列数一律走 tinylens:,不许各处手写阈值").toEqual([]);
     const cfg = readFileSync(resolve(SRC, "../tailwind.config.js"), "utf-8");
     const declared = [
-      ...cfg.matchAll(/addVariant\(\s*"(?:tinylens|compact)",\s*"@media \(max-width: *(\d+)px\)"/g),
+      ...cfg.matchAll(
+        /addVariant\(\s*"(?:tinylens|compact|bookfold)",\s*"@media \(max-width: *(\d+)px\)"/g,
+      ),
     ].map((m) => m[1]!);
-    expect(declared, "配置里要能找到极窄与紧凑两档阈值").toEqual(
-      expect.arrayContaining(["220", "359"]),
+    expect(declared, "配置里要能找到极窄、紧凑与折册三档阈值").toEqual(
+      expect.arrayContaining(["220", "359", "279"]),
     );
     const users = FILES.filter((f) => /tinylens:grid-cols-/.test(f.src)).map((f) => f.path);
     expect(users.length, "至少有一处在用这个变体").toBeGreaterThan(0);

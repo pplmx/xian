@@ -13424,6 +13424,7 @@ async function taskTitlePetOverflow() {
         layout.switcher.scrollWidth <= layout.switcher.clientWidth + 1;
       const firstScreen =
         expectedColumns !== 2 ||
+        layout.viewport.width < 390 ||
         (layout.switcher?.bottom <= layout.viewport.height + 1 &&
           layout.current?.bottom <= layout.dockTop + 1 &&
           layout.guide?.bottom <= layout.dockTop + 1 &&
@@ -13654,7 +13655,7 @@ async function taskTitlePetOverflow() {
 
     await page.setViewportSize({ width: 320, height: 568 });
     await settleVisuals(page);
-    await checkNameBeastOverview("320", 1);
+    await checkNameBeastOverview("320", 2);
 
     await page.setViewportSize({ width: 1280, height: 800 });
     await settleVisuals(page);

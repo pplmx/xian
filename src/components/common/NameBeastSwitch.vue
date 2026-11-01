@@ -7,7 +7,7 @@
       @keydown="onKeydown"
     >
       <button
-        v-for="choice in choices"
+        v-for="(choice, index) in choices"
         :id="`${choice.id}-tab`"
         :key="choice.id"
         ref="tabEls"
@@ -23,6 +23,9 @@
         :class="{ 'name-beast-switch__tab--active': model === choice.id }"
         @click="model = choice.id"
       >
+        <span class="name-beast-switch__ordinal" aria-hidden="true">
+          {{ String(index + 1).padStart(2, "0") }}
+        </span>
         <span class="name-beast-switch__mark" aria-hidden="true">{{ choice.mark }}</span>
         <span class="name-beast-switch__body">
           <span class="name-beast-switch__eyebrow">

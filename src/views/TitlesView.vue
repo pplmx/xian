@@ -19,65 +19,81 @@
         role="tabpanel"
         aria-labelledby="title-tab"
       >
-        <section class="name-beast-ledger name-beast-focus" data-title-ledger data-kind="title">
+        <section
+          class="name-beast-ledger name-beast-focus"
+          data-title-ledger
+          data-name-beast-focus
+          data-name-beast-book="title-focus"
+          data-kind="title"
+        >
           <LedgerHeader seal="名" eyebrow="名号 · 当前与可追" title="此刻佩印" />
 
           <div class="name-beast-focus__panels">
             <article class="name-beast-focus__panel" data-title-current>
-              <p class="name-beast-focus__label">
-                佩在身上
-                <span>{{ wornTitle?.state.label ?? "待佩" }}</span>
-              </p>
-              <template v-if="wornTitle">
-                <p class="name-beast-focus__line">
-                  <strong>{{ wornTitle.def.name }}</strong>
+              <span class="name-beast-focus__index" aria-hidden="true">今</span>
+              <div class="name-beast-focus__content">
+                <p class="name-beast-focus__label">
+                  佩在身上
+                  <span>{{ wornTitle?.state.label ?? "待佩" }}</span>
                 </p>
-                <p class="name-beast-focus__copy">{{ wornTitle.def.desc }}</p>
-                <p v-if="wornTitle.modText" class="name-beast-focus__effect tabular">
-                  {{ wornTitle.modText }}
-                </p>
-              </template>
-              <template v-else>
-                <p class="name-beast-focus__line"><strong>尚未佩印</strong></p>
-                <p class="name-beast-focus__copy">从名号谱里择一枚佩上，行藏只取当前这一印。</p>
-              </template>
+                <template v-if="wornTitle">
+                  <p class="name-beast-focus__line">
+                    <strong>{{ wornTitle.def.name }}</strong>
+                  </p>
+                  <p class="name-beast-focus__copy">{{ wornTitle.def.desc }}</p>
+                  <p v-if="wornTitle.modText" class="name-beast-focus__effect tabular">
+                    {{ wornTitle.modText }}
+                  </p>
+                </template>
+                <template v-else>
+                  <p class="name-beast-focus__line"><strong>尚未佩印</strong></p>
+                  <p class="name-beast-focus__copy">从名号谱里择一枚佩上，行藏只取当前这一印。</p>
+                </template>
+              </div>
             </article>
 
             <article v-if="nextTitle" class="name-beast-focus__panel" data-title-guide>
-              <p class="name-beast-focus__label">
-                下一顶名号
-                <span>按成就进度</span>
-              </p>
-              <p class="name-beast-focus__line">
-                <strong>{{ nextTitle.def.name }}</strong>
-                <span class="name-beast-focus__state">{{ nextTitle.progress.label }}</span>
-              </p>
-              <p class="name-beast-focus__copy">
-                名号获自「{{ nextTitle.source.name }}」 · {{ nextTitle.source.desc }}
-              </p>
-              <ProgressBar
-                class="name-beast-focus__progress"
-                :value="nextTitle.progress.ratio"
-                color="var(--color-cinnabar)"
-                :height="2"
-              />
-              <p v-if="nextTitle.progress.gap !== null" class="name-beast-focus__gap tabular">
-                尚差 {{ nextTitle.progress.gap }} —— 进度来自成就，不另算一套
-              </p>
+              <span class="name-beast-focus__index" aria-hidden="true">次</span>
+              <div class="name-beast-focus__content">
+                <p class="name-beast-focus__label">
+                  下一顶名号
+                  <span>按成就进度</span>
+                </p>
+                <p class="name-beast-focus__line">
+                  <strong>{{ nextTitle.def.name }}</strong>
+                  <span class="name-beast-focus__state">{{ nextTitle.progress.label }}</span>
+                </p>
+                <p class="name-beast-focus__copy">
+                  名号获自「{{ nextTitle.source.name }}」 · {{ nextTitle.source.desc }}
+                </p>
+                <ProgressBar
+                  class="name-beast-focus__progress"
+                  :value="nextTitle.progress.ratio"
+                  color="var(--color-cinnabar)"
+                  :height="2"
+                />
+                <p v-if="nextTitle.progress.gap !== null" class="name-beast-focus__gap tabular">
+                  尚差 {{ nextTitle.progress.gap }} —— 进度来自成就，不另算一套
+                </p>
+              </div>
             </article>
 
             <article v-else class="name-beast-focus__panel" data-title-guide>
-              <p class="name-beast-focus__label">下一顶名号</p>
-              <p class="name-beast-focus__line"><strong>名号尽收</strong></p>
-              <p class="name-beast-focus__copy">
-                {{ TITLES.length }} 顶名号皆已入谱，余下只在这一世的名下。
-              </p>
+              <span class="name-beast-focus__index" aria-hidden="true">次</span>
+              <div class="name-beast-focus__content">
+                <p class="name-beast-focus__label">下一顶名号</p>
+                <p class="name-beast-focus__line"><strong>名号尽收</strong></p>
+                <p class="name-beast-focus__copy">
+                  {{ TITLES.length }} 顶名号皆已入谱，余下只在这一世的名下。
+                </p>
+              </div>
             </article>
           </div>
         </section>
 
         <section
           class="name-beast-ledger name-ledger"
+          data-name-beast-book="title-index"
           data-kind="title"
           :data-title-total="titleRows.length"
           :data-title-shown="titlePage.shown"
@@ -168,65 +184,78 @@
         role="tabpanel"
         aria-labelledby="pet-tab"
       >
-        <section class="name-beast-ledger name-beast-focus" data-pet-ledger data-kind="pet">
+        <section
+          class="name-beast-ledger name-beast-focus"
+          data-pet-ledger
+          data-name-beast-focus
+          data-name-beast-book="pet-focus"
+          data-kind="pet"
+        >
           <LedgerHeader seal="兽" eyebrow="灵兽 · 同行与结缘" title="此刻相伴" />
 
           <div class="name-beast-focus__panels">
             <article class="name-beast-focus__panel" data-pet-current>
-              <p class="name-beast-focus__label">
-                身边这一只
-                <span>{{ activePet?.state.label ?? "无伴" }}</span>
-              </p>
-              <template v-if="activePet">
-                <p class="name-beast-focus__line">
-                  <span
-                    class="name-beast-focus__pet-icon"
-                    :style="{ color: qualityDef(activePet.def.quality).color }"
-                  >
-                    <GameIcon :name="activePet.def.icon" :size="17" />
-                  </span>
-                  <strong>{{ activePet.def.name }}</strong>
-                  <span class="name-beast-focus__state">{{
-                    qualityDef(activePet.def.quality).name
-                  }}</span>
+              <span class="name-beast-focus__index" aria-hidden="true">伴</span>
+              <div class="name-beast-focus__content">
+                <p class="name-beast-focus__label">
+                  身边这一只
+                  <span>{{ activePet?.state.label ?? "无伴" }}</span>
                 </p>
-                <p class="name-beast-focus__copy">{{ activePet.def.desc }}</p>
-                <p v-if="activePet.modText" class="name-beast-focus__effect tabular">
-                  {{ activePet.modText }}
-                </p>
-                <p class="name-beast-focus__trait">
-                  {{ activePet.personalityName }}
-                  <span>{{ activePet.personalityDesc }}</span>
-                  <template v-if="activePet.traitText">
-                    · <span class="tabular">{{ activePet.traitText }}</span>
-                  </template>
-                </p>
-              </template>
-              <template v-else>
-                <p class="name-beast-focus__line"><strong>尚无灵兽相伴</strong></p>
-                <p class="name-beast-focus__copy">从灵兽谱唤来一只，相伴加成随即进入人物总案。</p>
-              </template>
+                <template v-if="activePet">
+                  <p class="name-beast-focus__line">
+                    <span
+                      class="name-beast-focus__pet-icon"
+                      :style="{ color: qualityDef(activePet.def.quality).color }"
+                    >
+                      <GameIcon :name="activePet.def.icon" :size="17" />
+                    </span>
+                    <strong>{{ activePet.def.name }}</strong>
+                    <span class="name-beast-focus__state">{{
+                      qualityDef(activePet.def.quality).name
+                    }}</span>
+                  </p>
+                  <p class="name-beast-focus__copy">{{ activePet.def.desc }}</p>
+                  <p v-if="activePet.modText" class="name-beast-focus__effect tabular">
+                    {{ activePet.modText }}
+                  </p>
+                  <p class="name-beast-focus__trait">
+                    {{ activePet.personalityName }}
+                    <span>{{ activePet.personalityDesc }}</span>
+                    <template v-if="activePet.traitText">
+                      · <span class="tabular">{{ activePet.traitText }}</span>
+                    </template>
+                  </p>
+                </template>
+                <template v-else>
+                  <p class="name-beast-focus__line"><strong>尚无灵兽相伴</strong></p>
+                  <p class="name-beast-focus__copy">从灵兽谱唤来一只，相伴加成随即进入人物总案。</p>
+                </template>
+              </div>
             </article>
 
             <article class="name-beast-focus__panel">
-              <p class="name-beast-focus__label">结缘册</p>
-              <p class="name-beast-focus__line">
-                <strong>{{ ownedPetCount }} / {{ PETS.length }}</strong>
-                <span>只已结缘</span>
-              </p>
-              <p class="name-beast-focus__copy">{{ CODEX_SOURCES.pet }}</p>
-              <p v-if="!petsAllOwned" class="name-beast-focus__gap tabular">
-                尚余 {{ PETS.length - ownedPetCount }} 只未结缘
-              </p>
-              <p v-else class="name-beast-focus__gap name-beast-focus__gap--done">
-                灵兽尽收 · {{ cnNumber(PETS.length) }}只俱已结缘
-              </p>
+              <span class="name-beast-focus__index" aria-hidden="true">谱</span>
+              <div class="name-beast-focus__content">
+                <p class="name-beast-focus__label">结缘册</p>
+                <p class="name-beast-focus__line">
+                  <strong>{{ ownedPetCount }} / {{ PETS.length }}</strong>
+                  <span>只已结缘</span>
+                </p>
+                <p class="name-beast-focus__copy">{{ CODEX_SOURCES.pet }}</p>
+                <p v-if="!petsAllOwned" class="name-beast-focus__gap tabular">
+                  尚余 {{ PETS.length - ownedPetCount }} 只未结缘
+                </p>
+                <p v-else class="name-beast-focus__gap name-beast-focus__gap--done">
+                  灵兽尽收 · {{ cnNumber(PETS.length) }}只俱已结缘
+                </p>
+              </div>
             </article>
           </div>
         </section>
 
         <section
           class="name-beast-ledger name-ledger"
+          data-name-beast-book="pet-index"
           data-kind="pet"
           :data-pet-total="petRows.length"
           :data-pet-shown="petPage.shown"

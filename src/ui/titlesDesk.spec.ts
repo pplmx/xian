@@ -123,6 +123,36 @@ describe("名兽案 · 双契总览直接接卷首,当前、可追与全谱各�
     expect(view, "名号谱与灵兽谱继续只循环当前窗口").not.toContain('v-for="row in titleRows"');
   });
 
+  it("双契总览、此刻与全谱并回连续纸面,不再一页套三层边框", () => {
+    const view = source("src/views/TitlesView.vue");
+    const switcher = source("src/components/common/NameBeastSwitch.vue");
+    const css = source("src/style.css");
+    const start = css.indexOf("/*\n   * 名兽案");
+    const end = css.indexOf("/*\n   * 道躯案", start);
+    const titleCss = css.slice(start, end);
+
+    expect(view).toContain("data-name-beast-focus");
+    expect(view).toContain("data-name-beast-book");
+    expect(view, "此刻与下一印要有纸面边栏索引").toContain("name-beast-focus__index");
+    expect(switcher, "双契总览也要落册次索引").toContain("name-beast-switch__ordinal");
+    expect(titleCss, "总览是一条纸面索引,不是两张卡").toMatch(
+      /\.name-beast-switch\s*\{[\s\S]{0,260}border-top:\s*1px solid/,
+    );
+    expect(titleCss).toMatch(
+      /\.name-beast-switch__tab\s*\{[\s\S]{0,320}border:\s*0;[\s\S]{0,320}border-radius:\s*0;[\s\S]{0,320}background:\s*transparent;/,
+    );
+    expect(titleCss, "名谱本身不再画第二道外框").toMatch(
+      /\.name-beast-ledger\s*\{[\s\S]{0,360}border:\s*0;[\s\S]{0,360}border-radius:\s*0;[\s\S]{0,360}box-shadow:\s*none;/,
+    );
+    expect(titleCss).toMatch(/\.name-beast-ledger::before\s*\{[\s\S]{0,80}display:\s*none;/);
+    expect(titleCss, "桌面双页由中缝收口,不靠两张卡分隔").toMatch(
+      /@media \(min-width: 1100px\)[\s\S]{0,900}\.name-beast-tab > \.name-beast-focus\s*\{[\s\S]{0,180}border-right:\s*1px solid/,
+    );
+    expect(titleCss).not.toMatch(
+      /\.name-beast-ledger\s*\{[\s\S]{0,360}border:\s*1px solid rgb\(var\(--color-ink-rgb\) \/ 0\.14\)/,
+    );
+  });
+
   it("390 双契并读、小屏退回单册、620 聚焦双栏、1100 总览与全谱摊成两页", () => {
     const css = source("src/style.css");
     const start = css.indexOf("/*\n   * 名兽案");
@@ -134,8 +164,11 @@ describe("名兽案 · 双契总览直接接卷首,当前、可追与全谱各�
     expect(titleCss).toMatch(
       /\.name-beast-switch__grid\s*\{[\s\S]{0,180}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
     );
-    expect(titleCss).toMatch(
-      /@media \(max-width: 359px\)\s*\{[\s\S]{0,220}\.name-beast-switch__grid\s*\{[\s\S]{0,120}minmax\(0, 1fr\)/,
+    expect(titleCss, "320 仍把双契并排,只收掉册次与长注").toMatch(
+      /@media \(max-width: 359px\)\s*\{[\s\S]{0,900}\.name-beast-switch__note\s*\{[\s\S]{0,80}display:\s*none/,
+    );
+    expect(titleCss, "窄于 280 才退回单册").toMatch(
+      /@media \(max-width: 279px\)\s*\{[\s\S]{0,180}\.name-beast-switch__grid\s*\{[\s\S]{0,100}minmax\(0, 1fr\)/,
     );
     expect(titleCss).toMatch(
       /\.name-beast-focus__panels\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(0, 1fr\)/,

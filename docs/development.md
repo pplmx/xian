@@ -294,11 +294,12 @@ error: Failed to resolve vite command: GenericFailure, Expected
 九册正文继续保留来源、尽收、分批窗口与回翻;结构与事实源由
 `src/ui/collectionDesk.spec.ts` 守住。
 
-名号与灵兽页卷首用双印谱同报当前佩印、相伴灵兽与两册收集进度;名号总案先摊当前
-佩印和下一顶成就来路,灵兽总案先摊当前相伴的词条、性子与结缘来路。两册仍只循环
-`titlePage.visible` / `petPage.visible`,续开、回翻、换佩与唤伴继续把焦点送回
-新选行。进度夹取与「佩 / 藏 / 未」「伴 / 契 / 未」行态由 `ui/titlesDesk` 统一
-搬运,结构与事实源由 `src/ui/titlesDesk.spec.ts` 守住。
+名号与灵兽页的双契总览、当前与来路、全谱共用一张连续纸面:卷首只留两条契约索引,
+正文以「今 / 次 / 伴 / 谱」边栏续排,不再三层各包一张卡。359px 以下仍把双契并排,
+只收起册次与长注;279px 以下才退单册,让 320 先看见双契与当前,200% 缩放仍能操作。
+两册仍只循环 `titlePage.visible` / `petPage.visible`,续开、回翻、换佩与唤伴继续
+把焦点送回新选行。进度夹取与「佩 / 藏 / 未」「伴 / 契 / 未」行态由 `ui/titlesDesk`
+统一搬运,结构与事实源由 `src/ui/titlesDesk.spec.ts` 守住。
 
 基线(2026-10-30 实测,本机 + 无头 chromium,后期档,`--seconds 3`):
 
