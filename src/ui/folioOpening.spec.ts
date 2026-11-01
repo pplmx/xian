@@ -119,8 +119,8 @@ describe("开卷版式 · 全站册页基线外加一座游戏指挥台", () => 
     const souls = source("src/views/SoulsView.vue");
     expect(souls, "器魂阵账缺少运行时落点").toContain("data-soul-pulse");
     expect(souls.match(/data-soul-pulse(?![-\\w])/g), "器魂的阵账落点重复了").toHaveLength(1);
-    expect(souls, "器魂阵账仍要接在题签之后").toMatch(
-      /<\/FolioPageHeader>\s*<template v-if="unlocked">[\s\S]{0,500}<LedgerPulse/,
+    expect(souls, "器魂三章要接在题签之后").toMatch(
+      /<\/FolioPageHeader>\s*<template v-if="unlocked">[\s\S]{0,900}<article class="soul-register folio-span-all" data-soul-register>[\s\S]{0,500}<LedgerPulse/,
     );
     expect(souls, "器魂不再在题签里铺同义阵图").not.toContain("data-soul-forge-map");
   });

@@ -14965,6 +14965,35 @@ async function taskSoulListOverflow() {
         const seats = [...document.querySelectorAll("[data-soul-seat-index]")];
         const identity = pulse?.querySelector(".folio-ledger-head__identity");
         const action = pulse?.querySelector(".folio-ledger-pulse__action");
+        const register = document.querySelector("[data-soul-register]");
+        const chapters = [...document.querySelectorAll("[data-soul-chapter]")].map((chapter) => {
+          const style = getComputedStyle(chapter);
+          const head = chapter.querySelector("[data-soul-chapter-head], [data-folio-ledger-head]");
+          return {
+            key: chapter.getAttribute("data-soul-chapter") || "",
+            title:
+              chapter
+                .querySelector(".soul-chapter-head__title, .folio-ledger-head__title")
+                ?.textContent?.trim() || "",
+            index:
+              chapter
+                .querySelector(".soul-chapter-head__index, .folio-ledger-head__seal")
+                ?.textContent?.trim() || "",
+            fact: chapter.querySelector(".soul-chapter-head__fact")?.textContent?.trim() || "",
+            hasHead: Boolean(head),
+            borderWidths: [
+              style.borderTopWidth,
+              style.borderRightWidth,
+              style.borderBottomWidth,
+              style.borderLeftWidth,
+            ].map((width) => Number.parseFloat(width)),
+            radius: Number.parseFloat(style.borderTopLeftRadius),
+            shadow: style.boxShadow,
+            background: style.backgroundColor,
+            rect: box(chapter),
+          };
+        });
+        const registerStyle = register ? getComputedStyle(register) : null;
         const dock = document.querySelector("[data-folio-dock]");
         const dockBox = dock?.getBoundingClientRect();
         const seatGrid = document.querySelector("[data-soul-slots]");
@@ -14980,6 +15009,19 @@ async function taskSoulListOverflow() {
             : [],
           reserveButtons: document.querySelectorAll("[data-soul-reserve] button").length,
           legacyMap: !!document.querySelector("[data-soul-forge-map]"),
+          register: registerStyle
+            ? {
+                borderTop: Number.parseFloat(registerStyle.borderTopWidth),
+                borderRight: Number.parseFloat(registerStyle.borderRightWidth),
+                borderBottom: Number.parseFloat(registerStyle.borderBottomWidth),
+                borderLeft: Number.parseFloat(registerStyle.borderLeftWidth),
+                radius: Number.parseFloat(registerStyle.borderTopLeftRadius),
+                shadow: registerStyle.boxShadow,
+                rect: box(register),
+                cardShells: register?.querySelectorAll(".card-ink").length ?? 0,
+              }
+            : null,
+          chapters,
           dockTop:
             dockBox &&
             dockBox.width > 0 &&
@@ -15031,12 +15073,42 @@ async function taskSoulListOverflow() {
             seat.width >= (expectedColumns === 3 ? 78 : 68),
         ) &&
         layout.gridColumns.length === expectedColumns;
+      const chapterTitles = layout.chapters.map((chapter) => chapter.title);
+      const brokenChapters = layout.chapters.filter(
+        (chapter) =>
+          !chapter.hasHead ||
+          chapter.radius !== 0 ||
+          chapter.shadow !== "none" ||
+          chapter.background !== "rgba(0, 0, 0, 0)" ||
+          chapter.borderWidths.every((width) => width > 0),
+      );
+      const registerOk =
+        layout.register &&
+        layout.register.borderTop >= 1 &&
+        layout.register.borderBottom >= 1 &&
+        layout.register.borderLeft === 0 &&
+        layout.register.borderRight === 0 &&
+        layout.register.radius === 0 &&
+        layout.register.shadow === "none" &&
+        layout.register.cardShells === 0 &&
+        layout.register.rect.left >= -1 &&
+        layout.register.rect.right <= layout.viewport.width + 1 &&
+        layout.register.rect.scrollWidth <= layout.register.rect.clientWidth + 1;
       if (
         !followsMasthead ||
         !columnsOk ||
         !actionStacked ||
         !firstScreen ||
         !fits ||
+        layout.chapters.map((chapter) => chapter.key).join(",") !== "array,gateways,principle" ||
+        !chapterTitles[0] ||
+        chapterTitles[1] !== "两处门径" ||
+        chapterTitles[2] !== "器魂章法" ||
+        layout.chapters.map((chapter) => chapter.index).join(",") !== "壹,贰,叁" ||
+        !layout.chapters[1]?.fact ||
+        !layout.chapters[2]?.fact ||
+        brokenChapters.length > 0 ||
+        !registerOk ||
         layout.reserveButtons !== 0 ||
         layout.legacyMap ||
         layout.documentOverflow
@@ -15057,8 +15129,98 @@ async function taskSoulListOverflow() {
             `账盒=${layout.pulse?.left ?? "-"}..${layout.pulse?.right ?? "-"} / ` +
             `席宽=${layout.seats.map((seat) => Math.round(seat?.width ?? 0)).join("|")} / ` +
             `卷首动作键=${layout.reserveButtons} / 旧阵图=${layout.legacyMap} / ` +
-            `横向溢出=${layout.documentOverflow}`,
+            `横向溢出=${layout.documentOverflow} / ` +
+            `章=${JSON.stringify(layout.chapters)} / 散章=${JSON.stringify(brokenChapters)} / ` +
+            `续卷=${JSON.stringify(layout.register)}`,
         );
+      }
+    }
+
+    async function checkSoulRegisterSpread(width, height, label) {
+      await page.setViewportSize({ width, height });
+      await settleVisuals(page);
+      const spread = await page.evaluate(() => {
+        const rectOf = (selector) => {
+          const el = document.querySelector(selector);
+          if (!el) return null;
+          const rect = el.getBoundingClientRect();
+          return {
+            top: Math.round(rect.top),
+            right: Math.round(rect.right),
+            bottom: Math.round(rect.bottom),
+            left: Math.round(rect.left),
+            width: Math.round(rect.width),
+          };
+        };
+        const styleOf = (selector) => {
+          const el = document.querySelector(selector);
+          if (!el) return null;
+          const style = getComputedStyle(el);
+          return {
+            columns: style.gridTemplateColumns.split(/\s+/).filter(Boolean).length,
+            borderTop: Number.parseFloat(style.borderTopWidth),
+            borderLeft: Number.parseFloat(style.borderLeftWidth),
+          };
+        };
+        return {
+          register: rectOf("[data-soul-register]"),
+          array: rectOf('[data-soul-chapter="array"]'),
+          gateways: rectOf('[data-soul-chapter="gateways"]'),
+          principle: rectOf('[data-soul-chapter="principle"]'),
+          registerStyle: styleOf("[data-soul-register]"),
+          gatewayGridStyle: styleOf(".soul-gateway-grid"),
+          principleStyle: styleOf('[data-soul-chapter="principle"]'),
+        };
+      });
+      checked += 1;
+      const problems = problemsOf(await measurePage(page));
+      checked += 1;
+      if (problems.length) {
+        failures.push(`[${label}] /souls 器魂续卷 → ${problems.join(" / ")}`);
+      }
+      if (SHOTS) {
+        mkdirSync(SHOTS_DIR, { recursive: true });
+        await page.screenshot({
+          path: join(SHOTS_DIR, `${label}_soul-register.png`),
+          fullPage: true,
+        });
+      }
+      if (
+        !spread.register ||
+        !spread.array ||
+        !spread.gateways ||
+        !spread.principle ||
+        !spread.registerStyle ||
+        !spread.gatewayGridStyle ||
+        !spread.principleStyle
+      ) {
+        failures.push(`[${label}] 器魂续卷的章位没有量全:${JSON.stringify(spread)}`);
+        return;
+      }
+      if (width < 960) {
+        const gatewaysOk =
+          spread.registerStyle.columns === 1 &&
+          spread.gatewayGridStyle.columns === 2 &&
+          spread.gateways.top >= spread.array.bottom - 1 &&
+          spread.principle.top >= spread.gateways.bottom - 1;
+        if (!gatewaysOk) {
+          failures.push(
+            `[${label}] 器魂续卷在宽桌前仍应单列、门径两行并读:${JSON.stringify(spread)}`,
+          );
+        }
+        return;
+      }
+      const spreadOk =
+        spread.registerStyle.columns === 2 &&
+        spread.gatewayGridStyle.columns === 1 &&
+        spread.array.left <= spread.register.left + 2 &&
+        spread.array.right >= spread.register.right - 2 &&
+        Math.abs(spread.gateways.top - spread.principle.top) <= 2 &&
+        spread.gateways.right <= spread.principle.left + 1 &&
+        spread.principleStyle.borderTop === 0 &&
+        spread.principleStyle.borderLeft >= 1;
+      if (!spreadOk) {
+        failures.push(`[${label}] 器魂门径与章法没有左右并读:${JSON.stringify(spread)}`);
       }
     }
 
@@ -15216,6 +15378,16 @@ async function taskSoulListOverflow() {
     await page.setViewportSize({ width: 390, height: 844 });
     await settleVisuals(page);
     await checkSoulArrayOverview("390", 3);
+    if (SHOTS) {
+      mkdirSync(SHOTS_DIR, { recursive: true });
+      await page.screenshot({
+        path: join(SHOTS_DIR, "390_soul-register.png"),
+        fullPage: true,
+      });
+    }
+
+    await checkSoulRegisterSpread(620, 844, "620");
+    await checkSoulRegisterSpread(1280, 900, "1280");
 
     await page.setViewportSize({ width: 320, height: 568 });
     await settleVisuals(page);
@@ -15224,6 +15396,13 @@ async function taskSoulListOverflow() {
     await page.setViewportSize({ width: 195, height: 422 });
     await settleVisuals(page);
     await checkSoulArrayOverview("195", 1);
+    if (SHOTS) {
+      mkdirSync(SHOTS_DIR, { recursive: true });
+      await page.screenshot({
+        path: join(SHOTS_DIR, "195_soul-register.png"),
+        fullPage: true,
+      });
+    }
 
     checked += 1;
     if ((await idleEntry.count()) === 0) {

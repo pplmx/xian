@@ -24,10 +24,11 @@ describe("器魂案 · 题签只报道源,三席阵账紧随卷首", () => {
     expect(action, "道源仍读同一份 endgame 数据").toContain("formatNum(endgame.daoSource)");
     expect(action, "炉费仍读机制常量").toContain("SOUL_REFINE_COST");
     expect(action, "卷首不重复承接开炉动作").not.toContain("<button");
-    expect(view, "三席阵账要作为卷首后的第一张纸").toMatch(
-      /<\/FolioPageHeader>\s*<template v-if="unlocked">[\s\S]{0,500}<LedgerPulse/,
+    expect(view, "三席阵账要作为器魂续卷的第一章").toMatch(
+      /<\/FolioPageHeader>\s*<template v-if="unlocked">[\s\S]{0,900}<article class="soul-register folio-span-all" data-soul-register>[\s\S]{0,500}<LedgerPulse/,
     );
     expect(view, "阵账有独立运行时落点").toContain("data-soul-array");
+    expect(view, "器魂章序收在同一张续卷上").toContain('data-soul-chapter="array"');
   });
 
   it("三席收进此刻总账,下一步按装配、取舍、开炉与回行囊带路", () => {
@@ -82,9 +83,11 @@ describe("器魂案 · 题签只报道源,三席阵账紧随卷首", () => {
     );
   });
 
-  it("两处门径与器魂章法仍完整保留,章法退到页尾且数字读机制常量", () => {
+  it("两处门径与器魂章法仍完整保留,章法退到卷尾且数字读机制常量", () => {
     const view = source("src/views/SoulsView.vue");
 
+    expect(view, "两处门径是续卷第二章").toContain('data-soul-chapter="gateways"');
+    expect(view, "器魂章法是续卷第三章").toContain('data-soul-chapter="principle"');
     expect(view, "两处门径有独立运行时落点").toContain("data-soul-gateways");
     expect(view, "闲置形意仍开同一扇门").toContain('data-soul-gateway="idle"');
     expect(view, "凝炼台仍开同一扇门").toContain('data-soul-gateway="forge"');
@@ -94,33 +97,50 @@ describe("器魂案 · 题签只报道源,三席阵账紧随卷首", () => {
     expect(view, "章法仍可展开细读").toContain("soulIntroOpen");
   });
 
-  it("手机总账三栏,960 起两处门径并读,220 以下门径退单列", () => {
-    const css = source("src/style.css");
-    const start = css.indexOf(".soul-pulse {");
-    const end = css.indexOf("/*\n * 开关", start);
-    const soulCss = css.slice(start, end);
+  it("手机三章续排,620 起门径并读,960 起门径与章法并读,220 以下退单列", () => {
+    const soulCss = source("src/styles/pages/souls.css");
 
-    expect(start, "器魂样式段要能定位到").toBeGreaterThan(-1);
-    expect(end, "器魂样式段要有明确结尾").toBeGreaterThan(start);
     expect(soulCss).toMatch(
-      /@media \(min-width: 960px\)\s*\{[\s\S]{0,160}\.soul-gateway-grid\s*\{[\s\S]{0,100}repeat\(2, minmax\(0, 1fr\)\)/,
+      /@media \(min-width: 620px\)\s*\{[\s\S]{0,400}\.soul-gateway-grid\s*\{[\s\S]{0,100}repeat\(2, minmax\(0, 1fr\)\)/,
+    );
+    expect(soulCss).toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,700}\.soul-register\s*\{[\s\S]{0,220}grid-template-areas:\s*"array array"\s*"gateways principle"/,
     );
     expect(soulCss).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,2600}\.soul-gateway__arrow\s*\{[\s\S]{0,80}display:\s*none/,
     );
   });
 
-  it("三席与两处门径共成开口阵谱,不再逐席套卡", () => {
+  it("三席、门径与章法同住一张开口续卷,不再逐段套卡", () => {
     const view = source("src/views/SoulsView.vue");
     const css = source("src/styles/pages/souls.css");
+    const chapterHead = source("src/components/soul/SoulChapterHead.vue");
+    const layout = source("scripts/layout-check.mjs");
     const folio = view.slice(
       view.indexOf('<template v-if="unlocked">'),
       view.indexOf("<!-- 未至真仙"),
     );
 
     expect(folio, "正文阵谱不再借通用卡片皮").not.toContain("card-ink");
+    expect(folio, "整册不再另起自动编号章节头").not.toContain("<SectionTitle");
+    expect(folio, "后两章共用同一枚器魂章首").toContain("<SoulChapterHead");
+    expect(chapterHead, "章首要能定位到").toContain("data-soul-chapter-head");
+    expect(chapterHead, "章首报章号").toContain("{{ index }}");
+    expect(chapterHead, "章首报章名").toContain("{{ title }}");
+    expect(chapterHead, "章首报章内读法").toContain("{{ hint }}");
+    expect(chapterHead, "章首报章内读数").toContain("{{ fact }}");
+    expect(layout, "真浏览器门要定位整册").toContain(
+      'document.querySelector("[data-soul-register]")',
+    );
+    expect(layout, "真浏览器门要逐章核对").toContain('querySelectorAll("[data-soul-chapter]")');
     expect(folio, "器魂行要有独立的详情副本层").toContain("soul-seat__copy");
     expect(folio, "空席的读法与动作共用同一行").toContain("soul-seat__empty-copy");
+    expect(css, "整册只留上下账线").toMatch(
+      /\.soul-register\s*\{[\s\S]{0,420}border-top:\s*1px solid[\s\S]{0,180}border-bottom:\s*1px solid/,
+    );
+    expect(css, "三章全部退成透明分段").toMatch(
+      /\.soul-register__chapter\s*\{[\s\S]{0,420}border:\s*0;[\s\S]{0,420}background:\s*transparent;[\s\S]{0,420}box-shadow:\s*none;/,
+    );
     expect(css, "三席只用上下账线围合").toMatch(
       /\.soul-array__seats\s*\{[\s\S]{0,260}border-block:\s*1px solid/,
     );
@@ -133,8 +153,8 @@ describe("器魂案 · 题签只报道源,三席阵账紧随卷首", () => {
     expect(css, "两处门径是账行而不是两张按钮卡").toMatch(
       /\.soul-gateway\s*\{[\s\S]{0,420}border:\s*0;[\s\S]{0,420}background:\s*transparent;/,
     );
-    expect(css, "章法只留上下账线与分段线").toMatch(
-      /\.soul-principle__sheet\s*\{[\s\S]{0,320}border-block:\s*1px solid[\s\S]{0,320}border-radius:\s*0;[\s\S]{0,320}box-shadow:\s*none;/,
+    expect(css, "章法不再另起第二层纸框").toMatch(
+      /\.soul-principle__sheet\s*\{[\s\S]{0,320}border:\s*0;[\s\S]{0,320}background:\s*transparent;[\s\S]{0,320}box-shadow:\s*none;/,
     );
     expect(css, "195 宽三席退成一列账行").toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.soul-array__seats\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
