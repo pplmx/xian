@@ -49,11 +49,15 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
 
   it("行藏加成继续读引擎合并结果,点开来源、软上限与边界仍可解释", () => {
     const view = source("src/views/CharacterView.vue");
+    const desk = source("src/ui/characterDesk.ts");
 
     expect(view, "加成账要有稳定落点").toContain("data-character-modifiers");
-    expect(view, "逐项加成仍读 finalStats.mods").toContain("modOf(stats.value.mods, k)");
-    expect(view, "软上限仍读统一判定").toContain("isSoftCapped(stats.value.mods, k)");
-    expect(view, "来源明细仍逐项展开").toContain('@click="toggleBreakdown(row.key)"');
+    expect(view, "行藏四组仍读 finalStats.mods 与 breakdown").toContain(
+      "characterModifierDesk(stats.value.mods, stats.value.breakdown)",
+    );
+    expect(desk, "逐项加成仍读 finalStats.mods").toContain("modOf(mods, key)");
+    expect(desk, "软上限仍读统一判定").toContain("isSoftCapped(mods, key)");
+    expect(view, "来源明细仍逐项展开").toContain('@select="toggleBreakdown"');
     expect(view, "明细仍读 finalStats.breakdown").toContain("stats.value.breakdown");
     expect(view, "递减说明仍读常数表").toContain("DIMINISH_WEIGHTS");
     expect(view, "进阶成功率边界仍保留").toContain("进阶成功率只作用于小进阶");
@@ -66,12 +70,9 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
     const bondAt = view.indexOf('data-character-index="bond"');
     const recordAt = view.indexOf('data-character-index="record"');
 
-    expect(view, "卷末目录只起一章").toContain(
-      '<SectionTitle title="卷末目录" hint="道途、缘法、行迹,九处去向一页可寻" />',
-    );
-    expect(view, "目录要收进同一张跨栏纸面").toContain(
-      '<section class="character-afterword folio-span-all" data-character-afterword>',
-    );
+    expect(view, "卷末目录只起一章").toContain('data-character-chapter="catalog"');
+    expect(view, "卷末章首读同一份三章装配").toContain(':title="catalogChapter.title"');
+    expect(view, "目录要收进同一张跨栏纸面").toContain("data-character-afterword");
     expect(view, "三组共用一个目录网格").toContain(
       '<div class="character-catalog" data-character-catalog>',
     );
@@ -92,7 +93,7 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
     expect(view, "旧同形入口卡不再参与道躯页").not.toContain("<NavCard");
   });
 
-  it("手机总案与目录单列,720 起总案并读,桌面上三组目录并排", () => {
+  it("手机总案与目录单列,720 起总案与行藏并读,桌面上三组目录并排", () => {
     const css = source("src/style.css");
     const start = css.indexOf(".character-dossier {");
     const end = css.indexOf("/*\n * 开关(.toggle-ink)", start);
@@ -104,7 +105,10 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
       /\.character-dossier__grid\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
     expect(characterCss).toMatch(
-      /@media \(min-width: 720px\)\s*\{[\s\S]{0,180}\.character-dossier__grid\s*\{[\s\S]{0,120}minmax\(0, 1\.08fr\) minmax\(0, 0\.92fr\)/,
+      /@media \(min-width: 720px\)\s*\{[\s\S]{0,1200}\.character-dossier__grid\s*\{[\s\S]{0,120}minmax\(0, 1\.08fr\) minmax\(0, 0\.92fr\)/,
+    );
+    expect(characterCss).toMatch(
+      /@media \(min-width: 720px\)\s*\{[\s\S]{0,240}\.character-modifier-groups\s*\{[\s\S]{0,120}repeat\(2, minmax\(0, 1fr\)\)/,
     );
     expect(characterCss).toMatch(
       /\.character-catalog\s*\{[\s\S]{0,220}grid-template-columns:\s*minmax\(0, 1fr\)/,

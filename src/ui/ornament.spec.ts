@@ -258,9 +258,9 @@ describe("装饰层 · 花饰分隔只在页面层", () => {
   });
 
   it("确实有页面在用(否则这条判据在替一份空名单站岗)", () => {
-    // 修行页收成连续续卷后撤掉旧花饰,仍有两处页面与天界一册在用;
+    // 修行与道躯收成连续续卷后撤掉旧花饰,仍有藏珍页与天界远征一册在用;
     // 这里守的是“判据没有空转”,不是把旧装饰数量钉成发版指标。
-    expect(hits.length).toBeGreaterThanOrEqual(3);
+    expect(hits.length).toBeGreaterThanOrEqual(2);
   });
 });
 

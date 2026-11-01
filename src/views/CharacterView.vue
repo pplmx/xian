@@ -30,358 +30,408 @@
       三围不再在上下两张卡里各占一次主位：原值、权重与占战力比在同一行读，
       灵根则独立成另一半，名号、资质、倍率与天然倾向不再挤在战力卡尾。
     -->
-    <section class="folio-span-all">
-      <SectionTitle title="道躯总案" hint="三围折成战力,灵根定下行路" />
-      <div class="character-dossier" data-character-dossier>
-        <LedgerHeader
-          seal="躯"
-          eyebrow="本世根骨"
-          title="战力与灵根"
-          score-label="第"
-          :score-value="player.major + 1"
-          :score-suffix="`/ ${REALMS.length} 境`"
+    <article class="character-register folio-span-all" data-character-register>
+      <section class="character-register__chapter" data-character-chapter="foundation">
+        <CharacterChapterHead
+          :index="foundationChapter.index"
+          :title="foundationChapter.title"
+          :hint="foundationChapter.hint"
+          :fact="`第 ${player.major + 1} / ${REALMS.length} 境`"
         />
+        <div class="character-dossier" data-character-dossier>
+          <LedgerHeader
+            seal="躯"
+            eyebrow="本世根骨"
+            title="战力与灵根"
+            score-label="第"
+            :score-value="player.major + 1"
+            :score-suffix="`/ ${REALMS.length} 境`"
+          />
 
-        <div class="character-dossier__grid">
-          <section class="character-dossier__power" data-character-power>
-            <div class="character-dossier__power-head">
-              <span class="character-dossier__label">战 力</span>
-              <span class="character-dossier__hint">攻 / 防 / 血按引擎权重折算</span>
-            </div>
-            <p class="character-dossier__power-value font-kai tabular">
-              <TapNumber :value="stats.power" title="战力" :rows="powerDetailRows" />
-            </p>
-            <p class="character-dossier__formula tabular">{{ powerFormulaText }}</p>
-            <div class="character-dossier__bar" role="img" :aria-label="powerShareLabel">
-              <span
-                v-for="row in powerDetailRows"
-                :key="row.label"
-                :style="{ width: `${row.share * 100}%`, background: row.barColor }"
-              />
-            </div>
-            <div class="character-dossier__stats">
-              <div v-for="row in powerDetailRows" :key="row.label" class="character-dossier__stat">
-                <span class="character-dossier__stat-name">
-                  {{ row.label }}
-                  <span class="character-dossier__weight">×{{ row.weightText }}</span>
+          <div class="character-dossier__grid">
+            <section class="character-dossier__power" data-character-power>
+              <div class="character-dossier__power-head">
+                <span class="character-dossier__label">战 力</span>
+                <span class="character-dossier__hint">攻 / 防 / 血按引擎权重折算</span>
+              </div>
+              <p class="character-dossier__power-value font-kai tabular">
+                <TapNumber :value="stats.power" title="战力" :rows="powerDetailRows" />
+              </p>
+              <p class="character-dossier__formula tabular">{{ powerFormulaText }}</p>
+              <div class="character-dossier__bar" role="img" :aria-label="powerShareLabel">
+                <span
+                  v-for="row in powerDetailRows"
+                  :key="row.label"
+                  :style="{ width: `${row.share * 100}%`, background: row.barColor }"
+                />
+              </div>
+              <div class="character-dossier__stats">
+                <div
+                  v-for="row in powerDetailRows"
+                  :key="row.label"
+                  class="character-dossier__stat"
+                >
+                  <span class="character-dossier__stat-name">
+                    {{ row.label }}
+                    <span class="character-dossier__weight">×{{ row.weightText }}</span>
+                  </span>
+                  <span class="character-dossier__stat-value font-kai tabular">
+                    <TapNumber
+                      :value="row.value"
+                      :title="row.label"
+                      :rows="[
+                        { label: '战力权重', text: `×${row.weightText}` },
+                        { label: '占战力', text: formatPercent(row.share, 0) },
+                      ]"
+                    />
+                  </span>
+                  <span class="character-dossier__stat-share tabular">
+                    {{ formatPercent(row.share, 0) }}
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            <section class="character-dossier__roots" data-character-roots>
+              <div class="character-dossier__roots-head">
+                <span class="character-dossier__label">灵 根</span>
+                <span class="character-dossier__grade">{{ player.linggen?.gradeName }}</span>
+                <span class="character-dossier__growth tabular">
+                  ×{{ player.linggen?.growthMult.toFixed(2) }}
                 </span>
-                <span class="character-dossier__stat-value font-kai tabular">
-                  <TapNumber
-                    :value="row.value"
-                    :title="row.label"
-                    :rows="[
-                      { label: '战力权重', text: `×${row.weightText}` },
-                      { label: '占战力', text: formatPercent(row.share, 0) },
-                    ]"
+              </div>
+              <div class="character-dossier__root-list">
+                <span
+                  v-for="root in player.linggen?.roots ?? []"
+                  :key="root.element"
+                  class="character-dossier__root"
+                  :title="`${ELEMENTS[root.element].char}系 · 资质 ${root.aptitude}`"
+                >
+                  <span
+                    class="character-dossier__root-mark"
+                    :style="{
+                      borderColor: ELEMENTS[root.element].color,
+                      color: ELEMENTS[root.element].color,
+                    }"
+                    >{{ ELEMENTS[root.element].char }}</span
+                  >
+                  <span
+                    class="character-dossier__root-aptitude tabular"
+                    :style="{ color: ELEMENTS[root.element].color }"
+                    >{{ root.aptitude }}</span
+                  >
+                </span>
+              </div>
+              <p class="character-dossier__roots-copy">
+                灵根倍率作用于修行所得；五行只定亲近之路,不分高低。
+              </p>
+              <div v-if="tendencies.length" class="character-dossier__tendencies">
+                <p
+                  v-for="t in tendencies"
+                  :key="t.element"
+                  class="character-dossier__tendency t-body"
+                >
+                  <span
+                    class="character-dossier__tendency-mark"
+                    :style="{ color: ELEMENTS[t.element].color }"
+                    >{{ ELEMENTS[t.element].char }}</span
+                  >
+                  <span>{{ t.text }}</span>
+                </p>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section class="character-register__chapter" data-character-chapter="modifiers">
+        <CharacterChapterHead
+          :index="modifiersChapter.index"
+          :title="modifiersChapter.title"
+          :hint="modifiersChapter.hint"
+          :fact="modifierFact"
+        />
+        <div class="character-modifier-desk" data-character-modifiers>
+          <p v-if="modRows.length === 0" class="character-modifier-desk__empty">
+            此刻尚无行藏加成。功法、装备、丹药与天时落定后,四类行藏会在这里逐项现身。
+          </p>
+          <div v-else class="character-modifier-groups">
+            <section
+              v-for="group in modifierGroups.filter((entry) => entry.rows.length > 0)"
+              :key="group.key"
+              class="character-modifier-group"
+              :data-character-modifier-group="group.key"
+            >
+              <header class="character-modifier-group__head">
+                <span class="character-modifier-group__mark" aria-hidden="true">{{
+                  group.mark
+                }}</span>
+                <span class="character-modifier-group__copy">
+                  <strong>{{ group.title }}</strong>
+                  <small>{{ group.hint }}</small>
+                </span>
+                <span class="character-modifier-group__count tabular"
+                  >{{ group.rows.length }} 项</span
+                >
+              </header>
+              <div class="character-modifier-group__rows">
+                <CharacterModifierRow
+                  v-for="row in group.rows"
+                  :key="row.key"
+                  :row="row"
+                  :active="breakdownKey === row.key && breakdownRows.length > 0"
+                  @select="toggleBreakdown"
+                />
+              </div>
+            </section>
+          </div>
+
+          <section
+            v-if="breakdownRows.length"
+            class="character-modifier-detail"
+            data-character-modifier-detail
+            :data-character-modifier-detail-key="breakdownKey ?? undefined"
+          >
+            <header class="character-modifier-detail__head">
+              <div>
+                <p class="character-modifier-detail__eyebrow">拆卷 · 来源明细</p>
+                <h3>{{ STAT_NAMES[breakdownKey!] }}</h3>
+              </div>
+              <button
+                type="button"
+                class="character-modifier-detail__close"
+                data-character-modifier-close
+                :aria-label="`收起${STAT_NAMES[breakdownKey!]}来源明细`"
+                @click="breakdownKey = null"
+              >
+                合
+              </button>
+            </header>
+            <div class="character-modifier-detail__sources">
+              <div
+                v-for="source in breakdownRows"
+                :key="source.name"
+                class="character-modifier-source"
+                data-character-modifier-source
+              >
+                <span class="character-modifier-source__name">
+                  {{ source.name }}
+                  <span v-if="source.onTop" class="character-modifier-source__on-top">另乘</span>
+                </span>
+                <span
+                  class="character-modifier-source__value tabular"
+                  :class="source.value > 0 ? 'text-qing' : 'text-cinnabar'"
+                >
+                  {{ source.value > 0 ? "+" : "" }}{{ formatPercent(source.value) }}
+                </span>
+                <span class="character-modifier-source__track" aria-hidden="true">
+                  <span
+                    :class="source.value > 0 ? 'is-positive' : 'is-negative'"
+                    :style="{ width: `${Math.max(3, source.share * 100)}%` }"
                   />
-                </span>
-                <span class="character-dossier__stat-share tabular">
-                  {{ formatPercent(row.share, 0) }}
                 </span>
               </div>
             </div>
-          </section>
-
-          <section class="character-dossier__roots" data-character-roots>
-            <div class="character-dossier__roots-head">
-              <span class="character-dossier__label">灵 根</span>
-              <span class="character-dossier__grade">{{ player.linggen?.gradeName }}</span>
-              <span class="character-dossier__growth tabular">
-                ×{{ player.linggen?.growthMult.toFixed(2) }}
-              </span>
-            </div>
-            <div class="character-dossier__root-list">
-              <span
-                v-for="root in player.linggen?.roots ?? []"
-                :key="root.element"
-                class="character-dossier__root"
-                :title="`${ELEMENTS[root.element].char}系 · 资质 ${root.aptitude}`"
-              >
-                <span
-                  class="character-dossier__root-mark"
-                  :style="{
-                    borderColor: ELEMENTS[root.element].color,
-                    color: ELEMENTS[root.element].color,
-                  }"
-                  >{{ ELEMENTS[root.element].char }}</span
-                >
-                <span
-                  class="character-dossier__root-aptitude tabular"
-                  :style="{ color: ELEMENTS[root.element].color }"
-                  >{{ root.aptitude }}</span
-                >
-              </span>
-            </div>
-            <p class="character-dossier__roots-copy">
-              灵根倍率作用于修行所得；五行只定亲近之路,不分高低。
+            <p class="character-modifier-detail__note">
+              明细之和就是上面那个数;标「另乘」的不并入百分比,而是单独乘在攻防血上。
             </p>
-            <div v-if="tendencies.length" class="character-dossier__tendencies">
-              <p
-                v-for="t in tendencies"
-                :key="t.element"
-                class="character-dossier__tendency t-body"
-              >
-                <span
-                  class="character-dossier__tendency-mark"
-                  :style="{ color: ELEMENTS[t.element].color }"
-                  >{{ ELEMENTS[t.element].char }}</span
-                >
-                <span>{{ t.text }}</span>
-              </p>
+            <p v-if="diminishNote" class="character-modifier-detail__warning">
+              {{ diminishNote }}
+            </p>
+          </section>
+
+          <div
+            v-if="hasAdvanceRate || hasShieldMods || softCappedNotes.length"
+            class="character-modifier-notes"
+          >
+            <p v-if="hasAdvanceRate">
+              进阶成功率只作用于小进阶;大关须渡天劫,看的是劫型与四维准备度(护持/恢复/抗性/爆发)。
+            </p>
+            <p v-if="hasShieldMods">
+              护盾至多覆盖最大气血的 {{ formatPercent(SHIELD_CAP_RATIO, 0) }} ——
+              盾系堆得再多也顶不破这道上限。
+            </p>
+            <p v-if="softCappedNotes.length" class="character-modifier-notes__warning">
+              标「软」者已达软上限:{{
+                softCappedNotes.join("、")
+              }}。极限堆叠到此后收益递减,不是面板被削。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!--
+        九处去向原分三章长滚,每章都要重起一枚章节头;桌面上又各自只占半页,
+        三组目录因此把正文拖成一条断续的侧栏。现在三组同收进一张卷末目录:
+        桌面上三栏并读,手机上仍按「道途 → 缘法 → 行迹」单列续读。
+      -->
+      <section
+        class="character-register__chapter character-afterword"
+        data-character-chapter="catalog"
+        data-character-afterword
+      >
+        <CharacterChapterHead
+          :index="catalogChapter.index"
+          :title="catalogChapter.title"
+          :hint="catalogChapter.hint"
+        />
+        <div class="character-catalog" data-character-catalog>
+          <section
+            class="character-catalog__group"
+            data-character-index="way"
+            aria-labelledby="character-catalog-way"
+          >
+            <header class="character-catalog__head">
+              <span class="character-catalog__ordinal" aria-hidden="true">壹</span>
+              <div class="character-catalog__copy">
+                <h3 id="character-catalog-way" class="character-catalog__title">道途</h3>
+                <span class="character-catalog__hint">路数与身份</span>
+              </div>
+            </header>
+            <div class="character-catalog__rows">
+              <CharacterIndexRow
+                to="/build"
+                icon="swords"
+                title="流 派"
+                tone="cinnabar"
+                action="参详"
+                :sub="
+                  build
+                    ? `${build.displayName} · 契合 ${formatPercent(build.affinity, 0)} · 快照 ${loadouts.list.length} 套`
+                    : '道途尚未成路,词条与功法凑成一派便见分晓'
+                "
+              />
+
+              <!-- 修行画像(Phase 31.2:历史行为归纳,纯描述无数值) -->
+              <CharacterIndexRow
+                icon="circle-user"
+                title="修行画像"
+                action="展卷"
+                :sub="`「${identity?.epithet ?? '玄枢散人'}」 · ${identity?.narrative ?? '足迹尚浅'}`"
+                @click="identityOpen = true"
+              />
+
+              <!-- 相伴灵兽的「脸」:有伴亮伴侣的形,未伴用名号的冕 —— 同其他入口一样是一枚题头图 -->
+              <CharacterIndexRow
+                to="/titles"
+                :icon="currentPetIcon ?? 'crown'"
+                title="名号与灵兽"
+                tone="jade"
+                action="整理"
+                :sub="`${currentTitleName ?? '未佩名号'} · ${currentPetName ?? '未伴灵兽'}`"
+              />
             </div>
           </section>
-        </div>
-      </div>
-    </section>
 
-    <!-- 属性 -->
-    <section>
-      <SectionTitle title="行藏加成" hint="点一行看它从哪来" />
-      <div class="card-ink mt-2 px-4 py-3" data-character-modifiers>
-        <!--
-          每行可点:玩家问的从来不只是「多少」,还有「从哪来」。
-          可点这件事得先看得见 —— 选中那行染底并亮出「明细」,其余行才敢不吭声。
-          此前全无选中态,点开之后只多出一块正文,看不出点的是哪一行。
-        -->
-        <!--
-          属性名(「进阶成功率」五个字)在两列时每列只有 56.5px,名字被压成
-          11px 宽一字一列(实测 8 行里 7 行竖排)—— 极窄档放开成单列,
-          名字回到 44px 一行。两列是常态(390 档实测一分不动)。
-        -->
-        <div class="grid grid-cols-2 gap-x-4 gap-y-1 tinylens:grid-cols-1">
-          <button
-            v-for="row in modRows"
-            :key="row.label"
-            class="-my-1 flex items-center justify-between rounded-[2px] px-1.5 py-1.5 text-left text-body transition-colors active:opacity-60"
-            :class="breakdownKey === row.key ? 'bg-ink/5' : ''"
-            :aria-expanded="breakdownKey === row.key"
-            @click="toggleBreakdown(row.key)"
+          <section
+            class="character-catalog__group"
+            data-character-index="bond"
+            aria-labelledby="character-catalog-bond"
           >
-            <span class="text-ink-faint">
-              {{ row.label }}
-              <span v-if="row.capped" class="ml-0.5 text-note text-cinnabar">软</span>
-            </span>
-            <span class="flex items-center gap-1">
-              <span class="tabular" :class="row.value > 0 ? 'text-qing' : 'text-cinnabar'">
-                {{ row.value > 0 ? "+" : "" }}{{ formatPercent(row.value) }}
-              </span>
-              <!-- 明细口:收着时是一枚淡「›」,展开时转 90° 并转朱砂 -->
-              <span
-                class="w-2 text-note leading-none transition-transform"
-                :class="breakdownKey === row.key ? 'rotate-90 text-cinnabar' : 'text-ink-faint'"
-                aria-hidden="true"
-                >›</span
-              >
-            </span>
-          </button>
-        </div>
-        <!-- 提示只在没展开时出现:一旦展开,下面那块牌子本身就是答案 -->
-        <p v-if="modRows.length && !breakdownRows.length" class="mt-1 text-note text-ink-faint">
-          点一行看它从哪来
-        </p>
-        <!--
-          进阶成功率的名字容易过度承诺:它只进小进阶那一次掷点,大关走天劫推演。
-          有这一项时才提示 —— 没有这项的玩家不需要知道这个边界。
-        -->
-        <p v-if="hasAdvanceRate" class="mt-0.5 text-note leading-relaxed text-ink-faint">
-          进阶成功率只作用于小进阶;大关须渡天劫,看的是劫型与四维准备度(护持/恢复/抗性/爆发)。
-        </p>
-        <p v-if="hasShieldMods" class="mt-0.5 text-note leading-relaxed text-ink-faint">
-          护盾至多覆盖最大气血的 {{ formatPercent(SHIELD_CAP_RATIO, 0) }} ——
-          盾系堆得再多也顶不破这道上限。
-        </p>
-        <div v-if="breakdownRows.length" class="mt-1.5 rounded-[2px] bg-paper-deep/60 px-2.5 py-2">
-          <p class="text-note text-ink-soft">{{ STAT_NAMES[breakdownKey!] }} · 来源明细</p>
-          <p v-for="c in breakdownRows" :key="c.name" class="mt-0.5 flex justify-between text-note">
-            <span class="text-ink-faint">
-              {{ c.name }}
-              <span v-if="c.onTop" class="ml-1 text-note text-cinnabar">另乘</span>
-            </span>
-            <span class="tabular" :class="c.value > 0 ? 'text-qing' : 'text-cinnabar'">
-              {{ c.value > 0 ? "+" : "" }}{{ formatPercent(c.value) }}
-            </span>
-          </p>
-          <p class="mt-1 text-note leading-relaxed text-ink-faint">
-            明细之和就是上面那个数;标「另乘」的不并入百分比,而是单独乘在攻防血上。
-          </p>
-          <p v-if="diminishNote" class="mt-0.5 text-note leading-relaxed text-cinnabar">
-            {{ diminishNote }}
-          </p>
-        </div>
-        <p v-if="softCappedNotes.length" class="mt-1.5 text-note leading-relaxed text-cinnabar">
-          标「软」者已达软上限:{{
-            softCappedNotes.join("、")
-          }}。极限堆叠到此后收益递减,不是面板被削。
-        </p>
-      </div>
-    </section>
+            <header class="character-catalog__head">
+              <span class="character-catalog__ordinal" aria-hidden="true">贰</span>
+              <div class="character-catalog__copy">
+                <h3 id="character-catalog-bond" class="character-catalog__title">缘法</h3>
+                <span class="character-catalog__hint">这一世遇见的人</span>
+              </div>
+            </header>
+            <div class="character-catalog__rows">
+              <!-- 师承(Phase 31 S1):修行理念 + 师尊评价 -->
+              <CharacterIndexRow
+                icon="scroll"
+                title="师 承"
+                tone="qing"
+                :action="mentorVer ? '求教' : '拜师'"
+                :sub="
+                  mentorVer
+                    ? `${mentorVer.mentor?.name ?? ''}·${mentorVer.mentor?.title ?? ''} | ${mentorVer.line}`
+                    : '尚未拜师,可寻一位师尊'
+                "
+                @click="mentorDialog = true"
+              />
 
-    <!-- 至此是「我是谁」;往下转入九册去向,用一道页内花饰换气。 -->
-    <div class="ink-divider-mark my-4" aria-hidden="true" />
-
-    <!--
-      九处去向原分三章长滚,每章都要重起一枚章节头;桌面上又各自只占半页,
-      三组目录因此把正文拖成一条断续的侧栏。现在三组同收进一张卷末目录:
-      桌面上三栏并读,手机上仍按「道途 → 缘法 → 行迹」单列续读。
-    -->
-    <section class="character-afterword folio-span-all" data-character-afterword>
-      <SectionTitle title="卷末目录" hint="道途、缘法、行迹,九处去向一页可寻" />
-      <div class="character-catalog" data-character-catalog>
-        <section
-          class="character-catalog__group"
-          data-character-index="way"
-          aria-labelledby="character-catalog-way"
-        >
-          <header class="character-catalog__head">
-            <span class="character-catalog__ordinal" aria-hidden="true">壹</span>
-            <div class="character-catalog__copy">
-              <h3 id="character-catalog-way" class="character-catalog__title">道途</h3>
-              <span class="character-catalog__hint">路数与身份</span>
-            </div>
-          </header>
-          <div class="character-catalog__rows">
-            <CharacterIndexRow
-              to="/build"
-              icon="swords"
-              title="流 派"
-              tone="cinnabar"
-              action="参详"
-              :sub="
-                build
-                  ? `${build.displayName} · 契合 ${formatPercent(build.affinity, 0)} · 快照 ${loadouts.list.length} 套`
-                  : '道途尚未成路,词条与功法凑成一派便见分晓'
-              "
-            />
-
-            <!-- 修行画像(Phase 31.2:历史行为归纳,纯描述无数值) -->
-            <CharacterIndexRow
-              icon="circle-user"
-              title="修行画像"
-              action="展卷"
-              :sub="`「${identity?.epithet ?? '玄枢散人'}」 · ${identity?.narrative ?? '足迹尚浅'}`"
-              @click="identityOpen = true"
-            />
-
-            <!-- 相伴灵兽的「脸」:有伴亮伴侣的形,未伴用名号的冕 —— 同其他入口一样是一枚题头图 -->
-            <CharacterIndexRow
-              to="/titles"
-              :icon="currentPetIcon ?? 'crown'"
-              title="名号与灵兽"
-              tone="jade"
-              action="整理"
-              :sub="`${currentTitleName ?? '未佩名号'} · ${currentPetName ?? '未伴灵兽'}`"
-            />
-          </div>
-        </section>
-
-        <section
-          class="character-catalog__group"
-          data-character-index="bond"
-          aria-labelledby="character-catalog-bond"
-        >
-          <header class="character-catalog__head">
-            <span class="character-catalog__ordinal" aria-hidden="true">贰</span>
-            <div class="character-catalog__copy">
-              <h3 id="character-catalog-bond" class="character-catalog__title">缘法</h3>
-              <span class="character-catalog__hint">这一世遇见的人</span>
-            </div>
-          </header>
-          <div class="character-catalog__rows">
-            <!-- 师承(Phase 31 S1):修行理念 + 师尊评价 -->
-            <CharacterIndexRow
-              icon="scroll"
-              title="师 承"
-              tone="qing"
-              :action="mentorVer ? '求教' : '拜师'"
-              :sub="
-                mentorVer
-                  ? `${mentorVer.mentor?.name ?? ''}·${mentorVer.mentor?.title ?? ''} | ${mentorVer.line}`
-                  : '尚未拜师,可寻一位师尊'
-              "
-              @click="mentorDialog = true"
-            />
-
-            <!--
+              <!--
               道侣(Phase 33.8):这一世遇见的人。只记关系与经历,不给任何属性。
               她开了口 / 提了事,还等你一句 —— 这一行要报出来。此前只有点开弹窗
               才知道有事在等,而不开弹窗就永远不知道(与「卦在身」「今日天道未做」同族)。
             -->
-            <CharacterIndexRow
-              icon="user"
-              title="道 侣"
-              tone="qing"
-              :action="bondDef ? '相知' : '履历'"
-              :badge="hasBondWord ? '有话说' : ''"
-              :sub="
-                bondDef && bond
-                  ? `${bondDef.name}·${STAGE_NAMES[bond.stage]}${bond.fallen ? '(已殁)' : bond.departed ? '(已离)' : ''} | ${bondDef.brief}`
-                  : pastBonds.length
-                    ? `此生尚未遇见,历世曾有 ${pastBonds.length} 段同行`
-                    : '此生尚未遇见谁'
-              "
-              @click="bondDialog = true"
-            />
-          </div>
-        </section>
-
-        <section
-          class="character-catalog__group"
-          data-character-index="record"
-          aria-labelledby="character-catalog-record"
-        >
-          <header class="character-catalog__head">
-            <span class="character-catalog__ordinal" aria-hidden="true">叁</span>
-            <div class="character-catalog__copy">
-              <h3 id="character-catalog-record" class="character-catalog__title">行迹</h3>
-              <span class="character-catalog__hint">走过什么,路从哪来</span>
+              <CharacterIndexRow
+                icon="user"
+                title="道 侣"
+                tone="qing"
+                :action="bondDef ? '相知' : '履历'"
+                :badge="hasBondWord ? '有话说' : ''"
+                :sub="
+                  bondDef && bond
+                    ? `${bondDef.name}·${STAGE_NAMES[bond.stage]}${bond.fallen ? '(已殁)' : bond.departed ? '(已离)' : ''} | ${bondDef.brief}`
+                    : pastBonds.length
+                      ? `此生尚未遇见,历世曾有 ${pastBonds.length} 段同行`
+                      : '此生尚未遇见谁'
+                "
+                @click="bondDialog = true"
+              />
             </div>
-          </header>
-          <div class="character-catalog__rows">
-            <CharacterIndexRow
-              to="/collection"
-              icon="gem"
-              title="藏珍与成就"
-              tone="gold"
-              action="翻阅"
-              :badge="quests.hasCollectionNew ? '有新得' : ''"
-              :sub="`成就 ${achievementCounts(achievementStateOf(quests.achieved)).done}/${ACHIEVEMENTS.length} · 图鉴 ${collectionSummary.known}/${collectionSummary.total}`"
-            />
+          </section>
 
-            <CharacterIndexRow
-              to="/legacy"
-              icon="book"
-              title="修仙录"
-              action="展卷"
-              sub="画像 · 节点 · 我的纪录——这一部只写你自己"
-            />
+          <section
+            class="character-catalog__group"
+            data-character-index="record"
+            aria-labelledby="character-catalog-record"
+          >
+            <header class="character-catalog__head">
+              <span class="character-catalog__ordinal" aria-hidden="true">叁</span>
+              <div class="character-catalog__copy">
+                <h3 id="character-catalog-record" class="character-catalog__title">行迹</h3>
+                <span class="character-catalog__hint">走过什么,路从哪来</span>
+              </div>
+            </header>
+            <div class="character-catalog__rows">
+              <CharacterIndexRow
+                to="/collection"
+                icon="gem"
+                title="藏珍与成就"
+                tone="gold"
+                action="翻阅"
+                :badge="quests.hasCollectionNew ? '有新得' : ''"
+                :sub="`成就 ${achievementCounts(achievementStateOf(quests.achieved)).done}/${ACHIEVEMENTS.length} · 图鉴 ${collectionSummary.known}/${collectionSummary.total}`"
+              />
 
-            <!--
+              <CharacterIndexRow
+                to="/legacy"
+                icon="book"
+                title="修仙录"
+                action="展卷"
+                sub="画像 · 节点 · 我的纪录——这一部只写你自己"
+              />
+
+              <!--
               界域志:与修仙录同级 —— 一部写你,一部写这条路从哪来。
               这一册装着两半:界域/典籍是「来路」(只读),周易/紫微/星象/奇门是「术数四门」
               (有当下,问卦就在里面) —— 副题要把两半都说出来,否则想找问卦的人根本不会点进来。
             -->
-            <CharacterIndexRow
-              to="/codex"
-              icon="mountain"
-              title="界域志"
-              action="查阅"
-              :badge="divinationOn ? '卦在身' : ''"
-              :sub="`${cnNumber(WORLDS.length)}界${cnNumber(REALMS.length)}境的来路与典籍 · 术数四门`"
-            />
+              <CharacterIndexRow
+                to="/codex"
+                icon="mountain"
+                title="界域志"
+                action="查阅"
+                :badge="divinationOn ? '卦在身' : ''"
+                :sub="`${cnNumber(WORLDS.length)}界${cnNumber(REALMS.length)}境的来路与典籍 · 术数四门`"
+              />
 
-            <CharacterIndexRow
-              icon="refresh"
-              title="轮 回"
-              tone="violet"
-              action="观想"
-              badge="永久积累"
-              :sub="`道果 ${formatNum(player.reincarnation.daoFruit)} · 天赋 ${ownedTalents.length} 项`"
-              @click="rebirthOpen = true"
-            />
-          </div>
-        </section>
-      </div>
-    </section>
+              <CharacterIndexRow
+                icon="refresh"
+                title="轮 回"
+                tone="violet"
+                action="观想"
+                badge="永久积累"
+                :sub="`道果 ${formatNum(player.reincarnation.daoFruit)} · 天赋 ${ownedTalents.length} 项`"
+                @click="rebirthOpen = true"
+              />
+            </div>
+          </section>
+        </div>
+      </section>
+    </article>
 
     <IdentityDialog :open="identityOpen" @close="identityOpen = false" />
 
@@ -407,7 +457,7 @@ import { ACHIEVEMENTS } from "@/data/achievements";
 import { REALMS, WORLDS } from "@/data/realms";
 import { detectBuild } from "@/core/buildDetect";
 import { useLoadoutsStore } from "@/stores/loadouts";
-import { isSoftCapped, modOf } from "@/core/statsCalc";
+import { modOf } from "@/core/statsCalc";
 import {
   DIMINISH_KEYS,
   DIMINISH_WEIGHTS,
@@ -428,16 +478,23 @@ import TapNumber from "@/components/common/TapNumber.vue";
 import type { AnyStatKey } from "@/types";
 import { STAT_NAMES } from "@/data/statNames";
 import { achievementCounts, achievementStateOf } from "@/core/engineUnlocks";
-import SectionTitle from "@/components/common/SectionTitle.vue";
 import CharacterIndexRow from "@/components/character/CharacterIndexRow.vue";
+import CharacterChapterHead from "@/components/character/CharacterChapterHead.vue";
+import CharacterModifierRow from "@/components/character/CharacterModifierRow.vue";
 import CharacterSigil from "@/components/character/CharacterSigil.vue";
 import RebirthDialog from "@/components/character/RebirthDialog.vue";
 import BondDialog from "@/components/character/BondDialog.vue";
 import MentorDialog from "@/components/character/MentorDialog.vue";
 import IdentityDialog from "@/components/character/IdentityDialog.vue";
 import { useBondOverview } from "@/composables/useBondOverview";
+import {
+  characterChapters,
+  characterModifierDesk,
+  characterModifierSummary,
+} from "@/ui/characterDesk";
 
 const player = usePlayerStore();
+const [foundationChapter, modifiersChapter, catalogChapter] = characterChapters();
 /** 卦在身:时限制的一卦在跑 —— 界域志那一行要报出来(问卦就在那一册里) */
 const divinationOn = computed(() => !!player.activeDivination);
 
@@ -514,29 +571,15 @@ const powerFormulaText = computed(() =>
 /** 灵根的天然牌面(倾向文案,不含任何数值) */
 const tendencies = computed(() => tendencyLines(rootElements(player.linggen?.roots)));
 
-const MOD_KEYS: AnyStatKey[] = [
-  "cultivationSpeed",
-  "qiRegen",
-  "breakthroughRate",
-  "critRate",
-  "critDamage",
-  "damageBonus",
-  "damageReduction",
-  "dodgeRate",
-  "accuracy",
-  "shieldOnStart",
-  "luck",
-  "explorationSpeed",
-  "dropRate",
-];
-
-const modRows = computed(() =>
-  MOD_KEYS.map((k) => ({
-    key: k,
-    label: STAT_NAMES[k],
-    value: modOf(stats.value.mods, k),
-    capped: isSoftCapped(stats.value.mods, k),
-  })).filter((x) => x.value !== 0),
+const modifierGroups = computed(() =>
+  characterModifierDesk(stats.value.mods, stats.value.breakdown),
+);
+const modRows = computed(() => modifierGroups.value.flatMap((group) => group.rows));
+const modifierSummary = computed(() => characterModifierSummary(modifierGroups.value));
+const modifierFact = computed(() =>
+  modifierSummary.value.active > 0
+    ? `${modifierSummary.value.active} 项在身 · ${modifierSummary.value.groups} 类`
+    : "尚无行藏",
 );
 
 /** 面板上是否需要那句「进阶成功率只作用于小进阶」的边界说明 */
@@ -551,9 +594,14 @@ const breakdownKey = ref<AnyStatKey | null>(null);
 const breakdownRows = computed(() => {
   const key = breakdownKey.value;
   if (!key) return [];
-  return stats.value.breakdown
+  const rows = stats.value.breakdown
     .map((r) => ({ name: r.name, value: r.mods[key] ?? 0, onTop: r.onTop === true }))
     .filter((c) => c.value !== 0);
+  const max = Math.max(...rows.map((row) => Math.abs(row.value)), 0);
+  return rows.map((row) => ({
+    ...row,
+    share: max > 0 ? Math.abs(row.value) / max : 0,
+  }));
 });
 
 function toggleBreakdown(key: AnyStatKey): void {

@@ -86,20 +86,21 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
     expect(css).toContain(".folio-span-all");
   });
 
-  it("首页在宽案内自排双列仪表盘；人物页道躯总案与卷末目录跨两栏", () => {
+  it("首页在宽案内自排双列仪表盘；人物页三章续卷整册跨两栏", () => {
     const home = source("src/views/HomeView.vue");
     const homeCss = source("src/styles/pages/home.css");
+    const character = source("src/views/CharacterView.vue");
 
     expect(home).toContain('<div class="home-deck__board">');
     expect(home).not.toContain('class="folio-page--stack');
     expect(homeCss).toMatch(
       /@media \(min-width: 620px\) \{[\s\S]{0,900}?\.home-deck__board \{[\s\S]{0,120}?grid-template-columns: minmax\(0, 1\.03fr\) minmax\(0, 0\.97fr\)/,
     );
-    expect(source("src/views/CharacterView.vue")).toMatch(
-      /<section class="folio-span-all">\s*<SectionTitle title="道躯总案"/,
+    expect(character).toMatch(
+      /<article class="character-register folio-span-all" data-character-register>/,
     );
-    expect(source("src/views/CharacterView.vue")).toMatch(
-      /<section class="character-afterword folio-span-all" data-character-afterword>\s*<SectionTitle title="卷末目录"/,
+    expect(character).toMatch(
+      /<section\s+class="character-register__chapter character-afterword"\s+data-character-chapter="catalog"\s+data-character-afterword/,
     );
   });
 

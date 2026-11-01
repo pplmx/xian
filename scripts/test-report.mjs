@@ -284,6 +284,7 @@ const CATEGORIES = [
       "legacyDesk",
       "inventoryDesk",
       "equipmentDossier",
+      "characterDesk",
       "characterDossier",
       "dongfuDesk",
       "desktopSpine",

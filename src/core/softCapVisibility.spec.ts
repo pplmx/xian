@@ -31,6 +31,12 @@ function stripComments(src: string): string {
 const CHAR_VIEW_SRC = stripComments(
   readFileSync(resolve(__dirname, "../views/CharacterView.vue"), "utf8"),
 );
+const CHAR_DESK_SRC = stripComments(
+  readFileSync(resolve(__dirname, "../ui/characterDesk.ts"), "utf8"),
+);
+const CHAR_MODIFIER_ROW_SRC = stripComments(
+  readFileSync(resolve(__dirname, "../components/character/CharacterModifierRow.vue"), "utf8"),
+);
 
 const CAPPED_KEYS = Object.keys(SOFT_CAPS) as AnyStatKey[];
 
@@ -63,12 +69,13 @@ describe("软上限:机制本体", () => {
 describe("软上限:人物页真的标出来了", () => {
   it("凡有软阈值的属性,人物页都必须显示(否则无从标记)", () => {
     for (const key of CAPPED_KEYS) {
-      expect(CHAR_VIEW_SRC, `人物页漏了 ${key}`).toContain(`"${key}"`);
+      expect(CHAR_DESK_SRC, `人物页行藏装配漏了 ${key}`).toContain(`"${key}"`);
     }
   });
 
   it("标记与折扣率都走机制本体,不在视图里另写判据", () => {
-    expect(CHAR_VIEW_SRC).toContain("isSoftCapped(");
+    expect(CHAR_DESK_SRC).toContain("isSoftCapped(");
+    expect(CHAR_MODIFIER_ROW_SRC).toContain('class="character-modifier-row__cap">软</span>');
     expect(CHAR_VIEW_SRC).toContain("SOFT_CAPS[");
   });
 });

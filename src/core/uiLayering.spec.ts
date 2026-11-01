@@ -1461,25 +1461,32 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(restated, "角色已经管了 nowrap,调用点不许再抄一遍(两本账)").toEqual([]);
   });
 
-  it("人物页总案与属性行在极窄档放开列数 —— 九位数与属性名不许挤成竖排", () => {
+  it("人物页总案与行藏行在极窄档放开列数 —— 九位数与属性名不许挤成竖排", () => {
     /*
      * 195 CSS px(390 按 200%)实测:
      *   道躯总案常态三列会只剩几十像素,读数与占比挤成两行;极窄档把占比退到
      *     数值下方,名称与主值仍各占一行。总案本身在 720px 以下保持单列。
-     *   属性行两列时每列 56.5px,「进阶成功率」被压成 11px 宽一字一行(8 行里 7 行竖排)
-     *     —— 放开成单列,名字回到 44px 一行。
+     *   行藏行常态已是单列账;极窄档把来源数退到名称下方,主值与展开口仍各守一格。
      * 320 / 390 两档实测读数一分未动。
      */
     const ch = FILES.find((f) => f.path === "views/CharacterView.vue");
     expect(ch?.src, "道躯总案要定位得到 —— 定位不到这条就是空转").toContain(
       "data-character-dossier",
     );
-    const rows = /class="(grid grid-cols-2 gap-x-4 gap-y-1[^"]*)"/.exec(ch?.src ?? "")?.[1];
-    expect(rows, "属性行网格要定位得到").toBeTruthy();
-    expect(rows, "极窄档放开成单列").toContain("tinylens:grid-cols-1");
+    const row = readFileSync(
+      resolve(__dirname, "../components/character/CharacterModifierRow.vue"),
+      "utf-8",
+    );
+    expect(row, "行藏行要定位得到").toContain('class="character-modifier-row"');
     const css = readStyleCss();
     expect(css, "总案常态单列").toMatch(
       /\.character-dossier__grid \{[\s\S]{0,100}?grid-template-columns: minmax\(0, 1fr\)/,
+    );
+    expect(css, "行藏常态是单列账行").toMatch(
+      /\.character-modifier-row \{[\s\S]{0,240}?grid-template-columns: minmax\(0, 1fr\) auto auto/,
+    );
+    expect(css, "极窄档把来源退到下一行").toMatch(
+      /@media \(max-width: 220px\) \{[\s\S]{0,2600}?\.character-modifier-row \{[\s\S]{0,180}?grid-template-areas:/,
     );
     expect(css, "极窄档十位数与占比分两层").toMatch(
       /@media \(max-width: 220px\) \{[\s\S]{0,1800}?\.character-dossier__stat \{[\s\S]{0,100}?grid-template-columns: minmax\(0, 1fr\) auto/,
@@ -4700,25 +4707,39 @@ describe("人物页 · 可点行要说出自己是可点的", () => {
    *
    * 判据守三件事,每一件都是这次真改掉的东西:
    *   一 可点行带展开指示(›,选中时转 90° 并转朱砂);
-   *   二 选中行有底色(否则展开一块正文,看不出点的是哪一行);
-   *   三 那行提示只在**没展开**时出现(展开了,下面那块牌子本身就是答案)。
+   *   二 选中行有左侧朱砂短笔与极淡底(否则展开一块正文,看不出点的是哪一行);
+   *   三 来源拆卷只在**已展开**时出现,且能原地合上。
    */
   const char = (): string => FILES.find((f) => f.path === "views/CharacterView.vue")?.src ?? "";
 
   it("mod 行带展开指示,且有选中态", () => {
     const src = char();
-    expect(src, "mod 行要找得到 aria-expanded(读屏也要知道它展开没)").toContain(
-      ':aria-expanded="breakdownKey === row.key"',
+    const row = readFileSync(
+      resolve(__dirname, "../components/character/CharacterModifierRow.vue"),
+      "utf-8",
     );
-    expect(src, "选中行要染底").toContain("'bg-ink/5'");
-    expect(src, "展开指示要随选中态转 90°").toContain("rotate-90");
+    expect(row, "mod 行要找得到 aria-expanded(读屏也要知道它展开没)").toContain(
+      ':aria-expanded="active"',
+    );
+    expect(row, "选中行要有独立状态").toContain("'is-active': active");
+    expect(src, "展开行由当前拆卷键控制").toContain(
+      ':active="breakdownKey === row.key && breakdownRows.length > 0"',
+    );
+    const css = readStyleCss();
+    expect(css, "选中行留朱砂短笔与极淡底").toMatch(
+      /\.character-modifier-row\.is-active \{[\s\S]{0,180}?background:/,
+    );
+    expect(css, "展开指示要随选中态转 90°").toMatch(
+      /\.character-modifier-row\.is-active \.character-modifier-row__arrow \{[\s\S]{0,100}?transform: rotate\(90deg\)/,
+    );
   });
 
-  it("「点一行看它从哪来」不该在展开后还挂着", () => {
+  it("来源拆卷只在展开后出现,并能在原处合上", () => {
     const src = char();
-    // 提示那一行的 v-if 必须与 breakdownRows 挂钩;只写 modRows.length 就会永远显示
-    const hint = /<p[^>]*v-if="([^"]*)"[^>]*>\s*点一行看它从哪来/.exec(src)?.[1] ?? "";
-    expect(hint, "提示行的 v-if 要挂 !breakdownRows.length").toContain("!breakdownRows.length");
+    expect(src, "来源拆卷要挂稳定运行时落点").toContain("data-character-modifier-detail");
+    expect(src, "拆卷只在有来源行时铺开").toContain('v-if="breakdownRows.length"');
+    expect(src, "合上后清空当前拆卷键").toContain('@click="breakdownKey = null"');
+    expect(src, "每条来源要单独成行").toContain("data-character-modifier-source");
   });
 });
 

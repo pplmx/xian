@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 435 个 spec;本作自己那部分 355 个) |
+| `bun run test` | 全量用例(全量 436 个 spec;本作自己那部分 356 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -98,7 +98,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 435 个 spec(本作自己那部分 355 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 436 个 spec(本作自己那部分 356 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -252,6 +252,14 @@ error: Failed to resolve vite command: GenericFailure, Expected
 不再逐段套 `card-ink`。真浏览器门 `taskCultivationFold` 在 390 档核对恰好四章、章名与
 顺序、零卡壳、章内读数归石青、修为进度归石青,以及已启用的行动主键归朱砂且宽度不超过
 账行 72%;行动行本身不许整行铺底。结构判据由 `src/ui/cultivationDesk.spec.ts` 守住。
+
+道躯页现在也是一册「三章续卷」:道躯总案、行藏周天、卷末云笈由
+`src/ui/characterDesk.ts` 的同一份章序装配。行藏四组必须完整覆盖 `STAT_NAMES`,
+逐项只报非零 `finalStats.mods`,行内值、来源数与软上限都由同一份账现算;点开一行,
+`finalStats.breakdown` 的每笔来源就在原册里铺成带占比条的拆卷。旧的两列小字卡、
+`card-ink` 与展开后仍挂着的一句「点一行」都不许回来。真浏览器门在 390 核对三章顺序、
+四组行藏、零卡壳、来源拆卷开合与 28px 触达高度,再切到 1280 核对前两组真的并排;
+结构与全属性键覆盖由 `src/ui/characterDesk.spec.ts`、`characterDossier.spec.ts` 守住。
 
 名号与灵兽两册同样不再整册铺开:69 条终局清单各按 12 条一批、最多保留 24 条,
 续开、滑窗、回翻与焦点走同一套长列表规则。名号按「佩戴中 → 已拥有」排,灵兽按

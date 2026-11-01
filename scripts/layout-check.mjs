@@ -8972,6 +8972,179 @@ async function taskCultivationFold() {
   };
 }
 
+/** 道躯三章:总案、四类行藏与卷末云笈同住一册,来源拆卷可开可合 */
+async function taskCharacterFold() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    await seedSave(ctx, showcaseSlices("light"), "__characterFold");
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/character", 700);
+    checked += 1;
+    if (rendered === 0) {
+      failures.push("[390-character] 道躯页没渲染出来,三章判据没量到东西");
+    } else {
+      const fold = await page.evaluate(() => {
+        const register = document.querySelector("[data-character-register]");
+        const chapters = [...(register?.querySelectorAll("[data-character-chapter]") ?? [])];
+        const heads = [...(register?.querySelectorAll(".character-chapter-head") ?? [])];
+        const groups = [...(register?.querySelectorAll("[data-character-modifier-group]") ?? [])];
+        const rows = [...(register?.querySelectorAll("[data-character-modifier]") ?? [])];
+        const detail = register?.querySelector("[data-character-modifier-detail]");
+        return {
+          chapters: chapters.length,
+          chapterKeys: chapters.map((chapter) => chapter.getAttribute("data-character-chapter")),
+          heads: heads.length,
+          chapterTitles: heads.map((head) =>
+            (head.querySelector(".character-chapter-head__title")?.textContent || "").trim(),
+          ),
+          cardShells: register?.querySelectorAll(".card-ink").length ?? -1,
+          groups: groups.length,
+          groupKeys: groups.map((group) => group.getAttribute("data-character-modifier-group")),
+          rows: rows.length,
+          detailBefore: Boolean(detail),
+          groupTops: groups.map((group) => Math.round(group.getBoundingClientRect().top)),
+        };
+      });
+
+      checked += 1;
+      if (fold.chapters !== 3 || fold.heads !== 3) {
+        failures.push(
+          `[390-character] 道躯续卷应恰有三章三个章首,实见 ${fold.chapters} / ${fold.heads}`,
+        );
+      }
+      if (
+        fold.chapterKeys.join("|") !== "foundation|modifiers|catalog" ||
+        fold.chapterTitles.join("|") !== "道躯总案|行藏周天|卷末云笈"
+      ) {
+        failures.push(
+          `[390-character] 三章顺序或章名漂了:${fold.chapterKeys.join(" / ")} · ` +
+            fold.chapterTitles.join(" / "),
+        );
+      }
+      if (fold.cardShells !== 0) {
+        failures.push(`[390-character] 道躯续卷里仍套着 ${fold.cardShells} 张 card-ink`);
+      }
+      if (fold.groups !== 4 || fold.groupKeys.join("|") !== "practice|journey|combat|craft") {
+        failures.push(
+          `[390-character] 行藏没有分成修行、历练、斗法、百艺四组:${fold.groupKeys.join(" / ")}`,
+        );
+      }
+      if (fold.rows < 8) {
+        failures.push(`[390-character] 行藏账只铺出 ${fold.rows} 项,来源拆解失去入口`);
+      }
+      if (fold.detailBefore) {
+        failures.push("[390-character] 未点行时就摊开了来源拆卷");
+      }
+      if (fold.groupTops.some((top, index) => index > 0 && top <= fold.groupTops[index - 1])) {
+        failures.push(`[390-character] 手机四组行藏没有按序单列:${fold.groupTops.join(" / ")}`);
+      }
+
+      const probe = page.locator('[data-character-modifier="cultivationSpeed"]').first();
+      checked += 1;
+      if ((await probe.count()) === 0) {
+        failures.push("[390-character] 修炼速度行没找到,来源拆卷判据空转");
+      } else {
+        await probe.click();
+        const opened = await page
+          .waitForSelector("[data-character-modifier-detail]", { timeout: 2000 })
+          .then(() => true)
+          .catch(() => false);
+        const detail = await page.evaluate(() => {
+          const row = document.querySelector('[data-character-modifier="cultivationSpeed"]');
+          const panel = document.querySelector("[data-character-modifier-detail]");
+          return {
+            expanded: row?.getAttribute("aria-expanded"),
+            active: row?.classList.contains("is-active"),
+            key: panel?.getAttribute("data-character-modifier-detail-key"),
+            sources: panel?.querySelectorAll("[data-character-modifier-source]").length ?? 0,
+            text: (panel?.textContent || "").replace(/\s+/g, " ").trim(),
+          };
+        });
+        if (
+          !opened ||
+          detail.expanded !== "true" ||
+          !detail.active ||
+          detail.key !== "cultivationSpeed" ||
+          detail.sources < 2 ||
+          !/来源明细/.test(detail.text)
+        ) {
+          failures.push(`[390-character] 修炼速度来源没有完整摊开:${JSON.stringify(detail)}`);
+        }
+
+        await page.locator("[data-character-modifier-close]").click();
+        const closed = await page
+          .waitForFunction(
+            () =>
+              !document.querySelector("[data-character-modifier-detail]") &&
+              document
+                .querySelector('[data-character-modifier="cultivationSpeed"]')
+                ?.getAttribute("aria-expanded") === "false",
+            { timeout: 2000 },
+          )
+          .then(() => true)
+          .catch(() => false);
+        if (!closed) failures.push("[390-character] 来源拆卷合上后没有收回原行");
+      }
+
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await settleVisuals(page);
+      const desktopGroups = await page.evaluate(() => {
+        const groups = [...document.querySelectorAll("[data-character-modifier-group]")].slice(
+          0,
+          2,
+        );
+        return groups.map((group) => {
+          const rect = group.getBoundingClientRect();
+          return {
+            left: Math.round(rect.left),
+            right: Math.round(rect.right),
+            top: Math.round(rect.top),
+          };
+        });
+      });
+      checked += 1;
+      if (
+        desktopGroups.length !== 2 ||
+        Math.abs(desktopGroups[0].top - desktopGroups[1].top) > 2 ||
+        desktopGroups[0].right > desktopGroups[1].left
+      ) {
+        failures.push(`[1280-character] 行藏四组没有铺成双栏:${JSON.stringify(desktopGroups)}`);
+      }
+
+      if (SHOTS) {
+        await page.setViewportSize({ width: 390, height: 3000 });
+        await settleVisuals(page);
+        await page
+          .locator("[data-character-register]")
+          .screenshot({ path: join(SHOTS_DIR, "390-character-register.png") });
+      }
+    }
+    if (pageErrors.length)
+      failures.push(`[390-character] 道躯续卷页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return {
+    failures,
+    checked,
+    contrastFails: [],
+    pixelContrastFails: [],
+    zoomFails: [],
+  };
+}
+
 /** 天界试炼续卷:四章、八条试炼账行、四步挑战书与桌面双栏 */
 async function taskCelestialTrialFold() {
   const failures = [];
@@ -15861,6 +16034,7 @@ const TASKS = [
   ["洞府营造的账目", taskDongfuBuild],
   ["洞府首屏的营造优先", taskDongfuFold],
   ["修行续卷的四章与行动层", taskCultivationFold],
+  ["道躯三章与行藏拆卷", taskCharacterFold],
   ["天界试炼续卷的四章与八行", taskCelestialTrialFold],
   ["界域志首屏的此刻优先", taskCodexFold],
   ["成就谱首屏的眼下可追", taskAchievementFold],
