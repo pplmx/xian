@@ -212,6 +212,14 @@ error: Failed to resolve vite command: GenericFailure, Expected
 远征、试炼与道痕继续按激活册互斥挂载,逐项缺口与倒计时仍由各面板自报。总账由
 `core/celestialOverview` 一处汇总,结构与事实源由 `celestialDesk.spec` 守住。
 
+天界试炼域现在收成一册「天界试炼续卷」:今日天道、变数、八场试炼与挑战书四章
+沿同一卷面续排,外层与账行不再套同权卡。八场试炼仍逐项读 `TRIALS`,每行保留场名、
+最佳回合、规则、门票与首破赏;挑战书按择界 / 叠变数 / 立契 / 命名四步摊开,变数
+满员置灰与手机上的已选正文都照旧。真浏览器门 `taskCelestialTrialFold` 在 390 核对
+四章顺序、八条互异账行、零卡壳、章内读数归石青、试炼主键归朱砂且不宽于账行 72%,
+四步挑战书与开口选项;1280 再核对八行确实两两并读。结构判据由
+`src/ui/celestialDesk.spec.ts` 守住。
+
 界域志六册现在共用一张开口长账:外层只留上下账线,`data-realm-codex-folio` 只换
 `data-chapter`,典籍、周易、紫微、星象与奇门不再逐段套 `card-ink`;章节头后以
 `realm-codex-section` 和分段线续排,重复条目退成账行。620px 起典籍题名与释文、

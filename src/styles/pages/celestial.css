@@ -337,6 +337,441 @@
   .celestial-route-choice {
     border-block: 1px solid rgb(var(--color-ink-rgb) / 0.14);
   }
+  /*
+   * 试炼续卷 —— 今日题、变数、八场试炼与挑战书同住一册。
+   *
+   * 八场试炼不再各套一张同权卡：场名、规则、纪录与代价沿账行续排，
+   * 挑战书也从两排裸芯片收成四个有题头的步骤。可点的行动只留朱砂短笔，
+   * 难度、可行流派与章内纪录回石青；旧卡纸的顶线、底色与圆角一并撤掉。
+   */
+  .celestial-trial-ledger {
+    margin-top: 0.35rem;
+    overflow: hidden;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.2);
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.11);
+    border-inline: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .celestial-trial-chapter {
+    min-width: 0;
+    padding: 0 0.08rem 0.72rem;
+  }
+  .celestial-trial-chapter + .celestial-trial-chapter {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+  }
+  .celestial-chapter-head {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.38rem minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 0.18rem 0.55rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    padding: 0.72rem 0.08rem 0.54rem;
+  }
+  .celestial-chapter-head__index {
+    display: grid;
+    width: 1.38rem;
+    height: 1.38rem;
+    place-items: center;
+    border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.7);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  .celestial-chapter-head__copy {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.08rem 0.5rem;
+  }
+  .celestial-chapter-head__title {
+    margin: 0;
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    line-height: 1.35;
+  }
+  .celestial-chapter-head__hint {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .celestial-chapter-head__fact {
+    justify-self: end;
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+    text-align: right;
+  }
+  .celestial-trial-eyebrow {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.14em;
+    line-height: 1.4;
+  }
+  .celestial-trial-daily,
+  .celestial-trial-mutation {
+    padding: 0.58rem 0.1rem 0.08rem;
+  }
+  .celestial-trial-daily__head {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    gap: 0.48rem 0.8rem;
+  }
+  .celestial-trial-daily__identity,
+  .celestial-trial-row__copy {
+    min-width: 0;
+  }
+  .celestial-trial-daily__world {
+    margin-top: 0.04rem;
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    letter-spacing: 0.14em;
+    line-height: 1.35;
+  }
+  .celestial-trial-daily__meta {
+    margin-top: 0.08rem;
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .celestial-trial-daily__omens {
+    display: grid;
+    gap: 0;
+    margin-top: 0.48rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .celestial-trial-omen {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1rem minmax(0, auto) minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0.12rem 0.42rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.065);
+    padding: 0.34rem 0.04rem;
+    color: rgb(var(--color-violet-ink-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .celestial-trial-omen > span:first-child {
+    color: rgb(var(--color-violet-ink-rgb));
+    font-family: var(--font-kai);
+    text-align: center;
+  }
+  .celestial-trial-omen__text {
+    color: rgb(var(--color-ink-faint-rgb));
+    overflow-wrap: anywhere;
+  }
+  .celestial-trial-omen--pact,
+  .celestial-trial-omen--pact > span:first-child {
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  .celestial-trial-empty {
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    padding: 0.7rem 0.2rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-body);
+    line-height: 1.65;
+  }
+  .celestial-trial-action,
+  .celestial-challenge-option {
+    display: inline-flex;
+    min-height: 32px;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    border: 0;
+    border-bottom: 1px solid rgb(var(--color-cinnabar-rgb) / 0.36);
+    border-radius: 0;
+    background: rgb(var(--color-cinnabar-rgb) / 0.035);
+    padding: 0.34rem 0.66rem;
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.06em;
+    line-height: 1.35;
+    text-align: center;
+    white-space: normal;
+    transition:
+      background-color 0.12s ease,
+      color 0.12s ease,
+      transform 0.12s ease;
+  }
+  .celestial-trial-action {
+    width: fit-content;
+    max-width: 100%;
+    justify-self: start;
+  }
+  .celestial-trial-action--primary {
+    border-bottom-color: rgb(var(--color-cinnabar-rgb) / 0.68);
+    background: rgb(var(--color-cinnabar-rgb) / 0.065);
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  .celestial-trial-action:active:not(:disabled),
+  .celestial-challenge-option:active:not(:disabled) {
+    background: rgb(var(--color-cinnabar-rgb) / 0.1);
+    transform: scale(0.985);
+  }
+  .celestial-trial-action:disabled,
+  .celestial-challenge-option:disabled {
+    border-bottom-color: rgb(var(--color-ink-rgb) / 0.12);
+    background: transparent;
+    color: rgb(var(--color-ink-faint-rgb));
+    cursor: not-allowed;
+  }
+  .celestial-trial-mutation__rows {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .celestial-trial-actions,
+  .celestial-challenge-actions {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.38rem 0.62rem;
+    margin-top: 0.58rem;
+  }
+  .celestial-trial-copy {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-body);
+    line-height: 1.65;
+  }
+  .celestial-trial-mutation--empty {
+    padding-bottom: 0.16rem;
+  }
+  .celestial-trial-mutation--empty .celestial-trial-action {
+    margin-top: 0.48rem;
+  }
+  .celestial-trial-roster {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+  }
+  .celestial-trial-row {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.9rem minmax(0, 1fr);
+    align-items: start;
+    gap: 0.3rem 0.58rem;
+    border: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 0.62rem 0.1rem 0.66rem;
+  }
+  .celestial-trial-row__seal {
+    display: grid;
+    width: 1.72rem;
+    min-height: 2.15rem;
+    grid-row: 1 / span 2;
+    place-items: start center;
+    border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.55);
+    padding-top: 0.12rem;
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    line-height: 1.25;
+  }
+  .celestial-trial-row__head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.12rem 0.55rem;
+  }
+  .celestial-trial-row__name {
+    margin: 0;
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    line-height: 1.4;
+  }
+  .celestial-trial-row__record {
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .celestial-trial-row__desc {
+    margin-top: 0.18rem;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-body);
+    line-height: 1.62;
+    overflow-wrap: anywhere;
+  }
+  .celestial-trial-row__rules {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 0.08rem 0.62rem;
+    margin-top: 0.22rem;
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .celestial-trial-row__rules > span::before {
+    content: "◇ ";
+    color: rgb(var(--color-qing-rgb) / 0.72);
+  }
+  .celestial-trial-row__decision {
+    display: flex;
+    min-width: 0;
+    grid-column: 2;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.3rem 0.6rem;
+    margin-top: 0.18rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.065);
+    padding-top: 0.34rem;
+  }
+  .celestial-trial-row__cost {
+    min-width: 0;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .celestial-trial-row__decision .celestial-trial-action {
+    flex: none;
+    justify-self: end;
+  }
+  .celestial-trial-secret {
+    margin-top: 0.36rem;
+  }
+  .celestial-trial-secret > .card-ink {
+    border-top: 0;
+    background: transparent;
+  }
+  .celestial-challenge-form {
+    padding: 0.58rem 0.1rem 0.08rem;
+  }
+  .celestial-challenge-step {
+    margin-top: 0.58rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    padding-top: 0.5rem;
+  }
+  .celestial-challenge-step__head {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.12rem minmax(0, auto) minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0.16rem 0.46rem;
+  }
+  .celestial-challenge-step__ordinal {
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    text-align: center;
+  }
+  .celestial-challenge-step__head h3 {
+    margin: 0;
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    line-height: 1.45;
+  }
+  .celestial-challenge-step__head > span:last-child {
+    min-width: 0;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .celestial-challenge-options {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 0.22rem 0.5rem;
+    margin-top: 0.38rem;
+  }
+  .celestial-challenge-option {
+    min-width: 0;
+    justify-content: flex-start;
+    border-bottom-color: rgb(var(--color-ink-rgb) / 0.2);
+    background: transparent;
+    color: rgb(var(--color-ink-soft-rgb));
+    letter-spacing: 0.04em;
+    text-align: left;
+  }
+  .celestial-challenge-option[aria-pressed="true"] {
+    border-bottom-color: currentColor;
+    background: rgb(var(--color-ink-rgb) / 0.025);
+  }
+  .celestial-challenge-selection {
+    margin-top: 0.34rem;
+    border-left: 1px solid rgb(var(--color-cinnabar-rgb) / 0.3);
+    padding-left: 0.48rem;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+  .celestial-challenge-selection--mutation {
+    border-left-color: rgb(var(--color-violet-ink-rgb) / 0.32);
+    color: rgb(var(--color-violet-ink-rgb));
+  }
+  .celestial-challenge-name {
+    width: 100%;
+    min-height: 36px;
+    margin-top: 0.38rem;
+    border: 0;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.2);
+    border-radius: 0;
+    background: transparent;
+    padding: 0.35rem 0.08rem;
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: 16px;
+    outline: none;
+  }
+  .celestial-challenge-name:focus {
+    border-bottom-color: rgb(var(--color-cinnabar-rgb) / 0.5);
+  }
+  .celestial-challenge-verdict {
+    margin-top: 0.58rem;
+    border-block: 1px solid rgb(var(--color-qing-rgb) / 0.24);
+    padding: 0.46rem 0.12rem;
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+    line-height: 1.6;
+  }
+  .celestial-challenge-verdict p {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.2rem 0.7rem;
+  }
+  .celestial-challenge-verdict strong {
+    color: rgb(var(--color-gold-ink-rgb));
+    font-weight: 600;
+  }
+  .celestial-challenge-verdict.is-blocked {
+    border-block-color: rgb(var(--color-cinnabar-rgb) / 0.26);
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .celestial-trial-action:hover:not(:disabled),
+    .celestial-challenge-option:hover:not(:disabled) {
+      background: rgb(var(--color-cinnabar-rgb) / 0.075);
+    }
+  }
   @media (min-width: 960px) {
     .celestial-dao__columns {
       grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
@@ -346,13 +781,25 @@
     .celestial-gateways {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .celestial-trial-roster {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 1.1rem;
+    }
+
+    .celestial-trial-row:nth-child(even) {
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+      padding-left: 0.92rem;
+    }
   }
   @media (max-width: 220px) {
     .celestial-source,
     .celestial-book > section,
     .celestial-dao__card,
     .celestial-dao__choice,
-    .celestial-gateway {
+    .celestial-gateway,
+    .celestial-trial-chapter,
+    .celestial-trial-row {
       padding-inline: 0.62rem;
     }
 
@@ -379,6 +826,49 @@
 
     .celestial-gateway__arrow {
       display: none;
+    }
+
+    .celestial-chapter-head {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .celestial-chapter-head__fact {
+      grid-column: 2;
+      justify-self: start;
+      text-align: left;
+    }
+
+    .celestial-trial-row {
+      grid-template-columns: 1.5rem minmax(0, 1fr);
+    }
+
+    .celestial-trial-row__seal {
+      width: 1.4rem;
+    }
+
+    .celestial-trial-row__decision {
+      grid-column: 1 / -1;
+    }
+
+    .celestial-trial-row__decision .celestial-trial-action {
+      width: 100%;
+    }
+
+    .celestial-challenge-step__head {
+      grid-template-columns: 1rem minmax(0, 1fr);
+    }
+
+    .celestial-challenge-step__head > span:last-child {
+      grid-column: 2;
+    }
+
+    .celestial-challenge-options {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .celestial-challenge-option {
+      width: 100%;
     }
   }
 }

@@ -202,6 +202,9 @@
  *   七十一 兵解往生先核门槛与底账:道果、天赋、留折散计数与主要损失先于
  *      去留全账;全账只读轮回结算的同一份继承表,功法回一层与法宝归尘说在落子前。
  *      390 与 195(200% 缩放)下门槛、摘要与主按钮都不许横溢或挤成竖排。
+ *   七十二 天界试炼收成一册四章:今日天道、变数、八场试炼与挑战书沿同一卷面续排。
+ *      八场试炼各成一条账行,不再套同权卡;挑战书按择界 / 叠变数 / 立契 / 命名
+ *      四步摊开,不裸排两行芯片。960px 起八行并成两栏,390 仍单列读全。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -8969,6 +8972,221 @@ async function taskCultivationFold() {
   };
 }
 
+/** 天界试炼续卷:四章、八条试炼账行、四步挑战书与桌面双栏 */
+async function taskCelestialTrialFold() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    slices.endgame = {
+      ...slices.endgame,
+      endgameTutorialSeen: true,
+      resourceDialogSeen: true,
+    };
+    await seedSave(ctx, slices, "__celestialTrialFold");
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/celestial?tab=trial", 900);
+    checked += 1;
+    if (rendered === 0) {
+      failures.push("[390-trial] 天界试炼册没渲染出来,续卷判据没量到东西");
+    } else {
+      const tutorialClose = page.getByRole("button", { name: "知道了" }).first();
+      if ((await tutorialClose.count()) > 0) await tutorialClose.click().catch(() => {});
+      const leftover = await clearOverlays(page);
+      if (leftover.length) {
+        failures.push(`[390-trial] 量试炼续卷前还开着浮层:${leftover.join("、")}`);
+      }
+      const readFold = () =>
+        page.evaluate(() => {
+          const ledger = document.querySelector("[data-celestial-trial-ledger]");
+          const chapters = [...(ledger?.querySelectorAll("[data-celestial-trial-chapter]") ?? [])];
+          const heads = [...(ledger?.querySelectorAll(".celestial-chapter-head") ?? [])];
+          const roster = ledger?.querySelector(".celestial-trial-roster");
+          const rows = [...(roster?.querySelectorAll("[data-celestial-trial]") ?? [])];
+          const options = [...(ledger?.querySelectorAll(".celestial-challenge-option") ?? [])];
+          const actionRows = rows.map((row) => {
+            const button = row.querySelector("[data-celestial-trial-action]");
+            const rowRect = row.getBoundingClientRect();
+            const buttonRect = button?.getBoundingClientRect();
+            const style = getComputedStyle(row);
+            return {
+              id: row.getAttribute("data-celestial-trial"),
+              top: Math.round(rowRect.top),
+              width: rowRect.width,
+              radius: Number.parseFloat(style.borderRadius),
+              shadow: style.boxShadow,
+              background: style.backgroundColor,
+              buttonRatio:
+                buttonRect && rowRect.width > 0 ? buttonRect.width / rowRect.width : null,
+              buttonColor: button ? getComputedStyle(button).color : "missing",
+              disabled: button?.hasAttribute("disabled") ?? true,
+            };
+          });
+          const probe = document.createElement("span");
+          probe.style.color = "rgb(var(--color-qing-rgb))";
+          document.body.append(probe);
+          const qing = getComputedStyle(probe).color;
+          probe.style.color = "rgb(var(--color-cinnabar-rgb))";
+          const cinnabar = getComputedStyle(probe).color;
+          probe.remove();
+          return {
+            chapterKeys: chapters.map((chapter) =>
+              chapter.getAttribute("data-celestial-trial-chapter"),
+            ),
+            chapterTitles: heads.map((head) =>
+              (head.querySelector(".celestial-chapter-head__title")?.textContent || "").trim(),
+            ),
+            chapterFactColors: heads.map((head) => {
+              const fact = head.querySelector(".celestial-chapter-head__fact");
+              return fact ? getComputedStyle(fact).color : "missing";
+            }),
+            cardShells:
+              ledger?.querySelectorAll(
+                ".celestial-trial-chapter.card-ink, .celestial-trial-roster .card-ink",
+              ).length ?? -1,
+            rows: actionRows.length,
+            rowIds: actionRows.map((row) => row.id),
+            rowTops: actionRows.map((row) => row.top),
+            rowRadius: actionRows.map((row) => row.radius),
+            rowShadows: actionRows.map((row) => row.shadow),
+            rowBackgrounds: actionRows.map((row) => row.background),
+            buttonRatios: actionRows.map((row) => row.buttonRatio),
+            buttonColors: actionRows.map((row) => row.buttonColor),
+            inactiveButtons: actionRows.filter((row) => row.disabled).length,
+            challengeSteps: ledger?.querySelectorAll(".celestial-challenge-step").length ?? -1,
+            challengeOptions: options.length,
+            optionPills: options.filter((option) => {
+              const style = getComputedStyle(option);
+              return (
+                Number.parseFloat(style.borderRadius) !== 0 ||
+                Number.parseFloat(style.borderTopWidth) > 0
+              );
+            }).length,
+            columns: roster
+              ? getComputedStyle(roster).gridTemplateColumns.trim().split(/\s+/).length
+              : -1,
+            qing,
+            cinnabar,
+          };
+        });
+
+      const mobile = await readFold();
+      checked += 1;
+      if (
+        mobile.chapterKeys.join("|") !== "daily|mutation|trials|challenge" ||
+        mobile.chapterTitles.join("|") !== "今日天道|天道变数|天道试炼|天道挑战书"
+      ) {
+        failures.push(
+          `[390-trial] 四章顺序或章名漂了:${mobile.chapterKeys.join(" / ")} · ` +
+            mobile.chapterTitles.join(" / "),
+        );
+      }
+      if (mobile.rows !== 8 || new Set(mobile.rowIds).size !== 8) {
+        failures.push(
+          `[390-trial] 应恰有八条互异试炼账行,实见 ${mobile.rows} 条 / ${new Set(mobile.rowIds).size} 个 id`,
+        );
+      }
+      if (mobile.rowTops[1] <= mobile.rowTops[0]) {
+        failures.push("[390-trial] 手机档的试炼行没有逐条顺读");
+      }
+      if (mobile.cardShells !== 0) {
+        failures.push(`[390-trial] 试炼续卷里仍套着 ${mobile.cardShells} 张同权卡纸`);
+      }
+      if (
+        mobile.rowRadius.some((radius) => radius !== 0) ||
+        mobile.rowShadows.some((shadow) => shadow !== "none") ||
+        mobile.rowBackgrounds.some((background) => background !== "rgba(0, 0, 0, 0)")
+      ) {
+        failures.push(
+          `[390-trial] 试炼账行又长出卡壳:${JSON.stringify({
+            radius: mobile.rowRadius,
+            shadow: mobile.rowShadows,
+            background: mobile.rowBackgrounds,
+          })}`,
+        );
+      }
+      if (
+        mobile.buttonRatios.some((ratio) => ratio === null || ratio > 0.72) ||
+        mobile.buttonColors.some((color) => color !== mobile.cinnabar) ||
+        mobile.inactiveButtons !== 0
+      ) {
+        failures.push(
+          `[390-trial] 试炼主键没有收成朱砂短笔:${JSON.stringify({
+            ratios: mobile.buttonRatios,
+            colors: mobile.buttonColors,
+            disabled: mobile.inactiveButtons,
+          })}`,
+        );
+      }
+      if (
+        mobile.challengeSteps !== 4 ||
+        mobile.challengeOptions === 0 ||
+        mobile.optionPills !== 0
+      ) {
+        failures.push(
+          `[390-trial] 挑战书没有收成四步开口选项:${JSON.stringify({
+            steps: mobile.challengeSteps,
+            options: mobile.challengeOptions,
+            pills: mobile.optionPills,
+          })}`,
+        );
+      }
+      if (mobile.chapterFactColors.some((color) => color !== mobile.qing)) {
+        failures.push(`[390-trial] 章内读数没有回到石青:${mobile.chapterFactColors.join(" / ")}`);
+      }
+      if (mobile.columns !== 1) {
+        failures.push(`[390-trial] 手机档试炼名录应为单列,实见 ${mobile.columns} 列`);
+      }
+
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await settleVisuals(page);
+      const desktop = await readFold();
+      checked += 1;
+      if (desktop.columns !== 2) {
+        failures.push(`[1280-trial] 桌面档试炼名录应为两栏,实见 ${desktop.columns} 列`);
+      }
+      if (
+        desktop.rowTops.length !== 8 ||
+        desktop.rowTops[0] !== desktop.rowTops[1] ||
+        desktop.rowTops[2] <= desktop.rowTops[0]
+      ) {
+        failures.push(`[1280-trial] 八条试炼没有两两并读:${desktop.rowTops.join(" / ")}`);
+      }
+
+      if (SHOTS) {
+        await page
+          .locator("[data-celestial-trial-ledger]")
+          .screenshot({ path: join(SHOTS_DIR, "1280-celestial-trial-register.png") });
+        await page.setViewportSize({ width: 390, height: 2600 });
+        await settleVisuals(page);
+        await page
+          .locator("[data-celestial-trial-ledger]")
+          .screenshot({ path: join(SHOTS_DIR, "390-celestial-trial-register.png") });
+      }
+    }
+    if (pageErrors.length) {
+      failures.push(`[390-trial] 试炼续卷页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return {
+    failures,
+    checked,
+    contrastFails: [],
+    pixelContrastFails: [],
+    zoomFails: [],
+  };
+}
+
 /** 界域志首屏的此刻优先:当前境先到眼前,四界卷目按需展开 */
 async function taskCodexFold() {
   const failures = [];
@@ -15643,6 +15861,7 @@ const TASKS = [
   ["洞府营造的账目", taskDongfuBuild],
   ["洞府首屏的营造优先", taskDongfuFold],
   ["修行续卷的四章与行动层", taskCultivationFold],
+  ["天界试炼续卷的四章与八行", taskCelestialTrialFold],
   ["界域志首屏的此刻优先", taskCodexFold],
   ["成就谱首屏的眼下可追", taskAchievementFold],
   ["藏珍谱首屏的新得优先", taskCollectionFold],

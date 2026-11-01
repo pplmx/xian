@@ -121,6 +121,34 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
     expect(expedition, "远征择路也改开口行").toContain('class="celestial-route-choice');
   });
 
+  it("试炼域也收成一册四章,八场试炼与挑战书不再各套同权卡", () => {
+    const trial = source("src/components/celestial/TrialPanel.vue");
+    const css = source("src/styles/pages/celestial.css");
+    const ledger = css.match(/\.celestial-trial-ledger\s*\{([\s\S]*?)\n  \}/)?.[1] ?? "";
+
+    expect(trial, "试炼正文要有一册连续续卷").toContain(
+      'class="celestial-trial-ledger" data-celestial-trial-ledger',
+    );
+    expect(
+      [...trial.matchAll(/data-celestial-trial-chapter="([^"]+)"/g)].map((match) => match[1]),
+      "四章必须按今日天道、变数、试炼、挑战书续排",
+    ).toEqual(["daily", "mutation", "trials", "challenge"]);
+    expect(trial, "章首走统一组件").toContain("<CelestialChapterHead");
+    expect(trial, "今日题、变数与挑战书都要有运行时落点").toContain("data-celestial-daily");
+    expect(trial).toContain("data-celestial-mutation");
+    expect(trial).toContain("data-celestial-challenge");
+    expect(trial, "八场试炼仍逐项读取 TRIALS").toContain('v-for="trial in TRIALS"');
+    expect(trial, "每场试炼要有稳定运行时行").toContain(':data-celestial-trial="trial.id"');
+    expect(trial, "试炼正文不再套旧卡壳").not.toContain("card-ink");
+    expect(ledger, "续卷外层不封四边框").toContain("border-inline: 0;");
+    expect(ledger, "续卷外层不铺卡底").toContain("background: transparent;");
+    expect(ledger, "续卷外层不投卡影").toContain("box-shadow: none;");
+    expect(css, "试炼名录要有稳定的连续行").toContain(".celestial-trial-row");
+    expect(css).toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]*?\.celestial-trial-roster\s*\{[\s\S]{0,120}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
+    );
+  });
+
   it("手机总账两栏,960 起四栏并读,220 以下星图读数与门径退单列", () => {
     const css = source("src/style.css");
     const start = css.indexOf(".celestial-pulse {");
