@@ -18301,6 +18301,9 @@ async function taskRecipeListOverflow() {
       .first()
       .click({ timeout: 5000 });
     await page.locator("[data-recipe-total]").first().waitFor({ state: "visible", timeout: 10000 });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await settleVisuals(page);
+    await checkRecipeLedger("390");
     await page.setViewportSize({ width: 195, height: 422 });
     await settleVisuals(page);
 
@@ -18318,6 +18321,60 @@ async function taskRecipeListOverflow() {
           searchFocused: document.activeElement?.getAttribute("aria-label") === "搜方名",
         };
       });
+    }
+
+    async function readRecipeLedger() {
+      return page.evaluate(() => {
+        const ledger = document.querySelector("[data-recipe-ledger]");
+        if (!ledger) return null;
+        const style = getComputedStyle(ledger);
+        const rows = [...ledger.querySelectorAll("[data-recipe-row]")];
+        const tries = rows
+          .map((row) => {
+            const el = row.querySelector("[data-recipe-tries]");
+            if (!el) return null;
+            const range = document.createRange();
+            range.selectNodeContents(el);
+            return {
+              text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+              lines: new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size,
+              clipped: el.scrollWidth > el.clientWidth + 1,
+            };
+          })
+          .filter(Boolean);
+        return {
+          borderTop: Number.parseFloat(style.borderTopWidth),
+          borderRight: Number.parseFloat(style.borderRightWidth),
+          borderBottom: Number.parseFloat(style.borderBottomWidth),
+          borderLeft: Number.parseFloat(style.borderLeftWidth),
+          radius: Number.parseFloat(style.borderRadius),
+          background: style.backgroundColor,
+          cards: ledger.querySelectorAll(".card-ink").length,
+          rows: rows.length,
+          tries,
+        };
+      });
+    }
+
+    async function checkRecipeLedger(tag) {
+      checked += 1;
+      const ledger = await readRecipeLedger();
+      if (
+        !ledger ||
+        ledger.borderTop !== 1 ||
+        ledger.borderBottom !== 1 ||
+        ledger.borderRight !== 0 ||
+        ledger.borderLeft !== 0 ||
+        ledger.radius !== 0 ||
+        ledger.background !== "rgba(0, 0, 0, 0)" ||
+        ledger.cards !== 0 ||
+        ledger.rows < 1
+      ) {
+        failures.push(`[${tag}] 丹方册又套回内层卡壳:${JSON.stringify(ledger)}`);
+      }
+      if (!ledger?.tries.length || ledger.tries.some((row) => row.lines > 1 || row.clipped)) {
+        failures.push(`[${tag}] 丹方平均炉数没有完整落在单行:${JSON.stringify(ledger?.tries)}`);
+      }
     }
 
     async function waitForShown(shown) {
@@ -18403,6 +18460,7 @@ async function taskRecipeListOverflow() {
     checked += 1;
     const layoutProblems = problemsOf(await measurePage(page));
     if (layoutProblems.length) failures.push(`[195] 丹方册 → ${layoutProblems.join(" / ")}`);
+    await checkRecipeLedger("195");
 
     await more.click({ timeout: 5000 });
     await waitForShown(12);

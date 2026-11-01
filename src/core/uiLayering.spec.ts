@@ -1106,6 +1106,14 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(dialog?.src, "只循环当前窗口,不许再整册铺开").toMatch(
       /v-for="r in filteredRecipePage\.visible"/,
     );
+    expect(dialog?.src, "丹方册要收成一册连续长账").toContain("data-recipe-ledger");
+    expect(dialog?.src, "丹方账只留上下账线与行间线").toMatch(
+      /class="[^"]*divide-y[^"]*border-y[^"]*"[\s\S]{0,100}?data-recipe-ledger/,
+    );
+    expect(dialog?.src, "丹方逐张不再套内层纸卡").not.toContain("card-ink");
+    expect(dialog?.src, "平均炉数要独占一行且不拆行").toMatch(
+      /class="[^"]*whitespace-nowrap[^"]*"[\s\S]{0,100}?data-recipe-tries/,
+    );
     for (const attr of ["total", "shown", "start"]) {
       expect(dialog?.src, `丹方册要暴露 ${attr} 读数给运行时门`).toContain(`data-recipe-${attr}`);
     }

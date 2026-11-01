@@ -71,118 +71,130 @@
         没有叫「{{ recipeQuery.trim() }}」的方子
       </p>
       <div
-        v-for="r in filteredRecipePage.visible"
-        :key="r.def.id"
-        :data-recipe-row="r.def.id"
-        tabindex="-1"
-        class="card-ink px-3.5 py-2.5"
+        v-if="filteredRecipePage.visible.length"
+        class="divide-y divide-ink/10 border-y border-ink/10"
+        data-recipe-ledger
       >
-        <!--
-          左图 + 中信息 + 右把握:两个按钮下移到卡底 —— 三列挤在一行时,
-          中间的「方名 / 代价 / 成品」只剩一百来像素,「聚气散」被折成「聚气/散」(实测)。
-          极窄档(195 CSS px)还要再放开一层:面板 171 宽、卡片内宽 115,减掉图标与间距后
-          中间只剩 42px —— 「凡品灵草×8 · 灵石 3.4」折成 132px 高的六行、
-          「服之:修为 +80 点」折成 98px 高的四行(自检量到)。故这一档整块竖排:
-          图标与名字一行,代价与成品各占整行,把握块改成左对齐另起一段。
-        -->
-        <div class="flex items-start gap-3 tinylens:flex-col tinylens:gap-1.5">
-          <GameIcon
-            :name="r.def.icon"
-            :size="18"
-            class="mt-0.5"
-            :style="{ color: qualityDef(r.def.quality).color }"
-          />
-          <div class="min-w-0 grow">
-            <p class="flex items-center gap-2">
-              <span class="whitespace-nowrap font-kai text-title text-ink">{{ r.def.name }}</span>
-              <span class="whitespace-nowrap text-note text-ink-faint">{{ r.able.rank }} 阶</span>
-              <span v-if="r.able.overReach > 0" class="whitespace-nowrap text-note text-cinnabar"
-                >越阶 {{ r.able.overReach }}</span
+        <div
+          v-for="r in filteredRecipePage.visible"
+          :key="r.def.id"
+          :data-recipe-row="r.def.id"
+          tabindex="-1"
+          class="py-3"
+        >
+          <!--
+            左图 + 中信息 + 右把握:两个按钮下移到方行底 —— 三列挤在一行时,
+            中间的「方名 / 代价 / 成品」只剩一百来像素,「聚气散」被折成「聚气/散」(实测)。
+            极窄档(195 CSS px)还要再放开一层:面板只剩一百七十来像素,减掉图标与间距后
+            中间只剩几十像素 —— 「凡品灵草×8 · 灵石 3.4」折成 132px 高的六行、
+            「服之:修为 +80 点」折成 98px 高的四行(自检量到)。故这一档整块竖排:
+            图标与名字一行,代价与成品各占整行,把握块改成左对齐另起一段。
+          -->
+          <div
+            class="flex items-start gap-3 tinylens:flex-col tinylens:items-stretch tinylens:gap-1.5"
+          >
+            <GameIcon
+              :name="r.def.icon"
+              :size="18"
+              class="mt-0.5"
+              :style="{ color: qualityDef(r.def.quality).color }"
+            />
+            <div class="min-w-0 grow">
+              <p class="flex items-center gap-2">
+                <span class="whitespace-nowrap font-kai text-title text-ink">{{ r.def.name }}</span>
+                <span class="whitespace-nowrap text-note text-ink-faint">{{ r.able.rank }} 阶</span>
+                <span v-if="r.able.overReach > 0" class="whitespace-nowrap text-note text-cinnabar"
+                  >越阶 {{ r.able.overReach }}</span
+                >
+              </p>
+              <p class="text-body text-ink-faint tabular">
+                {{ HERB_GRADE_SHORT[r.cost.herbGrade] }}灵草×{{ r.cost.herb }} · 灵石
+                {{ formatGN(r.cost.stone) }} ·<template v-if="r.shouzhuoLeft"
+                  >本世首败(任一炉)灵草全保</template
+                ><template v-else>炸炉返草 ~{{ r.keptHerb }} 株</template
+                ><template v-if="toNum(r.cost.stone) > 0"> · 灵石不退</template>
+              </p>
+              <!-- 炼出来是什么:方子清单此前只报代价与把握,不报成品 -->
+              <p class="text-note leading-relaxed text-qing">{{ pillFuncText(r.def) }}</p>
+            </div>
+            <div class="shrink-0 text-right tinylens:w-full tinylens:text-left">
+              <p
+                class="tabular text-title"
+                :class="r.guaranteeLeft > 0 ? 'text-gold-ink' : rateClass(r.able.successRate)"
               >
-            </p>
-            <p class="text-body text-ink-faint tabular">
-              {{ HERB_GRADE_SHORT[r.cost.herbGrade] }}灵草×{{ r.cost.herb }} · 灵石
-              {{ formatGN(r.cost.stone) }} ·<template v-if="r.shouzhuoLeft"
-                >本世首败(任一炉)灵草全保</template
-              ><template v-else>炸炉返草 ~{{ r.keptHerb }} 株</template
-              ><template v-if="toNum(r.cost.stone) > 0"> · 灵石不退</template>
-            </p>
-            <!-- 炼出来是什么:方子清单此前只报代价与把握,不报成品 -->
-            <p class="text-note leading-relaxed text-qing">{{ pillFuncText(r.def) }}</p>
-          </div>
-          <div class="shrink-0 text-right">
-            <p
-              class="tabular text-title"
-              :class="r.guaranteeLeft > 0 ? 'text-gold-ink' : rateClass(r.able.successRate)"
-            >
-              {{ r.guaranteeLeft > 0 ? "必成" : formatPercent(r.able.successRate) }}
-              <span v-if="brewTriesText(r)" class="ml-1 text-note text-ink-faint">{{
-                brewTriesText(r)
-              }}</span>
-            </p>
-            <p class="text-note text-ink-faint">
-              {{
-                r.guaranteeLeft > 0
-                  ? `本世前 ${craftGuaranteeCrafts(player.reincarnation.heritage)} 炉保底 · 剩 ${r.guaranteeLeft} 炉`
-                  : "把握"
-              }}
-            </p>
-            <!-- 双成率也亮在炉前:骰子不藏 —— 与掷骰同一口径(alchemyBonusCapped,见行构造器) -->
-            <p class="mt-0.5 tabular text-note text-ink-soft">
-              {{ formatPercent(r.doubleRate)
-              }}<span class="ml-1 text-note text-ink-faint">双成</span>
-            </p>
-            <!--
+                {{ r.guaranteeLeft > 0 ? "必成" : formatPercent(r.able.successRate) }}
+              </p>
+              <p
+                v-if="brewTriesText(r)"
+                class="mt-0.5 whitespace-nowrap tabular text-note text-ink-faint"
+                data-recipe-tries
+              >
+                {{ brewTriesText(r) }}
+              </p>
+              <p class="text-note text-ink-faint">
+                {{
+                  r.guaranteeLeft > 0
+                    ? `本世前 ${craftGuaranteeCrafts(player.reincarnation.heritage)} 炉保底 · 剩 ${r.guaranteeLeft} 炉`
+                    : "把握"
+                }}
+              </p>
+              <!-- 双成率也亮在炉前:骰子不藏 —— 与掷骰同一口径(alchemyBonusCapped,见行构造器) -->
+              <p class="mt-0.5 tabular text-note text-ink-soft">
+                {{ formatPercent(r.doubleRate)
+                }}<span class="ml-1 text-note text-ink-faint">双成</span>
+              </p>
+              <!--
               炉前存货账:存几枚、增益丹药力顶没顶 —— 此前只摊把握与代价,
               行囊里躺着 8 枚顶满丹也照炼不误,炼出来白占一格。
               存货与丹匣同一份账(inventory.pills),药力状态与服用侧同一把尺
               (buffOverflowOf)+ 同一把钟(见 useBrewing 行构造器)。
             -->
-            <p class="mt-0.5 tabular text-note">
-              <span :class="r.stock > 0 ? 'text-ink-soft' : 'text-ink-faint'"
-                >存 {{ r.stock }}</span
-              >
-              <span v-if="r.overflow === 'full'" class="ml-1 text-cinnabar">已顶</span>
-              <span v-else-if="r.overflow === 'partial'" class="ml-1 text-gold-ink">将顶</span>
-            </p>
+              <p class="mt-0.5 tabular text-note">
+                <span :class="r.stock > 0 ? 'text-ink-soft' : 'text-ink-faint'"
+                  >存 {{ r.stock }}</span
+                >
+                <span v-if="r.overflow === 'full'" class="ml-1 text-cinnabar">已顶</span>
+                <span v-else-if="r.overflow === 'partial'" class="ml-1 text-gold-ink">将顶</span>
+              </p>
+            </div>
           </div>
-        </div>
-        <p v-if="r.shortText" class="mt-1 pl-7 text-note text-cinnabar tabular">
-          {{ r.shortText }}
-          <button
-            v-if="r.shortHerb"
-            class="underline active:opacity-60"
-            @click="emit('open-herb-shop')"
-          >
-            · 灵草坊可补 ›
-          </button>
-        </p>
-        <template v-if="r.guaranteeLeft === 0">
-          <p v-for="w in r.able.weakness" :key="w" class="mt-1 pl-7 text-note text-ink-faint">
-            · {{ w }}
+          <p v-if="r.shortText" class="mt-1 pl-7 text-note text-cinnabar tabular">
+            {{ r.shortText }}
+            <button
+              v-if="r.shortHerb"
+              class="underline active:opacity-60"
+              @click="emit('open-herb-shop')"
+            >
+              · 灵草坊可补 ›
+            </button>
           </p>
-        </template>
-        <!--
-          极窄档(195 CSS px)两枚动作键并排只剩 45px / 64px:「炼制」两个字加 px-3 的
-          左右内边距正好放不下,当场折成两行(实测 45×47)。这一档收内边距并锁一行 ——
-          动作词折行是最该避免的那一类(与全站 tap-row 同一条口径)。
-        -->
-        <div class="mt-2 flex justify-end gap-1.5">
-          <button
-            class="btn-seal whitespace-nowrap !px-3 !py-1.5 !text-body tinylens:!px-2"
-            :disabled="r.shortHerb || r.shortStone"
-            @click="craftPill(r.def.id)"
-          >
-            炼制
-          </button>
-          <!-- 连炼 ×5:材料见底自停,成败与保料合一条提示(见 pillService.craftPillBatch) -->
-          <button
-            class="btn-ghost whitespace-nowrap !px-3 !py-1.5 !text-body tinylens:!px-2"
-            :disabled="r.shortHerb || r.shortStone"
-            @click="craftBatch(r.def.id)"
-          >
-            连炼 ×{{ PILL_BATCH }}{{ batchGuaranteeText(r.guaranteeLeft) }}
-          </button>
+          <template v-if="r.guaranteeLeft === 0">
+            <p v-for="w in r.able.weakness" :key="w" class="mt-1 pl-7 text-note text-ink-faint">
+              · {{ w }}
+            </p>
+          </template>
+          <!--
+            极窄档(195 CSS px)两枚动作键并排只剩 45px / 64px:「炼制」两个字加 px-3 的
+            左右内边距正好放不下,当场折成两行(实测 45×47)。这一档收内边距并锁一行 ——
+            动作词折行是最该避免的那一类(与全站 tap-row 同一条口径)。
+          -->
+          <div class="mt-2 flex justify-end gap-1.5">
+            <button
+              class="btn-seal whitespace-nowrap !px-3 !py-1.5 !text-body tinylens:!px-2"
+              :disabled="r.shortHerb || r.shortStone"
+              @click="craftPill(r.def.id)"
+            >
+              炼制
+            </button>
+            <!-- 连炼 ×5:材料见底自停,成败与保料合一条提示(见 pillService.craftPillBatch) -->
+            <button
+              class="btn-ghost whitespace-nowrap !px-3 !py-1.5 !text-body tinylens:!px-2"
+              :disabled="r.shortHerb || r.shortStone"
+              @click="craftBatch(r.def.id)"
+            >
+              连炼 ×{{ PILL_BATCH }}{{ batchGuaranteeText(r.guaranteeLeft) }}
+            </button>
+          </div>
         </div>
       </div>
       <div
