@@ -121,15 +121,66 @@ describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
     expect(view, "不再用 v-show 常驻三册").not.toContain('v-show="marketTab ===');
   });
 
-  it("页签已经报过册名，正文章头只报本册小目，不再原词重复", () => {
+  it("三册正文共用坊市章首，章号、读法、真值与时钟各归其位", () => {
     const view = source("src/views/MarketView.vue");
+    const heads = [...view.matchAll(/<LedgerHeader\b[\s\S]*?(?:\/>|<\/LedgerHeader>)/g)].map(
+      (match) => match[0],
+    );
 
-    expect(view, "货架章头改报本架货目").toContain('<SectionTitle title="本架货目"');
-    expect(view, "悬赏章头改报本期赏单").toContain('<SectionTitle title="本期赏单"');
-    expect(view, "售出章头改报寄卖与即时柜").toContain('<SectionTitle title="寄卖与即时柜"');
-    expect(view, "货架章头不再与页签同名").not.toContain('<SectionTitle title="货架"');
-    expect(view, "悬赏章头不再与页签同名").not.toContain('<SectionTitle title="悬赏板"');
-    expect(view, "售出章头不再与页签同名").not.toContain('<SectionTitle title="售出"');
+    expect(view, "旧通用节题已从坊市退场").not.toContain("<SectionTitle");
+    expect(view, "旧通用节题 import 也已撤掉").not.toContain(
+      'import SectionTitle from "@/components/common/SectionTitle.vue"',
+    );
+    expect(view, "三册正文各有一枚共享章首").not.toContain("market-book__head");
+    expect(heads, "货架、悬赏、售出三章依次续排").toHaveLength(3);
+    expect(
+      [...view.matchAll(/data-market-book-head="([^"]+)"/g)].map((match) => match[1]),
+      "章首运行时落点必须按册序排列",
+    ).toEqual(["shelf", "bounty", "sell"]);
+
+    for (const [index, head] of heads.entries()) {
+      expect(head, `第 ${index + 1} 章走长账内章首`).toContain('variant="index"');
+      expect(head, `第 ${index + 1} 章真值有稳定运行时读数`).toContain(":data-market-book-value=");
+      expect(head, `第 ${index + 1} 章总数有稳定运行时读数`).toContain(":data-market-book-total=");
+    }
+
+    expect(heads[0], "货架章首直读本架可买与总格").toMatch(
+      /eyebrow="第壹册 · 换货"[\s\S]*title="本架货目"[\s\S]*:score-value="marketPulse\.availableGoods"[\s\S]*:score-suffix="`\/ \$\{marketPulse\.goodsTotal\} 件`"/,
+    );
+    expect(heads[0], "货架章首报真实换货时钟").toContain(
+      ':meta="`换货 ${formatCountdown(remainingSec)}`"',
+    );
+    expect(heads[0], "货架章首与册口读同一份可买真值").toContain(
+      ':data-market-book-value="marketPulse.availableGoods"',
+    );
+    expect(heads[0], "货架章首与册口读同一份总格").toContain(
+      ':data-market-book-total="marketPulse.goodsTotal"',
+    );
+
+    expect(heads[1], "悬赏章首直读可交与开单").toMatch(
+      /eyebrow="第贰册 · 收榜"[\s\S]*title="本期赏单"[\s\S]*:score-value="marketPulse\.claimableBounties"[\s\S]*:score-suffix="`\/ \$\{marketPulse\.openBounties\} 单`"/,
+    );
+    expect(heads[1], "悬赏章首报真实换榜时钟").toContain(
+      "formatCountdown(bountyRemainingSec(bounty.bountyAt, now))",
+    );
+    expect(heads[1], "悬赏章首与册口读同一份可交真值").toContain(
+      ':data-market-book-value="marketPulse.claimableBounties"',
+    );
+    expect(heads[1], "悬赏章首与册口读同一份开单总数").toContain(
+      ':data-market-book-total="marketPulse.openBounties"',
+    );
+    expect(heads[1], "一键交货仍留在章首动作席").toContain("<template #actions>");
+
+    expect(heads[2], "售出章首直读寄卖占用与机制总格").toMatch(
+      /eyebrow="第叁册 · 归账"[\s\S]*title="寄卖与即时柜"[\s\S]*:score-value="marketPulse\.consignCount"[\s\S]*:score-suffix="`\/ \$\{MARKET_CONSIGN_SLOTS\} 格`"/,
+    );
+    expect(heads[2], "售出章首报最近一件真实归账").toContain(':meta="nextConsign.text"');
+    expect(heads[2], "售出章首与册口读同一份寄卖真值").toContain(
+      ':data-market-book-value="marketPulse.consignCount"',
+    );
+    expect(heads[2], "售出章首与册口读同一份机制总格").toContain(
+      ':data-market-book-total="MARKET_CONSIGN_SLOTS"',
+    );
   });
 
   it("售罄与已领只换底和划记，不用整行透明度把文字压到读不清", () => {
@@ -209,6 +260,15 @@ describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
     );
     expect(marketCss).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,1600}\.market-chapter-rail__tabs\s*\{[\s\S]{0,100}grid-template-columns: minmax\(0, 1fr\)/,
+    );
+    expect(marketCss, "三册共享章首只留一条账线").toMatch(
+      /\.market-book\s*>\s*\.folio-ledger-head\s*\{[\s\S]{0,360}padding:\s*0\.66rem 0 0\.52rem;[\s\S]{0,160}border-bottom:\s*1px solid/,
+    );
+    expect(marketCss, "章内真值仍归石青信息色").toMatch(
+      /\.market-book\s*>\s*\.folio-ledger-head\s*\{[\s\S]{0,180}--ledger-accent:\s*var\(--color-qing\)/,
+    );
+    expect(marketCss, "极窄档章首不再留横向内边").toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.market-book\s*>\s*\.folio-ledger-head\s*\{[\s\S]{0,80}padding-inline:\s*0;/,
     );
   });
 });

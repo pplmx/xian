@@ -34,7 +34,7 @@ describe("此刻账 · 同一张纸边、同一枚动作键", () => {
     expect(pulse).toContain("headless: false");
   });
 
-  it("坊市、器魂与天界只交账格和强调色，不再各写纸边与动作键", () => {
+  it("坊市章首另接共享案头，三页总账仍只交账格和强调色", () => {
     const cases = [
       "src/views/MarketView.vue",
       "src/views/SoulsView.vue",
@@ -48,11 +48,19 @@ describe("此刻账 · 同一张纸边、同一枚动作键", () => {
       );
       expect(view, `${file} 的共享此刻账数量不对`).toMatch(/<LedgerPulse\b/g);
       expect(view.match(/<LedgerPulse\b/g), `${file} 的共享此刻账数量不对`).toHaveLength(1);
-      expect(view, `${file} 不该再直接搭账首`).not.toContain(
-        'import LedgerHeader from "@/components/common/LedgerHeader.vue"',
-      );
       expect(view, `${file} 的动作键要读共享纸边强调色`).toContain(
         'class="folio-ledger-pulse__action"',
+      );
+    }
+
+    const market = source("src/views/MarketView.vue");
+    expect(market, "坊市三册正文章首接共享案头").toContain(
+      'import LedgerHeader from "@/components/common/LedgerHeader.vue"',
+    );
+    expect(market.match(/<LedgerHeader\b/g), "坊市只给三册正文各接一枚章首").toHaveLength(3);
+    for (const file of ["src/views/SoulsView.vue", "src/views/CelestialView.vue"]) {
+      expect(source(file), `${file} 总账不应另搭第二枚账首`).not.toContain(
+        'import LedgerHeader from "@/components/common/LedgerHeader.vue"',
       );
     }
 

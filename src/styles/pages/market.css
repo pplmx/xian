@@ -66,30 +66,38 @@
     background: transparent;
     box-shadow: none;
   }
-  .market-book__head {
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.28rem 0.7rem;
+  /*
+   * 三册共用长账内章首：册口报总账，正文只续章号、读法、真值与时钟。
+   * 不再借通用节题另起一套自动编号，也不给章首套第二层边框。
+   */
+  .market-book > .folio-ledger-head {
+    --ledger-accent: var(--color-qing);
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "identity aside";
+    align-items: end;
     padding: 0.66rem 0 0.52rem;
-    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    background: linear-gradient(104deg, rgb(var(--color-qing-rgb) / 0.018), transparent 68%);
   }
-  .market-book__head--bounty {
-    border-bottom-color: rgb(var(--color-cinnabar-rgb) / 0.12);
+  .market-book > .folio-ledger-head .folio-ledger-head__title {
+    letter-spacing: 0.14em;
   }
-  .market-book__tools {
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.38rem 0.62rem;
-  }
-  .market-book__clock {
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
+  .market-book > .folio-ledger-head .folio-ledger-head__meta {
     white-space: nowrap;
+  }
+  .market-book[data-market-book="bounty"] > .folio-ledger-head {
+    border-bottom-color: rgb(var(--color-cinnabar-rgb) / 0.13);
+  }
+  .market-book__claim-all {
+    align-self: flex-end;
+  }
+  .market-book__claim-all,
+  .market-book > .folio-ledger-head .folio-ledger-head__score {
+    min-width: 0;
+  }
+  .market-book > .folio-ledger-head .folio-ledger-head__identity,
+  .market-book__empty {
+    min-width: 0;
   }
   .market-book__empty {
     padding: 1.1rem 0;
@@ -445,6 +453,14 @@
     }
   }
   @media (max-width: 220px) {
+    .market-book > .folio-ledger-head {
+      padding-inline: 0;
+    }
+
+    .market-book__claim-all {
+      width: 100%;
+    }
+
     .market-chapter-rail {
       position: relative;
       top: auto;

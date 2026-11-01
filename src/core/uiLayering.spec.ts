@@ -1679,13 +1679,14 @@ describe("界面分层 · 浮层只有一个出处", () => {
      */
     const market = FILES.find((f) => f.path === "views/MarketView.vue");
     const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
-    // 坊市卷首动作 + 悬赏板题头 + 货架/悬赏行
+    // 坊市卷首动作 + 三册共享章首 + 货架/悬赏行
     expect(market?.src, "坊市要接共同卷首").toContain("<FolioPageHeader");
     expect(market?.src, "坊市卷首动作极窄档落整行").toContain(
       "tinylens:w-full tinylens:justify-between",
     );
-    expect(market?.src, "悬赏板题头极窄档要纵向堆叠").toMatch(
-      /justify-between pr-1 tinylens:flex-col/,
+    expect(market?.src, "坊市三册章首改接共享案头").toContain('data-market-book-head="shelf"');
+    expect(readStyleCss(), "坊市章首极窄档不留横向内边").toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,2200}\.market-book\s*>\s*\.folio-ledger-head\s*\{[\s\S]{0,80}padding-inline:\s*0;/,
     );
     expect(market?.src, "坊市总账改接共享此刻账").toContain("<LedgerPulse");
     expect(market?.src, "坊市不再私写先手栏").not.toContain("market-pulse__lead");

@@ -14953,7 +14953,13 @@ async function taskMarketRegisterFold() {
         const rail = register?.querySelector("[data-market-chapter-rail]");
         const tabsRoot = rail?.querySelector('[role="tablist"]');
         const panel = register?.querySelector('[role="tabpanel"]');
+        const head = panel?.querySelector("[data-market-book-head]");
+        const headIdentity = head?.querySelector(".folio-ledger-head__identity");
+        const headScore = head?.querySelector(".folio-ledger-head__score");
+        const headMeta = head?.querySelector(".folio-ledger-head__meta");
+        const body = panel?.querySelector("[data-market-book-body]");
         const tabs = [...(tabsRoot?.querySelectorAll('[role="tab"]') ?? [])];
+        const textOf = (el) => (el?.textContent ?? "").replace(/\s+/g, " ").trim();
         const rectOf = (el) => {
           if (!el) return null;
           const rect = el.getBoundingClientRect();
@@ -14971,6 +14977,8 @@ async function taskMarketRegisterFold() {
         const railRect = rectOf(rail);
         const panelRect = rectOf(panel);
         const parts = [pulseRect, railRect, panelRect].filter(Boolean);
+        const scoreStyle = headScore ? getComputedStyle(headScore) : null;
+        const metaStyle = headMeta ? getComputedStyle(headMeta) : null;
         const within =
           registerRect &&
           pulseRect &&
@@ -15011,6 +15019,31 @@ async function taskMarketRegisterFold() {
           active: tabs
             .filter((tab) => tab.getAttribute("aria-selected") === "true")
             .map((tab) => tab.getAttribute("data-market-chapter-tab")),
+          head: head
+            ? {
+                id: head.getAttribute("data-market-book-head") ?? "",
+                eyebrow: textOf(head.querySelector(".folio-ledger-head__eyebrow")),
+                title: textOf(head.querySelector(".folio-ledger-head__title")),
+                description: textOf(head.querySelector(".folio-ledger-head__description")),
+                score: textOf(headScore),
+                meta: textOf(headMeta),
+                value: head.getAttribute("data-market-book-value") ?? "",
+                total: head.getAttribute("data-market-book-total") ?? "",
+                count: panel?.querySelectorAll("[data-market-book-head]").length ?? 0,
+                sectionTitleCount: register?.querySelectorAll(".section-title").length ?? 0,
+                cardInkCount: register?.querySelectorAll(".card-ink").length ?? 0,
+                rect: rectOf(head),
+                identityRect: rectOf(headIdentity),
+                scoreRect: rectOf(headScore),
+                bodyRect: rectOf(body),
+                headScrollWidth: head.scrollWidth,
+                headClientWidth: head.clientWidth,
+                scoreScrollWidth: headScore?.scrollWidth ?? 0,
+                scoreClientWidth: headScore?.clientWidth ?? 0,
+                scoreWhiteSpace: scoreStyle?.whiteSpace ?? "",
+                metaWhiteSpace: metaStyle?.whiteSpace ?? "",
+              }
+            : null,
           goodsColumns:
             goods === null || goods === undefined
               ? 0
@@ -15062,6 +15095,26 @@ async function taskMarketRegisterFold() {
     }
     checked += 1;
     if (
+      !mobile.head ||
+      mobile.head.id !== "shelf" ||
+      mobile.head.eyebrow !== "第壹册 · 换货" ||
+      mobile.head.title !== "本架货目" ||
+      !mobile.head.description ||
+      !/^换货\s+\S+/.test(mobile.head.meta) ||
+      mobile.head.value !== mobile.tabs[0]?.value ||
+      mobile.head.total !== mobile.tabs[0]?.total ||
+      mobile.head.count !== 1 ||
+      mobile.head.sectionTitleCount !== 0 ||
+      mobile.head.cardInkCount !== 0 ||
+      !mobile.head.rect ||
+      !mobile.head.bodyRect ||
+      mobile.head.rect.top < mobile.parts[2].top - 1 ||
+      mobile.head.bodyRect.top < mobile.head.rect.bottom - 1
+    ) {
+      failures.push(`[390-market] 货架章首没有续在册口与正文之间:${JSON.stringify(mobile.head)}`);
+    }
+    checked += 1;
+    if (
       mobile.tabColumns !== 3 ||
       mobile.tabs.length !== 3 ||
       mobile.tabs.some((tab) => tab.top !== mobile.tabs[0].top) ||
@@ -15087,10 +15140,33 @@ async function taskMarketRegisterFold() {
       failures.push(`[390-market] 坊市续卷又套回了卡壳:${JSON.stringify(mobile.chrome)}`);
     }
 
+    const marketChapterCopy = {
+      shelf: {
+        eyebrow: "第壹册 · 换货",
+        title: "本架货目",
+        scoreLabel: "可买",
+        meta: /^换货\s+\S+/,
+      },
+      bounty: {
+        eyebrow: "第贰册 · 收榜",
+        title: "本期赏单",
+        scoreLabel: "可交",
+        meta: /^换榜\s+\S+/,
+      },
+      sell: {
+        eyebrow: "第叁册 · 归账",
+        title: "寄卖与即时柜",
+        scoreLabel: "寄卖",
+        meta: /^(?:暂无寄卖|最近 .+ 后入账)$/,
+      },
+    };
+
     async function readTabTruth(id) {
       return page.evaluate((tabId) => {
         const tab = document.querySelector(`[data-market-chapter-tab="${tabId}"]`);
         const panel = document.querySelector(`#market-panel-${tabId}`);
+        const head = panel?.querySelector("[data-market-book-head]");
+        const textOf = (el) => (el?.textContent ?? "").replace(/\s+/g, " ").trim();
         let actual = 0;
         let totalActual = 0;
         if (tabId === "shelf") {
@@ -15101,8 +15177,7 @@ async function taskMarketRegisterFold() {
           totalActual = panel?.querySelectorAll(".market-bounty").length ?? 0;
         } else {
           actual = panel?.querySelectorAll(".market-consign__row").length ?? 0;
-          const clock = panel?.querySelector(".market-book__clock")?.textContent ?? "";
-          totalActual = Number(/(\d+)\s*\/\s*(\d+)/.exec(clock)?.[2] ?? 0);
+          totalActual = Number(panel?.getAttribute("data-market-consign-slots") ?? 0);
         }
         return {
           value: tab?.getAttribute("data-market-chapter-value") ?? "",
@@ -15113,6 +15188,19 @@ async function taskMarketRegisterFold() {
           controls: tab?.getAttribute("aria-controls"),
           panelCount: document.querySelectorAll("[data-market-register] [role=tabpanel]").length,
           panelLabelledby: panel?.getAttribute("aria-labelledby"),
+          head: {
+            id: head?.getAttribute("data-market-book-head") ?? "",
+            eyebrow: textOf(head?.querySelector(".folio-ledger-head__eyebrow")),
+            title: textOf(head?.querySelector(".folio-ledger-head__title")),
+            description: textOf(head?.querySelector(".folio-ledger-head__description")),
+            score: textOf(head?.querySelector(".folio-ledger-head__score")),
+            meta: textOf(head?.querySelector(".folio-ledger-head__meta")),
+            value: head?.getAttribute("data-market-book-value") ?? "",
+            total: head?.getAttribute("data-market-book-total") ?? "",
+            body: Boolean(panel?.querySelector("[data-market-book-body]")),
+            sectionTitleCount: panel?.querySelectorAll(".section-title").length ?? 0,
+            cardInkCount: panel?.querySelectorAll(".card-ink").length ?? 0,
+          },
         };
       }, id);
     }
@@ -15122,16 +15210,30 @@ async function taskMarketRegisterFold() {
       await page.waitForSelector(`#market-panel-${id}`, { timeout: 3000 });
       await settleVisuals(page);
       const truth = await readTabTruth(id);
+      const copy = marketChapterCopy[id];
       checked += 1;
       if (
         truth.value !== String(truth.actual) ||
         truth.total !== String(truth.totalActual) ||
+        truth.head.value !== truth.value ||
+        truth.head.total !== truth.total ||
         truth.selected !== "true" ||
         truth.controls !== `market-panel-${id}` ||
         truth.panelCount !== 1 ||
-        truth.panelLabelledby !== `market-tab-${id}`
+        truth.panelLabelledby !== `market-tab-${id}` ||
+        truth.head.id !== id ||
+        truth.head.eyebrow !== copy.eyebrow ||
+        truth.head.title !== copy.title ||
+        !truth.head.description ||
+        !truth.head.score.includes(copy.scoreLabel) ||
+        !truth.head.score.includes(String(truth.actual)) ||
+        !truth.head.score.includes(String(truth.totalActual)) ||
+        !copy.meta.test(truth.head.meta) ||
+        !truth.head.body ||
+        truth.head.sectionTitleCount !== 0 ||
+        truth.head.cardInkCount !== 0
       ) {
-        failures.push(`[390-market] ${id} 册口与当前摊面不同源:${JSON.stringify(truth)}`);
+        failures.push(`[390-market] ${id} 册口、章首与当前摊面不同源:${JSON.stringify(truth)}`);
       }
     }
 
@@ -15197,6 +15299,21 @@ async function taskMarketRegisterFold() {
         })}`,
       );
     }
+    checked += 1;
+    if (
+      !zoom.head ||
+      zoom.head.title !== "本架货目" ||
+      zoom.head.scoreWhiteSpace !== "nowrap" ||
+      zoom.head.metaWhiteSpace !== "nowrap" ||
+      zoom.head.scoreScrollWidth > zoom.head.scoreClientWidth + 1 ||
+      zoom.head.headScrollWidth > zoom.head.headClientWidth + 1 ||
+      !zoom.head.scoreRect ||
+      zoom.head.scoreRect.height > 48
+    ) {
+      failures.push(
+        `[195-market] 200% 缩放档章首真值被挤成竖排或横向溢出:${JSON.stringify(zoom.head)}`,
+      );
+    }
     const zoomProblems = problemsOf(await measurePage(page));
     checked += 1;
     if (zoomProblems.length) {
@@ -15220,6 +15337,22 @@ async function taskMarketRegisterFold() {
           tabs: desktop.tabs,
         })}`,
       );
+    }
+    checked += 1;
+    if (
+      !desktop.head ||
+      desktop.head.title !== "本架货目" ||
+      desktop.head.sectionTitleCount !== 0 ||
+      desktop.head.cardInkCount !== 0 ||
+      !desktop.head.identityRect ||
+      !desktop.head.scoreRect ||
+      !desktop.head.rect ||
+      !desktop.head.bodyRect ||
+      desktop.head.bodyRect.top < desktop.head.rect.bottom - 1 ||
+      desktop.head.scoreRect.left < desktop.head.identityRect.left ||
+      desktop.head.headScrollWidth > desktop.head.headClientWidth + 1
+    ) {
+      failures.push(`[1280-market] 桌面章首真值没有与正文并读:${JSON.stringify(desktop.head)}`);
     }
 
     if (SHOTS) {

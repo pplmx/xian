@@ -49,7 +49,7 @@ import { isRareQuality, qualityTextColor, qualityTierStyle } from "@/ui/qualityT
 import QualitySeal from "@/components/common/QualitySeal.vue";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LedgerPulse from "@/components/common/LedgerPulse.vue";
-import SectionTitle from "@/components/common/SectionTitle.vue";
+import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import MarketArcade from "@/components/market/MarketArcade.vue";
 import MarketChapterRail from "@/components/market/MarketChapterRail.vue";
@@ -557,11 +557,20 @@ function bountyReady(o: BountySlot): boolean {
         data-market-book="shelf"
         tabindex="0"
       >
-        <div class="market-book__head">
-          <SectionTitle title="本架货目" hint="时辰一到自会换新" />
-          <span class="market-book__clock">换货 {{ formatCountdown(remainingSec) }}</span>
-        </div>
-        <div class="market-goods">
+        <LedgerHeader
+          variant="index"
+          data-market-book-head="shelf"
+          eyebrow="第壹册 · 换货"
+          title="本架货目"
+          description="时辰一到自会换新；买不起或行囊满，都在摊签上列出差额。"
+          score-label="可买"
+          :score-value="marketPulse.availableGoods"
+          :score-suffix="`/ ${marketPulse.goodsTotal} 件`"
+          :meta="`换货 ${formatCountdown(remainingSec)}`"
+          :data-market-book-value="marketPulse.availableGoods"
+          :data-market-book-total="marketPulse.goodsTotal"
+        />
+        <div class="market-goods" data-market-book-body="shelf">
           <article
             v-for="slot in market.stock"
             :key="slot.idx"
@@ -650,28 +659,31 @@ function bountyReady(o: BountySlot): boolean {
         data-market-book="bounty"
         tabindex="0"
       >
-        <div
-          class="market-book__head market-book__head--bounty justify-between pr-1 tinylens:flex-col tinylens:items-start tinylens:gap-1"
+        <LedgerHeader
+          variant="index"
+          data-market-book-head="bounty"
+          eyebrow="第贰册 · 收榜"
+          title="本期赏单"
+          description="商号收购，交货即得；所需、缺口与酬劳逐单摊开。"
+          score-label="可交"
+          :score-value="marketPulse.claimableBounties"
+          :score-suffix="`/ ${marketPulse.openBounties} 单`"
+          :meta="`换榜 ${formatCountdown(bountyRemainingSec(bounty.bountyAt, now))}`"
+          :data-market-book-value="marketPulse.claimableBounties"
+          :data-market-book-total="marketPulse.openBounties"
         >
-          <SectionTitle title="本期赏单" hint="商号收购 · 交货即得" />
-          <div class="market-book__tools">
+          <template #actions>
             <button
               v-if="autoClaimable.length"
-              class="btn-seal min-h-[28px] !px-2.5 !py-1 text-body whitespace-nowrap"
+              class="market-book__claim-all btn-seal min-h-[28px] !px-2.5 !py-1 text-body whitespace-nowrap"
               @click="claimAllAuto()"
             >
               一键领取({{ autoClaimable.length }})
             </button>
-            <span class="market-book__clock" :title="`${BOUNTY_REFRESH_SECONDS / 3600} 小时一版`">
-              换新
-              <span class="countdown-slot">{{
-                formatCountdown(bountyRemainingSec(bounty.bountyAt, now))
-              }}</span>
-            </span>
-          </div>
-        </div>
+          </template>
+        </LedgerHeader>
 
-        <div class="market-bounties">
+        <div class="market-bounties" data-market-book-body="bounty">
           <article
             v-for="o in bounty.orders"
             :key="o.idx"
@@ -806,15 +818,23 @@ function bountyReady(o: BountySlot): boolean {
         aria-labelledby="market-tab-sell"
         data-market-book="sell"
         tabindex="0"
+        :data-market-consign-slots="MARKET_CONSIGN_SLOTS"
       >
-        <div class="market-book__head">
-          <SectionTitle title="寄卖与即时柜" hint="寄卖到时自售 · 即时售即入账" />
-          <span class="market-book__clock"
-            >寄卖 {{ market.consign.length }}/{{ MARKET_CONSIGN_SLOTS }}</span
-          >
-        </div>
+        <LedgerHeader
+          variant="index"
+          data-market-book-head="sell"
+          eyebrow="第叁册 · 归账"
+          title="寄卖与即时柜"
+          description="寄卖到时自售，即时售即入账；两路都不离本册。"
+          score-label="寄卖"
+          :score-value="marketPulse.consignCount"
+          :score-suffix="`/ ${MARKET_CONSIGN_SLOTS} 格`"
+          :meta="nextConsign.text"
+          :data-market-book-value="marketPulse.consignCount"
+          :data-market-book-total="MARKET_CONSIGN_SLOTS"
+        />
 
-        <div class="market-sell-grid">
+        <div class="market-sell-grid" data-market-book-body="sell">
           <section class="market-consign">
             <div class="market-consign__head">
               <p class="market-consign__title">寄卖架</p>
