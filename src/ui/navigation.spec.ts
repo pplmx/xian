@@ -134,4 +134,11 @@ describe("玄枢图 · 全站册目", () => {
       expect(source, `${path} 另写了一份分册目录`).toContain(chapters);
     }
   });
+
+  it("分册 query 被移除或写坏时回到默认册,不把上一册留在页面上", () => {
+    const source = readFileSync(resolve(ROOT, "src/composables/useRouteTab.ts"), "utf8");
+    expect(source, "query 缺失/非法时应回 fallback,而不是保留旧 tab").toMatch(
+      /tab\.value = \(allowed\.has\(next\) \? next : fallback\) as Tab/,
+    );
+  });
 });

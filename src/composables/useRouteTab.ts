@@ -28,7 +28,9 @@ export function useRouteTab<const C extends readonly NavigationChapter[]>(
     () => route.query.tab,
     (value) => {
       const next = tabFromQuery(value);
-      if (allowed.has(next)) tab.value = next as Tab;
+      // 回到无 query 的分册页(或地址里的 tab 写坏)时也要回默认册;
+      // 否则从「奇门」点回 /codex 会继续停在奇门,与地址和导航落点不一致。
+      tab.value = (allowed.has(next) ? next : fallback) as Tab;
     },
   );
 

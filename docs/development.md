@@ -212,6 +212,15 @@ error: Failed to resolve vite command: GenericFailure, Expected
 远征、试炼与道痕继续按激活册互斥挂载,逐项缺口与倒计时仍由各面板自报。总账由
 `core/celestialOverview` 一处汇总,结构与事实源由 `celestialDesk.spec` 守住。
 
+界域志六册现在共用一张开口长账:外层只留上下账线,`data-realm-codex-folio` 只换
+`data-chapter`,典籍、周易、紫微、星象与奇门不再逐段套 `card-ink`;章节头后以
+`realm-codex-section` 和分段线续排,重复条目退成账行。620px 起典籍题名与释文、
+八卦三栏、奇门两列并读,220 CSS px 以下谱格、宫位、宿名、门位与命格长读数全部
+退单列;两处长表展开键仍守 28px 触达下限。真浏览器巡页会逐册核对连续账的边框、
+圆角、投影与 `card-ink` 已清干净,并在 390 / 195 两档展开六十四卦与二十八宿后再量
+一次溢出。结构与事实源由 `src/ui/realmCodexDesk.spec.ts`、
+`src/core/uiLayering.spec.ts` 与 `scripts/layout-check.mjs` 守住。
+
 设置页的总案、存续案、留痕案与卷末索引现在同住一张开口长账:外层只留上下账线,
 内案去掉四边卡、底色、投影与第二层内框,存续和留痕只在账页里用分段线续排。960px
 仍把存续放左、留痕与索引叠右,220 CSS px 以下全部退单列;存续与留痕动作仍守

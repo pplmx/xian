@@ -1,10 +1,64 @@
 @layer reset, shared, page, app-utilities;
 @layer page {
+  /*
+   * 界域案 —— 六册同住一张开口长账。
+   *
+   * 「界域」此前已经收成连续账,但典籍、周易、紫微、星象与奇门仍各自套 card-ink:
+   * 同一页每切一册就重画一次纸边,读者看不出这是同一部书的六个分卷。现在外层
+   * 只留上下账线,章节头与内册只负责分段;重复条目一律退成账行,不再叠第二层卡。
+   * 事实、行动门槛与展开状态仍由页面原有数据与 core 行提供。
+   */
+  .realm-codex-folio,
+  .realm-codex-chapter,
+  .realm-codex-section,
+  .realm-codex-desk,
+  .realm-codex-desk__lead,
+  .realm-codex-desk__volumes {
+    min-width: 0;
+  }
+  .realm-codex-folio {
+    --realm-codex-inset: 0.72rem;
+    position: relative;
+    margin-top: 0.5rem;
+    border: 0;
+    border-block: 1px solid rgb(var(--color-ink-rgb) / 0.15);
+    border-radius: 0;
+    background:
+      linear-gradient(
+        112deg,
+        rgb(var(--color-qing-rgb) / 0.026),
+        transparent 42%,
+        rgb(var(--color-cinnabar-rgb) / 0.016) 78%,
+        transparent
+      ),
+      rgb(var(--color-paper-lifted-rgb) / 0.3);
+    box-shadow: none;
+  }
+  .realm-codex-chapter,
+  .realm-codex-section {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .realm-codex-chapter:not(.realm-codex-desk) {
+    display: grid;
+    gap: 0;
+  }
+  .realm-codex-chapter:not(.realm-codex-desk) > .section-title {
+    padding: 0.72rem var(--realm-codex-inset) 0.56rem;
+  }
+  .realm-codex-section {
+    min-width: 0;
+    padding: 0.68rem var(--realm-codex-inset) 0.82rem;
+  }
+  .realm-codex-section + .realm-codex-section {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+  }
   .realm-codex-desk,
   .realm-codex-desk__lead,
   .realm-codex-desk__volumes {
     display: grid;
-    min-width: 0;
     gap: 0.72rem;
   }
   .realm-codex-desk__lead > .realm-world-index,
@@ -429,6 +483,159 @@
   .realm-entry__classic:active {
     opacity: 0.62;
   }
+  .realm-classic-ledger,
+  .realm-trigram-ledger,
+  .realm-fate-palaces,
+  .realm-hexagram-list,
+  .realm-mansion-list,
+  .realm-qimen-list {
+    display: grid;
+    min-width: 0;
+    gap: 0;
+  }
+  .realm-classic,
+  .realm-trigram-row,
+  .realm-fate-row,
+  .realm-hexagram-row,
+  .realm-mansion-row,
+  .realm-qimen-row {
+    min-width: 0;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.085);
+  }
+  .realm-classic:last-child,
+  .realm-trigram-row:last-child,
+  .realm-fate-row:last-child,
+  .realm-hexagram-row:last-child,
+  .realm-mansion-row:last-child,
+  .realm-qimen-row:last-child {
+    border-bottom: 0;
+  }
+  .realm-classic {
+    display: grid;
+    gap: 0.22rem;
+    padding: 0.64rem 0;
+    scroll-margin-top: 5rem;
+  }
+  .realm-classic:first-child {
+    padding-top: 0.2rem;
+  }
+  .realm-classic__identity,
+  .realm-classic__copy {
+    min-width: 0;
+  }
+  .realm-classic__title-line {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.18rem 0.45rem;
+  }
+  .realm-classic__realm {
+    min-inline-size: 28px;
+    justify-content: center;
+  }
+  .realm-yi-reading {
+    margin-top: 0.75rem;
+    border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.38);
+    padding: 0.5rem 0.66rem 0.58rem;
+    background: linear-gradient(90deg, rgb(var(--color-cinnabar-rgb) / 0.045), transparent 72%);
+  }
+  .realm-codex-disclosure {
+    display: flex;
+    width: 100%;
+    min-block-size: 28px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.22rem 0.72rem;
+    border: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    padding: 0.38rem 0 0.18rem;
+    text-align: left;
+  }
+  .realm-codex-disclosure:active {
+    opacity: 0.62;
+  }
+  .realm-trigram-row {
+    display: grid;
+    gap: 0.16rem;
+    padding: 0.5rem 0 0.56rem;
+  }
+  .realm-trigram-row__identity,
+  .realm-trigram-row__signs {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.12rem 0.48rem;
+  }
+  .realm-trigram-row__signs {
+    gap: 0.12rem 0.7rem;
+  }
+  .realm-hexagram-list {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    padding-top: 0.1rem;
+  }
+  .realm-hexagram-row {
+    display: grid;
+    grid-template-columns: 1.35rem minmax(3.1rem, auto) auto minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0.18rem 0.48rem;
+    padding: 0.45rem 0;
+  }
+  .realm-hexagram-row__order,
+  .realm-hexagram-row__name,
+  .realm-hexagram-row__trigrams {
+    white-space: nowrap;
+  }
+  .realm-fate-palaces {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .realm-fate-row {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(5.5rem, 8rem) minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0.18rem 0.5rem;
+    padding: 0.44rem 0;
+  }
+  .realm-fate-row__palace,
+  .realm-fate-row__stars {
+    min-width: 0;
+  }
+  .realm-mansion-list {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    padding-top: 0.14rem;
+  }
+  .realm-mansion-group {
+    margin-top: 0.36rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .realm-mansion-row {
+    display: grid;
+    grid-template-columns: 3rem 4.9rem 2.9rem minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0.18rem 0.5rem;
+    padding: 0.42rem 0;
+  }
+  .realm-mansion-row__name,
+  .realm-mansion-row__full,
+  .realm-mansion-row__domain {
+    white-space: nowrap;
+  }
+  .realm-qimen-list {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .realm-qimen-row {
+    display: grid;
+    grid-template-columns: 3rem minmax(6rem, 7rem) minmax(0, 1fr);
+    align-items: start;
+    gap: 0.18rem 0.5rem;
+    padding: 0.5rem 0;
+  }
+  .realm-qimen-row__name,
+  .realm-qimen-row__seat {
+    min-width: 0;
+  }
   @media (min-width: 620px) {
     .realm-world-index__grid {
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -448,6 +655,33 @@
     .realm-ledger {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       column-gap: 1.25rem;
+    }
+
+    .realm-classic {
+      grid-template-columns: minmax(9.5rem, 0.42fr) minmax(0, 1fr);
+      align-items: start;
+      column-gap: 1.1rem;
+    }
+
+    .realm-trigram-row {
+      grid-template-columns: minmax(8rem, 0.34fr) minmax(8rem, 0.3fr) minmax(0, 1fr);
+      align-items: start;
+      column-gap: 0.9rem;
+    }
+
+    .realm-hexagram-list,
+    .realm-qimen-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 1rem;
+    }
+
+    .realm-qimen-row:nth-child(odd) {
+      border-right: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+      padding-right: 1rem;
+    }
+
+    .realm-qimen-row:nth-child(even) {
+      padding-left: 1rem;
     }
   }
   /*
@@ -485,6 +719,10 @@
     }
   }
   @media (max-width: 220px) {
+    .realm-codex-folio {
+      --realm-codex-inset: 0.28rem;
+    }
+
     .realm-atlas {
       width: 6.4rem;
       padding-inline: 0;
@@ -554,6 +792,51 @@
 
     .realm-entry__detail {
       padding-inline: 0.35rem;
+    }
+
+    .realm-codex-chapter:not(.realm-codex-desk) > .section-title {
+      padding-inline: var(--realm-codex-inset);
+    }
+
+    .realm-hexagram-row,
+    .realm-fate-row,
+    .realm-mansion-row,
+    .realm-qimen-row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .realm-hexagram-row__order {
+      display: none;
+    }
+
+    .realm-hexagram-row__gist,
+    .realm-fate-row__use,
+    .realm-mansion-row__good,
+    .realm-qimen-row__copy {
+      grid-column: 1 / -1;
+    }
+
+    .realm-fate-power {
+      flex-wrap: wrap;
+      row-gap: 0.12rem;
+    }
+
+    .realm-fate-power > span:first-child {
+      flex-basis: 100%;
+    }
+
+    .realm-fate-power > span:last-child {
+      min-width: 0;
+    }
+
+    .realm-mansion-row__name,
+    .realm-mansion-row__full,
+    .realm-mansion-row__domain,
+    .realm-fate-row__palace,
+    .realm-fate-row__stars,
+    .realm-qimen-row__name,
+    .realm-qimen-row__seat {
+      white-space: normal;
     }
   }
 }

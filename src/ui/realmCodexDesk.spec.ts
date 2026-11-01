@@ -171,4 +171,45 @@ describe("界域案 · 四界先成谱,境界再逐格展开", () => {
       "开口卷面不再托浅纸底,小序号要升到可读的第二档墨",
     ).toContain("color: var(--color-ink-soft);");
   });
+
+  it("六册收在同一张开口长账,典籍与术数四门不再逐段借通用纸片", () => {
+    const view = source("src/views/RealmCodexView.vue");
+    const css = source("src/styles/pages/realm-codex.css");
+    const layout = source("scripts/layout-check.mjs");
+
+    expect(view, "六册共用一个可识别、可切册的连续账页").toMatch(
+      /data-realm-codex-folio[\s\S]{0,180}:data-chapter="codexTab"/,
+    );
+    for (const chapter of ["realm", "classics", "yi", "ziwei", "xiang", "qimen"]) {
+      expect(view, `${chapter} 册要落在同一账页内`).toContain(
+        `data-realm-codex-chapter="${chapter}"`,
+      );
+    }
+    expect(view, "正文不再逐段复制通用的 card-ink 纸片").not.toContain("card-ink");
+    expect(css, "外层只留上下账线").toMatch(
+      /\.realm-codex-folio\s*\{[\s\S]{0,420}border:\s*0;[\s\S]{0,420}border-block:\s*1px solid/,
+    );
+    expect(css, "内册与账段撤掉四边卡、圆角、实底与投影").toMatch(
+      /\.realm-codex-chapter,\s*\.realm-codex-section\s*\{[\s\S]{0,620}border:\s*0;[\s\S]{0,620}border-radius:\s*0;[\s\S]{0,620}background:\s*transparent;[\s\S]{0,620}box-shadow:\s*none;/,
+    );
+    expect(css, "账段之间只留分段线").toMatch(
+      /\.realm-codex-section\s*\+\s*\.realm-codex-section\s*\{[\s\S]{0,120}border-top:\s*1px solid/,
+    );
+    expect(css, "账页不另画第二层内框").not.toMatch(
+      /\.realm-codex-(?:folio|chapter|section)::before/,
+    );
+    expect(css, "极窄档的术数行退成单列,不靠固定列宽硬挤").toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,2400}\.realm-(?:hexagram-row|fate-row|mansion-row|qimen-row)\s*\{[\s\S]{0,140}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(css, "命格之力在极窄档先报题再摊整行读数").toMatch(
+      /\.realm-fate-power\s*\{[\s\S]{0,100}flex-wrap:\s*wrap;[\s\S]{0,220}\.realm-fate-power > span:first-child\s*\{[\s\S]{0,80}flex-basis:\s*100%/,
+    );
+    expect(css, "典籍的短境界链也守住 28px 横向触控面").toMatch(
+      /\.realm-classic__realm\s*\{[\s\S]{0,80}min-inline-size:\s*28px;/,
+    );
+    expect(css, "两处展开键守住 28px 触控下限").toMatch(
+      /\.realm-codex-disclosure\s*\{[\s\S]{0,180}min-(?:block-size|height):\s*28px;/,
+    );
+    expect(layout, "真浏览器门要逐册量连续账与极窄档").toContain("realmCodexChapterSheets");
+  });
 });

@@ -8705,6 +8705,168 @@ async function taskCodexFold() {
       }
     }
 
+    async function realmCodexChapterSheets(width) {
+      const chapters = [
+        ["realm", "界域"],
+        ["classics", "典籍"],
+        ["yi", "周易"],
+        ["ziwei", "紫微"],
+        ["xiang", "星象"],
+        ["qimen", "奇门"],
+      ];
+      const disclosures = {
+        yi: "hexagrams",
+        xiang: "mansions",
+      };
+      const height = width <= 220 ? 422 : 844;
+      await page.setViewportSize({ width, height });
+
+      for (const [chapter, label] of chapters) {
+        await openRoute(page, chapter === "realm" ? "/codex" : `/codex?tab=${chapter}`, 120);
+        await page
+          .waitForSelector(`[data-realm-codex-folio][data-chapter="${chapter}"]`, {
+            timeout: 5000,
+          })
+          .catch(() => undefined);
+
+        const current = await page.evaluate((chapterId) => {
+          const folio = document.querySelector("[data-realm-codex-folio]");
+          const chapterEl = folio?.querySelector(`[data-realm-codex-chapter="${chapterId}"]`);
+          const style = folio ? getComputedStyle(folio) : null;
+          const sections = [...(folio?.querySelectorAll(".realm-codex-section") ?? [])];
+          const rows = [
+            ...(folio?.querySelectorAll(
+              ".realm-classic, .realm-trigram-row, .realm-fate-row, .realm-hexagram-row, .realm-mansion-row, .realm-qimen-row",
+            ) ?? []),
+          ].filter((row) => row.getClientRects().length > 0);
+          return {
+            chapter: folio?.getAttribute("data-chapter") ?? null,
+            label: (
+              chapterEl?.querySelector(".folio-chapter-head__title")?.textContent ??
+              document.querySelector('[data-folio-tabs] [role="tab"][aria-selected="true"]')
+                ?.textContent ??
+              ""
+            )
+              .replace(/\s+/g, " ")
+              .trim(),
+            chapterVisible:
+              Boolean(chapterEl?.getClientRects().length) &&
+              (chapterEl?.getBoundingClientRect().height ?? 0) > 0,
+            folio: style
+              ? {
+                  borderTop: Number.parseFloat(style.borderTopWidth),
+                  borderRight: Number.parseFloat(style.borderRightWidth),
+                  borderBottom: Number.parseFloat(style.borderBottomWidth),
+                  borderLeft: Number.parseFloat(style.borderLeftWidth),
+                  radius: Number.parseFloat(style.borderTopLeftRadius),
+                  shadow: style.boxShadow,
+                }
+              : null,
+            cardInk: folio?.querySelectorAll(".card-ink").length ?? -1,
+            sectionBorders: sections.map((section) => {
+              const sectionStyle = getComputedStyle(section);
+              return {
+                left: Number.parseFloat(sectionStyle.borderLeftWidth),
+                right: Number.parseFloat(sectionStyle.borderRightWidth),
+                radius: Number.parseFloat(sectionStyle.borderTopLeftRadius),
+                shadow: sectionStyle.boxShadow,
+              };
+            }),
+            sectionOverflow: sections
+              .map((section) => section.getBoundingClientRect())
+              .filter((rect) => rect.left < -1 || rect.right > innerWidth + 1).length,
+            rowOverflow: rows
+              .map((row) => row.getBoundingClientRect())
+              .filter((rect) => rect.left < -1 || rect.right > innerWidth + 1).length,
+            horizontalOverflow: document.documentElement.scrollWidth > innerWidth + 1,
+            viewport: innerWidth,
+          };
+        }, chapter);
+
+        checked += 1;
+        if (
+          current.chapter !== chapter ||
+          current.label !== label ||
+          !current.chapterVisible ||
+          !current.folio ||
+          current.folio.borderTop < 1 ||
+          current.folio.borderBottom < 1 ||
+          current.folio.borderLeft !== 0 ||
+          current.folio.borderRight !== 0 ||
+          current.folio.radius !== 0 ||
+          current.folio.shadow !== "none"
+        ) {
+          failures.push(
+            `[${width}-codex-${chapter}] 六册没有共用一张开口长账:${JSON.stringify(current)}`,
+          );
+        }
+        if (
+          current.cardInk !== 0 ||
+          current.sectionBorders.some(
+            (section) =>
+              section.left !== 0 ||
+              section.right !== 0 ||
+              section.radius !== 0 ||
+              section.shadow !== "none",
+          ) ||
+          current.sectionOverflow !== 0 ||
+          current.rowOverflow !== 0 ||
+          current.horizontalOverflow
+        ) {
+          failures.push(
+            `[${width}-codex-${chapter}] 账段或重复行又套回纸卡 / 挤出视口:${JSON.stringify(current)}`,
+          );
+        }
+
+        const disclosure = disclosures[chapter];
+        if (disclosure) {
+          const button = page.locator(`[data-realm-disclosure="${disclosure}"]`).first();
+          checked += 1;
+          if ((await button.count()) === 0) {
+            failures.push(`[${width}-codex-${chapter}] 展开键没有落位`);
+          } else {
+            const alreadyOpen = await button.getAttribute("aria-expanded");
+            if (alreadyOpen !== "true") {
+              await button.click({ timeout: 3000 }).catch(() => {});
+            }
+            await page.waitForTimeout(100);
+            const expanded = await page.evaluate(() => {
+              const rows = [
+                ...document.querySelectorAll(
+                  ".realm-hexagram-row, .realm-mansion-row, .realm-codex-disclosure",
+                ),
+              ].filter((row) => row.getClientRects().length > 0);
+              return {
+                expanded:
+                  rows
+                    .find((row) => row.matches(".realm-codex-disclosure"))
+                    ?.getAttribute("aria-expanded") ?? null,
+                rowOverflow: rows
+                  .map((row) => row.getBoundingClientRect())
+                  .filter((rect) => rect.left < -1 || rect.right > innerWidth + 1).length,
+                horizontalOverflow: document.documentElement.scrollWidth > innerWidth + 1,
+              };
+            });
+            if (
+              expanded.expanded !== "true" ||
+              expanded.rowOverflow !== 0 ||
+              expanded.horizontalOverflow
+            ) {
+              failures.push(
+                `[${width}-codex-${chapter}] 展开长表后挤出视口:${JSON.stringify(expanded)}`,
+              );
+            }
+          }
+        }
+
+        const problems = problemsOf(await measurePage(page));
+        checked += 1;
+        for (const problem of problems) {
+          failures.push(`[${width}-codex-${chapter}] ${problem}`);
+        }
+      }
+    }
+
     checked += 1;
     if (rendered === 0) {
       failures.push("[390-codex] 界域志没渲染出来,首屏判据没量到东西");
@@ -8831,6 +8993,8 @@ async function taskCodexFold() {
       await page.setViewportSize({ width: 1280, height: 800 });
       await settleVisuals(page);
       await realmCodexDeskSpread();
+      await realmCodexChapterSheets(390);
+      await realmCodexChapterSheets(195);
     }
     if (pageErrors.length)
       failures.push(`[390-codex] 界域志首屏页面异常:${[...new Set(pageErrors)].join(" | ")}`);

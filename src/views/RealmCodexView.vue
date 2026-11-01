@@ -24,526 +24,582 @@
     -->
     <InkTabs v-model="codexTab" :tabs="codexTabRows" />
 
-    <div v-if="codexTab === 'realm'" class="realm-codex-desk" data-realm-codex-desk>
-      <div class="realm-codex-desk__lead">
-        <!--
+    <div class="realm-codex-folio folio-span-all" data-realm-codex-folio :data-chapter="codexTab">
+      <div
+        v-if="codexTab === 'realm'"
+        class="realm-codex-desk realm-codex-chapter"
+        data-realm-codex-desk
+        data-realm-codex-chapter="realm"
+      >
+        <div class="realm-codex-desk__lead">
+          <!--
         卷首先报此刻:当前境、所在界、全路序号、前后境与四界刻度同屏。
         四界卷目与境界谱格只负责展开与查阅,不再把一整条仙路铺成没有层次的清单。
       -->
-        <section
-          data-realm-current
-          :data-current-realm-id="currentRealm.def.id"
-          :data-current-world-id="currentRealm.world.id"
-          :data-world="currentRealm.world.id"
-          class="realm-now"
-        >
-          <LedgerHeader
-            :seal="realmCodexWorldMark(currentRealm.world.id)"
-            :title="currentRealm.def.name"
-            score-label="全路"
-            :score-value="currentRealm.globalPosition"
-            :score-suffix="`/ ${realmOverview.total}`"
+          <section
+            data-realm-current
+            :data-current-realm-id="currentRealm.def.id"
+            :data-current-world-id="currentRealm.world.id"
+            :data-world="currentRealm.world.id"
+            class="realm-now"
           >
-            <template #eyebrow>
-              <span class="world-label">{{ currentRealm.world.name }}</span>
-              <span>第 {{ realmOverview.worldIndex }} / {{ realmOverview.worldCount }} 界</span>
-              <span>此刻在此</span>
-            </template>
-            <template #title>
-              <span data-current-realm-name>{{ currentRealm.def.name }}</span>
-              <span class="realm-now__basis">{{ currentRealm.def.basis }}</span>
-              <span class="realm-now__now">此刻</span>
-            </template>
-            <template #description>{{ currentRealm.def.desc }}</template>
-          </LedgerHeader>
-
-          <div class="realm-now__ladder">
-            <RealmLadder :major="player.major" />
-          </div>
-
-          <div class="realm-now__steps">
-            <button
-              v-if="currentRealm.previous"
-              data-realm-step="prev"
-              class="realm-now__step tap-row min-h-[28px] text-qing active:opacity-60"
-              @click="gotoRealm(currentRealm.previous.def.id)"
+            <LedgerHeader
+              :seal="realmCodexWorldMark(currentRealm.world.id)"
+              :title="currentRealm.def.name"
+              score-label="全路"
+              :score-value="currentRealm.globalPosition"
+              :score-suffix="`/ ${realmOverview.total}`"
             >
-              ← 前境 · {{ currentRealm.previous.def.name }}
-            </button>
-            <span v-else class="realm-now__step text-ink-faint">仙路起笔</span>
-            <span data-current-world-position class="realm-now__position text-ink-faint tabular">
-              {{ currentRealm.world.name }} {{ currentRealm.worldPosition }}/{{
-                currentRealm.worldTotal
-              }}
-            </span>
-            <button
-              v-if="currentRealm.next"
-              data-realm-step="next"
-              class="realm-now__step tap-row min-h-[28px] text-qing active:opacity-60"
-              @click="gotoRealm(currentRealm.next.def.id)"
-            >
-              后境 · {{ currentRealm.next.def.name }} →
-            </button>
-            <span v-else class="realm-now__step text-ink-faint">已至此卷末</span>
-          </div>
-        </section>
+              <template #eyebrow>
+                <span class="world-label">{{ currentRealm.world.name }}</span>
+                <span>第 {{ realmOverview.worldIndex }} / {{ realmOverview.worldCount }} 界</span>
+                <span>此刻在此</span>
+              </template>
+              <template #title>
+                <span data-current-realm-name>{{ currentRealm.def.name }}</span>
+                <span class="realm-now__basis">{{ currentRealm.def.basis }}</span>
+                <span class="realm-now__now">此刻</span>
+              </template>
+              <template #description>{{ currentRealm.def.desc }}</template>
+            </LedgerHeader>
 
-        <section data-realm-world-index class="realm-world-index">
-          <header class="realm-world-index__head">
-            <div>
-              <p class="text-note text-ink-faint">四界卷目</p>
-              <h2 class="text-title text-ink">先看身在何处，再翻境界谱</h2>
+            <div class="realm-now__ladder">
+              <RealmLadder :major="player.major" />
             </div>
-            <span class="text-note text-ink-faint tabular">
-              {{ WORLDS.length }} 界 · {{ REALMS.length }} 境 · {{ realmOverview.passed }}/{{
-                realmOverview.total
-              }}
-              已渡
-            </span>
-          </header>
-          <div class="realm-world-index__grid">
-            <button
-              v-for="row in realmAtlasRows"
-              :key="row.world.id"
-              type="button"
-              class="realm-world-index__cell"
-              :data-world="row.world.id"
-              :data-world-toggle="row.world.id"
-              :data-world-state="row.state"
-              :aria-expanded="isWorldOpen(row.world.id)"
-              :aria-controls="worldBodyId(row.world.id)"
-              @click="toggleWorld(row.world.id)"
-            >
-              <span class="realm-world-index__mark" aria-hidden="true">{{ row.mark }}</span>
-              <span class="realm-world-index__copy">
-                <span class="realm-world-index__line">
-                  <span class="world-seal font-kai">{{ row.world.name }}</span>
-                  <span class="text-note text-ink-faint">{{ row.rangeLabel }}</span>
-                </span>
-                <ProgressBar
-                  :value="row.ratio"
-                  :color="row.state === 'past' ? 'var(--color-jade)' : 'var(--realm-accent)'"
-                  :height="2"
-                />
-                <span class="realm-world-index__status">
-                  <span :class="worldStateClass(row)">{{ row.status }}</span>
-                  <span class="text-ink-faint">{{
-                    isWorldOpen(row.world.id) ? "收卷" : "展卷"
-                  }}</span>
-                </span>
+
+            <div class="realm-now__steps">
+              <button
+                v-if="currentRealm.previous"
+                data-realm-step="prev"
+                class="realm-now__step tap-row min-h-[28px] text-qing active:opacity-60"
+                @click="gotoRealm(currentRealm.previous.def.id)"
+              >
+                ← 前境 · {{ currentRealm.previous.def.name }}
+              </button>
+              <span v-else class="realm-now__step text-ink-faint">仙路起笔</span>
+              <span data-current-world-position class="realm-now__position text-ink-faint tabular">
+                {{ currentRealm.world.name }} {{ currentRealm.worldPosition }}/{{
+                  currentRealm.worldTotal
+                }}
               </span>
-            </button>
-          </div>
-        </section>
+              <button
+                v-if="currentRealm.next"
+                data-realm-step="next"
+                class="realm-now__step tap-row min-h-[28px] text-qing active:opacity-60"
+                @click="gotoRealm(currentRealm.next.def.id)"
+              >
+                后境 · {{ currentRealm.next.def.name }} →
+              </button>
+              <span v-else class="realm-now__step text-ink-faint">已至此卷末</span>
+            </div>
+          </section>
+
+          <section data-realm-world-index class="realm-world-index">
+            <header class="realm-world-index__head">
+              <div>
+                <p class="text-note text-ink-faint">四界卷目</p>
+                <h2 class="text-title text-ink">先看身在何处，再翻境界谱</h2>
+              </div>
+              <span class="text-note text-ink-faint tabular">
+                {{ WORLDS.length }} 界 · {{ REALMS.length }} 境 · {{ realmOverview.passed }}/{{
+                  realmOverview.total
+                }}
+                已渡
+              </span>
+            </header>
+            <div class="realm-world-index__grid">
+              <button
+                v-for="row in realmAtlasRows"
+                :key="row.world.id"
+                type="button"
+                class="realm-world-index__cell"
+                :data-world="row.world.id"
+                :data-world-toggle="row.world.id"
+                :data-world-state="row.state"
+                :aria-expanded="isWorldOpen(row.world.id)"
+                :aria-controls="worldBodyId(row.world.id)"
+                @click="toggleWorld(row.world.id)"
+              >
+                <span class="realm-world-index__mark" aria-hidden="true">{{ row.mark }}</span>
+                <span class="realm-world-index__copy">
+                  <span class="realm-world-index__line">
+                    <span class="world-seal font-kai">{{ row.world.name }}</span>
+                    <span class="text-note text-ink-faint">{{ row.rangeLabel }}</span>
+                  </span>
+                  <ProgressBar
+                    :value="row.ratio"
+                    :color="row.state === 'past' ? 'var(--color-jade)' : 'var(--realm-accent)'"
+                    :height="2"
+                  />
+                  <span class="realm-world-index__status">
+                    <span :class="worldStateClass(row)">{{ row.status }}</span>
+                    <span class="text-ink-faint">{{
+                      isWorldOpen(row.world.id) ? "收卷" : "展卷"
+                    }}</span>
+                  </span>
+                </span>
+              </button>
+            </div>
+          </section>
+        </div>
+
+        <div class="realm-codex-desk__volumes">
+          <section
+            v-for="row in realmAtlasRows"
+            :id="worldBodyId(row.world.id)"
+            v-show="isWorldOpen(row.world.id)"
+            :key="row.world.id"
+            class="realm-volume"
+            :data-world="row.world.id"
+          >
+            <header class="realm-volume__head">
+              <span class="realm-volume__mark" aria-hidden="true">{{ row.mark }}</span>
+              <div class="realm-volume__copy">
+                <p class="realm-volume__line">
+                  <span class="world-seal font-kai text-section">{{ row.world.name }}</span>
+                  <span class="text-note text-ink-faint">{{ row.rangeLabel }}</span>
+                  <span class="text-note text-ink-faint">{{ row.status }}</span>
+                </p>
+                <p class="realm-volume__desc">{{ row.world.desc }}</p>
+              </div>
+              <span class="realm-volume__ordinal tabular"
+                >卷 {{ String(row.ordinal).padStart(2, "0") }}</span
+              >
+            </header>
+
+            <div class="realm-ledger">
+              <article
+                v-for="cell in realmEntries(row)"
+                :id="`realm-${cell.def.id}`"
+                :key="cell.def.id"
+                class="realm-entry"
+                :class="cell.state === 'current' ? 'codex-current' : ''"
+                :data-realm-state="cell.state"
+              >
+                <button
+                  type="button"
+                  data-realm-toggle
+                  class="realm-entry__head"
+                  :aria-expanded="isRealmOpen(cell.def.id)"
+                  :aria-controls="realmBodyId(cell.def.id)"
+                  @click="toggleRealm(cell.def.id)"
+                >
+                  <span class="realm-entry__ordinal tabular">{{
+                    String(cell.ordinal).padStart(2, "0")
+                  }}</span>
+                  <span class="realm-entry__copy">
+                    <span class="realm-entry__line">
+                      <span class="realm-entry__name font-kai">{{ cell.def.name }}</span>
+                      <span class="realm-entry__basis">{{ cell.def.basis }}</span>
+                    </span>
+                    <span class="realm-entry__desc">{{ cell.def.desc }}</span>
+                  </span>
+                  <span class="realm-entry__state">
+                    <span class="realm-entry__state-mark" aria-hidden="true">{{
+                      cell.stateMark
+                    }}</span>
+                    <span>{{ cell.stateLabel }}</span>
+                  </span>
+                  <span
+                    class="realm-entry__chevron"
+                    :class="isRealmOpen(cell.def.id) ? 'is-open' : ''"
+                    aria-hidden="true"
+                    >▾</span
+                  >
+                </button>
+                <div
+                  v-if="isRealmOpen(cell.def.id)"
+                  :id="realmBodyId(cell.def.id)"
+                  data-realm-detail
+                  class="realm-entry__detail"
+                >
+                  <p>{{ cell.def.lore }}</p>
+                  <p v-if="classicsOf(cell.def.id).length" class="realm-entry__classics">
+                    <span>所据</span>
+                    <button
+                      v-for="c in classicsOf(cell.def.id)"
+                      :key="c.id"
+                      type="button"
+                      class="realm-entry__classic"
+                      :aria-label="`查看典籍《${c.title}》`"
+                      @click="gotoClassic(c.id)"
+                    >
+                      《{{ c.title }}》
+                    </button>
+                  </p>
+                </div>
+              </article>
+            </div>
+          </section>
+        </div>
       </div>
 
-      <div class="realm-codex-desk__volumes">
-        <section
-          v-for="row in realmAtlasRows"
-          :id="worldBodyId(row.world.id)"
-          v-show="isWorldOpen(row.world.id)"
-          :key="row.world.id"
-          class="realm-volume"
-          :data-world="row.world.id"
-        >
-          <header class="realm-volume__head">
-            <span class="realm-volume__mark" aria-hidden="true">{{ row.mark }}</span>
-            <div class="realm-volume__copy">
-              <p class="realm-volume__line">
-                <span class="world-seal font-kai text-section">{{ row.world.name }}</span>
-                <span class="text-note text-ink-faint">{{ row.rangeLabel }}</span>
-                <span class="text-note text-ink-faint">{{ row.status }}</span>
-              </p>
-              <p class="realm-volume__desc">{{ row.world.desc }}</p>
-            </div>
-            <span class="realm-volume__ordinal tabular"
-              >卷 {{ String(row.ordinal).padStart(2, "0") }}</span
-            >
-          </header>
-
-          <div class="realm-ledger">
+      <template v-if="codexTab === 'classics'">
+        <div class="realm-codex-chapter" data-realm-codex-chapter="classics">
+          <!-- 典籍:境界名背后的原典 -->
+          <SectionTitle title="典籍" hint="所述者传统道教、佛教、道家与丹道之书" />
+          <section
+            class="realm-codex-section realm-classic-ledger"
+            data-realm-codex-section="classics"
+          >
             <article
-              v-for="cell in realmEntries(row)"
-              :id="`realm-${cell.def.id}`"
-              :key="cell.def.id"
-              class="realm-entry"
-              :class="cell.state === 'current' ? 'codex-current' : ''"
-              :data-realm-state="cell.state"
+              v-for="c in CLASSICS"
+              :id="`classic-${c.id}`"
+              :key="c.id"
+              class="realm-classic"
             >
-              <button
-                type="button"
-                data-realm-toggle
-                class="realm-entry__head"
-                :aria-expanded="isRealmOpen(cell.def.id)"
-                :aria-controls="realmBodyId(cell.def.id)"
-                @click="toggleRealm(cell.def.id)"
-              >
-                <span class="realm-entry__ordinal tabular">{{
-                  String(cell.ordinal).padStart(2, "0")
-                }}</span>
-                <span class="realm-entry__copy">
-                  <span class="realm-entry__line">
-                    <span class="realm-entry__name font-kai">{{ cell.def.name }}</span>
-                    <span class="realm-entry__basis">{{ cell.def.basis }}</span>
-                  </span>
-                  <span class="realm-entry__desc">{{ cell.def.desc }}</span>
-                </span>
-                <span class="realm-entry__state">
-                  <span class="realm-entry__state-mark" aria-hidden="true">{{
-                    cell.stateMark
-                  }}</span>
-                  <span>{{ cell.stateLabel }}</span>
-                </span>
-                <span
-                  class="realm-entry__chevron"
-                  :class="isRealmOpen(cell.def.id) ? 'is-open' : ''"
-                  aria-hidden="true"
-                  >▾</span
+              <div class="realm-classic__identity">
+                <p class="realm-classic__title-line">
+                  <span class="font-kai text-title text-ink">《{{ c.title }}》</span>
+                  <span class="chip-ink !text-note">{{ c.school }}</span>
+                  <span class="text-note text-ink-faint">{{ c.source }}</span>
+                </p>
+              </div>
+              <div class="realm-classic__copy">
+                <p class="t-body text-ink-soft">{{ c.gist }}</p>
+                <!-- 相涉何境:点一下跳回「界域」那一段 —— 反向也能追 -->
+                <p
+                  v-if="c.realms.length"
+                  class="mt-1 flex flex-wrap items-center gap-x-1.5 text-note text-ink-faint"
                 >
-              </button>
-              <div
-                v-if="isRealmOpen(cell.def.id)"
-                :id="realmBodyId(cell.def.id)"
-                data-realm-detail
-                class="realm-entry__detail"
-              >
-                <p>{{ cell.def.lore }}</p>
-                <p v-if="classicsOf(cell.def.id).length" class="realm-entry__classics">
-                  <span>所据</span>
+                  <span>相涉:</span>
                   <button
-                    v-for="c in classicsOf(cell.def.id)"
-                    :key="c.id"
-                    type="button"
-                    class="realm-entry__classic"
-                    :aria-label="`查看典籍《${c.title}》`"
-                    @click="gotoClassic(c.id)"
+                    v-for="id in c.realms"
+                    :key="id"
+                    class="realm-classic__realm inline-flex min-h-[28px] items-center text-qing underline underline-offset-2 active:opacity-60"
+                    :aria-label="`查看境界「${realmName(id)}」`"
+                    @click="gotoRealm(id)"
                   >
-                    《{{ c.title }}》
+                    {{ realmName(id) }}
                   </button>
                 </p>
               </div>
             </article>
-          </div>
-        </section>
-      </div>
-    </div>
-
-    <template v-if="codexTab === 'classics'">
-      <!-- 典籍:境界名背后的原典 -->
-      <SectionTitle title="典籍" hint="所述者传统道教、佛教、道家与丹道之书" />
-      <section class="space-y-2">
-        <article
-          v-for="c in CLASSICS"
-          :id="`classic-${c.id}`"
-          :key="c.id"
-          class="card-ink px-4 py-3"
-        >
-          <p class="flex flex-wrap items-center gap-2">
-            <span class="font-kai text-title text-ink">《{{ c.title }}》</span>
-            <span class="chip-ink !text-note">{{ c.school }}</span>
-            <span class="text-note text-ink-faint">{{ c.source }}</span>
-          </p>
-          <p class="mt-1 t-body text-ink-soft">{{ c.gist }}</p>
-          <!-- 相涉何境:点一下跳回「界域」那一段 —— 反向也能追 -->
-          <p
-            v-if="c.realms.length"
-            class="mt-1 flex flex-wrap items-center gap-x-1.5 text-note text-ink-faint"
-          >
-            <span>相涉:</span>
-            <button
-              v-for="id in c.realms"
-              :key="id"
-              class="inline-flex min-h-[28px] items-center text-qing underline underline-offset-2 active:opacity-60"
-              :aria-label="`查看境界「${realmName(id)}」`"
-              @click="gotoRealm(id)"
-            >
-              {{ realmName(id) }}
-            </button>
-          </p>
-        </article>
-      </section>
-    </template>
-
-    <template v-if="codexTab === 'yi'">
-      <!-- 周易:读过之后可以真的问一卦 -->
-      <SectionTitle
-        title="周易"
-        :hint="`${cnNumber(TRIGRAMS.length)}卦为体,${cnNumber(HEXAGRAMS.length)}卦为用`"
-      />
-      <section class="card-ink px-4 py-3">
-        <p class="t-body text-ink-faint">
-          「易」不是书斋里的摆设:八卦各主一事之势,重卦由上下相叠 ——
-          下卦为身,上卦为境,故一卦之力是内外相济的两股。摇得之卦在身,过时自散。
-        </p>
-
-        <!-- 在身之卦 -->
-        <div v-if="currentReading" class="mt-3 rounded-[2px] bg-paper-deep/50 px-3 py-2.5">
-          <p class="flex flex-wrap items-center gap-2">
-            <span class="font-kai text-[16px] tracking-widest text-cinnabar"
-              >{{ currentReading.hexagram.name }}卦</span
-            >
-            <span class="text-note text-ink-faint tabular">
-              上{{ currentReading.upper.name }}{{ currentReading.upper.symbol }} · 下{{
-                currentReading.lower.name
-              }}{{ currentReading.lower.symbol }}
-            </span>
-            <span v-if="currentReading.changed" class="chip-ink !text-note"
-              >之{{ currentReading.changed.name }}</span
-            >
-            <span class="ml-auto text-note tabular text-ink-faint"
-              ><span class="countdown-slot">{{ remainText }}</span></span
-            >
-          </p>
-          <div class="mt-1.5 space-y-0.5 font-kai text-body tracking-[0.2em] text-ink-soft">
-            <p v-for="(bar, i) in drawnLines" :key="i">{{ bar }}</p>
-          </div>
-          <p class="mt-1.5 t-body text-ink-soft">
-            {{ currentReading.hexagram.gist }}
-          </p>
-          <p v-for="(line, i) in counsel" :key="`c${i}`" class="mt-0.5 t-body text-ink-faint">
-            {{ line }}
-          </p>
-          <p class="mt-1.5 text-body text-qing">在身之力:{{ powerText }}</p>
+          </section>
         </div>
+      </template>
 
-        <!-- 读屏:散卦没有 toast 可依,整块消失的那一瞬必须自报(成卦由 toast 落地即念) -->
-        <p aria-live="polite" class="sr-only">{{ readingAnnounce }}</p>
+      <template v-if="codexTab === 'yi'">
+        <div class="realm-codex-chapter" data-realm-codex-chapter="yi">
+          <!-- 周易:读过之后可以真的问一卦 -->
+          <SectionTitle
+            title="周易"
+            :hint="`${cnNumber(TRIGRAMS.length)}卦为体,${cnNumber(HEXAGRAMS.length)}卦为用`"
+          />
+          <section
+            class="realm-codex-section realm-yi-ledger"
+            data-realm-codex-section="yi-reading"
+          >
+            <p class="t-body text-ink-faint">
+              「易」不是书斋里的摆设:八卦各主一事之势,重卦由上下相叠 ——
+              下卦为身,上卦为境,故一卦之力是内外相济的两股。摇得之卦在身,过时自散。
+            </p>
 
-        <!--
+            <!-- 在身之卦 -->
+            <div v-if="currentReading" class="realm-yi-reading">
+              <p class="flex flex-wrap items-center gap-2">
+                <span class="font-kai text-[16px] tracking-widest text-cinnabar"
+                  >{{ currentReading.hexagram.name }}卦</span
+                >
+                <span class="text-note text-ink-faint tabular">
+                  上{{ currentReading.upper.name }}{{ currentReading.upper.symbol }} · 下{{
+                    currentReading.lower.name
+                  }}{{ currentReading.lower.symbol }}
+                </span>
+                <span v-if="currentReading.changed" class="chip-ink !text-note"
+                  >之{{ currentReading.changed.name }}</span
+                >
+                <span class="ml-auto text-note tabular text-ink-faint"
+                  ><span class="countdown-slot">{{ remainText }}</span></span
+                >
+              </p>
+              <div class="mt-1.5 space-y-0.5 font-kai text-body tracking-[0.2em] text-ink-soft">
+                <p v-for="(bar, i) in drawnLines" :key="i">{{ bar }}</p>
+              </div>
+              <p class="mt-1.5 t-body text-ink-soft">
+                {{ currentReading.hexagram.gist }}
+              </p>
+              <p v-for="(line, i) in counsel" :key="`c${i}`" class="mt-0.5 t-body text-ink-faint">
+                {{ line }}
+              </p>
+              <p class="mt-1.5 text-body text-qing">在身之力:{{ powerText }}</p>
+            </div>
+
+            <!-- 读屏:散卦没有 toast 可依,整块消失的那一瞬必须自报(成卦由 toast 落地即念) -->
+            <p aria-live="polite" class="sr-only">{{ readingAnnounce }}</p>
+
+            <!--
           按钮标签不许折行:原先这行是不换行的 flex,按钮被右侧长注挤到
           「问 卦(悟道」/「点 2)」两行 —— 门槛数字被拦腰折断。给按钮 shrink-0 +
           whitespace-nowrap(自己保住一整块),注文可换行、必要时整行再折(gap-y)。
         -->
-        <div class="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-          <button
-            class="btn-ghost shrink-0 whitespace-nowrap !py-1.5 !text-body"
-            :disabled="askDisabled"
-            @click="ask"
-          >
-            {{ askLabel }}
-          </button>
-          <span class="text-note leading-relaxed text-ink-faint">
-            卜以决疑,不疑何卜 —— 一事不二卜,卦力随动爻而盛,亦随时而尽。
-          </span>
-        </div>
-        <div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-note text-ink-faint tabular">
-          <span v-for="(t, i) in CHANGING_TIERS" :key="t.min"
-            >{{ changingRange(CHANGING_TIERS, i) }} 动 → {{ t.minutes }} 分 · ×{{
-              t.power
-            }}
-            倍</span
-          >
-        </div>
-      </section>
+            <div class="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+              <button
+                class="btn-ghost shrink-0 whitespace-nowrap !py-1.5 !text-body"
+                :disabled="askDisabled"
+                @click="ask"
+              >
+                {{ askLabel }}
+              </button>
+              <span class="text-note leading-relaxed text-ink-faint">
+                卜以决疑,不疑何卜 —— 一事不二卜,卦力随动爻而盛,亦随时而尽。
+              </span>
+            </div>
+            <div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-note text-ink-faint tabular">
+              <span v-for="(t, i) in CHANGING_TIERS" :key="t.min"
+                >{{ changingRange(CHANGING_TIERS, i) }} 动 → {{ t.minutes }} 分 · ×{{
+                  t.power
+                }}
+                倍</span
+              >
+            </div>
+          </section>
 
-      <!-- 八卦 -->
-      <section class="card-ink divide-y divide-ink/7 px-4">
-        <!-- 320px 窄窗:卦辞挪到自己一行,宜/忌靠右 —— 卦名+象+宜忌一行,卦辞整行不被挤成一根线 -->
-        <div v-for="t in TRIGRAMS" :key="t.id" class="py-2.5">
-          <p class="flex flex-wrap items-start gap-x-2 gap-y-0.5">
-            <span class="w-[52px] shrink-0 font-kai text-section text-ink"
-              >{{ t.symbol }} {{ t.name }}</span
+          <!-- 八卦 -->
+          <section
+            class="realm-codex-section realm-trigram-ledger"
+            data-realm-codex-section="trigrams"
+          >
+            <SectionMark text="八 卦" />
+            <!-- 320px 窄窗:卦辞挪到自己一行,宜/忌靠右 —— 卦名+象+宜忌一行,卦辞整行不被挤成一根线 -->
+            <div v-for="t in TRIGRAMS" :key="t.id" class="realm-trigram-row">
+              <div class="realm-trigram-row__identity">
+                <span class="font-kai text-section text-ink">{{ t.symbol }} {{ t.name }}</span>
+                <span class="text-note text-ink-faint">象{{ t.image }} · {{ t.nature }}</span>
+              </div>
+              <div class="realm-trigram-row__signs">
+                <span class="text-note text-jade">宜{{ t.good }}</span>
+                <span class="text-note text-cinnabar">忌{{ t.bad }}</span>
+              </div>
+              <p class="t-body text-ink-soft">{{ t.gist }}</p>
+            </div>
+          </section>
+
+          <!-- 六十四卦:全表可查,但不必时时铺开 -->
+          <section
+            class="realm-codex-section realm-hexagram-ledger"
+            data-realm-codex-section="hexagrams"
+          >
+            <button
+              class="realm-codex-disclosure"
+              data-realm-disclosure="hexagrams"
+              :aria-expanded="showAllHex"
+              @click="showAllHex = !showAllHex"
             >
-            <span class="shrink-0 text-note text-ink-faint">象{{ t.image }} · {{ t.nature }}</span>
-            <span class="ml-auto shrink-0 text-note text-jade">宜{{ t.good }}</span>
-            <span class="shrink-0 text-note text-cinnabar">忌{{ t.bad }}</span>
-          </p>
-          <p class="mt-0.5 t-body text-ink-soft">{{ t.gist }}</p>
+              <span class="font-kai text-title tracking-wider text-ink"
+                >{{ cnNumber(HEXAGRAMS.length) }}卦</span
+              >
+              <span class="text-note text-qing">{{
+                showAllHex ? "收起" : `展开查看 ${HEXAGRAMS.length} 卦 →`
+              }}</span>
+            </button>
+            <div
+              v-if="showAllHex"
+              class="scroll-pane realm-hexagram-list mt-2 max-h-72 overflow-y-auto"
+            >
+              <div v-for="x in HEXAGRAMS" :key="x.order" class="realm-hexagram-row">
+                <span class="realm-hexagram-row__order tabular text-note text-ink-faint">{{
+                  x.order
+                }}</span>
+                <span class="realm-hexagram-row__name font-kai text-title text-ink">{{
+                  x.name
+                }}</span>
+                <span class="realm-hexagram-row__trigrams text-note text-ink-faint tabular">
+                  {{ trigramDef(x.upper)?.symbol }}{{ trigramDef(x.lower)?.symbol }}
+                </span>
+                <span class="realm-hexagram-row__gist t-body text-ink-soft">{{ x.gist }}</span>
+              </div>
+            </div>
+          </section>
         </div>
-      </section>
+      </template>
 
-      <!-- 六十四卦:全表可查,但不必时时铺开 -->
-      <section class="card-ink px-4 py-3">
-        <button
-          class="flex w-full items-center justify-between text-left active:opacity-60"
-          :aria-expanded="showAllHex"
-          @click="showAllHex = !showAllHex"
-        >
-          <span class="font-kai text-title tracking-wider text-ink"
-            >{{ cnNumber(HEXAGRAMS.length) }}卦</span
-          >
-          <span class="text-note text-qing">{{
-            showAllHex ? "收起" : `展开查看 ${HEXAGRAMS.length} 卦 →`
-          }}</span>
-        </button>
-        <div
-          v-if="showAllHex"
-          class="scroll-pane mt-2 max-h-72 divide-y divide-ink/6 overflow-y-auto"
-        >
-          <div v-for="x in HEXAGRAMS" :key="x.order" class="flex items-baseline gap-2 py-2">
-            <span class="w-6 shrink-0 tabular text-note text-ink-faint">{{ x.order }}</span>
-            <span class="w-14 shrink-0 font-kai text-title text-ink">{{ x.name }}</span>
-            <span class="w-16 shrink-0 text-note text-ink-faint tabular">
-              {{ trigramDef(x.upper)?.symbol }}{{ trigramDef(x.lower)?.symbol }}
-            </span>
-            <span class="min-w-0 t-body text-ink-soft">{{ x.gist }}</span>
-          </div>
-        </div>
-      </section>
-    </template>
-
-    <template v-if="codexTab === 'ziwei'">
-      <!-- 紫微:一世之格,与周易的「一时之机」分工 -->
-      <SectionTitle title="紫微" :hint="`${cnNumber(PALACES.length)}宫定一世之格,与问卦分工`" />
-      <!--
+      <template v-if="codexTab === 'ziwei'">
+        <div class="realm-codex-chapter" data-realm-codex-chapter="ziwei">
+          <!-- 紫微:一世之格,与周易的「一时之机」分工 -->
+          <SectionTitle title="紫微" :hint="`${cnNumber(PALACES.length)}宫定一世之格,与问卦分工`" />
+          <!--
         这一册照星象册的三档重排:题(命主) → 用(命格之力) → 读(宫位与主星) → 来历。
         从前是一段长散文开头,唯一的动态量「命格之力」混在 11px 小字里 ——
         与师承契合度当初同一个病:玩家打开这一册想知道的从来是「我这一世是什么格、
         力有多大」,机制说明该归来历。
       -->
-      <section class="card-ink px-4 py-3">
-        <p class="font-kai text-title leading-relaxed text-ink">{{ fateLordLineText }}</p>
-        <div class="ink-divider my-2.5" aria-hidden="true" />
-        <!-- 用:命格之力 —— 这一册唯一据以行动的结论,与星象「今日利」同一版式 -->
-        <ValueRow label="命格之力" :value="fateModsText" color="text-jade" />
-        <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
-          卦是一时之机(可问、有时限),命是一世之格(常驻、转世重算,力薄为底色)。
-        </p>
-        <div class="ink-divider my-2.5" aria-hidden="true" />
-        <!-- 读:十二宫所安之星 -->
-        <SectionMark :text="`${cnNumber(PALACES.length)} 宫`" />
-        <div class="divide-y divide-ink/6">
-          <div
-            v-for="row in fateRows"
-            :key="row.palace.id"
-            class="flex items-baseline gap-2 py-1.5"
-          >
-            <span class="w-14 shrink-0 font-kai text-body text-ink-soft">{{
-              row.palace.name
-            }}</span>
-            <span class="w-24 shrink-0 text-body text-cinnabar">{{ row.starNames }}</span>
-            <span class="min-w-0 t-body text-ink-faint"
-              >{{ row.palace.domain }} · {{ row.palace.use }}</span
-            >
-          </div>
+          <section class="realm-codex-section realm-fate-ledger" data-realm-codex-section="ziwei">
+            <p class="font-kai text-title leading-relaxed text-ink">{{ fateLordLineText }}</p>
+            <div class="ink-divider my-2.5" aria-hidden="true" />
+            <!-- 用:命格之力 —— 这一册唯一据以行动的结论,与星象「今日利」同一版式 -->
+            <ValueRow
+              class="realm-fate-power"
+              label="命格之力"
+              :value="fateModsText"
+              color="text-jade"
+            />
+            <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
+              卦是一时之机(可问、有时限),命是一世之格(常驻、转世重算,力薄为底色)。
+            </p>
+            <div class="ink-divider my-2.5" aria-hidden="true" />
+            <!-- 读:十二宫所安之星 -->
+            <SectionMark :text="`${cnNumber(PALACES.length)} 宫`" />
+            <div class="realm-fate-palaces">
+              <div v-for="row in fateRows" :key="row.palace.id" class="realm-fate-row">
+                <span class="realm-fate-row__palace font-kai text-body text-ink-soft">
+                  {{ row.palace.name }}
+                </span>
+                <span class="realm-fate-row__stars text-body text-cinnabar">
+                  {{ row.starNames }}
+                </span>
+                <span class="realm-fate-row__use t-body text-ink-faint">
+                  {{ row.palace.domain }} · {{ row.palace.use }}
+                </span>
+              </div>
+            </div>
+            <div class="mt-3 border-t border-ink/10 pt-2">
+              <SectionMark :text="`${cnNumber(STARS.length)} 主 星`" />
+              <p v-for="s in STARS" :key="s.id" class="mt-1 t-body text-ink-soft">
+                <span class="font-kai text-ink">{{ s.name }}</span>
+                <span class="text-ink-faint"> · {{ s.nature }} · {{ s.gist }}</span>
+              </p>
+            </div>
+            <!-- 来历:取象义而非排盘的说明,归脚注 -->
+            <p class="mt-2 border-t border-ink/8 pt-2 text-note leading-relaxed text-ink-faint">
+              紫微斗数本当以生辰起五行局再安诸星,游戏内没有生辰 —— 故此门只取
+              <b class="text-ink">{{ cnNumber(PALACES.length) }}宫所主</b>与
+              <b class="text-ink">{{ cnNumber(STARS.length) }}主星的星性</b
+              >,按灵根与轮回归属安星:是取象义,不是排盘。诸星之力并进命格之力,不按宫位分流——宫位只是星象义,非机制分工。
+            </p>
+          </section>
         </div>
-        <div class="mt-3 border-t border-ink/10 pt-2">
-          <SectionMark :text="`${cnNumber(STARS.length)} 主 星`" />
-          <p v-for="s in STARS" :key="s.id" class="mt-1 t-body text-ink-soft">
-            <span class="font-kai text-ink">{{ s.name }}</span>
-            <span class="text-ink-faint"> · {{ s.nature }} · {{ s.gist }}</span>
-          </p>
-        </div>
-        <!-- 来历:取象义而非排盘的说明,归脚注 -->
-        <p class="mt-2 border-t border-ink/8 pt-2 text-note leading-relaxed text-ink-faint">
-          紫微斗数本当以生辰起五行局再安诸星,游戏内没有生辰 —— 故此门只取
-          <b class="text-ink">{{ cnNumber(PALACES.length) }}宫所主</b>与
-          <b class="text-ink">{{ cnNumber(STARS.length) }}主星的星性</b
-          >,按灵根与轮回归属安星:是取象义,不是排盘。诸星之力并进命格之力,不按宫位分流——宫位只是星象义,非机制分工。
-        </p>
-      </section>
-    </template>
+      </template>
 
-    <template v-if="codexTab === 'xiang'">
-      <!-- 星象:二十八宿值日,利一方界域 -->
-      <SectionTitle title="星象" :hint="`${cnNumber(MANSIONS.length)}宿值日,分野为读、四象为用`" />
-      <section class="card-ink px-4 py-3">
-        <!--
+      <template v-if="codexTab === 'xiang'">
+        <div class="realm-codex-chapter" data-realm-codex-chapter="xiang">
+          <!-- 星象:二十八宿值日,利一方界域 -->
+          <SectionTitle
+            title="星象"
+            :hint="`${cnNumber(MANSIONS.length)}宿值日,分野为读、四象为用`"
+          />
+          <section
+            class="realm-codex-section realm-mansion-ledger"
+            data-realm-codex-section="xiang"
+          >
+            <!--
           这一册从「一段散文」改成三档:今日值宿(题) → 今日之利(用) → 来历(读)。
           原先的顺序是把「管用的是下面这条」放在最前、把可执行的「今日利」埋在第三段,
           而玩家打开这一册想知道的从来是第一件:今天该往哪界走。
         -->
-        <p class="font-kai text-title leading-relaxed text-ink">{{ mansionLine }}</p>
-        <div class="ink-divider my-2.5" aria-hidden="true" />
-        <!-- 主读数:今日利某一界 —— 这是这一册唯一能据以行动的结论。
+            <p class="font-kai text-title leading-relaxed text-ink">{{ mansionLine }}</p>
+            <div class="ink-divider my-2.5" aria-hidden="true" />
+            <!-- 主读数:今日利某一界 —— 这是这一册唯一能据以行动的结论。
              label 与界名挨着放(不两端撑开):它们是一句话「今日利 人间界」,
              撑到卡两边会读成两栏互不相干的读数。 -->
-        <div data-value-row class="flex items-baseline gap-2">
-          <span class="shrink-0 text-body text-ink-faint">今日利</span>
-          <span class="font-kai text-section text-gold-ink">{{ favoredWorldName }}</span>
-          <span class="ml-auto shrink-0 text-note text-ink-faint tabular"
-            >+{{ formatPercent(MANSION_EVENT_LUCK, 0) }}</span
-          >
-        </div>
-        <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
-          只在 {{ favoredWorldName }} 生效,往他处去不加 —— 与天时不同:天时是全境之气,星象只利一方。
-        </p>
-        <button class="btn-ghost mt-2 w-full !py-1.5 !text-body" @click="goAdventure">
-          去 {{ favoredWorldName }} 历练 →
-        </button>
-        <!-- 来历归脚注:分野依《晋书·天文志》只作读,管用的是上面那条约定 -->
-        <p class="mt-1 text-note leading-relaxed text-ink-faint">
-          分野依《晋书·天文志》(诸家小异),只作来历读 —— 游戏里的地界不是九州。
-          {{ cnNumber(IMAGES.length) }}象配{{ cnNumber(WORLDS.length) }}界({{
-            imageWorldMap
-          }}),值日之宿所属之象, 所配界域今日际遇更易。
-        </p>
-        <button
-          class="mt-2 w-full border-t border-ink/8 pt-2 text-left text-note text-qing active:opacity-60"
-          :aria-expanded="showAllMansions"
-          @click="showAllMansions = !showAllMansions"
-        >
-          {{
-            showAllMansions
-              ? `收起${cnNumber(MANSIONS.length)}宿`
-              : `展开查看 ${MANSIONS.length} 宿 →`
-          }}
-        </button>
-        <div v-if="showAllMansions" class="mt-2 divide-y divide-ink/6">
-          <template v-for="img in IMAGES" :key="img.id">
-            <p class="pt-2 text-note text-ink-faint">
-              {{ img.direction }}方 {{ img.name }} · 所配{{ worldName(img.world) }}
-            </p>
-            <div
-              v-for="m in mansionsOf(img.id)"
-              :key="m.name"
-              class="flex items-baseline gap-2 py-1.5"
-            >
-              <span class="w-12 shrink-0 font-kai text-title text-ink">{{ m.name }}</span>
-              <span class="w-20 shrink-0 text-note text-ink-faint">{{ m.fullName }}</span>
-              <span class="w-12 shrink-0 text-note text-ink-faint">{{ m.domain }}</span>
-              <span class="min-w-0 t-body text-ink-soft">{{ m.good }}</span>
+            <div data-value-row class="flex items-baseline gap-2">
+              <span class="shrink-0 text-body text-ink-faint">今日利</span>
+              <span class="font-kai text-section text-gold-ink">{{ favoredWorldName }}</span>
+              <span class="ml-auto shrink-0 text-note text-ink-faint tabular"
+                >+{{ formatPercent(MANSION_EVENT_LUCK, 0) }}</span
+              >
             </div>
-          </template>
+            <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
+              只在 {{ favoredWorldName }} 生效,往他处去不加 ——
+              与天时不同:天时是全境之气,星象只利一方。
+            </p>
+            <button class="btn-ghost mt-2 w-full !py-1.5 !text-body" @click="goAdventure">
+              去 {{ favoredWorldName }} 历练 →
+            </button>
+            <!-- 来历归脚注:分野依《晋书·天文志》只作读,管用的是上面那条约定 -->
+            <p class="mt-1 text-note leading-relaxed text-ink-faint">
+              分野依《晋书·天文志》(诸家小异),只作来历读 —— 游戏里的地界不是九州。
+              {{ cnNumber(IMAGES.length) }}象配{{ cnNumber(WORLDS.length) }}界({{
+                imageWorldMap
+              }}),值日之宿所属之象, 所配界域今日际遇更易。
+            </p>
+            <button
+              class="realm-codex-disclosure"
+              data-realm-disclosure="mansions"
+              :aria-expanded="showAllMansions"
+              @click="showAllMansions = !showAllMansions"
+            >
+              {{
+                showAllMansions
+                  ? `收起${cnNumber(MANSIONS.length)}宿`
+                  : `展开查看 ${MANSIONS.length} 宿 →`
+              }}
+            </button>
+            <div v-if="showAllMansions" class="realm-mansion-list mt-2">
+              <template v-for="img in IMAGES" :key="img.id">
+                <p class="realm-mansion-group pt-2 text-note text-ink-faint">
+                  {{ img.direction }}方 {{ img.name }} · 所配{{ worldName(img.world) }}
+                </p>
+                <div v-for="m in mansionsOf(img.id)" :key="m.name" class="realm-mansion-row">
+                  <span class="realm-mansion-row__name font-kai text-title text-ink">{{
+                    m.name
+                  }}</span>
+                  <span class="realm-mansion-row__full text-note text-ink-faint">{{
+                    m.fullName
+                  }}</span>
+                  <span class="realm-mansion-row__domain text-note text-ink-faint">{{
+                    m.domain
+                  }}</span>
+                  <span class="realm-mansion-row__good t-body text-ink-soft">{{ m.good }}</span>
+                </div>
+              </template>
+            </div>
+          </section>
         </div>
-      </section>
-    </template>
+      </template>
 
-    <template v-if="codexTab === 'qimen'">
-      <!-- 奇门:九宫八门,择门而入 -->
-      <SectionTitle title="奇门" :hint="`九宫${cnNumber(GATES.length)}门,择门而入`" />
-      <section class="card-ink px-4 py-3">
-        <p class="t-body text-ink-faint">
-          {{ cnNumber(GATES.length) }}门依洛书九宫排布:{{ luoshuGatesText }}。
-          远征启程前可择一门入界 —— 不是与天道立契(那换的是道源), 择门改的是这一趟的<b
-            class="text-ink"
-            >打法</b
-          >:续航、抢攻、守拙或速决。
-        </p>
-        <div class="mt-2.5 divide-y divide-ink/6">
-          <div v-for="g in GATES" :key="g.id" class="flex items-start gap-2 py-2">
-            <span
-              class="w-12 shrink-0 font-kai text-title"
-              :class="
-                g.kind === '凶' ? 'text-cinnabar' : g.kind === '吉' ? 'text-jade' : 'text-ink-soft'
-              "
+      <template v-if="codexTab === 'qimen'">
+        <div class="realm-codex-chapter" data-realm-codex-chapter="qimen">
+          <!-- 奇门:九宫八门,择门而入 -->
+          <SectionTitle title="奇门" :hint="`九宫${cnNumber(GATES.length)}门,择门而入`" />
+          <section class="realm-codex-section realm-qimen-ledger" data-realm-codex-section="qimen">
+            <p class="t-body text-ink-faint">
+              {{ cnNumber(GATES.length) }}门依洛书九宫排布:{{ luoshuGatesText }}。
+              远征启程前可择一门入界 —— 不是与天道立契(那换的是道源), 择门改的是这一趟的<b
+                class="text-ink"
+                >打法</b
+              >:续航、抢攻、守拙或速决。
+            </p>
+            <div class="realm-qimen-list mt-2.5">
+              <div v-for="g in GATES" :key="g.id" class="realm-qimen-row">
+                <span
+                  class="realm-qimen-row__name font-kai text-title"
+                  :class="
+                    g.kind === '凶'
+                      ? 'text-cinnabar'
+                      : g.kind === '吉'
+                        ? 'text-jade'
+                        : 'text-ink-soft'
+                  "
+                >
+                  {{ g.fullName }}
+                </span>
+                <span class="realm-qimen-row__seat text-note text-ink-faint tabular"
+                  >{{ g.gua }}{{ g.direction }} · {{ g.palace }}宫 · {{ g.kind }}</span
+                >
+                <span class="realm-qimen-row__copy t-body text-ink-soft"
+                  >{{ g.gist }}<br /><span
+                    v-if="gateRuleSummary(g.rules)"
+                    class="mt-0.5 inline-block text-note tabular text-ink-faint"
+                    >{{ gateRuleSummary(g.rules) }}</span
+                  ></span
+                >
+              </div>
+            </div>
+            <p class="mt-2 text-note leading-relaxed text-ink-faint">
+              门的效果全部用既有的战斗规则表达,不另造字段 —— 不择门(走常道)时,规则与从前逐字相同。
+            </p>
+            <!-- 志 → 行动:门讲得再清楚,也得递出「去哪儿择」这一步 -->
+            <button
+              class="mt-1.5 inline-flex min-h-[28px] items-center text-body text-qing underline underline-offset-2 active:opacity-60"
+              @click="goExped"
             >
-              {{ g.fullName }}
-            </span>
-            <span class="w-20 shrink-0 text-note text-ink-faint tabular"
-              >{{ g.gua }}{{ g.direction }} · {{ g.palace }}宫 · {{ g.kind }}</span
-            >
-            <span class="min-w-0 t-body text-ink-soft"
-              >{{ g.gist }}<br /><span
-                v-if="gateRuleSummary(g.rules)"
-                class="mt-0.5 inline-block text-note tabular text-ink-faint"
-                >{{ gateRuleSummary(g.rules) }}</span
-              ></span
-            >
-          </div>
+              去天道远征 · 择门入界 →
+            </button>
+          </section>
         </div>
-        <p class="mt-2 text-note leading-relaxed text-ink-faint">
-          门的效果全部用既有的战斗规则表达,不另造字段 —— 不择门(走常道)时,规则与从前逐字相同。
-        </p>
-        <!-- 志 → 行动:门讲得再清楚,也得递出「去哪儿择」这一步 -->
-        <button
-          class="mt-1.5 inline-flex min-h-[28px] items-center text-body text-qing underline underline-offset-2 active:opacity-60"
-          @click="goExped"
-        >
-          去天道远征 · 择门入界 →
-        </button>
-      </section>
-    </template>
+      </template>
+    </div>
   </div>
 </template>
 

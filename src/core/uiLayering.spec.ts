@@ -2987,6 +2987,30 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(css, "内案不再留第二层内框").not.toMatch(/\.settings-(?:console|archive|trail)::before/);
   });
 
+  it("界域志六册共用一张连续账页 —— 典籍与术数四门不许各套一层纸卡", () => {
+    /*
+     * 界域册已经收成开口账,但典籍、周易、紫微、星象与奇门仍各自套 card-ink:
+     * 同一页每换一册就重画一次纸边,读者看不出这是同一册书的六个分卷。现在六册
+     * 共用一个 data-realm-codex-folio,内部只以章节头与分段线续排;故障注入 =
+     * 任一册另起 card-ink,或外层补回左右边框/圆角/投影,下面必红。
+     */
+    const view = FILES.find((f) => f.path === "views/RealmCodexView.vue");
+    const css = readFileSync(resolve(__dirname, "../styles/pages/realm-codex.css"), "utf8");
+
+    expect(view?.src, "六册要共用一个连续账页").toContain("data-realm-codex-folio");
+    expect(view?.src, "切册只换账页里的分卷,不换六张外壳").toContain(':data-chapter="codexTab"');
+    expect(view?.src, "界域志正文不再借通用卡片皮").not.toContain("card-ink");
+    expect(css, "连续账页只留上下账线").toMatch(
+      /\.realm-codex-folio\s*\{[\s\S]{0,420}border-block:\s*1px solid/,
+    );
+    expect(css, "内册与账段退成透明分段").toMatch(
+      /\.realm-codex-chapter,\s*\.realm-codex-section\s*\{[\s\S]{0,620}border:\s*0;[\s\S]{0,620}background:\s*transparent;[\s\S]{0,620}box-shadow:\s*none;/,
+    );
+    expect(css, "账页不再留第二层内框").not.toMatch(
+      /\.realm-codex-(?:folio|chapter|section)::before/,
+    );
+  });
+
   it("强色文字不叠透明度 —— 要淡是换 token,不许元素级 opacity", () => {
     // design.md「文字不叠透明度」:品阶名(整色)与 buff 叠数(继承强色)此前用元素级
     // opacity-80 淡化 —— 正好绕过 palette.spec 只扫「/80」斜杠语法的口子,浏览器照样
