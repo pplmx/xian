@@ -1,166 +1,179 @@
 <template>
-  <!--
-    破境卡 —— 与修行/闭关同族的卡头:左为楷书卡名(必须为 span,判据钉着),
-    右侧是状态位:可破时石绿,不可破时把拦因原样写出来(与突破钮同一个 reason,
-    不在这一行另编一套话)。
-    卡名读作「破 境」两字一顿,与「修 行」「闭 关」同一口气。
-  -->
-  <!--
-    素卡:不加封条,因为它不是「正在进行的事」,是「下一步要不要做」。
-  -->
-  <div class="card-ink px-4 py-3">
-    <div class="flex items-baseline justify-between">
-      <span class="font-kai text-title tracking-[0.2em] text-ink">破 境</span>
-      <span class="text-body" :class="btInfo.ready ? 'text-jade' : 'text-ink-soft'">
-        {{ btInfo.ready ? "可破" : btInfo.reason }}
-      </span>
-    </div>
-    <!--
+  <article
+    class="cultivation-action cultivation-action--breakthrough"
+    data-cultivation-action="breakthrough"
+  >
+    <header class="cultivation-action__head">
+      <span class="cultivation-action__mark" aria-hidden="true">关</span>
+      <div class="cultivation-action__heading">
+        <div class="cultivation-action__title-row">
+          <h3 class="cultivation-action__title">破 境</h3>
+          <span
+            class="cultivation-action__status"
+            :class="btInfo.ready ? 'is-ready' : 'is-blocked'"
+          >
+            {{ btInfo.ready ? "可破" : btInfo.reason }}
+          </span>
+        </div>
+        <p class="cultivation-action__lede">
+          下一境 {{ btInfo.targetLabel }} · 成败、代价与此刻能补的筹码都在这一账。
+        </p>
+      </div>
+    </header>
+    <div class="cultivation-action__body">
+      <!--
       天劫步不显示「突破成功率」:那条路根本不掷这个骰子(见 breakthrough.attemptBreakthrough,
       渡劫走 runTribulation 的逐波推演),摆出来只会让人以为还有一个可以堆的概率。
     -->
-    <div class="mt-2 grid gap-2" :class="btInfo.needTribulation ? 'grid-cols-1' : 'grid-cols-2'">
-      <div v-if="!btInfo.needTribulation" class="rounded-[2px] bg-paper-deep/60 px-2.5 py-1.5">
-        <p class="text-note text-ink-faint">进阶成功率(小进阶)</p>
-        <p
-          class="tabular text-[16px] font-kai leading-tight"
-          :class="btInfo.rate >= 0.7 ? 'text-jade' : 'text-cinnabar'"
-        >
-          {{ btInfo.rateText }}
-        </p>
-        <!--
+      <div
+        class="cultivation-breakthrough__measures"
+        :class="btInfo.needTribulation ? 'is-single' : ''"
+      >
+        <div v-if="!btInfo.needTribulation" class="cultivation-breakthrough__measure">
+          <p class="cultivation-breakthrough__label">进阶成功率(小进阶)</p>
+          <p
+            class="cultivation-breakthrough__value font-kai tabular"
+            :class="btInfo.rate >= 0.7 ? 'text-qing' : 'text-cinnabar'"
+          >
+            {{ btInfo.rateText }}
+          </p>
+          <!--
           概率不直观,期望直观:71% 读起来"还行",但它意味着平均要试 1.4 次。
           数值来自 core 的 expectedTries(与 realms.sim 同一个口径),不在这里另算。
         -->
-        <p v-if="triesText" class="tabular text-note text-ink-faint">{{ triesText }}</p>
-      </div>
-      <div class="rounded-[2px] bg-paper-deep/60 px-2.5 py-1.5">
-        <p class="text-note text-ink-faint">{{ btInfo.needTribulation ? "此劫" : "渡劫" }}</p>
-        <template v-if="tribPlan">
-          <p
-            class="tabular text-[16px] font-kai leading-tight"
-            :class="PLAN_COLOR[tribPlan.verdict]"
-          >
-            {{ tribPlan.title }}
+          <p v-if="triesText" class="cultivation-breakthrough__aside tabular">{{ triesText }}</p>
+        </div>
+        <div class="cultivation-breakthrough__measure">
+          <p class="cultivation-breakthrough__label">
+            {{ btInfo.needTribulation ? "此劫" : "渡劫" }}
           </p>
-          <p class="text-note text-ink-faint">
-            劫势:{{ verdictLabel(tribPlan.verdict) }}
-            <template v-if="tribPlan.risks.length"> · {{ tribPlan.risks[0] }}</template>
-          </p>
-        </template>
-        <p v-else class="text-[16px] font-kai leading-tight text-ink-faint">非大关</p>
+          <template v-if="tribPlan">
+            <p
+              class="cultivation-breakthrough__value font-kai tabular"
+              :class="PLAN_COLOR[tribPlan.verdict]"
+            >
+              {{ tribPlan.title }}
+            </p>
+            <p class="cultivation-breakthrough__aside">
+              劫势:{{ verdictLabel(tribPlan.verdict) }}
+              <template v-if="tribPlan.risks.length"> · {{ tribPlan.risks[0] }}</template>
+            </p>
+          </template>
+          <p v-else class="cultivation-breakthrough__value font-kai text-ink-faint">非大关</p>
+        </div>
       </div>
-    </div>
 
-    <!--
+      <!--
       破境增益 · 此刻在身:小进阶的成功率是谁在顶,突破前一眼见 —— buff→modsText,
       与开炉幕同款(不做两本账);大关不吃此益,故只在非天劫幕亮。
     -->
-    <div v-if="!btInfo.needTribulation" class="mt-2 rounded-[2px] bg-paper-deep/60 px-3 py-2">
-      <p class="text-note text-ink-faint">破境增益 · 此刻在身</p>
-      <div v-if="breakthroughBuffRows.length" class="mt-1 space-y-0.5">
-        <p
-          v-for="row in breakthroughBuffRows"
-          :key="row.buffId"
-          class="flex items-baseline gap-1.5 text-body"
-        >
-          <span class="font-kai shrink-0" :class="row.rate > 0 ? 'text-qing' : 'text-cinnabar'">{{
-            row.name
-          }}</span>
-          <span class="tabular text-ink-soft">{{ row.effect }}</span>
+      <section v-if="!btInfo.needTribulation" class="cultivation-breakthrough__buff">
+        <p class="cultivation-breakthrough__label">破境增益 · 此刻在身</p>
+        <div v-if="breakthroughBuffRows.length" class="cultivation-breakthrough__buff-rows">
+          <p
+            v-for="row in breakthroughBuffRows"
+            :key="row.buffId"
+            class="cultivation-breakthrough__buff-row"
+          >
+            <span class="font-kai" :class="row.rate > 0 ? 'text-qing' : 'text-cinnabar'">{{
+              row.name
+            }}</span>
+            <span class="tabular text-ink-soft">{{ row.effect }}</span>
+          </p>
+          <!-- 诚实收口:这条只列「状态」来源 —— 装备/称号/天时等别的源头在大数字里,不在条里重抄 -->
+          <p class="cultivation-breakthrough__aside">只列状态来源 —— 装备·名号·天时等见上值</p>
+        </div>
+        <p v-else class="cultivation-breakthrough__aside">
+          此刻身无破境状态 —— 备一味
+          <span class="text-qing">破境 · 凝神 · 定心 · 本源归一</span>,成功率即刻见涨
         </p>
-        <!-- 诚实收口:这条只列「状态」来源 —— 装备/称号/天时等别的源头在大数字里,不在条里重抄 -->
-        <p class="pt-0.5 text-note leading-relaxed text-ink-faint">
-          只列状态来源 —— 装备·名号·天时等见上值
-        </p>
-      </div>
-      <p v-else class="mt-0.5 text-note leading-relaxed text-ink-faint">
-        此刻身无破境状态 —— 备一味
-        <span class="text-qing">破境 · 凝神 · 定心 · 本源归一</span>,成功率即刻见涨
-      </p>
-    </div>
+      </section>
 
-    <!-- 劫势详情(决意前评估:风险维度 + 建议)→ TribulationPanel,注释与读数群随本体迁入 -->
-    <TribulationPanel v-if="tribPlan" :plan="tribPlan" />
-    <p data-value-row class="mt-1 text-body text-ink-soft tabular">
-      耗灵气 {{ formatNum(btInfo.qiCost) }}
-      <template v-if="btInfo.needTribulation">
-        ·
-        <span class="text-violet-ink">此乃大关,需渡天劫</span>
-      </template>
-    </p>
-    <!-- 突破不成的真代价也要摊:灵气付了之外,还有修为折损与必发的重伤
+      <!-- 劫势详情(决意前评估:风险维度 + 建议)→ TribulationPanel,注释与读数群随本体迁入 -->
+      <TribulationPanel v-if="tribPlan" :plan="tribPlan" />
+      <p data-value-row class="cultivation-breakthrough__cost text-body text-ink-soft tabular">
+        耗灵气 {{ formatNum(btInfo.qiCost) }}
+        <template v-if="btInfo.needTribulation">
+          ·
+          <span class="text-cinnabar">此乃大关,需渡天劫</span>
+        </template>
+      </p>
+      <!-- 突破不成的真代价也要摊:灵气付了之外,还有修为折损与必发的重伤
          (buffs.ts injury:修速减半、战力大减,需引气静养耗灵气平复)—— 频率≠无代价,
          且不复述「只损修为」那种不完整的账。
          减多少由 buff 本体现算:这里曾读 injury 的 desc,而 desc 现在只写风味 ——
          数值若留在那句风味里,改 mods 之后这行就成了唯一不跟的那处。 -->
-    <p class="mt-0.5 text-note leading-relaxed text-ink-faint tabular">
-      突破不成损修为 {{ formatPercent(BT_FAIL_EXP_LOSS) }}、身负
-      <span class="text-cinnabar">重伤</span>({{ modsText(injuryDef.mods) }},持续
-      {{ cnNumber(INJURY_DURATION) }}
-      秒,可引气静养平复)(破境返还词条可减修为损,首败跬步传承可全免)
-    </p>
+      <p class="cultivation-breakthrough__risk tabular">
+        突破不成损修为 {{ formatPercent(BT_FAIL_EXP_LOSS) }}、身负
+        <span class="text-cinnabar">重伤</span>({{ modsText(injuryDef.mods) }},持续
+        {{ cnNumber(INJURY_DURATION) }}
+        秒,可引气静养平复)(破境返还词条可减修为损,首败跬步传承可全免)
+      </p>
 
-    <!-- Phase 28 突破准备:静坐调息 / 服聚气丹(无劫突破时,一次性加成) -->
-    <div
-      v-if="!btInfo.needTribulation"
-      class="mt-2 rounded-[2px] border border-ink/10 bg-paper-deep/50 px-2.5 py-2"
-    >
-      <div class="flex items-center justify-between text-note text-ink-faint">
-        <span>突破准备(一次有效)</span>
-        <!--
+      <!-- Phase 28 突破准备:静坐调息 / 服聚气丹(无劫突破时,一次性加成) -->
+      <section v-if="!btInfo.needTribulation" class="cultivation-breakthrough__prep">
+        <div class="cultivation-breakthrough__prep-head">
+          <span>突破准备(一次有效)</span>
+          <!--
           倒计时一律走 formatCountdown(定宽),不用 formatDuration:
           后者每秒都可能改宽度,这枚胶囊一涨一缩,同一行的其余内容会跟着跳。
         -->
-        <span v-if="btInfo.prep.sitting" class="text-amber-ink tabular">
-          调息中 ·
-          <span class="countdown-slot">{{ formatCountdown(btInfo.prep.remainingSec) }}</span>
-        </span>
-        <span v-else-if="btInfo.prep.ready" class="text-jade"
-          >加成 +{{ formatPercent(btInfo.prep.bonus, 0) }} 就绪</span
-        >
-      </div>
-      <!--
+          <span v-if="btInfo.prep.sitting" class="text-qing tabular">
+            调息中 ·
+            <span class="countdown-slot">{{ formatCountdown(btInfo.prep.remainingSec) }}</span>
+          </span>
+          <span v-else-if="btInfo.prep.ready" class="text-qing"
+            >加成 +{{ formatPercent(btInfo.prep.bonus, 0) }} 就绪</span
+          >
+        </div>
+        <!--
         两个准备选项并排,但 chip-ink 是 nowrap 的胶囊,320px 窄屏放不下两枚
         (实测第二枚右缘到 331px,越界 11px)。故允许换行:宽屏并排、窄屏上下。
       -->
-      <div v-if="!btInfo.prep.sitting && !btInfo.prep.ready" class="mt-1.5 flex flex-wrap gap-1.5">
-        <button type="button" class="chip-ink !py-1.5 text-note" @click="startPrep('meditate')">
-          {{ prepMeditate.label }} · {{ Math.round(prepMeditate.duration / 60) }}分钟 +{{
-            formatPercent(prepMeditate.bonusRate, 0)
-          }}
-        </button>
-        <button
-          type="button"
-          class="chip-ink !py-1.5 text-note"
-          :disabled="!prepCanPill"
-          @click="startPrep('pill')"
+        <div
+          v-if="!btInfo.prep.sitting && !btInfo.prep.ready"
+          class="cultivation-breakthrough__prep-actions"
         >
-          <!--
+          <button type="button" class="cultivation-action__choice" @click="startPrep('meditate')">
+            {{ prepMeditate.label }} · {{ Math.round(prepMeditate.duration / 60) }}分钟 +{{
+              formatPercent(prepMeditate.bonusRate, 0)
+            }}
+          </button>
+          <button
+            type="button"
+            class="cultivation-action__choice"
+            :disabled="!prepCanPill"
+            @click="startPrep('pill')"
+          >
+            <!--
             付不起时换口「尚差 X 石」(与建筑卡同款,价与加成只在买得起时念全):
             更短才扛得住 200% 缩放档(390 放大一倍只剩 195 CSS px,chips 是 nowrap,
             实测「服用聚气丹 · +5% 尚差 30 石」会把右缘顶到 211px 越界 16px)。
           -->
-          <template v-if="prepCanPill"
-            >{{ prepPill.label }} · {{ prepPillCost }}石 +{{
-              formatPercent(prepPill.bonusRate, 0)
-            }}</template
-          >
-          <template v-else>聚气丹 · 尚差 {{ prepPillShort }} 石</template>
-        </button>
-      </div>
+            <template v-if="prepCanPill"
+              >{{ prepPill.label }} · {{ prepPillCost }}石 +{{
+                formatPercent(prepPill.bonusRate, 0)
+              }}</template
+            >
+            <template v-else>聚气丹 · 尚差 {{ prepPillShort }} 石</template>
+          </button>
+        </div>
+      </section>
+      <button
+        class="cultivation-action__primary cultivation-action__primary--breakthrough"
+        :class="{ 'is-ready': btInfo.ready }"
+        :disabled="!btInfo.ready"
+        data-cultivation-primary-action="breakthrough"
+        @click="attemptBreakthrough()"
+      >
+        {{
+          btInfo.ready ? (btInfo.needTribulation ? "引 劫 突 破" : "尝 试 突 破") : btInfo.reason
+        }}
+      </button>
+      <!-- 灵气不足是四个字,拦下的却是「还差多少、回够要多久」 —— 补齐直显,别让玩家点开灵气数才看见等待值(与修为 ETA 同款口径) -->
+      <QiShortfallNote v-if="btQiBlock" :short="btQiBlock.short" :eta="btQiBlock.eta" />
     </div>
-    <button
-      class="btn-seal mt-3 w-full !py-3"
-      :class="{ 'animate-glow-pulse pulse-ready': btInfo.ready }"
-      :disabled="!btInfo.ready"
-      @click="attemptBreakthrough()"
-    >
-      {{ btInfo.ready ? (btInfo.needTribulation ? "引 劫 突 破" : "尝 试 突 破") : btInfo.reason }}
-    </button>
-    <!-- 灵气不足是四个字,拦下的却是「还差多少、回够要多久」 —— 补齐直显,别让玩家点开灵气数才看见等待值(与修为 ETA 同款口径) -->
-    <QiShortfallNote v-if="btQiBlock" :short="btQiBlock.short" :eta="btQiBlock.eta" />
-  </div>
+  </article>
 </template>
 
 <script setup lang="ts">

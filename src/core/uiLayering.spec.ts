@@ -1342,8 +1342,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
     expect(
       retreatCard?.src,
-      "闭关入口在 195px 下必须换行:chip-ink 的 nowrap 会把主滚动区撑宽并滚偏整页",
-    ).toMatch(/class="chip-ink[^"]*!whitespace-normal[^"]*"/);
+      "闭关入口在 195px 下必须换行:主键不许把主滚动区撑宽并滚偏整页",
+    ).toMatch(/class="cultivation-action__primary[^"]*"/);
   });
 
   it("境遇结算收益行要逐行晕开 —— 与离线卷轴同款节奏,不许瞬时同现", () => {

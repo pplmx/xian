@@ -82,272 +82,301 @@
     </FolioPageHeader>
 
     <!--
-      行功账 —— 修炼页只留一张主账:先报本境修为,再报行速与灵气。
-      外圈周天盘在卷首给方向,正文这张账只回答「还要多久、靠什么在快」。
+      行功续卷 —— 卷首之下只留一册连续长账:
+      先报本境走到哪,再答下一步做什么,最后续上随身与功法。
+      四章共用一条账线,不再让破境、闭关、状态、丹药与书目各套一层卡片。
     -->
-    <section class="cultivation-ledger" data-cultivation-ledger>
-      <SectionTitle class="cultivation-ledger__head" title="修 行" eyebrow="此刻功课">
-        <template #actions>
-          <p class="cultivation-ledger__position tabular">
-            第 {{ player.major + 1 }} / {{ REALMS.length }} 境
-          </p>
-        </template>
-      </SectionTitle>
-
-      <!-- 仙路 21 境全景:已至/当前/未至一眼可辨,界门立界,四界分列 -->
-      <div class="cultivation-ledger__ladder" data-cultivation-route>
-        <RealmLadder :major="player.major" />
-      </div>
-
-      <div class="cultivation-ledger__primary" data-cultivation-primary>
-        <div class="cultivation-ledger__primary-head">
-          <span>本境修为</span>
-          <span class="text-ink-soft">下一步 → {{ btInfo.targetLabel }}</span>
-        </div>
-        <div
-          data-value-row
-          class="text-ink-soft cultivation-ledger__value-row flex flex-wrap items-baseline gap-x-1 text-body tabular"
+    <article class="cultivation-register folio-span-all" data-cultivation-register>
+      <div class="cultivation-register__main">
+        <section
+          class="cultivation-register__chapter cultivation-ledger"
+          data-cultivation-chapter="practice"
+          data-cultivation-ledger
         >
-          <span class="cultivation-ledger__value font-kai">
-            <TapNumber
-              :value="player.exp"
-              title="修为"
-              :rows="expDetailRows"
-              :note="expDetailNote"
-            />
-          </span>
-          <span class="text-ink-faint">/ {{ formatGN(player.expReq) }}</span>
-          <span v-if="player.expFull" class="text-jade">· 圆满</span>
-        </div>
-        <div :class="player.expFull ? 'bar-charged' : ''">
-          <ProgressBar :value="player.expProgress" color="var(--color-cinnabar)" :height="10" />
-        </div>
-        <div class="cultivation-ledger__remainder">
-          <span class="text-ink-soft tabular">
-            还剩 {{ formatPercent(1 - player.expProgress, 0) }} · {{ expEtaText }}
-          </span>
-          <button
-            class="tap-row -mx-1.5 -my-1 min-w-[28px] justify-center px-1.5 py-1.5 text-center text-note text-ink-faint active:opacity-60"
-            :aria-expanded="showCultBreakdown"
-            @click="showCultBreakdown = !showCultBreakdown"
-          >
-            {{ showCultBreakdown ? "▾" : "▸" }}来路
-          </button>
-        </div>
-        <p v-if="longEtaHint" class="cultivation-ledger__hint">
-          {{ longEtaHint }}
-        </p>
-      </div>
+          <CultivationChapterHead
+            :index="practiceChapter.index"
+            :title="practiceChapter.title"
+            :hint="practiceChapter.hint"
+            :fact="`第 ${player.major + 1} / ${REALMS.length} 境`"
+          />
 
-      <div class="cultivation-ledger__meters" data-cultivation-meters>
-        <section class="cultivation-ledger__meter">
-          <p class="cultivation-ledger__meter-label">此刻行速</p>
-          <p class="cultivation-ledger__meter-value font-kai">
-            {{ formatRate(player.cultPerSec) }}
-          </p>
-          <p class="cultivation-ledger__meter-copy tabular">
-            基础 {{ formatRate(cultBase) }} · 加成
-            <span class="text-qing">{{ formatPercent(cultMultiplier) }}</span>
-          </p>
-        </section>
-
-        <section class="cultivation-ledger__meter">
-          <div class="cultivation-ledger__meter-head">
-            <p class="cultivation-ledger__meter-label">灵气</p>
-            <span class="text-note text-ink-faint">+{{ formatRate(player.qiRegenPerSec) }}</span>
+          <!-- 仙路 21 境全景:已至/当前/未至一眼可辨,界门立界,四界分列 -->
+          <div class="cultivation-ledger__ladder" data-cultivation-route>
+            <RealmLadder :major="player.major" />
           </div>
-          <!--
-            极窄档(195 CSS px)把「灵气 +X/秒」与「现值 · 已封顶」拆成上下两段,
-            免得封顶标记被甩出主值行。
-          -->
-          <div
-            data-value-row
-            class="text-ink-soft cultivation-ledger__qi-row flex justify-between text-body tabular tinylens:flex-col tinylens:items-start tinylens:gap-y-0.5"
-          >
-            <span>
-              <TapNumber
-                :value="Math.floor(resources.qi)"
-                title="灵气"
-                :rows="qiDetailRows"
-                :note="qiDetailNote"
+
+          <div class="cultivation-ledger__primary" data-cultivation-primary>
+            <div class="cultivation-ledger__primary-head">
+              <span>本境修为</span>
+              <span class="text-qing">下一步 → {{ btInfo.targetLabel }}</span>
+            </div>
+            <div
+              data-value-row
+              class="text-ink-soft cultivation-ledger__value-row flex flex-wrap items-baseline gap-x-1 text-body tabular"
+            >
+              <span class="cultivation-ledger__value font-kai">
+                <TapNumber
+                  :value="player.exp"
+                  title="修为"
+                  :rows="expDetailRows"
+                  :note="expDetailNote"
+                />
+              </span>
+              <span class="text-ink-faint">/ {{ formatGN(player.expReq) }}</span>
+              <span v-if="player.expFull" class="text-qing">· 圆满</span>
+            </div>
+            <div :class="player.expFull ? 'bar-charged' : ''">
+              <ProgressBar :value="player.expProgress" color="var(--color-qing)" :height="10" />
+            </div>
+            <div class="cultivation-ledger__remainder">
+              <span class="text-ink-soft tabular">
+                还剩 {{ formatPercent(1 - player.expProgress, 0) }} · {{ expEtaText }}
+              </span>
+              <button
+                class="tap-row -mx-1.5 -my-1 min-w-[28px] justify-center px-1.5 py-1.5 text-center text-note text-ink-faint active:opacity-60"
+                :aria-expanded="showCultBreakdown"
+                @click="showCultBreakdown = !showCultBreakdown"
               >
-                <span :class="qiOverCap ? 'text-qing' : ''">
-                  {{ formatNum(Math.min(Math.floor(resources.qi), player.qiCapValue))
-                  }}<template v-if="qiOverCap">+</template>
-                </span>
-              </TapNumber>
-              <span class="tinylens:hidden">/ {{ formatNum(player.qiCapValue) }}</span>
-              <span v-if="resources.qi >= player.qiBankCapValue" class="text-amber-ink"
-                >· 已封顶</span
-              >
-            </span>
+                {{ showCultBreakdown ? "▾" : "▸" }}来路
+              </button>
+            </div>
+            <p v-if="longEtaHint" class="cultivation-ledger__hint">
+              {{ longEtaHint }}
+            </p>
           </div>
-          <ProgressBar :value="qiFillRatio" color="var(--color-qing)" :height="8" />
-          <p
-            class="cultivation-ledger__meter-copy"
-            :class="qiRichInfo.on ? 'text-qing' : 'text-ink-faint'"
-          >
-            <template v-if="qiRichInfo.on"
-              >灵气充盈 —— 修炼速度 +{{ formatPercent(QI_RICH_BONUS) }}</template
-            >
-            <template v-else>
-              距灵气充盈尚差 {{ formatNum(qiRichInfo.gap) }} 灵气(灵气 ≥
-              {{ formatNum(qiRichInfo.threshold) }}(容量
-              {{ formatPercent(QI_RICH_THRESHOLD_RATIO) }})→ 修炼 +{{
-                formatPercent(QI_RICH_BONUS)
-              }})
-            </template>
-          </p>
-          <button
-            v-if="repair.injured"
-            type="button"
-            class="chip-ink mt-2 w-full justify-center !whitespace-normal !py-2 text-center text-body"
-            :disabled="!repair.affordable"
-            @click="repairWithQi()"
-          >
-            {{
-              repair.affordable
-                ? `引气静养 · 平复伤势心魔 · 耗灵气 ${formatNum(repair.cost)}`
-                : `灵气不足(需 ${formatNum(repair.cost)})`
-            }}
-          </button>
-          <QiShortfallNote v-if="repairBlock" :short="repairBlock.short" :eta="repairBlock.eta" />
-        </section>
-      </div>
 
-      <div v-if="showCultBreakdown" class="cultivation-ledger__sources">
-        <p class="text-ink-soft">
-          基础 {{ formatRate(cultBase) }}({{ player.realm.name }}{{ player.subName
-          }}{{ player.linggen ? `·${player.linggen.gradeName}` : "" }}) × (1 +
-          <span class="tabular text-qing">{{ formatPercent(cultMultiplier) }}</span
-          >) = <span class="tabular text-cinnabar">{{ formatRate(player.cultPerSec) }}</span>
-        </p>
-        <p v-for="row in cultSources" :key="row.name" class="flex justify-between">
-          <span class="text-ink-faint">{{ row.name }}</span>
-          <span class="tabular" :class="row.value > 0 ? 'text-qing' : 'text-cinnabar'">
-            {{ row.value > 0 ? "+" : "" }}{{ formatPercent(row.value) }}
-          </span>
-        </p>
-        <p class="cultivation-ledger__hint">
-          这些都是修炼速度的百分比加成,相加后乘在基础上 —— 与人物页属性明细同源。
-        </p>
-      </div>
-    </section>
+          <div class="cultivation-ledger__meters" data-cultivation-meters>
+            <section class="cultivation-ledger__meter">
+              <p class="cultivation-ledger__meter-label">此刻行速</p>
+              <p class="cultivation-ledger__meter-value font-kai">
+                {{ formatRate(player.cultPerSec) }}
+              </p>
+              <p class="cultivation-ledger__meter-copy tabular">
+                基础 {{ formatRate(cultBase) }} · 加成
+                <span class="text-qing">{{ formatPercent(cultMultiplier) }}</span>
+              </p>
+            </section>
 
-    <!--
-      修行账回答「现在走到哪」,下一步只回答「此刻做哪件事」。
-      破境先于闭关:前者是这一境的出口,后者是留在原地的加速。
-    -->
-    <section class="cultivation-next" data-cultivation-next>
-      <SectionTitle title="下一步" hint="关口看把握,闭关看当下" />
-      <div class="cultivation-next__grid">
-        <BreakthroughCard />
-        <RetreatCard />
-      </div>
-    </section>
-
-    <!--
-      主区(修行/破境/闭关)与辅区(状态/丹药/功法)之间落一枚花饰分隔:
-      往下不再是「今天要做的事」,是「随身带着的家当」。
-    -->
-    <div class="ink-divider-mark folio-span-all my-4" aria-hidden="true" />
-
-    <div class="cultivation-support folio-span-all">
-      <div class="cultivation-support__grid">
-        <!-- 状态 -->
-        <section v-if="activeBuffs.length">
-          <SectionTitle title="状态" />
-          <div class="mt-2 flex flex-wrap gap-2">
-            <!--
-              状态胶囊每秒刷新一次,倒数文本必须定宽:formatCountdown 逐位补零,
-              再给它一个固定宽度的槽位(文字右对齐)—— 否则「10分0秒 → 10分1秒」
-              这一位的增减会把整排胶囊推来推去,看起来就是「状态一直在抖」。
-            -->
-            <button
-              v-for="b in activeBuffs"
-              :key="b.def!.id"
-              type="button"
-              class="chip-ink tabular transition-transform active:scale-95"
-              :class="
-                b.def!.kind === 'injury'
-                  ? 'border-cinnabar/60 text-cinnabar'
-                  : 'border-jade/60 text-jade'
-              "
-              @click="ui.buffDetailId = b.def!.id"
-            >
-              <GameIcon :name="b.def!.icon" :size="11" />
-              {{ b.def!.name }}
-              <span
-                v-if="b.stack > 1"
-                class="text-note"
-                :aria-label="`${b.def!.name} 与 ${b.stack - 1} 味状态同刻叠加`"
-                >×{{ b.stack }}</span
+            <section class="cultivation-ledger__meter">
+              <div class="cultivation-ledger__meter-head">
+                <p class="cultivation-ledger__meter-label">灵气</p>
+                <span class="text-note text-ink-faint"
+                  >+{{ formatRate(player.qiRegenPerSec) }}</span
+                >
+              </div>
+              <!--
+                极窄档(195 CSS px)把「灵气 +X/秒」与「现值 · 已封顶」拆成上下两段,
+                免得封顶标记被甩出主值行。
+              -->
+              <div
+                data-value-row
+                class="text-ink-soft cultivation-ledger__qi-row flex justify-between text-body tabular tinylens:flex-col tinylens:items-start tinylens:gap-y-0.5"
               >
-              <span class="countdown-slot">{{ formatCountdown(b.remain) }}</span>
-            </button>
-          </div>
-        </section>
-
-        <!-- 丹药速服 -->
-        <section v-if="quickPills.length">
-          <SectionTitle title="以药辅道" />
-          <!-- 极窄档(≤220 CSS px):两列时每张卡只有 78px,「存 5 · 修为 +」被压成 11px
-               宽、9 行 —— 放开成单列,中间那块回到整行宽。320 / 390 两档不动。 -->
-          <div class="mt-2 grid grid-cols-2 gap-2 tinylens:grid-cols-1">
-            <button
-              v-for="p in quickPills"
-              :key="p.def!.id"
-              data-quick-pill
-              class="card-ink flex items-center gap-2 px-3 py-2 text-left active:scale-98"
-              :disabled="p.overflow === 'full'"
-              @click="usePill(p.def!.id)"
-            >
-              <GameIcon
-                :name="p.def!.icon"
-                :size="16"
-                :style="{ color: qualityDef(p.def!.quality).color }"
-              />
-              <span class="min-w-0 grow">
-                <span class="block truncate font-kai text-body text-ink">{{ p.def!.name }}</span>
-                <span class="block text-note text-ink-faint tabular">
-                  存 {{ p.count
-                  }}<template v-if="quickPillBrief(p.def!)"
-                    >· {{ quickPillBrief(p.def!) }}</template
+                <span>
+                  <TapNumber
+                    :value="Math.floor(resources.qi)"
+                    title="灵气"
+                    :rows="qiDetailRows"
+                    :note="qiDetailNote"
+                  >
+                    <span :class="qiOverCap ? 'text-qing' : ''">
+                      {{ formatNum(Math.min(Math.floor(resources.qi), player.qiCapValue))
+                      }}<template v-if="qiOverCap">+</template>
+                    </span>
+                  </TapNumber>
+                  <span class="tinylens:hidden">/ {{ formatNum(player.qiCapValue) }}</span>
+                  <span v-if="resources.qi >= player.qiBankCapValue" class="text-amber-ink"
+                    >· 已封顶</span
                   >
                 </span>
-              </span>
-              <!-- 顶满=白费,禁用并改口;续时=只剩尾巴可续,照吃但把话说清 -->
-              <span
-                class="shrink-0 text-body"
-                :class="
-                  p.overflow === 'full'
-                    ? 'text-ink-faint'
-                    : p.overflow === 'partial'
-                      ? 'text-amber-ink'
-                      : 'text-jade'
-                "
+              </div>
+              <ProgressBar :value="qiFillRatio" color="var(--color-qing)" :height="8" />
+              <p
+                class="cultivation-ledger__meter-copy"
+                :class="qiRichInfo.on ? 'text-qing' : 'text-ink-faint'"
               >
-                {{ p.overflow === "full" ? "已顶" : p.overflow === "partial" ? "续时" : "服用" }}
-              </span>
-            </button>
+                <template v-if="qiRichInfo.on"
+                  >灵气充盈 —— 修炼速度 +{{ formatPercent(QI_RICH_BONUS) }}</template
+                >
+                <template v-else>
+                  距灵气充盈尚差 {{ formatNum(qiRichInfo.gap) }} 灵气(灵气 ≥
+                  {{ formatNum(qiRichInfo.threshold) }}(容量
+                  {{ formatPercent(QI_RICH_THRESHOLD_RATIO) }})→ 修炼 +{{
+                    formatPercent(QI_RICH_BONUS)
+                  }})
+                </template>
+              </p>
+              <button
+                v-if="repair.injured"
+                type="button"
+                class="cultivation-ledger-action mt-2"
+                :disabled="!repair.affordable"
+                @click="repairWithQi()"
+              >
+                {{
+                  repair.affordable
+                    ? `引气静养 · 平复伤势心魔 · 耗灵气 ${formatNum(repair.cost)}`
+                    : `灵气不足(需 ${formatNum(repair.cost)})`
+                }}
+              </button>
+              <QiShortfallNote
+                v-if="repairBlock"
+                :short="repairBlock.short"
+                :eta="repairBlock.eta"
+              />
+            </section>
           </div>
-          <!-- 速服只铺前四味;余量不能静默消失,给出去丹匣逐味查看的直达入口 -->
-          <RouterLink
-            v-if="quickPillsHidden > 0"
-            data-quick-pills-hidden
-            :to="{ path: '/inventory', query: { tab: 'pill' } }"
-            :aria-label="`另有 ${quickPillsHidden} 味可服丹药，前往丹匣查看`"
-            class="tap-row mt-2 w-full justify-between rounded-sm border border-ink/10 px-3 py-2 text-note text-ink-faint active:scale-99"
-          >
-            <span>另有 {{ quickPillsHidden }} 味</span>
-            <span class="text-qing">去丹匣 ›</span>
-          </RouterLink>
+
+          <div v-if="showCultBreakdown" class="cultivation-ledger__sources">
+            <p class="text-ink-soft">
+              基础 {{ formatRate(cultBase) }}({{ player.realm.name }}{{ player.subName
+              }}{{ player.linggen ? `·${player.linggen.gradeName}` : "" }}) × (1 +
+              <span class="tabular text-qing">{{ formatPercent(cultMultiplier) }}</span
+              >) = <span class="tabular text-qing">{{ formatRate(player.cultPerSec) }}</span>
+            </p>
+            <p v-for="row in cultSources" :key="row.name" class="flex justify-between">
+              <span class="text-ink-faint">{{ row.name }}</span>
+              <span class="tabular" :class="row.value > 0 ? 'text-qing' : 'text-cinnabar'">
+                {{ row.value > 0 ? "+" : "" }}{{ formatPercent(row.value) }}
+              </span>
+            </p>
+            <p class="cultivation-ledger__hint">
+              这些都是修炼速度的百分比加成,相加后乘在基础上 —— 与人物页属性明细同源。
+            </p>
+          </div>
+        </section>
+
+        <!--
+          修行账回答「现在走到哪」,下一步只回答「此刻做哪件事」。
+          破境先于闭关:前者是这一境的出口,后者是留在原地的加速。
+        -->
+        <section
+          class="cultivation-register__chapter cultivation-next"
+          data-cultivation-chapter="next"
+          data-cultivation-next
+        >
+          <CultivationChapterHead
+            :index="nextChapter.index"
+            :title="nextChapter.title"
+            :hint="nextChapter.hint"
+            :fact="stage.label"
+          />
+          <div class="cultivation-next__rows">
+            <BreakthroughCard />
+            <RetreatCard />
+          </div>
         </section>
       </div>
-    </div>
 
-    <!-- 功法区(主修卡/一门一册书目/参悟)→ GongfaSection,整块随本体迁入 -->
-    <GongfaSection class="folio-span-all" />
+      <section
+        v-if="activeBuffs.length || quickPills.length"
+        class="cultivation-register__chapter cultivation-support"
+        data-cultivation-chapter="support"
+        data-cultivation-support
+      >
+        <CultivationChapterHead
+          :index="supportChapter.index"
+          :title="supportChapter.title"
+          :hint="supportChapter.hint"
+          :fact="supportFact"
+        />
+        <div class="cultivation-support__grid">
+          <!-- 状态 -->
+          <section v-if="activeBuffs.length" class="cultivation-support__group">
+            <h3 class="cultivation-support__title">状态</h3>
+            <div class="cultivation-support__buffs">
+              <!--
+                状态胶囊每秒刷新一次,倒数文本必须定宽:formatCountdown 逐位补零,
+                再给它一个固定宽度的槽位(文字右对齐)—— 否则「10分0秒 → 10分1秒」
+                这一位的增减会把整排胶囊推来推去,看起来就是「状态一直在抖」。
+              -->
+              <button
+                v-for="b in activeBuffs"
+                :key="b.def!.id"
+                type="button"
+                class="chip-ink tabular transition-transform active:scale-95"
+                :class="
+                  b.def!.kind === 'injury'
+                    ? 'border-cinnabar/60 text-cinnabar'
+                    : 'border-jade/60 text-jade'
+                "
+                @click="ui.buffDetailId = b.def!.id"
+              >
+                <GameIcon :name="b.def!.icon" :size="11" />
+                {{ b.def!.name }}
+                <span
+                  v-if="b.stack > 1"
+                  class="text-note"
+                  :aria-label="`${b.def!.name} 与 ${b.stack - 1} 味状态同刻叠加`"
+                  >×{{ b.stack }}</span
+                >
+                <span class="countdown-slot">{{ formatCountdown(b.remain) }}</span>
+              </button>
+            </div>
+          </section>
+
+          <!-- 丹药速服 -->
+          <section v-if="quickPills.length" class="cultivation-support__group">
+            <h3 class="cultivation-support__title">以药辅道</h3>
+            <div class="cultivation-pills">
+              <button
+                v-for="p in quickPills"
+                :key="p.def!.id"
+                data-quick-pill
+                class="cultivation-pill-row"
+                :disabled="p.overflow === 'full'"
+                @click="usePill(p.def!.id)"
+              >
+                <GameIcon
+                  :name="p.def!.icon"
+                  :size="16"
+                  :style="{ color: qualityDef(p.def!.quality).color }"
+                />
+                <span class="cultivation-pill-row__copy">
+                  <span class="cultivation-pill-row__name">{{ p.def!.name }}</span>
+                  <span class="cultivation-pill-row__brief tabular">
+                    存 {{ p.count
+                    }}<template v-if="quickPillBrief(p.def!)"
+                      >· {{ quickPillBrief(p.def!) }}</template
+                    >
+                  </span>
+                </span>
+                <!-- 顶满=白费,禁用并改口;续时=只剩尾巴可续,照吃但把话说清 -->
+                <span
+                  class="cultivation-pill-row__state"
+                  :class="
+                    p.overflow === 'full'
+                      ? 'text-ink-faint'
+                      : p.overflow === 'partial'
+                        ? 'text-amber-ink'
+                        : 'text-qing'
+                  "
+                >
+                  {{ p.overflow === "full" ? "已顶" : p.overflow === "partial" ? "续时" : "服用" }}
+                </span>
+              </button>
+            </div>
+            <!-- 速服只铺前四味;余量不能静默消失,给出去丹匣逐味查看的直达入口 -->
+            <RouterLink
+              v-if="quickPillsHidden > 0"
+              data-quick-pills-hidden
+              :to="{ path: '/inventory', query: { tab: 'pill' } }"
+              :aria-label="`另有 ${quickPillsHidden} 味可服丹药，前往丹匣查看`"
+              class="cultivation-support__more"
+            >
+              <span>另有 {{ quickPillsHidden }} 味</span>
+              <span class="text-qing">去丹匣 ›</span>
+            </RouterLink>
+          </section>
+        </div>
+      </section>
+
+      <!-- 功法区(主修卡/一门一册书目/参悟)→ GongfaSection,整块随本体迁入 -->
+      <GongfaSection
+        class="cultivation-register__chapter cultivation-gongfa"
+        data-cultivation-chapter="gongfa"
+      />
+    </article>
 
     <GongfaDialog />
     <BuffDialog />
@@ -390,20 +419,24 @@ import {
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import TapNumber from "@/components/common/TapNumber.vue";
 import { qualityDef } from "@/data/qualities";
-import SectionTitle from "@/components/common/SectionTitle.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import GongfaDialog from "@/components/cultivation/GongfaDialog.vue";
 import BuffDialog from "@/components/cultivation/BuffDialog.vue";
 import RealmLadder from "@/components/cultivation/RealmLadder.vue";
 import CultivationDial from "@/components/cultivation/CultivationDial.vue";
+import CultivationChapterHead from "@/components/cultivation/CultivationChapterHead.vue";
 import GongfaSection from "@/components/cultivation/GongfaSection.vue";
 import BreakthroughCard from "@/components/cultivation/BreakthroughCard.vue";
 import RetreatCard from "@/components/cultivation/RetreatCard.vue";
 import QiShortfallNote from "@/components/cultivation/QiShortfallNote.vue";
+import { cultivationChapter } from "@/ui/cultivationDesk";
 
 const player = usePlayerStore();
 const resources = useResourcesStore();
+const practiceChapter = cultivationChapter("practice");
+const nextChapter = cultivationChapter("next");
+const supportChapter = cultivationChapter("support");
 
 /**
  * 修炼速度的来路 —— 玩家最常盯的就是这一行,故就地摊开:
@@ -640,4 +673,10 @@ const quickPillRows = computed(() =>
 
 const quickPills = computed(() => quickPillRows.value.slice(0, QUICK_PILL_LIMIT));
 const quickPillsHidden = computed(() => quickPillRows.value.length - quickPills.value.length);
+const supportFact = computed(() => {
+  const parts = [];
+  if (activeBuffs.value.length) parts.push(`${activeBuffs.value.length} 状态`);
+  if (quickPillRows.value.length) parts.push(`${quickPillRows.value.length} 丹`);
+  return parts.join(" · ");
+});
 </script>

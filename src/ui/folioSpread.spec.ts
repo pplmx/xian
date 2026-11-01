@@ -103,12 +103,15 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
     );
   });
 
-  it("修炼页让行功账与下一步同排双页,下一步不再横跨后把右页留空", () => {
+  it("修炼页让行功账与下一步同排双页,四章仍在一册续卷里", () => {
     const view = source("src/views/CultivationView.vue");
 
-    expect(view).toContain('<section class="cultivation-ledger" data-cultivation-ledger>');
-    expect(view).toContain('<section class="cultivation-next" data-cultivation-next>');
-    expect(view).not.toContain('<section class="folio-span-all cultivation-next"');
+    expect(view).toContain('<article class="cultivation-register folio-span-all"');
+    expect(view).toContain('class="cultivation-register__main"');
+    expect(view).toMatch(/<section\s+class="cultivation-register__chapter cultivation-ledger"/);
+    expect(view).toMatch(/<section\s+class="cultivation-register__chapter cultivation-next"/);
+    expect(view).toContain("data-cultivation-ledger");
+    expect(view).toContain("data-cultivation-next");
   });
 
   it("行囊在主读数下把九佩与藏品并读,四册页签共用同一张书桌", () => {

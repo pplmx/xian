@@ -256,7 +256,7 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     expect(title, "栏号仍由页内 counter 生成").toContain("data-folio-section-mark");
     expect(title, "章首支持可选眉题").toContain('v-if="eyebrow"');
     expect(title, "章首支持右侧动作席").toContain('<slot name="actions" />');
-    expect(cultivation, "修炼账走同一个章节头").toContain("<SectionTitle");
+    expect(cultivation, "修炼账改走续卷章首").toContain("<CultivationChapterHead");
     expect(inventory, "行囊检点走同一个章节头").toContain("<SectionTitle");
     expect(cultivation, "不再另造第二套章首组件").not.toContain("<FolioChapterHeader");
     expect(inventory, "不再另造第二套章首组件").not.toContain("<FolioChapterHeader");

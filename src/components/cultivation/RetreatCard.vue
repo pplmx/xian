@@ -1,45 +1,50 @@
 <template>
-  <!--
-    闭关卡 —— 与修行/破境同族的卡头:左为楷书卡名(必须为 span,判据钉着),
-    右侧是状态位:闭关中报倒计时(琥珀=进行中的事),未闭关不留字。
-    卡名读作「闭 关」两字一顿,与「修 行」「破 境」同一口气。
-  -->
   <!-- Phase 28 闭关:5 分钟 +150% 修炼,期间禁止历练(数值唯一来源 = buffs.ts retreat + earlyGameService) -->
-  <!-- 开始那瞬整卡一闪(与洞府建筑账行升级同款 card-flash)——「这件事发生在我这张卡上」 -->
-  <div
-    class="card-ink px-4 py-3"
+  <!-- 开始那瞬整行一闪(与洞府建筑账行升级同款 card-flash)——「这件事发生在我这条账上」 -->
+  <article
+    class="cultivation-action cultivation-action--retreat"
     :class="retreatFlash ? 'card-flash' : ''"
+    data-cultivation-action="retreat"
     @animationend.self="retreatFlash = false"
   >
-    <div class="flex items-baseline justify-between">
-      <span class="font-kai text-title tracking-[0.2em] text-ink">闭 关</span>
-      <span v-if="retreating" class="text-body text-amber-ink tabular">
-        闭关中 · <span class="countdown-slot">{{ formatCountdown(retreatRemaining) }}</span>
-      </span>
+    <header class="cultivation-action__head">
+      <span class="cultivation-action__mark" aria-hidden="true">静</span>
+      <div class="cultivation-action__heading">
+        <div class="cultivation-action__title-row">
+          <h3 class="cultivation-action__title">闭 关</h3>
+          <span v-if="retreating" class="cultivation-action__status tabular">
+            闭关中 · <span class="countdown-slot">{{ formatCountdown(retreatRemaining) }}</span>
+          </span>
+        </div>
+        <p class="cultivation-action__lede">封洞静坐,换一段更快的行功;期间不能外出历练。</p>
+      </div>
+    </header>
+    <div class="cultivation-action__body">
+      <p class="cultivation-action__copy">
+        <!--
+          文案里的时制要与真实时长对得上:闭关只有 5 分钟,一炷香却是 30 分钟 ——
+          拿"一炷香"说 5 分钟,玩家按古语理解会以为半小时,那就成了撒谎。
+        -->
+        静坐片刻({{ retreatMinutes }} 分钟),修炼速度 +{{ retreatPct }}%;闭关期间无法外出历练。
+      </p>
+      <button
+        v-if="!retreating"
+        type="button"
+        class="cultivation-action__primary"
+        data-cultivation-primary-action="retreat"
+        @click="beginRetreat"
+      >
+        闭关 · {{ retreatMinutes }}分钟 修炼 +{{ retreatPct }}%(期间无法历练)
+      </button>
+      <!-- 闭关该收多少就摊多少:照现倍率折算 base,不只在定性「+150%」上打转。
+           只在未闭关头展示为**前瞻**;闭关中现速率已含 +150%,再折算一遍会重复叠加,故撤 -->
+      <p v-if="!retreating" class="cultivation-action__forecast tabular">
+        闭关后每秒 ≈ {{ formatRate(retreatPerSec) }}(现 {{ formatRate(player.cultPerSec) }})·{{
+          retreatMinutes
+        }}分钟约多收 {{ formatRate(retreatExtra) }} 修为
+      </p>
     </div>
-    <p class="mt-0.5 text-note text-ink-faint">
-      <!--
-        文案里的时制要与真实时长对得上:闭关只有 5 分钟,一炷香却是 30 分钟 ——
-        拿"一炷香"说 5 分钟,玩家按古语理解会以为半小时,那就成了撒谎。
-      -->
-      静坐片刻({{ retreatMinutes }} 分钟),修炼速度 +{{ retreatPct }}%;闭关期间无法外出历练。
-    </p>
-    <button
-      v-if="!retreating"
-      type="button"
-      class="chip-ink mt-2 w-full justify-center !py-1.5 text-center !whitespace-normal text-body leading-relaxed"
-      @click="beginRetreat"
-    >
-      闭关 · {{ retreatMinutes }}分钟 修炼 +{{ retreatPct }}%(期间无法历练)
-    </button>
-    <!-- 闭关该收多少就摊多少:照现倍率折算 base,不只在定性「+150%」上打转。
-         只在未闭关头展示为**前瞻**;闭关中现速率已含 +150%,再折算一遍会重复叠加,故撤 -->
-    <p v-if="!retreating" class="mt-1 text-note text-ink-faint tabular">
-      闭关后每秒 ≈ {{ formatRate(retreatPerSec) }}(现 {{ formatRate(player.cultPerSec) }})·{{
-        retreatMinutes
-      }}分钟约多收 {{ formatRate(retreatExtra) }} 修为
-    </p>
-  </div>
+  </article>
 </template>
 
 <script setup lang="ts">

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { readStyleCss } from "@/test/readStyleCss";
+import { cultivationChapter, cultivationChapters } from "@/ui/cultivationDesk";
 
 const ROOT = resolve(__dirname, "../..");
 
@@ -10,7 +11,26 @@ function source(rel: string): string {
   return readFileSync(resolve(ROOT, rel), "utf8");
 }
 
-describe("修炼案 · 主读数先行,破境与闭关收成下一步", () => {
+describe("修炼案 · 四章收成一册行功续卷", () => {
+  it("章序只装配一次:修行、下一步、随身、功法四章不缺不乱", () => {
+    expect(cultivationChapters().map((chapter) => chapter.key)).toEqual([
+      "practice",
+      "next",
+      "support",
+      "gongfa",
+    ]);
+    expect(cultivationChapters().map((chapter) => chapter.title)).toEqual([
+      "修 行",
+      "下一步",
+      "随身",
+      "功法",
+    ]);
+    expect(cultivationChapter("next")).toMatchObject({
+      index: "贰",
+      hint: "关口看把握,闭关看当下",
+    });
+  });
+
   it("卷首改成内观台,用暗场周天盘承接境界、阶段与修为进度", () => {
     const view = source("src/views/CultivationView.vue");
     const dial = source("src/components/cultivation/CultivationDial.vue");
@@ -40,15 +60,17 @@ describe("修炼案 · 主读数先行,破境与闭关收成下一步", () => {
     );
   });
 
-  it("修行读数收成一张有主次的行功账,主值、余程与灵气不再同权重排队", () => {
+  it("正文从卷首直接续到一张行功账,章首由同一份章序落位", () => {
     const view = source("src/views/CultivationView.vue");
+    const register =
+      view.match(/<article class="cultivation-register[\s\S]*?<\/article>/)?.[0] ?? "";
 
+    expect(register, "正文四章同住一册续卷").toContain("data-cultivation-register");
     expect(view, "修行账要有独立运行时指纹").toContain("data-cultivation-ledger");
-    expect(view, "修行账改用全站唯一的章节头").toContain("<SectionTitle");
-    expect(view, "章首保留此刻功课的眉题").toContain('eyebrow="此刻功课"');
-    expect(view, "章首标题仍是修行").toContain('title="修 行"');
-    expect(view, "境界位置收进章首右侧动作席").toMatch(
-      /<template #actions>[\s\S]{0,120}<p class="cultivation-ledger__position tabular">/,
+    expect(view, "修行账改用续卷章首").toContain("<CultivationChapterHead");
+    expect(view, "章首标题仍从章序读取修行").toContain(':title="practiceChapter.title"');
+    expect(view, "境界位置收进章首右侧读数席").toContain(
+      ':fact="`第 ${player.major + 1} / ${REALMS.length} 境`"',
     );
     expect(view, "旧的自绘印章章首不再保留").not.toContain("cultivation-ledger__seal");
     expect(view, "修为主值要有独立落点").toContain("data-cultivation-primary");
@@ -56,34 +78,89 @@ describe("修炼案 · 主读数先行,破境与闭关收成下一步", () => {
     expect(view, "进度条仍读同一条修为进度").toContain(':value="player.expProgress"');
     expect(view, "修为主值仍点开同一份详情").toContain(':rows="expDetailRows"');
     expect(view, "灵气仍点开同一份详情").toContain(':rows="qiDetailRows"');
+    expect(view, "主进度属信息层,与行速、灵气同用石青").toContain(
+      'color="var(--color-qing)" :height="10"',
+    );
   });
 
-  it("破境与闭关收进同一条下一步,不再作为两张无标题的并列大卡", () => {
+  it("破境、闭关、随身与功法都沿同一账线续排,正文不再套卡片壳", () => {
     const view = source("src/views/CultivationView.vue");
+    const register =
+      view.match(/<article class="cultivation-register[\s\S]*?<\/article>/)?.[0] ?? "";
     const next = view.match(/<section[^>]*data-cultivation-next[\s\S]*?<\/section>/)?.[0] ?? "";
+    const gongfa = source("src/components/cultivation/GongfaSection.vue");
+    const breakthrough = source("src/components/cultivation/BreakthroughCard.vue");
+    const retreat = source("src/components/cultivation/RetreatCard.vue");
+    const tribulation = source("src/components/cultivation/TribulationPanel.vue");
 
-    expect(next, "下一步要有独立章节").toContain('title="下一步"');
+    expect(next, "下一步章首从同一章序读取").toContain(':title="nextChapter.title"');
     expect(next, "破境卡仍留在下一步章节").toContain("<BreakthroughCard />");
     expect(next, "闭关卡仍留在下一步章节").toContain("<RetreatCard />");
-    expect(next, "两张卡共用同一条响应式栅格").toContain("cultivation-next__grid");
-    expect(view, "下一步与行功账在桌面双页并读").toContain(
-      '<section class="cultivation-next" data-cultivation-next>',
+    expect(next, "两项行动收进同一条账列").toContain('class="cultivation-next__rows"');
+    expect(view, "状态与速服也是续卷的一章").toContain('data-cultivation-chapter="support"');
+    expect(view, "功法章接在随身之后").toMatch(
+      /<GongfaSection\s+class="cultivation-register__chapter cultivation-gongfa"/,
     );
-    expect(view, "下一步不再横跨双页把右页留空").not.toContain(
-      '<section class="folio-span-all cultivation-next"',
-    );
-    expect(view, "状态与速服在辅册内同排").toContain(
-      '<div class="cultivation-support folio-span-all">',
-    );
-    expect(view, "功法整区落在双页下方").toContain('<GongfaSection class="folio-span-all" />');
+    expect(register, "整册正文不再借 card-ink").not.toContain("card-ink");
+    for (const [name, panel] of [
+      ["破境", breakthrough],
+      ["闭关", retreat],
+      ["劫势", tribulation],
+      ["功法", gongfa],
+    ] as const) {
+      expect(panel, `${name}不再套通用卡片壳`).not.toContain("card-ink");
+    }
+    expect(breakthrough, "破境是一条行功账行").toContain('data-cultivation-action="breakthrough"');
+    expect(retreat, "闭关是一条行功账行").toContain('data-cultivation-action="retreat"');
   });
 
-  it("下一步始终单列承接两张行动卡,极窄档不横向溢出", () => {
+  it("续卷只留上下账线,主键是朱砂短笔而非整行色带", () => {
+    const css = source("src/style.css");
+
+    expect(css, "续卷只由上下账线收束").toMatch(
+      /\.cultivation-register\s*\{[\s\S]{0,260}border-top:\s*1px solid[\s\S]{0,120}border-bottom:\s*1px solid/,
+    );
+    expect(css, "桌面仍把修行与下一步并读").toMatch(
+      /\.cultivation-register__main\s*\{[\s\S]{0,260}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(css, "行动主键不铺满账行").toMatch(
+      /\.cultivation-action__primary\s*\{[\s\S]{0,520}width:\s*fit-content;[\s\S]{0,260}max-width:\s*72%/,
+    );
+    expect(css, "账行本身不整行铺底").toMatch(
+      /\.cultivation-action\s*\{[\s\S]{0,280}background:\s*transparent;/,
+    );
+    expect(css, "极窄档仍按单列续排").toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.cultivation-action__primary/,
+    );
+  });
+
+  it("下一步始终单列承接两条行动,极窄档不横向溢出", () => {
     const css = source("src/style.css");
 
     expect(css).toMatch(
-      /\.cultivation-next__grid\s*\{[\s\S]{0,160}grid-template-columns:\s*minmax\(0, 1fr\)/,
+      /\.cultivation-next__rows\s*\{[\s\S]{0,160}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
-    expect(css).toMatch(/@media \(max-width: 220px\)\s*\{[\s\S]{0,1200}\.cultivation-next__grid/);
+    expect(css).toMatch(/@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.cultivation-next__rows/);
+  });
+
+  it("真浏览器门核四章续账、零卡壳与朱砂短笔", () => {
+    const layout = source("scripts/layout-check.mjs");
+
+    expect(layout, "修行续卷要有独立真渲染任务").toContain("async function taskCultivationFold()");
+    expect(layout, "运行时先定位整册续卷").toContain(
+      'document.querySelector("[data-cultivation-register]")',
+    );
+    expect(layout, "四章要逐章核到").toContain(
+      'register?.querySelectorAll("[data-cultivation-chapter]")',
+    );
+    expect(layout, "续卷里不许再有卡片壳").toContain(
+      'register?.querySelectorAll(".card-ink").length',
+    );
+    expect(layout, "主键宽度要真量").toContain("[data-cultivation-primary-action]");
+    expect(layout, "行动色要真读 computed color").toContain("getComputedStyle(button).color");
+    expect(layout, "信息层要回到石青").toContain("chapterFactColors");
+    expect(layout, "修行首屏任务要挂进巡页").toContain(
+      '["修行续卷的四章与行动层", taskCultivationFold]',
+    );
   });
 });

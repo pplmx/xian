@@ -3396,54 +3396,70 @@ async function taskEngineModals() {
     const requiredKinds = new Set(["enlightenment", "cave"]);
     /*
      * 洞府巡游挂在引擎 30 秒周期检查上,而这条夹具从 load 到此处只过了数秒。
-     * 旧上限 20 秒会在冷机器/并发忙时卡在首轮周期前，误报「触发接线断了」；
-     * 给足 40 秒，让首轮周期一定有机会跑到。
+     * 旧上限 20 / 40 秒都在并发满载时误报过「触发接线断了」:渲染任务会把首轮
+     * 周期挤晚。给足 80 秒,同时按 kind 精确找卷,避免另一扇机缘先出现时
+     * `.modal-panel:last()` 把要量的事件顶掉。
      */
-    for (let i = 0; i < 80 && [...requiredKinds].some((kind) => !seen.has(kind)); i += 1) {
+    for (let i = 0; i < 160 && [...requiredKinds].some((kind) => !seen.has(kind)); i += 1) {
       await page.waitForTimeout(500);
-      const info = await page.evaluate(() => {
-        const panel = [...document.querySelectorAll(".modal-panel")].at(-1);
-        if (!panel) return null;
-        const scroll = panel.querySelector("[data-opportunity-scroll]");
-        if (!scroll) return null;
-        return {
-          kind: scroll.getAttribute("data-opportunity-kind"),
-          title:
-            (panel.querySelector("[data-opportunity-title]")?.textContent || "").trim() ||
-            "(无标题)",
-          label: panel.getAttribute("aria-label"),
-          role: panel.getAttribute("role"),
-          scrollCount: panel.querySelectorAll("[data-opportunity-scroll]").length,
-          choiceCount: panel.querySelectorAll("[data-opportunity-choice]").length,
-          effectCount: panel.querySelectorAll("[data-opportunity-effect]").length,
-          timer: (panel.querySelector("[data-opportunity-timer]")?.textContent || "").trim(),
-          hasLeave: !!panel.querySelector("[data-opportunity-leave]"),
-          controls: [...panel.querySelectorAll("button, a, [role=button]")]
-            .map((el) => {
-              const r = el.getBoundingClientRect();
-              const declared = parseFloat(getComputedStyle(el).minHeight);
-              return {
-                name: (el.getAttribute("aria-label") || el.textContent || "")
-                  .trim()
-                  .replace(/\s+/g, " ")
-                  .slice(0, 14),
-                h: Math.round(r.height * 10) / 10,
-                // 与巡页那条同一把尺子(见第四十三条)
-                ok: r.height >= 28 || (declared >= 28 && r.height >= 27.5),
-              };
-            })
-            .filter((c) => c.h > 0),
-        };
-      });
+      const info = await page.evaluate(
+        (seenKinds) => {
+          const seen = new Set(seenKinds);
+          const scroll = [...document.querySelectorAll("[data-opportunity-scroll]")]
+            .reverse()
+            .find((candidate) => {
+              const kind = candidate.getAttribute("data-opportunity-kind");
+              return kind && !seen.has(kind);
+            });
+          const panel = scroll?.closest(".modal-panel");
+          if (!scroll || !panel) return null;
+          return {
+            kind: scroll.getAttribute("data-opportunity-kind"),
+            title:
+              (panel.querySelector("[data-opportunity-title]")?.textContent || "").trim() ||
+              "(无标题)",
+            label: panel.getAttribute("aria-label"),
+            role: panel.getAttribute("role"),
+            scrollCount: panel.querySelectorAll("[data-opportunity-scroll]").length,
+            choiceCount: panel.querySelectorAll("[data-opportunity-choice]").length,
+            effectCount: panel.querySelectorAll("[data-opportunity-effect]").length,
+            timer: (panel.querySelector("[data-opportunity-timer]")?.textContent || "").trim(),
+            hasLeave: !!panel.querySelector("[data-opportunity-leave]"),
+            controls: [...panel.querySelectorAll("button, a, [role=button]")]
+              .map((el) => {
+                const r = el.getBoundingClientRect();
+                const declared = parseFloat(getComputedStyle(el).minHeight);
+                return {
+                  name: (el.getAttribute("aria-label") || el.textContent || "")
+                    .trim()
+                    .replace(/\s+/g, " ")
+                    .slice(0, 14),
+                  h: Math.round(r.height * 10) / 10,
+                  // 与巡页那条同一把尺子(见第四十三条)
+                  ok: r.height >= 28 || (declared >= 28 && r.height >= 27.5),
+                };
+              })
+              .filter((c) => c.h > 0),
+          };
+        },
+        [...seen.keys()],
+      );
       if (info?.kind && !seen.has(info.kind)) {
         seen.set(info.kind, info);
+        const eventScroll = page.locator(
+          `[data-opportunity-scroll][data-opportunity-kind="${info.kind}"]`,
+        );
         /*
          * 顿悟与洞府巡游也只在概率掷中时出现 —— 巡页与缩放档都碰不到它们。
          * 洞府巡游里那几行选项与代价正是 195 宽上最容易折的,故在收卷之前量一遍。
          */
         zoomSeen += 1;
         const evZoom = dialogZoomProblems(
-          await measureDialogZoom(page, { width: 375, height: 812 }),
+          await measureDialogZoom(
+            page,
+            { width: 375, height: 812 },
+            `[data-opportunity-scroll][data-opportunity-kind="${info.kind}"]`,
+          ),
         );
         if (evZoom.length)
           failures.push(`[375] 「${info.title}」在 200% 下坏了:${evZoom.join(" / ")}`);
@@ -3453,24 +3469,14 @@ async function taskEngineModals() {
          */
         await page.keyboard.press("Escape");
         await page.waitForTimeout(250);
-        const stillOpen = await page
-          .locator("[data-opportunity-scroll]")
-          .last()
-          .isVisible()
-          .catch(() => false);
+        const stillOpen = await eventScroll.isVisible().catch(() => false);
         if (!stillOpen)
           failures.push(`[375] 「${info.title}」被 Esc 静默收走 —— 舍签必须是显式动作`);
-        await page
-          .locator("[data-opportunity-scroll]")
-          .last()
+        await eventScroll
           .locator("[data-opportunity-leave]")
           .click({ timeout: 3000 })
           .catch(() => {});
-        await page
-          .locator("[data-opportunity-scroll]")
-          .last()
-          .waitFor({ state: "detached", timeout: 3000 })
-          .catch(() => {});
+        await eventScroll.waitFor({ state: "detached", timeout: 3000 }).catch(() => {});
         await page.waitForTimeout(400);
       }
     }
@@ -8699,6 +8705,156 @@ async function taskDongfuFold() {
     }
     if (pageErrors.length)
       failures.push(`[390-dongfu] 洞府首屏页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return {
+    failures,
+    checked,
+    contrastFails: [],
+    pixelContrastFails: [],
+    zoomFails: [],
+  };
+}
+
+/** 修行续卷的四章与行动层:零卡壳、信息归石青、行动归朱砂短笔 */
+async function taskCultivationFold() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    await seedSave(ctx, showcaseSlices("light"), "__cultivationFold");
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/cultivation", 700);
+    checked += 1;
+    if (rendered === 0) {
+      failures.push("[390-cultivation] 修行页没渲染出来,续卷判据没量到东西");
+    } else {
+      const fold = await page.evaluate(() => {
+        const register = document.querySelector("[data-cultivation-register]");
+        const chapters = [...(register?.querySelectorAll("[data-cultivation-chapter]") ?? [])];
+        const heads = [...(register?.querySelectorAll(".cultivation-chapter-head") ?? [])];
+        const chapterTitles = heads.map((head) =>
+          (head.querySelector(".cultivation-chapter-head__title")?.textContent || "").trim(),
+        );
+        const chapterFactColors = heads.map((head) => {
+          const fact = head.querySelector(".cultivation-chapter-head__fact");
+          return fact ? getComputedStyle(fact).color : "missing";
+        });
+        const actionRows = [...(register?.querySelectorAll("[data-cultivation-action]") ?? [])];
+        const actionIds = actionRows.map((row) => row.getAttribute("data-cultivation-action"));
+        const primaryActions = [
+          ...(register?.querySelectorAll("[data-cultivation-primary-action]") ?? []),
+        ];
+        const actionMetrics = primaryActions.map((button) => {
+          const actionRect = button.getBoundingClientRect();
+          const rowRect = button.closest("[data-cultivation-action]")?.getBoundingClientRect();
+          const active = !button.hasAttribute("disabled");
+          return {
+            id: button.getAttribute("data-cultivation-primary-action"),
+            ratio: rowRect?.width ? actionRect.width / rowRect.width : 1,
+            color: getComputedStyle(button).color,
+            active,
+          };
+        });
+        const rowBackgrounds = actionRows.map((row) => getComputedStyle(row).backgroundImage);
+        const progress = register?.querySelector("[data-cultivation-primary] .bar-fill");
+        const probe = document.createElement("span");
+        probe.style.color = "rgb(var(--color-qing-rgb))";
+        document.body.append(probe);
+        const qing = getComputedStyle(probe).color;
+        probe.style.color = "rgb(var(--color-cinnabar-rgb))";
+        const cinnabar = getComputedStyle(probe).color;
+        probe.remove();
+        return {
+          chapters: chapters.length,
+          chapterKeys: chapters.map((chapter) => chapter.getAttribute("data-cultivation-chapter")),
+          heads: heads.length,
+          chapterTitles,
+          chapterFactColors,
+          cardShells: register?.querySelectorAll(".card-ink").length ?? -1,
+          actionIds,
+          actionRows: actionRows.length,
+          actionMetrics,
+          rowBackgrounds,
+          progressColor: progress ? getComputedStyle(progress).backgroundColor : "missing",
+          qing,
+          cinnabar,
+        };
+      });
+
+      checked += 1;
+      if (fold.chapters !== 4 || fold.heads !== 4) {
+        failures.push(
+          `[390-cultivation] 行功续卷应恰有四章四个章首,实见 ${fold.chapters} / ${fold.heads}`,
+        );
+      }
+      if (
+        fold.chapterKeys.join("|") !== "practice|next|support|gongfa" ||
+        fold.chapterTitles.join("|") !== "修 行|下一步|随身|功法"
+      ) {
+        failures.push(
+          `[390-cultivation] 四章顺序或章名漂了:${fold.chapterKeys.join(" / ")} · ` +
+            fold.chapterTitles.join(" / "),
+        );
+      }
+      if (fold.cardShells !== 0) {
+        failures.push(`[390-cultivation] 行功续卷里仍套着 ${fold.cardShells} 张 card-ink`);
+      }
+      if (fold.actionRows !== 2 || fold.actionIds.join("|") !== "breakthrough|retreat") {
+        failures.push(
+          `[390-cultivation] 破境与闭关没有收成两条行动账:${fold.actionIds.join(" / ")}`,
+        );
+      }
+      const wideActions = fold.actionMetrics.filter((entry) => entry.ratio > 0.72);
+      if (wideActions.length) {
+        failures.push(
+          `[390-cultivation] 主行动又铺回整行账带:${wideActions
+            .map((entry) => `${entry.id} ${Math.round(entry.ratio * 100)}%`)
+            .join(" / ")}`,
+        );
+      }
+      const tintedRows = fold.rowBackgrounds.filter((background) => background !== "none");
+      if (tintedRows.length) {
+        failures.push("[390-cultivation] 修行行动仍在整行铺底");
+      }
+      if (fold.chapterFactColors.some((color) => color !== fold.qing)) {
+        failures.push(
+          `[390-cultivation] 章内读数没有回到石青:${fold.chapterFactColors.join(" / ")}`,
+        );
+      }
+      if (fold.progressColor !== fold.qing) {
+        failures.push(`[390-cultivation] 修为进度没有归石青:${fold.progressColor}`);
+      }
+      const enabled = fold.actionMetrics.filter((entry) => entry.active);
+      if (!enabled.length || enabled.some((entry) => entry.color !== fold.cinnabar)) {
+        failures.push(
+          `[390-cultivation] 可点行动没有统一落朱砂:${enabled
+            .map((entry) => `${entry.id} ${entry.color}`)
+            .join(" / ")}`,
+        );
+      }
+
+      if (SHOTS) {
+        await page.setViewportSize({ width: 390, height: 2200 });
+        await settleVisuals(page);
+        await page
+          .locator("[data-cultivation-register]")
+          .screenshot({ path: join(SHOTS_DIR, "390-cultivation-register.png") });
+      }
+    }
+    if (pageErrors.length)
+      failures.push(`[390-cultivation] 修行续卷页面异常:${[...new Set(pageErrors)].join(" | ")}`);
   } finally {
     await ctx.close();
   }
@@ -15384,6 +15540,7 @@ const TASKS = [
   ["法宝炼化的两笔账", taskArtifactRefine],
   ["洞府营造的账目", taskDongfuBuild],
   ["洞府首屏的营造优先", taskDongfuFold],
+  ["修行续卷的四章与行动层", taskCultivationFold],
   ["界域志首屏的此刻优先", taskCodexFold],
   ["成就谱首屏的眼下可追", taskAchievementFold],
   ["藏珍谱首屏的新得优先", taskCollectionFold],

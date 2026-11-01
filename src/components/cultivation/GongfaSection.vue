@@ -1,51 +1,56 @@
 <template>
   <!-- 功法 -->
   <section>
-    <SectionTitle title="功法" :hint="`残页 ${resources.page}`" />
-    <div class="mt-2 space-y-2">
+    <CultivationChapterHead
+      :index="gongfaChapter.index"
+      :title="gongfaChapter.title"
+      :hint="gongfaChapter.hint"
+      :fact="`残页 ${resources.page}`"
+    />
+    <div class="cultivation-gongfa__body">
       <!-- 主修 -->
       <button
         v-if="mainDef"
-        class="card-ink flex w-full items-center gap-3 px-3.5 py-3 text-left active:scale-99"
+        class="cultivation-gongfa__main"
         @click="ui.gongfaDetailId = mainDef.id"
       >
-        <span
-          class="grid h-9 w-9 shrink-0 place-items-center rounded-[2px] bg-cinnabar/6 font-kai text-cinnabar"
-          >主</span
-        >
-        <span class="min-w-0 grow">
-          <span class="block truncate font-kai text-title text-ink">{{ mainDef.name }}</span>
-          <span class="flex items-center gap-1.5">
-            <span class="shrink-0 text-body text-ink-faint tabular">
+        <span class="cultivation-gongfa__main-seal">主</span>
+        <span class="cultivation-gongfa__main-copy">
+          <span class="cultivation-gongfa__main-name">{{ mainDef.name }}</span>
+          <span class="cultivation-gongfa__main-meta">
+            <span class="cultivation-gongfa__main-level tabular">
               第 {{ cultivation.learned[mainDef.id] }} 层 · {{ qualityDef(mainDef.quality).name }}
             </span>
             <span
               v-if="branchName(mainDef.id)"
-              class="min-w-0 truncate rounded-[2px] bg-gold-ink/6 px-1.5 py-0.5 text-note text-gold-ink"
+              class="cultivation-gongfa__badge cultivation-gongfa__badge--gold"
               >{{ branchName(mainDef.id) }}</span
             >
             <span
               v-else-if="canEnlighten(mainDef.id)"
-              class="shrink-0 rounded-[2px] bg-qing/6 px-1.5 py-0.5 text-note text-qing"
+              class="cultivation-gongfa__badge cultivation-gongfa__badge--qing"
               >待悟道</span
             >
             <span
               v-if="mainCanUpgrade"
-              class="shrink-0 rounded-[2px] bg-jade/6 px-1.5 py-0.5 text-note text-jade"
+              class="cultivation-gongfa__badge cultivation-gongfa__badge--qing"
               >可升层</span
             >
           </span>
         </span>
-        <GameIcon name="flame" :size="15" class="text-cinnabar" />
+        <span class="cultivation-gongfa__main-action">
+          <span>看功法</span>
+          <GameIcon name="flame" :size="14" />
+        </span>
       </button>
 
       <!--
-        一门一册:签与书目同卡,选中签是 6% 朱砂底上的墨字,不铺三色印面。
+        一门一册:签与书目同账,选中签是 6% 朱砂底上的墨字,不铺三色印面。
         窄屏只留印章与部数,门名在读屏标签里。行分两行,名字不再被层数和席位挤扁。
       -->
-      <div class="card-ink overflow-hidden">
+      <div class="cultivation-gongfa__book">
         <div
-          class="flex gap-1 border-b border-ink/10 p-1"
+          class="cultivation-gongfa__tabs"
           role="tablist"
           aria-label="功法门类"
           @keydown="onGongfaCatKeydown"
@@ -61,7 +66,7 @@
             :aria-label="`${GONGFA_TYPE_NAMES[g.type]} ${g.items.length} 部`"
             :tabindex="gongfaCat === g.type ? 0 : -1"
             :data-gongfa-cat="g.type"
-            class="flex flex-1 items-center justify-center gap-1 rounded-[2px] py-1.5 font-kai text-title tracking-[0.14em]"
+            class="cultivation-gongfa__tab"
             :class="
               gongfaCat === g.type
                 ? 'bg-cinnabar/6 text-ink'
@@ -79,9 +84,7 @@
           </button>
         </div>
 
-        <p
-          class="flex flex-wrap gap-x-1.5 border-b border-ink/7 px-3 py-1.5 text-body text-ink-faint"
-        >
+        <p class="cultivation-gongfa__summary">
           <span>此门已习 {{ activeGongfaItems.length }} 部</span>
           <span v-if="activeGongfaItems.length" class="tabular"
             >· 现看 {{ gongfaPage.start + 1 }}–{{ gongfaPage.shown }}</span
@@ -93,8 +96,8 @@
         </p>
 
         <div
-          class="scroll-pane max-h-72 overflow-y-auto"
-          :class="activeGongfaItems.length ? 'divide-y divide-ink/7' : ''"
+          class="scroll-pane cultivation-gongfa__rows"
+          :class="activeGongfaItems.length ? 'is-populated' : ''"
           role="tabpanel"
           :id="`gongfa-cat-panel-${gongfaCat}`"
           :aria-labelledby="`gongfa-cat-tab-${gongfaCat}`"
@@ -107,7 +110,7 @@
             v-for="def in gongfaPage.visible"
             :key="def.id"
             :data-gongfa-row="def.id"
-            class="flex w-full flex-col gap-1 px-3 py-2.5 text-left active:bg-ink/4"
+            class="cultivation-gongfa__row"
             @click="ui.gongfaDetailId = def.id"
           >
             <span class="flex min-w-0 items-baseline justify-between gap-3">
@@ -174,10 +177,7 @@
           门内只铺当前窗:外层 max-h-72 只裁视觉,不裁 DOM。续开与回翻放到滚动框外,
           玩家不必先滑到底才能继续;续开后焦点仍交给新露出的第一行。
         -->
-        <div
-          v-if="gongfaPage.start > 0 || gongfaPage.hidden > 0"
-          class="flex flex-wrap gap-1 border-t border-ink/7 p-1.5"
-        >
+        <div v-if="gongfaPage.start > 0 || gongfaPage.hidden > 0" class="cultivation-gongfa__pager">
           <button
             v-if="gongfaPage.start > 0"
             type="button"
@@ -212,7 +212,7 @@
         加 flex-wrap 让它在放不下时整块落到第二行。320 / 390 两档不动。
       -->
       <button
-        class="btn-ghost w-full flex-wrap"
+        class="cultivation-ledger-action cultivation-gongfa__comprehend"
         :disabled="!canComprehend"
         @click="comprehendGongfa()"
       >
@@ -251,14 +251,16 @@ import {
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
-import SectionTitle from "@/components/common/SectionTitle.vue";
+import CultivationChapterHead from "@/components/cultivation/CultivationChapterHead.vue";
 import QualitySeal from "@/components/common/QualitySeal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
+import { cultivationChapter } from "@/ui/cultivationDesk";
 
 const player = usePlayerStore();
 const resources = useResourcesStore();
 const cultivation = useCultivationStore();
 const ui = useUiStore();
+const gongfaChapter = cultivationChapter("gongfa");
 
 const GONGFA_CAT_ORDER: GongfaType[] = ["main", "sub", "secret"];
 

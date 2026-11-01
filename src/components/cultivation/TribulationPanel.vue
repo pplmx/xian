@@ -6,8 +6,8 @@
     然后才是要核的四项读数,最后是脚注(天时/折算/界膜/道数)。
     一字未删,只是把「与你有关的三句」提到读数之前。
   -->
-  <div class="mt-2 rounded-[2px] border border-violet-ink/25 bg-violet-ink/5 px-3 py-2">
-    <p class="text-body text-violet-ink">{{ plan.desc }}</p>
+  <div class="cultivation-tribulation" data-cultivation-tribulation>
+    <p class="cultivation-tribulation__lede">{{ plan.desc }}</p>
     <p class="mt-1 text-body text-ink-soft">
       主要风险:<span class="text-cinnabar">{{ plan.risks.join("; ") }}</span>
     </p>
@@ -103,10 +103,7 @@
       上一版玩家吃过"护持明明写着有,过劫时却像没有"的亏,
       那种误会不该靠失败去发现。
     -->
-    <div
-      v-if="worldStep"
-      class="mt-2 rounded-[2px] border border-cinnabar/30 bg-cinnabar/5 px-2.5 py-2"
-    >
+    <div v-if="worldStep" class="cultivation-tribulation__world-step">
       <p class="text-note leading-relaxed text-cinnabar">
         界膜之劫:跨界这一关血肉之厚一概不算 ——
         防御与气血折算出的抗性、开劫护持在此作废,只认词条与准备。
