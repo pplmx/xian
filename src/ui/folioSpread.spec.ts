@@ -114,14 +114,17 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
     expect(view).toContain("data-cultivation-next");
   });
 
-  it("行囊在主读数下把九佩与藏品并读,四册页签共用同一张书桌", () => {
+  it("行囊在续卷里把九佩与藏品并读,四册页签共用同一张书桌", () => {
     const view = source("src/views/InventoryView.vue");
 
     expect(view).toContain('<div class="folio-page folio-page--stack stagger-in">');
     expect(view).toContain('class="inventory-tabs folio-span-all mt-3"');
-    expect(view).toContain('class="inventory-briefing folio-span-all mt-3"');
-    expect(view).toContain('class="inventory-equipment" data-inventory-equipment');
-    expect(view).toContain('class="inventory-collection"');
+    expect(view).toContain('<article class="inventory-register folio-span-all"');
+    expect(view).toContain('class="inventory-register__lower"');
+    expect(view).toMatch(
+      /class="inventory-register__chapter inventory-equipment"[\s\S]{0,100}?data-inventory-equipment/,
+    );
+    expect(view).toContain('class="inventory-register__chapter inventory-collection"');
     expect(view).toContain('class="inventory-materials folio-span-all"');
     expect(view).toContain('class="inventory-artifacts folio-span-all"');
   });

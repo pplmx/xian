@@ -4,9 +4,6 @@
       <template #meta>
         <div class="inventory-masthead__meta">
           <span
-            >已佩 <strong class="tabular">{{ equippedCount }}</strong> / {{ SLOTS.length }}</span
-          >
-          <span
             >器灵尘 <strong class="tabular">{{ formatExact(resources.dust) }}</strong></span
           >
         </div>
@@ -24,58 +21,64 @@
     <!-- 页签 -->
     <InkTabs v-model="tab" :tabs="TABS" class="inventory-tabs folio-span-all mt-3" />
 
-    <!-- 装备:部位槽,点击唤起部位列表 -->
+    <!-- 装备:一册连续行囊续卷 -->
     <template v-if="tab === 'equip'">
       <!--
-        行囊开卷先答三件事:这一批新得什么、哪几席能换、器物何去何从。
-        新得、可换与穿齐仍各读原有同一份核心清单;这里只重排先后,不另算一次。
+        行囊不再把检点、九佩与藏品拆成三张同权卡纸。
+        今日检点先答「这一批新得什么、哪几席能换」,九席与藏品沿同一册续读;
+        所有读数仍直读原核心清单,这里只重排阅读层级。
       -->
-      <section
-        class="inventory-briefing folio-span-all mt-3"
-        data-inventory-overview
-        :data-inventory-bag-count="inventory.bagItems.length"
-        :data-inventory-new-count="inventory.newItemCount"
-        :data-inventory-upgrade-count="upgradeRows.length"
-      >
-        <SectionTitle class="inventory-briefing__heading" title="本批检点" hint="先看新得与可换">
-          <template #actions>
-            <button
-              type="button"
-              class="inventory-briefing__tool"
-              aria-label="智能收纳设置"
-              :aria-expanded="smartOpen"
-              @click="smartOpen = true"
-            >
-              收纳{{ settings.smartKeep.enabled ? "·启" : "" }}
-            </button>
-            <button
-              type="button"
-              class="inventory-briefing__tool"
-              aria-label="批量分解装备"
-              :aria-expanded="decomposeOpen"
-              @click="decomposeOpen = true"
-            >
-              分解
-            </button>
-          </template>
-        </SectionTitle>
+      <article class="inventory-register folio-span-all" data-inventory-register>
+        <section
+          class="inventory-register__chapter inventory-briefing"
+          data-inventory-overview
+          data-inventory-chapter="briefing"
+          :data-inventory-bag-count="inventory.bagItems.length"
+          :data-inventory-new-count="inventory.newItemCount"
+          :data-inventory-upgrade-count="upgradeRows.length"
+        >
+          <InventoryChapterHead
+            :index="briefingChapter.index"
+            :title="briefingChapter.title"
+            :hint="briefingChapter.hint"
+          >
+            <template #actions>
+              <button
+                type="button"
+                class="inventory-briefing__tool"
+                aria-label="智能收纳设置"
+                :aria-expanded="smartOpen"
+                @click="smartOpen = true"
+              >
+                收纳{{ settings.smartKeep.enabled ? "·启" : "" }}
+              </button>
+              <button
+                type="button"
+                class="inventory-briefing__tool"
+                aria-label="批量分解装备"
+                :aria-expanded="decomposeOpen"
+                @click="decomposeOpen = true"
+              >
+                分解
+              </button>
+            </template>
+          </InventoryChapterHead>
 
-        <div class="inventory-briefing__sheet">
-          <div class="inventory-briefing__counts">
-            <div class="inventory-briefing__count">
+          <div class="inventory-briefing__summary">
+            <div class="inventory-briefing__reading">
               <span class="inventory-briefing__eyebrow">藏珍</span>
-              <p>
-                <strong class="tabular">{{ inventory.bagItems.length }}</strong>
-                <span class="tabular">/ {{ BAG_CAPACITY }}</span>
+              <p data-inventory-capacity class="tabular">
+                <strong>{{ inventory.bagItems.length }}</strong>
+                <span>/ {{ BAG_CAPACITY }}</span>
               </p>
               <span class="inventory-briefing__foot"
                 >余位 <b class="tabular">{{ BAG_CAPACITY - inventory.bagItems.length }}</b></span
               >
             </div>
-            <div class="inventory-briefing__count inventory-briefing__count--new">
+            <div class="inventory-briefing__reading inventory-briefing__reading--new">
               <span class="inventory-briefing__eyebrow">新得</span>
-              <p>
-                <strong class="tabular">{{ inventory.newItemCount }}</strong>
+              <p class="tabular">
+                <strong>{{ inventory.newItemCount }}</strong>
                 <span>件</span>
               </p>
               <button
@@ -90,31 +93,36 @@
               </button>
               <span v-else class="inventory-briefing__foot">已看尽</span>
             </div>
-          </div>
-
-          <div class="inventory-briefing__upgrade">
-            <div class="inventory-briefing__upgrade-head">
+            <div class="inventory-briefing__reading inventory-briefing__reading--upgrade">
               <span class="inventory-briefing__eyebrow">可换</span>
-              <strong :class="upgradeRows.length ? 'text-ink-soft' : 'text-jade'">
-                {{ upgradeRows.length ? `${upgradeRows.length} 槽` : "无事可换" }}
-              </strong>
+              <p class="tabular">
+                <strong>{{ upgradeRows.length }}</strong>
+                <span>{{ upgradeRows.length ? "槽" : "无事" }}</span>
+              </p>
               <span class="inventory-briefing__foot">只计真实战力更高</span>
             </div>
-            <div v-if="upgradeRows.length" class="inventory-briefing__upgrade-slots">
-              <button
-                v-for="row in upgradeRows"
-                :key="row.slot"
-                type="button"
-                :data-inventory-upgrade-slot="row.slot"
-                class="chip-ink !px-2 !py-1 text-note active:scale-95"
-                :aria-label="`查看${EQUIP_SLOT_NAMES[row.slot]}候选，${upgradeText(row)}`"
-                @click="pickerSlot = row.slot"
-              >
-                {{ EQUIP_SLOT_NAMES[row.slot] }}
-                <span class="tabular text-jade">{{ upgradeText(row) }}</span>
-              </button>
+          </div>
+
+          <div class="inventory-briefing__decision">
+            <div class="inventory-briefing__candidates">
+              <span class="inventory-briefing__eyebrow">可动槽</span>
+              <div v-if="upgradeRows.length" class="inventory-briefing__upgrade-slots">
+                <button
+                  v-for="row in upgradeRows"
+                  :key="row.slot"
+                  type="button"
+                  :data-inventory-upgrade-slot="row.slot"
+                  class="inventory-briefing__slot"
+                  :aria-label="`查看${EQUIP_SLOT_NAMES[row.slot]}候选，${upgradeText(row)}`"
+                  @click="pickerSlot = row.slot"
+                >
+                  {{ EQUIP_SLOT_NAMES[row.slot] }}
+                  <span class="tabular text-jade">{{ upgradeText(row) }}</span>
+                  <span aria-hidden="true">›</span>
+                </button>
+              </div>
+              <p v-else class="inventory-briefing__empty">没有空槽,也没有更强藏品。</p>
             </div>
-            <p v-else class="inventory-briefing__empty">没有空槽,也没有更强藏品。</p>
             <button
               class="inventory-briefing__wear"
               :disabled="upgradeRows.length === 0"
@@ -152,114 +160,127 @@
               </button>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="inventory-equipment" data-inventory-equipment>
-        <SectionTitle title="九佩" :hint="`${equippedCount} / ${SLOTS.length} 已佩`" />
-        <div class="inventory-equipment__grid">
-          <button
-            v-for="(row, index) in slotRows"
-            :key="row.slot"
-            :data-equip-slot="row.slot"
-            :data-equip-upgrade="row.upgrade ? row.upgrade.slot : undefined"
-            class="inventory-equipment__slot"
-            :class="{ 'is-upgradable': row.upgrade, 'is-empty': !row.item }"
-            :aria-label="slotAriaLabel(row)"
-            @click="pickerSlot = row.slot"
+        <div class="inventory-register__lower">
+          <section
+            class="inventory-register__chapter inventory-equipment"
+            data-inventory-chapter="seats"
+            data-inventory-equipment
           >
-            <span class="inventory-equipment__number" aria-hidden="true">
-              {{ String(index + 1).padStart(2, "0") }}
-            </span>
-            <span class="inventory-equipment__head">
-              <span class="inventory-equipment__name">{{ row.name }}</span>
-              <span v-if="row.stock" class="inventory-equipment__stock">{{ row.stock }} 件</span>
-            </span>
-            <span v-if="row.item && row.template" class="inventory-equipment__piece">
-              <GameIcon
-                :name="row.template.icon"
-                :size="20"
-                :style="{ color: qualityDef(row.item.quality).color }"
-              />
-              <span class="inventory-equipment__piece-copy">
-                <span
-                  class="inventory-equipment__piece-name"
-                  :style="{ color: qualityDef(row.item.quality).color }"
-                >
-                  {{ row.template.name }}
-                  <span v-if="row.item.level > 0" class="tabular">+{{ row.item.level }}</span>
+            <InventoryChapterHead
+              :index="seatsChapter.index"
+              :title="seatsChapter.title"
+              :hint="seatsChapter.hint"
+              :fact="`${equippedCount} / ${SLOTS.length} 已佩`"
+            />
+            <div class="inventory-equipment__grid">
+              <button
+                v-for="(row, index) in slotRows"
+                :key="row.slot"
+                :data-equip-slot="row.slot"
+                :data-equip-upgrade="row.upgrade ? row.upgrade.slot : undefined"
+                class="inventory-seat"
+                :class="{ 'is-upgradable': row.upgrade, 'is-empty': !row.item }"
+                :aria-label="slotAriaLabel(row)"
+                @click="pickerSlot = row.slot"
+              >
+                <span class="inventory-seat__number tabular" aria-hidden="true">
+                  {{ String(index + 1).padStart(2, "0") }}
                 </span>
-                <span v-if="row.item.note" class="inventory-equipment__note">{{
-                  row.item.note
-                }}</span>
-              </span>
-            </span>
-            <span v-else class="inventory-equipment__blank">空悬待补</span>
-            <span v-if="row.upgrade" class="inventory-equipment__upgrade-mark">
-              换 <span class="tabular">{{ upgradeText(row.upgrade) }}</span>
-            </span>
-          </button>
-        </div>
-        <p class="inventory-equipment__foot">点一片查看同席候补;行囊满时新掉落自动折作器灵尘。</p>
-      </section>
+                <span class="inventory-seat__head">
+                  <span class="inventory-seat__name">{{ row.name }}</span>
+                  <span v-if="row.stock" class="inventory-seat__stock">{{ row.stock }} 候</span>
+                </span>
+                <span v-if="row.item && row.template" class="inventory-seat__piece">
+                  <GameIcon
+                    :name="row.template.icon"
+                    :size="17"
+                    :style="{ color: qualityDef(row.item.quality).color }"
+                  />
+                  <span class="inventory-seat__piece-copy">
+                    <span
+                      class="inventory-seat__piece-name"
+                      :style="{ color: qualityDef(row.item.quality).color }"
+                    >
+                      {{ row.template.name }}
+                      <span v-if="row.item.level > 0" class="tabular">+{{ row.item.level }}</span>
+                    </span>
+                    <span v-if="row.item.note" class="inventory-seat__note">{{
+                      row.item.note
+                    }}</span>
+                  </span>
+                </span>
+                <span v-else class="inventory-seat__blank">空悬待补</span>
+                <span class="inventory-seat__state">
+                  <template v-if="row.upgrade">
+                    换 <span class="tabular">{{ upgradeText(row.upgrade) }}</span>
+                  </template>
+                  <template v-else-if="row.item">在佩</template>
+                  <template v-else>空席</template>
+                </span>
+              </button>
+            </div>
+            <p class="inventory-equipment__foot">
+              点一席查看同席候补;行囊满时新掉落自动折作器灵尘。
+            </p>
+          </section>
 
-      <!-- 全部藏品(含佩戴中):部位槽之下的完整清单 -->
-      <section
-        v-if="visibleItems.length"
-        class="inventory-collection"
-        :data-inventory-total="visibleItems.length"
-        :data-inventory-start="itemPage.start"
-        :data-inventory-scope="itemScope"
-        :data-inventory-new-total="inventory.newItemCount"
-      >
-        <SectionTitle :title="itemScope === 'new' ? '本次新得' : '全部藏品'" :hint="itemListHint" />
-        <!-- 方格背包:五列格子 + 空槽占位,一眼看出还剩多少地方 -->
-        <!--
-          四列,不是五列 —— 390 宽下五列每格只剩 ~70px,而格子里要装图标、名字、
-          强化等级与三枚角标(佩/共/新):名字几乎必被截成两三个字,8px 的角标
-          更是认不出的墨点。四列给到 ~88px,名字与角标才都有立足处。
-          320 宽下四列仍有 ~66px,比原来的五列 ~50px 宽裕。
-        -->
-        <div class="inventory-collection__grid mt-2">
-          <EquipmentCard
-            v-for="row in itemPage.visible"
-            :key="row.item.uid"
-            :item="row.item"
-            :equipped="row.equipped"
-            :is-new="row.isNew"
-            @open="openDetail"
-          />
-        </div>
-        <!--
-          背包一次只留一批卡:80 张实测 1048 DOM,已越过 800 的首帧预算。
-          「再看」前移到下一批并滑掉上一批,「前一批」保证整份行囊仍逐件可达。
-        -->
-        <div
-          v-if="itemPage.hidden > 0 || itemPage.start > 0"
-          class="inventory-collection__pager mt-3"
-        >
-          <button
-            v-if="itemPage.start > 0"
-            data-inventory-prev
-            class="btn-ghost !py-2 !text-body"
-            :aria-label="previousItemsLabel"
-            @click="showPreviousItems"
+          <section
+            class="inventory-register__chapter inventory-collection"
+            data-inventory-chapter="collection"
+            :data-inventory-total="visibleItems.length"
+            :data-inventory-start="itemPage.start"
+            :data-inventory-scope="itemScope"
+            :data-inventory-new-total="inventory.newItemCount"
           >
-            {{ previousItemsLabel }}
-          </button>
-          <button
-            v-if="itemPage.hidden > 0"
-            class="btn-ghost !py-2 !text-body"
-            :aria-label="moreItemsLabel"
-            @click="showMoreItems"
-          >
-            {{ moreItemsLabel }}
-          </button>
+            <InventoryChapterHead
+              :index="collectionChapter.index"
+              :title="collectionChapter.title"
+              :hint="collectionChapter.hint"
+            />
+            <p class="inventory-collection__readout tabular">{{ itemListHint }}</p>
+            <div v-if="visibleItems.length" class="inventory-collection__grid">
+              <InventoryCollectionRow
+                v-for="row in itemPage.visible"
+                :key="row.item.uid"
+                :item="row.item"
+                :equipped="row.equipped"
+                :is-new="row.isNew"
+                @open="openDetail"
+              />
+            </div>
+            <p v-else class="empty-note mt-4 text-center text-body text-ink-faint">
+              行囊空空,去历练中寻些机缘吧
+            </p>
+            <!--
+              背包一次只留一批:首批之外由玩家显式续开,「前一批」保证整份行囊仍逐件可达。
+            -->
+            <div
+              v-if="itemPage.hidden > 0 || itemPage.start > 0"
+              class="inventory-collection__pager mt-3"
+            >
+              <button
+                v-if="itemPage.start > 0"
+                data-inventory-prev
+                class="btn-ghost !py-2 !text-body"
+                :aria-label="previousItemsLabel"
+                @click="showPreviousItems"
+              >
+                {{ previousItemsLabel }}
+              </button>
+              <button
+                v-if="itemPage.hidden > 0"
+                class="btn-ghost !py-2 !text-body"
+                :aria-label="moreItemsLabel"
+                @click="showMoreItems"
+              >
+                {{ moreItemsLabel }}
+              </button>
+            </div>
+          </section>
         </div>
-      </section>
-      <p v-else class="empty-note folio-span-all mt-8 text-center text-body text-ink-faint">
-        行囊空空,去历练中寻些机缘吧
-      </p>
+      </article>
     </template>
 
     <!-- 丹药 -->
@@ -567,9 +588,10 @@ import SectionTitle from "@/components/common/SectionTitle.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ArtifactPanel from "@/components/inventory/ArtifactPanel.vue";
+import InventoryChapterHead from "@/components/inventory/InventoryChapterHead.vue";
+import InventoryCollectionRow from "@/components/inventory/InventoryCollectionRow.vue";
 import InventoryReliquary from "@/components/inventory/InventoryReliquary.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
-import EquipmentCard from "@/components/equipment/EquipmentCard.vue";
 import ItemCell from "@/components/common/ItemCell.vue";
 import BrewingDialog from "@/components/inventory/BrewingDialog.vue";
 import HerbShopDialog from "@/components/inventory/HerbShopDialog.vue";
@@ -579,6 +601,7 @@ import { useBrewing } from "@/composables/useBrewing";
 import { useNow } from "@/composables/useNow";
 import { useRouteTab } from "@/composables/useRouteTab";
 import { INVENTORY_CHAPTERS } from "@/ui/navigation";
+import { inventoryChapter } from "@/ui/inventoryDesk";
 
 const inventory = useInventoryStore();
 // 「新」角标清账时机 = 离开背包那一刻(路由无 keep-alive,离开即卸载):
@@ -638,6 +661,9 @@ const SLOTS: EquipSlot[] = [
   "ring",
   "talisman",
 ];
+const briefingChapter = inventoryChapter("briefing");
+const seatsChapter = inventoryChapter("seats");
+const collectionChapter = inventoryChapter("collection");
 const pickerSlot = ref<EquipSlot | null>(null);
 type ItemScope = "all" | "new";
 const itemScope = ref<ItemScope>("all");

@@ -190,9 +190,10 @@
  *      默认只开最近一路,点最近一枚或换一路时要真的展开目标卷。
  *   六十七 藏珍谱首屏的新得优先:卷首先报整体收录与新得/将满册目;有新得的册
  *      最多先展开三册,其余收着。点卷首册目或册目题头时,目标册要真的铺出来。
- *   六十八 背包先报新得与可换槽位:整册先列本次新得,「只看新得」只铺新件;
- *      一键按钮报的可动槽数必须与卷首逐槽入口一致,点下去正好全部换完。
- *      195 宽下新得卷首、分页入口与从可动槽打开的候选弹窗都不许被挤坏。
+ *   六十八 背包先报新得与可换槽位:三章必须按「今日检点 / 九佩 / 藏品」续排,
+ *      九席齐全且不再套九张同权卡;检点主行动不宽于账行 72%,容量只报一次。
+ *      「只看新得」只铺新件,一键按钮报的可动槽数必须与逐槽入口一致,点下去
+ *      正好全部换完。195 宽下整册续卷、分页入口与候选弹窗都不许被挤坏。
  *   六十九 门庭先报今日:在途 / 闲置 / 最近归期来自同一份弟子汇总;在途差事
  *      要有可见进度与读屏进度值。一键派发后卷首与按钮必须同步换口。
  *   七十 道侣的同行帖先答此刻:她主动提的事与共同事件都排在关系刻度之前,
@@ -2504,6 +2505,21 @@ async function taskPageTour(vp) {
         const inventoryCollection = document.querySelector(
           ".inventory-collection[data-inventory-total]",
         );
+        const inventoryRegister = document.querySelector("[data-inventory-register]");
+        const inventoryChapters = inventoryRegister
+          ? [...inventoryRegister.querySelectorAll("[data-inventory-chapter]")]
+          : [];
+        const inventoryRegisterStyle = inventoryRegister
+          ? getComputedStyle(inventoryRegister)
+          : null;
+        const inventoryChapterShells = inventoryChapters.filter((chapter) => {
+          const chapterStyle = getComputedStyle(chapter);
+          return (
+            Number.parseFloat(chapterStyle.borderRadius) !== 0 ||
+            chapterStyle.boxShadow !== "none" ||
+            chapterStyle.backgroundColor !== "rgba(0, 0, 0, 0)"
+          );
+        });
         const equipmentRect = inventoryEquipment?.getBoundingClientRect();
         const collectionRect = inventoryCollection?.getBoundingClientRect();
         const achievementBriefing = document.querySelector("[data-achievement-hero]");
@@ -2610,6 +2626,21 @@ async function taskPageTour(vp) {
                   collectionWidth: Math.round(collectionRect.width),
                 }
               : null,
+          inventoryRegister: inventoryRegister
+            ? {
+                chapters: inventoryChapters.map((chapter) =>
+                  chapter.getAttribute("data-inventory-chapter"),
+                ),
+                seats: inventoryRegister.querySelectorAll("[data-equip-slot]").length,
+                collectionRows: inventoryRegister.querySelectorAll("[data-uid]").length,
+                cardClasses: inventoryRegister.querySelectorAll(".card-ink").length,
+                chapterShells: inventoryChapterShells.length,
+                radius: inventoryRegisterStyle
+                  ? Number.parseFloat(inventoryRegisterStyle.borderRadius)
+                  : null,
+                shadow: inventoryRegisterStyle?.boxShadow ?? null,
+              }
+            : null,
           collectionPair:
             achievementRect && achievementVolumesRect
               ? {
@@ -2744,6 +2775,22 @@ async function taskPageTour(vp) {
             failures.push(
               `[${vp.tag}] /inventory 行囊九佩与藏品没有并读(${JSON.stringify(
                 desk.inventoryPair,
+              )})`,
+            );
+          }
+          if (
+            route === "/inventory" &&
+            (!desk.inventoryRegister ||
+              desk.inventoryRegister.chapters.join(",") !== "briefing,seats,collection" ||
+              desk.inventoryRegister.seats !== 9 ||
+              desk.inventoryRegister.cardClasses !== 0 ||
+              desk.inventoryRegister.chapterShells !== 0 ||
+              desk.inventoryRegister.radius !== 0 ||
+              desk.inventoryRegister.shadow !== "none")
+          ) {
+            failures.push(
+              `[${vp.tag}] /inventory 行囊没有收成一册三章续卷(${JSON.stringify(
+                desk.inventoryRegister,
               )})`,
             );
           }
@@ -5366,6 +5413,27 @@ async function taskInventoryAttention() {
         const oneClick = [...document.querySelectorAll("main button")].find((button) =>
           /一键 ·|已无可换之器/.test(button.textContent || ""),
         );
+        const register = document.querySelector("[data-inventory-register]");
+        const chapters = register
+          ? [...register.querySelectorAll("[data-inventory-chapter]")].map((chapter) =>
+              chapter.getAttribute("data-inventory-chapter"),
+            )
+          : [];
+        const chapterShells = register
+          ? [...register.querySelectorAll("[data-inventory-chapter]")].filter((chapter) => {
+              const style = getComputedStyle(chapter);
+              return (
+                Number.parseFloat(style.borderRadius) !== 0 ||
+                style.boxShadow !== "none" ||
+                style.backgroundColor !== "rgba(0, 0, 0, 0)"
+              );
+            }).length
+          : 0;
+        const registerStyle = register ? getComputedStyle(register) : null;
+        const decision = oneClick?.closest(".inventory-briefing__decision");
+        const oneClickRect = oneClick?.getBoundingClientRect();
+        const decisionRect = decision?.getBoundingClientRect();
+        const reliquary = document.querySelector("[data-inventory-reliquary]");
         const upgradeSlots = [...document.querySelectorAll("[data-inventory-upgrade-slot]")]
           .map((button) => button.getAttribute("data-inventory-upgrade-slot"))
           .filter((slot) => !!slot)
@@ -5388,13 +5456,47 @@ async function taskInventoryAttention() {
           oneClick: {
             disabled: oneClick?.hasAttribute("disabled") ?? true,
             text: (oneClick?.textContent || "").replace(/\s+/g, " ").trim(),
+            widthRatio:
+              oneClickRect && decisionRect && decisionRect.width > 0
+                ? oneClickRect.width / decisionRect.width
+                : null,
           },
+          register: register
+            ? {
+                chapters,
+                seats: register.querySelectorAll("[data-equip-slot]").length,
+                capacityReadouts: register.querySelectorAll("[data-inventory-capacity]").length,
+                reliquaryHasDuplicateCount: /\d+\s*\/\s*\d+/.test(reliquary?.textContent || ""),
+                chapterShells,
+                cardClasses: register.querySelectorAll(".card-ink").length,
+                radius: registerStyle ? Number.parseFloat(registerStyle.borderRadius) : null,
+                shadow: registerStyle?.boxShadow ?? null,
+              }
+            : null,
         };
       });
 
     const initial = await read();
     const expectedFirst = ["attention_w", "shot_w", "bag_r", "bag_n", "bag_bo"];
     checked += 1;
+    if (
+      !initial.register ||
+      initial.register.chapters.join(",") !== "briefing,seats,collection" ||
+      initial.register.seats !== 9 ||
+      initial.register.capacityReadouts !== 1 ||
+      initial.register.reliquaryHasDuplicateCount ||
+      initial.register.chapterShells !== 0 ||
+      initial.register.cardClasses !== 0 ||
+      initial.register.radius !== 0 ||
+      initial.register.shadow !== "none"
+    ) {
+      failures.push(`[390] 背包续卷没有收成一册三章(${JSON.stringify(initial.register)})`);
+    }
+    if (initial.oneClick.widthRatio === null || initial.oneClick.widthRatio > 0.72) {
+      failures.push(
+        `[390] 背包主行动宽度为 ${initial.oneClick.widthRatio ?? "未量到"} —— 应不超过检点账行 72%`,
+      );
+    }
     if (initial.newCount !== newUids.length) {
       failures.push(
         `[390] 背包新得场景:卷首应报 ${newUids.length} 件新得,实见 ${initial.newCount}`,

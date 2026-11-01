@@ -1,7 +1,8 @@
 <template>
   <!--
-    卷首九佩匣只画「哪一席已经有着落」与行囊容量。
-    精确件数、新得与可换项都在「本批检点」正文完整出现，故整匣不重复进读屏。
+    卷首容量总印只画九席方位与容量弧。
+    精确件数、新得与可换项都在「今日检点」正文完整出现，故整匣不重复读屏，
+    也不再于印面写第二份件数。
   -->
   <div class="inventory-reliquary" data-inventory-reliquary aria-hidden="true">
     <svg viewBox="0 0 140 140" role="presentation">
@@ -26,14 +27,14 @@
         class="inventory-reliquary__slot"
         :class="{ 'is-filled': node.filled }"
       >
-        <rect :x="node.x" :y="node.y" width="23" height="23" rx="2" />
-        <text :x="node.x + 11.5" :y="node.y + 11.5" text-anchor="middle" dominant-baseline="middle">
+        <path
+          class="inventory-reliquary__flame"
+          :d="`M${node.x + 2} ${node.y + 17} Q${node.x + 8} ${node.y + 3} ${node.x + 20} ${node.y + 10}`"
+        />
+        <text :x="node.x + 11.5" :y="node.y + 12.5" text-anchor="middle" dominant-baseline="middle">
           {{ node.mark }}
         </text>
       </g>
-      <text class="inventory-reliquary__count" x="70" y="128" text-anchor="middle">
-        藏 {{ bagCount }} / {{ capacity }}
-      </text>
     </svg>
   </div>
 </template>

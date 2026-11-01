@@ -1,11 +1,11 @@
 @layer reset, shared, page, app-utilities;
 @layer page {
   /*
-   * 行囊案 —— 先盘九佩，再问本批新得与可换。
+   * 行囊续卷 —— 先盘九佩，再问本批新得与可换。
    *
-   * 旧卷首把容量、收纳、分解、一键换装和九席散成五块竖排，真正要看的
-   * 「哪一席缺、哪一席能换」被压到折线以下。新版把容量、新得与换装报价
-   * 收进一张检点账；九佩按三乘三落成器匣，藏品仍留在其后。
+   * 卷首只留容量弧,正文三章同住一张开口纸面:今日检点先摊新得与可换,
+   * 九佩用九席阵账续排,藏品再以连续清单收尾。旧卡纸规则已清掉,这里只看
+   * 账线、章首与行动层级。
    */
   .inventory-masthead__meta {
     display: flex;
@@ -61,30 +61,13 @@
     transform: rotate(-90deg);
     transform-origin: 70px 70px;
   }
-  .inventory-reliquary__slot rect {
-    fill: rgb(var(--color-paper-lifted-rgb) / 0.88);
-    stroke: rgb(var(--color-ink-rgb) / 0.2);
-    stroke-dasharray: 2 2;
-    stroke-width: 0.9;
-  }
   .inventory-reliquary__slot text {
     fill: rgb(var(--color-ink-faint-rgb));
     font-family: var(--font-kai);
     font-size: 9px;
   }
-  .inventory-reliquary__slot.is-filled rect {
-    fill: rgb(var(--color-qing-rgb) / 0.08);
-    stroke: rgb(var(--color-qing-rgb) / 0.62);
-    stroke-dasharray: none;
-  }
   .inventory-reliquary__slot.is-filled text {
     fill: rgb(var(--color-qing-rgb));
-  }
-  .inventory-reliquary__count {
-    fill: rgb(var(--color-ink-faint-rgb));
-    font-family: var(--font-kai);
-    font-size: 8px;
-    letter-spacing: 0.08em;
   }
   .inventory-briefing,
   .inventory-equipment,
@@ -94,320 +77,6 @@
   .inventory-materials,
   .inventory-artifacts {
     min-width: 0;
-  }
-  .inventory-briefing__heading {
-    padding-inline: 0.15rem;
-  }
-  .inventory-briefing__foot {
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-  }
-  .inventory-briefing__tool {
-    display: inline-flex;
-    min-width: 36px;
-    min-height: 28px;
-    align-items: center;
-    justify-content: center;
-    padding: 0.22rem 0.48rem;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.15);
-    background: rgb(var(--color-paper-lifted-rgb) / 0.62);
-    color: rgb(var(--color-ink-soft-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    letter-spacing: 0.08em;
-  }
-  .inventory-briefing__sheet {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    margin-top: 0.5rem;
-    overflow: hidden;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.12);
-    border-left: 2px solid rgb(var(--color-qing-rgb) / 0.42);
-    background: rgb(var(--color-paper-lifted-rgb));
-    box-shadow:
-      inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.2),
-      2px 2px 0 rgb(var(--color-ink-rgb) / 0.02);
-  }
-  .inventory-briefing__counts {
-    display: grid;
-    min-width: 0;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-  }
-  .inventory-briefing__count {
-    min-width: 0;
-    padding: 0.62rem 0.72rem;
-    background:
-      linear-gradient(135deg, rgb(var(--color-qing-rgb) / 0.04), transparent 72%),
-      rgb(var(--color-paper-rgb) / 0.12);
-  }
-  .inventory-briefing__count + .inventory-briefing__count {
-    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-  }
-  .inventory-briefing__count--new {
-    background:
-      linear-gradient(135deg, rgb(var(--color-cinnabar-rgb) / 0.035), transparent 72%),
-      rgb(var(--color-paper-rgb) / 0.12);
-  }
-  .inventory-briefing__eyebrow {
-    display: block;
-    color: rgb(var(--color-ink-faint-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    letter-spacing: 0.16em;
-  }
-  .inventory-briefing__count p {
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0 0.28rem;
-    margin-top: 0.12rem;
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-  }
-  .inventory-briefing__count p strong {
-    color: rgb(var(--color-ink-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-title);
-    font-weight: 600;
-    line-height: 1.1;
-  }
-  .inventory-briefing__foot {
-    display: block;
-    margin-top: 0.18rem;
-    line-height: 1.45;
-  }
-  .inventory-briefing__foot b {
-    color: rgb(var(--color-ink-soft-rgb));
-    font-weight: 500;
-  }
-  .inventory-briefing__new-toggle {
-    display: inline-flex;
-    min-height: 28px;
-    align-items: center;
-    margin-top: 0.05rem;
-    padding-block: 0.1rem;
-    color: rgb(var(--color-cinnabar-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    letter-spacing: 0.08em;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    white-space: nowrap;
-  }
-  .inventory-briefing__upgrade {
-    display: grid;
-    min-width: 0;
-    align-content: start;
-    gap: 0.4rem;
-    padding: 0.62rem 0.72rem 0.68rem;
-  }
-  .inventory-briefing__upgrade-head {
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.1rem 0.45rem;
-  }
-  .inventory-briefing__upgrade-head strong {
-    font-family: var(--font-kai);
-    font-size: var(--type-body);
-    font-weight: 500;
-    letter-spacing: 0.08em;
-  }
-  .inventory-briefing__upgrade-head .inventory-briefing__foot {
-    margin-top: 0;
-  }
-  .inventory-briefing__upgrade-slots {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.3rem;
-  }
-  .inventory-briefing__empty {
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-    line-height: 1.55;
-  }
-  .inventory-briefing__wear {
-    display: flex;
-    min-height: 32px;
-    width: 100%;
-    align-items: center;
-    justify-content: center;
-    padding: 0.35rem 0.65rem;
-    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.72);
-    background: rgb(var(--color-cinnabar-rgb) / 0.94);
-    color: rgb(var(--color-paper-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    letter-spacing: 0.08em;
-  }
-  .inventory-briefing__wear:disabled {
-    border-color: rgb(var(--color-ink-rgb) / 0.12);
-    background: rgb(var(--color-ink-rgb) / 0.05);
-    color: rgb(var(--color-ink-faint-rgb));
-  }
-  .inventory-briefing__resonance {
-    grid-column: 1 / -1;
-    padding: 0.58rem 0.72rem 0.65rem;
-    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-    background: rgb(var(--color-qing-rgb) / 0.025);
-  }
-  .inventory-briefing__resonance-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.1rem 0.5rem;
-  }
-  .inventory-briefing__resonance-row {
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.2rem 0.55rem;
-    margin-top: 0.32rem;
-    font-size: var(--type-body);
-  }
-  .inventory-briefing__resonance-copy {
-    min-width: 0;
-    flex: 1 1 10rem;
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-    line-height: 1.45;
-  }
-  .inventory-briefing__resonance-action {
-    min-height: 28px;
-    padding: 0.15rem 0.25rem;
-    color: rgb(var(--color-cinnabar-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    letter-spacing: 0.06em;
-  }
-  .inventory-equipment__grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.45rem;
-    margin-top: 0.55rem;
-  }
-  .inventory-equipment__slot {
-    position: relative;
-    display: flex;
-    min-width: 0;
-    min-height: 6.55rem;
-    flex-direction: column;
-    gap: 0.38rem;
-    padding: 0.55rem 0.58rem 0.5rem;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.13);
-    background: linear-gradient(
-      145deg,
-      rgb(var(--color-paper-lifted-rgb)),
-      rgb(var(--color-paper-rgb) / 0.4)
-    );
-    text-align: left;
-  }
-  .inventory-equipment__slot::after {
-    position: absolute;
-    right: 0.35rem;
-    bottom: 0.3rem;
-    width: 0.9rem;
-    height: 0.9rem;
-    border-right: 1px solid rgb(var(--color-ink-rgb) / 0.09);
-    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.09);
-    content: "";
-  }
-  .inventory-equipment__slot.is-empty {
-    background: rgb(var(--color-paper-rgb) / 0.3);
-  }
-  .inventory-equipment__slot.is-upgradable {
-    border-color: rgb(var(--color-jade-rgb) / 0.42);
-    box-shadow: inset 2px 0 0 rgb(var(--color-jade-rgb) / 0.56);
-  }
-  .inventory-equipment__number {
-    position: absolute;
-    top: 0.34rem;
-    right: 0.42rem;
-    color: rgb(var(--color-ink-rgb) / 0.32);
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    letter-spacing: 0.04em;
-  }
-  .inventory-equipment__head {
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.12rem 0.3rem;
-    padding-right: 1.15rem;
-  }
-  .inventory-equipment__name {
-    color: rgb(var(--color-ink-soft-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-body);
-    letter-spacing: 0.1em;
-  }
-  .inventory-equipment__stock {
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-  }
-  .inventory-equipment__piece {
-    display: grid;
-    min-width: 0;
-    flex: 1;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
-    gap: 0.38rem;
-  }
-  .inventory-equipment__piece-copy {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    gap: 0.08rem;
-  }
-  .inventory-equipment__piece-name {
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    line-height: 1.35;
-    overflow-wrap: anywhere;
-  }
-  .inventory-equipment__note {
-    overflow: hidden;
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-    line-height: 1.35;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .inventory-equipment__blank {
-    display: flex;
-    flex: 1;
-    align-items: center;
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-    letter-spacing: 0.08em;
-  }
-  .inventory-equipment__upgrade-mark {
-    display: inline-flex;
-    width: max-content;
-    max-width: 100%;
-    flex-wrap: wrap;
-    gap: 0.15rem;
-    color: rgb(var(--color-jade-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    line-height: 1.35;
-  }
-  .inventory-equipment__foot {
-    margin-top: 0.55rem;
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-    line-height: 1.55;
-    text-align: center;
-  }
-  .inventory-collection__grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.5rem;
   }
   .inventory-collection__pager {
     display: flex;
@@ -1058,30 +727,11 @@
   .equip-dossier__workshop > .equip-dossier__section-head {
     margin: -0.55rem -0.65rem 0.5rem;
   }
-  @media (min-width: 360px) {
-    .inventory-briefing__sheet {
-      grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
-    }
-
-    .inventory-briefing__counts {
-      border-right: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-      border-bottom: 0;
-    }
-  }
   @media (min-width: 960px) {
-    .inventory-briefing__sheet {
-      grid-template-columns: minmax(0, 0.62fr) minmax(0, 1.38fr);
-    }
-
-    .inventory-equipment__grid {
-      gap: 0.58rem;
-    }
-
     .inventory-materials__groups {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .app-shell[data-folio-layout="spread"] .inventory-collection__grid,
     .app-shell[data-folio-layout="spread"] .inventory-pill-cabinet__grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
@@ -1195,26 +845,11 @@
       margin-inline: 0;
     }
 
-    .inventory-briefing__counts {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .inventory-briefing__count + .inventory-briefing__count {
-      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-      border-left: 0;
-    }
-
-    .inventory-equipment__grid,
     .inventory-workshop__grid,
     .inventory-materials__groups {
       grid-template-columns: minmax(0, 1fr);
     }
 
-    .inventory-equipment__slot {
-      min-height: 0;
-    }
-
-    .inventory-collection__grid,
     .inventory-pill-cabinet__grid,
     .inventory-material-group__grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1223,6 +858,674 @@
     .inventory-collection__pager > button {
       min-width: 0;
       flex-basis: 100%;
+    }
+  }
+
+  /*
+   * 行囊续卷的最终版式。
+   *
+   * 三章同住一张开口纸面:检点是总账，九佩是九席阵账，藏品是连续清单。
+   * 章节之间只靠账线和章首分层，不再让三块各套边框、底色与投影。
+   */
+  .inventory-register {
+    margin-top: 0.35rem;
+    overflow: hidden;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.2);
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.11);
+    border-radius: 0;
+    background:
+      linear-gradient(90deg, rgb(var(--color-ink-rgb) / 0.012), transparent 44%),
+      linear-gradient(180deg, transparent, rgb(var(--color-paper-rgb) / 0.08));
+    box-shadow: none;
+  }
+
+  .inventory-register__chapter {
+    min-width: 0;
+    padding: 0 0.08rem 0.7rem;
+  }
+
+  .inventory-register__chapter + .inventory-register__chapter {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+  }
+
+  .inventory-register__lower {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .inventory-register__lower > .inventory-register__chapter {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+  }
+
+  .inventory-chapter-head {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.55rem minmax(0, 1fr);
+    align-items: start;
+    gap: 0.24rem 0.55rem;
+    padding: 0.72rem 0.08rem 0.54rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+  }
+
+  .inventory-chapter-head__index {
+    display: grid;
+    width: 1.32rem;
+    min-height: 1.6rem;
+    grid-row: 1 / span 2;
+    place-items: start center;
+    padding-top: 0.1rem;
+    border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.7);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1.25;
+  }
+
+  .inventory-chapter-head__copy {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.08rem 0.52rem;
+  }
+
+  .inventory-chapter-head__title {
+    margin: 0;
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    line-height: 1.35;
+  }
+
+  .inventory-chapter-head__hint {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+
+  .inventory-chapter-head__tail {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.2rem 0.55rem;
+  }
+
+  .inventory-chapter-head__fact {
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+
+  .inventory-chapter-head__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.12rem 0.55rem;
+    margin-left: auto;
+  }
+
+  .inventory-briefing__tool {
+    display: inline-flex;
+    min-width: 2.5rem;
+    min-height: 28px;
+    align-items: center;
+    justify-content: center;
+    padding: 0.18rem 0.08rem;
+    border: 0;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.16);
+    border-radius: 0;
+    background: transparent;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+  }
+
+  .inventory-briefing__summary {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+  }
+
+  .inventory-briefing__reading {
+    display: grid;
+    min-width: 0;
+    align-content: start;
+    padding: 0.54rem 0.2rem 0.56rem;
+  }
+
+  .inventory-briefing__reading + .inventory-briefing__reading {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+  }
+
+  .inventory-briefing__eyebrow {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.14em;
+    line-height: 1.4;
+  }
+
+  .inventory-briefing__reading p {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.25rem;
+    margin-top: 0.1rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.2;
+  }
+
+  .inventory-briefing__reading p strong {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    font-weight: 600;
+  }
+
+  .inventory-briefing__reading--new p strong {
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+
+  .inventory-briefing__foot {
+    display: block;
+    margin-top: 0.18rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+
+  .inventory-briefing__foot b {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-weight: 500;
+  }
+
+  .inventory-briefing__new-toggle {
+    display: inline-flex;
+    min-height: 28px;
+    width: fit-content;
+    align-items: center;
+    margin-top: 0.04rem;
+    padding: 0.08rem 0;
+    border: 0;
+    border-bottom: 1px solid rgb(var(--color-cinnabar-rgb) / 0.38);
+    border-radius: 0;
+    background: transparent;
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+
+  .inventory-briefing__decision {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.38rem;
+    padding: 0.54rem 0.2rem 0.58rem;
+  }
+
+  .inventory-briefing__candidates {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.18rem 0.5rem;
+  }
+
+  .inventory-briefing__upgrade-slots {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 14rem;
+    flex-wrap: wrap;
+    gap: 0.08rem 0.7rem;
+  }
+
+  .inventory-briefing__slot {
+    display: inline-flex;
+    min-height: 28px;
+    align-items: center;
+    gap: 0.28rem;
+    padding: 0.12rem 0;
+    border: 0;
+    border-bottom: 1px solid rgb(var(--color-qing-rgb) / 0.3);
+    border-radius: 0;
+    background: transparent;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1.4;
+  }
+
+  .inventory-briefing__empty {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+
+  .inventory-briefing__wear {
+    display: inline-flex;
+    width: fit-content;
+    max-width: 72%;
+    min-height: 36px;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0.38rem 0.58rem 0.38rem 0.48rem;
+    border: 0;
+    border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.8);
+    border-radius: 0;
+    background: rgb(var(--color-cinnabar-rgb) / 0.045);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+    line-height: 1.4;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .inventory-briefing__wear:disabled {
+    border-left-color: rgb(var(--color-ink-rgb) / 0.16);
+    background: transparent;
+    color: rgb(var(--color-ink-soft-rgb));
+  }
+
+  .inventory-briefing__resonance {
+    padding: 0.52rem 0.2rem 0.12rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+  }
+
+  .inventory-briefing__resonance-head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.1rem 0.5rem;
+  }
+
+  .inventory-briefing__resonance-row {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.18rem 0.55rem;
+    margin-top: 0.28rem;
+    padding-top: 0.28rem;
+    border-top: 1px dashed rgb(var(--color-ink-rgb) / 0.075);
+    font-size: var(--type-body);
+  }
+
+  .inventory-briefing__resonance-copy {
+    min-width: 0;
+    flex: 1 1 10rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.48;
+  }
+
+  .inventory-briefing__resonance-action {
+    min-height: 28px;
+    padding: 0.12rem 0.08rem;
+    border-bottom: 1px solid rgb(var(--color-cinnabar-rgb) / 0.3);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.06em;
+  }
+
+  .inventory-equipment__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    margin-top: 0.18rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.11);
+  }
+
+  .inventory-seat {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    min-height: 6.1rem;
+    flex-direction: column;
+    gap: 0.34rem;
+    padding: 0.52rem 0.46rem 0.44rem;
+    border: 0;
+    border-right: 1px solid rgb(var(--color-ink-rgb) / 0.085);
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.085);
+    border-radius: 0;
+    background: transparent;
+    text-align: left;
+  }
+
+  .inventory-seat:nth-child(3n) {
+    border-right: 0;
+  }
+
+  .inventory-seat.is-empty {
+    color: rgb(var(--color-ink-faint-rgb));
+    background: rgb(var(--color-paper-rgb) / 0.12);
+  }
+
+  .inventory-seat.is-upgradable {
+    background:
+      linear-gradient(125deg, rgb(var(--color-jade-rgb) / 0.05), transparent 64%), transparent;
+    box-shadow: inset 2px 0 0 rgb(var(--color-jade-rgb) / 0.62);
+  }
+
+  .inventory-seat__number {
+    position: absolute;
+    top: 0.42rem;
+    right: 0.42rem;
+    color: rgb(var(--color-ink-rgb) / 0.3);
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+
+  .inventory-seat__head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.1rem 0.28rem;
+    padding-right: 1.25rem;
+  }
+
+  .inventory-seat__name {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    letter-spacing: 0.1em;
+  }
+
+  .inventory-seat__stock {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+
+  .inventory-seat__piece {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.32rem;
+  }
+
+  .inventory-seat__piece-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.06rem;
+  }
+
+  .inventory-seat__piece-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1.35;
+  }
+
+  .inventory-seat__note {
+    overflow: hidden;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .inventory-seat__blank {
+    display: flex;
+    min-height: 1.35rem;
+    flex: 1;
+    align-items: center;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+  }
+
+  .inventory-seat__state {
+    margin-top: auto;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1.35;
+  }
+
+  .inventory-seat.is-upgradable .inventory-seat__state {
+    color: rgb(var(--color-jade-rgb));
+  }
+
+  .inventory-equipment__foot {
+    margin-top: 0.48rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+
+  .inventory-collection__readout {
+    margin-top: 0.46rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+
+  .inventory-collection__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    margin-top: 0.28rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+  }
+
+  .inventory-item {
+    position: relative;
+    display: grid;
+    min-width: 0;
+    width: 100%;
+    min-height: 44px;
+    grid-template-areas:
+      "sigil name marks"
+      "sigil meta marks";
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 0.5rem;
+    row-gap: 0.08rem;
+    padding: 0.44rem 0.2rem;
+    border: 0;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.085);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    text-align: left;
+  }
+
+  .inventory-item.is-new {
+    background: linear-gradient(90deg, rgb(var(--color-cinnabar-rgb) / 0.045), transparent 68%);
+    box-shadow: inset 2px 0 0 rgb(var(--color-cinnabar-rgb) / 0.62);
+  }
+
+  .inventory-item__sigil {
+    display: grid;
+    width: 1.9rem;
+    height: 1.9rem;
+    grid-area: sigil;
+    align-self: center;
+    place-items: center;
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.13);
+  }
+
+  .inventory-item.is-equipped .inventory-item__sigil {
+    border-left-color: rgb(var(--color-qing-rgb) / 0.5);
+    background: rgb(var(--color-qing-rgb) / 0.035);
+  }
+
+  .inventory-item__name {
+    grid-area: name;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    line-height: 1.4;
+  }
+
+  .inventory-item__meta {
+    grid-area: meta;
+    min-width: 0;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.42;
+    overflow-wrap: anywhere;
+  }
+
+  .inventory-item__marks {
+    grid-area: marks;
+    padding: 0.08rem 0.18rem;
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.2);
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+
+  .inventory-item__marks.is-worn {
+    border-left-color: rgb(var(--color-qing-rgb) / 0.6);
+    color: rgb(var(--color-qing-rgb));
+  }
+
+  .inventory-item__marks.is-new {
+    border-left-color: rgb(var(--color-cinnabar-rgb) / 0.7);
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+
+  .inventory-reliquary__flame {
+    fill: none;
+    stroke: rgb(var(--color-ink-rgb) / 0.16);
+    stroke-linecap: round;
+    stroke-width: 0.8;
+  }
+
+  .inventory-reliquary__slot.is-filled .inventory-reliquary__flame {
+    stroke: rgb(var(--color-qing-rgb) / 0.62);
+    stroke-width: 1.2;
+  }
+
+  @media (min-width: 360px) {
+    .inventory-briefing__summary {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .inventory-briefing__reading + .inventory-briefing__reading {
+      border-top: 0;
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    }
+  }
+
+  @media (min-width: 960px) {
+    .inventory-register__lower {
+      grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+    }
+
+    .inventory-register__lower > .inventory-register__chapter + .inventory-register__chapter {
+      border-top: 0;
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+      padding-left: 1rem;
+    }
+
+    .inventory-briefing__decision {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+    }
+
+    .inventory-briefing__wear {
+      justify-self: end;
+    }
+
+    .inventory-collection__grid,
+    .app-shell[data-folio-layout="spread"] .inventory-collection__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .inventory-item:nth-child(odd) {
+      border-right: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+      padding-right: 0.65rem;
+    }
+
+    .inventory-item:nth-child(even) {
+      padding-left: 0.65rem;
+    }
+  }
+
+  @media (max-width: 220px) {
+    .inventory-chapter-head {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .inventory-chapter-head__index {
+      width: auto;
+      min-height: 0;
+      grid-row: auto;
+      justify-items: start;
+      border-left: 0;
+      border-bottom: 1px solid rgb(var(--color-cinnabar-rgb) / 0.34);
+      padding: 0 0 0.18rem;
+    }
+
+    .inventory-chapter-head__tail {
+      grid-column: 1;
+    }
+
+    .inventory-briefing__summary,
+    .inventory-register__lower,
+    .inventory-equipment__grid,
+    .inventory-workshop__grid,
+    .inventory-materials__groups {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .inventory-seat {
+      min-height: 0;
+      border-right: 0;
+    }
+
+    .inventory-briefing__decision {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .inventory-briefing__wear {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .inventory-collection__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .inventory-item {
+      grid-template-areas:
+        "sigil name"
+        "sigil meta"
+        "marks marks";
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .inventory-item__marks {
+      justify-self: start;
+      margin-top: 0.16rem;
+      padding-left: 0;
+      border-left: 0;
     }
   }
 }
