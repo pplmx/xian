@@ -123,10 +123,10 @@
                   </div>
                   <article
                     data-region-card
-                    class="card-ink adventure-region adventure-atlas__card px-4 py-3"
+                    class="adventure-region adventure-atlas__card"
                     :class="{
-                      'border-ink/15': !row.canEnter,
-                      '!border-gold-ink/30 bg-gold-ink/5': row.suppressed,
+                      'adventure-region--locked': !row.canEnter,
+                      'adventure-region--suppressed': row.suppressed,
                       'adventure-region--next': row.id === nextActionableId,
                     }"
                     :data-adventure-next="row.id === nextActionableId ? '' : undefined"
@@ -138,15 +138,15 @@
               右侧那一列 `shrink-0` 把左边的名字压到只剩一个字宽,「青云山麓」当场变成竖排,
               标签还会盖到产出字上(无头浏览器量的「横向溢出」抓不到这种挤压:它不溢出,只是挤)。
             -->
-                    <div class="flex items-start gap-3 tinylens:flex-col tinylens:gap-1.5">
+                    <div class="adventure-region__lead">
                       <span
-                        class="grid h-10 w-10 shrink-0 place-items-center rounded-[2px] tinylens:h-8 tinylens:w-8"
+                        class="adventure-region__icon"
                         :class="
                           row.suppressed
-                            ? 'bg-gold-ink/6 text-gold-ink'
+                            ? 'text-gold-ink'
                             : row.canEnter
-                              ? 'bg-indigo-ink/6 text-indigo-ink'
-                              : 'bg-ink/4 text-ink-faint'
+                              ? 'text-indigo-ink'
+                              : 'text-ink-faint'
                         "
                       >
                         <GameIcon
@@ -203,37 +203,6 @@
                             {{ prosperityName(row.recall.prosperity) }}
                           </span>
                         </p>
-                        <!--
-                    这一行是三档字号里的「注」:境相宜与中点留在最淡处(它是基准线),
-                    凶险名抬到 ink-soft(它才是要判的那一项),凶险 ≥4 另有朱砂。
-                  -->
-                        <p class="mt-0.5 text-body text-ink-faint">
-                          {{ REALMS[row.def.minRealm]?.name }}境{{
-                            row.pressure.active ? "门槛" : "相宜"
-                          }}
-                          ·
-                          <span :class="row.def.danger >= 4 ? 'text-cinnabar' : 'text-ink-soft'">{{
-                            DANGER_NAMES[row.def.danger]
-                          }}</span>
-                          <span v-if="row.pressure.active" class="ml-1 text-cinnabar"
-                            >· {{ row.pressure.label }},仍可凭战力硬闯</span
-                          >
-                          <!-- 复聚要说出"该怎么办":旧主归来了,再历一程即可复靖 -->
-                          <span v-if="row.revived" class="ml-1 text-cinnabar"
-                            >· 旧主归来,再历一程即可复靖</span
-                          >
-                        </p>
-                        <!--
-                  敌人的「层级补偿」此前只落在数值里:玩家看到的只是一只小怪,打起来却像换了一身装备。
-                  此处与战后归因同源(regionFoeOrigin)—— 出行方式与灵兽之性那一半在出行弹窗里摊开。
-                -->
-                        <p
-                          v-if="row.foeOrigin.parts.length"
-                          data-region-foe-origin
-                          class="mt-0.5 text-note leading-relaxed text-ink-faint"
-                        >
-                          此地之敌:{{ foeOriginPartsText(row.foeOrigin) }}
-                        </p>
                       </div>
                       <!--
                 已通关的地界仍可再历 —— 「已靖」只是标记,不是封路。
@@ -243,7 +212,7 @@
                       <button
                         v-if="row.canEnter && !row.suppressed"
                         data-region-action
-                        class="btn-seal shrink-0 !px-4 !py-2 !text-title tinylens:!px-2.5 tinylens:!py-1 tinylens:!text-body"
+                        class="adventure-region__action btn-seal shrink-0 !px-4 !py-2 !text-title tinylens:!px-2.5 tinylens:!py-1 tinylens:!text-body"
                         @click="chooseMode(row.def)"
                       >
                         出发
@@ -258,7 +227,7 @@
                       v-if="row.suppressed"
                       data-region-action
                       data-suppress-info
-                      class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[2px] bg-gold-ink/6 px-2.5 py-1.5"
+                      class="adventure-region__service adventure-region__service--suppressed"
                     >
                       <span class="text-body text-gold-ink tabular"
                         >自动产出 · {{ rateText(row.def, row.recall) }}</span
@@ -290,7 +259,7 @@
                     <div
                       v-else-if="row.canEnter && row.qualified"
                       data-region-action
-                      class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[2px] bg-ink/4 px-2.5 py-1.5"
+                      class="adventure-region__service adventure-region__service--qualified"
                     >
                       <span class="text-note text-ink-faint">已取得镇压资格</span>
                       <span class="text-note text-gold-ink tabular">{{
@@ -303,98 +272,141 @@
                         转为镇压收益
                       </button>
                     </div>
-                    <!--
+                    <div
+                      class="adventure-region__detail"
+                      :class="{ 'adventure-region__detail--paired': row.canEnter }"
+                    >
+                      <div class="adventure-region__conditions">
+                        <!--
+                    这一行是三档字号里的「注」:境相宜与中点留在最淡处(它是基准线),
+                    凶险名抬到 ink-soft(它才是要判的那一项),凶险 ≥4 另有朱砂。
+                  -->
+                        <p class="text-body text-ink-faint">
+                          {{ REALMS[row.def.minRealm]?.name }}境{{
+                            row.pressure.active ? "门槛" : "相宜"
+                          }}
+                          ·
+                          <span :class="row.def.danger >= 4 ? 'text-cinnabar' : 'text-ink-soft'">{{
+                            DANGER_NAMES[row.def.danger]
+                          }}</span>
+                          <span v-if="row.pressure.active" class="ml-1 text-cinnabar"
+                            >· {{ row.pressure.label }},仍可凭战力硬闯</span
+                          >
+                          <!-- 复聚要说出"该怎么办":旧主归来了,再历一程即可复靖 -->
+                          <span v-if="row.revived" class="ml-1 text-cinnabar"
+                            >· 旧主归来,再历一程即可复靖</span
+                          >
+                        </p>
+                        <!--
+                  敌人的「层级补偿」此前只落在数值里:玩家看到的只是一只小怪,打起来却像换了一身装备。
+                  此处与战后归因同源(regionFoeOrigin)—— 出行方式与灵兽之性那一半在出行弹窗里摊开。
+                -->
+                        <p
+                          v-if="row.foeOrigin.parts.length"
+                          data-region-foe-origin
+                          class="mt-0.5 text-note leading-relaxed text-ink-faint"
+                        >
+                          此地之敌:{{ foeOriginPartsText(row.foeOrigin) }}
+                        </p>
+                        <!--
                 路线内已有统一理由时,不再同时念旧链前置 —— 两套顺序可能指向不同地界,
                 同屏两句会把「眼下该往哪」说成互相打架的两件事。
               -->
-                    <p v-if="!row.canEnter && !row.blockReason" class="mt-2 t-body text-ink-faint">
-                      需先击败{{ prevRegionName(row.def) }}之主,方可踏足此地。
-                    </p>
-                    <!--
+                        <p
+                          v-if="!row.canEnter && !row.blockReason"
+                          class="mt-1 text-body text-ink-faint"
+                        >
+                          需先击败{{ prevRegionName(row.def) }}之主,方可踏足此地。
+                        </p>
+                        <!--
               镇压资格进度:只显示「能不能镇压」时,玩家打够了场数却压不住,
               只能猜自己差在哪 —— 这里把三条判据的当前值与阈值并排摆出来,未达标项标红
             -->
-                    <p
-                      v-if="row.canEnter && !row.suppressed && !row.qualified"
-                      class="mt-1 text-note leading-relaxed tabular"
-                    >
-                      <span class="text-body text-ink-soft">镇压资格</span>
-                      <span
-                        class="ml-1"
-                        :class="row.progress.winsOk ? 'text-jade' : 'text-ink-soft'"
-                      >
-                        {{ row.progress.wins }}/{{ row.progress.needWins }} 胜
-                      </span>
-                      <template v-if="row.progress.hasStats">
-                        <span
-                          class="ml-1.5"
-                          :class="row.progress.roundsOk ? 'text-ink-faint' : 'text-cinnabar'"
+                        <p
+                          v-if="row.canEnter && !row.suppressed && !row.qualified"
+                          class="mt-1 text-note leading-relaxed tabular"
                         >
-                          均 {{ row.progress.avgRounds.toFixed(1) }} 回合(需≤{{
-                            row.progress.maxAvgRounds
-                          }})
-                        </span>
-                        <span
-                          class="ml-1.5"
-                          :class="row.progress.damageOk ? 'text-ink-faint' : 'text-cinnabar'"
+                          <span class="text-body text-ink-soft">镇压资格</span>
+                          <span
+                            class="ml-1"
+                            :class="row.progress.winsOk ? 'text-jade' : 'text-ink-soft'"
+                          >
+                            {{ row.progress.wins }}/{{ row.progress.needWins }} 胜
+                          </span>
+                          <template v-if="row.progress.hasStats">
+                            <span
+                              class="ml-1.5"
+                              :class="row.progress.roundsOk ? 'text-ink-faint' : 'text-cinnabar'"
+                            >
+                              均 {{ row.progress.avgRounds.toFixed(1) }} 回合(需≤{{
+                                row.progress.maxAvgRounds
+                              }})
+                            </span>
+                            <span
+                              class="ml-1.5"
+                              :class="row.progress.damageOk ? 'text-ink-faint' : 'text-cinnabar'"
+                            >
+                              均受伤 {{ formatPercent(row.progress.avgDamagePct, 0) }}(需≤{{
+                                formatPercent(row.progress.maxAvgDamagePct, 0)
+                              }})
+                            </span>
+                          </template>
+                          <span v-else class="ml-1.5 text-ink-faint">尚无战绩</span>
+                        </p>
+                        <!-- 进不去时,理由指向眼下就能去的那一段,不让玩家自己排先后 -->
+                        <p v-if="row.blockReason" class="mt-1 text-body text-cinnabar">
+                          {{ row.blockReason }}
+                        </p>
+                        <div
+                          v-if="row.canEnter && (row.chips.length || row.adaptation)"
+                          class="mt-2 flex flex-wrap items-center gap-1.5"
                         >
-                          均受伤 {{ formatPercent(row.progress.avgDamagePct, 0) }}(需≤{{
-                            formatPercent(row.progress.maxAvgDamagePct, 0)
-                          }})
-                        </span>
-                      </template>
-                      <span v-else class="ml-1.5 text-ink-faint">尚无战绩</span>
-                    </p>
-                    <!-- 进不去时,理由指向眼下就能去的那一段,不让玩家自己排先后 -->
-                    <p v-if="row.blockReason" class="mt-1 text-body text-cinnabar">
-                      {{ row.blockReason }}
-                    </p>
-                    <div
-                      v-if="row.canEnter && (row.chips.length || row.adaptation)"
-                      class="mt-2 flex flex-wrap items-center gap-1.5"
-                    >
-                      <span
-                        v-for="chip in row.chips"
-                        :key="chip.trait"
-                        class="chip-ink !text-note"
-                        :class="
-                          chip.level >= 3
-                            ? 'border-cinnabar/50 text-cinnabar'
-                            : 'border-ink/25 text-ink-faint'
-                        "
-                      >
-                        {{ chip.name }}·{{ ECO_LEVEL_NAMES[chip.level] }}
-                      </span>
-                      <!-- 适配原因点按展开:手机没有 hover,得知道自己为什么被看好/看衰 -->
-                      <!-- min-h-[28px] 是排版自检的尺子:展开按钮此前只有 15px 高,拇指点不着 -->
-                      <button
-                        v-if="row.adaptation"
-                        class="ml-auto inline-flex min-h-[28px] items-center text-note text-ink-soft tabular active:scale-95"
-                        :title="row.adaptation.reasons.join(';')"
-                        :aria-expanded="adaptExpand === row.def.id"
-                        @click="adaptExpand = adaptExpand === row.def.id ? null : row.def.id"
-                      >
-                        适配
-                        <span class="text-gold-ink">{{ starsText(row.adaptation.stars) }}</span>
-                      </button>
-                    </div>
-                    <!--
+                          <span
+                            v-for="chip in row.chips"
+                            :key="chip.trait"
+                            class="chip-ink !text-note"
+                            :class="
+                              chip.level >= 3
+                                ? 'border-cinnabar/50 text-cinnabar'
+                                : 'border-ink/25 text-ink-faint'
+                            "
+                          >
+                            {{ chip.name }}·{{ ECO_LEVEL_NAMES[chip.level] }}
+                          </span>
+                          <!-- 适配原因点按展开:手机没有 hover,得知道自己为什么被看好/看衰 -->
+                          <!-- min-h-[28px] 是排版自检的尺子:展开按钮此前只有 15px 高,拇指点不着 -->
+                          <button
+                            v-if="row.adaptation"
+                            class="ml-auto inline-flex min-h-[28px] items-center text-note text-ink-soft tabular active:scale-95"
+                            :title="row.adaptation.reasons.join(';')"
+                            :aria-expanded="adaptExpand === row.def.id"
+                            @click="adaptExpand = adaptExpand === row.def.id ? null : row.def.id"
+                          >
+                            适配
+                            <span class="text-gold-ink">{{ starsText(row.adaptation.stars) }}</span>
+                          </button>
+                        </div>
+                      </div>
+                      <!--
                 描述归末:它是这一行里唯一的散文,却排在 chips 之前 ——
                 先读一段描写再看见「能不能打、打得合不合路数」,判断被夹在中间。
                 移到判据与 chips 之后、适配理由展开之前,字号收到 10px 一档。
-                首项卡又铺了石青渐变,ink-faint 只剩贴着 AA 的余量,正文改用 ink-soft。
+                首项行又铺了石青渐变,ink-faint 只剩贴着 AA 的余量,正文改用 ink-soft。
               -->
-                    <p v-if="row.canEnter" class="mt-2 text-note leading-relaxed text-ink-soft">
-                      {{ row.def.desc }}
-                    </p>
-                    <div v-if="adaptExpand === row.def.id && row.adaptation" class="mt-1">
-                      <p
-                        v-for="(r, i) in row.adaptation.reasons"
-                        :key="i"
-                        class="text-note leading-relaxed text-ink-faint"
-                      >
-                        · {{ r }}
-                      </p>
+                      <div class="adventure-region__reading">
+                        <p v-if="row.canEnter" class="mt-2 text-note leading-relaxed text-ink-soft">
+                          {{ row.def.desc }}
+                        </p>
+                        <div v-if="adaptExpand === row.def.id && row.adaptation" class="mt-1">
+                          <p
+                            v-for="(r, i) in row.adaptation.reasons"
+                            :key="i"
+                            class="text-note leading-relaxed text-ink-faint"
+                          >
+                            · {{ r }}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </article>
                 </div>

@@ -3,9 +3,9 @@
   /*
    * 历练案 —— 今日先看天时,眼下只认第一个真正能走的方向。
    *
-   * 旧版把星象、所钟、三档概率、支线秘境与整张地界表一路平铺,玩家要先越过
-   * 五六层说明才看见「出发」。这一版把这层压成一张今日行旅笺:星象与所钟
-   * 并读,三档概率落成同一组小格;主线地界随后出现,秘境退到主线之后。
+   * 旧版把地界逐张包成卡,今日行旅也另起一层纸框。这一版把两者摊成同一张
+   * 开口长卷:今日账只留账线与分段线,地界沿山河轨连续续排;身份与行动、
+   * 服务账、路况与地点说明各守一行,秘境仍退到主线之后。
    */
   .adventure-compass {
     position: relative;
@@ -231,12 +231,13 @@
     grid-template-columns: minmax(0, 1fr);
     margin-top: 0.5rem;
     overflow: hidden;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.12);
-    border-left: 2px solid rgb(var(--color-qing-rgb) / 0.48);
-    background: rgb(var(--color-paper-lifted-rgb));
-    box-shadow:
-      inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.2),
-      2px 2px 0 rgb(var(--color-ink-rgb) / 0.02);
+    border-block: 1px solid rgb(var(--color-ink-rgb) / 0.16);
+    border-left: 2px solid rgb(var(--color-qing-rgb) / 0.46);
+    border-radius: 0;
+    box-shadow: none;
+    background:
+      linear-gradient(90deg, rgb(var(--color-qing-rgb) / 0.035), transparent 48%),
+      rgb(var(--color-paper-lifted-rgb) / 0.38);
   }
   .adventure-briefing__omen,
   .adventure-briefing__fact,
@@ -246,9 +247,7 @@
     padding: 0.68rem 0.78rem;
   }
   .adventure-briefing__omen {
-    background:
-      linear-gradient(120deg, rgb(var(--color-qing-rgb) / 0.055), transparent 62%),
-      rgb(var(--color-paper-rgb) / 0.18);
+    background: linear-gradient(105deg, rgb(var(--color-qing-rgb) / 0.04), transparent 58%);
   }
   .adventure-briefing__omen p,
   .adventure-briefing__fact p,
@@ -273,15 +272,15 @@
     letter-spacing: 0.14em;
   }
   .adventure-briefing__fact {
-    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-    background: rgb(var(--color-gold-ink-rgb) / 0.045);
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    background: rgb(var(--color-gold-ink-rgb) / 0.025);
   }
   .adventure-briefing__fact strong {
     display: block;
     margin-top: 0.18rem;
   }
   .adventure-briefing__tiers {
-    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
   }
   .adventure-briefing__tier-head {
     display: flex;
@@ -296,7 +295,7 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     margin-top: 0.38rem;
-    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
   }
   .adventure-briefing__tier {
     position: relative;
@@ -307,8 +306,7 @@
     align-items: center;
     gap: 0.12rem 0.5rem;
     padding: 0.38rem 0.1rem 0.38rem 0.62rem;
-    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
-    background: linear-gradient(90deg, rgb(var(--color-paper-rgb) / 0.18), transparent 72%);
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.065);
   }
   .adventure-briefing__tier-mark {
     position: absolute;
@@ -342,7 +340,7 @@
     line-height: 1.45;
   }
   .adventure-briefing__notices {
-    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
   }
   .adventure-briefing__notices p + p {
     margin-top: 0.42rem;
@@ -362,8 +360,8 @@
   .adventure-atlas {
     position: relative;
     display: grid;
-    gap: 0.82rem;
-    margin-top: 0.55rem;
+    gap: 0;
+    margin-top: 0.45rem;
   }
   .adventure-atlas::before {
     position: absolute;
@@ -385,13 +383,15 @@
     position: relative;
     z-index: 1;
     min-width: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.13);
   }
   .adventure-atlas__chapter {
     display: flex;
     min-height: 1.42rem;
     align-items: center;
     gap: 0.45rem;
-    padding: 0 0.15rem;
+    padding: 0.58rem 0.15rem 0.42rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.06);
   }
   .adventure-atlas__seal {
     display: grid;
@@ -424,15 +424,14 @@
   }
   .adventure-atlas__trail {
     display: grid;
-    gap: 0.5rem;
-    margin-top: 0.18rem;
+    gap: 0;
   }
   .adventure-atlas__stop {
     display: grid;
     min-width: 0;
     grid-template-columns: 1.35rem minmax(0, 1fr);
     align-items: stretch;
-    gap: 0.4rem;
+    column-gap: 0.45rem;
   }
   .adventure-atlas__rail {
     position: relative;
@@ -446,7 +445,7 @@
     display: grid;
     width: 1.28rem;
     height: 1.28rem;
-    margin-top: 0.78rem;
+    margin-top: 0.76rem;
     place-items: center;
     border: 1px solid rgb(var(--color-ink-rgb) / 0.22);
     border-radius: 50%;
@@ -460,8 +459,8 @@
   }
   .adventure-atlas__line {
     position: absolute;
-    top: 2.08rem;
-    bottom: -0.55rem;
+    top: 2.02rem;
+    bottom: -0.18rem;
     left: 50%;
     width: 1px;
     background: repeating-linear-gradient(
@@ -482,6 +481,16 @@
   .adventure-atlas__card {
     position: relative;
     min-width: 0;
+  }
+  .adventure-atlas__card::after {
+    position: absolute;
+    right: 0.1rem;
+    bottom: 0;
+    left: 0.2rem;
+    height: 1px;
+    background: linear-gradient(90deg, rgb(var(--color-ink-rgb) / 0.11), transparent 88%);
+    content: "";
+    pointer-events: none;
   }
   .adventure-atlas__stop[data-atlas-state="current"] .adventure-atlas__node {
     border-color: rgb(var(--color-qing-rgb) / 0.72);
@@ -509,15 +518,77 @@
   }
   .adventure-region {
     position: relative;
+    min-width: 0;
+    padding: 0.72rem 0.62rem 0.9rem 0.18rem;
+    border: 0;
+    border-left: 2px solid transparent;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
   }
   .adventure-region--next {
+    background: linear-gradient(115deg, rgb(var(--color-qing-rgb) / 0.045), transparent 56%);
     border-left-color: rgb(var(--color-qing-rgb) / 0.66);
-    background:
-      linear-gradient(115deg, rgb(var(--color-qing-rgb) / 0.045), transparent 50%),
-      rgb(var(--color-paper-lifted-rgb));
-    box-shadow:
-      inset 0 0 0 3px rgb(var(--color-paper-rgb) / 0.18),
-      2px 2px 0 rgb(var(--color-ink-rgb) / 0.025);
+  }
+  .adventure-region--suppressed {
+    background: linear-gradient(100deg, rgb(var(--color-gold-ink-rgb) / 0.035), transparent 62%);
+  }
+  .adventure-region__lead {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.52rem;
+  }
+  .adventure-region__icon {
+    display: grid;
+    width: 1.75rem;
+    height: 1.75rem;
+    place-items: center;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.14);
+    background: rgb(var(--color-paper-lifted-rgb) / 0.36);
+  }
+  .adventure-region__action {
+    align-self: start;
+    justify-self: end;
+  }
+  .adventure-region__service {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.18rem 0.75rem;
+    margin-top: 0.48rem;
+    padding: 0.4rem 0.12rem 0.4rem 0.58rem;
+    border-block: 1px solid rgb(var(--color-ink-rgb) / 0.07);
+  }
+  .adventure-region__service--suppressed {
+    border-left: 1px solid rgb(var(--color-gold-ink-rgb) / 0.42);
+    background: linear-gradient(90deg, rgb(var(--color-gold-ink-rgb) / 0.045), transparent 72%);
+  }
+  .adventure-region__service--qualified {
+    border-left: 1px solid rgb(var(--color-qing-rgb) / 0.4);
+    background: linear-gradient(90deg, rgb(var(--color-qing-rgb) / 0.035), transparent 72%);
+  }
+  .adventure-region__detail {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.36rem 0.9rem;
+    margin-top: 0.42rem;
+  }
+  .adventure-region__conditions,
+  .adventure-region__reading {
+    min-width: 0;
+  }
+  .adventure-region__conditions > * + * {
+    margin-top: 0.26rem;
+  }
+  .adventure-region__reading {
+    color: rgb(var(--color-ink-soft-rgb));
+  }
+  .adventure-region--locked .adventure-region__icon {
+    border-bottom-style: dashed;
   }
   .adventure-secret {
     padding-top: 0.1rem;
@@ -1563,6 +1634,20 @@
     }
   }
   @media (min-width: 620px) {
+    .adventure-region__detail--paired {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      padding-left: 2.27rem;
+    }
+
+    .adventure-region__detail--paired .adventure-region__reading {
+      padding-left: 0.9rem;
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    }
+
+    .adventure-region__detail--paired .adventure-region__reading > p:first-child {
+      margin-top: 0;
+    }
+
     .combat-session__stats {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
@@ -1640,7 +1725,7 @@
   }
   @media (max-width: 220px) {
     .adventure-atlas {
-      gap: 0.66rem;
+      gap: 0;
     }
 
     .adventure-atlas__chapter {
@@ -1734,6 +1819,25 @@
 
     .adventure-briefing__tier strong {
       justify-self: start;
+    }
+
+    .adventure-region {
+      padding-right: 0.1rem;
+      padding-left: 0.1rem;
+    }
+
+    .adventure-region__lead {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .adventure-region__action {
+      grid-column: 1 / -1;
+      justify-self: start;
+      margin-left: 2.27rem;
+    }
+
+    .adventure-region__service {
+      padding-left: 0.45rem;
     }
 
     .combat-session__head {

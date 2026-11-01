@@ -131,6 +131,38 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
     );
   });
 
+  it("今日行旅与山河路账共成开口长卷,地界不再逐张套卡", () => {
+    const view = source("src/views/AdventureView.vue");
+    const css = source("src/styles/pages/adventure.css");
+    const regionAt = view.indexOf("data-region-card");
+    const regionEnd = view.indexOf("</article>", regionAt);
+    const region = view.slice(regionAt, regionEnd);
+
+    expect(regionAt, "地界行必须保留原运行时落点").toBeGreaterThan(-1);
+    expect(region, "地界行不再套通用卡片皮").not.toContain("card-ink");
+    expect(region, "一行先收图标、身份与主行动").toContain("adventure-region__lead");
+    expect(region, "镇压与转收益是行内服务账,不是第二张卡").toContain("adventure-region__service");
+    expect(region, "路况与说明要分栏但共用同一行").toContain("adventure-region__detail");
+    expect(region).toContain("adventure-region__conditions");
+    expect(region).toContain("adventure-region__reading");
+
+    expect(css, "今日行旅只用上下账线与世界色边线").toMatch(
+      /\.adventure-briefing__sheet\s*\{[\s\S]{0,360}border-block:\s*1px solid[\s\S]{0,360}border-radius:\s*0;[\s\S]{0,360}box-shadow:\s*none;/,
+    );
+    expect(css, "界域之间首尾相接,不再用组间距假装分册").toMatch(
+      /\.adventure-atlas\s*\{[\s\S]{0,220}gap:\s*0;/,
+    );
+    expect(css, "每卷以账线续排").toMatch(
+      /\.adventure-atlas__reach\s*\{[\s\S]{0,220}border-top:\s*1px solid/,
+    );
+    expect(css, "地界行本身不画第二层卡框").toMatch(
+      /\.adventure-region\s*\{[\s\S]{0,420}border:\s*0;[\s\S]{0,420}border-radius:\s*0;[\s\S]{0,420}box-shadow:\s*none;/,
+    );
+    expect(css, "620px 起路况与地点说明并读").toMatch(
+      /@media \(min-width: 620px\)[\s\S]{0,900}\.adventure-region__detail--paired\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(0, 1\.1fr\) minmax\(0, 0\.9fr\)/,
+    );
+  });
+
   it("今日账把三档落成连续概率行,手机不靠三列硬挤,极窄档再拆行", () => {
     const css = source("src/styles/pages/adventure.css");
     const view = source("src/views/AdventureView.vue");
