@@ -1,5 +1,5 @@
 <template>
-  <header class="name-beast-chapter-head" data-name-beast-chapter-head>
+  <header class="name-beast-chapter-head" data-folio-chapter-head data-name-beast-chapter-head>
     <span class="name-beast-chapter-head__index" aria-hidden="true">{{ index }}</span>
     <div class="name-beast-chapter-head__copy">
       <p v-if="eyebrow" class="name-beast-chapter-head__eyebrow">{{ eyebrow }}</p>

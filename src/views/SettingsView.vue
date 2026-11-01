@@ -43,7 +43,7 @@
         data-settings-chapter="sound"
         data-settings-group="sound"
       >
-        <header class="settings-register__head">
+        <header class="settings-register__head" data-folio-chapter-head>
           <span class="settings-register__ordinal" aria-hidden="true">壹</span>
           <span class="settings-register__identity">
             <span class="settings-register__eyebrow">入耳 · 即时</span>
@@ -121,7 +121,7 @@
         data-settings-chapter="sight"
         data-settings-group="sight"
       >
-        <header class="settings-register__head">
+        <header class="settings-register__head" data-folio-chapter-head>
           <span class="settings-register__ordinal" aria-hidden="true">贰</span>
           <span class="settings-register__identity">
             <span class="settings-register__eyebrow">入眼 · 即时</span>
@@ -178,7 +178,7 @@
         data-settings-chapter="conduct"
         data-settings-group="conduct"
       >
-        <header class="settings-register__head">
+        <header class="settings-register__head" data-folio-chapter-head>
           <span class="settings-register__ordinal" aria-hidden="true">叁</span>
           <span class="settings-register__identity">
             <span class="settings-register__eyebrow">入行 · 即时</span>
@@ -236,7 +236,7 @@
           data-settings-archive
           :data-backup="backupReadout.state"
         >
-          <header class="settings-register__head">
+          <header class="settings-register__head" data-folio-chapter-head>
             <span class="settings-register__ordinal" aria-hidden="true">肆</span>
             <span class="settings-register__identity">
               <span class="settings-register__eyebrow">本机存档</span>
@@ -353,7 +353,7 @@
           data-settings-trail
           :data-state="diagReadout.state"
         >
-          <header class="settings-register__head">
+          <header class="settings-register__head" data-folio-chapter-head>
             <span class="settings-register__ordinal" aria-hidden="true">伍</span>
             <span class="settings-register__identity">
               <span class="settings-register__eyebrow">本机留痕</span>
@@ -408,7 +408,7 @@
           class="settings-register__chapter settings-register__chapter--index"
           data-settings-chapter="index"
         >
-          <header class="settings-register__head">
+          <header class="settings-register__head" data-folio-chapter-head>
             <span class="settings-register__ordinal" aria-hidden="true">陆</span>
             <span class="settings-register__identity">
               <span class="settings-register__eyebrow">卷外三页</span>

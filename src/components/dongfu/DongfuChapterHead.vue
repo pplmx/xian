@@ -1,5 +1,5 @@
 <template>
-  <header class="dongfu-chapter-head" data-dongfu-chapter-head>
+  <header class="dongfu-chapter-head" data-folio-chapter-head data-dongfu-chapter-head>
     <span class="dongfu-chapter-head__index" aria-hidden="true">{{ index }}</span>
     <div class="dongfu-chapter-head__copy">
       <p v-if="eyebrow" class="dongfu-chapter-head__eyebrow">{{ eyebrow }}</p>

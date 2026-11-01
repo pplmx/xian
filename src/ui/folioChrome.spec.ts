@@ -231,7 +231,7 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     expect(modal, "弹窗题签也要读同一份卷次").toContain("navigationPositionOf");
   });
 
-  it("正文页框与节次只有一处出处，页页沿同一条书页基线", () => {
+  it("正文页框仍是唯一基线，旧 CSS counter 章首已从页框退场", () => {
     const css = source("src/style.css");
 
     expect(css, "常规页要有统一页框").toContain(".folio-page");
@@ -239,31 +239,46 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
       /\.folio-page\s*\{[\s\S]{0,180}?padding:\s*0\.25rem var\(--folio-page-gutter\) 1\.75rem;/,
     );
     expect(css, "页框要承接纵向节奏").toContain(".folio-page--stack");
-    expect(css, "章节要在页内自动编号").toContain(".folio-page .folio-section-mark::before");
-    expect(css, "旧的双笔章节头不该继续和栏号签叠成三重记号").not.toContain(
-      ".folio-page .section-title::before",
+    expect(css, "旧 CSS counter 章首不该留在页框里").not.toMatch(
+      /counter-reset:\s*folio-section|\.folio-page \.section-title|\.folio-page \.folio-section-mark/,
     );
-    expect(css, "节次计数器只能由页框重置").toContain("counter-reset: folio-section");
   });
 
-  it("章节头只有一个组件出处，眉题、标题、副读与动作席沿同一条栏号", () => {
-    const title = source("src/components/common/SectionTitle.vue");
+  it("旧通用章首整套退场，现役章首统一保留可巡页标记", () => {
     const cultivation = source("src/views/CultivationView.vue");
     const inventory = source("src/views/InventoryView.vue");
+    const adventure = source("src/views/AdventureView.vue");
+    const settings = source("src/views/SettingsView.vue");
     const css = source("src/style.css");
+    const files = vueFiles();
+    const heads = files.filter((file) => file.endsWith("ChapterHead.vue"));
 
-    expect(title, "章节头要有统一运行时标记").toContain("data-folio-chapter-head");
-    expect(title, "栏号仍由页内 counter 生成").toContain("data-folio-section-mark");
-    expect(title, "章首支持可选眉题").toContain('v-if="eyebrow"');
-    expect(title, "章首支持右侧动作席").toContain('<slot name="actions" />');
+    expect(
+      files.some((file) => file.endsWith("/SectionTitle.vue")),
+      "旧 SectionTitle.vue 已无页面引用，不该继续躺在组件目录里",
+    ).toBe(false);
+    expect(css, "旧通用章首的类名与栏号签也要一并退场").not.toMatch(
+      /\.folio-chapter-head|\.folio-section-mark|\.section-title\s*\{/,
+    );
+    expect(heads.length, "现役续卷章首不会被空数组判成假绿").toBeGreaterThan(8);
+    for (const file of heads) {
+      expect(
+        readFileSync(file, "utf8"),
+        `${file.slice(ROOT.length + 1)} 章首缺少统一巡页标记`,
+      ).toContain("data-folio-chapter-head");
+    }
     expect(cultivation, "修炼账改走续卷章首").toContain("<CultivationChapterHead");
     expect(inventory, "行囊八章走行囊续卷章首").toContain("<InventoryChapterHead");
+    expect(
+      adventure.match(/data-folio-chapter-head/g),
+      "历练四章也要能被通用巡页找到",
+    ).toHaveLength(4);
+    expect(settings.match(/data-folio-chapter-head/g), "设置六章也要能被通用巡页找到").toHaveLength(
+      6,
+    );
     expect(inventory, "通用节题已从行囊退场").not.toContain("<SectionTitle");
     expect(cultivation, "不再另造第二套章首组件").not.toContain("<FolioChapterHeader");
     expect(inventory, "不再另造第二套章首组件").not.toContain("<FolioChapterHeader");
-    expect(css, "极窄档动作席落到整行").toMatch(
-      /@media \(max-width: 220px\)[\s\S]{0,300}?\.folio-chapter-head__actions\s*\{[\s\S]{0,120}?flex:\s*1 0 100%;/,
-    );
   });
 
   it("册页内不再保留 App 式中圆角，纸片只留 2px 方倒角", () => {

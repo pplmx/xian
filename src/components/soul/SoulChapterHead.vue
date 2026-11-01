@@ -1,5 +1,5 @@
 <template>
-  <header class="soul-chapter-head" data-soul-chapter-head>
+  <header class="soul-chapter-head" data-folio-chapter-head data-soul-chapter-head>
     <span class="soul-chapter-head__index" aria-hidden="true">{{ index }}</span>
     <div class="soul-chapter-head__copy">
       <h2 class="soul-chapter-head__title">{{ title }}</h2>

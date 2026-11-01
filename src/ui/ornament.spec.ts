@@ -15,7 +15,6 @@
  * 另有四件事单独核:
  *   纸面段落与印面亮边 —— 纸片不再靠白顶光浮起,印面仍保留压印亮边;
  *   装饰墨的浓度上限 —— 背景里的墨不许浓到能当第二条边框;
- *   章节头的三件套 —— 栏号签随世界换色、副线走装饰档、尾线可让位;
  *   花饰分隔的位置 —— 只在页面层,弹窗是密集面板,一枚墨点会与数据争视线。
  */
 import { describe, expect, it } from "vite-plus/test";
@@ -165,47 +164,6 @@ describe("装饰层 · 纸面段落与印面压印", () => {
   it("印面沿上缘也有一道亮边(压印感),不是一块平色", () => {
     const seal = declsOf((s) => s === ".btn-seal").find((d) => d.prop === "box-shadow");
     expect(seal?.value).toMatch(/inset 0 1px 0 rgb\(255 255 255 \/ [\d.]+\)/);
-  });
-});
-
-describe("装饰层 · 章节头", () => {
-  const TITLE = templateOf(vue("src/components/common/SectionTitle.vue"));
-
-  it("栏号签只有一处，编号、世界色左线与大号章号收在同一枚签上", () => {
-    const mark = CSS.match(/\.folio-page \.folio-section-mark\s*\{([\s\S]*?)\}/)?.[1] ?? "";
-
-    expect(TITLE).toContain("folio-section-mark");
-    expect(TITLE.match(/class="[^"]*folio-section-mark/), "章节头只许留一枚栏号签").toBeTruthy();
-    expect(TITLE.match(/data-folio-section-mark/g), "章节头只许留一枚栏号签").toHaveLength(1);
-    expect(TITLE, "旧双笔不该继续挂在栏号签旁边").not.toContain('class="brush-bar');
-    expect(mark, "主笔随世界换色 —— 不许写死朱砂").toContain(
-      "border-left: 2px solid var(--world-bar);",
-    );
-    expect(TITLE, "章节笔杆写死了颜色,换界之后不跟").not.toMatch(/bg-cinnabar/);
-  });
-
-  it("栏号签不再叠第二道墨笔或方框", () => {
-    const mark = CSS.match(/\.folio-page \.folio-section-mark\s*\{([\s\S]*?)\}/)?.[1] ?? "";
-
-    expect(mark, "章节签仍有四边框").toContain("border: 0;");
-    expect(mark, "章节签仍铺纸底").toContain("background: transparent;");
-    expect(mark, "章节签仍有内框或副线投影").toContain("box-shadow: none;");
-    expect(mark, "旧双笔副线仍在").not.toContain("inset -3px");
-  });
-
-  it("尾线拉满剩余宽度,但留得住 4px 的让位底线", () => {
-    const rule = CSS.match(/\.folio-chapter-head__rule\s*\{([\s\S]*?)\}/)?.[1] ?? "";
-
-    expect(TITLE, "尾线要由共享章节头统一渲染").toContain("folio-chapter-head__rule");
-    expect(rule, "尾线没有伸缩比就拉不满").toMatch(/flex:\s*1 1 1rem/);
-    expect(rule, "尾线没有下限,窄屏会被挤成 0").toMatch(/min-width:\s*1rem/);
-    expect(rule, "尾线两侧收口靠墨色渐变,不是实色").toMatch(
-      /linear-gradient\([\s\S]*?--color-ink-rgb\)\s*\/\s*0\.14[\s\S]*?--color-ink-rgb\)\s*\/\s*0\.02/,
-    );
-  });
-
-  it("章节名不裁切 —— 折行也要读全(它不是列表项)", () => {
-    expect(TITLE).not.toContain("truncate");
   });
 });
 

@@ -1,5 +1,5 @@
 <template>
-  <header class="opening-chapter-head">
+  <header class="opening-chapter-head" data-folio-chapter-head>
     <span class="opening-chapter-head__index" aria-hidden="true">{{ index }}</span>
     <div class="opening-chapter-head__copy">
       <p class="opening-chapter-head__eyebrow">{{ eyebrow }}</p>

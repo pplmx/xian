@@ -1,5 +1,5 @@
 <template>
-  <header class="cultivation-chapter-head">
+  <header class="cultivation-chapter-head" data-folio-chapter-head>
     <span class="cultivation-chapter-head__index">{{ index }}</span>
     <div class="cultivation-chapter-head__copy">
       <h2 class="cultivation-chapter-head__title">{{ title }}</h2>

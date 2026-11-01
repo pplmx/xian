@@ -1,5 +1,10 @@
 <template>
-  <header class="realm-codex-chapter-head" data-realm-codex-chapter-head :data-chapter="tab">
+  <header
+    class="realm-codex-chapter-head"
+    data-folio-chapter-head
+    data-realm-codex-chapter-head
+    :data-chapter="tab"
+  >
     <span class="realm-codex-chapter-head__index" aria-hidden="true">{{ index }}</span>
     <div class="realm-codex-chapter-head__copy">
       <h2 class="realm-codex-chapter-head__title">{{ title }}</h2>

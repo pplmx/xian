@@ -728,10 +728,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
     expect(rite, "越界判据只许走 announceWorldEntry 纯函数").toContain("announceWorldEntry");
     expect(rite, "宣告遮罩不许拦操作(pointer-events-none)").toContain("pointer-events-none");
-    // 章节标题杆是全页高频的装饰 cue:每界各一色,别退回「只剩人间朱砂」
-    expect(css, "标题杆要读世界色(--world-bar),不许写死朱砂").toMatch(
-      /\.folio-section-mark\s*\{[\s\S]{0,500}var\(--world-bar\)/,
-    );
+    // 世界色不再借已退场的通用章首栏号签露头；卷首、门径与洞府账各自守住同一枚变量。
     expect(css).toMatch(/data-world="immortal"\][\s\S]{0,180}--world-bar/);
     expect(css).toMatch(/data-world="god"\][\s\S]{0,180}--world-bar/);
     expect(css).toMatch(/data-world="chaos"\][\s\S]{0,180}--world-bar/);
@@ -1309,9 +1306,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("全库弹窗标题统一笔杆 —— 页面每节有世界色书脊,弹窗标题不许孤悬", () => {
-    // 页面章节头(SectionTitle)用栏号签里的世界色书脊当家;BaseModal 是全库复用的
-    // 浮层原语,标题此前是悬空一行楷体。弹窗标题必须带同一根杆 —— 一处改动罩住
-    // 全库每个弹窗;拆掉杆(或挪到别处),下面红。
+    // BaseModal 是全库复用的浮层原语,标题此前是悬空一行楷体。弹窗标题必须与
+    // 卷首页框共用世界色笔杆 —— 一处改动罩住全库每个弹窗;拆掉杆(或挪到别处),下面红。
     const modal = FILES.find((f) => f.path === "components/common/BaseModal.vue");
     expect(modal?.src, "弹窗标题要挂世界色 brush-bar").toMatch(
       /<span[\s\S]{0,40}v-if="props\.title"[\s\S]{0,80}class="brush-bar h-3 w-0\.75 rounded-\[2px\] bg-\[var\(--world-bar\)\]"/,

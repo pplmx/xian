@@ -1,5 +1,5 @@
 <template>
-  <header class="inventory-chapter-head" data-inventory-chapter-head>
+  <header class="inventory-chapter-head" data-folio-chapter-head data-inventory-chapter-head>
     <span class="inventory-chapter-head__index" aria-hidden="true">{{ index }}</span>
     <div class="inventory-chapter-head__copy">
       <h2 class="inventory-chapter-head__title">{{ title }}</h2>

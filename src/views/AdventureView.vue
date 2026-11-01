@@ -37,7 +37,7 @@
             data-adventure-chapter="briefing"
             data-adventure-briefing
           >
-            <header class="adventure-register__head">
+            <header class="adventure-register__head" data-folio-chapter-head>
               <span class="adventure-register__ordinal" aria-hidden="true">壹</span>
               <span class="adventure-register__identity">
                 <span class="adventure-register__eyebrow">星象 · 本世</span>
@@ -112,7 +112,7 @@
             data-adventure-chapter="regions"
             data-adventure-regions
           >
-            <header class="adventure-register__head">
+            <header class="adventure-register__head" data-folio-chapter-head>
               <span class="adventure-register__ordinal" aria-hidden="true">贰</span>
               <span class="adventure-register__identity">
                 <span class="adventure-register__eyebrow">山河 · 本世</span>
@@ -471,7 +471,7 @@
             data-adventure-chapter="secret"
             data-adventure-secret
           >
-            <header class="adventure-register__head">
+            <header class="adventure-register__head" data-folio-chapter-head>
               <span class="adventure-register__ordinal" aria-hidden="true">叁</span>
               <span class="adventure-register__identity">
                 <span class="adventure-register__eyebrow">支线 · 出则散</span>
@@ -493,7 +493,7 @@
             data-adventure-chapter="rules"
             data-adventure-rules
           >
-            <header class="adventure-register__head">
+            <header class="adventure-register__head" data-folio-chapter-head>
               <span class="adventure-register__ordinal" aria-hidden="true">肆</span>
               <span class="adventure-register__identity">
                 <span class="adventure-register__eyebrow">规则 · 守土</span>

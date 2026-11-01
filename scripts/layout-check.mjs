@@ -2158,7 +2158,7 @@ async function taskPageTour(vp) {
         vars,
         note: px("[data-folio-position]") ?? px(".home-deck__eyebrow"),
         body: px(".t-body") ?? px(".home-card__copy"),
-        section: px(".section-title h2") ?? px(".home-card__head h2"),
+        section: px(".home-card__head h2"),
         display: px(".folio-masthead h1"),
         homeDisplay: here === "/" ? px(".home-deck__identity h1") : null,
       };
@@ -5979,7 +5979,9 @@ async function taskInventoryTabRegisters() {
                 shadow: registerStyle.boxShadow,
                 background: registerStyle.backgroundColor,
                 rect: box(register),
-                sectionTitles: register.querySelectorAll(".section-title").length,
+                legacyChapterHeads: register.querySelectorAll(
+                  ".section-title, .folio-chapter-head, [data-folio-section-mark]",
+                ).length,
                 oldShells: register.querySelectorAll(
                   ".inventory-workshop__card, .inventory-materials__groups, .inventory-material-group__head",
                 ).length,
@@ -6020,7 +6022,7 @@ async function taskInventoryTabRegisters() {
         layout.register.radius === 0 &&
         layout.register.shadow === "none" &&
         layout.register.background === "rgba(0, 0, 0, 0)" &&
-        layout.register.sectionTitles === 0 &&
+        layout.register.legacyChapterHeads === 0 &&
         layout.register.oldShells === 0 &&
         layout.register.rect?.scrollWidth <= layout.register.rect?.clientWidth + 1;
       const factsOk = expected.facts.every((pattern, index) => pattern.test(facts[index] || ""));
@@ -6355,7 +6357,10 @@ async function taskApprenticePulse() {
             fact: (head.querySelector(".apprentice-chapter-head__fact")?.textContent || "").trim(),
           })),
           pulseHasLedgerHead: Boolean(pulse?.querySelector("[data-folio-ledger-head]")),
-          sectionTitles: register?.querySelectorAll(".section-title").length ?? -1,
+          legacyChapterHeads:
+            register?.querySelectorAll(
+              ".section-title, .folio-chapter-head, [data-folio-section-mark]",
+            ).length ?? -1,
           register: chrome(register),
           roster: chrome(roster),
           rules: chrome(rules),
@@ -6398,7 +6403,7 @@ async function taskApprenticePulse() {
       fold.heads.map((head) => head.title).join(",") !== "一册值日,值日簿,门规" ||
       fold.heads.some((head) => head.fact.length === 0) ||
       fold.pulseHasLedgerHead ||
-      fold.sectionTitles !== 0
+      fold.legacyChapterHeads !== 0
     ) {
       failures.push(`[390] 门庭三章没有共用专用章首:${JSON.stringify(fold.heads)}`);
     }
@@ -9416,7 +9421,10 @@ async function taskDongfuFold() {
           })),
           ledgerHeads,
           pulseHasLedgerHead: Boolean(summaryChapter?.querySelector("[data-folio-ledger-head]")),
-          sectionTitles: ledgerRegister?.querySelectorAll(".section-title").length ?? -1,
+          legacyChapterHeads:
+            ledgerRegister?.querySelectorAll(
+              ".section-title, .folio-chapter-head, [data-folio-section-mark]",
+            ).length ?? -1,
           buildTitleTop: summaryChapter?.getBoundingClientRect().top ?? null,
           registerTop: registerChapter?.getBoundingClientRect().top ?? null,
           registerChapters: registerChapters.length,
@@ -9470,7 +9478,7 @@ async function taskDongfuFold() {
         !/^已营 \d+\/7$/.test(fold.ledgerHeads[0]?.fact || "") ||
         !/^\d+\/7 已营 · \d+ 时离线$/.test(fold.ledgerHeads[1]?.fact || "") ||
         fold.pulseHasLedgerHead ||
-        fold.sectionTitles !== 0
+        fold.legacyChapterHeads !== 0
       ) {
         failures.push(`[390-dongfu] 洞府两章没有共用专用章首:${JSON.stringify(fold.ledgerHeads)}`);
       }
@@ -10603,7 +10611,10 @@ async function taskCodexFold() {
                   count: chapterEl?.querySelectorAll("[data-realm-codex-chapter-head]").length,
                   chapter: head?.getAttribute("data-chapter") ?? null,
                   first: chapterEl?.firstElementChild === head,
-                  sectionTitles: chapterEl?.querySelectorAll(".section-title").length ?? -1,
+                  legacyChapterHeads:
+                    chapterEl?.querySelectorAll(
+                      ".section-title, .folio-chapter-head, [data-folio-section-mark]",
+                    ).length ?? -1,
                   columns: headStyle?.gridTemplateColumns.split(" ").filter(Boolean) ?? [],
                   factBelowCopy: copyRect && factRect ? factRect.top >= copyRect.bottom - 1 : false,
                   factRightOfCopy:
@@ -10659,7 +10670,7 @@ async function taskCodexFold() {
           current.head.count !== 1 ||
           current.head.chapter !== chapter ||
           !current.head.first ||
-          current.head.sectionTitles !== 0 ||
+          current.head.legacyChapterHeads !== 0 ||
           current.head.columns.length !== (width >= 620 ? 3 : 2) ||
           current.head.boxOverflow ||
           (width >= 620 ? !current.head.factRightOfCopy : !current.head.factBelowCopy) ||
@@ -15030,7 +15041,10 @@ async function taskMarketRegisterFold() {
                 value: head.getAttribute("data-market-book-value") ?? "",
                 total: head.getAttribute("data-market-book-total") ?? "",
                 count: panel?.querySelectorAll("[data-market-book-head]").length ?? 0,
-                sectionTitleCount: register?.querySelectorAll(".section-title").length ?? 0,
+                legacyChapterHeadCount:
+                  register?.querySelectorAll(
+                    ".section-title, .folio-chapter-head, [data-folio-section-mark]",
+                  ).length ?? 0,
                 cardInkCount: register?.querySelectorAll(".card-ink").length ?? 0,
                 rect: rectOf(head),
                 identityRect: rectOf(headIdentity),
@@ -15104,7 +15118,7 @@ async function taskMarketRegisterFold() {
       mobile.head.value !== mobile.tabs[0]?.value ||
       mobile.head.total !== mobile.tabs[0]?.total ||
       mobile.head.count !== 1 ||
-      mobile.head.sectionTitleCount !== 0 ||
+      mobile.head.legacyChapterHeadCount !== 0 ||
       mobile.head.cardInkCount !== 0 ||
       !mobile.head.rect ||
       !mobile.head.bodyRect ||
@@ -15198,7 +15212,10 @@ async function taskMarketRegisterFold() {
             value: head?.getAttribute("data-market-book-value") ?? "",
             total: head?.getAttribute("data-market-book-total") ?? "",
             body: Boolean(panel?.querySelector("[data-market-book-body]")),
-            sectionTitleCount: panel?.querySelectorAll(".section-title").length ?? 0,
+            legacyChapterHeadCount:
+              panel?.querySelectorAll(
+                ".section-title, .folio-chapter-head, [data-folio-section-mark]",
+              ).length ?? 0,
             cardInkCount: panel?.querySelectorAll(".card-ink").length ?? 0,
           },
         };
@@ -15230,7 +15247,7 @@ async function taskMarketRegisterFold() {
         !truth.head.score.includes(String(truth.totalActual)) ||
         !copy.meta.test(truth.head.meta) ||
         !truth.head.body ||
-        truth.head.sectionTitleCount !== 0 ||
+        truth.head.legacyChapterHeadCount !== 0 ||
         truth.head.cardInkCount !== 0
       ) {
         failures.push(`[390-market] ${id} 册口、章首与当前摊面不同源:${JSON.stringify(truth)}`);
@@ -15342,7 +15359,7 @@ async function taskMarketRegisterFold() {
     if (
       !desktop.head ||
       desktop.head.title !== "本架货目" ||
-      desktop.head.sectionTitleCount !== 0 ||
+      desktop.head.legacyChapterHeadCount !== 0 ||
       desktop.head.cardInkCount !== 0 ||
       !desktop.head.identityRect ||
       !desktop.head.scoreRect ||

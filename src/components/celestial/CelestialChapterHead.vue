@@ -1,5 +1,5 @@
 <template>
-  <header class="celestial-chapter-head">
+  <header class="celestial-chapter-head" data-folio-chapter-head>
     <span class="celestial-chapter-head__index" aria-hidden="true">{{ index }}</span>
     <div class="celestial-chapter-head__copy">
       <h2 class="celestial-chapter-head__title">{{ title }}</h2>

@@ -227,7 +227,7 @@ describe("天机案 · 设置卷首与三案同读此刻", () => {
       /<article\s+class="settings-register folio-span-all"\s+data-settings-register\s+data-settings-folio\s+data-settings-console\s*>/,
     );
     expect(view, "每章都从同一枚章首起笔").toMatch(
-      /data-settings-chapter="sound"[\s\S]{0,500}<header class="settings-register__head">/,
+      /data-settings-chapter="sound"[\s\S]{0,500}<header class="settings-register__head" data-folio-chapter-head>/,
     );
     expect(
       view.match(/class="settings-archive__reset[^"]*"/)?.[0] ?? "",
