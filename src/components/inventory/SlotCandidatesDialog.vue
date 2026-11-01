@@ -7,7 +7,6 @@
   >
     <div
       v-if="pickerRows.length"
-      class="space-y-1.5"
       :data-slot-candidate-total="pickerRows.length"
       :data-slot-candidate-shown="candidatePage.shown"
       :data-slot-candidate-start="candidatePage.start"
@@ -16,80 +15,91 @@
         大行囊按部位摊开后,同一槽仍可能几十件。先铺一批,余件显式续开;
         窗口最多留两批,回翻保证前面几批也仍可达。
       -->
-      <p class="pb-1 text-center text-note text-ink-faint tabular">
+      <p class="mb-1.5 text-center text-note text-ink-faint tabular">
         共 {{ pickerRows.length }} 件 · 现看 {{ candidatePage.start + 1 }}–{{ candidatePage.shown }}
         · 佩戴中置顶
       </p>
-      <div
-        v-for="row in candidatePage.visible"
-        :key="row.item.uid"
-        :data-slot-candidate="row.item.uid"
-        tabindex="-1"
-        class="slot-candidate-row flex items-center gap-2.5 rounded-[2px] px-2.5 py-2"
-        :class="row.equipped ? 'bg-jade/10' : 'bg-paper-deep/70'"
-      >
-        <GameIcon
-          :name="row.template.icon"
-          :size="16"
-          class="slot-candidate-row__icon"
-          :style="{ color: qualityDef(row.item.quality).color }"
-        />
-        <button
-          class="slot-candidate-row__body min-w-0 grow text-left active:opacity-70 tinylens:grow-0 tinylens:basis-[calc(100%_-_1.75rem)]"
-          @click="openDetail(row.item.uid)"
+      <div class="divide-y divide-ink/10 border-y border-ink/10" data-slot-candidate-ledger>
+        <div
+          v-for="row in candidatePage.visible"
+          :key="row.item.uid"
+          :data-slot-candidate="row.item.uid"
+          :data-slot-candidate-equipped="row.equipped ? '' : undefined"
+          tabindex="-1"
+          class="slot-candidate-row grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2.5 gap-y-1.5 py-2 tinylens:grid-cols-[auto_minmax(0,1fr)]"
+          :class="row.equipped ? 'bg-jade/6' : ''"
         >
-          <span class="flex min-w-0 items-center gap-1">
-            <!-- 天/仙/神名前盖品阶阴文章:稀有档的第二条线索,不靠颜色单打(见 qualityTier) -->
-            <QualitySeal
-              v-if="isRareQuality(row.item.quality)"
-              :quality="row.item.quality"
-              :size="14"
-              class="shrink-0"
-            />
-            <span
-              class="min-w-0 truncate font-kai text-title"
-              :style="{ color: qualityDef(row.item.quality).color }"
-            >
-              {{ row.template.name }}
-              <template v-if="row.item.level > 0">+{{ row.item.level }}</template>
+          <GameIcon
+            :name="row.template.icon"
+            :size="16"
+            class="slot-candidate-row__icon"
+            :style="{ color: qualityDef(row.item.quality).color }"
+          />
+          <button
+            class="slot-candidate-row__body min-w-0 text-left active:opacity-70"
+            @click="openDetail(row.item.uid)"
+          >
+            <span class="flex min-w-0 items-center gap-1">
+              <!-- 天/仙/神名前盖品阶阴文章:稀有档的第二条线索,不靠颜色单打(见 qualityTier) -->
+              <QualitySeal
+                v-if="isRareQuality(row.item.quality)"
+                :quality="row.item.quality"
+                :size="14"
+                class="shrink-0"
+              />
+              <span
+                class="min-w-0 truncate font-kai text-title"
+                data-slot-candidate-name
+                :style="{ color: qualityDef(row.item.quality).color }"
+              >
+                {{ row.template.name }}
+                <template v-if="row.item.level > 0">+{{ row.item.level }}</template>
+              </span>
             </span>
-          </span>
-          <span class="block text-note text-ink-faint">
-            <!-- 条数带分母:这一件还剩多少条可涨,一眼看得出(上限来自品质表) -->
-            {{ qualityDef(row.item.quality).name }} · {{ row.item.tier }} 阶 · 词条
-            {{ row.item.affixes.length }}/{{ qualityDef(row.item.quality).affixes[1] }}
-          </span>
-        </button>
-        <!--
-          换装决策的行级读数:这一件跟身上那件差多少战力,picker 层就该看见 ——
-          不用每件点开详情才知道值不值得换(与人物页战力同一个数,pScore 线性差)。
-        -->
-        <span
-          v-if="row.delta !== null"
-          class="slot-candidate-row__delta shrink-0 text-note tabular tinylens:basis-[calc(100%_-_1.75rem)]"
-          :class="row.deltaCls"
-          :title="`vs 当前佩戴:${row.deltaText}`"
-          >{{ row.deltaText }}</span
-        >
-        <button
-          v-if="row.equipped"
-          class="slot-candidate-row__action btn-ghost shrink-0 !px-2.5 !py-1 !text-body"
-          @click="unequipSlot()"
-        >
-          卸下
-        </button>
-        <button
-          v-else
-          class="slot-candidate-row__action btn-seal shrink-0 !px-2.5 !py-1 !text-body"
-          @click="equipItem(row.item.uid)"
-        >
-          换上
-        </button>
+            <span class="block text-note text-ink-faint">
+              <!-- 条数带分母:这一件还剩多少条可涨,一眼看得出(上限来自品质表) -->
+              {{ qualityDef(row.item.quality).name }} · {{ row.item.tier }} 阶 · 词条
+              {{ row.item.affixes.length }}/{{ qualityDef(row.item.quality).affixes[1] }}
+            </span>
+          </button>
+          <!--
+            换装决策的行级读数:这一件跟身上那件差多少战力,picker 层就该看见 ——
+            不用每件点开详情才知道值不值得换(与人物页战力同一个数,pScore 线性差)。
+            195px 下战差与动作合成同一决策行,不再各吃一整行。
+          -->
+          <div
+            class="slot-candidate-row__decision flex min-w-0 flex-wrap items-center justify-end gap-1.5 tinylens:col-span-2"
+            :class="row.delta !== null ? 'tinylens:justify-between' : 'tinylens:justify-end'"
+            data-slot-candidate-decision
+          >
+            <span
+              v-if="row.delta !== null"
+              class="slot-candidate-row__delta whitespace-nowrap text-note tabular"
+              :class="row.deltaCls"
+              :title="`vs 当前佩戴:${row.deltaText}`"
+              >{{ row.deltaText }}</span
+            >
+            <button
+              v-if="row.equipped"
+              class="slot-candidate-row__action btn-ghost min-h-[28px] whitespace-nowrap !px-2.5 !py-1 !text-body"
+              @click="unequipSlot()"
+            >
+              卸下
+            </button>
+            <button
+              v-else
+              class="slot-candidate-row__action btn-seal min-h-[28px] whitespace-nowrap !px-2.5 !py-1 !text-body"
+              @click="equipItem(row.item.uid)"
+            >
+              换上
+            </button>
+          </div>
+        </div>
       </div>
       <!-- 读完当前批再续开:回翻/续开不挡在本批首行之前。 -->
       <div
         v-if="candidatePage.start > 0 || candidatePage.hidden > 0"
-        class="flex flex-wrap justify-center gap-1 pt-1"
+        class="mt-1.5 flex flex-wrap justify-center gap-1"
       >
         <button
           v-if="candidatePage.start > 0"

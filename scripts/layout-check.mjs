@@ -13168,6 +13168,124 @@ async function taskDialogZoom() {
       };
     });
 
+  const readSlotCandidateLedger = () =>
+    page.evaluate(() => {
+      const ledger = document.querySelector("[data-slot-candidate-ledger]");
+      if (!ledger) return null;
+      const panel = ledger.closest(".modal-panel");
+      const panelRect = panel?.getBoundingClientRect();
+      const panelInner = panel?.querySelector("[data-folio-modal-scroll]");
+      const panelInnerRect = panelInner?.getBoundingClientRect();
+      const ledgerStyle = getComputedStyle(ledger);
+      const lineCount = (el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+      };
+      const rectOf = (el) => {
+        if (!el) return null;
+        const rect = el.getBoundingClientRect();
+        return { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right };
+      };
+      const rows = [...ledger.querySelectorAll("[data-slot-candidate]")].map((row) => {
+        const rowRect = row.getBoundingClientRect();
+        const rowStyle = getComputedStyle(row);
+        const body = row.querySelector(".slot-candidate-row__body");
+        const name = row.querySelector("[data-slot-candidate-name]");
+        const decision = row.querySelector("[data-slot-candidate-decision]");
+        const delta = row.querySelector(".slot-candidate-row__delta");
+        const action = row.querySelector(".slot-candidate-row__action");
+        const rowBox = rectOf(row);
+        const bodyBox = rectOf(body);
+        const nameBox = rectOf(name);
+        const decisionBox = rectOf(decision);
+        const deltaBox = rectOf(delta);
+        const actionBox = rectOf(action);
+        return {
+          text: (row.textContent || "").replace(/\s+/g, " ").trim(),
+          equipped: row.hasAttribute("data-slot-candidate-equipped"),
+          paperCard:
+            row.classList.contains("bg-paper-deep/70") || row.classList.contains("card-ink"),
+          height: rowRect.height,
+          background: rowStyle.backgroundColor,
+          radius: Number.parseFloat(rowStyle.borderRadius),
+          borderTop: Number.parseFloat(rowStyle.borderTopWidth),
+          borderRight: Number.parseFloat(rowStyle.borderRightWidth),
+          borderLeft: Number.parseFloat(rowStyle.borderLeftWidth),
+          row: rowBox,
+          body: bodyBox,
+          name:
+            name && nameBox
+              ? {
+                  text: (name.textContent || "").replace(/\s+/g, " ").trim(),
+                  width: nameBox.right - nameBox.left,
+                  lines: lineCount(name),
+                  clipped: name.scrollWidth > name.clientWidth + 1,
+                }
+              : null,
+          decision: decisionBox,
+          delta:
+            delta && deltaBox
+              ? {
+                  text: (delta.textContent || "").replace(/\s+/g, " ").trim(),
+                  lines: lineCount(delta),
+                  clipped: delta.scrollWidth > delta.clientWidth + 1,
+                  ...deltaBox,
+                }
+              : null,
+          action:
+            action && actionBox
+              ? {
+                  text: (action.textContent || "").replace(/\s+/g, " ").trim(),
+                  lines: lineCount(action),
+                  clipped: action.scrollWidth > action.clientWidth + 1,
+                  height: actionBox.bottom - actionBox.top,
+                  insideInner: Boolean(
+                    panelInnerRect &&
+                    actionBox.left >= panelInnerRect.left - 2 &&
+                    actionBox.right <= panelInnerRect.right + 2,
+                  ),
+                  ...actionBox,
+                }
+              : null,
+          decisionDeltaActionSameRow: Boolean(
+            deltaBox &&
+            actionBox &&
+            Math.max(deltaBox.top, actionBox.top) <=
+              Math.min(deltaBox.bottom, actionBox.bottom) + 1,
+          ),
+        };
+      });
+      return {
+        found: true,
+        panel: panelRect
+          ? {
+              left: panelRect.left,
+              right: panelRect.right,
+              width: panelRect.width,
+            }
+          : null,
+        inner: panelInnerRect
+          ? {
+              left: panelInnerRect.left,
+              right: panelInnerRect.right,
+              width: panelInnerRect.width,
+            }
+          : null,
+        borderTop: Number.parseFloat(ledgerStyle.borderTopWidth),
+        borderRight: Number.parseFloat(ledgerStyle.borderRightWidth),
+        borderBottom: Number.parseFloat(ledgerStyle.borderBottomWidth),
+        borderLeft: Number.parseFloat(ledgerStyle.borderLeftWidth),
+        radius: Number.parseFloat(ledgerStyle.borderRadius),
+        background: ledgerStyle.backgroundColor,
+        cards: [...ledger.querySelectorAll("*")].filter(
+          (el) => el.classList.contains("card-ink") || el.classList.contains("bg-paper-deep/70"),
+        ).length,
+        rows,
+        separators: rows.slice(1).filter((row) => row.borderTop === 1).length,
+      };
+    });
+
   /** 一扇弹窗:点开 → 量 → 关掉。点不开直接报红(判据没量到东西) */
   const probe = async (label, route, click) => {
     await page.goto(INDEX + "#" + route, { waitUntil: "load" });
@@ -13365,6 +13483,93 @@ async function taskDialogZoom() {
       await checkHerbShop("390", 190);
       if (SHOTS) {
         await page.screenshot({ path: join(SHOTS_DIR, "390-xian-herb-shop-ledger.png") });
+      }
+    }
+    if (label === "部位候选 · 第二批") {
+      // 续批会聚焦第 13 件并把账卷带下去;复核图先回到账首,整册仍留在 DOM 里量。
+      await page.evaluate(() => {
+        const scroller = document.querySelector("[data-folio-modal-scroll]");
+        if (scroller) scroller.scrollTop = 0;
+      });
+      await settleVisuals(page);
+
+      const checkSlotCandidateLedger = async (tag, maxRowHeight) => {
+        checked += 1;
+        const slot = await readSlotCandidateLedger();
+        const transparent = "rgba(0, 0, 0, 0)";
+        const insideInner = (box) =>
+          Boolean(
+            slot?.inner &&
+            box &&
+            box.left >= slot.inner.left - 2 &&
+            box.right <= slot.inner.right + 2,
+          );
+        if (
+          !slot ||
+          slot.borderTop !== 1 ||
+          slot.borderBottom !== 1 ||
+          slot.borderRight !== 0 ||
+          slot.borderLeft !== 0 ||
+          slot.radius !== 0 ||
+          slot.background !== transparent ||
+          slot.cards !== 0 ||
+          slot.rows.length < 13 ||
+          slot.separators !== slot.rows.length - 1 ||
+          slot.rows.filter((row) => row.equipped).length !== 1
+        ) {
+          failures.push(`[${tag}] 部位候选又套回逐行纸卡或长账没续满:${JSON.stringify(slot)}`);
+        }
+        const badRows = slot?.rows.filter(
+          (row) =>
+            row.paperCard ||
+            row.height > maxRowHeight ||
+            row.radius !== 0 ||
+            row.borderRight !== 0 ||
+            row.borderLeft !== 0 ||
+            (!row.equipped && row.background !== transparent) ||
+            !row.body ||
+            row.body.right - row.body.left < 100 ||
+            !row.name ||
+            row.name.lines !== 1 ||
+            row.name.clipped ||
+            row.name.width < 40 ||
+            !row.decision ||
+            !insideInner(row.decision) ||
+            !row.action ||
+            row.action.lines !== 1 ||
+            row.action.clipped ||
+            row.action.height < 27.5 ||
+            row.action.right - row.action.left < 40 ||
+            !row.action.insideInner ||
+            (!row.equipped && !row.decisionDeltaActionSameRow) ||
+            (tag === "195" &&
+              (!row.row ||
+                row.decision.left > row.row.left + 2 ||
+                row.decision.right < row.row.right - 2 ||
+                !row.body ||
+                row.decision.top < row.body.bottom - 1 ||
+                row.action.right < row.decision.right - 2)),
+        );
+        if (badRows?.length) {
+          failures.push(
+            `[${tag}] 部位候选被挤成竖排、越界、截名或战差与动作分行:${JSON.stringify(badRows)}`,
+          );
+        }
+      };
+
+      await page.setViewportSize({ width: 195, height: 422 });
+      await settleVisuals(page);
+      await checkSlotCandidateLedger("195", 96);
+      if (SHOTS) {
+        mkdirSync(SHOTS_DIR, { recursive: true });
+        await page.screenshot({ path: join(SHOTS_DIR, "195-xian-slot-candidate-ledger.png") });
+      }
+
+      await page.setViewportSize({ width: 390, height: 844 });
+      await settleVisuals(page);
+      await checkSlotCandidateLedger("390", 64);
+      if (SHOTS) {
+        await page.screenshot({ path: join(SHOTS_DIR, "390-xian-slot-candidate-ledger.png") });
       }
     }
     if (label === "装备详情 · 词条转移落位") {

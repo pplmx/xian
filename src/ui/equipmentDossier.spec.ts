@@ -151,23 +151,37 @@ describe("器评帖 · 装备详情先给身份与换装结论", () => {
     );
   });
 
-  it("部位候选在 195px 下把正文、战差与换装动作分行,零宽正文不许再出现", () => {
+  it("部位候选收成一册长账,195px 下正文与决策各守一行", () => {
     const css = source("src/styles/pages/inventory.css");
 
+    expect(candidates).toContain("data-slot-candidate-ledger");
+    expect(candidates, "候选账只留上下账线与行间线").toMatch(
+      /class="[^"]*divide-y[^"]*border-y[^"]*"[\s\S]{0,120}?data-slot-candidate-ledger/,
+    );
+    expect(candidates, "逐件不再套内层纸卡").not.toContain("bg-paper-deep/70");
     expect(candidates).toContain("slot-candidate-row__body");
     expect(candidates).toContain("slot-candidate-row__delta");
     expect(candidates).toContain("slot-candidate-row__action");
-    expect(candidates, "正文在 195px 退出 grow 并占满图标右侧").toContain(
-      "tinylens:grow-0 tinylens:basis-[calc(100%_-_1.75rem)]",
+    expect(candidates).toContain("data-slot-candidate-decision");
+    expect(candidates, "常态是图标 / 正文 / 决策三段账").toContain(
+      "grid-cols-[auto_minmax(0,1fr)_auto]",
     );
-    expect(candidates, "战差在 195px 退到正文下一行").toContain(
-      "tinylens:basis-[calc(100%_-_1.75rem)]",
+    expect(candidates, "极窄档正文留在图标右侧,决策退整行").toMatch(
+      /class="[^"]*tinylens:col-span-2[^"]*"[\s\S]{0,260}?data-slot-candidate-decision/,
     );
-    expect(css, "候选行在 195px 必须允许换行").toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,4000}\.slot-candidate-row\s*\{[\s\S]{0,80}flex-wrap:\s*wrap;/,
+    expect(candidates, "佩戴件独自在决策行时仍靠右").toContain("'tinylens:justify-end'");
+    expect(candidates, "战差与动作各自不折行").toMatch(
+      /class="[^"]*slot-candidate-row__delta[^"]*whitespace-nowrap/,
     );
-    expect(css).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,4400}\.slot-candidate-row__action\s*\{[\s\S]{0,120}width:\s*100%;/,
+    expect(candidates).toMatch(/class="[^"]*slot-candidate-row__action[^"]*whitespace-nowrap/);
+    expect(css, "旧的候选行折行规则不许复活").not.toMatch(
+      /\.slot-candidate-row\s*\{[^}]*flex-wrap:\s*wrap/,
+    );
+    expect(css, "195 动作不再独占整行").not.toMatch(
+      /\.slot-candidate-row__action\s*\{[^}]*flex-basis:\s*100%/,
+    );
+    expect(css, "旧的整宽换装键不许复活").not.toMatch(
+      /\.slot-candidate-row__action\s*\{[^}]*width:\s*100%/,
     );
   });
 
