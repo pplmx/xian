@@ -245,7 +245,7 @@
                   data-life-more
                   class="chip-ink !whitespace-normal text-center t-note text-cinnabar active:scale-95"
                   :aria-label="moreLifeText()"
-                  :data-promised="Math.min(LIFE_RENDER_BATCH, lifePage.hidden)"
+                  :data-promised="lifePromise"
                   @click="showMoreLives"
                 >
                   {{ moreLifeText() }}
@@ -433,7 +433,7 @@
                   data-loss-more
                   class="chip-ink !whitespace-normal text-center t-note text-cinnabar active:scale-95"
                   :aria-label="moreLossText()"
-                  :data-promised="Math.min(LOSS_RENDER_BATCH, lossPage.hidden)"
+                  :data-promised="lossPromise"
                   @click="showMoreLoss"
                 >
                   {{ moreLossText() }}
@@ -537,6 +537,7 @@ import {
   firstNewVisibleIndex,
   listWindow,
   nextListLimit,
+  nextRevealCount,
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
@@ -649,7 +650,7 @@ const lifeLimit = ref(LIFE_RENDER_BATCH);
 const lifePage = computed(() => listWindow(lifeRows.value, lifeLimit.value, LIFE_RENDER_WINDOW));
 
 function moreLifeText(): string {
-  const next = Math.min(LIFE_RENDER_BATCH, lifePage.value.hidden);
+  const next = lifePromise.value;
   return `再看 ${next} 世 · 余 ${lifePage.value.hidden}`;
 }
 
@@ -696,6 +697,8 @@ const nemesisRows = computed(() =>
     }))
     .sort((a, b) => (a.avengedAt ?? 0) - (b.avengedAt ?? 0)),
 );
+/** 这一批真正放出多少件 —— 按钮文案与 data-promised 共用,不许各算一遍 */
+const lifePromise = computed(() => nextRevealCount(lifePage.value.hidden, LIFE_RENDER_BATCH));
 const activeNemeses = computed(() => nemesisRows.value.filter((n) => !n.avengedAt).length);
 
 /** 行迹录:事件余波(世界记忆的最近完成) */
@@ -717,7 +720,7 @@ const lossLimit = ref(LOSS_RENDER_BATCH);
 const lossPage = computed(() => listWindow(lossRows.value, lossLimit.value, LOSS_RENDER_WINDOW));
 
 function moreLossText(): string {
-  const next = Math.min(LOSS_RENDER_BATCH, lossPage.value.hidden);
+  const next = lossPromise.value;
   return `再看 ${next} 则 · 余 ${lossPage.value.hidden}`;
 }
 
@@ -752,6 +755,8 @@ const chainRows = computed(() => chainProgressRows());
 const unfinishedChains = computed(
   () => chainRows.value.filter((c) => !c.finished && !c.broken).length,
 );
+/** 这一批真正放出多少件 —— 按钮文案与 data-promised 共用,不许各算一遍 */
+const lossPromise = computed(() => nextRevealCount(lossPage.value.hidden, LOSS_RENDER_BATCH));
 const fateMeter = computed(() => legacyMeter(unfinishedChains.value, chainRows.value.length));
 
 const milestoneRows = computed(() =>

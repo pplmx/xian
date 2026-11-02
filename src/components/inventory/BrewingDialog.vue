@@ -217,7 +217,7 @@
           data-recipe-more
           class="btn-ghost min-w-0 flex-1 !py-2 !text-body tinylens:basis-full tinylens:whitespace-nowrap"
           :aria-label="moreRecipeText"
-          :data-promised="Math.min(RECIPE_RENDER_BATCH, filteredRecipePage.hidden)"
+          :data-promised="recipePromise"
           @click="showMoreRecipes"
         >
           {{ moreRecipeText }}
@@ -296,6 +296,7 @@ import {
   firstNewVisibleIndex,
   listWindow,
   nextListLimit,
+  nextRevealCount,
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
@@ -349,8 +350,12 @@ const recipeLimit = ref(RECIPE_RENDER_BATCH);
 const filteredRecipePage = computed(() =>
   listWindow(filteredRecipes.value, recipeLimit.value, RECIPE_RENDER_WINDOW),
 );
+/** 这一批真正放出多少件 —— 按钮文案与 data-promised 共用,不许各算一遍 */
+const recipePromise = computed(() =>
+  nextRevealCount(filteredRecipePage.value.hidden, RECIPE_RENDER_BATCH),
+);
 const moreRecipeText = computed(() => {
-  const next = Math.min(RECIPE_RENDER_BATCH, filteredRecipePage.value.hidden);
+  const next = recipePromise.value;
   return `再看 ${next} 张 · 余 ${filteredRecipePage.value.hidden}`;
 });
 const previousRecipeText = computed(

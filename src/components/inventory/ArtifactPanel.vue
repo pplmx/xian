@@ -229,7 +229,7 @@
           data-artifact-more
           class="btn-ghost artifact-ledger__page-action"
           :aria-label="moreArtifactText"
-          :data-promised="Math.min(ARTIFACT_RENDER_BATCH, artifactPage.hidden)"
+          :data-promised="artifactPromise"
           @click="showMoreArtifacts"
         >
           {{ moreArtifactText }}
@@ -275,6 +275,7 @@ import {
   firstNewVisibleIndex,
   listWindow,
   nextListLimit,
+  nextRevealCount,
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
@@ -384,8 +385,12 @@ const artifactLimit = ref(ARTIFACT_RENDER_BATCH);
 const artifactPage = computed(() =>
   listWindow(artifactRows.value, artifactLimit.value, ARTIFACT_RENDER_WINDOW),
 );
+/** 这一批真正放出多少件 —— 按钮文案与 data-promised 共用,不许各算一遍 */
+const artifactPromise = computed(() =>
+  nextRevealCount(artifactPage.value.hidden, ARTIFACT_RENDER_BATCH),
+);
 const moreArtifactText = computed(() => {
-  const next = Math.min(ARTIFACT_RENDER_BATCH, artifactPage.value.hidden);
+  const next = artifactPromise.value;
   return `再看 ${next} 件 · 余 ${artifactPage.value.hidden}`;
 });
 const previousArtifactText = computed(

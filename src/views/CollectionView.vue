@@ -339,7 +339,7 @@
                         type="button"
                         class="collection-paging is-more"
                         :data-collection-more="cat.key"
-                        :data-promised="Math.min(COLLECTION_RENDER_BATCH, cat.hiddenKnown)"
+                        :data-promised="nextRevealCount(cat.hiddenKnown, COLLECTION_RENDER_BATCH)"
                         :aria-label="moreKnownLabel(cat)"
                         @click="showMoreKnown(cat)"
                       >
@@ -442,6 +442,7 @@ import {
   firstNewVisibleIndex,
   listWindow,
   nextListLimit,
+  nextRevealCount,
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
@@ -801,7 +802,7 @@ function setCollectionCategoryOpen(key: string, open: boolean): void {
 }
 
 function moreKnownLabel(cat: { hiddenKnown: number; hiddenNew: number }): string {
-  const next = Math.min(COLLECTION_RENDER_BATCH, cat.hiddenKnown);
+  const next = nextRevealCount(cat.hiddenKnown, COLLECTION_RENDER_BATCH);
   const fresh = cat.hiddenNew > 0 ? ` · 含新得 ${cat.hiddenNew}` : "";
   return `再看 ${next} 件 · 余 ${cat.hiddenKnown}${fresh}`;
 }

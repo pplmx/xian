@@ -179,7 +179,7 @@
               data-title-more
               class="chip-ink !whitespace-normal text-center t-note text-cinnabar active:scale-95"
               :aria-label="moreTitleText()"
-              :data-promised="Math.min(TITLE_RENDER_BATCH, titlePage.hidden)"
+              :data-promised="titlePromise"
               @click="showMoreTitles"
             >
               {{ moreTitleText() }}
@@ -375,7 +375,7 @@
               data-pet-more
               class="chip-ink !whitespace-normal text-center t-note text-cinnabar active:scale-95"
               :aria-label="morePetText()"
-              :data-promised="Math.min(PET_RENDER_BATCH, petPage.hidden)"
+              :data-promised="petPromise"
               @click="showMorePets"
             >
               {{ morePetText() }}
@@ -407,6 +407,7 @@ import {
   firstNewVisibleIndex,
   listWindow,
   nextListLimit,
+  nextRevealCount,
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
@@ -483,9 +484,11 @@ const titleLimit = ref(TITLE_RENDER_BATCH);
 const titlePage = computed(() =>
   listWindow(titleRows.value, titleLimit.value, TITLE_RENDER_WINDOW),
 );
+/** 这一批真正放出多少件 —— 按钮文案与 data-promised 共用,不许各算一遍 */
+const titlePromise = computed(() => nextRevealCount(titlePage.value.hidden, TITLE_RENDER_BATCH));
 
 function moreTitleText(): string {
-  const next = Math.min(TITLE_RENDER_BATCH, titlePage.value.hidden);
+  const next = titlePromise.value;
   return `再看 ${next} 顶 · 余 ${titlePage.value.hidden}`;
 }
 
@@ -616,9 +619,11 @@ const PET_RENDER_BATCH = 12;
 const PET_RENDER_WINDOW = PET_RENDER_BATCH * 2;
 const petLimit = ref(PET_RENDER_BATCH);
 const petPage = computed(() => listWindow(petRows.value, petLimit.value, PET_RENDER_WINDOW));
+/** 这一批真正放出多少件 —— 按钮文案与 data-promised 共用,不许各算一遍 */
+const petPromise = computed(() => nextRevealCount(petPage.value.hidden, PET_RENDER_BATCH));
 
 function morePetText(): string {
-  const next = Math.min(PET_RENDER_BATCH, petPage.value.hidden);
+  const next = petPromise.value;
   return `再看 ${next} 只 · 余 ${petPage.value.hidden}`;
 }
 

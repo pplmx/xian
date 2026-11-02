@@ -22,6 +22,7 @@ import {
   firstNewVisibleIndex,
   listWindow,
   nextListLimit,
+  nextRevealCount,
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
@@ -58,8 +59,12 @@ const candidateLimit = ref(AFFIX_CANDIDATE_RENDER_BATCH);
 const candidatePage = computed(() =>
   listWindow(candidates.value, candidateLimit.value, AFFIX_CANDIDATE_RENDER_WINDOW),
 );
+/** 这一批真正放出多少件 —— 按钮文案与 data-promised 共用,不许各算一遍 */
+const affixPromise = computed(() =>
+  nextRevealCount(candidatePage.value.hidden, AFFIX_CANDIDATE_RENDER_BATCH),
+);
 const moreCandidateText = computed(() => {
-  const next = Math.min(AFFIX_CANDIDATE_RENDER_BATCH, candidatePage.value.hidden);
+  const next = affixPromise.value;
   return `再看 ${next} 件 · 余 ${candidatePage.value.hidden}`;
 });
 const previousCandidateText = computed(
@@ -284,7 +289,7 @@ function doTransfer(): void {
             data-affix-candidate-more
             class="chip-ink !whitespace-nowrap text-center t-note text-cinnabar active:scale-95"
             :aria-label="moreCandidateText"
-            :data-promised="Math.min(AFFIX_CANDIDATE_RENDER_BATCH, candidatePage.hidden)"
+            :data-promised="affixPromise"
             @click="showMoreCandidates"
           >
             {{ moreCandidateText }}

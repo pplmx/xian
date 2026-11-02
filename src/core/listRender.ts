@@ -56,6 +56,29 @@ export function previousListLimit(shown: number, total: number, batch: number): 
   return Math.max(firstPage, previousPage);
 }
 
+/**
+ * 续开这一批会真正放出多少件 —— 末批不满时按真实件数报,不报满一个批量。
+ *
+ * 界面里这个数出现两次:按钮上写着「再看 N 部」,同一枚按钮的 `data-promised`
+ * 也报 N。两处各写一遍 `Math.min(BATCH, hidden)` 时,改批量只改一处就会变成
+ * 「按钮说 24,实际放出 8」—— 而玩家点下去看到的就是那个 8。
+ *
+ * 全仓曾有 27 处各自拼这个算式。收成一枚函数后算法只有一份,界面把同一个数
+ * 同时喂给文案与数据属性即可。
+ */
+export function nextRevealCount(hidden: number, batch: number): number {
+  const remaining = Number.isFinite(hidden) ? Math.max(0, Math.trunc(hidden)) : 0;
+  /*
+   * 批量的三种脏值各有各的落法:
+   * - Infinity 是「不限量」,该报出全部余量;
+   * - 0 / 负数 / NaN 是坏参数,落回 1 件 —— 报 0 的按钮是死的,而旁边还写着「余 N」。
+   * 先判 0 再判有限性,顺序反了会让 0 也走「不限量」。
+   */
+  if (batch === Number.POSITIVE_INFINITY) return remaining;
+  const step = Number.isFinite(batch) && batch > 0 ? Math.max(1, Math.trunc(batch)) : 1;
+  return Math.min(step, remaining);
+}
+
 /** 前翻会真正换回多少件;末页短批不能按完整批量报数。 */
 export function previousListStep(shown: number, total: number, batch: number): number {
   const current = clampCount(shown, total);

@@ -117,7 +117,7 @@
           data-slot-candidate-more
           class="chip-ink !whitespace-normal text-center t-note text-cinnabar active:scale-95"
           :aria-label="moreCandidateText"
-          :data-promised="Math.min(SLOT_CANDIDATE_RENDER_BATCH, candidatePage.hidden)"
+          :data-promised="slotPromise"
           @click="showMoreCandidates"
         >
           {{ moreCandidateText }}
@@ -147,6 +147,7 @@ import {
   firstNewVisibleIndex,
   listWindow,
   nextListLimit,
+  nextRevealCount,
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
@@ -213,8 +214,12 @@ const candidatePage = computed(() =>
   listWindow(pickerRows.value, candidateLimit.value, SLOT_CANDIDATE_RENDER_WINDOW),
 );
 
+/** 这一批真正放出多少件 —— 按钮文案与 data-promised 共用,不许各算一遍 */
+const slotPromise = computed(() =>
+  nextRevealCount(candidatePage.value.hidden, SLOT_CANDIDATE_RENDER_BATCH),
+);
 const moreCandidateText = computed(() => {
-  const next = Math.min(SLOT_CANDIDATE_RENDER_BATCH, candidatePage.value.hidden);
+  const next = slotPromise.value;
   return `再看 ${next} 件 · 余 ${candidatePage.value.hidden}`;
 });
 const previousCandidateText = computed(

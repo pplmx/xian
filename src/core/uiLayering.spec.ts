@@ -925,8 +925,13 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(col?.src).toContain("hiddenKnown");
     expect(col?.src).toContain(':data-collection-more="cat.key"');
     expect(col?.src).toContain(':data-collection-prev="cat.key"');
-    expect(col?.src).toContain(
-      ':data-promised="Math.min(COLLECTION_RENDER_BATCH, cat.hiddenKnown)"',
+    // data-promised 与按钮文案必须同一个数:两处各写一遍 min(BATCH, hidden) 时,
+    // 改批量只改一处就会变成「按钮说 24,实际放出 8」。
+    expect(col?.src, "续开件数要同源(按钮文案与 data-promised)").toContain(
+      ':data-promised="nextRevealCount(cat.hiddenKnown, COLLECTION_RENDER_BATCH)"',
+    );
+    expect(col?.src, "按钮文案也走同一枚函数").toContain(
+      "const next = nextRevealCount(cat.hiddenKnown, COLLECTION_RENDER_BATCH);",
     );
     expect(col?.src).toContain(':aria-label="moreKnownLabel(cat)"');
     expect(col?.src).toContain("hiddenUnknown");

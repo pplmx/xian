@@ -149,7 +149,7 @@
           data-marks-more
           class="chip-ink min-h-[28px] flex-1 basis-[7.5rem] !whitespace-normal text-center t-note text-cinnabar"
           :aria-label="moreMarksText"
-          :data-promised="Math.min(MARKS_RENDER_BATCH, marksPage.hidden)"
+          :data-promised="marksPromise"
           @click="showMoreMarks"
         >
           {{ moreMarksText }}
@@ -201,6 +201,7 @@ import {
   firstNewVisibleIndex,
   listWindow,
   nextListLimit,
+  nextRevealCount,
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
@@ -219,8 +220,10 @@ const MARKS_RENDER_BATCH = 12;
 const MARKS_RENDER_WINDOW = MARKS_RENDER_BATCH * 2;
 const marksLimit = ref(MARKS_RENDER_BATCH);
 const marksPage = computed(() => listWindow(endgame.marks, marksLimit.value, MARKS_RENDER_WINDOW));
+/** 这一批真正放出多少件 —— 按钮文案与 data-promised 共用,不许各算一遍 */
+const marksPromise = computed(() => nextRevealCount(marksPage.value.hidden, MARKS_RENDER_BATCH));
 const moreMarksText = computed(() => {
-  const next = Math.min(MARKS_RENDER_BATCH, marksPage.value.hidden);
+  const next = marksPromise.value;
   return `再看 ${next} 则 · 余 ${marksPage.value.hidden}`;
 });
 const previousMarksText = computed(

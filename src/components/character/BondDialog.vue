@@ -320,7 +320,7 @@
             data-bond-history-more
             class="bond-history__action is-accent"
             :aria-label="morePastBondText()"
-            :data-promised="Math.min(BOND_HISTORY_RENDER_BATCH, pastBondPage.hidden)"
+            :data-promised="bondPromise"
             @click="showMorePastBonds"
           >
             {{ morePastBondText() }}
@@ -362,6 +362,7 @@ import {
   firstNewVisibleIndex,
   listWindow,
   nextListLimit,
+  nextRevealCount,
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
@@ -387,8 +388,12 @@ const pastBondPage = computed(() =>
 );
 const resultRegion = ref<HTMLElement | null>(null);
 
+/** 这一批真正放出多少件 —— 按钮文案与 data-promised 共用,不许各算一遍 */
+const bondPromise = computed(() =>
+  nextRevealCount(pastBondPage.value.hidden, BOND_HISTORY_RENDER_BATCH),
+);
 function morePastBondText(): string {
-  const next = Math.min(BOND_HISTORY_RENDER_BATCH, pastBondPage.value.hidden);
+  const next = bondPromise.value;
   return `再看 ${next} 段 · 余 ${pastBondPage.value.hidden}`;
 }
 

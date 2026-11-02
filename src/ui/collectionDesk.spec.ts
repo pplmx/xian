@@ -130,7 +130,9 @@ describe("藏珍双阁 · 功名入榜，九柜纳珍", () => {
     );
     expect(view).toContain("data-collection-tray");
     expect(view).toContain(':data-collection-prev="cat.key"');
-    expect(view).toContain(':data-promised="Math.min(COLLECTION_RENDER_BATCH, cat.hiddenKnown)"');
+    expect(view, "续开件数与按钮文案同源").toContain(
+      ':data-promised="nextRevealCount(cat.hiddenKnown, COLLECTION_RENDER_BATCH)"',
+    );
     expect(view).toContain("selectedCollectionKey");
     expect(view).toContain("initialOpenKeys[0]");
     expect(view).toContain("catComplete(cat)");

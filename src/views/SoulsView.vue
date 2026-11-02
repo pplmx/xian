@@ -553,6 +553,7 @@ import {
   firstNewVisibleIndex,
   listWindow,
   nextListLimit,
+  nextRevealCount,
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
@@ -845,7 +846,7 @@ const refinablePage = computed(() =>
 );
 
 function moreListText(hidden: number, unit: string): string {
-  const next = Math.min(SOUL_RENDER_BATCH, hidden);
+  const next = nextRevealCount(hidden, SOUL_RENDER_BATCH);
   return `再看 ${next} ${unit} · 余 ${hidden}`;
 }
 

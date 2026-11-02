@@ -642,7 +642,7 @@ import {
   nextInventoryLimit,
   previousInventoryLimit,
 } from "@/core/inventoryRender";
-import { firstNewVisibleIndex, previousListStep } from "@/core/listRender";
+import { firstNewVisibleIndex, nextRevealCount, previousListStep } from "@/core/listRender";
 import { useLoreStore } from "@/stores/lore";
 import { formatGN, formatExact, formatNum, formatPercent } from "@/utils/format";
 import { colorWithAlpha } from "@/ui/colorVar";
@@ -813,6 +813,8 @@ const itemPage = computed(() => inventoryWindow(visibleItems.value, itemRenderLi
 const hiddenNewCount = computed(
   () => visibleItems.value.slice(itemPage.value.shown).filter((row) => row.isNew).length,
 );
+/** 这一批真正放出多少件 —— 按钮文案与 data-promised 共用,不许各算一遍 */
+const itemPromise = computed(() => nextRevealCount(itemPage.value.hidden, INVENTORY_RENDER_BATCH));
 const itemListHint = computed(() => {
   const total = visibleItems.value.length;
   const range = `现看 ${itemPage.value.start + 1}–${itemPage.value.shown}`;
@@ -821,7 +823,7 @@ const itemListHint = computed(() => {
   return `${total} 件${newText} · ${range}`;
 });
 const moreItemsLabel = computed(() => {
-  const next = Math.min(INVENTORY_RENDER_BATCH, itemPage.value.hidden);
+  const next = itemPromise.value;
   return `再看 ${next} 件 · 余 ${itemPage.value.hidden}${hiddenNewCount.value ? ` · 新入包 ${hiddenNewCount.value}` : ""}`;
 });
 const previousItemsLabel = computed(

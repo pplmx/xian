@@ -38,7 +38,7 @@ import {
   nextInventoryLimit,
   previousInventoryLimit,
 } from "@/core/inventoryRender";
-import { firstNewVisibleIndex, previousListStep } from "@/core/listRender";
+import { firstNewVisibleIndex, nextRevealCount, previousListStep } from "@/core/listRender";
 import { bountyRemainingSec, equipBountyReward } from "@/core/bountyService";
 import { bountyStatus, marketOverview } from "@/core/marketOverview";
 import { notify } from "@/core/notify";
@@ -401,8 +401,12 @@ const equipCandidateLimit = ref(INVENTORY_RENDER_BATCH);
 const equipCandidatePage = computed(() =>
   inventoryWindow(equipCandidates.value, equipCandidateLimit.value, MARKET_RENDER_WINDOW),
 );
+/** 这一批真正放出多少件 —— 按钮文案与 data-promised 共用,不许各算一遍 */
+const equipPromise = computed(() =>
+  nextRevealCount(equipCandidatePage.value.hidden, INVENTORY_RENDER_BATCH),
+);
 const equipCandidateMoreLabel = computed(() => {
-  const next = Math.min(INVENTORY_RENDER_BATCH, equipCandidatePage.value.hidden);
+  const next = equipPromise.value;
   return `再看 ${next} 件 · 余 ${equipCandidatePage.value.hidden}`;
 });
 const equipCandidatePrevLabel = computed(
@@ -434,8 +438,12 @@ const consignLimit = ref(INVENTORY_RENDER_BATCH);
 const consignPage = computed(() =>
   inventoryWindow(inventory.bagItems, consignLimit.value, MARKET_RENDER_WINDOW),
 );
+/** 这一批真正放出多少件 —— 按钮文案与 data-promised 共用,不许各算一遍 */
+const consignPromise = computed(() =>
+  nextRevealCount(consignPage.value.hidden, INVENTORY_RENDER_BATCH),
+);
 const consignMoreLabel = computed(() => {
-  const next = Math.min(INVENTORY_RENDER_BATCH, consignPage.value.hidden);
+  const next = consignPromise.value;
   return `再看 ${next} 件 · 余 ${consignPage.value.hidden}`;
 });
 const consignPrevLabel = computed(
@@ -918,7 +926,7 @@ function bountyReady(o: BountySlot): boolean {
             <button
               v-if="equipCandidatePage.hidden > 0"
               data-market-more="equip"
-              :data-promised="Math.min(INVENTORY_RENDER_BATCH, equipCandidatePage.hidden)"
+              :data-promised="equipPromise"
               class="btn-ghost min-h-[28px] flex-1 !py-1 text-note"
               :aria-label="equipCandidateMoreLabel"
               @click="showMoreEquipCandidates"
@@ -1033,7 +1041,7 @@ function bountyReady(o: BountySlot): boolean {
                   <button
                     v-if="consignPage.hidden > 0"
                     data-market-more="consign"
-                    :data-promised="Math.min(INVENTORY_RENDER_BATCH, consignPage.hidden)"
+                    :data-promised="consignPromise"
                     class="btn-ghost min-h-[28px] flex-1 !py-1 text-note"
                     :aria-label="consignMoreLabel"
                     @click="showMoreConsign"
