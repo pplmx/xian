@@ -108,6 +108,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | 读源一种写法 | 界面契约测试读文件只走 `@/test/readSource`(`src/ui/specReadSource.spec.ts` 守)。`readSource` 里带着「`src/style.css` 要走 readStyleCss() 拼装」这条分支 —— 直接读那份拿到的只是按路由拆过的残卷,而断言照样会绿。目录遍历同理由 `walkFiles(dir, 谓词)` 承担:八份各自的 `walk` 只差一行扩展名判断,而那正是最容易抄错的(`.spec.ts` 少个 s、把 `.d.ts` 当源码),故把差异摊成具名谓词 `isSourceFile` / `isTypeScriptOrVue` / `isVueFile` / `isSpecFile` / `isSourceOrScript` |
 | 首屏预算 | 冷启动解码字节 / FCP / 楷体换上三条上限(`scripts/first-paint.mjs`,自带静态服务与 4G 限速) |
 | 文档与实现一致 | `scripts/docs-check.mjs`(已并入 `bun run check`):文档里引用的 `bun run` 脚本必须真存在、反引号路径与相对链接必须存在、「全量 N 个 spec」必须等于真实文件数 —— 实测抓到过一次 25% 的漂移(文档写着 199 个 spec 时,实际已是 294) |
+| 静态扫描的假阳性 | 用正则扫界面容易「抓到」一批并不存在的问题,本仓实测过的几类:① 遍历使用 —— `VEINS` / `PETS` 的 id 在代码里搜不到字面量,但由 `v-for` 逐条渲染;② 文件内自用 —— `COMBO_ARTS` 这类导出只在本文件被读,「仅文件内使用的导出」全仓有七百多个,批量删不可行;③ 值域巧合 —— 「界面里与数据常量同值的裸数字」命中 438 处,几乎全是无关的巧合;④ 选择器两半都不存在 —— 旧章首查询用的是已删掉的 `.section-title`,但它是**金丝雀**(哪天有人抄回旧组件就会红),不是空转;⑤ 逐行回看找祖先 —— 装饰 SVG 的 `aria-hidden` 常挂在几十行之上的容器上,回看窗口太窄会误判,写成标签栈又会在单行多标签/自闭合标签上算错。结论:扫描只用来**找线索**,判据必须能指名到具体行与具体理由 |
 | 门禁自检 | 门本身也要被查:九道门失败时必须非零退出、冒烟与排版门的具名场景被删时必须红(`src/core/gateWiring.spec.ts`);排版门的五档视口与 200% 缩放档不许缩水(`layoutMeasure.spec.ts`);盘上的 spec 一条用例都没跑、或压根没被跑到,都算失败(`test:report`);只在 tag 上跑的路径(发版流水线、Android 签名、Release 正文)有静态判据(`releasePipeline.spec.ts`),发版体检 `bun run release:check` 的命令与接线也有判据 —— 「门在跑」不等于「有保护」:失败时不出声的门,只是把绿勾借给了没人看着的东西 |
 | 平衡审计 | 经济闭环、战力膨胀、修为收入、曲线节奏各有模拟器与阈值断言(`*Sim.spec` / `*Audit.spec`) |
 | 库的发布面 | 万象引擎另有三条:产物能被 Node import、发布包真装一遍并按包名 import、独立成库后仍能编译跑用例 |
