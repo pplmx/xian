@@ -96,7 +96,7 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
   it("手机总案与目录单列,720 起总案与行藏并读,桌面上三组目录并排", () => {
     const css = source("src/style.css");
     const start = css.indexOf(".character-dossier {");
-    const end = css.indexOf("/*\n * 开关(.toggle-ink)", start);
+    const end = css.indexOf("/*\n * 分段选择(.ink-choice)", start);
     const characterCss = css.slice(start, end);
 
     expect(start, "道躯样式段要能定位到").toBeGreaterThan(-1);

@@ -46,30 +46,36 @@
       </div>
 
       <div class="folio-head__ledger flex shrink-0 items-center tabular">
-        <span
-          class="folio-head__ledger-entry flex items-center whitespace-nowrap compact:px-1"
+        <TapNumber
+          :value="resources.spiritStone"
           title="灵石"
-          :aria-label="`灵石 ${formatGN(resources.spiritStone)}`"
+          data-resource-detail="stone"
+          aria-haspopup="dialog"
+          :aria-label="`灵石 ${formatGN(resources.spiritStone)}，查看精确值`"
+          class="folio-head__ledger-entry folio-head__resource-number !mx-0 !my-0 !min-h-[40px] !min-w-[30px] !px-0.5 !no-underline compact:px-1"
         >
           <GameIcon
             name="gem"
             :size="13"
             class="folio-head__resource-icon folio-head__resource-icon--stone"
           />
-          <span>{{ formatGN(resources.spiritStone) }}</span>
-        </span>
-        <span
-          class="folio-head__ledger-entry flex items-center whitespace-nowrap compact:px-1"
+          <span class="folio-head__resource-value">{{ formatGN(resources.spiritStone) }}</span>
+        </TapNumber>
+        <TapNumber
+          :value="Math.floor(resources.qi)"
           title="灵气"
-          :aria-label="`灵气 ${formatNum(Math.floor(resources.qi))}`"
+          data-resource-detail="qi"
+          aria-haspopup="dialog"
+          :aria-label="`灵气 ${formatNum(Math.floor(resources.qi))}，查看精确值`"
+          class="folio-head__ledger-entry folio-head__resource-number !mx-0 !my-0 !min-h-[40px] !min-w-[30px] !px-0.5 !no-underline compact:px-1"
         >
           <GameIcon
             name="wind"
             :size="13"
             class="folio-head__resource-icon folio-head__resource-icon--qi"
           />
-          <span>{{ formatNum(Math.floor(resources.qi)) }}</span>
-        </span>
+          <span class="folio-head__resource-value">{{ formatNum(Math.floor(resources.qi)) }}</span>
+        </TapNumber>
         <!-- 只有图标的入口必须自带名字:否则读屏只会念「链接」,自动化也点不着它 -->
         <RouterLink
           to="/settings"
@@ -94,6 +100,7 @@ import { Capacitor } from "@capacitor/core";
 import { useNativeInsets } from "@/composables/useNativeInsets";
 import { navigationPositionOf } from "@/ui/navigation";
 import GameIcon from "./GameIcon.vue";
+import TapNumber from "./TapNumber.vue";
 
 const emit = defineEmits<{ openAtlas: [] }>();
 const player = usePlayerStore();

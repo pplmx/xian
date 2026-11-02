@@ -354,7 +354,7 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
   it("手机总账两栏,960 起四栏并读,220 以下星图读数与门径退单列", () => {
     const css = source("src/style.css");
     const start = css.indexOf(".celestial-pulse {");
-    const end = css.indexOf("/*\n * 开关", start);
+    const end = css.indexOf("/*\n * 分段选择(.ink-choice)", start);
     const celestialCss = css.slice(start, end);
 
     expect(start, "天界样式段要能定位到").toBeGreaterThan(-1);

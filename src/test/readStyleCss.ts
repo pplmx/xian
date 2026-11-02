@@ -31,7 +31,7 @@ const PAGES = [
  */
 export function readStyleCss(): string {
   const base = readFileSync(resolve(ROOT, "src/style.css"), "utf8");
-  const tailMarker = "/*\n * 开关(.toggle-ink)";
+  const tailMarker = "/*\n * 分段选择(.ink-choice)";
   const tailAt = base.indexOf(tailMarker);
   if (tailAt < 0) throw new Error("style.css 里找不到共享尾段标记");
 

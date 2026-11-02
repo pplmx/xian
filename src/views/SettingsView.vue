@@ -55,17 +55,18 @@
         <div class="settings-register__body">
           <div class="settings-control">
             <div class="settings-control__head">
-              <label for="settings-music" class="settings-control__label">背景音乐</label>
+              <span class="settings-control__label">背景音乐</span>
               <span class="settings-control__value tabular">
-                {{ settings.musicOn ? soundReadout.music : "静" }}
+                {{ settings.musicOn ? `开 · ${soundReadout.music}` : "静音" }}
               </span>
-              <input
-                id="settings-music"
-                v-model="settings.musicOn"
-                type="checkbox"
-                class="toggle-ink"
-              />
             </div>
+            <InkChoice
+              label="背景音乐开关"
+              name="music"
+              :model-value="settings.musicOn ? 'on' : 'off'"
+              :options="AUDIO_OPTIONS"
+              @update:model-value="settings.musicOn = $event === 'on'"
+            />
             <!--
               min-w-0:range 的原生宽度(约 129px)是它作为可替换元素的自动最小尺寸,
               光有 grow 压不下去 —— 200% 字号(布局视口 195px)下整行会被它顶出去 6px。
@@ -87,17 +88,18 @@
 
           <div class="settings-control">
             <div class="settings-control__head">
-              <label for="settings-sfx" class="settings-control__label">音效</label>
+              <span class="settings-control__label">音效</span>
               <span class="settings-control__value tabular">
-                {{ settings.sfxOn ? soundReadout.sfx : "静" }}
+                {{ settings.sfxOn ? `开 · ${soundReadout.sfx}` : "静音" }}
               </span>
-              <input
-                id="settings-sfx"
-                v-model="settings.sfxOn"
-                type="checkbox"
-                class="toggle-ink"
-              />
             </div>
+            <InkChoice
+              label="音效开关"
+              name="sfx"
+              :model-value="settings.sfxOn ? 'on' : 'off'"
+              :options="AUDIO_OPTIONS"
+              @update:model-value="settings.sfxOn = $event === 'on'"
+            />
             <div v-if="settings.sfxOn" class="settings-level">
               <span class="settings-level__edge">轻</span>
               <input
@@ -138,18 +140,13 @@
               <span class="settings-control__label">夜间模式</span>
               <span class="settings-control__value">{{ themeReadout.label }}</span>
             </div>
-            <div role="group" aria-label="夜间模式" class="settings-segments">
-              <button
-                v-for="o in THEME_OPTIONS"
-                :key="o.id"
-                type="button"
-                :aria-pressed="settings.theme === o.id"
-                class="settings-segment"
-                @click="settings.theme = o.id"
-              >
-                {{ o.label }}
-              </button>
-            </div>
+            <InkChoice
+              label="夜间模式"
+              name="theme"
+              :model-value="settings.theme"
+              :options="THEME_OPTIONS"
+              @update:model-value="setTheme"
+            />
           </div>
 
           <div class="settings-control">
@@ -157,18 +154,13 @@
               <span class="settings-control__label">战报速度</span>
               <span class="settings-control__value tabular">×{{ settings.battleSpeed }}</span>
             </div>
-            <div role="group" aria-label="战报速度" class="settings-segments">
-              <button
-                v-for="s in [1, 2, 4] as const"
-                :key="s"
-                type="button"
-                :aria-pressed="settings.battleSpeed === s"
-                class="settings-segment"
-                @click="settings.battleSpeed = s"
-              >
-                ×{{ s }}
-              </button>
-            </div>
+            <InkChoice
+              label="战报速度"
+              name="battle-speed"
+              :model-value="String(settings.battleSpeed)"
+              :options="SPEED_OPTIONS"
+              @update:model-value="setBattleSpeed"
+            />
           </div>
         </div>
       </section>
@@ -193,14 +185,18 @@
         <div class="settings-register__body">
           <div class="settings-control">
             <div class="settings-control__head">
-              <label for="settings-motion" class="settings-control__label">减少动效</label>
-              <input
-                id="settings-motion"
-                v-model="settings.reduceMotion"
-                type="checkbox"
-                class="toggle-ink"
-              />
+              <span class="settings-control__label">减少动效</span>
+              <span class="settings-control__value">
+                {{ settings.reduceMotion ? "动效静" : "动效开" }}
+              </span>
             </div>
+            <InkChoice
+              label="动效开关"
+              name="motion"
+              :model-value="settings.reduceMotion ? 'reduced' : 'full'"
+              :options="MOTION_OPTIONS"
+              @update:model-value="settings.reduceMotion = $event === 'reduced'"
+            />
             <p class="settings-control__hint">
               入场、进度与战报回放少走过场，需要结果的步骤直接给结果。
             </p>
@@ -208,14 +204,18 @@
 
           <div class="settings-control">
             <div class="settings-control__head">
-              <label for="settings-dnd" class="settings-control__label">遇事勿扰</label>
-              <input
-                id="settings-dnd"
-                v-model="settings.dndEvents"
-                type="checkbox"
-                class="toggle-ink"
-              />
+              <span class="settings-control__label">遇事勿扰</span>
+              <span class="settings-control__value">
+                {{ settings.dndEvents ? "勿扰" : "照常" }}
+              </span>
             </div>
+            <InkChoice
+              label="遇事开关"
+              name="dnd"
+              :model-value="settings.dndEvents ? 'quiet' : 'normal'"
+              :options="DND_OPTIONS"
+              @update:model-value="settings.dndEvents = $event === 'quiet'"
+            />
             <!--
               功能 hint:这开关开着是「静默的」(际遇自动结清、弹窗永不出现),只留一个勾
               玩家会以为是际遇没了 —— 历练页有开着时的完整提示与就地关掉(见 explorationDnd
@@ -580,6 +580,7 @@ import AboutDialog from "@/components/common/AboutDialog.vue";
 import ProgressionDialog from "@/components/common/ProgressionDialog.vue";
 import InstallToHomeNotice from "@/components/common/InstallToHomeNotice.vue";
 import SettingsCompass from "@/components/common/SettingsCompass.vue";
+import InkChoice from "@/components/common/InkChoice.vue";
 import { DIAG_MAX, useDiagStore } from "@/stores/diag";
 import { backupDesk, diagDesk, soundDesk, themeDesk } from "@/ui/settingsDesk";
 
@@ -648,11 +649,43 @@ const backupPrompt = computed(() =>
   shouldPromptBackup(settings.lastExportAt, game.createdAt, now.value),
 );
 
-const THEME_OPTIONS = [
-  { id: "auto", label: "跟随系统" },
-  { id: "light", label: "日间" },
-  { id: "dark", label: "夜间" },
+type ChoiceOption = { value: string; label: string };
+
+const AUDIO_OPTIONS: readonly ChoiceOption[] = [
+  { value: "off", label: "静音" },
+  { value: "on", label: "开声" },
 ] as const;
+
+const THEME_OPTIONS: readonly ChoiceOption[] = [
+  { value: "auto", label: "跟随系统" },
+  { value: "light", label: "日间" },
+  { value: "dark", label: "夜间" },
+] as const;
+
+const SPEED_OPTIONS: readonly ChoiceOption[] = [
+  { value: "1", label: "×1" },
+  { value: "2", label: "×2" },
+  { value: "4", label: "×4" },
+] as const;
+
+const MOTION_OPTIONS: readonly ChoiceOption[] = [
+  { value: "reduced", label: "减少" },
+  { value: "full", label: "照常" },
+] as const;
+
+const DND_OPTIONS: readonly ChoiceOption[] = [
+  { value: "normal", label: "照常" },
+  { value: "quiet", label: "勿扰" },
+] as const;
+
+function setTheme(value: string): void {
+  if (value === "auto" || value === "light" || value === "dark") settings.theme = value;
+}
+
+function setBattleSpeed(value: string): void {
+  const speed = Number(value);
+  if (speed === 1 || speed === 2 || speed === 4) settings.battleSpeed = speed;
+}
 
 const resetConfirm = ref(false);
 const importConfirm = ref(false);

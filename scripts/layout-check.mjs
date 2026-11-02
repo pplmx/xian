@@ -463,7 +463,10 @@ async function clearOverlays(page) {
 /** 把 formatGN 渲染出来的文本还原成数值(万/亿/兆…按 10^4 递进) */
 async function readFormatted(page, title) {
   return page.evaluate((t) => {
-    const el = document.querySelector(`[title="${t}"]`);
+    const detailKey = t === "灵石" ? "stone" : t === "灵气" ? "qi" : "";
+    const el =
+      document.querySelector(`[title="${t}"]`) ||
+      (detailKey ? document.querySelector(`[data-resource-detail="${detailKey}"]`) : null);
     if (!el) return { text: `(找不到 ${t})`, value: null };
     const text = (el.textContent || "").trim().replace(/,/g, "");
     const UNITS = ["万", "亿", "兆", "京", "垓", "秭", "穰", "沟", "涧", "正", "载", "极"];
@@ -1164,11 +1167,11 @@ async function measurePage(page) {
           const on = els.filter((e) => e.getAttribute("aria-selected") === "true").length;
           if (on !== 1) out.push(`页签组(${els.length} 项)里有 ${on} 个选中`);
         }
-        // 设置页的两组选择(主题、战报速度)是明文约定:少了哪一组这里就红
+        // 设置页六组选择(声息×2、观照×2、行止×2)是明文约定:少了哪一组这里就红
         if (location.hash.startsWith("#/settings")) {
           const pressed = document.querySelectorAll("[aria-pressed]").length;
-          if (pressed < 6)
-            out.push(`设置页的选择控件只有 ${pressed} 个带 aria-pressed(主题 3 + 速度 3)`);
+          if (pressed < 14)
+            out.push(`设置页的选择控件只有 ${pressed} 个带 aria-pressed(六组共 14 项)`);
         }
         return out.slice(0, 3);
       })(),
@@ -2645,6 +2648,21 @@ async function taskPageTour(vp) {
           trail: !!document.querySelector("[data-settings-trail]"),
           index: !!document.querySelector("[data-settings-index]"),
           compass: !!document.querySelector("[data-settings-compass]"),
+          choices: [...document.querySelectorAll("[data-ink-choice]")].map((group) => {
+            const buttons = [...group.querySelectorAll("button")];
+            const rect = group.getBoundingClientRect();
+            return {
+              name: group.getAttribute("data-ink-choice") || "",
+              count: buttons.length,
+              pressed: buttons.filter((button) => button.getAttribute("aria-pressed") === "true")
+                .length,
+              minHeight: buttons.length
+                ? Math.min(...buttons.map((button) => button.getBoundingClientRect().height))
+                : 0,
+              overflow: group.scrollWidth > group.clientWidth + 1 || rect.width <= 0,
+            };
+          }),
+          checkboxes: document.querySelectorAll('input[type="checkbox"]').length,
         };
       });
       checked += 1;
@@ -2678,6 +2696,30 @@ async function taskPageTour(vp) {
       }
       if (!settingsDesk.archive || !settingsDesk.trail || !settingsDesk.index) {
         failures.push(`[${vp.tag}] /settings 存续、留痕或卷末缺了一章`);
+      }
+      if (settingsDesk.checkboxes > 0) {
+        failures.push(`[${vp.tag}] /settings 又出现 ${settingsDesk.checkboxes} 个原生 checkbox`);
+      }
+      if (
+        settingsDesk.choices.map((group) => group.name).join(",") !==
+        "music,sfx,theme,battle-speed,motion,dnd"
+      ) {
+        failures.push(
+          `[${vp.tag}] /settings 六组账签顺序不对:${settingsDesk.choices
+            .map((group) => group.name)
+            .join(" / ")}`,
+        );
+      }
+      const brokenChoices = settingsDesk.choices.filter(
+        (group) =>
+          group.count < 2 || group.pressed !== 1 || group.minHeight < 39.5 || group.overflow,
+      );
+      if (brokenChoices.length) {
+        failures.push(
+          `[${vp.tag}] /settings 账签没有一枚选中、40px 触达或出现横向溢出:${JSON.stringify(
+            brokenChoices,
+          )}`,
+        );
       }
       if (
         !settingsDesk.register ||
@@ -7581,15 +7623,18 @@ async function taskReduceMotion() {
     }
     await page.goto(INDEX + "#" + "/settings", { waitUntil: "load" });
     await page.waitForTimeout(700);
-    const box = page.getByLabel("减少动效");
-    if ((await box.count()) === 0) failures.push("[390] 减动效场景:设置页找不到「减少动效」开关");
+    const motionChoice = page.locator('[data-ink-choice="motion"]');
+    const reduceMotion = motionChoice.getByRole("button", { name: "减少" });
+    const fullMotion = motionChoice.getByRole("button", { name: "照常" });
+    if ((await reduceMotion.count()) === 0)
+      failures.push("[390] 减动效场景:设置页找不到「减少」账签");
     else {
-      await box.check({ timeout: 2500 }).catch(() => {});
+      await reduceMotion.click({ timeout: 2500 }).catch(() => {});
       await page.waitForTimeout(400);
       const off = await movingCount();
       if (off !== 0)
         failures.push(`[390] 减动效场景:开了「减少动效」仍有 ${off} 个元素在动(开关是摆设)`);
-      await box.uncheck({ timeout: 2500 }).catch(() => {});
+      await fullMotion.click({ timeout: 2500 }).catch(() => {});
       await page.waitForTimeout(400);
       const back = await movingCount();
       if (back === 0)
@@ -7597,6 +7642,19 @@ async function taskReduceMotion() {
       console.log(
         `\n减动效:默认 ${before} 个在动 → 打开开关 ${off} 个 → 关回 ${back} 个(音效开着点了一路,无异常)`,
       );
+    }
+    const stone = page.locator('[data-resource-detail="stone"]');
+    if ((await stone.count()) === 0) {
+      failures.push("[390] 页眉灵石没有做成精确值入口");
+    } else {
+      await stone.click({ timeout: 2500 });
+      const detail = page.getByRole("dialog", { name: "灵石" });
+      await detail.waitFor({ state: "visible", timeout: 2500 }).catch(() => {});
+      const body = (await detail.textContent().catch(() => "")) || "";
+      if (!body.includes("精确值") || !/\d{1,3}(?:,\d{3})+(?:\.\d+)?/.test(body)) {
+        failures.push(`[390] 页眉灵石没有展开精确值:«${body.slice(0, 80)}»`);
+      }
+      await page.keyboard.press("Escape");
     }
     if (pageErrors.length)
       failures.push(`[390] 减动效场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);

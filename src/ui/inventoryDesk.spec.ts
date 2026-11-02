@@ -376,7 +376,7 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
   it("手机上检点仍是一册账,360 起读数并读,220 以下整册退单列", () => {
     const css = source("src/style.css");
     const start = css.indexOf("/*\n   * 行囊续卷");
-    const end = css.indexOf("/*\n * 开关(.toggle-ink)", start);
+    const end = css.indexOf("/*\n * 分段选择(.ink-choice)", start);
     const inventoryCss = css.slice(start, end);
 
     expect(start, "行囊续卷样式段要能定位到").toBeGreaterThan(-1);

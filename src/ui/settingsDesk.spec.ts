@@ -153,7 +153,7 @@ describe("天机案 · 设置卷首与三案同读此刻", () => {
   it("手机逐章续排、620 两列、960 三列,220 以下章态、动作与选项退整行", () => {
     const css = source("src/style.css");
     const start = css.indexOf("/*\n   * 天机案");
-    const end = css.indexOf("/*\n * 开关(.toggle-ink)", start);
+    const end = css.indexOf("/*\n * 分段选择(.ink-choice)", start);
     const settingsCss = css.slice(start, end);
 
     expect(start, "天机样式段要能定位到").toBeGreaterThan(-1);
@@ -173,9 +173,27 @@ describe("天机案 · 设置卷首与三案同读此刻", () => {
     expect(settingsCss).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,3200}\.settings-archive__actions,[\s\S]{0,160}\.settings-trail__actions\s*\{[\s\S]{0,100}minmax\(0, 1fr\)/,
     );
-    expect(settingsCss).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,3600}\.settings-segment\s*\{[\s\S]{0,100}flex-basis:\s*100%/,
+    expect(css).toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,900}\.ink-choice__option\s*\{[\s\S]{0,100}flex-basis:\s*100%/,
     );
+  });
+
+  it("六组设置选择共用可点账签,不再留 38×22 的小号开关", () => {
+    const view = source("src/views/SettingsView.vue");
+    const choice = source("src/components/common/InkChoice.vue");
+    const css = source("src/style.css");
+
+    expect(view.match(/<InkChoice\b/g) ?? [], "声息/观照/行止共六组选择").toHaveLength(6);
+    expect(view, "设置页不再保留原生 checkbox").not.toContain('type="checkbox"');
+    expect(view, "旧开关类名不得回流").not.toContain("toggle-ink");
+    expect(choice, "每个选项都报同一个 aria-pressed 事实").toContain(
+      ':aria-pressed="modelValue === option.value"',
+    );
+    expect(choice, "每组选择都有可读组名").toContain('role="group" :aria-label="label"');
+    expect(css, "选项触达高度抬到 40px").toMatch(
+      /\.ink-choice__option\s*\{[\s\S]{0,180}min-height:\s*40px;/,
+    );
+    expect(css, "旧 toggle-ink 样式整层退场").not.toContain(".toggle-ink");
   });
 
   it("存续与留痕动作守住 28px,极窄档仍逐枚占满整行", () => {
@@ -197,7 +215,7 @@ describe("天机案 · 设置卷首与三案同读此刻", () => {
     const css = source("src/style.css");
     const layout = source("scripts/layout-check.mjs");
     const start = css.indexOf("/*\n   * 天机案");
-    const end = css.indexOf("/*\n * 开关(.toggle-ink)", start);
+    const end = css.indexOf("/*\n * 分段选择(.ink-choice)", start);
     const settingsCss = css.slice(start, end);
 
     expect(view).toContain("data-settings-afterword");

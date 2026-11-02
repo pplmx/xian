@@ -169,10 +169,19 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     expect(top, "位置仍读同一份玄枢落点").toContain("data-folio-position");
     expect(top, "手机书首不再保留第二行位置签").not.toContain("data-folio-trail");
     expect(top, "天幕带要有一道纸面星轨收口").toContain("folio-head__aether-thread");
+    const stoneDetailAt = top.indexOf('data-resource-detail="stone"');
+    const qiDetailAt = top.indexOf('data-resource-detail="qi"');
+    expect(stoneDetailAt, "灵石要能点开精确值").toBeGreaterThan(top.indexOf("<TapNumber"));
+    expect(qiDetailAt, "灵气也要能点开精确值").toBeGreaterThan(stoneDetailAt);
+    expect(top, "资源读数不再留不可点的裸 span").not.toMatch(
+      /class="folio-head__ledger-entry flex[\s\S]{0,220}<span>\{\{ format(?:GN|Num)/,
+    );
+    expect(top, "可点资源仍要报清读数与用途").toContain("查看精确值");
     expect(dock, "底栏要换成章印式导航").toContain("folio-dock--seal-rail");
     expect(dock, "底栏不再留旧实线边框").not.toContain("border-t border-transparent");
     expect(dock, "章印导航要有一层纸面aura").toContain("bottom-dock__aura");
     expect(css, "旧深墨书口样式不再存在").not.toContain(".folio-head--ribbon");
+    expect(css, "页眉资源值要点出可展开的书面线").toContain(".folio-head__resource-value");
     expect(css, "手机外壳贴满阅读面，不再像浮在桌面上的卡片").toMatch(
       /\.app-shell\s*\{[\s\S]{0,400}?isolation:\s*isolate;[\s\S]{0,160}?box-shadow:\s*none;/,
     );
