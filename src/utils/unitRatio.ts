@@ -32,6 +32,11 @@ export function unitRatio(value: number): number {
  *
  * 仍返回字符串而不是数字:调用点要的就是能直接塞进 `style` 的值,
  * 中间那一步数字没有别的用途。
+ *
+ * 与 `format/@utils formatPercent` 的分工(两者输入刻度相同,都是 0~1):
+ *  - `percentWidth` 用来画:**越界夹住**(50 → 100%),因为不存在 5000% 宽的条;
+ *  - `formatPercent` 用来说:不夹取(50 → "5000%"),因为读数失真的警告
+ *    比强行掰回 100% 更有价值,脏值则显示 "--"。
  */
 export function percentWidth(value: number): string {
   return `${unitRatio(value) * 100}%`;

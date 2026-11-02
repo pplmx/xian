@@ -10,6 +10,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { ROOT, walkFiles } from "@/test/readSource";
 import { clampPercent, percentWidth, unitRatio } from "./unitRatio";
+import { formatPercent } from "@/utils/format";
 
 describe("unitRatio · 夹到 0~1", () => {
   it("区间内的值原样通过", () => {
@@ -124,5 +125,20 @@ describe("clampPercent · 百分数刻度的那把尺", () => {
       if (/Math\.max\(\s*0\s*,\s*Math\.min\(\s*100\s*,/.test(body)) offenders.push(file);
     }
     expect(offenders, "这些文件又手写了一遍 0~100 夹取 —— 改用 clampPercent").toEqual([]);
+  });
+});
+
+describe("两个百分比函数的分工", () => {
+  it("画的会夹住,说的不夹 —— 各自选得有理由", () => {
+    // 同一个输入,一条是「宽度」,一条是「读数」:越界时该掰回还是该示警,答案不同
+    expect(percentWidth(50), "不存在 5000% 宽的条,夹到满格").toBe("100%");
+    expect(formatPercent(50), "读数越界要示警,不该悄悄掰回 100%").toBe("5000%");
+    expect(percentWidth(0.5)).toBe("50%");
+    expect(formatPercent(0.5)).toBe("50%");
+  });
+
+  it("脏值两者都不吐 NaN", () => {
+    expect(percentWidth(Number.NaN)).toBe("0%");
+    expect(formatPercent(Number.NaN)).toBe("--");
   });
 });
