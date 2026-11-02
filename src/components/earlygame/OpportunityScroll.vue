@@ -88,6 +88,7 @@ import { computed } from "vue";
 import { URGENT_COUNTDOWN_SEC } from "@/data/constants";
 import { cnNumber, formatCountdown } from "@/utils/format";
 import BaseModal from "@/components/common/BaseModal.vue";
+import { clampPercent } from "@/utils/unitRatio";
 
 interface OpportunityChoice {
   label: string;
@@ -118,7 +119,7 @@ const emit = defineEmits<{
 const urgent = computed(() => props.remainingSec <= URGENT_COUNTDOWN_SEC);
 const remainingPercent = computed(() => {
   if (props.totalSec <= 0) return 0;
-  return Math.max(0, Math.min(100, (props.remainingSec / props.totalSec) * 100));
+  return clampPercent((props.remainingSec / props.totalSec) * 100);
 });
 </script>
 

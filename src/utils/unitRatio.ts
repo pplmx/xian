@@ -36,3 +36,19 @@ export function unitRatio(value: number): number {
 export function percentWidth(value: number): string {
   return `${unitRatio(value) * 100}%`;
 }
+
+/**
+ * 「已经是百分数(0~100)」的那种夹取 —— 与 `unitRatio` 同病同药,只是刻度不同。
+ *
+ * 全仓 `Math.max(0, Math.min(100, x))` 写了九处:身上盘的扇段长度、
+ * 好感度表的仪表目标、洞府进度、背包容量、学徒进度、限时券的剩余百分比……
+ * 与 `unitRatio` 一样,`NaN` 会原样穿过去,而这些数几乎都被拿去拼 CSS。
+ *
+ * 两个刻度分开两个函数,是因为混用它们不会有编译错误:把 0~1 的数喂给
+ * 这里会得到「1%」,反过来会得到「100」——都不报错,只是画错。
+ * 名字里带 Percent 的就是 0~100 的那种。
+ */
+export function clampPercent(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(100, value));
+}

@@ -42,6 +42,9 @@ export interface DiagDesk {
 
 /** 音量来自持久化档，坏值不许一路渗到卷首变成 NaN%。 */
 export function settingVolume(value: number): number {
+  // 音量不是「进度」而是「刻度」:NaN 归零,而 Infinity 是「超出上限」,
+  // 语义上应当夹到满格 100 —— 这与 clampPercent 把非有限值一律归零不同,
+  // 那条留给「进度条没有进度可画」的场合。settingsDesk.spec 钉着这个区分。
   if (Number.isNaN(value)) return 0;
   return Math.max(0, Math.min(100, Math.round(value)));
 }

@@ -43,6 +43,7 @@
 import { computed } from "vue";
 import type { EquipSlot } from "@/types";
 import { EQUIP_SLOT_NAMES } from "@/data/equipment";
+import { clampPercent } from "@/utils/unitRatio";
 
 const props = defineProps<{
   slots: EquipSlot[];
@@ -74,6 +75,6 @@ const nodes = computed(() =>
 );
 const capacityPercent = computed(() => {
   if (props.capacity <= 0) return 0;
-  return Math.max(0, Math.min(100, (props.bagCount / props.capacity) * 100));
+  return clampPercent((props.bagCount / props.capacity) * 100);
 });
 </script>

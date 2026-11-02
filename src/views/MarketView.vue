@@ -60,6 +60,7 @@ import MarketArcade from "@/components/market/MarketArcade.vue";
 import MarketChapterRail from "@/components/market/MarketChapterRail.vue";
 import { useRouteTab } from "@/composables/useRouteTab";
 import { MARKET_CHAPTERS } from "@/ui/navigation";
+import { clampPercent } from "@/utils/unitRatio";
 
 const market = useMarketStore();
 const bounty = useBountyStore();
@@ -229,7 +230,7 @@ const marketLead = computed(() => {
 function consignProgress(finishAt: number): number {
   const left = Math.max(0, finishAt - now.value);
   const total = MARKET_CONSIGN_SECONDS * 1000;
-  return Math.max(0, Math.min(100, (1 - left / total) * 100));
+  return clampPercent((1 - left / total) * 100);
 }
 
 /**

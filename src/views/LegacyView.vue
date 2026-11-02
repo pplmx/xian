@@ -61,7 +61,7 @@
           <p v-for="d in profile.daoShares" :key="d.name" class="legacy-profile__share">
             <span>{{ d.name }}</span>
             <span class="legacy-profile__track">
-              <span :style="{ width: `${Math.max(0, Math.min(100, d.pct))}%` }" />
+              <span :style="{ width: `${clampPercent(d.pct)}%` }" />
             </span>
             <strong class="tabular">{{ formatPercent(d.pct / 100) }}</strong>
           </p>
@@ -551,6 +551,7 @@ import ProgressBar from "@/components/common/ProgressBar.vue";
 import LegacyChapterRail from "@/components/legacy/LegacyChapterRail.vue";
 import { useRouteTab } from "@/composables/useRouteTab";
 import { LEGACY_CHAPTERS } from "@/ui/navigation";
+import { clampPercent } from "@/utils/unitRatio";
 
 /** 长卷分册:轮回(本世与历世)/ 征程(节点与宿敌)/ 缘迹(奇缘与行迹)/ 纪录 */
 const tab = useRouteTab(LEGACY_CHAPTERS, "samsara");

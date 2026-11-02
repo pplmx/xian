@@ -80,6 +80,7 @@
 import { computed } from "vue";
 import type { SpiritRoot } from "@/types";
 import { ELEMENTS } from "@/data/linggen";
+import { clampPercent } from "@/utils/unitRatio";
 
 const props = defineProps<{
   name: string;
@@ -95,7 +96,7 @@ const nameMark = computed(() => Array.from(props.name.trim())[0] ?? "道");
 const arcs = computed(() => {
   let offset = 0;
   return props.segments.map((segment) => {
-    const length = Math.max(0, Math.min(100, segment.share * 100));
+    const length = clampPercent(segment.share * 100);
     const arc = { ...segment, length, offset };
     offset += length;
     return arc;

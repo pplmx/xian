@@ -72,6 +72,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { clampPercent } from "@/utils/unitRatio";
 
 type AtlasNode = {
   id: string;
@@ -104,7 +105,7 @@ const placedNodes = computed(() =>
       return {
         ...node,
         ...position,
-        ratio: node.cap > 0 ? Math.max(0, Math.min(100, (node.level / node.cap) * 100)) : 0,
+        ratio: node.cap > 0 ? clampPercent((node.level / node.cap) * 100) : 0,
       };
     }),
 );

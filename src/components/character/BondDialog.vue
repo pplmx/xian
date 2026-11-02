@@ -368,6 +368,7 @@ import {
 } from "@/core/listRender";
 import { useBondOverview } from "@/composables/useBondOverview";
 import BaseModal from "@/components/common/BaseModal.vue";
+import { clampPercent } from "@/utils/unitRatio";
 
 const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
@@ -521,7 +522,7 @@ function eventFlags(p: { choice: BondChoice; preview: BondChoicePreview | null }
 
 function meterGoalPercent(key: "fate" | "trust" | "accord"): string {
   const target = gateHint.value?.target[key] ?? 100;
-  return `${Math.max(0, Math.min(100, target))}%`;
+  return `${clampPercent(target)}%`;
 }
 
 function meterAria(label: string, value: number, key: "fate" | "trust" | "accord"): string {

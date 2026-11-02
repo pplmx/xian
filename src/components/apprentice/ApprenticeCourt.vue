@@ -70,6 +70,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { clampPercent } from "@/utils/unitRatio";
 
 type CourtNode = {
   uid: string;
@@ -99,7 +100,7 @@ const placedCells = computed(() =>
     ...SLOT_POSITIONS[i]!,
     node: {
       ...node,
-      progress: Math.max(0, Math.min(100, node.progress)),
+      progress: clampPercent(node.progress),
     },
   })),
 );
