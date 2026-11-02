@@ -67,3 +67,49 @@ describe("文案标点 · 一篇之内只有一套括号", () => {
     expect(mixed(ok)).toEqual([]);
   });
 });
+
+/**
+ * 乘号 —— 玩家看得见的「几倍」只用一个符号。
+ *
+ * 全站写倍率用的是全角 ×(「修为 ×1.05」「道源 ×2.2」),但数值体系弹窗里那半句
+ * 「耗时却压在 x2.4」用了 ASCII 的 x。同一个弹窗里两种乘号,一个宽一个窄,
+ * 并排读起来像两个不同的意思。
+ *
+ * 判据只扫**模板里的可见文本**:CSS 的 `100%`、变量名里的 `x`、base64 之类
+ * 一律不在此列。ASCII x 后面紧跟 `{{` 或数字、前面是中文或空白,才算「当乘号用」。
+ */
+describe("文案标点 · 乘号只用 ×", () => {
+  /** 取出模板里去掉标签的那部分可见文本(属性值里的表达式不算文案) */
+  function visibleText(tpl: string): string {
+    return tpl
+      .replace(/<script[\s\S]*?<\/script>/g, "")
+      .replace(/<style[\s\S]*?<\/style>/g, "")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\{\{[^}]*\}\}/g, " ");
+  }
+
+  it("模板可见文本里没有拿 ASCII x 当乘号", () => {
+    const offenders: string[] = [];
+    for (const file of FILES) {
+      const text = visibleText(file.tpl);
+      // 中文或空白 + x + 数字/占位,且 x 不是某个英文单词的一部分
+      if (
+        /(?:[\u4e00-\u9fa5]\s*|\s)x\s*\d/.test(text) ||
+        /(?:[\u4e00-\u9fa5])x(?:\.|\s|$)/.test(text)
+      ) {
+        offenders.push(file.path);
+      }
+    }
+    expect(
+      offenders,
+      "这些模板里用 ASCII x 当乘号 —— 全站别的倍率都写 ×,同一个界面里别混两种",
+    ).toEqual([]);
+  });
+
+  it("判据自证:认得出来,也不误伤真的字母 x", () => {
+    const bad = visibleText("<p>耗时压在 x2.4 之间</p>");
+    const ok = visibleText("<p>耗时压在 ×2.4 之间</p><p>max-width: 100%</p>");
+    expect(/(?:[\u4e00-\u9fa5]\s*|\s)x\s*\d/.test(bad)).toBe(true);
+    expect(/(?:[\u4e00-\u9fa5]\s*|\s)x\s*\d/.test(ok)).toBe(false);
+  });
+});

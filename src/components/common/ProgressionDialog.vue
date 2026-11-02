@@ -36,7 +36,7 @@
             / 境
           </p>
           <p class="mt-1 text-note text-ink-faint">
-            数值按指数堆叠,耗时却压在 x{{ OUTER_TIME_PER_MAJOR.toFixed(2) }} ——
+            数值按指数堆叠,耗时却压在 ×{{ OUTER_TIME_PER_MAJOR.toFixed(2) }} ——
             于是每一境都更"重",整条阶梯仍在可达范围。渡劫期雷海淬体让基础吐纳 ×{{
               TRIBULATION_CULT_BOOST
             }},飞升入界外时仙灵之气再 ×{{ ASCENSION_CULT_BOOST }},高境长尾不再滚成数十年。界外从第
