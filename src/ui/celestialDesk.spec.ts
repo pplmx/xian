@@ -221,15 +221,44 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
     expect(trial, "今日题、变数与挑战书都要有运行时落点").toContain("data-celestial-daily");
     expect(trial).toContain("data-celestial-mutation");
     expect(trial).toContain("data-celestial-challenge");
-    expect(trial, "八场试炼仍逐项读取 TRIALS").toContain('v-for="trial in TRIALS"');
-    expect(trial, "每场试炼要有稳定运行时行").toContain(':data-celestial-trial="trial.id"');
+    expect(trial, "八场试炼仍逐项读取 TRIALS").toContain('v-for="(trial, index) in TRIALS"');
+    expect(trial, "每场试炼要有稳定运行时门印").toContain(':data-celestial-trial="trial.id"');
     expect(trial, "试炼正文不再套旧卡壳").not.toContain("card-ink");
     expect(ledger, "续卷外层不封四边框").toContain("border-inline: 0;");
     expect(ledger, "续卷外层不铺卡底").toContain("background: transparent;");
     expect(ledger, "续卷外层不投卡影").toContain("box-shadow: none;");
-    expect(css, "试炼名录要有稳定的连续行").toContain(".celestial-trial-row");
-    expect(css).toMatch(
-      /@media \(min-width: 960px\)\s*\{[\s\S]*?\.celestial-trial-roster\s*\{[\s\S]{0,120}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
+    expect(css, "试炼名录要有稳定的八门印谱").toContain(".celestial-trial-roster");
+  });
+
+  it("八门试炼先选门印再读证道帖,不再把八份规则同时摊到底", () => {
+    const trial = source("src/components/celestial/TrialPanel.vue");
+    const css = source("src/styles/pages/celestial.css");
+    const actions = trial.match(/data-celestial-trial-action/g) ?? [];
+
+    expect(trial, "八门印谱要有独立运行时落点").toContain("data-celestial-trial-atlas");
+    expect(trial, "每枚门印先读场次与纪录").toContain("data-celestial-trial-seal");
+    expect(trial, "选中门印要报给读屏").toContain(':aria-pressed="selectedTrialId === trial.id"');
+    expect(trial, "门印走 roving tabindex,不在移动端留八个 Tab 停点").toContain(
+      ':tabindex="selectedTrialId === trial.id ? 0 : -1"',
+    );
+    expect(trial, "方向键可在八门间移印").toContain('@keydown="moveTrial($event, index)"');
+    expect(trial, "下方只留一份证道帖").toContain("data-celestial-trial-detail");
+    expect(trial, "换门印时整帖随选中项替换").toContain(':key="selectedTrial.id"');
+    expect(trial, "默认先选最近一处未破门印").toContain(
+      "TRIALS.find((trial) => !endgame.trialRecords[trial.id])",
+    );
+    expect(actions, "八门不能各挂一枚主按钮,整章只留一处应试").toHaveLength(1);
+    expect(css, "手机先铺四列门印").toMatch(
+      /\.celestial-trial-roster\s*\{[\s\S]{0,180}grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\)/,
+    );
+    expect(css, "桌面八门并成一排").toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]*?\.celestial-trial-roster\s*\{[\s\S]{0,160}grid-template-columns:\s*repeat\(8, minmax\(0, 1fr\)\)/,
+    );
+    expect(css, "200% 缩放档门印退两列").toMatch(
+      /@media \(max-width: 279px\)\s*\{[\s\S]*?\.celestial-trial-roster\s*\{[\s\S]{0,160}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
+    );
+    expect(css, "门印仍是开口谱,不再长回卡片").toMatch(
+      /\.celestial-trial-seal\s*\{[\s\S]{0,360}border-radius:\s*0;[\s\S]{0,360}box-shadow:\s*none;/,
     );
   });
 

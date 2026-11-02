@@ -120,55 +120,101 @@
         hint="极限构筑的证道之地"
         :fact="`${trialWins} / ${TRIALS.length} 已破`"
       />
-      <div class="celestial-trial-roster">
-        <article
-          v-for="trial in TRIALS"
-          :key="trial.id"
-          class="celestial-trial-row"
-          :data-celestial-trial="trial.id"
-        >
-          <span class="celestial-trial-row__seal" aria-hidden="true">{{ trial.seal }}</span>
-          <div class="celestial-trial-row__copy">
-            <header class="celestial-trial-row__head">
-              <h3 class="celestial-trial-row__name text-title">{{ trial.name }}</h3>
-              <span
-                v-if="endgame.trialRecords[trial.id]"
-                class="celestial-trial-row__record tabular"
-              >
-                最佳 {{ endgame.trialRecords[trial.id]!.bestRounds }} 回合
-              </span>
-              <span v-else class="celestial-trial-row__record">未破</span>
-            </header>
-            <p class="celestial-trial-row__desc text-body">{{ trial.desc }}</p>
-            <p class="celestial-trial-row__rules">
-              <span v-for="(r, i) in trial.ruleText" :key="i">{{ r }}</span>
-            </p>
-          </div>
-          <div class="celestial-trial-row__decision">
-            <p class="celestial-trial-row__cost tabular">
-              道源 {{ trial.entryCost }} ·
+      <div class="celestial-trial-atlas" data-celestial-trial-atlas>
+        <div class="celestial-trial-roster" role="group" aria-label="八场天道试炼">
+          <button
+            v-for="(trial, index) in TRIALS"
+            :key="trial.id"
+            type="button"
+            class="celestial-trial-seal"
+            :class="{
+              'is-selected': selectedTrialId === trial.id,
+              'is-cleared': Boolean(endgame.trialRecords[trial.id]),
+            }"
+            :data-celestial-trial="trial.id"
+            data-celestial-trial-seal
+            :aria-pressed="selectedTrialId === trial.id"
+            :aria-controls="`celestial-trial-detail`"
+            :aria-label="trialSealLabel(trial)"
+            :tabindex="selectedTrialId === trial.id ? 0 : -1"
+            @click="selectTrial(trial.id)"
+            @keydown="moveTrial($event, index)"
+          >
+            <span class="celestial-trial-seal__glyph" aria-hidden="true">{{ trial.seal }}</span>
+            <span class="celestial-trial-seal__name">{{ trial.name }}</span>
+            <span class="celestial-trial-seal__record tabular">
               {{
                 endgame.trialRecords[trial.id]
-                  ? "已捷,再战仅录纪录"
-                  : `首破得 ${trial.rewardDaoSource}`
+                  ? `最佳 ${endgame.trialRecords[trial.id]!.bestRounds} 回`
+                  : "未破"
               }}
-            </p>
-            <button
-              class="celestial-trial-action"
-              :disabled="!endgame.daoPath || daoEntryShort(trial.entryCost) > 0"
-              :aria-label="trialActionLabel(trial)"
-              data-celestial-trial-action
-              @click="goTrial(trial.id)"
-            >
-              <template v-if="!endgame.daoPath">先择道途</template>
-              <template v-else-if="daoEntryShort(trial.entryCost) > 0"
-                >尚差 {{ daoEntryShort(trial.entryCost) }} 道源</template
-              >
-              <template v-else-if="endgame.trialRecords[trial.id]">再 试</template>
-              <template v-else>应 试</template>
-            </button>
-          </div>
-        </article>
+            </span>
+          </button>
+        </div>
+
+        <Transition name="trial-dossier" mode="out-in">
+          <article
+            :key="selectedTrial.id"
+            id="celestial-trial-detail"
+            class="celestial-trial-dossier"
+            :data-celestial-trial-detail="selectedTrial.id"
+          >
+            <header class="celestial-trial-dossier__head">
+              <span class="celestial-trial-dossier__seal" aria-hidden="true">{{
+                selectedTrial.seal
+              }}</span>
+              <div class="celestial-trial-dossier__identity">
+                <p class="celestial-trial-eyebrow">
+                  第 {{ selectedTrialIndex + 1 }} 门 ·
+                  {{ endgame.trialRecords[selectedTrial.id] ? "已破" : "未破" }}
+                </p>
+                <h3 class="celestial-trial-dossier__name text-title">
+                  {{ selectedTrial.name }}
+                </h3>
+              </div>
+              <span class="celestial-trial-dossier__record tabular">
+                {{
+                  endgame.trialRecords[selectedTrial.id]
+                    ? `最佳 ${endgame.trialRecords[selectedTrial.id]!.bestRounds} 回合`
+                    : "尚无战绩"
+                }}
+              </span>
+            </header>
+
+            <div class="celestial-trial-dossier__body">
+              <div class="celestial-trial-dossier__copy">
+                <p class="celestial-trial-dossier__desc text-body">{{ selectedTrial.desc }}</p>
+                <p class="celestial-trial-dossier__rules text-note">
+                  <span v-for="(rule, i) in selectedTrial.ruleText" :key="i">{{ rule }}</span>
+                </p>
+              </div>
+              <div class="celestial-trial-dossier__decision">
+                <p class="celestial-trial-dossier__cost text-note tabular">
+                  道源 {{ selectedTrial.entryCost }} ·
+                  {{
+                    endgame.trialRecords[selectedTrial.id]
+                      ? "已捷,再战仅录纪录"
+                      : `首破得 ${selectedTrial.rewardDaoSource}`
+                  }}
+                </p>
+                <button
+                  class="celestial-trial-action"
+                  :disabled="!endgame.daoPath || daoEntryShort(selectedTrial.entryCost) > 0"
+                  :aria-label="trialActionLabel(selectedTrial)"
+                  data-celestial-trial-action
+                  @click="goTrial(selectedTrial.id)"
+                >
+                  <template v-if="!endgame.daoPath">先择道途</template>
+                  <template v-else-if="daoEntryShort(selectedTrial.entryCost) > 0"
+                    >尚差 {{ daoEntryShort(selectedTrial.entryCost) }} 道源</template
+                  >
+                  <template v-else-if="endgame.trialRecords[selectedTrial.id]">再 试</template>
+                  <template v-else>应 试</template>
+                </button>
+              </div>
+            </div>
+          </article>
+        </Transition>
       </div>
     </section>
 
@@ -351,7 +397,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
 import { useEndgameStore } from "@/stores/endgame";
 import { CELESTIAL_WORLDS, TRIALS } from "@/data/endgame";
 import { PACTS, pactDef } from "@/data/pacts";
@@ -397,6 +443,22 @@ const mutationDaoShort = computed(() => daoEntryShort(MUTATION_ENTRY_COST));
 const trialWins = computed(
   () => TRIALS.filter((trial) => endgame.trialRecords[trial.id] !== undefined).length,
 );
+/**
+ * 八门先读谱、后读帖:默认落在最近一处未破门印上,全破后再回到第一门。
+ * 选中只改眼前证道帖,不会自行开战或写存档。
+ */
+const selectedTrialId = ref(
+  TRIALS.find((trial) => !endgame.trialRecords[trial.id])?.id ?? TRIALS[0]!.id,
+);
+const selectedTrial = computed(
+  () => TRIALS.find((trial) => trial.id === selectedTrialId.value) ?? TRIALS[0]!,
+);
+const selectedTrialIndex = computed(() =>
+  Math.max(
+    0,
+    TRIALS.findIndex((trial) => trial.id === selectedTrial.value.id),
+  ),
+);
 
 // ---- 天道变数 ----
 const mutationDraw = ref<string[]>([]);
@@ -431,6 +493,41 @@ function goTrial(id: string): void {
       reward: result.rewardDaoSource,
     });
   }
+}
+
+function selectTrial(id: string): void {
+  selectedTrialId.value = id;
+}
+
+function trialSealLabel(trial: (typeof TRIALS)[number]): string {
+  const record = endgame.trialRecords[trial.id];
+  const state = record ? `最佳 ${record.bestRounds} 回合` : "未破";
+  return `${trial.name} · ${state}`;
+}
+
+/**
+ * 门印是一组单选按钮:方向键 / Home / End 在八门间移印,
+ * Tab 只停当前门印,避免手机外接键盘要连按八次才走到证道帖。
+ */
+function moveTrial(event: KeyboardEvent, index: number): void {
+  let next = index;
+  if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+    next = (index + 1) % TRIALS.length;
+  } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+    next = (index - 1 + TRIALS.length) % TRIALS.length;
+  } else if (event.key === "Home") {
+    next = 0;
+  } else if (event.key === "End") {
+    next = TRIALS.length - 1;
+  } else {
+    return;
+  }
+  event.preventDefault();
+  selectedTrialId.value = TRIALS[next]!.id;
+  const roster = (event.currentTarget as HTMLElement).closest("[data-celestial-trial-atlas]");
+  void nextTick(() => {
+    roster?.querySelectorAll<HTMLButtonElement>("[data-celestial-trial-seal]")[next]?.focus();
+  });
 }
 
 function trialActionLabel(trial: (typeof TRIALS)[number]): string {

@@ -203,8 +203,9 @@
  *      去留全账;全账只读轮回结算的同一份继承表,功法回一层与法宝归尘说在落子前。
  *      390 与 195(200% 缩放)下门槛、摘要与主按钮都不许横溢或挤成竖排。
  *   七十二 天界试炼收成一册四章:今日天道、变数、八场试炼与挑战书沿同一卷面续排。
- *      八场试炼各成一条账行,不再套同权卡;挑战书按择界 / 叠变数 / 立契 / 命名
- *      四步摊开,不裸排两行芯片。960px 起八行并成两栏,390 仍单列读全。
+ *      八场试炼先收成一张八门印谱,点印或方向键只换下方一份证道帖;挑战书按
+ *      择界 / 叠变数 / 立契 / 命名四步摊开。390 四列两行,960px 起八门同排,
+ *      200% 缩放档退两列,整章只留一枚应试主键。
  *   七十三 三生录的画像、四册册口与当前正文同住一册:册口先报各册真值,
  *      手机 2×2、620px 起四列、220px 以下单列;方向键 / Home / End 要联动焦点、
  *      选中态、地址与唯一 tabpanel。1280 宽才把两本账并读,避免三案主账被压窄。
@@ -10423,7 +10424,7 @@ async function taskCharacterFold() {
   };
 }
 
-/** 天界试炼续卷:四章、八条试炼账行、四步挑战书与桌面双栏 */
+/** 天界试炼续卷:四章、八门印谱、单份证道帖、四步挑战书与三档印阵 */
 async function taskCelestialTrialFold() {
   const failures = [];
   let checked = 0;
@@ -10461,26 +10462,28 @@ async function taskCelestialTrialFold() {
           const chapters = [...(ledger?.querySelectorAll("[data-celestial-trial-chapter]") ?? [])];
           const heads = [...(ledger?.querySelectorAll(".celestial-chapter-head") ?? [])];
           const roster = ledger?.querySelector(".celestial-trial-roster");
-          const rows = [...(roster?.querySelectorAll("[data-celestial-trial]") ?? [])];
+          const seals = [...(roster?.querySelectorAll("[data-celestial-trial-seal]") ?? [])];
+          const detail = ledger?.querySelector("[data-celestial-trial-detail]");
+          const action = detail?.querySelector("[data-celestial-trial-action]");
+          const detailRect = detail?.getBoundingClientRect();
+          const actionRect = action?.getBoundingClientRect();
           const options = [...(ledger?.querySelectorAll(".celestial-challenge-option") ?? [])];
-          const actionRows = rows.map((row) => {
-            const button = row.querySelector("[data-celestial-trial-action]");
-            const rowRect = row.getBoundingClientRect();
-            const buttonRect = button?.getBoundingClientRect();
-            const style = getComputedStyle(row);
+          const sealRows = seals.map((seal) => {
+            const rect = seal.getBoundingClientRect();
+            const style = getComputedStyle(seal);
             return {
-              id: row.getAttribute("data-celestial-trial"),
-              top: Math.round(rowRect.top),
-              width: rowRect.width,
+              id: seal.getAttribute("data-celestial-trial"),
+              name: (seal.querySelector(".celestial-trial-seal__name")?.textContent || "").trim(),
+              pressed: seal.getAttribute("aria-pressed") === "true",
+              tabIndex: seal.getAttribute("tabindex"),
+              top: Math.round(rect.top),
+              width: rect.width,
               radius: Number.parseFloat(style.borderRadius),
               shadow: style.boxShadow,
               background: style.backgroundColor,
-              buttonRatio:
-                buttonRect && rowRect.width > 0 ? buttonRect.width / rowRect.width : null,
-              buttonColor: button ? getComputedStyle(button).color : "missing",
-              disabled: button?.hasAttribute("disabled") ?? true,
             };
           });
+          const selected = sealRows.find((seal) => seal.pressed);
           const probe = document.createElement("span");
           probe.style.color = "rgb(var(--color-qing-rgb))";
           document.body.append(probe);
@@ -10503,15 +10506,35 @@ async function taskCelestialTrialFold() {
               ledger?.querySelectorAll(
                 ".celestial-trial-chapter.card-ink, .celestial-trial-roster .card-ink",
               ).length ?? -1,
-            rows: actionRows.length,
-            rowIds: actionRows.map((row) => row.id),
-            rowTops: actionRows.map((row) => row.top),
-            rowRadius: actionRows.map((row) => row.radius),
-            rowShadows: actionRows.map((row) => row.shadow),
-            rowBackgrounds: actionRows.map((row) => row.background),
-            buttonRatios: actionRows.map((row) => row.buttonRatio),
-            buttonColors: actionRows.map((row) => row.buttonColor),
-            inactiveButtons: actionRows.filter((row) => row.disabled).length,
+            seals: sealRows.length,
+            sealIds: sealRows.map((seal) => seal.id),
+            pressedCount: sealRows.filter((seal) => seal.pressed).length,
+            selectedId: selected?.id ?? null,
+            selectedName: selected?.name ?? "",
+            selectedTabIndex: selected?.tabIndex ?? null,
+            sealTops: sealRows.map((seal) => seal.top),
+            sealRadius: sealRows.map((seal) => seal.radius),
+            sealShadows: sealRows.map((seal) => seal.shadow),
+            unselectedBackgrounds: sealRows
+              .filter((seal) => !seal.pressed)
+              .map((seal) => seal.background),
+            detailId: detail?.getAttribute("data-celestial-trial-detail") ?? null,
+            detailName: (
+              detail?.querySelector(".celestial-trial-dossier__name")?.textContent || ""
+            ).trim(),
+            actionCount: detail?.querySelectorAll("[data-celestial-trial-action]").length ?? 0,
+            actionRatio:
+              actionRect && detailRect && detailRect.width > 0
+                ? actionRect.width / detailRect.width
+                : null,
+            actionColor: action ? getComputedStyle(action).color : "missing",
+            actionDisabled: action?.hasAttribute("disabled") ?? true,
+            activeId:
+              document.activeElement?.getAttribute("data-celestial-trial") ??
+              document.activeElement
+                ?.closest?.("[data-celestial-trial]")
+                ?.getAttribute("data-celestial-trial") ??
+              null,
             challengeSteps: ledger?.querySelectorAll(".celestial-challenge-step").length ?? -1,
             challengeOptions: options.length,
             optionPills: options.filter((option) => {
@@ -10524,6 +10547,8 @@ async function taskCelestialTrialFold() {
             columns: roster
               ? getComputedStyle(roster).gridTemplateColumns.trim().split(/\s+/).length
               : -1,
+            detailRight: detailRect?.right ?? null,
+            viewportWidth: window.innerWidth,
             qing,
             cinnabar,
           };
@@ -10540,40 +10565,70 @@ async function taskCelestialTrialFold() {
             mobile.chapterTitles.join(" / "),
         );
       }
-      if (mobile.rows !== 8 || new Set(mobile.rowIds).size !== 8) {
+      if (mobile.seals !== 8 || new Set(mobile.sealIds).size !== 8) {
         failures.push(
-          `[390-trial] 应恰有八条互异试炼账行,实见 ${mobile.rows} 条 / ${new Set(mobile.rowIds).size} 个 id`,
+          `[390-trial] 应恰有八枚互异试炼门印,实见 ${mobile.seals} 枚 / ${new Set(mobile.sealIds).size} 个 id`,
         );
       }
-      if (mobile.rowTops[1] <= mobile.rowTops[0]) {
-        failures.push("[390-trial] 手机档的试炼行没有逐条顺读");
+      if (
+        mobile.pressedCount !== 1 ||
+        mobile.selectedTabIndex !== "0" ||
+        mobile.detailId !== mobile.selectedId ||
+        mobile.detailName !== mobile.selectedName
+      ) {
+        failures.push(
+          `[390-trial] 八门单选与证道帖脱节:${JSON.stringify({
+            pressed: mobile.pressedCount,
+            selected: mobile.selectedId,
+            tabIndex: mobile.selectedTabIndex,
+            detail: mobile.detailId,
+            detailName: mobile.detailName,
+            selectedName: mobile.selectedName,
+          })}`,
+        );
+      }
+      if (
+        mobile.columns !== 4 ||
+        mobile.sealTops.length !== 8 ||
+        mobile.sealTops[1] !== mobile.sealTops[0] ||
+        mobile.sealTops[4] <= mobile.sealTops[0]
+      ) {
+        failures.push(
+          `[390-trial] 手机八门没有铺成四列两行:${JSON.stringify({
+            columns: mobile.columns,
+            tops: mobile.sealTops,
+          })}`,
+        );
       }
       if (mobile.cardShells !== 0) {
         failures.push(`[390-trial] 试炼续卷里仍套着 ${mobile.cardShells} 张同权卡纸`);
       }
       if (
-        mobile.rowRadius.some((radius) => radius !== 0) ||
-        mobile.rowShadows.some((shadow) => shadow !== "none") ||
-        mobile.rowBackgrounds.some((background) => background !== "rgba(0, 0, 0, 0)")
+        mobile.sealRadius.some((radius) => radius !== 0) ||
+        mobile.sealShadows.some((shadow) => shadow !== "none") ||
+        mobile.unselectedBackgrounds.some((background) => background !== "rgba(0, 0, 0, 0)")
       ) {
         failures.push(
-          `[390-trial] 试炼账行又长出卡壳:${JSON.stringify({
-            radius: mobile.rowRadius,
-            shadow: mobile.rowShadows,
-            background: mobile.rowBackgrounds,
+          `[390-trial] 试炼门印又长出卡壳:${JSON.stringify({
+            radius: mobile.sealRadius,
+            shadow: mobile.sealShadows,
+            background: mobile.unselectedBackgrounds,
           })}`,
         );
       }
       if (
-        mobile.buttonRatios.some((ratio) => ratio === null || ratio > 0.72) ||
-        mobile.buttonColors.some((color) => color !== mobile.cinnabar) ||
-        mobile.inactiveButtons !== 0
+        mobile.actionCount !== 1 ||
+        mobile.actionRatio === null ||
+        mobile.actionRatio > 0.72 ||
+        mobile.actionColor !== mobile.cinnabar ||
+        mobile.actionDisabled
       ) {
         failures.push(
-          `[390-trial] 试炼主键没有收成朱砂短笔:${JSON.stringify({
-            ratios: mobile.buttonRatios,
-            colors: mobile.buttonColors,
-            disabled: mobile.inactiveButtons,
+          `[390-trial] 证道帖主键没有收成唯一朱砂短笔:${JSON.stringify({
+            count: mobile.actionCount,
+            ratio: mobile.actionRatio,
+            color: mobile.actionColor,
+            disabled: mobile.actionDisabled,
           })}`,
         );
       }
@@ -10593,26 +10648,82 @@ async function taskCelestialTrialFold() {
       if (mobile.chapterFactColors.some((color) => color !== mobile.qing)) {
         failures.push(`[390-trial] 章内读数没有回到石青:${mobile.chapterFactColors.join(" / ")}`);
       }
-      if (mobile.columns !== 1) {
-        failures.push(`[390-trial] 手机档试炼名录应为单列,实见 ${mobile.columns} 列`);
+
+      const secondSeal = page.locator("[data-celestial-trial-seal]").nth(1);
+      const secondId = await secondSeal.getAttribute("data-celestial-trial");
+      await secondSeal.click();
+      await settleVisuals(page);
+      const switched = await readFold();
+      checked += 1;
+      if (switched.selectedId !== secondId || switched.detailId !== secondId) {
+        failures.push(
+          `[390-trial] 点第二枚门印没有换到对应证道帖:${JSON.stringify({
+            clicked: secondId,
+            selected: switched.selectedId,
+            detail: switched.detailId,
+          })}`,
+        );
+      }
+      await page.locator('[data-celestial-trial-seal][aria-pressed="true"]').focus();
+      await page.keyboard.press("ArrowRight");
+      await settleVisuals(page);
+      const keyboard = await readFold();
+      const expectedThirdId = keyboard.sealIds[2];
+      if (keyboard.selectedId !== expectedThirdId || keyboard.activeId !== expectedThirdId) {
+        failures.push(
+          `[390-trial] 方向键没有把门印、焦点与证道帖一起前移:${JSON.stringify({
+            expected: expectedThirdId,
+            selected: keyboard.selectedId,
+            focused: keyboard.activeId,
+          })}`,
+        );
       }
 
       await page.setViewportSize({ width: 1280, height: 900 });
       await settleVisuals(page);
       const desktop = await readFold();
       checked += 1;
-      if (desktop.columns !== 2) {
-        failures.push(`[1280-trial] 桌面档试炼名录应为两栏,实见 ${desktop.columns} 列`);
+      if (desktop.columns !== 8) {
+        failures.push(`[1280-trial] 桌面档八门应并成一排,实见 ${desktop.columns} 列`);
+      }
+      if (desktop.sealTops.length !== 8 || new Set(desktop.sealTops).size !== 1) {
+        failures.push(`[1280-trial] 八门没有同排并读:${desktop.sealTops.join(" / ")}`);
+      }
+
+      await page.setViewportSize({ width: 195, height: 900 });
+      await settleVisuals(page);
+      const compact = await readFold();
+      checked += 1;
+      if (
+        compact.columns !== 2 ||
+        compact.sealTops.length !== 8 ||
+        compact.sealTops[2] <= compact.sealTops[0]
+      ) {
+        failures.push(
+          `[195-trial] 200% 档八门应退两列续排:${JSON.stringify({
+            columns: compact.columns,
+            tops: compact.sealTops,
+          })}`,
+        );
       }
       if (
-        desktop.rowTops.length !== 8 ||
-        desktop.rowTops[0] !== desktop.rowTops[1] ||
-        desktop.rowTops[2] <= desktop.rowTops[0]
+        compact.detailRight === null ||
+        compact.detailRight > compact.viewportWidth + 1 ||
+        compact.actionRatio === null ||
+        compact.actionRatio > 1
       ) {
-        failures.push(`[1280-trial] 八条试炼没有两两并读:${desktop.rowTops.join(" / ")}`);
+        failures.push(
+          `[195-trial] 证道帖或应试键越出纸面:${JSON.stringify({
+            detailRight: compact.detailRight,
+            viewport: compact.viewportWidth,
+            actionRatio: compact.actionRatio,
+          })}`,
+        );
       }
 
       if (SHOTS) {
+        await page.setViewportSize({ width: 1280, height: 900 });
+        await settleVisuals(page);
         await page
           .locator("[data-celestial-trial-ledger]")
           .screenshot({ path: join(SHOTS_DIR, "1280-celestial-trial-register.png") });
@@ -20281,7 +20392,7 @@ const TASKS = [
   ["洞府首屏的营造优先", taskDongfuFold],
   ["修行续卷的四章与行动层", taskCultivationFold],
   ["道躯三章与行藏拆卷", taskCharacterFold],
-  ["天界试炼续卷的四章与八行", taskCelestialTrialFold],
+  ["天界试炼续卷的四章与八门", taskCelestialTrialFold],
   ["天界内层三册的章节与并读", taskCelestialInnerVolumes],
   ["界域志首屏的此刻优先", taskCodexFold],
   ["成就谱首屏的眼下可追", taskAchievementFold],
