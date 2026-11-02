@@ -187,7 +187,7 @@ const SAMPLER = `
         p95: Math.round(p(0.95)),
         median: Math.round(p(0.5)),
         over50ms: long,
-        nodes: document.querySelectorAll('*').length,
+        nodes: document.querySelectorAll("body *").length,
       });
       return window.__perf;
     };
@@ -386,7 +386,12 @@ async function expandAllBatches(
   rewindSpec = null,
 ) {
   const steps = [];
-  let peakNodes = await page.evaluate(() => document.querySelectorAll("*").length);
+  /*
+   * 数 body *:预算问的是**页面上**有多少节点。head 里那些 modulepreload /
+   * 字体 link 是构建产物,数量随 chunk 拆分变 —— 实测一次重构让它们多出一条,
+   * 修行页峰值就从 700 跳到 701,而界面一个节点都没多。
+   */
+  let peakNodes = await page.evaluate(() => document.querySelectorAll("body *").length);
   let seen = null;
   try {
     if (expectedTotal) {
@@ -406,7 +411,7 @@ async function expandAllBatches(
       steps.push(step);
       peakNodes = Math.max(
         peakNodes,
-        await page.evaluate(() => document.querySelectorAll("*").length),
+        await page.evaluate(() => document.querySelectorAll("body *").length),
       );
       if (!step.ok) throw new Error(step.reason ?? `批次异常:${JSON.stringify(step)}`);
       if (seen) {
@@ -453,7 +458,7 @@ async function expandAllBatches(
         if (!rewind.ok) throw new Error(rewind.reason ?? `回翻未换页:${JSON.stringify(rewind)}`);
       }
     }
-    const finalNodes = await page.evaluate(() => document.querySelectorAll("*").length);
+    const finalNodes = await page.evaluate(() => document.querySelectorAll("body *").length);
     return {
       before: steps[0]?.before ?? seen?.size ?? 0,
       after: steps.at(-1)?.after ?? seen?.size ?? 0,
@@ -467,7 +472,7 @@ async function expandAllBatches(
       ok: true,
     };
   } catch (error) {
-    const finalNodes = await page.evaluate(() => document.querySelectorAll("*").length);
+    const finalNodes = await page.evaluate(() => document.querySelectorAll("body *").length);
     return {
       before: steps[0]?.before ?? 0,
       after: steps.at(-1)?.after ?? 0,
@@ -934,7 +939,7 @@ for (const view of VIEWS) {
         peakNodes,
         consign.peakNodes ?? 0,
         candidates.peakNodes ?? 0,
-        await page.evaluate(() => document.querySelectorAll("*").length),
+        await page.evaluate(() => document.querySelectorAll("body *").length),
       );
       marketBatches = { consign, candidates };
     }
@@ -976,7 +981,7 @@ for (const view of VIEWS) {
       peakNodes = Math.max(
         peakNodes,
         ...gongfaBatches.map((batch) => batch.peakNodes ?? 0),
-        await page.evaluate(() => document.querySelectorAll("*").length),
+        await page.evaluate(() => document.querySelectorAll("body *").length),
       );
     }
     if (view.name === "celestial") {
@@ -998,7 +1003,7 @@ for (const view of VIEWS) {
       peakNodes = Math.max(
         peakNodes,
         marksBatches.peakNodes ?? 0,
-        await page.evaluate(() => document.querySelectorAll("*").length),
+        await page.evaluate(() => document.querySelectorAll("body *").length),
       );
     }
     if (view.name === "collection") {
@@ -1056,7 +1061,7 @@ for (const view of VIEWS) {
       peakNodes = Math.max(
         peakNodes,
         ...collectionBatches.map((batch) => batch.peakNodes ?? 0),
-        await page.evaluate(() => document.querySelectorAll("*").length),
+        await page.evaluate(() => document.querySelectorAll("body *").length),
       );
     }
     record = {

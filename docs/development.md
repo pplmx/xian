@@ -515,7 +515,9 @@ error: Failed to resolve vite command: GenericFailure, Expected
 修行功法峰值 DOM ≤ 700、天界道痕峰值 DOM ≤ 700、法宝全册峰值 DOM ≤ 1100、丹方全册峰值 DOM ≤ 1100、
 部位候选峰值 DOM ≤ 1100、词条转移峰值 DOM ≤ 1100、坊市峰值 DOM ≤ 1100、
 收藏续开峰值 DOM ≤ 1100(前两项环境变量 `PERF_MAX_FRAME_MS` /
-`PERF_LONG_FRAMES` 可调)。改动过会
+`PERF_LONG_FRAMES` 可调)。**DOM 一律数 `body *`**:预算问的是页面上有多少节点,
+`head` 里的 `modulepreload` 与字体 `link` 是构建产物、数量随 chunk 拆分变
+(实测一次重构让它们多一条,修行页峰值就从 700 跳到 701,而界面一个节点都没多)。改动过会
 显著影响单次渲染量的代码后,这些数要跟着重校,连同本表一起。
 
 ### 显示心跳的粒度(为什么秒针能走、`totalPlaySec` 仍是 5 秒一盖)
