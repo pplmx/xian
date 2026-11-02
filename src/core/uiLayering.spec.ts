@@ -3544,6 +3544,29 @@ describe("界面分层 · 浮层只有一个出处", () => {
     }
   });
 
+  it("世界宣告的在场时长只有一处 —— CSS 读 JS 的那一枚数", () => {
+    /*
+     * 越过界膜时的印碑与光晕要一起收。从前 JS 写 2800ms、CSS 写 2.7s,
+     * 两个数各活一处:改一边,另一边就留在旧值上 —— 差 100ms 就是
+     * 「光晕还没落完、印碑先被摘掉」那一瞬的跳,而它只在跨界的几秒里出现。
+     *
+     * 现在 JS 的 VEIL_HOLD_MS 通过 --veil-hold 写进根节点,CSS 的动画读它。
+     * 判据钉两件事:组件里以常量驱动(不再出现裸 2800),CSS 里读变量
+     * (不再出现裸 2.7s)。
+     */
+    const veil = readFileSync(
+      resolve(__dirname, "../components/common/WorldTransitionVeil.vue"),
+      "utf8",
+    );
+    expect(veil, "时长要有名字").toMatch(/const VEIL_HOLD_MS = \d+;/);
+    expect(veil, "根节点要把时长写给 CSS").toContain("'--veil-hold': `${VEIL_HOLD_MS}ms`");
+    expect(veil, "计时器读同一枚常量").toContain("}, VEIL_HOLD_MS);");
+    expect(veil, "不许再有裸毫秒数").not.toMatch(/}, \d{3,}\);/);
+    const css = readStyleCss();
+    expect(css, "光晕动画要读变量").toContain("var(--veil-hold");
+    expect(css, "不许再留手写时长").not.toContain("veil-glow 2.7s");
+  });
+
   it("纯视觉的 SVG 要么自报家门,要么整块对读屏隐藏", () => {
     /*
      * 装饰性 SVG(法球进度环、页头山水、罗盘底纹)对读屏是一串无标签节点;

@@ -8,6 +8,7 @@
     <div
       v-if="rite"
       class="pointer-events-none absolute inset-0 z-40 flex items-center justify-center"
+      :style="{ '--veil-hold': `${VEIL_HOLD_MS}ms` }"
       aria-hidden="true"
     >
       <span class="veil-glow" />
@@ -33,6 +34,16 @@ import type { WorldDef } from "@/data/realms";
 
 /** 此刻宣告的这一界;null = 无宣告在场 */
 const rite = ref<WorldDef | null>(null);
+/**
+ * 宣告在场多久(ms)—— 印碑与光晕一起收。
+ *
+ * 它同时是 CSS 里 `--veil-hold` 的值(见 style.css 的 veil-glow 动画):
+ * 从前两边各写一个数(JS 2800 / CSS 2.7s),谁改谁不同步,而差 100ms
+ * 就是「光晕还没落完、印碑先被摘掉」那一瞬的跳。根节点把这一枚数写成
+ * 自定义属性,CSS 读它,于是只有一处可改。
+ */
+const VEIL_HOLD_MS = 2800;
+
 /** window.setTimeout 的句柄(DOM 域返回 number;别用 Node 的 Timeout 类型) */
 let timer: number | undefined;
 
@@ -51,7 +62,7 @@ watch(
     window.clearTimeout(timer);
     timer = window.setTimeout(() => {
       rite.value = null;
-    }, 2800);
+    }, VEIL_HOLD_MS);
   },
 );
 

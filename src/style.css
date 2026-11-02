@@ -2759,7 +2759,8 @@
       rgb(var(--world-glow-rgb) / 0.2) 0%,
       transparent 62%
     );
-    animation: veil-glow 2.7s ease-out forwards;
+    /* 时长与 JS 的撤离计时同读一枚数(见 WorldTransitionVeil 的 VEIL_HOLD_MS) */
+    animation: veil-glow var(--veil-hold, 2800ms) ease-out forwards;
   }
   @keyframes veil-glow {
     0% {
