@@ -23,6 +23,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { QUALITIES } from "@/data/qualities";
 import { readStyleCss } from "@/test/readStyleCss";
+import { walkFiles } from "@/test/readSource";
 
 const ROOT = resolve(__dirname, "../..");
 const CSS = readStyleCss();
@@ -269,6 +270,36 @@ describe("调色板 · 书口带", () => {
     }
     expect(bad, "书口带上的奶油字、淡墨与资源色也要扛得住 10-14px 小字").toEqual([]);
     expect(bodyOf(/html\[data-theme=["']dark["']\] \{([\s\S]*?)\n\}/)).not.toContain("--chrome-");
+  });
+});
+
+describe("调色板 · 无主变量", () => {
+  /**
+   * 定义了却没人读的 CSS 变量是「写着给下一张卡准备的名字」:
+   * 下一个人会以为它在生效,改它却什么都没发生。
+   *
+   * 两种正当例外:
+   *   ① --chrome-*:书口带是整套通道,判据要求每一档都过 AA(见上一节),
+   *      即便当前没有站点取用,它也是配色契约的一部分;
+   *   ② reduced-motion 等媒体查询里临时改写的变量,由样式自己兜。
+   */
+  it("除书口带通道外,没有只定义不使用的变量", () => {
+    const sources = [
+      readStyleCss(),
+      ...walkFiles(resolve(ROOT, "src"), (n) => n.endsWith(".vue") || n.endsWith(".ts")).map(
+        (full) => readFileSync(full, "utf8"),
+      ),
+    ];
+    const corpus = sources.join("\n");
+    const defined = new Set([...corpus.matchAll(/^\s*(--[\w-]+):/gm)].map((m) => m[1] ?? ""));
+    const orphans = [...defined].filter(
+      (name) =>
+        !name.startsWith("--chrome-") &&
+        // 定义处之外还有别的地方在用它(读或写都算)
+        corpus.split(name).length <= 2,
+    );
+    expect(orphans, "这些变量只定义、从未被读取 —— 删掉或接上站点").toEqual([]);
+    expect(defined.size, "一个变量都没扫到,判据形同虚设").toBeGreaterThan(50);
   });
 });
 

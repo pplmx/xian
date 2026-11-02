@@ -574,7 +574,6 @@ function answerIntent(response: IntentResponse): void {
 .bond-empty,
 .bond-history {
   --bond-line: rgb(var(--color-ink-rgb) / 0.14);
-  --bond-line-strong: rgb(var(--color-ink-rgb) / 0.24);
   --bond-paper: rgb(var(--color-paper-deep-rgb) / 0.34);
   min-width: 0;
 }
