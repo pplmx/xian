@@ -310,8 +310,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(codex?.src).toContain("sawCollectionTab");
     expect(codex?.src).toMatch(/if \(sawCollectionTab\.value\) quests\.markCollectionSeen\(\)/);
     expect(codex?.src).not.toMatch(/onMounted\(\(\).*markCollectionSeen/);
-    // 页签上也得露:默认在成就页不切进去看不见有货,「收藏」页签挂新得点(呼吸提醒)
-    expect(codex?.src).toContain(`dot: t.id === "collection"`);
+    // 阁门上也得露:默认在功名榜不切进去看不见有货,「藏珍阁」门挂新得点(呼吸提醒)
+    expect(codex?.src).toContain("const collectionHasNew");
+    expect(codex?.src).toContain("dot: collectionHasNew.value");
+    expect(codex?.src, "深链直接进收藏也算真的看过").toMatch(
+      /watch\(\s*tab,[\s\S]{0,180}\{ immediate: true \}/,
+    );
     // 底部导航的背包点:任何页都看得见「有新货」,挂在 inventory.newItemCount 上(删则全局退回看不见)。
     // 量价分档:恰好一件 = 原来的小点(轻晃不吵),≥2 件才升级成计数徽标「N」、9+ 封顶 ——
     // 别退回「只有有没有量」的老点、也别把「1」也做成满格徽标(越吵越没人看)。
@@ -837,45 +841,46 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(col?.src).toContain("data-achievement-group-toggle");
     expect(col?.src).toContain(':aria-expanded="isGroupOpen(g.direction)"');
     expect(col?.src).toContain(':aria-controls="groupBodyId(gi)"');
+    expect(col?.src, "合上的方向卷不留在 DOM 里").toContain('v-if="isGroupOpen(g.direction)"');
+    expect(col?.src, "合上的方向卷只留空壳给 aria-controls").toContain(
+      'v-show="isGroupOpen(g.direction)"',
+    );
     expect(col?.src).toContain("revealAchievement(row)");
     expect(col?.src, "未达成者的名称要直接露出来").toContain("{{ row.def.name }}");
     expect(col?.src, "未达成者的条件要直接露出来").toContain("{{ row.def.desc }}");
     expect(col?.src, "旧的一整墙 ??? 文案已经退场").not.toContain("成时自见");
   });
 
-  it("藏珍谱先报新得或将满，再把九册收成可展开卷目", () => {
-    // 九册同时铺开时,首屏可能连续三册全是 ???,玩家既看不到整体进度,
-    // 也不知道哪一册值得先翻。判据:卷首读同一份 collectionProgress 汇总,
-    // 有新得先列新得、无新得列将满;册目是带 aria 的真按钮,新得册默认展开。
+  it("藏珍阁先报新得或将满，九柜只抽开一屉并给读屏稳定落点", () => {
+    // 九柜同铺时,首屏不该变成一面「???」墙。柜面自己报数、新得与缺口;
+    // 点一格只抽开对应柜屉,而不是把九册全部展开成九条通用账行。
     const col = FILES.find((f) => f.path === "views/CollectionView.vue");
+    const cabinet = FILES.find((f) => f.path === "components/common/CollectionCabinet.vue");
     expect(col?.src).toContain("collectionProgressOverview");
     expect(col?.src).toContain("data-collection-hero");
-    expect(col?.src).toContain("data-collection-category-toggle");
-    expect(col?.src).toContain(':aria-expanded="isCollectionCategoryOpen(cat.key)"');
-    expect(col?.src).toContain(':aria-controls="collectionCategoryBodyId(cat.key)"');
-    expect(col?.src).toContain("revealCollectionCategory(row.key)");
-    expect(col?.src, "新得册与将满册要分开报").toContain("眼下新得");
-    expect(col?.src, "无新得时卷首改报将满之册").toContain("将满之册");
-    expect(col?.src, "三册入口压成一眼能扫完的索引").toContain(
-      'class="collection-briefing__highlights"',
-    );
+    expect(cabinet?.src).toContain("data-collection-cabinet");
+    expect(cabinet?.src).toContain("data-collection-category-toggle");
+    expect(cabinet?.src).toContain(':aria-expanded="selectedKey === cell.key"');
+    expect(cabinet?.src).toContain(':aria-controls="`collection-category-body-${cell.key}`"');
+    expect(col?.src, "柜面只选一屉,不另造三张同权重新得卡").toContain("selectedCollectionKey");
+    expect(col?.src, "新得柜与将满柜要分开报").toContain("眼下新得");
+    expect(col?.src, "无新得时卷首改报将满之柜").toContain("将满之柜");
     expect(col?.src, "重复的藏珍总案标题已退场").not.toContain('title="藏珍谱"');
-    expect(col?.src, "超过三册的新得不能静默消失").toContain("collectionMoreNewCount");
-    expect(col?.src).toContain("data-collection-more-new");
-    expect(col?.src, "余册提示必须是一键收展入口,不是被动脚注").toContain(
-      "toggleRemainingNewCategories",
+    expect(col?.src, "九柜本身就会报新得,旧的余册入口已经退场").not.toContain(
+      "data-collection-more-new",
     );
-    expect(col?.src).toContain(':aria-expanded="collectionMoreNewOpen"');
-    expect(col?.src, "余册全开时按钮要说能收起,不能写死成已展开").toContain("收起余册");
-    expect(col?.src, "卷首已展数要随折叠状态变,不能写死成初始三册").toContain("openedNewCount");
-    const layout = readFileSync(resolve(__dirname, "../../scripts/layout-check.mjs"), "utf8");
-    expect(layout, "布局门要点到余册入口并核对展开结果").toContain(
-      'locator("[data-collection-more-new]").click',
+    expect(col?.src, "合上的柜屉不留在 DOM 里").toContain(
+      'v-if="isCollectionCategoryOpen(cat.key)"',
     );
-    expect(layout).toContain("余册入口没有真正展开第四册新得");
-    expect(col?.src, "册目内容按展开态渲染").toContain('v-if="isCollectionCategoryOpen(cat.key)"');
+    expect(col?.src, "合上的柜体只留空壳给 aria-controls").toContain(
+      'v-show="isCollectionCategoryOpen(cat.key)"',
+    );
     expect(col?.src, "展开态必须给测试与读屏一个稳定落点").toContain(
       ':data-collection-category-body="cat.key"',
+    );
+    const layout = readFileSync(resolve(__dirname, "../../scripts/layout-check.mjs"), "utf8");
+    expect(layout, "布局门要点九柜并核对只开一屉").toContain(
+      '[data-collection-category-toggle="pet"]',
     );
   });
 

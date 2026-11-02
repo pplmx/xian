@@ -1,45 +1,68 @@
 <template>
   <!--
-    九册总印是页签后的第一张总账：左边九枚册印，右边功名与藏珍总进度。
-    390px 下九册压成一行；更窄时先收起格内读数，195px 再退回三列。
+    九柜藏珍：每格都是能抽开的柜屉，不再只是卷首的一排只读总印。
+    柜面先给册名、收录数、缺口与新得；真正的条目落在同页的柜屉里。
   -->
-  <section class="collection-cabinet" data-collection-cabinet aria-label="九册总印">
-    <div class="collection-cabinet__head">
-      <span class="collection-cabinet__title">九册总印</span>
-      <div class="collection-cabinet__totals">
-        <span class="tabular"
+  <section class="collection-cabinet" data-collection-cabinet aria-label="九柜藏珍">
+    <header class="collection-cabinet__head">
+      <span class="collection-cabinet__title">九柜藏珍</span>
+      <span class="collection-cabinet__hint">抽开一柜，来源与条目在下一页续读</span>
+      <span class="collection-cabinet__totals tabular">
+        <span
           >名 <strong>{{ achievementDone }}</strong
           >/{{ achievementTotal }}</span
         >
-        <span class="tabular"
+        <span
           >珍 <strong>{{ collectionKnown }}</strong
           >/{{ collectionTotal }}</span
         >
-      </div>
-    </div>
+      </span>
+    </header>
 
-    <div class="collection-cabinet__grid" role="list" aria-label="九册收录进度">
-      <span
+    <div class="collection-cabinet__wall" role="list" aria-label="九柜收录进度">
+      <article
         v-for="cell in cells"
         :key="cell.key"
-        class="collection-cabinet__cell"
+        class="collection-cabinet__drawer"
         :class="{
           'is-lit': cell.known > 0,
           'is-complete': cell.complete,
           'is-new': cell.newCount > 0,
+          'is-open': selectedKey === cell.key,
         }"
+        :data-collection-category="cell.key"
+        :data-collection-start="cell.knownStart"
+        :data-collection-shown="cell.knownShown"
+        :data-collection-total="cell.knownTotal"
         role="listitem"
       >
-        <span class="sr-only">{{ cell.name }}</span>
-        <span class="collection-cabinet__cell-copy">
-          <span class="collection-cabinet__mark" aria-hidden="true">{{ cell.mark }}</span>
-          <span class="collection-cabinet__reading tabular">{{ cell.known }}/{{ cell.total }}</span>
-        </span>
-        <span class="collection-cabinet__track" aria-hidden="true">
-          <span :style="{ width: `${cell.ratio * 100}%` }" />
-        </span>
-        <span v-if="cell.newCount > 0" class="collection-cabinet__spark" aria-hidden="true" />
-      </span>
+        <button
+          type="button"
+          class="collection-cabinet__button"
+          :data-collection-category-toggle="cell.key"
+          :aria-expanded="selectedKey === cell.key"
+          :aria-controls="`collection-category-body-${cell.key}`"
+          @click="emit('select', cell.key)"
+        >
+          <span class="collection-cabinet__handle" aria-hidden="true"><span /></span>
+          <span class="collection-cabinet__line">
+            <span class="collection-cabinet__mark" aria-hidden="true">{{ cell.mark }}</span>
+            <span class="collection-cabinet__name">{{ cell.name }}</span>
+            <span class="collection-cabinet__reading tabular"
+              >{{ cell.known }}/{{ cell.total }}</span
+            >
+          </span>
+          <span class="collection-cabinet__track" aria-hidden="true">
+            <span :style="{ width: `${cell.ratio * 100}%` }" />
+          </span>
+          <span class="collection-cabinet__status tabular">
+            <template v-if="cell.newCount > 0">新 {{ cell.newCount }}</template>
+            <template v-else-if="cell.complete">尽收</template>
+            <template v-else-if="cell.known === 0">未启</template>
+            <template v-else>余 {{ cell.remaining }}</template>
+          </span>
+        </button>
+      </article>
     </div>
   </section>
 </template>
@@ -52,16 +75,25 @@ interface CabinetCell {
   known: number;
   total: number;
   ratio: number;
+  remaining: number;
   complete: boolean;
   newCount: number;
+  knownStart: number;
+  knownShown: number;
+  knownTotal: number;
 }
 
 defineProps<{
   cells: readonly CabinetCell[];
+  selectedKey: string | null;
   achievementDone: number;
   achievementTotal: number;
   collectionKnown: number;
   collectionTotal: number;
+}>();
+
+const emit = defineEmits<{
+  select: [key: string];
 }>();
 </script>
 
@@ -71,39 +103,44 @@ defineProps<{
   display: grid;
   width: 100%;
   min-width: 0;
-  grid-template-rows: auto auto;
-  gap: 0.34rem;
+  gap: 0.42rem;
   border: 0;
-  border-block: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+  border-block: 1px solid rgb(var(--color-ink-rgb) / 0.11);
   background: transparent;
-  padding: 0.46rem 0 0.52rem;
+  padding: 0.5rem 0 0.62rem;
 }
 
 .collection-cabinet__head {
-  position: relative;
-  z-index: 1;
   display: flex;
   min-width: 0;
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 0.16rem 0.7rem;
+  gap: 0.14rem 0.7rem;
 }
 
 .collection-cabinet__title {
   color: rgb(var(--color-ink-soft-rgb));
   font-family: var(--font-kai);
-  font-size: var(--type-note);
-  letter-spacing: 0.16em;
+  font-size: var(--type-title);
+  letter-spacing: 0.15em;
   line-height: 1.35;
+}
+
+.collection-cabinet__hint {
+  order: 3;
+  flex: 1 1 12rem;
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: var(--type-note);
+  line-height: 1.5;
 }
 
 .collection-cabinet__totals {
   display: flex;
-  min-width: 0;
+  flex: none;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.18rem 0.55rem;
+  justify-content: flex-end;
+  gap: 0.18rem 0.58rem;
   color: rgb(var(--color-ink-faint-rgb));
   font-size: var(--type-note);
   line-height: 1.35;
@@ -119,136 +156,171 @@ defineProps<{
   font-weight: 500;
 }
 
-.collection-cabinet__grid {
-  position: relative;
-  z-index: 1;
+.collection-cabinet__wall {
   display: grid;
   min-width: 0;
-  grid-template-columns: repeat(9, minmax(0, 1fr));
-  gap: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.07);
 }
 
-.collection-cabinet__cell {
-  position: relative;
-  display: grid;
+.collection-cabinet__drawer {
   min-width: 0;
-  min-height: 2.7rem;
-  grid-template-rows: 1fr 1px;
-  align-items: center;
-  gap: 0.2rem;
-  overflow: hidden;
   border: 0;
-  border-left: 1px solid rgb(var(--color-ink-rgb) / 0.085);
+  border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+  border-left: 1px solid rgb(var(--color-ink-rgb) / 0.09);
   background: transparent;
-  padding: 0.24rem 0.08rem 0.2rem;
 }
 
-.collection-cabinet__cell:first-child {
+.collection-cabinet__drawer:nth-child(-n + 3) {
+  border-top: 0;
+}
+
+.collection-cabinet__drawer:nth-child(3n + 1) {
   border-left: 0;
 }
 
-.collection-cabinet__cell.is-lit {
-  border-left-color: rgb(var(--color-qing-rgb) / 0.24);
+.collection-cabinet__drawer.is-open {
+  background:
+    linear-gradient(90deg, rgb(var(--color-cinnabar-rgb) / 0.045), transparent 44%),
+    rgb(var(--color-paper-lifted-rgb) / 0.38);
+  box-shadow: inset 0 -2px rgb(var(--color-cinnabar-rgb) / 0.5);
 }
 
-.collection-cabinet__cell.is-complete {
-  border-left-color: rgb(var(--color-jade-rgb) / 0.32);
+.collection-cabinet__button {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  min-height: 6.6rem;
+  grid-template-rows: auto auto 1px auto;
+  align-content: center;
+  gap: 0.28rem;
+  padding: 0.52rem 0.5rem 0.48rem;
+  text-align: left;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
-.collection-cabinet__cell.is-new {
-  border-left-color: rgb(var(--color-cinnabar-rgb) / 0.34);
+.collection-cabinet__handle {
+  display: grid;
+  width: 1.35rem;
+  height: 0.48rem;
+  place-items: center;
+  border: 1px solid rgb(var(--color-ink-rgb) / 0.16);
+  background: rgb(var(--color-paper-rgb) / 0.46);
 }
 
-.collection-cabinet__cell-copy {
+.collection-cabinet__handle > span {
+  width: 0.58rem;
+  height: 1px;
+  background: rgb(var(--color-ink-rgb) / 0.38);
+}
+
+.collection-cabinet__drawer.is-open .collection-cabinet__handle {
+  border-color: rgb(var(--color-cinnabar-rgb) / 0.38);
+}
+
+.collection-cabinet__drawer.is-open .collection-cabinet__handle > span {
+  background: rgb(var(--color-cinnabar-rgb) / 0.72);
+}
+
+.collection-cabinet__line {
   display: grid;
   min-width: 0;
-  place-items: center;
-  gap: 0.08rem;
+  grid-template-columns: 1.55rem minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.28rem;
 }
 
 .collection-cabinet__mark {
   color: rgb(var(--color-ink-faint-rgb));
   font-family: var(--font-kai);
-  font-size: var(--type-body);
+  font-size: var(--type-title);
   line-height: 1;
 }
 
-.collection-cabinet__cell.is-lit .collection-cabinet__mark {
-  color: rgb(var(--color-ink-soft-rgb));
+.collection-cabinet__drawer.is-lit .collection-cabinet__mark {
+  color: rgb(var(--color-qing-rgb));
 }
 
-.collection-cabinet__cell.is-complete .collection-cabinet__mark {
+.collection-cabinet__drawer.is-complete .collection-cabinet__mark {
   color: rgb(var(--color-jade-rgb));
 }
 
-.collection-cabinet__cell.is-new .collection-cabinet__mark {
+.collection-cabinet__drawer.is-new .collection-cabinet__mark {
   color: rgb(var(--color-cinnabar-rgb));
 }
 
-.collection-cabinet__reading {
-  max-width: 100%;
+.collection-cabinet__name {
+  min-width: 0;
   overflow: hidden;
-  color: rgb(var(--color-ink-faint-rgb));
+  color: rgb(var(--color-ink-rgb));
+  font-family: var(--font-kai);
   font-size: var(--type-note);
-  line-height: 1.15;
-  text-overflow: clip;
+  letter-spacing: 0.05em;
+  line-height: 1.35;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.collection-cabinet__cell.is-complete .collection-cabinet__reading {
-  color: rgb(var(--color-jade-rgb));
-}
-
-.collection-cabinet__cell.is-new .collection-cabinet__reading {
-  color: rgb(var(--color-cinnabar-rgb));
+.collection-cabinet__reading {
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: var(--type-note);
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .collection-cabinet__track {
   width: 100%;
   height: 1px;
   overflow: hidden;
-  background: rgb(var(--color-ink-rgb) / 0.06);
+  background: rgb(var(--color-ink-rgb) / 0.08);
 }
 
 .collection-cabinet__track > span {
   display: block;
   height: 100%;
-  background: rgb(var(--color-qing-rgb) / 0.5);
+  background: rgb(var(--color-qing-rgb) / 0.56);
 }
 
-.collection-cabinet__cell.is-complete .collection-cabinet__track > span {
-  background: rgb(var(--color-jade-rgb) / 0.62);
+.collection-cabinet__drawer.is-complete .collection-cabinet__track > span {
+  background: rgb(var(--color-jade-rgb) / 0.68);
 }
 
-.collection-cabinet__cell.is-new .collection-cabinet__track > span {
-  background: rgb(var(--color-cinnabar-rgb) / 0.62);
+.collection-cabinet__drawer.is-new .collection-cabinet__track > span {
+  background: rgb(var(--color-cinnabar-rgb) / 0.68);
 }
 
-.collection-cabinet__spark {
-  position: absolute;
-  top: 0.16rem;
-  right: 0.16rem;
-  width: 0.2rem;
-  height: 0.2rem;
-  border-radius: 50%;
-  background: rgb(var(--color-cinnabar-rgb) / 0.78);
+.collection-cabinet__status {
+  min-height: 1.1rem;
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: var(--type-note);
+  line-height: 1.35;
 }
 
-@media (max-width: 360px) {
-  .collection-cabinet__cell {
-    min-height: 1.9rem;
+.collection-cabinet__drawer.is-new .collection-cabinet__status {
+  color: rgb(var(--color-cinnabar-rgb));
+}
+
+.collection-cabinet__drawer.is-complete .collection-cabinet__status {
+  color: rgb(var(--color-jade-rgb));
+}
+
+.collection-cabinet__drawer.is-open .collection-cabinet__status {
+  color: rgb(var(--color-cinnabar-rgb));
+}
+
+@media (max-width: 430px) {
+  .collection-cabinet__line {
+    grid-template-columns: 1.35rem minmax(0, 1fr);
   }
 
   .collection-cabinet__reading {
-    display: none;
+    grid-column: 2;
   }
 }
 
-@media (max-width: 220px) {
-  .collection-cabinet {
-    padding-inline: 0;
-  }
-
+@media (max-width: 240px) {
   .collection-cabinet__head {
     align-items: flex-start;
     flex-direction: column;
@@ -259,25 +331,34 @@ defineProps<{
     justify-content: space-between;
   }
 
-  .collection-cabinet__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .collection-cabinet__wall {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .collection-cabinet__cell {
-    min-height: 2.35rem;
-    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.085);
+  .collection-cabinet__drawer {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.09);
   }
 
-  .collection-cabinet__cell:nth-child(-n + 3) {
-    border-top: 0;
-  }
-
-  .collection-cabinet__cell:nth-child(3n + 1) {
+  .collection-cabinet__drawer:nth-child(2n + 1) {
     border-left: 0;
   }
 
+  .collection-cabinet__drawer:nth-child(-n + 2) {
+    border-top: 0;
+  }
+
+  .collection-cabinet__button {
+    min-height: 5.8rem;
+    padding-inline: 0.42rem;
+  }
+
+  .collection-cabinet__line {
+    grid-template-columns: 1.35rem minmax(0, 1fr);
+  }
+
   .collection-cabinet__reading {
-    display: block;
+    grid-column: 2;
   }
 }
 </style>

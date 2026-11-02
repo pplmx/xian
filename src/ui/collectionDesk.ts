@@ -40,6 +40,7 @@ export interface CollectionCabinetCell {
   known: number;
   total: number;
   ratio: number;
+  remaining: number;
   complete: boolean;
   newCount: number;
 }
@@ -63,6 +64,7 @@ export function collectionCabinetCells(
     known: row.known,
     total: row.total,
     ratio: row.ratio,
+    remaining: row.remaining,
     complete: row.complete,
     newCount: row.newCount,
   }));

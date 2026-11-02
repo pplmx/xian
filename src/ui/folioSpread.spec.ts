@@ -175,20 +175,21 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
     expect(layout).toContain("界域志当前卷与境界谱没有摊成左右两页");
   });
 
-  it("藏珍两卷同住一册,960 宽才让行动章与卷目章左右并读", () => {
+  it("藏珍双阁同住一册,960 宽才让行动章与榜/柜章左右并读", () => {
     const view = source("src/views/CollectionView.vue");
     const css = source("src/styles/pages/collection.css");
 
     expect(view).toContain(
       '<article class="collection-register folio-span-all" data-collection-register>',
     );
+    expect(view).toContain('class="collection-gates folio-span-all"');
     expect(view).toContain('data-collection-chapter="lead"');
     expect(view).toContain('data-collection-chapter="volumes"');
     expect(view).toMatch(
       /<article class="collection-register[\s\S]*?data-achievement-hero[\s\S]*?data-achievement-volumes[\s\S]*?data-collection-hero[\s\S]*?data-collection-shelves[\s\S]*?<\/article>/,
     );
     expect(css).toMatch(
-      /@media \(min-width: 960px\)\s*\{[\s\S]{0,360}\.collection-register\s*\{[\s\S]{0,160}grid-template-columns:\s*minmax\(0, 1\.08fr\) minmax\(0, 0\.92fr\)/,
+      /@media \(min-width: 960px\)\s*\{[\s\S]{0,360}\.collection-register\s*\{[\s\S]{0,160}grid-template-columns:\s*minmax\(0, 0\.92fr\) minmax\(0, 1\.08fr\)/,
     );
   });
 });

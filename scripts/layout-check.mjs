@@ -188,8 +188,8 @@
  *      四界卷目默认只开当前界,其余收口,点开后要真的铺出该界境界。
  *   六十六 成就谱首屏的眼下可追:卷首先列最近三枚并写明条件/进度;方向卷目
  *      默认只开最近一路,点最近一枚或换一路时要真的展开目标卷。
- *   六十七 藏珍谱首屏的新得优先:卷首先报整体收录与新得/将满册目;有新得的册
- *      最多先展开三册,其余收着。点卷首册目或册目题头时,目标册要真的铺出来。
+ *   六十七 藏珍双阁的九柜换屉:功名榜先列最近三策、方向收成榜牌并只开一路;
+ *      藏珍阁的九柜排成三列,柜面报新得/余量,点另一柜时旧屉要合上且只留一屉正文。
  *   六十八 背包先报新得与可换槽位:三章必须按「今日检点 / 九佩 / 藏品」续排,
  *      九席齐全且不再套九张同权卡;检点主行动不宽于账行 72%,容量只报一次。
  *      「只看新得」只铺新件,一键按钮报的可动槽数必须与逐槽入口一致,点下去
@@ -12944,15 +12944,22 @@ async function taskAchievementFold() {
           const nav = document.querySelector("[data-folio-dock]")?.getBoundingClientRect();
           const hero = document.querySelector("[data-achievement-hero]");
           const heroRect = hero?.getBoundingClientRect();
-          const tabs = document.querySelector(".collection-tabs")?.getBoundingClientRect();
-          const cabinet = document.querySelector("[data-collection-cabinet]");
-          const cabinetRect = cabinet?.getBoundingClientRect();
-          const cabinetCells = [
-            ...(cabinet?.querySelectorAll(".collection-cabinet__cell") ?? []),
-          ].map((cell) => {
-            const rect = cell.getBoundingClientRect();
+          const gates = document.querySelector(".collection-gates")?.getBoundingClientRect();
+          const wall = document.querySelector(".achievement-wall");
+          const wallRect = wall?.getBoundingClientRect();
+          const volumesFact = (
+            document.querySelector("[data-achievement-volumes] .collection-chapter-head__fact")
+              ?.textContent ?? ""
+          )
+            .replace(/\s+/g, " ")
+            .trim();
+          const plaques = [
+            ...(wall?.querySelectorAll("[data-achievement-group-toggle]") ?? []),
+          ].map((btn) => {
+            const rect = btn.getBoundingClientRect();
             return {
-              text: (cell.textContent || "").replace(/\s+/g, " ").trim(),
+              text: (btn.textContent || "").replace(/\s+/g, " ").trim(),
+              expanded: btn.getAttribute("aria-expanded") ?? null,
               top: Math.round(rect.top),
               left: Math.round(rect.left),
             };
@@ -12986,12 +12993,13 @@ async function taskAchievementFold() {
             navTop: nav?.top ?? innerHeight,
             heroTop: heroRect?.top ?? null,
             heroBottom: heroRect?.bottom ?? null,
-            tabsBottom: tabs?.bottom ?? null,
-            cabinetTop: cabinetRect?.top ?? null,
-            cabinetBottom: cabinetRect?.bottom ?? null,
-            cabinetInHero: Boolean(cabinet && hero?.contains(cabinet)),
-            cabinetText: (cabinet?.textContent || "").replace(/\s+/g, " ").trim(),
-            cabinetCells,
+            gatesTop: gates?.top ?? null,
+            gatesBottom: gates?.bottom ?? null,
+            wallTop: wallRect?.top ?? null,
+            wallBottom: wallRect?.bottom ?? null,
+            wallText: (wall?.textContent || "").replace(/\s+/g, " ").trim(),
+            volumesFact,
+            plaques,
             heroText: (hero?.textContent || "").replace(/\s+/g, " ").trim(),
             jumps,
             toggles,
@@ -13008,23 +13016,17 @@ async function taskAchievementFold() {
           `[390-achievement] 成就谱卷首被推到折线以下(hero bottom ${Math.round(fold.heroBottom)} / nav top ${Math.round(fold.navTop)})`,
         );
       }
-      if (
-        fold.cabinetTop === null ||
-        fold.cabinetBottom === null ||
-        fold.tabsBottom === null ||
-        fold.cabinetTop < fold.tabsBottom - 1 ||
-        !fold.cabinetInHero ||
-        fold.cabinetBottom > fold.navTop + 1
-      ) {
-        failures.push("[390-achievement] 九册总印没有紧随页签并完整落在首屏");
+      if (fold.gatesBottom === null || fold.gatesBottom > fold.heroTop + 1) {
+        failures.push("[390-achievement] 双阁门没有接在功名状卷首之前");
       }
       if (
-        fold.cabinetCells.length !== 9 ||
-        new Set(fold.cabinetCells.map((cell) => cell.top)).size !== 1 ||
-        !fold.cabinetText.includes(`/${ACHIEVEMENTS.length}`)
+        fold.plaques.length < 10 ||
+        new Set(fold.plaques.map((row) => row.text)).size !== fold.plaques.length ||
+        fold.plaques.some((row) => !/\d+\s*\/\s*\d+/.test(row.text)) ||
+        !fold.volumesFact.includes(`/${ACHIEVEMENTS.length}`)
       ) {
         failures.push(
-          `[390-achievement] 九册没有压成一条可读索引(«${fold.cabinetText}» / ${fold.cabinetCells.length} 格)`,
+          `[390-achievement] 方向没有收成可读榜牌(«${fold.wallText}» / ${fold.plaques.length} 枚)`,
         );
       }
       if (fold.jumps.length !== 3) {
@@ -13115,7 +13117,7 @@ async function taskAchievementFold() {
   };
 }
 
-/** 藏珍谱首屏的新得优先:卷首报新得,九册最多先展开三册值得看的 */
+/** 藏珍双阁的换柜与换榜:只开当前一屉,柜面读数与目标正文同步换口 */
 async function taskCollectionFold() {
   const failures = [];
   let checked = 0;
@@ -13180,11 +13182,11 @@ async function taskCollectionFold() {
           const nav = document.querySelector("[data-folio-dock]")?.getBoundingClientRect();
           const hero = document.querySelector("[data-collection-hero]");
           const heroRect = hero?.getBoundingClientRect();
-          const tabs = document.querySelector(".collection-tabs")?.getBoundingClientRect();
+          const gates = document.querySelector(".collection-gates")?.getBoundingClientRect();
           const cabinet = document.querySelector("[data-collection-cabinet]");
           const cabinetRect = cabinet?.getBoundingClientRect();
           const cabinetCells = [
-            ...(cabinet?.querySelectorAll(".collection-cabinet__cell") ?? []),
+            ...(cabinet?.querySelectorAll(".collection-cabinet__drawer") ?? []),
           ].map((cell) => {
             const rect = cell.getBoundingClientRect();
             return {
@@ -13211,22 +13213,11 @@ async function taskCollectionFold() {
               };
             },
           );
-          const jumps = [...document.querySelectorAll("[data-collection-jump]")].map((btn) => {
-            const rect = btn.getBoundingClientRect();
-            return {
-              key: btn.getAttribute("data-collection-jump") ?? "",
-              text: (btn.textContent || "").replace(/\s+/g, " ").trim(),
-              top: Math.round(rect.top),
-              left: Math.round(rect.left),
-              width: Math.round(rect.width),
-            };
-          });
-          const moreNew = document.querySelector("[data-collection-more-new]");
           return {
             navTop: nav?.top ?? innerHeight,
             heroTop: heroRect?.top ?? null,
             heroBottom: heroRect?.bottom ?? null,
-            tabsBottom: tabs?.bottom ?? null,
+            gatesBottom: gates?.bottom ?? null,
             cabinetTop: cabinetRect?.top ?? null,
             cabinetBottom: cabinetRect?.bottom ?? null,
             cabinetInHero: Boolean(cabinet && hero?.contains(cabinet)),
@@ -13234,9 +13225,6 @@ async function taskCollectionFold() {
             cabinetCells,
             heroText: (hero?.textContent || "").replace(/\s+/g, " ").trim(),
             toggles,
-            jumps,
-            moreNewText: (moreNew?.textContent || "").replace(/\s+/g, " ").trim(),
-            moreNewExpanded: moreNew?.getAttribute("aria-expanded") ?? null,
           };
         });
 
@@ -13252,26 +13240,26 @@ async function taskCollectionFold() {
       if (
         fold.cabinetTop === null ||
         fold.cabinetBottom === null ||
-        fold.tabsBottom === null ||
-        fold.cabinetTop < fold.tabsBottom - 1 ||
+        fold.gatesBottom === null ||
+        fold.cabinetTop < fold.gatesBottom - 1 ||
         !fold.cabinetInHero ||
         fold.cabinetBottom > fold.navTop + 1
       ) {
-        failures.push("[390-collection] 九册总印没有紧随页签并完整落在首屏");
+        failures.push("[390-collection] 九柜没有紧随双阁门并完整落在首屏");
       }
       if (
         fold.cabinetCells.length !== 9 ||
-        new Set(fold.cabinetCells.map((cell) => cell.top)).size !== 1 ||
+        new Set(fold.cabinetCells.map((cell) => cell.top)).size !== 3 ||
         !/珍\s*\d+\s*\/\s*\d+/.test(fold.cabinetText)
       ) {
         failures.push(
-          `[390-collection] 九册没有压成一条可读索引(«${fold.cabinetText}» / ${fold.cabinetCells.length} 格)`,
+          `[390-collection] 九柜没有排成三列柜架(«${fold.cabinetText}» / ${fold.cabinetCells.length} 格)`,
         );
       }
       if (
-        !fold.heroText.includes("藏珍谱") ||
+        !fold.heroText.includes("藏珍阁") ||
         !fold.heroText.includes("眼下新得") ||
-        !fold.heroText.includes("4 册有新得") ||
+        !fold.heroText.includes("4 柜有新得") ||
         !fold.heroText.includes("5 枚待看")
       ) {
         failures.push(`[390-collection] 卷首没有把整体进度与新得数摊开(«${fold.heroText}»)`);
@@ -13282,121 +13270,54 @@ async function taskCollectionFold() {
       if (fold.toggles.some((row) => !row.bodyExists)) {
         failures.push("[390-collection] 册目的 aria-controls 指向了不存在的区域");
       }
-      const openKeys = fold.toggles
-        .filter((row) => row.expanded === "true")
-        .map((row) => row.key)
-        .sort();
-      const jumpKeys = fold.jumps.map((row) => row.key).sort();
-      if (
-        openKeys.join(",") !== jumpKeys.join(",") ||
-        fold.toggles.filter((row) => row.bodyVisible).length !== 3
-      ) {
+      const openRows = fold.toggles.filter((row) => row.expanded === "true");
+      if (openRows.length !== 1 || fold.toggles.filter((row) => row.bodyVisible).length !== 1) {
         failures.push(
-          `[390-collection] 新得最多的三册应默认展开(open=${openKeys.join(",") || "无"})`,
+          `[390-collection] 九柜应只抽开一屉(open=${openRows.map((row) => row.key).join(",") || "无"})`,
         );
       }
-      const highlightedWithoutEntry = fold.jumps.filter((row) => {
-        const body = fold.toggles.find((toggle) => toggle.key === row.key)?.bodyText ?? "";
-        return !body.includes(freshEntryText.get(row.key) ?? "");
-      });
-      if (highlightedWithoutEntry.length > 0) {
-        failures.push("[390-collection] 默认展开的册目没有铺出对应条目");
-      }
+      const defaultOpen = openRows[0];
       if (
-        !fold.jumps.some((row) => row.key === "gongfa") ||
-        !fold.jumps.some((row) => row.key === "pet")
+        !defaultOpen ||
+        !defaultOpen.bodyText.includes(freshEntryText.get(defaultOpen.key) ?? "")
       ) {
-        failures.push("[390-collection] 卷首没有列出有新得的册目入口");
+        failures.push("[390-collection] 默认柜屉没有铺出新得最多的那一册");
       }
-      if (fold.jumps.length !== 3 || new Set(fold.jumps.map((row) => row.top)).size !== 1) {
-        failures.push(
-          `[390-collection] 三册新得应并排成索引(实见 ${fold.jumps.map((row) => `${row.key}@${row.top}`).join(" / ")})`,
-        );
-      }
-      if (!fold.moreNewText.includes("另有 1 册新得")) {
-        failures.push(`[390-collection] 第四册新得没有在卷首报出余量(«${fold.moreNewText}»)`);
-      }
-      const remainingNewKey =
-        [...freshEntryText.keys()].find((key) => !fold.jumps.some((row) => row.key === key)) ?? "";
-      await page.locator("[data-collection-more-new]").click({ timeout: 3000 });
-      await page.waitForFunction(
-        () =>
-          document.querySelector("[data-collection-more-new]")?.textContent?.includes("收起余册") ??
-          false,
-      );
-      const expanded = await read();
-      const remainingBody =
-        expanded.toggles.find((row) => row.key === remainingNewKey)?.bodyText ?? "";
-      if (
-        expanded.moreNewExpanded !== "true" ||
-        !expanded.toggles.find((row) => row.key === remainingNewKey)?.bodyVisible ||
-        !remainingBody.includes(freshEntryText.get(remainingNewKey) ?? "") ||
-        !expanded.heroText.includes("4 册有新得，已展 4 册")
-      ) {
-        failures.push(
-          `[390-collection] 余册入口没有真正展开第四册新得(«${expanded.heroText}» / «${remainingBody}»)`,
-        );
-      }
-      await page.locator("[data-collection-more-new]").click({ timeout: 3000 });
-      await page.waitForFunction(
-        () =>
-          document.querySelector("[data-collection-more-new]")?.textContent?.includes("展开余册") ??
-          false,
-      );
-      const collapsedAgain = await read();
-      if (
-        collapsedAgain.moreNewExpanded !== "false" ||
-        collapsedAgain.toggles.find((row) => row.key === remainingNewKey)?.bodyVisible ||
-        !collapsedAgain.heroText.includes("4 册有新得，已展 3 册")
-      ) {
-        failures.push(
-          `[390-collection] 余册入口没有收回第四册新得(«${collapsedAgain.heroText}» / aria=${collapsedAgain.moreNewExpanded})`,
-        );
+      if (!fold.cabinetText.includes("新 2")) {
+        failures.push(`[390-collection] 柜面没有报出新得数(«${fold.cabinetText}»)`);
       }
 
       await page
         .locator('[data-collection-category-toggle="pet"]')
         .click({ timeout: 3000 })
         .catch(() => {});
-      await page.waitForFunction(
-        () =>
-          document
-            .querySelector('[data-collection-category-toggle="pet"]')
-            ?.getAttribute("aria-expanded") === "false",
-      );
+      await page.waitForTimeout(180);
       checked += 1;
-      const collapsed = await read();
-      if (collapsed.toggles.find((row) => row.key === "pet")?.expanded !== "false") {
-        failures.push("[390-collection] 点开着的册目题头没有收册");
-      }
-
-      await page
-        .locator('[data-collection-jump="pet"]')
-        .click({ timeout: 3000 })
-        .catch(() => {});
-      await page.waitForTimeout(350);
-      checked += 1;
-      const jumped = await read();
-      const petToggle = jumped.toggles.find((row) => row.key === "pet");
-      if (petToggle?.expanded !== "true" || !petToggle.bodyVisible) {
-        failures.push("[390-collection] 点卷首的新得册目没有展开目标册");
+      const petFold = await read();
+      const petToggle = petFold.toggles.find((row) => row.key === "pet");
+      if (
+        petToggle?.expanded !== "true" ||
+        !petToggle.bodyVisible ||
+        petFold.toggles.filter((row) => row.bodyVisible).length !== 1 ||
+        !petToggle.bodyText.includes(PETS[0].name)
+      ) {
+        failures.push("[390-collection] 点另一柜没有换开对应柜屉");
       }
 
       await page
         .locator('[data-collection-category-toggle="equip"]')
         .click({ timeout: 3000 })
         .catch(() => {});
-      await page.waitForFunction(
-        () =>
-          document
-            .querySelector('[data-collection-category-toggle="equip"]')
-            ?.getAttribute("aria-expanded") === "true",
-      );
+      await page.waitForTimeout(180);
       checked += 1;
       const reopened = await read();
       const equipToggle = reopened.toggles.find((row) => row.key === "equip");
-      if (equipToggle?.expanded !== "true" || !equipToggle.bodyVisible) {
-        failures.push("[390-collection] 点收着的册目题头没有铺出该册");
+      if (
+        equipToggle?.expanded !== "true" ||
+        !equipToggle.bodyVisible ||
+        reopened.toggles.find((row) => row.key === "pet")?.bodyVisible
+      ) {
+        failures.push("[390-collection] 换柜后旧抽屉没有合上");
       }
     }
     if (pageErrors.length)
@@ -13567,11 +13488,15 @@ async function taskCollectionRegister() {
       const leadTitleOk = Array.isArray(expected.leadTitle)
         ? expected.leadTitle.includes(layout.chapters[0]?.title)
         : layout.chapters[0]?.title === expected.leadTitle;
+      const volumesTitleOk = Array.isArray(expected.volumesTitle)
+        ? expected.volumesTitle.includes(layout.chapters[1]?.title)
+        : layout.chapters[1]?.title === expected.volumesTitle;
       const titlesOk =
         leadTitleOk &&
-        layout.chapters[1]?.title === expected.volumesTitle &&
+        volumesTitleOk &&
         chapterIndices === "壹,贰" &&
         layout.chapters.every((chapter) => chapter.fact);
+      const cabinetOk = layout.cabinetInLead === (expected.cabinetInLead ?? true);
       const factOk =
         expected.factBelowTitle !== true ||
         (layout.titleTop !== null &&
@@ -13580,7 +13505,7 @@ async function taskCollectionRegister() {
           layout.factColumn === "2");
       if (
         chapterKeys !== "lead,volumes" ||
-        !layout.cabinetInLead ||
+        !cabinetOk ||
         !titlesOk ||
         !columnOk ||
         !registerOk ||
@@ -13606,7 +13531,8 @@ async function taskCollectionRegister() {
     const fold = await assertRegister("390", {
       columns: 1,
       leadTitle: "眼下可追",
-      volumesTitle: "功名卷目",
+      volumesTitle: "功名榜",
+      cabinetInLead: false,
     });
     checked += 1;
     if (fold.targetColumns !== 1) {
@@ -13625,7 +13551,18 @@ async function taskCollectionRegister() {
     const collectionFold = await assertRegister("390-收藏", {
       columns: 1,
       leadTitle: ["眼下新得", "将满之册", "九册尽收", "九册待启"],
-      volumesTitle: "九册藏珍",
+      volumesTitle: [
+        "装备图鉴",
+        "功法阁",
+        "悟道录",
+        "丹方录",
+        "灵材谱",
+        "法宝谱",
+        "灵兽册",
+        "见闻志",
+        "天赋鉴",
+      ],
+      cabinetInLead: true,
     });
     checked += 1;
     if (collectionFold.categories !== 9) {
@@ -13645,7 +13582,8 @@ async function taskCollectionRegister() {
     const tablet = await assertRegister("620", {
       columns: 1,
       leadTitle: "眼下可追",
-      volumesTitle: "功名卷目",
+      volumesTitle: "功名榜",
+      cabinetInLead: false,
     });
     checked += 1;
     if (tablet.targetColumns !== 3) {
@@ -13663,7 +13601,8 @@ async function taskCollectionRegister() {
     await assertRegister("1280", {
       columns: 2,
       leadTitle: "眼下可追",
-      volumesTitle: "功名卷目",
+      volumesTitle: "功名榜",
+      cabinetInLead: false,
     });
     if (SHOTS) {
       await page.screenshot({
@@ -13677,7 +13616,8 @@ async function taskCollectionRegister() {
     await assertRegister("195", {
       columns: 1,
       leadTitle: "眼下可追",
-      volumesTitle: "功名卷目",
+      volumesTitle: "功名榜",
+      cabinetInLead: false,
       factBelowTitle: true,
     });
     if (SHOTS) {
@@ -21903,7 +21843,7 @@ const TASKS = [
   ["天界内层三册的章节与并读", taskCelestialInnerVolumes],
   ["界域志首屏的此刻优先", taskCodexFold],
   ["成就谱首屏的眼下可追", taskAchievementFold],
-  ["藏珍谱首屏的新得优先", taskCollectionFold],
+  ["藏珍双阁的九柜换屉", taskCollectionFold],
   ["藏珍两章续卷与桌面并读", taskCollectionRegister],
   ["减少动效真的减到了", taskReduceMotion],
   ["闭关的跨页承诺", taskRetreat],

@@ -31,7 +31,7 @@
  * 最差帧 17ms、零长帧;300 件背包逐页翻到底峰值 675,此前 1000 件加压为 682;
  * 全 45 件法宝逐批翻到末页再回翻峰值 667;54 张丹方同窗峰值 725;同包点开武器槽、
  * 部位候选逐页到底再回翻峰值 984;词条转移候选逐页到底峰值 978;坊市寄卖 + 贡器
- * 各翻到末页峰值 917;全收集九册共 809 条逐册翻到末页再回翻,峰值 585;
+ * 各翻到末页峰值 917;全收集九册共 809 条逐册翻到末页再回翻,峰值 715;
  * 全习得三册功法逐门翻到末页,峰值 533。预算见 BUDGET,曾有过更糟的读数时任它红。
  * 天界道痕满卷 60 则按 12 则一批、最多留 24 则,逐批到末页再回翻,峰值 364。
  */
@@ -96,7 +96,7 @@ const BUDGET = {
    * 词条转移 299 件候选按 12+12 滑窗,逐批开完峰值 948。四条密清单单独守 1100,
    * 不松动背包首屏预算。
    * 坊市是短横条/弹窗行,每窗最多 64 条;寄卖与贡器都逐页翻到末页再回翻一批。
-   * 收藏每册每窗最多 48 枚,九册都翻到末页再回翻,全流程峰值 585 DOM。
+   * 收藏每册每窗最多 48 枚,九册都翻到末页再回翻,全流程峰值 715 DOM。
    * 修行页三册功法每窗最多 24 部,全习得 66 部逐门翻完;单门整册铺开也会随内容增长,
    * 故单独守住 700 DOM。
    * 天界道痕满卷 60 则每窗最多 24 则,全流程峰值 362;celestial 也守住 700 DOM。
@@ -1016,30 +1016,29 @@ for (const view of VIEWS) {
         }
         const categoryTotal = Number(
           await page
-            .locator(`section[data-collection-category="${category}"]`)
+            .locator(`[data-collection-category="${category}"]`)
             .first()
             .getAttribute("data-collection-total"),
         );
+        const traySelector = `[data-collection-category-body="${category}"]`;
         collectionBatches.push({
           key: category,
           ...(await expandAllBatches(
             page,
-            `button[data-codex-entry="${category}"]`,
-            `button[data-collection-more="${category}"]`,
+            `${traySelector} button[data-codex-entry="${category}"]`,
+            `${traySelector} button[data-collection-more="${category}"]`,
             {
-              selector: `section[data-collection-category="${category}"]`,
+              selector: traySelector,
               attribute: "data-collection-total",
               count: categoryTotal,
             },
             {
-              startSelector: `section[data-collection-category="${category}"]`,
+              startSelector: traySelector,
               startAttribute: "data-collection-start",
-              previousSelector: `button[data-collection-prev="${category}"]`,
+              previousSelector: `${traySelector} button[data-collection-prev="${category}"]`,
             },
           )),
         });
-        await toggle.click({ timeout: 3000 });
-        await page.waitForTimeout(80);
       }
       if (collectionBatches.length === 0) {
         collectionBatches.push({
