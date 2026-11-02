@@ -244,6 +244,7 @@ import {
   seedSave,
   showcaseSlices,
 } from "./lib/saveFixture.mjs";
+import { SAVE_PREFIX } from "../src/utils/storage.ts";
 import { TITLES } from "../src/data/titles.ts";
 import { PETS } from "../src/data/pets.ts";
 import { EQUIPMENT_TEMPLATES } from "../src/data/equipment.ts";
@@ -4254,7 +4255,7 @@ async function taskLateTour() {
     };
     // 夹具 payload 只做一次,后面 320 那一遍复用;播种加闸(见第十四件事的坑)
     const latePayload = Object.fromEntries(
-      Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)]),
+      Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)]),
     );
     await ctx.addInitScript((decisivePayload) => {
       /*
@@ -4732,7 +4733,7 @@ async function taskTribulation() {
       (data) => {
         for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
       },
-      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)])),
     );
     const page = await ctx.newPage();
     const pageErrors = [];
@@ -4902,7 +4903,7 @@ async function taskReincarnation() {
       (data) => {
         for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
       },
-      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)])),
     );
     const page = await ctx.newPage();
     const pageErrors = [];
@@ -5316,7 +5317,7 @@ async function taskIdleTick() {
       (data) => {
         for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
       },
-      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)])),
     );
     const page = await ctx.newPage();
     const pageErrors = [];
@@ -5441,7 +5442,7 @@ async function taskSaveRoundTrip() {
         for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
         localStorage.setItem("__layoutSeeded", "1");
       },
-      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)])),
     );
     const page = await ctx.newPage();
     const pageErrors = [];
@@ -5449,7 +5450,10 @@ async function taskSaveRoundTrip() {
     const savePath = "/tmp/layout-roundtrip.save";
     /** 磁盘上那一份灵石(解密 resources 分片;GNum 是 m×10^e) */
     const storedStone = async () => {
-      const cipher = await page.evaluate(() => localStorage.getItem("xuanshu.resources") || "");
+      const cipher = await page.evaluate(
+        (prefix) => localStorage.getItem(`${prefix}resources`) || "",
+        SAVE_PREFIX,
+      );
       if (!cipher) return null;
       const plain = decryptSlice(cipher);
       if (!plain) return null;
@@ -5718,7 +5722,7 @@ async function taskSmartKeep() {
         for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
         localStorage.setItem("__layoutSeeded", "1");
       },
-      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)])),
     );
     const page = await ctx.newPage();
     const pageErrors = [];
@@ -7054,7 +7058,7 @@ async function taskDecompose() {
         for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
         localStorage.setItem("__layoutSeeded", "1");
       },
-      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)])),
     );
     const page = await ctx.newPage();
     const pageErrors = [];
@@ -7265,7 +7269,7 @@ async function taskArtifactRefine() {
         for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
         localStorage.setItem("__layoutSeeded", "1");
       },
-      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)])),
     );
     const page = await ctx.newPage();
     const pageErrors = [];
@@ -7277,7 +7281,10 @@ async function taskArtifactRefine() {
     /** 磁盘上的悟道点/灵石(等节流落盘,取精确值) */
     const readWal = async () => {
       await page.waitForTimeout(5600);
-      const cipher = await page.evaluate(() => localStorage.getItem("xuanshu.resources") || "");
+      const cipher = await page.evaluate(
+        (prefix) => localStorage.getItem(`${prefix}resources`) || "",
+        SAVE_PREFIX,
+      );
       if (!cipher) return null;
       const plain = decryptSlice(cipher);
       if (!plain) return null;
@@ -7545,7 +7552,7 @@ async function taskDongfuBuild() {
         for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
         localStorage.setItem("__layoutSeeded", "1");
       },
-      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)])),
     );
     const page = await ctx.newPage();
     const pageErrors = [];
@@ -7559,7 +7566,10 @@ async function taskDongfuBuild() {
      */
     const readOre = async () => {
       await page.waitForTimeout(5600);
-      const cipher = await page.evaluate(() => localStorage.getItem("xuanshu.resources") || "");
+      const cipher = await page.evaluate(
+        (prefix) => localStorage.getItem(`${prefix}resources`) || "",
+        SAVE_PREFIX,
+      );
       if (!cipher) return { text: "(无分片)", value: null };
       const plain = decryptSlice(cipher);
       if (!plain) return { text: "(解不开)", value: null };
@@ -7698,7 +7708,7 @@ async function taskReduceMotion() {
         for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
         localStorage.setItem("__layoutSeeded", "1");
       },
-      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)])),
     );
     const page = await ctx.newPage();
     const pageErrors = [];
@@ -7853,7 +7863,7 @@ async function taskRetreat() {
         for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
         localStorage.setItem("__layoutSeeded", "1");
       },
-      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)])),
     );
     const page = await ctx.newPage();
     const pageErrors = [];
@@ -8033,7 +8043,7 @@ async function taskInventoryAccounting() {
         for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
         localStorage.setItem("__layoutSeeded", "1");
       },
-      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)])),
     );
     const page = await ctx.newPage();
     const pageErrors = [];
@@ -9174,7 +9184,7 @@ async function taskCombatReplay() {
         for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
         localStorage.setItem("__layoutSeeded", "1");
       },
-      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)])),
     );
     const page = await ctx.newPage();
     const pageErrors = [];
@@ -9517,7 +9527,7 @@ async function taskEnemyCard() {
       (data) => {
         for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
       },
-      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)])),
     );
     const page = await ctx.newPage();
     const pageErrors = [];
@@ -9954,7 +9964,7 @@ async function taskSecretRealm320() {
       (data) => {
         for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
       },
-      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)])),
     );
     const page = await ctx.newPage();
     const pageErrors = [];
@@ -14178,7 +14188,7 @@ async function taskPersistTiming() {
         for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
         localStorage.setItem("__layoutSeeded", "1");
       },
-      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)])),
     );
     const page = await ctx.newPage();
     const pageErrors = [];
@@ -14192,7 +14202,10 @@ async function taskPersistTiming() {
     await page.waitForTimeout(500);
     /** 磁盘上那一份灵石(解密 resources 分片) */
     const diskStone = async () => {
-      const cipher = await page.evaluate(() => localStorage.getItem("xuanshu.resources") || "");
+      const cipher = await page.evaluate(
+        (prefix) => localStorage.getItem(`${prefix}resources`) || "",
+        SAVE_PREFIX,
+      );
       if (!cipher) return null;
       const plain = decryptSlice(cipher);
       if (!plain) return null;
@@ -14396,7 +14409,7 @@ async function taskExportFailure() {
         for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
         localStorage.setItem("__layoutSeeded", "1");
       },
-      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)])),
     );
     const page = await ctx.newPage();
     const pageErrors = [];
@@ -14517,7 +14530,7 @@ async function taskBadSave() {
         }
         localStorage.setItem("__layoutSeeded", "1");
       },
-      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+      Object.fromEntries(Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)])),
     );
     const page = await ctx.newPage();
     const pageErrors = [];
@@ -14705,7 +14718,7 @@ async function taskIosNotice() {
           smartKeep: { enabled: true, minQuality: 3, keepCoreAffix: true, keepComboPiece: true },
           theme: "light",
         },
-      }).map(([k, v]) => [`xuanshu.${k}`, enc(v)]),
+      }).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)]),
     );
     const openWith = async (userAgent, standalone = false) => {
       const ctx = await auditContext({ viewport: { width: 390, height: 844 }, userAgent });
@@ -14961,7 +14974,7 @@ async function taskDialogZoom() {
     (data) => {
       for (const [k, v] of Object.entries(data)) localStorage.setItem(k, v);
     },
-    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`xuanshu.${k}`, enc(v)])),
+    Object.fromEntries(Object.entries(slices).map(([k, v]) => [`${SAVE_PREFIX}${k}`, enc(v)])),
   );
   const page = await ctx.newPage();
   const pageErrors = [];
@@ -21477,6 +21490,11 @@ async function taskReadOnlyTab() {
      * 并发负载下，900ms 墙钟不保证写者已经拿到 Web Lock；读者若抢在前面，
      * 两个页面都会是写者，这条只读判据便整组假红。先等锁真的在写者手里，
      * 再开第二个标签页 —— 判据不变，只把「先到」这件事变成确定事实。
+     *
+     * 锁名这里写字面量而不 import SAVE_WRITER_LOCK:下面三段都跑在
+     * page.evaluate / waitForFunction 里 —— 那是浏览器上下文,拿不到 Node 侧的
+     * import。键名若有天要改,singleWriter.ts 的注释与这条一起改
+     * (src/core/singleWriter.spec 钉着源码里的那处)。
      */
     const writerHeld = await writer
       .waitForFunction(

@@ -3403,6 +3403,17 @@ describe("界面分层 · 浮层只有一个出处", () => {
       "document.documentElement.dataset.theme = _bt",
     );
     expect(html, "boot 样式要按 data-theme 给显式暗/亮").toContain('html[data-theme="dark"] #app');
+    /*
+     * 键名必须一字不差地对上。上面几条只查「有没有写」「有没有读」——
+     * 把 theme.ts 的键改成 xuanshu.theme、index.html 仍读 boot-theme 时,
+     * 三端各自都在,机制却整个失效:暗色玩家照样闪一帧亮白,而判据全绿。
+     * 这条两侧同时抽出字符串再比,才是「同一个键」。
+     */
+    const keyInTs = /BOOT_THEME_KEY = "([^"]+)"/.exec(theme)?.[1];
+    const keyInHtml = /getItem\("([^"]+)"\)/.exec(html)?.[1];
+    expect(keyInTs, "theme.ts 里找不到键名").toBeTruthy();
+    expect(keyInHtml, "index.html 里找不到读键的字符串").toBeTruthy();
+    expect(keyInHtml, "两侧键名不一致 —— 内联脚本读的是另一枚键,首帧锁会静默失效").toBe(keyInTs);
   });
 
   it("道号与名号各归其位 —— 玩家的道名只叫道号,称号系统才叫名号", () => {
