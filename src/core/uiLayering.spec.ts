@@ -1080,7 +1080,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("法宝全册渐进铺开 —— 祭炼与随身改序后焦点不许丢", () => {
-    // 45 件法宝每张都是名/描述/被动/神通/代价/双按钮的密卡,整册铺开会把
+    // 45 件法宝每行都是名/描述/被动/神通/代价/双按钮的长账,整册铺开会把
     // 背包法宝页变成一场 DOM 洪峰。与其它长列表共用同一套分批、滑窗、回翻与聚焦规则。
     const panel = FILES.find((f) => f.path === "components/inventory/ArtifactPanel.vue");
     expect(panel?.src, "法宝册要复用长列表窗口").toMatch(
@@ -1090,11 +1090,13 @@ describe("界面分层 · 浮层只有一个出处", () => {
       /ARTIFACT_RENDER_BATCH\s*=\s*6[\s\S]{0,140}ARTIFACT_RENDER_WINDOW\s*=\s*ARTIFACT_RENDER_BATCH\s*\*\s*2/,
     );
     expect(panel?.src, "只循环当前窗口,不许再整册铺开").toMatch(
-      /v-for="row in artifactPage\.visible"/,
+      /v-for="\(row, index\) in artifactPage\.visible"/,
     );
     for (const attr of ["total", "shown", "start"]) {
       expect(panel?.src, `法宝册要暴露 ${attr} 读数给运行时门`).toContain(`data-artifact-${attr}`);
     }
+    expect(panel?.src, "阵账与全册要共用一个稳定长账落点").toContain("data-artifact-register");
+    expect(panel?.src, "法宝行不再逐件套 card-ink 卡壳").not.toContain("card-ink");
     expect(panel?.src, "法宝卡要有稳定指纹").toContain(":data-artifact-row=");
     expect(panel?.src, "余件要能续开").toContain("data-artifact-more");
     expect(panel?.src, "滑走的批次要能回翻").toContain("data-artifact-prev");

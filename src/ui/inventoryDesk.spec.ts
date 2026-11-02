@@ -330,9 +330,7 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
     expect(css).toMatch(
       /\.inventory-artifact-list\s*\{[\s\S]{0,160}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
-    expect(css).toMatch(
-      /@media \(min-width: 960px\)\s*\{[\s\S]*\.inventory-artifact-list\s*\{[\s\S]{0,100}repeat\(2, minmax\(0, 1fr\)\)/,
-    );
+    expect(css).toMatch(/\.inventory-artifact-list\s*\{[\s\S]{0,160}gap:\s*0;/);
     expect(css).toMatch(
       /\.app-shell\[data-folio-layout="spread"\]\s+\.inventory-pill-cabinet__grid\s+\.inventory-cell--ledger:nth-child\(3n\)\s*\{\s*border-right:\s*0;/,
     );
@@ -341,9 +339,11 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
     );
   });
 
-  it("法宝册先报阵位与祭炼,再铺全册密卡", () => {
+  it("法宝册收成一页阵位长账,空态只留一处", () => {
     const panel = source("src/components/inventory/ArtifactPanel.vue");
+    const css = source("src/style.css");
 
+    expect(panel, "阵账与全册要有同一处稳定落点").toContain("data-artifact-register");
     expect(panel, "法宝册先要有稳定阵账落点").toContain("data-artifact-overview");
     expect(panel, "阵账读数走 core 的同一份汇总").toContain("artifactDeskSummary");
     expect(panel, "阵账逐位列出随身法宝").toContain("data-artifact-seat");
@@ -351,13 +351,26 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
     expect(panel, "可炼 / 欠料 / 满重要各有稳定读数").toContain('data-artifact-summary="ready"');
     expect(panel).toContain('data-artifact-summary="short"');
     expect(panel).toContain('data-artifact-summary="maxed"');
-    expect(panel, "密卡要把被动、神通与下一重分行摊开").toContain("artifact-card__ledger");
+    expect(panel, "全册行要把被动、神通与下一重分行摊开").toContain("artifact-row__ledger");
+    expect(panel, "全册不再逐件套 card-ink 卡壳").not.toContain("card-ink");
+    expect(panel, "空册只由同一个阵账说明,不再另铺第二块空态").not.toContain(
+      'class="artifact-empty"',
+    );
+    expect(panel, "空册标记要跟着同一处阵账落点").toContain(":data-artifact-empty=");
     expect(panel, "祭炼规则与法宝位门槛仍读同一组常数").toContain("ARTIFACT_LEVEL_BONUS");
     expect(panel).toContain("ARTIFACT_MAX_SLOTS");
     expect(panel).toContain("artifactUnlockRealm");
     expect(panel, "满位换入必须走与 store 同一份让位计划").toContain("planArtifactPlacement");
     expect(panel, "按下前要先点名会被替下的法宝").toContain("data-artifact-swap");
     expect(panel, "成功回执同样点名已替下的法宝").toContain("已替下 法");
+    expect(panel, "两笔炼化代价各成不拆词的账段").toContain("artifact-row__cost-segment");
+    expect(panel, "欠料差额也不许把资源词拆行").toContain("artifact-row__shortfall-segment");
+    expect(css, "法宝位只沿阵账线分栏,不再各自套四边框").toMatch(
+      /\.artifact-desk__seat\s*\{[\s\S]{0,420}border:\s*0;[\s\S]{0,220}border-radius:\s*0;[\s\S]{0,220}background:\s*transparent;/,
+    );
+    expect(css, "全册每件是连续账行而不是纸卡").toMatch(
+      /\.artifact-row\s*\{[\s\S]{0,520}border:\s*0;[\s\S]{0,220}border-top:\s*1px solid/,
+    );
   });
 
   it("手机上检点仍是一册账,360 起读数并读,220 以下整册退单列", () => {

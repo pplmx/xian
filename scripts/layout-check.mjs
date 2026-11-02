@@ -162,7 +162,7 @@
  *   五十六 部位候选按 12 件一批、最多留 24 件。300 件后期背包里同槽仍有几十件,
  *      续开与回翻必须真的可达;换装后佩戴件跳到顶部,窗口要回首批并把焦点送过去。
  *      195 宽下另把候选续到第二批,量分页读数、入口与候选行是否被挤坏。
- *   五十七 法宝全册共 45 张密卡,按 6 件一批、最多留 12 件。195 宽下逐批翻到末页
+ *   五十七 法宝全册共 45 条长账,按 6 件一批、最多留 12 件。195 宽下逐批翻到末页
  *      再回翻,随身 / 炼化改序后焦点仍要跟住同一件;整页不许被双按钮或代价行挤坏。
  *   五十八 开炉丹方共 54 张,按 6 张一批、最多留 12 张。搜索换词要重置窗口且不抢
  *      输入焦点;195 宽下逐批翻到末页再回翻,炼制耗料改序后焦点仍要跟住同一张方。
@@ -6070,6 +6070,11 @@ async function taskInventoryTabRegisters() {
               ),
             ]
           : [];
+        const artifactHost = register?.querySelector("[data-inventory-artifacts]");
+        const artifactRegister = register?.querySelector("[data-artifact-register]");
+        const artifactSeats = artifactRegister
+          ? [...artifactRegister.querySelectorAll("[data-artifact-seat]")]
+          : [];
         return {
           tab: register?.getAttribute("data-inventory-register-tab") || "",
           register: registerStyle
@@ -6092,6 +6097,29 @@ async function taskInventoryTabRegisters() {
                   .length,
                 ledgerCells: register.querySelectorAll(".inventory-cell--ledger").length,
                 artifactPanel: Boolean(register.querySelector("[data-artifact-overview]")),
+              }
+            : null,
+          artifactSurface: artifactHost
+            ? {
+                register: Boolean(artifactRegister),
+                emptyMarker: Boolean(artifactRegister?.hasAttribute("data-artifact-empty")),
+                emptyTextCount: ((artifactHost.innerText || "").match(/尚无法宝随身/g) || [])
+                  .length,
+                seats: artifactSeats.length,
+                boxedSeats: artifactSeats.filter((seat) => {
+                  const style = getComputedStyle(seat);
+                  const widths = [
+                    style.borderTopWidth,
+                    style.borderRightWidth,
+                    style.borderBottomWidth,
+                    style.borderLeftWidth,
+                  ].map((width) => Number.parseFloat(width) || 0);
+                  return (
+                    widths.every((width) => width > 0) ||
+                    (Number.parseFloat(style.borderTopLeftRadius) || 0) > 0 ||
+                    style.backgroundColor !== "rgba(0, 0, 0, 0)"
+                  );
+                }).length,
               }
             : null,
           chapters,
@@ -6215,6 +6243,18 @@ async function taskInventoryTabRegisters() {
     });
     if (!artifact.register?.artifactPanel) {
       failures.push("[390-法宝] 法宝章节里没有法宝阵账面板");
+    }
+    checked += 1;
+    if (
+      !artifact.artifactSurface?.register ||
+      !artifact.artifactSurface.emptyMarker ||
+      artifact.artifactSurface.emptyTextCount !== 1 ||
+      artifact.artifactSurface.seats !== 2 ||
+      artifact.artifactSurface.boxedSeats !== 0
+    ) {
+      failures.push(
+        `[390-法宝] 空册没有收成一页阵位长账:` + JSON.stringify(artifact.artifactSurface),
+      );
     }
     if (SHOTS) {
       await page.screenshot({ path: join(SHOTS_DIR, "390-inventory-artifact-register.png") });
@@ -6984,7 +7024,10 @@ async function taskArtifactRefine() {
         items: [],
         equipped: {},
         pills: {},
-        artifacts: [{ defId: "af_lihuo", level: 0 }],
+        artifacts: [
+          { defId: "af_lihuo", level: 0 },
+          { defId: "af_hundun", level: 8 },
+        ],
         equippedArtifacts: [],
       },
       endgame: { daoPath: null, daoSource: 0, souls: [], equippedSouls: [] },
@@ -7035,7 +7078,87 @@ async function taskArtifactRefine() {
       .click({ timeout: 3000 })
       .catch(() => {});
     await page.waitForTimeout(400);
-    const btn = page.locator("main button", { hasText: /炼\s*化/ }).first();
+    const shortfallRow = page.locator('[data-artifact-row="af_hundun"]');
+    await shortfallRow.waitFor({ state: "visible", timeout: 5000 });
+
+    async function readShortfallFit() {
+      await shortfallRow
+        .locator(".artifact-row__decision")
+        .evaluate((el) => el.scrollIntoView({ block: "center" }));
+      await settleVisuals(page);
+      return shortfallRow.evaluate((row) => {
+        const box = (el) => {
+          if (!el) return null;
+          const rect = el.getBoundingClientRect();
+          return {
+            left: rect.left,
+            right: rect.right,
+            top: rect.top,
+            bottom: rect.bottom,
+            width: rect.width,
+            height: rect.height,
+          };
+        };
+        const rowBox = box(row);
+        const refine = [...row.querySelectorAll("button")].find((button) =>
+          /炼\s*化/.test(button.textContent || ""),
+        );
+        const shortfall = row.querySelector("[data-artifact-shortfall]");
+        const segments = (selector) =>
+          [...row.querySelectorAll(selector)].map((segment) => ({
+            text: (segment.textContent || "").replace(/\s+/g, " ").trim(),
+            box: box(segment),
+            scrollWidth: segment.scrollWidth,
+            clientWidth: segment.clientWidth,
+          }));
+        return {
+          row: rowBox,
+          refine: box(refine),
+          refineDisabled: refine?.hasAttribute("disabled") ?? false,
+          shortfall: box(shortfall),
+          shortfallText: (shortfall?.textContent || "").replace(/\s+/g, " ").trim(),
+          costSegments: segments(".artifact-row__cost-segment"),
+          shortfallSegments: segments(".artifact-row__shortfall-segment"),
+          viewport: { width: window.innerWidth, height: window.innerHeight },
+        };
+      });
+    }
+
+    const shortfall390 = await readShortfallFit();
+    checked += 1;
+    if (
+      !shortfall390.row ||
+      !shortfall390.refine ||
+      !shortfall390.refineDisabled ||
+      !shortfall390.shortfall ||
+      !shortfall390.shortfallText.includes("尚差") ||
+      shortfall390.refine.left < shortfall390.row.left - 1 ||
+      shortfall390.refine.right > shortfall390.row.right + 1 ||
+      shortfall390.shortfall.left < shortfall390.row.left - 1 ||
+      shortfall390.shortfall.right > shortfall390.row.right + 1 ||
+      shortfall390.refine.top < -1 ||
+      shortfall390.refine.bottom > shortfall390.viewport.height + 1 ||
+      shortfall390.shortfall.top < -1 ||
+      shortfall390.shortfall.bottom > shortfall390.viewport.height + 1 ||
+      shortfall390.costSegments.length !== 2 ||
+      shortfall390.costSegments.some(
+        (segment) =>
+          segment.scrollWidth > segment.clientWidth + 1 || !segment.box || segment.box.height > 26,
+      ) ||
+      shortfall390.shortfallSegments.length !== 2 ||
+      shortfall390.shortfallSegments.some(
+        (segment) =>
+          segment.scrollWidth > segment.clientWidth + 1 || !segment.box || segment.box.height > 26,
+      )
+    ) {
+      failures.push(`[390] 法宝欠料账没有把动作与差额锁在同一行:${JSON.stringify(shortfall390)}`);
+    }
+    if (SHOTS) {
+      await page.screenshot({ path: join(SHOTS_DIR, "390_artifact-shortfall.png") });
+    }
+
+    const cheapRow = page.locator('[data-artifact-row="af_lihuo"]');
+    const btn = cheapRow.locator("button", { hasText: /炼\s*化/ }).first();
     if ((await btn.count()) === 0) failures.push("[390] 炼化场景:背包「法宝」页找不到「炼化」入口");
     else {
       const label = ((await btn.textContent()) || "").replace(/\s+/g, " ").trim();
@@ -7071,6 +7194,41 @@ async function taskArtifactRefine() {
       } else {
         failures.push("[390] 炼化场景:读不到资源分片(判据没跑到东西)");
       }
+    }
+
+    await page.setViewportSize({ width: 195, height: 422 });
+    const shortfall195 = await readShortfallFit();
+    checked += 1;
+    if (
+      !shortfall195.row ||
+      !shortfall195.refine ||
+      !shortfall195.refineDisabled ||
+      !shortfall195.shortfall ||
+      !shortfall195.shortfallText.includes("尚差") ||
+      shortfall195.refine.left < shortfall195.row.left - 1 ||
+      shortfall195.refine.right > shortfall195.row.right + 1 ||
+      shortfall195.shortfall.left < shortfall195.row.left - 1 ||
+      shortfall195.shortfall.right > shortfall195.row.right + 1 ||
+      shortfall195.shortfall.top < shortfall195.refine.top - 1 ||
+      shortfall195.refine.top < -1 ||
+      shortfall195.refine.bottom > shortfall195.viewport.height + 1 ||
+      shortfall195.shortfall.top < -1 ||
+      shortfall195.shortfall.bottom > shortfall195.viewport.height + 1 ||
+      shortfall195.costSegments.length !== 2 ||
+      shortfall195.costSegments.some(
+        (segment) =>
+          segment.scrollWidth > segment.clientWidth + 1 || !segment.box || segment.box.height > 26,
+      ) ||
+      shortfall195.shortfallSegments.length !== 2 ||
+      shortfall195.shortfallSegments.some(
+        (segment) =>
+          segment.scrollWidth > segment.clientWidth + 1 || !segment.box || segment.box.height > 26,
+      )
+    ) {
+      failures.push(`[195] 法宝欠料账把动作或差额裁掉了:${JSON.stringify(shortfall195)}`);
+    }
+    if (SHOTS) {
+      await page.screenshot({ path: join(SHOTS_DIR, "195_artifact-shortfall.png") });
     }
     if (pageErrors.length)
       failures.push(`[390] 炼化场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
@@ -18600,7 +18758,7 @@ async function taskTitlePetOverflow() {
 }
 
 /**
- * 法宝全册 —— 45 张名/描述/被动/神通/代价/双按钮密卡,不许整册铺进页面。
+ * 法宝全册 —— 45 条名/描述/被动/神通/代价/双按钮长账,不许整册铺进页面。
  *
  * 这里补齐三件运行时事实:六件首批、十二件滑窗、195 宽下双按钮与代价行不变形;
  * 逐批翻到末页再回翻,既证全册可达,也证焦点跟着新批走。最后真按「随身」与
@@ -18668,6 +18826,8 @@ async function taskArtifactListOverflow() {
           Number(node.querySelector("strong")?.textContent),
         ]),
       );
+      const register = document.querySelector("[data-artifact-register]");
+      const rows = [...document.querySelectorAll("[data-artifact-row]")];
       return {
         owned: Number(holder?.getAttribute("data-artifact-owned")),
         carried: Number(holder?.getAttribute("data-artifact-carried")),
@@ -18679,6 +18839,23 @@ async function taskArtifactListOverflow() {
         filled: seats.filter((seat) => seat.getAttribute("data-artifact-seat-filled") === "true")
           .length,
         values,
+        register: Boolean(register),
+        emptyMarker: Boolean(register?.hasAttribute("data-artifact-empty")),
+        cardInk: register?.querySelectorAll(".card-ink").length ?? -1,
+        boxedRows: rows.filter((row) => {
+          const style = getComputedStyle(row);
+          const widths = [
+            style.borderTopWidth,
+            style.borderRightWidth,
+            style.borderBottomWidth,
+            style.borderLeftWidth,
+          ].map((width) => Number.parseFloat(width) || 0);
+          return (
+            widths.every((width) => width > 0) ||
+            (Number.parseFloat(style.borderTopLeftRadius) || 0) > 0 ||
+            style.backgroundColor !== "rgba(0, 0, 0, 0)"
+          );
+        }).length,
       };
     });
     checked += 1;
@@ -18691,21 +18868,39 @@ async function taskArtifactListOverflow() {
       overview.ready !== overview.values.ready ||
       overview.short !== overview.values.short ||
       overview.maxed !== overview.values.maxed ||
-      overview.ready + overview.short + overview.maxed !== total
+      overview.ready + overview.short + overview.maxed !== total ||
+      !overview.register ||
+      overview.emptyMarker ||
+      overview.cardInk !== 0 ||
+      overview.boxedRows !== 0
     ) {
       failures.push(
         `[320] 法宝阵账与全册不同源:` +
           `应 ${total} 件 / 随身 ${equippedIds.length} / 2 位 / 3 项读数合计 ${total},` +
           `实见 ${overview.owned} 件 / 随身 ${overview.carried} / ${overview.slots} 位 / ` +
           `席位 ${overview.filled}/${overview.seats} / ` +
-          `可炼 ${overview.ready} · 欠料 ${overview.short} · 满重 ${overview.maxed}`,
+          `可炼 ${overview.ready} · 欠料 ${overview.short} · 满重 ${overview.maxed} / ` +
+          `长账 ${overview.register} / 空标记 ${overview.emptyMarker} / ` +
+          `card-ink ${overview.cardInk} / 四边行 ${overview.boxedRows}`,
       );
     }
+    await settleVisuals(page);
     if (SHOTS) {
       await page.screenshot({ path: join(SHOTS_DIR, "320_artifact.png") });
+      await page.locator("[data-artifact-row]").first().scrollIntoViewIfNeeded();
+      await settleVisuals(page);
+      await page.screenshot({ path: join(SHOTS_DIR, "320_artifact-row.png") });
+      await page.locator("[data-artifact-overview]").scrollIntoViewIfNeeded();
     }
     await page.setViewportSize({ width: 195, height: 422 });
+    await page.locator("[data-artifact-overview]").scrollIntoViewIfNeeded();
     await settleVisuals(page);
+    if (SHOTS) {
+      await page.screenshot({ path: join(SHOTS_DIR, "195_artifact.png") });
+      await page.locator("[data-artifact-row]").first().scrollIntoViewIfNeeded();
+      await settleVisuals(page);
+      await page.screenshot({ path: join(SHOTS_DIR, "195_artifact-row.png") });
+    }
 
     async function readList() {
       return page.evaluate(() => {
@@ -18762,6 +18957,48 @@ async function taskArtifactListOverflow() {
         `[320] 法宝册首批应 6/${total}(${sortedIds[0]} → ${sortedIds[5]}),` +
           `实见 ${initial.ids[0] ?? "无"} → ${initial.ids.at(-1) ?? "无"} / ${initial.count} 行 ` +
           `(shown ${initial.shown} / total ${initial.total}) «${moreText}»`,
+      );
+    }
+
+    checked += 1;
+    const actionFit = await page.evaluate(() => {
+      return [...document.querySelectorAll("[data-artifact-row]")].flatMap((row) => {
+        const rowBox = row.getBoundingClientRect();
+        return [...row.querySelectorAll("button")].map((button) => {
+          const box = button.getBoundingClientRect();
+          return {
+            row: row.getAttribute("data-artifact-row"),
+            text: (button.textContent || "").replace(/\s+/g, " ").trim().slice(0, 18),
+            left: box.left,
+            right: box.right,
+            height: box.height,
+            rowLeft: rowBox.left,
+            rowRight: rowBox.right,
+            scrollWidth: button.scrollWidth,
+            clientWidth: button.clientWidth,
+            viewport: window.innerWidth,
+          };
+        });
+      });
+    });
+    const clippedAction = actionFit.find(
+      (button) =>
+        button.left < button.rowLeft - 1 ||
+        button.right > button.rowRight + 1 ||
+        button.right > button.viewport + 1 ||
+        button.scrollWidth > button.clientWidth + 1 ||
+        button.height < 27.5,
+    );
+    if (!actionFit.length || clippedAction) {
+      failures.push(
+        `[195] 法宝账行动作被裁:` +
+          (clippedAction
+            ? `${clippedAction.row}«${clippedAction.text}» ` +
+              `${Math.round(clippedAction.left)}..${Math.round(clippedAction.right)} / ` +
+              `行 ${Math.round(clippedAction.rowLeft)}..${Math.round(clippedAction.rowRight)} / ` +
+              `内容 ${clippedAction.scrollWidth}>${clippedAction.clientWidth} / ` +
+              `高 ${Math.round(clippedAction.height * 10) / 10}`
+            : "一件动作都没量到"),
       );
     }
 

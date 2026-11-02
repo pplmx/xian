@@ -178,19 +178,19 @@
   .inventory-artifact-list {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 0.625rem;
+    gap: 0;
   }
   /*
-   * 法宝阵账 —— 先报「谁在位上、哪几件能炼、几件已满重」,再铺全册。
-   * 原先三行裸读数没有行为落点;现在位次用席位、祭炼用总账、代价留在卡片。
+   * 法宝阵账 —— 卷首报位次与祭炼总账，下面沿同一张纸续排全册。
+   * 席位只靠分栏线分隔，全册每件也只留账线与品阶左缘，不再逐件套纸卡。
    */
+  .artifact-register {
+    min-width: 0;
+  }
   .artifact-desk {
-    margin-top: 0.8rem;
-    border: 1px solid rgb(var(--color-ink-rgb) / 0.12);
-    border-top: 2px solid rgb(var(--color-qing-rgb));
-    background:
-      linear-gradient(135deg, rgb(var(--color-qing-rgb) / 0.045), transparent 58%),
-      rgb(var(--color-paper-lifted-rgb) / 0.72);
+    margin-top: 0.48rem;
+    border: 0;
+    background: transparent;
   }
   .artifact-desk__head {
     display: grid;
@@ -251,27 +251,28 @@
   .artifact-desk__seats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
-    gap: 0.45rem;
-    padding: 0.62rem 0.82rem;
+    gap: 0;
+    padding: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
     border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.09);
   }
   .artifact-desk__seat {
     display: grid;
     min-width: 0;
-    min-height: 4.3rem;
+    min-height: 3.7rem;
     grid-template-columns: minmax(0, 1fr) auto;
     align-content: center;
     gap: 0.1rem 0.35rem;
-    padding: 0.5rem 0.58rem;
-    border: 1px dashed rgb(var(--color-ink-rgb) / 0.2);
-    background: rgb(var(--color-paper-rgb) / 0.38);
+    padding: 0.5rem 0.75rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  .artifact-desk__seat + .artifact-desk__seat {
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.09);
   }
   .artifact-desk__seat.is-filled {
-    border-style: solid;
-    border-color: rgb(var(--color-qing-rgb) / 0.34);
-    background:
-      linear-gradient(135deg, rgb(var(--color-qing-rgb) / 0.04), transparent 72%),
-      rgb(var(--color-paper-rgb) / 0.48);
+    box-shadow: inset 2px 0 0 rgb(var(--color-qing-rgb) / 0.62);
   }
   .artifact-desk__seat-index {
     grid-column: 1 / -1;
@@ -331,19 +332,22 @@
     line-height: 1.55;
   }
   .artifact-ledger {
-    margin-top: 0.9rem;
+    margin-top: 0;
   }
   .artifact-ledger__head {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
     gap: 0.12rem 0.55rem;
-    padding: 0 0.12rem 0.5rem;
+    padding: 0.7rem 0.12rem 0.42rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
   }
   .artifact-ledger__title {
+    margin: 0;
     color: rgb(var(--color-ink-soft-rgb));
     font-family: var(--font-kai);
     font-size: var(--type-section);
+    font-weight: 500;
     letter-spacing: 0.08em;
   }
   .artifact-ledger__hint,
@@ -354,53 +358,108 @@
   .artifact-ledger__count {
     margin-left: auto;
   }
-  .artifact-card {
+  .artifact-row {
+    position: relative;
+    min-width: 0;
+    padding: 0.72rem 0.24rem 0.78rem 0.66rem;
+    border: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: inset 2px 0 0 var(--artifact-edge);
+  }
+  .artifact-row:focus-visible {
+    outline: 2px solid rgb(var(--color-cinnabar-rgb) / 0.45);
+    outline-offset: -2px;
+  }
+  .artifact-row__head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.18rem 0.42rem;
+  }
+  .artifact-row__order {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+  }
+  .artifact-row__name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: var(--artifact-tone);
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    line-height: 1.35;
+  }
+  .artifact-row__carried {
+    color: rgb(var(--color-jade-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1.4;
+    border-bottom: 1px solid rgb(var(--color-jade-rgb) / 0.42);
+  }
+  .artifact-row__level {
+    margin-left: auto;
+    color: rgb(var(--color-gold-ink-rgb));
+    font-size: var(--type-body);
+    white-space: nowrap;
+  }
+  .artifact-row__progress {
+    margin-top: 0.38rem;
+  }
+  .artifact-row__body {
+    min-width: 0;
+    margin-top: 0.42rem;
+  }
+  .artifact-row__read {
     min-width: 0;
   }
-  .artifact-card__head {
-    padding-right: 1.25rem;
-  }
-  .artifact-card__description {
-    margin-top: 0.35rem;
+  .artifact-row__description {
     color: rgb(var(--color-ink-faint-rgb));
     font-size: var(--type-note);
     line-height: 1.5;
   }
-  .artifact-card__ledger {
-    margin-top: 0.55rem;
+  .artifact-row__ledger {
+    margin-top: 0.45rem;
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
   }
-  .artifact-card__fact {
+  .artifact-row__fact {
     display: grid;
     grid-template-columns: 4.8rem minmax(0, 1fr);
     gap: 0.5rem;
     padding: 0.38rem 0;
   }
-  .artifact-card__fact + .artifact-card__fact {
+  .artifact-row__fact + .artifact-row__fact {
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
   }
-  .artifact-card__fact dt {
+  .artifact-row__fact dt {
     color: rgb(var(--color-ink-faint-rgb));
     font-size: var(--type-note);
     line-height: 1.55;
   }
-  .artifact-card__fact dd {
+  .artifact-row__fact dd {
     min-width: 0;
     color: rgb(var(--color-ink-soft-rgb));
     font-size: var(--type-body);
     line-height: 1.55;
   }
-  .artifact-card__fact:nth-child(1) dd {
+  .artifact-row__fact:nth-child(1) dd {
     color: rgb(var(--color-qing-rgb));
   }
-  .artifact-card__fact:nth-child(2) dd {
+  .artifact-row__fact:nth-child(2) dd {
     color: rgb(var(--color-violet-ink-rgb));
   }
-  .artifact-card__fact:nth-child(3) dd {
+  .artifact-row__fact:nth-child(3) dd {
     color: rgb(var(--color-ink-faint-rgb));
   }
-  .artifact-card__swap {
+  .artifact-row__decision {
+    min-width: 0;
     margin-top: 0.55rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.085);
+  }
+  .artifact-row__swap {
     padding-left: 0.48rem;
     border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.5);
     color: rgb(var(--color-ink-soft-rgb));
@@ -408,41 +467,67 @@
     line-height: 1.55;
     overflow-wrap: anywhere;
   }
-  .artifact-card__actions {
-    margin-top: 0.65rem;
-    padding-top: 0.6rem;
+  .artifact-row__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.45rem;
+  }
+  .artifact-row__action {
+    min-width: 0;
+    min-height: 2.2rem;
+    flex: 0 1 auto;
+    padding: 0.36rem 0.58rem;
+    font-size: var(--type-body);
+    line-height: 1.45;
+    white-space: normal;
+  }
+  .artifact-row__action--cost {
+    flex-wrap: wrap;
+    flex: 1 1 12rem;
+  }
+  .artifact-row__cost-segment,
+  .artifact-row__shortfall-segment {
+    white-space: nowrap;
+  }
+  .artifact-row__shortfall {
+    margin-top: 0.38rem;
+    color: rgb(var(--color-cinnabar-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+  .artifact-ledger__pager {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    padding-top: 0.62rem;
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
   }
-  .artifact-empty {
-    display: grid;
-    max-width: 30rem;
-    margin: 2.5rem auto 0;
-    justify-items: center;
-    padding: 1.15rem 1rem;
-    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
-    text-align: center;
-  }
-  .artifact-empty__seal {
-    display: grid;
-    width: 2.4rem;
-    height: 2.4rem;
-    place-items: center;
-    border: 1px dashed rgb(var(--color-ink-rgb) / 0.26);
-    color: rgb(var(--color-ink-faint-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-title);
-  }
-  .artifact-empty__title {
-    margin-top: 0.55rem;
-    color: rgb(var(--color-ink-soft-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-section);
-  }
-  .artifact-empty__copy {
-    margin-top: 0.25rem;
-    color: rgb(var(--color-ink-faint-rgb));
+  .artifact-ledger__page-action {
+    min-width: 0;
+    min-height: 2rem;
+    flex: 1 1 8rem;
+    padding: 0.36rem 0.55rem;
     font-size: var(--type-note);
-    line-height: 1.6;
+    white-space: normal;
+  }
+  @media (min-width: 720px) {
+    .artifact-row__body {
+      display: grid;
+      grid-template-columns: minmax(0, 1.32fr) minmax(14rem, 0.68fr);
+      gap: 1rem;
+    }
+    .artifact-row__decision {
+      margin-top: 0;
+      padding-top: 0;
+      padding-left: 1rem;
+      border-top: 0;
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.085);
+    }
+    .artifact-row__actions {
+      align-content: start;
+    }
   }
   .inventory-material-group {
     min-width: 0;
@@ -731,10 +816,6 @@
       .inventory-cell--ledger:nth-child(3n) {
       border-right: 0;
     }
-
-    .app-shell[data-folio-layout="spread"] .inventory-artifact-list {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
   }
   @media (max-width: 220px) {
     .artifact-desk__head {
@@ -755,6 +836,11 @@
       grid-template-columns: minmax(0, 1fr);
     }
 
+    .artifact-desk__seat + .artifact-desk__seat {
+      border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+      border-left: 0;
+    }
+
     .artifact-desk__reading + .artifact-desk__reading {
       border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
       border-left: 0;
@@ -765,9 +851,23 @@
       margin-left: 0;
     }
 
-    .artifact-card__fact {
+    .artifact-row__fact {
       grid-template-columns: minmax(0, 1fr);
       gap: 0.08rem;
+    }
+
+    .artifact-row__actions {
+      flex-direction: column;
+    }
+
+    .artifact-row__action {
+      width: 100%;
+      flex-basis: auto;
+    }
+
+    .artifact-ledger__page-action {
+      width: 100%;
+      flex-basis: auto;
     }
 
     .equip-dossier__hero {
@@ -880,13 +980,6 @@
 
   .inventory-register__lower > .inventory-register__chapter {
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
-  }
-
-  .inventory-artifacts > .artifact-desk {
-    margin-top: 0.48rem;
-    border: 0;
-    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
-    background: transparent;
   }
 
   .inventory-chapter-head {
