@@ -20,7 +20,7 @@
       被动翻检全程无进度条:玩家只知道某天突然翻出一张方子,不知道它快到了。
       这一行把「下一件事」报成时间 —— 读数与 studyTick 同序,见 core/loreService.studyEta
     -->
-    <p v-if="studyLine" class="mb-2 text-note leading-relaxed text-ink-faint tabular">
+    <p v-if="studyLine" class="mb-2 t-note text-ink-faint tabular">
       {{ studyLine }}
     </p>
     <!--
@@ -41,7 +41,7 @@
         </p>
       </div>
     </div>
-    <p v-else class="mb-2 text-note leading-relaxed text-ink-faint">
+    <p v-else class="mb-2 t-note text-ink-faint">
       炉前还是白身 —— 备一味
       <span class="text-qing">安神 · 澄心 · 定心</span>,双成 / 心得 / 护料即刻各涨一截
     </p>
@@ -115,7 +115,7 @@
                 ><template v-if="toNum(r.cost.stone) > 0"> · 灵石不退</template>
               </p>
               <!-- 炼出来是什么:方子清单此前只报代价与把握,不报成品 -->
-              <p class="text-note leading-relaxed text-qing">{{ pillFuncText(r.def) }}</p>
+              <p class="t-note text-qing">{{ pillFuncText(r.def) }}</p>
             </div>
             <div class="shrink-0 text-right tinylens:w-full tinylens:text-left">
               <p
@@ -247,10 +247,9 @@
               一字一行(自检量到 34px 宽的三行竖排)。故这一档三段改回自适应宽度
               (挤在一行读得出),说明用 basis-full 独占下一行。
             -->
-            <span
-              class="min-w-[9em] flex-1 text-note leading-relaxed text-ink-faint tinylens:basis-full"
-              >{{ s.desc }}</span
-            >
+            <span class="min-w-[9em] flex-1 t-note text-ink-faint tinylens:basis-full">{{
+              s.desc
+            }}</span>
           </p>
           <!-- 离下一境还差多少:境地内线性进度(见 skillStageProgress),同其余进度条共一根 ProgressBar -->
           <p class="mt-0.5 flex items-center gap-1.5 pl-14">

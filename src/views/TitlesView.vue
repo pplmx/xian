@@ -167,7 +167,7 @@
               v-if="titlePage.start > 0"
               type="button"
               data-title-prev
-              class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
+              class="chip-ink !whitespace-normal text-center t-note text-ink-soft active:scale-95"
               :aria-label="previousTitleText()"
               @click="showPreviousTitles"
             >
@@ -177,7 +177,7 @@
               v-if="titlePage.hidden > 0"
               type="button"
               data-title-more
-              class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
+              class="chip-ink !whitespace-normal text-center t-note text-cinnabar active:scale-95"
               :aria-label="moreTitleText()"
               :data-promised="Math.min(TITLE_RENDER_BATCH, titlePage.hidden)"
               @click="showMoreTitles"
@@ -363,7 +363,7 @@
               v-if="petPage.start > 0"
               type="button"
               data-pet-prev
-              class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
+              class="chip-ink !whitespace-normal text-center t-note text-ink-soft active:scale-95"
               :aria-label="previousPetText()"
               @click="showPreviousPets"
             >
@@ -373,7 +373,7 @@
               v-if="petPage.hidden > 0"
               type="button"
               data-pet-more
-              class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
+              class="chip-ink !whitespace-normal text-center t-note text-cinnabar active:scale-95"
               :aria-label="morePetText()"
               :data-promised="Math.min(PET_RENDER_BATCH, petPage.hidden)"
               @click="showMorePets"

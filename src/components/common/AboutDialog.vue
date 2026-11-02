@@ -1,6 +1,6 @@
 <template>
   <BaseModal :open="open" title="关于此作" @close="$emit('close')">
-    <div class="text-body leading-relaxed" data-about-surface>
+    <div class="t-body" data-about-surface>
       <p class="text-ink-faint">《玄枢录》—— 玄之又玄,众妙之门。</p>
       <div class="mt-3 divide-y divide-ink/10 border-y border-ink/10" data-about-ledger>
         <div class="py-2">

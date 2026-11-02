@@ -59,15 +59,13 @@
       <!-- 在境中 -->
       <template v-if="state">
         <p class="mt-1.5 t-body text-ink-soft">{{ def?.name }} · {{ def?.desc }}</p>
-        <p class="mt-1 text-note leading-relaxed text-violet-ink">
-          此地规则:{{ state.rules.join(" · ") }}
-        </p>
-        <p v-if="builtinRulesText" class="mt-0.5 text-note leading-relaxed text-ink-soft">
+        <p class="mt-1 t-note text-violet-ink">此地规则:{{ state.rules.join(" · ") }}</p>
+        <p v-if="builtinRulesText" class="mt-0.5 t-note text-ink-soft">
           本境之则:{{ builtinRulesText }}
         </p>
         <p
           v-if="state.spoils.length"
-          class="scroll-pane mt-1 max-h-24 overflow-y-auto text-note leading-relaxed text-ink-faint"
+          class="scroll-pane mt-1 max-h-24 overflow-y-auto t-note text-ink-faint"
         >
           <span v-for="(s, i) in state.spoils" :key="i" class="block">· {{ s }}</span>
         </p>
@@ -75,7 +73,7 @@
         <!-- 组内不断、组间可换行:整行 nowrap 在 320 宽上会顶出卡片,全放开又会让「本层劫:xxx」被拆成两截 -->
         <p
           v-if="preview"
-          class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-note leading-relaxed text-ink-soft"
+          class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 t-note text-ink-soft"
         >
           <span class="whitespace-nowrap">
             <template v-if="preview.foe">
@@ -96,7 +94,7 @@
           隐性机制随预览披露(同源,不手写):逐出门槛、层间回血/损血、终层宝藏 ——
           这三样按下去决定成败/去留,不许只活到战报/结算才见。
         -->
-        <p v-if="preview" class="mt-0.5 text-note leading-relaxed tabular">
+        <p v-if="preview" class="mt-0.5 t-note tabular">
           <span :class="preview.lossesLeft <= 1 ? 'text-cinnabar' : 'text-ink-faint'"
             >再败 {{ preview.lossesLeft === 0 ? "即逐出" : `${preview.lossesLeft} 场逐出` }}</span
           ><template v-if="preview.healBetweenPct && preview.healBetweenPct !== 0"
@@ -137,7 +135,7 @@
       <!-- 未入:择一处 -->
       <template v-else>
         <!-- 身在另一册的境中:先说明进不去,不摆一列点了才被拒的门 -->
-        <p v-if="elsewhere" class="mt-1 text-note leading-relaxed text-ink-faint">
+        <p v-if="elsewhere" class="mt-1 t-note text-ink-faint">
           身在「{{ elsewhere.name }}」秘境之中 —— 出而后再来择境。
         </p>
         <div v-else class="mt-1">
@@ -168,9 +166,7 @@
                   >入 境 →</span
                 >
               </span>
-              <span class="mt-0.5 block text-note leading-relaxed text-ink-faint">{{
-                r.desc
-              }}</span>
+              <span class="mt-0.5 block t-note text-ink-faint">{{ r.desc }}</span>
             </button>
             <p v-if="list.length === 0" class="empty-note text-center text-body text-ink-faint">
               {{

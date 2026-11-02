@@ -89,11 +89,7 @@
                     ×{{ receipt.count }}
                   </span>
                 </p>
-                <p
-                  v-for="(line, j) in receipt.lines"
-                  :key="j"
-                  class="mt-0.5 text-body leading-relaxed text-ink"
-                >
+                <p v-for="(line, j) in receipt.lines" :key="j" class="mt-0.5 t-body text-ink">
                   {{ line }}
                 </p>
               </li>

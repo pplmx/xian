@@ -199,9 +199,7 @@
                     :class="route.name === entry.name ? 'text-cinnabar' : 'text-ink'"
                     >{{ entry.label }}</span
                   >
-                  <span class="mt-0.5 block text-note leading-relaxed text-ink-faint">{{
-                    entry.description
-                  }}</span>
+                  <span class="mt-0.5 block t-note text-ink-faint">{{ entry.description }}</span>
                 </span>
                 <span
                   v-if="entryCue(entry.name)"

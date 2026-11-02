@@ -63,6 +63,11 @@ const FILES = walk(SRC)
  * 模板已不再写 text-[10px] 这类裸值；判据若只认像素，会在重构后「零命中全绿」。
  * 这里把 token 还原成手机基准档，既保留原有的私档检查，也防止把 text-title 写成
  * 别的字号再靠改名绕过。
+ *
+ * 排版角色类（`.t-card / .t-entry / .t-item / .t-body / .t-note`）同样在决定字号 ——
+ * 它们各自读 `--type-*` 变量（见 style.css 那一节）。不认它们，就会出现
+ * 「把 `text-note leading-relaxed` 换成等价的角色类之后，扫描器当这页没写字号」的
+ * 假绿：字号照样在那里，只是判据看不见了。
  */
 const TYPE_TOKEN_PX: Record<string, number> = {
   note: 10,
@@ -71,10 +76,20 @@ const TYPE_TOKEN_PX: Record<string, number> = {
   section: 15,
   heading: 18,
 };
+const ROLE_TOKEN_PX: Record<string, number> = {
+  "t-card": TYPE_TOKEN_PX.title!,
+  "t-entry": TYPE_TOKEN_PX.title!,
+  "t-item": TYPE_TOKEN_PX.title!,
+  "t-body": TYPE_TOKEN_PX.body!,
+  "t-note": TYPE_TOKEN_PX.note!,
+};
 const usedTypeSizes = (src: string): number[] => [
   ...[...src.matchAll(/text-\[(\d+)px\]/g)].map((m) => Number(m[1] ?? 0)),
   ...[...src.matchAll(/\btext-(note|body|title|section|heading)\b/g)].map(
     (m) => TYPE_TOKEN_PX[m[1] ?? ""] ?? 0,
+  ),
+  ...[...src.matchAll(/\b(t-card|t-entry|t-item|t-body|t-note)\b/g)].map(
+    (m) => ROLE_TOKEN_PX[m[1] ?? ""] ?? 0,
   ),
   ...[...src.matchAll(/font-size:\s*var\(--type-(note|body|title|section|heading)\)/g)].map(
     (m) => TYPE_TOKEN_PX[m[1] ?? ""] ?? 0,
@@ -1867,7 +1882,10 @@ describe("界面分层 · 浮层只有一个出处", () => {
     const sClass = souls?.src.match(
       /<p[\s\S]{0,200}?v-if="row\.invested && row\.investedCost"[\s\S]{0,120}?class="([^"]*)"/,
     )?.[1];
-    expect(sClass, "已淬养警示须可换行(投入尘/灵石不许被省略号裁)").toMatch(/\bleading-relaxed\b/);
+    expect(
+      sClass,
+      "已淬养警示须可换行(投入尘/灵石不许被省略号裁)—— 手写 leading-relaxed 或角色类 .t-note 都算数",
+    ).toMatch(/\bleading-relaxed\b|\bt-note\b/);
     if (sClass) expect(sClass, "已淬养警示不许 nowrap 裁掉投入数").not.toMatch(/\btruncate\b/);
     const market = FILES.find((f) => f.path === "views/MarketView.vue");
     const mClass = market?.src.match(

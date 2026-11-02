@@ -28,9 +28,7 @@
           <h2 id="world-route-heading" class="font-kai text-title tracking-[0.24em] text-ink">
             山河行旅图
           </h2>
-          <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
-            高处境深 · 远处路长 · 点大处事多
-          </p>
+          <p class="mt-0.5 t-note text-ink-faint">高处境深 · 远处路长 · 点大处事多</p>
         </div>
         <div class="shrink-0 text-right">
           <p class="font-kai text-title text-ink tabular">

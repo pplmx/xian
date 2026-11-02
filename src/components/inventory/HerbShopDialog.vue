@@ -73,9 +73,7 @@
         </div>
       </div>
     </div>
-    <p class="mt-3 text-note leading-relaxed text-ink-faint">
-      灵石不够时,账上会写明尚差多少 —— 那就去历练,别硬买。
-    </p>
+    <p class="mt-3 t-note text-ink-faint">灵石不够时,账上会写明尚差多少 —— 那就去历练,别硬买。</p>
     <template #footer>
       <button class="btn-seal w-full" @click="emit('close')">收 市</button>
     </template>

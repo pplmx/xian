@@ -494,10 +494,7 @@
         本机当前的修行进度 —— 之后的收获会回到备份那一刻,且无法撤销。
       </p>
       <!-- 备份是谁的、什么版本、什么时间导的:整体替换前先摊个底细(决策前摊数字契约) -->
-      <div
-        v-if="importInspect"
-        class="mt-3 rounded-[2px] bg-paper-deep/60 px-3 py-2 text-body leading-relaxed"
-      >
+      <div v-if="importInspect" class="mt-3 rounded-[2px] bg-paper-deep/60 px-3 py-2 t-body">
         <p class="flex flex-wrap items-baseline gap-x-2 text-ink">
           <span class="font-kai text-title">{{ importInspect.name }}</span>
           <span class="text-ink-faint">{{ importInspect.realmLabel }}</span>
@@ -512,7 +509,7 @@
         </p>
         <p
           v-if="importInspect.skipped.length || importInspect.missingCritical"
-          class="mt-1 text-note leading-relaxed text-cinnabar"
+          class="mt-1 t-note text-cinnabar"
         >
           <template v-if="importInspect.missingCritical">
             这份备份缺少「{{

@@ -272,7 +272,7 @@ function doTransfer(): void {
             v-if="candidatePage.start > 0"
             type="button"
             data-affix-candidate-prev
-            class="chip-ink !whitespace-nowrap text-center text-note leading-relaxed text-ink-soft active:scale-95"
+            class="chip-ink !whitespace-nowrap text-center t-note text-ink-soft active:scale-95"
             :aria-label="previousCandidateText"
             @click="showPreviousCandidates"
           >
@@ -282,7 +282,7 @@ function doTransfer(): void {
             v-if="candidatePage.hidden > 0"
             type="button"
             data-affix-candidate-more
-            class="chip-ink !whitespace-nowrap text-center text-note leading-relaxed text-cinnabar active:scale-95"
+            class="chip-ink !whitespace-nowrap text-center t-note text-cinnabar active:scale-95"
             :aria-label="moreCandidateText"
             :data-promised="Math.min(AFFIX_CANDIDATE_RENDER_BATCH, candidatePage.hidden)"
             @click="showMoreCandidates"

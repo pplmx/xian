@@ -503,7 +503,7 @@
         </div>
         <p class="mt-3 t-body text-ink-soft">{{ currentPill.def.desc }}</p>
         <!-- 效果与来路:丹药卡片此前只有风味与数量,服下去会怎样一个字都没说 -->
-        <p class="mt-2 whitespace-pre-line text-body leading-relaxed text-qing">
+        <p class="mt-2 whitespace-pre-line t-body text-qing">
           {{ pillFuncText(currentPill.def) }}
         </p>
         <p v-if="pillMasteryText(currentPill.def.id)" class="mt-1 text-body text-ink-faint">

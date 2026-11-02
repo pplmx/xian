@@ -2,8 +2,8 @@
   <div class="batch-spend-ledger" :data-tone="tone">
     <span class="batch-spend-ledger__seal font-kai text-note" aria-hidden="true">{{ seal }}</span>
     <div class="batch-spend-ledger__copy">
-      <p class="text-body leading-relaxed text-ink"><slot name="title" /></p>
-      <p class="tabular text-note leading-relaxed text-ink-faint"><slot name="detail" /></p>
+      <p class="t-body text-ink"><slot name="title" /></p>
+      <p class="tabular t-note text-ink-faint"><slot name="detail" /></p>
     </div>
     <span
       class="batch-spend-ledger__status text-note"

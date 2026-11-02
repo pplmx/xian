@@ -23,7 +23,7 @@
           v-if="furnaceConfirm === row.rate.resource"
           class="mt-1.5 rounded-[2px] bg-cinnabar/5 px-3 py-2"
         >
-          <p class="text-note leading-relaxed text-cinnabar">
+          <p class="t-note text-cinnabar">
             将
             <span class="tabular"
               >{{ row.rate.name }} ×{{ formatNum(furnacePreview(row.rate) * row.rate.per) }}</span
@@ -90,7 +90,7 @@
             >下世有效 {{ fruitInfo.nextEffectiveText }} 枚(+{{ fruitInfo.deltaPct }}%)</span
           >
         </div>
-        <p class="mt-0.5 text-note leading-relaxed text-ink-faint tabular">
+        <p class="mt-0.5 t-note text-ink-faint tabular">
           当前 {{ fruitInfo.total }} 枚 · 有效 {{ fruitInfo.effectiveText }} 枚 · 边际收益渐减
         </p>
       </div>
@@ -102,7 +102,7 @@
 
   <!-- 首次凝道果:把「跨世保留的到底是什么」讲一次 -->
   <BaseModal :open="fruitDialogOpen" title="道果" @close="fruitDialogOpen = false">
-    <div class="space-y-2.5 text-body leading-relaxed">
+    <div class="space-y-2.5 t-body">
       <p class="text-ink-soft">{{ fruitDialog.intro }}</p>
       <div>
         <p class="font-kai text-body tracking-wider text-ink">用途</p>

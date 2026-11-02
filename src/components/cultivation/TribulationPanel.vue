@@ -105,7 +105,7 @@
       那种误会不该靠失败去发现。
     -->
     <div v-if="worldStep" class="cultivation-tribulation__world-step">
-      <p class="text-note leading-relaxed text-cinnabar">
+      <p class="t-note text-cinnabar">
         界膜之劫:跨界这一关血肉之厚一概不算 ——
         防御与气血折算出的抗性、开劫护持在此作废,只认词条与准备。
       </p>

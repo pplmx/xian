@@ -110,7 +110,7 @@
               放进确认态:点「确认重写」之前必先看见这句。整行在确认态才 flex-wrap,
               平时那行还是原来的一行(不为了这一段去改所有行的排版)。
             -->
-            <p class="w-full text-note leading-relaxed text-ink-faint">
+            <p class="w-full t-note text-ink-faint">
               判胜 —— 以今日之你重打此战,
               <span class="text-ink-soft">快过 {{ mark.rounds }} 回合</span>
               即【胜于旧我】;此次花 {{ REWRITE_ENTRY_COST }} 道源,不破不退。
@@ -137,7 +137,7 @@
           v-if="marksPage.start > 0"
           type="button"
           data-marks-prev
-          class="chip-ink min-h-[28px] flex-1 basis-[7.5rem] !whitespace-normal text-center text-note leading-relaxed text-ink-soft"
+          class="chip-ink min-h-[28px] flex-1 basis-[7.5rem] !whitespace-normal text-center t-note text-ink-soft"
           :aria-label="previousMarksText"
           @click="showPreviousMarks"
         >
@@ -147,7 +147,7 @@
           v-if="marksPage.hidden > 0"
           type="button"
           data-marks-more
-          class="chip-ink min-h-[28px] flex-1 basis-[7.5rem] !whitespace-normal text-center text-note leading-relaxed text-cinnabar"
+          class="chip-ink min-h-[28px] flex-1 basis-[7.5rem] !whitespace-normal text-center t-note text-cinnabar"
           :aria-label="moreMarksText"
           :data-promised="Math.min(MARKS_RENDER_BATCH, marksPage.hidden)"
           @click="showMoreMarks"

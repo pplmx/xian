@@ -341,7 +341,7 @@
               <p class="truncate text-body" :style="{ color: soulColor(soul) }">
                 {{ soulLabel(soul) }}
               </p>
-              <p class="text-note leading-relaxed text-ink-faint">
+              <p class="t-note text-ink-faint">
                 凝自「{{ soul.fromName }}」 · {{ soulModText(soul) }}
               </p>
             </div>
@@ -380,7 +380,7 @@
             v-if="idleSoulPage.start > 0"
             type="button"
             data-soul-idle-prev
-            class="chip-ink min-h-[28px] !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
+            class="chip-ink min-h-[28px] !whitespace-normal text-center t-note text-ink-soft active:scale-95"
             :aria-label="previousListText(idleSoulPage.shown, idleSoulRows.length, '缕')"
             @click="showPreviousIdleSouls"
           >
@@ -390,7 +390,7 @@
             v-if="idleSoulPage.hidden > 0"
             type="button"
             data-soul-idle-more
-            class="chip-ink min-h-[28px] !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
+            class="chip-ink min-h-[28px] !whitespace-normal text-center t-note text-cinnabar active:scale-95"
             :aria-label="moreListText(idleSoulPage.hidden, '缕')"
             @click="showMoreIdleSouls"
           >
@@ -458,10 +458,7 @@
                 手动动作不拦,但必须说清代价 —— 玩家不该在按下确认后才发现自己练过它。
                 投入要报数:尘几许、灵石几许(enhanceInvested 同款,不是一句定性)。
               -->
-              <p
-                v-if="row.invested && row.investedCost"
-                class="text-note leading-relaxed text-cinnabar"
-              >
+              <p v-if="row.invested && row.investedCost" class="t-note text-cinnabar">
                 此器已淬养,入炉将连同强化投入一并失去(器灵尘×{{ row.investedCost.dust }} · 灵石
                 {{ formatGN(row.investedCost.stone) }})
               </p>
@@ -493,7 +490,7 @@
             v-if="refinablePage.start > 0"
             type="button"
             data-soul-forge-prev
-            class="chip-ink min-h-[28px] !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
+            class="chip-ink min-h-[28px] !whitespace-normal text-center t-note text-ink-soft active:scale-95"
             :aria-label="previousListText(refinablePage.shown, refinableRows.length, '件')"
             @click="showPreviousRefinable"
           >
@@ -503,7 +500,7 @@
             v-if="refinablePage.hidden > 0"
             type="button"
             data-soul-forge-more
-            class="chip-ink min-h-[28px] !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
+            class="chip-ink min-h-[28px] !whitespace-normal text-center t-note text-cinnabar active:scale-95"
             :aria-label="moreListText(refinablePage.hidden, '件')"
             @click="showMoreRefinable"
           >

@@ -343,7 +343,7 @@ function triesOf(id: string, minRoll = 0): number | null {
       重铸到底做什么,得在按下之前说清:条数与数值一并重掷(封存的不动),
       不限次数、成本只随「阶数」与「封存数」走 —— 与旧版"越洗越贵、上限十次"不同。
     -->
-    <p v-if="reforgeCostVal" class="text-center text-note leading-relaxed text-ink-faint">
+    <p v-if="reforgeCostVal" class="text-center t-note text-ink-faint">
       重掷未封存的词条:条数(≤{{ affixCap }} 条)与数值一并重掷,封存的不动 ·
       不限次数,成本随阶数与封存数走
     </p>

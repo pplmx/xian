@@ -354,7 +354,7 @@
               >
                 {{ askLabel }}
               </button>
-              <span class="text-note leading-relaxed text-ink-faint">
+              <span class="t-note text-ink-faint">
                 卜以决疑,不疑何卜 —— 一事不二卜,卦力随动爻而盛,亦随时而尽。
               </span>
             </div>
@@ -452,7 +452,7 @@
               :value="fateModsText"
               color="text-jade"
             />
-            <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
+            <p class="mt-0.5 t-note text-ink-faint">
               卦是一时之机(可问、有时限),命是一世之格(常驻、转世重算,力薄为底色)。
             </p>
             <div class="ink-divider my-2.5" aria-hidden="true" />
@@ -479,7 +479,7 @@
               </p>
             </div>
             <!-- 来历:取象义而非排盘的说明,归脚注 -->
-            <p class="mt-2 border-t border-ink/8 pt-2 text-note leading-relaxed text-ink-faint">
+            <p class="mt-2 border-t border-ink/8 pt-2 t-note text-ink-faint">
               紫微斗数本当以生辰起五行局再安诸星,游戏内没有生辰 —— 故此门只取
               <b class="text-ink">{{ cnNumber(PALACES.length) }}宫所主</b>与
               <b class="text-ink">{{ cnNumber(STARS.length) }}主星的星性</b
@@ -519,7 +519,7 @@
                 mansionLuckText()
               }}</span>
             </div>
-            <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
+            <p class="mt-0.5 t-note text-ink-faint">
               只在 {{ favoredWorldName }} 生效,往他处去不加 ——
               与天时不同:天时是全境之气,星象只利一方。
             </p>
@@ -527,7 +527,7 @@
               去 {{ favoredWorldName }} 历练 →
             </button>
             <!-- 来历归脚注:分野依《晋书·天文志》只作读,管用的是上面那条约定 -->
-            <p class="mt-1 text-note leading-relaxed text-ink-faint">
+            <p class="mt-1 t-note text-ink-faint">
               分野依《晋书·天文志》(诸家小异),只作来历读 —— 游戏里的地界不是九州。
               {{ cnNumber(IMAGES.length) }}象配{{ cnNumber(WORLDS.length) }}界({{
                 imageWorldMap
@@ -612,7 +612,7 @@
                 >
               </div>
             </div>
-            <p class="mt-2 text-note leading-relaxed text-ink-faint">
+            <p class="mt-2 t-note text-ink-faint">
               门的效果全部用既有的战斗规则表达,不另造字段 —— 不择门(走常道)时,规则与从前逐字相同。
             </p>
             <!-- 志 → 行动:门讲得再清楚,也得递出「去哪儿择」这一步 -->

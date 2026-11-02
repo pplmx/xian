@@ -40,7 +40,7 @@
             <span class="text-ink-soft">{{ row.label }}</span>
             <span class="tabular text-qing">{{ row.value }}</span>
           </p>
-          <p v-if="def.skill" class="text-body leading-relaxed text-cinnabar">
+          <p v-if="def.skill" class="t-body text-cinnabar">
             {{ gongfaSkillLine(def.skill) }}
           </p>
         </div>
@@ -89,7 +89,7 @@
             </button>
             <!-- 永久抉择二步确认:选了就改不了,按一下不该就此了结 -->
             <div v-if="branchConfirm" class="rounded-[2px] bg-cinnabar/5 px-3 py-2">
-              <p class="text-note leading-relaxed text-cinnabar">
+              <p class="t-note text-cinnabar">
                 道分歧路,一经择定<strong>终身不改</strong>(转世仍随你)。确认择【{{
                   gongfaBranchDef(branchConfirm)?.name ?? ""
                 }}】?
@@ -122,7 +122,7 @@
             <span class="text-ink-faint">{{ row.label }}</span>
             <span class="tabular text-qing">{{ row.value }}</span>
           </p>
-          <p v-if="def.skill" class="text-body leading-relaxed text-cinnabar">
+          <p v-if="def.skill" class="t-body text-cinnabar">
             {{ gongfaSkillLine(def.skill) }}
           </p>
           <!-- 同上一行:满级账之外,把这功法的"尽头是条可择之路"一并预告 -->

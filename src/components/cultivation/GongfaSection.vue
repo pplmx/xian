@@ -183,7 +183,7 @@
             v-if="gongfaPage.start > 0"
             type="button"
             data-gongfa-prev
-            class="chip-ink min-h-[28px] flex-1 basis-[7.5rem] !whitespace-normal text-center text-note leading-relaxed text-ink-soft"
+            class="chip-ink min-h-[28px] flex-1 basis-[7.5rem] !whitespace-normal text-center t-note text-ink-soft"
             :aria-label="previousGongfaText"
             @click="showPreviousGongfa"
           >
@@ -193,7 +193,7 @@
             v-if="gongfaPage.hidden > 0"
             type="button"
             data-gongfa-more
-            class="chip-ink min-h-[28px] flex-1 basis-[7.5rem] !whitespace-normal text-center text-note leading-relaxed text-cinnabar"
+            class="chip-ink min-h-[28px] flex-1 basis-[7.5rem] !whitespace-normal text-center t-note text-cinnabar"
             :aria-label="moreGongfaText"
             :data-promised="Math.min(GONGFA_RENDER_BATCH, gongfaPage.hidden)"
             @click="showMoreGongfa"

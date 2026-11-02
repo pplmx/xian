@@ -105,7 +105,7 @@
           v-if="candidatePage.start > 0"
           type="button"
           data-slot-candidate-prev
-          class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
+          class="chip-ink !whitespace-normal text-center t-note text-ink-soft active:scale-95"
           :aria-label="previousCandidateText"
           @click="showPreviousCandidates"
         >
@@ -115,7 +115,7 @@
           v-if="candidatePage.hidden > 0"
           type="button"
           data-slot-candidate-more
-          class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
+          class="chip-ink !whitespace-normal text-center t-note text-cinnabar active:scale-95"
           :aria-label="moreCandidateText"
           :data-promised="Math.min(SLOT_CANDIDATE_RENDER_BATCH, candidatePage.hidden)"
           @click="showMoreCandidates"

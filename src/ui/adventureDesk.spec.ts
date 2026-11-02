@@ -83,7 +83,8 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
       /\.adventure-region--next\s*\{[\s\S]{0,150}linear-gradient\(115deg,\s*rgb\(var\(--color-qing-rgb\) \/ 0\.045\)/,
     );
     expect(view, "地点描述在渐变卡上必须用 ink-soft;ink-faint 只剩贴着 4.5:1 的余量").toMatch(
-      /<p\s+v-if="row\.canEnter"\s+class="mt-2 text-note leading-relaxed text-ink-soft"\s*>\s*\{\{\s*row\.def\.desc\s*\}\}/,
+      // 行高由角色类 .t-note 给(等价于 text-note + leading-relaxed),判据只钉「有读数档行高」与墨色
+      /<p\s+v-if="row\.canEnter"\s+class="mt-2 (?:t-note|text-note leading-relaxed) text-ink-soft"\s*>\s*\{\{\s*row\.def\.desc\s*\}\}/,
     );
   });
 

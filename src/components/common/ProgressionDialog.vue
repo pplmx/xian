@@ -1,6 +1,6 @@
 <template>
   <BaseModal :open="open" title="数值体系" @close="$emit('close')">
-    <div class="text-body leading-relaxed" data-progression-surface>
+    <div class="t-body" data-progression-surface>
       <p class="text-ink-faint">
         每个大境界,数值按复利增长;而"净耗时"增长得更慢 —— 字段里的倍率都取自代码常数,
         不是手写的漂亮话。
@@ -21,7 +21,7 @@
               <span class="w-[92px] shrink-0 tabular text-ink">
                 ×{{ a.mortal.toFixed(1) }} / ×{{ a.outer.toFixed(1) }}
               </span>
-              <span class="w-full text-note leading-relaxed text-ink-faint">{{ a.note }}</span>
+              <span class="w-full t-note text-ink-faint">{{ a.note }}</span>
             </div>
           </div>
         </div>
@@ -58,7 +58,7 @@
               <span class="w-[74px] shrink-0 tabular text-ink"
                 >×{{ c.growth.toFixed(2) }}/{{ c.unit.slice(-1) }}</span
               >
-              <span class="w-full text-note leading-relaxed text-ink-faint">{{ c.note }}</span>
+              <span class="w-full t-note text-ink-faint">{{ c.note }}</span>
             </div>
           </div>
         </div>
@@ -93,11 +93,11 @@
                 <span class="block text-note text-ink-faint"
                   >{{ s.cadence }} · 代价:{{ s.cost }}</span
                 >
-                <span class="block text-note leading-relaxed text-ink-faint">{{ s.note }}</span>
+                <span class="block t-note text-ink-faint">{{ s.note }}</span>
               </span>
             </div>
           </div>
-          <p class="mt-1.5 text-note leading-relaxed text-ink-soft">{{ SORCERY_SUMMARY }}</p>
+          <p class="mt-1.5 t-note text-ink-soft">{{ SORCERY_SUMMARY }}</p>
           <p class="mt-1 text-note text-ink-faint">
             四门的数字同样取自各自模块(问卦代价、卦的时长档位、星象加成、八门之数),此处不手写。
           </p>

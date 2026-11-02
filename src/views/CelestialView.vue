@@ -287,7 +287,7 @@
 
     <!-- Phase 30.9 S2:道源说明弹窗 -->
     <BaseModal :open="daoSourceDialogOpen" title="道源" @close="daoSourceDialogOpen = false">
-      <div class="space-y-3 text-body leading-relaxed">
+      <div class="space-y-3 t-body">
         <p class="text-ink-soft">{{ daoSourceDialog().intro }}</p>
         <div>
           <p class="font-kai text-body tracking-wider text-ink">用途</p>

@@ -233,7 +233,7 @@
                   v-if="lifePage.start > 0"
                   type="button"
                   data-life-prev
-                  class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
+                  class="chip-ink !whitespace-normal text-center t-note text-ink-soft active:scale-95"
                   :aria-label="previousLifeText()"
                   @click="showPreviousLives"
                 >
@@ -243,7 +243,7 @@
                   v-if="lifePage.hidden > 0"
                   type="button"
                   data-life-more
-                  class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
+                  class="chip-ink !whitespace-normal text-center t-note text-cinnabar active:scale-95"
                   :aria-label="moreLifeText()"
                   :data-promised="Math.min(LIFE_RENDER_BATCH, lifePage.hidden)"
                   @click="showMoreLives"
@@ -421,7 +421,7 @@
                   v-if="lossPage.start > 0"
                   type="button"
                   data-loss-prev
-                  class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-ink-soft active:scale-95"
+                  class="chip-ink !whitespace-normal text-center t-note text-ink-soft active:scale-95"
                   :aria-label="previousLossText()"
                   @click="showPreviousLoss"
                 >
@@ -431,7 +431,7 @@
                   v-if="lossPage.hidden > 0"
                   type="button"
                   data-loss-more
-                  class="chip-ink !whitespace-normal text-center text-note leading-relaxed text-cinnabar active:scale-95"
+                  class="chip-ink !whitespace-normal text-center t-note text-cinnabar active:scale-95"
                   :aria-label="moreLossText()"
                   :data-promised="Math.min(LOSS_RENDER_BATCH, lossPage.hidden)"
                   @click="showMoreLoss"

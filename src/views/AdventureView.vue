@@ -342,7 +342,7 @@
                             <p
                               v-if="row.foeOrigin.parts.length"
                               data-region-foe-origin
-                              class="mt-0.5 text-note leading-relaxed text-ink-faint"
+                              class="mt-0.5 t-note text-ink-faint"
                             >
                               此地之敌:{{ foeOriginPartsText(row.foeOrigin) }}
                             </p>
@@ -362,7 +362,7 @@
             -->
                             <p
                               v-if="row.canEnter && !row.suppressed && !row.qualified"
-                              class="mt-1 text-note leading-relaxed tabular"
+                              class="mt-1 t-note tabular"
                             >
                               <span class="text-body text-ink-soft">镇压资格</span>
                               <span
@@ -440,17 +440,14 @@
                 首项行又铺了石青渐变,ink-faint 只剩贴着 AA 的余量,正文改用 ink-soft。
               -->
                           <div class="adventure-region__reading">
-                            <p
-                              v-if="row.canEnter"
-                              class="mt-2 text-note leading-relaxed text-ink-soft"
-                            >
+                            <p v-if="row.canEnter" class="mt-2 t-note text-ink-soft">
                               {{ row.def.desc }}
                             </p>
                             <div v-if="adaptExpand === row.def.id && row.adaptation" class="mt-1">
                               <p
                                 v-for="(r, i) in row.adaptation.reasons"
                                 :key="i"
-                                class="text-note leading-relaxed text-ink-faint"
+                                class="t-note text-ink-faint"
                               >
                                 · {{ r }}
                               </p>
@@ -560,7 +557,7 @@
           class="mt-2 border-l-2 border-cinnabar/55 pl-2.5"
         >
           <p class="text-body text-cinnabar tabular">{{ preview.pressure.summary }}</p>
-          <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
+          <p class="mt-0.5 t-note text-ink-faint">
             {{ preview.pressure.guidance }}
           </p>
         </div>
@@ -601,9 +598,7 @@
         </button>
       </div>
       <!-- 上面两行按普通战算:首领战装备 ×2.5、法宝 ×6,不写清会让人以为亘古不变 -->
-      <p class="mt-2 text-note leading-relaxed text-ink-faint">
-        以上按普通战计;首领战的装备与法宝产出另计,高于此数。
-      </p>
+      <p class="mt-2 t-note text-ink-faint">以上按普通战计;首领战的装备与法宝产出另计,高于此数。</p>
     </BaseModal>
   </div>
 </template>

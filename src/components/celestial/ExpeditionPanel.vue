@@ -106,9 +106,7 @@
           </button>
         </template>
         <template v-if="abandonArmed">
-          <p
-            class="mt-2 rounded-[2px] bg-cinnabar/6 px-2.5 py-1.5 text-note leading-relaxed text-cinnabar"
-          >
+          <p class="mt-2 rounded-[2px] bg-cinnabar/6 px-2.5 py-1.5 t-note text-cinnabar">
             此行 {{ runWorld.entryCost }} 道源与已攒的沿途道源
             {{ run.bonus > 0 ? `+${run.bonus}` : "" }}尽付东流,战果与纪录不保。
           </p>
@@ -348,7 +346,7 @@
       <!-- 逆命契:签前把这场封印的具体词条摊开(决策前摊数字,不许只给定性形容词) -->
       <p
         v-if="sealedCore"
-        class="mt-1.5 rounded-[2px] bg-paper-deep/70 px-3 py-2 text-note leading-relaxed text-cinnabar"
+        class="mt-1.5 rounded-[2px] bg-paper-deep/70 px-3 py-2 t-note text-cinnabar"
       >
         <span class="font-kai text-ink">封印「{{ sealedCore.displayName }}」:</span>
         {{ sealedCore.text }}
@@ -396,7 +394,7 @@
       </div>
       <p
         v-if="selectedGate"
-        class="mt-1.5 rounded-[2px] bg-paper-deep/70 px-3 py-2 text-note leading-relaxed text-ink-soft"
+        class="mt-1.5 rounded-[2px] bg-paper-deep/70 px-3 py-2 t-note text-ink-soft"
       >
         <span class="font-kai text-ink">{{ selectedGate.fullName }}</span>
         <span class="text-ink-faint">
@@ -432,15 +430,15 @@
         <p
           v-for="(line, i) in prepForecast.judgementLines"
           :key="i"
-          class="mt-0.5 text-note leading-relaxed text-cinnabar"
+          class="mt-0.5 t-note text-cinnabar"
         >
           {{ line }}
         </p>
       </div>
-      <p v-if="prepPreview" class="mt-2 text-note leading-relaxed text-violet-ink">
+      <p v-if="prepPreview" class="mt-2 t-note text-violet-ink">
         天机透视 · 入界之敌:{{ prepPreview.skillLines.join(" / ") }} —— {{ prepPreview.winText }}
       </p>
-      <p v-if="prepPreview?.riskLines.length" class="mt-1 text-note leading-relaxed text-cinnabar">
+      <p v-if="prepPreview?.riskLines.length" class="mt-1 t-note text-cinnabar">
         危局:{{ prepPreview.riskLines.join(";") }}
       </p>
     </template>
