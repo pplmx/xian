@@ -6476,9 +6476,29 @@ async function taskApprenticePulse() {
     const read = () =>
       page.evaluate(() => {
         const pulse = document.querySelector("[data-apprentice-pulse]");
+        const order = pulse?.querySelector("[data-apprentice-order]");
+        const depot = pulse?.querySelector("[data-apprentice-depot]");
         const dispatch = pulse?.querySelector("[data-apprentice-dispatch-all]");
         const taskRows = [...document.querySelectorAll("[data-apprentice-task-progress]")];
         const bars = [...document.querySelectorAll('[role="progressbar"]')];
+        const rect = (el) => {
+          const box = el?.getBoundingClientRect();
+          return box
+            ? {
+                top: Math.round(box.top),
+                bottom: Math.round(box.bottom),
+                left: Math.round(box.left),
+                right: Math.round(box.right),
+                width: Math.round(box.width),
+                height: Math.round(box.height),
+              }
+            : null;
+        };
+        const orderRect = rect(order);
+        const depotRect = rect(depot);
+        const dispatchRect = rect(dispatch);
+        const dockTop = document.querySelector("[data-folio-dock]")?.getBoundingClientRect().top;
+        const foldBottom = Math.min(window.innerHeight, dockTop ?? window.innerHeight);
         const needs = [...document.querySelectorAll("[data-apprentice-need]")].map((row) => ({
           spec: row.getAttribute("data-apprentice-need"),
           name: (row.querySelector(".apprentice-depot__name")?.textContent || "")
@@ -6503,6 +6523,20 @@ async function taskApprenticePulse() {
           aria: bars.map((bar) => Number(bar.getAttribute("aria-valuenow"))),
           dispatchDisabled: dispatch?.hasAttribute("disabled") ?? true,
           dispatchText: (dispatch?.textContent || "").replace(/\s+/g, " ").trim(),
+          dispatchAria: (dispatch?.getAttribute("aria-label") || "").trim(),
+          orderTitle: (order?.querySelector(".apprentice-order__title-full")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+          orderNote: (order?.querySelector(".apprentice-order__note")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+          order: orderRect,
+          dispatchRect,
+          depotTop: depotRect?.top ?? null,
+          orderBeforeDepot:
+            Boolean(orderRect && depotRect) && orderRect.bottom <= depotRect.top + 1,
+          actionInFold:
+            Boolean(dispatchRect) && dispatchRect.top >= 0 && dispatchRect.bottom <= foldBottom + 1,
           needs,
         };
       });
@@ -6540,13 +6574,42 @@ async function taskApprenticePulse() {
     if (targetNeeds.length === 0 && tiedNeeds.length < 2) {
       failures.push("[390] 门庭场景:四门既没有唯一目标,也没有至少两门同分");
     }
-    if (targetNeeds.length > 0 && !initial.dispatchText.includes(targetNeeds[0].name)) {
+    if (targetNeeds.length > 0 && !initial.orderTitle.includes(targetNeeds[0].name)) {
       failures.push(
-        `[390] 门庭场景:存底目标 «${targetNeeds[0].name}» 与一令齐发 «${initial.dispatchText}» 不同源`,
+        `[390] 门庭场景:存底目标 «${targetNeeds[0].name}» 与案头令 «${initial.orderTitle}» 不同源`,
       );
     }
-    if (initial.dispatchDisabled || !initial.dispatchText.includes("派闲置 2 人")) {
-      failures.push(`[390] 门庭场景:派发按钮没有报出这次会派走 2 人(«${initial.dispatchText}»)`);
+    if (
+      initial.dispatchDisabled ||
+      !initial.orderTitle.includes("派闲置 2 人") ||
+      !initial.dispatchAria.includes("派闲置 2 人")
+    ) {
+      failures.push(
+        `[390] 门庭场景:案头令没有报出这次会派走 2 人` +
+          `(«${initial.orderTitle}» / «${initial.dispatchAria}» / «${initial.dispatchText}» )`,
+      );
+    }
+    if (!initial.orderNote.includes("灵石兜底") && !initial.orderNote.includes("四门缺度最高")) {
+      failures.push(`[390] 门庭场景:案头令没有摊开择门依据(«${initial.orderNote}»)`);
+    }
+    checked += 1;
+    if (
+      !initial.order ||
+      !initial.dispatchRect ||
+      !initial.orderBeforeDepot ||
+      !initial.actionInFold ||
+      initial.dispatchRect.width > initial.order.width * 0.6
+    ) {
+      failures.push(
+        `[390] 门庭场景:案头令没有先于存底出现在首屏,或动作签又拉成整行:` +
+          `${JSON.stringify({
+            order: initial.order,
+            dispatch: initial.dispatchRect,
+            depotTop: initial.depotTop,
+            orderBeforeDepot: initial.orderBeforeDepot,
+            actionInFold: initial.actionInFold,
+          })}`,
+      );
     }
 
     const readRegister = () =>
@@ -6555,6 +6618,8 @@ async function taskApprenticePulse() {
         const pulse = register?.querySelector("[data-apprentice-pulse]");
         const roster = register?.querySelector("[data-apprentice-roster]");
         const rules = register?.querySelector(".apprentice-rules");
+        const order = register?.querySelector("[data-apprentice-order]");
+        const dispatch = register?.querySelector("[data-apprentice-dispatch-all]");
         const chapters = [...(register?.querySelectorAll("[data-apprentice-chapter]") ?? [])];
         const chapterHeads = [
           ...(register?.querySelectorAll("[data-apprentice-chapter-head]") ?? []),
@@ -6578,6 +6643,7 @@ async function taskApprenticePulse() {
                   style.borderLeftWidth,
                 ],
                 background: style.backgroundColor,
+                image: style.backgroundImage,
                 shadow: style.boxShadow,
                 radius: style.borderTopLeftRadius,
               }
@@ -6614,6 +6680,27 @@ async function taskApprenticePulse() {
               ".section-title, .folio-chapter-head, [data-folio-section-mark]",
             ).length ?? -1,
           register: chrome(register),
+          order: chrome(order),
+          orderRect: order
+            ? {
+                top: Math.round(order.getBoundingClientRect().top),
+                bottom: Math.round(order.getBoundingClientRect().bottom),
+                width: Math.round(order.getBoundingClientRect().width),
+              }
+            : null,
+          orderBeforeDepot: Boolean(
+            order &&
+            depot &&
+            order.getBoundingClientRect().bottom <= depot.getBoundingClientRect().top + 1,
+          ),
+          actionRect: dispatch
+            ? {
+                top: Math.round(dispatch.getBoundingClientRect().top),
+                bottom: Math.round(dispatch.getBoundingClientRect().bottom),
+                width: Math.round(dispatch.getBoundingClientRect().width),
+              }
+            : null,
+          registerWidth: register ? Math.round(register.getBoundingClientRect().width) : 0,
           roster: chrome(roster),
           rules: chrome(rules),
           depot: chrome(depot),
@@ -6653,7 +6740,7 @@ async function taskApprenticePulse() {
     if (
       fold.heads.map((head) => head.chapter).join(",") !== "pulse,roster,rules" ||
       fold.heads.map((head) => head.index).join(",") !== "壹,贰,叁" ||
-      fold.heads.map((head) => head.title).join(",") !== "一册值日,值日簿,门规" ||
+      fold.heads.map((head) => head.title).join(",") !== "案头一令,值日簿,门规" ||
       fold.heads.some((head) => head.fact.length === 0) ||
       fold.pulseHasLedgerHead ||
       fold.legacyChapterHeads !== 0
@@ -6700,6 +6787,22 @@ async function taskApprenticePulse() {
     }
     checked += 1;
     if (
+      !fold.order ||
+      width(fold.order.borders[0]) < 1 ||
+      width(fold.order.borders[2]) < 1 ||
+      width(fold.order.borders[1]) !== 0 ||
+      width(fold.order.borders[3]) !== 0 ||
+      !fold.order.image.includes("linear-gradient") ||
+      fold.order.shadow !== "none" ||
+      !fold.orderRect ||
+      !fold.actionRect ||
+      !fold.orderBeforeDepot ||
+      fold.actionRect.width > fold.orderRect.width * 0.6
+    ) {
+      failures.push(`[390] 案头令又退回整宽红条或落到存底之后:${JSON.stringify(fold)}`);
+    }
+    checked += 1;
+    if (
       !fold.choice ||
       fold.choice.count !== 10 ||
       fold.choice.radius !== "0px" ||
@@ -6728,6 +6831,23 @@ async function taskApprenticePulse() {
     checked += 1;
     if (wide.columns.depot !== 4 || wide.columns.choices !== 3 || wide.columns.rules !== 1) {
       failures.push(`[1280] 门庭续卷没有按桌面档并读:${JSON.stringify({ columns: wide.columns })}`);
+    }
+    checked += 1;
+    if (
+      !wide.orderBeforeDepot ||
+      !wide.orderRect ||
+      !wide.actionRect ||
+      wide.actionRect.width > wide.orderRect.width * 0.28 ||
+      wide.actionRect.width > wide.registerWidth * 0.3
+    ) {
+      failures.push(
+        `[1280] 案头令没有收成窄动作签:${JSON.stringify({
+          order: wide.orderRect,
+          action: wide.actionRect,
+          registerWidth: wide.registerWidth,
+          orderBeforeDepot: wide.orderBeforeDepot,
+        })}`,
+      );
     }
     checked += 1;
     const [widePulse, wideRoster, wideRules] = wide.chapters;
@@ -6811,13 +6931,13 @@ async function taskApprenticePulse() {
     }
     if (
       !after.dispatchDisabled ||
-      after.dispatchText !== "弟子都在路上" ||
+      !after.orderTitle.includes("弟子都在路上") ||
       after.progress.length !== 3 ||
       after.aria.length !== 3
     ) {
       failures.push(
-        `[390] 门庭场景:派完后按钮«${after.dispatchText}» / 进度 ${after.progress.length} 条,` +
-          `应与卷首一起换口`,
+        `[390] 门庭场景:派完后案头令«${after.orderTitle}» / 动作«${after.dispatchText}» / ` +
+          `进度 ${after.progress.length} 条,应与卷首一起换口`,
       );
     }
 

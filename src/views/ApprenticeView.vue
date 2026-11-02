@@ -270,6 +270,38 @@ const nextReturnText = computed(() =>
     ? nextReturn.value.countdown
     : `${nextReturn.value.route} ${nextReturn.value.countdown}`,
 );
+
+/** 案头令只负责把「这一下会发生什么」提前说清,四门存底紧随其后作依据。 */
+const dispatchOrderEyebrow = computed(() => {
+  if (pulse.value.total === 0) return "今日调拨 · 门庭空席";
+  if (!hasIdle.value) return "今日调拨 · 全员在途";
+  return `今日调拨 · ${pulse.value.idle} 人候差`;
+});
+const dispatchOrderTitle = computed(() => {
+  if (pulse.value.total === 0) return "尚无弟子可派";
+  return hasIdle.value ? dispatchLabel.value : "弟子都在路上";
+});
+const dispatchOrderShortTitle = computed(() => {
+  if (pulse.value.total === 0) return "尚无弟子";
+  return hasIdle.value ? dispatchShortLabel.value : "弟子都在路上";
+});
+const dispatchOrderNote = computed(() => {
+  if (pulse.value.total === 0) return "先在卷首收下一名弟子,候差后再发令。";
+  if (!hasIdle.value) return `最近归来 · ${nextReturnText.value}`;
+  const target = dispatchPlan.value.target;
+  if (!target) return `${dispatchLead.value}；落印后各归本命门。`;
+  const row = dispatchNeedRows.value.find((need) => need.spec === target);
+  if (!row) return dispatchLead.value;
+  if (row.resource === null) {
+    return `「${row.name}」走灵石兜底,不耗库存；落印即齐发。`;
+  }
+  return `${row.sourceText} ${formatGN(row.stock)}/${formatGN(row.waterline)} · 四门缺度最高；落印即齐发。`;
+});
+const dispatchActionLabel = computed(() => {
+  if (pulse.value.total === 0) return "待收徒";
+  return hasIdle.value ? "落印派发" : "候差已空";
+});
+
 const apprenticeLedgerRows = computed(() => [
   {
     id: "idle",
@@ -404,22 +436,50 @@ function dispatchSelected(a: OwnedApprentice): void {
       <section
         class="apprentice-register__chapter apprentice-register__chapter--pulse"
         data-apprentice-chapter="pulse"
+        data-apprentice-pulse
+        :data-apprentice-total="pulse.total"
+        :data-apprentice-idle="pulse.idle"
+        :data-apprentice-away="pulse.away"
       >
         <ApprenticeChapterHead
           index="壹"
           eyebrow="今日门庭"
-          title="一册值日"
-          hint="候差、在途与四门存底同读一册"
+          title="案头一令"
+          hint="先发这一令,再核四门存底"
           :fact="`${pulse.total} / ${slots} 席`"
         />
+
+        <section class="apprentice-order" data-apprentice-order>
+          <span class="apprentice-order__seal" aria-hidden="true">令</span>
+          <div class="apprentice-order__copy">
+            <p class="apprentice-order__eyebrow">{{ dispatchOrderEyebrow }}</p>
+            <p class="apprentice-order__title">
+              <span class="apprentice-order__title-full">{{ dispatchOrderTitle }}</span>
+              <span class="apprentice-order__title-short">{{ dispatchOrderShortTitle }}</span>
+            </p>
+            <p class="apprentice-order__note">{{ dispatchOrderNote }}</p>
+          </div>
+          <div class="apprentice-order__action">
+            <button
+              class="btn-seal apprentice-order__issue"
+              data-apprentice-dispatch-all
+              :disabled="!hasIdle"
+              :aria-label="hasIdle ? dispatchLabel : dispatchOrderTitle"
+              @click="doDispatchAll"
+            >
+              <span>{{ dispatchActionLabel }}</span>
+              <span class="apprentice-order__issue-arrow" aria-hidden="true">→</span>
+            </button>
+            <span class="apprentice-order__action-note">
+              {{ hasIdle ? "一令齐发" : "无令可发" }}
+            </span>
+          </div>
+        </section>
+
         <LedgerPulse
           class="apprentice-pulse"
           headless
-          data-apprentice-pulse
-          :data-apprentice-total="pulse.total"
-          :data-apprentice-idle="pulse.idle"
-          :data-apprentice-away="pulse.away"
-          title="一册值日"
+          title="案头一令"
           :tally-columns="2"
           :tally-wide-columns="3"
         >
@@ -484,27 +544,8 @@ function dispatchSelected(a: OwnedApprentice): void {
             </p>
           </section>
 
-          <button
-            class="btn-seal apprentice-pulse__dispatch"
-            data-apprentice-dispatch-all
-            :disabled="!hasIdle"
-            :aria-label="hasIdle ? dispatchLabel : '弟子都在路上'"
-            @click="doDispatchAll"
-          >
-            <template v-if="hasIdle">
-              <span class="apprentice-pulse__dispatch-label apprentice-pulse__dispatch-label--full">
-                {{ dispatchLabel }}
-              </span>
-              <span
-                class="apprentice-pulse__dispatch-label apprentice-pulse__dispatch-label--short"
-              >
-                {{ dispatchShortLabel }}
-              </span>
-            </template>
-            <span v-else>弟子都在路上</span>
-          </button>
           <p class="apprentice-pulse__foot">
-            候差者可按库存一令齐发；各自的本命门类与逐单进度,都摊在下面值日簿里。
+            四门存底是这一令的依据；落印后各自的本命门类与逐单进度,都摊在下面值日簿里。
           </p>
         </LedgerPulse>
       </section>

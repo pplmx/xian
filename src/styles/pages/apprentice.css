@@ -98,16 +98,100 @@
   .apprentice-pulse .folio-ledger-pulse__tallies > *:nth-child(3) {
     grid-column: 1 / -1;
   }
-  .apprentice-pulse .apprentice-pulse__dispatch {
-    width: 100%;
-    min-height: 42px;
-    border-top: 1px solid rgb(var(--color-cinnabar-rgb) / 0.16);
-    border-radius: 1px;
-    padding: 0.58rem 0.78rem;
-    white-space: normal;
+  /*
+   * 案头一令 —— 整章最先出现的一行不是按钮,而是一张已经把人数、目标与依据
+   * 写全的调拨签。桌面只落一枚窄印,不再让朱砂横贯整页;手机先看得到这一令,
+   * 四门存底退到其后作依据。
+   */
+  .apprentice-order {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.8rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.62rem;
+    margin: 0.48rem 0.08rem 0.16rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    padding: 0.68rem 0.1rem 0.68rem 0.62rem;
+    background: linear-gradient(106deg, rgb(var(--color-cinnabar-rgb) / 0.04), transparent 48%);
   }
-  .apprentice-pulse__dispatch-label--short {
+  .apprentice-order::before {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 2px;
+    background: rgb(var(--color-cinnabar-rgb) / 0.72);
+    content: "";
+  }
+  .apprentice-order__seal {
+    display: grid;
+    width: 1.8rem;
+    height: 1.8rem;
+    place-items: center;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.34);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0;
+    line-height: 1;
+  }
+  .apprentice-order__copy {
+    display: grid;
+    min-width: 0;
+    gap: 0.06rem;
+  }
+  .apprentice-order__eyebrow {
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.12em;
+    line-height: 1.4;
+  }
+  .apprentice-order__title {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    letter-spacing: 0.06em;
+    line-height: 1.35;
+  }
+  .apprentice-order__title-short {
     display: none;
+  }
+  .apprentice-order__note {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+  .apprentice-order__action {
+    display: grid;
+    flex: none;
+    justify-items: center;
+    gap: 0.18rem;
+  }
+  .apprentice-order__issue {
+    width: auto;
+    min-width: 7.4rem;
+    min-height: 44px;
+    border-radius: 1px;
+    padding: 0.48rem 0.7rem;
+    font-size: var(--type-body);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+  .apprentice-order__issue-arrow {
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    line-height: 1;
+  }
+  .apprentice-order__action-note {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+    line-height: 1.35;
+    white-space: nowrap;
   }
   .apprentice-pulse__foot {
     position: relative;
@@ -821,18 +905,38 @@
       white-space: normal;
     }
 
-    .apprentice-pulse .apprentice-pulse__dispatch {
-      padding-inline: 0.36rem;
-      font-size: var(--type-note);
-      white-space: nowrap;
+    .apprentice-order {
+      grid-template-columns: 1.65rem minmax(0, 1fr);
+      gap: 0.45rem;
+      padding-inline: 0.48rem 0.32rem;
     }
 
-    .apprentice-pulse__dispatch-label--full {
+    .apprentice-order__seal {
+      width: 1.65rem;
+      height: 1.65rem;
+    }
+
+    .apprentice-order__title-full {
       display: none;
     }
 
-    .apprentice-pulse__dispatch-label--short {
+    .apprentice-order__title-short {
       display: inline;
+    }
+
+    .apprentice-order__action {
+      width: 100%;
+      grid-column: 1 / -1;
+      justify-items: stretch;
+    }
+
+    .apprentice-order__issue {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .apprentice-order__action-note {
+      text-align: center;
     }
 
     .apprentice-pulse__foot,

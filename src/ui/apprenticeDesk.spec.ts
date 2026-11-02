@@ -10,7 +10,7 @@ function source(rel: string): string {
   return readFileSync(resolve(ROOT, rel), "utf8");
 }
 
-describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
+describe("门庭案 · 先落一令,再核四门存底与值日簿", () => {
   it("卷首门庭图读真实候差与在途位置,整图不重复进入读屏", () => {
     const view = source("src/views/ApprenticeView.vue");
     const court = source("src/components/apprentice/ApprenticeCourt.vue");
@@ -31,11 +31,16 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
     );
   });
 
-  it("今日门庭把候差、在途、最近归期与一令齐发收成一张总账", () => {
+  it("今日门庭先发案头调拨令,再铺候差、在途与最近归期", () => {
     const view = source("src/views/ApprenticeView.vue");
     const markers = view.match(/data-apprentice-pulse(?![-\\w])/g) ?? [];
     const pulseStart = view.indexOf("data-apprentice-pulse");
-    const pulse = view.slice(pulseStart, view.indexOf("</LedgerPulse>", pulseStart));
+    const pulse = view.slice(
+      pulseStart,
+      view.indexOf('data-apprentice-chapter="roster"', pulseStart),
+    );
+    const orderStart = pulse.indexOf("data-apprentice-order");
+    const depotStart = pulse.indexOf("data-apprentice-depot");
 
     expect(markers, "总账运行时落点只能有一个").toHaveLength(1);
     expect(view, "门庭总账接共享此刻账").toContain(
@@ -61,10 +66,18 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
     expect(view, "最近归期文案必须带真实差事名").toContain("taskDef(spec).name");
     expect(view, "一键派发仍读汇总里的候差数").toContain("pulse.value.idle");
     expect(pulse.match(/<button/g), "总账里的第一枚按钮必须是一键派发").toHaveLength(1);
-    expect(pulse, "一键派发要有独立动作位").toContain("apprentice-pulse__dispatch");
-    expect(pulse, "极窄档的短文案不抢走完整读屏说明").toContain("dispatchShortLabel");
-    expect(pulse, "无人在家时读屏动作换口").toContain("'弟子都在路上'");
-    expect(pulse, "无人在家时可见动作换口").toContain("<span v-else>弟子都在路上</span>");
+    expect(orderStart, "案头调拨令必须落在总账里").toBeGreaterThan(-1);
+    expect(orderStart, "调拨令要排在四门存底之前,先给行动再给依据").toBeLessThan(depotStart);
+    expect(pulse, "派发动作要有独立的案头令位").toContain("apprentice-order__issue");
+    expect(pulse, "案头令先报会派走几人、去哪个门").toContain("dispatchOrderTitle");
+    expect(pulse, "案头令的择门依据仍从同一份计划行现算").toContain("dispatchOrderNote");
+    expect(pulse, "极窄档保留短标题,完整语义交给 aria-label").toContain("dispatchOrderShortTitle");
+    expect(view, "短标题仍由同一枚派发文案压缩").toContain("dispatchShortLabel");
+    expect(pulse, "无人在家时读屏动作换口").toContain(':aria-label="hasIdle ? dispatchLabel');
+    expect(view, "无人在家时可见标题与动作都换口").toContain(
+      'return hasIdle.value ? dispatchLabel.value : "弟子都在路上";',
+    );
+    expect(pulse, "旧版全宽朱砂横条退场").not.toContain("apprentice-pulse__dispatch");
     expect(pulse, "门庭总账不再手搓账格骨架").not.toContain('class="apprentice-pulse__tallies"');
   });
 
@@ -74,8 +87,8 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
     const register = view.slice(start, view.lastIndexOf("</article>") + "</article>".length);
 
     expect(start, "门庭正文要收进同一册").toBeGreaterThan(-1);
-    expect(register, "今日门庭是续卷第一章").toMatch(
-      /data-apprentice-chapter="pulse"[\s\S]{0,420}<ApprenticeChapterHead[\s\S]{0,320}<LedgerPulse/,
+    expect(register, "今日门庭是续卷第一章,先落一令再摊账格").toMatch(
+      /data-apprentice-chapter="pulse"[\s\S]{0,620}<ApprenticeChapterHead[\s\S]{0,700}data-apprentice-order[\s\S]{0,1500}<LedgerPulse/,
     );
     expect(register, "值日簿紧随总账续排").toMatch(
       /data-apprentice-chapter="roster"[\s\S]{0,320}<ApprenticeChapterHead[\s\S]{0,220}title="值日簿"/,
@@ -120,7 +133,10 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
   it("四门存底摊开调度依据,目标与同分都从 core 同一份方案来", () => {
     const view = source("src/views/ApprenticeView.vue");
     const pulseStart = view.indexOf("data-apprentice-pulse");
-    const pulse = view.slice(pulseStart, view.indexOf("</LedgerPulse>", pulseStart));
+    const pulse = view.slice(
+      pulseStart,
+      view.indexOf('data-apprentice-chapter="roster"', pulseStart),
+    );
 
     expect(view, "调度案只走 core 的唯一一份计划").toContain(
       "apprenticeDispatchPlan(dispatchStock.value)",
@@ -137,6 +153,37 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
     expect(pulse, "水位直接读计划行").toContain("{{ row.waterline }}");
     expect(pulse, "灵石兜底不伪装成器尘库存").toContain("row.resource === null");
     expect(pulse, "寻机缘为何不参与自动调拨要说清").toContain("寻机缘不参与自动调拨");
+  });
+
+  it("案头令把目标原因、库存水位与无人在途两种状态都摊开", () => {
+    const view = source("src/views/ApprenticeView.vue");
+    const css = source("src/styles/pages/apprentice.css");
+
+    expect(view, "单门胜出时,令面要报该门真实库存与水位").toMatch(
+      /const dispatchOrderNote = computed\([\s\S]{0,1200}?row\.stock[\s\S]{0,300}?row\.waterline/,
+    );
+    expect(view, "灵石兜底门不许伪装成有库存的仓门").toContain(
+      'row.resource === null ? "灵石兜底"',
+    );
+    expect(view, "兜底门的令面文案从资源类型分支现算").toMatch(
+      /if \(row\.resource === null\) \{[\s\S]{0,120}?走灵石兜底/,
+    );
+    expect(view, "全员在途时改报最近归期,不硬凑派发计划").toMatch(
+      /if \(!hasIdle\.value\) return `最近归来[\s\S]{0,120}?nextReturnText\.value/,
+    );
+    expect(view, "一键派发仍只问 store 的 dispatchAllToNeed").toContain("appr.dispatchAllToNeed");
+    expect(css, "案头令自身是一条横向命令,不是红色大卡").toMatch(
+      /\.apprentice-order\s*\{[\s\S]{0,500}?grid-template-columns:\s*1\.8rem minmax\(0, 1fr\) auto/,
+    );
+    expect(css, "动作签按内容收窄,桌面不许拉满整页").toMatch(
+      /\.apprentice-order__issue\s*\{[\s\S]{0,320}?(?:width:\s*auto|min-width:)[\s\S]{0,120}?min-height:\s*44px/,
+    );
+    expect(source("scripts/layout-check.mjs"), "真浏览器门要量首屏可见与先令后底").toContain(
+      "actionInFold",
+    );
+    expect(source("scripts/layout-check.mjs"), "桌面动作签要按案宽限权").toContain(
+      "wide.actionRect.width > wide.registerWidth * 0.3",
+    );
   });
 
   it("四门存底沿续卷账线摊开,不再在总账里另套一张四边表", () => {
@@ -291,8 +338,8 @@ describe("门庭案 · 门庭图先立意,总账再落到值日簿", () => {
     expect(apprenticeCss, "差事名不许被本命与时长挤成省略号").toMatch(
       /\.apprentice-task-choice__top\s*\{[\s\S]{0,160}flex-wrap:\s*wrap/,
     );
-    expect(apprenticeCss, "极窄档派发签只换短文案且不折行").toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,260}\.apprentice-pulse \.apprentice-pulse__dispatch\s*\{[\s\S]{0,160}white-space:\s*nowrap/,
+    expect(apprenticeCss, "极窄档案头令退成单列,动作签仍不横向溢出").toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]{0,700}\.apprentice-order\s*\{[\s\S]{0,160}grid-template-columns:\s*1\.65rem minmax\(0, 1fr\)/,
     );
     expect(apprenticeCss, "差事名要允许换行").toMatch(
       /\.apprentice-task-choice__name\s*\{[\s\S]{0,180}white-space:\s*normal/,

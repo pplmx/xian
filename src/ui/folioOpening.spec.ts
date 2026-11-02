@@ -107,7 +107,7 @@ describe("开卷版式 · 全站册页基线外加一座游戏指挥台", () => 
       1,
     );
     expect(apprentice, "今日门庭、值日簿与门规没有收进同一续卷").toMatch(
-      /<article class="apprentice-register folio-span-all" data-apprentice-register>[\s\S]{0,600}<LedgerPulse[\s\S]*data-apprentice-chapter="rules"/,
+      /<article class="apprentice-register folio-span-all" data-apprentice-register>[\s\S]{0,700}data-apprentice-chapter="pulse"[\s\S]{0,1800}data-apprentice-order[\s\S]{0,1800}<LedgerPulse[\s\S]*data-apprentice-chapter="rules"/,
     );
 
     const market = source("src/views/MarketView.vue");
