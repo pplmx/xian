@@ -102,6 +102,13 @@ function clampAutoBudget(): void {
 }
 /** 停止条件:任一命中即停;minRoll 给「数值范围」那一嘴 */
 const autoTargets = ref<ReforgeTarget[]>([]);
+/**
+ * 同屏可选几条 —— 上限与「至多 N 条」那句文案共读这一枚。
+ * 从前两边各写一个 3:调上限那天文案就开始撒谎(AGENTS「改常数就撒谎」)。
+ */
+const AUTO_TARGET_LIMIT = 3;
+/** 新选中的目标默认求「高值」:拉到底 0% 即回到「出现就行」 */
+const AUTO_TARGET_DEFAULT_ROLL = 0.5;
 /** 首洗成本判付不起:自动重铸每洗与单次重铸同源(reforgeCost),缺一道账即灰 */
 const autoAffordable = computed(() => {
   const c = reforgeCostVal.value;
@@ -132,9 +139,9 @@ function isAutoTarget(id: string): boolean {
 
 function toggleAutoTarget(id: string): void {
   if (isAutoTarget(id)) autoTargets.value = autoTargets.value.filter((t) => t.affixId !== id);
-  // 默认先求「高值」(≥50%);拉到底 0% 即回到「出现就行」
-  else if (autoTargets.value.length < 3)
-    autoTargets.value = [...autoTargets.value, { affixId: id, minRoll: 0.5 }];
+  // 默认先求「高值」;拉到底 0% 即回到「出现就行」
+  else if (autoTargets.value.length < AUTO_TARGET_LIMIT)
+    autoTargets.value = [...autoTargets.value, { affixId: id, minRoll: AUTO_TARGET_DEFAULT_ROLL }];
 }
 
 function closeAuto(): void {
@@ -210,7 +217,9 @@ function triesOf(id: string, minRoll = 0): number | null {
     data-equipment-auto-reforge
     class="mt-3 border-t border-ink/10 pt-2.5"
   >
-    <p class="mb-1 text-body text-ink-soft">洗到这些词条出现就停(任一命中即停,至多 3 条)</p>
+    <p class="mb-1 text-body text-ink-soft">
+      洗到这些词条出现就停(任一命中即停,至多 {{ AUTO_TARGET_LIMIT }} 条)
+    </p>
     <div class="scroll-pane grid max-h-36 grid-cols-3 gap-1 overflow-y-auto tinylens:grid-cols-2">
       <button
         v-for="af in affixOptions"

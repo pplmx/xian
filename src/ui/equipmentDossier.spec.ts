@@ -72,6 +72,14 @@ describe("器评帖 · 装备详情先给身份与换装结论", () => {
     expect(reforge, "自动重铸不再自成一张四边卡").not.toMatch(
       /data-equipment-auto-reforge[\s\S]{0,120}rounded-\[2px\] border border-ink\/15/,
     );
+    // 「至多 N 条」与真的拦住第 N+1 次选中必须是同一个数:从前两边各写一个 3,
+    // 改上限那天文案就开始撒谎
+    expect(reforge, "自动重铸的条数上限只有一处定义").toContain("AUTO_TARGET_LIMIT = 3");
+    expect(reforge, "文案里的条数读同一枚常数").toContain("至多 {{ AUTO_TARGET_LIMIT }} 条");
+    expect(
+      reforge.match(/autoTargets\.value\.length < (\S+?)\)/)?.[1],
+      "拦住第 N+1 次的判据也要读那枚常数,不许再写死",
+    ).toBe("AUTO_TARGET_LIMIT");
     expect(reforge, "封存价签是账栏,不再伪装成一枚按钮").toContain("data-equipment-seal-price");
     expect(reforge, "封存价签只留分隔线,不铺圆角方底").not.toMatch(
       /data-equipment-seal-price[\s\S]{0,180}rounded-\[2px\] border px-2/,
