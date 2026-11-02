@@ -478,10 +478,13 @@ error: Failed to resolve vite command: GenericFailure, Expected
 真正可动的那一下,完整效果、灵兽/藏经阁联动与连升总账仍由同一个 `aria-expanded`
 详情展开。`BuildingLedgerRow` 继续直读 `buildingUpgradeInfo`、
 `buildingUpgradeBatchCost` 与 `upgradeBuilding`,不另算一套可升或价格。章序从
-`ui/dongfuDesk` 的同一份建筑表装配,结构与事实源由 `src/ui/dongfuDesk.spec.ts`
-守住;390 真渲染门同时核对两章顺序、壹 / 贰章首与章内真值、首章无共享账首、
-零 `.section-title`、续账至少五章、恰好七条账行、续账里零 `card-ink`,主键不宽于
-账行 72%、建筑行不整行铺色,以及首枚可用营造键仍在底栏以上。
+`ui/dongfuDesk` 的同一份建筑表装配;离线存续由同一模块的 `offlineCapTiers`
+把 `offlineCapHours` 摊成过去 / 现档 / 未来三态,并保证唯一现档。结构与事实源由
+`src/ui/dongfuDesk.spec.ts` 守住;390 真渲染门同时核对两章顺序、壹 / 贰章首与
+章内真值、首章无共享账首、零 `.section-title`、续账至少五章、恰好七条账行、
+续账里零 `card-ink`,主键不宽于账行 72%、建筑行不整行铺色、离线刻度唯一现档且
+不铺实心档块,以及首枚可用营造键仍在底栏以上;195(200% 缩放档)再核对离线
+刻度退成单列纵轨且无横向溢出。
 
 基线(2026-11-01 实测,本机 + 无头 chromium,后期档,`--seconds 3`):
 

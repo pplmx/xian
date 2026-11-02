@@ -1872,11 +1872,26 @@ describe("界面分层 · 浮层只有一个出处", () => {
     if (mClass) expect(mClass, "贡器门槛行不许 nowrap 裁掉门槛数").not.toMatch(/\btruncate\b/);
   });
 
-  it("洞府离线存续当前档要实底点亮 —— 不许退回淡染的哑当前态", () => {
-    // 离线上限阶梯「现在第几档」曾只有 6% 底 + 50% 边框,是全库最哑的当前态
-    // 指示器(对照 InkTabs 极淡纸光 + 朱砂游标 / 行程点实底呼吸)。当前档改实底 paper 字。
+  it("洞府离线存续只亮唯一现档 —— 连续刻度不铺五枚实心假按钮", () => {
+    // 五档都是静态上限,却曾把已过档整排铺成朱砂实底,看起来像五个可点按钮,
+    // 夜间尤其刺眼。现在过去 / 现档 / 未来由同一份纯函数分流,现档只留石青圆印,
+    // 朱砂继续专供真正的行动。
     const dv = FILES.find((f) => f.path === "views/DongfuView.vue");
-    expect(dv?.src, "当前档必须实底 + paper 字 + 楷体").toMatch(/bg-cinnabar text-paper font-kai/);
+    const css = readStyleCss();
+    expect(dv?.src, "离线上限五档要收成有序连续刻度").toContain(
+      '<ol class="dongfu-ledger__ladder"',
+    );
+    expect(dv?.src, "现档由同一份档位映射反推").toContain("offlineCapTiers(offlineCapHours.value)");
+    expect(dv?.src, "每档要报过去 / 现档 / 未来态").toContain(
+      ':data-offline-tier-state="tier.state"',
+    );
+    expect(dv?.src, "离线刻度不再铺朱砂实底").not.toContain("bg-cinnabar");
+    expect(css, "现档圆印走石青信息色").toMatch(
+      /\.dongfu-ledger__step\.is-current::after\s*\{[\s\S]{0,260}background:\s*rgb\(var\(--color-qing-rgb\)\)/,
+    );
+    expect(css, "未来档只留空心墨点").toMatch(
+      /\.dongfu-ledger__step::after\s*\{[\s\S]{0,220}border:\s*1px solid rgb\(var\(--color-ink-rgb\) \/ 0\.22\)[\s\S]{0,160}background:\s*rgb\(var\(--color-paper-rgb\)\)/,
+    );
   });
 
   it("图鉴详情要有视觉锚 —— 带 icon 的收录物,详情不许丢章", () => {

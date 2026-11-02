@@ -9996,6 +9996,13 @@ async function taskDongfuFold() {
         const register = document.querySelector("[data-dongfu-register]");
         const registerChapters = register?.querySelectorAll("[data-dongfu-chapter]") ?? [];
         const buildingRows = register?.querySelectorAll("[data-dongfu-building-row]") ?? [];
+        const offline = document.querySelector("[data-dongfu-offline]");
+        const offlineLadder = offline?.querySelector(".dongfu-ledger__ladder");
+        const offlineSteps = [...(offline?.querySelectorAll("[data-offline-tier-state]") ?? [])];
+        const offlineCurrent = offlineSteps.find(
+          (step) => step.getAttribute("data-offline-tier-state") === "current",
+        );
+        const offlineCurrentHours = offline?.querySelector("[data-dongfu-offline-current]");
         const action =
           document.querySelector("[data-dongfu-quick-build]:not([disabled])") ??
           [...document.querySelectorAll("[data-building-action]:not([disabled])")].find((el) => {
@@ -10041,6 +10048,26 @@ async function taskDongfuFold() {
           rowWidths: [...buildingRows].map((el) => el.getBoundingClientRect().width),
           cardShells: register?.querySelectorAll(".card-ink").length ?? -1,
           actions,
+          offlineTag: offlineLadder?.tagName ?? "",
+          offlineSteps: offlineSteps.map((step) => {
+            const style = getComputedStyle(step);
+            return {
+              state: step.getAttribute("data-offline-tier-state"),
+              current: step.getAttribute("aria-current"),
+              text: (step.querySelector(".dongfu-ledger__step-hours")?.textContent || "").trim(),
+              backgroundColor: style.backgroundColor,
+              backgroundImage: style.backgroundImage,
+            };
+          }),
+          offlineCurrentColor: offlineCurrent
+            ? getComputedStyle(offlineCurrent.querySelector(".dongfu-ledger__step-hours")).color
+            : null,
+          offlineCurrentHours: (offlineCurrentHours?.textContent || "").replace(/\s+/g, " ").trim(),
+          offlineCurrentMarker: offlineCurrent
+            ? getComputedStyle(offlineCurrent, "::after").backgroundColor
+            : null,
+          offlineButtons: offline?.querySelectorAll("button").length ?? -1,
+          offlineOverflow: offline ? offline.scrollWidth - offline.clientWidth : null,
           levelColors: [...buildingRows].map((row) => {
             const level = row.querySelector(".dongfu-building__level");
             return level ? getComputedStyle(level).color : "missing";
@@ -10104,6 +10131,41 @@ async function taskDongfuFold() {
       }
       if (fold.cardShells !== 0) {
         failures.push(`[390-dongfu] 山门续账里仍套着 ${fold.cardShells} 张 card-ink`);
+      }
+      checked += 1;
+      const currentOffline = fold.offlineSteps.filter((step) => step.state === "current");
+      if (
+        fold.offlineTag !== "OL" ||
+        fold.offlineSteps.length !== 5 ||
+        currentOffline.length !== 1 ||
+        currentOffline[0]?.current !== "step" ||
+        fold.offlineButtons !== 0
+      ) {
+        failures.push(
+          `[390-dongfu] 离线档位没有收成唯一现档的连续刻度:${JSON.stringify(fold.offlineSteps)}`,
+        );
+      }
+      if (
+        fold.offlineCurrentColor !== fold.qing ||
+        fold.offlineCurrentMarker !== fold.qing ||
+        !/^现档 · \d+ 时$/.test(fold.offlineCurrentHours || "")
+      ) {
+        failures.push(
+          `[390-dongfu] 离线现档没有归石青信息层:${fold.offlineCurrentHours} / ${fold.offlineCurrentColor} / ${fold.offlineCurrentMarker}`,
+        );
+      }
+      const filledOfflineSteps = fold.offlineSteps.filter(
+        (step) => step.backgroundColor !== "rgba(0, 0, 0, 0)" || step.backgroundImage !== "none",
+      );
+      if (filledOfflineSteps.length) {
+        failures.push(
+          `[390-dongfu] 离线刻度仍被铺成实心档块:${filledOfflineSteps
+            .map((step) => step.text)
+            .join(" / ")}`,
+        );
+      }
+      if (fold.offlineOverflow === null || fold.offlineOverflow > 1) {
+        failures.push(`[390-dongfu] 离线刻度横向溢出:${fold.offlineOverflow ?? "missing"}px`);
       }
       const wideActions = fold.actions.filter((entry) => entry.ratio > 0.72);
       if (wideActions.length) {
@@ -10171,6 +10233,42 @@ async function taskDongfuFold() {
         if (opened.expanded !== "true" || !opened.visible || !/当前效果/.test(opened.text)) {
           failures.push("[390-dongfu] 建筑卡点开详情后没有铺出完整效果");
         }
+      }
+
+      await page.setViewportSize({ width: 195, height: 844 });
+      await page.waitForTimeout(120);
+      checked += 1;
+      const compactOffline = await page.evaluate(() => {
+        const offline = document.querySelector("[data-dongfu-offline]");
+        const steps = [...(offline?.querySelectorAll("[data-offline-tier-state]") ?? [])];
+        const second = steps[1];
+        const offlineBox = offline?.getBoundingClientRect();
+        return {
+          overflow: offline ? offline.scrollWidth - offline.clientWidth : null,
+          display: second ? getComputedStyle(second).display : "",
+          railWidth: second ? getComputedStyle(second, "::before").width : "",
+          railHeight: second ? getComputedStyle(second, "::before").height : "",
+          currentCount: steps.filter(
+            (step) => step.getAttribute("data-offline-tier-state") === "current",
+          ).length,
+          outside: steps.filter((step) => {
+            const box = step.getBoundingClientRect();
+            return (
+              !offlineBox || box.left < offlineBox.left - 1 || box.right > offlineBox.right + 1
+            );
+          }).length,
+        };
+      });
+      if (
+        compactOffline.overflow === null ||
+        compactOffline.overflow > 1 ||
+        compactOffline.display !== "flex" ||
+        compactOffline.currentCount !== 1 ||
+        compactOffline.outside !== 0 ||
+        parseFloat(compactOffline.railWidth) > 1.5 ||
+        parseFloat(compactOffline.railHeight) < 8
+      ) {
+        failures.push(`[195-dongfu] 离线刻度没有退成单列纵轨:${JSON.stringify(compactOffline)}`);
       }
     }
     if (pageErrors.length)

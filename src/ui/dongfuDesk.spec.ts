@@ -2,7 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { readStyleCss } from "@/test/readStyleCss";
-import { dongfuBuildingChapters } from "./dongfuDesk";
+import { dongfuBuildingChapters, offlineCapTiers } from "./dongfuDesk";
 
 const ROOT = resolve(__dirname, "../..");
 
@@ -49,8 +49,60 @@ describe("洞府案 · 山门图先立意,总账再摊开七作", () => {
     expect(ledger, "三行家底都落在总账里").toContain("合府加成");
     expect(ledger, "三行家底都落在总账里").toContain("每时藏收");
     expect(ledger, "三行家底都落在总账里").toContain("门庭弟子");
-    expect(ledger, "离线阶梯仍读常数表").toContain('v-for="(h, i) in OFFLINE_CAP_HOURS"');
-    expect(ledger, "当前离线档仍要实底点亮").toContain("bg-cinnabar text-paper font-kai");
+    expect(ledger, "离线阶梯走同一份档位装配").toContain('v-for="tier in offlineTiers"');
+    expect(view, "当前档由纯函数从离线上限反推").toContain(
+      "offlineCapTiers(offlineCapHours.value)",
+    );
+    expect(ledger, "离线效率仍读结算常数").toContain("OFFLINE_EFFICIENCY");
+  });
+
+  it("离线存续是一条连续刻度 —— 唯一现档,过去与未来都不伪装成按钮", () => {
+    expect(offlineCapTiers(8).map((tier) => tier.state)).toEqual([
+      "current",
+      "future",
+      "future",
+      "future",
+      "future",
+    ]);
+    expect(offlineCapTiers(24).map((tier) => tier.state)).toEqual([
+      "past",
+      "past",
+      "current",
+      "future",
+      "future",
+    ]);
+    expect(offlineCapTiers(72).map((tier) => tier.state)).toEqual([
+      "past",
+      "past",
+      "past",
+      "past",
+      "current",
+    ]);
+    expect(
+      offlineCapTiers(96).filter((tier) => tier.state === "current"),
+      "超过表尾仍只能有一个现档",
+    ).toHaveLength(1);
+    expect(offlineCapTiers(24)[2]).toEqual({ level: 2, hours: 24, state: "current" });
+
+    const view = source("src/views/DongfuView.vue");
+    const offlineStart = view.indexOf("data-dongfu-offline");
+    const offline = view.slice(
+      view.lastIndexOf("<section", offlineStart),
+      view.indexOf("</section>", offlineStart) + "</section>".length,
+    );
+    expect(offline, "阶梯要用有序列表表达连续档位").toContain("<ol");
+    expect(offline, "每一档是一条刻度").toContain("<li");
+    expect(offline, "档态落到运行时指纹").toContain(':data-offline-tier-state="tier.state"');
+    expect(offline, "读屏也要知道唯一下当前档").toContain(
+      `:aria-current="tier.state === 'current' ? 'step' : undefined"`,
+    );
+    expect(offline, "离线刻度不再装成五个动作按钮").not.toContain("<button");
+    expect(offline, "离线刻度不再整档铺朱砂").not.toContain("bg-cinnabar");
+    expect(offline, "当前读数归石青信息层").toContain("dongfu-ledger__offline-current");
+
+    const layout = source("scripts/layout-check.mjs");
+    expect(layout, "真浏览器要数唯一现档").toContain("data-offline-tier-state");
+    expect(layout, "真浏览器要核阶梯没有横向溢出").toContain("offlineOverflow");
   });
 
   it("山门总账与续账收成一册两章,专用章首同报章号、读法与真值", () => {

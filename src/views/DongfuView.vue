@@ -104,35 +104,43 @@
             </span>
           </button>
 
-          <section class="dongfu-ledger__offline" data-dongfu-offline>
+          <section
+            class="dongfu-ledger__offline"
+            data-dongfu-offline
+            aria-labelledby="dongfu-offline-title"
+          >
             <div class="dongfu-ledger__offline-head">
-              <span class="dongfu-ledger__label">离线存续</span>
-              <span class="dongfu-ledger__offline-current tabular"
-                >当前 {{ offlineCapHours }} 时</span
+              <span id="dongfu-offline-title" class="dongfu-ledger__label">离线存续</span>
+              <span class="dongfu-ledger__offline-current tabular" data-dongfu-offline-current
+                >现档 · {{ offlineCapHours }} 时</span
               >
             </div>
-            <div class="dongfu-ledger__ladder">
-              <div
-                v-for="(h, i) in OFFLINE_CAP_HOURS"
-                :key="i"
+            <ol class="dongfu-ledger__ladder" aria-label="离线存续档位">
+              <li
+                v-for="tier in offlineTiers"
+                :key="tier.hours"
                 class="dongfu-ledger__step"
-                :class="
-                  i <= mansionLevel
-                    ? 'border-cinnabar bg-cinnabar text-paper font-kai'
-                    : 'border-ink/15 text-ink-faint'
-                "
-                :title="`洞府 ${i} 级可攒 ${h} 小时`"
+                :class="`is-${tier.state}`"
+                :data-offline-tier-state="tier.state"
+                :aria-current="tier.state === 'current' ? 'step' : undefined"
               >
-                {{ h }}时
-              </div>
-            </div>
+                <span class="dongfu-ledger__step-hours tabular">{{ tier.hours }} 时</span>
+                <span
+                  v-if="tier.state === 'current'"
+                  class="dongfu-ledger__step-state"
+                  aria-hidden="true"
+                  >现档</span
+                >
+                <span class="sr-only">{{ offlineTierStateLabels[tier.state] }}</span>
+              </li>
+            </ol>
             <p class="dongfu-ledger__offline-note">
-              离线上限随洞府等级抬升
-              <template v-if="mansionLevel < OFFLINE_CAP_HOURS.length - 1">
-                —— 升到 {{ mansionLevel + 1 }} 级,可攒至
-                {{ OFFLINE_CAP_HOURS[mansionLevel + 1] }} 时
+              修为与灵气全额计入；材料、钻研与历练按
+              <strong class="tabular">{{ OFFLINE_EFFICIENCY * 10 }} 折</strong>挂机。
+              <template v-if="offlineNextTier">
+                洞府升至 {{ offlineNextTier.level }} 级，可攒至 {{ offlineNextTier.hours }} 时。
               </template>
-              <template v-else>—— 已至顶档</template>
+              <template v-else>离线上限已至最高档。</template>
             </p>
           </section>
 
@@ -261,14 +269,14 @@ import { useDongfuStore } from "@/stores/dongfu";
 import { useResourcesStore } from "@/stores/resources";
 import { useApprenticeStore } from "@/stores/apprentice";
 import { usePlayerStore } from "@/stores/player";
-import { OFFLINE_CAP_HOURS, VEIN_UNLOCK_MAJOR } from "@/data/constants";
+import { OFFLINE_EFFICIENCY, VEIN_UNLOCK_MAJOR } from "@/data/constants";
 import { BUILDINGS } from "@/data/buildings";
 import { modsText } from "@/data/statNames";
 import { veinDef } from "@/data/veins";
 import { buildingUpgradeInfo, upgradeBuilding } from "@/core/buildingService";
 import { hourlyYieldText } from "@/core/engineFacilities";
 import { cnNumber, formatGN } from "@/utils/format";
-import { dongfuBuildingChapters } from "@/ui/dongfuDesk";
+import { dongfuBuildingChapters, offlineCapTiers, type OfflineCapTierState } from "@/ui/dongfuDesk";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LedgerPulse from "@/components/common/LedgerPulse.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
@@ -294,8 +302,16 @@ const apprenticeFact = computed(() => {
     : `门前 ${apprentices.value.length} 人皆待命`;
 });
 
-const mansionLevel = computed(() => dongfu.levels.mansion ?? 0);
 const offlineCapHours = computed(() => dongfu.offlineCapHours);
+const offlineTiers = computed(() => offlineCapTiers(offlineCapHours.value));
+const offlineNextTier = computed(
+  () => offlineTiers.value.find((tier) => tier.state === "future") ?? null,
+);
+const offlineTierStateLabels: Record<OfflineCapTierState, string> = {
+  past: "已过",
+  current: "现档",
+  future: "未至",
+};
 const hourlyLines = computed(() => hourlyYieldText({ ...dongfu.levels }));
 const buildingModText = computed(() => modsText(dongfu.buildingMods));
 const builtProgress = computed(() => `${Math.min(1, dongfu.builtCount / BUILDINGS.length) * 100}%`);
