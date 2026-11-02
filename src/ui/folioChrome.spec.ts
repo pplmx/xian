@@ -385,6 +385,36 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     expect(souls, "器魂槽位数不手抄，读 SOUL_SLOTS").toContain("${SOUL_SLOTS}");
   });
 
+  it("封卷页收成一页门径账:左读缘由,右报门限,行迹按重境落齿", () => {
+    const sealed = source("src/components/common/UnopenedFolio.vue");
+    const css = source("src/style.css");
+    const layout = source("scripts/layout-check.mjs");
+
+    expect(sealed, "门限账要有稳定落点").toContain("data-unopened-gate");
+    expect(sealed, "行迹刻度要有稳定落点").toContain("data-unopened-notches");
+    expect(sealed, "正文把目标写成一句可读的封卷题").toContain("尚待");
+    expect(sealed, "页首已报册名,封卷正文不再复读同一枚大标题").not.toContain(
+      '<h2 class="mt-4 font-kai text-display tracking-[0.3em] text-ink">{{ title }}</h2>',
+    );
+    expect(sealed, "行迹齿逐重境由 gateMajor 生成").toContain("gateSteps");
+    expect(sealed, "当前重境与门限各有独立齿态").toContain("is-current");
+    expect(sealed, "门限齿单独标记").toContain("is-gate");
+
+    expect(css, "封卷页不再靠固定高撑成一页空洞").toMatch(
+      /\.unopened-folio\s*\{[\s\S]{0,320}min-height:\s*0;/,
+    );
+    expect(css, "封卷正文在宽页分成缘由与门径两读").toMatch(
+      /\.unopened-folio__body\s*\{[\s\S]{0,520}grid-template-columns:\s*minmax\(0,\s*1fr\);/,
+    );
+    expect(css, "重境齿沿同一行铺开").toMatch(
+      /\.unopened-folio__notches\s*\{[\s\S]{0,260}display:\s*grid;[\s\S]{0,180}grid-template-columns:\s*repeat\(/,
+    );
+    expect(css, "宽页把缘由与门径并为左右两读").toMatch(
+      /@media \(min-width: 720px\)\s*\{[\s\S]{0,900}\.unopened-folio__body\s*\{[\s\S]{0,260}grid-template-columns:\s*minmax\(0,\s*1\.05fr\) minmax\(18rem,\s*0\.95fr\)/,
+    );
+    expect(layout, "真浏览器要核封卷齿与门径账").toContain("data-unopened-notches");
+  });
+
   it("像素对比度采样不依赖会每秒刷新的文本节点", () => {
     const layout = source("scripts/layout-check.mjs");
 

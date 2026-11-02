@@ -339,6 +339,8 @@ let controlHostsSeen = 0;
 /** 200% 缩放档量过几页、采样像素量过几处字 —— 同样防判据空转 */
 let zoomSeen = 0;
 let pixelTextsSeen = 0;
+/** 封卷页在 390 / 320 / 195 三档各量过几次 —— 0 表示门径账探针空转 */
+let unopenedFolioSeen = 0;
 /** 1280 桌面档逐页核过多少次书桌 / 单叶 / 双页几何 */
 let desktopFolioSeen = 0;
 /** 1280 桌面档逐页核过多少次书脊、当前册与底栏退场 */
@@ -1322,6 +1324,90 @@ async function measureTextContrast(page) {
 }
 
 /**
+ * 封卷页的门径账不是一张静态空态:它要同时量到三格事实、逐重境齿、
+ * 当前与门限的唯一落点,以及极窄档有没有把齿列或动作裁进 overflow:hidden。
+ */
+async function probeUnopenedFolio(page) {
+  return page.evaluate(() => {
+    const folio = document.querySelector("[data-unopened-folio]");
+    if (!folio) return null;
+    const gate = folio.querySelector("[data-unopened-gate]");
+    const ledger = folio.querySelector("[data-unopened-ledger]");
+    const progress = folio.querySelector("[data-unopened-progress]");
+    const notches = folio.querySelector("[data-unopened-notches]");
+    const notchRows = notches ? [...notches.querySelectorAll(".unopened-folio__notch")] : [];
+    const gateBox = gate?.getBoundingClientRect();
+    const folioBox = folio.getBoundingClientRect();
+    const important = [
+      folio.querySelector(".unopened-folio__heading-copy"),
+      ledger,
+      notches,
+      ...folio.querySelectorAll(".unopened-folio__actions a"),
+    ].filter(Boolean);
+    const clipped = important
+      .map((el) => {
+        const box = el.getBoundingClientRect();
+        const outside =
+          box.left < folioBox.left - 1 ||
+          box.right > folioBox.right + 1 ||
+          box.bottom > folioBox.bottom + 1;
+        if (!outside) return null;
+        return `${el.className || el.tagName}@${Math.round(box.left)}..${Math.round(box.right)}/${Math.round(folioBox.left)}..${Math.round(folioBox.right)}`;
+      })
+      .filter(Boolean)
+      .slice(0, 3);
+    const gateMajor = Number(notches?.dataset.unopenedGateMajor);
+    return {
+      gate: Boolean(gate),
+      notches: Boolean(notches),
+      progress: Boolean(progress),
+      ledgerRows: ledger?.querySelectorAll(":scope > p").length ?? 0,
+      notchCount: notchRows.length,
+      expectedNotchCount: Number.isFinite(gateMajor) ? gateMajor + 1 : -1,
+      currentCount: notchRows.filter((el) => el.classList.contains("is-current")).length,
+      gateCount: notchRows.filter((el) => el.classList.contains("is-gate")).length,
+      role: notches?.getAttribute("role") || "",
+      ariaNow: notches?.getAttribute("aria-valuenow") || "",
+      ariaMax: notches?.getAttribute("aria-valuemax") || "",
+      notchOverflow: notches ? notches.scrollWidth > notches.clientWidth + 1 : true,
+      gateVisible: gateBox
+        ? gateBox.bottom > 0 && gateBox.top < document.documentElement.clientHeight
+        : false,
+      clipped,
+      cultivation: folio.querySelector('a[href="#/cultivation"]')?.textContent?.trim() || "",
+      codex: folio.querySelector('a[href="#/codex"]')?.textContent?.trim() || "",
+      ledgerText: (ledger?.textContent || "").replace(/\s+/g, " ").trim(),
+    };
+  });
+}
+
+function unopenedFolioProblems(sealed, label, { firstScreen = false } = {}) {
+  if (!sealed) return [`${label} 封卷页没有渲染出来`];
+  const problems = [];
+  if (!sealed.gate) problems.push("缺门径账落点");
+  if (!sealed.notches) problems.push("缺行迹齿列");
+  if (!sealed.progress) problems.push("缺行迹段落");
+  if (sealed.ledgerRows !== 3) problems.push(`门限账应有 3 行,实见 ${sealed.ledgerRows}`);
+  for (const label of ["当前", "门限", "尚隔"]) {
+    if (!sealed.ledgerText.includes(label)) problems.push(`门限账缺「${label}」`);
+  }
+  if (sealed.expectedNotchCount < 1 || sealed.notchCount !== sealed.expectedNotchCount) {
+    problems.push(`重境齿应 ${sealed.expectedNotchCount} 枚,实见 ${sealed.notchCount}`);
+  }
+  if (sealed.currentCount !== 1) problems.push(`当前齿应唯一,实见 ${sealed.currentCount}`);
+  if (sealed.gateCount !== 1) problems.push(`门限齿应唯一,实见 ${sealed.gateCount}`);
+  if (sealed.role !== "progressbar" || !sealed.ariaNow || !sealed.ariaMax) {
+    problems.push("齿列没有完整进度语义");
+  }
+  if (sealed.notchOverflow) problems.push("齿列横向溢出");
+  if (sealed.clipped.length) problems.push(`封卷内容被裁切:${sealed.clipped.join(", ")}`);
+  if (firstScreen && !sealed.gateVisible) problems.push("门径账不在首屏");
+  if (!sealed.cultivation.includes("回修炼")) problems.push("缺「回修炼」去路");
+  if (!sealed.codex.includes("看境界谱")) problems.push("缺「看境界谱」去路");
+  return problems;
+}
+
+/**
  * 两百档缩放(200%)—— 390 宽的机型放大到 200% 后,布局视口只剩 195 CSS px。
  *
  * 量法与巡页**共用同一把尺子**(measurePage):横向溢出、外壳被滚偏、越界元素、主值行折行。
@@ -1330,16 +1416,26 @@ async function measureTextContrast(page) {
  *
  * 量完把视口还原(后面的巡页与 --shots 都按原尺寸走)。
  */
-async function measureZoomScale(page, vp) {
+async function measureZoomScale(page, vp, shotRoute = null) {
   const width = Math.round(vp.width / 2);
   const height = Math.round(vp.height / 2);
   await page.setViewportSize({ width, height });
   await page.waitForTimeout(420); // 让断点与 transition 走完再量
   const info = await measurePage(page);
+  const unopened = await probeUnopenedFolio(page);
+  if (SHOTS && shotRoute && unopened) {
+    mkdirSync(SHOTS_DIR, { recursive: true });
+    // 195×422 只能看到门径账的上半页；截图时只加高取景，不改宽度与任何断点。
+    await page.setViewportSize({ width, height: 1400 });
+    await page.waitForTimeout(120);
+    await page.locator("[data-unopened-folio]").screenshot({
+      path: join(SHOTS_DIR, `195-unopened-folio${shotRoute.replace(/\//g, "_")}.png`),
+    });
+  }
   const innerWidth = await page.evaluate(() => window.innerWidth);
   await page.setViewportSize({ width: vp.width, height: vp.height });
   await page.waitForTimeout(260);
-  return { ...info, innerWidth };
+  return { ...info, innerWidth, unopened };
 }
 
 /** 缩放档的读数 → 失败清单(只判:溢出、外壳被滚偏、越界元素、主值行折行) */
@@ -2656,26 +2752,14 @@ async function taskPageTour(vp) {
         failures.push(`[${vp.tag}] /legacy 卷首没有同报世数与宿慧:«${legacyDesk.current}»`);
       }
     }
-    if (vp.tag === "390" && (route === "/celestial" || route === "/souls")) {
-      const sealed = await page.evaluate(() => {
-        const folio = document.querySelector("[data-unopened-folio]");
-        if (!folio) return null;
-        return {
-          ledgerRows: folio.querySelectorAll("[data-unopened-ledger] > p").length,
-          hasProgress: Boolean(folio.querySelector("[data-unopened-progress]")),
-          cultivation: folio.querySelector('a[href="#/cultivation"]')?.textContent?.trim() || "",
-          codex: folio.querySelector('a[href="#/codex"]')?.textContent?.trim() || "",
-        };
+    if ((vp.tag === "390" || vp.tag === "320") && (route === "/celestial" || route === "/souls")) {
+      const sealed = await probeUnopenedFolio(page);
+      unopenedFolioSeen += 1;
+      checked += 1;
+      const sealedBad = unopenedFolioProblems(sealed, `[${vp.tag}] ${route}`, {
+        firstScreen: vp.tag === "390",
       });
-      if (
-        !sealed ||
-        sealed.ledgerRows !== 3 ||
-        !sealed.hasProgress ||
-        !sealed.cultivation.includes("回修炼") ||
-        !sealed.codex.includes("看境界谱")
-      ) {
-        failures.push(`[${vp.tag}] ${route} 封卷页没有渲染出来,或门槛账与两条去路不齐`);
-      }
+      if (sealedBad.length) failures.push(sealedBad.join(" / "));
     }
     /*
      * 桌面不是「放大的手机」:960px 以上游戏外壳应展开成书桌,修炼 / 行囊 /
@@ -3182,10 +3266,16 @@ async function taskPageTour(vp) {
      * 免得把前面那些按原尺寸量的读数带偏。
      */
     if (vp.tag === "390") {
-      const zoom = await measureZoomScale(page, vp);
+      const zoom = await measureZoomScale(page, vp, route);
       zoomSeen += 1;
       const zoomBad = zoomProblems(zoom, vp.tag);
       if (zoomBad.length) zoomFails.push(`[${vp.tag}] ${route} → ${zoomBad.join(" / ")}`);
+      if (route === "/celestial" || route === "/souls") {
+        unopenedFolioSeen += 1;
+        checked += 1;
+        const sealedBad = unopenedFolioProblems(zoom.unopened, `[195] ${route}`);
+        if (sealedBad.length) zoomFails.push(sealedBad.join(" / "));
+      }
     }
     if (SHOTS) {
       mkdirSync(SHOTS_DIR, { recursive: true });
@@ -3193,6 +3283,14 @@ async function taskPageTour(vp) {
         path: join(SHOTS_DIR, `${vp.tag}${route.replace(/\//g, "_")}.png`),
         fullPage: true,
       });
+      if (
+        (vp.tag === "390" || vp.tag === "320") &&
+        (route === "/celestial" || route === "/souls")
+      ) {
+        await page.locator("[data-unopened-folio]").screenshot({
+          path: join(SHOTS_DIR, `${vp.tag}-unopened-folio${route.replace(/\//g, "_")}.png`),
+        });
+      }
     }
   }
   if (pageErrors.length)
@@ -20033,6 +20131,11 @@ if (controlHostsSeen === 0) {
 if (zoomSeen === 0) {
   failures.push("200% 缩放档一页都没量到 —— 那条判据空转了");
 }
+if (unopenedFolioSeen < 6) {
+  failures.push(
+    `封卷门径账只量了 ${unopenedFolioSeen}/6 次 —— 390 / 320 / 195 的天界与器魂没覆盖全`,
+  );
+}
 if (pixelTextsSeen === 0) {
   failures.push("渐变/图片底上的字一处都没采到 —— 那条判据空转了(采样半径或底色判定写错了?)");
 }
@@ -20103,6 +20206,7 @@ if (failures.length === 0) {
   console.log("✓ 桌面界域志当前卷与境界谱并读,六册章号与真值同源");
   console.log(`✓ 主值行一格一行(${valueRowsSeen} 处带 data-value-row 的行没被次要读数挤折)`);
   console.log(`✓ 两百档字号(${zoomSeen} 页在 200% 缩放下不溢出、主值行不折)`);
+  console.log(`✓ 封卷门径账(${unopenedFolioSeen} 次:390 / 320 / 195 齿数与去路齐全)`);
   console.log(`✓ 渐变与图片底上的字(${pixelTextsSeen} 处按屏幕像素采过,没有成片读不出来的)`);
   console.log("✓ iOS 存档风险提示只在该出现的平台出现,关一次就不再唠叨");
   console.log("✓ 楷体三端统一(内置排栈首,系统楷体留作兜底),且真由内置字体渲染");
