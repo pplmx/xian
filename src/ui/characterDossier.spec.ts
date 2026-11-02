@@ -201,6 +201,19 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
     expect(dialog, "法宝损失要明说").toContain("法宝归尘");
   });
 
+  it("往生帖四章续在同一账线,不在浮层里再叠内层纸卡", () => {
+    const dialog = source("src/components/character/RebirthDialog.vue");
+
+    expect(dialog, "往生帖四章共用人物册的同一枚章首").toContain("<CharacterChapterHead");
+    expect(
+      dialog.match(/<CharacterChapterHead/g)?.length ?? 0,
+      "此刻、随魂、交割与最后一笔各成一章",
+    ).toBeGreaterThanOrEqual(4);
+    expect(dialog, "四章由同一条账线分段").toContain('class="rebirth-chapter');
+    expect(dialog, "内层面板不再画四边框").not.toContain("border: 1px solid var(--rebirth-line)");
+    expect(dialog, "内层面板不再铺第二张纸底").not.toContain("background: var(--rebirth-paper)");
+  });
+
   it("往生帖 390 单列,620 起道果与天赋并读,260 以下门槛与动作上下收住", () => {
     const dialog = source("src/components/character/RebirthDialog.vue");
 

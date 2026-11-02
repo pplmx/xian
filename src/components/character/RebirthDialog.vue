@@ -28,14 +28,13 @@
         </p>
       </header>
 
-      <section class="rebirth-now" data-rebirth-now>
-        <header class="rebirth-now__head">
-          <span class="rebirth-now__mark font-kai" aria-hidden="true">此</span>
-          <div>
-            <p class="rebirth-now__title">此刻要决定的事</p>
-            <p class="rebirth-now__hint">这不是一次普通确认。先把底账核对清楚,再进往生三程。</p>
-          </div>
-        </header>
+      <section class="rebirth-chapter rebirth-now" data-rebirth-now>
+        <CharacterChapterHead
+          index="壹"
+          title="此刻要决定的事"
+          hint="这不是一次普通确认。先把底账核对清楚,再进往生三程。"
+          fact="尚未登账"
+        />
 
         <p class="rebirth-now__contract">
           下一屏只作回顾;真正不可撤回的落子,是末程的「踏入轮回」。此前都还来得及回到这一页。
@@ -60,91 +59,98 @@
         </div>
       </section>
 
-      <div class="rebirth-detail-grid">
-        <section class="rebirth-panel rebirth-dao" data-rebirth-dao-fruit>
-          <header class="rebirth-panel__head">
-            <div>
-              <p class="rebirth-panel__eyebrow">永久积累</p>
-              <p class="rebirth-panel__title">道果</p>
-            </div>
-            <p class="rebirth-dao__total tabular">
-              {{ formatNum(player.reincarnation.daoFruit) }}<small>枚</small>
-            </p>
-          </header>
-          <dl class="rebirth-dao__rows">
-            <div>
-              <dt>当前有效收益</dt>
-              <dd>{{ fruitInfo.effectiveText }} 枚</dd>
-            </div>
-            <div>
-              <dt>修行加成</dt>
-              <dd>{{ fruitInfo.cultBonusText }}</dd>
-            </div>
-            <div>
-              <dt>再凝一枚</dt>
-              <dd>
-                有效 {{ fruitInfo.nextEffectiveText }} 枚
-                <span class="tabular">· +{{ fruitInfo.deltaPct }}%</span>
-              </dd>
-            </div>
-          </dl>
-          <p class="rebirth-panel__note">
-            每枚名义:修行 +{{ formatPercent(DAO_FRUIT_CULT_BONUS, 0) }},道躯 +{{
-              formatPercent(DAO_FRUIT_COMBAT_BONUS, 0)
-            }}。
-          </p>
-          <p class="rebirth-panel__note">{{ softCapText }}</p>
-        </section>
+      <section class="rebirth-chapter rebirth-heritage">
+        <CharacterChapterHead
+          index="贰"
+          title="随魂所积"
+          hint="道果与先天之姿跨世留下，来世仍可调用。"
+          fact="随魂不灭"
+        />
 
-        <section class="rebirth-panel rebirth-talents" data-rebirth-talents>
-          <header class="rebirth-panel__head">
-            <div>
-              <p class="rebirth-panel__eyebrow">随魂不灭</p>
-              <p class="rebirth-panel__title">先天之姿</p>
-            </div>
-            <p class="rebirth-talents__total tabular">{{ ownedTalents.length }}<small>项</small></p>
-          </header>
-          <div v-if="ownedTalents.length" class="rebirth-talents__list">
-            <button
-              v-for="t in ownedTalents"
-              :key="t.id"
-              type="button"
-              class="rebirth-talent"
-              :style="{ color: TALENT_GRADE_COLORS[t.grade] }"
-              :aria-expanded="talentTap === t.id"
-              :aria-label="`${t.name}，${TALENT_GRADE_NAMES[t.grade]}，展开效果`"
-              @click="talentTap = talentTap === t.id ? null : t.id"
-            >
-              <span class="rebirth-talent__name">{{ t.name }}</span>
-              <span class="rebirth-talent__grade">{{ TALENT_GRADE_NAMES[t.grade] }}</span>
-            </button>
-          </div>
-          <p v-else class="rebirth-panel__empty">转世之后,才会觉醒第一项先天之姿。</p>
-          <div v-if="tappedTalent" class="rebirth-talent__detail" data-rebirth-talent-detail>
-            <p>
-              <span :style="{ color: TALENT_GRADE_COLORS[tappedTalent.grade] }">{{
-                tappedTalent.name
-              }}</span>
-              · {{ tappedTalent.desc }}
+        <div class="rebirth-detail-grid">
+          <section class="rebirth-panel rebirth-dao" data-rebirth-dao-fruit>
+            <header class="rebirth-panel__head">
+              <div>
+                <p class="rebirth-panel__eyebrow">永久积累</p>
+                <p class="rebirth-panel__title">道果</p>
+              </div>
+              <p class="rebirth-dao__total tabular">
+                {{ formatNum(player.reincarnation.daoFruit) }}<small>枚</small>
+              </p>
+            </header>
+            <dl class="rebirth-dao__rows">
+              <div>
+                <dt>当前有效收益</dt>
+                <dd>{{ fruitInfo.effectiveText }} 枚</dd>
+              </div>
+              <div>
+                <dt>修行加成</dt>
+                <dd>{{ fruitInfo.cultBonusText }}</dd>
+              </div>
+              <div>
+                <dt>再凝一枚</dt>
+                <dd>
+                  有效 {{ fruitInfo.nextEffectiveText }} 枚
+                  <span class="tabular">· +{{ fruitInfo.deltaPct }}%</span>
+                </dd>
+              </div>
+            </dl>
+            <p class="rebirth-panel__note">
+              每枚名义:修行 +{{ formatPercent(DAO_FRUIT_CULT_BONUS, 0) }},道躯 +{{
+                formatPercent(DAO_FRUIT_COMBAT_BONUS, 0)
+              }}。
             </p>
-            <p v-if="modsText(tappedTalent.mods)" class="is-qing">
-              {{ modsText(tappedTalent.mods) }}
-            </p>
-          </div>
-        </section>
-      </div>
+            <p class="rebirth-panel__note">{{ softCapText }}</p>
+          </section>
 
-      <section class="rebirth-ledger" data-rebirth-ledger>
-        <header class="rebirth-ledger__head">
-          <div>
-            <p class="rebirth-panel__eyebrow">去留同源</p>
-            <p class="rebirth-panel__title">此世交割</p>
-            <p class="rebirth-ledger__hint">
-              条目直接取轮回结算的同一份继承表。先看影响最大的几笔,再展开全账。
-            </p>
-          </div>
-          <p class="rebirth-ledger__count tabular">{{ totalCount }}<small>项</small></p>
-        </header>
+          <section class="rebirth-panel rebirth-talents" data-rebirth-talents>
+            <header class="rebirth-panel__head">
+              <div>
+                <p class="rebirth-panel__eyebrow">随魂不灭</p>
+                <p class="rebirth-panel__title">先天之姿</p>
+              </div>
+              <p class="rebirth-talents__total tabular">
+                {{ ownedTalents.length }}<small>项</small>
+              </p>
+            </header>
+            <div v-if="ownedTalents.length" class="rebirth-talents__list">
+              <button
+                v-for="t in ownedTalents"
+                :key="t.id"
+                type="button"
+                class="rebirth-talent"
+                :style="{ color: TALENT_GRADE_COLORS[t.grade] }"
+                :aria-expanded="talentTap === t.id"
+                :aria-label="`${t.name}，${TALENT_GRADE_NAMES[t.grade]}，展开效果`"
+                @click="talentTap = talentTap === t.id ? null : t.id"
+              >
+                <span class="rebirth-talent__name">{{ t.name }}</span>
+                <span class="rebirth-talent__grade">{{ TALENT_GRADE_NAMES[t.grade] }}</span>
+              </button>
+            </div>
+            <p v-else class="rebirth-panel__empty">转世之后,才会觉醒第一项先天之姿。</p>
+            <div v-if="tappedTalent" class="rebirth-talent__detail" data-rebirth-talent-detail>
+              <p>
+                <span :style="{ color: TALENT_GRADE_COLORS[tappedTalent.grade] }">{{
+                  tappedTalent.name
+                }}</span>
+                · {{ tappedTalent.desc }}
+              </p>
+              <p v-if="modsText(tappedTalent.mods)" class="is-qing">
+                {{ modsText(tappedTalent.mods) }}
+              </p>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="rebirth-chapter rebirth-ledger" data-rebirth-ledger>
+        <CharacterChapterHead
+          index="叁"
+          title="此世交割"
+          hint="条目直接取轮回结算的同一份继承表。先看影响最大的几笔,再展开全账。"
+          :fact="`${totalCount} 项`"
+        />
 
         <div class="rebirth-critical" data-rebirth-critical>
           <p class="rebirth-critical__caption">先看这些</p>
@@ -217,13 +223,17 @@
         </div>
       </section>
 
-      <section class="rebirth-last-call">
+      <section class="rebirth-chapter rebirth-last-call">
+        <CharacterChapterHead
+          index="肆"
+          title="本世最后一笔"
+          hint="可补立逆旅契；真正落子仍在往生末程。"
+          :fact="signedTrial ? '已立契' : '可补契'"
+        />
+
         <div class="rebirth-trial" data-rebirth-trial>
           <div class="rebirth-trial__head">
-            <div>
-              <p class="rebirth-panel__eyebrow">本世最后一笔</p>
-              <p class="rebirth-panel__title">逆旅契</p>
-            </div>
+            <p class="rebirth-trial__title">逆旅契</p>
             <span v-if="signedTrial" class="rebirth-trial__seal font-kai" aria-hidden="true">{{
               signedTrial.seal
             }}</span>
@@ -329,6 +339,7 @@ import { formatNum, formatPercent, yearsShown } from "@/utils/format";
 import { modsText } from "@/data/statNames";
 import { criticalSamsaraRows, samsaraBalance, samsaraLedger } from "@/ui/reincarnationDesk";
 import BaseModal from "@/components/common/BaseModal.vue";
+import CharacterChapterHead from "@/components/character/CharacterChapterHead.vue";
 
 /**
  * 兵解前的最后一张账。
@@ -416,8 +427,30 @@ function rebirth(): void {
 .rebirth-trial-folio {
   --rebirth-line: rgb(var(--color-ink-rgb) / 0.14);
   --rebirth-line-strong: rgb(var(--color-ink-rgb) / 0.22);
-  --rebirth-paper: rgb(var(--color-paper-deep-rgb) / 0.34);
   min-width: 0;
+}
+
+.rebirth-folio {
+  --character-accent: var(--color-cinnabar);
+  --character-accent-rgb: var(--color-cinnabar-rgb);
+  display: grid;
+}
+
+.rebirth-chapter {
+  min-width: 0;
+  margin-top: 0.82rem;
+  border-top: 1px solid var(--rebirth-line);
+  padding-top: 0.82rem;
+}
+
+.rebirth-head + .rebirth-chapter {
+  margin-top: 0.72rem;
+  border-top: 0;
+  padding-top: 0;
+}
+
+.rebirth-chapter > .character-chapter-head {
+  margin-bottom: 0.56rem;
 }
 
 .rebirth-head {
@@ -500,53 +533,8 @@ function rebirth(): void {
   color: var(--color-amber-ink);
 }
 
-.rebirth-now {
-  margin-top: 0.9rem;
-  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.2);
-  border-top: 2px solid rgb(var(--color-cinnabar-rgb) / 0.72);
-  border-radius: 2px;
-  background:
-    linear-gradient(128deg, rgb(var(--color-cinnabar-rgb) / 0.045), transparent 52%),
-    rgb(var(--color-paper-lifted-rgb) / 0.45);
-  padding: 0.72rem 0.78rem 0.78rem;
-}
-
-.rebirth-now__head {
-  display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr);
-  align-items: start;
-  gap: 0.55rem;
-}
-
-.rebirth-now__mark {
-  display: grid;
-  width: 2rem;
-  height: 2rem;
-  place-items: center;
-  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.38);
-  border-radius: 2px;
-  color: var(--color-cinnabar);
-  font-size: var(--type-title);
-  line-height: 1;
-}
-
-.rebirth-now__title {
-  color: var(--color-ink);
-  font-family: var(--font-kai);
-  font-size: var(--type-title);
-  letter-spacing: 0.1em;
-  line-height: 1.4;
-}
-
-.rebirth-now__hint {
-  margin-top: 0.12rem;
-  color: var(--color-ink-faint);
-  font-size: var(--type-note);
-  line-height: 1.55;
-}
-
 .rebirth-now__contract {
-  margin-top: 0.55rem;
+  margin-top: 0.16rem;
   border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.6);
   padding-left: 0.55rem;
   color: var(--color-ink-soft);
@@ -557,8 +545,9 @@ function rebirth(): void {
 .rebirth-balance {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.32rem;
-  margin-top: 0.66rem;
+  gap: 0;
+  margin-top: 0.58rem;
+  border-block: 1px solid var(--rebirth-line);
 }
 
 .rebirth-balance__row {
@@ -567,9 +556,8 @@ function rebirth(): void {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: baseline;
   gap: 0.05rem 0.3rem;
-  border: 1px solid var(--rebirth-line);
-  border-radius: 2px;
-  padding: 0.42rem 0.5rem;
+  border-left: 1px dashed var(--rebirth-line);
+  padding: 0.44rem 0.55rem;
 }
 
 .rebirth-balance__row span {
@@ -594,7 +582,7 @@ function rebirth(): void {
 }
 
 .rebirth-balance__row.is-keep {
-  border-color: rgb(var(--color-jade-rgb) / 0.24);
+  border-left: 2px solid rgb(var(--color-jade-rgb) / 0.58);
 }
 
 .rebirth-balance__row.is-keep strong {
@@ -602,7 +590,7 @@ function rebirth(): void {
 }
 
 .rebirth-balance__row.is-partial {
-  border-color: rgb(var(--color-gold-ink-rgb) / 0.28);
+  border-left: 2px solid rgb(var(--color-gold-ink-rgb) / 0.58);
 }
 
 .rebirth-balance__row.is-partial strong {
@@ -610,7 +598,7 @@ function rebirth(): void {
 }
 
 .rebirth-balance__row.is-reset {
-  border-color: rgb(var(--color-ink-rgb) / 0.16);
+  border-left: 2px solid rgb(var(--color-ink-rgb) / 0.28);
 }
 
 .rebirth-balance__row.is-reset strong {
@@ -621,34 +609,30 @@ function rebirth(): void {
   display: grid;
   min-width: 0;
   grid-template-columns: minmax(0, 1fr);
-  gap: 0.6rem;
-  margin-top: 0.68rem;
-}
-
-.rebirth-panel,
-.rebirth-ledger,
-.rebirth-trial,
-.rebirth-departure {
-  min-width: 0;
-  border: 1px solid var(--rebirth-line);
-  border-radius: 2px;
-  background: var(--rebirth-paper);
+  gap: 0;
 }
 
 .rebirth-panel {
-  padding: 0.68rem 0.72rem 0.72rem;
+  min-width: 0;
+  padding: 0 0 0.68rem;
 }
 
-.rebirth-dao {
-  border-top: 2px solid rgb(var(--color-violet-ink-rgb) / 0.54);
+.rebirth-panel + .rebirth-panel {
+  margin-top: 0.58rem;
+  border-top: 1px solid var(--rebirth-line);
+  padding-top: 0.58rem;
+  padding-bottom: 0;
 }
 
-.rebirth-talents {
-  border-top: 2px solid rgb(var(--color-gold-ink-rgb) / 0.54);
+.rebirth-dao .rebirth-panel__title {
+  color: var(--color-violet-ink);
+}
+
+.rebirth-talents .rebirth-panel__title {
+  color: var(--color-gold-ink);
 }
 
 .rebirth-panel__head,
-.rebirth-ledger__head,
 .rebirth-trial__head {
   display: flex;
   min-width: 0;
@@ -674,8 +658,7 @@ function rebirth(): void {
 }
 
 .rebirth-dao__total,
-.rebirth-talents__total,
-.rebirth-ledger__count {
+.rebirth-talents__total {
   flex: none;
   color: var(--color-cinnabar);
   font-family: var(--font-kai);
@@ -687,13 +670,8 @@ function rebirth(): void {
   color: var(--color-gold-ink);
 }
 
-.rebirth-ledger__count {
-  color: var(--color-qing);
-}
-
 .rebirth-dao__total small,
-.rebirth-talents__total small,
-.rebirth-ledger__count small {
+.rebirth-talents__total small {
   margin-left: 0.16rem;
   color: var(--color-ink-faint);
   font-family: inherit;
@@ -788,25 +766,8 @@ function rebirth(): void {
   color: var(--color-qing);
 }
 
-.rebirth-ledger {
-  margin-top: 0.68rem;
-  border-top: 2px solid rgb(var(--color-qing-rgb) / 0.52);
-  padding: 0.68rem 0.72rem 0.72rem;
-}
-
-.rebirth-ledger__head > div:first-child {
-  min-width: 0;
-}
-
-.rebirth-ledger__hint {
-  margin-top: 0.18rem;
-  color: var(--color-ink-faint);
-  font-size: var(--type-note);
-  line-height: 1.55;
-}
-
 .rebirth-critical {
-  margin-top: 0.6rem;
+  margin-top: 0;
   border-top: 1px solid var(--rebirth-line);
   padding-top: 0.5rem;
 }
@@ -875,9 +836,8 @@ function rebirth(): void {
   justify-content: space-between;
   gap: 0.6rem;
   margin-top: 0.52rem;
-  border: 1px solid var(--rebirth-line);
-  border-radius: 2px;
-  padding: 0.34rem 0.48rem;
+  border-block: 1px dashed var(--rebirth-line);
+  padding: 0.42rem 0;
   color: var(--color-qing);
   font-size: var(--type-body);
   text-align: left;
@@ -894,10 +854,7 @@ function rebirth(): void {
 }
 
 .rebirth-ledger__scroll {
-  border: 1px solid var(--rebirth-line);
-  border-radius: 2px;
-  background: rgb(var(--color-paper-rgb) / 0.3);
-  padding: 0.42rem 0.5rem;
+  padding: 0.42rem 0;
 }
 
 .rebirth-group + .rebirth-group {
@@ -998,12 +955,24 @@ function rebirth(): void {
   display: grid;
   min-width: 0;
   grid-template-columns: minmax(0, 1fr);
-  gap: 0.55rem;
-  margin-top: 0.68rem;
+  gap: 0;
+}
+
+.rebirth-last-call > .character-chapter-head {
+  grid-column: 1 / -1;
 }
 
 .rebirth-trial {
-  padding: 0.62rem 0.68rem;
+  min-width: 0;
+  padding: 0 0 0.58rem;
+}
+
+.rebirth-trial__title {
+  color: var(--color-ink);
+  font-family: var(--font-kai);
+  font-size: var(--type-title);
+  letter-spacing: 0.08em;
+  line-height: 1.35;
 }
 
 .rebirth-trial__seal {
@@ -1035,11 +1004,12 @@ function rebirth(): void {
 
 .rebirth-departure {
   display: grid;
+  min-width: 0;
   grid-template-columns: 2rem minmax(0, 1fr);
   align-items: start;
   gap: 0.55rem;
-  border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.58);
-  padding: 0.62rem 0.68rem;
+  border-top: 1px solid var(--rebirth-line);
+  padding: 0.58rem 0 0;
 }
 
 .rebirth-departure__mark {
@@ -1129,10 +1099,10 @@ function rebirth(): void {
   width: 100%;
   min-height: 2.8rem;
   gap: 0.18rem;
-  border: 1px solid var(--rebirth-line);
+  border: 0;
+  border-bottom: 1px solid var(--rebirth-line);
   border-left: 2px solid rgb(var(--color-gold-ink-rgb) / 0.54);
-  border-radius: 2px;
-  padding: 0.48rem 0.56rem;
+  padding: 0.48rem 0 0.48rem 0.56rem;
   text-align: left;
 }
 
@@ -1192,6 +1162,17 @@ function rebirth(): void {
     grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.94fr);
   }
 
+  .rebirth-panel {
+    padding: 0 0.78rem 0 0;
+  }
+
+  .rebirth-panel + .rebirth-panel {
+    margin-top: 0;
+    border-top: 0;
+    border-left: 1px solid var(--rebirth-line);
+    padding: 0 0 0 0.78rem;
+  }
+
   .rebirth-critical__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 0.8rem;
@@ -1199,6 +1180,16 @@ function rebirth(): void {
 
   .rebirth-last-call {
     grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+  }
+
+  .rebirth-trial {
+    padding: 0 0.78rem 0 0;
+  }
+
+  .rebirth-departure {
+    border-top: 0;
+    border-left: 1px solid var(--rebirth-line);
+    padding: 0 0 0 0.78rem;
   }
 }
 
@@ -1220,6 +1211,14 @@ function rebirth(): void {
 
   .rebirth-balance {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rebirth-balance__row {
+    padding-inline: 0;
+  }
+
+  .rebirth-balance__row + .rebirth-balance__row {
+    border-top: 1px dashed var(--rebirth-line);
   }
 
   .rebirth-critical__row {

@@ -318,6 +318,12 @@ error: Failed to resolve vite command: GenericFailure, Expected
 四组行藏、零卡壳、来源拆卷开合与 28px 触达高度,再切到 1280 核对前两组真的并排;
 结构与全属性键覆盖由 `src/ui/characterDesk.spec.ts`、`characterDossier.spec.ts` 守住。
 
+兵解前的往生帖也续在同一册章首语法里:此刻、随魂、交割与最后一笔四章共用
+`CharacterChapterHead`,内层面板只留分栏与行线,不再各套四边卡与第二张纸底。
+`characterDossier.spec.ts` 守住四章数量与去卡壳源码契约;真浏览器门
+`taskRebirthFolio` 在 390 核对四枚章首、内层零四边框、道果 / 天赋 / 主损失与全账,
+再切到 195 核对摘要、门槛与去留行收成单列且不压窄账目名。
+
 流派页成路后现在收成一册「铸道续卷」:道途阶梯、下一步、五维形状、实战面、
 构筑快照与可选旧筑对照沿同一组 `BuildChapterHead` 续排,原有的 `data-build-stage`
 / `next` / `shape` / `battle` / `loadouts` / `compare` 运行时落点全部保留。390 档核对

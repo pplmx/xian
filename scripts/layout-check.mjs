@@ -8644,6 +8644,19 @@ async function taskRebirthFolio() {
         const summaryBox = root.querySelector("[data-rebirth-summary]");
         const actions = panel.querySelector(".rebirth-actions");
         const detail = root.querySelector(".rebirth-ledger-row__detail");
+        const nestedShells = [
+          ...root.querySelectorAll(
+            "[data-rebirth-now], [data-rebirth-dao-fruit], [data-rebirth-talents], [data-rebirth-ledger], [data-rebirth-trial], .rebirth-departure",
+          ),
+        ].map((el) => {
+          const style = getComputedStyle(el);
+          return {
+            className: String(el.className),
+            fullBorder: ["Top", "Right", "Bottom", "Left"].every(
+              (side) => parseFloat(style[`border${side}Width`]) > 0,
+            ),
+          };
+        });
         return {
           text: (root.textContent || "").replace(/\s+/g, " ").trim(),
           gateState: root
@@ -8679,6 +8692,8 @@ async function taskRebirthFolio() {
           enterDisabled: !!enter?.hasAttribute("disabled"),
           enterText: (enter?.textContent || "").replace(/\s+/g, " ").trim(),
           actionsColumns: actions ? getComputedStyle(actions).gridTemplateColumns : "",
+          chapterHeads: root.querySelectorAll(".character-chapter-head").length,
+          nestedShells,
           panelWidth: panel.clientWidth,
           panelScrollWidth: panel.scrollWidth,
         };
@@ -8697,6 +8712,8 @@ async function taskRebirthFolio() {
         !folio.text.includes("先看这些") ||
         !folio.text.includes("功法回一层") ||
         !folio.text.includes("法宝归尘") ||
+        folio.chapterHeads < 4 ||
+        folio.nestedShells.some((shell) => shell.fullBorder) ||
         !criticalIds.has("gongfa") ||
         !criticalIds.has("artifacts") ||
         !criticalIds.has("linggen") ||
@@ -8713,6 +8730,13 @@ async function taskRebirthFolio() {
             `门槛 ${folio?.gateState || "无"}/«${folio?.gateText || "无"}» / ` +
             `摘要 ${folio?.summary.map((row) => row.text).join(" | ") || "无"} / ` +
             `主要损失 ${folio?.critical.map((row) => row.id).join(",") || "无"} / ` +
+            `章首 ${folio?.chapterHeads ?? 0} / ` +
+            `内层卡壳 ${
+              folio?.nestedShells
+                .filter((shell) => shell.fullBorder)
+                .map((shell) => shell.className)
+                .join(",") || "无"
+            } / ` +
             `天赋 ${folio?.talentChips ?? 0} / 道果 «${folio?.daoText.slice(0, 32) || "无"}» / ` +
             `主按钮 «${folio?.enterText || "无"}»`,
         );
@@ -12654,7 +12678,12 @@ async function taskCollectionFold() {
         .locator('[data-collection-category-toggle="pet"]')
         .click({ timeout: 3000 })
         .catch(() => {});
-      await page.waitForTimeout(120);
+      await page.waitForFunction(
+        () =>
+          document
+            .querySelector('[data-collection-category-toggle="pet"]')
+            ?.getAttribute("aria-expanded") === "false",
+      );
       checked += 1;
       const collapsed = await read();
       if (collapsed.toggles.find((row) => row.key === "pet")?.expanded !== "false") {
@@ -12677,7 +12706,12 @@ async function taskCollectionFold() {
         .locator('[data-collection-category-toggle="equip"]')
         .click({ timeout: 3000 })
         .catch(() => {});
-      await page.waitForTimeout(120);
+      await page.waitForFunction(
+        () =>
+          document
+            .querySelector('[data-collection-category-toggle="equip"]')
+            ?.getAttribute("aria-expanded") === "true",
+      );
       checked += 1;
       const reopened = await read();
       const equipToggle = reopened.toggles.find((row) => row.key === "equip");
