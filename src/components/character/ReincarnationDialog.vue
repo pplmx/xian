@@ -1366,9 +1366,9 @@ watch(view, (next) => {
   padding: 0.55rem 0.58rem;
   text-align: left;
   transition:
-    border-color 160ms ease,
-    background-color 160ms ease,
-    transform 120ms ease;
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    transform 0.12s ease;
 }
 
 .reincarnation-talent-choice:active,

@@ -114,3 +114,48 @@ describe("样式表里没有没人用的类", () => {
     expect(used.length, "五个排版角色一个都没在用").toBeGreaterThanOrEqual(1);
   });
 });
+
+/**
+ * CSS 里的时长一律用秒写。
+ *
+ * 全站一百多处 animation / transition 都是 `0.14s` / `0.45s` 这种写法,
+ * 只有个别几处写成 `180ms`。两种写法等价,但同一份样式表里并存时,
+ * 调「这批过渡是不是太快」得一列列换算 —— 而人眼对 0.18s 与 180ms
+ * 的差别毫无直觉,读代码时却要先除一千。
+ *
+ * 唯一的例外是 `0.01ms`:那是 reduced-motion 兜底里用来「真的关掉动效」
+ * 的技巧值,写成秒会变成 0.00001s —— 一样能关,但意图不如 ms 直白。
+ */
+describe("样式 · 时长单位统一写秒", () => {
+  const CSS_SOURCES = () => [
+    { path: "src/style.css", css: readStyleCss() },
+    ...walkFiles(resolve(ROOT, "src/styles"), (name) => name.endsWith(".css")).map((full) => ({
+      path: full.slice(ROOT.length + 1).replace(/\\/g, "/"),
+      css: readFileSync(full, "utf8"),
+    })),
+  ];
+
+  it("动画与过渡的时长不写 ms", () => {
+    const offenders: string[] = [];
+    for (const f of CSS_SOURCES()) {
+      // 只看声明:注释里的「180ms 的空白」是说明文字,不算样式
+      const stripped = f.css.replace(/\/\*[\s\S]*?\*\//g, "");
+      for (const m of stripped.matchAll(/(?<![\w.-])(\d+(?:\.\d+)?)ms\b/g)) {
+        if (m[1] === "0.01") continue; // reduced-motion 兜底,见上
+        // var(--veil-hold, 2800ms) 的回退值:它是 JS 常量 VEIL_HOLD_MS 的兜底,
+        // 与那个数保持同一种单位(毫秒)更好读,且只有这一个变量这样写
+        if (/var\(--veil-hold/.test(stripped.slice(Math.max(0, m.index - 30), m.index + 10)))
+          continue;
+        const ln = stripped.slice(0, m.index).split("\n").length;
+        offenders.push(`${f.path}:${ln} ${m[0]}`);
+      }
+    }
+    expect(offenders, "这些时长写成 ms —— 全站其余都写秒,统一一下").toEqual([]);
+    // 防空转:确实扫到了大量以秒为单位的时长
+    const seconds = CSS_SOURCES().reduce(
+      (n, f) => n + (f.css.match(/(?<![\w.-])\d+(?:\.\d+)?s\b/g)?.length ?? 0),
+      0,
+    );
+    expect(seconds, "以秒为单位的时长一处都没扫到,判据可能在空转").toBeGreaterThan(50);
+  });
+});

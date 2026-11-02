@@ -274,8 +274,8 @@
     background: transparent;
     text-align: left;
     transition:
-      color 180ms ease,
-      background-color 180ms ease;
+      color 0.18s ease,
+      background-color 0.18s ease;
   }
   .legacy-chapter-rail__tab:nth-child(even) {
     border-left: 1px solid rgb(var(--color-ink-rgb) / 0.1);
