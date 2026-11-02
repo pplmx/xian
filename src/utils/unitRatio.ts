@@ -22,3 +22,17 @@ export function unitRatio(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.max(0, Math.min(1, value));
 }
+
+/**
+ * 「把 0~1 的比例变成 CSS 百分比字符串」—— 与 `unitRatio` 成对的那一步。
+ *
+ * `unitRatio(x) * 100` 后拼 `%` 在本仓出现多次(进度条宽度、切换钮的滑块宽度)。
+ * 拆开写没有错,但每处都在重复同一个决定:乘多少、带不带 `%`、
+ * 脏值怎么办。收成一处之后,「宽度」这个语义只有一个答案。
+ *
+ * 仍返回字符串而不是数字:调用点要的就是能直接塞进 `style` 的值,
+ * 中间那一步数字没有别的用途。
+ */
+export function percentWidth(value: number): string {
+  return `${unitRatio(value) * 100}%`;
+}

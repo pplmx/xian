@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { unitRatio } from "@/utils/unitRatio";
+import { percentWidth } from "@/utils/unitRatio";
 
 const props = withDefaults(
   defineProps<{
@@ -24,5 +24,5 @@ const props = withDefaults(
  * 进度条**消失**且控制台干净,而调用方拿脏值是真实会发生的事
  * (坏档 / 除零的比值)。
  */
-const width = computed(() => `${unitRatio(props.value) * 100}%`);
+const width = computed(() => percentWidth(props.value));
 </script>

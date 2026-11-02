@@ -51,7 +51,7 @@
 
 <script setup lang="ts" generic="T extends string">
 import { computed, useTemplateRef } from "vue";
-import { unitRatio } from "@/utils/unitRatio";
+import { percentWidth } from "@/utils/unitRatio";
 import type { NameBeastChoice } from "@/ui/titlesDesk";
 
 const props = withDefaults(
@@ -73,7 +73,7 @@ const activeIndex = computed(() =>
 const tabEls = useTemplateRef<HTMLButtonElement[]>("tabEls");
 
 function widthOf(ratio: number): string {
-  return `${unitRatio(ratio) * 100}%`;
+  return percentWidth(ratio);
 }
 
 function focusTab(index: number): void {

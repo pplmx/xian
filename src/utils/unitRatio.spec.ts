@@ -6,7 +6,10 @@
  * 造出这种值,所以「脏值归零」是这条判据真正要守的东西。
  */
 import { describe, expect, it } from "vite-plus/test";
-import { unitRatio } from "./unitRatio";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { ROOT, walkFiles } from "@/test/readSource";
+import { percentWidth, unitRatio } from "./unitRatio";
 
 describe("unitRatio · 夹到 0~1", () => {
   it("区间内的值原样通过", () => {
@@ -37,5 +40,46 @@ describe("unitRatio · 夹到 0~1", () => {
       expect(Number.parseFloat(css)).toBeGreaterThanOrEqual(0);
       expect(Number.parseFloat(css)).toBeLessThanOrEqual(100);
     }
+  });
+});
+
+describe("percentWidth · 比例到 CSS 宽度", () => {
+  it("把 0~1 变成能直接塞进 style 的百分比字符串", () => {
+    expect(percentWidth(0)).toBe("0%");
+    expect(percentWidth(0.5)).toBe("50%");
+    expect(percentWidth(1)).toBe("100%");
+  });
+
+  it("越界夹到 0~100%", () => {
+    expect(percentWidth(1.4)).toBe("100%");
+    expect(percentWidth(-0.3)).toBe("0%");
+  });
+
+  it("脏值给 0%,不给 NaN% —— 后者会让浏览器丢掉整条样式", () => {
+    // 反面证据:不夹取时拼出来的是什么
+    const bare = (v: number) => `${v * 100}%`;
+    expect(bare(Number.NaN), "裸拼就是 NaN%,那条 width 会被整条丢弃").toBe("NaN%");
+    expect(percentWidth(Number.NaN)).toBe("0%");
+    expect(percentWidth(Number.POSITIVE_INFINITY)).toBe("0%");
+    expect(percentWidth(Number.NEGATIVE_INFINITY)).toBe("0%");
+  });
+});
+
+describe("百分比宽度 · 只有一个出处", () => {
+  it("界面里不再自己乘 100 拼 %", () => {
+    /*
+     * `unitRatio(x) * 100` 再拼 `%` 这个组合,此前在 ProgressBar 与
+     * NameBeastSwitch 各写过一遍。两次都对,但它们各自都在重复同一个决定:
+     * 乘多少、带不带百分号、脏值怎么办。第三次写的时候,很可能只有两处里
+     * 有一处记得夹取 —— 于是某条进度条在坏档下消失,而另一条正常。
+     */
+    const offenders: string[] = [];
+    for (const file of walkFiles(resolve(ROOT, "src"), (n) => n.endsWith(".vue"))) {
+      const src = readFileSync(file, "utf8");
+      if (/unitRatio\([^)]*\)\s*\*\s*100/.test(src)) offenders.push(file);
+    }
+    expect(offenders, "这些文件又自己拼了一遍百分比宽度 —— 改用 percentWidth").toEqual([]);
+    // 防空转:确认确实扫到了组件文件
+    expect(walkFiles(resolve(ROOT, "src"), (n) => n.endsWith(".vue")).length).toBeGreaterThan(50);
   });
 });
