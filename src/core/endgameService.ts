@@ -93,7 +93,15 @@ export function furnaceConvert(rate: FurnaceRate): number {
     return 0;
   }
   endgame.addDaoSource(daoSource);
-  notify(`${rate.name}×${daoSource * rate.per} 熔作道源 +${daoSource}`, "success");
+  /*
+   * 两处数字都走 formatGN。玩家攒到上万玄铁很常见,裸数就是
+   * 「玄铁×1000000 熔作道源 +40000」—— 要数零才知道自己换掉了多少,
+   * 而这一刻正是他最需要看清代价的时候。
+   */
+  notify(
+    `${rate.name}×${formatGN(daoSource * rate.per)} 熔作道源 +${formatGN(daoSource)}`,
+    "success",
+  );
   return daoSource;
 }
 

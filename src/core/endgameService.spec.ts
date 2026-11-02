@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import { useUiStore } from "@/stores/ui";
 import { createPinia, setActivePinia } from "pinia";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
@@ -56,6 +57,27 @@ describe("真仙终局服务", () => {
     const rules = currentDaoRules();
     expect(rules?.playerAtkMult).toBe(1.25);
     expect(rules?.maxRounds).toBe(35);
+  });
+
+  /**
+   * 熔铸提示里的两处数字从前是裸数:「玄铁×1000000 熔作道源 +40000」。
+   * 玩家攒到上万玄铁很常见,而那一刻正是他最需要看清代价的时候 ——
+   * 弹窗预览早就用 formatNum 了,提示与它必须同一个读法。
+   */
+  it("熔铸提示的两处数字都走格式化 —— 与弹窗预览同一读法", () => {
+    ascend();
+    const resources = useResourcesStore();
+    const endgame = useEndgameStore();
+    const ui = useUiStore();
+    resources.addSmall("ore", 1_000_000);
+    const rate = FURNACE_RATES.find((r) => r.resource === "ore")!;
+    ui.toasts = [];
+    expect(furnaceConvert(rate)).toBe(40_000);
+    const text = ui.toasts.map((t) => t.text).join(" | ");
+    expect(text, "材料数要带单位缩写,不印七位裸数").toContain("玄铁×100万");
+    expect(text, "道源数同读法").toContain("+4万");
+    expect(text, "不许再出现裸数").not.toContain("1000000");
+    expect(endgame.daoSource).toBe(40_000);
   });
 
   it("天道熔炉:闲置资源熔作道源,余数保留", () => {
