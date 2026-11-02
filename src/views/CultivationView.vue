@@ -50,7 +50,7 @@
         </details>
       </template>
       <template #visual>
-        <CultivationDial tone="chrome" />
+        <CultivationDial />
       </template>
       <div class="cultivation-masthead__readout" data-cultivation-stage-readout>
         <div class="cultivation-masthead__readout-cell">

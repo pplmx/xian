@@ -1282,11 +1282,11 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(css, "状态行要配楷体与对位主角比肩").toMatch(
       /\.home-deck__status \{[\s\S]{0,180}?font-family: var\(--font-kai\)/,
     );
-    expect(css, "非告急那一路用可读的中亮墨,不许再降成 faint").toMatch(
-      /\.home-deck__status \{[\s\S]{0,160}?color: rgb\(var\(--chrome-muted-rgb\)\)/,
+    expect(css, "非告急那一路用随主题翻转的可读中墨,不许再降成 faint").toMatch(
+      /\.home-deck__status \{[\s\S]{0,160}?color: rgb\(var\(--color-ink-soft-rgb\)\)/,
     );
     expect(css, "寿元告急那一路仍转朱砂").toMatch(
-      /\.home-deck__status\.is-alert \{[\s\S]{0,80}?color: rgb\(var\(--chrome-accent-rgb\)\)/,
+      /\.home-deck__status\.is-alert \{[\s\S]{0,80}?color: rgb\(var\(--color-cinnabar-rgb\)\)/,
     );
   });
 

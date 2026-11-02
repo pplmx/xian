@@ -10337,6 +10337,198 @@ async function taskCultivationFold() {
   };
 }
 
+/**
+ * 晨昏纸面 —— 洞府卷首、当前道途与修行内观台必须跟主题一起换纸。
+ *
+ * 这条门只看真渲染后的计算色:三个舞台都先对主题 token,再要求日间是亮纸、
+ * 夜间是暗纸,正文在两边都保持 AA。单看源码里的变量名拦不住「窗口里又写回
+ * 固定书口色」或某层继承覆盖,故在同一份存档上原地切 `data-theme` 量。
+ */
+async function taskThemeStageSurfaces() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    await seedSave(ctx, showcaseSlices("light"), "__themeStageSurfaces");
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    const readThemes = async (selector) => {
+      await freezeTransitions(page);
+      const themes = {};
+      for (const theme of ["light", "dark"]) {
+        await page.evaluate((value) => {
+          document.documentElement.dataset.theme = value;
+        }, theme);
+        await settleVisuals(page);
+        themes[theme] = await page.evaluate((targetSelector) => {
+          const el = document.querySelector(targetSelector);
+          if (!el) return null;
+          const style = getComputedStyle(el);
+          const rootStyle = getComputedStyle(document.documentElement);
+          const channels = (value) => {
+            const match = /rgba?\(([^)]+)\)/.exec(value);
+            if (!match) return null;
+            const parts = match[1]
+              .split(/[,\s/]+/)
+              .filter(Boolean)
+              .map(Number);
+            return parts.length >= 3 ? parts.slice(0, 3) : null;
+          };
+          const token = (name) => {
+            const parts = rootStyle
+              .getPropertyValue(name)
+              .trim()
+              .split(/\s+/)
+              .filter(Boolean)
+              .map(Number);
+            return parts.length === 3 && parts.every(Number.isFinite) ? parts : null;
+          };
+          const luminance = (rgb) => {
+            if (!rgb) return null;
+            const [r, g, b] = rgb.map((value) => {
+              const channel = value / 255;
+              return channel <= 0.03928
+                ? channel / 12.92
+                : Math.pow((channel + 0.055) / 1.055, 2.4);
+            });
+            return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+          };
+          const same = (left, right) =>
+            Boolean(left && right && left.every((value, index) => value === right[index]));
+          const background = channels(style.backgroundColor);
+          const foreground = channels(style.color);
+          const paper = token(
+            targetSelector === "[data-home-goal]" ? "--color-paper-rgb" : "--color-paper-deep-rgb",
+          );
+          const ink = token("--color-ink-rgb");
+          const backgroundLum = luminance(background);
+          const foregroundLum = luminance(foreground);
+          const contrast =
+            backgroundLum === null || foregroundLum === null
+              ? null
+              : (Math.max(backgroundLum, foregroundLum) + 0.05) /
+                (Math.min(backgroundLum, foregroundLum) + 0.05);
+          return {
+            theme: document.documentElement.dataset.theme,
+            background: style.backgroundColor,
+            backgroundImage: style.backgroundImage,
+            color: style.color,
+            backgroundLum,
+            foregroundLum,
+            contrast,
+            usesThemePaper: same(background, paper),
+            usesThemeInk: same(foreground, ink),
+          };
+        }, selector);
+      }
+      await page.evaluate(() => {
+        document.documentElement.dataset.theme = "light";
+      });
+      await unfreezeTransitions(page);
+      return themes;
+    };
+
+    const verify = (label, themes) => {
+      checked += 1;
+      const { light, dark } = themes;
+      if (!light || !dark) {
+        failures.push(`[390-theme] ${label}没量到,晨昏纸面判据空转`);
+        return;
+      }
+      if (
+        light.theme !== "light" ||
+        dark.theme !== "dark" ||
+        !light.usesThemePaper ||
+        !dark.usesThemePaper
+      ) {
+        failures.push(
+          `[390-theme] ${label}没有读主题纸色:${JSON.stringify({
+            light: [light.theme, light.background, light.usesThemePaper],
+            dark: [dark.theme, dark.background, dark.usesThemePaper],
+          })}`,
+        );
+      }
+      checked += 1;
+      if (
+        light.backgroundLum === null ||
+        dark.backgroundLum === null ||
+        light.backgroundLum < 0.55 ||
+        dark.backgroundLum > 0.18 ||
+        light.backgroundLum - dark.backgroundLum < 0.45
+      ) {
+        failures.push(
+          `[390-theme] ${label}没有随晨昏翻转:${JSON.stringify({
+            light: light.backgroundLum,
+            dark: dark.backgroundLum,
+            colors: [light.background, dark.background],
+          })}`,
+        );
+      }
+      checked += 1;
+      if (
+        !light.usesThemeInk ||
+        !dark.usesThemeInk ||
+        light.contrast === null ||
+        dark.contrast === null ||
+        light.contrast < 4.5 ||
+        dark.contrast < 4.5
+      ) {
+        failures.push(
+          `[390-theme] ${label}正文没有随纸面保持 AA:${JSON.stringify({
+            light: [light.color, light.contrast, light.usesThemeInk],
+            dark: [dark.color, dark.contrast, dark.usesThemeInk],
+          })}`,
+        );
+      }
+    };
+
+    const homeRendered = await openRoute(page, "/", 700);
+    checked += 1;
+    if (homeRendered === 0) {
+      failures.push("[390-theme] 洞府页没渲染出来,晨昏纸面判据没量到东西");
+    } else {
+      await clearOverlays(page);
+      const hero = await readThemes("[data-home-hero]");
+      const goal = await readThemes("[data-home-goal]");
+      verify("洞府卷首", hero);
+      verify("当前道途", goal);
+    }
+
+    const cultivationRendered = await openRoute(page, "/cultivation", 700);
+    checked += 1;
+    if (cultivationRendered === 0) {
+      failures.push("[390-theme] 修行页没渲染出来,内观台纸面判据没量到东西");
+    } else {
+      await clearOverlays(page);
+      const stage = await readThemes("[data-cultivation-stage]");
+      verify("修行内观台", stage);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390-theme] 晨昏纸面页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return {
+    failures,
+    checked,
+    contrastFails: [],
+    pixelContrastFails: [],
+    zoomFails: [],
+  };
+}
+
 /** 道躯三章:总案、四类行藏与卷末云笈同住一册,来源拆卷可开可合 */
 async function taskCharacterFold() {
   const failures = [];
@@ -21533,6 +21725,7 @@ const TASKS = [
   ["洞府营造的账目", taskDongfuBuild],
   ["洞府首屏的营造优先", taskDongfuFold],
   ["修行续卷的四章与行动层", taskCultivationFold],
+  ["洞府与修行的晨昏纸面", taskThemeStageSurfaces],
   ["道躯三章与行藏拆卷", taskCharacterFold],
   ["修行画像的两章与根因", taskIdentityFolio],
   ["天界试炼续卷的四章、八门与四程", taskCelestialTrialFold],

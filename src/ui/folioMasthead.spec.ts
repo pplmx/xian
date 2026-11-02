@@ -99,7 +99,7 @@ describe("册页卷首 · 一页只讲清一件事", () => {
     }
   });
 
-  it("共享卷首用中墨；首页暗场主舞台把天时说明与效果摊成可读层级", () => {
+  it("共享卷首用中墨；首页主题纸面把天时说明与效果摊成可读层级", () => {
     const world = source("src/views/MortalWorldView.vue");
     const home = source("src/views/HomeView.vue");
     const homeCss = source("src/styles/pages/home.css");
@@ -109,11 +109,11 @@ describe("册页卷首 · 一页只讲清一件事", () => {
     );
     expect(home, "首页天时说明保留独立文本").toContain("{{ weather.desc }}");
     expect(home, "影响行仍从 modsText 拆签").toContain('v-for="effect in weatherEffects"');
-    expect(homeCss, "暗场说明用可读的中亮墨而非最弱档").toMatch(
-      /\.home-deck__weather-copy,[\s\S]{0,160}color:\s*rgb\(var\(--chrome-muted-rgb\)\)/,
+    expect(homeCss, "主题纸面上的说明用可读中墨而非最弱档").toMatch(
+      /\.home-deck__weather-copy,[\s\S]{0,160}color:\s*rgb\(var\(--color-ink-soft-rgb\)\)/,
     );
     expect(homeCss, "效果签用石青信息色并允许换行").toMatch(
-      /\.home-deck__effects span \{[\s\S]{0,220}color:\s*rgb\(var\(--chrome-qing-rgb\)\)/,
+      /\.home-deck__effects span \{[\s\S]{0,220}color:\s*rgb\(var\(--color-qing-rgb\)\)/,
     );
   });
 

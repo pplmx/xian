@@ -15,7 +15,7 @@ function homeTemplate(): string {
 }
 
 describe("首页指挥台 · 先给今日一步，再摊长期账", () => {
-  it("暗场主舞台、长期道途、日课与门径各有唯一运行时落点", () => {
+  it("主题纸面主舞台、长期道途、日课与门径各有唯一运行时落点", () => {
     const home = homeTemplate();
     const markers = [
       "data-home-hero",
@@ -123,5 +123,24 @@ describe("首页指挥台 · 先给今日一步，再摊长期账", () => {
     expect(homeCss).not.toMatch(
       /\.home-passage__eyebrow\s*\{[\s\S]{0,120}color:\s*rgb\(var\(--color-qing-rgb\)\)/,
     );
+  });
+
+  it("洞府指挥台与当前道途随主题换纸,日间不留暗场、夜间不落浅卡", () => {
+    const homeCss = source("src/styles/pages/home.css");
+    const hero = homeCss.match(/\.home-deck__hero\s*\{[\s\S]*?\n  \}/)?.[0] ?? "";
+    const next = homeCss.match(/\.home-deck__next\s*\{[\s\S]*?\n  \}/)?.[0] ?? "";
+
+    expect(hero, "洞府卷首要从主题纸色起笔").toContain("rgb(var(--color-paper-deep-rgb))");
+    expect(hero, "洞府卷首不许再用固定书口黑").not.toContain("--chrome-");
+    expect(next, "当前道途要落在主题纸面上").toContain("rgb(var(--color-paper-rgb) / 0.96)");
+    expect(next, "当前道途正文要随主题落在墨色").toContain("color: rgb(var(--color-ink-rgb))");
+    expect(next, "当前道途不许再是一张固定浅卡").not.toContain("--chrome-");
+  });
+
+  it("真浏览器门同时量日间与夜间的洞府、当前道途和修行卷首", () => {
+    const layout = source("scripts/layout-check.mjs");
+
+    expect(layout).toContain("async function taskThemeStageSurfaces()");
+    expect(layout).toContain('["洞府与修行的晨昏纸面", taskThemeStageSurfaces]');
   });
 });

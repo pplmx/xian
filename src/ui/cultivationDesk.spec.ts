@@ -31,13 +31,13 @@ describe("修炼案 · 四章收成一册行功续卷", () => {
     });
   });
 
-  it("卷首改成内观台,用暗场周天盘承接境界、阶段与修为进度", () => {
+  it("卷首改成随主题换纸的内观台,用周天盘承接境界、阶段与修为进度", () => {
     const view = source("src/views/CultivationView.vue");
     const dial = source("src/components/cultivation/CultivationDial.vue");
     const css = source("src/styles/pages/cultivation.css");
 
     expect(view, "修炼卷首要有稳定的周天盘落点").toMatch(
-      /<template #visual>[\s\S]{0,160}<CultivationDial\s+tone="chrome"\s*\/>/,
+      /<template #visual>[\s\S]{0,160}<CultivationDial\s*\/>/,
     );
     expect(view, "周天盘必须真的接进修炼页").toContain(
       'import CultivationDial from "@/components/cultivation/CultivationDial.vue"',
@@ -55,8 +55,12 @@ describe("修炼案 · 四章收成一册行功续卷", () => {
       /\.cultivation-dial\s*\{[\s\S]{0,1000}?width:\s*140px;[\s\S]{0,80}?height:\s*140px;/,
     );
     expect(dial, "纯视觉不重复读屏正文").toContain('aria-hidden="true"');
-    expect(css, "内观台使用固定书口色组,不随纸面昼夜翻转").toContain(
-      "--color-ink-rgb: var(--chrome-ink-rgb);",
+    expect(css, "内观台要随纸面昼夜翻转").toContain(
+      "linear-gradient(124deg, rgb(var(--color-paper-deep-rgb)), rgb(var(--color-paper-dark-rgb)))",
+    );
+    expect(css, "内观台不许再覆盖成固定书口色组").not.toContain("--chrome-");
+    expect(source("scripts/layout-check.mjs"), "修行卷首的昼夜底色要由真浏览器量").toContain(
+      '"[data-cultivation-stage]"',
     );
   });
 

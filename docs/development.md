@@ -310,6 +310,13 @@ error: Failed to resolve vite command: GenericFailure, Expected
 顺序、零卡壳、章内读数归石青、修为进度归石青,以及已启用的行动主键归朱砂且宽度不超过
 账行 72%;行动行本身不许整行铺底。结构判据由 `src/ui/cultivationDesk.spec.ts` 守住。
 
+洞府卷首、当前道途与修行内观台不再借固定书口色:三者都读主题 `paper` / `ink` 阶梯,
+日间落浅纸、夜间落深纸。修行页的周天盘回到默认 `paper` tone,不再局部覆盖成暗场色组。
+真浏览器门 `taskThemeStageSurfaces` 在同一份存档上原地切 `data-theme`,分别核对三处舞台
+的计算底色确实等于对应主题 token、日夜亮度跨度足够、正文在两端都保持 AA;全站渐变压字
+另由像素采样门复核。源码级契约由 `src/ui/homeDesk.spec.ts` 与
+`src/ui/cultivationDesk.spec.ts` 守住。
+
 道躯页现在也是一册「三章续卷」:道躯总案、行藏周天、卷末云笈由
 `src/ui/characterDesk.ts` 的同一份章序装配。行藏四组必须完整覆盖 `STAT_NAMES`,
 逐项只报非零 `finalStats.mods`,行内值、来源数与软上限都由同一份账现算;点开一行,
