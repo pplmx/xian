@@ -89,10 +89,10 @@
         </RouterLink>
 
         <component
-          :is="currentGoal?.to ? RouterLink : 'div'"
+          :is="currentGoal.destination ? RouterLink : 'div'"
           v-else-if="currentGoal"
-          :to="currentGoal?.to"
-          :class="currentGoal?.to ? 'active:scale-99' : ''"
+          :to="currentGoal.destination?.to"
+          :class="currentGoal.destination ? 'active:scale-99' : ''"
           class="home-deck__next"
           data-home-goal
         >
@@ -105,7 +105,12 @@
             <template v-if="currentGoal.progress !== undefined">{{
               formatPercent(currentGoal.progress, 0)
             }}</template>
-            <template v-else-if="currentGoal.to">前往 →</template>
+            <template v-if="currentGoal.destination">
+              <span v-if="currentGoal.progress !== undefined" aria-hidden="true"> · </span>
+              <span class="home-deck__next-cue">
+                {{ currentGoal.destination.label }} <span aria-hidden="true">→</span>
+              </span>
+            </template>
           </span>
         </component>
 
@@ -114,13 +119,22 @@
           <p>眼下没有系统递来的下一步。修为、历练、行囊与人物都在底栏,按自己的路走。</p>
         </div>
 
-        <p v-if="firstStep && currentGoal" class="home-deck__after">
+        <component
+          v-if="firstStep && currentGoal"
+          :is="currentGoal.destination ? RouterLink : 'p'"
+          :to="currentGoal.destination?.to"
+          class="home-deck__after"
+          data-home-goal-after
+        >
           <span>其后</span>
           <span>{{ currentGoal.text }}</span>
           <span v-if="currentGoal.progress !== undefined" class="tabular">{{
             formatPercent(currentGoal.progress, 0)
           }}</span>
-        </p>
+          <span v-if="currentGoal.destination" class="home-deck__after-action">
+            {{ currentGoal.destination.label }} →
+          </span>
+        </component>
       </div>
     </section>
 

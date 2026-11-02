@@ -26,6 +26,11 @@ import type { EquipSlot } from "@/types";
 
 export type GoalType = "breakthrough" | "equipment" | "explore" | "material" | "build";
 
+export interface GoalDestination {
+  to: string;
+  label: string;
+}
+
 export interface Goal {
   type: GoalType;
   text: string;
@@ -34,7 +39,7 @@ export interface Goal {
   /** 建议下一步(可选) */
   hint?: string;
   /** 想去哪(可选):有去向则该卡渲染成可点跳转,免得只给方向不给入口 */
-  to?: string;
+  destination?: GoalDestination;
 }
 
 /**
@@ -74,6 +79,7 @@ export function generateCurrentGoal(player: PlayerStore): Goal | null {
       text: `尝试突破「${next}」`,
       progress: player.expProgress,
       hint: "修为已近圆满,服用凝神丹或静坐调息可提升成功率",
+      destination: { to: "/cultivation", label: "去修炼" },
     };
   }
   if (player.expProgress >= 0.5) {
@@ -82,6 +88,7 @@ export function generateCurrentGoal(player: PlayerStore): Goal | null {
       type: "breakthrough",
       text: `向「${next}」迈进`,
       progress: player.expProgress,
+      destination: { to: "/cultivation", label: "去修炼" },
     };
   }
 
@@ -95,6 +102,7 @@ export function generateCurrentGoal(player: PlayerStore): Goal | null {
       text: `完善「${style}」流派`,
       progress: Math.min(1, core / 4),
       hint: `当前已凑出 ${core}/4 个核心词条,继续寻找关键装备`,
+      destination: { to: "/build", label: "去构筑" },
     };
   }
 
@@ -118,7 +126,7 @@ export function generateCurrentGoal(player: PlayerStore): Goal | null {
       type: "explore",
       text: `深入「${nextRegion.name}」`,
       hint: "增长阅历,也寻些机缘与材料",
-      to: "/adventure",
+      destination: { to: "/adventure", label: "去历练" },
     };
   }
   const hasClearedAny = adventure.cleared.length > 0;
@@ -136,6 +144,7 @@ export function generateCurrentGoal(player: PlayerStore): Goal | null {
         text: `去「${best.name}」采集灵草`,
         progress: Math.min(1, resources.herb / MATERIAL_LOW_HERB),
         hint: "丹药原料所剩无几,历练途中常有灵草可采",
+        destination: { to: "/adventure", label: "去历练" },
       };
     }
   }
@@ -151,6 +160,7 @@ export function generateCurrentGoal(player: PlayerStore): Goal | null {
       text: `寻一件${slotName}`,
       progress: filled / GEAR_SLOTS.length,
       hint: `还缺一件${slotName},历练所得的装备里常有`,
+      destination: { to: "/inventory?tab=equip", label: "去行囊" },
     };
   }
   return null;

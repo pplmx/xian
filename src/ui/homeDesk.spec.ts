@@ -44,6 +44,40 @@ describe("首页指挥台 · 先给今日一步，再摊长期账", () => {
     expect(home).toContain("今日一步");
   });
 
+  it("系统递来的当前道途都带目的册，进度与去处同屏但不伪造第二套读数", () => {
+    const home = homeTemplate();
+    const css = source("src/styles/pages/home.css");
+
+    expect(home).toContain(":is=\"currentGoal.destination ? RouterLink : 'div'\"");
+    expect(home).toContain(':to="currentGoal.destination?.to"');
+    expect(home).toContain("currentGoal.destination.label");
+    expect(css).toMatch(
+      /\.home-deck__next-cue\s*\{[\s\S]{0,120}?color:\s*rgb\(var\(--color-cinnabar-rgb\)\)/,
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 220px\) \{[\s\S]{0,1200}?\.home-deck__next \{[\s\S]{0,180}?grid-template-areas:\s*"tag"\s*"body"\s*"action"/,
+    );
+  });
+
+  it("今日一步占位时，其后那条道途仍可直达目的册", () => {
+    const home = homeTemplate();
+    const css = source("src/styles/pages/home.css");
+
+    expect(home).toContain("data-home-goal-after");
+    expect(home).toMatch(
+      /v-if="firstStep && currentGoal"[\s\S]{0,260}?currentGoal\.destination \? RouterLink : 'p'/,
+    );
+    expect(home).toMatch(
+      /data-home-goal-after[\s\S]{0,700}?currentGoal\.destination\.label[\s\S]{0,80}?→/,
+    );
+    expect(css).toMatch(
+      /\.home-deck__after-action\s*\{[\s\S]{0,180}?color:\s*rgb\(var\(--color-ink-rgb\)\)/,
+    );
+    expect(css).toMatch(
+      /a\.home-deck__after\s*\{[\s\S]{0,180}?min-height:\s*28px[\s\S]{0,80}?text-decoration:\s*none/,
+    );
+  });
+
   it("主舞台身份、天时与修为法球同屏，天时读 mods 真值且倒数走定宽槽", () => {
     const view = source("src/views/HomeView.vue");
     const home = homeTemplate();

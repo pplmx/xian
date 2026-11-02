@@ -10600,6 +10600,20 @@ async function taskThemeStageSurfaces() {
       const goal = await readThemes("[data-home-goal]");
       verify("洞府卷首", hero);
       verify("当前道途", goal);
+
+      const goalLink = await page.locator("[data-home-goal]").evaluate((el) => ({
+        tag: el.tagName,
+        href: el.getAttribute("href") ?? "",
+        text: (el.textContent ?? "").replace(/\s+/g, " ").trim(),
+      }));
+      checked += 1;
+      if (
+        goalLink.tag !== "A" ||
+        !goalLink.href ||
+        !/去(?:修炼|构筑|历练|行囊)/.test(goalLink.text)
+      ) {
+        failures.push(`[390-theme] 当前道途没有可抵达的目的册:${JSON.stringify(goalLink)}`);
+      }
     }
 
     const cultivationRendered = await openRoute(page, "/cultivation", 700);

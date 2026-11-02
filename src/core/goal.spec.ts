@@ -34,6 +34,7 @@ describe("修行目标(Phase 29)", () => {
     expect(goal.type).toBe("breakthrough");
     expect(goal.text).toContain("突破");
     expect(goal.hint).toBeTruthy();
+    expect(goal.destination).toEqual({ to: "/cultivation", label: "去修炼" });
   });
 
   it("修为 50%~85% → 突破目标,无 hint(未临近,不给多余建议)", () => {
@@ -43,6 +44,7 @@ describe("修行目标(Phase 29)", () => {
     const goal = generateCurrentGoal(player)!;
     expect(goal.type).toBe("breakthrough");
     expect(goal.hint).toBeUndefined();
+    expect(goal.destination).toEqual({ to: "/cultivation", label: "去修炼" });
   });
 
   it("无临近突破且已有 Build → build 目标,进度 = 核心词条数/4", () => {
@@ -56,6 +58,7 @@ describe("修行目标(Phase 29)", () => {
     expect(goal.type).toBe("build");
     expect(goal.text).toContain("天龙");
     expect(goal.progress).toBe(0.5);
+    expect(goal.destination).toEqual({ to: "/build", label: "去构筑" });
   });
 
   it("近突破优先于 build(breakthrough 检查在最前)", () => {
@@ -75,6 +78,7 @@ describe("修行目标(Phase 29)", () => {
     const goal = generateCurrentGoal(player)!;
     expect(goal.type).toBe("explore");
     expect(goal.text).toContain("深入");
+    expect(goal.destination).toEqual({ to: "/adventure", label: "去历练" });
   });
 
   it("复聚的旧地界不占「深入」的位置(它按表序排在前面,不许把前沿顶掉)", () => {
@@ -130,6 +134,7 @@ describe("修行目标(Phase 29)", () => {
     expect(goal.text).toContain("落霞谷"); // tier 2 > tier 1,指最高的
     expect(goal.progress).toBe(0.3);
     expect(goal.hint).toBeTruthy();
+    expect(goal.destination).toEqual({ to: "/adventure", label: "去历练" });
   });
 
   it("灵草充足(herb>=10) → material 不触发", () => {
@@ -173,6 +178,7 @@ describe("修行目标(Phase 29)", () => {
     expect(goal.text).toContain("衣袍");
     expect(goal.progress).toBeCloseTo(2 / 9);
     expect(goal.hint).toBeTruthy();
+    expect(goal.destination).toEqual({ to: "/inventory?tab=equip", label: "去行囊" });
   });
 
   it("从未通关过地界(cleared 为空) → 即便灵草与装备皆缺也不硬塞(宁缺毋滥)", () => {

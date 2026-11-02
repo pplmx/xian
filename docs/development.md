@@ -314,7 +314,9 @@ error: Failed to resolve vite command: GenericFailure, Expected
 日间落浅纸、夜间落深纸。修行页的周天盘回到默认 `paper` tone,不再局部覆盖成暗场色组。
 真浏览器门 `taskThemeStageSurfaces` 在同一份存档上原地切 `data-theme`,分别核对三处舞台
 的计算底色确实等于对应主题 token、日夜亮度跨度足够、正文在两端都保持 AA;全站渐变压字
-另由像素采样门复核。源码级契约由 `src/ui/homeDesk.spec.ts` 与
+另由像素采样门复核。同一道门还核对当前道途确实渲染成带目的册的链接,不能只剩进度读数;
+`src/core/goal.spec.ts` 逐类钉住突破、构筑、历练、材料与装备目标的目的路由。源码级契约由
+`src/ui/homeDesk.spec.ts` 与
 `src/ui/cultivationDesk.spec.ts` 守住。
 
 道躯页现在也是一册「三章续卷」:道躯总案、行藏周天、卷末云笈由
