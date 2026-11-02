@@ -121,7 +121,7 @@
           <div class="opening-create__reroll-row">
             <button
               class="btn-ghost opening-create__reroll"
-              :disabled="starting"
+              :disabled="starting || rerollExhausted"
               data-opening-reroll
               @click="reroll"
             >
@@ -200,9 +200,18 @@ const nameFact = computed(() => {
 });
 const rerollsLeft = computed(() => game.createRerolls);
 const unlimitedReroll = computed(() => rerollsLeft.value === null);
-const rerollLabel = computed(() =>
-  rerollsLeft.value === null ? "逆天改命" : `逆天改命(余 ${rerollsLeft.value} 次)`,
-);
+/**
+ * 重掷额度耗尽时按钮必须置灰 —— 此前只靠 `spendCreateReroll()` 返回 false
+ * 静默拦住:玩家按下去什么都没发生,既没提示也没灰,只会以为按钮坏了
+ * (额度默认不限,null,所以这条只在把 CREATE_REROLL_QUOTA 改成有限值时露出来,
+ *  正因如此更得先写好)。
+ */
+const rerollExhausted = computed(() => rerollsLeft.value !== null && rerollsLeft.value <= 0);
+const rerollLabel = computed(() => {
+  if (rerollsLeft.value === null) return "逆天改命";
+  if (rerollsLeft.value <= 0) return "逆天改命(额度已尽)";
+  return `逆天改命(余 ${rerollsLeft.value} 次)`;
+});
 
 const rollSeq = ref(0);
 const rerollAnnounce = ref("");
@@ -217,7 +226,7 @@ const starting = ref(false);
 const tendencies = computed(() => tendencyLines(rootElements(profile.value.roots)));
 
 function reroll(): void {
-  if (starting.value) return;
+  if (starting.value || rerollExhausted.value) return;
   if (!game.spendCreateReroll()) return;
   game.setCreateProfile(rollLinggen(rng));
   rollSeq.value += 1;

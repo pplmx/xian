@@ -3354,6 +3354,25 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(create?.src, "播报句要念出「重掷得」(新牌开场白)").toContain("重掷得");
   });
 
+  it("重掷额度耗尽要置灰并说明 —— 不许按下去毫无反应", () => {
+    /*
+     * 建号的重掷额度默认是不限(null),所以「耗尽」这条分支平时看不见。
+     * 但它一旦被设成有限值,原先的行为是:按钮不灰、点下去 spendCreateReroll()
+     * 返回 false 后静默 return —— 玩家按一下什么都没有,只会以为按钮坏了。
+     * 「不可行就置灰 + 说清为什么」是仓库纪律,这条分支得先写好。
+     */
+    const create = FILES.find((f) => f.path === "views/CreateView.vue");
+    const src = create?.src ?? "";
+    expect(src, "要有「额度已尽」的判定").toMatch(/rerollExhausted\s*=\s*computed\(/);
+    expect(src, "按钮要读它置灰").toMatch(/:disabled="[^"]*rerollExhausted/);
+    expect(src, "标签要说明为什么灰").toContain("额度已尽");
+    expect(src, "处理函数用同一判定,别另写一份条件").toMatch(
+      /function reroll\(\)[\s\S]{0,120}rerollExhausted/,
+    );
+    // 防空转:确认取到了这个文件
+    expect(src.length, "没取到 CreateView.vue,判据在空转").toBeGreaterThan(1000);
+  });
+
   it("问卦付不起就置灰+列差 —— 缺哪样、直说,不许点了才弹", () => {
     // 此前按只在「卦在身」时限灰:悟道点不足时照常可点,点下去才弹 warn toast。
     // 与进修/熔炉同款纪律:付不起的按钮当场置灰、内联写出差额(防御臂仍在 core)。
