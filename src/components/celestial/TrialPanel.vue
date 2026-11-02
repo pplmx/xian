@@ -238,130 +238,198 @@
 
       <div class="celestial-challenge-form">
         <p class="celestial-trial-copy">
-          选界 · 叠变数(至多 {{ cnNumber(CHALLENGE_MAX_MUTATORS) }} 条)· 立契 ·
-          命名。赏格由天道实测难度定价,无从作弊。
+          四程立契:先择界,再叠至多 {{ cnNumber(CHALLENGE_MAX_MUTATORS) }} 条变数,随后立契、
+          命名。约文与天道验价始终留在台下,赏格由实测难度定价,无从作弊。
         </p>
 
-        <section class="celestial-challenge-step">
-          <header class="celestial-challenge-step__head">
-            <span class="celestial-challenge-step__ordinal" aria-hidden="true">一</span>
-            <h3>择界</h3>
-            <span>本挑战落在哪一重天</span>
-          </header>
-          <div class="celestial-challenge-options" role="group" aria-label="选择挑战星界">
+        <div class="celestial-challenge-workbench" data-celestial-challenge-workbench>
+          <div
+            ref="challengeWorkbench"
+            class="celestial-challenge-steps"
+            role="tablist"
+            aria-label="天道挑战书四程"
+          >
             <button
-              v-for="w in CELESTIAL_WORLDS"
-              :key="w.id"
-              class="chip-ink celestial-challenge-option"
-              :class="
-                draft.worldId === w.id
-                  ? 'border-cinnabar text-cinnabar'
-                  : 'border-ink/25 text-ink-faint'
-              "
-              :aria-pressed="draft.worldId === w.id"
-              @click="setDraftWorld(w.id)"
+              v-for="(step, index) in CHALLENGE_STEPS"
+              :id="`celestial-challenge-tab-${step.id}`"
+              :key="step.id"
+              type="button"
+              role="tab"
+              class="celestial-challenge-step-tab"
+              :class="{ 'is-selected': challengeStep === step.id }"
+              :data-celestial-challenge-step="step.id"
+              :aria-selected="challengeStep === step.id"
+              :aria-controls="`celestial-challenge-panel-${step.id}`"
+              :aria-label="challengeStepLabel(step)"
+              :tabindex="challengeStep === step.id ? 0 : -1"
+              @click="selectChallengeStep(step.id)"
+              @keydown="moveChallengeStep($event, index)"
             >
-              {{ w.name }}
+              <span class="celestial-challenge-step-tab__ordinal" aria-hidden="true">{{
+                step.ordinal
+              }}</span>
+              <span class="celestial-challenge-step-tab__title">{{ step.title }}</span>
+              <span class="celestial-challenge-step-tab__value tabular">{{
+                challengeStepValue(step.id)
+              }}</span>
             </button>
           </div>
-        </section>
 
-        <section class="celestial-challenge-step">
-          <header class="celestial-challenge-step__head">
-            <span class="celestial-challenge-step__ordinal" aria-hidden="true">二</span>
-            <h3>叠变数</h3>
-            <span
-              >至多 {{ cnNumber(CHALLENGE_MAX_MUTATORS) }} 条 · 已选
-              {{ draft.mutatorIds.length }}</span
+          <section
+            :id="`celestial-challenge-panel-${challengeStep}`"
+            class="celestial-challenge-step"
+            role="tabpanel"
+            :aria-labelledby="`celestial-challenge-tab-${challengeStep}`"
+            :data-celestial-challenge-panel="challengeStep"
+            tabindex="0"
+          >
+            <header class="celestial-challenge-step__head">
+              <span class="celestial-challenge-step__ordinal" aria-hidden="true">{{
+                currentChallengeStep.ordinal
+              }}</span>
+              <h3>{{ currentChallengeStep.title }}</h3>
+              <span>{{ currentChallengeStep.hint }}</span>
+            </header>
+
+            <div v-if="challengeStep === 'world'" class="celestial-challenge-step__body">
+              <div class="celestial-challenge-options" role="group" aria-label="选择挑战星界">
+                <button
+                  v-for="w in CELESTIAL_WORLDS"
+                  :key="w.id"
+                  type="button"
+                  class="chip-ink celestial-challenge-option"
+                  :class="
+                    draft.worldId === w.id
+                      ? 'border-cinnabar text-cinnabar'
+                      : 'border-ink/25 text-ink-faint'
+                  "
+                  :aria-pressed="draft.worldId === w.id"
+                  @click="setDraftWorld(w.id)"
+                >
+                  {{ w.name }}
+                </button>
+              </div>
+            </div>
+
+            <div v-else-if="challengeStep === 'mutators'" class="celestial-challenge-step__body">
+              <p class="celestial-challenge-step__note">
+                至多 {{ cnNumber(CHALLENGE_MAX_MUTATORS) }} 条 · 已选
+                {{ draft.mutatorIds.length }}
+              </p>
+              <div class="celestial-challenge-options" role="group" aria-label="选择天道变数">
+                <button
+                  v-for="m in MUTATORS"
+                  :key="m.id"
+                  type="button"
+                  class="chip-ink celestial-challenge-option"
+                  :class="
+                    draft.mutatorIds.includes(m.id)
+                      ? 'border-violet-ink text-violet-ink'
+                      : draftFull
+                        ? 'border-ink/15 text-ink-faint'
+                        : 'border-ink/25 text-ink-faint'
+                  "
+                  :title="
+                    draft.mutatorIds.includes(m.id)
+                      ? m.text
+                      : draftFull
+                        ? `至多 ${cnNumber(CHALLENGE_MAX_MUTATORS)} 条,已选满`
+                        : m.text
+                  "
+                  :aria-pressed="draft.mutatorIds.includes(m.id)"
+                  :disabled="!draft.mutatorIds.includes(m.id) && draftFull"
+                  @click="toggleDraftMutator(m.id)"
+                >
+                  {{ m.name }}
+                </button>
+              </div>
+            </div>
+
+            <div v-else-if="challengeStep === 'pact'" class="celestial-challenge-step__body">
+              <div class="celestial-challenge-options" role="group" aria-label="选择天道契约">
+                <button
+                  type="button"
+                  class="chip-ink celestial-challenge-option"
+                  :class="
+                    draft.pactId === null ? 'border-jade text-jade' : 'border-ink/25 text-ink-faint'
+                  "
+                  :aria-pressed="draft.pactId === null"
+                  @click="setDraftPact(null)"
+                >
+                  不立契
+                </button>
+                <button
+                  v-for="p in PACTS"
+                  :key="p.id"
+                  type="button"
+                  class="chip-ink celestial-challenge-option"
+                  :class="
+                    draft.pactId === p.id
+                      ? 'border-cinnabar text-cinnabar'
+                      : 'border-ink/25 text-ink-faint'
+                  "
+                  :title="p.ruleText"
+                  :aria-pressed="draft.pactId === p.id"
+                  @click="setDraftPact(p.id)"
+                >
+                  {{ p.name }}
+                </button>
+              </div>
+            </div>
+
+            <div v-else class="celestial-challenge-step__body">
+              <input
+                v-model="draft.name"
+                maxlength="8"
+                aria-label="为此挑战书命名(最多八个字)"
+                class="celestial-challenge-name text-[16px]"
+                placeholder="为此挑战书命名(如《无盾求生》)"
+              />
+            </div>
+
+            <div class="celestial-challenge-step-nav">
+              <button
+                type="button"
+                class="celestial-challenge-step-nav__button"
+                :disabled="currentChallengeStepIndex === 0"
+                @click="shiftChallengeStep(-1)"
+              >
+                上一程
+              </button>
+              <span class="tabular"
+                >第 {{ currentChallengeStepIndex + 1 }} / {{ CHALLENGE_STEPS.length }} 程</span
+              >
+              <button
+                type="button"
+                class="celestial-challenge-step-nav__button"
+                :disabled="currentChallengeStepIndex === CHALLENGE_STEPS.length - 1"
+                @click="shiftChallengeStep(1)"
+              >
+                下一程
+              </button>
+            </div>
+          </section>
+        </div>
+
+        <div class="celestial-challenge-contract" data-celestial-challenge-contract>
+          <p class="celestial-challenge-contract__head">
+            <span>此刻约文</span>
+            <strong
+              >{{ challengeWorld.name }} · {{ challengePact?.name ?? "不立契" }} ·
+              {{ draft.name.trim() ? `《${draft.name.trim()}》` : "未命名" }}</strong
             >
-          </header>
-          <div class="celestial-challenge-options" role="group" aria-label="选择天道变数">
-            <button
-              v-for="m in MUTATORS"
-              :key="m.id"
-              class="chip-ink celestial-challenge-option"
-              :class="
-                draft.mutatorIds.includes(m.id)
-                  ? 'border-violet-ink text-violet-ink'
-                  : draftFull
-                    ? 'border-ink/15 text-ink-faint'
-                    : 'border-ink/25 text-ink-faint'
-              "
-              :title="
-                draft.mutatorIds.includes(m.id)
-                  ? m.text
-                  : draftFull
-                    ? `至多 ${cnNumber(CHALLENGE_MAX_MUTATORS)} 条,已选满`
-                    : m.text
-              "
-              :aria-pressed="draft.mutatorIds.includes(m.id)"
-              :disabled="!draft.mutatorIds.includes(m.id) && draftFull"
-              @click="toggleDraftMutator(m.id)"
-            >
-              {{ m.name }}
-            </button>
-          </div>
-          <!-- 变数已选的,把效果正文亮出来 —— 手机没有 hover,赌约规则得看得见 -->
+          </p>
           <p
             v-if="selectedMutators.length"
             class="celestial-challenge-selection celestial-challenge-selection--mutation"
           >
             {{ selectedMutators.map((m) => `${m.name}：${m.text}`).join("；") }}
           </p>
-        </section>
-
-        <section class="celestial-challenge-step">
-          <header class="celestial-challenge-step__head">
-            <span class="celestial-challenge-step__ordinal" aria-hidden="true">三</span>
-            <h3>立契</h3>
-            <span>不立契也可验约</span>
-          </header>
-          <div class="celestial-challenge-options" role="group" aria-label="选择天道契约">
-            <button
-              class="chip-ink celestial-challenge-option"
-              :class="
-                draft.pactId === null ? 'border-jade text-jade' : 'border-ink/25 text-ink-faint'
-              "
-              :aria-pressed="draft.pactId === null"
-              @click="setDraftPact(null)"
-            >
-              不立契
-            </button>
-            <button
-              v-for="p in PACTS"
-              :key="p.id"
-              class="chip-ink celestial-challenge-option"
-              :class="
-                draft.pactId === p.id
-                  ? 'border-cinnabar text-cinnabar'
-                  : 'border-ink/25 text-ink-faint'
-              "
-              :title="p.ruleText"
-              :aria-pressed="draft.pactId === p.id"
-              @click="setDraftPact(p.id)"
-            >
-              {{ p.name }}
-            </button>
-          </div>
+          <p v-else class="celestial-challenge-contract__note">未叠变数 · 只按本界原始规则验约</p>
           <p v-if="challengePact" class="celestial-challenge-selection">
             立约「{{ challengePact.name }}」：{{ challengePact.ruleText }}
           </p>
-        </section>
-
-        <section class="celestial-challenge-step celestial-challenge-step--name">
-          <header class="celestial-challenge-step__head">
-            <span class="celestial-challenge-step__ordinal" aria-hidden="true">四</span>
-            <h3>命名</h3>
-            <span>八字以内,写进道痕</span>
-          </header>
-          <input
-            v-model="draft.name"
-            maxlength="8"
-            aria-label="为此挑战书命名(最多八个字)"
-            class="celestial-challenge-name text-[16px]"
-            placeholder="为此挑战书命名(如《无盾求生》)"
-          />
-        </section>
+        </div>
 
         <div
           v-if="challengeVerdict"
@@ -379,7 +447,7 @@
           <p v-else>{{ challengeVerdict.reason }}</p>
         </div>
 
-        <div class="celestial-challenge-actions">
+        <div class="celestial-challenge-actions" data-celestial-challenge-actions>
           <button class="celestial-trial-action" @click="doVerify">验 约</button>
           <button
             class="celestial-trial-action celestial-trial-action--primary"
@@ -540,6 +608,15 @@ function trialActionLabel(trial: (typeof TRIALS)[number]): string {
 }
 
 // ---- 天道挑战书 ----
+const CHALLENGE_STEPS = [
+  { id: "world", ordinal: "一", title: "择界", hint: "本挑战落在哪一重天" },
+  { id: "mutators", ordinal: "二", title: "叠变数", hint: "规则越叠越险,赏格随实测难度上浮" },
+  { id: "pact", ordinal: "三", title: "立契", hint: "立约改打法;不立契也可验约" },
+  { id: "name", ordinal: "四", title: "命名", hint: "八字以内,写进道痕" },
+] as const;
+type ChallengeStepId = (typeof CHALLENGE_STEPS)[number]["id"];
+const challengeWorkbench = ref<HTMLElement | null>(null);
+const challengeStep = ref<ChallengeStepId>("world");
 const draft = ref<ChallengeDraft>({
   worldId: CELESTIAL_WORLDS[0]!.id,
   mutatorIds: [],
@@ -561,6 +638,67 @@ const challengePact = computed(() =>
 );
 /** 变数已选满(至多三条):未选中的芯片应置灰,不许静默点不动 */
 const draftFull = computed(() => draft.value.mutatorIds.length >= CHALLENGE_MAX_MUTATORS);
+const challengeWorld = computed(
+  () => CELESTIAL_WORLDS.find((world) => world.id === draft.value.worldId) ?? CELESTIAL_WORLDS[0]!,
+);
+const currentChallengeStepIndex = computed(() =>
+  Math.max(
+    0,
+    CHALLENGE_STEPS.findIndex((step) => step.id === challengeStep.value),
+  ),
+);
+const currentChallengeStep = computed(
+  () => CHALLENGE_STEPS[currentChallengeStepIndex.value] ?? CHALLENGE_STEPS[0]!,
+);
+
+function challengeStepValue(id: ChallengeStepId): string {
+  if (id === "world") return challengeWorld.value.name;
+  if (id === "mutators") return `${draft.value.mutatorIds.length} / ${CHALLENGE_MAX_MUTATORS}`;
+  if (id === "pact") return challengePact.value?.name ?? "不立契";
+  return draft.value.name.trim() || "未名";
+}
+
+function challengeStepLabel(step: (typeof CHALLENGE_STEPS)[number]): string {
+  return `${step.title} · ${challengeStepValue(step.id)}`;
+}
+
+function focusChallengeStep(index: number): void {
+  void nextTick(() => {
+    challengeWorkbench.value?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[index]?.focus();
+  });
+}
+
+function selectChallengeStep(id: ChallengeStepId): void {
+  challengeStep.value = id;
+}
+
+function moveChallengeStep(event: KeyboardEvent, index: number): void {
+  let next = index;
+  if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+    next = (index + 1) % CHALLENGE_STEPS.length;
+  } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+    next = (index - 1 + CHALLENGE_STEPS.length) % CHALLENGE_STEPS.length;
+  } else if (event.key === "Home") {
+    next = 0;
+  } else if (event.key === "End") {
+    next = CHALLENGE_STEPS.length - 1;
+  } else {
+    return;
+  }
+  event.preventDefault();
+  challengeStep.value = CHALLENGE_STEPS[next]!.id;
+  focusChallengeStep(next);
+}
+
+function shiftChallengeStep(delta: number): void {
+  const next = Math.max(
+    0,
+    Math.min(CHALLENGE_STEPS.length - 1, currentChallengeStepIndex.value + delta),
+  );
+  if (next === currentChallengeStepIndex.value) return;
+  challengeStep.value = CHALLENGE_STEPS[next]!.id;
+  focusChallengeStep(next);
+}
 
 function setDraftWorld(id: string): void {
   draft.value = { ...draft.value, worldId: id };

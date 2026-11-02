@@ -262,6 +262,32 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
     );
   });
 
+  it("挑战书先选四程之一,当前只摊一程,约文与验约始终可见", () => {
+    const trial = source("src/components/celestial/TrialPanel.vue");
+    const css = source("src/styles/pages/celestial.css");
+
+    expect(trial, "四程要有独立的立契约台").toContain("data-celestial-challenge-workbench");
+    expect(trial, "四程入口走单选 tablist").toContain('role="tablist"');
+    expect(trial, "四程逐项读取同一声明源").toContain('v-for="(step, index) in CHALLENGE_STEPS"');
+    expect(trial, "每程要有稳定运行时入口").toContain("data-celestial-challenge-step");
+    expect(trial, "当前程只留一个 tabpanel").toContain("data-celestial-challenge-panel");
+    expect(trial, "四程入口走 roving tabindex").toContain(
+      ':tabindex="challengeStep === step.id ? 0 : -1"',
+    );
+    expect(trial, "方向键可在四程间移步").toContain('@keydown="moveChallengeStep($event, index)"');
+    expect(trial, "约文摘要把已选规则带出当前程").toContain("data-celestial-challenge-contract");
+    expect(trial, "验约与立约不能藏进某一程").toContain("data-celestial-challenge-actions");
+    expect(css, "手机四程铺两列").toMatch(
+      /\.celestial-challenge-steps\s*\{[\s\S]{0,180}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
+    );
+    expect(css, "960 起四程收成左栏,当前程在右展开").toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]*?\.celestial-challenge-workbench\s*\{[\s\S]{0,200}grid-template-columns:\s*minmax\(8\.5rem, 0\.28fr\) minmax\(0, 1fr\)/,
+    );
+    expect(css, "200% 缩放档四程退单列").toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]*?\.celestial-challenge-steps\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+  });
+
   it("手机总账两栏,960 起四栏并读,220 以下星图读数与门径退单列", () => {
     const css = source("src/style.css");
     const start = css.indexOf(".celestial-pulse {");

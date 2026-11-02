@@ -204,8 +204,9 @@
  *      390 与 195(200% 缩放)下门槛、摘要与主按钮都不许横溢或挤成竖排。
  *   七十二 天界试炼收成一册四章:今日天道、变数、八场试炼与挑战书沿同一卷面续排。
  *      八场试炼先收成一张八门印谱,点印或方向键只换下方一份证道帖;挑战书按
- *      择界 / 叠变数 / 立契 / 命名四步摊开。390 四列两行,960px 起八门同排,
- *      200% 缩放档退两列,整章只留一枚应试主键。
+ *      择界 / 叠变数 / 立契 / 命名四程收成立契约台,当前只摊一程、约文与验约常驻。
+ *      390 八门四列两行、四程两列两行,960px 起八门同排、四程在左,200% 缩放档
+ *      分别退两列与单列,整章只留一枚应试主键。
  *   七十三 三生录的画像、四册册口与当前正文同住一册:册口先报各册真值,
  *      手机 2×2、620px 起四列、220px 以下单列;方向键 / Home / End 要联动焦点、
  *      选中态、地址与唯一 tabpanel。1280 宽才把两本账并读,避免三案主账被压窄。
@@ -10424,7 +10425,7 @@ async function taskCharacterFold() {
   };
 }
 
-/** 天界试炼续卷:四章、八门印谱、单份证道帖、四步挑战书与三档印阵 */
+/** 天界试炼续卷:四章、八门印谱、单份证道帖、四程立契约台与三档印阵 */
 async function taskCelestialTrialFold() {
   const failures = [];
   let checked = 0;
@@ -10468,6 +10469,30 @@ async function taskCelestialTrialFold() {
           const detailRect = detail?.getBoundingClientRect();
           const actionRect = action?.getBoundingClientRect();
           const options = [...(ledger?.querySelectorAll(".celestial-challenge-option") ?? [])];
+          const challengeSteps = [
+            ...(ledger?.querySelectorAll("[data-celestial-challenge-step]") ?? []),
+          ];
+          const challengeStepsGrid = ledger?.querySelector(".celestial-challenge-steps");
+          const challengeWorkbench = ledger?.querySelector("[data-celestial-challenge-workbench]");
+          const challengePanel = ledger?.querySelector("[data-celestial-challenge-panel]");
+          const challengePanelRect = challengePanel?.getBoundingClientRect();
+          const challengeActions = ledger?.querySelector("[data-celestial-challenge-actions]");
+          const challengeActionsRect = challengeActions?.getBoundingClientRect();
+          const challengeContract = ledger?.querySelector("[data-celestial-challenge-contract]");
+          const challengeTabRows = challengeSteps.map((tab) => {
+            const rect = tab.getBoundingClientRect();
+            const style = getComputedStyle(tab);
+            return {
+              id: tab.getAttribute("data-celestial-challenge-step"),
+              selected: tab.getAttribute("aria-selected") === "true",
+              tabIndex: tab.getAttribute("tabindex"),
+              top: Math.round(rect.top),
+              radius: Number.parseFloat(style.borderRadius),
+              shadow: style.boxShadow,
+              background: style.backgroundColor,
+            };
+          });
+          const selectedChallengeStep = challengeTabRows.find((tab) => tab.selected);
           const sealRows = seals.map((seal) => {
             const rect = seal.getBoundingClientRect();
             const style = getComputedStyle(seal);
@@ -10535,7 +10560,30 @@ async function taskCelestialTrialFold() {
                 ?.closest?.("[data-celestial-trial]")
                 ?.getAttribute("data-celestial-trial") ??
               null,
-            challengeSteps: ledger?.querySelectorAll(".celestial-challenge-step").length ?? -1,
+            challengeSteps: challengeTabRows.length,
+            challengeTabIds: challengeTabRows.map((tab) => tab.id),
+            challengeSelected: selectedChallengeStep?.id ?? null,
+            challengeSelectedTabIndex: selectedChallengeStep?.tabIndex ?? null,
+            challengeTabSelected: challengeTabRows.map((tab) => tab.selected),
+            challengeTabTops: challengeTabRows.map((tab) => tab.top),
+            challengeTabRadius: challengeTabRows.map((tab) => tab.radius),
+            challengeTabShadows: challengeTabRows.map((tab) => tab.shadow),
+            challengeTabBackgrounds: challengeTabRows.map((tab) => tab.background),
+            challengeStepColumns: challengeStepsGrid
+              ? getComputedStyle(challengeStepsGrid).gridTemplateColumns.trim().split(/\s+/).length
+              : -1,
+            challengeWorkbenchColumns: challengeWorkbench
+              ? getComputedStyle(challengeWorkbench).gridTemplateColumns.trim().split(/\s+/).length
+              : -1,
+            challengePanel: challengePanel?.getAttribute("data-celestial-challenge-panel") ?? null,
+            challengePanelTitle: (
+              challengePanel?.querySelector(".celestial-challenge-step__head h3")?.textContent || ""
+            ).trim(),
+            challengePanelRight: challengePanelRect?.right ?? null,
+            challengeActionsRight: challengeActionsRect?.right ?? null,
+            challengeContractText: (challengeContract?.textContent || "")
+              .replace(/\s+/g, " ")
+              .trim(),
             challengeOptions: options.length,
             optionPills: options.filter((option) => {
               const style = getComputedStyle(option);
@@ -10544,6 +10592,12 @@ async function taskCelestialTrialFold() {
                 Number.parseFloat(style.borderTopWidth) > 0
               );
             }).length,
+            challengeActiveId:
+              document.activeElement?.getAttribute("data-celestial-challenge-step") ??
+              document.activeElement
+                ?.closest?.("[data-celestial-challenge-step]")
+                ?.getAttribute("data-celestial-challenge-step") ??
+              null,
             columns: roster
               ? getComputedStyle(roster).gridTemplateColumns.trim().split(/\s+/).length
               : -1,
@@ -10634,14 +10688,54 @@ async function taskCelestialTrialFold() {
       }
       if (
         mobile.challengeSteps !== 4 ||
+        new Set(mobile.challengeTabIds).size !== 4 ||
+        mobile.challengeSelected !== "world" ||
+        mobile.challengeSelectedTabIndex !== "0" ||
+        mobile.challengePanel !== "world" ||
+        mobile.challengePanelTitle !== "择界" ||
         mobile.challengeOptions === 0 ||
         mobile.optionPills !== 0
       ) {
         failures.push(
-          `[390-trial] 挑战书没有收成四步开口选项:${JSON.stringify({
+          `[390-trial] 挑战书四程与当前程脱节:${JSON.stringify({
             steps: mobile.challengeSteps,
+            ids: mobile.challengeTabIds,
+            selected: mobile.challengeSelected,
+            tabIndex: mobile.challengeSelectedTabIndex,
+            panel: mobile.challengePanel,
+            title: mobile.challengePanelTitle,
             options: mobile.challengeOptions,
             pills: mobile.optionPills,
+          })}`,
+        );
+      }
+      if (
+        mobile.challengeStepColumns !== 2 ||
+        mobile.challengeTabTops.length !== 4 ||
+        mobile.challengeTabTops[0] !== mobile.challengeTabTops[1] ||
+        mobile.challengeTabTops[2] <= mobile.challengeTabTops[0]
+      ) {
+        failures.push(
+          `[390-trial] 挑战书四程没有铺成两列两行:${JSON.stringify({
+            columns: mobile.challengeStepColumns,
+            tops: mobile.challengeTabTops,
+          })}`,
+        );
+      }
+      if (
+        mobile.challengeTabRadius.some((radius) => radius !== 0) ||
+        mobile.challengeTabShadows
+          .filter((shadow, index) => !mobile.challengeTabSelected[index])
+          .some((shadow) => shadow !== "none") ||
+        mobile.challengeTabBackgrounds
+          .filter((background, index) => !mobile.challengeTabSelected[index])
+          .some((background) => background !== "rgba(0, 0, 0, 0)")
+      ) {
+        failures.push(
+          `[390-trial] 挑战书四程又长出卡壳:${JSON.stringify({
+            radius: mobile.challengeTabRadius,
+            shadows: mobile.challengeTabShadows,
+            backgrounds: mobile.challengeTabBackgrounds,
           })}`,
         );
       }
@@ -10679,6 +10773,46 @@ async function taskCelestialTrialFold() {
         );
       }
 
+      await page.locator('[data-celestial-challenge-step="mutators"]').click();
+      await settleVisuals(page);
+      const challengeStepClicked = await readFold();
+      const firstMutator = page.locator(".celestial-challenge-option").first();
+      const firstMutatorName = ((await firstMutator.textContent()) || "").trim();
+      await firstMutator.click();
+      await settleVisuals(page);
+      const challengeFilled = await readFold();
+      if (
+        challengeStepClicked.challengeSelected !== "mutators" ||
+        challengeStepClicked.challengePanel !== "mutators" ||
+        challengeFilled.challengeContractText.includes(firstMutatorName) === false
+      ) {
+        failures.push(
+          `[390-trial] 挑战书点击第二程或选取变数后约文没有同步:${JSON.stringify({
+            selected: challengeStepClicked.challengeSelected,
+            panel: challengeStepClicked.challengePanel,
+            picked: firstMutatorName,
+            contract: challengeFilled.challengeContractText,
+          })}`,
+        );
+      }
+      await page.locator('[data-celestial-challenge-step][aria-selected="true"]').focus();
+      await page.keyboard.press("ArrowRight");
+      await settleVisuals(page);
+      const challengeKeyboard = await readFold();
+      if (
+        challengeKeyboard.challengeSelected !== "pact" ||
+        challengeKeyboard.challengePanel !== "pact" ||
+        challengeKeyboard.challengeActiveId !== "pact"
+      ) {
+        failures.push(
+          `[390-trial] 挑战书方向键没有把当前程、焦点与题头一起前移:${JSON.stringify({
+            selected: challengeKeyboard.challengeSelected,
+            panel: challengeKeyboard.challengePanel,
+            focused: challengeKeyboard.challengeActiveId,
+          })}`,
+        );
+      }
+
       await page.setViewportSize({ width: 1280, height: 900 });
       await settleVisuals(page);
       const desktop = await readFold();
@@ -10688,6 +10822,19 @@ async function taskCelestialTrialFold() {
       }
       if (desktop.sealTops.length !== 8 || new Set(desktop.sealTops).size !== 1) {
         failures.push(`[1280-trial] 八门没有同排并读:${desktop.sealTops.join(" / ")}`);
+      }
+      if (
+        desktop.challengeWorkbenchColumns !== 2 ||
+        desktop.challengeStepColumns !== 1 ||
+        new Set(desktop.challengeTabTops).size !== 4
+      ) {
+        failures.push(
+          `[1280-trial] 挑战书没有收成左四程、右一程:${JSON.stringify({
+            workbench: desktop.challengeWorkbenchColumns,
+            steps: desktop.challengeStepColumns,
+            tops: desktop.challengeTabTops,
+          })}`,
+        );
       }
 
       await page.setViewportSize({ width: 195, height: 900 });
@@ -10717,6 +10864,22 @@ async function taskCelestialTrialFold() {
             detailRight: compact.detailRight,
             viewport: compact.viewportWidth,
             actionRatio: compact.actionRatio,
+          })}`,
+        );
+      }
+      if (
+        compact.challengeStepColumns !== 1 ||
+        compact.challengePanelRight === null ||
+        compact.challengePanelRight > compact.viewportWidth + 1 ||
+        compact.challengeActionsRight === null ||
+        compact.challengeActionsRight > compact.viewportWidth + 1
+      ) {
+        failures.push(
+          `[195-trial] 挑战书四程或约文动作越出纸面:${JSON.stringify({
+            stepColumns: compact.challengeStepColumns,
+            panelRight: compact.challengePanelRight,
+            actionsRight: compact.challengeActionsRight,
+            viewport: compact.viewportWidth,
           })}`,
         );
       }
@@ -20392,7 +20555,7 @@ const TASKS = [
   ["洞府首屏的营造优先", taskDongfuFold],
   ["修行续卷的四章与行动层", taskCultivationFold],
   ["道躯三章与行藏拆卷", taskCharacterFold],
-  ["天界试炼续卷的四章与八门", taskCelestialTrialFold],
+  ["天界试炼续卷的四章、八门与四程", taskCelestialTrialFold],
   ["天界内层三册的章节与并读", taskCelestialInnerVolumes],
   ["界域志首屏的此刻优先", taskCodexFold],
   ["成就谱首屏的眼下可追", taskAchievementFold],
