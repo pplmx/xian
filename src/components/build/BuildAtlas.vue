@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { unitRatio } from "@/utils/unitRatio";
 import type { BuildAffinityRow } from "@/core/buildDetect";
 
 const props = defineProps<{
@@ -11,17 +12,13 @@ const props = defineProps<{
 
 const ARC_SPAN = 13;
 
-function ratio(value: number): number {
-  return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
-}
-
 const segments = computed(() => {
   const step = props.rows.length > 0 ? 100 / props.rows.length : 100;
   return props.rows.map((row, index) => ({
     ...row,
     angle: (index * 360) / Math.max(1, props.rows.length),
     start: index * step + 1.6,
-    arc: ARC_SPAN * ratio(row.affinity),
+    arc: ARC_SPAN * unitRatio(row.affinity),
   }));
 });
 

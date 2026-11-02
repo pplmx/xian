@@ -3,6 +3,7 @@
  * 不替代红线断言;红线管「不许坏」,健康度管「趋势如何」
  */
 import { BUILD_PROFILES } from "./buildSim";
+import { unitRatio } from "@/utils/unitRatio";
 
 export interface HealthInput {
   /** 各终局世界可行流派数(0~BUILD_PROFILES.length) */
@@ -33,15 +34,14 @@ export interface HealthReport {
 }
 
 const avg = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
-const clamp01 = (x: number): number => Math.max(0, Math.min(1, x));
 
 export function computeEcosystemHealth(input: HealthInput): HealthReport {
-  const diversity = clamp01(avg(input.viablePerWorld) / BUILD_PROFILES.length);
-  const spread = clamp01(avg(input.secondOverBest));
-  const universal = clamp01(1 - input.universalRate / 0.015);
-  const trap = clamp01(1 - input.trapRate / 0.3);
-  const cross = clamp01(1 - input.crossWorldCount / 3);
-  const synergy = clamp01(1 - Math.max(0, input.maxPairSynergy - 1) / 1.5);
+  const diversity = unitRatio(avg(input.viablePerWorld) / BUILD_PROFILES.length);
+  const spread = unitRatio(avg(input.secondOverBest));
+  const universal = unitRatio(1 - input.universalRate / 0.015);
+  const trap = unitRatio(1 - input.trapRate / 0.3);
+  const cross = unitRatio(1 - input.crossWorldCount / 3);
+  const synergy = unitRatio(1 - Math.max(0, input.maxPairSynergy - 1) / 1.5);
 
   const parts: HealthPart[] = [
     {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { unitRatio } from "@/utils/unitRatio";
 import { usePlayerStore } from "@/stores/player";
 import { realmLadderPoints, realmOrdinalText } from "@/core/realmLadder";
 import { formatPercent } from "@/utils/format";
@@ -14,7 +15,7 @@ withDefaults(
 
 const player = usePlayerStore();
 const points = computed(() => realmLadderPoints(player.major));
-const progress = computed(() => Math.max(0, Math.min(1, player.expProgress)));
+const progress = computed(() => unitRatio(player.expProgress));
 const progressText = computed(() => {
   const text = formatPercent(progress.value, 1);
   // 后期一境常有进度小到一位小数仍读成 0% 的时候;只要真在涨,就不许显示成零。

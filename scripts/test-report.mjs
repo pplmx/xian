@@ -292,6 +292,7 @@ const CATEGORIES = [
       "desktopSpine",
       "useMediaQuery",
       "useListFocus",
+      "unitRatio",
       "navigation",
       "atlas.spec",
       "visualLanguage",

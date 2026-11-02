@@ -6,6 +6,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { unitRatio } from "@/utils/unitRatio";
 
 const props = withDefaults(
   defineProps<{
@@ -17,5 +18,11 @@ const props = withDefaults(
   { color: "var(--color-jade)", height: 6 },
 );
 
-const width = computed(() => `${Math.max(0, Math.min(1, props.value)) * 100}%`);
+/**
+ * 宽度走 unitRatio:脏值(NaN / Infinity)归零。
+ * 裸夹取时 NaN 会一路穿到 `width: NaN%` —— 浏览器整条样式丢掉,
+ * 进度条**消失**且控制台干净,而调用方拿脏值是真实会发生的事
+ * (坏档 / 除零的比值)。
+ */
+const width = computed(() => `${unitRatio(props.value) * 100}%`);
 </script>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { unitRatio } from "@/utils/unitRatio";
 
 const props = defineProps<{
   life: number;
@@ -12,14 +13,10 @@ const props = defineProps<{
 const TRACK_LENGTH = 27;
 const ARC_STARTS = [0, 120, 240];
 
-function ratio(value: number): number {
-  return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
-}
-
 const arcs = computed(() => [
-  { key: "life", start: ARC_STARTS[0]!, length: TRACK_LENGTH * ratio(props.stageRatio) },
-  { key: "lore", start: ARC_STARTS[1]!, length: TRACK_LENGTH * ratio(props.loreRatio) },
-  { key: "fate", start: ARC_STARTS[2]!, length: TRACK_LENGTH * ratio(props.fateRatio) },
+  { key: "life", start: ARC_STARTS[0]!, length: TRACK_LENGTH * unitRatio(props.stageRatio) },
+  { key: "lore", start: ARC_STARTS[1]!, length: TRACK_LENGTH * unitRatio(props.loreRatio) },
+  { key: "fate", start: ARC_STARTS[2]!, length: TRACK_LENGTH * unitRatio(props.fateRatio) },
 ]);
 
 const nodes = [

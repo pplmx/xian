@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { unitRatio } from "@/utils/unitRatio";
 
 const props = defineProps<{
   soundLevel: number;
@@ -12,25 +13,21 @@ const props = defineProps<{
 const TRACK_LENGTH = 27;
 const ARC_STARTS = [0, 34, 68];
 
-function ratio(value: number): number {
-  return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
-}
-
 const arcs = computed(() => [
   {
     key: "sound",
     start: ARC_STARTS[0]!,
-    length: TRACK_LENGTH * ratio(props.soundLevel),
+    length: TRACK_LENGTH * unitRatio(props.soundLevel),
   },
   {
     key: "sight",
     start: ARC_STARTS[1]!,
-    length: TRACK_LENGTH * ratio(props.sightLevel),
+    length: TRACK_LENGTH * unitRatio(props.sightLevel),
   },
   {
     key: "keep",
     start: ARC_STARTS[2]!,
-    length: TRACK_LENGTH * ratio(props.keepLevel),
+    length: TRACK_LENGTH * unitRatio(props.keepLevel),
   },
 ]);
 
