@@ -18,6 +18,8 @@
  *      改了数值忘了改文案,CI 直接红。
  */
 
+import { cnNumber } from "@/utils/format";
+
 /** 一盏茶 */
 export const TEA_SEC = 600;
 /** 一刻(一刻钟) */
@@ -31,8 +33,19 @@ export const SHICHEN_SEC = 7200;
 
 const CN = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"] as const;
 
-/** 1..99 的汉字数词(时辰/刻的倍数用得上) */
+/**
+ * 汉字数词。**任何正整数都答得出**,不只是 1..99。
+ *
+ * 从前的实现只覆盖 1..99,超出就静默算错:100 个时辰得到「十十个」、
+ * 200 个时辰得到「undefined十个」。它不是没人能撞上的边界 —— buff 的
+ * 持续时长一旦超过 200 小时(「一个月」这种长闭关),界面就会显示
+ * 「undefined十个时辰(400 小时)」。
+ *
+ * 1..99 仍走这里的短路径(读起来与手写的一样);其余交给 format 的
+ * `cnNumber`(它本来就覆盖到 9999,越界原样返回阿拉伯数字)。
+ */
 export function cnNum(n: number): string {
+  if (!Number.isInteger(n) || n < 0 || n > 99) return cnNumber(n);
   if (n <= 10) return CN[n]!;
   if (n < 20) return `十${n === 10 ? "" : CN[n - 10]}`;
   const tens = Math.floor(n / 10);

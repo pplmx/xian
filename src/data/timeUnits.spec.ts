@@ -24,7 +24,8 @@
 import { describe, expect, it } from "vite-plus/test";
 import { PILLS } from "./pills";
 import { BUFFS, buffDef } from "./buffs";
-import { KE_SEC, SHICHEN_SEC, classicalDuration, parseClassicalDuration } from "./timeUnits";
+import { KE_SEC, SHICHEN_SEC, classicalDuration, cnNum, parseClassicalDuration } from "./timeUnits";
+import { durationText } from "@/ui/earlyGameText";
 import { pillFuncText } from "@/ui/itemText";
 import { formatDuration } from "@/utils/format";
 
@@ -67,6 +68,46 @@ describe("道门时制 · 表本身", () => {
     expect(classicalDuration(10800)).toBe("一个半时辰(3 小时)");
     expect(classicalDuration(540)).toBe("将近一刻(9 分钟)");
     expect(classicalDuration(1080)).toBe("一刻有余(18 分钟)");
+  });
+});
+
+describe("时制 · 汉字数词覆盖所有正整数", () => {
+  /**
+   * 从前的 cnNum 只覆盖 1..99,超出**静默算错**而不是报错:
+   * 100 个时辰得到「十十个」、200 个时辰得到「undefined十个」。
+   * 这不是理论边界 —— buff 持续时长一旦到 200 小时(长闭关),
+   * 界面就真会显示「undefined十个时辰(400 小时)」。
+   */
+  it("1..99 与手写读法一致(短路径不回归)", () => {
+    expect(cnNum(1)).toBe("一");
+    expect(cnNum(10)).toBe("十");
+    expect(cnNum(11)).toBe("十一");
+    expect(cnNum(20)).toBe("二十");
+    expect(cnNum(99)).toBe("九十九");
+  });
+
+  it("超过 99 也答得出,不再出现「十十」或 undefined", () => {
+    expect(cnNum(100)).toBe("一百");
+    expect(cnNum(101)).toBe("一百零一");
+    expect(cnNum(110)).toBe("一百一十");
+    expect(cnNum(200)).toBe("二百");
+    expect(cnNum(1000)).toBe("一千");
+    // 反面证据:旧实现在这几个数上会拼出什么
+    for (const n of [100, 200, 1000]) {
+      expect(cnNum(n), `cnNum(${n}) 不许含 undefined`).not.toContain("undefined");
+      expect(cnNum(n), `cnNum(${n}) 不许出现重复的「十十」`).not.toContain("十十");
+    }
+  });
+
+  it("落不到整数上的值原样交回,不硬凑古语", () => {
+    expect(cnNum(1.5)).toBe("1.5");
+    expect(cnNum(-1)).toBe("-1");
+  });
+
+  it("长时长的界面文案真的读对了", () => {
+    // 端到端:这是玩家会看到的那一行
+    expect(durationText(SHICHEN_SEC * 100)).toBe("一百个时辰(200 小时)");
+    expect(durationText(SHICHEN_SEC * 200)).toBe("二百个时辰(400 小时)");
   });
 });
 
