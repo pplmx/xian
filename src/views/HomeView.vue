@@ -336,6 +336,7 @@ import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import CultivationOrb from "@/components/common/CultivationOrb.vue";
 import InstallToHomeNotice from "@/components/common/InstallToHomeNotice.vue";
+import { keepNumberUnit } from "@/utils/keepNumberUnit";
 
 const player = usePlayerStore();
 const ui = useUiStore();
@@ -437,8 +438,4 @@ const dailyDoneCount = computed(() => dailyRows.value.filter((r) => r.done).leng
 const dailyRatio = computed(() =>
   dailyRows.value.length ? dailyDoneCount.value / dailyRows.value.length : 0,
 );
-/** 两列日课里「3 次」不许拆成两行:只锁数字与紧随其后的量词,其余文案照常折行。 */
-function keepNumberUnit(text: string): string {
-  return text.replace(/(\d[\d,.]*)\s+(?=[石铁尘株张载年次件层场阶枚缕时日])/g, "$1\u00a0");
-}
 </script>

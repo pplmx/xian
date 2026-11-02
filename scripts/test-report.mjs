@@ -293,6 +293,7 @@ const CATEGORIES = [
       "useMediaQuery",
       "useListFocus",
       "unitRatio",
+      "keepNumberUnit",
       "navigation",
       "atlas.spec",
       "visualLanguage",

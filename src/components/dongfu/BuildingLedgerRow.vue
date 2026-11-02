@@ -44,7 +44,7 @@
       <div class="dongfu-building__facts">
         <p class="dongfu-building__fact">
           <span class="dongfu-building__fact-mark" aria-hidden="true">现</span>
-          <span>{{ keepNumberUnits(primaryCurrent) }}</span>
+          <span>{{ keepNumberUnit(primaryCurrent) }}</span>
         </p>
         <p v-if="primaryPreview" class="dongfu-building__fact dongfu-building__fact--next">
           <span class="dongfu-building__fact-mark" aria-hidden="true">将</span>
@@ -53,7 +53,7 @@
               preview.built ? "建成后" : `升至 ${preview.nextLevel} 级`
             }}</span>
             <span aria-hidden="true"> · </span>
-            {{ keepNumberUnits(primaryPreview) }}
+            {{ keepNumberUnit(primaryPreview) }}
           </span>
         </p>
       </div>
@@ -71,7 +71,7 @@
             >· {{ info.ore }} 玄铁</span
           >
         </template>
-        <template v-else>{{ keepNumberUnits(info.reason) }}</template>
+        <template v-else>{{ keepNumberUnit(info.reason) }}</template>
       </button>
     </div>
 
@@ -81,7 +81,7 @@
           <p class="dongfu-building__detail-label">当前效果</p>
           <div class="dongfu-building__detail-copy">
             <template v-if="level > 0">
-              <p v-for="(line, i) in currentLines" :key="i">{{ keepNumberUnits(line) }}</p>
+              <p v-for="(line, i) in currentLines" :key="i">{{ keepNumberUnit(line) }}</p>
             </template>
             <p v-else>{{ props.def.desc }}</p>
           </div>
@@ -92,7 +92,7 @@
             {{ preview.built ? "建成后" : `升至 ${preview.nextLevel} 级` }}
           </p>
           <div class="dongfu-building__detail-copy">
-            <p v-for="(line, i) in preview.lines" :key="i">{{ keepNumberUnits(line) }}</p>
+            <p v-for="(line, i) in preview.lines" :key="i">{{ keepNumberUnit(line) }}</p>
           </div>
         </section>
       </div>
@@ -132,7 +132,7 @@
         >
           <span class="text-ink-faint">升至 {{ batchPreview.nextLevel }} 级累积净得:</span>
           <span v-for="line in batchPreview.lines" :key="line" class="block">{{
-            keepNumberUnits(line)
+            keepNumberUnit(line)
           }}</span>
         </p>
       </section>
@@ -157,6 +157,7 @@ import {
 import { studyEta } from "@/core/loreService";
 import { formatDuration, formatGN } from "@/utils/format";
 import GameIcon from "@/components/common/GameIcon.vue";
+import { keepNumberUnit } from "@/utils/keepNumberUnit";
 
 /** 连升一次至多升几级(与连炼×5 / 灵脉+5 同一种有界批量) */
 const BUILD_BATCH = 5;
@@ -180,12 +181,6 @@ const progressLabel = computed(
 const currentLines = computed(() => (level.value > 0 ? props.def.effectText(level.value) : []));
 const primaryCurrent = computed(() => currentLines.value[0] ?? props.def.desc);
 /** 数字、量级与量词之间只许换行在分隔处,不许把「6 株」拆成两行 */
-function keepNumberUnits(text: string): string {
-  return text.replace(
-    /([\d,.]+(?:万|亿|兆)?)\s+(?=[石铁尘株张载年次件层场阶枚缕时日])/g,
-    "$1\u00a0",
-  );
-}
 
 /** 连升整批会实际花掉的总账(只读预演,与 buildingUpgradeN 同一判定) —— 按下前把总数摊开 */
 const batch = computed(() => buildingUpgradeBatchCost(props.def.id, BUILD_BATCH));
