@@ -256,3 +256,48 @@ describe("文案标点 · 中文与手写数字之间留空格", () => {
     expect(glued('<p class="text-[11px]">大约 3 次</p>')).toEqual([]);
   });
 });
+
+/**
+ * 省略号 —— 中文里用六个点(两个 U+2026),不用三个点。
+ *
+ * 全站可见文案本来就是这个写法(「正在测定灵根……」「山风掠过,四下无声……」),
+ * 丹房搜索框的 placeholder 却写成「搜方名…」:同一个游戏里一处占两个汉字宽、
+ * 一处占一个,光标挪过去时两种空。单省略号在**代码注释与日志截断**里是正当的
+ * (「9.99…e52」「${text.slice(0, 34)}…」),故判据只扫模板可见文本与属性值。
+ */
+describe("文案标点 · 省略号写 ……", () => {
+  /**
+   * 单个 … 且**贴着中文**才算「中文散文里的省略号」。
+   *
+   * 特意排除两种正当写法:`万/亿/兆/京…` 这类紧跟在符号后的是清单收尾,
+   * 与 `…+N` 一样属于图形标记(它后面接的是加号或数字,不是话),不是句子。
+   */
+  function singleEllipsis(tpl: string): string[] {
+    const text = `${visibleOnly(tpl)} ${attributeText(tpl)}`;
+    return [...text.matchAll(/(?<!…)(?<=[\u4e00-\u9fa5])…(?!…)/g)].map((m) =>
+      text.slice(Math.max(0, m.index - 12), m.index + 12).trim(),
+    );
+  }
+
+  it("模板可见文案里没有单省略号", () => {
+    const offenders: { file: string; sample: string[] }[] = [];
+    for (const file of FILES) {
+      const hits = singleEllipsis(file.tpl);
+      if (hits.length) offenders.push({ file: file.path, sample: hits.slice(0, 3) });
+    }
+    expect(offenders, "这些地方用了单省略号 —— 中文文案里写「……」").toEqual([]);
+  });
+
+  it("判据确实扫得到东西(防空转)", () => {
+    const withDouble = FILES.filter((f) => /……/.test(visibleOnly(f.tpl))).length;
+    expect(withDouble, "双省略号一处都没扫到 —— 判据可能在空转").toBeGreaterThanOrEqual(2);
+  });
+
+  it("判据自证:单省略号认得出来,…… 与注释里的数学符号不误伤", () => {
+    expect(singleEllipsis("<p>正在测定灵根…</p>")).toHaveLength(1);
+    expect(singleEllipsis("<p>正在测定灵根……</p>")).toEqual([]);
+    // 注释与表达式里的单省略号不算文案
+    expect(singleEllipsis("<!-- 9.99…e52 --><p>甲</p>")).toEqual([]);
+    expect(singleEllipsis('<p>{{ a ? "甲…" : "乙" }}</p>')).toEqual([]);
+  });
+});

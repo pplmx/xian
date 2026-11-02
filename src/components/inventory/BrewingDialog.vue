@@ -58,7 +58,7 @@
         inputmode="search"
         aria-label="搜方名"
         class="w-full rounded-[2px] border border-ink/15 bg-paper-deep/60 px-2.5 py-1.5 text-[16px] text-ink outline-none placeholder:text-ink-faint"
-        placeholder="搜方名…"
+        placeholder="搜方名……"
       />
       <p v-if="filteredRecipes.length" class="px-0.5 text-center text-note text-ink-faint tabular">
         {{ recipeQuery.trim() ? "搜得" : "丹方共" }} {{ filteredRecipes.length }} 张 · 现看
