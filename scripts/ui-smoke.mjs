@@ -63,6 +63,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { blockExternal, watchPageErrors } from "./lib/pageErrors.mjs";
 import { decryptSlice, lateSlices, seedSave } from "./lib/saveFixture.mjs";
+import { SAVE_PREFIX } from "../src/utils/storage.ts";
 import { SAVE_VERSION } from "../src/utils/storage.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -394,7 +395,10 @@ async function checkLegacySave(browser) {
     watchPageErrors(page, pageErrors);
     await page.goto(INDEX + "#/inventory", { waitUntil: "load" });
     await page.waitForTimeout(1800);
-    const raw = await page.evaluate(() => localStorage.getItem("xuanshu.resources"));
+    const raw = await page.evaluate(
+      (prefix) => localStorage.getItem(`${prefix}resources`),
+      SAVE_PREFIX,
+    );
     const res = JSON.parse(decryptSlice(raw) || "{}");
     if (!res.herbs) fails.push("旧档的标量灵草没有被迁移成五档");
     if (res.herb !== undefined) fails.push("迁移之后旧键 herb 还在盘上");
@@ -483,8 +487,9 @@ async function checkSaveFull(browser) {
        * adventure 等一起落了盘)。故这里钉「至少 7 个、且 settings 在场」——
        * 少了任何一片,都说明重试只是把横幅收了起来。
        */
-      const diskKeys = await page.evaluate(() =>
-        Object.keys(localStorage).filter((k) => k.startsWith("xuanshu.")),
+      const diskKeys = await page.evaluate(
+        (prefix) => Object.keys(localStorage).filter((k) => k.startsWith(prefix)),
+        SAVE_PREFIX,
       );
       if (diskKeys.length < 7) {
         fails.push(
