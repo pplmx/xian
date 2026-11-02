@@ -303,6 +303,7 @@ const CATEGORIES = [
       "colorVar.spec",
       "inkIcons.spec",
       "ornament.spec",
+      "deadStyle.spec",
       "favicon.spec",
       "useNativeInsets",
       "useGameClock",

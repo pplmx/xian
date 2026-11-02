@@ -38,7 +38,7 @@
         </div>
       </div>
 
-      <div data-desktop-context class="folio-head__position min-w-0">
+      <div class="folio-head__position min-w-0">
         <span class="folio-head__position-volume">{{ positionMark }}</span>
         <span class="folio-head__position-rule" aria-hidden="true" />
         <span class="folio-head__position-entry truncate">{{ entryMark }}</span>

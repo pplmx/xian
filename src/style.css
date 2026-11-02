@@ -377,14 +377,6 @@
       transform: translateY(-2px);
     }
   }
-  @keyframes drift {
-    from {
-      transform: translateX(-4px);
-    }
-    to {
-      transform: translateX(4px);
-    }
-  }
   @keyframes ink-wave {
     0% {
       opacity: 0.55;
@@ -393,17 +385,6 @@
     100% {
       opacity: 0;
       transform: scale(1.6);
-    }
-  } /* 修为圆满「蓄势微光」:辉光由 .card-charged::before 以静态 box-shadow 驻留,
-   这里只把它的 opacity 淡入淡出 —— opacity 是合成器属性(走 GPU 合成层),
-   不再像从前那样逐帧重绘 box-shadow(无限动画 × 每帧重绘 = 低端移动端掉帧源)。 */
-  @keyframes card-glow {
-    0%,
-    100% {
-      opacity: 0;
-    }
-    50% {
-      opacity: 1;
     }
   }
   @keyframes card-flash {
@@ -1157,10 +1138,6 @@
     border-radius: 0;
     background: transparent;
     box-shadow: none;
-  }
-  .atlas-trigger__mark {
-    color: rgb(var(--color-ink-faint-rgb));
-    letter-spacing: 0.08em;
   }
   .atlas-trigger:active {
     background: rgb(var(--color-ink-rgb) / 0.06);
@@ -1986,11 +1963,8 @@
  *
  * 收起态仍有 28px 触达高度；册名只是视觉收起，链接文字仍在 DOM 中供读屏读取。
  */
-  .desktop-spine,
-  .folio-head__desktop-context {
-    display: none;
-  }
   .desktop-spine {
+    display: none;
     min-width: 0;
     min-height: 0;
     flex-direction: column;
@@ -2537,10 +2511,6 @@
     .app-shell[data-game-shell="desk"] [data-atlas-trigger],
     .app-shell[data-game-shell="desk"] .folio-head__identity {
       display: none;
-    }
-
-    .app-shell[data-game-shell="desk"] .folio-head__desktop-context {
-      display: flex;
     }
 
     /*
@@ -3750,19 +3720,6 @@
       transparent 72%
     );
     animation: ink-wave 1.15s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
-  } /* 修为圆满:境界卡蓄势微光呼吸(保留卡片底影) */
-  .card-charged {
-    border-color: rgb(var(--color-cinnabar-rgb) / 0.38);
-  } /* 同上:朱砂辉光以静态 box-shadow 画在 ::before 上,随 card-glow 淡入淡出
-   (透明遮罩 + pointer-events:none,不挡内容不挡点击) */
-  .card-charged::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    box-shadow: 0 0 16px 2px rgb(168 63 57 / 0.22);
-    animation: card-glow 2.6s ease-in-out infinite;
   } /* 修为圆满:进度条流光转金、涌动加速 */
   .bar-charged .bar-fill::after {
     background: linear-gradient(90deg, transparent, rgb(255 226 150 / 0.6), transparent);
@@ -3893,12 +3850,6 @@
   }
   .ink-dots span:nth-child(3) {
     animation-delay: 0.3s;
-  } /* 远山视差:两层山错速缓漂 */
-  .drift-far {
-    animation: drift 26s ease-in-out infinite alternate;
-  }
-  .drift-near {
-    animation: drift 18s ease-in-out infinite alternate-reverse;
   } /* 蓄势涟漪:大事将成的按钮外圈 */
   .pulse-ready {
     position: relative;

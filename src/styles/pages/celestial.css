@@ -438,8 +438,7 @@
     align-items: center;
     gap: 0.48rem 0.8rem;
   }
-  .celestial-trial-daily__identity,
-  .celestial-trial-row__copy {
+  .celestial-trial-daily__identity {
     min-width: 0;
   }
   .celestial-trial-daily__world {
