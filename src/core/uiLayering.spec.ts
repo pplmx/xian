@@ -2268,8 +2268,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 只报「灵石不足/器灵尘不足」,付不起看不到差多少。补齐并钉死:短差必须走
     // GNum 指数感知减法(与重铸同款),不许退回裸定性词。
     const xfer = FILES.find((f) => f.path === "components/equipment/AffixTransferPanel.vue");
+    // 短差要列出来(判据的实质),数字格式走 formatGN(同屏灵石已是那个格式)
     expect(xfer?.src, "转移付不起要列器灵尘差").toContain(
-      "器灵尘×{{ Math.max(0, plan.cost.dust - resources.dust) }}",
+      "器灵尘×{{ formatGN(Math.max(0, plan.cost.dust - resources.dust)) }}",
     );
     expect(xfer?.src, "转移付不起要列灵石差(GNum 感知)").toContain(
       "toNum(plan.cost.stone) - toNum(resources.spiritStone)",
@@ -3440,7 +3441,10 @@ describe("界面分层 · 浮层只有一个出处", () => {
       "悟道点 · {{ upCost.page }} 残页",
     );
     const equip = FILES.find((f) => f.path === "components/equipment/EquipReforgePanel.vue");
-    expect(equip?.src, "重铸行要用全称「器灵尘」").toContain("器灵尘×{{ reforgeCostVal.dust }}");
+    // 实质是「用全称而不是裸『尘×』」;数字走 formatGN,与同屏灵石同一个读法
+    expect(equip?.src, "重铸行要用全称「器灵尘」").toContain(
+      "器灵尘×{{ formatGN(reforgeCostVal.dust) }}",
+    );
     expect(equip?.src, "不许重铸再退回裸「尘×」").toContain("花 器灵尘×");
     const service = readFileSync(resolve(__dirname, "../core/buildingService.ts"), "utf-8");
     expect(service, "建筑尚差两臂同用简称「铁」").toContain("} 铁`");
@@ -3527,6 +3531,26 @@ describe("界面分层 · 浮层只有一个出处", () => {
       expect(src, `${f} 的返回兜底要指向人物`).toContain('back-to="character"');
       expect(src, `${f} 的返回文案要写「人物」`).toContain('back-label="人物"');
     }
+  });
+
+  it("器灵尘展示一律走 formatGN —— 与同屏灵石同一个读法", () => {
+    /*
+     * 器灵尘是普通 number,灵石是 GNum,于是「尘」那边长期直接印裸数:
+     * 强化到 15 级时同一行写着「器灵尘×2569 · 灵石 33,627」——
+     * 一个带千分位、一个不带,读者会以为两种单位量级不同。
+     * 2500 以上就开始出现这种并排,而那一档正是玩家最常看代价的时候。
+     */
+    const offenders: string[] = [];
+    for (const f of FILES) {
+      if (!/器灵尘×\{\{/.test(f.src)) continue;
+      for (const m of f.src.matchAll(/器灵尘×\{\{\s*([^}]*)\}\}/g)) {
+        const expr = (m[1] ?? "").trim();
+        if (!expr.includes("formatGN(")) offenders.push(`${f.path}: 器灵尘×{{ ${expr} }}`);
+      }
+    }
+    expect(offenders, "这些地方的器灵尘没走 formatGN —— 与灵石同一个读法").toEqual([]);
+    // 防空转:真的扫到过若干处
+    expect(FILES.filter((f) => /器灵尘×\{\{/.test(f.src)).length).toBeGreaterThanOrEqual(3);
   });
 
   it("同物一名回潮就红 —— 名号/气血/灵根念白的用户面命名不许分叉", () => {

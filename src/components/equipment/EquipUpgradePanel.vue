@@ -61,7 +61,9 @@ function doUpgradeAll(): void {
     <div class="ink-divider my-3" />
     <p class="flex items-center justify-between text-body text-ink-faint">
       <span>强化 +{{ inst.level + 1 }} / 上限 {{ equipLevelCap() }}</span>
-      <span class="tabular">器灵尘×{{ upCost.dust }} · 灵石 {{ formatGN(upCost.stone) }}</span>
+      <span class="tabular"
+        >器灵尘×{{ formatGN(upCost.dust) }} · 灵石 {{ formatGN(upCost.stone) }}</span
+      >
     </p>
     <!-- 代价有了,这一级给什么也要在 —— 基础攻防血按 (1+级数×12%) 叠乘,读 EPQUIP_LEVEL_BONUS 不手写 -->
     <p class="mt-0.5 text-note text-ink-faint">
@@ -69,7 +71,7 @@ function doUpgradeAll(): void {
     </p>
     <!-- 付不起就把缺摆出来:灰按钮只说不许,不告诉差多少等于没说完(与法宝炼化同款) -->
     <p v-if="!upAffordable" class="mt-1 text-note text-cinnabar tabular">
-      尚差 器灵尘×{{ Math.max(0, upCost.dust - resources.dust) }} · 灵石
+      尚差 器灵尘×{{ formatGN(Math.max(0, upCost.dust - resources.dust)) }} · 灵石
       {{ formatGN(Math.max(0, toNum(upCost.stone) - toNum(resources.spiritStone))) }}
     </p>
     <!--
@@ -93,7 +95,7 @@ function doUpgradeAll(): void {
         本轮连强至 +{{ upgradePlan.toLevel }}，共 {{ upgradePlan.count }} 档
       </template>
       <template #detail>
-        耗 器灵尘×{{ upgradePlan.dust }} · 灵石 {{ formatGN(upgradePlan.stone) }}
+        耗 器灵尘×{{ formatGN(upgradePlan.dust) }} · 灵石 {{ formatGN(upgradePlan.stone) }}
       </template>
     </BatchSpendLedger>
     <button

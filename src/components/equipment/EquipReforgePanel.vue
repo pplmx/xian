@@ -296,11 +296,11 @@ function triesOf(id: string, minRoll = 0): number | null {
       </button>
     </div>
     <p class="mt-1 text-note text-ink-faint tabular">
-      每洗 器灵尘×{{ reforgeCostVal.dust }} · 灵石 {{ formatGN(reforgeCostVal.stone) }}
+      每洗 器灵尘×{{ formatGN(reforgeCostVal.dust) }} · 灵石 {{ formatGN(reforgeCostVal.stone) }}
     </p>
     <!-- 首洗就付不起,预告就把它摆出来(与重铸/封存同款):灰钮不许只有 broke toast -->
     <p v-if="autoTargets.length && !autoAffordable" class="mt-1 text-note text-cinnabar tabular">
-      尚差 器灵尘×{{ Math.max(0, reforgeCostVal.dust - resources.dust) }} · 灵石
+      尚差 器灵尘×{{ formatGN(Math.max(0, reforgeCostVal.dust - resources.dust)) }} · 灵石
       {{ formatGN(Math.max(0, toNum(reforgeCostVal.stone) - toNum(resources.spiritStone))) }}
     </p>
     <p v-if="autoTargets.length && !autoReachable" class="mt-1 text-note text-cinnabar">
@@ -318,7 +318,7 @@ function triesOf(id: string, minRoll = 0): number | null {
       >
         重铸词条
         <span class="ml-1 tabular text-note text-ink-faint tinylens:ml-0">
-          器灵尘×{{ reforgeCostVal.dust }} · 灵石 {{ formatGN(reforgeCostVal.stone) }}
+          器灵尘×{{ formatGN(reforgeCostVal.dust) }} · 灵石 {{ formatGN(reforgeCostVal.stone) }}
         </span>
       </button>
       <div
@@ -332,7 +332,7 @@ function triesOf(id: string, minRoll = 0): number | null {
     </div>
     <!-- 付不起就把缺摆出来(与强化同款):重铸同样器灵尘+灵石两道账,缺谁明说谁 -->
     <p v-if="reforgeCostVal && !reforgeAffordable" class="mt-1 text-note text-cinnabar tabular">
-      尚差 器灵尘×{{ Math.max(0, reforgeCostVal.dust - resources.dust) }} · 灵石
+      尚差 器灵尘×{{ formatGN(Math.max(0, reforgeCostVal.dust - resources.dust)) }} · 灵石
       {{ formatGN(Math.max(0, toNum(reforgeCostVal.stone) - toNum(resources.spiritStone))) }}
     </p>
     <!-- 封存只算灵石一道账:付不起同样置灰+列差,不许只有点了才听见 toast -->

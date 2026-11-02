@@ -222,7 +222,9 @@
             >分解返还{{ inst?.level ? `(${refundRateText()})` : "" }}</span
           >
           <span data-equipment-salvage-cost class="flex flex-wrap justify-end gap-x-1.5 tabular">
-            <span data-value-nowrap class="whitespace-nowrap">器灵尘×{{ salvage.dust }}</span>
+            <span data-value-nowrap class="whitespace-nowrap"
+              >器灵尘×{{ formatGN(salvage.dust) }}</span
+            >
             <span v-if="!isZero(salvage.stone)" data-value-nowrap class="whitespace-nowrap"
               >· 灵石 {{ formatGN(salvage.stone) }}</span
             >

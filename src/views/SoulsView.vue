@@ -459,8 +459,8 @@
                 投入要报数:尘几许、灵石几许(enhanceInvested 同款,不是一句定性)。
               -->
               <p v-if="row.invested && row.investedCost" class="t-note text-cinnabar">
-                此器已淬养,入炉将连同强化投入一并失去(器灵尘×{{ row.investedCost.dust }} · 灵石
-                {{ formatGN(row.investedCost.stone) }})
+                此器已淬养,入炉将连同强化投入一并失去(器灵尘×{{ formatGN(row.investedCost.dust) }} ·
+                灵石 {{ formatGN(row.investedCost.stone) }})
               </p>
             </div>
             <!-- 入炉二步确认:毁的是原器,不按一个「入 炉」就直接交代了 -->
