@@ -6,7 +6,7 @@
  * - 值日之宿:今日之星象,只利**一方界域**(四象配四界的游戏约定,见 data/xiangxiu)。
  *
  * 故它给的不是又一个全局加成,而是一个"今日该往哪里去"的提示:
- * 值日宿所属之象,所配界域的际遇更易遇上(见 exploration 的际遇判定)。
+ * 值日宿所属之象,所配界域的际遇概率提高 MANSION_EVENT_LUCK(见 exploration 的际遇判定)。
  *
  * 确定性:由**游戏总秒数**派生,同一游戏日固定,无现实时间依赖(与天时同法)。
  * 这一层是**纯函数** —— 游戏总秒数由调用方给(引擎 / 离线结算 / 视图都拿得到
@@ -17,6 +17,7 @@ import { regionDef } from "@/data/regions";
 import { worldOf } from "@/data/realms";
 import { MANSION_EVENT_LUCK } from "@/data/constants";
 export { MANSION_EVENT_LUCK };
+import { formatPercent } from "@/utils/format";
 import type { WorldId } from "@/types";
 
 /**
@@ -61,6 +62,17 @@ export function isFavoredRegion(regionId: string, totalPlaySec: number): boolean
  */
 export function mansionEventLuck(regionId: string, totalPlaySec: number): number {
   return isFavoredRegion(regionId, totalPlaySec) ? MANSION_EVENT_LUCK : 0;
+}
+
+/**
+ * 星象之利的读数文案 —— 历练横幅与界域志共用这一处,措辞跟着真值走。
+ *
+ * 它加的是**概率的比例增量**:`概率 × (1 + LUCK)`。旧文案写「概率乘 10%」,
+ * 乘号后面接的是乘数,读出来是「只剩一成」,与真值正好相反;「概率 +10%」才与
+ * 上式同义。数字仍从同一枚常数现算,改常数不会撒谎。
+ */
+export function mansionLuckText(): string {
+  return `+${formatPercent(MANSION_EVENT_LUCK, 0)}`;
 }
 
 /** 今日星象一句话(展示层直接用,不另写一份) */

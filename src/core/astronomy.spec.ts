@@ -20,10 +20,12 @@ import {
   favoredWorld,
   isFavoredRegion,
   mansionEventLuck,
+  mansionLuckText,
   mansionOfDay,
   todayMansion,
   todayMansionLine,
 } from "./astronomy";
+import { formatPercent } from "@/utils/format";
 import { exploreEventChance } from "./exploration";
 
 describe("二十八宿 · 数据", () => {
@@ -132,10 +134,18 @@ describe("星象 · 接线", () => {
     const src = readFileSync(resolve(__dirname, "../views/AdventureView.vue"), "utf8")
       .replace(/<!--[\s\S]*?-->/g, "")
       .replace(/\/\/.*$/gm, "");
-    // 直接引引擎常数现算,不许写死「+10%」(改了常数才跟着改)—— AGENTS「改常数就撒谎」
-    expect(src).toContain("MANSION_EVENT_LUCK,");
-    expect(src).toContain("formatPercent(MANSION_EVENT_LUCK, 0)");
+    // 读数文案只此一处(core/astronomy.mansionLuckText),页面直接展开它;
+    // 自己再写一遍 formatPercent 就是第二份副本 —— 措辞与常数两边各改各的
+    expect(src).toContain("mansionLuckText()");
+    expect(src, "利方读数不许在页面里另算一遍").not.toContain("formatPercent(MANSION_EVENT_LUCK");
     expect(src, "利方加成不许退回定性词「更易」").not.toContain("更易");
+  });
+
+  it("星象读数说的是「概率 +10%」而不是「概率乘 10%」", () => {
+    // 真值是 概率 × (1 + LUCK):「乘 10%」读出来是只剩一成,与上式正好相反。
+    // 数字仍从同一枚常数现算,改常数文案跟着走。
+    expect(mansionLuckText()).toBe(`+${formatPercent(MANSION_EVENT_LUCK, 0)}`);
+    expect(mansionLuckText(), "措辞不能把乘数当增量").not.toContain("乘");
   });
 
   it("在线与离线同源:际遇概率只有一份口径(含星象之利)", () => {

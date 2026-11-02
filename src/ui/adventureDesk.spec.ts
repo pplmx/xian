@@ -42,8 +42,11 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
     );
     expect(briefing, "今日行旅直接展示星象账").toContain("{{ mansionLine }}");
     expect(view, "星象仍从 todayMansion 现算").toContain("todayMansion(game.totalPlaySec)");
-    expect(briefing, "利方概率由星象账直接摊开").toContain("{{ describeMansionLuck }}");
-    expect(view, "利方概率直接读引擎常数").toContain("formatPercent(MANSION_EVENT_LUCK, 0)");
+    expect(briefing, "利方概率由星象账直接摊开").toContain("{{ mansionLuckText() }}");
+    expect(view, "读数文案只有一处实现(core/astronomy)").toMatch(
+      /import \{[^}]*mansionLuckText[^}]*\} from "@\/core\/astronomy"/,
+    );
+    expect(briefing, "利方说明要写清他处不加").toContain("他处不加");
     expect(briefing, "途中三档仍走唯一档位表").toContain("EVENT_TIERS");
     expect(briefing, "每档概率按当前缘分状态现算").toContain("tierOddsText(t.id, chainPending)");
     expect(briefing, "所钟标签仍从 biasEffectOf 取").toContain("{{ biasLabel }}");

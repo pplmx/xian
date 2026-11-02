@@ -272,7 +272,7 @@ describe("界域案 · 四界先成谱,境界再逐格展开", () => {
       /const ziweiChapterFact = computed\([\s\S]{0,300}PALACES\.length[\s\S]{0,160}STARS\.length[\s\S]{0,180}fateModsText\.value/,
     );
     expect(view).toMatch(
-      /const xiangChapterFact = computed\([\s\S]{0,300}MANSIONS\.length[\s\S]{0,180}favoredWorldName\.value[\s\S]{0,180}MANSION_EVENT_LUCK/,
+      /const xiangChapterFact = computed\([\s\S]{0,300}MANSIONS\.length[\s\S]{0,180}favoredWorldName\.value[\s\S]{0,180}mansionLuckText\(\)/,
     );
     expect(view).toMatch(
       /const qimenChapterFact = computed\([\s\S]{0,180}GATES\.length[\s\S]{0,120}QIMEN_PALACE_COUNT/,

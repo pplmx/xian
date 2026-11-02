@@ -515,9 +515,9 @@
             <div data-value-row class="flex items-baseline gap-2">
               <span class="shrink-0 text-body text-ink-faint">今日利</span>
               <span class="font-kai text-section text-gold-ink">{{ favoredWorldName }}</span>
-              <span class="ml-auto shrink-0 text-note text-ink-faint tabular"
-                >+{{ formatPercent(MANSION_EVENT_LUCK, 0) }}</span
-              >
+              <span class="ml-auto shrink-0 text-note text-ink-faint tabular">{{
+                mansionLuckText()
+              }}</span>
             </div>
             <p class="mt-0.5 text-note leading-relaxed text-ink-faint">
               只在 {{ favoredWorldName }} 生效,往他处去不加 ——
@@ -531,7 +531,7 @@
               分野依《晋书·天文志》(诸家小异),只作来历读 —— 游戏里的地界不是九州。
               {{ cnNumber(IMAGES.length) }}象配{{ cnNumber(WORLDS.length) }}界({{
                 imageWorldMap
-              }}),值日之宿所属之象, 所配界域今日际遇更易。
+              }}),值日之宿所属之象,所配界域今日际遇概率{{ mansionLuckText() }}。
             </p>
             <button
               class="realm-codex-disclosure"
@@ -655,8 +655,8 @@ import { PALACES, STARS } from "@/data/ziwei";
 import { fateLordLine } from "@/core/fate";
 import { IMAGES, MANSIONS, type ImageId } from "@/data/xiangxiu";
 import { GATES, QIMEN_PALACE_COUNT } from "@/data/qimen";
-import { cnNumber, formatCountdown, formatPercent } from "@/utils/format";
-import { MANSION_EVENT_LUCK, favoredWorld, todayMansion, todayMansionLine } from "@/core/astronomy";
+import { cnNumber, formatCountdown } from "@/utils/format";
+import { favoredWorld, mansionLuckText, todayMansion, todayMansionLine } from "@/core/astronomy";
 import { worldDef, worldOf } from "@/data/realms";
 import type { WorldId } from "@/types";
 import { modsText } from "@/data/statNames";
@@ -849,8 +849,7 @@ const ziweiChapterFact = computed(
   () => `${PALACES.length} 宫 · ${STARS.length} 主星 · 命格之力 ${fateModsText.value}`,
 );
 const xiangChapterFact = computed(
-  () =>
-    `${MANSIONS.length} 宿 · 今日利 ${favoredWorldName.value} +${formatPercent(MANSION_EVENT_LUCK, 0)}`,
+  () => `${MANSIONS.length} 宿 · 今日利 ${favoredWorldName.value} ${mansionLuckText()}`,
 );
 const qimenChapterFact = computed(() => `${GATES.length} 门 · 洛书 ${QIMEN_PALACE_COUNT} 宫`);
 /** 卷目默认只开当前界;换境之后新所在的一卷也自动展开,不把玩家留在旧卷。 */

@@ -54,7 +54,7 @@
                 <p>
                   {{ mansionLine }} —— 利
                   <strong>{{ favoredWorldName }}</strong>
-                  ,在其地历练际遇{{ describeMansionLuck }}。
+                  ,在其地历练际遇概率{{ mansionLuckText() }},他处不加。
                 </p>
               </div>
               <div v-if="biasLabel" data-bias-hint class="adventure-briefing__fact">
@@ -632,7 +632,7 @@ import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import AdventureCompass from "@/components/adventure/AdventureCompass.vue";
 import SecretRealmCard from "@/components/adventure/SecretRealmCard.vue";
 import MortalWorldRibbon from "@/components/world/MortalWorldRibbon.vue";
-import { todayMansion, favoredWorld, todayMansionLine, MANSION_EVENT_LUCK } from "@/core/astronomy";
+import { todayMansion, favoredWorld, todayMansionLine, mansionLuckText } from "@/core/astronomy";
 import { worldDef } from "@/data/realms";
 import {
   canEnterRegion,
@@ -733,8 +733,6 @@ const todayMansionName = computed(() => todayMansionDef.value.fullName);
 const mansionLine = computed(() => todayMansionLine(game.totalPlaySec));
 const favoredWorldId = computed<WorldId>(() => favoredWorld(todayMansionDef.value));
 const favoredWorldName = computed(() => worldDef(favoredWorldId.value).name);
-/** 利方际遇加成 —— 直接读引擎那枚常数现算(不许写定性形容词) */
-const describeMansionLuck = computed(() => `概率乘 ${formatPercent(MANSION_EVENT_LUCK, 0)}`);
 /** 区域适配原因点按展开(移动端无 hover) */
 const adaptExpand = ref<string | null>(null);
 
