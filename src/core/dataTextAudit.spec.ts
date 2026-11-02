@@ -36,10 +36,10 @@ import {
 } from "@/data/earlyGame";
 import { modernDuration } from "@/data/timeUnits";
 import { caveOptionEffectText, durationText, enlightenmentEffectText } from "@/ui/earlyGameText";
-import { PACTS } from "@/data/pacts";
+import { PACTS, pactRuleLine } from "@/data/pacts";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { relative, resolve } from "node:path";
-import { isSourceFile, walkFiles } from "@/test/readSource";
+import { isSourceFile, readSource, walkFiles } from "@/test/readSource";
 import { cnNumber, formatSignedPercent } from "@/utils/format";
 import { REALMS, WORLDS, ascensionLeap } from "@/data/realms";
 import {
@@ -191,51 +191,45 @@ describe("文案数值对账 · 天道契约", () => {
     expect(checked).toBeGreaterThanOrEqual(4);
   });
 
-  it("「道源 ×N」里的 N 必须等于 sourceMult —— 光说能找到不够", () => {
+  it("「道源 ×N」由 sourceMult 现算 —— 文案里不许再抄一遍", () => {
     /**
-     * 上面两条查的是**单向**:文案里的每个数字,能不能在 rules / sourceMult 里找到。
-     * 这挡得住"文案凭空多写一个数",挡不住**改字段不改文案** ——
-     * 把血契的 sourceMult 从 2.2 提到 3.5,文案里的 2.2 仍能在 rules 里找到
-     * (治疗无效那条 rules 是 `healMult: 0`,而 2.2 恰好不再被任何规则承载,
-     * 但判据只问"文案能不能对上",不会反问"字段有没有被文案表达")。
+     * 这条从前做的是**双向对账**:文案里写的「×2.2」必须等于 `sourceMult`。
+     * 那能抓住「改字段不改文案」,但根子还在 —— 同一个数在一处定义、另一处复述,
+     * 全靠判据盯着不许分叉。
      *
-     * 「道源 ×N」是契约文案里唯一**有确切归属**的数字 —— 它只可能来自 sourceMult。
-     * 故对它做双向对账:文案写的必须恰是字段值。改数不文案,当场红。
+     * 现在两者是**派生**关系:pactRuleLine() 从 `sourceMult` 现算后半句,
+     * 文案里根本没有第二个数可抄。判据于是改成钉这条派生:
+     *   ① 每份契约的整句里都出现「道源 ×<sourceMult>」;
+     *   ② 数据源里不许再出现手写的「道源 ×数字」。
+     * 改 sourceMult 时整句自动跟着变,不存在"忘了改文案"这个失败模式。
      */
     let checked = 0;
     for (const p of PACTS) {
-      if (typeof p.sourceMult !== "number") continue;
-      const shown = /道源\s*×\s*(\d+(?:\.\d+)?)/.exec(p.ruleText);
-      expect(
-        shown,
-        `契约「${p.name}」有 sourceMult,文案里却没写「道源 ×N」:${p.ruleText}`,
-      ).not.toBeNull();
+      const line = pactRuleLine(p);
+      expect(line, `契约「${p.name}」的整句里没有「道源 ×${p.sourceMult}」:${line}`).toContain(
+        `道源 ×${p.sourceMult.toFixed(1)}`,
+      );
       checked += 1;
-      expect(
-        Number(shown![1]),
-        `契约「${p.name}」文案写「道源 ×${shown![1]}」,但 sourceMult 是 ${p.sourceMult} —— 改数没改文案`,
-      ).toBe(p.sourceMult);
     }
-    // 自证:真改一个字段,这条会红(见下方注入用例)
-    expect(checked, "一条「道源 ×N」都没查到,判据形同虚设").toBeGreaterThanOrEqual(4);
+    expect(checked, "一份契约都没查到,判据形同虚设").toBeGreaterThanOrEqual(4);
+
+    const src = readSource("src/data/pacts.ts");
+    // 数据源里的 ruleText 只写规则本体,倍率由 pactRuleLine 现算
+    expect(
+      /道源\s*×\s*\d/.test(src.replace(/\/\*[\s\S]*?\*\//g, "")),
+      "pacts.ts 里又出现了手写的「道源 ×N」—— 它该由 sourceMult 现算",
+    ).toBe(false);
   });
 
-  it("判据自证:把 sourceMult 改掉,双向对账必须抓得住", () => {
-    /**
-     * 与 deadExportAudit 同一条纪律:判据本身要先证明它能被违反。
-     * 上一条若是写成"文案里的数能在字段里找到"的单向形式,这条注入就抓不到 ——
-     * 因为规则里的数还在,文案也就"对得上"。故这里显式跑一遍反向逻辑。
-     */
+  it("判据自证:改 sourceMult,整句自动跟着变(没有第二处要改)", () => {
+    // 与 deadExportAudit 同一条纪律:判据要先证明它能被违反。
+    // 派生写法下,改字段就等于改文案 —— 正是这条要钉的性质。
     const mutated = PACTS.map((p) => (p.id === "xue" ? { ...p, sourceMult: 3.5 } : p));
-    const broken = mutated.filter((p) => {
-      if (typeof p.sourceMult !== "number") return false;
-      const shown = /道源\s*×\s*(\d+(?:\.\d+)?)/.exec(p.ruleText);
-      return shown !== null && Number(shown[1]) !== p.sourceMult;
-    });
-    expect(
-      broken.map((p) => p.name),
-      "改 sourceMult 却不改文案,双向对账必须红",
-    ).toEqual(["血契"]);
+    const xue = mutated.find((p) => p.id === "xue")!;
+    expect(pactRuleLine(xue)).toContain("道源 ×3.5");
+    expect(pactRuleLine(xue), "旧值不该残留").not.toContain("2.2");
+    // 反证:若有人把倍率写回 ruleText,上面那条源码判据就会红
+    expect(/道源\s*×\s*\d/.test('ruleText: "一切治疗无效 · 道源 ×3.5"')).toBe(true);
   });
 
   /**

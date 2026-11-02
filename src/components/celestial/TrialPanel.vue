@@ -48,7 +48,7 @@
           <span v-if="dailyPact" class="celestial-trial-omen celestial-trial-omen--pact">
             <span aria-hidden="true">契</span>
             <span>{{ dailyPact.name }}</span>
-            <span class="celestial-trial-omen__text">{{ dailyPact.ruleText }}</span>
+            <span class="celestial-trial-omen__text">{{ pactRuleLine(dailyPact) }}</span>
           </span>
         </p>
       </div>
@@ -372,7 +372,7 @@
                       ? 'border-cinnabar text-cinnabar'
                       : 'border-ink/25 text-ink-faint'
                   "
-                  :title="p.ruleText"
+                  :title="pactRuleLine(p)"
                   :aria-pressed="draft.pactId === p.id"
                   @click="setDraftPact(p.id)"
                 >
@@ -431,7 +431,7 @@
           </p>
           <p v-else class="celestial-challenge-contract__note">未叠变数 · 只按本界原始规则验约</p>
           <p v-if="challengePact" class="celestial-challenge-selection">
-            立约「{{ challengePact.name }}」：{{ challengePact.ruleText }}
+            立约「{{ challengePact.name }}」：{{ pactRuleLine(challengePact) }}
           </p>
         </div>
 
@@ -472,7 +472,7 @@
 import { computed, nextTick, ref } from "vue";
 import { useEndgameStore } from "@/stores/endgame";
 import { CELESTIAL_WORLDS, TRIALS } from "@/data/endgame";
-import { PACTS, pactDef } from "@/data/pacts";
+import { PACTS, pactDef, pactRuleLine } from "@/data/pacts";
 import { MUTATORS, mutatorDef } from "@/data/mutators";
 import { undertakeDaily, type DailyChallenge } from "@/core/dailyChallenge";
 import {

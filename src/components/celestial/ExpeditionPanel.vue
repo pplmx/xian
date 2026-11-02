@@ -320,7 +320,7 @@
           @click="prepPact = null"
         >
           <span class="text-body text-ink-soft">不立契约</span>
-          <span class="ml-auto text-note text-ink-faint">道源 ×1.0</span>
+          <span class="ml-auto text-note text-ink-faint">道源 ×{{ NO_PACT_MULT.toFixed(1) }}</span>
         </button>
         <button
           v-for="pact in PACTS"
@@ -339,7 +339,7 @@
           >
           <span class="min-w-0">
             <span class="block font-kai text-body text-ink">{{ pact.name }}</span>
-            <span class="block text-note text-ink-faint">{{ pact.ruleText }}</span>
+            <span class="block text-note text-ink-faint">{{ pactRuleLine(pact) }}</span>
           </span>
         </button>
       </div>
@@ -480,7 +480,7 @@ import {
   EXPEDITION_ROUTE_LAYERS,
 } from "@/data/endgame";
 import { REALMS } from "@/data/realms";
-import { PACTS, pactDef } from "@/data/pacts";
+import { NO_PACT_MULT, PACTS, pactDef, pactRuleLine } from "@/data/pacts";
 import { GATES, gateDef } from "@/data/qimen";
 import {
   abandonExpedition,

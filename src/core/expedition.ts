@@ -15,7 +15,7 @@ import type {
 import { rng } from "@/utils/random";
 import { mulberry32, RandomService } from "@/utils/random";
 import { celestialWorldDef } from "@/data/endgame";
-import { pactDef } from "@/data/pacts";
+import { NO_PACT_MULT, pactDef } from "@/data/pacts";
 import { MUTATORS } from "@/data/mutators";
 import { PACT_END_HP_FLOOR } from "@/data/constants";
 import { EXPEDITION_GUARDIAN_LAYER, EXPEDITION_ROUTE_LAYERS, MUTATION_FOES } from "@/data/endgame";
@@ -186,7 +186,10 @@ function settle(
     // starTied 世界:启动时由 UI 算好的今日星象相合乘数(run.starFavor,默认 1)——只此世界、不给全局
     const starFavor = run.starFavor ?? 1;
     reward = Math.floor(
-      (world.rewardDaoSource + run.bonus) * (pact?.sourceMult ?? 1) * (1 + speedBonus) * starFavor,
+      (world.rewardDaoSource + run.bonus) *
+        (pact?.sourceMult ?? NO_PACT_MULT) *
+        (1 + speedBonus) *
+        starFavor,
     );
     endgame.addDaoSource(reward);
     endgame.recordWorldClear(world.id);

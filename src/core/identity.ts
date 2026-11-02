@@ -4,7 +4,7 @@
  */
 import type { DaoMark, DaoPathId, MarkReplay } from "@/types";
 import { DAO_PATHS, celestialWorldDef } from "@/data/endgame";
-import { pactDef } from "@/data/pacts";
+import { NO_PACT_MULT, pactDef } from "@/data/pacts";
 import { PACT_END_HP_FLOOR } from "@/data/constants";
 import { usePlayerStore } from "@/stores/player";
 import { useEndgameStore } from "@/stores/endgame";
@@ -93,7 +93,7 @@ export function cultivatorProfile(marks: DaoMark[]): CultivatorProfile | null {
   );
   const pactRate = pactMarks.length / marks.length;
   const avgMult = pactMarks.length
-    ? pactMarks.reduce((s, m) => s + (pactDef(m.replay.pactId)?.sourceMult ?? 1), 0) /
+    ? pactMarks.reduce((s, m) => s + (pactDef(m.replay.pactId)?.sourceMult ?? NO_PACT_MULT), 0) /
       pactMarks.length
     : 1;
   const riskScore = pactRate * avgMult;
@@ -166,7 +166,9 @@ export function daoNarrative(
   const pacted = thisLife.filter(
     (m): m is DaoMark & { replay: MarkReplay & { pactId: string } } => !!m.replay?.pactId,
   );
-  const heavyPacts = pacted.filter((m) => (pactDef(m.replay.pactId)?.sourceMult ?? 1) >= 2.5);
+  const heavyPacts = pacted.filter(
+    (m) => (pactDef(m.replay.pactId)?.sourceMult ?? NO_PACT_MULT) >= 2.5,
+  );
   const canPacts = pacted.filter((m) => m.replay.pactId === "can" || m.replay.pactId === "xue");
 
   switch (daoId) {
@@ -218,7 +220,7 @@ export function trackClearRecords(
   const life = player.reincarnation.count + 1;
   endgame.updateRecord("fastest_world", totalRounds, life, worldName, "min");
   if (pactId) {
-    const mult = pactDef(pactId)?.sourceMult ?? 1;
+    const mult = pactDef(pactId)?.sourceMult ?? NO_PACT_MULT;
     endgame.updateRecord(
       "highest_pact",
       Math.round(mult * 10) / 10,
