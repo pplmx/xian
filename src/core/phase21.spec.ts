@@ -3,6 +3,8 @@
  * 原则:每条新规则都必须「有解、无万金油」;模拟器就是发布门
  */
 import { describe, expect, it } from "vite-plus/test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import type { CombatRules, CombatantSnap } from "@/types";
 import { mulberry32, RandomService } from "@/utils/random";
 import { CELESTIAL_WORLDS, MUTATION_FOES, TRIAL_FOES } from "@/data/endgame";
@@ -265,6 +267,14 @@ describe("道途深化裁判", () => {
       displayName: "x",
     });
     expect(SWORD_PURITY_MAX_LAYERS).toBe(pure.checks.length);
+    // 判据名里的百分比也读那一枚阈值:改成 0.55 却还写着「≥60%」,玩家会照旧
+    // 以为 60% 才成形。名字与判定同读 STYLE_MATURE_AFFINITY —— 故这里不查
+    // "等于 60%"(今天恰好同值),而是查源码里没有手写的「≥60%」字面量。
+    expect(pure.checks[0]!.name, "纯度判据名里的百分比要跟着阈值走").toContain(
+      `${Math.round(STYLE_MATURE_AFFINITY * 100)}%`,
+    );
+    const daoDepthSrc = readFileSync(resolve(__dirname, "daoDepth.ts"), "utf8");
+    expect(daoDepthSrc, "判据名不许再手写「契合 ≥60%」").not.toMatch(/契合\s*≥\s*60%/);
   });
 
   it("剑意叠层与杀伐速战加成的数学正确", () => {

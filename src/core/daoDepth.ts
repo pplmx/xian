@@ -7,6 +7,9 @@ import type { BuildDetection } from "./buildDetect";
 import { modOf } from "./statsCalc";
 import { STYLE_MATURE_AFFINITY } from "./buildDetect";
 
+/** 纯度判据里「主流派成形」那一项的名字 —— 百分比从阈值现算,不手写「60%」 */
+const MATURE_PURITY_NAME = `主流派成形(契合 ≥${Math.round(STYLE_MATURE_AFFINITY * 100)}%)`;
+
 /** 剑意每层加成 */
 export const SWORD_LAYER_MODS: StatMods = { damageBonus: 0.04, critRate: 0.02 };
 /** 剑道远征逐胜叠层 */
@@ -21,7 +24,7 @@ type PurityCheck = {
 };
 const PURITY_CHECKS: PurityCheck[] = [
   {
-    name: "主流派成形(契合 ≥60%)",
+    name: MATURE_PURITY_NAME,
     test: (_mods, _art, build) => (build?.affinity ?? 0) >= STYLE_MATURE_AFFINITY,
   },
   {
