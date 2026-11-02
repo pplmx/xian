@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vite-plus/test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { setActivePinia, createPinia } from "pinia";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
@@ -333,6 +335,46 @@ describe("突破准备数据源(BREAKTHROUGH_PREP_OPTIONS · TASK-029 接线后)
     expect(BREAKTHROUGH_PREP_OPTIONS.some((o) => o.id === "direct")).toBe(true);
     expect(prepareBreakthrough("direct")).toBe(false);
     expect(breakthroughPrepState().ready).toBe(false);
+  });
+});
+
+/**
+ * 衰减表里只许留**真的接了读数**的机制。
+ *
+ * 表里曾经还有「闭关」与「连胜」两档,但两处都没读过:闭关本来就是
+ * 「到中期仍可自由选择」(不衰减),连胜的赏格按档位固定发放(不随境界变)。
+ * 留着不读的表,只会让下一个人以为改了它会生效 —— 那正是「两本账」最隐蔽的形态:
+ * 表在,数在,机制不在。
+ *
+ * 判据从**源码倒推**:表里每个键,change 必须在非测试代码里被 earlyEventDecay 读到。
+ */
+describe("前期事件衰减 · 表里每一项都真被读取", () => {
+  it("没有只定义、无人读取的机制档", () => {
+    const tableSrc = readFileSync(resolve(__dirname, "../data/earlyGame.ts"), "utf8");
+    const block = tableSrc.slice(
+      tableSrc.indexOf("EARLY_EVENT_DECAY = {"),
+      tableSrc.indexOf("export function earlyEventDecay"),
+    );
+    const keys = [...block.matchAll(/^\s{2}(\w+):\s*\{/gm)].map((m) => m[1] ?? "");
+    expect(keys.length, "一个机制都没扫到,判据形同虚设").toBeGreaterThanOrEqual(2);
+
+    const service = readFileSync(resolve(__dirname, "./earlyGameService.ts"), "utf8");
+    const reads = new Set(
+      [...service.matchAll(/earlyEventDecay\(\s*"([\w-]+)"/g)].map((m) => m[1] ?? ""),
+    );
+
+    const orphans = keys.filter((k) => !reads.has(k));
+    expect(orphans, `这些机制档没人读 —— 要么接上读数,要么删掉:${orphans.join("、")}`).toEqual([]);
+  });
+
+  it("判据自证:把一档没接读数的机制塞回去,它认得出来", () => {
+    const tableSrc = readFileSync(resolve(__dirname, "../data/earlyGame.ts"), "utf8");
+    const service = readFileSync(resolve(__dirname, "./earlyGameService.ts"), "utf8");
+    const reads = new Set(
+      [...service.matchAll(/earlyEventDecay\(\s*"([\w-]+)"/g)].map((m) => m[1] ?? ""),
+    );
+    expect(reads.has("shortRetreat"), "闭关档早已删除,不该还出现在读数里").toBe(false);
+    expect(tableSrc.includes("shortRetreat:"), "闭关档不该还在表里").toBe(false);
   });
 });
 
