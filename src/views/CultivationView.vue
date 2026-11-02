@@ -364,7 +364,7 @@
               v-if="quickPillsHidden > 0"
               data-quick-pills-hidden
               :to="{ path: '/inventory', query: { tab: 'pill' } }"
-              :aria-label="`另有 ${quickPillsHidden} 味可服丹药，前往丹匣查看`"
+              :aria-label="`另有 ${quickPillsHidden} 味可服丹药,前往丹匣查看`"
               class="cultivation-support__more"
             >
               <span>另有 {{ quickPillsHidden }} 味</span>

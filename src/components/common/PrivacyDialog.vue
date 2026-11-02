@@ -5,7 +5,7 @@
         <div>
           <p class="privacy-ledger__eyebrow">一页读懂</p>
           <h4>此作只守本机</h4>
-          <p>没有账号，没有远端档案，也没有偷偷发出去的使用记录。</p>
+          <p>没有账号,没有远端档案,也没有偷偷发出去的使用记录。</p>
         </div>
         <span class="privacy-ledger__seal tinylens:!hidden" aria-hidden="true">隐</span>
       </header>

@@ -31,12 +31,79 @@ function templateOf(src: string): string {
   return tpl.replace(/<!--[\s\S]*?-->/g, "");
 }
 
-/** 带中文的括号片段才算「中文文案里的括号」 */
-const FULL = /（[^（）()]{0,60}[\u4e00-\u9fa5][^（）()]{0,60}）/g;
-const HALF = /\([^（）()]{0,60}[\u4e00-\u9fa5][^（）()]{0,60}\)/g;
+/**
+ * 把 `{{ }}` 与 `${}` 表达式内部抹成等长空白 —— 保留偏移,便于报行号。
+ *
+ * 表达式里的逗号是 JS 语法,不是文案标点:混进统计就会把 "a, b" 这类
+ * 代码逗号算成「半角中文逗号」,判据从此在错误的样本上做出决定。
+ */
+function maskExpressions(text: string): string {
+  const chars = [...text];
+  for (const re of [/\$\{[^{}]*\}/g, /\{\{[^{}]*\}\}/g]) {
+    for (const m of text.matchAll(re)) {
+      for (let i = m.index; i < m.index + m[0].length; i += 1) chars[i] = " ";
+    }
+  }
+  return chars.join("");
+}
+
+/**
+ * 只留**玩家读得到**的那部分:标签、注释、script/style、表达式一律抹成空白。
+ *
+ * 逗号判据必须与「清理时改的是哪些字」用同一把尺子:第一版只抹表达式,
+ * 结果把标签属性里的 `hint="择契而入，逐层择路"` 与注释里的说明也算了进去 ——
+ * 于是清完之后判据仍报「混用」。属性值确实是玩家看得见的(会被渲染成 title
+ * 或说明),所以它要留在扫描面内;真正该排除的是标签语法本身与注释。
+ */
+function visibleOnly(text: string): string {
+  const chars = [...text];
+  for (const re of [
+    /<!--[\s\S]*?-->/g,
+    /<script[\s\S]*?<\/script>/g,
+    /<style[\s\S]*?<\/style>/g,
+    /\{\{[\s\S]*?\}\}/g,
+    /\$\{[^{}]*\}/g,
+    /<[^>]*>/g,
+  ]) {
+    for (const m of text.matchAll(re)) {
+      for (let i = m.index; i < m.index + m[0].length; i += 1) chars[i] = " ";
+    }
+  }
+  return chars.join("");
+}
+
+/**
+ * 标签属性里的可见文案 —— `<p hint="甲，乙">` 这类值会被渲染出来,
+ * 判据要看得见它。做法是把属性值单独摘出来拼在可见文本之后。
+ */
+function attributeText(text: string): string {
+  return [...text.matchAll(/\b[\w:@.-]+\s*=\s*"([^"]*)"/g)].map((m) => m[1] ?? "").join(" ");
+}
+
+/** 带中文的括号片段才算「中文文案里的括号」 —— 不带 g:带 g 的 test 会记 lastIndex,跨文件串扰 */
+const FULL = /（[^（）()]{0,60}[\u4e00-\u9fa5][^（）()]{0,60}）/;
+const HALF = /\([^（）()]{0,60}[\u4e00-\u9fa5][^（）()]{0,60}\)/;
+/** 中文后面的逗号 —— 两种写法各算一次(同样不带 g) */
+const FULL_COMMA = /[\u4e00-\u9fa5]，/;
+const HALF_COMMA = /[\u4e00-\u9fa5],/;
 
 function mixed(files: { path: string; tpl: string }[]): string[] {
   return files.filter((f) => FULL.test(f.tpl) && HALF.test(f.tpl)).map((f) => f.path);
+}
+
+/**
+ * 同一文件里两种逗号并存 —— 与括号同一条纪律,只是对象换了。
+ *
+ * 扫描面 = 可见文本 + 标签属性值(两者玩家都读得到),注释与表达式不含在内。
+ * `FILES` 的 tpl 已经在 templateOf 里剥过注释,故属性值摘出来也不会带进注释文字。
+ */
+function mixedComma(files: { path: string; tpl: string }[]): string[] {
+  return files
+    .filter((f) => {
+      const text = `${visibleOnly(f.tpl)} ${attributeText(f.tpl)}`;
+      return FULL_COMMA.test(text) && HALF_COMMA.test(text);
+    })
+    .map((f) => f.path);
 }
 
 const FILES = walk(resolve(ROOT, "src")).map((full) => ({
@@ -65,6 +132,41 @@ describe("文案标点 · 一篇之内只有一套括号", () => {
     const ok = [{ path: "b.vue", tpl: "<p>最多留 3 条(本页)</p><p>共 5 项(全账)</p>" }];
     expect(mixed(bad)).toEqual(["a.vue"]);
     expect(mixed(ok)).toEqual([]);
+  });
+});
+
+/**
+ * 逗号 —— 与括号同一条纪律,但这一条过去只写在别处、没有判据。
+ *
+ * 全站两种写法都有人用(全角 178 处 / 半角 265 处),本来只是风格;可同一页里
+ * 两种并置时,「逐词条，更好看」与「逐条目,更好看」上下两行,一个逗号占半格、
+ * 一个占一格,行尾会跟着参差。
+ *
+ * 判据口径与括号一致:**一篇之内自洽**。文件想用哪一种由它自己那多数决定,
+ * 判据只查「有没有两套」—— 逼全站换字是一次性的重排,那是另一件事。
+ */
+describe("文案标点 · 一篇之内只有一套逗号", () => {
+  it("模板里不同时出现全角与半角的中文逗号", () => {
+    expect(mixedComma(FILES), "这些文件同屏混着全角与半角的中文逗号 —— 统一成其中一种").toEqual([]);
+  });
+
+  it("判据确实扫得到东西(防空转)", () => {
+    const masked = FILES.map((f) => maskExpressions(f.tpl));
+    const full = masked.filter((t) => /[\u4e00-\u9fa5]，/.test(t)).length;
+    const half = masked.filter((t) => /[\u4e00-\u9fa5],/.test(t)).length;
+    // 两种都得真扫到:全站本来就有全角为主的文件(设置页、藏珍页)与半角为主的
+    expect(full, "全角中文逗号一处都没扫到").toBeGreaterThan(3);
+    expect(half, "半角中文逗号一处都没扫到").toBeGreaterThan(20);
+  });
+
+  it("判据自证:混用的样本认得出来,表达式里的代码逗号不误伤", () => {
+    const bad = [{ path: "a.vue", tpl: "<p>逐词条，更好看</p><p>逐条目,更好看</p>" }];
+    const ok = [{ path: "b.vue", tpl: "<p>逐条目,更好看</p><p>{{ a }}, {{ b }}</p>" }];
+    expect(mixedComma(bad)).toEqual(["a.vue"]);
+    expect(mixedComma(ok)).toEqual([]);
+    // 表达式内部即便写了中文逗号,也不算「模板里的半角逗号」
+    const expr = [{ path: "c.vue", tpl: "<p>{{ x ? '甲，乙' : '甲' }}</p><p>逐条目,更好看</p>" }];
+    expect(mixedComma(expr)).toEqual([]);
   });
 });
 

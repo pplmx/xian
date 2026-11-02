@@ -184,7 +184,7 @@
           :data-gongfa-batch-ended="batchPlan.ended"
         >
           <template #title>
-            本轮修至第 {{ batchPlan.toLevel }} 层，共 {{ batchPlan.count }} 层
+            本轮修至第 {{ batchPlan.toLevel }} 层,共 {{ batchPlan.count }} 层
           </template>
           <template #detail> 耗 悟道点×{{ batchPlan.wudao }} · 残页×{{ batchPlan.page }} </template>
         </BatchSpendLedger>

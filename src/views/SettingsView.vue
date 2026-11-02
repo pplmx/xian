@@ -476,7 +476,7 @@
       <p class="text-title leading-relaxed text-ink-soft">
         此举将
         <span class="text-cinnabar">彻底抹去</span>
-        本机的一切修行痕迹,包括转世收获,且无法恢复。
+        本机的一切修行痕迹，包括转世收获，且无法恢复。
       </p>
       <template #footer>
         <div class="flex gap-2">
@@ -491,7 +491,7 @@
       <p class="text-title leading-relaxed text-ink-soft">
         这份备份将
         <span class="text-cinnabar">整体替换</span>
-        本机当前的修行进度 —— 之后的收获会回到备份那一刻,且无法撤销。
+        本机当前的修行进度 —— 之后的收获会回到备份那一刻，且无法撤销。
       </p>
       <!-- 备份是谁的、什么版本、什么时间导的:整体替换前先摊个底细(决策前摊数字契约) -->
       <div v-if="importInspect" class="mt-3 rounded-[2px] bg-paper-deep/60 px-3 py-2 t-body">
@@ -514,7 +514,7 @@
           <template v-if="importInspect.missingCritical">
             这份备份缺少「{{
               importInspect.skipped.map((id) => STORE_NAMES[id] ?? id).join("、")
-            }}」;关键分片缺失,这份备份无法导入。
+            }}」;关键分片缺失，这份备份无法导入。
           </template>
           <template v-else>
             这份备份缺少「{{

@@ -103,7 +103,7 @@
               <header class="realm-world-index__head">
                 <div>
                   <p class="text-note text-ink-faint">四界卷目</p>
-                  <h2 class="text-title text-ink">先看身在何处，再翻境界谱</h2>
+                  <h2 class="text-title text-ink">先看身在何处,再翻境界谱</h2>
                 </div>
                 <span class="text-note text-ink-faint tabular">
                   {{ WORLDS.length }} 界 · {{ REALMS.length }} 境 · {{ realmOverview.passed }}/{{

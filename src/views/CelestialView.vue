@@ -80,8 +80,8 @@
       v-if="!unlocked"
       title="天界"
       eyebrow="天门未启"
-      lead="仙光垂落而不可及。先走完凡界诸境,再叩天门。"
-      hint="这一册不催你提前攒道源;破境之后,道途、远征、试炼与道痕会在此展开。"
+      lead="仙光垂落而不可及。先走完凡界诸境，再叩天门。"
+      hint="这一册不催你提前攒道源;破境之后，道途、远征、试炼与道痕会在此展开。"
       :current-realm="player.realmName"
       :current-major="player.major"
       :gate-realm="realmDef(WORLD_BREAK_MAJOR).name"
@@ -274,7 +274,7 @@
           · {{ r }}
         </p>
         <p class="mt-3 border-l-2 border-cinnabar/60 pl-2 text-body text-cinnabar">
-          道途既定,此世不再更改;误选须待兵解转世方能重择
+          道途既定，此世不再更改;误选须待兵解转世方能重择
         </p>
       </template>
       <template #footer>

@@ -118,7 +118,7 @@
                   type="button"
                   :data-inventory-upgrade-slot="row.slot"
                   class="inventory-briefing__slot"
-                  :aria-label="`查看${EQUIP_SLOT_NAMES[row.slot]}候选，${upgradeText(row)}`"
+                  :aria-label="`查看${EQUIP_SLOT_NAMES[row.slot]}候选,${upgradeText(row)}`"
                   @click="pickerSlot = row.slot"
                 >
                   {{ EQUIP_SLOT_NAMES[row.slot] }}

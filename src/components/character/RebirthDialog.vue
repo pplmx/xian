@@ -65,7 +65,7 @@
           data-character-chapter-head
           index="贰"
           title="随魂所积"
-          hint="道果与先天之姿跨世留下，来世仍可调用。"
+          hint="道果与先天之姿跨世留下,来世仍可调用。"
           fact="随魂不灭"
         />
 
@@ -256,9 +256,9 @@
         <div class="rebirth-departure">
           <p class="rebirth-departure__mark font-kai" aria-hidden="true">诀</p>
           <div>
-            <p class="rebirth-departure__title">此刻按下的，只是开卷</p>
+            <p class="rebirth-departure__title">此刻按下的,只是开卷</p>
             <p class="rebirth-departure__copy">
-              先看清此生带得走什么、放得下什么：功法回一层，法宝归尘，余者随皮囊散去。往生三程里仍可停步，最后一步才会真正落定。
+              先看清此生带得走什么、放得下什么：功法回一层,法宝归尘,余者随皮囊散去。往生三程里仍可停步,最后一步才会真正落定。
             </p>
           </div>
         </div>
@@ -269,9 +269,9 @@
       <div class="rebirth-actions">
         <p class="rebirth-actions__gate" :class="{ 'is-open': canRebirth }">
           <template v-if="canRebirth">
-            {{ gateRealm.name }}门槛已过。下一步先回顾此生，不会立刻清空外物。
+            {{ gateRealm.name }}门槛已过。下一步先回顾此生,不会立刻清空外物。
           </template>
-          <template v-else> {{ gateRealm.name }}境方可自行兵解，尚差 {{ gateGap }} 境。 </template>
+          <template v-else> {{ gateRealm.name }}境方可自行兵解,尚差 {{ gateGap }} 境。 </template>
         </p>
         <button
           type="button"
@@ -282,7 +282,7 @@
         >
           <span>{{ canRebirth ? "兵解转世" : `尚差 ${gateGap} 境` }}</span>
           <small>{{
-            canRebirth ? "先回顾此生，再定来世" : `${gateRealm.name}境方可自行兵解`
+            canRebirth ? "先回顾此生,再定来世" : `${gateRealm.name}境方可自行兵解`
           }}</small>
         </button>
       </div>

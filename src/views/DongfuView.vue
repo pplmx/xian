@@ -139,7 +139,7 @@
               修为与灵气全额计入；材料、钻研与历练按
               <strong class="tabular">{{ OFFLINE_EFFICIENCY * 10 }} 折</strong>挂机。
               <template v-if="offlineNextTier">
-                洞府升至 {{ offlineNextTier.level }} 级，可攒至 {{ offlineNextTier.hours }} 时。
+                洞府升至 {{ offlineNextTier.level }} 级,可攒至 {{ offlineNextTier.hours }} 时。
               </template>
               <template v-else>离线上限已至最高档。</template>
             </p>

@@ -7,7 +7,7 @@
         index="壹"
         title="在途远征"
         :hint="
-          runPact ? `契约「${runPact.name}」 · 走到哪重，下一步就在此` : '走到哪重，下一步就在此'
+          runPact ? `契约「${runPact.name}」 · 走到哪重,下一步就在此` : '走到哪重,下一步就在此'
         "
         :fact="run && runWorld ? `${runWorld.name} · ${run.rows.length} 战` : '未启程'"
       />
@@ -128,7 +128,7 @@
         </button>
       </div>
       <p v-else class="celestial-expedition-empty" data-celestial-run-empty>
-        此刻没有在途远征。从下一章择一界，立契启程；途中每一重都可回凡界换构筑。
+        此刻没有在途远征。从下一章择一界,立契启程；途中每一重都可回凡界换构筑。
       </p>
     </section>
 
@@ -142,7 +142,7 @@
         data-celestial-chapter-head
         index="贰"
         title="特殊规则世界"
-        hint="择契而入，逐层择路"
+        hint="择契而入,逐层择路"
         :fact="`${CELESTIAL_WORLDS.length + (endgame.voidWorld ? 1 : 0)} 界 · ${
           endgame.voidWorld ? '虚门可窥' : '虚门待窥'
         }`"

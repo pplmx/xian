@@ -39,7 +39,7 @@
           <span class="bond-section-head__mark font-kai" aria-hidden="true">此</span>
           <div>
             <p class="bond-section-head__title">此刻要答的事</p>
-            <p class="bond-section-head__hint">先把她的话与后果摊开,再落子。</p>
+            <p class="bond-section-head__hint">先把她的话与后果摊开，再落子。</p>
           </div>
         </div>
 
