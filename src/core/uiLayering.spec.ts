@@ -579,7 +579,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
       /class="[^"]*tinylens:flex-col[^"]*"[\s\S]{0,100}?data-herb-shop-figures/,
     );
     expect(shop?.src, "买一买十的短标签不许折行").toMatch(
-      /class="[^"]*whitespace-nowrap[^"]*"[\s\S]{0,180}?买1/,
+      /class="[^"]*whitespace-nowrap[^"]*"[\s\S]{0,180}?买\s*1/,
     );
     const layout = readFileSync(resolve(__dirname, "../../scripts/layout-check.mjs"), "utf8");
     expect(layout, "真浏览器 390/195 两档都要量灵草坊账").toContain(

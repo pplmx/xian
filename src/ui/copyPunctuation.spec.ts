@@ -113,3 +113,44 @@ describe("文案标点 · 乘号只用 ×", () => {
     expect(/(?:[\u4e00-\u9fa5]\s*|\s)x\s*\d/.test(ok)).toBe(false);
   });
 });
+
+/**
+ * 字与数的间距 —— 中文与阿拉伯数字之间留一个空格。
+ *
+ * 全站这个口径是统一的(「已凑出 1/2 个核心词条」「还剩 100%」),但灵草坊那两枚
+ * 按钮写成了「买1」「买10」:同一个游戏里,数字有时候贴字、有时候留白,读起来像
+ * 两种排版。数字已由模板插值出来的站点不在扫描面内(那种间距由数据决定),
+ * 这里只钉**手写在模板里**的数字。
+ */
+describe("文案标点 · 中文与手写数字之间留空格", () => {
+  /** 手写数字(不含 {{ }} 插值)紧贴中文的位置 */
+  function glued(tpl: string): string[] {
+    const text = tpl
+      .replace(/<!--[\s\S]*?-->/g, " ")
+      .replace(/\{\{[\s\S]*?\}\}/g, " ")
+      .replace(/<[^>]*>/g, " ")
+      // 尖括号属性里可能带 px/rem 这类,把它们也当语法而不是文案
+      .replace(/\b\d+(?:\.\d+)?(?:px|rem|em|vh|vw|ms|s)\b/g, " ")
+      // 数字与量词之间没有空格的样本
+      .match(/[\u4e00-\u9fa5]\d|\d[\u4e00-\u9fa5]/g);
+    return text ?? [];
+  }
+
+  it("模板里没有中文紧贴手写数字的地方", () => {
+    const offenders: { file: string; sample: string[] }[] = [];
+    for (const file of FILES) {
+      const hits = glued(file.tpl);
+      if (hits.length) offenders.push({ file: file.path, sample: hits.slice(0, 4) });
+    }
+    expect(
+      offenders,
+      "这些模板里中文紧贴着手写的数字 —— 全站口径是留一个空格(「买 1」而不是「买1」)",
+    ).toEqual([]);
+  });
+
+  it("判据自证:「买1」认得出来,插值与 CSS 数字不误伤", () => {
+    expect(glued("<button>买1</button>")).toEqual(["买1"]);
+    expect(glued("<span>{{ n }} 件</span>")).toEqual([]);
+    expect(glued('<p class="text-[11px]">大约 3 次</p>')).toEqual([]);
+  });
+});

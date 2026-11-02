@@ -28,14 +28,14 @@
               :disabled="!row.affordable"
               @click="buyOne(row.grade)"
             >
-              买1
+              买 1
             </button>
             <button
               class="btn-seal whitespace-nowrap !px-3 !py-1.5 !text-body tinylens:min-w-0 tinylens:flex-1"
               :disabled="!row.affordable10"
               @click="buyTen(row.grade)"
             >
-              买10
+              买 10
             </button>
           </div>
           <div
