@@ -249,6 +249,7 @@ function triesOf(id: string, minRoll = 0): number | null {
             min="0"
             max="1"
             step="0.05"
+            :aria-label="`自动重铸:${affixDef(t.affixId)?.name ?? t.affixId} 保留阈值`"
             class="min-w-0 grow accent-cinnabar"
           />
           <span class="w-12 shrink-0 text-right tabular"

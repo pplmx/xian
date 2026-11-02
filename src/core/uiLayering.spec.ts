@@ -3544,6 +3544,26 @@ describe("界面分层 · 浮层只有一个出处", () => {
     }
   });
 
+  it("滑块要有可访问名称 —— 读屏不许只念「滑块, 50」", () => {
+    /*
+     * 全站三枚 type="range":两枚音量滑块早有 aria-label,重铸那枚
+     * (「自动重铸:某词条 保留阈值」)此前没有 —— 旁边只有一枚视觉标签,
+     * 读屏读到的是「滑块 50%」,玩家不知道在调哪一条词条。
+     * 滑块本身没有可见文字可当名字,故这条只能靠 aria-label / aria-labelledby。
+     */
+    const offenders: string[] = [];
+    for (const f of FILES) {
+      for (const m of f.src.matchAll(/<input[\s\S]{0,400}?type="range"[\s\S]{0,400}?\/?>/g)) {
+        const block = m[0];
+        if (/aria-label|aria-labelledby/.test(block)) continue;
+        offenders.push(`${f.path}: ${" ".repeat(0)}${block.split("\n")[0]?.trim() ?? ""}`);
+      }
+    }
+    expect(offenders, "这些滑块没有可访问名称").toEqual([]);
+    // 防空转:真的扫到过滑块(设置页两枚音量 + 重铸一枚,分布在两个文件)
+    expect(FILES.filter((f) => /type="range"/.test(f.src)).length).toBeGreaterThanOrEqual(2);
+  });
+
   it("器灵尘展示一律走 formatGN —— 与同屏灵石同一个读法", () => {
     /*
      * 器灵尘是普通 number,灵石是 GNum,于是「尘」那边长期直接印裸数:
