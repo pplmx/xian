@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { ROOT, isSourceFile, walkFiles } from "@/test/readSource";
+import { readFileSync } from "node:fs";
+import { relative, resolve } from "node:path";
 import { readStyleCss } from "@/test/readStyleCss";
 
-const ROOT = resolve(__dirname, "../..");
 const SRC = resolve(ROOT, "src");
 const STYLE = readStyleCss();
 const TAILWIND = readFileSync(resolve(ROOT, "tailwind.config.js"), "utf8");
@@ -12,17 +12,6 @@ const TIERS = ["note", "body", "title", "section", "heading"] as const;
 const MOBILE = { note: 10, body: 11, title: 14, section: 15, heading: 18 };
 const DESKTOP_COMPACT = { note: 11, body: 12, title: 15, section: 16, heading: 20 };
 const DESKTOP_READING = { note: 12, body: 14, title: 16, section: 18, heading: 24 };
-
-function walk(dir: string, out: string[] = []): string[] {
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
-    else if (entry.endsWith(".vue") || (entry.endsWith(".ts") && !entry.endsWith(".spec.ts"))) {
-      out.push(full);
-    }
-  }
-  return out;
-}
 
 function tierValues(block: string): Record<(typeof TIERS)[number], number> {
   return Object.fromEntries(
@@ -56,7 +45,7 @@ describe("桌面阅读字阶 · 手机与宽屏共用一套语义刻度", () => 
 
   it("常规界面不再写回五个裸像素档", () => {
     const offenders: string[] = [];
-    for (const file of walk(SRC)) {
+    for (const file of walkFiles(SRC, isSourceFile)) {
       const code = readFileSync(file, "utf8")
         .replace(/<!--[\s\S]*?-->/g, "")
         .replace(/\/\*[\s\S]*?\*\//g, "")

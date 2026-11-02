@@ -16,7 +16,8 @@
  * 故障注入:删掉任一 case、任一 track 写入、任一属性读取点,本文件立刻变红。
  */
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { isSourceFile, walkFiles } from "@/test/readSource";
+import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { AFFIXES } from "@/data/affixes";
 import { ARTIFACTS } from "@/data/artifacts";
@@ -26,15 +27,6 @@ import { TALENTS } from "@/data/talents";
 import { TITLES } from "@/data/titles";
 
 const SRC = resolve(__dirname, "..");
-
-function walk(dir: string, out: string[] = []): string[] {
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
-    else if (/\.(ts|vue)$/.test(entry) && !entry.endsWith(".d.ts")) out.push(full);
-  }
-  return out;
-}
 
 const TYPES_SRC = readFileSync(join(SRC, "types/index.ts"), "utf8");
 
@@ -65,7 +57,7 @@ function taggedTypes(startMarker: string): string[] {
 }
 
 /** 除数据与类型之外的全部源码(实现层) */
-const implFiles = walk(SRC).filter(
+const implFiles = walkFiles(SRC, isSourceFile).filter(
   (f) => !f.includes("/data/") && !f.endsWith("types/index.ts") && !f.endsWith(".spec.ts"),
 );
 const implCorpus = implFiles.map((f) => readFileSync(f, "utf8")).join("\n");

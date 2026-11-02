@@ -19,20 +19,12 @@
  * 把某个 title 删掉 → 第二条红;把 @close 删掉 → 第三条红。
  */
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { isVueFile, walkFiles } from "@/test/readSource";
+import { readdirSync, statSync, readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { readStyleCss } from "@/test/readStyleCss";
 
 const SRC = resolve(__dirname, "..");
-
-function walk(dir: string, out: string[] = []): string[] {
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
-    else if (entry.endsWith(".vue")) out.push(full);
-  }
-  return out;
-}
 
 /** 按后缀收文件 —— 界面判据的扫描面不止 components/views,外壳、脚本常量、样式表都要看得见 */
 function walkByExt(dir: string, ext: string, out: string[] = []): string[] {
@@ -44,7 +36,7 @@ function walkByExt(dir: string, ext: string, out: string[] = []): string[] {
   return out;
 }
 
-const FILES = walk(SRC)
+const FILES = walkFiles(SRC, isVueFile)
   .filter(
     (f) => f.includes(`${join("src", "components")}`) || f.includes(`${join("src", "views")}`),
   )

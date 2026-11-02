@@ -18,26 +18,18 @@
  * 或把 collect('talent') 挪到别的模块,本文件立刻红。
  */
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { isSourceFile, walkFiles } from "@/test/readSource";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { CODEX_SOURCES } from "@/ui/codex";
 import type { CollectionCategory } from "@/types";
 
 const SRC = resolve(__dirname, "..");
 
-function walk(dir: string, out: string[] = []): string[] {
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
-    else if (/\.(ts|vue)$/.test(entry) && !entry.endsWith(".spec.ts")) out.push(full);
-  }
-  return out;
-}
-
 /** 每一类是在哪些模块里被 collect 的(相对 src/ 的路径,统一正斜杠) */
 function collectorsOf(cat: CollectionCategory): string[] {
   const hits: string[] = [];
-  for (const file of walk(SRC)) {
+  for (const file of walkFiles(SRC, isSourceFile)) {
     const src = readFileSync(file, "utf8");
     if (new RegExp(`collect\\(\\s*["']${cat}["']`).test(src)) {
       // Windows 上 walk 的 join 产出 `core\loot.ts`,机制表是正斜杠,必须归一

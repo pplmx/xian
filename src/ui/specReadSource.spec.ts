@@ -10,21 +10,19 @@
  * 现在实现收在 `@/test/readSource` 一处,这份判据守住「别再长回第二份」。
  */
 import { describe, expect, it } from "vite-plus/test";
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, resolve } from "node:path";
+import {
+  ROOT,
+  isSourceFile,
+  isSourceOrScript,
+  isSpecFile,
+  isTypeScriptOrVue,
+  isVueFile,
+  walkFiles,
+} from "@/test/readSource";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
-const ROOT = resolve(__dirname, "../..");
-
-function walk(dir: string, out: string[] = []): string[] {
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
-    else if (entry.endsWith(".spec.ts")) out.push(full);
-  }
-  return out;
-}
-
-const SPECS = walk(resolve(ROOT, "src")).map((full) => ({
+const SPECS = walkFiles(resolve(ROOT, "src"), isSpecFile).map((full) => ({
   path: full.slice(ROOT.length + 1).replace(/\\/g, "/"),
   src: readFileSync(full, "utf8"),
 }));
@@ -53,5 +51,39 @@ describe("界面契约测试 · 读源只有一种写法", () => {
     // 大部分界面契约测试都靠读源做断言;若 walk 坏了这里会静默通过。
     const readers = SPECS.filter((s) => s.src.includes("@/test/readSource")).length;
     expect(readers, "一个用共享 readSource 的 spec 都没扫到").toBeGreaterThan(20);
+  });
+
+  it("没有 spec 自己再定义一份 walk(dir)", () => {
+    /*
+     * 目录遍历的八份实现彼此只差一行「收哪些扩展名」,而那正是最容易抄错的:
+     * `!.endsWith(".spec.ts")` 少个 s、把 `.d.ts` 当源码、或漏掉 `.mjs`,
+     * 都会让某个审计悄悄少扫一片而不报错。差异摊到 walkFiles 的谓词参数上,
+     * 遍历本身只写一次。
+     *
+     * 仍在用自己那份 walk 的两个(按需自取相对路径 / 需要 posix 归一)留着,
+     * 但它们的形态与本条判据不冲突 —— 判据只拦「重新长出一份通用 walk」。
+     */
+    const ALLOW = new Set([
+      // 返回相对路径而非绝对路径,与 walkFiles 的契约不同,且只有它自己用
+      "src/ui/folioChapterHead.spec.ts",
+    ]);
+    const offenders = SPECS.filter((s) => /function walk\(/.test(s.src) && !ALLOW.has(s.path)).map(
+      (s) => s.path,
+    );
+    expect(
+      offenders,
+      "这些 spec 又各自写了一份 walk() —— 改用 @/test/readSource 的 walkFiles(dir, 谓词)",
+    ).toEqual([]);
+  });
+
+  it("walkFiles 的谓词把「收不收 spec」写成了名字", () => {
+    // 这一条是上一条的注脚:分界必须显式。查「谁在用某个导出」要把 spec 算进来,
+    // 查「界面用了哪份样式」不该算 —— 两类都存在于本仓,靠名字区分而不是各记一个正则。
+    expect(isTypeScriptOrVue("a.spec.ts"), "查引用要把用例算进语料").toBe(true);
+    expect(isSourceFile("a.spec.ts"), "查样式语料不该收用例").toBe(false);
+    expect(isTypeScriptOrVue("a.d.ts"), "类型声明两头都不该收").toBe(false);
+    expect(isVueFile("A.vue")).toBe(true);
+    expect(isSourceOrScript("scripts/x.mjs")).toBe(true);
+    expect(isSourceOrScript("src/x.ts")).toBe(true);
   });
 });

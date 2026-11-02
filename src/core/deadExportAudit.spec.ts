@@ -22,8 +22,9 @@
  * `obj.foo` 的属性名 / 接口字段名也不算,免得"提过一嘴"冒充"接线"。
  */
 import { describe, expect, it } from "vite-plus/test";
+import { isTypeScriptOrVue, walkFiles } from "@/test/readSource";
 import ts from "typescript";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 
 const SRC = resolve(__dirname, "..");
@@ -80,15 +81,6 @@ const AUDIT_MODULES = new Set([
  */
 const posix = (p: string): string => p.replace(/\\/g, "/");
 
-function walk(dir: string, out: string[] = []): string[] {
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
-    else if (/\.(ts|vue)$/.test(entry) && !entry.endsWith(".d.ts")) out.push(posix(full));
-  }
-  return out;
-}
-
 /**
  * .vue 取**全部** <script> 块;返回可解析的源码。
  *
@@ -143,7 +135,7 @@ function scanExports(): {
   scanned: number;
   exports: number;
 } {
-  const files = walk(SRC);
+  const files = walkFiles(SRC, isTypeScriptOrVue).map(posix);
   const declarations = new Map<string, number>();
   const declFile = new Map<string, string>();
   /** 导出名 → 声明所在的绝对路径(判定"运行时模块"用) */

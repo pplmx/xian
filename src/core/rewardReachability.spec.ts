@@ -12,7 +12,8 @@
  *      对不存在的 pillId 则直接抛错(非空断言),两种都要在数据层拦住。
  */
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { isSourceFile, walkFiles } from "@/test/readSource";
+import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { TITLES, titleDef } from "@/data/titles";
 import { ACHIEVEMENTS } from "@/data/achievements";
@@ -29,18 +30,8 @@ import { formatGN } from "@/utils/format";
 
 const SRC = resolve(__dirname, "..");
 
-function walk(dir: string, out: string[] = []): string[] {
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
-    // 排除 spec:用例里的示例字符串不是游戏内的发放点
-    else if (/\.(ts|vue)$/.test(entry) && !entry.endsWith(".spec.ts")) out.push(full);
-  }
-  return out;
-}
-
 /** 全部源码(含数据)里出现 `titleId: 'x'` 的地方 —— 那就是发放点 */
-const corpus = walk(SRC)
+const corpus = walkFiles(SRC, isSourceFile)
   .map((f) => readFileSync(f, "utf8"))
   .join("\n");
 const grantedTitles = new Set(

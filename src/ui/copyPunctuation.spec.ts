@@ -11,19 +11,9 @@
  * 全角括号有它的正当场合(竖排、题签),故不禁止,只要求一篇之内一致。
  */
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join, resolve } from "node:path";
-
-const ROOT = resolve(__dirname, "../..");
-
-function walk(dir: string, out: string[] = []): string[] {
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
-    else if (entry.endsWith(".vue")) out.push(full);
-  }
-  return out;
-}
+import { ROOT, isVueFile, walkFiles } from "@/test/readSource";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 /** 只看模板本体:注释里的举例不算文案 */
 function templateOf(src: string): string {
@@ -106,7 +96,7 @@ function mixedComma(files: { path: string; tpl: string }[]): string[] {
     .map((f) => f.path);
 }
 
-const FILES = walk(resolve(ROOT, "src")).map((full) => ({
+const FILES = walkFiles(resolve(ROOT, "src"), isVueFile).map((full) => ({
   path: full.slice(ROOT.length + 1).replace(/\\/g, "/"),
   tpl: templateOf(readFileSync(full, "utf8")),
 }));

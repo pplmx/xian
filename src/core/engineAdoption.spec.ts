@@ -22,8 +22,9 @@
  * 反过来,理由过期了(其实已经真拿过来用)也要清掉。
  */
 import { describe, expect, it } from "vite-plus/test";
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { walkFiles } from "@/test/readSource";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import * as engine from "wanxiang-engine";
 
 /**
@@ -124,21 +125,14 @@ function engineBoundNames(files: readonly string[]): { bound: Set<string>; names
   return { bound, namespace };
 }
 
-function walk(dir: string): string[] {
-  return readdirSync(dir).flatMap((entry) => {
-    const full = join(dir, entry);
-    return statSync(full).isDirectory() ? walk(full) : [full];
-  });
-}
-
 describe("库导出在本作的落地", () => {
   it("每个导出要么按名字用上,要么在归属表里点名", () => {
     // 本审计自己会写下这些名字,所以把自己排除掉,免得"自己证明自己用过"
     // 只看应用侧代码:用例(含 parity)不算"本作用上了" —— 它们是对账,不是接线
-    const files = walk(HOST_SRC).filter(
+    const files = walkFiles(HOST_SRC, () => true).filter(
       (file) => /\.(ts|vue)$/.test(file) && !file.includes(".spec.") && !file.includes(`__tests__`),
     );
-    const allFiles = walk(HOST_SRC).filter((file) => /\.(ts|vue)$/.test(file));
+    const allFiles = walkFiles(HOST_SRC, () => true).filter((file) => /\.(ts|vue)$/.test(file));
 
     const exports = Object.keys(engine).sort();
     const { bound, namespace } = engineBoundNames(

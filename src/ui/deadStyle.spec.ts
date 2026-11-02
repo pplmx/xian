@@ -16,11 +16,10 @@
  *     必须逐条写明为什么,写不出的就是该删的。
  */
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { ROOT, isSourceOrScript, walkFiles } from "@/test/readSource";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { readStyleCss } from "@/test/readStyleCss";
-
-const ROOT = resolve(__dirname, "../..");
 
 /**
  * 由框架或模板字面量生成的类名 —— 源码里查不到全名,但它们确实是活的。
@@ -56,18 +55,12 @@ function generated(name: string): boolean {
   return ROLE_VOCAB.has(name) || GENERATED.some((g) => g.pattern.test(name));
 }
 
-function walk(dir: string, out: string[] = []): string[] {
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
-    else if (/\.(ts|vue|mjs)$/.test(entry) && !entry.endsWith(".spec.ts")) out.push(full);
-  }
-  return out;
-}
-
 /** 全部会被读到的源码文本:src 下的源码 + scripts 下的自检脚本(它们也查选择器) */
 function consumerText(): string {
-  const files = [...walk(resolve(ROOT, "src")), ...walk(resolve(ROOT, "scripts"))];
+  const files = [
+    ...walkFiles(resolve(ROOT, "src"), isSourceOrScript),
+    ...walkFiles(resolve(ROOT, "scripts"), isSourceOrScript),
+  ];
   return files.map((f) => readFileSync(f, "utf8")).join("\n");
 }
 

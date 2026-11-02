@@ -8,7 +8,8 @@
  * 故这里直接读源码文本,把「谁都不许再抄一遍」写成断言。
  */
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { isSourceFile, walkFiles } from "@/test/readSource";
+import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const SOURCES = import.meta.glob(
@@ -34,15 +35,6 @@ function readSrc(fileName: string): string {
 }
 
 const SRC = resolve(__dirname, "..");
-
-function walk(dir: string, out: string[] = []): string[] {
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
-    else if (/\.(ts|vue)$/.test(entry) && !entry.endsWith(".spec.ts")) out.push(full);
-  }
-  return out;
-}
 
 describe("同源审计 · 镇压速率", () => {
   it("历练页的镇压速率走 suppressRateFor,自己不许再算一遍 stoneByTier", () => {
@@ -166,7 +158,7 @@ describe("同源审计 · 收徒成本", () => {
  */
 describe("同源审计 · 丹药获得", () => {
   it("生产代码只有 acquirePill 能直接写 inventory.addPill", () => {
-    const hits = walk(SRC)
+    const hits = walkFiles(SRC, isSourceFile)
       .map(
         (file) =>
           [
@@ -198,7 +190,7 @@ describe("同源审计 · 功法习得", () => {
   const LEARN_CALL = /\bcultivation\.learn\s*\(/;
 
   it("生产代码只有 core/gongfaService.ts 能直接调用 cultivation.learn", () => {
-    const hits = walk(SRC)
+    const hits = walkFiles(SRC, isSourceFile)
       .map(
         (file) =>
           [
@@ -233,7 +225,7 @@ describe("同源审计 · 功法习得", () => {
  */
 describe("同源审计 · 装备获得", () => {
   it("生产代码只有 core/loot.ts 能直接写 inventory.addEquipment", () => {
-    const hits = walk(SRC)
+    const hits = walkFiles(SRC, isSourceFile)
       .map(
         (file) =>
           [
