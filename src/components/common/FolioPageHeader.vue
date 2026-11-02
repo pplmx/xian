@@ -63,7 +63,13 @@
         >
           {{ title }}
         </h1>
-        <p v-if="description" class="mt-1 t-body text-ink-faint">
+        <!--
+          副题用 ink-soft 而不是 ink-faint:t-body 是 11px,11px 的淡墨在
+          2100 页×视口的像素门里贴过线 —— 铸道案页头压着一层朱砂/石青光晕,
+          底色被压暗后 ink-faint 只剩 4.41:1(需 4.5)。换深一档是 7.03:1,
+          且它与标题之间仍拉开层次(小一号、非楷体、不占主线)。
+        -->
+        <p v-if="description" class="mt-1 t-body text-ink-soft">
           {{ description }}
         </p>
         <slot name="meta" />
