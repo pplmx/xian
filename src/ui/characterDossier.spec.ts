@@ -143,9 +143,9 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
     expect(dialog, "画像要占满浮层可用宽").toContain('size="wide"');
     expect(dialog, "画像正文要有稳定落点").toContain("data-identity-folio");
     expect(dialog, "两章共用人物册章首").toContain(
-      'import CharacterChapterHead from "@/components/character/CharacterChapterHead.vue"',
+      'import FolioChapterHead from "@/components/common/FolioChapterHead.vue"',
     );
-    expect(dialog.match(/<CharacterChapterHead/g)?.length, "根因与行迹各成一章").toBe(2);
+    expect(dialog.match(/<FolioChapterHead/g)?.length, "根因与行迹各成一章").toBe(2);
     expect(dialog, "根因章要有稳定落点").toContain('data-identity-chapter="roots"');
     expect(dialog, "行迹章要有稳定落点").toContain('data-identity-chapter="traits"');
     expect(dialog, "四项目录由同一份行数据生成").toContain('v-for="row in identityRoots"');
@@ -260,9 +260,9 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
   it("往生帖四章续在同一账线,不在浮层里再叠内层纸卡", () => {
     const dialog = source("src/components/character/RebirthDialog.vue");
 
-    expect(dialog, "往生帖四章共用人物册的同一枚章首").toContain("<CharacterChapterHead");
+    expect(dialog, "往生帖四章共用人物册的同一枚章首").toContain("<FolioChapterHead");
     expect(
-      dialog.match(/<CharacterChapterHead/g)?.length ?? 0,
+      dialog.match(/<FolioChapterHead/g)?.length ?? 0,
       "此刻、随魂、交割与最后一笔各成一章",
     ).toBeGreaterThanOrEqual(4);
     expect(dialog, "四章由同一条账线分段").toContain('class="rebirth-chapter');
@@ -321,10 +321,10 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
     const rail = source("src/components/character/ReincarnationStageRail.vue");
 
     expect(dialog, "三程正文共用人物册章首").toContain(
-      'import CharacterChapterHead from "@/components/character/CharacterChapterHead.vue"',
+      'import FolioChapterHead from "@/components/common/FolioChapterHead.vue"',
     );
     expect(
-      dialog.match(/<CharacterChapterHead/g)?.length ?? 0,
+      dialog.match(/<FolioChapterHead/g)?.length ?? 0,
       "辞世一叙、回照三叙与择生诸章都要各成章",
     ).toBeGreaterThanOrEqual(9);
     expect(dialog, "每章沿同一条开口账线续排").toContain('class="reincarnation-chapter');
@@ -339,17 +339,20 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
   });
 
   it("人物册章首自带版式,转世浮层不靠人物页异步样式才成栅格", () => {
-    const head = source("src/components/character/CharacterChapterHead.vue");
+    const head = source("src/components/common/FolioChapterHead.vue");
 
     expect(head, "章首组件要自带样式").toContain("<style scoped>");
     expect(head, "章首要自己声明三栏栅格").toMatch(
-      /\.character-chapter-head\s*\{[\s\S]{0,180}display:\s*grid;[\s\S]{0,180}grid-template-columns:\s*auto minmax\(0, 1fr\) auto/,
+      /\.folio-chapter-head\s*\{[\s\S]{0,260}display:\s*grid;[\s\S]{0,260}grid-template-columns:\s*1\.45rem minmax\(0, 1fr\) minmax\(6\.5rem, auto\)/,
     );
     expect(head, "200% 缩放档仍由组件自己收口").toMatch(
-      /@media \(max-width: 220px\)[\s\S]{0,260}\.character-chapter-head\s*\{[\s\S]{0,120}grid-template-columns:\s*auto minmax\(0, 1fr\)/,
+      /@media \(max-width: 520px\)[\s\S]{0,500}\.folio-chapter-head\s*\{[\s\S]{0,120}grid-template-columns:\s*1\.35rem minmax\(0, 1fr\)/,
     );
     expect(head, "未注入主题变量时章号仍落朱砂").toContain(
-      "var(--character-accent, var(--color-cinnabar))",
+      "var(--folio-chapter-accent, var(--color-cinnabar))",
+    );
+    expect(source("src/components/character/ReincarnationDialog.vue")).toContain(
+      "--folio-chapter-accent: var(--character-accent)",
     );
   });
 
@@ -362,7 +365,7 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
       /@media \(min-width: 620px\)[\s\S]{0,700}\.reincarnation-review__grid\s*\{[\s\S]{0,140}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
     );
     expect(dialog, "620 起双账里的章首先保题名宽度,真值落到下一行").toMatch(
-      /@media \(min-width: 620px\)[\s\S]{0,900}\.reincarnation-review__grid > \.reincarnation-chapter > \.character-chapter-head\s*\{[\s\S]{0,160}grid-template-columns:\s*auto minmax\(0, 1fr\)/,
+      /@media \(min-width: 620px\)[\s\S]{0,900}\.reincarnation-review__grid > \.reincarnation-chapter > \.folio-chapter-head\s*\{[\s\S]{0,160}grid-template-columns:\s*auto minmax\(0, 1fr\)/,
     );
     expect(rail, "220 以下路签收成竖排").toMatch(
       /@media \(max-width: 220px\)[\s\S]{0,1600}\.reincarnation-stages\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,

@@ -90,7 +90,7 @@ describe("道躯案 · 三章连续卷与行藏周天", () => {
     expect(
       [...view.matchAll(/data-character-chapter="([^"]+)"/g)].map((match) => match[1]),
     ).toEqual(["foundation", "modifiers", "catalog"]);
-    expect(view).toContain("<CharacterChapterHead");
+    expect(view).toContain("<FolioChapterHead");
     expect(view).toContain("<CharacterModifierRow");
   });
 

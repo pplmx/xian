@@ -4,6 +4,10 @@
    * 藏珍双阁 —— 功名榜与藏珍阁各是一册两章。
    * 960 宽起把行动章与榜/柜章摊成左右两页；此前是一张连续单叶。
    */
+  .collection-page {
+    --folio-chapter-accent: var(--color-gold-ink);
+    --folio-chapter-accent-rgb: var(--color-gold-ink-rgb);
+  }
   .collection-page .folio-masthead--featured {
     background:
       radial-gradient(circle at 82% 18%, rgb(var(--color-gold-ink-rgb) / 0.05), transparent 9rem),
@@ -146,70 +150,6 @@
 
   .collection-register > [data-collection-chapter="volumes"] {
     grid-area: volumes;
-  }
-
-  .collection-chapter-head {
-    display: grid;
-    min-width: 0;
-    grid-template-columns: 1.45rem minmax(0, 1fr) auto;
-    align-items: start;
-    gap: 0.24rem 0.55rem;
-    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
-    padding: 0.66rem 0.05rem 0.54rem;
-  }
-
-  .collection-chapter-head__index {
-    display: grid;
-    width: 1.35rem;
-    height: 1.35rem;
-    place-items: center;
-    border-left: 2px solid rgb(var(--color-gold-ink-rgb) / 0.68);
-    color: rgb(var(--color-gold-ink-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    line-height: 1;
-  }
-
-  .collection-chapter-head__copy {
-    display: grid;
-    min-width: 0;
-    gap: 0.04rem;
-  }
-
-  .collection-chapter-head__eyebrow {
-    color: rgb(var(--color-gold-ink-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    letter-spacing: 0.12em;
-    line-height: 1.35;
-  }
-
-  .collection-chapter-head__title {
-    margin: 0;
-    color: rgb(var(--color-ink-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-section);
-    font-weight: 400;
-    letter-spacing: 0.13em;
-    line-height: 1.35;
-  }
-
-  .collection-chapter-head__hint {
-    min-width: 0;
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-    line-height: 1.52;
-    overflow-wrap: anywhere;
-  }
-
-  .collection-chapter-head__fact {
-    justify-self: end;
-    color: rgb(var(--color-qing-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    line-height: 1.45;
-    text-align: right;
-    white-space: nowrap;
   }
 
   .achievement-briefing__targets {
@@ -901,19 +841,6 @@
     .collection-gate__dot {
       top: 0.42rem;
       right: 0.42rem;
-    }
-
-    .collection-chapter-head {
-      grid-template-columns: 1.35rem minmax(0, 1fr);
-      gap: 0.3rem 0.42rem;
-      padding-inline: 0.58rem;
-    }
-
-    .collection-chapter-head__fact {
-      grid-column: 2;
-      justify-self: start;
-      text-align: left;
-      white-space: normal;
     }
 
     .achievement-target {

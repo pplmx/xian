@@ -6,7 +6,8 @@
       data-celestial-report-chapter="result"
       data-celestial-report-result
     >
-      <CelestialChapterHead
+      <FolioChapterHead
+        data-celestial-chapter-head
         index="壹"
         title="战果"
         hint="先报此程终局,再逐场回看"
@@ -46,7 +47,8 @@
       data-celestial-report-chapter="field"
       data-celestial-report-field
     >
-      <CelestialChapterHead
+      <FolioChapterHead
+        data-celestial-chapter-head
         index="贰"
         title="战局"
         hint="选一场,重看当场对阵与回放"
@@ -66,7 +68,8 @@
       data-celestial-report-chapter="fights"
       data-celestial-report-fights
     >
-      <CelestialChapterHead
+      <FolioChapterHead
+        data-celestial-chapter-head
         index="叁"
         title="逐场"
         hint="胜负之外,余血与回合也一并入账"
@@ -102,7 +105,8 @@
       data-celestial-report-chapter="judgement"
       data-celestial-report-judgement
     >
-      <CelestialChapterHead
+      <FolioChapterHead
+        data-celestial-chapter-head
         index="肆"
         title="此战之判"
         hint="战报不是判决书,是下一次出发的依据"
@@ -132,7 +136,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { formatPercent } from "@/utils/format";
-import CelestialChapterHead from "@/components/celestial/CelestialChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import GauntletPanel from "@/components/celestial/GauntletPanel.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import type { ReportView } from "@/components/celestial/reportView";

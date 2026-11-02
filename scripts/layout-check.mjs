@@ -4458,7 +4458,7 @@ async function taskLateTour() {
         : page.locator("main button", { hasText: /决\s*战/ }).first();
     const runShown = await page.evaluate(() => {
       const chapter = document.querySelector("[data-celestial-run]");
-      const fact = chapter?.querySelector(".celestial-chapter-head__fact");
+      const fact = chapter?.querySelector(".folio-chapter-head__fact");
       return {
         found: Boolean(chapter),
         empty: Boolean(chapter?.querySelector("[data-celestial-run-empty]")),
@@ -4940,17 +4940,16 @@ async function taskReincarnation() {
             range.selectNodeContents(el);
             return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
           }),
-          chapterHeads: p.querySelectorAll("[data-reincarnation-stage] .character-chapter-head")
-            .length,
-          chapterTitles: [...p.querySelectorAll(".character-chapter-head__title")].map((el) =>
+          chapterHeads: p.querySelectorAll("[data-reincarnation-stage] .folio-chapter-head").length,
+          chapterTitles: [...p.querySelectorAll(".folio-chapter-head__title")].map((el) =>
             (el.textContent || "").replace(/\s+/g, " ").trim(),
           ),
           chapterHeadDisplay: (() => {
-            const head = p.querySelector("[data-reincarnation-stage] .character-chapter-head");
+            const head = p.querySelector("[data-reincarnation-stage] .folio-chapter-head");
             return head ? getComputedStyle(head).display : "";
           })(),
           chapterHeadColumns: (() => {
-            const head = p.querySelector("[data-reincarnation-stage] .character-chapter-head");
+            const head = p.querySelector("[data-reincarnation-stage] .folio-chapter-head");
             return head ? getComputedStyle(head).gridTemplateColumns : "";
           })(),
           nestedShells: [
@@ -5023,10 +5022,10 @@ async function taskReincarnation() {
         failures.push(`[390] 转世场景:${label}的三程路签被挤折行(${p.stageNoteLines.join("/")})`);
       if (p.chapterHeads > 0 && p.chapterHeadDisplay !== "grid")
         failures.push(
-          `[390] 转世场景:${label}的章首退成了 ${p.chapterHeadDisplay || "无样式"},不是三栏账头`,
+          `[390] 转世场景:${label}的章首退成了 ${p.chapterHeadDisplay || "无样式"},不是双栏账头`,
         );
-      if (p.chapterHeads > 0 && p.chapterHeadColumns.split(/\s+/).filter(Boolean).length !== 3)
-        failures.push(`[390] 转世场景:${label}的章首没有摊成三栏(${p.chapterHeadColumns || "无"})`);
+      if (p.chapterHeads > 0 && p.chapterHeadColumns.split(/\s+/).filter(Boolean).length !== 2)
+        failures.push(`[390] 转世场景:${label}的章首没有摊成双栏(${p.chapterHeadColumns || "无"})`);
       if (p.nestedShells.some((shell) => shell.fullBorder))
         failures.push(
           `[390] 转世场景:${label}的续卷里又叠了四边框卡壳 —— ` +
@@ -6143,13 +6142,12 @@ async function taskInventoryTabRegisters() {
         const chapters = register
           ? [...register.querySelectorAll("[data-inventory-chapter]")].map((chapter) => {
               const style = getComputedStyle(chapter);
-              const head = chapter.querySelector("[data-inventory-chapter-head]");
-              const title = head?.querySelector(".inventory-chapter-head__title");
-              const fact = head?.querySelector(".inventory-chapter-head__fact");
+              const head = chapter.querySelector("[data-folio-chapter-head]");
+              const title = head?.querySelector(".folio-chapter-head__title");
+              const fact = head?.querySelector(".folio-chapter-head__fact");
               return {
                 key: chapter.getAttribute("data-inventory-chapter") || "",
-                index:
-                  head?.querySelector(".inventory-chapter-head__index")?.textContent?.trim() || "",
+                index: head?.querySelector(".folio-chapter-head__index")?.textContent?.trim() || "",
                 title: (title?.textContent || "").trim(),
                 fact: (fact?.textContent || "").replace(/\s+/g, " ").trim(),
                 hasHead: Boolean(head),
@@ -6193,7 +6191,7 @@ async function taskInventoryTabRegisters() {
                 background: registerStyle.backgroundColor,
                 rect: box(register),
                 legacyChapterHeads: register.querySelectorAll(
-                  ".section-title, .folio-chapter-head, [data-folio-section-mark]",
+                  ".section-title, [data-folio-section-mark]",
                 ).length,
                 oldShells: register.querySelectorAll(
                   ".inventory-workshop__card, .inventory-materials__groups, .inventory-material-group__head",
@@ -6621,9 +6619,7 @@ async function taskApprenticePulse() {
         const order = register?.querySelector("[data-apprentice-order]");
         const dispatch = register?.querySelector("[data-apprentice-dispatch-all]");
         const chapters = [...(register?.querySelectorAll("[data-apprentice-chapter]") ?? [])];
-        const chapterHeads = [
-          ...(register?.querySelectorAll("[data-apprentice-chapter-head]") ?? []),
-        ];
+        const chapterHeads = [...(register?.querySelectorAll("[data-folio-chapter-head]") ?? [])];
         const choiceGrid = roster?.querySelector(".apprentice-task-choice-grid");
         const choices = [...(register?.querySelectorAll(".apprentice-task-choice") ?? [])];
         const depot = register?.querySelector(".apprentice-depot__rows");
@@ -6666,19 +6662,13 @@ async function taskApprenticePulse() {
             chapter: head
               .closest("[data-apprentice-chapter]")
               ?.getAttribute("data-apprentice-chapter"),
-            index: (
-              head.querySelector(".apprentice-chapter-head__index")?.textContent || ""
-            ).trim(),
-            title: (
-              head.querySelector(".apprentice-chapter-head__title")?.textContent || ""
-            ).trim(),
-            fact: (head.querySelector(".apprentice-chapter-head__fact")?.textContent || "").trim(),
+            index: (head.querySelector(".folio-chapter-head__index")?.textContent || "").trim(),
+            title: (head.querySelector(".folio-chapter-head__title")?.textContent || "").trim(),
+            fact: (head.querySelector(".folio-chapter-head__fact")?.textContent || "").trim(),
           })),
           pulseHasLedgerHead: Boolean(pulse?.querySelector("[data-folio-ledger-head]")),
           legacyChapterHeads:
-            register?.querySelectorAll(
-              ".section-title, .folio-chapter-head, [data-folio-section-mark]",
-            ).length ?? -1,
+            register?.querySelectorAll(".section-title, [data-folio-section-mark]").length ?? -1,
           register: chrome(register),
           order: chrome(order),
           orderRect: order
@@ -8929,7 +8919,7 @@ async function taskRebirthFolio() {
           enterDisabled: !!enter?.hasAttribute("disabled"),
           enterText: (enter?.textContent || "").replace(/\s+/g, " ").trim(),
           actionsColumns: actions ? getComputedStyle(actions).gridTemplateColumns : "",
-          chapterHeads: root.querySelectorAll(".character-chapter-head").length,
+          chapterHeads: root.querySelectorAll(".folio-chapter-head").length,
           nestedShells,
           panelWidth: panel.clientWidth,
           panelScrollWidth: panel.scrollWidth,
@@ -10162,14 +10152,14 @@ async function taskDongfuFold() {
           '[data-dongfu-ledger-chapter="register"]',
         );
         const ledgerHeads = [
-          ...(ledgerRegister?.querySelectorAll("[data-dongfu-chapter-head]") ?? []),
+          ...(ledgerRegister?.querySelectorAll("[data-folio-chapter-head]") ?? []),
         ].map((head) => ({
           chapter: head
             .closest("[data-dongfu-ledger-chapter]")
             ?.getAttribute("data-dongfu-ledger-chapter"),
-          index: (head.querySelector(".dongfu-chapter-head__index")?.textContent || "").trim(),
-          title: (head.querySelector(".dongfu-chapter-head__title")?.textContent || "").trim(),
-          fact: (head.querySelector(".dongfu-chapter-head__fact")?.textContent || "").trim(),
+          index: (head.querySelector(".folio-chapter-head__index")?.textContent || "").trim(),
+          title: (head.querySelector(".folio-chapter-head__title")?.textContent || "").trim(),
+          fact: (head.querySelector(".folio-chapter-head__fact")?.textContent || "").trim(),
         }));
         const register = document.querySelector("[data-dongfu-register]");
         const registerChapters = register?.querySelectorAll("[data-dongfu-chapter]") ?? [];
@@ -10216,9 +10206,8 @@ async function taskDongfuFold() {
           ledgerHeads,
           pulseHasLedgerHead: Boolean(summaryChapter?.querySelector("[data-folio-ledger-head]")),
           legacyChapterHeads:
-            ledgerRegister?.querySelectorAll(
-              ".section-title, .folio-chapter-head, [data-folio-section-mark]",
-            ).length ?? -1,
+            ledgerRegister?.querySelectorAll(".section-title, [data-folio-section-mark]").length ??
+            -1,
           buildTitleTop: summaryChapter?.getBoundingClientRect().top ?? null,
           registerTop: registerChapter?.getBoundingClientRect().top ?? null,
           registerChapters: registerChapters.length,
@@ -10489,12 +10478,12 @@ async function taskCultivationFold() {
       const fold = await page.evaluate(() => {
         const register = document.querySelector("[data-cultivation-register]");
         const chapters = [...(register?.querySelectorAll("[data-cultivation-chapter]") ?? [])];
-        const heads = [...(register?.querySelectorAll(".cultivation-chapter-head") ?? [])];
+        const heads = [...(register?.querySelectorAll(".folio-chapter-head") ?? [])];
         const chapterTitles = heads.map((head) =>
-          (head.querySelector(".cultivation-chapter-head__title")?.textContent || "").trim(),
+          (head.querySelector(".folio-chapter-head__title")?.textContent || "").trim(),
         );
         const chapterFactColors = heads.map((head) => {
-          const fact = head.querySelector(".cultivation-chapter-head__fact");
+          const fact = head.querySelector(".folio-chapter-head__fact");
           return fact ? getComputedStyle(fact).color : "missing";
         });
         const actionRows = [...(register?.querySelectorAll("[data-cultivation-action]") ?? [])];
@@ -10845,7 +10834,7 @@ async function taskCharacterFold() {
       const fold = await page.evaluate(() => {
         const register = document.querySelector("[data-character-register]");
         const chapters = [...(register?.querySelectorAll("[data-character-chapter]") ?? [])];
-        const heads = [...(register?.querySelectorAll(".character-chapter-head") ?? [])];
+        const heads = [...(register?.querySelectorAll(".folio-chapter-head") ?? [])];
         const groups = [...(register?.querySelectorAll("[data-character-modifier-group]") ?? [])];
         const rows = [...(register?.querySelectorAll("[data-character-modifier]") ?? [])];
         const detail = register?.querySelector("[data-character-modifier-detail]");
@@ -10854,7 +10843,7 @@ async function taskCharacterFold() {
           chapterKeys: chapters.map((chapter) => chapter.getAttribute("data-character-chapter")),
           heads: heads.length,
           chapterTitles: heads.map((head) =>
-            (head.querySelector(".character-chapter-head__title")?.textContent || "").trim(),
+            (head.querySelector(".folio-chapter-head__title")?.textContent || "").trim(),
           ),
           cardShells: register?.querySelectorAll(".card-ink").length ?? -1,
           groups: groups.length,
@@ -11048,7 +11037,7 @@ async function taskIdentityFolio() {
           const panel = root?.closest(".modal-panel");
           const scroll = panel?.querySelector("[data-folio-modal-scroll]");
           const chapters = [...(root?.querySelectorAll("[data-identity-chapter]") ?? [])];
-          const heads = [...(root?.querySelectorAll(".character-chapter-head") ?? [])];
+          const heads = [...(root?.querySelectorAll(".folio-chapter-head") ?? [])];
           const textOf = (el) => (el?.textContent || "").replace(/\s+/g, " ").trim();
           const rowsOf = (selector) => [...(root?.querySelectorAll(selector) ?? [])];
           const styleOf = (el) => (el ? getComputedStyle(el) : null);
@@ -11060,7 +11049,7 @@ async function taskIdentityFolio() {
             text: textOf(root),
             chapterKeys: chapters.map((chapter) => chapter.getAttribute("data-identity-chapter")),
             chapterTitles: heads.map((head) =>
-              textOf(head.querySelector(".character-chapter-head__title")),
+              textOf(head.querySelector(".folio-chapter-head__title")),
             ),
             chapterCount: chapters.length,
             headCount: heads.length,
@@ -11287,7 +11276,7 @@ async function taskCelestialTrialFold() {
         page.evaluate(() => {
           const ledger = document.querySelector("[data-celestial-trial-ledger]");
           const chapters = [...(ledger?.querySelectorAll("[data-celestial-trial-chapter]") ?? [])];
-          const heads = [...(ledger?.querySelectorAll(".celestial-chapter-head") ?? [])];
+          const heads = [...(ledger?.querySelectorAll(".folio-chapter-head") ?? [])];
           const roster = ledger?.querySelector(".celestial-trial-roster");
           const seals = [...(roster?.querySelectorAll("[data-celestial-trial-seal]") ?? [])];
           const detail = ledger?.querySelector("[data-celestial-trial-detail]");
@@ -11347,10 +11336,10 @@ async function taskCelestialTrialFold() {
               chapter.getAttribute("data-celestial-trial-chapter"),
             ),
             chapterTitles: heads.map((head) =>
-              (head.querySelector(".celestial-chapter-head__title")?.textContent || "").trim(),
+              (head.querySelector(".folio-chapter-head__title")?.textContent || "").trim(),
             ),
             chapterFactColors: heads.map((head) => {
-              const fact = head.querySelector(".celestial-chapter-head__fact");
+              const fact = head.querySelector(".folio-chapter-head__fact");
               return fact ? getComputedStyle(fact).color : "missing";
             }),
             cardShells:
@@ -11867,9 +11856,9 @@ async function taskCelestialBattleScroll() {
               chapter.getAttribute("data-celestial-report-chapter"),
             ),
             chapterTitles: chapters.map((chapter) =>
-              (chapter.querySelector(".celestial-chapter-head__title")?.textContent || "").trim(),
+              (chapter.querySelector(".folio-chapter-head__title")?.textContent || "").trim(),
             ),
-            chapterHeads: ledger?.querySelectorAll(".celestial-chapter-head").length ?? -1,
+            chapterHeads: ledger?.querySelectorAll(".folio-chapter-head").length ?? -1,
             cardShells: ledger?.querySelectorAll(".card-ink").length ?? -1,
             ledger: style(ledger),
             ledgerBox,
@@ -12285,7 +12274,7 @@ async function taskCelestialInnerVolumes() {
               ...ledger.querySelectorAll("[data-celestial-chapter]"),
             ]
           : [];
-        const heads = [...(ledger?.querySelectorAll(".celestial-chapter-head") ?? [])];
+        const heads = [...(ledger?.querySelectorAll(".folio-chapter-head") ?? [])];
         const overlaps = (a, b) =>
           Boolean(
             a &&
@@ -12298,10 +12287,10 @@ async function taskCelestialInnerVolumes() {
           found: Boolean(ledger),
           chapterKeys: chapters.map((chapter) => chapter.getAttribute("data-celestial-chapter")),
           chapterTitles: heads.map((head) =>
-            (head.querySelector(".celestial-chapter-head__title")?.textContent || "").trim(),
+            (head.querySelector(".folio-chapter-head__title")?.textContent || "").trim(),
           ),
           chapterFacts: heads.map((head) =>
-            (head.querySelector(".celestial-chapter-head__fact")?.textContent || "").trim(),
+            (head.querySelector(".folio-chapter-head__fact")?.textContent || "").trim(),
           ),
           cardShells: ledger?.querySelectorAll(".card-ink").length ?? -1,
           ledgerChrome: {
@@ -12312,8 +12301,8 @@ async function taskCelestialInnerVolumes() {
           },
           heads: heads.map((head) => {
             const headRect = head.getBoundingClientRect();
-            const copy = head.querySelector(".celestial-chapter-head__copy");
-            const fact = head.querySelector(".celestial-chapter-head__fact");
+            const copy = head.querySelector(".folio-chapter-head__copy");
+            const fact = head.querySelector(".folio-chapter-head__fact");
             const copyRect = copy?.getBoundingClientRect();
             const factRect = fact?.getBoundingClientRect();
             const lineHeight = fact
@@ -12697,9 +12686,9 @@ async function taskCodexFold() {
         const current = await page.evaluate((chapterId) => {
           const folio = document.querySelector("[data-realm-codex-folio]");
           const chapterEl = folio?.querySelector(`[data-realm-codex-chapter="${chapterId}"]`);
-          const head = chapterEl?.querySelector("[data-realm-codex-chapter-head]");
-          const headCopy = head?.querySelector(".realm-codex-chapter-head__copy");
-          const headFact = head?.querySelector(".realm-codex-chapter-head__fact");
+          const head = chapterEl?.querySelector("[data-folio-chapter-head]");
+          const headCopy = head?.querySelector(".folio-chapter-head__copy");
+          const headFact = head?.querySelector(".folio-chapter-head__fact");
           const style = folio ? getComputedStyle(folio) : null;
           const headStyle = head ? getComputedStyle(head) : null;
           const headRect = head?.getBoundingClientRect();
@@ -12714,19 +12703,18 @@ async function taskCodexFold() {
           ].filter((row) => row.getClientRects().length > 0);
           return {
             chapter: folio?.getAttribute("data-chapter") ?? null,
-            label: readText(head?.querySelector(".realm-codex-chapter-head__title")),
-            headIndex: readText(head?.querySelector(".realm-codex-chapter-head__index")),
-            headHint: readText(head?.querySelector(".realm-codex-chapter-head__hint")),
+            label: readText(head?.querySelector(".folio-chapter-head__title")),
+            headIndex: readText(head?.querySelector(".folio-chapter-head__index")),
+            headHint: readText(head?.querySelector(".folio-chapter-head__hint")),
             headFact: readText(headFact),
             head: headRect
               ? {
-                  count: chapterEl?.querySelectorAll("[data-realm-codex-chapter-head]").length,
+                  count: chapterEl?.querySelectorAll("[data-folio-chapter-head]").length,
                   chapter: head?.getAttribute("data-chapter") ?? null,
                   first: chapterEl?.firstElementChild === head,
                   legacyChapterHeads:
-                    chapterEl?.querySelectorAll(
-                      ".section-title, .folio-chapter-head, [data-folio-section-mark]",
-                    ).length ?? -1,
+                    chapterEl?.querySelectorAll(".section-title, [data-folio-section-mark]")
+                      .length ?? -1,
                   columns: headStyle?.gridTemplateColumns.split(" ").filter(Boolean) ?? [],
                   factBelowCopy: copyRect && factRect ? factRect.top >= copyRect.bottom - 1 : false,
                   factRightOfCopy:
@@ -13068,7 +13056,7 @@ async function taskAchievementFold() {
           const wall = document.querySelector(".achievement-wall");
           const wallRect = wall?.getBoundingClientRect();
           const volumesFact = (
-            document.querySelector("[data-achievement-volumes] .collection-chapter-head__fact")
+            document.querySelector("[data-achievement-volumes] .folio-chapter-head__fact")
               ?.textContent ?? ""
           )
             .replace(/\s+/g, " ")
@@ -13511,15 +13499,12 @@ async function taskCollectionRegister() {
         const chapters = [...document.querySelectorAll("[data-collection-chapter]")].map(
           (chapter) => {
             const style = getComputedStyle(chapter);
-            const head = chapter.querySelector("[data-collection-chapter-head]");
+            const head = chapter.querySelector("[data-folio-chapter-head]");
             return {
               key: chapter.getAttribute("data-collection-chapter") || "",
-              title:
-                head?.querySelector(".collection-chapter-head__title")?.textContent?.trim() || "",
-              index:
-                head?.querySelector(".collection-chapter-head__index")?.textContent?.trim() || "",
-              fact:
-                head?.querySelector(".collection-chapter-head__fact")?.textContent?.trim() || "",
+              title: head?.querySelector(".folio-chapter-head__title")?.textContent?.trim() || "",
+              index: head?.querySelector(".folio-chapter-head__index")?.textContent?.trim() || "",
+              fact: head?.querySelector(".folio-chapter-head__fact")?.textContent?.trim() || "",
               hasHead: Boolean(head),
               borderWidths: [
                 style.borderTopWidth,
@@ -13535,10 +13520,11 @@ async function taskCollectionRegister() {
           },
         );
         const firstHead = chapters[0]
-          ? document.querySelectorAll("[data-collection-chapter-head]")[0]
+          ? document.querySelectorAll("[data-folio-chapter-head]")[0]
           : null;
-        const firstTitle = firstHead?.querySelector(".collection-chapter-head__title");
-        const firstFact = firstHead?.querySelector(".collection-chapter-head__fact");
+        const firstTitle = firstHead?.querySelector(".folio-chapter-head__title");
+        const firstFact = firstHead?.querySelector(".folio-chapter-head__fact");
+        const firstTail = firstFact?.closest(".folio-chapter-head__tail");
         const targets = document.querySelector(".achievement-briefing__targets");
         return {
           viewport: { width: window.innerWidth, height: window.innerHeight },
@@ -13565,7 +13551,7 @@ async function taskCollectionRegister() {
           targetColumns: targets
             ? getComputedStyle(targets).gridTemplateColumns.split(/\s+/).filter(Boolean).length
             : 0,
-          factColumn: firstFact ? getComputedStyle(firstFact).gridColumnStart : "",
+          factColumn: firstTail ? getComputedStyle(firstTail).gridColumnStart : "",
           titleTop: firstTitle ? Math.round(firstTitle.getBoundingClientRect().top) : null,
           factTop: firstFact ? Math.round(firstFact.getBoundingClientRect().top) : null,
           documentOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
@@ -16021,13 +16007,13 @@ async function taskPreGameTour() {
         ids: chapters.map((el) => el.getAttribute("data-opening-chapter")),
         heads: chapters.map((chapter) => ({
           id: chapter.getAttribute("data-opening-chapter"),
-          index: (chapter.querySelector(".opening-chapter-head__index")?.textContent || "").trim(),
+          index: (chapter.querySelector(".folio-chapter-head__index")?.textContent || "").trim(),
           eyebrow: (
-            chapter.querySelector(".opening-chapter-head__eyebrow")?.textContent || ""
+            chapter.querySelector(".folio-chapter-head__eyebrow")?.textContent || ""
           ).trim(),
-          title: (chapter.querySelector(".opening-chapter-head__title")?.textContent || "").trim(),
-          hint: (chapter.querySelector(".opening-chapter-head__hint")?.textContent || "").trim(),
-          fact: (chapter.querySelector(".opening-chapter-head__fact")?.textContent || "").trim(),
+          title: (chapter.querySelector(".folio-chapter-head__title")?.textContent || "").trim(),
+          hint: (chapter.querySelector(".folio-chapter-head__hint")?.textContent || "").trim(),
+          fact: (chapter.querySelector(".folio-chapter-head__fact")?.textContent || "").trim(),
           borderSides: borderSides(chapter),
           radius: getComputedStyle(chapter).borderRadius,
           shadow: getComputedStyle(chapter).boxShadow,
@@ -17498,12 +17484,12 @@ async function taskBuildFormed() {
         const chapters = [...(root?.querySelectorAll("[data-build-chapter]") ?? [])].map(
           (chapter) => {
             const style = getComputedStyle(chapter);
-            const head = chapter.querySelector("[data-build-chapter-head]");
+            const head = chapter.querySelector("[data-folio-chapter-head]");
             return {
               key: chapter.getAttribute("data-build-chapter") || "",
-              title: chapter.querySelector(".build-chapter-head__title")?.textContent?.trim() || "",
+              title: chapter.querySelector(".folio-chapter-head__title")?.textContent?.trim() || "",
               hasHead: Boolean(head),
-              fact: chapter.querySelector(".build-chapter-head__fact")?.textContent?.trim() || "",
+              fact: chapter.querySelector(".folio-chapter-head__fact")?.textContent?.trim() || "",
               borderWidths: [
                 style.borderTopWidth,
                 style.borderRightWidth,
@@ -17851,9 +17837,8 @@ async function taskMarketRegisterFold() {
                 total: head.getAttribute("data-market-book-total") ?? "",
                 count: panel?.querySelectorAll("[data-market-book-head]").length ?? 0,
                 legacyChapterHeadCount:
-                  register?.querySelectorAll(
-                    ".section-title, .folio-chapter-head, [data-folio-section-mark]",
-                  ).length ?? 0,
+                  register?.querySelectorAll(".section-title, [data-folio-section-mark]").length ??
+                  0,
                 cardInkCount: register?.querySelectorAll(".card-ink").length ?? 0,
                 rect: rectOf(head),
                 identityRect: rectOf(headIdentity),
@@ -18121,9 +18106,7 @@ async function taskMarketRegisterFold() {
             total: head?.getAttribute("data-market-book-total") ?? "",
             body: Boolean(panel?.querySelector("[data-market-book-body]")),
             legacyChapterHeadCount:
-              panel?.querySelectorAll(
-                ".section-title, .folio-chapter-head, [data-folio-section-mark]",
-              ).length ?? 0,
+              panel?.querySelectorAll(".section-title, [data-folio-section-mark]").length ?? 0,
             cardInkCount: panel?.querySelectorAll(".card-ink").length ?? 0,
           },
         };
@@ -19299,18 +19282,18 @@ async function taskSoulListOverflow() {
         const register = document.querySelector("[data-soul-register]");
         const chapters = [...document.querySelectorAll("[data-soul-chapter]")].map((chapter) => {
           const style = getComputedStyle(chapter);
-          const head = chapter.querySelector("[data-soul-chapter-head], [data-folio-ledger-head]");
+          const head = chapter.querySelector("[data-folio-chapter-head], [data-folio-ledger-head]");
           return {
             key: chapter.getAttribute("data-soul-chapter") || "",
             title:
               chapter
-                .querySelector(".soul-chapter-head__title, .folio-ledger-head__title")
+                .querySelector(".folio-chapter-head__title, .folio-ledger-head__title")
                 ?.textContent?.trim() || "",
             index:
               chapter
-                .querySelector(".soul-chapter-head__index, .folio-ledger-head__seal")
+                .querySelector(".folio-chapter-head__index, .folio-ledger-head__seal")
                 ?.textContent?.trim() || "",
-            fact: chapter.querySelector(".soul-chapter-head__fact")?.textContent?.trim() || "",
+            fact: chapter.querySelector(".folio-chapter-head__fact")?.textContent?.trim() || "",
             hasHead: Boolean(head),
             borderWidths: [
               style.borderTopWidth,
@@ -19999,22 +19982,22 @@ async function taskTitlePetOverflow() {
           registerBorderTop: registerStyle?.borderTopWidth ?? "0px",
           registerBorderBottom: registerStyle?.borderBottomWidth ?? "0px",
           chapters: chapters.map((chapter) => {
-            const head = chapter.querySelector("[data-name-beast-chapter-head]");
+            const head = chapter.querySelector("[data-folio-chapter-head]");
             return {
               key: chapter.getAttribute("data-name-beast-chapter"),
               box: box(chapter),
               head: {
                 box: box(head),
-                index: (head?.querySelector(".name-beast-chapter-head__index")?.textContent || "")
+                index: (head?.querySelector(".folio-chapter-head__index")?.textContent || "")
                   .replace(/\s+/g, "")
                   .trim(),
-                title: (head?.querySelector(".name-beast-chapter-head__title")?.textContent || "")
+                title: (head?.querySelector(".folio-chapter-head__title")?.textContent || "")
                   .replace(/\s+/g, " ")
                   .trim(),
-                hint: (head?.querySelector(".name-beast-chapter-head__hint")?.textContent || "")
+                hint: (head?.querySelector(".folio-chapter-head__hint")?.textContent || "")
                   .replace(/\s+/g, " ")
                   .trim(),
-                fact: (head?.querySelector(".name-beast-chapter-head__fact")?.textContent || "")
+                fact: (head?.querySelector(".folio-chapter-head__fact")?.textContent || "")
                   .replace(/\s+/g, " ")
                   .trim(),
               },

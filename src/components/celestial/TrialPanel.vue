@@ -6,7 +6,8 @@
       data-celestial-trial-chapter="daily"
       data-celestial-daily
     >
-      <CelestialChapterHead
+      <FolioChapterHead
+        data-celestial-chapter-head
         index="壹"
         title="今日天道"
         hint="日出而题,日落而息"
@@ -66,7 +67,8 @@
       data-celestial-trial-chapter="mutation"
       data-celestial-mutation
     >
-      <CelestialChapterHead
+      <FolioChapterHead
+        data-celestial-chapter-head
         index="贰"
         title="天道变数"
         hint="规则随机,每探一次天机便换一副面孔"
@@ -114,7 +116,8 @@
       data-celestial-trial-chapter="trials"
       data-celestial-trials
     >
-      <CelestialChapterHead
+      <FolioChapterHead
+        data-celestial-chapter-head
         index="叁"
         title="天道试炼"
         hint="极限构筑的证道之地"
@@ -224,7 +227,8 @@
       data-celestial-trial-chapter="challenge"
       data-celestial-challenge
     >
-      <CelestialChapterHead
+      <FolioChapterHead
+        data-celestial-chapter-head
         index="肆"
         title="天道挑战书"
         hint="你定规则,天道定赏"
@@ -490,7 +494,7 @@ import {
 import { BUILD_PROFILES } from "@/core/buildSim";
 import { cnNumber } from "@/utils/format";
 import { useDaoEntry } from "@/composables/useDaoEntry";
-import CelestialChapterHead from "@/components/celestial/CelestialChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import SecretRealmCard from "@/components/adventure/SecretRealmCard.vue";
 import type { ReportView } from "@/components/celestial/reportView";
 

@@ -146,11 +146,11 @@ describe("界域志 · 分册", () => {
 
   it("六门各自的题名由同一份册目与章首渲染(分册只是分组,不删内容)", () => {
     const chapterHead = readFileSync(
-      resolve(__dirname, "../components/codex/RealmCodexChapterHead.vue"),
+      resolve(__dirname, "../components/common/FolioChapterHead.vue"),
       "utf8",
     );
 
-    expect(src.match(/<RealmCodexChapterHead\b/g), "六册每册都要起章首").toHaveLength(6);
+    expect(src.match(/<FolioChapterHead\b/g), "六册每册都要起章首").toHaveLength(6);
     for (const id of tabIds) {
       expect(src, `分册 ${id} 的题名没有读统一装配`).toContain(`realmCodexChapter("${id}")`);
     }

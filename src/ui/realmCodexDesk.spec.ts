@@ -247,11 +247,11 @@ describe("界域案 · 四界先成谱,境界再逐格展开", () => {
 
   it("六册各起同一枚章首,卷次、读法与章内真值同源", () => {
     const view = source("src/views/RealmCodexView.vue");
-    const head = source("src/components/codex/RealmCodexChapterHead.vue");
+    const head = source("src/components/common/FolioChapterHead.vue");
     const css = source("src/styles/pages/realm-codex.css");
     const layout = source("scripts/layout-check.mjs");
 
-    expect(view.match(/<RealmCodexChapterHead\b/g), "六册每册只起一枚章首").toHaveLength(6);
+    expect(view.match(/<FolioChapterHead\b/g), "六册每册只起一枚章首").toHaveLength(6);
     for (const chapter of ["realm", "classics", "yi", "ziwei", "xiang", "qimen"]) {
       expect(view, `${chapter} 册章首直读同一份卷次装配`).toContain(`v-bind="${chapter}Chapter"`);
       expect(view, `${chapter} 册章首必须报本册真值`).toContain(`:fact="${chapter}ChapterFact"`);
@@ -278,23 +278,21 @@ describe("界域案 · 四界先成谱,境界再逐格展开", () => {
       /const qimenChapterFact = computed\([\s\S]{0,180}GATES\.length[\s\S]{0,120}QIMEN_PALACE_COUNT/,
     );
 
-    expect(head).toContain("data-realm-codex-chapter-head");
-    expect(head).toContain(':data-chapter="tab"');
-    expect(head).toContain("realm-codex-chapter-head__index");
-    expect(head).toContain("realm-codex-chapter-head__title");
-    expect(head).toContain("realm-codex-chapter-head__hint");
-    expect(head).toContain("realm-codex-chapter-head__fact");
+    expect(head).toContain("data-folio-chapter-head");
+    expect(view).toContain(':data-chapter="realmChapter.tab"');
+    expect(view.match(/data-realm-codex-chapter-head/g), "六册各留自己的巡页指纹").toHaveLength(6);
+    expect(head).toContain("folio-chapter-head__index");
+    expect(head).toContain("folio-chapter-head__title");
+    expect(head).toContain("folio-chapter-head__hint");
+    expect(head).toContain("folio-chapter-head__fact");
 
-    expect(css, "390 先让章号与题名并读,真值落到题名下方").toMatch(
-      /\.realm-codex-chapter-head\s*\{[\s\S]{0,360}grid-template-columns:\s*1\.45rem minmax\(0, 1fr\)/,
+    expect(css, "六册章首共用界域志的石青强调").toMatch(
+      /\.realm-codex-folio\s*\{[\s\S]{0,320}--folio-chapter-accent:\s*var\(--color-qing\)/,
     );
-    expect(css).toMatch(/\.realm-codex-chapter-head__fact\s*\{[\s\S]{0,180}grid-column:\s*2;/);
-    expect(css, "620 起章内真值回到题名右侧").toMatch(
-      /@media \(min-width: 620px\)[\s\S]{0,2600}\.realm-codex-chapter-head\s*\{[\s\S]{0,120}1\.45rem minmax\(0, 1fr\) auto/,
+    expect(head, "390 与 200% 缩放时章内真值退到题名下方").toMatch(
+      /@media \(max-width: 520px\)\s*\{[\s\S]{0,900}\.folio-chapter-head__tail\s*\{[\s\S]{0,120}grid-column:\s*2/,
     );
-    expect(layout, "真浏览器门逐册量章号、题名、读法与真值").toContain(
-      "[data-realm-codex-chapter-head]",
-    );
+    expect(layout, "真浏览器门逐册量章号、题名、读法与真值").toContain("[data-folio-chapter-head]");
     expect(layout, "真浏览器门在 1280 再核章内真值回到右侧").toContain(
       "realmCodexChapterSheets(1280)",
     );

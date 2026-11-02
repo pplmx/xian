@@ -273,6 +273,7 @@ const CATEGORIES = [
       "opportunityDesk",
       "folioMasthead",
       "folioIndexRail",
+      "folioChapterHead",
       "folioOpening",
       "folioChrome",
       "folioSpread",

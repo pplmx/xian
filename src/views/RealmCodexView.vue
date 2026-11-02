@@ -26,7 +26,12 @@
 
     <div class="realm-codex-folio folio-span-all" data-realm-codex-folio :data-chapter="codexTab">
       <div v-if="codexTab === 'realm'" class="realm-codex-chapter" data-realm-codex-chapter="realm">
-        <RealmCodexChapterHead v-bind="realmChapter" :fact="realmChapterFact" />
+        <FolioChapterHead
+          data-realm-codex-chapter-head
+          :data-chapter="realmChapter.tab"
+          v-bind="realmChapter"
+          :fact="realmChapterFact"
+        />
         <div class="realm-codex-desk" data-realm-codex-desk>
           <div class="realm-codex-desk__lead">
             <!--
@@ -238,7 +243,12 @@
       <template v-if="codexTab === 'classics'">
         <div class="realm-codex-chapter" data-realm-codex-chapter="classics">
           <!-- 典籍:境界名背后的原典 -->
-          <RealmCodexChapterHead v-bind="classicsChapter" :fact="classicsChapterFact" />
+          <FolioChapterHead
+            data-realm-codex-chapter-head
+            :data-chapter="classicsChapter.tab"
+            v-bind="classicsChapter"
+            :fact="classicsChapterFact"
+          />
           <section
             class="realm-codex-section realm-classic-ledger"
             data-realm-codex-section="classics"
@@ -283,7 +293,12 @@
       <template v-if="codexTab === 'yi'">
         <div class="realm-codex-chapter" data-realm-codex-chapter="yi">
           <!-- 周易:读过之后可以真的问一卦 -->
-          <RealmCodexChapterHead v-bind="yiChapter" :fact="yiChapterFact" />
+          <FolioChapterHead
+            data-realm-codex-chapter-head
+            :data-chapter="yiChapter.tab"
+            v-bind="yiChapter"
+            :fact="yiChapterFact"
+          />
           <section
             class="realm-codex-section realm-yi-ledger"
             data-realm-codex-section="yi-reading"
@@ -415,7 +430,12 @@
       <template v-if="codexTab === 'ziwei'">
         <div class="realm-codex-chapter" data-realm-codex-chapter="ziwei">
           <!-- 紫微:一世之格,与周易的「一时之机」分工 -->
-          <RealmCodexChapterHead v-bind="ziweiChapter" :fact="ziweiChapterFact" />
+          <FolioChapterHead
+            data-realm-codex-chapter-head
+            :data-chapter="ziweiChapter.tab"
+            v-bind="ziweiChapter"
+            :fact="ziweiChapterFact"
+          />
           <!--
         这一册照星象册的三档重排:题(命主) → 用(命格之力) → 读(宫位与主星) → 来历。
         从前是一段长散文开头,唯一的动态量「命格之力」混在 11px 小字里 ——
@@ -472,7 +492,12 @@
       <template v-if="codexTab === 'xiang'">
         <div class="realm-codex-chapter" data-realm-codex-chapter="xiang">
           <!-- 星象:二十八宿值日,利一方界域 -->
-          <RealmCodexChapterHead v-bind="xiangChapter" :fact="xiangChapterFact" />
+          <FolioChapterHead
+            data-realm-codex-chapter-head
+            :data-chapter="xiangChapter.tab"
+            v-bind="xiangChapter"
+            :fact="xiangChapterFact"
+          />
           <section
             class="realm-codex-section realm-mansion-ledger"
             data-realm-codex-section="xiang"
@@ -546,7 +571,12 @@
       <template v-if="codexTab === 'qimen'">
         <div class="realm-codex-chapter" data-realm-codex-chapter="qimen">
           <!-- 奇门:九宫八门,择门而入 -->
-          <RealmCodexChapterHead v-bind="qimenChapter" :fact="qimenChapterFact" />
+          <FolioChapterHead
+            data-realm-codex-chapter-head
+            :data-chapter="qimenChapter.tab"
+            v-bind="qimenChapter"
+            :fact="qimenChapterFact"
+          />
           <section class="realm-codex-section realm-qimen-ledger" data-realm-codex-section="qimen">
             <p class="t-body text-ink-faint">
               {{ cnNumber(GATES.length) }}门依洛书{{ cnNumber(QIMEN_PALACE_COUNT) }}宫排布:{{
@@ -647,7 +677,7 @@ import SectionMark from "@/components/common/SectionMark.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import RealmAtlas from "@/components/common/RealmAtlas.vue";
 import RealmLadder from "@/components/cultivation/RealmLadder.vue";
-import RealmCodexChapterHead from "@/components/codex/RealmCodexChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import { useGameNow } from "@/composables/useGameNow";
 import { useRouteTab } from "@/composables/useRouteTab";
 import { CODEX_CHAPTERS } from "@/ui/navigation";

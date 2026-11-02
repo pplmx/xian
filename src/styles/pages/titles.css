@@ -207,66 +207,11 @@
   .name-beast-register__chapter + .name-beast-register__chapter {
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
   }
-  .name-beast-chapter-head {
-    display: grid;
-    min-width: 0;
-    grid-template-columns: 1.45rem minmax(0, 1fr) auto;
-    align-items: start;
-    gap: 0.24rem 0.55rem;
-    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
-    padding: 0.64rem 0.05rem 0.5rem;
-  }
-  .name-beast-chapter-head__index {
-    display: grid;
-    width: 1.35rem;
-    height: 1.35rem;
-    place-items: center;
-    border-left: 2px solid var(--name-beast-accent);
-    color: var(--name-beast-accent);
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    line-height: 1;
-  }
-  .name-beast-chapter-head__copy {
-    display: grid;
-    min-width: 0;
-    gap: 0.04rem;
-  }
-  .name-beast-chapter-head__eyebrow {
-    color: var(--name-beast-accent);
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    letter-spacing: 0.12em;
-    line-height: 1.35;
-  }
-  .name-beast-chapter-head__title {
-    margin: 0;
-    color: var(--color-ink);
-    font-family: var(--font-kai);
-    font-size: var(--type-section);
-    font-weight: 400;
-    letter-spacing: 0.13em;
-    line-height: 1.35;
-  }
-  .name-beast-chapter-head__hint {
-    min-width: 0;
-    color: var(--color-ink-faint);
-    font-size: var(--type-note);
-    line-height: 1.52;
-    overflow-wrap: anywhere;
-  }
-  .name-beast-chapter-head__fact {
-    justify-self: end;
-    color: var(--color-qing);
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    line-height: 1.45;
-    text-align: right;
-    white-space: nowrap;
-  }
   .name-beast-ledger {
     --name-beast-accent: var(--color-cinnabar);
     --name-beast-accent-rgb: var(--color-cinnabar-rgb);
+    --folio-chapter-accent: var(--name-beast-accent);
+    --folio-chapter-accent-rgb: var(--name-beast-accent-rgb);
     --ledger-accent: var(--name-beast-accent);
     position: relative;
     min-width: 0;
@@ -666,17 +611,6 @@
     .name-beast-switch__tab {
       min-height: 0;
       padding-inline: 0.58rem;
-    }
-
-    .name-beast-chapter-head {
-      grid-template-columns: 1.35rem minmax(0, 1fr);
-    }
-
-    .name-beast-chapter-head__fact {
-      grid-column: 2;
-      justify-self: start;
-      text-align: left;
-      white-space: normal;
     }
 
     .name-beast-focus__panel,

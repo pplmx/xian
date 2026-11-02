@@ -253,7 +253,7 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     );
   });
 
-  it("旧通用章首整套退场，现役章首统一保留可巡页标记", () => {
+  it("旧通用章首整套退场，专页章首收成一枚共享件并保留可巡页标记", () => {
     const cultivation = source("src/views/CultivationView.vue");
     const inventory = source("src/views/InventoryView.vue");
     const adventure = source("src/views/AdventureView.vue");
@@ -261,23 +261,21 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     const css = source("src/style.css");
     const files = vueFiles();
     const heads = files.filter((file) => file.endsWith("ChapterHead.vue"));
+    const sharedHead = source("src/components/common/FolioChapterHead.vue");
 
     expect(
       files.some((file) => file.endsWith("/SectionTitle.vue")),
       "旧 SectionTitle.vue 已无页面引用，不该继续躺在组件目录里",
     ).toBe(false);
-    expect(css, "旧通用章首的类名与栏号签也要一并退场").not.toMatch(
-      /\.folio-chapter-head|\.folio-section-mark|\.section-title\s*\{/,
+    expect(css, "旧栏号签与全局节题也要一并退场").not.toMatch(
+      /\.folio-section-mark|\.section-title\s*\{/,
     );
-    expect(heads.length, "现役续卷章首不会被空数组判成假绿").toBeGreaterThan(8);
-    for (const file of heads) {
-      expect(
-        readFileSync(file, "utf8"),
-        `${file.slice(ROOT.length + 1)} 章首缺少统一巡页标记`,
-      ).toContain("data-folio-chapter-head");
-    }
-    expect(cultivation, "修炼账改走续卷章首").toContain("<CultivationChapterHead");
-    expect(inventory, "行囊八章走行囊续卷章首").toContain("<InventoryChapterHead");
+    expect(heads, "续卷章首只由共享组件持有").toEqual([
+      `${ROOT}/src/components/common/FolioChapterHead.vue`,
+    ]);
+    expect(sharedHead, "共享章首要能被通用巡页找到").toContain("data-folio-chapter-head");
+    expect(cultivation, "修炼账改走续卷章首").toContain("<FolioChapterHead");
+    expect(inventory, "行囊八章走行囊续卷章首").toContain("<FolioChapterHead");
     expect(
       adventure.match(/data-folio-chapter-head/g),
       "历练四章也要能被通用巡页找到",

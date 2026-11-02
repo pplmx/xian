@@ -232,7 +232,7 @@ describe("藏珍双阁 · 功名入榜，九柜纳珍", () => {
     expect(view).toContain('class="collection-register__chapter achievement-volumes"');
     expect(view).toContain('class="collection-register__chapter collection-briefing"');
     expect(view).toContain('class="collection-register__chapter collection-shelves"');
-    expect(view.match(/<CollectionChapterHead\b/g)).toHaveLength(4);
+    expect(view.match(/<FolioChapterHead\b/g)).toHaveLength(4);
     expect(view).toContain('index="壹"');
     expect(view).toContain('index="贰"');
 

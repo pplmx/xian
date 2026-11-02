@@ -26,7 +26,8 @@
       </header>
 
       <section class="reincarnation-chapter" data-reincarnation-chapter="death">
-        <CharacterChapterHead
+        <FolioChapterHead
+          data-character-chapter-head
           index="壹"
           title="此生止步"
           hint="先核对此生终点与能带走什么，再进下一程。"
@@ -119,7 +120,8 @@
 
       <div class="reincarnation-review__grid">
         <section class="reincarnation-chapter" data-reincarnation-theme>
-          <CharacterChapterHead
+          <FolioChapterHead
+            data-character-chapter-head
             index="壹"
             :title="reviewTheme ? `「${reviewTheme.vow}」` : '此世未立命题'"
             hint="此生命题只判这一世，未竟或破戒都不倒扣。"
@@ -144,7 +146,8 @@
         </section>
 
         <section class="reincarnation-chapter" data-reincarnation-insight>
-          <CharacterChapterHead
+          <FolioChapterHead
+            data-character-chapter-head
             index="贰"
             title="随魂所积"
             hint="阅历与所知随神魂留下，下一阶仍从这份底账续起。"
@@ -175,7 +178,8 @@
       </div>
 
       <section class="reincarnation-chapter reincarnation-ledger" data-reincarnation-ledger>
-        <CharacterChapterHead
+        <FolioChapterHead
+          data-character-chapter-head
           index="叁"
           title="此世交割"
           hint="条目直接取轮回结算的同一份继承表；先看影响最大的几笔，再展开全账。"
@@ -340,7 +344,8 @@
       </header>
 
       <section class="reincarnation-chapter" data-reincarnation-chapter="choice-roots">
-        <CharacterChapterHead
+        <FolioChapterHead
+          data-character-chapter-head
           index="壹"
           title="来世根骨"
           hint="灵根所见即所得；道果只入永世底账，不再回到本世皮囊。"
@@ -392,7 +397,8 @@
       </section>
 
       <section class="reincarnation-chapter reincarnation-name" data-reincarnation-name>
-        <CharacterChapterHead
+        <FolioChapterHead
+          data-character-chapter-head
           index="贰"
           title="新一世的道号"
           hint="道号随这一副皮囊可重拟，最多八字；留白不填，便沿用旧号。"
@@ -420,7 +426,8 @@
       </section>
 
       <section class="reincarnation-chapter reincarnation-talent-section">
-        <CharacterChapterHead
+        <FolioChapterHead
+          data-character-chapter-head
           index="叁"
           title="择一先天之姿"
           hint="只取其一，余者本世无缘；具体数字与效果先摊在这里，不靠猜名字。"
@@ -472,7 +479,8 @@
       </section>
 
       <section class="reincarnation-chapter reincarnation-theme-section">
-        <CharacterChapterHead
+        <FolioChapterHead
+          data-character-chapter-head
           index="肆"
           title="这一世要做什么"
           hint="立题不给属性；走到底才得一份宿慧与来路。破戒或未竟都不会倒扣。"
@@ -514,7 +522,8 @@
         class="reincarnation-chapter reincarnation-heritage-gained"
         data-reincarnation-heritage-gained
       >
-        <CharacterChapterHead
+        <FolioChapterHead
+          data-character-chapter-head
           index="伍"
           title="道统传承"
           hint="深修所悟随神魂不灭，来世仍能沿用这份道统。"
@@ -527,7 +536,8 @@
       </section>
 
       <section class="reincarnation-chapter reincarnation-final" data-reincarnation-final-warning>
-        <CharacterChapterHead
+        <FolioChapterHead
+          data-character-chapter-head
           index="末"
           title="落印之前"
           hint="落印即刻归档此生：灵根、境界与天地换新；资源、装备、法宝与外物随皮囊散去。"
@@ -594,7 +604,7 @@ import { engine } from "@/core/engine";
 import { formatNum, yearsShown } from "@/utils/format";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
-import CharacterChapterHead from "@/components/character/CharacterChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import ReincarnationStageRail from "@/components/character/ReincarnationStageRail.vue";
 
 const ui = useUiStore();
@@ -678,6 +688,8 @@ watch(view, (next) => {
   --reincarnation-line-strong: rgb(var(--color-ink-rgb) / 0.23);
   --character-accent: var(--color-cinnabar);
   --character-accent-rgb: var(--color-cinnabar-rgb);
+  --folio-chapter-accent: var(--character-accent);
+  --folio-chapter-accent-rgb: var(--character-accent-rgb);
   min-width: 0;
 }
 
@@ -775,7 +787,7 @@ watch(view, (next) => {
   padding-top: 0.72rem;
 }
 
-.reincarnation-chapter > .character-chapter-head {
+.reincarnation-chapter > .folio-chapter-head {
   margin-bottom: 0.56rem;
 }
 
@@ -1511,15 +1523,15 @@ watch(view, (next) => {
     padding: 0 0 0 0.9rem;
   }
 
-  .reincarnation-review__grid > .reincarnation-chapter > .character-chapter-head {
+  .reincarnation-review__grid > .reincarnation-chapter > .folio-chapter-head {
     grid-template-columns: auto minmax(0, 1fr);
     align-items: start;
   }
 
   .reincarnation-review__grid
     > .reincarnation-chapter
-    > .character-chapter-head
-    :deep(.character-chapter-head__fact) {
+    > .folio-chapter-head
+    :deep(.folio-chapter-head__fact) {
     grid-column: 2;
     justify-self: start;
     text-align: left;

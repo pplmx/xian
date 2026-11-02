@@ -114,7 +114,7 @@ describe("器魂案 · 题签只报道源,三席阵账紧随卷首", () => {
   it("三席、门径与章法同住一张开口续卷,不再逐段套卡", () => {
     const view = source("src/views/SoulsView.vue");
     const css = source("src/styles/pages/souls.css");
-    const chapterHead = source("src/components/soul/SoulChapterHead.vue");
+    const chapterHead = source("src/components/common/FolioChapterHead.vue");
     const layout = source("scripts/layout-check.mjs");
     const folio = view.slice(
       view.indexOf('<template v-if="unlocked">'),
@@ -123,8 +123,8 @@ describe("器魂案 · 题签只报道源,三席阵账紧随卷首", () => {
 
     expect(folio, "正文阵谱不再借通用卡片皮").not.toContain("card-ink");
     expect(folio, "整册不再另起自动编号章节头").not.toContain("<SectionTitle");
-    expect(folio, "后两章共用同一枚器魂章首").toContain("<SoulChapterHead");
-    expect(chapterHead, "章首要能定位到").toContain("data-soul-chapter-head");
+    expect(folio, "后两章共用同一枚器魂章首").toContain("<FolioChapterHead");
+    expect(chapterHead, "章首要能定位到").toContain("data-folio-chapter-head");
     expect(chapterHead, "章首报章号").toContain("{{ index }}");
     expect(chapterHead, "章首报章名").toContain("{{ title }}");
     expect(chapterHead, "章首报章内读法").toContain("{{ hint }}");

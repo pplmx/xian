@@ -44,7 +44,8 @@
           data-build-chapter="stage"
           data-build-stage
         >
-          <BuildChapterHead
+          <FolioChapterHead
+            data-build-chapter-head
             index="壹"
             :eyebrow="`已成之路 · ${build.displayName}`"
             title="道途阶梯"
@@ -86,7 +87,8 @@
           data-build-chapter="next"
           data-build-next
         >
-          <BuildChapterHead
+          <FolioChapterHead
+            data-build-chapter-head
             index="贰"
             title="下一步"
             :hint="nextActionTitle"
@@ -118,7 +120,8 @@
           data-build-chapter="shape"
           data-build-shape
         >
-          <BuildChapterHead
+          <FolioChapterHead
+            data-build-chapter-head
             index="叁"
             :title="`${cnNumber(powerRating.labels.length)}维形状`"
             hint="读的是构筑形状，不是战力名次；点一维看词条来路。"
@@ -170,7 +173,8 @@
           data-build-chapter="battle"
           data-build-battle
         >
-          <BuildChapterHead
+          <FolioChapterHead
+            data-build-chapter-head
             index="肆"
             eyebrow="实战面 · 只报方向"
             title="短板与第二套答案"
@@ -257,7 +261,8 @@
           data-build-chapter="loadouts"
           data-build-loadouts
         >
-          <BuildChapterHead
+          <FolioChapterHead
+            data-build-chapter-head
             index="伍"
             title="构筑快照"
             hint="把顺手的整套功法、法宝与装备存起来，按当前处境一键换装。"
@@ -317,7 +322,8 @@
           data-build-chapter="compare"
           data-build-compare
         >
-          <BuildChapterHead
+          <FolioChapterHead
+            data-build-chapter-head
             index="陆"
             eyebrow="跨世校样"
             title="旧筑对照"
@@ -448,7 +454,7 @@ import GameIcon from "@/components/common/GameIcon.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import BuildAtlas from "@/components/build/BuildAtlas.vue";
-import BuildChapterHead from "@/components/build/BuildChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import BuildDiscovery from "@/components/build/BuildDiscovery.vue";
 
 const player = usePlayerStore();

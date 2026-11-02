@@ -32,7 +32,8 @@
     -->
     <article class="character-register folio-span-all" data-character-register>
       <section class="character-register__chapter" data-character-chapter="foundation">
-        <CharacterChapterHead
+        <FolioChapterHead
+          data-character-chapter-head
           :index="foundationChapter.index"
           :title="foundationChapter.title"
           :hint="foundationChapter.hint"
@@ -145,7 +146,8 @@
       </section>
 
       <section class="character-register__chapter" data-character-chapter="modifiers">
-        <CharacterChapterHead
+        <FolioChapterHead
+          data-character-chapter-head
           :index="modifiersChapter.index"
           :title="modifiersChapter.title"
           :hint="modifiersChapter.hint"
@@ -270,7 +272,8 @@
         data-character-chapter="catalog"
         data-character-afterword
       >
-        <CharacterChapterHead
+        <FolioChapterHead
+          data-character-chapter-head
           :index="catalogChapter.index"
           :title="catalogChapter.title"
           :hint="catalogChapter.hint"
@@ -479,7 +482,7 @@ import type { AnyStatKey } from "@/types";
 import { STAT_NAMES } from "@/data/statNames";
 import { achievementCounts, achievementStateOf } from "@/core/engineUnlocks";
 import CharacterIndexRow from "@/components/character/CharacterIndexRow.vue";
-import CharacterChapterHead from "@/components/character/CharacterChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import CharacterModifierRow from "@/components/character/CharacterModifierRow.vue";
 import CharacterSigil from "@/components/character/CharacterSigil.vue";
 import RebirthDialog from "@/components/character/RebirthDialog.vue";

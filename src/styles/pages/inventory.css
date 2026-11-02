@@ -982,77 +982,6 @@
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
   }
 
-  .inventory-chapter-head {
-    display: grid;
-    min-width: 0;
-    grid-template-columns: 1.55rem minmax(0, 1fr);
-    align-items: start;
-    gap: 0.24rem 0.55rem;
-    padding: 0.72rem 0.08rem 0.54rem;
-    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
-  }
-
-  .inventory-chapter-head__index {
-    display: grid;
-    width: 1.32rem;
-    min-height: 1.6rem;
-    grid-row: 1 / span 2;
-    place-items: start center;
-    padding-top: 0.1rem;
-    border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.7);
-    color: rgb(var(--color-cinnabar-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    line-height: 1.25;
-  }
-
-  .inventory-chapter-head__copy {
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.08rem 0.52rem;
-  }
-
-  .inventory-chapter-head__title {
-    margin: 0;
-    color: rgb(var(--color-ink-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-title);
-    font-weight: 500;
-    letter-spacing: 0.16em;
-    line-height: 1.35;
-  }
-
-  .inventory-chapter-head__hint {
-    color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-note);
-    line-height: 1.5;
-  }
-
-  .inventory-chapter-head__tail {
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.2rem 0.55rem;
-  }
-
-  .inventory-chapter-head__fact {
-    color: rgb(var(--color-qing-rgb));
-    font-size: var(--type-note);
-    line-height: 1.5;
-  }
-
-  .inventory-chapter-head__actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.12rem 0.55rem;
-    margin-left: auto;
-  }
-
   .inventory-briefing__tool {
     display: inline-flex;
     min-width: 2.5rem;
@@ -1558,24 +1487,6 @@
   }
 
   @media (max-width: 220px) {
-    .inventory-chapter-head {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .inventory-chapter-head__index {
-      width: auto;
-      min-height: 0;
-      grid-row: auto;
-      justify-items: start;
-      border-left: 0;
-      border-bottom: 1px solid rgb(var(--color-cinnabar-rgb) / 0.34);
-      padding: 0 0 0.18rem;
-    }
-
-    .inventory-chapter-head__tail {
-      grid-column: 1;
-    }
-
     .inventory-briefing__summary,
     .inventory-register__lower,
     .inventory-equipment__grid,

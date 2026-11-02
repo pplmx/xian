@@ -155,7 +155,7 @@ describe("名兽案 · 双契总览直接接卷首,当前、可追与全谱各�
 
   it("名号与灵兽各收成一册两章,章首同报章号、读法与章内真值", () => {
     const view = source("src/views/TitlesView.vue");
-    const head = source("src/components/titles/NameBeastChapterHead.vue");
+    const head = source("src/components/common/FolioChapterHead.vue");
     const titleCss = source("src/styles/pages/titles.css");
 
     expect(view).toContain(
@@ -163,14 +163,14 @@ describe("名兽案 · 双契总览直接接卷首,当前、可追与全谱各�
     );
     expect(view).toContain('data-name-beast-chapter="focus"');
     expect(view).toContain('data-name-beast-chapter="index"');
-    expect(view).toContain("<NameBeastChapterHead");
+    expect(view).toContain("<FolioChapterHead");
     expect(view).toContain('index="壹"');
     expect(view).toContain('index="贰"');
     expect(view, "章首接管标题后旧总账头应退场").not.toContain("<LedgerHeader");
-    expect(head).toContain("data-name-beast-chapter-head");
-    expect(head).toContain("name-beast-chapter-head__index");
-    expect(head).toContain("name-beast-chapter-head__hint");
-    expect(head).toContain("name-beast-chapter-head__fact");
+    expect(head).toContain("data-folio-chapter-head");
+    expect(head).toContain("folio-chapter-head__index");
+    expect(head).toContain("folio-chapter-head__hint");
+    expect(head).toContain("folio-chapter-head__fact");
     expect(titleCss).toMatch(
       /\.name-beast-register\s*\{[\s\S]{0,320}border-top:\s*1px solid[\s\S]{0,160}border-bottom:\s*1px solid/,
     );

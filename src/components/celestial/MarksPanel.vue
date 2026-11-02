@@ -6,7 +6,8 @@
     data-celestial-chapter="marks"
     data-celestial-marks
   >
-    <CelestialChapterHead
+    <FolioChapterHead
+      data-celestial-chapter-head
       index="壹"
       title="道痕"
       hint="历代修行履历"
@@ -203,7 +204,7 @@ import {
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
-import CelestialChapterHead from "@/components/celestial/CelestialChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import type { ReportView } from "@/components/celestial/reportView";
 

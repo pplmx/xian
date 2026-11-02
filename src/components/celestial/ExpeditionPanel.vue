@@ -2,7 +2,8 @@
   <div class="celestial-expedition-ledger" data-celestial-expedition-ledger>
     <!-- 进行中的远征 -->
     <section class="celestial-expedition-chapter" data-celestial-chapter="run" data-celestial-run>
-      <CelestialChapterHead
+      <FolioChapterHead
+        data-celestial-chapter-head
         index="壹"
         title="在途远征"
         :hint="
@@ -139,7 +140,8 @@
       data-celestial-chapter="worlds"
       data-celestial-worlds
     >
-      <CelestialChapterHead
+      <FolioChapterHead
+        data-celestial-chapter-head
         index="贰"
         title="特殊规则世界"
         hint="择契而入，逐层择路"
@@ -499,7 +501,7 @@ import { detectBuild } from "@/core/buildDetect";
 import { BUILD_PROFILES } from "@/core/buildSim";
 import { cnNumber, formatPercent } from "@/utils/format";
 import { useDaoEntry } from "@/composables/useDaoEntry";
-import CelestialChapterHead from "@/components/celestial/CelestialChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 
 /**

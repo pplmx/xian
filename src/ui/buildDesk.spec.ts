@@ -61,7 +61,7 @@ describe("铸道案 · 六路、形状与下一步同读此刻", () => {
   it("成路后收成一册铸道续卷，阶梯、下一步、形状、实战、快照与旧筑各有章位", () => {
     const view = source("src/views/BuildView.vue");
     const atlas = source("src/components/build/BuildAtlas.vue");
-    const chapterHead = source("src/components/build/BuildChapterHead.vue");
+    const chapterHead = source("src/components/common/FolioChapterHead.vue");
     const layout = source("scripts/layout-check.mjs");
     const stageAt = view.indexOf("data-build-stage");
     const nextAt = view.indexOf("data-build-next");
@@ -74,7 +74,7 @@ describe("铸道案 · 六路、形状与下一步同读此刻", () => {
     expect(view).toContain("data-build-current");
     expect(view).toContain("data-build-formed");
     expect(view).toContain("data-build-register");
-    expect(view).toContain("<BuildChapterHead");
+    expect(view).toContain("<FolioChapterHead");
     expect(view).toContain("data-build-stage");
     expect(view).toContain("data-build-shape");
     expect(view).toContain("data-build-next");
@@ -96,7 +96,7 @@ describe("铸道案 · 六路、形状与下一步同读此刻", () => {
     expect(layout).toContain("nextTop");
     expect(layout).toContain("shapeTop");
     expect(layout).toContain('"__buildFormedFixture"');
-    expect(chapterHead).toContain("data-build-chapter-head");
+    expect(chapterHead).toContain("data-folio-chapter-head");
     expect(chapterHead).toContain("{{ index }}");
     expect(chapterHead).toContain("{{ title }}");
     expect(chapterHead).toContain("{{ hint }}");
@@ -116,6 +116,7 @@ describe("铸道案 · 六路、形状与下一步同读此刻", () => {
 
   it("续卷手机单列、620 两列、960 前三章并读，220 以下章态退整行", () => {
     const css = source("src/style.css");
+    const sharedHead = source("src/components/common/FolioChapterHead.vue");
     const start = css.indexOf("/*\n   * 铸道案");
     const end = css.indexOf("/*\n   * 道途未成", start);
     const buildCss = css.slice(start, end);
@@ -153,8 +154,11 @@ describe("铸道案 · 六路、形状与下一步同读此刻", () => {
     expect(buildCss, "三列时按阅读顺序恢复阶梯 / 下一步 / 五维").toMatch(
       /@media \(min-width: 960px\)\s*\{[\s\S]{0,1000}\.build-register\s*\{[\s\S]{0,260}grid-template-areas:\s*"stage next shape"/,
     );
-    expect(buildCss, "章首在极窄档把读数退到章名下一行").toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1400}\.build-chapter-head\s*\{[\s\S]{0,220}grid-template-columns:\s*auto minmax\(0, 1fr\)/,
+    expect(buildCss, "桌面铸道格里的章首保持等高").toMatch(
+      /\.build-register__chapter > \.folio-chapter-head\s*\{[\s\S]{0,100}min-height:\s*5\.5rem/,
+    );
+    expect(sharedHead, "手机与 200% 缩放时章内真值退到章名下一行").toMatch(
+      /@media \(max-width: 520px\)\s*\{[\s\S]{0,900}\.folio-chapter-head__tail\s*\{[\s\S]{0,120}grid-column:\s*2/,
     );
     expect(buildCss, "核心缺口的小字要在渐变纸上与墨色混合后仍读得清").toMatch(
       /\.build-core__gap\s*\{[\s\S]{0,120}color:\s*color-mix\(in srgb,\s*var\(--color-cinnabar\)\s*64%,\s*var\(--color-ink\)\s*36%\)/,

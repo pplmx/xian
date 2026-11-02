@@ -134,7 +134,7 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
     const briefing =
       view.match(/<section[^>]*data-inventory-overview[\s\S]*?<\/section>/)?.[0] ?? "";
 
-    expect(briefing, "检点账改用行囊续卷章首").toContain("<InventoryChapterHead");
+    expect(briefing, "检点账改用行囊续卷章首").toContain("<FolioChapterHead");
     expect(briefing, "检点章序号读装配表").toContain(':index="briefingChapter.index"');
     expect(briefing, "检点账要有独立标题").toContain(':title="briefingChapter.title"');
     expect(briefing, "标题后的副读仍读装配表").toContain(':hint="briefingChapter.hint"');
@@ -227,7 +227,7 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
     expect(
       view.match(/data-inventory-register-tab="(?:equip|pill|material|artifact)"/g),
     ).toHaveLength(4);
-    expect(view.match(/<InventoryChapterHead\b/g), "四签八章各用同一枚章首").toHaveLength(8);
+    expect(view.match(/<FolioChapterHead\b/g), "四签八章各用同一枚章首").toHaveLength(8);
 
     expect(
       [...pill.matchAll(/data-inventory-chapter="([^"]+)"/g)].map((match) => match[1]),
@@ -411,6 +411,7 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
     );
     const tinyStart = inventoryCss.indexOf("@media (max-width: 220px)");
     const tinyCss = inventoryCss.slice(tinyStart);
+    const sharedHead = source("src/components/common/FolioChapterHead.vue");
     expect(tinyStart, "220 以下的窄档要能定位到").toBeGreaterThan(-1);
     expect(tinyCss).toMatch(
       /\.inventory-briefing__summary,[\s\S]{0,180}\.inventory-register__lower,[\s\S]{0,180}\.inventory-equipment__grid,[\s\S]{0,120}\.inventory-workshop__grid\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
@@ -421,8 +422,8 @@ describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
     expect(tinyCss, "藏品行在极窄档仍是一列清单").toMatch(
       /\.inventory-collection__grid\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
-    expect(tinyCss, "章内真值在 200% 缩放下退到章名下方").toMatch(
-      /\.inventory-chapter-head__tail\s*\{[\s\S]{0,120}grid-column:\s*1/,
+    expect(sharedHead, "章内真值与动作尾槽在手机与 200% 缩放下退到章名下方").toMatch(
+      /@media \(max-width: 520px\)\s*\{[\s\S]{0,900}\.folio-chapter-head__tail\s*\{[\s\S]{0,120}grid-column:\s*2/,
     );
   });
 });

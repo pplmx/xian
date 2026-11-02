@@ -41,7 +41,8 @@
           :data-inventory-new-count="inventory.newItemCount"
           :data-inventory-upgrade-count="upgradeRows.length"
         >
-          <InventoryChapterHead
+          <FolioChapterHead
+            data-inventory-chapter-head
             :index="briefingChapter.index"
             :title="briefingChapter.title"
             :hint="briefingChapter.hint"
@@ -66,7 +67,7 @@
                 分解
               </button>
             </template>
-          </InventoryChapterHead>
+          </FolioChapterHead>
 
           <div class="inventory-briefing__summary">
             <div class="inventory-briefing__reading">
@@ -172,7 +173,8 @@
             data-inventory-chapter="seats"
             data-inventory-equipment
           >
-            <InventoryChapterHead
+            <FolioChapterHead
+              data-inventory-chapter-head
               :index="seatsChapter.index"
               :title="seatsChapter.title"
               :hint="seatsChapter.hint"
@@ -238,7 +240,8 @@
             :data-inventory-scope="itemScope"
             :data-inventory-new-total="inventory.newItemCount"
           >
-            <InventoryChapterHead
+            <FolioChapterHead
+              data-inventory-chapter-head
               :index="collectionChapter.index"
               :title="collectionChapter.title"
               :hint="collectionChapter.hint"
@@ -300,7 +303,8 @@
             data-inventory-workshop
             data-inventory-chapter="workshop"
           >
-            <InventoryChapterHead
+            <FolioChapterHead
+              data-inventory-chapter-head
               :index="pillWorkshopChapter.index"
               :title="pillWorkshopChapter.title"
               :hint="pillWorkshopChapter.hint"
@@ -347,7 +351,8 @@
             data-inventory-pill-cabinet
             data-inventory-chapter="cabinet"
           >
-            <InventoryChapterHead
+            <FolioChapterHead
+              data-inventory-chapter-head
               :index="pillCabinetChapter.index"
               :title="pillCabinetChapter.title"
               :hint="pillCabinetChapter.hint"
@@ -395,7 +400,8 @@
             data-inventory-material-group="craft"
             data-inventory-chapter="craft"
           >
-            <InventoryChapterHead
+            <FolioChapterHead
+              data-inventory-chapter-head
               :index="craftChapter.index"
               :title="craftChapter.title"
               :hint="craftChapter.hint"
@@ -421,7 +427,8 @@
             data-inventory-material-group="stock"
             data-inventory-chapter="stock"
           >
-            <InventoryChapterHead
+            <FolioChapterHead
+              data-inventory-chapter-head
               :index="stockChapter.index"
               :title="stockChapter.title"
               :hint="stockChapter.hint"
@@ -458,7 +465,8 @@
           data-inventory-artifacts
           data-inventory-chapter="artifact"
         >
-          <InventoryChapterHead
+          <FolioChapterHead
+            data-inventory-chapter-head
             :index="artifactChapter.index"
             :title="artifactChapter.title"
             :hint="artifactChapter.hint"
@@ -643,7 +651,7 @@ import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ArtifactPanel from "@/components/inventory/ArtifactPanel.vue";
-import InventoryChapterHead from "@/components/inventory/InventoryChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import InventoryCollectionRow from "@/components/inventory/InventoryCollectionRow.vue";
 import InventoryReliquary from "@/components/inventory/InventoryReliquary.vue";
 import BaseModal from "@/components/common/BaseModal.vue";

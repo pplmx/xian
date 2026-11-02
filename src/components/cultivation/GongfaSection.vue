@@ -1,7 +1,8 @@
 <template>
   <!-- 功法 -->
   <section>
-    <CultivationChapterHead
+    <FolioChapterHead
+      data-cultivation-chapter-head
       :index="gongfaChapter.index"
       :title="gongfaChapter.title"
       :hint="gongfaChapter.hint"
@@ -251,7 +252,7 @@ import {
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
-import CultivationChapterHead from "@/components/cultivation/CultivationChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import QualitySeal from "@/components/common/QualitySeal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import { cultivationChapter } from "@/ui/cultivationDesk";

@@ -148,7 +148,8 @@
           data-soul-chapter="gateways"
           data-soul-gateways
         >
-          <SoulChapterHead
+          <FolioChapterHead
+            data-soul-chapter-head
             index="贰"
             title="两处门径"
             hint="散置形意 · 凝炼台"
@@ -209,7 +210,8 @@
           data-soul-chapter="principle"
           data-soul-principle
         >
-          <SoulChapterHead
+          <FolioChapterHead
+            data-soul-chapter-head
             index="叁"
             title="器魂章法"
             hint="先懂代价,再决定入炉"
@@ -564,7 +566,7 @@ import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LedgerPulse from "@/components/common/LedgerPulse.vue";
 import LedgerTally from "@/components/common/LedgerTally.vue";
 import UnopenedFolio from "@/components/common/UnopenedFolio.vue";
-import SoulChapterHead from "@/components/soul/SoulChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 
 const endgame = useEndgameStore();

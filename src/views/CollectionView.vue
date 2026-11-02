@@ -55,7 +55,8 @@
           data-collection-chapter="lead"
           data-achievement-hero
         >
-          <CollectionChapterHead
+          <FolioChapterHead
+            data-collection-chapter-head
             index="壹"
             eyebrow="功名状 · 按完成比例"
             title="眼下可追"
@@ -97,7 +98,8 @@
           data-collection-chapter="volumes"
           data-achievement-volumes
         >
-          <CollectionChapterHead
+          <FolioChapterHead
+            data-collection-chapter-head
             index="贰"
             eyebrow="功名墙 · 按方向收榜"
             title="功名榜"
@@ -228,7 +230,8 @@
           data-collection-chapter="lead"
           data-collection-hero
         >
-          <CollectionChapterHead
+          <FolioChapterHead
+            data-collection-chapter-head
             index="壹"
             eyebrow="藏珍阁 · 新得先开"
             :title="collectionLeadTitle"
@@ -252,7 +255,8 @@
           data-collection-chapter="volumes"
           data-collection-shelves
         >
-          <CollectionChapterHead
+          <FolioChapterHead
+            data-collection-chapter-head
             index="贰"
             eyebrow="开柜查验"
             :title="collectionTrayTitle"
@@ -449,7 +453,7 @@ import {
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import CollectionCabinet from "@/components/common/CollectionCabinet.vue";
-import CollectionChapterHead from "@/components/collection/CollectionChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import { useRouteTab } from "@/composables/useRouteTab";

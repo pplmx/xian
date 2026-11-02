@@ -45,7 +45,7 @@ import LedgerPulse from "@/components/common/LedgerPulse.vue";
 import LedgerTally from "@/components/common/LedgerTally.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
-import ApprenticeChapterHead from "@/components/apprentice/ApprenticeChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import ApprenticeCourt from "@/components/apprentice/ApprenticeCourt.vue";
 
 const appr = useApprenticeStore();
@@ -441,7 +441,8 @@ function dispatchSelected(a: OwnedApprentice): void {
         :data-apprentice-idle="pulse.idle"
         :data-apprentice-away="pulse.away"
       >
-        <ApprenticeChapterHead
+        <FolioChapterHead
+          data-apprentice-chapter-head
           index="壹"
           eyebrow="今日门庭"
           title="案头一令"
@@ -554,7 +555,8 @@ function dispatchSelected(a: OwnedApprentice): void {
         class="apprentice-register__chapter apprentice-register__chapter--roster apprentice-roster-section"
         data-apprentice-chapter="roster"
       >
-        <ApprenticeChapterHead
+        <FolioChapterHead
+          data-apprentice-chapter-head
           index="贰"
           title="值日簿"
           :hint="`候差 ${idleRows.length} · 在途 ${awayRows.length} · 在途按归期先后`"
@@ -767,7 +769,8 @@ function dispatchSelected(a: OwnedApprentice): void {
         class="apprentice-register__chapter apprentice-register__chapter--rules apprentice-rules-section"
         data-apprentice-chapter="rules"
       >
-        <ApprenticeChapterHead
+        <FolioChapterHead
+          data-apprentice-chapter-head
           index="叁"
           title="门规"
           hint="界面读数与结算同源"

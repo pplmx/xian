@@ -17,7 +17,9 @@
 
       <div class="opening-gate__register" data-opening-gate-register>
         <section class="opening-gate__threshold" data-opening-chapter="gate" data-opening-gate-main>
-          <OpeningChapterHead
+          <FolioChapterHead
+            data-opening-chapter-head
+            size="heading"
             index="壹"
             eyebrow="山门未闭"
             title="一介凡身，入万象之枢"
@@ -58,7 +60,9 @@
         </section>
 
         <aside class="opening-gate__ledger" data-opening-chapter="rules" data-opening-gate-rules>
-          <OpeningChapterHead
+          <FolioChapterHead
+            data-opening-chapter-head
+            size="heading"
             index="贰"
             eyebrow="本作所守"
             title="入山三则"
@@ -136,7 +140,7 @@ import PrivacyDialog from "@/components/common/PrivacyDialog.vue";
 import AboutDialog from "@/components/common/AboutDialog.vue";
 import WarpPortal from "@/components/common/WarpPortal.vue";
 import OpeningBackdrop from "@/components/opening/OpeningBackdrop.vue";
-import OpeningChapterHead from "@/components/opening/OpeningChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import OpeningPact from "@/components/opening/OpeningPact.vue";
 import { REALMS, WORLDS } from "@/data/realms";
 import { cnNumber } from "@/utils/format";
@@ -295,7 +299,7 @@ function onFilePicked(e: Event): void {
   padding: 0 0 0.7rem;
 }
 
-.opening-gate__threshold :deep(.opening-chapter-head__title) {
+.opening-gate__threshold :deep(.folio-chapter-head__title) {
   max-width: 18em;
   margin-top: 0.12rem;
   font-size: clamp(1.45rem, 6.5vw, var(--type-display));

@@ -71,7 +71,7 @@ describe("修炼案 · 四章收成一册行功续卷", () => {
 
     expect(register, "正文四章同住一册续卷").toContain("data-cultivation-register");
     expect(view, "修行账要有独立运行时指纹").toContain("data-cultivation-ledger");
-    expect(view, "修行账改用续卷章首").toContain("<CultivationChapterHead");
+    expect(view, "修行账改用续卷章首").toContain("<FolioChapterHead");
     expect(view, "章首标题仍从章序读取修行").toContain(':title="practiceChapter.title"');
     expect(view, "境界位置收进章首右侧读数席").toContain(
       ':fact="`第 ${player.major + 1} / ${REALMS.length} 境`"',

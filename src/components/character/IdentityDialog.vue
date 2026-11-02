@@ -22,7 +22,8 @@
       </header>
 
       <section class="identity-chapter" data-identity-chapter="roots">
-        <CharacterChapterHead
+        <FolioChapterHead
+          data-character-chapter-head
           index="壹"
           title="此身所历"
           hint="师承、道途、流派与悟道，合成了别人口中的你"
@@ -88,7 +89,8 @@
       </section>
 
       <section class="identity-chapter" data-identity-chapter="traits">
-        <CharacterChapterHead
+        <FolioChapterHead
+          data-character-chapter-head
           index="贰"
           title="行迹三数"
           hint="只看累计事实，不把一次偶然写成性情"
@@ -132,7 +134,7 @@
 import { computed } from "vue";
 import { buildIdentity } from "@/core/identityService";
 import BaseModal from "@/components/common/BaseModal.vue";
-import CharacterChapterHead from "@/components/character/CharacterChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import { cnNumber, formatNum } from "@/utils/format";
 
 /**
@@ -205,6 +207,8 @@ const riskLine = computed(() => {
   --identity-line: rgb(var(--color-ink-rgb) / 0.13);
   --character-accent: var(--color-cinnabar);
   --character-accent-rgb: var(--color-cinnabar-rgb);
+  --folio-chapter-accent: var(--character-accent);
+  --folio-chapter-accent-rgb: var(--character-accent-rgb);
   min-width: 0;
 }
 

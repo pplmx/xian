@@ -45,9 +45,9 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
 
     const titles = source("src/views/TitlesView.vue");
     expect(titles, "名兽两册改读专用章首").toContain(
-      'import NameBeastChapterHead from "@/components/titles/NameBeastChapterHead.vue"',
+      'import FolioChapterHead from "@/components/common/FolioChapterHead.vue"',
     );
-    expect(titles.match(/<NameBeastChapterHead\b/g), "名兽两册应各两章").toHaveLength(4);
+    expect(titles.match(/<FolioChapterHead\b/g), "名兽两册应各两章").toHaveLength(4);
 
     for (const file of [
       "src/views/BuildView.vue",

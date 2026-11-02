@@ -29,7 +29,9 @@
           class="opening-create__chapter opening-create__identity"
           data-opening-chapter="name"
         >
-          <OpeningChapterHead
+          <FolioChapterHead
+            data-opening-chapter-head
+            size="heading"
             index="壹"
             eyebrow="留名"
             title="道号"
@@ -59,7 +61,9 @@
           data-opening-chapter="roots"
           data-opening-roots
         >
-          <OpeningChapterHead
+          <FolioChapterHead
+            data-opening-chapter-head
+            size="heading"
             index="贰"
             eyebrow="验根"
             title="灵根"
@@ -129,7 +133,9 @@
         </section>
 
         <section class="opening-create__vow" data-opening-chapter="vow">
-          <OpeningChapterHead
+          <FolioChapterHead
+            data-opening-chapter-head
+            size="heading"
             index="叁"
             eyebrow="定卷"
             title="一印定此世"
@@ -176,7 +182,7 @@ import { useUiStore } from "@/stores/ui";
 import GameIcon from "@/components/common/GameIcon.vue";
 import SpiritRootReveal from "@/components/common/SpiritRootReveal.vue";
 import OpeningBackdrop from "@/components/opening/OpeningBackdrop.vue";
-import OpeningChapterHead from "@/components/opening/OpeningChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 
 const router = useRouter();
 const game = useGameStore();
@@ -656,11 +662,11 @@ function begin(): void {
     padding: 0 0.1rem 0.9rem 1.3rem;
   }
 
-  .opening-create__vow :deep(.opening-chapter-head) {
+  .opening-create__vow :deep(.folio-chapter-head) {
     grid-template-columns: 1.35rem minmax(0, 1fr);
   }
 
-  .opening-create__vow :deep(.opening-chapter-head__fact) {
+  .opening-create__vow :deep(.folio-chapter-head__fact) {
     grid-column: 2;
     justify-self: start;
     text-align: left;

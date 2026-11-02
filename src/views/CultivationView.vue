@@ -93,7 +93,8 @@
           data-cultivation-chapter="practice"
           data-cultivation-ledger
         >
-          <CultivationChapterHead
+          <FolioChapterHead
+            data-cultivation-chapter-head
             :index="practiceChapter.index"
             :title="practiceChapter.title"
             :hint="practiceChapter.hint"
@@ -255,7 +256,8 @@
           data-cultivation-chapter="next"
           data-cultivation-next
         >
-          <CultivationChapterHead
+          <FolioChapterHead
+            data-cultivation-chapter-head
             :index="nextChapter.index"
             :title="nextChapter.title"
             :hint="nextChapter.hint"
@@ -274,7 +276,8 @@
         data-cultivation-chapter="support"
         data-cultivation-support
       >
-        <CultivationChapterHead
+        <FolioChapterHead
+          data-cultivation-chapter-head
           :index="supportChapter.index"
           :title="supportChapter.title"
           :hint="supportChapter.hint"
@@ -425,7 +428,7 @@ import GongfaDialog from "@/components/cultivation/GongfaDialog.vue";
 import BuffDialog from "@/components/cultivation/BuffDialog.vue";
 import RealmLadder from "@/components/cultivation/RealmLadder.vue";
 import CultivationDial from "@/components/cultivation/CultivationDial.vue";
-import CultivationChapterHead from "@/components/cultivation/CultivationChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import GongfaSection from "@/components/cultivation/GongfaSection.vue";
 import BreakthroughCard from "@/components/cultivation/BreakthroughCard.vue";
 import RetreatCard from "@/components/cultivation/RetreatCard.vue";

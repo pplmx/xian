@@ -27,7 +27,8 @@
           data-name-beast-book="title-focus"
           data-kind="title"
         >
-          <NameBeastChapterHead
+          <FolioChapterHead
+            data-name-beast-chapter-head
             index="壹"
             eyebrow="名号 · 当前与可追"
             title="此刻佩印"
@@ -107,7 +108,8 @@
           :data-title-shown="titlePage.shown"
           :data-title-start="titlePage.start"
         >
-          <NameBeastChapterHead
+          <FolioChapterHead
+            data-name-beast-chapter-head
             index="贰"
             eyebrow="佩印与旧藏"
             title="名号谱"
@@ -201,7 +203,8 @@
           data-name-beast-book="pet-focus"
           data-kind="pet"
         >
-          <NameBeastChapterHead
+          <FolioChapterHead
+            data-name-beast-chapter-head
             index="壹"
             eyebrow="灵兽 · 同行与结缘"
             title="此刻相伴"
@@ -278,7 +281,8 @@
           :data-pet-shown="petPage.shown"
           :data-pet-start="petPage.start"
         >
-          <NameBeastChapterHead
+          <FolioChapterHead
+            data-name-beast-chapter-head
             index="贰"
             eyebrow="已契与未逢"
             title="灵兽谱"
@@ -415,7 +419,7 @@ import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import NameBeastSwitch from "@/components/common/NameBeastSwitch.vue";
-import NameBeastChapterHead from "@/components/titles/NameBeastChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import {
   nameBeastMeter,
   petEntryState,

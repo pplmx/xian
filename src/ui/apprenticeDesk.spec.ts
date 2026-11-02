@@ -50,7 +50,7 @@ describe("门庭案 · 先落一令,再核四门存底与值日簿", () => {
       'import LedgerTally from "@/components/common/LedgerTally.vue"',
     );
     expect(view, "首章章首由门庭专用组件接管").toContain(
-      'import ApprenticeChapterHead from "@/components/apprentice/ApprenticeChapterHead.vue"',
+      'import FolioChapterHead from "@/components/common/FolioChapterHead.vue"',
     );
     expect(view, "共享此刻账只留正文账格").toMatch(/<LedgerPulse\b[\s\S]{0,100}\bheadless\b/);
     expect(view, "门庭不再手搭账首").not.toContain(
@@ -88,24 +88,27 @@ describe("门庭案 · 先落一令,再核四门存底与值日簿", () => {
 
     expect(start, "门庭正文要收进同一册").toBeGreaterThan(-1);
     expect(register, "今日门庭是续卷第一章,先落一令再摊账格").toMatch(
-      /data-apprentice-chapter="pulse"[\s\S]{0,620}<ApprenticeChapterHead[\s\S]{0,700}data-apprentice-order[\s\S]{0,1500}<LedgerPulse/,
+      /data-apprentice-chapter="pulse"[\s\S]{0,620}<FolioChapterHead[\s\S]{0,700}data-apprentice-order[\s\S]{0,1500}<LedgerPulse/,
     );
     expect(register, "值日簿紧随总账续排").toMatch(
-      /data-apprentice-chapter="roster"[\s\S]{0,320}<ApprenticeChapterHead[\s\S]{0,220}title="值日簿"/,
+      /data-apprentice-chapter="roster"[\s\S]{0,320}<FolioChapterHead[\s\S]{0,220}title="值日簿"/,
     );
     expect(register, "门规是同一册的末章").toMatch(
-      /data-apprentice-chapter="rules"[\s\S]{0,320}<ApprenticeChapterHead[\s\S]{0,220}title="门规"/,
+      /data-apprentice-chapter="rules"[\s\S]{0,320}<FolioChapterHead[\s\S]{0,220}title="门规"/,
     );
     expect(register.match(/data-apprentice-chapter=/g), "续卷只列三章").toHaveLength(3);
   });
 
   it("门庭三章共用专用章首,章号、读法与章内真值各归其位", () => {
     const view = source("src/views/ApprenticeView.vue");
-    const head = source("src/components/apprentice/ApprenticeChapterHead.vue");
-    const apprenticeCss = source("src/styles/pages/apprentice.css");
+    const head = source("src/components/common/FolioChapterHead.vue");
 
     expect(view, "旧通用节题退场").not.toContain("<SectionTitle");
-    expect(view.match(/<ApprenticeChapterHead\b/g), "三章各用一枚门庭章首").toHaveLength(3);
+    expect(view.match(/<FolioChapterHead\b/g), "三章各用一枚门庭章首").toHaveLength(3);
+    expect(
+      view.match(/data-apprentice-chapter-head/g),
+      "门庭三章仍保留自己的巡页指纹",
+    ).toHaveLength(3);
     expect(view).toContain('index="壹"');
     expect(view).toContain('index="贰"');
     expect(view).toContain('index="叁"');
@@ -114,20 +117,12 @@ describe("门庭案 · 先落一令,再核四门存底与值日簿", () => {
     expect(view, "门规真值仍读机制常量").toContain(
       ':fact="`${slots} 席 · ${APPRENTICE_MAX_LEVEL} 级封顶`"',
     );
-    expect(head).toContain("data-apprentice-chapter-head");
-    expect(head).toContain("apprentice-chapter-head__index");
-    expect(head).toContain("apprentice-chapter-head__eyebrow");
-    expect(head).toContain("apprentice-chapter-head__hint");
-    expect(head).toContain("apprentice-chapter-head__fact");
-    expect(apprenticeCss).toMatch(
-      /\.apprentice-chapter-head\s*\{[\s\S]{0,260}grid-template-columns:\s*1\.45rem minmax\(0, 1fr\) auto/,
-    );
-    expect(apprenticeCss).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,900}\.apprentice-chapter-head\s*\{[\s\S]{0,100}grid-template-columns:\s*1\.35rem minmax\(0, 1fr\)/,
-    );
-    expect(apprenticeCss).toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1200}\.apprentice-chapter-head__fact\s*\{[\s\S]{0,160}grid-column:\s*2/,
-    );
+    expect(head).toContain("data-folio-chapter-head");
+    expect(head).toContain("folio-chapter-head__index");
+    expect(head).toContain("folio-chapter-head__eyebrow");
+    expect(head).toContain("folio-chapter-head__hint");
+    expect(head).toContain("folio-chapter-head__fact");
+    expect(head).toContain('<slot name="actions"');
   });
 
   it("四门存底摊开调度依据,目标与同分都从 core 同一份方案来", () => {

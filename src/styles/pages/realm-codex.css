@@ -17,6 +17,8 @@
   }
   .realm-codex-folio {
     --realm-codex-inset: 0.72rem;
+    --folio-chapter-accent: var(--color-qing);
+    --folio-chapter-accent-rgb: var(--color-qing-rgb);
     position: relative;
     margin-top: 0.5rem;
     border: 0;
@@ -43,58 +45,6 @@
   .realm-codex-chapter:not(.realm-codex-desk) {
     display: grid;
     gap: 0;
-  }
-  .realm-codex-chapter-head {
-    display: grid;
-    min-width: 0;
-    grid-template-columns: 1.45rem minmax(0, 1fr);
-    align-items: start;
-    gap: 0.22rem 0.55rem;
-    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
-    padding: 0.72rem var(--realm-codex-inset) 0.58rem;
-  }
-  .realm-codex-chapter-head__index {
-    display: grid;
-    width: 1.35rem;
-    height: 1.35rem;
-    place-items: center;
-    border-left: 2px solid rgb(var(--color-qing-rgb) / 0.72);
-    color: var(--color-qing);
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    line-height: 1;
-  }
-  .realm-codex-chapter-head__copy {
-    display: grid;
-    min-width: 0;
-    gap: 0.04rem;
-  }
-  .realm-codex-chapter-head__title {
-    margin: 0;
-    color: var(--color-ink);
-    font-family: var(--font-kai);
-    font-size: var(--type-section);
-    font-weight: 400;
-    letter-spacing: 0.13em;
-    line-height: 1.35;
-  }
-  .realm-codex-chapter-head__hint {
-    min-width: 0;
-    color: var(--color-ink-faint);
-    font-size: var(--type-note);
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-  }
-  .realm-codex-chapter-head__fact {
-    grid-column: 2;
-    justify-self: start;
-    min-width: 0;
-    color: var(--color-qing);
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-    text-align: left;
   }
   .realm-codex-section {
     min-width: 0;
@@ -685,18 +635,6 @@
     min-width: 0;
   }
   @media (min-width: 620px) {
-    .realm-codex-chapter-head {
-      grid-template-columns: 1.45rem minmax(0, 1fr) auto;
-      align-items: baseline;
-    }
-
-    .realm-codex-chapter-head__fact {
-      grid-column: auto;
-      justify-self: end;
-      max-width: min(20rem, 42vw);
-      text-align: right;
-    }
-
     .realm-world-index__grid {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }

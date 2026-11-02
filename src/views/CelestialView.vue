@@ -97,7 +97,8 @@
           <!-- 道途:此世已定则摊开代价、章法与剑意；未定则先列七道 -->
           <article class="celestial-dao-ledger" data-celestial-dao-ledger>
             <section class="celestial-dao" data-celestial-chapter="dao" data-celestial-dao>
-              <CelestialChapterHead
+              <FolioChapterHead
+                data-celestial-chapter-head
                 index="壹"
                 title="道途与门径"
                 hint="此生一诺，炉魂另启"
@@ -194,7 +195,8 @@
               data-celestial-chapter="gateways"
               data-celestial-gateways
             >
-              <CelestialChapterHead
+              <FolioChapterHead
+                data-celestial-chapter-head
                 index="贰"
                 title="两处门径"
                 hint="熔作道源 · 器魂成阵"
@@ -343,7 +345,7 @@ import InkTabs from "@/components/common/InkTabs.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import CelestialReportLedger from "@/components/celestial/CelestialReportLedger.vue";
 import CelestialGateMap from "@/components/celestial/CelestialGateMap.vue";
-import CelestialChapterHead from "@/components/celestial/CelestialChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import FurnaceDialog from "@/components/celestial/FurnaceDialog.vue";
 import TutorialDialog from "@/components/celestial/TutorialDialog.vue";
 import MarksPanel from "@/components/celestial/MarksPanel.vue";

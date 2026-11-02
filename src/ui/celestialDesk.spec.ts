@@ -84,7 +84,7 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
       [...view.matchAll(/data-celestial-chapter="([^"]+)"/g)].map((match) => match[1]),
       "道途、门径两章必须依次续排",
     ).toEqual(["dao", "gateways"]);
-    expect(view, "两章共用统一章首").toMatch(/<CelestialChapterHead[\s\S]*<CelestialChapterHead/);
+    expect(view, "两章共用统一章首").toMatch(/<FolioChapterHead[\s\S]*<FolioChapterHead/);
     expect(view, "道途章首报道此世真实道途").toContain(
       ':fact="currentDao ? `${currentDao.name} · 已定` : `${DAO_PATHS.length} 道待择`"',
     );
@@ -138,7 +138,7 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
       'class="celestial-marks-ledger"\n    data-celestial-marks-ledger',
     );
     expect(marks, "道痕册只留一章真实落点").toContain('data-celestial-chapter="marks"');
-    expect(marks, "章首走统一组件").toContain("<CelestialChapterHead");
+    expect(marks, "章首走统一组件").toContain("<FolioChapterHead");
     expect(marks, "章首报卷内则数与上限同源").toContain(
       ':fact="`${endgame.marks.length} / ${MAX_MARKS} 则`"',
     );
@@ -217,7 +217,7 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
       [...trial.matchAll(/data-celestial-trial-chapter="([^"]+)"/g)].map((match) => match[1]),
       "四章必须按今日天道、变数、试炼、挑战书续排",
     ).toEqual(["daily", "mutation", "trials", "challenge"]);
-    expect(trial, "章首走统一组件").toContain("<CelestialChapterHead");
+    expect(trial, "章首走统一组件").toContain("<FolioChapterHead");
     expect(trial, "今日题、变数与挑战书都要有运行时落点").toContain("data-celestial-daily");
     expect(trial).toContain("data-celestial-mutation");
     expect(trial).toContain("data-celestial-challenge");
@@ -305,7 +305,7 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
       [...report.matchAll(/data-celestial-report-chapter="([^"]+)"/g)].map((match) => match[1]),
       "战果、战局、逐场与此战之判必须依次续排",
     ).toEqual(["result", "field", "fights", "judgement"]);
-    expect(report.match(/<CelestialChapterHead/g) ?? [], "四章共用同一章首").toHaveLength(4);
+    expect(report.match(/<FolioChapterHead/g) ?? [], "四章共用同一章首").toHaveLength(4);
     expect(report, "战局由主文件持有当前场,场签与战报同源").toContain(':current="currentFight"');
     expect(report, "场签切换回写到战卷").toContain('@select="selectFight"');
     expect(report, "逐场账行要有稳定运行时落点").toContain("data-celestial-report-fight");
@@ -356,6 +356,7 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
     const start = css.indexOf(".celestial-pulse {");
     const end = css.indexOf("/*\n * 分段选择(.ink-choice)", start);
     const celestialCss = css.slice(start, end);
+    const sharedHead = source("src/components/common/FolioChapterHead.vue");
 
     expect(start, "天界样式段要能定位到").toBeGreaterThan(-1);
     expect(end, "天界样式段要有明确结尾").toBeGreaterThan(start);
@@ -371,8 +372,8 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
     expect(celestialCss, "960 起世界账行两栏并读").toMatch(
       /@media \(min-width: 960px\)\s*\{[\s\S]{0,1200}\.celestial-world-ledger\s*\{[\s\S]{0,120}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
     );
-    expect(celestialCss, "220 以下章内读数退到题名下方").toMatch(
-      /@media \(max-width: 220px\)\s*\{[\s\S]{0,1800}\.celestial-chapter-head__fact\s*\{[\s\S]{0,80}grid-column:\s*2;[\s\S]{0,100}justify-self:\s*start;/,
+    expect(sharedHead, "手机与 200% 缩放时章内读数退到题名下方").toMatch(
+      /@media \(max-width: 520px\)\s*\{[\s\S]{0,900}\.folio-chapter-head__tail\s*\{[\s\S]{0,160}grid-column:\s*2/,
     );
   });
 

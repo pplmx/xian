@@ -9,6 +9,8 @@
    */
   .character-register {
     --character-accent: var(--color-cinnabar);
+    --folio-chapter-accent: var(--character-accent);
+    --folio-chapter-accent-rgb: var(--character-accent-rgb, var(--color-cinnabar-rgb));
     margin-top: 0.65rem;
     border: 0;
     border-top: 1px solid color-mix(in srgb, var(--world-bar) 46%, transparent);

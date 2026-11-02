@@ -23,7 +23,8 @@
     <!-- 总账只摊家底与眼前一锤,续账沿同一条纸线接七作、家业与灵脉。 -->
     <article class="dongfu-ledger-register folio-span-all" data-dongfu-ledger-register>
       <section class="dongfu-ledger-register__chapter" data-dongfu-ledger-chapter="summary">
-        <DongfuChapterHead
+        <FolioChapterHead
+          data-dongfu-chapter-head
           index="壹"
           eyebrow="山门总账"
           title="七作营造"
@@ -155,7 +156,8 @@
       </section>
 
       <section class="dongfu-ledger-register__chapter" data-dongfu-ledger-chapter="register">
-        <DongfuChapterHead
+        <FolioChapterHead
+          data-dongfu-chapter-head
           index="贰"
           eyebrow="营造之后"
           title="山门续账"
@@ -282,7 +284,7 @@ import LedgerPulse from "@/components/common/LedgerPulse.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import BuildingLedgerRow from "@/components/dongfu/BuildingLedgerRow.vue";
 import DongfuAtlas from "@/components/dongfu/DongfuAtlas.vue";
-import DongfuChapterHead from "@/components/dongfu/DongfuChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import DongfuGatewayRow from "@/components/dongfu/DongfuGatewayRow.vue";
 import VeinInvestCard from "@/components/dongfu/VeinInvestCard.vue";
 

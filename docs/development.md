@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 437 个 spec;本作自己那部分 357 个) |
+| `bun run test` | 全量用例(全量 438 个 spec;本作自己那部分 358 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -98,7 +98,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 437 个 spec(本作自己那部分 357 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 438 个 spec(本作自己那部分 358 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -258,7 +258,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 在 1280 核验四列并读及轮回主账 / 旧世归档的并读几何;结构与响应式契约由
 `src/ui/legacyDesk.spec.ts` 守住。
 
-界域志六册现在共用一张开口长账与一枚 `RealmCodexChapterHead`:卷次、题名和读法由
+界域志六册现在共用一张开口长账与一枚 `FolioChapterHead`:卷次、题名和读法由
 `realmCodexChapters()` 沿导航顺序装配,章内真值仍直读页面原有数据表、store 与 core
 派生值。`data-realm-codex-folio` 只换 `data-chapter`,典籍、周易、紫微、星象与奇门
 不再导入 `SectionTitle`,也不再逐段套 `card-ink`;章首后以 `realm-codex-section`
@@ -287,7 +287,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 开卷两页现在也收进同一套章首语法。欢迎页的 `data-opening-gate-register` 只有
 `gate / rules` 两章,建号页的 `data-opening-create-register` 只有
-`name / roots / vow` 三章,五章共用 `OpeningChapterHead` 的序印、眉题、题名、读法与
+`name / roots / vow` 三章,五章共用 `FolioChapterHead` 的序印、眉题、题名、读法与
 章内真值;道号实时报 `N / 8 字`,灵根章首直读当前等级,定卷章首随落印状态改口。
 旧 `opening-gate__layout`、`opening-create__sheet` 与分区题头已撤,外层最多留一条
 上下账线,章内不再套卡。390 真浏览器门核对两册章序、章首五项齐全、章内零四边框 /
@@ -340,21 +340,21 @@ error: Failed to resolve vite command: GenericFailure, Expected
 `src/ui/characterDossier.spec.ts` 守住两章数量、同源读口与断点源码契约。
 
 兵解前的往生帖也续在同一册章首语法里:此刻、随魂、交割与最后一笔四章共用
-`CharacterChapterHead`,内层面板只留分栏与行线,不再各套四边卡与第二张纸底。
+`FolioChapterHead`,内层面板只留分栏与行线,不再各套四边卡与第二张纸底。
 `characterDossier.spec.ts` 守住四章数量与去卡壳源码契约;真浏览器门
 `taskRebirthFolio` 在 390 核对四枚章首、内层零四边框、道果 / 天赋 / 主损失与全账,
 再切到 195 核对摘要、门槛与去留行收成单列且不压窄账目名。
 
 往生帖之后的辞世、回照、择生三程也续在同一册章首语法里。三程路签由
 `ReincarnationStageRail` 共用,辞世、回照与择生分别核对 1 / 3 / 至少 5 枚
-`CharacterChapterHead`;命题、宿慧、交割、灵根、道号、天姿与落印说明只保留开口账线,
-旧 `reincarnation-sheet` 与第二张纸底不得回来。章首版式随 `CharacterChapterHead` 组件
+`FolioChapterHead`;命题、宿慧、交割、灵根、道号、天姿与落印说明只保留开口账线,
+旧 `reincarnation-sheet` 与第二张纸底不得回来。章首版式随 `FolioChapterHead` 组件
 自身加载,避免读档即身故、人物页样式尚未载入时退成块级长文。`characterDossier.spec.ts`
 守住章节数量、去卡壳、组件自带版式与三程共用路签的源码契约;`taskReincarnation` 在 390
 三程真走一遍,核对章序、内层零四边框、全账展开、置灰门与 200% 收口。
 
 流派页成路后现在收成一册「铸道续卷」:道途阶梯、下一步、五维形状、实战面、
-构筑快照与可选旧筑对照沿同一组 `BuildChapterHead` 续排,原有的 `data-build-stage`
+构筑快照与可选旧筑对照沿同一组 `FolioChapterHead` 续排,原有的 `data-build-stage`
 / `next` / `shape` / `battle` / `loadouts` / `compare` 运行时落点全部保留。390 档核对
 五章稳定章序、章名、章首读数、零 `card-ink` 与下一步首屏位置;620 档阶梯与下一步
 先并读、五维续整行;1280 档前三章同顶并读,实战章再以整行接续。旧案、实战、快照与
@@ -377,7 +377,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 行囊四签现在同住一册「行囊续卷」:装备三章(今日检点、九佩、藏品)、丹药两章
 (丹房、丹匣)、材料两章(炉材、账材)与法宝一章由 `src/ui/inventoryDesk.ts` 的
-同一份章序装配。八章共用 `InventoryChapterHead` 的章号、题名、读法与章内真值;
+同一份章序装配。八章共用 `FolioChapterHead` 的章号、题名、读法与章内真值;
 丹药和材料格走 `ItemCell` 的 `ledger` 模式,只留账页分栏线,不再另套四边卡与底色。
 九席仍是九个真实的 `data-equip-slot`,藏品仍走原来的 `inventoryWindow` 分批窗口、
 `data-inventory-prev` 回翻与焦点链;换装候选和数量仍分别直读 `equipUpgrades` 与同一份
@@ -424,7 +424,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 道痕页首屏 DOM 281、全流程峰值 364。
 
 门庭页的「今日门庭」总账、值日簿与门规同住一张开口续卷,三章共用
-`ApprenticeChapterHead` 的壹 / 贰 / 叁、读法与章内真值;首章用的共享 `LedgerPulse`
+`FolioChapterHead` 的壹 / 贰 / 叁、读法与章内真值;首章用的共享 `LedgerPulse`
 切成无账首态,只留账格,不再与后两章各用一套章节头。整册只留上下账线与章间线。
 总账先报候差、在途、最近归来与一键派发,最近归期直接带弟子名和差事名;四门存底把
 唯一目标或同分门与一令齐发的目标对齐。值日簿候差在前、在途按归期续列,任务进度与
@@ -439,7 +439,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 列「尚差 N 道源」,不会在入口先写一句 N 件可凝、点进去才看见按钮全灰。
 题签只留道源读数,正文收成一册三章「器魂续卷」:壹「三席阵账」把总账、先手与精确
 席位放在同一章,贰「两处门径」承接散置形意与凝炼台,叁「器魂章法」退到卷尾。三章
-共用 `SoulChapterHead` 的章号、章名、读法与章内读数,整册只留上下账线和章节线;
+共用 `FolioChapterHead` 的章号、章名、读法与章内读数,整册只留上下账线和章节线;
 阵账仍是 `LedgerPulse`,两处门径与章法不再借 `SectionTitle` 另起一层卡壳。390 宽三章
 续排且首屏仍能看见可落子的席位,620 宽两扇门径并读,960 宽门径与章法左右并读;
 320 以下先手动作退到标题下方,195 宽三席退成三行、章内读数退到章名下方。有闲置先
@@ -452,7 +452,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 藏珍总量 / 新得。功名榜的行动章先列最近三策,卷目章把方向收成三列榜牌,只展开一路
 卷轴;藏珍阁的行动章摆九柜,柜面报单字印、册名、已录 / 总数与唯一状态,卷目章只抽开
 一屉。两侧仍共用 `collectionProgressOverviewFromCodex`、`nearestAchievementRows`
-与 `ui/collectionDesk` 的单字印 / 柜格搬运,不在组件里重数条目。`CollectionChapterHead`
+与 `ui/collectionDesk` 的单字印 / 柜格搬运,不在组件里重数条目。`FolioChapterHead`
 统一章号、眉题、题名、读法与章内真值,卷目章沿同一卷面续排。390 / 620 宽单列续读,
 960 宽才让行动章与卷目章左右并读,195 宽把章内读数退到章名下方、九柜与方向榜退两列。
 合上的方向卷轴与柜屉不保留正文,只给 `aria-controls` 留空壳;结构与事实源由
@@ -468,7 +468,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 事实源由 `src/ui/adventureDesk.spec.ts` 守住。
 
 名号与灵兽页的双契总览、当前与来路、全谱共用一张连续纸面:卷首只留两条契约索引,
-名号与灵兽各收成一册两章,`NameBeastChapterHead` 统一章号、眉题、题名、读法与章内
+名号与灵兽各收成一册两章,`FolioChapterHead` 统一章号、眉题、题名、读法与章内
 真值。正文以「今 / 次 / 伴 / 谱」边栏续排,不再三层各包一张卡。359px 以下仍把双契
 并排,只收起册次与长注;279px 以下才退单册,让 320 先看见双契与当前,200% 缩放仍能
 操作。960px 起当前章与全谱章左右并读,220px 以下章内真值退到章名下方。两册仍只循环
@@ -478,7 +478,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 洞府正文收成一册两章:壹「七作营造」只走 `headless` 共享此刻账,家底、眼前一锤与
 离线存续都在章首之下;贰「山门续账」接七作四章、家业与灵脉,不再各自套入口卡。
-两章共用 `DongfuChapterHead` 的章号、眉题、题名、读法与章内真值,整册只留上下账线
+两章共用 `FolioChapterHead` 的章号、眉题、题名、读法与章内真值,整册只留上下账线
 和章间线,旧通用节题与首章共享账首都已撤掉。每条建筑账行只露当前首项、下一级首项
 和一枚行内主升级键;等级、进度与已营计数走石青信息层,主键只用朱砂短笔与淡底标出
 真正可动的那一下,完整效果、灵兽/藏经阁联动与连升总账仍由同一个 `aria-expanded`

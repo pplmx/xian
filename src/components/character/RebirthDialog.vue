@@ -29,7 +29,8 @@
       </header>
 
       <section class="rebirth-chapter rebirth-now" data-rebirth-now>
-        <CharacterChapterHead
+        <FolioChapterHead
+          data-character-chapter-head
           index="壹"
           title="此刻要决定的事"
           hint="这不是一次普通确认。先把底账核对清楚,再进往生三程。"
@@ -60,7 +61,8 @@
       </section>
 
       <section class="rebirth-chapter rebirth-heritage">
-        <CharacterChapterHead
+        <FolioChapterHead
+          data-character-chapter-head
           index="贰"
           title="随魂所积"
           hint="道果与先天之姿跨世留下，来世仍可调用。"
@@ -145,7 +147,8 @@
       </section>
 
       <section class="rebirth-chapter rebirth-ledger" data-rebirth-ledger>
-        <CharacterChapterHead
+        <FolioChapterHead
+          data-character-chapter-head
           index="叁"
           title="此世交割"
           hint="条目直接取轮回结算的同一份继承表。先看影响最大的几笔,再展开全账。"
@@ -224,7 +227,8 @@
       </section>
 
       <section class="rebirth-chapter rebirth-last-call">
-        <CharacterChapterHead
+        <FolioChapterHead
+          data-character-chapter-head
           index="肆"
           title="本世最后一笔"
           hint="可补立逆旅契；真正落子仍在往生末程。"
@@ -339,7 +343,7 @@ import { formatNum, formatPercent, yearsShown } from "@/utils/format";
 import { modsText } from "@/data/statNames";
 import { criticalSamsaraRows, samsaraBalance, samsaraLedger } from "@/ui/reincarnationDesk";
 import BaseModal from "@/components/common/BaseModal.vue";
-import CharacterChapterHead from "@/components/character/CharacterChapterHead.vue";
+import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 
 /**
  * 兵解前的最后一张账。
@@ -433,6 +437,8 @@ function rebirth(): void {
 .rebirth-folio {
   --character-accent: var(--color-cinnabar);
   --character-accent-rgb: var(--color-cinnabar-rgb);
+  --folio-chapter-accent: var(--character-accent);
+  --folio-chapter-accent-rgb: var(--character-accent-rgb);
   display: grid;
 }
 
@@ -449,7 +455,7 @@ function rebirth(): void {
   padding-top: 0;
 }
 
-.rebirth-chapter > .character-chapter-head {
+.rebirth-chapter > .folio-chapter-head {
   margin-bottom: 0.56rem;
 }
 
@@ -958,7 +964,7 @@ function rebirth(): void {
   gap: 0;
 }
 
-.rebirth-last-call > .character-chapter-head {
+.rebirth-last-call > .folio-chapter-head {
   grid-column: 1 / -1;
 }
 
