@@ -142,10 +142,13 @@ describe("样式 · 时长单位统一写秒", () => {
       const stripped = f.css.replace(/\/\*[\s\S]*?\*\//g, "");
       for (const m of stripped.matchAll(/(?<![\w.-])(\d+(?:\.\d+)?)ms\b/g)) {
         if (m[1] === "0.01") continue; // reduced-motion 兜底,见上
-        // var(--veil-hold, 2800ms) 的回退值:它是 JS 常量 VEIL_HOLD_MS 的兜底,
-        // 与那个数保持同一种单位(毫秒)更好读,且只有这一个变量这样写
-        if (/var\(--veil-hold/.test(stripped.slice(Math.max(0, m.index - 30), m.index + 10)))
-          continue;
+        /*
+         * var(--x, NNNms) 的回退值:那些变量由 JS 常量写入(--veil-hold ← VEIL_HOLD_MS,
+         * --toast-anim ← TOAST_ANIM_MS),回退值跟 JS 用同一种单位更好读。
+         * 判据认的是「这个数前面开着 var(--某变量,」,不点名具体变量 ——
+         * 免得每新增一处同款写法就要回来加一个名字。
+         */
+        if (/var\(--[\w-]+,\s*$/.test(stripped.slice(Math.max(0, m.index - 60), m.index))) continue;
         const ln = stripped.slice(0, m.index).split("\n").length;
         offenders.push(`${f.path}:${ln} ${m[0]}`);
       }

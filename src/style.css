@@ -3999,9 +3999,10 @@
   } /* Toast */
   .toast-slide-enter-active,
   .toast-slide-leave-active {
+    /* 时长由 ToastHost 的 TOAST_ANIM_MS 经 --toast-anim 给定,两边不再各写一份 */
     transition:
-      opacity 0.25s ease,
-      transform 0.25s ease;
+      opacity var(--toast-anim, 250ms) ease,
+      transform var(--toast-anim, 250ms) ease;
   }
   .toast-slide-enter-from {
     opacity: 0;

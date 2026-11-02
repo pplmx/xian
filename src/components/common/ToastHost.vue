@@ -25,6 +25,7 @@
     <div
       aria-live="polite"
       class="pointer-events-none fixed inset-x-0 top-[max(env(safe-area-inset-top),2.5rem)] z-70 flex flex-col items-center gap-1.5 px-6"
+      :style="{ '--toast-anim': `${TOAST_ANIM_MS}ms` }"
     >
       <TransitionGroup name="toast-slide" :duration="TOAST_ANIM_MS">
         <button
@@ -52,11 +53,15 @@ import { playSfx, type SfxName } from "@/core/audio";
 const ui = useUiStore();
 
 /**
- * 离场动画时长 —— 必须与 style.css 里 .toast-slide-* 的 0.25s 对齐。
+ * 离场动画时长 —— 唯一的一处定义。
  *
  * 之所以要显式写死:稀有提示的柔辉是挂在 ::before 上的 2.4s 无限动画。
  * 离场不能依赖 transition 的自动探测去猜时长 —— 无限动画没有可用的
  * animationend,玩家点掉提示后还得在原地等两秒。写死时长让 Vue 到点就摘。
+ *
+ * 它同时通过 `--toast-anim` 写给 style.css 的 .toast-slide-*:
+ * 从前 CSS 里另写了一个 0.25s,注释写着「必须与它对齐」—— 那就只是口头约定,
+ * 改一处另一处无从得知。现在 CSS 读这一枚,两边自动同拍。
  */
 const TOAST_ANIM_MS = 250;
 

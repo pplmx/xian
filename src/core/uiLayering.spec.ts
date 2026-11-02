@@ -3544,6 +3544,28 @@ describe("界面分层 · 浮层只有一个出处", () => {
     }
   });
 
+  it("提示条的离场时长只有一处 —— CSS 读 ToastHost 的那一枚数", () => {
+    /*
+     * 稀有提示的柔辉是挂在 ::before 上的无限动画,所以离场时长必须写死给
+     * Vue 的 TransitionGroup 用(`:duration`),否则它探测不到动画结束。
+     * 从前 CSS 里另写一个 0.25s,注释写着「必须与它对齐」—— 那只是口头约定:
+     * 改 JS 不同步,提示会在动画中途被摘掉或拖住。
+     *
+     * 现在两份数都由 TOAST_ANIM_MS 经 --toast-anim 给出。判据钉住这条派生。
+     */
+    const host = readFileSync(resolve(__dirname, "../components/common/ToastHost.vue"), "utf8");
+    expect(host, "时长要有名字").toMatch(/const TOAST_ANIM_MS = \d+;/);
+    expect(host, "根节点要把时长写给 CSS").toContain("'--toast-anim': `${TOAST_ANIM_MS}ms`");
+    expect(host, "TransitionGroup 读同一枚常量").toContain(':duration="TOAST_ANIM_MS"');
+    const css = readStyleCss();
+    const block = css.slice(
+      css.indexOf(".toast-slide-enter-active"),
+      css.indexOf(".toast-slide-enter-from"),
+    );
+    expect(block, "过渡要读变量").toContain("var(--toast-anim");
+    expect(block, "不许再手写 0.25s").not.toMatch(/opacity 0\.25s|transform 0\.25s/);
+  });
+
   it("世界宣告的在场时长只有一处 —— CSS 读 JS 的那一枚数", () => {
     /*
      * 越过界膜时的印碑与光晕要一起收。从前 JS 写 2800ms、CSS 写 2.7s,
