@@ -12,7 +12,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { INSIGHT_DISCOUNT_PER_POINT, veinDef } from "@/data/veins";
+import { insightDiscountOf, veinDef } from "@/data/veins";
 import { formatPercent } from "@/utils/format";
 import { veinEffectText } from "./veinText";
 import { STAT_NAMES } from "../data/statNames";
@@ -39,9 +39,18 @@ describe("灵脉效果行", () => {
     expect(t, "「炼器消耗」这名从前逼得显示层写特例绕开 +X%,已作废").not.toContain("炼器消耗");
   });
 
-  it("寒冥灵脉的折扣读 INSIGHT_DISCOUNT_PER_POINT 常量,不写死倍数", () => {
+  it("寒冥灵脉的折扣走唯一换算入口 insightDiscountOf,不写死倍数", () => {
     const t = veinEffectText(veinDef("insight"), 15);
-    expect(t).toBe(`功法进修悟道点 -${formatPercent(15 * INSIGHT_DISCOUNT_PER_POINT)}`);
+    expect(t).toBe(`功法进修悟道点 -${formatPercent(insightDiscountOf(15))}`);
+  });
+
+  it("折扣封顶只算一次:超过上限的点数不再线性外推", () => {
+    // 上限 0.5 与每点 0.004 住同一处;125 点正好到顶,再投也不涨 ——
+    // 从前结算与卡片各写一遍 Math.min(0.5, …),改上限只动一边。
+    const capped = insightDiscountOf(200);
+    expect(capped).toBe(insightDiscountOf(125));
+    expect(capped).toBeLessThanOrEqual(0.5);
+    expect(veinEffectText(veinDef("insight"), 200)).toBe(veinEffectText(veinDef("insight"), 125));
   });
 
   it("数据表回归纯声明:veins.ts 不许再带效果文案闭包或手写乘数", () => {

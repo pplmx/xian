@@ -5,7 +5,7 @@ import type { BuildingId, SmallResourceId, StatMods } from "@/types";
 import type { VeinId } from "@/data/veins";
 import { persistConfig } from "@/utils/storage";
 import { BUILDINGS, librarySubGongfaSlots } from "@/data/buildings";
-import { INSIGHT_DISCOUNT_PER_POINT } from "@/data/veins";
+import { insightDiscountOf } from "@/data/veins";
 import {
   ARRAY_QI_CAP_PER_LEVEL,
   BEAST_MULT_PER_LEVEL,
@@ -59,10 +59,8 @@ export const useDongfuStore = defineStore(
       return veinModsOf(veinStateOf(veinPoints.value, veinMain.value));
     });
 
-    /** 悟道脉参悟折扣(0~) */
-    const insightDiscount = computed(
-      () => (veinPoints.value.insight ?? 0) * INSIGHT_DISCOUNT_PER_POINT,
-    );
+    /** 悟道脉参悟折扣(已封顶;换算是唯一入口 insightDiscountOf) */
+    const insightDiscount = computed(() => insightDiscountOf(veinPoints.value.insight ?? 0));
 
     /** 灵脉已投总点数 */
     const veinTotal = computed(() => veinTotalOf(veinStateOf(veinPoints.value, veinMain.value)));

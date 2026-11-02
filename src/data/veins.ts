@@ -70,6 +70,23 @@ export const VEINS: VeinDef[] = [
 /** 悟道脉每点参悟折扣 */
 export const INSIGHT_DISCOUNT_PER_POINT = 0.004;
 
+/**
+ * 参悟折扣的绝对上限 —— 不导出:对外只给封顶后的结果(见 insightDiscountOf)。
+ * 从前功法结算与灵脉卡片各写一遍 `Math.min(0.5, …)`,改上限那天两边会分家。
+ */
+const INSIGHT_DISCOUNT_CAP = 0.5;
+
+/**
+ * 已投点数 → 参悟折扣(已封顶)。
+ *
+ * 唯一的换算入口:store 的 insightDiscount(结算真正读的那个数)、灵脉效果行
+ * 与灵脉卡片的「当前加成」都从这一处来 —— 卡片上写的百分比与功法实扣的折扣
+ * 因此不可能各说一套。
+ */
+export function insightDiscountOf(points: number): number {
+  return Math.min(INSIGHT_DISCOUNT_CAP, Math.max(0, points) * INSIGHT_DISCOUNT_PER_POINT);
+}
+
 export function veinDef(id: VeinId): VeinDef {
   return VEINS.find((v) => v.id === id)!;
 }

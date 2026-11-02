@@ -164,9 +164,10 @@ const bonusRows = computed(() => {
       rows.push({ label: STAT_NAMES[k as AnyStatKey] ?? k, value: v, sign: "+" });
     }
   }
-  // 折扣作用于功法「进修」的悟道点(参悟=藏经阁,只耗残页),故标「功法进修省耗」而非「参悟省耗」
+  // 折扣作用于功法「进修」的悟道点(参悟=藏经阁,只耗残页),故标「功法进修省耗」而非「参悟省耗」。
+  // 数值直接取自 store(已按 insightDiscountOf 封顶),卡片不自己再封一次。
   if (dongfu.insightDiscount > 0) {
-    rows.push({ label: "功法进修省耗", value: Math.min(0.5, dongfu.insightDiscount), sign: "−" });
+    rows.push({ label: "功法进修省耗", value: dongfu.insightDiscount, sign: "−" });
   }
   return rows;
 });

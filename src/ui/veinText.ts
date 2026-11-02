@@ -9,7 +9,7 @@
  * 本文件只做映射与文案,不读 store、不改状态 —— 需要状态时调用方传进来。
  */
 import type { AnyStatKey } from "@/types";
-import { INSIGHT_DISCOUNT_PER_POINT, type VeinDef } from "@/data/veins";
+import { insightDiscountOf, type VeinDef } from "@/data/veins";
 import { formatPercent, formatSignedPercent } from "@/utils/format";
 import { STAT_NAMES } from "../data/statNames";
 
@@ -22,9 +22,10 @@ export function veinEffectText(def: VeinDef, points: number): string {
     // 正号读起来就是「省 +X%」,不再需要为它单开 -X% 特例 —— 显示层默认从此对
     parts.push(`${STAT_NAMES[key as AnyStatKey] ?? key} ${formatSignedPercent(val)}`);
   }
-  // 寒冥灵脉的 perPoint 是空对象,效果走参悟折扣这条专用通道,别把它写死在 strings 里(见 INSIGHT_DISCOUNT_PER_POINT)
+  // 寒冥灵脉的 perPoint 是空对象,效果走参悟折扣这条专用通道,别把它写死在 strings 里。
+  // 换算走 insightDiscountOf(已封顶):效果行与功法实扣的折扣从此同一个数。
   if (def.id === "insight") {
-    parts.push(`功法进修悟道点 -${formatPercent(points * INSIGHT_DISCOUNT_PER_POINT)}`);
+    parts.push(`功法进修悟道点 -${formatPercent(insightDiscountOf(points))}`);
   }
   return parts.join(" · ");
 }

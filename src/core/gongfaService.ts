@@ -91,8 +91,9 @@ export function comprehendGongfa(): boolean {
 function gongfaUpgradeCostAt(id: string, lv: number): { wudao: number; page: number } | null {
   const def = gongfaDef(id);
   if (!def || !lv || lv >= def.maxLevel) return null;
-  // 寒冥灵脉:参悟悟道点折扣(Phase 30.3)
-  const discount = Math.min(0.5, useDongfuStore().insightDiscount);
+  // 寒冥灵脉:参悟悟道点折扣(Phase 30.3)。折扣已在 store 里按唯一入口封过顶 ——
+  // 这里再 `Math.min(0.5, …)` 一遍就是同一个上限的第二份副本,改上限只动一边。
+  const discount = useDongfuStore().insightDiscount;
   // 消耗曲线由公共库算(见 core/engineWorld 的 GONGFA_SYSTEM):
   // 悟道点 = 基数 × 倍率^等级 ×(1-折扣);残页 = 等级 ×(1 + 品质序 × 0.5),下限 1
   const costs = GONGFA_SYSTEM.costAt(id, lv, { discount });
