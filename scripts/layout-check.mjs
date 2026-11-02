@@ -21520,7 +21520,8 @@ async function taskReadOnlyTab() {
  * 底栏只有五册,而洞府营造、坊市、器魂、天界等页面都从这枚印进入。这里不只数
  * 入口数量:在 390 与 200% 缩放档(195)各开一次,量五卷快引、十七册卷宗有没有
  * 把页面撑坏;390 档还要真的点「天机」快引翻到末卷,再点一册跳到对应路由。
- * 册目是新壳层的高频入口,不能只在源码里有 17 条数据。
+ * 1280 档逐卷核对当前册页确实铺满案台、册次只在桌面出现;册目是新壳层的高频
+ * 入口,不能只在源码里有 17 条数据。
  */
 async function taskAtlasNavigation() {
   const failures = [];
@@ -21572,6 +21573,9 @@ async function taskAtlasNavigation() {
         const visibleSections = [...document.querySelectorAll("[data-atlas-section]")].filter(
           (el) => el.offsetParent !== null,
         );
+        const visibleSection = visibleSections[0];
+        const index = document.querySelector(".atlas-index");
+        const ordinal = visibleSection?.querySelector(".atlas-entry__ordinal");
         return {
           present: !!atlas,
           entries: entries.length,
@@ -21588,6 +21592,9 @@ async function taskAtlasNavigation() {
           current: (current?.textContent || "").replace(/\s+/g, " ").trim(),
           active: entries.filter((el) => el.getAttribute("aria-current") === "page").length,
           visibleSections: visibleSections.length,
+          indexWidth: index?.getBoundingClientRect().width ?? 0,
+          sectionWidth: visibleSection?.getBoundingClientRect().width ?? 0,
+          ordinalVisible: !!ordinal && ordinal.offsetParent !== null,
           bagVolumeCue:
             volumes
               .find((el) => el.getAttribute("data-atlas-volume") === "belongings")
@@ -21632,6 +21639,18 @@ async function taskAtlasNavigation() {
       if (state.visibleSections !== 1) {
         failures.push(`[${vp.tag}] 玄枢图同时展开了 ${state.visibleSections} 卷(应只展开当前一卷)`);
       }
+      if (vp.tag === "1280") {
+        if (state.sectionWidth < state.indexWidth - 1) {
+          failures.push(
+            `[${vp.tag}] 玄枢图册目只铺了 ${state.sectionWidth.toFixed(1)} / ${state.indexWidth.toFixed(1)}px，右侧留出旧版双栏空位`,
+          );
+        }
+        if (!state.ordinalVisible) {
+          failures.push(`[${vp.tag}] 玄枢图桌面册目没有显示本卷册次`);
+        }
+      } else if (state.ordinalVisible) {
+        failures.push(`[${vp.tag}] 玄枢图窄屏多出了桌面册次`);
+      }
       if (!state.bagVolumeCue.includes("6 件新物")) {
         failures.push(
           `[${vp.tag}] 玄枢图身外卷签没有汇总行囊新货:${state.bagVolumeCue || "无提醒"}`,
@@ -21649,6 +21668,46 @@ async function taskAtlasNavigation() {
       const problems = problemsOf(await measurePage(page));
       checked += 1;
       for (const problem of problems) failures.push(`[${vp.tag}] 玄枢图:${problem}`);
+
+      if (vp.tag === "1280") {
+        for (const volumeId of ["practice", "estate", "journey", "belongings", "fate"]) {
+          await page.locator(`[data-atlas-volume="${volumeId}"]`).click();
+          await page
+            .waitForFunction(
+              (id) => {
+                const section = document.querySelector(`[data-atlas-section="${id}"]`);
+                return !!section && section.offsetParent !== null;
+              },
+              volumeId,
+              { timeout: 2000 },
+            )
+            .catch(() => undefined);
+          const geometry = await page.evaluate((id) => {
+            const index = document.querySelector(".atlas-index");
+            const section = document.querySelector(`[data-atlas-section="${id}"]`);
+            const ordinals = [...(section?.querySelectorAll(".atlas-entry__ordinal") ?? [])].filter(
+              (el) => el.offsetParent !== null,
+            );
+            return {
+              indexWidth: index?.getBoundingClientRect().width ?? 0,
+              sectionWidth: section?.getBoundingClientRect().width ?? 0,
+              entries: section?.querySelectorAll("[data-atlas-entry]").length ?? 0,
+              ordinals: ordinals.length,
+            };
+          }, volumeId);
+          checked += 1;
+          if (geometry.sectionWidth < geometry.indexWidth - 1) {
+            failures.push(
+              `[1280] 玄枢图 ${volumeId} 卷册目只铺了 ${geometry.sectionWidth.toFixed(1)} / ${geometry.indexWidth.toFixed(1)}px`,
+            );
+          }
+          if (geometry.ordinals !== geometry.entries || geometry.entries === 0) {
+            failures.push(
+              `[1280] 玄枢图 ${volumeId} 卷册次 ${geometry.ordinals} / ${geometry.entries} 条`,
+            );
+          }
+        }
+      }
 
       if (vp.tag === "390") {
         await page.locator("[data-atlas-search]").fill("天机");

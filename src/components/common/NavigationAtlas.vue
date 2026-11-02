@@ -167,7 +167,7 @@
 
             <div class="atlas-entry-list">
               <RouterLink
-                v-for="entry in group.entries"
+                v-for="(entry, entryIndex) in group.entries"
                 :key="entry.name"
                 :to="entry.to"
                 data-atlas-entry
@@ -180,6 +180,9 @@
                 :data-atlas-current="route.name === entry.name ? '' : undefined"
                 @click="emit('close')"
               >
+                <span class="atlas-entry__ordinal" aria-hidden="true">
+                  {{ String(entryIndex + 1).padStart(2, "0") }}
+                </span>
                 <span
                   class="atlas-entry__icon grid h-8 w-8 shrink-0 place-items-center tinylens:h-7 tinylens:w-7"
                   :class="

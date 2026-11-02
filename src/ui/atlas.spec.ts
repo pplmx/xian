@@ -179,6 +179,7 @@ describe("玄枢图 · 五卷快引", () => {
     expect(atlas, "卷签要汇总本卷待办而不只靠点开后才看见").toContain("data-atlas-volume-cue");
     expect(atlas, "册目条要在对应册上直接落章").toContain("data-atlas-entry-cue");
     expect(atlas, "寻册结果保留同一枚待办章").toContain("data-atlas-result-cue");
+    expect(atlas, "桌面册目要报出本卷册次").toContain("atlas-entry__ordinal");
     expect(atlas, "触屏不再展示按不出的键盘快捷键").toContain('v-if="finePointer"');
     expect(modal, "弹窗原语要支持总图宽度").toContain('props.size === "max"');
     expect(modal, "弹窗原语要支持指定首焦点").toContain("initialFocus");
@@ -188,6 +189,12 @@ describe("玄枢图 · 五卷快引", () => {
     expect(css, "书脊寻册入口要有独立样式").toContain(".desktop-spine__lookup");
     expect(css, "桌面总图要把卷目与当前卷宗并读").toMatch(
       /@media \(min-width: 720px\)[\s\S]{0,1600}?\.atlas-browser[\s\S]{0,220}?grid-template-columns:/,
+    );
+    expect(css, "桌面册目必须铺满当前卷宗，不再残留旧版双栏索引").not.toMatch(
+      /@media \(min-width: 720px\)[\s\S]{0,600}?\.atlas-index\s*\{[\s\S]{0,180}?grid-template-columns:\s*repeat\(2,/,
+    );
+    expect(css, "桌面册次要显示，窄屏保持收口").toMatch(
+      /@media \(min-width: 720px\)[\s\S]*?\.atlas-entry__ordinal\s*\{[\s\S]{0,260}?display:\s*block;/,
     );
     expect(css, "195px 档五卷快引改两列，末卷跨满整行").toMatch(
       /@media \(max-width: 220px\)[\s\S]*?\.atlas-compass\s*\{[\s\S]{0,180}?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);[\s\S]{0,900}?\.atlas-volume:last-child\s*\{[\s\S]{0,100}?grid-column:\s*1\s*\/\s*-1;/,
