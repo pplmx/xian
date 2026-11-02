@@ -457,3 +457,35 @@ describe("存档重置 · 清档成功后才停引擎和封存写盘", () => {
     expect(reload, "清档成功后应重载回欢迎页").toHaveBeenCalledOnce();
   });
 });
+
+/**
+ * 隐私告知与实际存盘同一份账。
+ *
+ * 隐私弹窗「数据收集」那一节此前只列两类:游戏进度、游戏设置。而实际落盘的
+ * 分片里还有「节奏遥测」与「异常留档」—— 两者都随「导出存档」一起走。
+ * 少写不等于没存:玩家读到的清单与实际不符,那段告知就失了准。
+ *
+ * 这里钉的不是措辞,而是**覆盖**:这两类必须在清单里被提到。
+ */
+describe("隐私告知 · 与实际存盘同一份账", () => {
+  const dialog = readFileSync(resolve(__dirname, "../components/common/PrivacyDialog.vue"), "utf8");
+
+  it("节奏计数与异常留档都在「数据收集」清单里", () => {
+    // 它们确实落盘(见 utils/storage 的 PERSISTED_STORES 与 STORE_NAMES)
+    expect(PERSISTED_STORES, "遥测分片不在存盘清单里 —— 本条判据失去对象").toContain("pacing");
+    expect(PERSISTED_STORES, "异常分片不在存盘清单里 —— 本条判据失去对象").toContain("diag");
+    const section = dialog.slice(dialog.indexOf("数据收集"), dialog.indexOf("数据存储"));
+    expect(section, "隐私页要写明本机会记节奏计数").toContain("节奏计数");
+    expect(section, "隐私页要写明本机会留异常摘要").toContain("异常留档");
+  });
+
+  it("两条都点明「只在本机、不上传」", () => {
+    const section = dialog.slice(dialog.indexOf("数据收集"), dialog.indexOf("数据存储"));
+    const items = [...section.matchAll(/<li>([^<]*)<\/li>/g)].map((m) => m[1] ?? "");
+    expect(items.length, "清单条目太少,可能没扫到").toBeGreaterThanOrEqual(4);
+    const counting = items.find((t) => t.includes("节奏计数")) ?? "";
+    const diag = items.find((t) => t.includes("异常留档")) ?? "";
+    expect(counting, "节奏计数要说明不上传").toContain("不上传");
+    expect(diag, "异常留档要说明用途(供反馈)").toMatch(/反馈|备份/);
+  });
+});
