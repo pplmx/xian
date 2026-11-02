@@ -66,9 +66,10 @@ describe("修炼案 · 四章收成一册行功续卷", () => {
     expect(view, "修行账要有独立运行时指纹").toContain("data-cultivation-ledger");
     expect(view, "修行账改用续卷章首").toContain("<FolioChapterHead");
     expect(view, "章首标题仍从章序读取修行").toContain(':title="practiceChapter.title"');
-    expect(view, "境界位置收进章首右侧读数席").toContain(
-      ':fact="`第 ${player.major + 1} / ${REALMS.length} 境`"',
-    );
+    // 读数走 realmOrdinalText():分母只认 REALMS.length 一处。
+    // 从前这里钉的是拼接式 `第 ${player.major + 1} / ${REALMS.length} 境`,
+    // 而全站另有三处同款读数各写一遍 —— 抽出来之后,钉的是「读同一份」。
+    expect(view, "境界位置收进章首右侧读数席").toContain(':fact="realmOrdinalText(player.major)"');
     expect(view, "旧的自绘印章章首不再保留").not.toContain("cultivation-ledger__seal");
     expect(view, "修为主值要有独立落点").toContain("data-cultivation-primary");
     expect(view, "灵气与速度要有次读数区").toContain("data-cultivation-meters");

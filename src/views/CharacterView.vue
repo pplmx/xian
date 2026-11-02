@@ -37,7 +37,7 @@
           :index="foundationChapter.index"
           :title="foundationChapter.title"
           :hint="foundationChapter.hint"
-          :fact="`第 ${player.major + 1} / ${REALMS.length} 境`"
+          :fact="realmOrdinalText(player.major)"
         />
         <div class="character-dossier" data-character-dossier>
           <LedgerHeader
@@ -448,6 +448,7 @@
 
 <script setup lang="ts">
 import "@/styles/pages/character.css";
+import { realmOrdinalText } from "@/core/realmLadder";
 import { computed, ref } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import { STAGE_NAMES } from "@/data/daolu";

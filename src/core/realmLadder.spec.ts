@@ -6,7 +6,7 @@
  */
 import { describe, expect, it } from "vite-plus/test";
 import { REALMS, WORLDS, isWorldEntry } from "@/data/realms";
-import { realmLadderPoints, realmLadderWorlds } from "./realmLadder";
+import { realmLadderPoints, realmLadderWorlds, realmOrdinalText } from "./realmLadder";
 
 describe("realmLadder · 三态", () => {
   it("第 1 境(major=0):只是当前境,前无已至", () => {
@@ -55,5 +55,33 @@ describe("realmLadder · 界首与界段", () => {
       expect(centerIdx).toBeLessThan(w.end + 1);
     }
     expect(worlds.length).toBe(WORLDS.length);
+  });
+});
+
+describe("realmLadder · 「第 N / M 境」读数", () => {
+  /*
+   * 这枚读数在四处出现(修行页首屏、修行页章首、人物页、修炼圆盘),
+   * 从前各写一遍 `player.major + 1` 与分母。分母还有过两个变体:
+   * REALMS.length 与 points.length(后者是 REALMS.map(...) 的长度),
+   * 今天相等,改 REALMS 或改圆盘取数时就会分叉。
+   */
+  it("首境从 1 数起,末境不越过总数", () => {
+    expect(realmOrdinalText(0)).toBe(`第 1 / ${REALMS.length} 境`);
+    expect(realmOrdinalText(REALMS.length - 1)).toBe(`第 ${REALMS.length} / ${REALMS.length} 境`);
+  });
+
+  it("圆盘的分母与读数同源 —— points 就是从 REALMS 映射出来的", () => {
+    // 这条钉的是「两个分母今后也不会分叉」:圆盘若改取别的数组,这里会红
+    expect(realmLadderPoints(0)).toHaveLength(REALMS.length);
+    expect(realmOrdinalText(5)).toContain(`/ ${realmLadderPoints(5).length} 境`);
+  });
+
+  it("脏档被夹回合法区间:不印「第 0 境」,也不印超过总数的序号", () => {
+    expect(realmOrdinalText(-3)).toBe(`第 1 / ${REALMS.length} 境`);
+    expect(realmOrdinalText(99)).toBe(`第 ${REALMS.length} / ${REALMS.length} 境`);
+    expect(realmOrdinalText(Number.NaN)).toBe(`第 1 / ${REALMS.length} 境`);
+    expect(realmOrdinalText(Number.POSITIVE_INFINITY)).toBe(
+      `第 ${REALMS.length} / ${REALMS.length} 境`,
+    );
   });
 });

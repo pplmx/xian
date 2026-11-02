@@ -39,9 +39,9 @@
             <span aria-hidden="true" />
             {{ stage.label }}
           </span>
-          <span class="cultivation-masthead__ordinal tabular"
-            >第 {{ player.major + 1 }} / {{ REALMS.length }} 境</span
-          >
+          <span class="cultivation-masthead__ordinal tabular">{{
+            realmOrdinalText(player.major)
+          }}</span>
         </div>
         <p class="cultivation-masthead__state">{{ stage.hint }}</p>
         <details class="cultivation-masthead__lore">
@@ -98,7 +98,7 @@
             :index="practiceChapter.index"
             :title="practiceChapter.title"
             :hint="practiceChapter.hint"
-            :fact="`第 ${player.major + 1} / ${REALMS.length} 境`"
+            :fact="realmOrdinalText(player.major)"
           />
 
           <!-- 仙路 21 境全景:已至/当前/未至一眼可辨,界门立界,四界分列 -->
@@ -388,6 +388,7 @@
 
 <script setup lang="ts">
 import "@/styles/pages/cultivation.css";
+import { realmOrdinalText } from "@/core/realmLadder";
 import { computed, ref } from "vue";
 import { RouterLink } from "vue-router";
 import { usePlayerStore } from "@/stores/player";
@@ -406,7 +407,6 @@ import { qiRepairView, repairWithQi } from "@/core/qiRepair";
 import { isRetreating } from "@/core/earlyGameService";
 import { useNow } from "@/composables/useNow";
 import { useProgressEta } from "@/composables/useProgressEta";
-import { REALMS } from "@/data/realms";
 import { buffDef } from "@/data/buffs";
 import { pillDef } from "@/data/pills";
 import type { PillDef } from "@/types";

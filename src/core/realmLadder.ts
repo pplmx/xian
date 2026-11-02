@@ -46,6 +46,27 @@ export function realmLadderPoints(major: number): RealmLadderPoint[] {
   }));
 }
 
+/**
+ * 「第 N / M 境」—— 全站这枚读数的唯一拼法。
+ *
+ * 它在四处出现(修行页首屏、修行页章首、人物页、修炼圆盘),从前各写一遍
+ * `player.major + 1` 与 `/ ${REALMS.length}`;分母还有个变体用 `points.length`
+ * (那是 `REALMS.map(...)` 的长度,今天相等,明天未必)。读数抽出来之后,
+ * 分母只认 REALMS.length 一处,「第 21 / 21 境」不会因为谁少加一而错位。
+ */
+export function realmOrdinalText(major: number): string {
+  const total = REALMS.length;
+  /*
+   * 脏档夹回 1~total:读数是给人看的,不能印出「第 0 / 21 境」。
+   * Infinity 单独处理 —— 它表达「远超末境」,落末境比落首境更接近玩家意图;
+   * 若与 NaN 一起落回首境,一个练到顶的坏档会显示成「第 1 境」。
+   */
+  const m =
+    major === Number.POSITIVE_INFINITY ? total - 1 : Number.isFinite(major) ? Math.trunc(major) : 0;
+  const ordinal = Math.min(total, Math.max(1, m + 1));
+  return `第 ${ordinal} / ${total} 境`;
+}
+
 /** 四界段位 —— 界名、首尾索引从 data 直接继承,UI 不另抄第二份。
     段心的算式:段中点那把「第几格」折算成刻度百分比 ——
     段 [a,b] 的中点格是 (a+b)/2,格心在 +0.5,故 ((a+b)/2+0.5)/21×100 */

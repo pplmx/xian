@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { usePlayerStore } from "@/stores/player";
-import { realmLadderPoints } from "@/core/realmLadder";
+import { realmLadderPoints, realmOrdinalText } from "@/core/realmLadder";
 import { formatPercent } from "@/utils/format";
 
 withDefaults(
@@ -60,9 +60,7 @@ const dashOffset = computed(() => circumference * (1 - progress.value));
       <span class="cultivation-dial__eyebrow">内观 · 周天</span>
       <strong class="cultivation-dial__number">{{ progressText }}</strong>
       <span class="cultivation-dial__stage">{{ player.realm.name }} · {{ player.subName }}</span>
-      <span class="cultivation-dial__ordinal tabular"
-        >第 {{ player.major + 1 }} / {{ points.length }} 境</span
-      >
+      <span class="cultivation-dial__ordinal tabular">{{ realmOrdinalText(player.major) }}</span>
     </div>
   </div>
 </template>
