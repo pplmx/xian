@@ -72,14 +72,21 @@ describe("界膜之劫 · 玩家看得见", () => {
    * 渡劫账曾漏显濒危减伤:waveDamage 在气血垂危(<30%)时按 lowHpReduction
    * (0.6 封顶)再削一波(背水/涅槃路数),账上却只报 damageReduction ——
    * 玩家顶着 35% 濒危减伤看「减伤 0%」,说不出自己凭什么撑着。
-   * 结算兑现的不该隐身:账上要有这一行,且数与结算同款公式(min(0.6, modOf))。
+   * 结算兑现的不该隐身:账上要有这一行。
+   *
+   * 判据从「同款公式」升级为「同款函数」:从前界面照抄 `Math.min(0.6, modOf(...))`,
+   * 与结算是同一个数字的两份副本 —— 调封顶那天只有一边会动。现在两侧都走
+   * tribLowHpReduction / tribReduction,界面里连 0.6、0.3 都不该再出现。
    */
-  it("渡劫账披露濒危减伤,与 waveDamage 结算同源", () => {
+  it("渡劫账披露濒危减伤,读结算那一份函数而不是再封一次顶", () => {
     const src = (p: string): string => readFileSync(resolve(__dirname, p), "utf8");
     const panel = src("../components/cultivation/TribulationPanel.vue");
-    expect(panel, "账上要有濒危减伤一行").toContain("lowHpReduction");
-    expect(panel, "要与结算同款封顶,不许裸读词条").toMatch(
-      /Math\.min\(0\.6,\s*modOf\(mods,\s*"lowHpReduction"\)\)/,
-    );
+    const decision = src("./tribulationDecision.ts");
+    expect(panel, "账上要有濒危减伤一行").toContain("濒危减伤");
+    expect(panel, "濒危减伤要读结算的 tribLowHpReduction").toContain("tribLowHpReduction(");
+    expect(panel, "减伤要读结算的 tribReduction").toContain("tribReduction(");
+    expect(panel, "界面里不许再出现封顶字面量(第二份副本)").not.toMatch(/Math\.min\(\s*0\.6/);
+    expect(panel, "濒危触发线要读同一枚常数,不写死 30%").toContain("TRIB_LOW_HP_TRIGGER");
+    expect(decision, "结算的封顶口径只此一处").toContain("TRIB_LOW_HP_REDUCTION_CAP");
   });
 });

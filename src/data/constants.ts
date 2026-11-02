@@ -191,6 +191,20 @@ export const TRIB_DEF_RESIST_CAP = 0.18;
 export const TRIB_HP_GUARD_PER_SURPLUS = 0.04;
 export const TRIB_HP_GUARD_CAP = 0.35;
 /**
+ * 天劫吸伤的**两档绝对上限** —— 减伤与濒危减伤各封到 0.6,抗性封到 0.8。
+ *
+ * 这三个数只在 TRIB 这一处定义:core/tribulationDecision 的结算,
+ * 与渡劫账(cultivation/TribulationPanel)的读数都从这里取。
+ * 从前结算里写 0.6 / 界面上再写一遍 `Math.min(0.6, …)`,两边注释都写着「同源」——
+ * 那不是同源,是同一个数字的两份副本:调一处,界面立刻开始撒谎。
+ */
+export const TRIB_DAMAGE_REDUCTION_CAP = 0.6;
+export const TRIB_LOW_HP_REDUCTION_CAP = 0.6;
+/** 天劫抗性的绝对上限(词条抗性 + 减伤折算 + 三维折算三者之和) */
+export const TRIB_RESIST_CAP = 0.8;
+/** 濒危减伤只在气血低于这一档时逐波生效 —— 与 LOW_HP_THRESHOLD 同值,但语义是渡劫自己的 */
+export const TRIB_LOW_HP_TRIGGER = 0.3;
+/**
  * 天劫难度的境界封顶点(扩界)。
  *
  * 伤害与波次原为 = 0.15 + major×0.02(逐境) + wave×0.03(逐波),波次 = 3 + major,

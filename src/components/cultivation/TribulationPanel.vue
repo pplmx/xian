@@ -61,7 +61,8 @@
           <span class="text-ink-soft">{{ formatPercent(tribLedger?.lowHpRed ?? 0, 0) }}</span>
         </span>
         <span class="block text-note text-ink-faint"
-          >(气血垂危(&lt;30%)时逐波生效 —— 结算同款封顶)</span
+          >(气血垂危(&lt;{{ formatPercent(TRIB_LOW_HP_TRIGGER, 0) }})时逐波生效 ——
+          结算同款封顶)</span
         >
       </p>
       <p>
@@ -124,7 +125,6 @@
 import { computed } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import { todayWeather } from "@/core/weather";
-import { modOf } from "@/core/statsCalc";
 import {
   currentStatGuard,
   currentTribulationRelief,
@@ -132,12 +132,15 @@ import {
   settlementResist,
   statFoldAt,
   sustainScore,
+  tribLowHpReduction,
+  tribReduction,
   tribulationWaveSpan,
   type TribulationPlan,
 } from "@/core/tribulationDecision";
 import { reliefElements, rootElements } from "@/core/linggenAffinity";
 import { ELEMENTS } from "@/data/linggen";
 import { STAT_NAMES } from "@/data/statNames";
+import { TRIB_LOW_HP_TRIGGER } from "@/data/constants";
 import { formatPercent } from "@/utils/format";
 
 const player = usePlayerStore();
@@ -171,11 +174,12 @@ const tribTargetMajor = computed(() => (player.isMajorStep ? player.major + 1 : 
 const worldStep = computed(() => statFoldAt(tribTargetMajor.value) < 1);
 
 /**
- * 渡劫账上的四项实际读数 —— 只摊天劫真的会读的那些,恢复/护持/抗性直接调
- * 结算的同一批函数(sustainScore / guardScore / settlementResist),界面不抄
- * 第二份系数。曾抄过:0.3/0.8 字面量与 easeDiscount 折叠全对不上(逆流劫
- * 界面报 30% 实际只有 19.5%),注释还写着「同源」—— 审计抓出来后根治。
- * 玩家按这个数决定补词条、换灵根,看到的就是结算的。
+ * 渡劫账上的四项实际读数 —— 只摊天劫真的会读的那些,恢复/护持/抗性/两档减伤
+ * 直接调结算的同一批函数(sustainScore / guardScore / settlementResist /
+ * tribReduction / tribLowHpReduction),界面不抄第二份系数。曾抄过:0.3/0.8
+ * 字面量与 easeDiscount 折叠全对不上(逆流劫界面报 30% 实际只有 19.5%),
+ * 注释还写着「同源」—— 审计抓出来后根治。玩家按这个数决定补词条、换灵根,
+ * 看到的就是结算的。
  */
 const tribLedger = computed(() => {
   const mods = player.finalStats.mods;
@@ -185,11 +189,11 @@ const tribLedger = computed(() => {
   return {
     resist: settlementResist(mods, relief, stat),
     statResist: stat.resist,
-    // 减伤同受结算的 0.6 上限:显示"此劫真的会读的"值,不拿全局裸减伤充数
-    reduction: Math.min(0.6, modOf(mods, "damageReduction")),
-    // 濒危减伤同源:waveDamage 在气血垂危(<30%)时按这个数逐波再折(0.6 封顶),
+    // 减伤同受结算的封顶:显示"此劫真的会读的"值,不拿全局裸减伤充数
+    reduction: tribReduction(mods),
+    // 濒危减伤同源:waveDamage 在气血垂危时按这个数逐波再折,
     // 背水/涅槃路数的真实护持,从前只在结算里兑现、账上隐身
-    lowHpRed: Math.min(0.6, modOf(mods, "lowHpReduction")),
+    lowHpRed: tribLowHpReduction(mods),
     sustain: sustainScore(mods, def, relief),
     guard: guardScore(mods, def, relief) + stat.guard,
     statGuard: stat.guard,

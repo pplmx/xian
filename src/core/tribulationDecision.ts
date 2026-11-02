@@ -31,10 +31,14 @@ import {
   TRIBULATION_BASE_WAVES,
   TRIBULATION_DIFFICULTY_CAP_MAJOR,
   TRIB_WORLD_STEP_STAT_FOLD,
+  TRIB_DAMAGE_REDUCTION_CAP,
   TRIB_DEF_RESIST_CAP,
   TRIB_DEF_RESIST_PER_SURPLUS,
   TRIB_HP_GUARD_CAP,
   TRIB_HP_GUARD_PER_SURPLUS,
+  TRIB_LOW_HP_REDUCTION_CAP,
+  TRIB_LOW_HP_TRIGGER,
+  TRIB_RESIST_CAP,
 } from "@/data/constants";
 import { realmScale, tribulationWaveDamage } from "./formulas";
 import { isWorldEntry } from "@/data/realms";
@@ -227,20 +231,35 @@ export function effectiveBurstTier(mods: StatMods, relief: TribulationRelief = N
 /**
  * 结算口径的天劫抗性 —— waveDamage 与渡劫账 UI 共用同一份,界面不许另抄一个数。
  *
- * 三条约束都叠在这一个数里:减伤本身封顶 0.6、折算成的抗性与词条抗性同受
- * 0.8 上限、三维折算(防御→抗性)同处一项。曾有一版界面行漏了减伤折算与
- * 上限,读起来偏乐观/偏悲观,跟结算各走一头 —— 那正是要根治的病。
+ * 三条约束都叠在这一个数里:减伤本身封顶 TRIB_DAMAGE_REDUCTION_CAP、折算成的抗性
+ * 与词条抗性同受 TRIB_RESIST_CAP 上限、三维折算(防御→抗性)同处一项。曾有一版
+ * 界面行漏了减伤折算与上限,读起来偏乐观/偏悲观,跟结算各走一头 —— 那正是要根治的病。
  */
 export function settlementResist(
   mods: StatMods,
   relief: TribulationRelief,
   stat: TribStatGuard,
 ): number {
-  const reduction = Math.min(0.6, modOf(mods, "damageReduction"));
+  const reduction = tribReduction(mods);
   return Math.min(
-    0.8,
+    TRIB_RESIST_CAP,
     modOf(mods, "tribulationResist") + reduction * relief.reductionToResist + stat.resist,
   );
+}
+
+/**
+ * 结算真正会读的减伤 —— 渡劫账那一行与 waveDamage 都取这一处。
+ *
+ * 导出它是因为界面要**显示**这个数:此前界面自己 `Math.min(0.6, …)` 了一遍,
+ * 与结算成了同一个数字的两份副本(常数一动就分家)。
+ */
+export function tribReduction(mods: StatMods): number {
+  return Math.min(TRIB_DAMAGE_REDUCTION_CAP, modOf(mods, "damageReduction"));
+}
+
+/** 同上:濒危减伤结算会读的那一档,界面照抄它而不是再封一次顶 */
+export function tribLowHpReduction(mods: StatMods): number {
+  return Math.min(TRIB_LOW_HP_REDUCTION_CAP, modOf(mods, "lowHpReduction"));
 }
 
 /** 每波恢复量(prep.sustain 与结算共用;吸血按三成折算为持续恢复) */
@@ -341,9 +360,9 @@ export function waveDamage(
   weatherMult = 1,
   stat: TribStatGuard = NO_STAT_GUARD,
 ): number {
-  const reduction = Math.min(0.6, modOf(mods, "damageReduction"));
+  const reduction = tribReduction(mods);
   const resist = settlementResist(mods, relief, stat);
-  const lowHpRed = Math.min(0.6, modOf(mods, "lowHpReduction"));
+  const lowHpRed = tribLowHpReduction(mods);
   const waves = tribulationWaves(targetMajor);
   let dmg =
     tribulationWaveDamage(targetMajor, wave, resist) *
@@ -352,7 +371,7 @@ export function waveDamage(
   // 裂魂:攻势足者可硬生生削去几分劫威(减免按 prep.burst 星级查表,UI 星级即结算输入)
   if (def.id === "soulrend") dmg *= 1 - SOULREND_BURST_RELIEF[effectiveBurstTier(mods, relief)]!;
   // 濒危减伤(背水路数)在气血垂危时同样护持渡劫
-  if (hpLeft < 0.3) dmg *= 1 - lowHpRed;
+  if (hpLeft < TRIB_LOW_HP_TRIGGER) dmg *= 1 - lowHpRed;
   // 天时(雷鸣日渡劫更难,tribulationMult>1):预览与结算共用同一乘数,审计基线不传则默认 1
   dmg *= weatherMult;
   return dmg;
