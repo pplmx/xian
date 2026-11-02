@@ -10510,6 +10510,265 @@ async function taskCharacterFold() {
   };
 }
 
+/**
+ * 修行画像:称谓、根因、机缘、灵兽与行迹三数收成一册两章。
+ *
+ * 真浏览器必须同时证明两件事:内容真的从 core 归纳结果现读;弹窗在 390 与
+ * 200% 缩放档都不靠内层纸卡或横向滚动撑开。fixture 特意放进多种机缘与一灵兽,
+ * 否则「机缘只读事件表」「灵兽不再只写随行」两条会空转。
+ */
+async function taskIdentityFolio() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    slices.player.mentor = "swordsman";
+    slices.player.fortuneChoices = {
+      ft_sword_remnant: "take",
+      ft_beast_pledge: "take",
+      ft_meteor_iron: "take",
+    };
+    slices.player.petId = "pet_qingyu";
+    slices.quests.counters = { kills: 214, explores: 38, breakthroughs: 9 };
+    await seedSave(ctx, slices, "__identityFolio");
+
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/character", 700);
+    checked += 1;
+    if (rendered === 0) failures.push("[390-identity] 道躯页没有渲染出来,画像判据没量到东西");
+    await clearOverlays(page);
+
+    const entry = page.locator("main button", { hasText: /修行画像/ }).first();
+    const opened = await entry
+      .click({ timeout: 3000 })
+      .then(() =>
+        page.locator("[data-identity-folio]").waitFor({ state: "visible", timeout: 4000 }),
+      )
+      .then(() => true)
+      .catch(() => false);
+    if (opened) await settleVisuals(page);
+
+    checked += 1;
+    if (!opened) {
+      failures.push("[390-identity] 点「修行画像」后没有打开画像册");
+    } else {
+      const readIdentity = () =>
+        page.evaluate(() => {
+          const root = document.querySelector("[data-identity-folio]");
+          const panel = root?.closest(".modal-panel");
+          const scroll = panel?.querySelector("[data-folio-modal-scroll]");
+          const chapters = [...(root?.querySelectorAll("[data-identity-chapter]") ?? [])];
+          const heads = [...(root?.querySelectorAll(".character-chapter-head") ?? [])];
+          const textOf = (el) => (el?.textContent || "").replace(/\s+/g, " ").trim();
+          const rowsOf = (selector) => [...(root?.querySelectorAll(selector) ?? [])];
+          const styleOf = (el) => (el ? getComputedStyle(el) : null);
+          const columns = (el) => {
+            const style = styleOf(el);
+            return style ? style.gridTemplateColumns.trim().split(/\s+/).filter(Boolean).length : 0;
+          };
+          return {
+            text: textOf(root),
+            chapterKeys: chapters.map((chapter) => chapter.getAttribute("data-identity-chapter")),
+            chapterTitles: heads.map((head) =>
+              textOf(head.querySelector(".character-chapter-head__title")),
+            ),
+            chapterCount: chapters.length,
+            headCount: heads.length,
+            chapterChrome: chapters.map((chapter) => {
+              const style = styleOf(chapter);
+              return {
+                borders: style
+                  ? [
+                      style.borderTopWidth,
+                      style.borderRightWidth,
+                      style.borderBottomWidth,
+                      style.borderLeftWidth,
+                    ]
+                  : [],
+                radius: style ? Number.parseFloat(style.borderRadius) : null,
+                shadow: style?.boxShadow ?? "",
+                background: style?.backgroundColor ?? "",
+              };
+            }),
+            roots: rowsOf("[data-identity-root]").map((row) => ({
+              key: row.getAttribute("data-identity-root"),
+              label: textOf(row.querySelector(".identity-root__label")),
+              value: textOf(row.querySelector(".identity-root__value")),
+            })),
+            fortunes: rowsOf("[data-identity-fortune]").map((row) => ({
+              title: textOf(row.querySelector(".identity-fortune__title")),
+              line: textOf(row.querySelector(".identity-fortune__line")),
+            })),
+            pet: {
+              name: textOf(root?.querySelector(".identity-pet__name")),
+              nature: textOf(root?.querySelector(".identity-pet__nature")),
+              brief: textOf(root?.querySelector(".identity-pet__brief")),
+              line: textOf(root?.querySelector(".identity-pet__line")),
+            },
+            traits: rowsOf("[data-identity-trait]").map((row) => ({
+              key: row.getAttribute("data-identity-trait"),
+              value: textOf(row.querySelector(".identity-trait__value")),
+            })),
+            risk: textOf(root?.querySelector("[data-identity-risk]")),
+            cardShells: root?.querySelectorAll(".card-ink").length ?? -1,
+            eventCardShells:
+              root?.querySelectorAll(
+                ".identity-chapter.card-ink, .identity-chapter + .identity-chapter.card-ink",
+              ).length ?? -1,
+            panelWidth: panel?.clientWidth ?? 0,
+            panelScrollWidth: panel?.scrollWidth ?? 0,
+            scrollOverflow: scroll?.scrollWidth > scroll?.clientWidth + 1,
+            traitColumns: columns(root?.querySelector(".identity-traits")),
+            rootColumns: columns(root?.querySelector(".identity-roots")),
+            petHeadColumns: columns(root?.querySelector(".identity-pet__head")),
+          };
+        });
+
+      const mobile = await readIdentity();
+      checked += 1;
+      if (
+        mobile.chapterCount !== 2 ||
+        mobile.headCount !== 2 ||
+        mobile.chapterKeys.join("|") !== "roots|traits" ||
+        mobile.chapterTitles.join("|") !== "此身所历|行迹三数"
+      ) {
+        failures.push(
+          `[390-identity] 画像章序或章名漂了:${JSON.stringify({
+            chapters: mobile.chapterKeys,
+            titles: mobile.chapterTitles,
+            heads: mobile.headCount,
+          })}`,
+        );
+      }
+      checked += 1;
+      if (
+        mobile.roots.length !== 4 ||
+        mobile.roots[0]?.value !== "剑修 · 一剑破万法" ||
+        mobile.roots[1]?.value !== "剑道" ||
+        !mobile.roots[2]?.value.includes("背水") ||
+        mobile.roots[3]?.value !== "未定"
+      ) {
+        failures.push(`[390-identity] 此身所历没有读同一份根因:${JSON.stringify(mobile.roots)}`);
+      }
+      checked += 1;
+      if (
+        mobile.fortunes.length !== 3 ||
+        mobile.fortunes.map((row) => row.title).join("|") !== "上古剑痕|妖兽认主|天外陨铁" ||
+        mobile.fortunes.some((row) => !row.line)
+      ) {
+        failures.push(`[390-identity] 机缘没有从事件表现读:${JSON.stringify(mobile.fortunes)}`);
+      }
+      checked += 1;
+      if (
+        mobile.pet.name !== "青羽灵狐" ||
+        mobile.pet.nature !== "贪宝" ||
+        !mobile.pet.brief.includes("善寻机缘") ||
+        !mobile.pet.line.includes("稀有之物")
+      ) {
+        failures.push(`[390-identity] 灵兽仍只报随行,没有姓名与性格:${JSON.stringify(mobile.pet)}`);
+      }
+      checked += 1;
+      if (
+        mobile.traits.map((row) => `${row.key}:${row.value}`).join("|") !==
+          "kills:214|explores:38|breakthroughs:9" ||
+        !mobile.risk.includes("以险求胜") ||
+        !mobile.text.includes("不提供数值加成")
+      ) {
+        failures.push(`[390-identity] 行迹三数或判词没有同源:${JSON.stringify(mobile)}`);
+      }
+      checked += 1;
+      if (
+        mobile.cardShells !== 0 ||
+        mobile.eventCardShells !== 0 ||
+        mobile.chapterChrome.some(
+          (style) =>
+            style.radius !== 0 ||
+            style.shadow !== "none" ||
+            style.background !== "rgba(0, 0, 0, 0)" ||
+            style.borders.every((width) => Number.parseFloat(width) > 0),
+        )
+      ) {
+        failures.push(`[390-identity] 画像内层又套回纸卡:${JSON.stringify(mobile.chapterChrome)}`);
+      }
+      checked += 1;
+      if (
+        mobile.panelScrollWidth > mobile.panelWidth + 1 ||
+        mobile.scrollOverflow ||
+        mobile.traitColumns !== 3
+      ) {
+        failures.push(
+          `[390-identity] 画像横向溢出或三数没有并读:${JSON.stringify({
+            panel: [mobile.panelScrollWidth, mobile.panelWidth],
+            scroll: mobile.scrollOverflow,
+            traits: mobile.traitColumns,
+          })}`,
+        );
+      }
+
+      const controls = await auditModalControls(page);
+      checked += 1;
+      if (!controls || controls.count === 0 || controls.unnamed.length || controls.small.length) {
+        failures.push(
+          `[390-identity] 画像控件不合格:${controls?.count ?? 0} 枚 / ` +
+            `无名 ${controls?.unnamed.join(" | ") || "无"} / ` +
+            `过小 ${controls?.small.join(" | ") || "无"}`,
+        );
+      }
+
+      zoomSeen += 1;
+      const zoomProblems = dialogZoomProblems(
+        await measureDialogZoom(page, { width: 390, height: 844 }),
+      );
+      checked += 1;
+      if (zoomProblems.length)
+        failures.push(`[195-identity] 修行画像 → ${zoomProblems.join(" / ")}`);
+
+      await page.setViewportSize({ width: 195, height: 422 });
+      await settleVisuals(page);
+      const narrow = await readIdentity();
+      checked += 1;
+      if (
+        narrow.scrollOverflow ||
+        narrow.rootColumns !== 1 ||
+        narrow.traitColumns !== 1 ||
+        narrow.petHeadColumns !== 1 ||
+        narrow.roots.some((row) => row.value.includes("· ·"))
+      ) {
+        failures.push(
+          `[195-identity] 画像窄档没有收成上下段:${JSON.stringify({
+            scroll: narrow.scrollOverflow,
+            roots: narrow.rootColumns,
+            traits: narrow.traitColumns,
+            pet: narrow.petHeadColumns,
+            rootValues: narrow.roots.map((row) => row.value),
+          })}`,
+        );
+      }
+      if (SHOTS) {
+        mkdirSync(SHOTS_DIR, { recursive: true });
+        await page.screenshot({ path: join(SHOTS_DIR, "identity-folio-195.png") });
+        await page.setViewportSize({ width: 390, height: 844 });
+        await settleVisuals(page);
+        await page.screenshot({ path: join(SHOTS_DIR, "identity-folio-390.png") });
+      }
+    }
+
+    if (pageErrors.length)
+      failures.push(`[390-identity] 修行画像页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
 /** 天界试炼续卷:四章、八门印谱、单份证道帖、四程立契约台与三档印阵 */
 async function taskCelestialTrialFold() {
   const failures = [];
@@ -21275,6 +21534,7 @@ const TASKS = [
   ["洞府首屏的营造优先", taskDongfuFold],
   ["修行续卷的四章与行动层", taskCultivationFold],
   ["道躯三章与行藏拆卷", taskCharacterFold],
+  ["修行画像的两章与根因", taskIdentityFolio],
   ["天界试炼续卷的四章、八门与四程", taskCelestialTrialFold],
   ["天界证道战卷的四章与场次键盘", taskCelestialBattleScroll],
   ["天界内层三册的章节与并读", taskCelestialInnerVolumes],

@@ -35,7 +35,7 @@ defineProps<{
   height: 1.7rem;
   place-items: center;
   border-left: 2px solid rgb(var(--character-accent-rgb, var(--color-cinnabar-rgb)) / 0.72);
-  color: var(--character-accent);
+  color: var(--character-accent, var(--color-cinnabar));
   font-family: var(--font-kai);
   font-size: var(--type-note);
   line-height: 1;

@@ -7,6 +7,9 @@ import { describe, it, expect, beforeEach } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 import { buildIdentity } from "./identityService";
 import { DAO_PATHS } from "@/data/endgame";
+import { FORTUNE_EVENTS } from "@/data/events";
+import { petDef } from "@/data/pets";
+import { PERSONALITY_NAMES, personalityDesc } from "@/data/petTraits";
 import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
 import { useEndgameStore } from "@/stores/endgame";
@@ -28,7 +31,7 @@ describe("修行身份(identityService)", () => {
     const player = usePlayerStore();
     player.setFortuneChoices({ ft_sword_remnant: "take", ft_beast_pledge: "take" });
     const id = buildIdentity();
-    expect(id.roots.fortunes.map((f) => f.title)).toContain("剑痕悟道");
+    expect(id.roots.fortunes.map((f) => f.title)).toContain("上古剑痕");
   });
 
   it("师承+道途 → 称谓由两者合成(剑道+剑修 → 问剑剑心)", () => {
@@ -64,6 +67,34 @@ describe("修行身份(identityService)", () => {
     const id = buildIdentity();
     expect(id.traits.riskBias).toBe("gamble");
     expect(id.narrative).toContain("以险求胜");
+  });
+
+  it("机缘根因只读事件表,每一种取过的机缘都不会掉回泛称", () => {
+    for (const ev of FORTUNE_EVENTS) {
+      setActivePinia(createPinia());
+      usePlayerStore().setFortuneChoices({ [ev.id]: "take" });
+      const fortune = buildIdentity().roots.fortunes[0];
+      expect(fortune, `${ev.id} 没有进入画像根因`).toEqual({
+        id: ev.id,
+        title: ev.title,
+        line: ev.text,
+      });
+    }
+  });
+
+  it("相伴灵兽带同源姓名、性格与说明,不再只写一个「随行」", () => {
+    const player = usePlayerStore();
+    player.setPet("pet_qingyu");
+    const def = petDef("pet_qingyu")!;
+    const pet = buildIdentity().roots.pet;
+
+    expect(pet).toEqual({
+      id: def.id,
+      name: def.name,
+      personalityName: PERSONALITY_NAMES[def.personality],
+      brief: def.desc,
+      personalityLine: personalityDesc(def.personality),
+    });
   });
 });
 

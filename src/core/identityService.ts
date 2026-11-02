@@ -12,6 +12,9 @@
 import type { MentorId } from "@/data/mentors";
 import { mentorDef } from "@/data/mentors";
 import { daoPathDef } from "@/data/endgame";
+import { eventDef } from "@/data/events";
+import { petDef } from "@/data/pets";
+import { PERSONALITY_NAMES, personalityDesc } from "@/data/petTraits";
 import { detectBuild } from "./buildDetect";
 import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
@@ -21,15 +24,21 @@ import { gongfaBranchDef } from "@/data/gongfaBranches";
 
 export interface IdentityRoots {
   /** 机缘印记:取过的机缘(最多 3 条) */
-  fortunes: { id: string; title: string }[];
+  fortunes: { id: string; title: string; line: string }[];
   /** 师承 */
   mentor: { name: string; title: string } | null;
   /** 道途 */
   daoPath: string | null;
   /** 功法分支(最多 2 条) */
   branches: string[];
-  /** 灵兽性格倾向 */
-  petTemp: string | null;
+  /** 相伴灵兽:姓名、性格与来由都从灵兽表现读 */
+  pet: {
+    id: string;
+    name: string;
+    personalityName: string;
+    brief: string;
+    personalityLine: string;
+  } | null;
   /** 当前流派 */
   build: string | null;
 }
@@ -51,14 +60,6 @@ export interface CultivatorIdentity {
   /** 一句话修行叙事 */
   narrative: string;
 }
-
-const FORTUNE_TITLES: Record<string, string> = {
-  ft_sword_remnant: "剑痕悟道",
-  ft_ancient_elixir: "丹方得承",
-  ft_beast_pledge: "妖兽认主",
-  ft_reclusive_elder: "隐世点拨",
-  ft_blood_contract: "秘术染尘",
-};
 
 const MENTOR_EPITHETS: Record<MentorId, string> = {
   swordsman: "剑心",
@@ -87,9 +88,13 @@ export function buildIdentity(): CultivatorIdentity {
   const fortunes = Object.entries(player.fortuneChoices)
     .filter(([, c]) => c === "take")
     .slice(0, 3)
-    .map(([id]) => ({ id, title: FORTUNE_TITLES[id] ?? "机缘" }));
+    .map(([id]) => {
+      const def = eventDef(id);
+      return { id, title: def?.title ?? "机缘", line: def?.text ?? "" };
+    });
 
   const mentor = player.mentor ? (mentorDef(player.mentor) ?? null) : null;
+  const pet = player.petId ? petDef(player.petId) : undefined;
 
   // 功法分支名(最多 2 条)
   const branches = Object.values(cultivation.gongfaBranch)
@@ -132,7 +137,15 @@ export function buildIdentity(): CultivatorIdentity {
       mentor: mentor ? { name: mentor.name, title: mentor.title } : null,
       daoPath: daoName,
       branches,
-      petTemp: player.petId ? "随行" : null,
+      pet: pet
+        ? {
+            id: pet.id,
+            name: pet.name,
+            personalityName: PERSONALITY_NAMES[pet.personality],
+            brief: pet.desc,
+            personalityLine: personalityDesc(pet.personality),
+          }
+        : null,
       build: build?.displayName ?? null,
     },
     traits: { adjectives, riskBias, counters: { kills, explores, breakthroughs } },

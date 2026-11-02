@@ -318,6 +318,15 @@ error: Failed to resolve vite command: GenericFailure, Expected
 四组行藏、零卡壳、来源拆卷开合与 28px 触达高度,再切到 1280 核对前两组真的并排;
 结构与全属性键覆盖由 `src/ui/characterDesk.spec.ts`、`characterDossier.spec.ts` 守住。
 
+修行画像续成同一册章首语法里的两章小传。`identityService` 不再维护手抄的机缘标题,
+而是逐条读 `eventDef(id)` 的题名与事件原文;灵兽根因也改为姓名、说明、性格名与
+性格说明四项同源结果。真浏览器门 `taskIdentityFolio` 用三条机缘、青羽灵狐与
+214 / 38 / 9 三数夹具,在 390 核对两章顺序与章名、四项根因、机缘原文、灵兽身份、
+三数、风险判词、「不提供数值加成」、零 `card-ink`、无横向溢出与三数并读;
+再切到 195 核对根因值、灵兽身份与三数都收成单列,并走同一道 200% 弹窗缩放判据。
+`src/core/identityService.spec.ts` 守住每一种机缘都不掉回泛称、灵兽不再只写随行,
+`src/ui/characterDossier.spec.ts` 守住两章数量、同源读口与断点源码契约。
+
 兵解前的往生帖也续在同一册章首语法里:此刻、随魂、交割与最后一笔四章共用
 `CharacterChapterHead`,内层面板只留分栏与行线,不再各套四边卡与第二张纸底。
 `characterDossier.spec.ts` 守住四章数量与去卡壳源码契约;真浏览器门

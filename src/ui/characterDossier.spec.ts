@@ -137,6 +137,62 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
     expect(dialog, "词条仍只走 modsPills 同一口径").toContain("modsPills(m.mods)");
   });
 
+  it("修行画像收成一册两章小传,根因、机缘、灵兽与行迹三数全部现读", () => {
+    const dialog = source("src/components/character/IdentityDialog.vue");
+
+    expect(dialog, "画像要占满浮层可用宽").toContain('size="wide"');
+    expect(dialog, "画像正文要有稳定落点").toContain("data-identity-folio");
+    expect(dialog, "两章共用人物册章首").toContain(
+      'import CharacterChapterHead from "@/components/character/CharacterChapterHead.vue"',
+    );
+    expect(dialog.match(/<CharacterChapterHead/g)?.length, "根因与行迹各成一章").toBe(2);
+    expect(dialog, "根因章要有稳定落点").toContain('data-identity-chapter="roots"');
+    expect(dialog, "行迹章要有稳定落点").toContain('data-identity-chapter="traits"');
+    expect(dialog, "四项目录由同一份行数据生成").toContain('v-for="row in identityRoots"');
+    expect(dialog, "机缘名与来由都读 core 的同一份根因").toContain(
+      'v-for="(fortune, index) in identity.roots.fortunes"',
+    );
+    expect(dialog, "机缘要摊开事件原文").toContain("{{ fortune.line }}");
+    expect(dialog, "相伴灵兽不再只写随行").toContain("data-identity-pet");
+    expect(dialog, "灵兽名读 core").toContain("identity.roots.pet.name");
+    expect(dialog, "灵兽性格读 core").toContain("identity.roots.pet.personalityName");
+    expect(dialog, "行迹三数各读同一份 counters").toContain(
+      "const counters = identity.value?.traits.counters",
+    );
+    expect(dialog).toContain("formatNum(counters?.kills");
+    expect(dialog).toContain("formatNum(counters?.explores");
+    expect(dialog).toContain("formatNum(counters?.breakthroughs");
+    expect(dialog, "风险判词读同一份 riskBias").toContain(
+      "const risk = identity.value?.traits.riskBias",
+    );
+    expect(dialog, "画像只作描述,要把无加成说穿").toContain("不提供数值加成");
+    expect(dialog, "画像里不再另手抄机缘名").not.toContain("剑痕悟道");
+    expect(dialog, "画像里不再叠内层纸卡").not.toContain("card-ink");
+  });
+
+  it("修行画像 390 单列,220 以下根因值、灵兽与三数都退成上下段", () => {
+    const dialog = source("src/components/character/IdentityDialog.vue");
+
+    expect(dialog, "根因账默认单列").toMatch(
+      /\.identity-roots\s*\{[\s\S]{0,140}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(dialog, "行迹默认三数并读").toMatch(
+      /\.identity-traits\s*\{[\s\S]{0,140}grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/,
+    );
+    expect(dialog, "220 以下行迹退单列").toMatch(
+      /@media \(max-width: 220px\)[\s\S]{0,900}\.identity-traits\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(dialog, "220 以下根因值落到标签下一行").toMatch(
+      /@media \(max-width: 220px\)[\s\S]{0,1200}\.identity-root\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(dialog, "220 以下灵兽身份上下收住").toMatch(
+      /@media \(max-width: 220px\)[\s\S]{0,1600}\.identity-pet__head\s*\{[\s\S]{0,100}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(dialog, "章与章之间只留续卷账线").toMatch(
+      /\.identity-chapter \+ \.identity-chapter\s*\{[\s\S]{0,100}border-top:\s*1px solid/,
+    );
+  });
+
   it("择师谱 390 单列横读,195 把签身与印面动作上下收住", () => {
     const dialog = source("src/components/character/MentorDialog.vue");
 
@@ -291,6 +347,9 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
     );
     expect(head, "200% 缩放档仍由组件自己收口").toMatch(
       /@media \(max-width: 220px\)[\s\S]{0,260}\.character-chapter-head\s*\{[\s\S]{0,120}grid-template-columns:\s*auto minmax\(0, 1fr\)/,
+    );
+    expect(head, "未注入主题变量时章号仍落朱砂").toContain(
+      "var(--character-accent, var(--color-cinnabar))",
     );
   });
 
