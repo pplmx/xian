@@ -389,6 +389,7 @@
 
 <script setup lang="ts">
 import "@/styles/pages/titles.css";
+import { focusListRow } from "@/composables/useListFocus";
 import { computed, nextTick, ref } from "vue";
 import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";
@@ -642,13 +643,6 @@ function showMorePets(): void {
 function showPreviousPets(): void {
   petLimit.value = previousListLimit(petPage.value.shown, petRows.value.length, PET_RENDER_BATCH);
   focusListRow("[data-pet-row]");
-}
-
-function focusListRow(selector: string, index = 0): void {
-  void nextTick(() => {
-    const rows = document.querySelectorAll<HTMLElement>(selector);
-    rows[Math.min(Math.max(0, index), rows.length - 1)]?.focus();
-  });
 }
 
 function togglePet(id: string): void {

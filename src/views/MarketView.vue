@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import "@/styles/pages/market.css";
+import { focusListRow } from "@/composables/useListFocus";
 /**
  * 坊市 —— 灵石换机缘之地。货架买卖(购丹/续料/购兵刃)+ 售出(寄卖装备、即时售丹/料)。
  * 货架按墙钟刷新,离线照走;寄卖到时辰自售入账。判据与价签全在
@@ -421,7 +422,7 @@ function showMoreEquipCandidates(): void {
   const shownBefore = equipCandidatePage.value.shown;
   const shownAfter = nextInventoryLimit(shownBefore, equipCandidates.value.length);
   equipCandidateLimit.value = shownAfter;
-  focusItem(
+  focusListRow(
     "button[data-equip-candidate]",
     firstNewVisibleIndex(shownBefore, shownAfter, MARKET_RENDER_WINDOW),
   );
@@ -431,7 +432,7 @@ function showPreviousEquipCandidates(): void {
     equipCandidatePage.value.shown,
     equipCandidates.value.length,
   );
-  focusItem("button[data-equip-candidate]");
+  focusListRow("button[data-equip-candidate]");
 }
 
 const consignLimit = ref(INVENTORY_RENDER_BATCH);
@@ -458,23 +459,17 @@ function showMoreConsign(): void {
   const shownBefore = consignPage.value.shown;
   const shownAfter = nextInventoryLimit(shownBefore, inventory.bagItems.length);
   consignLimit.value = shownAfter;
-  focusItem(
+  focusListRow(
     "button[data-consign-uid]",
     firstNewVisibleIndex(shownBefore, shownAfter, MARKET_RENDER_WINDOW),
   );
 }
 function showPreviousConsign(): void {
   consignLimit.value = previousInventoryLimit(consignPage.value.shown, inventory.bagItems.length);
-  focusItem("button[data-consign-uid]");
+  focusListRow("button[data-consign-uid]");
 }
 
 /** 续开送到新露出首件,回翻送到当前页首件;焦点不留在已消失的按钮上。 */
-function focusItem(selector: string, index = 0): void {
-  void nextTick(() => {
-    const items = document.querySelectorAll<HTMLElement>(selector);
-    items[Math.min(Math.max(0, index), items.length - 1)]?.focus();
-  });
-}
 
 // 换版瞬间收起点选窗:挑单是**对着旧单**挑的,新单同号未必还是贡器单 ——
 // equipCandidates 会因此空掉,窗口就挂成一张空列表;收掉让玩家按新单再点。

@@ -522,7 +522,8 @@
 
 <script setup lang="ts">
 import "@/styles/pages/souls.css";
-import { computed, nextTick, ref, watch } from "vue";
+import { focusListRow } from "@/composables/useListFocus";
+import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { formatGN, formatNum } from "@/utils/format";
 import { modsText } from "@/data/statNames";
@@ -855,18 +856,11 @@ function previousListText(shown: number, total: number, unit: string): string {
   return `前一批 ${step} ${unit}`;
 }
 
-function focusSoulRow(selector: string, index = 0): void {
-  void nextTick(() => {
-    const rows = document.querySelectorAll<HTMLElement>(selector);
-    rows[Math.min(Math.max(0, index), rows.length - 1)]?.focus();
-  });
-}
-
 function showMoreIdleSouls(): void {
   const shownBefore = idleSoulPage.value.shown;
   const shownAfter = nextListLimit(shownBefore, idleSoulRows.value.length, SOUL_RENDER_BATCH);
   idleSoulLimit.value = shownAfter;
-  focusSoulRow(
+  focusListRow(
     "[data-soul-idle-row]",
     firstNewVisibleIndex(shownBefore, shownAfter, SOUL_RENDER_WINDOW),
   );
@@ -878,14 +872,14 @@ function showPreviousIdleSouls(): void {
     idleSoulRows.value.length,
     SOUL_RENDER_BATCH,
   );
-  focusSoulRow("[data-soul-idle-row]");
+  focusListRow("[data-soul-idle-row]");
 }
 
 function showMoreRefinable(): void {
   const shownBefore = refinablePage.value.shown;
   const shownAfter = nextListLimit(shownBefore, refinableRows.value.length, SOUL_RENDER_BATCH);
   refinableLimit.value = shownAfter;
-  focusSoulRow(
+  focusListRow(
     "[data-soul-forge-row]",
     firstNewVisibleIndex(shownBefore, shownAfter, SOUL_RENDER_WINDOW),
   );
@@ -897,7 +891,7 @@ function showPreviousRefinable(): void {
     refinableRows.value.length,
     SOUL_RENDER_BATCH,
   );
-  focusSoulRow("[data-soul-forge-row]");
+  focusListRow("[data-soul-forge-row]");
 }
 
 watch([idleOpen, forgeOpen], ([idle, forge]) => {

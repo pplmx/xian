@@ -291,6 +291,7 @@ const CATEGORIES = [
       "dongfuDesk",
       "desktopSpine",
       "useMediaQuery",
+      "useListFocus",
       "navigation",
       "atlas.spec",
       "visualLanguage",

@@ -509,7 +509,8 @@
 
 <script setup lang="ts">
 import "@/styles/pages/legacy.css";
-import { computed, nextTick, ref } from "vue";
+import { focusListRow } from "@/composables/useListFocus";
+import { computed, ref } from "vue";
 import { useEndgameStore } from "@/stores/endgame";
 import { usePlayerStore } from "@/stores/player";
 import { useAdventureStore } from "@/stores/adventure";
@@ -659,18 +660,11 @@ function previousLifeText(): string {
   return `前一批 ${step} 世`;
 }
 
-function focusHistoryRow(selector: string, index = 0): void {
-  void nextTick(() => {
-    const rows = document.querySelectorAll<HTMLElement>(selector);
-    rows[Math.min(Math.max(0, index), rows.length - 1)]?.focus();
-  });
-}
-
 function showMoreLives(): void {
   const shownBefore = lifePage.value.shown;
   const shownAfter = nextListLimit(shownBefore, lifeRows.value.length, LIFE_RENDER_BATCH);
   lifeLimit.value = shownAfter;
-  focusHistoryRow(
+  focusListRow(
     "[data-life-row]",
     firstNewVisibleIndex(shownBefore, shownAfter, LIFE_RENDER_WINDOW),
   );
@@ -682,7 +676,7 @@ function showPreviousLives(): void {
     lifeRows.value.length,
     LIFE_RENDER_BATCH,
   );
-  focusHistoryRow("[data-life-row]");
+  focusListRow("[data-life-row]");
 }
 
 /** 征战录:当前未雪耻/已雪耻的宿敌 */
@@ -733,7 +727,7 @@ function showMoreLoss(): void {
   const shownBefore = lossPage.value.shown;
   const shownAfter = nextListLimit(shownBefore, lossRows.value.length, LOSS_RENDER_BATCH);
   lossLimit.value = shownAfter;
-  focusHistoryRow(
+  focusListRow(
     "[data-loss-row]",
     firstNewVisibleIndex(shownBefore, shownAfter, LOSS_RENDER_WINDOW),
   );
@@ -745,7 +739,7 @@ function showPreviousLoss(): void {
     lossRows.value.length,
     LOSS_RENDER_BATCH,
   );
-  focusHistoryRow("[data-loss-row]");
+  focusListRow("[data-loss-row]");
 }
 
 const profile = computed(() => cultivatorProfile(endgame.marks));
