@@ -133,7 +133,7 @@ import { ref, useTemplateRef } from "vue";
 import { useRouter } from "vue-router";
 import { useSettingsStore } from "@/stores/settings";
 import { useUiStore } from "@/stores/ui";
-import { importSaveText, reloadGame, sealStorageWrites } from "@/core/save";
+import { finishSaveImport, importSaveText } from "@/core/save";
 import { engine } from "@/core/engine";
 import BaseModal from "@/components/common/BaseModal.vue";
 import PrivacyDialog from "@/components/common/PrivacyDialog.vue";
@@ -202,9 +202,7 @@ function onFilePicked(e: Event): void {
       engine.resume();
       return;
     }
-    ui.toast("存档导入成功,即将重入仙途", "success");
-    sealStorageWrites();
-    setTimeout(reloadGame, 800);
+    finishSaveImport();
   };
   reader.readAsText(file);
   if (fileInput.value) fileInput.value.value = "";

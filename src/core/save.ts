@@ -16,6 +16,7 @@ import { realmLabel } from "@/data/realms";
 import { defineSaveFormat, runMigrations } from "wanxiang-engine";
 import { useGameStore } from "@/stores/game";
 import { engine } from "./engine";
+import { notify } from "./notify";
 
 /**
  * 本作的存档格式:版本链由公共库执行(见 packages/engine 的 save / runMigrations)。
@@ -255,4 +256,24 @@ export function reloadGame(): void {
   engine.stop();
   sealStorageWrites();
   window.location.reload();
+}
+
+/**
+ * 导入成功后的收尾 —— 两个入口共用同一串动作。
+ *
+ * 欢迎页(还没有存档时的首次导入)与设置页(换一份存档)走的是同一个流程:
+ * 说一句、立刻封存、留 800ms 让 toast 读得完再重载。
+ *
+ * 从前这段在两处各写一遍,连提示语都分成了「重入仙途」与「重新入定」——
+ * 同一件事两种说法,玩家会以为两者有区别。顺序更不能各写:封存必须紧跟
+ * 在导入写盘之后、重载之前,漏掉一侧就是「刚导入的档被旧内存回写覆盖」。
+ * 故收成一处,让两边只有调用、没有各自的编排。
+ */
+export function finishSaveImport(): void {
+  notify("存档导入成功,即将重入仙途", "success");
+  // 导入已写盘,立即封存:阻止 persist 插件把旧内存回写覆盖。
+  // setTimeout 里的 reloadGame 也会封存一次,但那是 800ms 之后的事 ——
+  // 这段窗口里排队中的刷盘足够把刚导入的分片盖掉。
+  sealStorageWrites();
+  setTimeout(reloadGame, 800);
 }

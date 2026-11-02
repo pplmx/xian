@@ -553,11 +553,10 @@ import { useGameStore } from "@/stores/game";
 import { useUiStore } from "@/stores/ui";
 import { engine } from "@/core/engine";
 import {
+  finishSaveImport,
   importSaveText,
   importRejectReason,
   resetGame,
-  reloadGame,
-  sealStorageWrites,
   inspectImportText,
 } from "@/core/save";
 import { exportSaveToDevice } from "@/core/savePlatform";
@@ -789,11 +788,8 @@ function confirmImport(): void {
     engine.resume(); // 导入失败时恢复引擎
     return;
   }
-  ui.toast("存档导入成功,即将重新入定", "success");
   importConfirm.value = false;
   pendingImport.value = null;
-  // 导入已写盘,立即封存:阻止 persist 插件把旧内存回写覆盖
-  sealStorageWrites();
-  setTimeout(reloadGame, 800);
+  finishSaveImport();
 }
 </script>

@@ -15,6 +15,8 @@
  * 分片为字符串或数字、game 缺失,一律被导入前校验挡下 —— 两条路都不炸。
  */
 import { describe, expect, it, vi, beforeEach } from "vite-plus/test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { createApp } from "vue";
 import { createPinia, setActivePinia } from "pinia";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
@@ -414,5 +416,48 @@ describe("导入 · 确认框与导入路径同源", () => {
     expect(inspected, "过了校验的档,确认框必须给得出底细").not.toBeNull();
     expect(inspected!.name).toBe("正常人");
     expect(inspected!.tooNew).toBe(false);
+  });
+});
+
+/**
+ * 导入成功后的收尾只许有一个出处。
+ *
+ * 欢迎页(首次导入)与设置页(换一份存档)走同一串动作:说一句 → 立刻封存 →
+ * 留 800ms 让 toast 读得完再重载。从前两处各写一遍,连提示语都分成
+ * 「重入仙途」与「重新入定」,玩家会以为两者有区别。
+ *
+ * 顺序尤其不能各写:封存必须在导入写盘之后、重载之前。漏掉那一侧,排队中的
+ * persist 刷盘会把旧内存回写覆盖刚导入的分片 —— 这是本仓踩过的坑
+ * (见 sealStorageWrites 的注释与 Android WebView 的实测)。
+ */
+describe("导入收尾 · 只有一个出处", () => {
+  const ROOT = resolve(__dirname, "../..");
+  const read = (rel: string): string => readFileSync(resolve(ROOT, rel), "utf8");
+
+  it("两个入口都调 finishSaveImport,不各自编排", () => {
+    for (const view of ["src/views/WelcomeView.vue", "src/views/SettingsView.vue"]) {
+      const src = read(view);
+      expect(src, `${view} 要走共享的收尾`).toContain("finishSaveImport()");
+      expect(src, `${view} 不该自己再封存一次`).not.toContain("sealStorageWrites()");
+      expect(src, `${view} 不该自己再排重载`).not.toMatch(/setTimeout\(\s*reloadGame/);
+    }
+  });
+
+  it("共享收尾里的顺序是同一条:先说话,再封存,最后重载", () => {
+    const src = read("src/core/save.ts");
+    // 只看代码:注释里也写着这两个名字(解释为什么封存要在重载之前),混进来会错判顺序
+    const fn = src
+      .slice(src.indexOf("export function finishSaveImport"))
+      .split("\n")
+      .filter((line) => !/^\s*(\/\/|\*|\/\*)/.test(line))
+      .join("\n");
+    const notifyAt = fn.indexOf("notify(");
+    const sealAt = fn.indexOf("sealStorageWrites()");
+    const reloadAt = fn.indexOf("setTimeout(");
+    expect(notifyAt, "收尾要先说一句话").toBeGreaterThan(-1);
+    expect(sealAt, "收尾要封存").toBeGreaterThan(notifyAt);
+    expect(reloadAt, "封存之后才排重载").toBeGreaterThan(sealAt);
+    // 800ms 是给 toast 读的时间,写成常量不许散落
+    expect(fn).toContain("setTimeout(reloadGame, 800)");
   });
 });
