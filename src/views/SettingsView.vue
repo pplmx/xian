@@ -333,7 +333,7 @@
               type="button"
               @click="openReset"
             >
-              散尽修为，重入轮回（清空存档）
+              散尽修为，重入轮回(清空存档)
             </button>
 
             <!-- iOS 专属:装到主屏幕才躲得过系统清存储(非 iOS 不显示,见组件注释) -->
@@ -374,7 +374,7 @@
             <div class="settings-trail__body">
               <p class="settings-trail__copy">
                 <template v-if="diag.errors.length">
-                  最近记录了 {{ diag.errors.length }} 条异常（最多留 {{ DIAG_MAX }} 条）。
+                  最近记录了 {{ diag.errors.length }} 条异常(最多留 {{ DIAG_MAX }} 条)。
                 </template>
                 <template v-else>
                   未记录到异常。真出问题时这里会自动留一条，可连同「导出存档」一起发给我们。

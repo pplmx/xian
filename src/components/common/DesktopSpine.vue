@@ -27,7 +27,7 @@
         type="button"
         data-spine-atlas-trigger
         class="desktop-spine__lookup"
-        :aria-label="`打开玄枢图寻册（${shortcutHint}）`"
+        :aria-label="`打开玄枢图寻册(${shortcutHint})`"
         aria-haspopup="dialog"
         @click="emit('openAtlas')"
       >

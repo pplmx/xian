@@ -304,6 +304,7 @@ const CATEGORIES = [
       "inkIcons.spec",
       "ornament.spec",
       "deadStyle.spec",
+      "copyPunctuation.spec",
       "favicon.spec",
       "useNativeInsets",
       "useGameClock",

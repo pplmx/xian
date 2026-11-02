@@ -210,7 +210,7 @@
                   >{{ entryCue(entry.name)?.label }}</span
                 >
                 <span v-if="entryCue(entry.name)" class="sr-only"
-                  >（{{ entryCue(entry.name)?.spoken }}）</span
+                  >({{ entryCue(entry.name)?.spoken }})</span
                 >
                 <span
                   v-if="route.name === entry.name"
@@ -274,9 +274,7 @@
               aria-hidden="true"
               >{{ resultCue(result)?.label }}</span
             >
-            <span v-if="resultCue(result)" class="sr-only"
-              >（{{ resultCue(result)?.spoken }}）</span
-            >
+            <span v-if="resultCue(result)" class="sr-only">({{ resultCue(result)?.spoken }})</span>
             <span v-if="isCurrentResult(result)" class="atlas-result__current">在</span>
             <span v-else class="atlas-result__arrow" aria-hidden="true">›</span>
           </RouterLink>

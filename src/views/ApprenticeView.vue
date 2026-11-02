@@ -541,7 +541,7 @@ function dispatchSelected(a: OwnedApprentice): void {
               </article>
             </div>
             <p class="apprentice-depot__note">
-              缺度按「水位 ÷（存量 + 1）」现算；寻机缘不参与自动调拨,只能在值日簿逐人点选。
+              缺度按「水位 ÷(存量 + 1)」现算；寻机缘不参与自动调拨,只能在值日簿逐人点选。
             </p>
           </section>
 

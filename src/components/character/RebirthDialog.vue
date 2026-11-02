@@ -179,7 +179,7 @@
           :aria-expanded="heritageOpen"
           @click="heritageOpen = !heritageOpen"
         >
-          <span>{{ heritageOpen ? "收起去留全账" : `展开去留全账（${totalCount} 项）` }}</span>
+          <span>{{ heritageOpen ? "收起去留全账" : `展开去留全账(${totalCount} 项)` }}</span>
           <span aria-hidden="true">{{ heritageOpen ? "▾" : "▸" }}</span>
         </button>
 
