@@ -3544,6 +3544,41 @@ describe("界面分层 · 浮层只有一个出处", () => {
     }
   });
 
+  it("纯视觉的 SVG 要么自报家门,要么整块对读屏隐藏", () => {
+    /*
+     * 装饰性 SVG(法球进度环、页头山水、罗盘底纹)对读屏是一串无标签节点;
+     * 而它们想表达的数值,旁边通常已有文字读数。两种正当写法:
+     *   ① 自身 aria-hidden / aria-label / role="img";
+     *   ② 祖先容器 aria-hidden="true"(子树整体退出无障碍树)。
+     *
+     * 这条判据抓的是第三种:两者都没有 —— 那种 SVG 会被读屏逐个念出来,
+     * 却什么也没说清。实测修掉的一例是首页法球:旁边明明写着「修为 42.3%」,
+     * 读屏却先去啃那几十个装饰节点。
+     */
+    const offenders: string[] = [];
+    for (const f of FILES) {
+      const lines = f.src.split("\n");
+      for (const m of f.src.matchAll(/<svg([^>]*)>/g)) {
+        const attrs = m[1] ?? "";
+        if (/aria-hidden|aria-label|role="img"|focusable/.test(attrs)) continue;
+        const ln = f.src.slice(0, m.index).split("\n").length;
+        /*
+         * 回看 40 行:隐藏标记常挂在容器根节点上,而装饰 SVG 在其内几十行处
+         * (法球、修行页页头都是这样)。这是文本近似而非真正的祖先判定 ——
+         * 宁可这样,也不在判据里手写一个标签栈:试过一版,单行多标签与自闭合
+         * 标签会把深度算错,反而放过真问题。近似够用的前提是「隐藏标记与它
+         * 包住的装饰同属一段模板」,本仓的写法都满足。
+         */
+        const ctx = lines.slice(Math.max(0, ln - 40), ln + 1).join("\n");
+        if (/aria-hidden="true"/.test(ctx)) continue;
+        offenders.push(`${f.path}:${ln}`);
+      }
+    }
+    expect(offenders, "这些 SVG 既没自报家门,祖先也没对读屏隐藏").toEqual([]);
+    // 防空转:全站确实有不少 SVG
+    expect(FILES.filter((f) => /<svg/.test(f.src)).length).toBeGreaterThanOrEqual(8);
+  });
+
   it("滑块要有可访问名称 —— 读屏不许只念「滑块, 50」", () => {
     /*
      * 全站三枚 type="range":两枚音量滑块早有 aria-label,重铸那枚

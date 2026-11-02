@@ -1,6 +1,12 @@
 <template>
-  <!-- 修炼法球:三层反向旋转环 + 外圈能量粒子 + 八卦符文 + SVG 进度环 + 内圈轨道粒子 配色改为水墨朱砂金 -->
-  <div class="orb-root" :class="{ cultivating: active, breakthrough: full }">
+  <!--
+    修炼法球:三层反向旋转环 + 外圈能量粒子 + 八卦符文 + SVG 进度环 + 内圈轨道粒子 配色改为水墨朱砂金
+
+    aria-hidden:整枚法球是视觉摘要,进度另有文字读数写在旁边
+    (首页那行「修为 42.3%」)。不隐藏的话读屏会把它拆成一串无标签的
+    装饰节点,而进度百分比反而读不到。
+  -->
+  <div class="orb-root" :class="{ cultivating: active, breakthrough: full }" aria-hidden="true">
     <!-- 背景能量粒子(外圈,12 颗,随相位散布) -->
     <div class="particle-ring">
       <div v-for="i in 12" :key="i" class="orb-particle" :style="particleStyle(i)" />
