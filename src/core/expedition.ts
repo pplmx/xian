@@ -17,6 +17,7 @@ import { mulberry32, RandomService } from "@/utils/random";
 import { celestialWorldDef } from "@/data/endgame";
 import { pactDef } from "@/data/pacts";
 import { MUTATORS } from "@/data/mutators";
+import { PACT_END_HP_FLOOR } from "@/data/constants";
 import { EXPEDITION_GUARDIAN_LAYER, EXPEDITION_ROUTE_LAYERS, MUTATION_FOES } from "@/data/endgame";
 import { buildPlayerSnap } from "./playerSnap";
 import { detectBuild } from "./buildDetect";
@@ -268,7 +269,7 @@ function fightStep(
       judgementLines: judgementLinesOf(world),
     };
   }
-  if (pact?.special === "endHp80" && result.playerHpPct < 0.8) {
+  if (pact?.special === "endHp80" && result.playerHpPct < PACT_END_HP_FLOOR) {
     endgame.worldRun = next;
     settle(next, world, false, true);
     return {
@@ -631,7 +632,7 @@ export function forecastExpedition(
   const pact = pactId ? pactDef(pactId) : undefined;
   // 预估须与真打同源:择了门就把门也算进去,否则玩家看到的胜算与实战不符
   const rules = chainRules(currentDaoRules(), world.rules, pactRules(pact), gateRulesOf(gateId));
-  const opts = pact?.special === "endHp80" ? { minHpAfterFight: 0.8 } : {};
+  const opts = pact?.special === "endHp80" ? { minHpAfterFight: PACT_END_HP_FLOOR } : {};
   const seededRng = new RandomService(
     mulberry32(worldId.length * 1009 + (pactId?.length ?? 0) * 97 + world.name.length * 7),
   );

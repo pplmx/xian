@@ -9,6 +9,7 @@ import { mulberry32, RandomService } from "@/utils/random";
 import { celestialWorldDef } from "@/data/endgame";
 import { mutatorDef } from "@/data/mutators";
 import { pactDef } from "@/data/pacts";
+import { PACT_END_HP_FLOOR } from "@/data/constants";
 import { BUILD_PROFILES, buildSnap } from "./buildSim";
 import { SIM_REFERENCE } from "./celestialSim";
 import {
@@ -90,7 +91,7 @@ export function verifyChallenge(draft: ChallengeDraft): ChallengeVerdict | null 
   const rules = draftRules(draft);
   const foes = draftFoes(draft.worldId, SIM_REFERENCE);
   const pact = draft.pactId ? pactDef(draft.pactId) : undefined;
-  const opts = pact?.special === "endHp80" ? { minHpAfterFight: 0.8 } : {};
+  const opts = pact?.special === "endHp80" ? { minHpAfterFight: PACT_END_HP_FLOOR } : {};
   const rates = BUILD_PROFILES.map((p, i) => {
     const seeded = new RandomService(
       mulberry32(510000 + i * 61 + draft.mutatorIds.length * 7 + (draft.pactId?.length ?? 0)),
@@ -140,7 +141,7 @@ export function undertakeChallenge(
   const rules = mergeRules(currentDaoRules(), draftRules(draft));
   const pact = draft.pactId ? pactDef(draft.pactId) : undefined;
   const opts = {
-    ...(pact?.special === "endHp80" ? { minHpAfterFight: 0.8 } : {}),
+    ...(pact?.special === "endHp80" ? { minHpAfterFight: PACT_END_HP_FLOOR } : {}),
     perWinPlayerMods:
       endgame.daoPath === "sword"
         ? SWORD_PER_WIN

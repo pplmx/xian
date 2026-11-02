@@ -41,7 +41,12 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { cnNumber, formatSignedPercent } from "@/utils/format";
 import { REALMS, WORLDS, ascensionLeap } from "@/data/realms";
-import { VEIN_MAIN_CAPACITY, VEIN_SIDE_CAP, VEIN_TOTAL_CAPACITY } from "@/data/constants";
+import {
+  PACT_END_HP_FLOOR,
+  VEIN_MAIN_CAPACITY,
+  VEIN_SIDE_CAP,
+  VEIN_TOTAL_CAPACITY,
+} from "@/data/constants";
 import { VEINS } from "@/data/veins";
 import { BUILD_PROFILES } from "@/core/buildSim";
 import { HEXAGRAMS, TRIGRAMS } from "@/data/yijing";
@@ -230,6 +235,25 @@ describe("文案数值对账 · 天道契约", () => {
       broken.map((p) => p.name),
       "改 sourceMult 却不改文案,双向对账必须红",
     ).toEqual(["血契"]);
+  });
+
+  /**
+   * 无伤契的 80% 藏在 `special: 'endHp80'` 这个名字里 —— 上面对账只认
+   * 「special 里出现了这个数」,于是把阈值从 80 改到 75,名字里仍是 80,
+   * 文案照样过,真打却按新阈值判契毁。故这一条直接钉住「文案首数字 = 常数」。
+   */
+  it("无伤契的战后气血线只有一枚常数,文案与判定同读", () => {
+    const wushang = PACTS.find((p) => p.special === "endHp80");
+    expect(wushang, "无伤契不见了:这条判据会静默空转").toBeTruthy();
+    const shown = /≥(\d+(?:\.\d+)?)%/.exec(wushang!.ruleText);
+    expect(shown, "契约文案里该写「≥80%」这种确切百分比").not.toBeNull();
+    expect(Number(shown![1]) / 100, "改常数不改文案,这里必须红").toBe(PACT_END_HP_FLOOR);
+    // 判定侧:远征与挑战书都读同一枚,谁都不许再写 0.8
+    for (const file of ["../core/expedition.ts", "../core/challenge.ts"]) {
+      const src = readFileSync(resolve(__dirname, file), "utf8");
+      expect(src, `${file} 该读 PACT_END_HP_FLOOR`).toContain("PACT_END_HP_FLOOR");
+      expect(src, `${file} 里又出现了 0.8 这种字面量`).not.toMatch(/minHpAfterFight:\s*0\.8\b/);
+    }
   });
 });
 

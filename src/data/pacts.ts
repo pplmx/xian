@@ -1,5 +1,6 @@
 /** 天道契约(Phase 21)—— 玩家主动签下的不公平规则,风险换道源 */
 import type { PactDef } from "@/types";
+import { PACT_END_HP_FLOOR } from "@/data/constants";
 
 export const PACTS: PactDef[] = [
   {
@@ -42,8 +43,9 @@ export const PACTS: PactDef[] = [
     id: "wushang",
     name: "无伤契",
     seal: "完",
-    desc: "每场战罢气血须存八成,否则契毁人出",
-    ruleText: "每场战后气血 ≥80% · 道源 ×3.0",
+    desc: `每场战罢气血须存 ${PACT_END_HP_FLOOR * 100}% 以上,否则契毁人出`,
+    // 文案的百分比与判定阈值共读 PACT_END_HP_FLOOR:改那一枚,这句话跟着改
+    ruleText: `每场战后气血 ≥${PACT_END_HP_FLOOR * 100}% · 道源 ×3.0`,
     special: "endHp80",
     sourceMult: 3.0,
   },

@@ -657,3 +657,13 @@ export const DIVINATION_COST = 2;
  * (定义住 data/constants,core/astronomy 与 progressionDoc 同源读取)
  */
 export const MANSION_EVENT_LUCK = 0.1;
+
+// ============ 天道契约 ============
+/**
+ * 无伤契的战后气血下限 —— 低于此线即契毁人出(道源归零)。
+ *
+ * 一枚常数,四处读它:契约文案的「≥80%」、真打的 breaking 判定、远征预估的
+ * opts.minHpAfterFight、以及挑战书的两处预演。从前这四处各写一个 0.8 / 80,
+ * 调一档就得同时记住四个地方 —— 漏一个,预览与结算就开始说两种话。
+ */
+export const PACT_END_HP_FLOOR = 0.8;
