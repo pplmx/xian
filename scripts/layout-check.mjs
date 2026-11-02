@@ -4898,6 +4898,38 @@ async function taskReincarnation() {
             range.selectNodeContents(el);
             return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
           }),
+          chapterHeads: p.querySelectorAll("[data-reincarnation-stage] .character-chapter-head")
+            .length,
+          chapterTitles: [...p.querySelectorAll(".character-chapter-head__title")].map((el) =>
+            (el.textContent || "").replace(/\s+/g, " ").trim(),
+          ),
+          chapterHeadDisplay: (() => {
+            const head = p.querySelector("[data-reincarnation-stage] .character-chapter-head");
+            return head ? getComputedStyle(head).display : "";
+          })(),
+          chapterHeadColumns: (() => {
+            const head = p.querySelector("[data-reincarnation-stage] .character-chapter-head");
+            return head ? getComputedStyle(head).gridTemplateColumns : "";
+          })(),
+          nestedShells: [
+            ...p.querySelectorAll(
+              [
+                "[data-reincarnation-stage] .reincarnation-chapter",
+                "[data-reincarnation-stage] .reincarnation-sheet",
+                "[data-reincarnation-stage] .reincarnation-read-panel",
+                "[data-reincarnation-stage] .reincarnation-talent-choice",
+                "[data-reincarnation-stage] .reincarnation-theme-choice",
+              ].join(","),
+            ),
+          ].map((el) => {
+            const style = getComputedStyle(el);
+            return {
+              className: String(el.className),
+              fullBorder: ["Top", "Right", "Bottom", "Left"].every(
+                (side) => parseFloat(style[`border${side}Width`]) > 0,
+              ),
+            };
+          }),
           balanceRows: p.querySelectorAll(
             "[data-reincarnation-balance] .reincarnation-balance__row",
           ).length,
@@ -4947,6 +4979,20 @@ async function taskReincarnation() {
       if (p.panelOverflow) failures.push(`[390] 转世场景:${label}的弹窗内容横向溢出`);
       if (p.stageNoteLines.some((lines) => lines !== 1))
         failures.push(`[390] 转世场景:${label}的三程路签被挤折行(${p.stageNoteLines.join("/")})`);
+      if (p.chapterHeads > 0 && p.chapterHeadDisplay !== "grid")
+        failures.push(
+          `[390] 转世场景:${label}的章首退成了 ${p.chapterHeadDisplay || "无样式"},不是三栏账头`,
+        );
+      if (p.chapterHeads > 0 && p.chapterHeadColumns.split(/\s+/).filter(Boolean).length !== 3)
+        failures.push(`[390] 转世场景:${label}的章首没有摊成三栏(${p.chapterHeadColumns || "无"})`);
+      if (p.nestedShells.some((shell) => shell.fullBorder))
+        failures.push(
+          `[390] 转世场景:${label}的续卷里又叠了四边框卡壳 —— ` +
+            p.nestedShells
+              .filter((shell) => shell.fullBorder)
+              .map((shell) => shell.className)
+              .join(","),
+        );
       if (p.actionsColumns.split(/\s+/).filter(Boolean).length !== 1)
         failures.push(
           `[390] 转世场景:${label}的动作区没有在手机上收成上下段(${p.actionsColumns || "无"})`,
@@ -4972,13 +5018,17 @@ async function taskReincarnation() {
       if (
         death.stage !== "death" ||
         death.stages.join(",") !== "current,upcoming,upcoming" ||
+        death.chapterHeads !== 1 ||
+        death.chapterTitles[0] !== "此生止步" ||
         !death.text.includes("这不是清档，是开卷") ||
         !death.text.includes("尚未写入轮回") ||
         !/兵解转世/.test(death.buttons.join(" "))
       ) {
         failures.push(
           `[390] 转世场景:辞世屏没有先开卷再落子:` +
-            `阶段 ${death.stage}/${death.stages.join(",")} / 按钮 «${death.buttons.join(" | ")}»`,
+            `阶段 ${death.stage}/${death.stages.join(",")} / ` +
+            `章首 ${death.chapterHeads}/${death.chapterTitles.join(" | ")} / ` +
+            `按钮 «${death.buttons.join(" | ")}»`,
         );
       }
     }
@@ -4999,6 +5049,8 @@ async function taskReincarnation() {
       if (
         review.stage !== "review" ||
         review.stages.join(",") !== "done,current,upcoming" ||
+        review.chapterHeads !== 3 ||
+        !["随魂所积", "此世交割"].every((title) => review.chapterTitles.includes(title)) ||
         !/宿慧/.test(review.text) ||
         review.balanceRows !== 3 ||
         !critical.has("gongfa") ||
@@ -5012,6 +5064,7 @@ async function taskReincarnation() {
         failures.push(
           `[390] 转世场景:回照没有先摊三账与主要损失:` +
             `阶段 ${review.stage}/${review.stages.join(",")} / ` +
+            `章首 ${review.chapterHeads}/${review.chapterTitles.join(" | ")} / ` +
             `三账 ${review.balanceRows} / 主损 ${review.criticalRows.join(",")} / ` +
             `全账 ${review.ledgerGroups} 组 ${review.ledgerRows} 项`,
         );
@@ -5077,13 +5130,19 @@ async function taskReincarnation() {
       if (
         next.stage !== "choice" ||
         next.stages.join(",") !== "done,done,current" ||
+        next.chapterHeads < 5 ||
+        !["来世根骨", "新一世的道号", "择一先天之姿", "这一世要做什么", "落印之前"].every((title) =>
+          next.chapterTitles.includes(title),
+        ) ||
         !/道果/.test(next.text) ||
         !next.text.includes("不可撤回") ||
         (next.talentChoices > 0 && (!next.confirmDisabled || next.confirmState !== "blocked"))
       ) {
         failures.push(
           `[390] 转世场景:择生屏没有把末次落子说清:` +
-            `阶段 ${next.stage}/${next.stages.join(",")} / 天姿 ${next.talentChoices} / ` +
+            `阶段 ${next.stage}/${next.stages.join(",")} / ` +
+            `章首 ${next.chapterHeads}/${next.chapterTitles.join(" | ")} / ` +
+            `天姿 ${next.talentChoices} / ` +
             `确认 ${next.confirmState}/${next.confirmDisabled ? "灰" : "亮"}`,
         );
       }

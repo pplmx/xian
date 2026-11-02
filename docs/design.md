@@ -570,8 +570,12 @@ CSS px 仍按单列阅读。底栏只放洞府、修炼、历练、背包、人�
 往生帖之后的三程收成一册「往生录」:一程「辞世」只说明皮囊已尽、尚未落账;
 二程「回照」先摊此生命题、宿慧与「随魂 / 折损 / 归尘」三账,主要损失列在全部去留项之前;
 三程「择生」才铺道号、灵根、先天之姿与命题,并把不可撤回的警告放在「踏入轮回」旁。
-三程路签只读 `reincarnationDesk` 的 `REINCARNATION_STAGES`;去留账分别复用
-`samsaraLedger` / `samsaraBalance` / `criticalSamsaraRows`,不再另抄一份继承清单。
+三程路签由 `ReincarnationStageRail` 同源装配,只留上下账线与当前程的朱砂底线;
+每章共用 `CharacterChapterHead`,辞世为一章、回照为此生命题 / 随魂所积 / 此世交割三章,
+择生至少五章,道统传承有得时才续一章。先天之姿、命题、道号与落印说明都退成开口账行,
+不再在浮层里叠四边框纸卡或第二张纸底。三程路签只读 `reincarnationDesk` 的
+`REINCARNATION_STAGES`;去留账分别复用 `samsaraLedger` / `samsaraBalance` /
+`criticalSamsaraRows`,不再另抄一份继承清单。
 先天之姿尚有可选而尚未择定时,末程主按钮置灰,并在同一处说明欠哪一步;留白道号按核心契约
 沿用旧号,不另许一个结算没有的口径。手机单列,620px 起回照的双账并读,
 220 CSS px 以下路签、账行状态与末程动作各自上下收住。结构与读写语义由

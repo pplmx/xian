@@ -324,6 +324,14 @@ error: Failed to resolve vite command: GenericFailure, Expected
 `taskRebirthFolio` 在 390 核对四枚章首、内层零四边框、道果 / 天赋 / 主损失与全账,
 再切到 195 核对摘要、门槛与去留行收成单列且不压窄账目名。
 
+往生帖之后的辞世、回照、择生三程也续在同一册章首语法里。三程路签由
+`ReincarnationStageRail` 共用,辞世、回照与择生分别核对 1 / 3 / 至少 5 枚
+`CharacterChapterHead`;命题、宿慧、交割、灵根、道号、天姿与落印说明只保留开口账线,
+旧 `reincarnation-sheet` 与第二张纸底不得回来。章首版式随 `CharacterChapterHead` 组件
+自身加载,避免读档即身故、人物页样式尚未载入时退成块级长文。`characterDossier.spec.ts`
+守住章节数量、去卡壳、组件自带版式与三程共用路签的源码契约;`taskReincarnation` 在 390
+三程真走一遍,核对章序、内层零四边框、全账展开、置灰门与 200% 收口。
+
 流派页成路后现在收成一册「铸道续卷」:道途阶梯、下一步、五维形状、实战面、
 构筑快照与可选旧筑对照沿同一组 `BuildChapterHead` 续排,原有的 `data-build-stage`
 / `next` / `shape` / `battle` / `loadouts` / `compare` 运行时落点全部保留。390 档核对

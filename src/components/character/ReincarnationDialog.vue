@@ -5,22 +5,7 @@
       class="reincarnation-folio reincarnation-folio--death stagger-in"
       data-reincarnation-stage="death"
     >
-      <nav class="reincarnation-stages" data-reincarnation-stage-rail aria-label="往生三程">
-        <div
-          v-for="(stage, index) in REINCARNATION_STAGES"
-          :key="stage.id"
-          class="reincarnation-stage"
-          :class="`is-${reincarnationStageState(index + 1, 1)}`"
-          :data-reincarnation-stage-state="reincarnationStageState(index + 1, 1)"
-          :aria-current="reincarnationStageState(index + 1, 1) === 'current' ? 'step' : undefined"
-        >
-          <span class="reincarnation-stage__ordinal" aria-hidden="true">{{ stage.ordinal }}</span>
-          <span class="reincarnation-stage__copy">
-            <strong>{{ stage.name }}</strong>
-            <small>{{ stage.note }}</small>
-          </span>
-        </div>
-      </nav>
+      <ReincarnationStageRail :step="1" />
 
       <header class="reincarnation-head">
         <span class="reincarnation-head__seal font-kai" aria-hidden="true">终</span>
@@ -40,34 +25,43 @@
         </p>
       </header>
 
-      <section class="reincarnation-callout" data-reincarnation-death-summary>
-        <span class="reincarnation-callout__mark font-kai" aria-hidden="true">别</span>
-        <div>
-          <p class="reincarnation-callout__title">这不是清档，是开卷</p>
-          <p class="reincarnation-callout__copy">
-            下一屏只作回照，核对此生带得走什么、放得下什么；尚未写入轮回。真正不可撤回的落子，是三程末的「踏入轮回」。
-          </p>
+      <section class="reincarnation-chapter" data-reincarnation-chapter="death">
+        <CharacterChapterHead
+          index="壹"
+          title="此生止步"
+          hint="先核对此生终点与能带走什么，再进下一程。"
+          fact="尚未落账"
+        />
+
+        <div class="reincarnation-callout" data-reincarnation-death-summary>
+          <span class="reincarnation-callout__mark font-kai" aria-hidden="true">别</span>
+          <div>
+            <p class="reincarnation-callout__title">这不是清档，是开卷</p>
+            <p class="reincarnation-callout__copy">
+              下一屏只作回照，核对此生带得走什么、放得下什么；尚未写入轮回。真正不可撤回的落子，是三程末的「踏入轮回」。
+            </p>
+          </div>
         </div>
+
+        <dl class="reincarnation-death-grid">
+          <div>
+            <dt>今生</dt>
+            <dd>第 {{ currentLife }} 世</dd>
+          </div>
+          <div>
+            <dt>止步</dt>
+            <dd>{{ player.realmName }}</dd>
+          </div>
+          <div>
+            <dt>随身先天之姿</dt>
+            <dd>{{ ownedTalents.length }} 项</dd>
+          </div>
+        </dl>
+
+        <p class="reincarnation-footnote">
+          功法只折层数，道果、天赋与所知随神魂留下；境界、灵根、法宝与外物随皮囊散去。
+        </p>
       </section>
-
-      <dl class="reincarnation-death-grid">
-        <div>
-          <dt>今生</dt>
-          <dd>第 {{ currentLife }} 世</dd>
-        </div>
-        <div>
-          <dt>止步</dt>
-          <dd>{{ player.realmName }}</dd>
-        </div>
-        <div>
-          <dt>随身先天之姿</dt>
-          <dd>{{ ownedTalents.length }} 项</dd>
-        </div>
-      </dl>
-
-      <p class="reincarnation-footnote">
-        功法只折层数，道果、天赋与所知随神魂留下；境界、灵根、法宝与外物随皮囊散去。
-      </p>
     </article>
 
     <template #footer>
@@ -102,22 +96,7 @@
       data-reincarnation-stage="review"
       data-reincarnation-review
     >
-      <nav class="reincarnation-stages" data-reincarnation-stage-rail aria-label="往生三程">
-        <div
-          v-for="(stage, index) in REINCARNATION_STAGES"
-          :key="stage.id"
-          class="reincarnation-stage"
-          :class="`is-${reincarnationStageState(index + 1, 2)}`"
-          :data-reincarnation-stage-state="reincarnationStageState(index + 1, 2)"
-          :aria-current="reincarnationStageState(index + 1, 2) === 'current' ? 'step' : undefined"
-        >
-          <span class="reincarnation-stage__ordinal" aria-hidden="true">{{ stage.ordinal }}</span>
-          <span class="reincarnation-stage__copy">
-            <strong>{{ stage.name }}</strong>
-            <small>{{ stage.note }}</small>
-          </span>
-        </div>
-      </nav>
+      <ReincarnationStageRail :step="2" />
 
       <header class="reincarnation-head">
         <span class="reincarnation-head__seal font-kai" aria-hidden="true">照</span>
@@ -139,62 +118,39 @@
       </header>
 
       <div class="reincarnation-review__grid">
-        <section
-          class="reincarnation-sheet"
-          :class="{ 'is-quiet': !reviewTheme }"
-          data-reincarnation-theme
-        >
-          <header class="reincarnation-sheet__head">
-            <span class="reincarnation-sheet__mark font-kai" aria-hidden="true">题</span>
-            <div>
-              <p class="reincarnation-sheet__eyebrow">此生命题</p>
-              <p class="reincarnation-sheet__title">
-                {{ reviewTheme ? `「${reviewTheme.vow}」` : "此世未立命题" }}
-              </p>
-            </div>
-            <span
-              v-if="reviewTheme"
-              class="reincarnation-sheet__state"
-              :class="RESULT_COLORS[view.review.themeResult ?? 'unfinished']"
-            >
-              {{ RESULT_NAMES[view.review.themeResult ?? "unfinished"] }}
-            </span>
-          </header>
+        <section class="reincarnation-chapter" data-reincarnation-theme>
+          <CharacterChapterHead
+            index="壹"
+            :title="reviewTheme ? `「${reviewTheme.vow}」` : '此世未立命题'"
+            hint="此生命题只判这一世，未竟或破戒都不倒扣。"
+            :fact="reviewTheme ? RESULT_NAMES[view.review.themeResult ?? 'unfinished'] : '未立题'"
+          />
+
           <template v-if="reviewTheme">
-            <p class="reincarnation-sheet__copy">{{ reviewTheme.goal }}</p>
-            <p
-              v-if="view.review.themeResult === 'unfinished'"
-              class="reincarnation-sheet__read tabular"
-            >
+            <p class="reincarnation-copy">{{ reviewTheme.goal }}</p>
+            <p v-if="view.review.themeResult === 'unfinished'" class="reincarnation-read tabular">
               {{ Math.floor(view.review.themeCur) }} / {{ view.review.themeNeed }} · 未竟不给宿慧
             </p>
-            <p
-              v-else-if="view.review.themeResult === 'done'"
-              class="reincarnation-sheet__read is-gold"
-            >
+            <p v-else-if="view.review.themeResult === 'done'" class="reincarnation-read is-gold">
               {{ reviewTheme.legacy }}
             </p>
-            <p v-else class="reincarnation-sheet__read is-amber">
+            <p v-else class="reincarnation-read is-amber">
               此生破了「{{ TABOO_NAMES[reviewTheme.taboo ?? "pill"] }}」之戒，题的所得没有兑现。
             </p>
           </template>
-          <p v-else class="reincarnation-sheet__copy">
+          <p v-else class="reincarnation-copy">
             这一世没有立题，便没有命题宿慧；阅历所得仍会计入下一阶。
           </p>
         </section>
 
-        <section class="reincarnation-sheet" data-reincarnation-insight>
-          <header class="reincarnation-sheet__head">
-            <span class="reincarnation-sheet__mark font-kai is-qing" aria-hidden="true">慧</span>
-            <div>
-              <p class="reincarnation-sheet__eyebrow">随神魂所积</p>
-              <p class="reincarnation-sheet__title">{{ view.stageName }}</p>
-            </div>
-            <span v-if="view.stageAdvanced" class="reincarnation-sheet__state text-cinnabar">
-              境地已迁
-            </span>
-          </header>
-          <p class="reincarnation-sheet__copy">{{ view.stageDesc }}</p>
+        <section class="reincarnation-chapter" data-reincarnation-insight>
+          <CharacterChapterHead
+            index="贰"
+            title="随魂所积"
+            hint="阅历与所知随神魂留下，下一阶仍从这份底账续起。"
+            :fact="view.stageAdvanced ? '境地已迁' : view.stageName"
+          />
+          <p class="reincarnation-copy">{{ view.stageDesc }}</p>
           <dl class="reincarnation-insight-rows">
             <div>
               <dt>此生入账</dt>
@@ -218,17 +174,13 @@
         </section>
       </div>
 
-      <section class="reincarnation-ledger" data-reincarnation-ledger>
-        <header class="reincarnation-ledger__head">
-          <div>
-            <p class="reincarnation-sheet__eyebrow">去留同源</p>
-            <p class="reincarnation-ledger__title">此世交割</p>
-            <p class="reincarnation-ledger__copy">
-              条目直接取轮回结算的同一份继承表；先看影响最大的几笔，再展开全账。
-            </p>
-          </div>
-          <p class="reincarnation-ledger__count tabular">{{ balance.total }}<small>项</small></p>
-        </header>
+      <section class="reincarnation-chapter reincarnation-ledger" data-reincarnation-ledger>
+        <CharacterChapterHead
+          index="叁"
+          title="此世交割"
+          hint="条目直接取轮回结算的同一份继承表；先看影响最大的几笔，再展开全账。"
+          :fact="`${balance.total} 项`"
+        />
 
         <div class="reincarnation-balance" data-reincarnation-balance>
           <p class="reincarnation-balance__row is-full">
@@ -369,22 +321,7 @@
       data-reincarnation-stage="choice"
       data-reincarnation-choice
     >
-      <nav class="reincarnation-stages" data-reincarnation-stage-rail aria-label="往生三程">
-        <div
-          v-for="(stage, index) in REINCARNATION_STAGES"
-          :key="stage.id"
-          class="reincarnation-stage"
-          :class="`is-${reincarnationStageState(index + 1, 3)}`"
-          :data-reincarnation-stage-state="reincarnationStageState(index + 1, 3)"
-          :aria-current="reincarnationStageState(index + 1, 3) === 'current' ? 'step' : undefined"
-        >
-          <span class="reincarnation-stage__ordinal" aria-hidden="true">{{ stage.ordinal }}</span>
-          <span class="reincarnation-stage__copy">
-            <strong>{{ stage.name }}</strong>
-            <small>{{ stage.note }}</small>
-          </span>
-        </div>
-      </nav>
+      <ReincarnationStageRail :step="3" />
 
       <header class="reincarnation-head">
         <span class="reincarnation-head__seal font-kai" aria-hidden="true">生</span>
@@ -402,69 +339,65 @@
         </p>
       </header>
 
-      <div class="reincarnation-choice__grid">
-        <section class="reincarnation-sheet reincarnation-destiny" data-reincarnation-destiny>
-          <header class="reincarnation-sheet__head">
-            <span class="reincarnation-sheet__mark font-kai" aria-hidden="true">根</span>
-            <div>
-              <p class="reincarnation-sheet__eyebrow">来世根本</p>
-              <p class="reincarnation-sheet__title">{{ view.nextLinggen.gradeName }}</p>
-            </div>
-            <span class="reincarnation-sheet__state text-qing">
-              修行 ×{{ view.nextLinggen.growthMult }}
-            </span>
-          </header>
-          <div class="reincarnation-roots" aria-label="来世灵根资质">
-            <span
-              v-for="root in view.nextLinggen.roots"
-              :key="root.element"
-              class="reincarnation-root"
-            >
-              <strong class="font-kai">{{ ELEMENTS[root.element].name }}</strong>
-              <span class="tabular">{{ root.aptitude }}</span>
-            </span>
-          </div>
-        </section>
+      <section class="reincarnation-chapter" data-reincarnation-chapter="choice-roots">
+        <CharacterChapterHead
+          index="壹"
+          title="来世根骨"
+          hint="灵根所见即所得；道果只入永世底账，不再回到本世皮囊。"
+          :fact="`修行 ×${view.nextLinggen.growthMult}`"
+        />
 
-        <section class="reincarnation-sheet" data-reincarnation-dao-fruit>
-          <header class="reincarnation-sheet__head">
-            <span class="reincarnation-sheet__mark font-kai is-gold" aria-hidden="true">果</span>
-            <div>
-              <p class="reincarnation-sheet__eyebrow">永生积累</p>
-              <p class="reincarnation-sheet__title">道果落账</p>
+        <div class="reincarnation-choice__grid">
+          <section
+            class="reincarnation-read-panel reincarnation-destiny"
+            data-reincarnation-destiny
+          >
+            <header class="reincarnation-read-head">
+              <span>来世灵根</span>
+              <strong>{{ view.nextLinggen.gradeName }}</strong>
+            </header>
+            <div class="reincarnation-roots" aria-label="来世灵根资质">
+              <span
+                v-for="root in view.nextLinggen.roots"
+                :key="root.element"
+                class="reincarnation-root"
+              >
+                <strong class="font-kai">{{ ELEMENTS[root.element].name }}</strong>
+                <span class="tabular">{{ root.aptitude }}</span>
+              </span>
             </div>
-            <span class="reincarnation-sheet__state tabular text-cinnabar">
-              +{{ formatNum(view.daoFruitGained) }}
-            </span>
-          </header>
-          <dl class="reincarnation-insight-rows">
-            <div>
-              <dt>今生凝得</dt>
-              <dd class="tabular">{{ formatNum(view.daoFruitGained) }} 枚</dd>
-            </div>
-            <div>
-              <dt>落账后共有</dt>
-              <dd class="tabular">{{ formatNum(nextFruitTotal) }} 枚</dd>
-            </div>
-            <div>
-              <dt>跨世用途</dt>
-              <dd>修行与道躯的永久底账</dd>
-            </div>
-          </dl>
-        </section>
-      </div>
+          </section>
 
-      <section class="reincarnation-sheet reincarnation-name" data-reincarnation-name>
-        <header class="reincarnation-sheet__head">
-          <span class="reincarnation-sheet__mark font-kai" aria-hidden="true">名</span>
-          <div>
-            <p class="reincarnation-sheet__eyebrow">新一世如何自报家门</p>
-            <p class="reincarnation-sheet__title">新一世的道号</p>
-          </div>
-        </header>
-        <p class="reincarnation-sheet__copy">
-          道号随这一副皮囊可重拟，最多八字；留白不填，便沿用旧号。
-        </p>
+          <section class="reincarnation-read-panel" data-reincarnation-dao-fruit>
+            <header class="reincarnation-read-head">
+              <span>道果落账</span>
+              <strong class="tabular">+{{ formatNum(view.daoFruitGained) }} 枚</strong>
+            </header>
+            <dl class="reincarnation-insight-rows">
+              <div>
+                <dt>今生凝得</dt>
+                <dd class="tabular">{{ formatNum(view.daoFruitGained) }} 枚</dd>
+              </div>
+              <div>
+                <dt>落账后共有</dt>
+                <dd class="tabular">{{ formatNum(nextFruitTotal) }} 枚</dd>
+              </div>
+              <div>
+                <dt>跨世用途</dt>
+                <dd>修行与道躯的永久底账</dd>
+              </div>
+            </dl>
+          </section>
+        </div>
+      </section>
+
+      <section class="reincarnation-chapter reincarnation-name" data-reincarnation-name>
+        <CharacterChapterHead
+          index="贰"
+          title="新一世的道号"
+          hint="道号随这一副皮囊可重拟，最多八字；留白不填，便沿用旧号。"
+          fact="可留白"
+        />
         <div class="reincarnation-name__row">
           <input
             v-model="nameDraft"
@@ -486,19 +419,13 @@
         </div>
       </section>
 
-      <section class="reincarnation-sheet reincarnation-talent-section">
-        <header class="reincarnation-section-head">
-          <div>
-            <p class="reincarnation-sheet__eyebrow">随魂不灭 · 本世只取其一</p>
-            <p class="reincarnation-section-head__title">择一先天之姿</p>
-          </div>
-          <span class="reincarnation-section-head__state" :class="{ 'is-blocked': !chosen }">
-            {{ view.talentChoices.length ? (chosen ? "已择定" : "待择") : "池已尽" }}
-          </span>
-        </header>
-        <p class="reincarnation-sheet__copy">
-          只取其一，余者本世无缘；具体数字与效果先摊在这里，不靠猜名字。
-        </p>
+      <section class="reincarnation-chapter reincarnation-talent-section">
+        <CharacterChapterHead
+          index="叁"
+          title="择一先天之姿"
+          hint="只取其一，余者本世无缘；具体数字与效果先摊在这里，不靠猜名字。"
+          :fact="view.talentChoices.length ? (chosen ? '已择定' : '待择') : '池已尽'"
+        />
         <p v-if="view.talentChoices.length === 0" class="reincarnation-empty">
           先天之姿已尽数为你所有，此番再无可择，可直取轮回。
         </p>
@@ -544,19 +471,13 @@
         </p>
       </section>
 
-      <section class="reincarnation-sheet reincarnation-theme-section">
-        <header class="reincarnation-section-head">
-          <div>
-            <p class="reincarnation-sheet__eyebrow">只判这一世 · 可立可不立</p>
-            <p class="reincarnation-section-head__title">这一世要做什么</p>
-          </div>
-          <span class="reincarnation-section-head__state" :class="{ 'is-qing': theme }">
-            {{ theme ? "已择题" : "可不立" }}
-          </span>
-        </header>
-        <p class="reincarnation-sheet__copy">
-          立题不给属性；走到底才得一份宿慧与来路。破戒或未竟都不会倒扣。
-        </p>
+      <section class="reincarnation-chapter reincarnation-theme-section">
+        <CharacterChapterHead
+          index="肆"
+          title="这一世要做什么"
+          hint="立题不给属性；走到底才得一份宿慧与来路。破戒或未竟都不会倒扣。"
+          :fact="theme ? '已择题' : '可不立'"
+        />
         <p v-if="view.themeFree" class="reincarnation-theme-free">
           百世老修，此阶可在已开命题中任取一题。
         </p>
@@ -590,32 +511,31 @@
 
       <section
         v-if="view.heritageGained && heritageDef(view.heritageGained)"
-        class="reincarnation-sheet reincarnation-heritage-gained"
+        class="reincarnation-chapter reincarnation-heritage-gained"
         data-reincarnation-heritage-gained
       >
-        <header class="reincarnation-sheet__head">
-          <span class="reincarnation-sheet__mark font-kai is-gold" aria-hidden="true">传</span>
-          <div>
-            <p class="reincarnation-sheet__eyebrow">深修所悟 · 随神魂不灭</p>
-            <p class="reincarnation-sheet__title">
-              道统传承 · {{ heritageDef(view.heritageGained)!.name }}
-            </p>
-          </div>
-        </header>
-        <p class="reincarnation-sheet__copy">{{ heritageDef(view.heritageGained)!.desc }}</p>
+        <CharacterChapterHead
+          index="伍"
+          title="道统传承"
+          hint="深修所悟随神魂不灭，来世仍能沿用这份道统。"
+          :fact="heritageDef(view.heritageGained)!.name"
+        />
+        <p class="reincarnation-copy">{{ heritageDef(view.heritageGained)!.desc }}</p>
         <p class="reincarnation-heritage-gained__effect">
           效果：{{ heritageDef(view.heritageGained)!.effectDesc }}
         </p>
       </section>
 
-      <section class="reincarnation-final" data-reincarnation-final-warning>
-        <span class="reincarnation-final__seal font-kai" aria-hidden="true">印</span>
-        <div>
-          <p class="reincarnation-final__title">最后一程，只在按下「踏入轮回」后落定</p>
-          <p class="reincarnation-final__copy">
-            落印即刻归档此生：灵根、境界与天地换新，道号可按上页重拟；资源、装备、法宝与外物随皮囊散去。此前所有点选都还可改。
-          </p>
-        </div>
+      <section class="reincarnation-chapter reincarnation-final" data-reincarnation-final-warning>
+        <CharacterChapterHead
+          index="末"
+          title="落印之前"
+          hint="落印即刻归档此生：灵根、境界与天地换新；资源、装备、法宝与外物随皮囊散去。"
+          fact="尚未落定"
+        />
+        <p class="reincarnation-final__copy">
+          按下「踏入轮回」后，此前所有点选才真正落定；这已是最后一程。
+        </p>
       </section>
     </article>
 
@@ -665,10 +585,8 @@ import { lifeThemeDef, TABOO_NAMES } from "@/data/lifeThemes";
 import { ELEMENTS } from "@/data/linggen";
 import { heritageGroups } from "@/core/samsaraAudit";
 import {
-  REINCARNATION_STAGES,
   criticalSamsaraRows,
   reincarnationConfirmGate,
-  reincarnationStageState,
   samsaraBalance,
   samsaraLedger,
 } from "@/ui/reincarnationDesk";
@@ -676,6 +594,8 @@ import { engine } from "@/core/engine";
 import { formatNum, yearsShown } from "@/utils/format";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
+import CharacterChapterHead from "@/components/character/CharacterChapterHead.vue";
+import ReincarnationStageRail from "@/components/character/ReincarnationStageRail.vue";
 
 const ui = useUiStore();
 const player = usePlayerStore();
@@ -685,11 +605,6 @@ const RESULT_NAMES: Record<"done" | "unfinished" | "broken", string> = {
   done: "践行到底",
   unfinished: "未竟",
   broken: "已破",
-};
-const RESULT_COLORS: Record<"done" | "unfinished" | "broken", string> = {
-  done: "text-cinnabar",
-  unfinished: "text-ink-faint",
-  broken: "text-amber-ink",
 };
 
 const chosen = ref<string | null>(null);
@@ -761,82 +676,9 @@ watch(view, (next) => {
 .reincarnation-folio {
   --reincarnation-line: rgb(var(--color-ink-rgb) / 0.14);
   --reincarnation-line-strong: rgb(var(--color-ink-rgb) / 0.23);
-  --reincarnation-paper: rgb(var(--color-paper-deep-rgb) / 0.34);
+  --character-accent: var(--color-cinnabar);
+  --character-accent-rgb: var(--color-cinnabar-rgb);
   min-width: 0;
-}
-
-.reincarnation-stages {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin: 0 0 0.9rem;
-  border: 1px solid var(--reincarnation-line);
-  background: rgb(var(--color-paper-deep-rgb) / 0.18);
-}
-
-.reincarnation-stage {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: 1.2rem minmax(0, 1fr);
-  align-items: center;
-  gap: 0.28rem;
-  padding: 0.4rem 0.35rem;
-  color: var(--color-ink-faint);
-}
-
-.reincarnation-stage + .reincarnation-stage {
-  border-left: 1px solid var(--reincarnation-line);
-}
-
-.reincarnation-stage.is-current {
-  background: rgb(var(--color-cinnabar-rgb) / 0.045);
-  color: var(--color-ink);
-}
-
-.reincarnation-stage.is-done {
-  color: var(--color-ink-soft);
-}
-
-.reincarnation-stage__ordinal {
-  display: grid;
-  width: 1.2rem;
-  height: 1.2rem;
-  place-items: center;
-  border: 1px solid currentColor;
-  border-radius: 2px;
-  font-family: var(--font-kai);
-  font-size: var(--type-note);
-  line-height: 1;
-}
-
-.reincarnation-stage.is-current .reincarnation-stage__ordinal {
-  border-color: rgb(var(--color-cinnabar-rgb) / 0.46);
-  color: var(--color-cinnabar);
-}
-
-.reincarnation-stage.is-upcoming .reincarnation-stage__ordinal {
-  border-style: dashed;
-}
-
-.reincarnation-stage__copy {
-  display: grid;
-  min-width: 0;
-  gap: 0.08rem;
-}
-
-.reincarnation-stage__copy strong {
-  overflow-wrap: anywhere;
-  color: inherit;
-  font-family: var(--font-kai);
-  font-size: var(--type-body);
-  font-weight: 400;
-  letter-spacing: 0.08em;
-}
-
-.reincarnation-stage__copy small {
-  overflow-wrap: anywhere;
-  color: var(--color-ink-faint);
-  font-size: var(--type-note);
-  line-height: 1.35;
 }
 
 .reincarnation-head {
@@ -850,11 +692,10 @@ watch(view, (next) => {
 
 .reincarnation-head__seal {
   display: grid;
-  width: 2.45rem;
+  width: 2.1rem;
   height: 2.45rem;
   place-items: center;
-  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.44);
-  border-radius: 2px;
+  border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.72);
   color: var(--color-cinnabar);
   font-size: var(--type-title);
   line-height: 1;
@@ -921,14 +762,54 @@ watch(view, (next) => {
   line-height: 1.1;
 }
 
+.reincarnation-chapter {
+  min-width: 0;
+  margin-top: 0.82rem;
+  border-top: 1px solid var(--reincarnation-line);
+  padding-top: 0.82rem;
+}
+
+.reincarnation-head + .reincarnation-chapter {
+  margin-top: 0.72rem;
+  border-top: 0;
+  padding-top: 0.72rem;
+}
+
+.reincarnation-chapter > .character-chapter-head {
+  margin-bottom: 0.56rem;
+}
+
+.reincarnation-copy {
+  overflow-wrap: anywhere;
+  color: var(--color-ink-soft);
+  font-size: var(--type-body);
+  line-height: 1.65;
+}
+
+.reincarnation-read {
+  margin-top: 0.45rem;
+  overflow-wrap: anywhere;
+  border-top: 1px solid var(--reincarnation-line);
+  padding-top: 0.45rem;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+  line-height: 1.65;
+}
+
+.reincarnation-read.is-gold {
+  color: var(--color-gold-ink);
+}
+
+.reincarnation-read.is-amber {
+  color: var(--color-amber-ink);
+}
+
 .reincarnation-callout {
   display: grid;
   grid-template-columns: 2.1rem minmax(0, 1fr);
   gap: 0.62rem;
-  margin-top: 0.8rem;
-  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.25);
-  background: rgb(var(--color-cinnabar-rgb) / 0.035);
-  padding: 0.72rem;
+  border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.58);
+  padding-left: 0.62rem;
 }
 
 .reincarnation-callout__mark {
@@ -936,8 +817,6 @@ watch(view, (next) => {
   width: 2.1rem;
   height: 2.1rem;
   place-items: center;
-  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.4);
-  border-radius: 2px;
   color: var(--color-cinnabar);
   font-size: var(--type-title);
 }
@@ -959,17 +838,17 @@ watch(view, (next) => {
 .reincarnation-death-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 0.8rem;
-  border: 1px solid var(--reincarnation-line);
+  margin-top: 0.62rem;
+  border-block: 1px solid var(--reincarnation-line);
 }
 
 .reincarnation-death-grid > div {
   min-width: 0;
-  padding: 0.62rem;
+  padding: 0.5rem 0.6rem;
 }
 
 .reincarnation-death-grid > div + div {
-  border-left: 1px solid var(--reincarnation-line);
+  border-left: 1px dashed var(--reincarnation-line);
 }
 
 .reincarnation-death-grid dt {
@@ -1046,106 +925,61 @@ watch(view, (next) => {
   line-height: 1.35;
 }
 
-.reincarnation-review__grid,
+.reincarnation-review__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 0.72rem;
+}
+
+.reincarnation-review__grid > .reincarnation-chapter {
+  margin-top: 0;
+  border-top: 0;
+  padding-top: 0;
+}
+
+.reincarnation-review__grid > .reincarnation-chapter + .reincarnation-chapter {
+  margin-top: 0.72rem;
+  border-top: 1px solid var(--reincarnation-line);
+  padding-top: 0.72rem;
+}
+
 .reincarnation-choice__grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 0.62rem;
-  margin-top: 0.8rem;
+  margin-top: 0.58rem;
 }
 
-.reincarnation-sheet {
+.reincarnation-read-panel {
   min-width: 0;
-  border: 1px solid var(--reincarnation-line);
-  background: var(--reincarnation-paper);
-  padding: 0.7rem;
+  padding: 0.52rem 0;
 }
 
-.reincarnation-sheet.is-quiet {
-  background: transparent;
+.reincarnation-read-panel + .reincarnation-read-panel {
+  border-top: 1px solid var(--reincarnation-line);
 }
 
-.reincarnation-sheet__head,
-.reincarnation-section-head {
-  display: grid;
+.reincarnation-read-head {
+  display: flex;
   min-width: 0;
-  grid-template-columns: 2rem minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 0.55rem;
-}
-
-.reincarnation-sheet__mark {
-  display: grid;
-  width: 2rem;
-  height: 2rem;
-  place-items: center;
-  border: 1px solid rgb(var(--color-ink-rgb) / 0.22);
-  border-radius: 2px;
-  color: var(--color-ink-soft);
-  font-size: var(--type-title);
-  line-height: 1;
-}
-
-.reincarnation-sheet__mark.is-qing {
-  border-color: rgb(var(--color-qing-rgb) / 0.35);
-  color: var(--color-qing);
-}
-
-.reincarnation-sheet__mark.is-gold {
-  border-color: rgb(var(--color-gold-rgb) / 0.38);
-  color: var(--color-gold-ink);
-}
-
-.reincarnation-sheet__eyebrow {
-  overflow-wrap: anywhere;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
   color: var(--color-ink-faint);
   font-size: var(--type-note);
-  line-height: 1.45;
 }
 
-.reincarnation-sheet__title,
-.reincarnation-section-head__title {
-  margin-top: 0.08rem;
+.reincarnation-read-head strong {
   overflow-wrap: anywhere;
   color: var(--color-ink);
   font-family: var(--font-kai);
   font-size: var(--type-title);
   font-weight: 400;
-  letter-spacing: 0.05em;
-  line-height: 1.45;
-}
-
-.reincarnation-sheet__state {
-  align-self: start;
-  font-size: var(--type-note);
-  line-height: 1.5;
+  letter-spacing: 0.06em;
   text-align: right;
 }
 
-.reincarnation-sheet__copy {
-  margin-top: 0.52rem;
-  overflow-wrap: anywhere;
-  color: var(--color-ink-soft);
-  font-size: var(--type-body);
-  line-height: 1.65;
-}
-
-.reincarnation-sheet__read {
-  margin-top: 0.45rem;
-  overflow-wrap: anywhere;
-  border-top: 1px solid var(--reincarnation-line);
-  padding-top: 0.45rem;
-  color: var(--color-ink-faint);
-  font-size: var(--type-note);
-  line-height: 1.65;
-}
-
-.reincarnation-sheet__read.is-gold {
-  color: var(--color-gold-ink);
-}
-
-.reincarnation-sheet__read.is-amber {
-  color: var(--color-amber-ink);
+.reincarnation-read-panel .reincarnation-insight-rows {
+  margin-top: 0.36rem;
 }
 
 .reincarnation-insight-rows {
@@ -1177,57 +1011,13 @@ watch(view, (next) => {
 }
 
 .reincarnation-ledger {
-  margin-top: 0.8rem;
-  border: 1px solid var(--reincarnation-line);
-  padding: 0.72rem;
-}
-
-.reincarnation-ledger__head {
-  display: flex;
   min-width: 0;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.7rem;
-}
-
-.reincarnation-ledger__head > div {
-  min-width: 0;
-}
-
-.reincarnation-ledger__title {
-  margin-top: 0.08rem;
-  color: var(--color-ink);
-  font-family: var(--font-kai);
-  font-size: var(--type-title);
-  letter-spacing: 0.06em;
-}
-
-.reincarnation-ledger__copy {
-  margin-top: 0.2rem;
-  color: var(--color-ink-faint);
-  font-size: var(--type-note);
-  line-height: 1.55;
-}
-
-.reincarnation-ledger__count {
-  flex: 0 0 auto;
-  color: var(--color-cinnabar);
-  font-family: var(--font-kai);
-  font-size: var(--type-title);
-  line-height: 1;
-}
-
-.reincarnation-ledger__count small {
-  margin-left: 0.18rem;
-  color: var(--color-ink-faint);
-  font-size: var(--type-note);
 }
 
 .reincarnation-balance {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 0.58rem;
-  border: 1px solid var(--reincarnation-line);
+  border-block: 1px solid var(--reincarnation-line);
 }
 
 .reincarnation-balance__row {
@@ -1240,7 +1030,7 @@ watch(view, (next) => {
 }
 
 .reincarnation-balance__row + .reincarnation-balance__row {
-  border-left: 1px solid var(--reincarnation-line);
+  border-left: 1px dashed var(--reincarnation-line);
 }
 
 .reincarnation-balance__row span {
@@ -1305,8 +1095,7 @@ watch(view, (next) => {
   width: 1.6rem;
   height: 1.6rem;
   place-items: center;
-  border: 1px solid currentColor;
-  border-radius: 2px;
+  border-left: 2px solid currentColor;
   font-size: var(--type-note);
   line-height: 1;
 }
@@ -1352,8 +1141,7 @@ watch(view, (next) => {
   width: 1.6rem;
   height: 1.6rem;
   place-items: center;
-  border: 1px solid rgb(var(--color-gold-rgb) / 0.38);
-  border-radius: 2px;
+  border-left: 2px solid rgb(var(--color-gold-rgb) / 0.58);
   color: var(--color-gold-ink);
 }
 
@@ -1381,12 +1169,11 @@ watch(view, (next) => {
 }
 
 .reincarnation-ledger-group {
-  border: 1px solid var(--reincarnation-line);
-  padding: 0.45rem;
+  padding: 0.42rem 0;
 }
 
 .reincarnation-ledger-group + .reincarnation-ledger-group {
-  margin-top: 0.42rem;
+  border-top: 1px solid var(--reincarnation-line);
 }
 
 .reincarnation-ledger-group__head {
@@ -1403,8 +1190,7 @@ watch(view, (next) => {
   width: 1.45rem;
   height: 1.45rem;
   place-items: center;
-  border: 1px solid currentColor;
-  border-radius: 2px;
+  border-left: 2px solid currentColor;
   font-size: var(--type-note);
   line-height: 1;
 }
@@ -1491,8 +1277,8 @@ watch(view, (next) => {
   min-width: 0;
   align-items: baseline;
   gap: 0.28rem;
-  border: 1px solid var(--reincarnation-line);
-  padding: 0.2rem 0.4rem;
+  border-left: 1px solid rgb(var(--color-qing-rgb) / 0.42);
+  padding: 0.2rem 0 0.2rem 0.42rem;
   color: var(--color-ink-soft);
 }
 
@@ -1539,41 +1325,10 @@ watch(view, (next) => {
   white-space: normal;
 }
 
-.reincarnation-talent-section,
-.reincarnation-theme-section,
-.reincarnation-heritage-gained {
-  margin-top: 0.65rem;
-}
-
-.reincarnation-section-head {
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-
-.reincarnation-section-head__state {
-  align-self: start;
-  border: 1px solid rgb(var(--color-ink-rgb) / 0.18);
-  border-radius: 2px;
-  padding: 0.15rem 0.42rem;
-  color: var(--color-ink-faint);
-  font-size: var(--type-note);
-  line-height: 1.4;
-  text-align: right;
-}
-
-.reincarnation-section-head__state.is-blocked {
-  border-color: rgb(var(--color-cinnabar-rgb) / 0.34);
-  color: var(--color-cinnabar);
-}
-
-.reincarnation-section-head__state.is-qing {
-  border-color: rgb(var(--color-qing-rgb) / 0.32);
-  color: var(--color-qing);
-}
-
 .reincarnation-empty {
   margin-top: 0.55rem;
-  border: 1px dashed var(--reincarnation-line-strong);
-  padding: 0.55rem;
+  border-block: 1px dashed var(--reincarnation-line-strong);
+  padding: 0.55rem 0;
   color: var(--color-ink-faint);
   font-size: var(--type-body);
   line-height: 1.6;
@@ -1582,7 +1337,7 @@ watch(view, (next) => {
 .reincarnation-talent-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 0.42rem;
+  gap: 0;
   margin-top: 0.55rem;
 }
 
@@ -1592,9 +1347,11 @@ watch(view, (next) => {
   width: 100%;
   min-width: 0;
   gap: 0.35rem;
-  border: 1px solid var(--reincarnation-line);
-  background: rgb(var(--color-paper-deep-rgb) / 0.22);
-  padding: 0.55rem;
+  border: 0;
+  border-bottom: 1px solid var(--reincarnation-line);
+  border-left: 2px solid transparent;
+  background: transparent;
+  padding: 0.55rem 0.58rem;
   text-align: left;
   transition:
     border-color 160ms ease,
@@ -1609,8 +1366,8 @@ watch(view, (next) => {
 
 .reincarnation-talent-choice.is-chosen,
 .reincarnation-theme-choice.is-chosen {
-  border-color: rgb(var(--color-cinnabar-rgb) / 0.58);
-  background: rgb(var(--color-cinnabar-rgb) / 0.04);
+  border-left-color: rgb(var(--color-cinnabar-rgb) / 0.72);
+  background: rgb(var(--color-cinnabar-rgb) / 0.025);
 }
 
 .reincarnation-talent-choice__head,
@@ -1683,7 +1440,7 @@ watch(view, (next) => {
 
 .reincarnation-theme-list {
   display: grid;
-  gap: 0.42rem;
+  gap: 0;
   margin-top: 0.55rem;
 }
 
@@ -1720,36 +1477,12 @@ watch(view, (next) => {
 }
 
 .reincarnation-final {
-  display: grid;
-  grid-template-columns: 2.1rem minmax(0, 1fr);
-  gap: 0.62rem;
-  margin-top: 0.72rem;
-  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.28);
-  background: rgb(var(--color-cinnabar-rgb) / 0.04);
-  padding: 0.68rem;
-}
-
-.reincarnation-final__seal {
-  display: grid;
-  width: 2.1rem;
-  height: 2.1rem;
-  place-items: center;
-  border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.42);
-  border-radius: 2px;
-  color: var(--color-cinnabar);
-  font-size: var(--type-title);
-}
-
-.reincarnation-final__title {
-  color: var(--color-ink);
-  font-family: var(--font-kai);
-  font-size: var(--type-title);
-  letter-spacing: 0.04em;
-  line-height: 1.45;
+  border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.58);
+  padding-left: 0.62rem;
 }
 
 .reincarnation-final__copy {
-  margin-top: 0.3rem;
+  margin-top: 0.48rem;
   color: var(--color-ink-soft);
   font-size: var(--type-note);
   line-height: 1.65;
@@ -1768,10 +1501,39 @@ watch(view, (next) => {
 
   .reincarnation-review__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 0.9rem;
+  }
+
+  .reincarnation-review__grid > .reincarnation-chapter + .reincarnation-chapter {
+    margin-top: 0;
+    border-top: 0;
+    border-left: 1px solid var(--reincarnation-line);
+    padding: 0 0 0 0.9rem;
+  }
+
+  .reincarnation-review__grid > .reincarnation-chapter > .character-chapter-head {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .reincarnation-review__grid
+    > .reincarnation-chapter
+    > .character-chapter-head
+    :deep(.character-chapter-head__fact) {
+    grid-column: 2;
+    justify-self: start;
+    text-align: left;
   }
 
   .reincarnation-choice__grid {
     grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+    column-gap: 0.9rem;
+  }
+
+  .reincarnation-read-panel + .reincarnation-read-panel {
+    border-top: 0;
+    border-left: 1px solid var(--reincarnation-line);
+    padding-left: 0.9rem;
   }
 
   .reincarnation-critical {
@@ -1804,7 +1566,7 @@ watch(view, (next) => {
   }
 
   .reincarnation-death-grid > div + div {
-    border-top: 1px solid var(--reincarnation-line);
+    border-top: 1px dashed var(--reincarnation-line);
     border-left: 0;
   }
 
@@ -1813,17 +1575,8 @@ watch(view, (next) => {
   }
 
   .reincarnation-balance__row + .reincarnation-balance__row {
-    border-top: 1px solid var(--reincarnation-line);
+    border-top: 1px dashed var(--reincarnation-line);
     border-left: 0;
-  }
-
-  .reincarnation-sheet__head {
-    grid-template-columns: 1.8rem minmax(0, 1fr);
-  }
-
-  .reincarnation-sheet__state {
-    grid-column: 2;
-    text-align: left;
   }
 
   .reincarnation-critical__row {
@@ -1838,15 +1591,6 @@ watch(view, (next) => {
 }
 
 @media (max-width: 220px) {
-  .reincarnation-stages {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .reincarnation-stage + .reincarnation-stage {
-    border-top: 1px solid var(--reincarnation-line);
-    border-left: 0;
-  }
-
   .reincarnation-actions {
     grid-template-columns: minmax(0, 1fr);
   }

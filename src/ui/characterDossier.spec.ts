@@ -239,13 +239,15 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
 
   it("往生三程先辞世再回照,末程才摊落子与不可撤回", () => {
     const dialog = source("src/components/character/ReincarnationDialog.vue");
+    const rail = source("src/components/character/ReincarnationStageRail.vue");
 
-    expect(dialog, "三扇窗都要带同一枚往生三程路签").toContain("data-reincarnation-stage-rail");
+    expect(dialog, "三扇窗共用同一枚往生三程路签").toContain("<ReincarnationStageRail");
+    expect(rail, "三程路签要有稳定落点").toContain("data-reincarnation-stage-rail");
     expect(dialog, "三程要各有稳定落点").toContain('data-reincarnation-stage="death"');
     expect(dialog).toContain('data-reincarnation-stage="review"');
     expect(dialog).toContain('data-reincarnation-stage="choice"');
-    expect(dialog, "三程名与状态只读同一份装配").toContain("REINCARNATION_STAGES");
-    expect(dialog, "每程当前态也要有可量测的稳定标记").toContain("data-reincarnation-stage-state");
+    expect(rail, "三程名与状态只读同一份装配").toContain("REINCARNATION_STAGES");
+    expect(rail, "每程当前态也要有可量测的稳定标记").toContain("data-reincarnation-stage-state");
     expect(dialog, "辞世屏要说明尚未落子").toContain("尚未写入轮回");
     expect(dialog, "回照屏去留账只读同一份继承表").toContain("samsaraLedger(");
     expect(dialog, "回照屏仍可展开 36 项全账").toContain("data-reincarnation-heritage-toggle");
@@ -258,14 +260,52 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
     expect(dialog, "踏入轮回仍是唯一最终落子动作").toContain("data-reincarnation-confirm");
   });
 
+  it("往生录三程续在同一册章首,内层不再叠纸卡", () => {
+    const dialog = source("src/components/character/ReincarnationDialog.vue");
+    const rail = source("src/components/character/ReincarnationStageRail.vue");
+
+    expect(dialog, "三程正文共用人物册章首").toContain(
+      'import CharacterChapterHead from "@/components/character/CharacterChapterHead.vue"',
+    );
+    expect(
+      dialog.match(/<CharacterChapterHead/g)?.length ?? 0,
+      "辞世一叙、回照三叙与择生诸章都要各成章",
+    ).toBeGreaterThanOrEqual(9);
+    expect(dialog, "每章沿同一条开口账线续排").toContain('class="reincarnation-chapter');
+    expect(dialog, "旧内层纸卡退场").not.toContain('class="reincarnation-sheet');
+    expect(dialog, "不再另存一份纸底变量").not.toContain("--reincarnation-paper");
+    expect(dialog, "择姿与立题改成可选账行").toMatch(
+      /\.reincarnation-talent-choice,[\s\S]{0,220}border:\s*0;/,
+    );
+    expect(rail, "三程路签只留上下账线").toMatch(
+      /\.reincarnation-stages\s*\{[\s\S]{0,220}border-block:/,
+    );
+  });
+
+  it("人物册章首自带版式,转世浮层不靠人物页异步样式才成栅格", () => {
+    const head = source("src/components/character/CharacterChapterHead.vue");
+
+    expect(head, "章首组件要自带样式").toContain("<style scoped>");
+    expect(head, "章首要自己声明三栏栅格").toMatch(
+      /\.character-chapter-head\s*\{[\s\S]{0,180}display:\s*grid;[\s\S]{0,180}grid-template-columns:\s*auto minmax\(0, 1fr\) auto/,
+    );
+    expect(head, "200% 缩放档仍由组件自己收口").toMatch(
+      /@media \(max-width: 220px\)[\s\S]{0,260}\.character-chapter-head\s*\{[\s\S]{0,120}grid-template-columns:\s*auto minmax\(0, 1fr\)/,
+    );
+  });
+
   it("往生三程手机单列,620 起回照两账并读,220 以下路签与动作收成上下段", () => {
     const dialog = source("src/components/character/ReincarnationDialog.vue");
+    const rail = source("src/components/character/ReincarnationStageRail.vue");
 
     expect(dialog, "往生三程要占满浮层可用宽").toContain('size="wide"');
     expect(dialog, "620 起回照两账并读").toMatch(
       /@media \(min-width: 620px\)[\s\S]{0,700}\.reincarnation-review__grid\s*\{[\s\S]{0,140}grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/,
     );
-    expect(dialog, "220 以下路签收成竖排").toMatch(
+    expect(dialog, "620 起双账里的章首先保题名宽度,真值落到下一行").toMatch(
+      /@media \(min-width: 620px\)[\s\S]{0,900}\.reincarnation-review__grid > \.reincarnation-chapter > \.character-chapter-head\s*\{[\s\S]{0,160}grid-template-columns:\s*auto minmax\(0, 1fr\)/,
+    );
+    expect(rail, "220 以下路签收成竖排").toMatch(
       /@media \(max-width: 220px\)[\s\S]{0,1600}\.reincarnation-stages\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
     expect(dialog, "220 以下末程动作上下收住").toMatch(
