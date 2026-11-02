@@ -239,6 +239,14 @@ error: Failed to resolve vite command: GenericFailure, Expected
 左四程 / 右一程,195 核对印谱两列、四程单列且整帖与动作不越纸。结构判据由
 `src/ui/celestialDesk.spec.ts` 守住。
 
+天界战报浮层另收成一册「证道战卷」,四章固定为战果、战局、逐场与此战之判。
+场签从裸数字芯片改成 roving tablist:方向键与 Home / End 必须同步选中场、焦点、
+对阵与回放,逐场账行也标出同一当前场;关动效时回放直接落满,重播键仍守 28px 触达面。
+真浏览器门 `taskCelestialBattleScroll` 用七杀试炼真打一场,在 390 / 960 / 195 三档
+核对四章顺序、卷身只留上下账线、场签与日志零卡壳、无横向裁切;960 核对场签同排与
+对阵左 / 战报右,195 核对场签单列。源码契约同样由 `src/ui/celestialDesk.spec.ts`
+守住。
+
 三生录的画像、四册册口与当前正文现在同住一张开口续卷,`LegacyChapterRail`
 在每枚册口先报本世、节点、未了与纪录真值,方向键 / Home / End 同步移动焦点、
 选中态、地址和唯一 tabpanel。真浏览器门 `taskLegacyRegisterFold` 在 390 核验

@@ -288,6 +288,69 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
     );
   });
 
+  it("天界战报收成一册证道战卷,四章同账且场次键盘同步战局与战报", () => {
+    const view = source("src/views/CelestialView.vue");
+    const report = source("src/components/celestial/CelestialReportLedger.vue");
+    const gauntlet = source("src/components/celestial/GauntletPanel.vue");
+    const css = source("src/styles/pages/celestial.css");
+    const layout = source("scripts/layout-check.mjs");
+
+    expect(view, "战报浮层改挂一册证道战卷").toContain('title="证道战卷"');
+    expect(view, "战报正文交给独立战卷组件").toContain("<CelestialReportLedger");
+    expect(view, "逐场摘要、判词与奖励不再留在主视图各拼一段").not.toContain("bg-paper-deep/70");
+    expect(report, "战卷要有稳定运行时落点").toContain(
+      'class="celestial-report-ledger" data-celestial-report-ledger',
+    );
+    expect(
+      [...report.matchAll(/data-celestial-report-chapter="([^"]+)"/g)].map((match) => match[1]),
+      "战果、战局、逐场与此战之判必须依次续排",
+    ).toEqual(["result", "field", "fights", "judgement"]);
+    expect(report.match(/<CelestialChapterHead/g) ?? [], "四章共用同一章首").toHaveLength(4);
+    expect(report, "战局由主文件持有当前场,场签与战报同源").toContain(':current="currentFight"');
+    expect(report, "场签切换回写到战卷").toContain('@select="selectFight"');
+    expect(report, "逐场账行要有稳定运行时落点").toContain("data-celestial-report-fight");
+    expect(report, "逐场账行标出当前场").toContain(':data-current="currentFight === index');
+    expect(report, "战果、逐场与判词不再另套圆角纸卡").not.toContain("rounded-[2px]");
+    expect(gauntlet, "场次入口走单一 tablist").toContain('role="tablist"');
+    expect(gauntlet, "每场是真正的 tab").toContain('role="tab"');
+    expect(gauntlet, "选中场要报给读屏").toContain(':aria-selected="current === i"');
+    expect(gauntlet, "场次走 roving tabindex").toContain(':tabindex="current === i ? 0 : -1"');
+    expect(gauntlet, "方向键与 Home / End 在场次间移动").toContain(
+      '@keydown="moveFight($event, i)"',
+    );
+    expect(gauntlet, "对阵仍是受控 tabpanel").toContain('role="tabpanel"');
+    expect(gauntlet, "回放仍由暂停感知时钟推进").toContain("gameClock(");
+    expect(gauntlet, "关动效仍直接给结果").toContain("settings.reduceMotion");
+    expect(gauntlet, "日志颜色仍由同一张 KIND_COLOR 表决定").toContain("KIND_COLOR[entry.t]");
+    expect(gauntlet, "伤害数字与暴击着色不得回退").toContain('v-if="entry.dmg"');
+    expect(gauntlet, "旧场次芯片、对阵卡与日志框不再留下圆角卡壳").not.toContain("rounded-[2px]");
+    expect(gauntlet, "旧通用纸卡不再混进战卷").not.toContain("card-ink");
+    expect(css, "战卷只留上下账线,不铺侧框、圆角与卡底").toMatch(
+      /\.celestial-report-ledger\s*\{[\s\S]{0,260}border:\s*0;[\s\S]{0,180}border-block:\s*1px solid;[\s\S]{0,180}border-radius:\s*0;[\s\S]{0,180}background:\s*transparent;[\s\S]{0,180}box-shadow:\s*none;/,
+    );
+    expect(css, "四章之间只留分段线").toMatch(
+      /\.celestial-report-chapter\s*\+\s*\.celestial-report-chapter\s*\{[\s\S]{0,80}border-top:\s*1px solid/,
+    );
+    expect(css, "场签退成开口账格").toMatch(
+      /\.celestial-fight-tab\s*\{[\s\S]{0,360}border-radius:\s*0;[\s\S]{0,220}background:\s*transparent;[\s\S]{0,120}box-shadow:\s*none;/,
+    );
+    expect(css, "当前场只用朱砂 inset 线,不重新长成实心胶囊").toMatch(
+      /\.celestial-fight-tab\.is-selected\s*\{[\s\S]{0,180}box-shadow:\s*inset 0 -2px 0/,
+    );
+    expect(css, "对阵与战报退成同一张透明账页").toMatch(
+      /\.celestial-gauntlet__station\s*\{[\s\S]{0,300}border:\s*0;[\s\S]{0,180}background:\s*transparent;/,
+    );
+    expect(css, "960 起对阵与战报并读").toMatch(
+      /@media \(min-width: 960px\)\s*\{[\s\S]*?\.celestial-gauntlet__station\s*\{[\s\S]{0,220}grid-template-columns:\s*minmax\(0, 0\.42fr\) minmax\(0, 1fr\)/,
+    );
+    expect(css, "200% 缩放档场签退单列").toMatch(
+      /@media \(max-width: 220px\)\s*\{[\s\S]*?\.celestial-fight-tabs\s*\{[\s\S]{0,120}grid-template-columns:\s*minmax\(0, 1fr\)/,
+    );
+    expect(layout, "真浏览器要核证道战卷、场签与日志三档").toContain(
+      "data-celestial-report-ledger",
+    );
+  });
+
   it("手机总账两栏,960 起四栏并读,220 以下星图读数与门径退单列", () => {
     const css = source("src/style.css");
     const start = css.indexOf(".celestial-pulse {");

@@ -1057,6 +1057,392 @@
     border-block-color: rgb(var(--color-cinnabar-rgb) / 0.26);
     color: rgb(var(--color-cinnabar-rgb));
   }
+  /*
+   * 证道战卷 —— 战报不再是一叠同权纸卡。
+   *
+   * 战果、战局、逐场与判词共用整册上下账线;场签、对阵、回放和逐场行都退成
+   * 开口账页,只在章与章之间留分段线。当前场只由朱砂 inset 线标记,胜负与
+   * 余血仍读正文墨色;896 以上让对阵与回放并读,390 续排,195 场签退单列。
+   */
+  .celestial-report-ledger {
+    margin-top: 0.35rem;
+    border: 0;
+    border-block: 1px solid;
+    border-block-color: rgb(var(--color-ink-rgb) / 0.2);
+    border-block-start-color: rgb(var(--color-cinnabar-rgb) / 0.28);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .celestial-report-chapter {
+    min-width: 0;
+    padding: 0 0.12rem 0.78rem;
+  }
+  .celestial-report-chapter + .celestial-report-chapter {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+  }
+  .celestial-report-result {
+    display: grid;
+    min-width: 0;
+    align-items: center;
+    gap: 0.48rem 0.8rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    padding: 0.66rem 0.08rem 0.62rem;
+  }
+  .celestial-report-result__identity {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    gap: 0.68rem;
+  }
+  .celestial-report-result__seal {
+    display: grid;
+    width: 2.55rem;
+    height: 2.55rem;
+    flex: none;
+    place-items: center;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.42);
+    background: rgb(var(--color-cinnabar-rgb) / 0.035);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    line-height: 1;
+  }
+  .celestial-report-result__seal.is-cleared {
+    border-color: rgb(var(--color-qing-rgb) / 0.42);
+    background: rgb(var(--color-qing-rgb) / 0.035);
+    color: rgb(var(--color-qing-rgb));
+  }
+  .celestial-report-result__copy {
+    min-width: 0;
+  }
+  .celestial-report-result__source {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.12em;
+    line-height: 1.45;
+  }
+  .celestial-report-result__mark {
+    margin-top: 0.08rem;
+    font-family: var(--font-kai);
+    font-size: calc(var(--type-title) + 1px);
+    letter-spacing: 0.08em;
+    line-height: 1.42;
+    overflow-wrap: anywhere;
+  }
+  .celestial-report-result__meta {
+    margin-top: 0.12rem;
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .celestial-report-result__reward {
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-body);
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .celestial-fight-tabs {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(auto-fit, minmax(5.25rem, 1fr));
+    border-block: 1px solid rgb(var(--color-ink-rgb) / 0.11);
+    padding: 0.12rem 0;
+  }
+  .celestial-fight-tab {
+    display: grid;
+    min-width: 0;
+    min-height: 3.2rem;
+    grid-template-areas:
+      "ordinal verdict"
+      "foe foe";
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-content: center;
+    gap: 0.08rem 0.35rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 0.38rem 0.42rem;
+    color: rgb(var(--color-ink-soft-rgb));
+    text-align: left;
+  }
+  .celestial-fight-tab__ordinal {
+    min-width: 0;
+    grid-area: ordinal;
+    color: rgb(var(--color-qing-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1.35;
+    white-space: nowrap;
+  }
+  .celestial-fight-tab__verdict {
+    grid-area: verdict;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1.35;
+  }
+  .celestial-fight-tab.is-loss .celestial-fight-tab__verdict {
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  .celestial-fight-tab__foe {
+    min-width: 0;
+    grid-area: foe;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+  .celestial-fight-tab.is-selected {
+    background: rgb(var(--color-cinnabar-rgb) / 0.035);
+    box-shadow: inset 0 -2px 0 rgb(var(--color-cinnabar-rgb) / 0.72);
+  }
+  .celestial-fight-tab.is-selected .celestial-fight-tab__ordinal,
+  .celestial-fight-tab.is-selected .celestial-fight-tab__verdict {
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  .celestial-fight-tab:focus-visible {
+    outline: 1px solid rgb(var(--color-cinnabar-rgb) / 0.6);
+    outline-offset: -2px;
+  }
+  .celestial-gauntlet__station {
+    display: grid;
+    min-width: 0;
+    grid-template-areas:
+      "duel"
+      "report"
+      "controls";
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+  }
+  .celestial-gauntlet__duel {
+    display: grid;
+    min-width: 0;
+    grid-area: duel;
+    align-content: center;
+    padding: 0.62rem 0.08rem 0.52rem;
+  }
+  .celestial-gauntlet__names {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0.28rem 0.62rem;
+  }
+  .celestial-gauntlet__player {
+    min-width: 0;
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+  .celestial-gauntlet__round {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.4;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .celestial-gauntlet__foe {
+    min-width: 0;
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    line-height: 1.45;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+  .celestial-gauntlet__bars {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.46rem;
+  }
+  .celestial-gauntlet__report {
+    min-width: 0;
+    grid-area: report;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+  }
+  .celestial-gauntlet__log-head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.18rem 0.6rem;
+    padding: 0.42rem 0.08rem 0.28rem;
+  }
+  .celestial-gauntlet__log-head span {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    letter-spacing: 0.18em;
+  }
+  .celestial-gauntlet__log-head small {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.4;
+  }
+  .celestial-gauntlet__log.scroll-pane {
+    max-height: 12.5rem;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0 0.08rem 0.42rem;
+    overflow-y: auto;
+  }
+  .celestial-gauntlet__line {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.55rem;
+    border-left: 2px solid transparent;
+    padding: 0.2rem 0.08rem 0.2rem 0.42rem;
+    line-height: 1.58;
+    overflow-wrap: anywhere;
+  }
+  .celestial-gauntlet__line + .celestial-gauntlet__line {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.06);
+  }
+  .celestial-gauntlet__line[data-log-kind="skill"] {
+    border-left-color: rgb(var(--color-qing-rgb) / 0.5);
+  }
+  .celestial-gauntlet__line[data-log-kind="crit"] {
+    border-left-color: rgb(var(--color-cinnabar-rgb) / 0.62);
+  }
+  .celestial-gauntlet__line[data-log-kind="shield"] {
+    border-left-color: rgb(var(--color-gold-ink-rgb) / 0.55);
+  }
+  .celestial-gauntlet__line[data-log-kind="heal"] {
+    border-left-color: rgb(var(--color-jade-rgb) / 0.55);
+  }
+  .celestial-gauntlet__line[data-log-kind="proc"] {
+    border-left-color: rgb(var(--color-violet-ink-rgb) / 0.5);
+  }
+  .celestial-gauntlet__line[data-log-kind="win"] {
+    border-left-color: rgb(var(--color-jade-rgb) / 0.65);
+  }
+  .celestial-gauntlet__line[data-log-kind="lose"] {
+    border-left-color: rgb(var(--color-cinnabar-rgb) / 0.65);
+  }
+  .celestial-gauntlet__damage {
+    flex: none;
+    font-weight: 600;
+  }
+  .celestial-gauntlet__empty {
+    display: grid;
+    min-height: 5.4rem;
+    place-items: center;
+    color: rgb(var(--color-ink-faint-rgb));
+    text-align: center;
+  }
+  .celestial-gauntlet__controls {
+    display: flex;
+    min-width: 0;
+    grid-area: controls;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    padding: 0.38rem 0.08rem 0.08rem;
+  }
+  .celestial-gauntlet__count {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.4;
+  }
+  .celestial-gauntlet__playback {
+    min-width: 2rem;
+    min-height: 32px;
+    border: 0;
+    border-bottom: 1px solid rgb(var(--color-cinnabar-rgb) / 0.3);
+    border-radius: 0;
+    background: transparent;
+    padding: 0.22rem 0.08rem;
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1.4;
+  }
+  .celestial-report-fights {
+    min-width: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .celestial-report-fight {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.15rem minmax(0, 1fr) auto auto;
+    align-items: baseline;
+    gap: 0.12rem 0.52rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.065);
+    padding: 0.42rem 0.08rem;
+  }
+  .celestial-report-fight.is-current {
+    background: rgb(var(--color-cinnabar-rgb) / 0.035);
+    box-shadow: inset 2px 0 0 rgb(var(--color-cinnabar-rgb) / 0.66);
+  }
+  .celestial-report-fight__ordinal {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1.5;
+    text-align: center;
+  }
+  .celestial-report-fight__foe {
+    min-width: 0;
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+  .celestial-report-fight__verdict {
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .celestial-report-fight__meta {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.45;
+    text-align: right;
+  }
+  .celestial-report-judgement {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .celestial-report-judgement__line {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1rem minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0.28rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.065);
+    padding: 0.38rem 0.08rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.62;
+    overflow-wrap: anywhere;
+  }
+  .celestial-report-judgement__line > span:first-child {
+    color: rgb(var(--color-qing-rgb));
+    font-family: var(--font-kai);
+    text-align: center;
+  }
+  .celestial-report-judgement__empty {
+    padding: 0.58rem 0.08rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.6;
+  }
   @media (hover: hover) and (pointer: fine) {
     .celestial-trial-action:hover:not(:disabled),
     .celestial-challenge-option:hover:not(:disabled) {
@@ -1070,6 +1456,10 @@
     }
     .celestial-challenge-step-nav__button:hover:not(:disabled) {
       background: rgb(var(--color-cinnabar-rgb) / 0.05);
+    }
+    .celestial-fight-tab:hover,
+    .celestial-gauntlet__playback:hover {
+      background: rgb(var(--color-ink-rgb) / 0.025);
     }
   }
   @media (min-width: 960px) {
@@ -1159,6 +1549,51 @@
     .celestial-challenge-step-nav {
       margin-top: auto;
     }
+
+    .celestial-report-result {
+      grid-template-columns: minmax(0, 1fr) auto;
+      padding-inline: 0.12rem;
+    }
+
+    .celestial-fight-tabs {
+      grid-template-columns: repeat(auto-fit, minmax(4.6rem, 1fr));
+    }
+
+    .celestial-gauntlet__station {
+      grid-template-areas:
+        "duel report"
+        "controls report";
+      grid-template-columns: minmax(0, 0.42fr) minmax(0, 1fr);
+      align-items: stretch;
+      gap: 0 1rem;
+    }
+
+    .celestial-gauntlet__duel {
+      align-content: center;
+      padding: 0.68rem 0.12rem;
+    }
+
+    .celestial-gauntlet__report {
+      border-top: 0;
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+      padding-left: 1rem;
+    }
+
+    .celestial-gauntlet__controls {
+      align-self: end;
+      padding: 0.42rem 0.12rem 0.1rem;
+    }
+
+    .celestial-report-fights {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 1rem;
+    }
+
+    .celestial-report-fight:nth-child(even) {
+      border-left: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+      padding-left: 0.72rem;
+    }
   }
   @media (max-width: 279px) {
     .celestial-trial-roster {
@@ -1209,7 +1644,8 @@
     .celestial-dao__choice,
     .celestial-gateway,
     .celestial-trial-chapter,
-    .celestial-trial-seal {
+    .celestial-trial-seal,
+    .celestial-report-chapter {
       padding-inline: 0.62rem;
     }
 
@@ -1304,6 +1740,45 @@
     .celestial-challenge-contract__head strong {
       display: block;
       margin-top: 0.12rem;
+      text-align: left;
+    }
+
+    .celestial-fight-tabs {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .celestial-report-result__identity {
+      align-items: flex-start;
+    }
+
+    .celestial-report-result__reward {
+      white-space: normal;
+    }
+
+    .celestial-gauntlet__names {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .celestial-gauntlet__round {
+      grid-row: 2;
+      grid-column: 1 / -1;
+      justify-self: start;
+      text-align: left;
+    }
+
+    .celestial-gauntlet__foe {
+      grid-row: 1;
+      grid-column: 2;
+    }
+
+    .celestial-report-fight {
+      grid-template-columns: 1.15rem minmax(0, 1fr) auto;
+    }
+
+    .celestial-report-fight__meta {
+      grid-row: 2;
+      grid-column: 2 / -1;
+      justify-self: start;
       text-align: left;
     }
   }

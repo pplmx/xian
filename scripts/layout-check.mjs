@@ -10913,6 +10913,496 @@ async function taskCelestialTrialFold() {
 }
 
 /**
+ * 天界证道战卷:战果、战局、逐场与判词同住一册。
+ *
+ * 用七杀试炼真打一场,在 390 / 960 / 195 三档核四章顺序、卷身卡壳归零、
+ * 场签 roving tablist、方向键 / Home / End 与战局焦点同步,以及日志不越出账页。
+ * 夹具关动效,让回放直接落满,量的不是播放中途的半页。
+ */
+async function taskCelestialBattleScroll() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    slices.endgame = {
+      ...slices.endgame,
+      endgameTutorialSeen: true,
+      resourceDialogSeen: true,
+    };
+    slices.settings = {
+      ...slices.settings,
+      reduceMotion: true,
+      battleSpeed: 4,
+    };
+    await seedSave(ctx, slices, "__celestialBattleScroll");
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/celestial?tab=trial", 900);
+    checked += 1;
+    if (rendered === 0) {
+      failures.push("[390-report] 天界试炼册没渲染出来,证道战卷没打开");
+    } else {
+      const tutorialClose = page.getByRole("button", { name: "知道了" }).first();
+      if ((await tutorialClose.count()) > 0) await tutorialClose.click().catch(() => {});
+      const leftover = await clearOverlays(page);
+      if (leftover.length) {
+        failures.push(`[390-report] 开战报前还开着浮层:${leftover.join("、")}`);
+      }
+
+      const trialAction = page.locator("[data-celestial-trial-action]").first();
+      if ((await trialAction.count()) === 0) {
+        failures.push("[390-report] 找不到试炼应试入口,证道战卷没打开");
+      } else {
+        await trialAction.click({ timeout: 3000 }).catch(() => {});
+        await page
+          .waitForSelector("[data-celestial-report-ledger]", { timeout: 6000 })
+          .catch(() => undefined);
+      }
+
+      const readReport = () =>
+        page.evaluate(() => {
+          const ledger = document.querySelector("[data-celestial-report-ledger]");
+          const modal = ledger?.closest("[data-folio-modal]");
+          const modalScroll = modal?.querySelector("[data-folio-modal-scroll]");
+          const station = ledger?.querySelector(".celestial-gauntlet__station");
+          const tabsRoot = ledger?.querySelector(".celestial-fight-tabs");
+          const log = ledger?.querySelector("[data-celestial-fight-log]");
+          const playback = ledger?.querySelector(".celestial-gauntlet__playback");
+          const box = (el) => {
+            if (!el) return null;
+            const r = el.getBoundingClientRect();
+            return {
+              top: r.top,
+              right: r.right,
+              bottom: r.bottom,
+              left: r.left,
+              width: r.width,
+              height: r.height,
+            };
+          };
+          const style = (el) => {
+            if (!el) return null;
+            const s = getComputedStyle(el);
+            return {
+              top: Number.parseFloat(s.borderTopWidth) || 0,
+              right: Number.parseFloat(s.borderRightWidth) || 0,
+              bottom: Number.parseFloat(s.borderBottomWidth) || 0,
+              left: Number.parseFloat(s.borderLeftWidth) || 0,
+              radius: Number.parseFloat(s.borderTopLeftRadius) || 0,
+              background: s.backgroundColor,
+              shadow: s.boxShadow,
+            };
+          };
+          const chapters = [...(ledger?.querySelectorAll("[data-celestial-report-chapter]") ?? [])];
+          const tabs = [...(ledger?.querySelectorAll("[data-celestial-fight-tab]") ?? [])];
+          const rows = [...(ledger?.querySelectorAll("[data-celestial-report-fight]") ?? [])];
+          const ledgerBox = box(ledger);
+          const tabRows = tabs.map((tab, index) => {
+            const tabBox = box(tab);
+            const tabStyle = style(tab);
+            return {
+              index,
+              role: tab.getAttribute("role"),
+              selected: tab.getAttribute("aria-selected") === "true",
+              tabIndex: tab.getAttribute("tabindex"),
+              label: tab.getAttribute("aria-label") || "",
+              foe: (tab.querySelector(".celestial-fight-tab__foe")?.textContent || "").trim(),
+              top: Math.round(tabBox?.top ?? -1),
+              right: tabBox?.right ?? null,
+              radius: tabStyle?.radius ?? -1,
+              background: tabStyle?.background ?? "",
+              shadow: tabStyle?.shadow ?? "",
+            };
+          });
+          const selectedIndex = tabRows.findIndex((tab) => tab.selected);
+          const logLines = [...(log?.querySelectorAll(".celestial-gauntlet__line") ?? [])].map(
+            (line) => {
+              const lineBox = box(line);
+              return {
+                text: (line.textContent || "").replace(/\s+/g, " ").trim(),
+                clip: line.scrollWidth > line.clientWidth + 1,
+                outside:
+                  !!ledgerBox &&
+                  !!lineBox &&
+                  (lineBox.left < ledgerBox.left - 1 || lineBox.right > ledgerBox.right + 1),
+              };
+            },
+          );
+          return {
+            found: !!ledger,
+            chapterKeys: chapters.map((chapter) =>
+              chapter.getAttribute("data-celestial-report-chapter"),
+            ),
+            chapterTitles: chapters.map((chapter) =>
+              (chapter.querySelector(".celestial-chapter-head__title")?.textContent || "").trim(),
+            ),
+            chapterHeads: ledger?.querySelectorAll(".celestial-chapter-head").length ?? -1,
+            cardShells: ledger?.querySelectorAll(".card-ink").length ?? -1,
+            ledger: style(ledger),
+            ledgerBox,
+            modalBox: box(modal),
+            modalScrollBox: box(modalScroll),
+            modalScrollClip: modalScroll
+              ? modalScroll.scrollWidth > modalScroll.clientWidth + 1
+              : true,
+            station: style(station),
+            stationBox: box(station),
+            stationCurrent: Number(station?.getAttribute("data-celestial-fight-current") ?? -1),
+            stationRole: station?.getAttribute("role") ?? null,
+            stationFoe: (
+              station?.querySelector(".celestial-gauntlet__foe")?.textContent || ""
+            ).trim(),
+            tabsRootRole: tabsRoot?.getAttribute("role") ?? null,
+            tabColumns: tabsRoot
+              ? getComputedStyle(tabsRoot).gridTemplateColumns.trim().split(/\s+/).length
+              : -1,
+            stationColumns: station
+              ? getComputedStyle(station).gridTemplateColumns.trim().split(/\s+/).length
+              : -1,
+            tabs: tabRows,
+            tabCount: tabRows.length,
+            selectedCount: tabRows.filter((tab) => tab.selected).length,
+            selectedIndex,
+            selectedTabIndex: tabRows[selectedIndex]?.tabIndex ?? null,
+            activeIndex: tabs.findIndex((tab) => tab === document.activeElement),
+            rowCount: rows.length,
+            currentRows: rows
+              .map((row, index) => ({ index, current: row.hasAttribute("data-current") }))
+              .filter((row) => row.current)
+              .map((row) => row.index),
+            rowRadii: rows.map((row) => style(row)?.radius ?? -1),
+            log: style(log),
+            logLines,
+            logRole: log?.getAttribute("role") ?? null,
+            playbackLabel: (playback?.textContent || "").trim(),
+            viewportWidth: window.innerWidth,
+            viewportHeight: window.innerHeight,
+          };
+        });
+
+      await settleVisuals(page);
+      const mobile = await readReport();
+      checked += 1;
+      if (!mobile.found) {
+        failures.push("[390-report] 证道战卷没有渲染,整组判据落空");
+      } else {
+        if (
+          mobile.chapterKeys.join("|") !== "result|field|fights|judgement" ||
+          mobile.chapterTitles.join("|") !== "战果|战局|逐场|此战之判" ||
+          mobile.chapterHeads !== 4
+        ) {
+          failures.push(
+            `[390-report] 战卷四章顺序或章首漂了:${JSON.stringify({
+              keys: mobile.chapterKeys,
+              titles: mobile.chapterTitles,
+              heads: mobile.chapterHeads,
+            })}`,
+          );
+        }
+        if (
+          !mobile.ledger ||
+          mobile.ledger.top < 0.9 ||
+          mobile.ledger.bottom < 0.9 ||
+          mobile.ledger.left > 0.1 ||
+          mobile.ledger.right > 0.1 ||
+          mobile.ledger.radius > 0.1 ||
+          mobile.ledger.background !== "rgba(0, 0, 0, 0)" ||
+          mobile.ledger.shadow !== "none"
+        ) {
+          failures.push(`[390-report] 战卷没有只留上下账线:${JSON.stringify(mobile.ledger)}`);
+        }
+        if (mobile.cardShells !== 0) {
+          failures.push(`[390-report] 战卷正文仍套着 ${mobile.cardShells} 张同权卡纸`);
+        }
+        if (
+          mobile.tabsRootRole !== "tablist" ||
+          mobile.tabCount < 2 ||
+          mobile.selectedCount !== 1 ||
+          mobile.selectedTabIndex !== "0" ||
+          mobile.stationRole !== "tabpanel" ||
+          mobile.stationCurrent !== mobile.selectedIndex ||
+          mobile.rowCount !== mobile.tabCount ||
+          mobile.currentRows.join(",") !== String(mobile.selectedIndex)
+        ) {
+          failures.push(
+            `[390-report] 场签、战局与逐场没有同报当前场:${JSON.stringify({
+              role: mobile.tabsRootRole,
+              tabs: mobile.tabCount,
+              selectedCount: mobile.selectedCount,
+              selectedIndex: mobile.selectedIndex,
+              selectedTabIndex: mobile.selectedTabIndex,
+              stationRole: mobile.stationRole,
+              stationCurrent: mobile.stationCurrent,
+              rows: mobile.rowCount,
+              currentRows: mobile.currentRows,
+            })}`,
+          );
+        }
+        if (mobile.tabColumns < 2) {
+          failures.push(`[390-report] 手机场签只铺成 ${mobile.tabColumns} 列,没成组可扫`);
+        }
+        const badTabs = mobile.tabs.filter(
+          (tab) =>
+            tab.role !== "tab" ||
+            tab.radius !== 0 ||
+            (!tab.selected && (tab.background !== "rgba(0, 0, 0, 0)" || tab.shadow !== "none")),
+        );
+        if (badTabs.length) {
+          failures.push(
+            `[390-report] 场签又长成卡壳:${JSON.stringify(
+              badTabs.map((tab) => ({
+                label: tab.label,
+                radius: tab.radius,
+                background: tab.background,
+                shadow: tab.shadow,
+              })),
+            )}`,
+          );
+        }
+        if (
+          !mobile.station ||
+          mobile.station.top > 0.1 ||
+          mobile.station.right > 0.1 ||
+          mobile.station.bottom > 0.1 ||
+          mobile.station.left > 0.1 ||
+          mobile.station.radius > 0.1 ||
+          mobile.station.background !== "rgba(0, 0, 0, 0)" ||
+          mobile.station.shadow !== "none"
+        ) {
+          failures.push(`[390-report] 战局又自成一张纸卡:${JSON.stringify(mobile.station)}`);
+        }
+        if (
+          !mobile.log ||
+          mobile.log.top > 0.1 ||
+          mobile.log.right > 0.1 ||
+          mobile.log.bottom > 0.1 ||
+          mobile.log.left > 0.1 ||
+          mobile.log.radius > 0.1 ||
+          mobile.log.background !== "rgba(0, 0, 0, 0)" ||
+          mobile.logRole !== "log"
+        ) {
+          failures.push(`[390-report] 战报没有退成透明账页:${JSON.stringify(mobile.log)}`);
+        }
+        if (mobile.logLines.length === 0) {
+          failures.push("[390-report] 关动效后战报仍没有直给结果");
+        } else if (mobile.logLines.some((line) => line.clip || line.outside)) {
+          failures.push(
+            `[390-report] 战报行被裁或越出账页:${mobile.logLines
+              .filter((line) => line.clip || line.outside)
+              .map((line) => line.text)
+              .join(" | ")}`,
+          );
+        }
+        if (mobile.playbackLabel !== "重播") {
+          failures.push(
+            `[390-report] 关动效没有把回放直接落满,播放键仍是「${mobile.playbackLabel || "无"}」`,
+          );
+        }
+        if (!mobile.rowRadii.every((radius) => radius === 0)) {
+          failures.push(`[390-report] 逐场账行又长出圆角:${mobile.rowRadii.join(",")}`);
+        }
+        if (
+          !mobile.modalBox ||
+          !mobile.ledgerBox ||
+          mobile.modalBox.left < -1 ||
+          mobile.modalBox.right > mobile.viewportWidth + 1 ||
+          mobile.ledgerBox.left < -1 ||
+          mobile.ledgerBox.right > mobile.viewportWidth + 1 ||
+          mobile.modalScrollClip
+        ) {
+          failures.push(
+            `[390-report] 战卷越出视口:${JSON.stringify({
+              modal: mobile.modalBox,
+              modalScroll: mobile.modalScrollBox,
+              ledger: mobile.ledgerBox,
+              viewport: mobile.viewportWidth,
+            })}`,
+          );
+        }
+      }
+
+      await page.locator('[data-celestial-fight-tab][aria-selected="true"]').focus();
+      await page.keyboard.press("ArrowRight");
+      await settleVisuals(page);
+      const keyRight = await readReport();
+      checked += 1;
+      if (
+        keyRight.selectedIndex !== 1 ||
+        keyRight.activeIndex !== 1 ||
+        keyRight.stationCurrent !== 1 ||
+        keyRight.stationFoe !== keyRight.tabs[1]?.foe ||
+        keyRight.currentRows.join(",") !== "1"
+      ) {
+        failures.push(
+          `[390-report] 方向键没有让场签、焦点、战局与逐场同步前移:${JSON.stringify({
+            selected: keyRight.selectedIndex,
+            active: keyRight.activeIndex,
+            station: keyRight.stationCurrent,
+            stationFoe: keyRight.stationFoe,
+            tabFoe: keyRight.tabs[1]?.foe,
+            currentRows: keyRight.currentRows,
+          })}`,
+        );
+      }
+
+      await page.locator('[data-celestial-fight-tab][aria-selected="true"]').focus();
+      await page.keyboard.press("End");
+      await settleVisuals(page);
+      const keyEnd = await readReport();
+      if (
+        keyEnd.selectedIndex !== keyEnd.tabCount - 1 ||
+        keyEnd.activeIndex !== keyEnd.tabCount - 1 ||
+        keyEnd.stationCurrent !== keyEnd.tabCount - 1
+      ) {
+        failures.push(
+          `[390-report] End 没有落到末场:${JSON.stringify({
+            selected: keyEnd.selectedIndex,
+            active: keyEnd.activeIndex,
+            station: keyEnd.stationCurrent,
+            tabs: keyEnd.tabCount,
+          })}`,
+        );
+      }
+
+      await page.locator('[data-celestial-fight-tab][aria-selected="true"]').focus();
+      await page.keyboard.press("Home");
+      await settleVisuals(page);
+      const keyHome = await readReport();
+      if (
+        keyHome.selectedIndex !== 0 ||
+        keyHome.activeIndex !== 0 ||
+        keyHome.stationCurrent !== 0
+      ) {
+        failures.push(
+          `[390-report] Home 没有回到首场:${JSON.stringify({
+            selected: keyHome.selectedIndex,
+            active: keyHome.activeIndex,
+            station: keyHome.stationCurrent,
+          })}`,
+        );
+      }
+
+      await page.setViewportSize({ width: 960, height: 900 });
+      await settleVisuals(page);
+      const desktop = await readReport();
+      checked += 1;
+      if (desktop.tabColumns < desktop.tabCount) {
+        failures.push(
+          `[960-report] 桌面场签没有并成一排:${desktop.tabColumns} 列 / ${desktop.tabCount} 场`,
+        );
+      }
+      if (new Set(desktop.tabs.map((tab) => tab.top)).size !== 1) {
+        failures.push(
+          `[960-report] 桌面场签没有同排:${desktop.tabs.map((tab) => tab.top).join(" / ")}`,
+        );
+      }
+      if (desktop.stationColumns !== 2) {
+        failures.push(`[960-report] 战局没有收成对阵左、战报右:${desktop.stationColumns} 列`);
+      }
+      if (
+        !desktop.ledgerBox ||
+        !desktop.modalBox ||
+        desktop.ledgerBox.left < -1 ||
+        desktop.ledgerBox.right > desktop.viewportWidth + 1 ||
+        desktop.modalBox.left < -1 ||
+        desktop.modalBox.right > desktop.viewportWidth + 1 ||
+        desktop.modalScrollClip ||
+        desktop.tabs.some((tab) => tab.right !== null && tab.right > desktop.viewportWidth + 1) ||
+        desktop.logLines.some((line) => line.clip || line.outside)
+      ) {
+        failures.push(
+          `[960-report] 战卷、场签或日志越出纸面:${JSON.stringify({
+            viewport: desktop.viewportWidth,
+            modal: desktop.modalBox,
+            modalScroll: desktop.modalScrollBox,
+            ledger: desktop.ledgerBox,
+            tabs: desktop.tabs.map((tab) => tab.right),
+            badLines: desktop.logLines
+              .filter((line) => line.clip || line.outside)
+              .map((line) => line.text),
+          })}`,
+        );
+      }
+
+      await page.setViewportSize({ width: 195, height: 900 });
+      await settleVisuals(page);
+      const compact = await readReport();
+      checked += 1;
+      if (compact.tabColumns !== 1) {
+        failures.push(`[195-report] 200% 档场签应退单列,实见 ${compact.tabColumns} 列`);
+      }
+      if (
+        !compact.ledgerBox ||
+        !compact.modalBox ||
+        compact.ledgerBox.right > compact.viewportWidth + 1 ||
+        compact.modalBox.left < -1 ||
+        compact.modalBox.right > compact.viewportWidth + 1 ||
+        compact.modalScrollClip ||
+        compact.tabs.some((tab) => tab.right !== null && tab.right > compact.viewportWidth + 1) ||
+        compact.logLines.some((line) => line.clip || line.outside)
+      ) {
+        failures.push(
+          `[195-report] 战卷、场签或日志越出纸面:${JSON.stringify({
+            viewport: compact.viewportWidth,
+            modal: compact.modalBox,
+            modalScroll: compact.modalScrollBox,
+            ledger: compact.ledgerBox,
+            tabs: compact.tabs.map((tab) => tab.right),
+            badLines: compact.logLines
+              .filter((line) => line.clip || line.outside)
+              .map((line) => line.text),
+          })}`,
+        );
+      }
+      /*
+       * 这里不调 measurePage:它会把 BaseModal 背后那组故意 tabindex=-1 的 roving
+       * 试炼门印当成「念出来是按钮却按不动」。战卷自己已有浮层宽度、滚动余量、
+       * 场签、日志逐行越界判据,量的是浮层内真实可见的那一册。
+       */
+      for (const check of [
+        { tag: "390", state: mobile },
+        { tag: "960", state: desktop },
+        { tag: "195", state: compact },
+      ]) {
+        if (!check.state.found) failures.push(`[${check.tag}-report] 战卷在切档后消失`);
+      }
+
+      if (SHOTS) {
+        await page.setViewportSize({ width: 960, height: 1100 });
+        await settleVisuals(page);
+        await page
+          .locator("[data-celestial-report-ledger]")
+          .screenshot({ path: join(SHOTS_DIR, "960-celestial-report-scroll.png") });
+        await page.setViewportSize({ width: 390, height: 2600 });
+        await settleVisuals(page);
+        await page
+          .locator("[data-celestial-report-ledger]")
+          .screenshot({ path: join(SHOTS_DIR, "390-celestial-report-scroll.png") });
+      }
+    }
+    if (pageErrors.length) {
+      failures.push(`[390-report] 证道战卷页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return {
+    failures,
+    checked,
+    contrastFails: [],
+    pixelContrastFails: [],
+    zoomFails: [],
+  };
+}
+
+/**
  * 天界内层三册:道途两章、远征两章与道痕一册都沿同一套开口续卷语法。
  *
  * 390 核对章序、章首真值与单列账行；1280 核对门径与世界账行两两并读；
@@ -20556,6 +21046,7 @@ const TASKS = [
   ["修行续卷的四章与行动层", taskCultivationFold],
   ["道躯三章与行藏拆卷", taskCharacterFold],
   ["天界试炼续卷的四章、八门与四程", taskCelestialTrialFold],
+  ["天界证道战卷的四章与场次键盘", taskCelestialBattleScroll],
   ["天界内层三册的章节与并读", taskCelestialInnerVolumes],
   ["界域志首屏的此刻优先", taskCodexFold],
   ["成就谱首屏的眼下可追", taskAchievementFold],

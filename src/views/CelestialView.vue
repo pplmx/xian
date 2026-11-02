@@ -246,62 +246,15 @@
       </div>
     </template>
 
-    <!-- 战报(远征终局 / 试炼 / 变数) -->
+    <!-- 战报(远征终局 / 试炼 / 变数):四章同住一册证道战卷。 -->
     <BaseModal
       :open="expedition !== null"
-      :title="expedition?.title ?? ''"
+      title="证道战卷"
+      size="max"
+      panel-class="celestial-report-modal"
       @close="expedition = null"
     >
-      <template v-if="expedition">
-        <p
-          class="font-kai text-title tracking-wider"
-          :class="expedition.cleared ? 'text-jade' : 'text-cinnabar'"
-        >
-          {{ expedition.markText }}
-        </p>
-
-        <!-- 战斗过程:与历练同样逐回合播放 -->
-        <div class="mt-2">
-          <GauntletPanel :rows="expedition.rows" :player-name="player.name" />
-        </div>
-
-        <!-- 逐场摘要:场次多时限高滚动,不把弹窗撑到 82vh 上限 -->
-        <div class="scroll-pane mt-2 max-h-40 space-y-1 overflow-y-auto">
-          <p
-            v-for="(row, i) in expedition.rows"
-            :key="i"
-            class="flex items-center justify-between rounded-[2px] bg-paper-deep/70 px-3 py-1.5 text-body"
-          >
-            <span :class="row.win ? 'text-ink-soft' : 'text-cinnabar'">
-              第{{ i + 1 }}战 · {{ row.foeName }} · {{ row.win ? "胜" : "负" }}
-            </span>
-            <span class="tabular text-body text-ink-faint"
-              >{{ row.rounds }}回合 · 余血{{ formatPercent(row.hpLeftPct, 0) }}</span
-            >
-          </p>
-        </div>
-        <!--
-          输也要输得明白:敌人一侧的判定(道之理解 / 境界压制)与战前预估同源,
-          连同"怎么办"一并写在这里 —— 战报不是判决书,是下一次出发的依据。
-        -->
-        <div
-          v-if="expedition.judgementLines?.length"
-          class="mt-2 rounded-[2px] bg-cinnabar/5 px-3 py-2"
-        >
-          <p class="font-kai text-body tracking-widest text-cinnabar">此战之判</p>
-          <p
-            v-for="(line, i) in expedition.judgementLines"
-            :key="i"
-            class="mt-0.5 text-note leading-relaxed text-ink-faint"
-          >
-            {{ line }}
-          </p>
-        </div>
-        <p v-if="expedition.reward > 0" class="mt-2 text-body text-gold-ink tabular">
-          <GameIcon name="sparkles" :size="12" class="inline" />
-          道源 +{{ expedition.reward }}
-        </p>
-      </template>
+      <CelestialReportLedger v-if="expedition" :report="expedition" :player-name="player.name" />
       <template #footer>
         <button class="btn-seal w-full" @click="expedition = null">收 卷</button>
       </template>
@@ -388,7 +341,7 @@ import LedgerTally from "@/components/common/LedgerTally.vue";
 import UnopenedFolio from "@/components/common/UnopenedFolio.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
-import GauntletPanel from "@/components/celestial/GauntletPanel.vue";
+import CelestialReportLedger from "@/components/celestial/CelestialReportLedger.vue";
 import CelestialGateMap from "@/components/celestial/CelestialGateMap.vue";
 import CelestialChapterHead from "@/components/celestial/CelestialChapterHead.vue";
 import FurnaceDialog from "@/components/celestial/FurnaceDialog.vue";
@@ -397,7 +350,6 @@ import MarksPanel from "@/components/celestial/MarksPanel.vue";
 import TrialPanel from "@/components/celestial/TrialPanel.vue";
 import ExpeditionPanel from "@/components/celestial/ExpeditionPanel.vue";
 import type { ReportView } from "@/components/celestial/reportView";
-import GameIcon from "@/components/common/GameIcon.vue";
 import {
   daoSourceDialog,
   shouldShowEndgameTutorial,
