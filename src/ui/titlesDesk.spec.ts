@@ -1,15 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readSource } from "@/test/readSource";
 import { nameBeastMeter, petEntryState, titleEntryState } from "./titlesDesk";
-import { readStyleCss } from "@/test/readStyleCss";
 
-const ROOT = resolve(__dirname, "../..");
-
-function source(rel: string): string {
-  if (rel === "src/style.css") return readStyleCss();
-  return readFileSync(resolve(ROOT, rel), "utf8");
-}
+const source = readSource;
 
 describe("名兽案 · 双契总览直接接卷首,当前、可追与全谱各归一处", () => {
   it("两册进度只做同一把尺:夹取坏数、全收才圆满", () => {

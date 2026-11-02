@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readSource } from "@/test/readSource";
 import { STAT_NAMES } from "@/data/statNames";
 import type { AnyStatKey, StatMods } from "@/types";
 import { readStyleCss } from "@/test/readStyleCss";
@@ -11,11 +10,7 @@ import {
   characterModifierSummary,
 } from "@/ui/characterDesk";
 
-const ROOT = resolve(__dirname, "../..");
-
-function source(rel: string): string {
-  return readFileSync(resolve(ROOT, rel), "utf8");
-}
+const source = readSource;
 
 describe("道躯案 · 三章连续卷与行藏周天", () => {
   it("章序只装配一次:总案、行藏、目录三章不缺不乱", () => {

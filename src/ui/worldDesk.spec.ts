@@ -1,16 +1,9 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readSource } from "@/test/readSource";
 import { mortalStageStatuses, type PlaceView } from "@/core/mortalWorldService";
 import { worldDeskMeter } from "./worldDesk";
-import { readStyleCss } from "@/test/readStyleCss";
 
-const ROOT = resolve(__dirname, "../..");
-
-function source(rel: string): string {
-  if (rel === "src/style.css") return readStyleCss();
-  return readFileSync(resolve(ROOT, rel), "utf8");
-}
+const source = readSource;
 
 function places(count: number): PlaceView[] {
   return Array.from({ length: count }, (_, index) => ({

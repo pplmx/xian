@@ -1,16 +1,9 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readSource } from "@/test/readSource";
 import { qualityDef } from "@/data/qualities";
 import { qualityTextColor } from "@/ui/qualityTier";
-import { readStyleCss } from "@/test/readStyleCss";
 
-const ROOT = resolve(__dirname, "../..");
-
-function source(rel: string): string {
-  if (rel === "src/style.css") return readStyleCss();
-  return readFileSync(resolve(ROOT, rel), "utf8");
-}
+const source = readSource;
 
 describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
   it("品名在各自的品阶晕染上都留足正文可读性", () => {

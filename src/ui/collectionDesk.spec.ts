@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readSource } from "@/test/readSource";
 import { collectionProgressOverview } from "@/core/collectionProgress";
-import { readStyleCss } from "@/test/readStyleCss";
 import {
   achievementDirectionMark,
   collectionCabinetCells,
@@ -10,12 +8,7 @@ import {
   COLLECTION_CATEGORY_MARKS,
 } from "./collectionDesk";
 
-const ROOT = resolve(__dirname, "../..");
-
-function source(rel: string): string {
-  if (rel === "src/style.css") return readStyleCss();
-  return readFileSync(resolve(ROOT, rel), "utf8");
-}
+const source = readSource;
 
 function rule(css: string, selector: string): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

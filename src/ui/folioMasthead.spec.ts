@@ -1,14 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { readStyleCss } from "@/test/readStyleCss";
+import { readSource } from "@/test/readSource";
 
-const ROOT = resolve(__dirname, "../..");
-
-function source(rel: string): string {
-  if (rel === "src/style.css") return readStyleCss();
-  return readFileSync(resolve(ROOT, rel), "utf8");
-}
+const source = readSource;
 
 describe("册页卷首 · 一页只讲清一件事", () => {
   it("卷首从玄枢图读分卷与说明，返回走父页兜底，标题是真正的 h1", () => {

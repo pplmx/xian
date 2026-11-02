@@ -1,16 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
+import { readSource } from "@/test/readSource";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
-import { readStyleCss } from "@/test/readStyleCss";
 import { folioArrivalTextOf } from "./folioArrival";
 import { folioTurnDirectionOf } from "./folioTurn";
 
 const ROOT = resolve(__dirname, "../..");
 
-function source(rel: string): string {
-  if (rel === "src/style.css") return readStyleCss();
-  return readFileSync(resolve(ROOT, rel), "utf8");
-}
+const source = readSource;
 
 function vueFiles(dir = resolve(ROOT, "src")): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

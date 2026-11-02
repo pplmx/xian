@@ -1,15 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readSource } from "@/test/readSource";
 import { legacyCoverage, legacyMeter, legacyStageMeter } from "./legacyDesk";
-import { readStyleCss } from "@/test/readStyleCss";
 
-const ROOT = resolve(__dirname, "../..");
-
-function source(rel: string): string {
-  if (rel === "src/style.css") return readStyleCss();
-  return readFileSync(resolve(ROOT, rel), "utf8");
-}
+const source = readSource;
 
 describe("三生案 · 本世、所知与旧缘同读此刻", () => {
   it("通用账目只做一把尺:坏数归零、越界夹住、空表不算圆满", () => {

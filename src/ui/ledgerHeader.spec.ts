@@ -1,14 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { readStyleCss } from "@/test/readStyleCss";
+import { readSource } from "@/test/readSource";
 
-const ROOT = resolve(__dirname, "../..");
-
-function source(rel: string): string {
-  if (rel === "src/style.css") return readStyleCss();
-  return readFileSync(resolve(ROOT, rel), "utf8");
-}
+const source = readSource;
 
 describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => {
   it("共享案头收住印、眉题、标题、说明、总账与动作席", () => {

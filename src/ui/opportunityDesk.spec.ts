@@ -1,12 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readSource } from "@/test/readSource";
 
-const ROOT = resolve(__dirname, "../..");
-
-function source(rel: string): string {
-  return readFileSync(resolve(ROOT, rel), "utf8");
-}
+const source = readSource;
 
 describe("限时机缘卷 · 顿悟与巡游共用一纸", () => {
   it("两扇引擎浮层走同一张机缘卷，不再各铺一套普通按钮列表", () => {

@@ -1,14 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { readStyleCss } from "@/test/readStyleCss";
+import { readSource } from "@/test/readSource";
 
-const ROOT = resolve(__dirname, "../..");
-
-function source(rel: string): string {
-  if (rel === "src/style.css") return readStyleCss();
-  return readFileSync(resolve(ROOT, rel), "utf8");
-}
+const source = readSource;
 
 describe("门庭案 · 先落一令,再核四门存底与值日簿", () => {
   it("卷首门庭图读真实候差与在途位置,整图不重复进入读屏", () => {

@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readSource } from "@/test/readSource";
 import { realmCodexCurrent, realmCodexWorldRows } from "@/core/realmCodex";
-import { readStyleCss } from "@/test/readStyleCss";
 import {
   REALM_WORLD_MARKS,
   realmCodexAtlasRows,
@@ -14,12 +12,7 @@ import {
   realmCodexWorldMark,
 } from "./realmCodexDesk";
 
-const ROOT = resolve(__dirname, "../..");
-
-function source(rel: string): string {
-  if (rel === "src/style.css") return readStyleCss();
-  return readFileSync(resolve(ROOT, rel), "utf8");
-}
+const source = readSource;
 
 function latestRule(css: string, selector: string): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

@@ -1,16 +1,9 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { readStyleCss } from "@/test/readStyleCss";
+import { readSource } from "@/test/readSource";
 import { artifactDeskSummary, planArtifactPlacement } from "@/core/artifactDesk";
 import { inventoryChapter, inventoryChapters } from "@/ui/inventoryDesk";
 
-const ROOT = resolve(__dirname, "../..");
-
-function source(rel: string): string {
-  if (rel === "src/style.css") return readStyleCss();
-  return readFileSync(resolve(ROOT, rel), "utf8");
-}
+const source = readSource;
 
 describe("行囊案 · 先盘九佩,再问本批新得与可换", () => {
   it("行囊四册只由同一份装配表给出顺序与章名", () => {

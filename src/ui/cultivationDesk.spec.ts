@@ -1,15 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { readStyleCss } from "@/test/readStyleCss";
+import { readSource } from "@/test/readSource";
 import { cultivationChapter, cultivationChapters } from "@/ui/cultivationDesk";
 
-const ROOT = resolve(__dirname, "../..");
-
-function source(rel: string): string {
-  if (rel === "src/style.css") return readStyleCss();
-  return readFileSync(resolve(ROOT, rel), "utf8");
-}
+const source = readSource;
 
 describe("修炼案 · 四章收成一册行功续卷", () => {
   it("章序只装配一次:修行、下一步、随身、功法四章不缺不乱", () => {

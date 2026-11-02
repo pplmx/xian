@@ -305,6 +305,7 @@ const CATEGORIES = [
       "ornament.spec",
       "deadStyle.spec",
       "copyPunctuation.spec",
+      "specReadSource.spec",
       "favicon.spec",
       "useNativeInsets",
       "useGameClock",

@@ -1,16 +1,9 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readSource } from "@/test/readSource";
 import { BUILD_STYLES, buildAffinityRows } from "@/core/buildDetect";
 import { buildCoreGaps, buildStageMeter } from "./buildDesk";
-import { readStyleCss } from "@/test/readStyleCss";
 
-const ROOT = resolve(__dirname, "../..");
-
-function source(rel: string): string {
-  if (rel === "src/style.css") return readStyleCss();
-  return readFileSync(resolve(ROOT, rel), "utf8");
-}
+const source = readSource;
 
 describe("铸道案 · 六路、形状与下一步同读此刻", () => {
   it("契合按雏形 / 成形 / 大成三段推进，坏数归零、顶阶走满", () => {

@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readdirSync, readFileSync } from "node:fs";
+import { readSource } from "@/test/readSource";
+import { readdirSync } from "node:fs";
 import { resolve } from "node:path";
 
 const ROOT = resolve(__dirname, "../..");
 
-function source(rel: string): string {
-  return readFileSync(resolve(ROOT, rel), "utf8");
-}
+const source = readSource;
 
 function walk(rel: string): string[] {
   return readdirSync(resolve(ROOT, rel), { withFileTypes: true }).flatMap((entry) => {

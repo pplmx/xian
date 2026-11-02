@@ -1,15 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { readStyleCss } from "@/test/readStyleCss";
+import { readSource } from "@/test/readSource";
 import { dongfuBuildingChapters, offlineCapTiers } from "./dongfuDesk";
 
-const ROOT = resolve(__dirname, "../..");
-
-function source(rel: string): string {
-  if (rel === "src/style.css") return readStyleCss();
-  return readFileSync(resolve(ROOT, rel), "utf8");
-}
+const source = readSource;
 
 describe("洞府案 · 山门图先立意,总账再摊开七作", () => {
   it("卷首山门图读真实七作等级与上限,整图不重复进入读屏", () => {

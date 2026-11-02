@@ -1,15 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { readStyleCss } from "@/test/readStyleCss";
+import { readSource } from "@/test/readSource";
 import { chapterRailItems } from "./folioIndexRail";
 
-const ROOT = resolve(__dirname, "../..");
-
-function source(rel: string): string {
-  if (rel === "src/style.css") return readStyleCss();
-  return readFileSync(resolve(ROOT, rel), "utf8");
-}
+const source = readSource;
 
 describe("书口签 · 同卷诸册都能直接翻", () => {
   it("册口签只列当前一卷，当前册唯一，未知路由不臆造册目", () => {
