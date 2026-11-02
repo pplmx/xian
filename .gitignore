@@ -54,3 +54,7 @@ core.[0-9]*
 # ② rumdl 默认扫「cwd 下所有 .md 减 exclude」,会把里面的会话笔记当文档判错
 # —— rumdl.toml 里写着「runtime 目录另有 respect_gitignore 兜底」,这条就是补那个洞。
 .workbuddy/
+
+# agent 工具链的皮肤/插件缓存(实测落进来一份 catalog.json + tgz,三兆多),
+# 与 .workbuddy/ 同属宿主工具的运行时副产物,不是本仓库的内容。
+.tmp-skin/
