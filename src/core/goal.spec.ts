@@ -47,24 +47,43 @@ describe("修行目标(Phase 29)", () => {
     expect(goal.destination).toEqual({ to: "/cultivation", label: "去修炼" });
   });
 
-  it("无临近突破且已有 Build → build 目标,进度 = 核心词条数/4", () => {
+  it("无临近突破且已有 Build → build 目标,进度按这一路的核心词条数算", () => {
     const player = usePlayerStore();
     player.initCharacter("目标", { roots: [] } as never);
     setBuild.value = {
       style: { name: "天龙" },
       coreValues: [{ key: "critChance" }, { key: "critDamage" }],
+      coreTotal: 4,
     };
     const goal = generateCurrentGoal(player)!;
     expect(goal.type).toBe("build");
     expect(goal.text).toContain("天龙");
     expect(goal.progress).toBe(0.5);
+    expect(goal.hint, "分母要跟着这一路的核心词条数说").toContain("2/4");
     expect(goal.destination).toEqual({ to: "/build", label: "去构筑" });
+  });
+
+  /**
+   * 回归:首页道途卡曾写死「已凑出 N/4 个核心词条」,而流派核心词条只有 2~3 条 ——
+   * 背水流凑齐两条也只报 2/4,进度条永远走不到头。分母必须来自 detectBuild。
+   */
+  it("核心词条少的流派也能走到 100%:分母取该流派自己的词条数", () => {
+    const player = usePlayerStore();
+    player.initCharacter("目标", { roots: [] } as never);
+    setBuild.value = {
+      style: { name: "背水流" },
+      coreValues: [{ key: "lowHpDamage" }, { key: "lowHpReduction" }],
+      coreTotal: 2,
+    };
+    const goal = generateCurrentGoal(player)!;
+    expect(goal.hint).toContain("2/2");
+    expect(goal.progress, "凑齐这一路的全部核心词条就是 100%").toBe(1);
   });
 
   it("近突破优先于 build(breakthrough 检查在最前)", () => {
     const player = usePlayerStore();
     player.initCharacter("目标", { roots: [] } as never);
-    setBuild.value = { style: { name: "玄武" }, coreValues: [{ key: "x" }] };
+    setBuild.value = { style: { name: "玄武" }, coreValues: [{ key: "x" }], coreTotal: 1 };
     player.exp = gn(Math.floor(toNum(player.expReq) * 0.95));
     const goal = generateCurrentGoal(player)!;
     expect(goal.type).toBe("breakthrough");

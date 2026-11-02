@@ -96,12 +96,15 @@ export function generateCurrentGoal(player: PlayerStore): Goal | null {
   const build = detectBuild(player.finalStats.mods);
   if (build) {
     const style = build.style.name;
-    const core = Math.max(1, build.coreValues.length);
+    const core = Math.min(build.coreValues.length, build.coreTotal);
+    // 分母按这一路的核心词条数走(见 detectBuild 的 coreTotal):写死一个数会让
+    // 核心词条少的那几路永远停在半路,进度条也就只是在骗人。
+    const total = Math.max(1, build.coreTotal);
     return {
       type: "build",
       text: `完善「${style}」流派`,
-      progress: Math.min(1, core / 4),
-      hint: `当前已凑出 ${core}/4 个核心词条,继续寻找关键装备`,
+      progress: Math.min(1, core / total),
+      hint: `当前已凑出 ${core}/${total} 个核心词条,继续寻找关键装备`,
       destination: { to: "/build", label: "去构筑" },
     };
   }

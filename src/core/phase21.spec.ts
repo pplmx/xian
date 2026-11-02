@@ -241,6 +241,7 @@ describe("道途深化裁判", () => {
       affinity: 1,
       stageName: "大成",
       coreValues: [],
+      coreTotal: 3,
       displayName: "锋芒流",
     });
     expect(pure.layers).toBe(4);
@@ -260,6 +261,7 @@ describe("道途深化裁判", () => {
       affinity: 1,
       stageName: "大成",
       coreValues: [],
+      coreTotal: 0,
       displayName: "x",
     });
     expect(SWORD_PURITY_MAX_LAYERS).toBe(pure.checks.length);

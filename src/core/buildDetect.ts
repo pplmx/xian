@@ -72,6 +72,8 @@ export interface BuildDetection {
   stageName: string;
   /** 核心词条当前数值 */
   coreValues: { key: AnyStatKey; value: number }[];
+  /** 这一路的核心里程碑总数(= style.core 的词条数);进度分母只认它 */
+  coreTotal: number;
   /** 副体系(混合流派;修行无职业,道路可以不纯) */
   secondary?: { style: BuildStyleDef; affinity: number };
   /** 展示名:纯派为「罡盾流」,混合为「罡盾·反震」 */
@@ -165,6 +167,9 @@ export function detectBuild(mods: StatMods): BuildDetection | null {
     coreValues: best.terms
       .map(({ key, value }) => ({ key, value }))
       .filter((term) => term.value > 0),
+    // 分母取这一路自己的核心词条数(背水 2 条、沐泽 3 条),不是某个全局常数 ——
+    // 从前首页道途卡写死「/4」,背水流凑齐 2 条也只报 1/4,永远走不到头。
+    coreTotal: best.terms.length,
     secondary: hasSecondary ? { style: second.style, affinity: second.affinity } : undefined,
     displayName: hasSecondary
       ? `${shortName(best.style)}·${shortName(second.style)}`
