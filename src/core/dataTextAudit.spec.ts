@@ -56,7 +56,8 @@ import { MANSIONS } from "@/data/xiangxiu";
 import { GATES } from "@/data/qimen";
 import { SECRET_LAYERS } from "@/data/secretRealms";
 import { ARTIFACT_MAX_SLOTS, ARTIFACT_SLOT_UNLOCK_MAJOR } from "@/data/artifacts";
-import { EXPEDITION_ROUTE_LAYERS } from "@/data/endgame";
+import { CELESTIAL_WORLDS, EXPEDITION_ROUTE_LAYERS } from "@/data/endgame";
+import { DEFAULT_MAX_ROUNDS, LIFE_TRIALS } from "@/data/lifeTrials";
 import { MUTATION_FIGHTS } from "@/core/expedition";
 import { PROFILE_MIN_MARKS } from "@/core/identity";
 import type { CaveEvent } from "@/types";
@@ -96,6 +97,96 @@ describe("文案数值对账 · 天道变数", () => {
       }
     }
     expect(checked, "一条百分比都没扫到,断言形同虚设").toBeGreaterThanOrEqual(5);
+  });
+});
+
+describe("文案数值对账 · 天界世界规则", () => {
+  /**
+   * 变数与秘境规则早就有这条判据,**天界世界一直没有** —— 五个世界的 ruleText
+   * 同样把「敌人攻击 +40%」「治疗 -35%」写进了文案,而真值在各自的 rules 里。
+   * 平衡一改(patch 挪 rules),那三行说明就原地撒谎,而玩家进界前只读那三行。
+   *
+   * 检查方式是既有那套 percentBacked:百分比要么等于某个值、要么等于 1±值
+   * (乘区写法)。不做双向 —— 文案是摘要,不必把每条 rules 都念一遍。
+   */
+  it("每个世界说明里的百分比,都能在它自己的 rules 里找到", () => {
+    let checked = 0;
+    for (const w of CELESTIAL_WORLDS) {
+      const nums: number[] = [];
+      const push = (v: unknown): void => {
+        if (typeof v === "number") nums.push(v);
+        else if (v && typeof v === "object") Object.values(v as object).forEach(push);
+      };
+      Object.values(w.rules ?? {}).forEach(push);
+      for (const line of w.ruleText) {
+        for (const pc of percentsOf(line)) {
+          checked += 1;
+          expect(
+            percentBacked(pc, nums),
+            `世界「${w.name}」说明写 ${pc}%,rules 里对不上:${line} · [${nums.join(", ")}]`,
+          ).toBe(true);
+        }
+      }
+    }
+    expect(checked, "一条百分比都没扫到,断言形同虚设").toBeGreaterThanOrEqual(4);
+  });
+
+  it("判据自证:改一个 world 的 rules,那条说明就对不上了", () => {
+    // 注入:把赤炎天的敌人攻击倍率从 1.4 改成 1.9,文案里的 40% 立刻没有依据
+    const chiyan = CELESTIAL_WORLDS.find((w) => w.id === "chiyan")!;
+    const mutated = { ...chiyan, rules: { ...chiyan.rules, enemyAtkMult: 1.9 } };
+    const nums: number[] = [];
+    const push = (v: unknown): void => {
+      if (typeof v === "number") nums.push(v);
+      else if (v && typeof v === "object") Object.values(v as object).forEach(push);
+    };
+    Object.values(mutated.rules ?? {}).forEach(push);
+    expect(percentBacked(40, nums), "改完倍率后 40% 不该还站得住").toBe(false);
+  });
+});
+
+describe("文案数值对账 · 逆旅契", () => {
+  /**
+   * 逆旅契的 ruleText 把「治疗 25%」「敌人攻击 +30%」这类数写进了文案,
+   * 真值在各自的 rules 里。这类契约**玩家是花钱签的**(24~48 枚道果),
+   * 全文案就是他的购买依据:改 rules 不改文案,等于卖了一件与说明不符的东西。
+   *
+   * 与变数/秘境/天界世界同一套 percentBacked 判法。
+   */
+  it("每份逆旅契的契文百分比,都能在它自己的 rules 里找到", () => {
+    let checked = 0;
+    for (const t of LIFE_TRIALS) {
+      const nums = Object.values(t.rules).flatMap((v) =>
+        typeof v === "number" ? [v] : typeof v === "object" && v !== null ? Object.values(v) : [],
+      ) as number[];
+      for (const pc of percentsOf(t.ruleText)) {
+        checked += 1;
+        expect(
+          percentBacked(pc, nums),
+          `逆旅契「${t.name}」契文写 ${pc}%,rules 里对不上:${t.ruleText} · [${nums.join(", ")}]`,
+        ).toBe(true);
+      }
+    }
+    expect(checked, "一条百分比都没扫到,断言形同虚设").toBeGreaterThanOrEqual(3);
+  });
+
+  it("契文之外还有一处「纯逆境」铁律:规则只许加难", () => {
+    // 这条不是文案对账,是同一条购买依据的另一半:契文说「更难受」,
+    // 规则里就不许混进一条让战斗变容易的。判据住在这里,是因为它与
+    // 上面那条一起构成「玩家读到的 == 他真正买到的」。
+    for (const t of LIFE_TRIALS) {
+      const rules = t.rules;
+      expect(rules.healMult ?? 1, `「${t.name}」不许抬高治疗`).toBeLessThanOrEqual(1);
+      expect(rules.playerStartHpPct ?? 1, `「${t.name}」不许抬高开局气血`).toBeLessThanOrEqual(1);
+      expect(rules.enemyAtkMult ?? 1, `「${t.name}」敌人攻击只许升`).toBeGreaterThanOrEqual(1);
+      expect(rules.enemyHpMult ?? 1, `「${t.name}」敌人生命只许升`).toBeGreaterThanOrEqual(1);
+      // 没写 maxRounds 表示这一契不管回合上限,不是「上限无穷」
+      if (rules.maxRounds !== undefined) {
+        expect(rules.maxRounds, `「${t.name}」回合上限只许降`).toBeLessThanOrEqual(
+          DEFAULT_MAX_ROUNDS,
+        );
+      }
+    }
   });
 });
 
