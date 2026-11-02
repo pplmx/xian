@@ -136,6 +136,14 @@ export const BT_MAJOR_BASE_RATE = 0.78;
 export const BT_MAJOR_DECAY = 0.05;
 export const BT_MIN_RATE = 0.15;
 export const BT_MAX_RATE = 0.98;
+/**
+ * 「气运」折算成突破成功率的系数:每 1 点 luck 抵这么多成功率。
+ *
+ * 结算(breakthrough.ts 的 rate)与破境幕的两张加成表都读它。
+ * 从前这一枚 0.05 在三处各写一遍:改结算不改界面,幕上那句
+ * 「加成 +N% 就绪」就会与实际判定差一截,而玩家是照着它决定按不按的。
+ */
+export const BT_LUCK_TO_RATE = 0.05;
 /** 突破失败损失修为比例 */
 export const BT_FAIL_EXP_LOSS = 0.18;
 /** 突破消耗灵气(占上限比例) */

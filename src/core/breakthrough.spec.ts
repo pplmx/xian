@@ -3,6 +3,8 @@
  * 突破服务 —— 渡劫成功率推演
  */
 import { describe, it, expect, beforeEach, vi } from "vite-plus/test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { createPinia, setActivePinia } from "pinia";
 import {
   tribulationSuccessRate,
@@ -250,5 +252,33 @@ describe("期望尝试次数 · 界面上「平均约 N 次」那行的口径", 
       expect(e).toBeGreaterThanOrEqual(1);
       prev = e;
     }
+  });
+});
+
+/**
+ * 「气运」折算成功率只有一处系数。
+ *
+ * 结算(rate)与破境幕的两张加成表都按 luck × 系数 折算。从前这一枚 0.05
+ * 在三处各写一遍 —— 改结算不改界面,幕上那句「加成 +N% 就绪」就会与实际
+ * 判定差一截,而玩家正是照着它决定按不按的。
+ */
+describe("气运折算 · 系数只有一个出处", () => {
+  it("结算与破境幕都读 BT_LUCK_TO_RATE", () => {
+    const core = readFileSync(resolve(__dirname, "./breakthrough.ts"), "utf8");
+    expect(core, "结算要读常量").toContain('modOf(mods, "luck") * BT_LUCK_TO_RATE');
+    const card = readFileSync(
+      resolve(__dirname, "../components/cultivation/BreakthroughCard.vue"),
+      "utf8",
+    );
+    const hits = card.match(/luck \?\? 0\) \* BT_LUCK_TO_RATE/g) ?? [];
+    expect(hits.length, "破境幕的两张加成表都要读同一常量").toBe(2);
+    // 不许再有裸系数:luck 右侧紧跟的数字就是被抄出来的那一份
+    expect(core, "结算里不许再写裸 0.05").not.toMatch(/luck"\) \* 0\.05/);
+    expect(card, "界面上不许再写裸 0.05").not.toMatch(/luck \?\? 0\) \* 0\.05/);
+  });
+
+  it("常量本身有个名字,不是散在公式里", () => {
+    const consts = readFileSync(resolve(__dirname, "../data/constants.ts"), "utf8");
+    expect(consts, "常量要有名字与说明").toMatch(/export const BT_LUCK_TO_RATE = 0\.05;/);
   });
 });

@@ -4,7 +4,12 @@
 import { mulberry32, rng } from "@/utils/random";
 import { formatPercent } from "@/utils/format";
 import { realmDef, realmLabel, worldOf, isWorldEntry } from "@/data/realms";
-import { BT_FAIL_EXP_LOSS, BT_QI_COST_RATIO, VEIN_UNLOCK_MAJOR } from "@/data/constants";
+import {
+  BT_FAIL_EXP_LOSS,
+  BT_LUCK_TO_RATE,
+  BT_QI_COST_RATIO,
+  VEIN_UNLOCK_MAJOR,
+} from "@/data/constants";
 import { ARTIFACT_SLOT_UNLOCK_MAJOR } from "@/data/artifacts";
 import { breakthroughBaseRate, clampRate } from "./formulas";
 import { modOf } from "./statsCalc";
@@ -133,7 +138,7 @@ export function breakthroughInfo(): BreakthroughInfo {
   const rate = clampRate(
     breakthroughBaseRate(player.major, player.sub) +
       modOf(mods, "breakthroughRate") +
-      modOf(mods, "luck") * 0.05 +
+      modOf(mods, "luck") * BT_LUCK_TO_RATE +
       (prep.ready ? prep.bonus : 0),
   );
   let ready = true;

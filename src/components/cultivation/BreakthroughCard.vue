@@ -194,7 +194,7 @@ import {
 import { BREAKTHROUGH_PREP_OPTIONS } from "@/data/earlyGame";
 import { buffDef } from "@/data/buffs";
 import { modsText } from "@/data/statNames";
-import { BT_FAIL_EXP_LOSS, INJURY_DURATION } from "@/data/constants";
+import { BT_FAIL_EXP_LOSS, BT_LUCK_TO_RATE, INJURY_DURATION } from "@/data/constants";
 import {
   cnNumber,
   formatCountdown,
@@ -292,7 +292,7 @@ const breakthroughBuffRows = computed(() => {
         // luck 也按实判口径折进成功率(+luck*0.05,见 breakthrough.ts 的 rate)
         const rate =
           ((face as import("@/types").StatMods).breakthroughRate ?? 0) +
-          ((face as import("@/types").StatMods).luck ?? 0) * 0.05;
+          ((face as import("@/types").StatMods).luck ?? 0) * BT_LUCK_TO_RATE;
         return rate !== 0
           ? {
               buffId: def.id,
@@ -311,7 +311,7 @@ const breakthroughBuffRows = computed(() => {
       ([k]) => k === "breakthroughRate" || k === "luck",
     ),
   );
-  const wRate = (wFace.breakthroughRate ?? 0) + (wFace.luck ?? 0) * 0.05;
+  const wRate = (wFace.breakthroughRate ?? 0) + (wFace.luck ?? 0) * BT_LUCK_TO_RATE;
   if (wRate !== 0) {
     rows.push({
       buffId: "weather",
