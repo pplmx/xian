@@ -20,6 +20,7 @@ import { mulberry32, RandomService } from "@/utils/random";
 import { SECRET_REALMS, SECRET_RULES } from "@/data/secretRealms";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
+import { useUiStore } from "@/stores/ui";
 import { useEndgameStore } from "@/stores/endgame";
 import {
   SECRET_LAYERS,
@@ -195,6 +196,31 @@ describe("秘境 · 推得动、出得来", () => {
     const src = readFileSync(resolve(__dirname, "secretRealm.ts"), "utf8");
     expect(src).toContain("`连败 ${cnNumber(SECRET_MAX_LOSSES)} 场,被逐出秘境`");
     expect(src, "不许再手写门槛数字").not.toContain("连败两场");
+  });
+
+  /**
+   * 付不起时的提示曾经报**总价**:「灵石不足 300」。卡面那行同时写着「尚差 N 石」,
+   * 手里有 280 的玩家读到「不足 300」,会以为还差 300 —— 比实际所需多一截。
+   * 这条钉住「报差额」:提示里的数必须等于 卡面差额 那一笔账。
+   */
+  it("付不起时报差额而不是总价 —— 与卡面「尚差」同源", () => {
+    const resources = useResourcesStore();
+    const player = usePlayerStore();
+    player.major = 3;
+    resources.addStone(gn(0));
+    const def = SECRET_REALMS.find((d) => d.id === "sr_kurong")!;
+    const cost = entryCostOf(def, player.major);
+    expect(cost.kind, "这条用例假定苦戎境以灵石计价").toBe("stone");
+    const total = cost.kind === "stone" ? toNum(cost.stone) : 0;
+    resources.addStone(gn(total - 7));
+
+    const ui = useUiStore();
+    ui.toasts = [];
+    expect(enterSecretRealm("sr_kurong").ok).toBe(false);
+
+    const text = ui.toasts.map((t) => t.text).join(" | ");
+    expect(text, "要报差额 7,不是总价").toContain("尚差 7 石");
+    expect(text, `不许把总价 ${total} 当成缺口报出来`).not.toContain(`不足 ${total}`);
   });
 
   it("放弃即出,状态清空(已得战利不退)", () => {

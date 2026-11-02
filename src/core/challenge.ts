@@ -129,7 +129,7 @@ export function undertakeChallenge(
   const world = celestialWorldDef(draft.worldId);
   if (!world) return null;
   if (!endgame.spendDaoSource(CHALLENGE_ENTRY_COST)) {
-    notify(`道源不足 ${CHALLENGE_ENTRY_COST}`, "warn");
+    notify(`道源不足,尚差 ${CHALLENGE_ENTRY_COST - endgame.daoSource} 道源`, "warn");
     return null;
   }
   // 与远征/试炼同源:敌人按本界锚点定标,判定按玩家的厚度与境界算(见 celestialFoeCaliber)

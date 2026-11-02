@@ -93,7 +93,12 @@ describe("器魂凝炼 · 拒绝路径不许改状态", () => {
     expect(end.daoSource).toBe(SOUL_REFINE_COST - 1);
     expect(inv.findItem("d"), "拒绝时原器必须还在").toBeTruthy();
     expect(end.soulList).toHaveLength(0);
-    expect(msgs.some((m) => m.includes(String(SOUL_REFINE_COST)))).toBe(true);
+    // 报的是**差额**(手里只有 COST-1,故尚差 1),不是总价 —— 与界面那枚
+    // 「尚差 N 道源可开一炉」同口径。从前这里报总价,读起来像还差一整炉的钱。
+    expect(
+      msgs.some((m) => m.includes("尚差 1 道源")),
+      msgs.join(" | "),
+    ).toBe(true);
   });
 });
 

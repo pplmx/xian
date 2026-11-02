@@ -35,7 +35,7 @@ export function refineEquipment(uid: string): boolean {
     return false;
   }
   if (!endgame.spendDaoSource(SOUL_REFINE_COST)) {
-    notify(`道源不足 ${SOUL_REFINE_COST}`, "warn");
+    notify(`道源不足,尚差 ${SOUL_REFINE_COST - endgame.daoSource} 道源`, "warn");
     return false;
   }
 

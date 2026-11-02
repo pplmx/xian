@@ -129,7 +129,7 @@ export function condenseDaoFruit(): boolean {
   const endgame = useEndgameStore();
   const player = usePlayerStore();
   if (!endgame.spendDaoSource(DAO_SOURCE_PER_FRUIT)) {
-    notify(`道源不足 ${DAO_SOURCE_PER_FRUIT}`, "warn");
+    notify(`道源不足,尚差 ${DAO_SOURCE_PER_FRUIT - endgame.daoSource} 道源`, "warn");
     return false;
   }
   player.addDaoFruit(1);
@@ -344,7 +344,7 @@ export function rewriteMark(mark: DaoMark): ExpeditionResult | null {
     return null;
   }
   if (!endgame.spendDaoSource(REWRITE_ENTRY_COST)) {
-    notify(`道源不足 ${REWRITE_ENTRY_COST}`, "warn");
+    notify(`道源不足,尚差 ${REWRITE_ENTRY_COST - endgame.daoSource} 道源`, "warn");
     return null;
   }
   const player = usePlayerStore();
@@ -438,7 +438,7 @@ export function challengeTrial(trialId: string): ExpeditionResult | null {
     return null;
   }
   if (!endgame.spendDaoSource(trial.entryCost)) {
-    notify(`道源不足 ${trial.entryCost}`, "warn");
+    notify(`道源不足,尚差 ${trial.entryCost - endgame.daoSource} 道源`, "warn");
     return null;
   }
   const stats = player.celestialStats;

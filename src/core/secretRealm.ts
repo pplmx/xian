@@ -10,6 +10,7 @@
 import type { CombatantSnap, CombatRules, GNum } from "@/types";
 import type { WorldFoeShape } from "@/types";
 import { cnNumber, formatGN } from "@/utils/format";
+import { toNum } from "@/utils/gnum";
 import { rng } from "@/utils/random";
 import { ENEMIES, enemyDef } from "@/data/enemies";
 import { maxTierForMajor } from "@/data/regions";
@@ -118,13 +119,21 @@ export function enterSecretRealm(defId: string): EnterResult {
   const cost = entryCostOf(def, player.major);
   if (cost.kind === "stone") {
     if (!resources.hasStone(cost.stone)) {
-      notify(`灵石不足 ${formatGN(cost.stone)}`, "warn");
+      /*
+       * 报**差额**而不是总价。卡面那行已经写着「尚差 N 石」,而这里从前说的是
+       * 「灵石不足 300」(总价 300):玩家手里有 280 时,那句会被读成「还差 300」,
+       * 比实际所需多出一大截 —— 于是要么白攒一笔,要么以为界面在骗人。
+       * 与 useBrewing 的「灵石不足,尚差 N 石」同一句式,差额用同一次减法现算。
+       */
+      const short = Math.max(0, toNum(cost.stone) - toNum(resources.spiritStone));
+      notify(`灵石不足,尚差 ${formatGN(short)} 石`, "warn");
       return { ok: false, reason: "灵石不足" };
     }
     resources.spendStone(cost.stone);
   } else {
     if (!endgame.spendDaoSource(cost.daoSource)) {
-      notify(`道源不足 ${cost.daoSource}`, "warn");
+      const short = Math.max(0, cost.daoSource - endgame.daoSource);
+      notify(`道源不足,尚差 ${short} 道源`, "warn");
       return { ok: false, reason: "道源不足" };
     }
   }

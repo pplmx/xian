@@ -38,7 +38,8 @@ import { modernDuration } from "@/data/timeUnits";
 import { caveOptionEffectText, durationText, enlightenmentEffectText } from "@/ui/earlyGameText";
 import { PACTS } from "@/data/pacts";
 import { readFileSync, readdirSync, statSync } from "node:fs";
-import { resolve } from "node:path";
+import { relative, resolve } from "node:path";
+import { isSourceFile, walkFiles } from "@/test/readSource";
 import { cnNumber, formatSignedPercent } from "@/utils/format";
 import { REALMS, WORLDS, ascensionLeap } from "@/data/realms";
 import {
@@ -1590,5 +1591,45 @@ describe("枚举 id 不许印到界面上 —— 玩家看的是名字,不是 ke
     // 正确写法不该被认成坏样本(它是 qualityDef(it.quality).name)
     const good = "<span>{{ qualityDef(it.quality).name }}</span>";
     expect(/\{\{[^}]*\.quality\s*\}\}/.test(good)).toBe(false);
+  });
+});
+
+/**
+ * 拒绝提示报**差额**,不报总价。
+ *
+ * 「灵石不足 300」里的 300 是这一趟的总价,而玩家手里可能已有 280 ——
+ * 那句话读起来像「还差 300」,比实际所需多出一大截:要么白攒一笔,
+ * 要么以为界面在骗人。卡面那行同时写着「尚差 N」,两者必须同口径。
+ *
+ * 唯一放行的是兑换门槛句式(「玄铁不足 20,不够熔铸一缕道源」)——
+ * 它说的是「每 20 才换一缕」,不是「你差 20」,语义本就不同。
+ */
+describe("文案数值对账 · 拒绝提示报差额不报总价", () => {
+  it("core 里没有「不足 <总价常量>」的提示", () => {
+    const bad: string[] = [];
+    const coreDir = resolve(__dirname, ".");
+    for (const file of walkFiles(coreDir, isSourceFile)) {
+      const rel = relative(coreDir, file).replace(/\\/g, "/");
+      const live = readFileSync(file, "utf8")
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/^\s*\/\/.*$/gm, "");
+      for (const m of live.matchAll(/不足\s*\$\{([A-Z][A-Z0-9_]*)\}/g)) {
+        bad.push(`${rel}: ${m[0]}`);
+      }
+    }
+    expect(
+      bad,
+      `这些提示报的是总价,读起来像「还差这么多」—— 改报差额(总价 - 余额):${bad.join(" | ")}`,
+    ).toEqual([]);
+  });
+
+  it("判据自证:认得总价写法,差额写法不误伤", () => {
+    const total = 'notify(`道源不足 ${DAO_SOURCE_PER_FRUIT}`, "warn")';
+    const short = "notify(`道源不足,尚差 ${DAO_SOURCE_PER_FRUIT - endgame.daoSource} 道源`)";
+    expect(/不足\s*\$\{([A-Z][A-Z0-9_]*)\}/.test(total)).toBe(true);
+    expect(/不足\s*\$\{([A-Z][A-Z0-9_]*)\}/.test(short)).toBe(false);
+    expect(/不足\s*\$\{([A-Z][A-Z0-9_]*)\}/.test("notify(`${rate.name}不足 ${rate.per}`)")).toBe(
+      false,
+    );
   });
 });

@@ -331,7 +331,10 @@ export function startWorldExpedition(
     sealedMods = sealed;
   }
   if (!endgame.spendDaoSource(world.entryCost)) {
-    notify(`道源不足 ${world.entryCost}(天道熔炉可献祭闲置资财)`, "warn");
+    notify(
+      `道源不足,尚差 ${world.entryCost - endgame.daoSource} 道源(天道熔炉可献祭闲置资财)`,
+      "warn",
+    );
     return null;
   }
   const rules = chainRules(currentDaoRules(), world.rules, pactRules(pact), gateRulesOf(gate?.id));
@@ -526,7 +529,7 @@ export function challengeMutation(mutatorIds: string[]): MutationResult | null {
     muts.push(next);
   }
   if (!endgame.spendDaoSource(MUTATION_ENTRY_COST)) {
-    notify(`道源不足 ${MUTATION_ENTRY_COST}`, "warn");
+    notify(`道源不足,尚差 ${MUTATION_ENTRY_COST - endgame.daoSource} 道源`, "warn");
     return null;
   }
   const rules = chainRules(currentDaoRules(), ...muts.map((m) => m.rules));
@@ -579,7 +582,7 @@ export function rerollVoidWorld(): boolean {
     return false;
   }
   if (!endgame.spendDaoSource(VOID_REROLL_COST)) {
-    notify(`道源不足 ${VOID_REROLL_COST}`, "warn");
+    notify(`道源不足,尚差 ${VOID_REROLL_COST - endgame.daoSource} 道源`, "warn");
     return false;
   }
   const generated = generateApprovedWorld(Date.now() % 999983, 40, voidHistory());
