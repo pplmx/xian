@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 436 个 spec;本作自己那部分 356 个) |
+| `bun run test` | 全量用例(全量 437 个 spec;本作自己那部分 357 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -98,7 +98,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 436 个 spec(本作自己那部分 356 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 437 个 spec(本作自己那部分 357 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -208,9 +208,13 @@ error: Failed to resolve vite command: GenericFailure, Expected
 章内可买、可交、寄卖真值与总格仍直读 `marketPulse`、当前面板对象与
 `MARKET_CONSIGN_SLOTS`,不再借 `SectionTitle` 另起自动编号。正文不再另套卡壳;
 可买、可交、开单数与逐单「尚差」共用 `core/marketOverview` 的同一份判据。
+兵刃摊签另有可收起的买前验货:本件战力、当前同槽战力、平铺三围差、词条全文、
+固有与共鸣当前件数都直接复用换装比较与装备解析,展开前后 `aria-expanded` 与
+`aria-controls` 同指一份验货帖,不把详情拖到买回行囊之后。
 真浏览器门 `taskMarketRegisterFold` 在 390 核对三摊并读、三册章号 / 题名 / 真值
-与正文件数同源、方向键 / Home / End 同步焦点与唯一 tabpanel,在 195 核对单列、
-章内真值不竖排且无横向可滚,在 1280 核对三摊并读、章首与正文并读及货架两列。
+与正文件数同源、方向键 / Home / End 同步焦点与唯一 tabpanel,并展开兵刃验货核对
+战力、对照与词条落在同一账线;在 195 核对单列、验货头与三围退单列、章内真值
+不竖排且无横向可滚,在 1280 核对三摊并读、章首与正文并读、验货与摊签并读及货架两列。
 切册后顶栏时钟只报当前这一册的换货、换榜或寄售进度,不再让悬赏页继续挂着货架倒计时。
 
 天界页把四册先收进同一张天门总账:道途报是否已定,远征报已破/总数与在途战次,

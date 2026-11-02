@@ -221,6 +221,8 @@
  *      先让真值落到题名下方,620 起回到右侧;1280 再核章内真值与正文并读。
  *   七十八 天界内层三册同用开口续卷:道途两章、远征两章与道痕一册的章序、
  *      章内真值和卡壳归零;390 单列,960 起门径与世界账行两两并读,195 读数不竖排。
+ *   七十九 坊市兵刃可先验货:本件战力、当前同槽战力、三围增减、词条与固有
+ *      都要在同一账线内展开;390 / 195 / 1280 三档核对展开宽度、单列退让与收起。
  *
  * 判据是「横向溢出」这一类——它正是窄屏上最常见的排版事故。
  * 说明:这是无头 Chromium 的视口模拟,不是真机;字体渲染与安全区(刘海/手势条)
@@ -16964,7 +16966,8 @@ async function taskBuildFormed() {
  *
  * 390 量三摊并读、册口真值与当前正文同源；195 量册口退成单列且整页不挤压；
  * 1280 再量三摊并读和货架两列。方向键、Home 与 End 要同步移动焦点、选中态与
- * 唯一 tabpanel；外层只留上下账线，正文不再另套卡壳。
+ * 唯一 tabpanel；外层只留上下账线，正文不再另套卡壳。兵刃摊签还要真的展开
+ * 验货帖，核对战力、当前对照、三围与词条/固有都在同一账线内。
  */
 async function taskMarketRegisterFold() {
   const failures = [];
@@ -17186,6 +17189,105 @@ async function taskMarketRegisterFold() {
       failures.push(`[390-market] 坊市续卷又套回了卡壳:${JSON.stringify(mobile.chrome)}`);
     }
 
+    async function readEquipmentInspection() {
+      return page.evaluate(() => {
+        const toggle = document.querySelector("[data-market-equipment-toggle]");
+        const preview = document.querySelector("[data-market-equipment-preview]");
+        const article = preview?.closest(".market-good");
+        const panel = preview?.closest("[role=tabpanel]");
+        const head = preview?.querySelector(".market-good__inspection-head");
+        const flats = preview?.querySelector("[data-market-equipment-flats]");
+        const power = preview?.querySelector("[data-market-equipment-power]");
+        const compare =
+          preview?.querySelector("[data-market-equipment-preview-compare]") ??
+          toggle?.querySelector("[data-market-equipment-compare]");
+        const rectOf = (el) => {
+          if (!el) return null;
+          const rect = el.getBoundingClientRect();
+          return {
+            top: Math.round(rect.top),
+            right: Math.round(rect.right),
+            bottom: Math.round(rect.bottom),
+            left: Math.round(rect.left),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+          };
+        };
+        const textOf = (el) => (el?.textContent ?? "").replace(/\s+/g, " ").trim();
+        const articleRect = rectOf(article);
+        const previewRect = rectOf(preview);
+        const panelRect = rectOf(panel);
+        return {
+          expanded: toggle?.getAttribute("aria-expanded") ?? "",
+          controls: toggle?.getAttribute("aria-controls") ?? "",
+          previewId: preview?.id ?? "",
+          articleRect,
+          previewRect,
+          panelRect,
+          withinArticle:
+            articleRect && previewRect
+              ? previewRect.left >= articleRect.left - 1 &&
+                previewRect.right <= articleRect.right + 1 &&
+                previewRect.top >= articleRect.top - 1 &&
+                previewRect.bottom <= articleRect.bottom + 1
+              : false,
+          withinPanel:
+            panelRect && previewRect
+              ? previewRect.left >= panelRect.left - 1 && previewRect.right <= panelRect.right + 1
+              : false,
+          headColumns: head
+            ? getComputedStyle(head).gridTemplateColumns.split(/\s+/).filter(Boolean).length
+            : 0,
+          flatColumns: flats
+            ? getComputedStyle(flats).gridTemplateColumns.split(/\s+/).filter(Boolean).length
+            : 0,
+          flatRows: preview?.querySelectorAll("[data-market-equipment-flats] > li").length ?? 0,
+          power: textOf(power),
+          compare: textOf(compare),
+          previewScrollWidth: preview?.scrollWidth ?? 0,
+          previewClientWidth: preview?.clientWidth ?? 0,
+        };
+      });
+    }
+
+    const equipmentToggle = page.locator("[data-market-equipment-toggle]").first();
+    checked += 1;
+    if ((await equipmentToggle.count()) === 0) {
+      failures.push("[390-market] 货架上没有可展开验货的兵刃，验货判据空转");
+    } else {
+      await equipmentToggle.click();
+      await page.waitForSelector("[data-market-equipment-preview]", { timeout: 3000 });
+      await settleVisuals(page);
+      const inspection = await readEquipmentInspection();
+      checked += 1;
+      if (
+        inspection.expanded !== "true" ||
+        inspection.controls !== inspection.previewId ||
+        !inspection.previewId ||
+        !inspection.withinArticle ||
+        !inspection.withinPanel ||
+        inspection.flatRows === 0 ||
+        !inspection.power.includes("本件战力") ||
+        !inspection.compare ||
+        inspection.previewScrollWidth > inspection.previewClientWidth + 1
+      ) {
+        failures.push(`[390-market] 兵刃验货没有在同一账线内摊开:${JSON.stringify(inspection)}`);
+      }
+
+      await equipmentToggle.click();
+      await page.waitForSelector("[data-market-equipment-preview]", {
+        state: "detached",
+        timeout: 3000,
+      });
+      const collapsed = await equipmentToggle.getAttribute("aria-expanded");
+      checked += 1;
+      if (collapsed !== "false") {
+        failures.push(`[390-market] 再按验货没有收起:aria-expanded=${collapsed}`);
+      }
+      await equipmentToggle.click();
+      await page.waitForSelector("[data-market-equipment-preview]", { timeout: 3000 });
+    }
+
     const marketChapterCopy = {
       shelf: {
         eyebrow: "第壹册 · 换货",
@@ -17334,6 +17436,27 @@ async function taskMarketRegisterFold() {
     await page.locator('[data-market-chapter-tab="shelf"]').click();
     await page.setViewportSize({ width: 195, height: 422 });
     await settleVisuals(page);
+    if ((await page.locator("[data-market-equipment-preview]").count()) === 0) {
+      const toggle = page.locator("[data-market-equipment-toggle]").first();
+      if ((await toggle.count()) > 0) {
+        await toggle.click();
+        await page.waitForSelector("[data-market-equipment-preview]", { timeout: 3000 });
+      }
+    }
+    const zoomInspection = await readEquipmentInspection();
+    checked += 1;
+    if (
+      zoomInspection.expanded !== "true" ||
+      zoomInspection.headColumns !== 1 ||
+      zoomInspection.flatColumns !== 1 ||
+      !zoomInspection.withinArticle ||
+      !zoomInspection.withinPanel ||
+      zoomInspection.previewScrollWidth > zoomInspection.previewClientWidth + 1
+    ) {
+      failures.push(
+        `[195-market] 200% 缩放档兵刃验货没有退成单列:${JSON.stringify(zoomInspection)}`,
+      );
+    }
     const zoom = await readFold();
     checked += 1;
     if (
@@ -17371,6 +17494,20 @@ async function taskMarketRegisterFold() {
 
     await page.setViewportSize({ width: 1280, height: 800 });
     await settleVisuals(page);
+    const desktopInspection = await readEquipmentInspection();
+    checked += 1;
+    if (
+      desktopInspection.expanded !== "true" ||
+      desktopInspection.headColumns !== 2 ||
+      desktopInspection.flatColumns < 1 ||
+      !desktopInspection.withinArticle ||
+      !desktopInspection.withinPanel ||
+      desktopInspection.previewScrollWidth > desktopInspection.previewClientWidth + 1
+    ) {
+      failures.push(
+        `[1280-market] 桌面兵刃验货没有与摊签并读:${JSON.stringify(desktopInspection)}`,
+      );
+    }
     const desktop = await readFold();
     checked += 1;
     if (

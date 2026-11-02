@@ -105,6 +105,32 @@ describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
     expect(view, "售铁不足也要列差").toContain("尚差 ${oreSellShort} 玄铁");
   });
 
+  it("兵刃摊签可先验货：战力、当前对照、平铺、词条与固有都在买前摊开", () => {
+    const view = source("src/views/MarketView.vue");
+    const desk = source("src/ui/marketShelf.ts");
+    const css = source("src/styles/pages/market.css");
+
+    expect(desk, "验货与换装详情共用真实战力比较").toContain("equipPowerComparison(");
+    expect(desk, "平铺与词条读同一份装备解析").toContain("resolveEquipStats(");
+    expect(desk, "词条文案不在页面另拼").toContain("modsText(");
+    expect(view, "货架预览装配走验货事实源").toContain("marketEquipView(");
+    expect(view, "装备摊签可展开验货").toContain("data-market-equipment-toggle");
+    expect(view, "展开态要有 aria-expanded").toContain(
+      ':aria-expanded="inspectedSlot === slot.idx"',
+    );
+    expect(view, "验货帖有稳定运行时落点").toContain("data-market-equipment-preview");
+    expect(view, "验货帖报本件战力").toContain("data-market-equipment-power");
+    expect(view, "验货帖报当前对照").toContain("data-market-equipment-compare");
+    expect(view, "验货帖展开后仍有当前对照落点").toContain("data-market-equipment-preview-compare");
+    expect(view, "验货帖摊开平铺三围").toContain("previewFor(slot)!.flatRows");
+    expect(view, "验货帖摊开词条全文").toContain("previewFor(slot)!.affixRows");
+    expect(view, "验货帖摊开固有与共鸣").toContain("previewFor(slot)!.fixedModsText");
+    expect(view, "验货三围有真浏览器落点").toContain("data-market-equipment-flats");
+    expect(view, "验货词条有真浏览器落点").toContain("data-market-equipment-affixes");
+    expect(view, "验货固有与共鸣有真浏览器落点").toContain("data-market-equipment-notes");
+    expect(css, "验货仍沿同一账线，不再套一张卡").toContain(".market-good__inspection");
+  });
+
   it("三册只挂当前一册，隐藏页不把整份货架与赏单留在 DOM", () => {
     const view = source("src/views/MarketView.vue");
 

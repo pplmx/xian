@@ -15,12 +15,13 @@ import { pillDef } from "@/data/pills";
 import { RESOURCE_LABELS } from "@/data/resourceNames";
 import { formatCountdown, formatGN } from "@/utils/format";
 import { add, gn, toNum } from "@/utils/gnum";
-import type { EquipmentInstance, GNum, QualityId } from "@/types";
+import type { EquipmentInstance, GNum } from "@/types";
 import {
   MARKET_CONSIGN_SECONDS,
   MARKET_CONSIGN_SLOTS,
   MARKET_MAT_COUNT,
   MARKET_REFRESH_SECONDS,
+  type MarketSlot,
 } from "@/data/market";
 import type { BountySlot } from "@/data/bounty";
 import {
@@ -42,11 +43,14 @@ import { bountyRemainingSec, equipBountyReward } from "@/core/bountyService";
 import { bountyStatus, marketOverview } from "@/core/marketOverview";
 import { notify } from "@/core/notify";
 import { BOUNTY_REFRESH_SECONDS } from "@/data/bounty";
-import { qualityDef, QUALITIES } from "@/data/qualities";
+import { qualityDef } from "@/data/qualities";
 import { equipmentTemplate } from "@/data/equipment";
+import { setCounts } from "@/core/equipSet";
 import { colorWithAlpha } from "@/ui/colorVar";
 import { isRareQuality, qualityTextColor, qualityTierStyle } from "@/ui/qualityTier";
+import { marketEquipView, type MarketEquipView } from "@/ui/marketShelf";
 import QualitySeal from "@/components/common/QualitySeal.vue";
+import GameIcon from "@/components/common/GameIcon.vue";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LedgerPulse from "@/components/common/LedgerPulse.vue";
 import LedgerHeader from "@/components/common/LedgerHeader.vue";
@@ -229,40 +233,44 @@ function consignProgress(finishAt: number): number {
 
 /**
  * 货架装备预览(确定性实例,只取它与品质,不落库)。缓成 per-slot 表:
- * 只随货架 / 上货时刻重算,不再随每秒的倒计时重掷整件装备(避免每个 tick 生成 6 次)。
+ * 只随货架 / 上货时刻 / 当前佩戴重算,不再随每秒的倒计时重掷整件装备。
  *
- * **这里返回结构化对象而不是一个字符串**,是这次修 bug 的关键:
- * 原先它返回 `generateEquipment(...).quality` —— 那是品阶的 **id**("excellent"),
- * 而字典类型是 `Record<number, string>`:QualityId 与 name 都是 string,
- * TypeScript 看不出区别,英文枚举于是就这样印到了货架上。
- * 现在只有 `qualityName`(中文名)与 `name`(装备名),想印 id 得先绕过类型。
+ * 预览不只给名字与品阶,还把本件战力、当前同槽对照、平铺三围、词条全文、
+ * 固有与共鸣一起摊开 —— 买前能看懂的账,不能等买回行囊才补。
  */
-interface EquipPreview {
-  name: string;
-  qualityName: string;
-  color: string;
-  textColor: string;
-  quality: QualityId;
-  /** 天/仙/神 —— 该盖品阶章的那批(同源 qualityTier,与背包格一份账) */
-  rare: boolean;
-}
-const previews = computed<Record<number, EquipPreview>>(() => {
-  const m: Record<number, EquipPreview> = {};
+const previews = computed<Record<number, MarketEquipView | null>>(() => {
+  const m: Record<number, MarketEquipView | null> = {};
+  const equippedSets = setCounts(inventory.equippedItems);
   for (const s of market.stock) {
     if (s.kind !== "equipment") continue;
     const inst = marketEquipInstance(s, market.stockedAt);
-    const q = qualityDef(inst.quality);
-    m[s.idx] = {
-      name: equipmentTemplate(inst.templateId)?.name ?? "兵刃",
-      qualityName: q.name,
-      color: q.color,
-      textColor: qualityTextColor(inst.quality),
-      quality: inst.quality,
-      rare: isRareQuality(inst.quality),
-    };
+    const template = equipmentTemplate(inst.templateId);
+    const occupantUid = template ? inventory.equipped[template.slot] : undefined;
+    const occupant = occupantUid ? inventory.findItem(occupantUid) : undefined;
+    const setCount = template?.set ? (equippedSets.get(template.set) ?? 0) : 0;
+    m[s.idx] = marketEquipView(inst, occupant, setCount);
   }
   return m;
 });
+
+/** 当前展开验货的货格;换架时收起，避免旧货的展开态落到同号新货上。 */
+const inspectedSlot = ref<number | null>(null);
+watch(
+  () => market.stockedAt,
+  () => {
+    inspectedSlot.value = null;
+  },
+);
+
+function previewFor(slot: MarketSlot): MarketEquipView | null {
+  return slot.kind === "equipment" ? (previews.value[slot.idx] ?? null) : null;
+}
+
+/** 平铺有几项就铺几栏：一围不空出两栏，三围仍并读；极窄档由 CSS 统一退单列。 */
+function flatGridStyle(slot: MarketSlot): Record<string, string> {
+  const count = Math.max(1, Math.min(3, previewFor(slot)?.flatRows.length ?? 1));
+  return { "--market-flat-columns": String(count) };
+}
 
 /**
  * 货架售品卡的品阶晕染(仅兵刃行):边框随档加深(qualityTier 同源),
@@ -575,54 +583,92 @@ function bountyReady(o: BountySlot): boolean {
             v-for="slot in market.stock"
             :key="slot.idx"
             class="market-good"
-            :class="{ 'is-sold': slot.sold }"
+            :class="{ 'is-sold': slot.sold, 'is-inspecting': inspectedSlot === slot.idx }"
             :style="shelfTier(slot)"
           >
-            <span class="market-good__mark" aria-hidden="true">
-              {{ slot.kind === "pill" ? "丹" : slot.kind === "material" ? "料" : "兵" }}
+            <span
+              class="market-good__mark"
+              :class="{ 'market-good__mark--equipment': slot.kind === 'equipment' }"
+              aria-hidden="true"
+            >
+              <GameIcon
+                v-if="slot.kind === 'equipment' && previewFor(slot)"
+                :name="previewFor(slot)!.template.icon"
+                :size="15"
+                :style="{ color: previewFor(slot)!.textColor }"
+              />
+              <template v-else>{{
+                slot.kind === "pill" ? "丹" : slot.kind === "material" ? "料" : "兵"
+              }}</template>
             </span>
-            <div class="market-good__body">
-              <template v-if="slot.kind === 'pill'">
-                <p class="market-good__name">
-                  {{ pillDef(slot.pillId)?.name ?? slot.pillId }}
-                  <span class="market-good__count">×{{ slot.count }}</span>
-                </p>
-                <p class="market-good__note">一枚丹方之味 · 免去集草开炉</p>
-              </template>
-              <template v-else-if="slot.kind === 'material'">
-                <p class="market-good__name">
-                  {{ slot.matId === "herb" ? "灵草" : "玄铁" }} ×{{ MARKET_MAT_COUNT }}
-                </p>
-                <p class="market-good__note">续洞府生产之料 · 当场入账</p>
-              </template>
-              <template v-else>
-                <p class="market-good__name">
-                  <QualitySeal
-                    v-if="previews[slot.idx]?.rare"
-                    :quality="previews[slot.idx]!.quality"
-                    :size="12"
-                    class="mr-1 align-[-2px]"
-                  />
-                  <span
-                    class="font-kai"
-                    :style="{ color: previews[slot.idx]?.textColor ?? 'var(--color-ink)' }"
-                    >{{ previews[slot.idx]?.name ?? "兵刃" }}</span
-                  >
-                  <span class="market-good__quality"
-                    >· {{ previews[slot.idx]?.qualityName ?? "" }}{{ slot.tier }}阶</span
-                  >
-                </p>
-                <p class="market-good__note">
-                  一件已定兵刃，到手即用 · 底档{{
-                    QUALITIES[(slot as { minQualityRank: number }).minQualityRank]?.name ?? ""
-                  }}
-                </p>
-              </template>
+
+            <div v-if="slot.kind === 'pill'" class="market-good__body">
+              <p class="market-good__name">
+                {{ pillDef(slot.pillId)?.name ?? slot.pillId }}
+                <span class="market-good__count">×{{ slot.count }}</span>
+              </p>
+              <p class="market-good__note">一枚丹方之味 · 免去集草开炉</p>
             </div>
+            <div v-else-if="slot.kind === 'material'" class="market-good__body">
+              <p class="market-good__name">
+                {{ slot.matId === "herb" ? "灵草" : "玄铁" }} ×{{ MARKET_MAT_COUNT }}
+              </p>
+              <p class="market-good__note">续洞府生产之料 · 当场入账</p>
+            </div>
+            <button
+              v-else-if="previewFor(slot)"
+              type="button"
+              class="market-good__body market-good__body--inspect"
+              data-market-equipment-toggle
+              :data-market-equipment-index="slot.idx"
+              :aria-expanded="inspectedSlot === slot.idx"
+              :aria-controls="`market-inspect-${slot.idx}`"
+              @click="inspectedSlot = inspectedSlot === slot.idx ? null : slot.idx"
+            >
+              <span class="market-good__name">
+                <QualitySeal
+                  v-if="previewFor(slot)!.rare"
+                  :quality="previewFor(slot)!.quality"
+                  :size="12"
+                  class="mr-1 align-[-2px]"
+                />
+                <span class="font-kai" :style="{ color: previewFor(slot)!.textColor }">
+                  {{ previewFor(slot)!.name
+                  }}<template v-if="previewFor(slot)!.item.level > 0"
+                    >+{{ previewFor(slot)!.item.level }}</template
+                  >
+                </span>
+                <span class="market-good__quality">
+                  · {{ previewFor(slot)!.qualityName }} · {{ slot.tier }}阶
+                </span>
+              </span>
+              <span class="market-good__note">
+                {{ previewFor(slot)!.meta }} · {{ previewFor(slot)!.desc }}
+              </span>
+              <span class="market-good__compare" data-market-equipment-compare>
+                <span>{{ previewFor(slot)!.compareText }}</span>
+                <strong class="tabular" :data-tone="previewFor(slot)!.tone">{{
+                  previewFor(slot)!.deltaText
+                }}</strong>
+              </span>
+              <span class="market-good__inspect-cue">
+                {{ inspectedSlot === slot.idx ? "收起验货" : "展开验货" }}
+                <span aria-hidden="true">{{ inspectedSlot === slot.idx ? "▾" : "▸" }}</span>
+              </span>
+            </button>
+            <div v-else class="market-good__body">
+              <p class="market-good__name">
+                <span class="font-kai">兵刃</span>
+                <span class="market-good__quality">· {{ slot.tier }}阶</span>
+              </p>
+              <p class="market-good__note">这件货的兵刃预览暂不可用。</p>
+            </div>
+
             <div class="market-good__trade">
               <span class="market-good__price">{{ formatGN(slot.price) }}</span>
               <span class="market-good__price-unit">灵石</span>
               <button
+                data-market-buy
                 class="btn-seal market-good__action min-h-[28px] !px-3 !py-1 text-body hoverable:hover:border-cinnabar"
                 :disabled="
                   slot.sold ||
@@ -642,6 +688,81 @@ function bountyReady(o: BountySlot): boolean {
                 }}
               </button>
             </div>
+
+            <section
+              v-if="slot.kind === 'equipment' && inspectedSlot === slot.idx && previewFor(slot)"
+              :id="`market-inspect-${slot.idx}`"
+              class="market-good__inspection"
+              data-market-equipment-preview
+              :data-market-equipment-tone="previewFor(slot)!.tone"
+            >
+              <header class="market-good__inspection-head">
+                <div>
+                  <p class="market-good__inspection-eyebrow">验货签 · 器性全录</p>
+                  <p class="market-good__inspection-verdict" data-market-equipment-preview-compare>
+                    {{ previewFor(slot)!.compareText }}
+                    <strong :data-tone="previewFor(slot)!.tone">{{
+                      previewFor(slot)!.deltaText
+                    }}</strong>
+                  </p>
+                </div>
+                <p class="market-good__inspection-power" data-market-equipment-power>
+                  <span>本件战力</span>
+                  <strong class="tabular">{{ previewFor(slot)!.powerText }}</strong>
+                  <small v-if="previewFor(slot)!.incumbentPowerText" class="tabular">
+                    当前 {{ previewFor(slot)!.incumbentPowerText }}
+                  </small>
+                </p>
+              </header>
+
+              <ul
+                class="market-good__inspection-flats"
+                data-market-equipment-flats
+                :style="flatGridStyle(slot)"
+              >
+                <li v-for="row in previewFor(slot)!.flatRows" :key="row.label">
+                  <span>{{ row.label }}</span>
+                  <strong class="tabular">{{ row.value }}</strong>
+                  <em v-if="row.diff" :data-tone="row.tone" class="tabular">{{ row.diff }}</em>
+                </li>
+              </ul>
+
+              <section
+                v-if="previewFor(slot)!.affixRows.length"
+                class="market-good__affixes"
+                data-market-equipment-affixes
+              >
+                <p class="market-good__inspection-label">
+                  词条 {{ previewFor(slot)!.affixRows.length }} 条 · 按稀有度排
+                </p>
+                <ul>
+                  <li
+                    v-for="line in previewFor(slot)!.affixRows"
+                    :key="line.id"
+                    :style="{ borderLeftColor: line.color }"
+                  >
+                    <span class="font-kai" :style="{ color: line.color }">
+                      「{{ line.name }}」
+                    </span>
+                    <small :style="{ color: line.color }">{{ line.rarityName }}</small>
+                    <span>{{ line.desc }}</span>
+                  </li>
+                </ul>
+              </section>
+
+              <div
+                v-if="previewFor(slot)!.fixedModsText || previewFor(slot)!.setText"
+                class="market-good__inspection-notes"
+                data-market-equipment-notes
+              >
+                <p v-if="previewFor(slot)!.fixedModsText">
+                  <span>固有</span>{{ previewFor(slot)!.fixedModsText }}
+                </p>
+                <p v-if="previewFor(slot)!.setText">
+                  <span>共鸣</span>{{ previewFor(slot)!.setText }}
+                </p>
+              </div>
+            </section>
           </article>
           <p v-if="market.stock.length === 0" class="market-book__empty">
             货架空着 —— 时辰一到自会换新。
