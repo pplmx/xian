@@ -10822,6 +10822,27 @@ async function taskThemeStageSurfaces() {
 async function taskCharacterFold() {
   const failures = [];
   let checked = 0;
+  /** 窄屏下的拆卷浮层:不许横向撑破、关闭键必须够得着 */
+  const failedIfNarrow = (n) => {
+    checked += 1;
+    if (n.overflowX > 0) {
+      failures.push(`[窄档-character] 拆卷内容窗横向撑破 ${n.overflowX}px(视口 ${n.viewportW})`);
+    }
+    if (n.panelBeyond > 0) {
+      failures.push(
+        `[窄档-character] 拆卷面板右缘越出浮层 ${n.panelBeyond}px(视口 ${n.viewportW})`,
+      );
+    }
+    if (!n.closeInView) {
+      failures.push(`[窄档-character] 拆卷关闭键不在视口里(视口 ${n.viewportW})`);
+    }
+    if (n.sources === 0) {
+      failures.push(`[窄档-character] 拆卷在窄屏里一条来源都没渲染(视口 ${n.viewportW})`);
+    }
+    if (n.modalLeft !== null && n.modalLeft < 0 && n.viewportW > 200) {
+      failures.push(`[窄档-character] 拆卷浮层左缘越界 ${n.modalLeft}(视口 ${n.viewportW})`);
+    }
+  };
   const ctx = await auditContext({
     viewport: { width: 390, height: 844 },
     deviceScaleFactor: 3,
@@ -10958,6 +10979,42 @@ async function taskCharacterFold() {
           .then(() => true)
           .catch(() => false);
         if (!closed) failures.push("[390-character] 来源拆卷合上后没有收回原行");
+
+        /*
+         * 极窄档再验一次:拆卷现在是浮层,320 下若标题/来源行把面板撑破,
+         * 玩家看到的是被裁掉的明细。「能开」不等于「在窄屏里也装得下」。
+         */
+        for (const width of [320, 195]) {
+          await page.setViewportSize({ width, height: 844 });
+          await probe.click();
+          await page.waitForTimeout(300);
+          const narrow = await page.evaluate(() => {
+            const modal = document.querySelector("[data-folio-modal]");
+            const panel = document.querySelector("[data-character-modifier-detail]");
+            const close = document.querySelector("[data-character-modifier-close]");
+            const mr = modal?.getBoundingClientRect();
+            const pr = panel?.getBoundingClientRect();
+            const cr = close?.getBoundingClientRect();
+            const pane = modal?.querySelector(".scroll-pane");
+            return {
+              /*
+               * 溢出要看**内容窗**(.scroll-pane)与面板自身的右缘:
+               * modal 自己写着 overflow-hidden,它的 scrollWidth 永远是 clientWidth ——
+               * 拿它量溢出等于常返回 0,注入一个 min-width:600px 的破版都抓不到。
+               */
+              overflowX: pane ? Math.max(0, pane.scrollWidth - pane.clientWidth) : 0,
+              panelBeyond: pr && mr ? Math.max(0, Math.round(pr.right - mr.right)) : 0,
+              closeInView: cr ? cr.top >= 0 && cr.bottom <= window.innerHeight : false,
+              sources: panel?.querySelectorAll("[data-character-modifier-source]").length ?? 0,
+              modalLeft: mr ? Math.round(mr.left) : null,
+              modalRight: mr ? Math.round(mr.right) : null,
+              viewportW: window.innerWidth,
+            };
+          });
+          failedIfNarrow(narrow);
+          await page.locator("[data-character-modifier-close]").click();
+          await page.waitForTimeout(200);
+        }
       }
 
       await page.setViewportSize({ width: 1280, height: 800 });
