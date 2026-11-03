@@ -619,7 +619,7 @@ async function measurePage(page) {
        *   · 相邻两行文字相同不算(那多半是列表里两条同名数据)。
        * 它不判断「该留哪一个」—— 那要人看。它只负责让新出现的一处当场红。
        */
-      repeatedShortLines: () => {
+      repeatedShortLines: (() => {
         const vh = window.innerHeight;
         const main = document.querySelector("[data-folio-main]");
         if (!main) return [];
@@ -637,16 +637,33 @@ async function measurePage(page) {
           if (box.top < 0 || box.bottom > vh || box.width <= 0) continue;
           // 导航与顶栏是跨页常驻的索引,不在「同一页说两遍」的范围里
           if (el.closest("[data-folio-dock], [data-folio-head], [data-folio-spine]")) continue;
-          if (seen.has(text)) {
-            const first = seen.get(text);
-            // 竖直方向紧挨着的同名行多半是列表数据,不算
-            if (Math.abs(box.top - first) > 8) repeats.push(text);
+          /*
+           * 相同文案只有在**同一块**里才算重复。
+           *
+           * 「尚差 21%」在铸道页出现两次:卷首 meta 说的是离最近流派还差多少,
+           * 核心词条那一行说的是该词条自己还差多少 —— 两处恰好同值,但不是同一个
+           * 读数,分开是对的。用最近的可辨识祖先(data-* 或语义区块)当身份,
+           * 两个不同区块里的同值不算复读。
+           */
+          const blockOf = (node) => {
+            const host = node.closest(
+              "[data-cultivation-meters], [data-build-core], [data-market-shelf], [data-market-pulse]",
+            );
+            return (
+              host ?? node.closest("section, article, header, li, footer") ?? node.parentElement
+            );
+          };
+          const key = text;
+          if (seen.has(key)) {
+            const { top, block } = seen.get(key);
+            // 竖直方向紧挨着的同名行多半是列表数据,不算;不同区块里的同值也不算
+            if (Math.abs(box.top - top) > 8 && block === blockOf(el)) repeats.push(text);
           } else {
-            seen.set(text, box.top);
+            seen.set(key, { top: box.top, block: blockOf(el) });
           }
         }
         return [...new Set(repeats)];
-      },
+      })(),
       horizontalOverflow: document.documentElement.scrollWidth > vw + 1,
       /**
        * 外壳(#app 的第一层)不能被滚偏,也不该有可滚的横向余量。
@@ -4419,6 +4436,23 @@ async function taskLateTour() {
       }
       const problems = problemsOf(info);
       if (problems.length) failures.push(`[390-late] ${route} → ${problems.join(" / ")}`);
+      /*
+       * 首屏重复也要在**深档**这一遍判:巡页那一遍跑的是刚建号的档,首屏内容浅,
+       * 好几处只在满档下才进首屏。这一遍用的是 showcase 存档 —— 实测「第 10 / 21 境」
+       * 在修炼页首屏出现三处(top 176 / 270 / 461),那一遍量到、巡页那遍量不到。
+       */
+      /*
+       * 允许清单为空是**结果**,不是遗漏:判据跑通后,深档这一遍的首屏重复已被清零
+       * (周天盘内圈那枚界序号与卷首 meta 重复,已删)。将来若某处确实该重复,
+       * 在这里加一行并写明理由 —— 理由比条目重要。
+       */
+      const lateRepeats = new Set();
+      for (const line of info.repeatedShortLines ?? []) {
+        if (lateRepeats.has(line)) continue;
+        failures.push(
+          `[390-late] ${route} 首屏把同一句说了两遍:«${line}» —— 该合并,或加进允许清单并写明理由`,
+        );
+      }
       const rail = await measureTabRail(page);
       const railFails = railProblems(rail);
       if (rail) checked += 1;

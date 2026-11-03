@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import { unitRatio } from "@/utils/unitRatio";
 import { usePlayerStore } from "@/stores/player";
-import { realmLadderPoints, realmOrdinalText } from "@/core/realmLadder";
+import { realmLadderPoints } from "@/core/realmLadder";
 import { formatPercent } from "@/utils/format";
 
 withDefaults(
@@ -61,7 +61,10 @@ const dashOffset = computed(() => circumference * (1 - progress.value));
       <span class="cultivation-dial__eyebrow">内观 · 周天</span>
       <strong class="cultivation-dial__number">{{ progressText }}</strong>
       <span class="cultivation-dial__stage">{{ player.realm.name }} · {{ player.subName }}</span>
-      <span class="cultivation-dial__ordinal tabular">{{ realmOrdinalText(player.major) }}</span>
+      <!--
+        界序号不在这里再写一遍:卷首 meta 已经有同一枚(top 176 与 270,同在首屏),
+        而盘面这一侧紧贴着的「境界名 · 副修」已经把"此刻在哪"说清楚了。
+      -->
     </div>
   </div>
 </template>
