@@ -3563,6 +3563,38 @@ describe("界面分层 · 浮层只有一个出处", () => {
     }
   });
 
+  it("顶栏两枚资源数点开要说清「它是什么」,而不只是「它是多少」", () => {
+    /*
+     * 此前顶栏的灵石与灵气点开只有一个精确值(外加一句科学计数法说明)。
+     * 玩家看得见「18.74亿」,却看不到容量、回复速度、几时回满 —— 而这三样
+     * 恰是「这个数该不该花」的全部依据;修炼页早就答得出,顶栏却答不出,
+     * 同一个数在两处深浅不一。
+     *
+     * 现在灵气走 useProgressEta(与修炼页同构),灵石给一句用途。
+     * 这条判据钉的是「带上下文」,不是具体措辞。
+     */
+    const bar = FILES.find((f) => f.path === "components/common/TopStatusBar.vue")?.src ?? "";
+    expect(bar, "没取到顶栏,判据在空转").toContain("data-resource-detail");
+    expect(bar, "灵气浮层要接同构的进度上下文").toContain("useProgressEta");
+    expect(bar, "灵气要把 rows 交给 TapNumber").toMatch(
+      /title="灵气"[\s\S]{0,160}?:rows="qiDetailRows"/,
+    );
+    expect(bar, "灵气要带那句人话(几时回满 / 已封顶)").toContain(":note=");
+    expect(bar, "灵石浮层要有用途行").toMatch(/stoneDetailRows[\s\S]{0,200}?用途/);
+    // 用途里的四类必须真在 core 里有 spendStone 出口,不许凭空写
+    const sinks = [
+      "core/buildingService.ts",
+      "core/forge.ts",
+      "core/pillService.ts",
+      "core/herbMarketService.ts",
+    ];
+    for (const rel of sinks) {
+      // core/ 下的 .ts 不在 FILES 里(FILES 只收 .vue),直接读文件
+      const src = readFileSync(resolve(__dirname, "..", rel), "utf8");
+      expect(src, `${rel} 里没有 spendStone —— 灵石用途那句话失去依据`).toContain("spendStone");
+    }
+  });
+
   it("数值浮层的默认解释不许替调用方撒谎", () => {
     /*
      * TapNumber 是「点一下看它到底是多少」的通用入口,接在修为、灵气、三围、

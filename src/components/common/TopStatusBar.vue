@@ -49,6 +49,7 @@
         <TapNumber
           :value="resources.spiritStone"
           title="灵石"
+          :rows="stoneDetailRows"
           data-resource-detail="stone"
           aria-haspopup="dialog"
           :aria-label="`灵石 ${formatGN(resources.spiritStone)}，查看精确值`"
@@ -64,6 +65,8 @@
         <TapNumber
           :value="Math.floor(resources.qi)"
           title="灵气"
+          :rows="qiDetailRows"
+          :note="qiDetailNote"
           data-resource-detail="qi"
           aria-haspopup="dialog"
           :aria-label="`灵气 ${formatNum(Math.floor(resources.qi))}，查看精确值`"
@@ -101,6 +104,9 @@ import { useNativeInsets } from "@/composables/useNativeInsets";
 import { navigationPositionOf } from "@/ui/navigation";
 import GameIcon from "./GameIcon.vue";
 import TapNumber from "./TapNumber.vue";
+import { useProgressEta } from "@/composables/useProgressEta";
+import { formatDuration, formatRate } from "@/utils/format";
+import { QI_BANK_MULT } from "@/data/constants";
 
 const emit = defineEmits<{ openAtlas: [] }>();
 const player = usePlayerStore();
@@ -128,6 +134,48 @@ const entryMark = computed(() =>
  * 老的猜测 —— 原生 20px(沉浸式状态栏的近似)/ 网页 8px,web 渲染逐位不变。
  */
 const { top: statusInset } = useNativeInsets();
+
+/**
+ * 灵气浮层的上下文 —— 与修炼页那份 `useProgressEta` 同构(同一套读数、同一套文案)。
+ *
+ * 此前顶栏这两枚数字点开只有一个「精确值 + 科学计数法」:玩家看得见 18.74亿,
+ * 却看不到容量、回复速度、几时回满 —— 而这三样恰是「这个数该不该花」的全部依据。
+ * 修炼页早就答得出,顶栏却答不出,同一个数在两处深浅不一。
+ */
+/**
+ * 灵石浮层的上下文 —— 只有精确值等于没答。
+ *
+ * 它和灵气的区别在于:灵气有容量与回复速度可言,灵石没有上限、也不回复,
+ * 玩家真正想知道的是「它花在哪」。这句用途不是解说的发挥:花钱的出口
+ * 是 core 里调 spendStone 的那十处,列出的四类各自对应其中若干处。
+ */
+const stoneDetailRows = computed(() => [
+  {
+    label: "用途",
+    text: "建造与升级、强化封存、炼丹、坊市购货",
+    hint: "洞府营造、器坊、丹房、货架与悬赏",
+  },
+]);
+
+const { rows: qiDetailRows, note: qiDetailNote } = useProgressEta({
+  cap: () => player.qiCapValue,
+  rate: () => player.qiRegenPerSec,
+  isFull: () => resources.qi >= player.qiCapValue,
+  gap: () => player.qiCapValue - resources.qi,
+  remain: () => Math.max(0, Math.floor(player.qiCapValue - resources.qi)),
+  capRow: { label: "标称容量", hint: "进度条与上限判定走的这条线" },
+  banked: {
+    value: () => Math.max(0, Math.floor(resources.qi) - Math.floor(player.qiCapValue)),
+    label: "积余",
+    hint: () =>
+      `容量之外还在攒的部分;可积到 ${formatNum(player.qiBankCapValue)}(容量的 ${QI_BANK_MULT} 倍)`,
+  },
+  remainRow: { label: "还差", hint: () => `每秒 ${formatRate(player.qiRegenPerSec)}` },
+  etaRow: { label: "预计回满", hint: "按当前回复速度" },
+  fullText: "已满",
+  rateEmptyText: "当前无回复",
+  formatEta: (sec) => `约 ${formatDuration(sec)}`,
+});
 /** 年龄/寿元:两侧同一套缩写,单位(载)在模板里只写一次 */
 const lifespan = computed(() => lifespanPair(player.age, player.lifespanMax));
 const statusTopPad = computed(() =>
