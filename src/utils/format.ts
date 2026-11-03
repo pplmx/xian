@@ -159,9 +159,18 @@ export function formatDuration(totalSec: number): string {
   const h = Math.floor((sec % 86400) / 3600);
   const m = Math.floor((sec % 3600) / 60);
   const s = sec % 60;
-  if (d > 0) return `${d}天${h}小时`;
-  if (h > 0) return `${h}小时${m}分`;
-  if (m > 0) return `${m}分${s}秒`;
+  /*
+   * 末位为 0 的那一段不写。
+   *
+   * 此前是拼死的 `${d}天${h}小时` / `${h}小时${m}分` / `${m}分${s}秒`,
+   * 于是所有整分钟时长都读作「30分0秒」、整小时读作「2小时0分」——
+   * 而这在内容里随处可见:一炷香 1800 秒、一盏茶 600 秒、一刻 900 秒,
+   * 丹药与 buff 的时长、趟数、打坐收益全都落在整分钟上。
+   * 「0 秒」不是精度,是把一个整数说成了两段。
+   */
+  if (d > 0) return h > 0 ? `${d}天${h}小时` : `${d}天`;
+  if (h > 0) return m > 0 ? `${h}小时${m}分` : `${h}小时`;
+  if (m > 0) return s > 0 ? `${m}分${s}秒` : `${m}分`;
   return `${s}秒`;
 }
 

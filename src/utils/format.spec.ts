@@ -65,6 +65,27 @@ describe("数值格式化", () => {
     // 差 1 秒到整点必须仍是 59 分,不能 round 成「60 分」或「1 时 60 分」
     expect(formatDuration(3599)).toBe("59分59秒");
     expect(formatDuration(7199)).toBe("1小时59分");
+    /*
+     * 整分钟 / 整小时不写末尾那个 0。
+     *
+     * 上面那几条全是**非整数**分钟(65 / 3660 / 3599 / 7199),恰好绕开了
+     * 整点这一档 —— 于是「30分0秒」这种读法长期没被任何用例碰到。
+     * 而整点在本作里到处都是:一炷香 1800 秒、一盏茶 600 秒、一刻 900 秒,
+     * 丹药与 buff 的时长、趟数、打坐收益基本都落在整分钟上。
+     */
+    expect(formatDuration(60)).toBe("1分");
+    expect(formatDuration(600)).toBe("10分");
+    expect(formatDuration(1800)).toBe("30分");
+    expect(formatDuration(3600)).toBe("1小时");
+    expect(formatDuration(7200)).toBe("2小时");
+    expect(formatDuration(86400)).toBe("1天");
+    expect(formatDuration(90000)).toBe("1天1小时");
+    // 非整点仍把两段都写出来
+    expect(formatDuration(5400)).toBe("1小时30分");
+    expect(formatDuration(90)).toBe("1分30秒");
+    // 一秒都不足时只有秒
+    expect(formatDuration(0)).toBe("0秒");
+    expect(formatDuration(30)).toBe("30秒");
   });
 
   /**
