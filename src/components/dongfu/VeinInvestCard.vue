@@ -17,7 +17,7 @@
       <div v-for="v in VEINS" :key="v.id" class="space-y-1">
         <div class="flex items-stretch gap-1.5 tinylens:gap-1">
           <button
-            class="btn-ghost flex min-w-0 flex-1 items-center justify-between !py-1.5 !text-[12px] tinylens:flex-wrap tinylens:!px-1.5"
+            class="btn-ghost flex min-w-0 flex-1 items-center justify-between !py-1.5 !text-body tinylens:flex-wrap tinylens:!px-1.5"
             :disabled="!canInvest(v.id)"
             @click="doInvest(v.id)"
           >

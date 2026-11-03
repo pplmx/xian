@@ -311,7 +311,7 @@
             <!-- 在身之卦 -->
             <div v-if="currentReading" class="realm-yi-reading">
               <p class="flex flex-wrap items-center gap-2">
-                <span class="font-kai text-[16px] tracking-widest text-cinnabar"
+                <span class="font-kai text-section tracking-widest text-cinnabar"
                   >{{ currentReading.hexagram.name }}卦</span
                 >
                 <span class="text-note text-ink-faint tabular">

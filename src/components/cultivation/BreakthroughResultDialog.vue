@@ -22,7 +22,7 @@
           {{ view.success ? "破" : "滞" }}
         </div>
       </div>
-      <p class="mt-3 font-kai text-[16px] tracking-[0.3em] text-ink">
+      <p class="mt-3 font-kai text-section tracking-[0.3em] text-ink">
         {{ view.success ? "突破成功" : "突破失败" }}
       </p>
       <!--

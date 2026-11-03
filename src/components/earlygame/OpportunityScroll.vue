@@ -9,7 +9,7 @@
         <span class="opportunity-scroll__seal font-kai" aria-hidden="true">{{ seal }}</span>
         <div class="opportunity-scroll__identity">
           <p class="opportunity-scroll__source">{{ source }} · 限时机缘</p>
-          <h2 class="opportunity-scroll__title text-[16px] font-kai" data-opportunity-title>
+          <h2 class="opportunity-scroll__title text-section font-kai" data-opportunity-title>
             {{ title }}
           </h2>
         </div>

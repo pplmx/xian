@@ -145,7 +145,7 @@
           <div class="opening-create__vow-body">
             <p>这一世的修行之路，由它决定。</p>
             <button
-              class="btn-seal opening-create__begin text-[16px]"
+              class="btn-seal opening-create__begin text-section"
               :disabled="starting"
               @click="begin"
             >

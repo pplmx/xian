@@ -43,15 +43,35 @@ describe("桌面阅读字阶 · 手机与宽屏共用一套语义刻度", () => 
     }
   });
 
-  it("常规界面不再写回五个裸像素档", () => {
+  it("常规界面不再写回裸像素档 —— 包括恰好等于某一档的那几个数", () => {
+    /*
+     * 拦的是「本该读变量却写死数字」。12 与 16 曾经不在拦截名单里,因为
+     * 它们正好等于**中档**的 body 与 section —— 可字阶分三档:手机 11/15、
+     * 中档 12/16、宽屏阅读 14/18。写死 16 的段落于是永远停在 16,
+     * 手机档该是 15、宽屏该是 18,它一处都不跟。
+     *
+     * 实测抓到的两处:破境结果那句「突破成功」(手机 15 / 宽屏 18 都写成了 16)、
+     * 灵脉投入按钮(宽屏该 14,写死 12)。
+     *
+     * 放行 input / textarea 上的 16:那是 iOS 聚焦不缩放的硬要求,
+     * 与阅读字阶无关,换成 15/18 反而会触发缩放。
+     */
     const offenders: string[] = [];
     for (const file of walkFiles(SRC, isSourceFile)) {
       const code = readFileSync(file, "utf8")
         .replace(/<!--[\s\S]*?-->/g, "")
         .replace(/\/\*[\s\S]*?\*\//g, "")
         .replace(/^\s*\/\/.*$/gm, "");
-      if (/text-\[(?:10|11|14|15|18)px\]/.test(code)) {
+      for (const m of code.matchAll(/text-\[(10|11|12|14|15|16|18)px\]/g)) {
+        if (m[1] === "16") {
+          // 只有当它落在 input / textarea 的开标签里才放行
+          const before = code.slice(0, m.index);
+          const tagStart = before.lastIndexOf("<");
+          const tag = before.slice(tagStart).split("\n").slice(0, 12).join("\n");
+          if (/^<(?:input|textarea)\b/.test(tag.trim())) continue;
+        }
         offenders.push(relative(ROOT, file).replace(/\\/g, "/"));
+        break;
       }
     }
     expect(offenders, "这些文件又把阅读字阶写成了裸像素").toEqual([]);
