@@ -360,6 +360,7 @@ const CATEGORIES = [
       "qualityVerdicts",
       "toastSeal",
       "peakRealm",
+      "codexMoment",
     ],
   },
   {

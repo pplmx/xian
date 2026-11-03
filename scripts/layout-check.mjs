@@ -9230,6 +9230,179 @@ async function taskRebirthFolio() {
 }
 
 /**
+ * 道历收录 —— 图鉴页脚不许再报现实世界的钟。
+ *
+ * 全作唯一一处露出现实时间的地方就在图鉴每条的页脚:「收录时间 2026-11-04 14:32」。
+ * 界面上其余每个时间字样都在世界内(寿元几载、此去几时辰、第 N 世),
+ * 唯独这一格把玩家从道历里拽出来,还带时区 —— 同一份存档换个时区读到不同日期。
+ *
+ * 判据三件:
+ *   一 有世界内读数的条目,页脚写「第 N 世 · M 岁」,与存档里那一对数逐字对得上;
+ *   二 页脚里**不出现**四位年份或时分 —— 量的是真渲染出来的字,不是源码;
+ *   三 旧档(只有毫秒、没有世界内读数)照实说「早年收录」,不按现在的年岁往回编。
+ */
+async function taskCodexMoment() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const LIFE = 3;
+    const AGE = 47;
+    const slices = showcaseSlices("light");
+    const equipId = slices.inventory.items[0]?.templateId;
+    if (!equipId) throw new Error("道历夹具:存档里没有可用的装备模板");
+    slices.player = {
+      ...slices.player,
+      major: 3,
+      age: AGE,
+      reincarnation: { ...slices.player.reincarnation, count: LIFE - 1, peakMajor: 3 },
+    };
+    slices.quests = {
+      ...slices.quests,
+      collections: { ...slices.quests.collections, equip: [equipId] },
+      // 只有毫秒、没有世界内读数的旧档条目:另取一件模板
+      collectedAt: { [`equip:${equipId}`]: Date.now() },
+      collectedMoment: { [`equip:${equipId}`]: { life: LIFE, age: AGE } },
+      lastCollectionViewAt: Date.now() - 60_000,
+    };
+    await seedSave(ctx, slices, "__codexMomentFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/collection?tab=collection", 900);
+    await clearOverlays(page);
+
+    // 打开装备柜,点开那一条已收录的装备
+    checked += 1;
+    const opened = await page.evaluate(() => {
+      const toggle = document.querySelector('[data-collection-category-toggle="equip"]');
+      if (toggle) toggle.click();
+      return Boolean(toggle);
+    });
+    if (!opened) {
+      failures.push("[390] 道历场景:藏珍里找不到「装备」柜的展开签");
+    } else {
+      await page.waitForTimeout(400);
+    }
+    const clicked = await page.evaluate(() => {
+      const token = document.querySelector('[data-codex-entry="equip"]');
+      if (!token) return false;
+      token.click();
+      return true;
+    });
+    if (!clicked) {
+      failures.push("[390] 道历场景:装备柜里没有已收录条目");
+    } else {
+      await page.waitForTimeout(450);
+    }
+
+    checked += 1;
+    const foot = await page.evaluate(() => {
+      const panel = document.querySelector(".collection-detail");
+      if (!panel) return null;
+      const rows = [...panel.querySelectorAll(".collection-detail__foot")];
+      for (const row of rows) {
+        const label = (row.firstElementChild?.textContent || "").trim();
+        if (!label.includes("收录")) continue;
+        const valueEl = row.lastElementChild;
+        const value = (valueEl?.textContent || "").replace(/\s+/g, " ").trim();
+        // 值是真的落在一个元素里,而不是被 textContent 把两格拼成一串
+        return {
+          text: `${label} · ${value}`,
+          label,
+          value,
+          valueIsOwnNode: valueEl !== row.firstElementChild,
+        };
+      }
+      return { text: "", label: "", value: "", valueIsOwnNode: false };
+    });
+    if (!foot) {
+      failures.push("[390] 道历场景:藏珍详情没打开");
+    } else {
+      const want = `第 ${LIFE} 世 · ${AGE} 岁`;
+      if (foot.value !== want) {
+        failures.push(`[390] 道历场景:页脚该写 «${want}»,实见 «${foot.value}»`);
+      }
+      if (!foot.valueIsOwnNode) {
+        failures.push("[390] 道历场景:读数没有落在自己那一格(标签与值黏成一串)");
+      }
+      // 真渲染出来的字里不许有公历年月日与时分
+      if (/\d{4}[-/年]\d{1,2}/.test(foot.value)) {
+        failures.push(`[390] 道历场景:页脚里出现了现实年份 «${foot.value}»`);
+      }
+      if (/\d{1,2}:\d{2}/.test(foot.value)) {
+        failures.push(`[390] 道历场景:页脚里出现了钟点 «${foot.value}»`);
+      }
+    }
+
+    // 旧档:只有毫秒没有世界内读数 —— 照实说「早年收录」
+    checked += 1;
+    const legacy = showcaseSlices("light");
+    const legacyEquipId = legacy.inventory.items[0]?.templateId;
+    if (!legacyEquipId) {
+      failures.push("[390] 道历场景:旧档夹具缺少装备模板");
+    } else {
+      legacy.quests = {
+        ...legacy.quests,
+        collections: { ...legacy.quests.collections, equip: [legacyEquipId] },
+        collectedAt: { [`equip:${legacyEquipId}`]: Date.now() - 86400_000 },
+        collectedMoment: {},
+        lastCollectionViewAt: Date.now() - 60_000,
+      };
+      await seedSave(ctx, legacy, "__codexMomentLegacy");
+      await page.reload({ waitUntil: "load" });
+      await page.waitForTimeout(900);
+      await openRoute(page, "/collection?tab=collection", 900);
+      await clearOverlays(page);
+      await page.evaluate(() => {
+        document.querySelector('[data-collection-category-toggle="equip"]')?.click();
+      });
+      await page.waitForTimeout(400);
+      await page.evaluate(() => {
+        document.querySelector('[data-codex-entry="equip"]')?.click();
+      });
+      await page.waitForTimeout(450);
+      const legacyFoot = await page.evaluate(() => {
+        const panel = document.querySelector(".collection-detail");
+        const rows = [...(panel?.querySelectorAll(".collection-detail__foot") ?? [])];
+        for (const row of rows) {
+          const label = (row.firstElementChild?.textContent || "").trim();
+          if (label.includes("收录")) return (row.lastElementChild?.textContent || "").trim();
+        }
+        return "";
+      });
+      if (!legacyFoot.includes("早年收录")) {
+        failures.push(`[390] 道历场景:旧档条目该说「早年收录」,实见 «${legacyFoot}»`);
+      }
+      if (/\d{4}[-/年]\d{1,2}/.test(legacyFoot)) {
+        failures.push(`[390] 道历场景:旧档条目仍印出现实年份 «${legacyFoot}»`);
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 道历场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(
+        `\n道历收录:图鉴页脚读「${foot?.value ?? ""}」,旧档说「早年收录」,都没有现实日期`,
+      );
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 历世足迹 —— 转世把这一世折回起点,界域志仍说得出「你到过哪里」。
  *
  * 这条判据守的是一个**只有转世之后才现形**的窟窿:新一世从炼气重来,谱上真仙那一行
@@ -23143,6 +23316,7 @@ const TASKS = [
   ["品评说得出一档的分量", taskQualityVerdict],
   ["品阶印跟着高品落地", taskToastSeal],
   ["历世足迹留得住到过的地方", taskPeakRealm],
+  ["道历收录不再露现实时间", taskCodexMoment],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
   ["一键分解先勾后点", taskDecompose],

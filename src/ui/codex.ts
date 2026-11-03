@@ -27,6 +27,7 @@ import { GONGFA, GONGFA_TYPE_NAMES, gongfaDef } from "@/data/gongfa";
 import { gongfaBranchDef } from "@/data/gongfaBranches";
 import { realmLabel } from "@/data/realms";
 import { daoNoteLine, type DaoNote } from "@/core/daoNote";
+import { codexMomentText } from "./codexMoment";
 import { QUALITIES, qualityDef } from "@/data/qualities";
 import { ARTIFACTS, ARTIFACT_MAX_LEVEL } from "@/data/artifacts";
 import { EQUIPMENT_TEMPLATES } from "@/data/equipment";
@@ -495,7 +496,13 @@ export function equipCodex(): CodexCat {
       owned.has(def.id),
       lore.blueprintMastery(def.id),
     ),
-    foot: { label: "收录时间", value: collectedTimeText(quests.collectedAt[`equip:${def.id}`]) },
+    foot: {
+      label: "收录时间",
+      value: collectedTimeText(
+        quests.collectedAt[`equip:${def.id}`],
+        quests.collectedMoment[`equip:${def.id}`],
+      ),
+    },
   })).sort((a, b) => b.stage - a.stage);
   const seen = entries.filter((e) => e.stage >= 1).length;
   const best = entries.filter((e) => e.stage >= EQUIP_STAGE_MAX).length;
@@ -520,7 +527,10 @@ export function artifactCodex(): CodexCat {
         ...describeArtifact(def, levelOf.get(def.id) ?? 0, owned.has(def.id)),
         foot: {
           label: "收录时间",
-          value: collectedTimeText(quests.collectedAt[`artifact:${def.id}`]),
+          value: collectedTimeText(
+            quests.collectedAt[`artifact:${def.id}`],
+            quests.collectedMoment[`artifact:${def.id}`],
+          ),
         },
       },
     })),
@@ -545,7 +555,13 @@ export function pillCodex(): CodexCat {
       rank: qualityDef(def.quality).rank,
       entry: {
         ...describePill(def, owned.has(def.id), lore.recipeMastery(def.id)),
-        foot: { label: "收录时间", value: collectedTimeText(quests.collectedAt[`pill:${def.id}`]) },
+        foot: {
+          label: "收录时间",
+          value: collectedTimeText(
+            quests.collectedAt[`pill:${def.id}`],
+            quests.collectedMoment[`pill:${def.id}`],
+          ),
+        },
       },
     })),
   );
@@ -598,7 +614,12 @@ export function petStage(status: {
 }
 
 /** 灵兽册条目:风味 + 它给我什么 + 与玩家的相伴档 */
-export function describePet(def: PetDef, stage: number, collectedAt?: number): CodexEntry {
+export function describePet(
+  def: PetDef,
+  stage: number,
+  collectedAt?: number,
+  petMoment?: { life: number; age: number },
+): CodexEntry {
   const lv = Math.max(0, Math.min(PET_STAGE_MAX, Math.floor(stage || 0)));
   const q = qualityDef(def.quality);
   return {
@@ -622,7 +643,10 @@ export function describePet(def: PetDef, stage: number, collectedAt?: number): C
     stageName: PET_STAGE_NAMES[lv]!,
     badge: lv >= PET_STAGE_MAX ? "伴" : "",
     hint: PET_HINTS[lv]!,
-    foot: { label: "收录时间", value: collectedTimeText(collectedAt) },
+    foot: {
+      label: "收录时间",
+      value: collectedTimeText(collectedAt, petMoment),
+    },
   };
 }
 
@@ -643,6 +667,7 @@ export function petCodex(): CodexCat {
         current: player.petId === def.id,
       }),
       quests.collectedAt[`pet:${def.id}`],
+      quests.collectedMoment[`pet:${def.id}`],
     ),
   }));
   const entries = rows
@@ -690,7 +715,13 @@ function makeCollectionCat(
         stageName: "",
         badge: "",
         hint: "",
-        foot: { label: "收录时间", value: collectedTimeText(quests.collectedAt[`${key}:${d.id}`]) },
+        foot: {
+          label: "收录时间",
+          value: collectedTimeText(
+            quests.collectedAt[`${key}:${d.id}`],
+            quests.collectedMoment[`${key}:${d.id}`],
+          ),
+        },
       },
     }))
     .sort((a, b) => b.rank - a.rank || b.entry.stage - a.entry.stage || a.idx - b.idx);
@@ -756,16 +787,21 @@ export function collectionCodex(): CodexCat[] {
 }
 
 /**
- * 收录时刻的人话。旧档里已收录的条目没有记录 —— 照实说「早年收录」,
- * 而不是编一个时间或显示 1970。
+ * 收录时刻的人话 —— 改用**道历**(见 ui/codexMoment):「第 3 世 · 42 岁」。
+ *
+ * 从前这里 `new Date(ts).toLocaleString("zh-CN", …)`,于是全作唯一一处露出
+ * 现实世界的钟就长在图鉴的页脚上,还带时区(同一份存档在东八区与 UTC 读到不同日期)。
+ *
+ * 现在按收录时记下的世界内读数说事。缺读数(旧档)时照实说「早年收录」——
+ * 与从前同一条诚实口径,只是不再补一个机房日期。
+ *
+ * 保留 `ts` 入参:调用方不必为此改一圈,而「早于这一栏存在的旧档」与
+ * 「有毫秒却没有道历」本来就是同一批条目。
  */
-export function collectedTimeText(ts: number | undefined): string {
-  if (ts === undefined || !Number.isFinite(ts)) return "早年收录,未记时日";
-  return new Date(ts).toLocaleString("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+export function collectedTimeText(
+  ts: number | undefined,
+  moment?: { life: number; age: number },
+): string {
+  void ts;
+  return codexMomentText(moment);
 }

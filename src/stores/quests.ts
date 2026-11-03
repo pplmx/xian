@@ -22,6 +22,7 @@ import {
 } from "@/utils/saveShape";
 import type { StoredDaily } from "@/core/engineDailies";
 import { dailyShapeOf, dailyStateOf, rolloverDailyBoard } from "@/core/engineDailies";
+import { usePlayerStore } from "@/stores/player";
 
 function uniqueKnown(ids: string[], exists: (id: string) => boolean): string[] {
   const out: string[] = [];
@@ -59,6 +60,16 @@ export const useQuestsStore = defineStore(
     });
     /** 图鉴收录时刻,键为 `${category}:${id}`(旧档已收录条目无记录) */
     const collectedAt = ref<Record<string, number>>({});
+    /**
+     * 收录那一刻的**世界内**读数:第几世、活到几岁(见 ui/codexMoment)。
+     *
+     * 从前图鉴页脚写的是 `new Date(ts)` 格式化出来的机房时间 —— 全作唯一一处露出现实
+     * 世界的钟,还带时区(同一份存档在东八区与 UTC 会读到不同日期)。历法本身不用发明:
+     * 第几世与年岁这两枚事实早就有了,记下来就是道历。
+     *
+     * 旧档没有这一栏 —— 那些条目照实说「早年收录」,不按现在的年岁往回编。
+     */
+    const collectedMoment = ref<Record<string, { life: number; age: number }>>({});
     /**
      * 图鉴「新得」的界:上次打开图鉴的时刻。收录发生在界后的条目挂「新」,
      * 打开图鉴(markCollectionSeen)把界推进到此刻 —— 新韵只这一遍见(见 quests.spec 图鉴新得)。
@@ -112,6 +123,19 @@ export const useQuestsStore = defineStore(
         if (keptKeys.has(key) && ts > 0) nextAt[key] = Math.floor(ts);
       }
       collectedAt.value = nextAt;
+      /*
+       * 世界内读数跟着收录表一起修形:认不得的键、坏值一律丢掉 ——
+       * 宁可让那一条退回「早年收录」,也不要印出「第 NaN 世 · NaN 岁」。
+       */
+      const nextMoment: Record<string, { life: number; age: number }> = {};
+      for (const [key, value] of Object.entries(asRecord(collectedMoment.value))) {
+        if (!keptKeys.has(key) || !value || typeof value !== "object") continue;
+        const life = asFiniteNumber((value as { life?: unknown }).life, 0, 0);
+        const age = asFiniteNumber((value as { age?: unknown }).age, 0, 0);
+        if (life < 1) continue;
+        nextMoment[key] = { life: Math.floor(life), age: Math.floor(age) };
+      }
+      collectedMoment.value = nextMoment;
       // 「新得」的界:坏值洗回 0;为 0 即老档尚无此字段 —— 播种把界抬到此刻,
       // 已收录的一律不算新得,免得老玩家一开图鉴整页假新。播种后恒 > 0,天然只此一遍
       lastCollectionViewAt.value = Math.floor(asFiniteNumber(lastCollectionViewAt.value, 0, 0));
@@ -189,8 +213,15 @@ export const useQuestsStore = defineStore(
     function collect(category: CollectionCategory, id: string): boolean {
       const list = collections.value[category];
       if (list.includes(id)) return false;
+      const key = `${category}:${id}`;
       collections.value = { ...collections.value, [category]: [...list, id] };
-      collectedAt.value = { ...collectedAt.value, [`${category}:${id}`]: Date.now() };
+      collectedAt.value = { ...collectedAt.value, [key]: Date.now() };
+      // 道历读数取自玩家自身:第几世与这一世活到几岁,都是已有事实,不另记一份钟
+      const player = usePlayerStore();
+      collectedMoment.value = {
+        ...collectedMoment.value,
+        [key]: { life: player.reincarnation.count + 1, age: Math.floor(player.age) },
+      };
       return true;
     }
 
@@ -224,6 +255,7 @@ export const useQuestsStore = defineStore(
       titlesOwned,
       collections,
       collectedAt,
+      collectedMoment,
       lastCollectionViewAt,
       isEntryNew,
       hasCollectionNew,
