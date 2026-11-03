@@ -276,3 +276,33 @@ describe("汉字数字(页面上的数量从来源数出来)", () => {
     expect(cnNumber(1.5)).toBe("1.5");
   });
 });
+
+/**
+ * 两个时长函数的分工:一个说给人听,一个要宽度不动。
+ *
+ * formatDuration 去掉末位为 0 的那段之后,同一量级内的宽度会变
+ * (「10分」3 字、「10分5秒」5 字)—— 这正是它不能被放进会跳动的状态胶囊的原因,
+ * 也是 formatCountdown 存在的理由。两者若互相误用:胶囊会左右抖,
+ * 或一句人话里多出「00秒」。
+ */
+describe("时长两式 · 各司其职", () => {
+  it("要说清多少时间,用不带补零的那一式", () => {
+    expect(formatDuration(600)).toBe("10分");
+    expect(formatDuration(3600)).toBe("1小时");
+  });
+
+  it("要宽度不动,用逐位补零的那一式", () => {
+    // 同一分钟内每秒等宽:逐位替换,胶囊不会左右跳
+    expect(formatCountdown(60)).toBe("01分00秒");
+    expect(formatCountdown(61)).toBe("01分01秒");
+    expect(formatCountdown(69)).toBe("01分09秒");
+    expect(formatCountdown(60).length).toBe(formatCountdown(69).length);
+    // 跨到 10 分时定宽规则让宽度只增一次,不是每秒都变
+    expect(formatCountdown(600).length).toBe(formatCountdown(659).length);
+  });
+
+  it("两式都不吐 NaN", () => {
+    expect(formatDuration(Number.NaN)).toBe("--");
+    expect(formatCountdown(Number.NaN)).toBe("--");
+  });
+});
