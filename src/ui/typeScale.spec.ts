@@ -62,7 +62,12 @@ describe("桌面阅读字阶 · 手机与宽屏共用一套语义刻度", () => 
         .replace(/<!--[\s\S]*?-->/g, "")
         .replace(/\/\*[\s\S]*?\*\//g, "")
         .replace(/^\s*\/\/.*$/gm, "");
-      for (const m of code.matchAll(/text-\[(10|11|12|14|15|16|18)px\]/g)) {
+      for (const m of code.matchAll(/text-\[(8|9|10|11|12|13|14|15|16|18)px\]/g)) {
+        /*
+         * 8 / 9 是徽标与印面的字:它们要塞进 13px 见方的方块里,
+         * 用正文档位会直接撑破。这类「尺寸由容器决定」的字不读阅读字阶。
+         */
+        if (m[1] === "8" || m[1] === "9") continue;
         if (m[1] === "16") {
           // 只有当它落在 input / textarea 的开标签里才放行
           const before = code.slice(0, m.index);

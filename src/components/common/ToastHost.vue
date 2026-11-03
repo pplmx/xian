@@ -33,7 +33,7 @@
           :key="t.id"
           data-toast
           type="button"
-          class="pointer-events-auto max-w-90 cursor-pointer rounded-sm border px-4 py-2 text-left text-[13px] shadow-md font-kai tracking-wide active:opacity-60 whitespace-pre-line"
+          class="pointer-events-auto max-w-90 cursor-pointer rounded-sm border px-4 py-2 text-left text-body shadow-md font-kai tracking-wide active:opacity-60 whitespace-pre-line"
           :class="KIND_CLASS[t.kind]"
           @click="ui.dismissToast(t.id)"
         >
@@ -51,6 +51,18 @@ import type { Toast } from "@/types";
 import { playSfx, type SfxName } from "@/core/audio";
 
 const ui = useUiStore();
+
+/*
+ * 字号走 text-body,不写死 13px。
+ *
+ * 写死之后它两头都不对:手机档正文是 11px,toast 反而更大(13);宽屏阅读档
+ * 正文 14px,toast 又更小(13)—— 同一个提示条在两个档位里的分量是反的。
+ * 实测确认改前 390 档 13 vs 11、1280 档 13 vs 14。
+ *
+ * 与正文**同号**而不是更高一档:toast 是一句短散文,它的分量靠边框、
+ * 底色与浮在页面之上来表达,不靠字号压过正文。往上取一档就只能用 text-title,
+ * 那是给标题留的语义,拿来装提示语是另一种失真。
+ */
 
 /**
  * 离场动画时长 —— 唯一的一处定义。

@@ -9,7 +9,7 @@
         与坏档提示同一套做法:一次性的提醒之外,得有个地方能把话再读一遍。
   -->
   <div v-if="visible" class="card-ink border-qing/30 px-4 py-3">
-    <p class="font-kai text-[13px] tracking-wider text-ink">把游戏「添加到主屏幕」</p>
+    <p class="font-kai text-body tracking-wider text-ink">把游戏「添加到主屏幕」</p>
     <p class="mt-1.5 t-body text-ink-faint">
       iOS 在网页七天没被打开之后会清掉它的本地数据 —— 存档就存在那里,连离线缓存一起。
       添加到主屏幕后,游戏以独立应用的样子存在,不受这条规则约束。
