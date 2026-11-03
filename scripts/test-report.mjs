@@ -363,6 +363,7 @@ const CATEGORIES = [
       "codexMoment",
       "resonanceGap",
       "unwalkedBranch",
+      "reforgeBudget",
     ],
   },
   {

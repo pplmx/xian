@@ -9230,6 +9230,158 @@ async function taskRebirthFolio() {
 }
 
 /**
+ * 重铸预算总账 —— 「开洗」之前,这一押最多花多少要说清楚。
+ *
+ * 面板上有三样分散的读数:预算「至多洗 N 次」、单价「每洗 尘×12 · 石 800」、
+ * 逐条的「约 M 次」—— 唯独没有把它们乘起来的那一个数。玩家要决定的是「押不押」,
+ * 而那个问题要的是总价:单看「每洗 12 尘」会觉得便宜,乘上 50 次才是真的数。
+ *
+ * 判据三件:
+ *   一 总账那一行在:同时报出次数与总价,且**等于**单价 × 预算的乘积(逐字核);
+ *   二 改预算,总价跟着改 —— 它是算出来的,不是写死的;
+ *   三 手上够不够写得出来:给足资源时不说「尚差」,掐掉尘时说出确切的差额。
+ */
+async function taskReforgeBudget() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    // 尘与石都管够,先量「够」的那一版
+    slices.resources = { ...slices.resources, dust: 100000, spiritStone: { m: 1, e: 9 } };
+    await seedSave(ctx, slices, "__reforgeBudgetFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/inventory", 900);
+    await clearOverlays(page);
+
+    // 打开行囊里第一件装备的器评帖,展开自动重铸
+    checked += 1;
+    const openedItem = await page.evaluate(() => {
+      const btn = document.querySelector("main button[data-uid]");
+      if (!btn) return false;
+      btn.click();
+      return true;
+    });
+    if (!openedItem) {
+      failures.push("[390] 重铸预算:行囊里没有任何装备可开");
+    } else {
+      await page.waitForTimeout(450);
+    }
+    const autoBtn = page.getByRole("button", { name: /自动重铸/ }).first();
+    if ((await autoBtn.count()) === 0) {
+      failures.push("[390] 重铸预算:器评帖里找不到「自动重铸」入口");
+    } else {
+      await autoBtn.click({ timeout: 3000 });
+      await page.waitForTimeout(350);
+    }
+    // 选一条目标,总账才与「要洗什么」对上
+    await page
+      .locator("[data-equipment-auto-reforge] button")
+      .first()
+      .click({ timeout: 3000 })
+      .catch(() => {});
+    await page.waitForTimeout(300);
+
+    const readBudget = () =>
+      page.evaluate(() => {
+        const el = document.querySelector("[data-equipment-reforge-budget-total]");
+        const panel = document.querySelector("[data-equipment-auto-reforge]");
+        const input = panel?.querySelector("input[type='number']");
+        const unit = panel?.querySelector("[data-equipment-reforge-budget] span");
+        return {
+          text: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : "",
+          rolls: input ? Number(input.value) : null,
+          unit: unit ? (unit.textContent || "").replace(/\s+/g, " ").trim() : "",
+          overflow: panel ? panel.scrollWidth - panel.clientWidth : 0,
+        };
+      });
+
+    checked += 1;
+    const first = await readBudget();
+    if (!first.text) {
+      failures.push("[390] 重铸预算:没有总账那一行");
+    } else {
+      // 从单价行里取两个数,与总账行里的两个数逐字核
+      const unitDust = /器灵尘×(\d+)/.exec(first.unit)?.[1];
+      const unitStone = /灵石\s*([\d.]*(?:万|亿)?)/.exec(first.unit)?.[1];
+      if (!unitDust) {
+        failures.push(`[390] 重铸预算:单价行里读不出器灵尘 «${first.unit}»`);
+      } else if (!first.text.includes(`${first.rolls} 次`)) {
+        failures.push(`[390] 重铸预算:总账没报次数(${first.rolls}) «${first.text}»`);
+      } else {
+        const wantDust = Number(unitDust) * Number(first.rolls);
+        if (!first.text.includes(`器灵尘×${wantDust}`)) {
+          failures.push(
+            `[390] 重铸预算:总账该是 ${unitDust}×${first.rolls}=${wantDust} «${first.text}»`,
+          );
+        }
+      }
+      if (unitStone && unitStone !== "0" && !first.text.includes("灵石")) {
+        failures.push(`[390] 重铸预算:单价里有灵石,总账却没报 «${first.text}»`);
+      }
+      if (!first.text.includes("至多")) {
+        failures.push(`[390] 重铸预算:那是上界不是预计,要写明「至多» «${first.text}»`);
+      }
+      if (first.text.includes("尚差")) {
+        failures.push(`[390] 重铸预算:资源给足了,却还说「尚差» «${first.text}»`);
+      }
+      if (first.overflow > 1) {
+        failures.push(`[390] 重铸预算:总账那一段横向溢出 ${first.overflow}px`);
+      }
+    }
+
+    // 改预算:总价跟着改(它是算出来的)
+    checked += 1;
+    const changed = await page.evaluate(() => {
+      const input = document.querySelector("[data-equipment-auto-reforge] input[type='number']");
+      if (!input) return false;
+      input.value = "10";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      return true;
+    });
+    if (!changed) {
+      failures.push("[390] 重铸预算:找不到预算输入框");
+    } else {
+      await page.waitForTimeout(350);
+      const second = await readBudget();
+      if (second.rolls !== 10) {
+        failures.push(`[390] 重铸预算:预算改成 10 次没生效(${second.rolls})`);
+      }
+      if (!second.text.includes("10 次")) {
+        failures.push(`[390] 重铸预算:总账没跟着预算改 «${second.text}»`);
+      }
+      if (second.text === first.text) {
+        failures.push("[390] 重铸预算:预算改了,总账一个字没变 —— 那是写死的");
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 重铸预算页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(
+        `\n重铸预算:总账读「${first.text}」,预算改小后读「${(await readBudget()).text}」`,
+      );
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 共鸣缺口 —— 器评帖要说得出「还差哪一件」,以及下一步做什么。
  *
  * 此前只有「共鸣『铁壁共鸣』1/2」,然后没了。差的那件在行囊里(换上即可)、
@@ -23628,6 +23780,7 @@ const TASKS = [
   ["历世足迹留得住到过的地方", taskPeakRealm],
   ["道历收录不再露现实时间", taskCodexMoment],
   ["共鸣缺口说得出还差哪件", taskResonanceGap],
+  ["重铸预算开洗前摊开总价", taskReforgeBudget],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
   ["一键分解先勾后点", taskDecompose],

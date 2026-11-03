@@ -35,6 +35,12 @@ import {
   type ReforgeTarget,
 } from "@/core/reforge";
 import { formatGN, formatPercent } from "@/utils/format";
+import {
+  clampReforgeRolls,
+  reforgeBudget,
+  reforgeBudgetLine,
+  REFORGE_BUDGET_MAX,
+} from "@/ui/reforgeBudget";
 import { toNum, subClamp } from "@/utils/gnum";
 import { useLoreStore } from "@/stores/lore";
 import { blueprintReforgesUntilMastered } from "@/core/blueprintMastery";
@@ -98,7 +104,7 @@ const autoBudget = ref(50);
  * 「至多洗 N 次」显示与实跑 clampAutoBudget 同口径 —— 预览与实发不许脱节。 */
 function clampAutoBudget(): void {
   const raw = Math.floor(Number(autoBudget.value) || 0);
-  autoBudget.value = Math.min(500, Math.max(1, raw));
+  autoBudget.value = clampReforgeRolls(raw);
 }
 /** 停止条件:任一命中即停;minRoll 给「数值范围」那一嘴 */
 const autoTargets = ref<ReforgeTarget[]>([]);
@@ -133,6 +139,25 @@ function autoTriesOf(target: ReforgeTarget): number | null {
 }
 const autoReachable = computed(() => autoTargets.value.some((t) => autoTriesOf(t) !== null));
 
+/**
+ * 这一押的总账(见 ui/reforgeBudget)。
+ *
+ * 面板上原本有三样分散的读数:预算「至多洗 N 次」、单价「每洗 尘×12 · 石 800」、
+ * 逐条的「约 M 次」—— 唯独没有把它们乘起来的那一个数:这一押**最多花掉多少**。
+ * 玩家要决定的是「押不押」,而那个问题要的是总价。
+ *
+ * 价目仍取自 core/reforge(同一个 reforgeCostVal),这里只做乘法。
+ */
+const autoBudgetCost = computed(() =>
+  reforgeBudget(
+    autoBudget.value,
+    reforgeCostVal.value
+      ? { dust: reforgeCostVal.value.dust, stone: reforgeCostVal.value.stone }
+      : null,
+    { dust: resources.dust, stone: resources.spiritStone },
+  ),
+);
+
 function isAutoTarget(id: string): boolean {
   return autoTargets.value.some((t) => t.affixId === id);
 }
@@ -152,7 +177,7 @@ function closeAuto(): void {
 function runAutoReforge(): void {
   if (!inst.value) return;
   const targets = autoTargets.value;
-  const budget = Math.min(500, Math.max(1, Math.floor(autoBudget.value || 0)));
+  const budget = clampReforgeRolls(autoBudget.value);
   const out = autoReforge(inst.value.uid, targets, budget);
   const cost = `花 器灵尘×${out.dust} · 灵石 ${formatGN(out.stone)}`;
   // 「没洗到目标」不等于「没洗动」:每次重铸词条都尽数重掷,结账要报清现在这一身落在哪
@@ -272,7 +297,7 @@ function triesOf(id: string, minRoll = 0): number | null {
           v-model.number="autoBudget"
           type="number"
           min="1"
-          max="500"
+          :max="REFORGE_BUDGET_MAX"
           aria-label="自动重铸至多洗几次"
           class="w-16 min-w-0 rounded-[2px] border border-ink/15 bg-paper/70 px-1 py-0.5 text-[16px] tabular"
           @change="clampAutoBudget"
@@ -296,8 +321,24 @@ function triesOf(id: string, minRoll = 0): number | null {
         开 洗
       </button>
     </div>
-    <p class="mt-1 text-note text-ink-faint tabular">
-      每洗 器灵尘×{{ formatGN(reforgeCostVal.dust) }} · 灵石 {{ formatGN(reforgeCostVal.stone) }}
+    <p class="mt-1 text-note tabular" data-equipment-reforge-budget>
+      <span class="text-ink-faint"
+        >每洗 器灵尘×{{ formatGN(reforgeCostVal.dust) }} · 灵石
+        {{ formatGN(reforgeCostVal.stone) }}</span
+      >
+      <!--
+        总账这一行:至多洗几次、这一押最多花多少、手上够不够。
+        从前只有单价与逐条的「约 N 次」—— 单看「每洗 12 尘」会觉得便宜,
+        乘上 50 次才是真的要花掉的数。
+      -->
+      <span
+        v-if="autoBudgetCost"
+        class="mt-0.5 block"
+        :class="autoBudgetCost.enough ? 'text-ink-soft' : 'text-cinnabar'"
+        data-equipment-reforge-budget-total
+      >
+        {{ reforgeBudgetLine(autoBudgetCost, formatGN) }}
+      </span>
     </p>
     <!-- 首洗就付不起,预告就把它摆出来(与重铸/封存同款):灰钮不许只有 broke toast -->
     <p v-if="autoTargets.length && !autoAffordable" class="mt-1 text-note text-cinnabar tabular">
