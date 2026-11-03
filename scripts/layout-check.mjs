@@ -7774,7 +7774,39 @@ async function taskReduceMotion() {
       if (!body.includes("精确值") || !/\d{1,3}(?:,\d{3})+(?:\.\d+)?/.test(body)) {
         failures.push(`[390] 页眉灵石没有展开精确值:«${body.slice(0, 80)}»`);
       }
+      /*
+       * 内容窗不许横向撑破。浮层的行是 flex,长文案若带 shrink-0 就会把整行
+       * 顶出去 —— 实测「用途:建造与升级、强化封存、炼丹、坊市购货」在 320 下
+       * 撑出 34px、195 下 135px,而上面那条「有精确值」照样绿。
+       */
       await page.keyboard.press("Escape");
+      /*
+       * 三档都量一遍:390 下装得下不代表 320/195 也装得下 —— 长文案是在窄档
+       * 才露馅的(实测 320 撑出 34px、195 撑出 135px,而 390 一直是 0)。
+       */
+      for (const width of [320, 195]) {
+        await page.setViewportSize({ width, height: 844 });
+        await stone.click({ timeout: 2500 }).catch(() => {});
+        const dialogOpen = await page
+          .getByRole("dialog", { name: "灵石" })
+          .waitFor({ state: "visible", timeout: 2500 })
+          .then(() => true)
+          .catch(() => false);
+        if (!dialogOpen) {
+          failures.push(`[窄档 ${width}] 灵石精确值打不开了`);
+        } else {
+          const over = await page.evaluate(() => {
+            const pane = document.querySelector("[data-folio-modal] .scroll-pane");
+            return pane ? Math.max(0, pane.scrollWidth - pane.clientWidth) : 0;
+          });
+          if (over > 0) {
+            failures.push(`[窄档 ${width}] 灵石精确值浮层的行撑出了内容窗 ${over}px`);
+          }
+        }
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(150);
+      }
+      await page.setViewportSize({ width: 390, height: 844 });
     }
     if (pageErrors.length)
       failures.push(`[390] 减动效场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);

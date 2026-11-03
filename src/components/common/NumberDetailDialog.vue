@@ -14,7 +14,15 @@
         >
           <p class="flex items-baseline justify-between gap-2">
             <span class="shrink-0 text-body text-ink-faint">{{ row.label }}</span>
-            <span v-if="row.text" class="shrink-0 text-title text-ink tabular">{{ row.text }}</span>
+            <!--
+              text 行不能一律 shrink-0:数字串(「×3」「49%」)确实不该被压,
+              但一句长文案(灵石的「建造与升级、强化封存、炼丹、坊市购货」)
+              在 320 宽下会把整行撑出弹窗 —— 实测内容窗横向溢出 34px。
+              故这一支允许换行收缩,数字由 tabular 与自然宽度保证不被压扁。
+            -->
+            <span v-if="row.text" class="min-w-0 text-right text-title text-ink tabular">{{
+              row.text
+            }}</span>
             <span v-else class="shrink-0 text-body text-ink-faint tabular">{{
               formatGN(row.value!)
             }}</span>
