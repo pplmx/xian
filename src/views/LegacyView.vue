@@ -91,13 +91,18 @@
 
           <div class="legacy-ledger__grid legacy-ledger__grid--three">
             <article class="legacy-panel" data-legacy-stage>
+              <!--
+                这两行此前各写一遍 stage.name(小字副标签与下面的加粗大标题),
+                连读起来就是「熟知修仙界 / 熟知修仙界」。而「宿慧 423」又与卷首
+                meta 里那一枚重复(实测 top 203 与 622,同在首屏)。
+                现在:标签行末报**本阶进度**,主行报阶名与宿慧总额 —— 三行各说一件事。
+              -->
               <p class="legacy-panel__label">
                 宿慧阶梯
-                <span>{{ stage.name }}</span>
+                <span class="tabular">{{ stageMeter.value }} / {{ stageMeter.total }}</span>
               </p>
               <p class="legacy-panel__line">
                 <strong>{{ stage.name }}</strong>
-                <span>宿慧 {{ insight }}</span>
               </p>
               <p class="legacy-panel__copy">{{ stage.desc }}</p>
               <ProgressBar

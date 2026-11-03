@@ -190,3 +190,44 @@ describe("三生案 · 本世、所知与旧缘同读此刻", () => {
     );
   });
 });
+
+/**
+ * 宿慧阶梯那一块里的三行,各说一件事。
+ *
+ * 此前两行各写一遍 stage.name(小字副标签 + 下面加粗大标题),连读起来就是
+ * 「熟知修仙界 / 熟知修仙界」;而「宿慧 N」又与卷首 meta 里那一枚重复
+ * (实测 top 203 与 622,同在首屏)。一个面板里三行只说了两件事。
+ */
+describe("宿慧阶梯 · 三行各说一件事", () => {
+  const view = () => readSource("src/views/LegacyView.vue");
+
+  it("阶段名只出现一次,标签行改报本阶进度", () => {
+    const src = view();
+    // 面板内的 stage.name 只该有一处(加粗主行);标签行末改为进度
+    // 剥注释:注释里写着「此前两行各写一遍 stage.name」是在解释原因
+    const panel = src
+      .slice(src.indexOf("data-legacy-stage"), src.indexOf("data-legacy-lore"))
+      .split("<!--")
+      .map((chunk, i) => (i === 0 ? chunk : chunk.slice(chunk.indexOf("-->") + 3)))
+      .join("");
+    const hits = (panel.match(/stage\.name/g) ?? []).length;
+    expect(hits, "面板里的阶段名只该写一次").toBe(1);
+    expect(panel, "标签行末要报本阶进度").toContain("stageMeter.value }} / {{ stageMeter.total");
+  });
+
+  it("宿慧总额留在卷首那一处,面板里不再复述", () => {
+    const src = view();
+    const panel = src.slice(src.indexOf("data-legacy-stage"), src.indexOf("data-legacy-lore"));
+    expect(panel, "面板里不该再写宿慧总额(卷首 meta 已经有一枚)").not.toMatch(/宿慧 \{\{/);
+    // 卷首那一枚仍在
+    expect(src.slice(0, src.indexOf("data-legacy-stage")), "卷首要保留宿慧总额").toContain(
+      "宿慧 {{ insight }}",
+    );
+  });
+
+  it("防空转:确认取到了这一块", () => {
+    const src = view();
+    expect(src.indexOf("data-legacy-stage")).toBeGreaterThan(0);
+    expect(src.indexOf("data-legacy-lore")).toBeGreaterThan(src.indexOf("data-legacy-stage"));
+  });
+});
