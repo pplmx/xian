@@ -9240,6 +9240,155 @@ async function taskRebirthFolio() {
 }
 
 /**
+ * 提示条的去路 —— 拾得高品那条要能点开看。
+ *
+ * 「灵光乍现,拾得「灵品·古剑」」是玩家唯一看见「我得到了什么」的地方,几秒后消失。
+ * 此后想再看那一件的词条、器铭与对比,得自己判断它落在行囊哪一格、翻进去、再点开。
+ *
+ * 走真路径:插剑石(ev_sword_stone)的第一个分支权重 15,拔出来的就是一件
+ * 灵品(minQualityRank 4)武器 —— `Math.random = () => 0` 让它必然被选中。
+ * 于是提示由 core 的 notify 真实发出,与玩家点下去走同一条链。
+ *
+ * 判据三件:
+ *   一 那条提示上带得出去路,且类别是装备;
+ *   二 点它一下,器评帖真的打开(不是"点了没反应"),提示自己收起;
+ *   三 没有去路的提示点一下只收掉自己,不打开任何浮层。
+ */
+async function taskToastTarget() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    slices.adventure = {
+      ...(slices.adventure ?? {}),
+      pendingEventId: "ev_sword_stone",
+      pendingEventSince: Date.now(),
+    };
+    await seedSave(ctx, slices, "__toastTargetFixture");
+
+    const page = await ctx.newPage();
+    // 恒 0:weighted 会取第一个分支(15% 那一支,拔出灵品古剑)
+    await page.addInitScript(() => {
+      Math.random = () => 0;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/adventure", 800);
+    await page.locator("[data-event-slip]").waitFor({ state: "visible", timeout: 6000 });
+    await clearOverlays(page).catch(() => {});
+
+    // 选「尝试拔剑」
+    checked += 1;
+    const pick = page.locator("[data-event-slip] button", { hasText: /尝试拔剑/ }).first();
+    if ((await pick.count()) === 0) {
+      failures.push("[390] 提示条去处:际遇里找不到「尝试拔剑」那一支");
+    } else {
+      await pick.click({ timeout: 4000 });
+      await page.waitForTimeout(700);
+    }
+
+    // 那条提示该带得出去路
+    checked += 1;
+    const withTarget = await page.evaluate(() => {
+      const nodes = [...document.querySelectorAll("[data-toast]")];
+      const hit = nodes.filter((n) => n.getAttribute("data-toast-target")).at(-1);
+      if (!hit) {
+        return { found: false, texts: nodes.map((n) => (n.textContent || "").trim()) };
+      }
+      return {
+        found: true,
+        kind: hit.getAttribute("data-toast-target"),
+        text: (hit.textContent || "").replace(/\s+/g, " ").trim(),
+        // 有去路的那条该带一个提示符号
+        cue: /看/.test(hit.textContent || ""),
+      };
+    });
+    if (!withTarget.found) {
+      failures.push(
+        `[390] 提示条去处:拾得之后那条提示没有去路 «${(withTarget.texts ?? []).join(" | ")}»`,
+      );
+    } else {
+      if (withTarget.kind !== "equipment") {
+        failures.push(`[390] 提示条去处:去路类别该是装备,实见「${withTarget.kind}」`);
+      }
+      if (!/拾得/.test(withTarget.text)) {
+        failures.push(`[390] 提示条去处:那条提示不是拾得回执 «${withTarget.text}»`);
+      }
+      if (!withTarget.cue) {
+        failures.push(`[390] 提示条去处:带路的那条没有点开的提示 «${withTarget.text}»`);
+      }
+
+      // 点一下:器评帖真的打开,提示自己收起
+      checked += 1;
+      await page.evaluate(() => {
+        const nodes = [...document.querySelectorAll("[data-toast]")];
+        const hit = nodes.filter((n) => n.getAttribute("data-toast-target")).at(-1);
+        if (hit) hit.click();
+      });
+      await page.waitForTimeout(650);
+      const after = await page.evaluate(() => ({
+        dossier: Boolean(document.querySelector("[data-equipment-dossier]")),
+        stillThere: [...document.querySelectorAll("[data-toast]")].some((n) =>
+          n.getAttribute("data-toast-target"),
+        ),
+      }));
+      if (!after.dossier) {
+        failures.push("[390] 提示条去处:点了那条提示,器评帖没打开 —— 去路无处可去");
+      }
+      if (after.stillThere) {
+        failures.push("[390] 提示条去处:点开之后那条提示还挂着");
+      }
+      // 收尾:关掉器评帖
+      for (let i = 0; i < 3 && (await page.locator(".modal-panel").count()) > 0; i += 1) {
+        await page.keyboard.press("Escape").catch(() => {});
+        await page.waitForTimeout(200);
+      }
+    }
+
+    // 反向:普通提示点一下只收掉自己
+    checked += 1;
+    const plain = await page.evaluate(() => {
+      const node = [...document.querySelectorAll("[data-toast]")].find(
+        (n) => !n.getAttribute("data-toast-target"),
+      );
+      if (!node) return { found: false };
+      const before = document.querySelectorAll("[data-toast]").length;
+      node.click();
+      return { found: true, before };
+    });
+    if (plain.found) {
+      await page.waitForTimeout(400);
+      const afterClick = await page.evaluate(() => ({
+        toasts: document.querySelectorAll("[data-toast]").length,
+        dossier: Boolean(document.querySelector("[data-equipment-dossier]")),
+      }));
+      if (afterClick.dossier) {
+        failures.push("[390] 提示条去处:没有去路的提示点一下就打开了浮层");
+      }
+      if (afterClick.toasts >= plain.before) {
+        failures.push("[390] 提示条去处:普通提示点了没收起");
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 提示条去处页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n提示条去处:拾得那条带装备去路并点得开(${withTarget.text})`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 册目读法 —— 「第几册」在一句话里只有一种写法。
  *
  * 星图的当前落点此前读作「卷三 · 第 03 册」:前半句汉字、后半句两位阿拉伯数字,
@@ -24047,6 +24196,7 @@ const TASKS = [
   ["重铸预算开洗前摊开总价", taskReforgeBudget],
   ["册次水印写汉字且说得清第几册", taskFolioOrdinal],
   ["册目读法一句话一种数字", taskFolioPosition],
+  ["提示条的去路真能点开", taskToastTarget],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
   ["一键分解先勾后点", taskDecompose],

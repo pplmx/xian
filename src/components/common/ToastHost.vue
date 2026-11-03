@@ -36,7 +36,8 @@
           class="pointer-events-auto flex max-w-90 cursor-pointer items-start gap-2 rounded-sm border px-4 py-2 text-left text-body shadow-md font-kai tracking-wide active:opacity-60 whitespace-pre-line"
           :class="KIND_CLASS[t.kind]"
           :data-toast-seal="t.seal"
-          @click="ui.dismissToast(t.id)"
+          :data-toast-target="t.target?.kind"
+          @click="ui.openToastTarget(t.id)"
         >
           <!--
             品阶印 —— 高品之物落地时,这一条不再是一句灰字,而是带着这一档的印。
@@ -51,6 +52,16 @@
             >{{ qualityDef(t.seal).name.charAt(0) }}</span
           >
           <span class="min-w-0">{{ t.text }}</span>
+          <!--
+            去路 —— 有可看的东西时给一枚「看」字(见 ui/toastTarget)。
+            没有去路的提示一字不多:绝大多数提示点一下只是收掉自己。
+          -->
+          <span
+            v-if="t.target"
+            class="ml-1 shrink-0 self-center text-note text-qing"
+            aria-hidden="true"
+            >看 ›</span
+          >
         </button>
       </TransitionGroup>
     </div>

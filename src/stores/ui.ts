@@ -12,6 +12,7 @@ import type {
   Toast,
 } from "@/types";
 import { QUALITIES } from "@/data/qualities";
+import { toastTargetOf } from "@/ui/toastTarget";
 
 /**
  * 认得的品阶 id 集合 —— 提示条要盖印时先在这里对一次账。
@@ -47,12 +48,19 @@ export const useUiStore = defineStore("ui", () => {
    *  这句,用自家 aria-live 补上,读完即清(只在创角→首页这一趟念)。 */
   const worldEnter = ref<string | null>(null);
 
-  function toast(text: string, kind: Toast["kind"] = "info", seal?: string): void {
+  function toast(
+    text: string,
+    kind: Toast["kind"] = "info",
+    seal?: string,
+    target?: Toast["target"],
+  ): void {
     const id = toastSeq;
     toastSeq += 1;
     // 印只认品质表里真有的档(见 data/qualities)—— 写坏的 id 不该让提示条长出半枚印
     const stamped = seal && QUALITY_IDS.has(seal as QualityId) ? (seal as QualityId) : undefined;
-    toasts.value = [...toasts.value.slice(-4), { id, text, kind, seal: stamped }];
+    // 去路同样先对一次账:点了没反应的提示比不可点的提示更让人困惑
+    const way = toastTargetOf(target) ?? undefined;
+    toasts.value = [...toasts.value.slice(-4), { id, text, kind, seal: stamped, target: way }];
     const ttl = kind === "rare" ? 4200 : 2600;
     setTimeout(() => {
       toasts.value = toasts.value.filter((t) => t.id !== id);
@@ -68,7 +76,17 @@ export const useUiStore = defineStore("ui", () => {
    * `vi.spyOn(useUiStore(), "toast")` 仍然拦得住** core 发出的提示(现有一批
    * 对账用例就是这么截提示语的),落点也始终是当前 active 的那份 pinia。
    */
-  setNotifier({ toast: (text, kind, seal) => useUiStore().toast(text, kind, seal) });
+  /*
+   * 转发器必须把**每一个**参数原样送到落点。
+   *
+   * 这里栽过两次:先是漏了 seal(品阶印),再是漏了 target(去路)—— 两次都类型合法
+   * (JS 丢实参不报错),而单元测试直接调 store 的三/四参版本全绿,只有真浏览器里
+   * 「怎么没效果」。写 `(...args)` 转发:参数表由 Notifier 的签名约束,
+   * 端口涨一个参数时这里不用改也不会漏。
+   */
+  setNotifier({
+    toast: (...args) => useUiStore().toast(...args),
+  });
 
   /*
    * 视图模型端口(见 core/uiPort.ts):core 不再 `useUiStore().breakthrough = view`
@@ -97,6 +115,25 @@ export const useUiStore = defineStore("ui", () => {
     toasts.value = toasts.value.filter((t) => t.id !== id);
   }
 
+  /**
+   * 点开一条提示的去路(见 ui/toastTarget)。
+   *
+   * 没有去路的提示也走这里 —— 它只收起自己,不打开任何浮层。这样界面那一侧
+   * 不必分两个 handler:一个「点击」语义,有路就去、没路就收。
+   *
+   * 为什么去路是**动作**而不是路由链接:提示条浮在任意页面上,有些目标
+   * (器评帖)本身就是全局浮层。做成链接会把玩家从现在这一页带走 ——
+   * 他可能正在看战斗回放。
+   */
+  function openToastTarget(id: number): void {
+    const hit = toasts.value.find((t) => t.id === id);
+    if (hit?.target) {
+      if (hit.target.kind === "equipment") equipDetailUid.value = hit.target.id;
+      else artifactDetailId.value = hit.target.id;
+    }
+    dismissToast(id);
+  }
+
   return {
     toasts,
     offlineSummary,
@@ -112,5 +149,6 @@ export const useUiStore = defineStore("ui", () => {
     worldEnter,
     toast,
     dismissToast,
+    openToastTarget,
   };
 });

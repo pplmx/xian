@@ -23,8 +23,14 @@ export type NoticeKind = "info" | "success" | "warn" | "rare";
  * 「这一条该盖哪一档的印」;色与单字由上层去 `data/qualities` 取。与
  * `Toast.seal` 是同一条口径的两种写法:一个给调用方,一个给落点。
  */
+/** 提示条的去路(见 ui/toastTarget)—— core 只说「能点开哪一件」,不说怎么开 */
+export interface NoticeTarget {
+  kind: "equipment" | "artifact";
+  id: string;
+}
+
 export interface Notifier {
-  toast(text: string, kind: NoticeKind, seal?: string): void;
+  toast(text: string, kind: NoticeKind, seal?: string, target?: NoticeTarget): void;
 }
 
 let sink: Notifier | null = null;
@@ -38,6 +44,11 @@ export function setNotifier(notifier: Notifier | null): void {
  * 说一句。没有落点时静默丢弃 —— 纯逻辑不该因为「这会儿没人听」就跑不动
  * (批量结算、脚本、库的调用方都可能不挂 UI)。
  */
-export function notify(text: string, kind: NoticeKind = "info", seal?: string): void {
-  sink?.toast(text, kind, seal);
+export function notify(
+  text: string,
+  kind: NoticeKind = "info",
+  seal?: string,
+  target?: NoticeTarget,
+): void {
+  sink?.toast(text, kind, seal, target);
 }

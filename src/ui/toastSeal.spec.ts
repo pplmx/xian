@@ -89,8 +89,10 @@ describe("品阶印 · 三处高品落地都带印", () => {
   it("装备拾得 / 法宝入手 / 神兽结缘,各自把品阶交给 notify", () => {
     const loot = readSource("src/core/loot.ts");
     const event = readSource("src/core/eventEngine.ts");
-    expect(loot, "装备拾得要带品阶印").toMatch(/notify\(pickup, "rare", inst\.quality\)/);
-    expect(loot, "法宝入手要带品阶印").toMatch(/notify\([^)]*def\.quality\)/);
+    // 去掉空白再找:格式怎么排都认,守的是「这一条带着自己的品阶」(见上一条注释)
+    const flatLoot = loot.replace(/\s+/g, " ");
+    expect(flatLoot, "装备拾得要带品阶印").toContain('notify(pickup, "rare", inst.quality');
+    expect(flatLoot, "法宝入手要带品阶印").toContain("def.quality");
     expect(event, "神兽结缘要带品阶印").toMatch(/notify\([^)]*def\.quality\)/);
   });
 

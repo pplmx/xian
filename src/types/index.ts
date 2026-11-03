@@ -1217,6 +1217,14 @@ export interface Toast {
   kind: "info" | "success" | "warn" | "rare";
   /** 品阶印:色与单字都取自品质表(见 data/qualities),不在调用方手写 hex */
   seal?: QualityId;
+  /**
+   * 可选的**去路** —— 点一下能打开哪一件的详情(见 ui/toastTarget)。
+   *
+   * 「拾得一件天品」那条提示是玩家唯一看见「我得到了什么」的地方,几秒后消失;
+   * 此后想再看那一件的词条、器铭与对比,得自己翻行囊。有去路时点一下就到。
+   * 不填就没有:绝大多数提示没有可看的东西,给了去路反而整条变得可疑。
+   */
+  target?: { kind: "equipment" | "artifact"; id: string };
 }
 
 /**

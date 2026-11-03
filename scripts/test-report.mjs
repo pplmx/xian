@@ -366,6 +366,7 @@ const CATEGORIES = [
       "reforgeBudget",
       "folioOrdinal",
       "folioPosition",
+      "toastTarget",
     ],
   },
   {
