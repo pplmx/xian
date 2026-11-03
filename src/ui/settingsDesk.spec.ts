@@ -287,3 +287,40 @@ describe("天机案 · 设置卷首与三案同读此刻", () => {
     expect(exportRow, "导出时间不拿状态标签再冒充一遍").not.toContain("backupReadout.label");
   });
 });
+
+/**
+ * 声息章的章首不复述卷首那一枚声道读数。
+ *
+ * 它此前写的也是 `soundReadout.label`,与卷首 meta 里的那一枚一字不差:
+ * 实测 top 168 与 268,相距 100px,都在首屏。而其余章首都报**本章自己的**
+ * 读数(观照章报主题+战报、行止章报动效+勿扰),声息章按同一规矩该报
+ * 两条声道里有几条在响。
+ */
+describe("声息章 · 章首报自己的读数", () => {
+  const view = () => readSource("src/views/SettingsView.vue");
+
+  it("章首不再直接用 soundReadout.label", () => {
+    const src = view();
+    // 剥注释:注释里写着「此前却复述了卷首 meta 里那枚 soundReadout.label」是在解释原因
+    const chapter = src
+      .slice(src.indexOf('data-settings-group="sound"'), src.indexOf('data-settings-group="sight"'))
+      .split("<!--")
+      .map((chunk, i) => (i === 0 ? chunk : chunk.slice(chunk.indexOf("-->") + 3)))
+      .join("");
+    expect(chapter, "声息章的章首不该复述 soundReadout.label").not.toContain("soundReadout.label");
+    expect(chapter, "要报两条声道的条数").toContain("soundReadout.active");
+  });
+
+  it("卷首那一枚仍在(它是全页的摘要)", () => {
+    expect(view(), "卷首 meta 要保留完整读数").toContain(
+      "data-settings-sound>{{ soundReadout.label }}",
+    );
+  });
+
+  it("章首三种组合的说法互不相同", () => {
+    const src = view();
+    for (const word of ["双声道", "单声道", "俱静"]) {
+      expect(src, `章首缺「${word}」这一档`).toContain(word);
+    }
+  });
+});

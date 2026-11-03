@@ -49,7 +49,16 @@
             <span class="settings-register__eyebrow">入耳 · 即时</span>
             <h2 class="settings-register__title">声息</h2>
           </span>
-          <span class="settings-register__state tabular">{{ soundReadout.label }}</span>
+          <!--
+            章首这一格报**本章自己的**读数(与观照章报主题+战报、行止章报动效+勿扰同例),
+            此前却复述了卷首 meta 里那枚 `soundReadout.label` —— 两处相距 100px、
+            都在首屏,连字符串都一模一样(实测 top 168 与 268)。
+          -->
+          <span class="settings-register__state tabular" data-settings-sound-chapter>
+            {{
+              soundReadout.active === 2 ? "双声道" : soundReadout.active === 1 ? "单声道" : "俱静"
+            }}
+          </span>
         </header>
 
         <div class="settings-register__body">
