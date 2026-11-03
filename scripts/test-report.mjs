@@ -109,6 +109,7 @@ const CATEGORIES = [
       "artifacts.spec",
       "talentLadder",
       "petQuality",
+      "petVows",
       "gongfaBranch",
       "softCapAudit",
       "softCapVisibility",

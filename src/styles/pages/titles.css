@@ -312,11 +312,24 @@
   .name-beast-focus__copy,
   .name-beast-focus__effect,
   .name-beast-focus__gap,
-  .name-beast-focus__trait {
+  .name-beast-focus__trait,
+  .name-beast-focus__vow {
     margin-top: 0.16rem;
     font-size: var(--type-note);
     line-height: 1.55;
     overflow-wrap: anywhere;
+  }
+  /*
+   * 契语 —— 四十只灵兽各一句只对你说的话(见 data/petVows)。
+   * 它比 flavor 重:楷体、墨色、左缘一道细短笔,像一行手写批注落在相伴帖上;
+   * 但不给底色、不套框 —— 与器铭同一条规矩,一张纸只多一行字。
+   */
+  .name-beast-focus__vow {
+    padding-left: 0.45rem;
+    border-left: 2px solid var(--color-ink-faint);
+    color: var(--color-ink-soft);
+    font-family: var(--font-kai);
+    letter-spacing: 0.04em;
   }
   .name-beast-focus__copy,
   .name-beast-focus__trait span {

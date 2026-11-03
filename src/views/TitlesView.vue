@@ -234,6 +234,13 @@
                     }}</span>
                   </p>
                   <p class="name-beast-focus__copy">{{ activePet.def.desc }}</p>
+                  <!--
+                    契语 —— 它对你说的那一句(见 data/petVows)。与上一行 flavor 分工不同:
+                    上一行答「它是什么」,这一行答「它对你是什么样」。没登记契语的灵兽整段不出。
+                  -->
+                  <p v-if="activePet.vow" class="name-beast-focus__vow" data-pet-vow>
+                    {{ activePet.vow }}
+                  </p>
                   <p v-if="activePet.modText" class="name-beast-focus__effect tabular">
                     {{ activePet.modText }}
                   </p>
@@ -396,7 +403,9 @@ import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
 import { ACHIEVEMENTS } from "@/data/achievements";
 import { TITLES } from "@/data/titles";
-import { PETS } from "@/data/pets";
+import { PETS, petDef } from "@/data/pets";
+import { petVow } from "@/data/petVows";
+import { notify } from "@/core/notify";
 import { PERSONALITY_NAMES, personalityDesc } from "@/core/petPersonality";
 import type { StatMods } from "@/types";
 import { petTraitText } from "@/ui/itemText";
@@ -558,6 +567,8 @@ const petRows = computed(() =>
       // 相伴中的显示放大后的真值(灵兽园 × 安抚,与人物页属性明细同源 —— 都是 finalStats 的「灵兽」行);
       // 其余仍为基础值 —— 按表里数字决定"该换哪只"不会与实战打架
       modText: modsText(def.id === player.petId ? (activePetMods.value ?? def.mods) : def.mods),
+      /** 契语只在相伴面板露面,逐行长列表不铺(见 data/petVows 的注释) */
+      vow: petVow(def.id),
       personalityName: PERSONALITY_NAMES[def.personality],
       personalityDesc: personalityDesc(def.personality),
       traitText: petTraitText(def),
@@ -651,6 +662,15 @@ function togglePet(id: string): void {
   petLimit.value = PET_RENDER_BATCH;
   if (parting) focusListRow("[data-pet-row]");
   else focusListRowById("data-pet-row", id);
+  /*
+   * 唤来那一下,它应你一声 —— 契语(见 data/petVows)在换伴的此刻说出口,
+   * 而不是塞进灵兽谱的每一行。暂别不响:它只是退开半步,不是无话可说。
+   */
+  if (!parting) {
+    const def = petDef(id);
+    const vow = petVow(id);
+    if (def && vow) notify(`「${def.name}」${vow}`, "info");
+  }
 }
 
 function focusListRowById(attribute: "data-title-row" | "data-pet-row", id: string): void {

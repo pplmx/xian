@@ -55,6 +55,7 @@ import {
   ECHO_GHOST_CHANCE,
 } from "./worldMemory";
 import { personalityEffects } from "./petPersonality";
+import { petVow } from "@/data/petVows";
 import { notify } from "./notify";
 // 连胜与宿敌各有一个 recordLoss,一个管连胜清空、一个管宿敌(败北阈值):
 // 前者来自 Phase 28 前期玩法(earlyGameService),后者来自世界记忆(worldMemory),
@@ -423,7 +424,12 @@ function runBattle(now: number): void {
     // 好战型 lossReduction=0,恒不触发,与无灵兽行为一致
     if (rng.chance(personalityEffects(player.petId).lossReduction)) {
       adventure.setSession({ ...s, nextBattleAt: nextBattleTime(now) });
-      notify("灵兽机警,替你挡开了这一击,历练继续", "info");
+      // 报出是哪一只挡的,并附它自己的那一句(见 data/petVows)——
+      // 「灵兽机警」四个字认不出是谁;护主是这一只做过的事,就该署它的名
+      const petName = player.petId ? (petDef(player.petId)?.name ?? "") : "";
+      const vow = petVow(player.petId);
+      const who = petName ? `「${petName}」` : "灵兽";
+      notify(`${who}机警,替你挡开了这一击,历练继续${vow ? ` —— ${vow}` : ""}`, "info");
       return;
     }
     cultivation.addBuff("injury", now);

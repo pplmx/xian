@@ -247,6 +247,7 @@ import {
 import { SAVE_PREFIX } from "../src/utils/storage.ts";
 import { TITLES } from "../src/data/titles.ts";
 import { PETS } from "../src/data/pets.ts";
+import { PET_VOWS } from "../src/data/petVows.ts";
 import { EQUIPMENT_TEMPLATES } from "../src/data/equipment.ts";
 import { EVENTS } from "../src/data/events.ts";
 import { GONGFA } from "../src/data/gongfa.ts";
@@ -9218,6 +9219,129 @@ async function taskRebirthFolio() {
 
     if (pageErrors.length)
       failures.push(`[390] 往生帖场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
+ * 灵兽契语 —— 只在「相伴」处出声,唤伴那一下真的说得出来。
+ *
+ * 为什么必须真浏览器量:
+ *   一 契语只该出现在相伴面板与图鉴条目,**灵兽谱的逐行不许铺** —— 这条靠源码判据
+ *      只能證明「那个字符串没写在某个切片里」,真正的样子得看渲染后的行里有没有它;
+ *   二 唤伴是一个动作,提示条是它的回声 —— 表里有这一句而按钮不响,等于没有。
+ *
+ * 判据:
+ *   一 相伴面板上有契语,且与 `data/petVows` 里这一只的那句逐字相同;
+ *   二 灵兽谱逐行里不出现任何契语(整册四十句并排就不再是契语);
+ *   三 点「唤来」之后,提示条里出现这一只的名字与它的契语。
+ */
+async function taskPetVow() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    if (PETS.filter((p) => PET_VOWS[p.id]).length !== PETS.length) {
+      throw new Error("灵兽契语夹具:有灵兽没有契语,这一条判据会量到空");
+    }
+    const slices = showcaseSlices("light");
+    slices.player = { ...slices.player, petId: null };
+    slices.quests = {
+      ...slices.quests,
+      collections: { ...slices.quests.collections, pet: PETS.map((p) => p.id) },
+      // 刻意为空:唤伴要能真的记档(见 quests.recordPetCompanion)
+      petCompanions: [],
+    };
+    await seedSave(ctx, slices, "__petVowFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript((vows) => {
+      Math.random = () => 1;
+      // 契语全表投进页面:谱上泄漏任何一句都能被认出来,不必只知道被点名的那一只
+      window.ALL_VOWS = vows;
+    }, Object.values(PET_VOWS));
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/titles", 900);
+    await clearOverlays(page);
+
+    const petTab = page.getByRole("tab", { name: /灵兽/ }).first();
+    if ((await petTab.count()) === 0) throw new Error("灵兽页签找不到");
+    await petTab.click({ timeout: 3000 });
+    await page.waitForTimeout(400);
+
+    // 唤来之前:面板上没有契语(此刻无伴),逐行里也不该有
+    checked += 1;
+    const before = await page.evaluate(() => {
+      const rows = [...document.querySelectorAll("[data-pet-row]")];
+      return {
+        hasVow: Boolean(document.querySelector("[data-pet-vow]")),
+        // 谱上任何一句契语都算漏 —— 四十句并排就成了文案表
+        leaked: (window.ALL_VOWS || []).filter((vow) =>
+          rows.some((r) => (r.textContent ?? "").includes(vow)),
+        ),
+        rows: rows.length,
+        first: rows[0]?.getAttribute("data-pet-row") ?? "",
+      };
+    });
+    if (before.hasVow) failures.push("[390] 契语场景:还没有相伴面板就已有契语");
+    if (before.rows === 0) failures.push("[390] 契语场景:灵兽谱一行都没渲染出来");
+    if (before.leaked.length > 0)
+      failures.push(`[390] 契语场景:灵兽谱逐行里铺了契语 —— 那是文案墙(${before.leaked[0]})`);
+    const target = PETS.find((p) => p.id === before.first);
+    if (!target) throw new Error(`灵兽契语夹具:首行 ${before.first} 不在灵兽表里`);
+    const vow = PET_VOWS[target.id];
+
+    // 唤来那一只:提示条要说它的名与它的契语
+    checked += 1;
+    const row = page.locator(`[data-pet-row="${target.id}"]`);
+    if ((await row.count()) === 0) {
+      failures.push(`[390] 契语场景:灵兽谱里找不到 ${target.name}(夹具未收录?)`);
+    } else {
+      await row.getByRole("button", { name: "唤来" }).click({ timeout: 3000 });
+      await page.waitForTimeout(450);
+      const toast = await page.evaluate(() =>
+        [...document.querySelectorAll("[data-toast]")]
+          .map((b) => (b.textContent || "").trim())
+          .join(" | "),
+      );
+      if (!toast.includes(target.name))
+        failures.push(`[390] 契语场景:唤伴提示里没有它的名字(${toast || "无提示"})`);
+      if (!toast.includes(vow)) failures.push(`[390] 契语场景:唤伴提示里没有它的契语(${toast})`);
+    }
+
+    // 唤来之后:相伴面板上要有这一句,且逐行里仍然没有
+    checked += 1;
+    await page.waitForTimeout(300);
+    const after = await page.evaluate((vowText) => {
+      const block = document.querySelector("[data-pet-vow]");
+      const rows = [...document.querySelectorAll("[data-pet-row]")];
+      return {
+        text: (block?.textContent ?? "").replace(/\s+/g, " ").trim(),
+        inRows: rows.some((r) => (r.textContent ?? "").includes(vowText)),
+        overflow: block ? block.scrollWidth - block.clientWidth : 0,
+      };
+    }, vow);
+    if (after.text !== vow)
+      failures.push(`[390] 契语场景:相伴面板上的契语与表里不一致「${after.text}」`);
+    if (after.inRows) failures.push("[390] 契语场景:唤伴之后灵兽谱逐行里也铺上了契语");
+    if (after.overflow > 1) failures.push(`[390] 契语场景:契语行横向溢出 ${after.overflow}px`);
+
+    if (pageErrors.length) {
+      failures.push(`[390] 契语场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(
+        `\n灵兽契语:谱上不铺、相伴面板与唤伴提示各说一遍(「${target.name}」:${vow.slice(0, 12)}…)`,
+      );
+    }
   } finally {
     await ctx.close();
   }
@@ -22433,6 +22557,7 @@ const TASKS = [
   ["智能收纳不扔有投入的件", taskSmartKeep],
   ["背包先报新得与可换槽位", taskInventoryAttention],
   ["器铭的出身与逐件不同", taskInscription],
+  ["灵兽契语只在相伴处出声", taskPetVow],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
   ["一键分解先勾后点", taskDecompose],

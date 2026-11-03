@@ -25,6 +25,7 @@ import { PETS, petDef } from "@/data/pets";
 import { qualityDef } from "@/data/qualities";
 import { equipmentTemplate } from "@/data/equipment";
 import { inscriptionFor } from "./inscription";
+import { petVow } from "@/data/petVows";
 import { artifactDef } from "@/data/artifacts";
 import { ELEMENTS } from "@/data/linggen";
 import { expFromSecs, stoneByTier } from "./formulas";
@@ -421,7 +422,14 @@ function applyEffect(effect: EventEffect, ctx: EventApplyContext): AppliedEventE
       if (!player.petId) player.setPet(id);
       const def = petDef(id);
       const line = `灵兽「${def?.name ?? ""}」愿意追随于你`;
-      return applied(line, { receipt: line });
+      /**
+       * 结缘的这一刻也说一句契语(见 data/petVows)——
+       * 归来卷轴上的这一格因此不只是"多了一只",而是"它说了什么"。
+       * 没登记契语的灵兽退回原句,不印半截。
+       */
+      const vow = petVow(id);
+      const receipt = vow ? `${line} · 「${vow}」` : line;
+      return applied(line, { receipt });
     }
     case "nothing":
       return null;

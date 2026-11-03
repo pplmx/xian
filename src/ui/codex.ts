@@ -38,6 +38,7 @@ import { useCultivationStore } from "@/stores/cultivation";
 import { useQuestsStore } from "@/stores/quests";
 import { usePlayerStore } from "@/stores/player";
 import { PETS } from "@/data/pets";
+import { petVow } from "@/data/petVows";
 import { PERSONALITY_NAMES, personalityDesc } from "@/core/petPersonality";
 import { clampBlueprintMastery, isBlueprintMastered } from "@/core/blueprintMastery";
 import { formatPercent } from "@/utils/format";
@@ -566,6 +567,8 @@ export function describePet(def: PetDef, stage: number, collectedAt?: number): C
     name: def.name,
     desc: [
       def.desc,
+      // 契语(它对你说的那一句)排在 flavor 之后、数值之前 —— 收进图鉴就是「见过这一只」的凭证
+      petVow(def.id),
       petFuncText(def),
       `性格 ${PERSONALITY_NAMES[def.personality]}:${personalityDesc(def.personality)}`,
       petTraitText(def),
