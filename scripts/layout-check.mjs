@@ -601,6 +601,52 @@ async function measurePage(page) {
       hash: location.hash,
       /** 这一页上有几个"主值行"(显式契约 data-value-row)—— 用于防空转 */
       valueRowCount: document.querySelectorAll("[data-value-row]").length,
+      /**
+       * 首屏里被念了不止一遍的可见短句。
+       *
+       * 这一类冗余没有任何门会红:排版门量溢出与触控面,快照门量像素对比度,
+       * 冒烟门点按钮 —— 而「同一个数在同一眼里出现两遍」既没溢出也没错字,
+       * 只是让一屏能说清的事占了两行的位置。实测一口气抓出七处:
+       * 修炼页「此刻行速」、界域志「第 15–18 境」、宿慧阶梯的阶段名、
+       * 铸道「契合 N%」、设置「乐静 · 音静」、界域志的 status 与总述。
+       *
+       * 判据只认**同一屏内、可见、纯文本叶子节点**里逐字相同的短句:
+       *   · 只取 body 主区内、非导航/非顶栏的元素(那些是跨页常驻的索引,本就该重复);
+       *   · 只取 6~40 字的短句(长句重复多半是排版巧合,短句重复通常是同一个读数)。
+       *     下限从 8 降到 6 是因为实测那些真重复只有 7 字:「契合 100%」。
+       *     再低就会把「第 15 境」这类列表项也算进来,噪声压不住;
+       *   · 排除 aria-label / title / 隐藏元素(读屏文本与视觉不冲突);
+       *   · 相邻两行文字相同不算(那多半是列表里两条同名数据)。
+       * 它不判断「该留哪一个」—— 那要人看。它只负责让新出现的一处当场红。
+       */
+      repeatedShortLines: () => {
+        const vh = window.innerHeight;
+        const main = document.querySelector("[data-folio-main]");
+        if (!main) return [];
+        const seen = new Map();
+        const repeats = [];
+        for (const el of main.querySelectorAll("*")) {
+          if (el.children.length > 0) continue;
+          const text = (el.textContent || "").trim().replace(/\s+/g, " ");
+          if (text.length < 6 || text.length > 40) continue;
+          // 隐藏的、或被 display:none 的祖先藏起来的都不算
+          if (!el.offsetParent) continue;
+          const cs = getComputedStyle(el);
+          if (cs.visibility === "hidden" || cs.opacity === "0") continue;
+          const box = el.getBoundingClientRect();
+          if (box.top < 0 || box.bottom > vh || box.width <= 0) continue;
+          // 导航与顶栏是跨页常驻的索引,不在「同一页说两遍」的范围里
+          if (el.closest("[data-folio-dock], [data-folio-head], [data-folio-spine]")) continue;
+          if (seen.has(text)) {
+            const first = seen.get(text);
+            // 竖直方向紧挨着的同名行多半是列表数据,不算
+            if (Math.abs(box.top - first) > 8) repeats.push(text);
+          } else {
+            seen.set(text, box.top);
+          }
+        }
+        return [...new Set(repeats)];
+      },
       horizontalOverflow: document.documentElement.scrollWidth > vw + 1,
       /**
        * 外壳(#app 的第一层)不能被滚偏,也不该有可滚的横向余量。
@@ -2352,6 +2398,27 @@ async function taskPageTour(vp) {
     controlHostsSeen += info.nestedControls?.hosts ?? 0;
     const problems = problemsOf(info);
     if (problems.length) failures.push(`[${vp.tag}] ${route} → ${problems.join(" / ")}`);
+    /*
+     * 首屏重复:同一个读数在同一眼里说了两遍。允许清单只放**确实该重复**的条目 ——
+     * 每一条都要写清楚为什么留,否则这张表迟早变成「红了就加一行」。
+     */
+    const allowedRepeats = new Set([
+      // 首页日课与主线各有自己的赏格行,同一句「得 悟道点×N」出现在两条不同的任务上
+      "得 悟道点",
+    ]);
+    /*
+     * 注意覆盖面:这一遍巡页只用一个 page、从建号流程起步,而建号前的
+     * 路由守卫会把 /cultivation 之类重定向成欢迎页 —— 那些页在新号下量不到。
+     * 因此这条判据当前只在**有存档时**真正生效(seed 过存档的任务里同样会走
+     * measurePage 的话才有效)。它拦得住「有人往首屏塞第二遍」,但拦不住
+     * 「本来就只在有存档时渲染的那一处」—— 后者靠各页自己的判据。
+     */
+    for (const line of info.repeatedShortLines ?? []) {
+      if ([...allowedRepeats].some((a) => line.startsWith(a))) continue;
+      failures.push(
+        `[${vp.tag}] ${route} 首屏把同一句说了两遍:«${line}» —— 该合并,或加进允许清单并写明理由`,
+      );
+    }
     if (vp.tag === "844x390") {
       const landscape = await page.evaluate(() => {
         const here = location.hash.replace(/^#/, "").split("?")[0] || "/";
