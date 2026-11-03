@@ -10910,12 +10910,23 @@ async function taskCharacterFold() {
         const detail = await page.evaluate(() => {
           const row = document.querySelector('[data-character-modifier="cultivationSpeed"]');
           const panel = document.querySelector("[data-character-modifier-detail]");
+          const rect = panel?.getBoundingClientRect();
           return {
             expanded: row?.getAttribute("aria-expanded"),
             active: row?.classList.contains("is-active"),
             key: panel?.getAttribute("data-character-modifier-detail-key"),
             sources: panel?.querySelectorAll("[data-character-modifier-source]").length ?? 0,
             text: (panel?.textContent || "").replace(/\s+/g, " ").trim(),
+            /*
+             * 看得见才算打开。此前它是铺在四组行藏之后的内联面板:
+             * 滚动之后点第一组的行,面板落在 top=1158(视口 844),
+             * 所有「开没开」的判据全绿,而玩家什么都没看到。
+             */
+            inViewport: rect
+              ? rect.top < window.innerHeight && rect.bottom > 0 && rect.width > 0
+              : false,
+            top: rect ? Math.round(rect.top) : null,
+            viewportH: window.innerHeight,
           };
         });
         if (
@@ -10927,6 +10938,11 @@ async function taskCharacterFold() {
           !/来源明细/.test(detail.text)
         ) {
           failures.push(`[390-character] 修炼速度来源没有完整摊开:${JSON.stringify(detail)}`);
+        }
+        if (!detail.inViewport) {
+          failures.push(
+            `[390-character] 来源拆卷开了却不在视口里(top=${detail.top} / 视口 ${detail.viewportH})—— 点了等于没点`,
+          );
         }
 
         await page.locator("[data-character-modifier-close]").click();

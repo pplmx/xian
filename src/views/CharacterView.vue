@@ -188,59 +188,72 @@
             </section>
           </div>
 
-          <section
-            v-if="breakdownRows.length"
-            class="character-modifier-detail"
-            data-character-modifier-detail
-            :data-character-modifier-detail-key="breakdownKey ?? undefined"
+          <!--
+            来源明细**进浮层**,不做内联展开。
+
+            此前它是铺在四组行藏之后的一段内联面板:点第一组的行,面板出现在
+            四组之后,390×844 下实测 top=1158(视口 844)—— 玩家点完什么也看不见,
+            得自己往下滚两屏才知道点开了。而行数越多偏移越大:斗法组一项就占
+            近 20 行,点它时面板离所点的行 672px。
+
+            BaseModal 会 teleport 到 body 并固定在视口中央,点哪一行都立刻看见。
+            标记与结构(来源行、关闭键、说明句、递减提示)原样保留,判据不必改判据口径。
+          -->
+          <BaseModal
+            :open="breakdownRows.length !== 0"
+            size="wide"
+            :title="`${STAT_NAMES[breakdownKey!]} · 来源明细`"
+            @close="breakdownKey = null"
           >
-            <header class="character-modifier-detail__head">
-              <div>
-                <p class="character-modifier-detail__eyebrow">拆卷 · 来源明细</p>
-                <h3>{{ STAT_NAMES[breakdownKey!] }}</h3>
+            <div
+              class="character-modifier-detail"
+              data-character-modifier-detail
+              :data-character-modifier-detail-key="breakdownKey ?? undefined"
+            >
+              <p class="character-modifier-detail__eyebrow">拆卷 · 来源明细</p>
+              <div class="character-modifier-detail__sources">
+                <div
+                  v-for="source in breakdownRows"
+                  :key="source.name"
+                  class="character-modifier-source"
+                  data-character-modifier-source
+                >
+                  <span class="character-modifier-source__name">
+                    {{ source.name }}
+                    <span v-if="source.onTop" class="character-modifier-source__on-top">另乘</span>
+                  </span>
+                  <span
+                    class="character-modifier-source__value tabular"
+                    :class="source.value > 0 ? 'text-qing' : 'text-cinnabar'"
+                  >
+                    {{ source.value > 0 ? "+" : "" }}{{ formatPercent(source.value) }}
+                  </span>
+                  <span class="character-modifier-source__track" aria-hidden="true">
+                    <span
+                      :class="source.value > 0 ? 'is-positive' : 'is-negative'"
+                      :style="{ width: `${Math.max(3, source.share * 100)}%` }"
+                    />
+                  </span>
+                </div>
               </div>
+              <p class="character-modifier-detail__note">
+                明细之和就是上面那个数;标「另乘」的不并入百分比,而是单独乘在攻防血上。
+              </p>
+              <p v-if="diminishNote" class="character-modifier-detail__warning">
+                {{ diminishNote }}
+              </p>
+            </div>
+            <template #footer>
               <button
                 type="button"
-                class="character-modifier-detail__close"
+                class="btn-ghost w-full"
                 data-character-modifier-close
-                :aria-label="`收起${STAT_NAMES[breakdownKey!]}来源明细`"
                 @click="breakdownKey = null"
               >
-                合
+                合上
               </button>
-            </header>
-            <div class="character-modifier-detail__sources">
-              <div
-                v-for="source in breakdownRows"
-                :key="source.name"
-                class="character-modifier-source"
-                data-character-modifier-source
-              >
-                <span class="character-modifier-source__name">
-                  {{ source.name }}
-                  <span v-if="source.onTop" class="character-modifier-source__on-top">另乘</span>
-                </span>
-                <span
-                  class="character-modifier-source__value tabular"
-                  :class="source.value > 0 ? 'text-qing' : 'text-cinnabar'"
-                >
-                  {{ source.value > 0 ? "+" : "" }}{{ formatPercent(source.value) }}
-                </span>
-                <span class="character-modifier-source__track" aria-hidden="true">
-                  <span
-                    :class="source.value > 0 ? 'is-positive' : 'is-negative'"
-                    :style="{ width: `${Math.max(3, source.share * 100)}%` }"
-                  />
-                </span>
-              </div>
-            </div>
-            <p class="character-modifier-detail__note">
-              明细之和就是上面那个数;标「另乘」的不并入百分比,而是单独乘在攻防血上。
-            </p>
-            <p v-if="diminishNote" class="character-modifier-detail__warning">
-              {{ diminishNote }}
-            </p>
-          </section>
+            </template>
+          </BaseModal>
 
           <div
             v-if="hasAdvanceRate || hasShieldMods || softCappedNotes.length"
@@ -491,6 +504,7 @@ import BondDialog from "@/components/character/BondDialog.vue";
 import MentorDialog from "@/components/character/MentorDialog.vue";
 import IdentityDialog from "@/components/character/IdentityDialog.vue";
 import { useBondOverview } from "@/composables/useBondOverview";
+import BaseModal from "@/components/common/BaseModal.vue";
 import {
   characterChapters,
   characterModifierDesk,

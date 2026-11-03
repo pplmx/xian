@@ -4968,12 +4968,27 @@ describe("人物页 · 可点行要说出自己是可点的", () => {
     );
   });
 
-  it("来源拆卷只在展开后出现,并能在原处合上", () => {
+  it("来源拆卷进浮层,点哪一行都立刻看得见", () => {
     const src = char();
     expect(src, "来源拆卷要挂稳定运行时落点").toContain("data-character-modifier-detail");
-    expect(src, "拆卷只在有来源行时铺开").toContain('v-if="breakdownRows.length"');
+    expect(src, "拆卷只在有来源行时才开").toMatch(/:open="breakdownRows\.length/);
     expect(src, "合上后清空当前拆卷键").toContain('@click="breakdownKey = null"');
     expect(src, "每条来源要单独成行").toContain("data-character-modifier-source");
+    /*
+     * 它曾经是铺在四组行藏之后的内联面板。390×844 下实测:滚动之后点第一组
+     * 的行,面板出现在 top=1158(视口 844),玩家点完什么也看不见,得自己往下
+     * 滚两屏;斗法组近 20 行,点它时面板离所点的行 672px。
+     *
+     * 故钉住「它现在是一扇浮层」:BaseModal teleport 到 body 并居中,
+     * 页面滚到哪里都不影响。这条同时挡住「有人又改回内联」。
+     */
+    expect(src, "拆卷要走 BaseModal 浮层").toMatch(
+      /<BaseModal[\s\S]{0,300}?data-character-modifier-detail|<BaseModal[\s\S]{0,80}:open="breakdownRows/,
+    );
+    // 反向:不许再在行藏组之后直接内联铺开
+    expect(src, "拆卷不再内联在行藏组下方").not.toMatch(
+      /character-modifier-groups[\s\S]{0,4000}?v-if="breakdownRows\.length"/,
+    );
   });
 });
 

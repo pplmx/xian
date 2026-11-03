@@ -173,42 +173,11 @@
     border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
     background: linear-gradient(90deg, rgb(var(--color-qing-rgb) / 0.028), transparent 62%);
   }
-  .character-modifier-detail__head {
-    display: flex;
-    min-width: 0;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.7rem;
-    padding-bottom: 0.45rem;
-    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
-  }
   .character-modifier-detail__eyebrow {
     color: rgb(var(--color-qing-rgb));
     font-size: var(--type-note);
     letter-spacing: 0.18em;
     line-height: 1.4;
-  }
-  .character-modifier-detail__head h3 {
-    margin-top: 0.08rem;
-    color: rgb(var(--color-ink-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-title);
-    font-weight: 400;
-    letter-spacing: 0.12em;
-    line-height: 1.35;
-  }
-  .character-modifier-detail__close {
-    display: grid;
-    width: 2rem;
-    height: 2rem;
-    flex: none;
-    place-items: center;
-    border: 0;
-    border-left: 1px solid rgb(var(--color-cinnabar-rgb) / 0.38);
-    background: transparent;
-    color: rgb(var(--color-cinnabar-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
   }
   .character-modifier-detail__sources {
     margin-top: 0.18rem;
