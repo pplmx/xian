@@ -147,16 +147,13 @@
           </div>
 
           <div class="cultivation-ledger__meters" data-cultivation-meters>
-            <section class="cultivation-ledger__meter">
-              <p class="cultivation-ledger__meter-label">此刻行速</p>
-              <p class="cultivation-ledger__meter-value font-kai">
-                {{ formatRate(player.cultPerSec) }}
-              </p>
-              <p class="cultivation-ledger__meter-copy tabular">
-                基础 {{ formatRate(cultBase) }} · 加成
-                <span class="text-qing">{{ formatPercent(cultMultiplier) }}</span>
-              </p>
-            </section>
+            <!--
+              「此刻行速」这一格曾经在这里,与卷首内观台那一格一字不差
+              (同一个 formatRate(cultPerSec)、同一句「基础 N · 加成 M」)。
+              390×844 实测两处都在首屏(top 332 与 676),玩家同一眼里读到
+              两遍同一个数。行速归内观台(那里本就是「余程 / 行速 / 灵气」三格);
+              这里只留灵气 —— 它有内观台没有的东西:充盈还差多少、引气静养的入口。
+            -->
 
             <section class="cultivation-ledger__meter">
               <div class="cultivation-ledger__meter-head">

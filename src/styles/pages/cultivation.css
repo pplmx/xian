@@ -623,13 +623,6 @@
     letter-spacing: 0.12em;
   }
 
-  .cultivation-ledger__meter-value {
-    margin-top: 0.15rem;
-    color: rgb(var(--color-qing-rgb));
-    font-size: var(--type-title);
-    line-height: 1.35;
-  }
-
   .cultivation-ledger__meter-copy {
     margin-top: 0.25rem;
     color: rgb(var(--color-ink-faint-rgb));
