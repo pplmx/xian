@@ -33,11 +33,24 @@
           :key="t.id"
           data-toast
           type="button"
-          class="pointer-events-auto max-w-90 cursor-pointer rounded-sm border px-4 py-2 text-left text-body shadow-md font-kai tracking-wide active:opacity-60 whitespace-pre-line"
+          class="pointer-events-auto flex max-w-90 cursor-pointer items-start gap-2 rounded-sm border px-4 py-2 text-left text-body shadow-md font-kai tracking-wide active:opacity-60 whitespace-pre-line"
           :class="KIND_CLASS[t.kind]"
+          :data-toast-seal="t.seal"
           @click="ui.dismissToast(t.id)"
         >
-          {{ t.text }}
+          <!--
+            品阶印 —— 高品之物落地时,这一条不再是一句灰字,而是带着这一档的印。
+            阴文章的画法与 QualitySeal 一致(纸底 + 品阶色字 + 细边),尺寸取行高内,
+            故不改提示条的高度;没有印的提示(绝大多数)布局与从前一字不差。
+          -->
+          <span
+            v-if="t.seal"
+            class="mt-px inline-grid size-5 shrink-0 place-items-center rounded-[3px] border font-kai text-note leading-none"
+            :style="sealStyle(t.seal)"
+            aria-hidden="true"
+            >{{ qualityDef(t.seal).name.charAt(0) }}</span
+          >
+          <span class="min-w-0">{{ t.text }}</span>
         </button>
       </TransitionGroup>
     </div>
@@ -49,6 +62,22 @@ import { ref, watch } from "vue";
 import { useUiStore } from "@/stores/ui";
 import type { Toast } from "@/types";
 import { playSfx, type SfxName } from "@/core/audio";
+import { qualityDef } from "@/data/qualities";
+import { colorWithAlpha } from "@/ui/colorVar";
+import type { QualityId } from "@/types";
+
+/**
+ * 那枚印的画法 —— 色与名目全取自品质表,调用方只说「哪一档」。
+ * 与 QualitySeal 同一套阴阳文口径:纸底、品阶色字、细边。
+ */
+function sealStyle(quality: QualityId): Record<string, string> {
+  const tone = qualityDef(quality).color;
+  return {
+    borderColor: colorWithAlpha(tone, 0.45),
+    background: colorWithAlpha(tone, 0.12),
+    color: tone,
+  };
+}
 
 const ui = useUiStore();
 

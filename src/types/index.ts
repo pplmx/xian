@@ -1200,11 +1200,23 @@ export interface AdventureSession {
  * 却被迫依赖状态容器。放到这里,core 只认 @/types,store 只负责装数据。
  */
 
-/** 瞬态提示条 */
+/**
+ * 瞬态提示条。
+ *
+ * `seal` 是可选的**品阶印**:高品之物落地时,那一条提示不只说「拾得了什么」,
+ * 还自己带着这一件的品阶色与那一个字。它让「得到一件好东西」在屏幕上留下
+ * 一枚看得见的印 —— 而不是一句与「灵石 +3」同款的灰字。
+ *
+ * 字段刻意做成「谁给的谁填」:core 的 notify 只传文字与档位(见 core/notify),
+ * 需要印的那几处(拾得装备 / 法宝 / 神兽)自己把品阶带上;其余提示不填,
+ * 排版与从前一字不差。
+ */
 export interface Toast {
   id: number;
   text: string;
   kind: "info" | "success" | "warn" | "rare";
+  /** 品阶印:色与单字都取自品质表(见 data/qualities),不在调用方手写 hex */
+  seal?: QualityId;
 }
 
 /**

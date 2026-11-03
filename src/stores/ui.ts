@@ -7,9 +7,19 @@ import type {
   BreakthroughView,
   NumberDetailView,
   OfflineSummary,
+  QualityId,
   ReincarnationView,
   Toast,
 } from "@/types";
+import { QUALITIES } from "@/data/qualities";
+
+/**
+ * 认得的品阶 id 集合 —— 提示条要盖印时先在这里对一次账。
+ *
+ * 不在模板里现查 `qualityDef` 的原因:那函数认不得就给 `QUALITIES[0]`,于是
+ * 一个写坏的 id 会静默变成「凡品」印 —— 盖错印比不盖更糟。
+ */
+const QUALITY_IDS = new Set<string>(QUALITIES.map((q) => q.id));
 
 let toastSeq = 1;
 
@@ -37,10 +47,12 @@ export const useUiStore = defineStore("ui", () => {
    *  这句,用自家 aria-live 补上,读完即清(只在创角→首页这一趟念)。 */
   const worldEnter = ref<string | null>(null);
 
-  function toast(text: string, kind: Toast["kind"] = "info"): void {
+  function toast(text: string, kind: Toast["kind"] = "info", seal?: string): void {
     const id = toastSeq;
     toastSeq += 1;
-    toasts.value = [...toasts.value.slice(-4), { id, text, kind }];
+    // 印只认品质表里真有的档(见 data/qualities)—— 写坏的 id 不该让提示条长出半枚印
+    const stamped = seal && QUALITY_IDS.has(seal as QualityId) ? (seal as QualityId) : undefined;
+    toasts.value = [...toasts.value.slice(-4), { id, text, kind, seal: stamped }];
     const ttl = kind === "rare" ? 4200 : 2600;
     setTimeout(() => {
       toasts.value = toasts.value.filter((t) => t.id !== id);
@@ -56,7 +68,7 @@ export const useUiStore = defineStore("ui", () => {
    * `vi.spyOn(useUiStore(), "toast")` 仍然拦得住** core 发出的提示(现有一批
    * 对账用例就是这么截提示语的),落点也始终是当前 active 的那份 pinia。
    */
-  setNotifier({ toast: (text, kind) => useUiStore().toast(text, kind) });
+  setNotifier({ toast: (text, kind, seal) => useUiStore().toast(text, kind, seal) });
 
   /*
    * 视图模型端口(见 core/uiPort.ts):core 不再 `useUiStore().breakthrough = view`

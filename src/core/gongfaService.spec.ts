@@ -35,13 +35,14 @@ describe("功法习得漏斗", () => {
   it("随机习得走同一漏斗,指定与抽取两条分支都不漏记", () => {
     const quests = useQuestsStore();
 
-    expect(learnRandomGongfa("m_lihuo")).toBe("离火焚天诀");
+    expect(learnRandomGongfa("m_lihuo")?.name).toBe("离火焚天诀");
     expect(quests.collections.gongfa).toContain("m_lihuo");
     expect(quests.counter("gongfaLearned")).toBe(1);
 
-    const randomName = learnRandomGongfa();
-    const randomDef = GONGFA.find((g) => g.name === randomName);
+    // 返回的是**那一部**而不只是名字:调用方要靠它取品阶(提示条上的印)
+    const randomDef = learnRandomGongfa();
     expect(randomDef, "随机习得必须返回功法库里真实存在的一部").toBeDefined();
+    expect(GONGFA).toContainEqual(randomDef);
     expect(quests.collections.gongfa).toContain(randomDef!.id);
     expect(quests.counter("gongfaLearned")).toBe(2);
   });

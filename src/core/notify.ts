@@ -16,8 +16,15 @@
  */
 export type NoticeKind = "info" | "success" | "warn" | "rare";
 
+/**
+ * 品阶印的**载荷** —— 只带品质 id,不带色值。
+ *
+ * core 不该知道 `--color-tenghuang` 这种东西(那是调色板的事),故这里只说
+ * 「这一条该盖哪一档的印」;色与单字由上层去 `data/qualities` 取。与
+ * `Toast.seal` 是同一条口径的两种写法:一个给调用方,一个给落点。
+ */
 export interface Notifier {
-  toast(text: string, kind: NoticeKind): void;
+  toast(text: string, kind: NoticeKind, seal?: string): void;
 }
 
 let sink: Notifier | null = null;
@@ -31,6 +38,6 @@ export function setNotifier(notifier: Notifier | null): void {
  * 说一句。没有落点时静默丢弃 —— 纯逻辑不该因为「这会儿没人听」就跑不动
  * (批量结算、脚本、库的调用方都可能不挂 UI)。
  */
-export function notify(text: string, kind: NoticeKind = "info"): void {
-  sink?.toast(text, kind);
+export function notify(text: string, kind: NoticeKind = "info", seal?: string): void {
+  sink?.toast(text, kind, seal);
 }

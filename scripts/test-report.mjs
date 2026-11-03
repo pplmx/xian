@@ -358,6 +358,7 @@ const CATEGORIES = [
       "veinText",
       "statNames.spec",
       "qualityVerdicts",
+      "toastSeal",
     ],
   },
   {

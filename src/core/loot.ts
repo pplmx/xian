@@ -174,7 +174,7 @@ export function acquireEquipment(
       };
     }
     recordEquipmentGained(inst);
-    if (!quiet && q.rank >= 3) notify(pickup, "rare");
+    if (!quiet && q.rank >= 3) notify(pickup, "rare", inst.quality);
     return { line: label, bagged: true, recycled: 0, dust: 0, stone: gnZero() };
   }
 
@@ -200,7 +200,7 @@ export function acquireEquipment(
       };
     }
     if (!quiet && q.rank >= 3) {
-      notify(pickup, "rare");
+      notify(pickup, "rare", inst.quality);
     }
     return { line: label, bagged: true, recycled: 0, dust: 0, stone: gnZero() };
   }
@@ -233,7 +233,7 @@ export function acquireArtifact(defId: string, quiet = false): ArtifactAcquireRe
     resources.addSmall("wudao", 10);
     return { line: `法宝「${def.name}」(已拥有,化作悟道点×10)`, added: false, wudao: 10 };
   }
-  if (!quiet) notify(`天降机缘!获得法宝「${def.name}」`, "rare");
+  if (!quiet) notify(`天降机缘!获得法宝「${def.name}」`, "rare", def.quality);
   return { line: `法宝「${def.name}」`, added: true, wudao: 0 };
 }
 

@@ -11,6 +11,7 @@ import { collect, isCollected, track } from "./progress";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useCultivationStore } from "@/stores/cultivation";
+import type { GongfaDef } from "@/types";
 import { useDongfuStore } from "@/stores/dongfu";
 import { notify } from "./notify";
 
@@ -43,13 +44,18 @@ export function syncLearnedGongfa(): number {
   return repaired;
 }
 
-/** 随机习得一部功法(事件/掉落),返回功法名;无可学返回 null */
-export function learnRandomGongfa(specificId?: string): string | null {
+/**
+ * 随机习得一部功法(事件/掉落)。
+ *
+ * 返回**那一部**而不只是名字:调用方要靠它取品阶(提示条上的印)与其它事实,
+ * 让调用方再去 `GONGFA.find(name)` 反查一遍就是第二本账 —— 名字不是主键。
+ */
+export function learnRandomGongfa(specificId?: string): GongfaDef | null {
   const player = usePlayerStore();
   const cultivation = useCultivationStore();
   if (specificId) {
     const def = gongfaDef(specificId);
-    if (def && learnGongfa(specificId)) return def.name;
+    if (def && learnGongfa(specificId)) return def;
     return null;
   }
   const pool = GONGFA.filter((g) => g.minRealm <= player.major + 1 && !cultivation.learned[g.id]);
@@ -61,7 +67,7 @@ export function learnRandomGongfa(specificId?: string): string | null {
     pool,
     (g) => (100 / (1 + qualityDef(g.quality).rank * 1.5)) * gongfaAffinity(g.element, elements),
   );
-  return learnGongfa(picked.id) ? picked.name : null;
+  return learnGongfa(picked.id) ? picked : null;
 }
 
 /** 藏经阁参悟:消耗残页随机习得 */
@@ -79,9 +85,10 @@ export function comprehendGongfa(): boolean {
     return false;
   }
   resources.spendSmall("page", COMPREHEND_PAGE_COST);
-  const name = learnRandomGongfa();
-  if (name) {
-    notify(`残卷拼合,你参悟出《${name}》`, "rare");
+  const learnt = learnRandomGongfa();
+  if (learnt) {
+    // 高品功法盖这一档的印:参悟出天品与参悟出凡品,分量不该一样
+    notify(`残卷拼合,你参悟出《${learnt.name}》`, "rare", learnt.quality);
     return true;
   }
   return false;

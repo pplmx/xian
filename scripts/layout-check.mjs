@@ -255,6 +255,7 @@ import { branchesFor } from "../src/data/gongfaBranches.ts";
 import { ACHIEVEMENTS } from "../src/data/achievements.ts";
 import { qualityDef } from "../src/data/qualities.ts";
 import { QUALITY_VERDICTS, qualityVerdict } from "../src/data/qualityVerdicts.ts";
+import { COMPREHEND_PAGE_COST } from "../src/data/constants.ts";
 import { NAVIGATION_ENTRIES, NAVIGATION_SECTIONS } from "../src/ui/navigation.ts";
 import { folioLayoutOf } from "../src/ui/folioSpread.ts";
 import { mkdirSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
@@ -9221,6 +9222,153 @@ async function taskRebirthFolio() {
 
     if (pageErrors.length)
       failures.push(`[390] 往生帖场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
+ * 品阶印 —— 高品之物落地时,那一条提示自己带着这一档的印。
+ *
+ * 「拾得一件天品」与「灵石 +3」此前长得一模一样:一句灰字、两秒、消失。
+ * 玩家得到好东西的那一刻,屏幕上没有任何东西比得上这件事的分量。
+ *
+ * 为什么必须在真浏览器里量:印是从 `data/qualities` 取色、从提示条的载荷取档,
+ * 两处各写一半 —— 源码判据只能说「两边都提到了品质表」,量不到「屏幕上那枚印
+ * 真的是这一档的字、真的是这一档的色」。而写坏的档位必须整枚不出:
+ * 半枚印(有框没字)比不盖更糟。
+ *
+ * 走真路径:在藏经阁真点一次「参悟」,提示由 core 的 notify 发出,
+ * 与玩家点下去走的是同一条链。
+ */
+async function taskToastSeal() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    /*
+     * 只留**一档**未习得:池里唯一的那一部会被参悟到,提示里那一档因此是确定的。
+     * 取品质最高的那部 —— 印在最高档上最有说服力。
+     */
+    const pool = GONGFA.filter((g) => g.minRealm <= slices.player.major + 1);
+    const target = pool.reduce((best, g) =>
+      qualityDef(g.quality).rank > qualityDef(best.quality).rank ? g : best,
+    );
+    slices.cultivation = {
+      ...slices.cultivation,
+      learned: {},
+      mainGongfa: null,
+      subGongfa: [],
+      gongfaBranch: {},
+      daoNotes: {},
+    };
+    slices.resources = { ...slices.resources, page: COMPREHEND_PAGE_COST * 2 };
+    // 池里只留一部:其余同境界功法先记成已习得,参悟便只会撞上 target
+    slices.cultivation.learned = Object.fromEntries(
+      pool.filter((g) => g.id !== target.id).map((g) => [g.id, 1]),
+    );
+    await seedSave(ctx, slices, "__toastSealFixture");
+
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/cultivation", 900);
+    await clearOverlays(page);
+
+    checked += 1;
+    const button = page.locator("button.cultivation-gongfa__comprehend").first();
+    if ((await button.count()) === 0) {
+      failures.push("[390] 品阶印场景:藏经阁的「参悟」入口不见了");
+    } else if (await button.isDisabled()) {
+      // 置灰时不该点 —— 连带说明夹具没备够(残页/池)
+      failures.push("[390] 品阶印场景:「参悟」是置灰的,夹具没备够残页或池已空");
+    } else {
+      await button.click({ timeout: 4000 });
+      await page.waitForTimeout(500);
+      checked += 1;
+      const seal = await page.evaluate(() => {
+        const nodes = [...document.querySelectorAll("[data-toast]")];
+        const hit = nodes.filter((n) => n.getAttribute("data-toast-seal")).at(-1);
+        if (!hit) return null;
+        const stamp = hit.querySelector("span[aria-hidden='true']");
+        if (!stamp) return { text: hit.textContent || "", stamp: null };
+        const style = getComputedStyle(stamp);
+        const rect = stamp.getBoundingClientRect();
+        return {
+          text: (hit.textContent || "").replace(/\s+/g, " ").trim(),
+          stamp: {
+            char: (stamp.textContent || "").trim(),
+            color: style.color,
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+          },
+        };
+      });
+      const want = qualityDef(target.quality);
+      if (!seal) {
+        failures.push(`[390] 品阶印场景:参悟出「${target.name}」(${want.name})却没有印`);
+      } else if (!seal.stamp) {
+        failures.push("[390] 品阶印场景:印的位置是空的(有 toast 却没有印)");
+      } else {
+        if (seal.stamp.char !== want.name.charAt(0)) {
+          failures.push(
+            `[390] 品阶印场景:印上的字是「${seal.stamp.char}」,${want.name}该是「${want.name.charAt(0)}」`,
+          );
+        }
+        // 色必须来自品质表本档,而不是别的档位或兜底色
+        const expected = await page.evaluate((token) => {
+          const probe = document.createElement("span");
+          probe.style.color = token;
+          document.body.append(probe);
+          const got = getComputedStyle(probe).color;
+          probe.remove();
+          return got;
+        }, want.color);
+        if (seal.stamp.color !== expected) {
+          failures.push(
+            `[390] 品阶印场景:印的色「${seal.stamp.color}」不是${want.name}那一档「${expected}」`,
+          );
+        }
+        if (seal.stamp.width < 14 || seal.stamp.height < 14) {
+          failures.push(`[390] 品阶印场景:印被压扁了(${seal.stamp.width}×${seal.stamp.height})`);
+        }
+        if (!seal.text.includes(target.name)) {
+          failures.push(`[390] 品阶印场景:提示里没报功法名「${seal.text}」`);
+        }
+      }
+    }
+
+    // 不带印的提示里一枚印都没有 —— 绝大多数提示不该因为这项改动多出个空格
+    checked += 1;
+    const plainStamped = await page.evaluate(() => {
+      const nodes = [...document.querySelectorAll("[data-toast]")];
+      return {
+        total: nodes.length,
+        stamped: nodes.filter((n) => n.getAttribute("data-toast-seal")).length,
+        ghosts: nodes.filter(
+          (n) => !n.getAttribute("data-toast-seal") && n.querySelector("span[aria-hidden='true']"),
+        ).length,
+      };
+    });
+    if (plainStamped.ghosts > 0) {
+      failures.push(`[390] 品阶印场景:${plainStamped.ghosts} 条普通提示里冒出了印`);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 品阶印场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(
+        `\n品阶印:参悟出「${target.name}」时提示条自带${qualityDef(target.quality).name}印,普通提示无印`,
+      );
+    }
   } finally {
     await ctx.close();
   }
@@ -22863,6 +23011,7 @@ const TASKS = [
   ["灵兽契语只在相伴处出声", taskPetVow],
   ["道记留得住择道那一刻", taskDaoNote],
   ["品评说得出一档的分量", taskQualityVerdict],
+  ["品阶印跟着高品落地", taskToastSeal],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
   ["一键分解先勾后点", taskDecompose],

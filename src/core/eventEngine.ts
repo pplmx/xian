@@ -26,6 +26,7 @@ import { qualityDef } from "@/data/qualities";
 import { equipmentTemplate } from "@/data/equipment";
 import { inscriptionFor } from "./inscription";
 import { petVow } from "@/data/petVows";
+import { notify } from "./notify";
 import { artifactDef } from "@/data/artifacts";
 import { ELEMENTS } from "@/data/linggen";
 import { expFromSecs, stoneByTier } from "./formulas";
@@ -364,7 +365,9 @@ function applyEffect(effect: EventEffect, ctx: EventApplyContext): AppliedEventE
     case "gongfa": {
       const learnt = learnRandomGongfa(effect.id);
       if (learnt) {
-        const line = `习得功法《${learnt}》`;
+        const line = `习得功法《${learnt.name}》`;
+        // 功法也有品阶:天品法门落地时同样该带一枚印(见 types 的 Toast.seal)
+        notify(line, "rare", learnt.quality);
         return applied(line, { receipt: line });
       }
       resources.addSmall("page", 10);
@@ -429,6 +432,11 @@ function applyEffect(effect: EventEffect, ctx: EventApplyContext): AppliedEventE
        */
       const vow = petVow(id);
       const receipt = vow ? `${line} · 「${vow}」` : line;
+      /*
+       * 神兽结缘也盖一枚品阶印:应龙、麒麟、鲲鹏都是仙/神品,
+       * 这一条提示与「灵草 +10」不该长得一样(见 types 的 Toast.seal)。
+       */
+      if (def) notify(`${line}${vow ? ` —— ${vow}` : ""}`, "rare", def.quality);
       return applied(line, { receipt });
     }
     case "nothing":
