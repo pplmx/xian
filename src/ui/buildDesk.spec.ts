@@ -158,3 +158,40 @@ describe("铸道案 · 六路、形状与下一步同读此刻", () => {
     );
   });
 });
+
+/**
+ * 章首那颗「事实」不复述卷首已经报过的契合值。
+ *
+ * 它此前写的也是「契合 N%」,而卷首 meta 与下面的阶段行各有一枚 ——
+ * 同一块里同一个数出现三次(实测 top 168 / 269 两枚相距 100px,都在首屏)。
+ * 章首该答的是「离下一级还多远」,不是把当前值再念一遍。
+ */
+describe("铸道章首 · 报缺口不复述当前值", () => {
+  const view = () => readSource("src/views/BuildView.vue");
+
+  it("章首的 fact 不再是一个契合百分比", () => {
+    const src = view();
+    const chapterHead = src.slice(
+      src.indexOf("data-build-chapter-head"),
+      src.indexOf("build-register__body"),
+    );
+    expect(chapterHead, "章首 fact 不该再写「契合 N%」").not.toMatch(/:fact="`契合/);
+    expect(chapterHead, "章首 fact 要读那个算缺口的 computed").toContain(':fact="stageFactText"');
+  });
+
+  it("缺口读 stageMeter 那一份,不另减一遍", () => {
+    const src = view();
+    const block = src.slice(src.indexOf("const stageFactText"), src.indexOf("const stageGapText"));
+    expect(block, "要读 stageMeter.gap").toContain("stageMeter.value.gap");
+    expect(block, "不许自己再写 target - aff —— 那是第二本账").not.toContain("target - aff");
+  });
+
+  it("防空转", () => {
+    const src = view();
+    expect(src).toContain("stageFactText");
+    expect(src.indexOf("data-build-chapter-head")).toBeGreaterThan(0);
+    expect(src.indexOf("build-register__body")).toBeGreaterThan(
+      src.indexOf("data-build-chapter-head"),
+    );
+  });
+});

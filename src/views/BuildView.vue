@@ -50,7 +50,7 @@
             :eyebrow="`已成之路 · ${build.displayName}`"
             title="道途阶梯"
             :hint="build.style.desc"
-            :fact="`契合 ${formatPercent(build.affinity, 0)}`"
+            :fact="stageFactText"
           />
           <div class="build-register__body">
             <div class="build-stage">
@@ -474,6 +474,21 @@ const stageSteps = computed(() => [
 ]);
 
 /** 距下一形态还差多少契合：读判定线常量，不在视图里另写门槛。 */
+/**
+ * 章首那颗「事实」的位置报什么。
+ *
+ * 它此前写的是「契合 N%」,而卷首 meta 里已有同一枚、下面的阶段行也有一枚 ——
+ * 同一块里同一个数出现三次(实测 top 168 / 269 两枚相距 100px,都在首屏)。
+ * 章首该答的是「离下一级还多远」,不是把当前值再念一遍。
+ */
+const stageFactText = computed(() => {
+  if (build.value?.affinity === undefined) return "道途未成";
+  // 「到底了」与「还差多少」都读 stageMeter 那一份,不在这里另减一遍 ——
+  // 上面 stageGapText 就是这么写的,两处各算一次迟早会分叉
+  if (stageMeter.value.gap <= 0) return "识别线全过";
+  return `距下一形态还差 ${formatPercent(stageMeter.value.gap, 0)}`;
+});
+
 const stageGapText = computed(() => {
   const aff = build.value?.affinity;
   if (aff === undefined) return "";
