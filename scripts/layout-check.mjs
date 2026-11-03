@@ -21703,9 +21703,16 @@ async function taskReadOnlyTab() {
     if (!freed) {
       failures.push("[只读页 · 恢复] 另一处关掉之后,横幅没有换成「刷新即可继续」—— 玩家只能猜");
     } else {
-      await reader.evaluate(() => {
-        document.querySelector("[data-save-reader] button")?.click();
-      });
+      /*
+       * 点「刷新本页」。这一下会导航到新文档,而 Playwright 的 click 在导航
+       * 期间可能抛「execution context destroyed」—— 那恰恰说明刷新**成功了**,
+       * 不是失败。故只 catch 掉它,再把「横幅消失」当作刷新的证据去等。
+       */
+      await reader
+        .evaluate(() => {
+          document.querySelector("[data-save-reader] button")?.click();
+        })
+        .catch(() => undefined);
       const recovered = await reader
         .waitForFunction(() => !document.querySelector("[data-save-reader]"), { timeout: 12000 })
         .then(() => true)
@@ -21749,6 +21756,11 @@ async function taskReadOnlyTab() {
             held: (state.held || []).map((l) => l.name),
             pending: (state.pending || []).map((l) => l.name),
             readyState: document.readyState,
+            // 页面被浏览器回收(后台标签页内存压力)时会整页重建:锁自然没了,
+            // 而外壳也会短暂不存在 —— 那是环境噪声,不是本作的 bug
+            wasDiscarded: document.wasDiscarded ?? null,
+            // 同一份现场里再看一眼:锁是不是根本没被申请过
+            hasLocks: typeof navigator.locks?.query === "function",
           };
         });
         failures.push(
