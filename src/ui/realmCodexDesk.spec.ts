@@ -291,3 +291,26 @@ describe("界域案 · 四界先成谱,境界再逐格展开", () => {
     );
   });
 });
+
+/**
+ * 卷首不复述索引按钮已经说过的境界范围。
+ *
+ * 界域卷目那排按钮各自写着「第 15–18 境」,而展开后的卷首又写了一遍 ——
+ * 两处实测相距 85px(btnTop 670 / bodyTop 755),都在首屏,同一个范围在同一眼里
+ * 读两遍。按钮给的是「这一卷覆盖哪些境界」的索引,卷首该说的是这一卷**是什么**。
+ */
+describe("卷首不复述索引的范围标签", () => {
+  it("rangeLabel 只出现在索引按钮里", () => {
+    const view = readSource("src/views/RealmCodexView.vue");
+    // 剥掉 HTML 注释:注释里提到 rangeLabel 是在解释它为何被删,不该算渲染
+    const rendered = view
+      .split("<!--")
+      .map((chunk, i) => (i === 0 ? chunk : chunk.slice(chunk.indexOf("-->") + 3)))
+      .join("");
+    const hits = (rendered.match(/row\.rangeLabel/g) ?? []).length;
+    expect(hits, "rangeLabel 只该在卷目按钮里出现一次").toBe(1);
+    // 防空转:确认真的读到了这个文件
+    expect(rendered, "没取到 realm-world-index 按钮").toContain("data-world-toggle");
+    expect(rendered, "卷首仍在").toContain("realm-volume__head");
+  });
+});

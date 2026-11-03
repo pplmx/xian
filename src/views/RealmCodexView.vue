@@ -160,9 +160,14 @@
               <header class="realm-volume__head">
                 <span class="realm-volume__mark" aria-hidden="true">{{ row.mark }}</span>
                 <div class="realm-volume__copy">
+                  <!--
+                    卷首不再复述 rangeLabel:那一行就在它上方 85px 的索引按钮里,
+                    同一个「第 15–18 境」在同一眼里读两遍(实测 btnTop 670 /
+                    bodyTop 755,都在首屏)。按钮给的是"这一卷覆盖哪些境界"的索引,
+                    卷首该说的是这一卷**是什么** —— 世名、状态与卷次已经够了。
+                  -->
                   <p class="realm-volume__line">
                     <span class="world-seal font-kai text-section">{{ row.world.name }}</span>
-                    <span class="text-note text-ink-faint">{{ row.rangeLabel }}</span>
                     <span class="text-note text-ink-faint">{{ row.status }}</span>
                   </p>
                   <p class="realm-volume__desc">{{ row.world.desc }}</p>
