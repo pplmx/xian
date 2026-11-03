@@ -362,6 +362,7 @@ const CATEGORIES = [
       "peakRealm",
       "codexMoment",
       "resonanceGap",
+      "unwalkedBranch",
     ],
   },
   {

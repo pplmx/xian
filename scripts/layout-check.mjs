@@ -10216,6 +10216,52 @@ async function taskDaoNote() {
     if (second !== first) {
       failures.push(`[390] 道记场景:再开一次就改了口「${first}」→「${second}」`);
     }
+
+    /*
+     * 未行之道(见 ui/unwalkedBranch):择定之后,其余几条还要在这一页看得见 ——
+     * 且要看得见它们**当时给什么**,而不只是名字。它们不可再选,故不许长得像按钮。
+     */
+    checked += 1;
+    const unwalked = await page.evaluate(() => {
+      const el = document.querySelector("[data-gongfa-unwalked]");
+      if (!el) return null;
+      return {
+        text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+        clickable: el.querySelectorAll("button, a, [role='button']").length,
+        // 页面上此刻还有没有可点的分支选项(不该有:已经择定了)
+        optionButtons: [...document.querySelectorAll(".modal-panel button")].filter((b) =>
+          /择此道/.test(b.textContent || ""),
+        ).length,
+      };
+    });
+    if (!unwalked) {
+      failures.push("[390] 道记场景:择定之后看不见「未行」那几条了");
+    } else {
+      if (!unwalked.text.includes("未行")) {
+        failures.push(`[390] 道记场景:未行之道没写「未行» «${unwalked.text}»`);
+      }
+      for (const other of branches.slice(1)) {
+        if (!unwalked.text.includes(other.name)) {
+          failures.push(`[390] 道记场景:未行之道漏了「${other.name}» «${unwalked.text}»`);
+        }
+        if (!unwalked.text.includes(other.desc)) {
+          failures.push(`[390] 道记场景:「${other.name}」没带它当时会给什么`);
+        }
+      }
+      if (unwalked.text.includes(picked.name)) {
+        failures.push(`[390] 道记场景:未行之道把自己那条也列进去了 «${unwalked.text}»`);
+      }
+      if (unwalked.clickable > 0) {
+        failures.push(
+          `[390] 道记场景:未行之道里有 ${unwalked.clickable} 个可点元素 —— 它们已经不可选`,
+        );
+      }
+      if (unwalked.optionButtons > 0) {
+        failures.push(
+          `[390] 道记场景:已经择定了,页面上还有 ${unwalked.optionButtons} 个「择此道」`,
+        );
+      }
+    }
     await closeDialog();
 
     // 整页重载:它真进了存档

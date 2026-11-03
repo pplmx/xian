@@ -79,6 +79,24 @@
             <p v-if="branchNoteLine" class="mt-1 t-note text-ink-faint" data-gongfa-dao-note>
               {{ branchNoteLine }}
             </p>
+            <!--
+              未行之道 —— 择定之后,其余几条从这里退成一行题跋(见 ui/unwalkedBranch)。
+              悟道录那边一直留着它们的「已见」,而这一页把它们藏了:玩家刚做完一个
+              不可撤销的决定,却在这一页看不到另外几条当时给的是什么。
+              写成字,不写成按钮 —— 它们已经不可选了。
+            -->
+            <p
+              v-if="unwalked.length"
+              class="mt-1 border-t border-ink/10 pt-1 t-note text-ink-faint"
+              data-gongfa-unwalked
+            >
+              <span class="tracking-[0.18em]">未行</span>
+              <template v-for="(w, i) in unwalked" :key="w.id">
+                <span v-if="i > 0" class="px-1 text-ink-faint">·</span>
+                <span class="font-kai">{{ w.name }}</span>
+                <span class="ml-1">{{ w.effect }}</span>
+              </template>
+            </p>
           </div>
           <div v-else class="space-y-1.5">
             <button
@@ -236,6 +254,7 @@ import {
 } from "@/core/gongfaService";
 import { gongfaAffinity, rootElements } from "@/core/linggenAffinity";
 import { daoNoteLine } from "@/core/daoNote";
+import { unwalkedBranches } from "@/ui/unwalkedBranch";
 import { gongfaModsAt } from "@/stores/cultivation";
 import { cnNumber, formatSignedPercent, yearsShown } from "@/utils/format";
 import { gongfaSkillLine } from "@/ui/itemText";
@@ -344,6 +363,15 @@ const branchConfirm = ref<string | null>(null);
  * 那一行落款 —— 年岁与境界名都取自各自的事实源(utils/format 的年岁口径、
  * data/realms 的境界名),本组件只负责把三者拼成一句(拼句在 core/daoNote)。
  */
+/**
+ * 没走的那几条道(见 ui/unwalkedBranch)。
+ *
+ * 只在**已择定**时非空:没择之前页面上是完整可选列表,再列一遍就是同一屏说两遍。
+ */
+const unwalked = computed(() =>
+  unwalkedBranches(branches.value, cultivation.gongfaBranch[def.value?.id ?? ""] ?? null),
+);
+
 const branchNoteLine = computed(() => {
   if (!def.value) return "";
   const note = cultivation.daoNotes[def.value.id];
