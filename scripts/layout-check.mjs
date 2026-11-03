@@ -9240,6 +9240,133 @@ async function taskRebirthFolio() {
 }
 
 /**
+ * 册目读法 —— 「第几册」在一句话里只有一种写法。
+ *
+ * 星图的当前落点此前读作「卷三 · 第 03 册」:前半句汉字、后半句两位阿拉伯数字,
+ * 一句话里混着两套写法。顶栏那枚读「03 · 行囊」—— 更像页码,不像册次。
+ * 而这一作别处早就是统一的(卷三、壹贰叁、乙丙),上一轮连卷首水印也改了汉字。
+ *
+ * 判据三件:
+ *   一 星图的落点与顶栏的落点里都没有阿拉伯数字,且都读得出「第…册」;
+ *   二 两处说的是**同一册** —— 同源,不各拼一句;
+ *   三 册目清单那一列也读汉字,但**行号**(行囊那种成百条)仍是两位数字 ——
+ *      体例与计量分开,别把该留数字的也汉字化。
+ */
+async function taskFolioPosition() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    await seedSave(ctx, showcaseSlices("light"), "__folioPositionFixture");
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    // 顶栏:落点读法
+    await openRoute(page, "/inventory", 900);
+    await clearOverlays(page);
+    checked += 1;
+    const top = await page.evaluate(() => {
+      const head = document.querySelector("[data-folio-head]");
+      if (!head) return null;
+      const text = (head.textContent || "").replace(/\s+/g, " ").trim();
+      // 落点那一块带着 data-folio-position 的键,但可读的字在它里面
+      const key = head.getAttribute("data-folio-position");
+      return { text, key };
+    });
+    if (!top) {
+      failures.push("[390] 册目读法:找不到顶栏");
+    } else if (/第?\s*\d+\s*·/.test(top.text)) {
+      failures.push(`[390] 册目读法:顶栏落点仍是数字打头 «${top.text.slice(0, 60)}»`);
+    }
+
+    // 星图:落点读法,且与顶栏说同一册
+    checked += 1;
+    await page.evaluate(() => {
+      // 入口就是顶栏那枚「玄」章(见 TopStatusBar 的 data-atlas-trigger)
+      document.querySelector("[data-atlas-trigger]")?.click();
+    });
+    await page.waitForTimeout(500);
+    const atlas = await page.evaluate(() => {
+      const atlasEl = document.querySelector("[data-navigation-atlas], .atlas-panel, [data-atlas]");
+      const current = document.querySelector(".atlas-current, [data-atlas-current-label]");
+      const ordinalEl = document.querySelector(".atlas-entry__ordinal");
+      const body = atlasEl ?? document.body;
+      return {
+        found: Boolean(atlasEl),
+        currentText: current ? (current.textContent || "").replace(/\s+/g, " ").trim() : "",
+        ordinalText: ordinalEl ? (ordinalEl.textContent || "").trim() : "",
+        bodyText: (body.textContent || "").replace(/\s+/g, " ").trim().slice(0, 400),
+      };
+    });
+    const atlasOpen = await page.evaluate(
+      () => document.querySelectorAll("[data-atlas-entry]").length > 0,
+    );
+    if (!atlasOpen) {
+      // 星图没开成:不把「没打开」算成「读法错」
+      failures.push("[390] 册目读法:玄枢图没打开,这一条没量到");
+    } else {
+      if (/第\s*\d+\s*册/.test(atlas.bodyText)) {
+        failures.push("[390] 册目读法:星图里仍有「第 03 册」这种两位数字写法");
+      }
+      if (atlas.ordinalText && /[0-9]/.test(atlas.ordinalText)) {
+        failures.push(`[390] 册目读法:册目清单的册次还是数字 «${atlas.ordinalText}»`);
+      }
+      if (atlas.ordinalText && !/^[一二三四五六七八九十]+$/.test(atlas.ordinalText)) {
+        failures.push(`[390] 册目读法:册目清单的册次不是汉字 «${atlas.ordinalText}»`);
+      }
+    }
+    await page.keyboard.press("Escape").catch(() => {});
+    await page.waitForTimeout(300);
+
+    // 反向守卫:成百条的列表行号仍是两位数字
+    checked += 1;
+    await openRoute(page, "/inventory", 900);
+    await clearOverlays(page);
+    const rowOrdinals = await page.evaluate(() => {
+      const rows = [...document.querySelectorAll("main button[data-uid]")].slice(0, 6);
+      return rows.map((row) => {
+        const el = row.querySelector(".artifact-row__order, [data-row-order]");
+        return {
+          uid: row.getAttribute("data-uid"),
+          order: el ? (el.textContent || "").trim() : "",
+        };
+      });
+    });
+    const withOrder = rowOrdinals.filter((r) => r.order);
+    if (withOrder.length > 0) {
+      for (const row of withOrder) {
+        if (!/^\d{2}$/.test(row.order)) {
+          failures.push(
+            `[390] 册目读法:行号被改成了汉字 «${row.order}» —— 成百条的行号该留两位数字`,
+          );
+        }
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 册目读法页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(
+        `\n册目读法:顶栏「${(top?.text ?? "").slice(0, 24)}」· 星图册次「${atlas.ordinalText}」,行号仍两位数字`,
+      );
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 册次水印 —— 卷首最大的那枚字写汉字,且说得清是第几册。
  *
  * 那枚水印是全屏最大的字(4.6rem ~ 8.5rem),此前写「01」「02」—— 而这一作里
@@ -23919,6 +24046,7 @@ const TASKS = [
   ["共鸣缺口说得出还差哪件", taskResonanceGap],
   ["重铸预算开洗前摊开总价", taskReforgeBudget],
   ["册次水印写汉字且说得清第几册", taskFolioOrdinal],
+  ["册目读法一句话一种数字", taskFolioPosition],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
   ["一键分解先勾后点", taskDecompose],

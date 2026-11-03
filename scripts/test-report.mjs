@@ -365,6 +365,7 @@ const CATEGORIES = [
       "unwalkedBranch",
       "reforgeBudget",
       "folioOrdinal",
+      "folioPosition",
     ],
   },
   {

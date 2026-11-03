@@ -180,8 +180,12 @@
                 :data-atlas-current="route.name === entry.name ? '' : undefined"
                 @click="emit('close')"
               >
+                <!--
+                  册次读汉字(见 ui/folioPosition)。这一栏最多十七册,是**体例**不是计量;
+                  成百上千条的行号(行囊、法宝谱)仍用两位数字,两者不混为一谈。
+                -->
                 <span class="atlas-entry__ordinal" aria-hidden="true">
-                  {{ String(entryIndex + 1).padStart(2, "0") }}
+                  {{ cnNumber(entryIndex + 1) }}
                 </span>
                 <span
                   class="atlas-entry__icon grid h-8 w-8 shrink-0 place-items-center tinylens:h-7 tinylens:w-7"
@@ -320,6 +324,7 @@ import { usePlayerStore } from "@/stores/player";
 import { useMediaQuery } from "@/composables/useMediaQuery";
 import { useNavigationSignals } from "@/composables/useNavigationSignals";
 import { cnNumber } from "@/utils/format";
+import { folioPositionMark } from "@/ui/folioPosition";
 import {
   atlasEntryCueOf,
   atlasInitialFocusOf,
@@ -372,9 +377,13 @@ const currentVolumeId = computed(
 );
 const currentOrdinal = computed(() => {
   const position = currentPosition.value;
-  return position
-    ? `卷${cnNumber(position.sectionIndex + 1)} · 第 ${String(position.entryIndex + 1).padStart(2, "0")} 册`
-    : "未入册";
+  /**
+   * 「卷三 · 第三册」—— 同一句里只有一种数字(见 ui/folioPosition)。
+   *
+   * 此前是「卷三 · 第 03 册」:前半句汉字、后半句两位阿拉伯数字,
+   * 一句话里混着两套写法。而这一作别处早就是统一的(卷三、壹贰叁、乙丙)。
+   */
+  return position ? folioPositionMark(position.sectionIndex, position.entryIndex) : "未入册";
 });
 const sectionNumber = (index: number): string => cnNumber(index + 1);
 

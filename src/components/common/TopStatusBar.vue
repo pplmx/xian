@@ -102,6 +102,7 @@ import { LIFESPAN_WARN_RATIO } from "@/data/constants";
 import { Capacitor } from "@capacitor/core";
 import { useNativeInsets } from "@/composables/useNativeInsets";
 import { navigationPositionOf } from "@/ui/navigation";
+import { folioBookMark } from "@/ui/folioPosition";
 import GameIcon from "./GameIcon.vue";
 import TapNumber from "./TapNumber.vue";
 import { useProgressEta } from "@/composables/useProgressEta";
@@ -124,9 +125,15 @@ const positionMark = computed(() =>
 const volumeMark = computed(() =>
   position.value ? cnNumber(position.value.sectionIndex + 1) : "玄",
 );
+/**
+ * 顶栏那枚落点 —— 「第三册 · 行囊」。
+ *
+ * 此前是「03 · 行囊」:两位数字像页码,不像册次;而同一栏右侧的卷次
+ * (`volumeMark`)已经是汉字。一句话里两种写法,而且一个像页码一个像册名。
+ */
 const entryMark = computed(() =>
   position.value
-    ? `${String(position.value.entryIndex + 1).padStart(2, "0")} · ${position.value.entry.label}`
+    ? `${folioBookMark(position.value.entryIndex)} · ${position.value.entry.label}`
     : "未名之页",
 );
 /**
