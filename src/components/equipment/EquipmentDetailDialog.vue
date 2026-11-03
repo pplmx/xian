@@ -94,6 +94,14 @@
             · 开战护盾 +{{ formatPercent(ASTRAL_SET_SHIELD) }} 最大气血</template
           >
         </span>
+        <!-- 还差哪一件、以及下一步该做什么(见 ui/resonanceGap) -->
+        <span
+          v-if="setInfo.gap.line"
+          class="equip-dossier__resonance-gap"
+          data-equipment-resonance-gap
+        >
+          {{ setInfo.gap.line }}
+        </span>
       </p>
 
       <section class="equip-dossier__sheet" data-equipment-stats>
@@ -277,8 +285,9 @@
 import { computed } from "vue";
 import { useUiStore } from "@/stores/ui";
 import { useInventoryStore } from "@/stores/inventory";
-import { equipmentTemplate, EQUIP_SLOT_NAMES } from "@/data/equipment";
+import { EQUIPMENT_TEMPLATES, equipmentTemplate, EQUIP_SLOT_NAMES } from "@/data/equipment";
 import { equipSetDef, setCounts, ASTRAL_SET_SHIELD } from "@/core/equipSet";
+import { resonanceGap, templatesOfSet } from "@/ui/resonanceGap";
 import { equipPowerComparison } from "@/core/equipBest";
 import { worldNameOfTier } from "@/core/formulas";
 import { inscriptionFor } from "@/core/inscription";
@@ -426,7 +435,24 @@ const setInfo = computed(() => {
   const def = equipSetDef(setId);
   if (!def) return null;
   const count = setCounts(inventory.equippedItems).get(setId) ?? 0;
-  return { def, count, active: count >= def.required };
+  /*
+   * 还差哪一件(见 ui/resonanceGap)。
+   *
+   * 只报一个「1/2」等于把三种截然不同的局面说成一种:差的那件在行囊里(换上即可)、
+   * 见过但手上没有(去刷)、连见都没见过(先探到那一带)。下一步完全不同,
+   * 而玩家此前要自己去装备图鉴里翻才知道是哪一件。
+   */
+  const wornIds = inventory.equippedItems.map((it) => it.templateId);
+  const bagIds = inventory.items.map((it) => it.templateId);
+  const seenIds = Object.keys(loreStore.equipLore);
+  const gap = resonanceGap(
+    def,
+    wornIds,
+    bagIds,
+    seenIds,
+    templatesOfSet(setId, EQUIPMENT_TEMPLATES),
+  );
+  return { def, count, active: count >= def.required, gap };
 });
 
 /** 这一件按品质能有多少条词条:上限来自品质表,不在界面里另写一份 */

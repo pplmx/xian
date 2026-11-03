@@ -361,6 +361,7 @@ const CATEGORIES = [
       "toastSeal",
       "peakRealm",
       "codexMoment",
+      "resonanceGap",
     ],
   },
   {

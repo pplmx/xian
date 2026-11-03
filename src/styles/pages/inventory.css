@@ -735,6 +735,17 @@
   .equip-dossier__note {
     margin-top: 0.5rem;
   }
+  /*
+   * 共鸣缺口 —— 还差哪一件、下一步做什么(见 ui/resonanceGap)。
+   * 单独占一整行(前一段是效果说明,这一段是行动指引),故 flex-basis 拉满;
+   * 字色比效果说明再退一档:它是提示,不是机制本身。
+   */
+  .equip-dossier__resonance-gap {
+    flex-basis: 100%;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    letter-spacing: 0.03em;
+  }
   .equip-dossier__resonance {
     display: flex;
     min-width: 0;

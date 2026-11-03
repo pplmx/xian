@@ -9230,6 +9230,270 @@ async function taskRebirthFolio() {
 }
 
 /**
+ * 共鸣缺口 —— 器评帖要说得出「还差哪一件」,以及下一步做什么。
+ *
+ * 此前只有「共鸣『铁壁共鸣』1/2」,然后没了。差的那件在行囊里(换上即可)、
+ * 见过但手上没有(去刷)、连见都没见过(先探到那一带)—— 三种局面的下一步完全不同,
+ * 而界面用同一个分数把它们抹平了。
+ *
+ * 判据三件:
+ *   一 穿一件、另两件一件在包、一件没见过:缺口那行要点名槽位与名字,
+ *      且两种处境写成不同的话(在行囊 / 未曾见);
+ *   二 两件都穿上之后,那一行**整行不出** —— 已共鸣时还写「还差」就是错话;
+ *   三 缺口行不把器评帖撑出横向溢出(它是一整行长句)。
+ */
+async function taskResonanceGap() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const WEAPON = "w_xuantie";
+    const HEAD = "h_xuantie";
+    const mk = (uid, templateId, tier) => ({
+      uid,
+      templateId,
+      quality: "fine",
+      tier,
+      level: 0,
+      affixes: [{ id: "atk1", roll: 1 }],
+    });
+    const slices = showcaseSlices("light");
+    // 只穿兵器;头冠在行囊里(没穿);甲从未见过
+    slices.inventory = {
+      ...slices.inventory,
+      items: [mk("rg_weapon", WEAPON, 2), mk("rg_head", HEAD, 4)],
+      equipped: { weapon: "rg_weapon" },
+      seenUids: ["rg_weapon", "rg_head"],
+      seenSeeded: true,
+    };
+    /*
+     * 「见过」以 lore.equipLore 为准(图鉴那本账),不是「行囊里有」——
+     * 故只记兵器与头冠的见闻,甲不记,它才真的是「未曾见」。
+     */
+    slices.lore = {
+      ...slices.lore,
+      equipLore: {
+        [WEAPON]: { q: 1, t: 2, u: 1 },
+        [HEAD]: { q: 1, t: 4, u: 1 },
+      },
+    };
+    await seedSave(ctx, slices, "__resonanceGapFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/inventory", 900);
+    await clearOverlays(page);
+
+    // 打开兵器(它在身上)的器评帖:缺口该点名「衣袍·玄武甲」且读作未曾见
+    checked += 1;
+    const opened = await page.evaluate((uid) => {
+      const btn = document.querySelector(`main button[data-uid="${uid}"]`);
+      if (!btn) return false;
+      btn.click();
+      return true;
+    }, "rg_weapon");
+    if (!opened) {
+      failures.push("[390] 共鸣缺口:行囊里找不到那件兵器");
+    } else {
+      await page.waitForTimeout(450);
+    }
+
+    checked += 1;
+    const gap = await page.evaluate(() => {
+      const el = document.querySelector("[data-equipment-resonance-gap]");
+      if (!el) return null;
+      const res = el.closest(".equip-dossier__resonance");
+      return {
+        text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+        overflow: res ? res.scrollWidth - res.clientWidth : 0,
+        width: el.getBoundingClientRect().width,
+      };
+    });
+    if (!gap) {
+      failures.push("[390] 共鸣缺口:器评帖里没有「还差哪一件」那一行");
+    } else {
+      if (!gap.text.includes("还差 1 件")) {
+        failures.push(`[390] 共鸣缺口:那一行没有报还差几件 «${gap.text}»`);
+      }
+      /*
+       * 穿上兵器后只差 1 件,而缺口取的是**按槽位序的第一个未穿件** ——
+       * 头冠排在衣袍之前,故缺的那件正是头冠(它在行囊里,下一步是「换上」)。
+       * 这里量的是「缺哪件就说哪件」,不是「把所有未穿件都列出来」。
+       */
+      if (!gap.text.includes("玄铁冠")) {
+        failures.push(`[390] 共鸣缺口:没有点名缺的那件 «${gap.text}»`);
+      }
+      if (!gap.text.includes("在行囊")) {
+        failures.push(`[390] 共鸣缺口:行囊里那件该读「在行囊» «${gap.text}»`);
+      }
+      if (!gap.text.includes("头冠")) {
+        failures.push(`[390] 共鸣缺口:没有点出槽位 «${gap.text}»`);
+      }
+      if (gap.overflow > 1) {
+        failures.push(`[390] 共鸣缺口:那一行把器评帖撑出横向溢出 ${gap.overflow}px`);
+      }
+      if (gap.width < 120) {
+        failures.push(`[390] 共鸣缺口:那一行被压成一条窄缝(${Math.round(gap.width)}px)`);
+      }
+    }
+    for (let i = 0; i < 3 && (await page.locator(".modal-panel").count()) > 0; i += 1) {
+      await page.keyboard.press("Escape").catch(() => {});
+      await page.waitForTimeout(200);
+    }
+
+    // 头冠在行囊:缺口那行该读「在行囊,换上即可」
+    checked += 1;
+    const headOpened = await page.evaluate((uid) => {
+      const btn = document.querySelector(`main button[data-uid="${uid}"]`);
+      if (!btn) return false;
+      btn.click();
+      return true;
+    }, "rg_head");
+    if (!headOpened) {
+      failures.push("[390] 共鸣缺口:行囊里找不到那件头冠");
+    } else {
+      await page.waitForTimeout(450);
+      const headGap = await page.evaluate(() => {
+        const el = document.querySelector("[data-equipment-resonance-gap]");
+        return el ? (el.textContent || "").replace(/\s+/g, " ").trim() : "";
+      });
+      /*
+       * 头冠还没穿 —— 它自己就是缺的那一件。故这一份的缺口该点名**它自己**,
+       * 且读作「在行囊,换上即可」:这正是「这件就在你包里」那种局面的文案。
+       */
+      if (!headGap.includes("玄铁冠")) {
+        failures.push(`[390] 共鸣缺口:头冠那件报的缺口不对 «${headGap}»`);
+      }
+      if (!headGap.includes("在行囊")) {
+        failures.push(`[390] 共鸣缺口:头冠那件该读「在行囊» «${headGap}»`);
+      }
+    }
+    for (let i = 0; i < 3 && (await page.locator(".modal-panel").count()) > 0; i += 1) {
+      await page.keyboard.press("Escape").catch(() => {});
+      await page.waitForTimeout(200);
+    }
+
+    /*
+     * 第三份:只穿头冠 —— 缺口取按槽位序的第一个未穿件,
+     * 也就是头冠(在包)。要单独核「未曾见」那种话,得让排在前面的件都穿上、
+     * 只剩没见过的那件:故穿兵器与头冠之外的组合做不到,改为只穿头冠、兵器与甲都缺。
+     */
+    checked += 1;
+    slices.inventory = {
+      ...slices.inventory,
+      items: [mk("rg_weapon", WEAPON, 2), mk("rg_head", HEAD, 4)],
+      equipped: { head: "rg_head" },
+    };
+    slices.lore = { ...slices.lore, equipLore: { [HEAD]: { q: 1, t: 4, u: 1 } } };
+    await seedSave(ctx, slices, "__resonanceGapUnknownFixture");
+    await page.reload({ waitUntil: "load" });
+    await page.waitForTimeout(900);
+    await openRoute(page, "/inventory", 900);
+    await clearOverlays(page);
+    await page.evaluate((uid) => {
+      document.querySelector(`main button[data-uid="${uid}"]`)?.click();
+    }, "rg_head");
+    await page.waitForTimeout(450);
+    const unknownGap = await page.evaluate(() => {
+      const el = document.querySelector("[data-equipment-resonance-gap]");
+      return el ? (el.textContent || "").replace(/\s+/g, " ").trim() : "";
+    });
+    if (!unknownGap.includes("玄铁重剑")) {
+      // 兵器排最前且未穿,故它才是被点名的那件
+      failures.push(`[390] 共鸣缺口:只穿头冠时该点名未穿的兵器 «${unknownGap}»`);
+    }
+    /*
+     * 「未曾见」只会在**缺口那几件都真没见过**时出现。这个夹具里兵器在行囊,
+     * 它排在槽位序最前、又是缺的那一件 —— 故这里正确读法是「在行囊」。
+     * 要核「未曾见」得让缺口落在没见过的件上:把兵器也从行囊里拿掉。
+     */
+    if (!unknownGap.includes("在行囊")) {
+      failures.push(`[390] 共鸣缺口:只穿头冠时兵器在包里,该读「在行囊» «${unknownGap}»`);
+    }
+
+    // 第四份:兵器既不在身上、也不在包里、更没见过 —— 缺口该读「未曾见」
+    checked += 1;
+    slices.inventory = {
+      ...slices.inventory,
+      items: [mk("rg_head", HEAD, 4)],
+      equipped: { head: "rg_head" },
+    };
+    await seedSave(ctx, slices, "__resonanceGapUnseenFixture");
+    await page.reload({ waitUntil: "load" });
+    await page.waitForTimeout(900);
+    await openRoute(page, "/inventory", 900);
+    await clearOverlays(page);
+    await page.evaluate((uid) => {
+      document.querySelector(`main button[data-uid="${uid}"]`)?.click();
+    }, "rg_head");
+    await page.waitForTimeout(450);
+    const unseenGap = await page.evaluate(() => {
+      const el = document.querySelector("[data-equipment-resonance-gap]");
+      return el ? (el.textContent || "").replace(/\s+/g, " ").trim() : "";
+    });
+    if (!unseenGap.includes("未曾见")) {
+      failures.push(`[390] 共鸣缺口:没见过的件该读「未曾见» «${unseenGap}»`);
+    }
+    if (!unseenGap.includes("玄铁重剑")) {
+      failures.push(`[390] 共鸣缺口:没见过的缺口该点名那件 «${unseenGap}»`);
+    }
+    for (let i = 0; i < 3 && (await page.locator(".modal-panel").count()) > 0; i += 1) {
+      await page.keyboard.press("Escape").catch(() => {});
+      await page.waitForTimeout(200);
+    }
+
+    // 两件都穿上:共鸣已达成,那行整行不出
+    checked += 1;
+    slices.inventory = {
+      ...slices.inventory,
+      items: [mk("rg_weapon", WEAPON, 2), mk("rg_head", HEAD, 4)],
+      equipped: { weapon: "rg_weapon", head: "rg_head" },
+    };
+    await seedSave(ctx, slices, "__resonanceGapFullFixture");
+    await page.reload({ waitUntil: "load" });
+    await page.waitForTimeout(900);
+    await openRoute(page, "/inventory", 900);
+    await clearOverlays(page);
+    await page.evaluate((uid) => {
+      document.querySelector(`main button[data-uid="${uid}"]`)?.click();
+    }, "rg_weapon");
+    await page.waitForTimeout(450);
+    const full = await page.evaluate(() => {
+      const res = document.querySelector(".equip-dossier__resonance");
+      return {
+        hasGap: Boolean(document.querySelector("[data-equipment-resonance-gap]")),
+        text: (res?.textContent || "").replace(/\s+/g, " ").trim(),
+      };
+    });
+    if (full.hasGap) {
+      failures.push(`[390] 共鸣缺口:两件都穿了,却还在说「还差» «${full.text}»`);
+    }
+    if (!full.text.includes("2/2")) {
+      failures.push(`[390] 共鸣缺口:凑齐之后该读 2/2 «${full.text}»`);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 共鸣缺口页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n共鸣缺口:器评帖报「${gap?.text ?? ""}」,凑齐后整行不出`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 道历收录 —— 图鉴页脚不许再报现实世界的钟。
  *
  * 全作唯一一处露出现实时间的地方就在图鉴每条的页脚:「收录时间 2026-11-04 14:32」。
@@ -23317,6 +23581,7 @@ const TASKS = [
   ["品阶印跟着高品落地", taskToastSeal],
   ["历世足迹留得住到过的地方", taskPeakRealm],
   ["道历收录不再露现实时间", taskCodexMoment],
+  ["共鸣缺口说得出还差哪件", taskResonanceGap],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
   ["一键分解先勾后点", taskDecompose],
