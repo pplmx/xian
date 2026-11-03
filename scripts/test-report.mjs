@@ -364,6 +364,7 @@ const CATEGORIES = [
       "resonanceGap",
       "unwalkedBranch",
       "reforgeBudget",
+      "folioOrdinal",
     ],
   },
   {

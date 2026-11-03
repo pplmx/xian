@@ -2995,6 +2995,10 @@ async function taskPageTour(vp) {
                   ? {
                       display: getComputedStyle(mastheadOrdinal).display,
                       text: mastheadOrdinal.textContent?.trim() ?? "",
+                      // 册次数字挂在卷首外壳上:水印写汉字,数字留给核对
+                      numeral: mastheadOrdinal
+                        .closest("[data-folio-masthead]")
+                        ?.getAttribute("data-folio-ordinal"),
                     }
                   : null,
               }
@@ -3195,7 +3199,13 @@ async function taskPageTour(vp) {
           if (
             !desk.masthead?.ordinal ||
             desk.masthead.ordinal.display === "none" ||
-            !/^\d{2}$/.test(desk.masthead.ordinal.text)
+            /*
+             * 水印现在写汉字(见 ui/folioOrdinal),故不再判「两位阿拉伯数字」——
+             * 那条正则绑的是写法,不是这件事本身。要守的是:水印在、且**说得清是第几册**。
+             * 于是改判「汉字非空」+「同页的册次数字也在」:两者同源,任缺其一都算没落出来。
+             */
+            !/^[零一二三四五六七八九十]+$/.test(desk.masthead.ordinal.text) ||
+            !/^\d{2}$/.test(desk.masthead.ordinal.numeral ?? "")
           ) {
             failures.push(`[${vp.tag}] ${route} 桌面卷首册次水印没有落出来`);
           }
@@ -9223,6 +9233,133 @@ async function taskRebirthFolio() {
 
     if (pageErrors.length)
       failures.push(`[390] 往生帖场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
+ * 册次水印 —— 卷首最大的那枚字写汉字,且说得清是第几册。
+ *
+ * 那枚水印是全屏最大的字(4.6rem ~ 8.5rem),此前写「01」「02」—— 而这一作里
+ * 所有读得出来的序数都是汉字:卷次「卷三」、章序「壹贰叁」、页签「乙丙」。
+ * 页面上最重的视觉元素,却是唯一一处阿拉伯序数。
+ *
+ * 判据三件:
+ *   一 水印里没有阿拉伯数字,且长度合理(一~两个字);
+ *   二 它真的说得清册次:同一页上 `data-folio-ordinal`(数字)与它一一对应;
+ *   三 换一页,水印跟着换 —— 不是写死的。
+ */
+async function taskFolioOrdinal() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    await seedSave(ctx, showcaseSlices("light"), "__folioOrdinalFixture");
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    const CN = "零一二三四五六七八九";
+    const readMark = () =>
+      page.evaluate(() => {
+        const el = document.querySelector(".folio-masthead__ordinal");
+        if (!el) return null;
+        const style = getComputedStyle(el);
+        const rect = el.getBoundingClientRect();
+        // 册次数字挂在卷首外壳上(它描述的是这一页),水印元素自己只带汉字
+        const header = el.closest("[data-folio-masthead]");
+        return {
+          text: (el.textContent || "").trim(),
+          numeral: header?.getAttribute("data-folio-ordinal") ?? null,
+          mark: el.getAttribute("data-folio-ordinal-mark"),
+          fontSize: parseFloat(style.fontSize),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+        };
+      });
+
+    const pages = [
+      { route: "/inventory", tag: "行囊" },
+      { route: "/cultivation", tag: "修炼" },
+      { route: "/titles", tag: "名号" },
+    ];
+    const seen = [];
+    for (const { route, tag } of pages) {
+      checked += 1;
+      await openRoute(page, route, 900);
+      await clearOverlays(page);
+      const mark = await readMark();
+      if (!mark) {
+        failures.push(`[390] 册次水印:${tag}页的卷首没有水印`);
+        continue;
+      }
+      if (/[0-9]/.test(mark.text)) {
+        failures.push(`[390] 册次水印:${tag}页的水印里还有阿拉伯数字 «${mark.text}»`);
+      }
+      if (!mark.text.length) {
+        failures.push(`[390] 册次水印:${tag}页的水印是空的`);
+      } else if (mark.text.length > 3) {
+        failures.push(`[390] 册次水印:${tag}页的水印太长 «${mark.text}»`);
+      }
+      for (const ch of mark.text) {
+        if (!CN.includes(ch)) {
+          failures.push(`[390] 册次水印:${tag}页的水印有非汉字字符 «${ch}»`);
+        }
+      }
+      /*
+       * 汉字与数字一一对应。把汉字读回一个数(「七」→7、「十」→10、「十七」→17),
+       * 与同页 `data-folio-ordinal` 比 —— 两者同源,读回来必须相等。
+       */
+      const n = Number(mark.numeral);
+      if (/^\d+$/.test(mark.numeral ?? "") && n >= 1 && n <= 19) {
+        const digitAt = (ch) => CN.indexOf(ch);
+        let back;
+        if (mark.text === "十") back = 10;
+        else if (mark.text.startsWith("十")) back = 10 + digitAt(mark.text[1] ?? "");
+        else if (mark.text.includes("十"))
+          back =
+            digitAt(mark.text[0] ?? "") * 10 +
+            (mark.text.length > 2 ? digitAt(mark.text[2] ?? "") : 0);
+        else back = digitAt(mark.text[0] ?? "");
+        if (back !== n) {
+          failures.push(`[390] 册次水印:${tag}页水印 «${mark.text}» 读回 ${back},册次却是 ${n}`);
+        }
+      }
+      if (mark.mark !== mark.text) {
+        failures.push(`[390] 册次水印:${tag}页的属性值与可见字不一致`);
+      }
+      // 它该是卷首里最大的那枚字
+      if (mark.fontSize < 40) {
+        failures.push(`[390] 册次水印:${tag}页的水印只有 ${mark.fontSize}px,不像水印`);
+      }
+      seen.push({ tag, text: mark.text, numeral: mark.numeral });
+    }
+
+    // 换页要换字 —— 不是写死的
+    checked += 1;
+    const distinct = new Set(seen.map((r) => `${r.numeral}:${r.text}`));
+    if (seen.length >= 2 && distinct.size < 2) {
+      failures.push(`[390] 册次水印:三页的水印全一样 «${JSON.stringify(seen)}»`);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 册次水印页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(
+        `\n册次水印:${seen.map((r) => `${r.tag}「${r.text}」(${r.numeral})`).join(" · ")}`,
+      );
+    }
   } finally {
     await ctx.close();
   }
@@ -23781,6 +23918,7 @@ const TASKS = [
   ["道历收录不再露现实时间", taskCodexMoment],
   ["共鸣缺口说得出还差哪件", taskResonanceGap],
   ["重铸预算开洗前摊开总价", taskReforgeBudget],
+  ["册次水印写汉字且说得清第几册", taskFolioOrdinal],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
   ["一键分解先勾后点", taskDecompose],

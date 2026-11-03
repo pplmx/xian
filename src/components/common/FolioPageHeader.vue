@@ -10,7 +10,19 @@
   >
     <slot name="backdrop" />
 
-    <span class="folio-masthead__ordinal" aria-hidden="true">{{ folioOrdinal }}</span>
+    <!--
+      册次水印 —— 全屏最大的那枚字,写汉字(与卷次小字「卷三」、章序「壹贰叁」、
+      页签「乙丙」同一套序数语言)。此前它是「01」:页面上最大的字,
+      也是唯一一处读得出来的阿拉伯序数。
+      数字仍留在 data-folio-ordinal 上:那枚字是 aria-hidden 的纯装饰,
+      但判据要能核「水印说的是第几册」—— 机器核对用数字,玩家看汉字,同源。
+    -->
+    <span
+      class="folio-masthead__ordinal"
+      :data-folio-ordinal-mark="folioOrdinalMarkValue"
+      aria-hidden="true"
+      >{{ folioOrdinalMarkValue }}</span
+    >
 
     <div class="relative z-10 flex flex-wrap items-center gap-x-2 gap-y-1">
       <button
@@ -100,6 +112,7 @@ import { useRoute, useRouter } from "vue-router";
 import { goBack } from "@/router/goBack";
 import { cnNumber } from "@/utils/format";
 import { chapterRailItems } from "@/ui/folioIndexRail";
+import { folioOrdinalMark } from "@/ui/folioOrdinal";
 import { navigationPositionOf } from "@/ui/navigation";
 import FolioIndexRail from "./FolioIndexRail.vue";
 import GameIcon from "./GameIcon.vue";
@@ -129,5 +142,13 @@ const positionMark = computed(() =>
 const folioOrdinal = computed(() =>
   position.value ? String(position.value.entryIndex + 1).padStart(2, "0") : "00",
 );
+/**
+ * 水印的汉字写法(见 ui/folioOrdinal)。
+ *
+ * 与 `folioOrdinal` 同源:两者都从 `position.entryIndex` 推出来,一个是给机器核对的
+ * 「第几册」,一个是给眼睛看的写法。没有册目位置时(未登记的页)读「零」而不是空白 ——
+ * 一枚空的水印会让卷首右上角出现一块没来由的凹陷。
+ */
+const folioOrdinalMarkValue = computed(() => folioOrdinalMark(position.value?.entryIndex ?? -1));
 const description = computed(() => props.subtitle || navigation.value?.description || "");
 </script>
