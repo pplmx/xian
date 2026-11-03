@@ -254,6 +254,7 @@ import { GONGFA } from "../src/data/gongfa.ts";
 import { branchesFor } from "../src/data/gongfaBranches.ts";
 import { ACHIEVEMENTS } from "../src/data/achievements.ts";
 import { qualityDef } from "../src/data/qualities.ts";
+import { REALMS } from "../src/data/realms.ts";
 import { QUALITY_VERDICTS, qualityVerdict } from "../src/data/qualityVerdicts.ts";
 import { COMPREHEND_PAGE_COST } from "../src/data/constants.ts";
 import { NAVIGATION_ENTRIES, NAVIGATION_SECTIONS } from "../src/ui/navigation.ts";
@@ -9222,6 +9223,135 @@ async function taskRebirthFolio() {
 
     if (pageErrors.length)
       failures.push(`[390] 往生帖场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
+ * 历世足迹 —— 转世把这一世折回起点,界域志仍说得出「你到过哪里」。
+ *
+ * 这条判据守的是一个**只有转世之后才现形**的窟窿:新一世从炼气重来,谱上真仙那一行
+ * 照旧写「未至」,而玩家上个月刚从那里转世下来 —— 历世履历里明明记着。
+ *
+ * 判据三件:
+ *   一 这一世在起点、历世到过第五境时,卷首报一句「此身曾至」,谱上中间那几行读「曾至」;
+ *   二 此刻即历世最高时,那句话**不出**(否则与「此刻在此」同屏说两遍);
+ *   三 整页重载之后仍在 —— 它进的是存档,不是一次性的界面状态。
+ */
+async function taskPeakRealm() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const PEAK = 5;
+    const slices = showcaseSlices("light");
+    slices.player = {
+      ...slices.player,
+      major: 0,
+      sub: 0,
+      reincarnation: { ...slices.player.reincarnation, count: 3, peakMajor: PEAK },
+    };
+    await seedSave(ctx, slices, "__peakRealmFixture");
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/codex", 900);
+    await clearOverlays(page);
+
+    const read = () =>
+      page.evaluate(() => {
+        const peak = document.querySelector("[data-realm-peak]");
+        const rows = [...document.querySelectorAll("[data-realm-state]")].map((el) => ({
+          id: el.id.replace("realm-", ""),
+          state: el.getAttribute("data-realm-state") ?? "",
+          text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+        }));
+        return {
+          peak: peak ? (peak.textContent || "").replace(/\s+/g, " ").trim() : "",
+          reached: rows.filter((r) => r.state === "reached"),
+          current: rows.filter((r) => r.state === "current").map((r) => r.id),
+        };
+      });
+
+    checked += 1;
+    const first = await read();
+    const peakName = REALMS[PEAK]?.name ?? "";
+    if (!first.peak) {
+      failures.push(`[390] 历世足迹:这一世在起点、历世到过${peakName},卷首却没有「此身曾至」`);
+    } else if (!first.peak.includes(peakName) || !first.peak.includes("曾至")) {
+      failures.push(`[390] 历世足迹:卷首那一句不对 «${first.peak}»(该报${peakName})`);
+    }
+    if (first.reached.length === 0) {
+      failures.push("[390] 历世足迹:谱上一行「曾至」都没有 —— 中间那几境被读成了未至");
+    } else {
+      // 此刻之上、历世最高及以下的境都该是「曾至」,且每行都写着那两个字
+      const want = PEAK; // major=0,故 1..PEAK 共 PEAK 行
+      if (first.reached.length !== want) {
+        failures.push(`[390] 历世足迹:该有 ${want} 行「曾至」,实见 ${first.reached.length} 行`);
+      }
+      for (const row of first.reached) {
+        if (!row.text.includes("曾至")) {
+          failures.push(`[390] 历世足迹:${row.id} 那行标了 reached,却没有写出「曾至」`);
+        }
+      }
+      if (first.current.length !== 1) {
+        failures.push(`[390] 历世足迹:当前境该正好一行,实见 ${first.current.length}`);
+      }
+    }
+
+    // 整页重载:它进的是存档
+    checked += 1;
+    await page.reload({ waitUntil: "load" });
+    await page.waitForTimeout(900);
+    await openRoute(page, "/codex", 900);
+    await clearOverlays(page);
+    const second = await read();
+    if (second.peak !== first.peak || second.reached.length !== first.reached.length) {
+      failures.push(
+        `[390] 历世足迹:重载之后变了 «${first.peak}»/${first.reached.length} → «${second.peak}»/${second.reached.length}`,
+      );
+    }
+
+    // 此刻即历世最高:那句话整行不出
+    checked += 1;
+    const sameCtx = showcaseSlices("light");
+    sameCtx.player = {
+      ...sameCtx.player,
+      major: PEAK,
+      sub: 0,
+      reincarnation: { ...sameCtx.player.reincarnation, count: 1, peakMajor: PEAK },
+    };
+    await seedSave(ctx, sameCtx, "__peakRealmSameFixture");
+    await page.reload({ waitUntil: "load" });
+    await page.waitForTimeout(900);
+    await openRoute(page, "/codex", 900);
+    await clearOverlays(page);
+    const same = await read();
+    if (same.peak) {
+      failures.push(`[390] 历世足迹:此刻即最高,却还说「此身曾至»(${same.peak})`);
+    }
+    if (same.reached.length !== 0) {
+      failures.push(`[390] 历世足迹:此刻即最高,却多出 ${same.reached.length} 行「曾至」`);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 历世足迹页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(
+        `\n历世足迹:转世后卷首报「${first.peak}」,谱上 ${first.reached.length} 行「曾至」且重载不改`,
+      );
+    }
   } finally {
     await ctx.close();
   }
@@ -23012,6 +23142,7 @@ const TASKS = [
   ["道记留得住择道那一刻", taskDaoNote],
   ["品评说得出一档的分量", taskQualityVerdict],
   ["品阶印跟着高品落地", taskToastSeal],
+  ["历世足迹留得住到过的地方", taskPeakRealm],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
   ["一键分解先勾后点", taskDecompose],

@@ -133,7 +133,10 @@ describe("界域案 · 四界先成谱,境界再逐格展开", () => {
     expect(view).toContain("data-realm-current");
     expect(view).toContain("realmCodexOverview(currentRealm.value, worldRows.value)");
     expect(view).toContain("realmCodexAtlasRows(worldRows.value)");
-    expect(view).toContain("realmCodexRealmEntries(row, player.major)");
+    // 境界格的三个入参:当前境 + 历世足迹(见 core/peakRealm)—— 少一个就只剩这一世
+    expect(view).toMatch(
+      /realmCodexRealmEntries\(row, player\.major, player\.reincarnation\.peakMajor\)/,
+    );
     expect(view, "界域册给左右两页留稳定落点").toContain("data-realm-codex-desk");
     expect(view, "当前境与四界卷目归左页").toContain("realm-codex-desk__lead");
     expect(view, "境界谱归右页").toContain("realm-codex-desk__volumes");

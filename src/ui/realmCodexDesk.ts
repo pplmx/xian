@@ -5,6 +5,7 @@ import {
   type RealmWorldState,
 } from "@/core/realmCodex";
 import { CODEX_CHAPTERS } from "@/ui/navigation";
+import { realmDef } from "@/data/realms";
 
 export type RealmCodexTab = (typeof CODEX_CHAPTERS)[number]["id"];
 
@@ -55,6 +56,22 @@ export const REALM_WORLD_MARKS: Record<string, string> = {
   chaos: "混",
 };
 
+/**
+ * 卷首那一行「此身曾至」。
+ *
+ * 只在这一世**没走回**那个高度时才有话说:当前境就是历世最高,读出来与「此刻在此」
+ * 完全重复,那正是本仓刚清掉的那类同屏两遍。所以给 null,整行不出。
+ */
+export function realmCodexPeakLine(
+  current: RealmCodexCurrent,
+  peakMajor: number,
+): { def: RealmCodexCurrent["def"]; label: string } | null {
+  const peak = Number.isFinite(peakMajor) ? Math.max(0, Math.trunc(peakMajor)) : 0;
+  if (peak <= current.index) return null;
+  const def = realmDef(peak);
+  return { def, label: `此身曾至 ${def.name}` };
+}
+
 export interface RealmCodexAtlasRow extends RealmCodexWorldRow {
   mark: string;
   ordinal: number;
@@ -78,7 +95,8 @@ export interface RealmCodexRealmEntry {
   def: RealmCodexWorldRow["realms"][number]["def"];
   index: number;
   ordinal: number;
-  state: RealmWorldState;
+  /** 三态之外多一种「曾至」:历世到过、而这一世还没重新走到的境 */
+  state: RealmWorldState | "reached";
   stateLabel: string;
   stateMark: string;
 }
@@ -123,32 +141,50 @@ export function realmCodexOverview(
   };
 }
 
-/** 单境三态与当前大境界同源；坏档与 realmCodex 一样把当前境夹回首境。 */
-export function realmCodexRealmState(index: number, major: number): RealmWorldState {
-  const at = Number.isFinite(major) ? Math.max(0, Math.trunc(major)) : 0;
-  if (index < at) return "past";
-  if (index === at) return "current";
-  return "future";
-}
-
-export function realmCodexRealmStateLabel(state: RealmWorldState): string {
+export function realmCodexRealmStateLabel(state: RealmWorldState | "reached"): string {
   if (state === "past") return "已渡";
   if (state === "current") return "此刻";
+  if (state === "reached") return "曾至";
   return "未至";
 }
 
-export function realmCodexRealmStateMark(state: RealmWorldState): string {
+export function realmCodexRealmStateMark(state: RealmWorldState | "reached"): string {
   if (state === "past") return "渡";
   if (state === "current") return "此";
+  if (state === "reached") return "曾";
   return "待";
+}
+
+/**
+ * 谱上那一行的读法。
+ *
+ * 三态(已渡 / 此刻 / 未至)说的是**这一世**走到了哪里;可转世会把这一世折回起点,
+ * 于是你上个月刚从真仙转世下来,谱上那一行照样写「未至」—— 而它明明在历世履历里。
+ *
+ * 第四种读法补的就是这一段:**当前境之上、曾到过的**那些境,读「曾至」。
+ * 它不改任何门槛:`major` 仍是唯一决定你能做什么的数,这里只多一句话。
+ * 当前境本身仍是「此刻」—— 「此刻在真仙」比「曾至真仙」信息量大。
+ */
+export function realmCodexRealmState(
+  index: number,
+  major: number,
+  peakMajor = major,
+): RealmWorldState | "reached" {
+  const at = Number.isFinite(major) ? Math.max(0, Math.trunc(major)) : 0;
+  if (index < at) return "past";
+  if (index === at) return "current";
+  const peak = Number.isFinite(peakMajor) ? Math.max(at, Math.trunc(peakMajor)) : at;
+  if (index <= peak) return "reached";
+  return "future";
 }
 
 export function realmCodexRealmEntries(
   row: RealmCodexWorldRow,
   major: number,
+  peakMajor = major,
 ): RealmCodexRealmEntry[] {
   return row.realms.map((cell) => {
-    const state = realmCodexRealmState(cell.index, major);
+    const state = realmCodexRealmState(cell.index, major, peakMajor);
     return {
       ...cell,
       ordinal: cell.index + 1,

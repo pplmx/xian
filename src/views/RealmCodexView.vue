@@ -87,6 +87,14 @@
                     currentRealm.worldTotal
                   }}
                 </span>
+                <!--
+                  此身曾至 —— 转世把这一世折回起点,却没把「你到过哪里」还回去。
+                  只在这一世尚未走回那高度时出现;当前境就是最高时整行不出
+                  (否则与「此刻在此」同屏说两遍)。
+                -->
+                <span v-if="peakLine" data-realm-peak class="realm-now__peak">
+                  {{ peakLine.label }}
+                </span>
                 <button
                   v-if="currentRealm.next"
                   data-realm-step="next"
@@ -674,6 +682,7 @@ import {
   realmCodexAtlasRows,
   realmCodexChapter,
   realmCodexOverview,
+  realmCodexPeakLine,
   realmCodexRealmEntries,
   realmCodexWorldMark,
   type RealmCodexAtlasRow,
@@ -842,6 +851,9 @@ const imageWorldMap = computed(() =>
 const currentRealm = computed(() => realmCodexCurrent(player.major));
 const worldRows = computed(() => realmCodexWorldRows(player.major));
 const realmOverview = computed(() => realmCodexOverview(currentRealm.value, worldRows.value));
+const peakLine = computed(() =>
+  realmCodexPeakLine(currentRealm.value, player.reincarnation.peakMajor),
+);
 const realmAtlasRows = computed(() => realmCodexAtlasRows(worldRows.value));
 const realmChapterFact = computed(
   () =>
@@ -889,7 +901,8 @@ function worldBodyId(id: string): string {
 }
 
 function realmEntries(row: RealmCodexAtlasRow) {
-  return realmCodexRealmEntries(row, player.major);
+  // 第三个数是历世足迹(见 core/peakRealm):当前境之上、曾到过的那些境读「曾至」
+  return realmCodexRealmEntries(row, player.major, player.reincarnation.peakMajor);
 }
 
 function isRealmOpen(id: string): boolean {

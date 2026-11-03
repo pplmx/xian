@@ -223,6 +223,15 @@
   .realm-now__position {
     white-space: nowrap;
   }
+  /*
+   * 此身曾至 —— 历世到过、而这一世还没走回的那一境(见 core/peakRealm)。
+   * 与前后境按钮同一行:它说的是同一件事的另一个时间面(不是此刻,是曾经)。
+   * 用石绿而非朱砂 —— 朱砂在这页是「此刻」,曾经该退一档。
+   */
+  .realm-now__peak {
+    color: var(--color-jade);
+    white-space: nowrap;
+  }
   .realm-world-index {
     margin-top: 0;
     border: 0;
@@ -439,6 +448,19 @@
   .realm-entry.codex-current .realm-entry__state,
   .realm-entry.codex-current .realm-entry__state-mark {
     color: var(--realm-accent);
+  }
+  /*
+   * 曾至 —— 历世到过、这一世还没走回(见 core/peakRealm)。
+   * 与「已渡」同用石绿(都是「属于过去」),但印面加一道虚边:
+   * 已渡是这一世真走过,曾至是上一世走过 —— 同一个颜色,两段时间。
+   */
+  .realm-entry[data-realm-state="reached"] .realm-entry__state,
+  .realm-entry[data-realm-state="reached"] .realm-entry__state-mark {
+    color: var(--color-jade);
+  }
+  .realm-entry[data-realm-state="reached"] .realm-entry__state-mark {
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--color-jade) 42%, transparent);
   }
   .realm-entry.codex-current .realm-entry__state-mark {
     border-color: rgb(var(--realm-accent-rgb) / 0.3);

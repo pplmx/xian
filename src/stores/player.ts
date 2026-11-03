@@ -5,6 +5,7 @@ import type { FinalStats, GNum, LinggenProfile, StatMods } from "@/types";
 import { gn, gnZero, add, gte, mulN, progress, subClamp } from "@/utils/gnum";
 import { persistConfig } from "@/utils/storage";
 import { realmDef, realmLabel, worldOf, SUB_NAMES, MAX_MAJOR } from "@/data/realms";
+import { clampPeakMajor, notePeakMajor } from "@/core/peakRealm";
 import { SUB_LEVELS, START_AGE } from "@/data/constants";
 import { QI_BANK_MULT, QI_RICH_THRESHOLD_RATIO } from "@/data/constants";
 import { insightOnLoad } from "@/data/samsara";
@@ -88,6 +89,14 @@ export const usePlayerStore = defineStore(
        * 但「曾与谁走到哪一步」会记在这里,并成为宿缘重逢的依据
        */
       bonds: [] as import("@/core/daoluService").BondRecord[],
+      /**
+       * 历世到过的最远一境(见 core/peakRealm)。
+       *
+       * 与 `major` 是两件事:`major` 转世即折回起点,决定你**此刻能做什么**;
+       * 这个数只增不减,只用来**读** —— 界域志上那一行因此说得出「曾至」。
+       * 合并成一个字段就等于让门槛跟着历史放宽,那是另一套游戏。
+       */
+      peakMajor: 0,
     });
 
     /**
@@ -420,6 +429,19 @@ export const usePlayerStore = defineStore(
         sub.value += 1;
       }
       exp.value = subClamp(exp.value, spent);
+      notePeak();
+    }
+
+    /**
+     * 记一笔「历世到过这里」(见 core/peakRealm)。
+     *
+     * 在 `advanceRealm` 里顺手记,而不是让突破那侧另调一次:境界只在这一处上去,
+     * 两个调用点就是两本账 —— 迟早有一处忘了记,而界域志会安静地少一行。
+     */
+    function notePeak(): void {
+      const next = notePeakMajor(reincarnation.value.peakMajor, major.value);
+      if (!next.raised) return;
+      reincarnation.value = { ...reincarnation.value, peakMajor: next.peak };
     }
 
     /**
@@ -797,6 +819,13 @@ export const usePlayerStore = defineStore(
         trial: r?.trial ?? null,
         bonds: Array.isArray(r?.bonds) ? r.bonds : [],
         heritageUses: sanitizeHeritageUses(r?.heritageUses),
+        /*
+         * 历世足迹:只增不减,且**不许低于当下这一境**。
+         *
+         * 老存档没有这一栏(读成 0),而玩家可能已经站在元婴上 —— 若就地补 0,
+         * 界域志会把他此刻这一境说成「未至」。与 major 取大者,一次补齐。
+         */
+        peakMajor: Math.max(clampPeakMajor(r?.peakMajor), clampPeakMajor(major.value)),
       };
       // Ghost pet id: personalityEffects / companion mods fall back to neutral
       // and the character row shows "no companion" — wipe the dangling id.
@@ -1091,6 +1120,7 @@ export const usePlayerStore = defineStore(
       gainExp,
       loseExpPct,
       advanceRealm,
+      notePeak,
       addAge,
       addLifespan,
       setTitle,

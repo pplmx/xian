@@ -359,6 +359,7 @@ const CATEGORIES = [
       "statNames.spec",
       "qualityVerdicts",
       "toastSeal",
+      "peakRealm",
     ],
   },
   {
