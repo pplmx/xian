@@ -9224,6 +9224,163 @@ async function taskRebirthFolio() {
   return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
 }
 
+/**
+ * 器铭 —— 「这一件」的出身要在真渲染里说得出来,并且**重复打开与重载之后一字不改**。
+ *
+ * 为什么不在这里现算一份来对:铭由 uid 决定,而 Node 侧解析不了 `@/` 别名(见
+ * `scripts/lib/saveFixture` 的说明),照搬一份算法就变成第二本账 —— 那正是要防的。
+ * 这里量的是**只有真渲染才看得见**的三件事:
+ *   一 天品的器首真有器铭,铭名 / 铭文 / 成色三项齐全,且 0~100;
+ *   二 关掉再开、整页重载之后**逐字相同**(铭只由 uid 定,不许随渲染重掷);
+ *   三 精品件不出现器铭 —— 人人有铭等于人人无铭。
+ * 核心那一侧(铭与件相配、成色单调、铭库不重复)由 `core/inscription.spec` 守。
+ */
+async function taskInscription() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const rareItem = {
+    uid: "insc_rare",
+    templateId: "h_miwu",
+    quality: "heaven",
+    tier: 16,
+    level: 0,
+    affixes: [
+      { id: "hp3", roll: 0.4 },
+      { id: "bs3", roll: 0.8 },
+    ],
+  };
+  const twinItem = { ...rareItem, uid: "insc_twin" };
+  const commonItem = {
+    uid: "insc_common",
+    templateId: "h_muzan",
+    quality: "excellent",
+    tier: 1,
+    level: 0,
+    affixes: [{ id: "def1", roll: 1 }],
+  };
+  try {
+    const slices = showcaseSlices("light");
+    slices.inventory = {
+      ...slices.inventory,
+      items: [rareItem, twinItem, commonItem, ...slices.inventory.items],
+      equipped: {},
+      seenUids: [rareItem.uid, twinItem.uid, commonItem.uid],
+      seenSeeded: true,
+    };
+    await seedSave(ctx, slices, "__inscriptionFixture");
+
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    const readDossier = () =>
+      page.evaluate(() => {
+        const root = document.querySelector("[data-equipment-dossier]");
+        if (!root) return null;
+        const block = root.querySelector("[data-equipment-inscription]");
+        const overflow = root.scrollWidth - root.clientWidth;
+        if (!block) return { present: false, overflow };
+        const text = (sel) =>
+          (block.querySelector(sel)?.textContent ?? "").replace(/\s+/g, " ").trim();
+        const temperRaw = (
+          block.querySelector("[data-equipment-inscription-temper] strong")?.textContent ?? ""
+        ).replace(/[^0-9.-]/g, "");
+        return {
+          present: true,
+          overflow,
+          title: text(".equip-dossier__inscription-title"),
+          verse: text(".equip-dossier__inscription-verse"),
+          temper: Number(temperRaw),
+          full: (block.textContent ?? "").replace(/\s+/g, " ").trim(),
+        };
+      });
+
+    const openItem = async (uid) => {
+      await openRoute(page, "/inventory", 900);
+      await clearOverlays(page);
+      await page.locator(`main button[data-uid="${uid}"]`).first().click({ timeout: 4000 });
+      await page.waitForTimeout(450);
+    };
+    const closeDialog = async () => {
+      for (let i = 0; i < 3 && (await page.locator(".modal-panel").count()) > 0; i += 1) {
+        await page.keyboard.press("Escape").catch(() => {});
+        await page.waitForTimeout(200);
+      }
+    };
+
+    const seen = new Map();
+    for (const item of [rareItem, twinItem]) {
+      await openItem(item.uid);
+      const got = await readDossier();
+      checked += 1;
+      if (!got) {
+        failures.push(`[390] 器铭场景:${item.uid} 的器评帖没渲染出来`);
+      } else if (!got.present) {
+        failures.push(`[390] 器铭场景:${item.uid}(天品)的器首没有器铭 —— 高级别的出身没露出来`);
+      } else {
+        if (!got.title) failures.push(`[390] 器铭场景:${item.uid} 没有铭名`);
+        if (!got.verse) failures.push(`[390] 器铭场景:${item.uid} 没有铭文`);
+        if (!(got.temper >= 0 && got.temper <= 100))
+          failures.push(`[390] 器铭场景:${item.uid} 的成色读数越出 0~100(${got.temper})`);
+        if (got.overflow > 1)
+          failures.push(`[390] 器铭场景:${item.uid} 的器铭行横向溢出 ${got.overflow}px`);
+        seen.set(item.uid, got.full);
+      }
+      await closeDialog();
+    }
+
+    // 重载 + 重开同一件:铭是出身,不许随渲染重掷
+    if (seen.size > 0) {
+      const uid = rareItem.uid;
+      await page.reload({ waitUntil: "load" });
+      await page.waitForTimeout(800);
+      await openItem(uid);
+      const again = await readDossier();
+      checked += 1;
+      if (!again?.present) {
+        failures.push(`[390] 器铭场景:重载之后 ${uid} 的器铭不见了`);
+      } else if (again.full !== seen.get(uid)) {
+        failures.push(
+          `[390] 器铭场景:${uid} 的铭在重载后改了口 ——「${seen.get(uid)}」→「${again.full}」`,
+        );
+      }
+      await closeDialog();
+      if (seen.size === 2) {
+        const [a, b] = [seen.get(rareItem.uid), seen.get(twinItem.uid)];
+        if (a && b && a === b) {
+          failures.push(
+            `[390] 器铭场景:同模板同品质的两件取到了同一枚铭 —— 逐件不同才是「这一件的出身」(${a})`,
+          );
+        }
+      }
+    }
+
+    await openItem(commonItem.uid);
+    checked += 1;
+    const commonGot = await readDossier();
+    if (commonGot?.present) {
+      failures.push("[390] 器铭场景:精品件也刻了铭 —— 灵品以下不该有铭,人人有铭等于人人无铭");
+    }
+    await closeDialog();
+
+    if (pageErrors.length) {
+      failures.push(`[390] 器铭场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log("\n器铭:天品两件各有其铭、重载后一字不改、成色在 0~100、精品件无铭");
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
 /** 真打一场历练战斗 */
 async function taskCombatReplay() {
   const failures = [];
@@ -22275,6 +22432,7 @@ const TASKS = [
   ["存档导出 / 导入往返", taskSaveRoundTrip],
   ["智能收纳不扔有投入的件", taskSmartKeep],
   ["背包先报新得与可换槽位", taskInventoryAttention],
+  ["器铭的出身与逐件不同", taskInscription],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
   ["一键分解先勾后点", taskDecompose],

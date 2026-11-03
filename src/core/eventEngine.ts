@@ -24,6 +24,7 @@ import { buffDef } from "@/data/buffs";
 import { PETS, petDef } from "@/data/pets";
 import { qualityDef } from "@/data/qualities";
 import { equipmentTemplate } from "@/data/equipment";
+import { inscriptionFor } from "./inscription";
 import { artifactDef } from "@/data/artifacts";
 import { ELEMENTS } from "@/data/linggen";
 import { expFromSecs, stoneByTier } from "./formulas";
@@ -326,6 +327,7 @@ function applyEffect(effect: EventEffect, ctx: EventApplyContext): AppliedEventE
         name: equipmentTemplate(inst.templateId)?.name ?? "未知",
         quality: inst.quality,
         recycled: !acquired.bagged,
+        inscription: inscriptionFor(inst)?.title,
       });
       ctx.recycledEquipment += acquired.recycled;
       ctx.recycledDust += acquired.dust;
@@ -450,6 +452,8 @@ export interface EventEquipmentGain {
   name: string;
   quality: QualityId;
   recycled?: boolean;
+  /** 这一件的铭名(灵品以上才有,见 core/inscription)—— 归来卷轴与拾得提示共用 */
+  inscription?: string;
 }
 
 /**

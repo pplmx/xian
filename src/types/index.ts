@@ -1150,8 +1150,14 @@ export interface OfflineSummary {
   bossBattles: number;
   bossWins: number;
   events: number;
-  /** 产出装备清单;回收(自动回收/满包化尘)的件以 recycled 标注 */
-  equipment: { name: string; quality: QualityId; recycled?: boolean }[];
+  /**
+   * 产出装备清单;回收(自动回收/满包化尘)的件以 recycled 标注。
+   *
+   * `inscription` —— 这一件的铭名(见 core/inscription)。只在灵品以上给:
+   * 归来卷轴报「拾得「仙品·XX」· 铭「照夜」」时,那句铭与详情页、图鉴、坊市验货
+   * 是同一份快照;此处只存已算好的铭名,不把整枚铭搬进存档(它是 uid 的函数)。
+   */
+  equipment: { name: string; quality: QualityId; recycled?: boolean; inscription?: string }[];
   /** 期间装备折算产生的器灵尘总量 */
   recycledDust: number;
   /** 与 recycledDust 同源的折算件数(含腾位旧件) */

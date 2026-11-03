@@ -72,7 +72,8 @@
                 class="font-kai text-body"
                 :style="{ color: qualityDef(eq.quality).color }"
               >
-                {{ qualityDef(eq.quality).name }}·{{ eq.name }}
+                {{ qualityDef(eq.quality).name }}·{{ eq.name
+                }}<template v-if="eq.inscription"> · 铭「{{ eq.inscription }}」</template>
               </span>
             </p>
           </li>

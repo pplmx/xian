@@ -30,6 +30,7 @@ import { biasChanceMult, biasEffectOf } from "./mortalBias";
 import { personalityEffects } from "./petPersonality";
 import { compareEvictable, keepVerdict, shouldAutoRecycle, smartKeepEnabled } from "./smartKeep";
 import { salvageOf } from "./salvage";
+import { inscriptionFor } from "./inscription";
 import { acquirePill, checkQualityAchievement, collect, track } from "./progress";
 import { harvestMaterials } from "./loreService";
 import { usePlayerStore } from "@/stores/player";
@@ -151,6 +152,16 @@ export function acquireEquipment(
   const q = qualityDef(inst.quality);
   const t = equipmentTemplate(inst.templateId);
   const label = `${q.name}·${t?.name ?? "不明之物"}`;
+  /**
+   * 顶级之物的拾得提示多报一句器铭 —— 「这一件」的出身(见 core/inscription)。
+   *
+   * 只在天品以上报:灵/玄/地也会掉出来,每件都喊一句铭就成了背景噪音;
+   * 而天品以上本来就是一次罕见事件,值回这一行的篇幅。
+   */
+  const ins = q.rank >= qualityDef("heaven").rank ? inscriptionFor(inst) : null;
+  const pickup = ins
+    ? `灵光乍现,拾得「${label}」· 铭「${ins.title}」`
+    : `灵光乍现,拾得「${label}」`;
 
   if (keepExactly) {
     if (!inventory.addEquipment(inst)) {
@@ -163,7 +174,7 @@ export function acquireEquipment(
       };
     }
     recordEquipmentGained(inst);
-    if (!quiet && q.rank >= 3) notify(`灵光乍现,拾得「${label}」`, "rare");
+    if (!quiet && q.rank >= 3) notify(pickup, "rare");
     return { line: label, bagged: true, recycled: 0, dust: 0, stone: gnZero() };
   }
 
@@ -189,7 +200,7 @@ export function acquireEquipment(
       };
     }
     if (!quiet && q.rank >= 3) {
-      notify(`灵光乍现,拾得「${label}」`, "rare");
+      notify(pickup, "rare");
     }
     return { line: label, bagged: true, recycled: 0, dust: 0, stone: gnZero() };
   }

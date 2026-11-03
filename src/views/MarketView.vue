@@ -719,6 +719,20 @@ function bountyReady(o: BountySlot): boolean {
                 </p>
               </header>
 
+              <p
+                v-if="previewFor(slot)!.inscription"
+                class="market-good__inscription"
+                data-market-equipment-inscription
+              >
+                <span class="market-good__inscription-title font-kai">
+                  「{{ previewFor(slot)!.inscription!.title }}」
+                </span>
+                <span>{{ previewFor(slot)!.inscription!.verse.text }}</span>
+                <span class="market-good__inscription-temper tabular">
+                  成色 {{ previewFor(slot)!.inscription!.temper }}/100
+                </span>
+              </p>
+
               <ul
                 class="market-good__inspection-flats"
                 data-market-equipment-flats

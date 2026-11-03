@@ -379,6 +379,32 @@
   .market-good__inspection-notes {
     min-width: 0;
   }
+  /*
+   * 器铭 —— 验货签上的一行出身。与详情页同一条画法(铭名楷体、铭文退说明档、
+   * 成色单独一枚读数),只是这里不得另起一张卡:它落在正文账线上。
+   */
+  .market-good__inscription {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.08rem 0.45rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px dashed rgb(var(--color-ink-rgb) / 0.09);
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .market-good__inscription-title {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-body);
+    letter-spacing: 0.12em;
+  }
+  .market-good__inscription-temper {
+    flex: none;
+    margin-left: auto;
+    white-space: nowrap;
+  }
   .market-good__inspection-label {
     margin-bottom: 0.2rem;
     color: rgb(var(--color-ink-faint-rgb));

@@ -5,6 +5,7 @@ import { equipPowerComparison } from "@/core/equipBest";
 import { equipSetDef } from "@/core/equipSet";
 import { resolveEquipStats } from "@/core/equipGen";
 import { worldNameOfTier } from "@/core/formulas";
+import { inscriptionFor, type Inscription } from "@/core/inscription";
 import { formatGN } from "@/utils/format";
 import { isZero, sub } from "@/utils/gnum";
 import { isRareQuality, qualityTextColor } from "./qualityTier";
@@ -49,6 +50,11 @@ export interface MarketEquipView {
   affixRows: MarketEquipAffixRow[];
   fixedModsText: string;
   setText: string;
+  /**
+   * 器铭 —— 买之前就该看见它的出身(与详情页同一份快照,见 core/inscription)。
+   * 灵品以下为 null,验货签不出这一段。
+   */
+  inscription: Inscription | null;
 }
 
 function signedGNum(value: ReturnType<typeof sub>): string {
@@ -84,6 +90,7 @@ export function marketEquipView(
       ? `${incumbentName}${incumbent.level > 0 ? ` +${incumbent.level}` : ""}`
       : "";
   const set = template.set ? equipSetDef(template.set) : undefined;
+  const inscription = inscriptionFor(item);
 
   const flatRows: MarketEquipFlatRow[] = [];
   for (const key of ["attack", "defense", "maxHp"] as const) {
@@ -139,5 +146,6 @@ export function marketEquipView(
     setText: set
       ? `共鸣「${set.name}」当前 ${setCount}/${set.required} 件 · ${set.effectDesc}`
       : "",
+    inscription,
   };
 }

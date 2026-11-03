@@ -613,6 +613,49 @@
     font-size: var(--type-body);
     line-height: 1.55;
   }
+  /*
+   * 器铭 —— 铭名走楷体(它是「这一件的题」),铭文与成色退到说明档。
+   * 三段同一行,窄档整段落到铭名下方;成色只留上下两道账线之间的一枚读数,
+   * 不再另起一张卡(见 docs/design.md 的「最多一层容器边」)。
+   */
+  .equip-dossier__inscription {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.1rem 0.5rem;
+    margin-top: 0.36rem;
+    padding-top: 0.32rem;
+    border-top: 1px dashed rgb(var(--color-ink-rgb) / 0.12);
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .equip-dossier__inscription-title {
+    color: var(--equip-text);
+    font-size: var(--type-body);
+    letter-spacing: 0.12em;
+  }
+  .equip-dossier__inscription-verse {
+    min-width: 0;
+    flex: 1 1 8rem;
+    overflow-wrap: anywhere;
+  }
+  .equip-dossier__inscription-temper {
+    display: inline-flex;
+    flex: none;
+    align-items: baseline;
+    gap: 0.18rem;
+    white-space: nowrap;
+  }
+  .equip-dossier__inscription-temper strong {
+    color: var(--equip-text);
+    font-size: var(--type-body);
+    font-weight: 500;
+  }
+  .equip-dossier__inscription-units {
+    color: rgb(var(--color-ink-faint-rgb));
+  }
   .equip-dossier__lock {
     display: inline-flex;
     min-width: 28px;

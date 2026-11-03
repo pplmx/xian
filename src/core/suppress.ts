@@ -17,6 +17,7 @@ import { gnZero, add, isZero, mulN, gn } from "@/utils/gnum";
 import { formatGN } from "@/utils/format";
 import type { GNum, QualityId, RegionRecall } from "@/types";
 import { equipmentTemplate } from "@/data/equipment";
+import { inscriptionFor } from "./inscription";
 import { deriveProsperity, prosperityYieldMult } from "./worldMemory";
 import { settleRegionRevivals } from "./regionRevival";
 import { AGE_YEARS_PER_HOUR } from "@/data/constants";
@@ -211,7 +212,7 @@ export interface SuppressedYield {
   stone: GNum;
   /** 镇守道韵:这一段镇压折算的修为点数(与挂机同源,见 SUPPRESS_EXP_PER_REGION) */
   expGain: GNum;
-  equipment: { name: string; quality: QualityId; recycled?: boolean }[];
+  equipment: { name: string; quality: QualityId; recycled?: boolean; inscription?: string }[];
   /** 装备折算产生的器灵尘(含自动回收、满包与腾位旧件) */
   recycledDust: number;
   /** 实际折算掉的装备件数 */
@@ -329,6 +330,8 @@ export function settleSuppressedRegions(
         name: equipmentTemplate(equip.templateId)?.name ?? "未知",
         quality: equip.quality,
         recycled: !res.bagged,
+        // 与拾得提示、详情页、图鉴同一份器铭(见 core/inscription)
+        inscription: inscriptionFor(equip)?.title,
       });
       total.recycledDust += res.dust;
       total.recycledEquipment += res.recycled;

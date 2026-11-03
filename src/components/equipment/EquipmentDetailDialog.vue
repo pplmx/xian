@@ -26,6 +26,23 @@
             <span>{{ isEquipped ? "本槽在佩" : "收在行囊" }}</span>
           </p>
           <p class="equip-dossier__desc">{{ template.desc }}</p>
+          <!--
+            器铭 —— 「这一件」的出身,不是这一类的通名。
+            同品同名的件在别处毫无分别(见 core/inscription 的注释);这里给它一枚铭名、
+            一句铭文与一道读词条掷点的成色刻度。只有灵品以上才有,故灵品以下整段不出。
+            器类与界域不在此复述:眉题上一行已经报过,同一屏说两遍正是本仓刚清掉的那类。
+          -->
+          <p v-if="inscription" class="equip-dossier__inscription" data-equipment-inscription>
+            <span class="equip-dossier__inscription-title font-kai">
+              「{{ inscription.title }}」
+            </span>
+            <span class="equip-dossier__inscription-verse">{{ inscription.verse.text }}</span>
+            <span class="equip-dossier__inscription-temper" data-equipment-inscription-temper>
+              <span>成色</span>
+              <strong class="tabular">{{ inscription.temper }}</strong>
+              <span class="equip-dossier__inscription-units">/100</span>
+            </span>
+          </p>
         </div>
         <button
           class="equip-dossier__lock"
@@ -257,6 +274,7 @@ import { equipmentTemplate, EQUIP_SLOT_NAMES } from "@/data/equipment";
 import { equipSetDef, setCounts, ASTRAL_SET_SHIELD } from "@/core/equipSet";
 import { equipPowerComparison } from "@/core/equipBest";
 import { worldNameOfTier } from "@/core/formulas";
+import { inscriptionFor } from "@/core/inscription";
 import { resolveEquipStats } from "@/core/equipGen";
 import { equipUpgradeCost, upgradeEquipment } from "@/core/forge";
 import { useResourcesStore } from "@/stores/resources";
@@ -327,6 +345,11 @@ const template = computed(() =>
   inst.value ? equipmentTemplate(inst.value.templateId) : undefined,
 );
 const resolved = computed(() => (inst.value ? resolveEquipStats(inst.value) : null));
+/**
+ * 器铭 —— 这一件的出身(见 core/inscription)。灵品以下为 null,卷首整段不出。
+ * 与战力、词条、工坊都不联动:它是「这一件是谁」,不是第二条选件依据。
+ */
+const inscription = computed(() => (inst.value ? inscriptionFor(inst.value) : null));
 const isEquipped = computed(() =>
   inst.value && template.value ? inventory.equipped[template.value.slot] === inst.value.uid : false,
 );

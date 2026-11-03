@@ -35,6 +35,7 @@ import {
 import { makeEnemySnap, resolveCombat, sampleWinRateRaw } from "./combat";
 import { buildPlayerSnap } from "./playerSnap";
 import { generateEquipment } from "./equipGen";
+import { inscriptionFor } from "./inscription";
 import {
   acquireArtifact,
   acquireEquipment,
@@ -487,6 +488,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
             name: equipmentTemplate(inst.templateId)?.name ?? "未知",
             quality: inst.quality,
             recycled: !res.bagged,
+            inscription: inscriptionFor(inst)?.title,
           });
           recycledDust += res.dust;
           recycledEquipment += res.recycled;
