@@ -300,7 +300,7 @@ describe("界域案 · 四界先成谱,境界再逐格展开", () => {
  * 读两遍。按钮给的是「这一卷覆盖哪些境界」的索引,卷首该说的是这一卷**是什么**。
  */
 describe("卷首不复述索引的范围标签", () => {
-  it("rangeLabel 只出现在索引按钮里", () => {
+  it("rangeLabel 与 status 都只出现在索引按钮里", () => {
     const view = readSource("src/views/RealmCodexView.vue");
     // 剥掉 HTML 注释:注释里提到 rangeLabel 是在解释它为何被删,不该算渲染
     const rendered = view
@@ -309,8 +309,40 @@ describe("卷首不复述索引的范围标签", () => {
       .join("");
     const hits = (rendered.match(/row\.rangeLabel/g) ?? []).length;
     expect(hits, "rangeLabel 只该在卷目按钮里出现一次").toBe(1);
+    // status 同理:它就在上方 56px 的按钮里,卷首再写一遍是同一眼里的重复
+    const statusHits = (rendered.match(/row\.status/g) ?? []).length;
+    expect(statusHits, "status 也只该在卷目按钮里出现一次").toBe(1);
     // 防空转:确认真的读到了这个文件
     expect(rendered, "没取到 realm-world-index 按钮").toContain("data-world-toggle");
     expect(rendered, "卷首仍在").toContain("realm-volume__head");
+  });
+});
+
+/**
+ * 界域总述与章首 fact 读同一份来源。
+ *
+ * 总述此前读 `WORLDS.length` / `REALMS.length` 两个字面量,而章首 fact 读的是
+ * 由 rows 折出来的 worldCount 与 total —— 两本账,首屏还重复(top 319 / 557)。
+ */
+describe("界域总述 · 与章首 fact 同源", () => {
+  it("总述不读 WORLDS.length / REALMS.length 这类字面量", () => {
+    const view = readSource("src/views/RealmCodexView.vue");
+    // 剥注释:注释里写着「此前读的是 WORLDS.length」是在解释原因
+    const index = view
+      .slice(view.indexOf("data-realm-world-index"), view.indexOf("realm-world-index__grid"))
+      .split("<!--")
+      .map((chunk, i) => (i === 0 ? chunk : chunk.slice(chunk.indexOf("-->") + 3)))
+      .join("");
+    expect(index, "总述要读 realmOverview 那一份").toContain("realmOverview.worldCount");
+    expect(index, "总述不许再读 WORLDS.length").not.toContain("WORLDS.length");
+    expect(index, "总述不许再读 REALMS.length").not.toContain("REALMS.length");
+  });
+
+  it("防空转", () => {
+    const view = readSource("src/views/RealmCodexView.vue");
+    expect(view.indexOf("data-realm-world-index")).toBeGreaterThan(0);
+    expect(view.indexOf("realm-world-index__grid")).toBeGreaterThan(
+      view.indexOf("data-realm-world-index"),
+    );
   });
 });

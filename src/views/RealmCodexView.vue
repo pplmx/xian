@@ -105,11 +105,15 @@
                   <p class="text-note text-ink-faint">四界卷目</p>
                   <h2 class="text-title text-ink">先看身在何处,再翻境界谱</h2>
                 </div>
+                <!--
+                  与章首 fact 同一串数、同一份来源(realmOverview)。此前这里读的是
+                  `WORLDS.length` / `REALMS.length` 两个字面量,而章首读的是由 rows
+                  折出来的 worldCount 与 total —— 两本账,且首屏重复:实测
+                  top 319(章首)与 557(本节)两处一字不差。
+                  现在本节只报「界/境」的总量,已渡数由章首那一个 fact 独报。
+                -->
                 <span class="text-note text-ink-faint tabular">
-                  {{ WORLDS.length }} 界 · {{ REALMS.length }} 境 · {{ realmOverview.passed }}/{{
-                    realmOverview.total
-                  }}
-                  已渡
+                  {{ realmOverview.worldCount }} 界 · {{ realmOverview.total }} 境
                 </span>
               </header>
               <div class="realm-world-index__grid">
@@ -161,14 +165,14 @@
                 <span class="realm-volume__mark" aria-hidden="true">{{ row.mark }}</span>
                 <div class="realm-volume__copy">
                   <!--
-                    卷首不再复述 rangeLabel:那一行就在它上方 85px 的索引按钮里,
-                    同一个「第 15–18 境」在同一眼里读两遍(实测 btnTop 670 /
-                    bodyTop 755,都在首屏)。按钮给的是"这一卷覆盖哪些境界"的索引,
-                    卷首该说的是这一卷**是什么** —— 世名、状态与卷次已经够了。
+                    卷首不复述索引按钮已经报过的两样:rangeLabel 与 status。
+                    它们就在上方 56–85px 的按钮里(实测 status: btnTop 699 /
+                    bodyTop 755),同一眼里读两遍。按钮给的是「这一卷覆盖哪些境界、
+                    走到哪了」的索引;卷首该说的是这一卷**是什么** ——
+                    世名与卷次已经够了,状态在按钮上与进度条里都读得到。
                   -->
                   <p class="realm-volume__line">
                     <span class="world-seal font-kai text-section">{{ row.world.name }}</span>
-                    <span class="text-note text-ink-faint">{{ row.status }}</span>
                   </p>
                   <p class="realm-volume__desc">{{ row.world.desc }}</p>
                 </div>
