@@ -5,7 +5,14 @@
  */
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
-/** 浏览器 chrome(地址栏 / PWA 标题栏)的颜色 —— 得跟页面底色走,暗色玩家不该看到亮米色衬底 */
+/**
+ * 浏览器 chrome(地址栏 / PWA 标题栏)的颜色 —— 得跟页面底色走,暗色玩家不该看到亮米色衬底。
+ *
+ * 亮色这一枚在仓里另有三个抄本,各自在「JS 还没接手」的时刻生效:
+ * index.html 的首帧 meta、PWA manifest 的启动底色与主题色、图标脚本的衬底。
+ * 它们不共享代码(前两个是静态文件,第三个跑在构建前),故由 theme.spec 的
+ * 「首帧底色 · 与抄本逐处对账」逐处比对本文件的这两个值 —— 改这里就会红。
+ */
 const THEME_CHROME = { light: "#F3EFE4", dark: "#211F1C" } as const;
 
 function syncChromeColor(dark: boolean): void {
