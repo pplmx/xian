@@ -81,8 +81,16 @@
                       :value="row.value"
                       :title="row.label"
                       :rows="[
-                        { label: '战力权重', text: `×${row.weightText}` },
-                        { label: '占战力', text: formatPercent(row.share, 0) },
+                        {
+                          label: '战力权重',
+                          text: `×${row.weightText}`,
+                          hint: '三围在战力里的固定权重(见上方公式)',
+                        },
+                        {
+                          label: '占战力',
+                          text: formatPercent(row.share, 0),
+                          hint: '这一项此刻贡献的份额,随三围涨落',
+                        },
                       ]"
                     />
                   </span>

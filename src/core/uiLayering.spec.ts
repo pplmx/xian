@@ -3563,6 +3563,34 @@ describe("界面分层 · 浮层只有一个出处", () => {
     }
   });
 
+  it("数值浮层的默认解释不许替调用方撒谎", () => {
+    /*
+     * TapNumber 是「点一下看它到底是多少」的通用入口,接在修为、灵气、三围、
+     * 诸般读数上。每行可以给 hint;不给时浮层得有一句默认解释。
+     *
+     * 那句默认以前写死「由当前速率推算」—— 对修为成立,对战力却完全不成立:
+     * 「战力权重 ×3」「占战力 49%」既不来自速率、也不随速率变。玩家点开三围
+     * 看到的是一句错的因果,而它看起来像系统给的权威解释。
+     *
+     * 故钉两件事:默认句必须中性;战力那两行必须自带正确的 hint。
+     */
+    const raw = readFileSync(
+      resolve(__dirname, "../components/common/NumberDetailDialog.vue"),
+      "utf8",
+    );
+    // 只查渲染出来的字:注释里写着「以前那句是错的」正是该留的说明,不该被这条判据打红
+    const dialog = raw.replace(/<!--[\s\S]*?-->/g, "");
+    expect(dialog, "默认解释要在").toMatch(/row\.hint \?\? "[^"]+"/);
+    // 默认句本身要中性:不含「速率」这类只对部分接入点成立的词
+    const fallback = /row\.hint \?\? "([^"]+)"/.exec(dialog)?.[1] ?? "";
+    expect(fallback, "默认句里不该出现「速率」——它对战力行不成立").not.toContain("速率");
+
+    const char = FILES.find((f) => f.path === "views/CharacterView.vue")?.src ?? "";
+    expect(char, "战力权重行要自带 hint").toMatch(/label: '战力权重'[\s\S]{0,120}?hint:/);
+    expect(char, "占战力行要自带 hint").toMatch(/label: '占战力'[\s\S]{0,120}?hint:/);
+    expect(char, "没取到人物页,判据在空转").toContain("powerDetailRows");
+  });
+
   it("提示条的离场时长只有一处 —— CSS 读 ToastHost 的那一枚数", () => {
     /*
      * 稀有提示的柔辉是挂在 ::before 上的无限动画,所以离场时长必须写死给
