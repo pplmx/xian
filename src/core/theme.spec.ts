@@ -141,8 +141,16 @@ describe("首帧底色 · 与抄本逐处对账", () => {
   const dark = /dark:\s*"(#[0-9A-Fa-f]{6})"/.exec(read("src/core/theme.ts"))?.[1] ?? "";
 
   it("theme.ts 里两档色都读得到(判据自身不许空转)", () => {
-    expect(light).toMatch(/^#[0-9A-Fa-f]{6}$/);
-    expect(dark).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    expect(light, "亮色解析不到 —— 下面三条对账会全部空转").toMatch(/^#[0-9A-Fa-f]{6}$/);
+    /*
+     * 暗色只有格式断言,不参与下方对账:它**没有**静态抄本。
+     * index.html 与 manifest 里的那两枚都是亮色 —— 冷启动与装到主屏时的底色,
+     * 而那时脚本还没跑,读不到玩家的主题选择。暗色由 theme.ts 在 applyTheme
+     * 里通过 meta 改,不存在「另一处写死了暗色」的风险。
+     * 留着这条是为了遮住一个真会发生的退化:万一正则写错、解析出空串,
+     * 上面那条 light 断言会红,但若哪天有人只改暗色,这条能立刻说明「暗色也读到了」。
+     */
+    expect(dark, "暗色解析不到").toMatch(/^#[0-9A-Fa-f]{6}$/);
   });
 
   it("index.html 的首帧 meta 跟着同一枚亮色", () => {
