@@ -24,6 +24,9 @@ import { ELEMENTS } from "@/data/linggen";
 import { LORE_MAX, LORE_STAGE_NAMES, MATERIALS, type MaterialDef } from "@/data/materials";
 import { GONGFA_BRANCHES, canEnlighten, type GongfaBranchDef } from "@/data/gongfaBranches";
 import { GONGFA, GONGFA_TYPE_NAMES, gongfaDef } from "@/data/gongfa";
+import { gongfaBranchDef } from "@/data/gongfaBranches";
+import { realmLabel } from "@/data/realms";
+import { daoNoteLine, type DaoNote } from "@/core/daoNote";
 import { QUALITIES, qualityDef } from "@/data/qualities";
 import { ARTIFACTS, ARTIFACT_MAX_LEVEL } from "@/data/artifacts";
 import { EQUIPMENT_TEMPLATES } from "@/data/equipment";
@@ -41,7 +44,7 @@ import { PETS } from "@/data/pets";
 import { petVow } from "@/data/petVows";
 import { PERSONALITY_NAMES, personalityDesc } from "@/core/petPersonality";
 import { clampBlueprintMastery, isBlueprintMastered } from "@/core/blueprintMastery";
-import { formatPercent } from "@/utils/format";
+import { cnNumber, formatPercent, yearsShown } from "@/utils/format";
 import { modsText } from "../data/statNames";
 import {
   artifactFuncText,
@@ -229,13 +232,27 @@ export function branchStage(
 }
 
 /** 按三态揭示一条悟道分支 */
-export function describeBranch(def: GongfaBranchDef, stage: number): CodexEntry {
+export function describeBranch(def: GongfaBranchDef, stage: number, note?: DaoNote): CodexEntry {
   const lv = Math.max(0, Math.min(BRANCH_STAGE_MAX, Math.floor(stage)));
   const g = gongfaDef(def.gongfaId);
+  /**
+   * 落款只挂在**真择了这一条**的那一页上(见 core/daoNote)。
+   * 它的位置在正文末行:先说这条道给什么,再说哪一年走上来的。
+   */
+  const noteLine =
+    note && lv >= BRANCH_STAGE_MAX
+      ? daoNoteLine(note, {
+          ageText: `${cnNumber(yearsShown(note.age))}岁`,
+          realmText: realmLabel(note.major, note.sub),
+          branchName: (id) => gongfaBranchDef(id)?.name ?? "",
+        })
+      : "";
   return {
     id: def.id,
     name: def.name,
-    desc: lv >= 1 ? `${def.desc}\n${modsText(def.mods)}` : "",
+    desc: [lv >= 1 ? `${def.desc}\n${modsText(def.mods)}` : "", noteLine]
+      .filter(Boolean)
+      .join("\n"),
     meta: g ? `${g.name} · ${GONGFA_TYPE_NAMES[g.type]} · ${qualityDef(g.quality).name}` : "",
     color: lv >= BRANCH_STAGE_MAX ? PICKED_COLOR : g ? qualityDef(g.quality).color : undefined,
     stage: lv,
@@ -256,7 +273,11 @@ export function describeBranch(def: GongfaBranchDef, stage: number): CodexEntry 
 export function branchCodex(): CodexCat {
   const cultivation = useCultivationStore();
   const entries = GONGFA_BRANCHES.map((def) =>
-    describeBranch(def, branchStage(def, cultivation.learned, cultivation.gongfaBranch)),
+    describeBranch(
+      def,
+      branchStage(def, cultivation.learned, cultivation.gongfaBranch),
+      cultivation.daoNotes[def.gongfaId],
+    ),
   );
   const seen = entries.filter((e) => e.stage >= 1).length;
   const picked = entries.filter((e) => e.stage >= BRANCH_STAGE_MAX).length;

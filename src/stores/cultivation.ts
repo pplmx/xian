@@ -11,7 +11,9 @@ import {
   clearNegativeBuffList,
   pruneBuffList,
 } from "@/core/engineBuffs";
-import { gongfaBranchDef } from "@/data/gongfaBranches";
+import { branchesFor, gongfaBranchDef } from "@/data/gongfaBranches";
+import { MAX_MAJOR } from "@/data/realms";
+import { type DaoNoteBook, makeDaoNote, sanitizeDaoNotes } from "@/core/daoNote";
 import { GONGFA_SYSTEM } from "@/core/engineWorld";
 import { mergeMods } from "@/core/statsCalc";
 import { asArray, asNumberRecord, asRecord, asStringArray } from "@/utils/saveShape";
@@ -33,6 +35,14 @@ export const useCultivationStore = defineStore(
     const buffs = ref<BuffInstance[]>([]);
     /** Phase 31 A3:功法悟道分支(gongfaId → branchId,满级后择一) */
     const gongfaBranch = ref<Record<string, string>>({});
+    /**
+     * 道记 —— 择道那一刻的落款(见 core/daoNote)。
+     *
+     * 与 gongfaBranch 分开存,不改它的形状:分支是**规则**(决定并入哪一组词条),
+     * 道记是**题跋**(几岁、什么境界、舍了哪几条)。混进一个值里,两条都要改形状,
+     * 而它们的寿命并不一样 —— 分支加成随转世可失效,落款却该一直留着。
+     */
+    const daoNotes = ref<DaoNoteBook>({});
 
     /**
      * 存档修复:功法表/分支表被写坏时,属性汇总会在渲染期 Object.entries(null) 抛错。
@@ -77,6 +87,13 @@ export const useCultivationStore = defineStore(
         if (def && def.gongfaId === gid && fixedLearned[gid]) nextBranch[gid] = bid;
       }
       gongfaBranch.value = nextBranch;
+      // 落款跟着它的那一支走:分支被修形丢掉时,孤零零的一行题跋也不该留着
+      const fixedNotes = sanitizeDaoNotes(daoNotes.value, (id) => !!gongfaBranchDef(id), MAX_MAJOR);
+      const nextNotes: DaoNoteBook = {};
+      for (const [gid, note] of Object.entries(fixedNotes)) {
+        if (nextBranch[gid]) nextNotes[gid] = note;
+      }
+      daoNotes.value = nextNotes;
     }
 
     const gongfaMods = computed<StatMods>(() => {
@@ -197,12 +214,32 @@ export const useCultivationStore = defineStore(
     }
 
     // Phase 31 A3:选择功法悟道分支(满级后一次,不可改)
-    function chooseBranch(gongfaId: string, branchId: string): boolean {
+    /**
+     * 择道。
+     *
+     * `context` 由调用方给(年岁与境界住在 player store,修炼 store 不去够它)——
+     * 少了它也能择,只是不留落款:界面永远传,测试与批量脚本可以不传。
+     */
+    function chooseBranch(
+      gongfaId: string,
+      branchId: string,
+      context?: { age: number; major: number; sub: number },
+    ): boolean {
       const full = (learned.value[gongfaId] ?? 0) >= (gongfaDef(gongfaId)?.maxLevel ?? 9);
       const def = gongfaBranchDef(branchId);
       if (!full || !def || def.gongfaId !== gongfaId) return false;
       if (gongfaBranch.value[gongfaId]) return false;
       gongfaBranch.value = { ...gongfaBranch.value, [gongfaId]: branchId };
+      if (context) {
+        // 舍掉的是「当时还有的其余几条」—— 此刻的 branchesFor 就是当时的全部可选
+        const forgone = branchesFor(gongfaId)
+          .map((b) => b.id)
+          .filter((id) => id !== branchId);
+        daoNotes.value = {
+          ...daoNotes.value,
+          [gongfaId]: makeDaoNote({ ...context, forgone }, MAX_MAJOR),
+        };
+      }
       return true;
     }
 
@@ -213,6 +250,7 @@ export const useCultivationStore = defineStore(
       buffs,
       activeBuffs,
       gongfaBranch,
+      daoNotes,
       gongfaMods,
       buffMods,
       mainSkill,

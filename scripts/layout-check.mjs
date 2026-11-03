@@ -251,6 +251,7 @@ import { PET_VOWS } from "../src/data/petVows.ts";
 import { EQUIPMENT_TEMPLATES } from "../src/data/equipment.ts";
 import { EVENTS } from "../src/data/events.ts";
 import { GONGFA } from "../src/data/gongfa.ts";
+import { branchesFor } from "../src/data/gongfaBranches.ts";
 import { ACHIEVEMENTS } from "../src/data/achievements.ts";
 import { qualityDef } from "../src/data/qualities.ts";
 import { NAVIGATION_ENTRIES, NAVIGATION_SECTIONS } from "../src/ui/navigation.ts";
@@ -9219,6 +9220,144 @@ async function taskRebirthFolio() {
 
     if (pageErrors.length)
       failures.push(`[390] 往生帖场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
+ * 道记 —— 择道那一刻的落款要在真渲染里说得出来,并随存档往返。
+ *
+ * 为什么必须真浏览器量:
+ *   一 落款是**择道之后才有**的一行,它挂在二步确认之后的分支面板里 ——
+ *      源码判据只能證明那个类名写过,量不到「择完之后那一行真的出现了」;
+ *   二 它记的是当时的年岁与境界,那是**存档里的数**,导出导入之后还在才算真的落了盘。
+ *
+ * 判据:
+ *   一 未择道时不出现落款;择完之后出现,且含年岁、境界与舍掉的路;
+ *   二 再关再开,同一行一字不改(落款是数据,不是每次重算);
+ *   三 整页重载之后仍在 —— 它真进了存档。
+ */
+async function taskDaoNote() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    // 一门满级、尚未择道的功法:太玄引气诀(3 条分支)
+    const target = GONGFA.find((g) => g.maxLevel === 9 && branchesFor(g.id).length >= 3);
+    if (!target) throw new Error("道记夹具:找不到满级且有三条分支的功法");
+    const branches = branchesFor(target.id);
+    const picked = branches[0];
+    const slices = showcaseSlices("light");
+    slices.cultivation = {
+      ...slices.cultivation,
+      learned: { [target.id]: target.maxLevel },
+      mainGongfa: target.id,
+      subGongfa: [],
+      gongfaBranch: {},
+      daoNotes: {},
+    };
+    await seedSave(ctx, slices, "__daoNoteFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/cultivation", 900);
+    await clearOverlays(page);
+
+    const openTarget = async () => {
+      await page
+        .locator("main button", { hasText: new RegExp(target.name) })
+        .first()
+        .click({ timeout: 4000 });
+      await page.waitForTimeout(400);
+    };
+    const readNote = () =>
+      page.evaluate(() => {
+        const el = document.querySelector("[data-gongfa-dao-note]");
+        return el ? (el.textContent || "").replace(/\s+/g, " ").trim() : "";
+      });
+    const closeDialog = async () => {
+      for (let i = 0; i < 3 && (await page.locator(".modal-panel").count()) > 0; i += 1) {
+        await page.keyboard.press("Escape").catch(() => {});
+        await page.waitForTimeout(200);
+      }
+    };
+
+    // 未择道:没有落款
+    await openTarget();
+    checked += 1;
+    if (await readNote()) failures.push("[390] 道记场景:还没择道就已经有落款了");
+
+    // 择道(二步确认):落款出现,且含年岁与舍掉的分支名
+    checked += 1;
+    const pickButton = page
+      .locator(".modal-panel button", { hasText: new RegExp(`^${picked.name}`) })
+      .first();
+    if ((await pickButton.count()) === 0) {
+      failures.push(`[390] 道记场景:分支「${picked.name}」的入口找不到`);
+    } else {
+      await pickButton.click({ timeout: 3000 });
+      const confirm = page.locator(".modal-panel button", { hasText: /确认择道/ }).first();
+      if ((await confirm.count()) === 0) {
+        failures.push("[390] 道记场景:二步确认不见了 —— 终身不改的抉择不该一下就了结");
+      } else {
+        await confirm.click({ timeout: 3000 });
+        await page.waitForTimeout(500);
+      }
+    }
+    const first = await readNote();
+    if (!first) {
+      failures.push("[390] 道记场景:择完道却没有落款");
+    } else {
+      if (!/岁/.test(first)) failures.push(`[390] 道记场景:落款里没有年岁(${first})`);
+      if (!/择此道/.test(first)) failures.push(`[390] 道记场景:落款没有说这是择道那一刻(${first})`);
+      for (const other of branches.slice(1)) {
+        if (!first.includes(other.name))
+          failures.push(`[390] 道记场景:舍掉的「${other.name}」没写进落款(${first})`);
+      }
+      if (first.includes(picked.name) && !/舍/.test(first))
+        failures.push(`[390] 道记场景:落款把选中的那条也列成了舍掉的(${first})`);
+    }
+    await closeDialog();
+
+    // 关掉再开:一字不改
+    checked += 1;
+    await openTarget();
+    const second = await readNote();
+    if (second !== first) {
+      failures.push(`[390] 道记场景:再开一次就改了口「${first}」→「${second}」`);
+    }
+    await closeDialog();
+
+    // 整页重载:它真进了存档
+    checked += 1;
+    await page.reload({ waitUntil: "load" });
+    await page.waitForTimeout(900);
+    await openRoute(page, "/cultivation", 900);
+    await clearOverlays(page);
+    await openTarget();
+    const third = await readNote();
+    if (third !== first) {
+      failures.push(`[390] 道记场景:重载之后落款没了或改了「${first}」→「${third}」`);
+    }
+    await closeDialog();
+
+    if (pageErrors.length) {
+      failures.push(`[390] 道记场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n道记:择道后落一句、重开与重载都不改口(「${target.name}」${first})`);
+    }
   } finally {
     await ctx.close();
   }
@@ -22558,6 +22697,7 @@ const TASKS = [
   ["背包先报新得与可换槽位", taskInventoryAttention],
   ["器铭的出身与逐件不同", taskInscription],
   ["灵兽契语只在相伴处出声", taskPetVow],
+  ["道记留得住择道那一刻", taskDaoNote],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
   ["一键分解先勾后点", taskDecompose],

@@ -111,6 +111,7 @@ const CATEGORIES = [
       "petQuality",
       "petVows",
       "gongfaBranch",
+      "daoNote",
       "softCapAudit",
       "softCapVisibility",
       "speedGranularity",

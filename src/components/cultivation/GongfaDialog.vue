@@ -72,6 +72,13 @@
               <span class="ml-2 text-body text-ink-faint">{{ branchPicked.desc }}</span>
             </p>
             <p class="tabular mt-0.5 text-body text-qing">{{ modsText(branchPicked.mods) }}</p>
+            <!--
+              道记 —— 择道那一刻的落款(见 core/daoNote)。此前择定之后只剩一枚词,
+              几十小时后回头,那一年走到哪儿、放弃了哪几条路,全都不在了。
+            -->
+            <p v-if="branchNoteLine" class="mt-1 t-note text-ink-faint" data-gongfa-dao-note>
+              {{ branchNoteLine }}
+            </p>
           </div>
           <div v-else class="space-y-1.5">
             <button
@@ -218,7 +225,7 @@ import { useDongfuStore } from "@/stores/dongfu";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { gongfaDef, GONGFA_TYPE_NAMES } from "@/data/gongfa";
-import { realmDef } from "@/data/realms";
+import { realmDef, realmLabel } from "@/data/realms";
 import { ELEMENTS } from "@/data/linggen";
 import { branchesFor, gongfaBranchDef } from "@/data/gongfaBranches";
 import {
@@ -228,8 +235,9 @@ import {
   upgradeGongfaAll,
 } from "@/core/gongfaService";
 import { gongfaAffinity, rootElements } from "@/core/linggenAffinity";
+import { daoNoteLine } from "@/core/daoNote";
 import { gongfaModsAt } from "@/stores/cultivation";
-import { formatSignedPercent } from "@/utils/format";
+import { cnNumber, formatSignedPercent, yearsShown } from "@/utils/format";
 import { gongfaSkillLine } from "@/ui/itemText";
 import { STAT_NAMES, modsText } from "@/data/statNames";
 import type { AnyStatKey } from "@/types";
@@ -331,13 +339,34 @@ const branchPicked = computed(() => {
 
 /** 悟道分岔确认态(按分支 id):永久抉择先确认。换功法/关弹窗即复位 */
 const branchConfirm = ref<string | null>(null);
+
+/**
+ * 那一行落款 —— 年岁与境界名都取自各自的事实源(utils/format 的年岁口径、
+ * data/realms 的境界名),本组件只负责把三者拼成一句(拼句在 core/daoNote)。
+ */
+const branchNoteLine = computed(() => {
+  if (!def.value) return "";
+  const note = cultivation.daoNotes[def.value.id];
+  if (!note) return "";
+  return daoNoteLine(note, {
+    ageText: `${cnNumber(yearsShown(note.age))}岁`,
+    realmText: realmLabel(note.major, note.sub),
+    branchName: (id) => gongfaBranchDef(id)?.name ?? "",
+  });
+});
 watch(def, () => {
   branchConfirm.value = null;
 });
 
 function choose(branchId: string): void {
   if (!def.value) return;
-  if (cultivation.chooseBranch(def.value.id, branchId)) {
+  // 落款要记的是**此刻**的年岁与境界(道记不给数值,但年岁与境是自己走出来的证据)
+  const ok = cultivation.chooseBranch(def.value.id, branchId, {
+    age: player.age,
+    major: player.major,
+    sub: player.sub,
+  });
+  if (ok) {
     ui.toast(`已悟道「${gongfaBranchDef(branchId)?.name ?? ""}」`, "rare");
   }
 }
