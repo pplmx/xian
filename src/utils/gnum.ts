@@ -13,8 +13,24 @@ function normalize(m: number, e: number): GNum {
   if (m === 0 || !Number.isFinite(m)) return { m: 0, e: 0 };
   const sign = m < 0 ? -1 : 1;
   const abs = Math.abs(m);
-  const shift = Math.floor(LOG10(abs));
-  const nm = abs / Math.pow(10, shift);
+  let shift = Math.floor(LOG10(abs));
+  let nm = abs / Math.pow(10, shift);
+  /*
+   * 10^shift 在 double 的下限处下溢成 0(|m| 小于约 1e-323 时 shift 会到 -324),
+   * 于是 abs / 0 = Infinity —— 一个**有限**的小数被折成无穷大,还一路漏到界面:
+   * gn(5e-324) → {m:Infinity,e:-323},formatNum 拿 toNum 得 Infinity,
+   * 最后 `Number.prototype.toLocaleString` 把 Infinity 排成「∞」,玩家看到的
+   * 是「∞/秒」。本模块的不变量是**尾数始终有限**,这里不能例外。
+   *
+   * toExponential() 从 double 自己的二进制表示取十进制尾数与指数,不受
+   * 「10^shift 能不能被 double 表示」的限制,故用它兜底。上溢方向(shift>308)
+   * 不经这条分支:Math.abs 的有限值不会超过 1.8e308,shift 最大 308。
+   */
+  if (!Number.isFinite(nm) || !(nm > 0)) {
+    const [mant, exp] = abs.toExponential().split("e");
+    nm = Number(mant);
+    shift = Number(exp);
+  }
   // 处理浮点边界(如 9.9999999 → 10)
   if (nm >= 10) return { m: sign * (nm / 10), e: e + shift + 1 };
   return { m: sign * nm, e: e + shift };

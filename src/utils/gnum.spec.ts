@@ -17,6 +17,7 @@ import {
   toNum,
 } from "./gnum";
 import { gnumNumeric } from "@/core/engineNumeric";
+import { formatExact, formatNum, formatRate } from "./format";
 
 describe("GameNumber 大数运算", () => {
   it("构造与规范化", () => {
@@ -144,5 +145,43 @@ describe("GameNumber 大数运算", () => {
     expect(ratio(gn(50), gn(200))).toBeCloseTo(0.25);
     expect(progress(gn(150), gn(100))).toBe(1);
     expect(progress(gn(0), gn(100))).toBe(0);
+  });
+});
+
+/**
+ * 次正规数(subnormal)不许被折成无穷大。
+ *
+ * 这一族数是 double 的下溢区:10^shift 在这里会下溢成 0,于是 normalize 里的
+ * `abs / Math.pow(10, shift)` 得到 Infinity —— 一个**有限**的小数被折成无穷,
+ * 还一路漏到界面:gn(5e-324) → {m:Infinity, e:-323},formatRate 排成「∞/秒」。
+ * 本模块的不变量是「尾数始终有限」,下溢区不能例外。
+ *
+ * 数值上这些量级在游戏里几乎不会出现,但存档被写坏、或某处误把除法结果当量级用时
+ * 就会撞上;而它坏起来的样子是「∞」,比「0」更容易被当成真值。
+ */
+describe("次正规数:尾数必须保持有限", () => {
+  const subnormals = [Number.MIN_VALUE, 1e-320, 1e-310, 2.2250738585072014e-308];
+
+  it("gn() 给出的尾数有限且非零", () => {
+    for (const v of subnormals) {
+      const g = gn(v);
+      expect(Number.isFinite(g.m), `gn(${v}).m 必须是有限数,实得 ${g.m}`).toBe(true);
+      expect(g.m, `gn(${v}) 不该被折成 0`).not.toBe(0);
+    }
+  });
+
+  it("指数仍能读出量级", () => {
+    const g = gn(Number.MIN_VALUE);
+    expect(g.m).toBeCloseTo(5, 10);
+    expect(g.e).toBe(-324);
+    expect(gn(1e-310).e).toBe(-310);
+  });
+
+  it("走完整条格式化链也不再出现 ∞", () => {
+    for (const v of subnormals) {
+      expect(formatNum(v), `formatNum(${v})`).not.toContain("∞");
+      expect(formatRate(v), `formatRate(${v})`).not.toContain("∞");
+      expect(formatExact(v), `formatExact(${v})`).not.toContain("∞");
+    }
   });
 });
