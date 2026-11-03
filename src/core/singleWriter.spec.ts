@@ -55,6 +55,40 @@ describe("单写者 · 先到先写,后来的只读", () => {
     expect(saveReader.value).toBe(false);
   });
 
+  /**
+   * 迟到的「没拿到」必须把已经开出去的写者身份收回来。
+   *
+   * 超时那条路会在 500ms 后按 fail-open 答 true(main.ts 据此跑 prepareLocalSave
+   * 与心跳)。而浏览器完全可能更晚才回 locks.request 的回调 —— 主线程忙、
+   * 锁服务被占着,500ms 不算长。若那时只把 promise settle 掉,没有人会再看它:
+   * 本页带着「我是写者」的身份继续跑,两个页面各写各的,后写的盖掉先写的。
+   *
+   * 这条用例让回调在超时**之后**才给 null,断言本页被收回成只读。
+   */
+  it("超时后回调才说没拿到:要把写者身份收回来", async () => {
+    vi.useFakeTimers();
+    try {
+      let lateCallback: (() => void) | null = null;
+      const late: LockLike = {
+        request: (_name, _opts, callback) => {
+          // 先不回,等用例主动触发 —— 模拟「浏览器迟于超时」
+          lateCallback = () => void callback(null);
+          return Promise.resolve(null);
+        },
+      };
+      const p = acquireSaveWriterRole(late);
+      await vi.advanceTimersByTimeAsync(800);
+      expect(await p, "超时先按写者处理(fail-open)").toBe(true);
+      expect(saveReader.value, "此刻还不是只读").toBe(false);
+
+      lateCallback!();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(saveReader.value, "迟到的 null 必须把本页收回成只读").toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("探测卡住时按写者处理 —— 不把启动挂在锁上", async () => {
     vi.useFakeTimers();
     try {

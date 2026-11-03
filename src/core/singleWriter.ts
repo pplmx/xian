@@ -20,6 +20,7 @@
  * 让游戏起不来。这里只降级一个已存在的问题,不引入新的启动失败点。
  */
 import { ref } from "vue";
+import { blockSaveWrites } from "@/utils/storage";
 
 /** 本页是不是只读的后来者 —— 启动流程据此跳过引擎与写盘 */
 export const saveReader = ref(false);
@@ -71,11 +72,27 @@ export async function acquireSaveWriterRole(locks = defaultLocks()): Promise<boo
 
   void locks.request(SAVE_WRITER_LOCK, { ifAvailable: true }, (lock) => {
     const got = lock !== null && lock !== undefined;
-    settle(got);
-    // 拿不到就立刻交还:不排队、不等待 —— 这一页永远只读
-    if (!got) return;
-    // 拿到就持有到页面卸载(浏览器负责释放),回调永不 resolve
-    return new Promise<void>(() => undefined);
+    if (got) {
+      settle(true);
+      // 拿到就持有到页面卸载(浏览器负责释放),回调永不 resolve
+      return new Promise<void>(() => undefined);
+    }
+    /*
+     * 拿不到:这一页永远只读 —— 但**已经答过「可写」时还要把它改回来**。
+     *
+     * 超时那条路会在 500ms 后按 fail-open 答 true,而浏览器完全可能更晚才
+     * 回这个回调(锁服务被别的页面占着、主线程忙)。若这里只是 settle(false),
+     * 那个 promise 早已被 race 丢掉,没有人会再看 —— 本页于是带着「我是写者」
+     * 的身份去跑 prepareLocalSave 与心跳,两个页面各写各的,后写的盖掉先写的。
+     *
+     * 故这里直接把结论改回只读,并封住后续写入(与 main.ts 在启动序列里
+     * 走的那条只读路径同一个收尾)。
+     */
+    settle(false);
+    if (!saveReader.value) {
+      saveReader.value = true;
+      blockSaveWrites();
+    }
   });
 
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -84,6 +101,13 @@ export async function acquireSaveWriterRole(locks = defaultLocks()): Promise<boo
   });
   const writer = await Promise.race([probed, timeout]);
   if (timer !== undefined) clearTimeout(timer);
+  /*
+   * 结论只在两条路里二选一,不再有第三条修修补补的分支:
+   *   · 回调先到 → writer 就是它给的结论(拿到 true / 没拿到 false);
+   *   · 超时先到 → writer 是 fail-open 的 true,而 saveReader 保持 false。
+   * 回调**晚于**超时的情况由上面那个 got=false 分支兜住(它会自己把本页翻成
+   * 只读并封写)—— 那才是这条判据真正要防的竞态。
+   */
   saveReader.value = !writer;
   return writer;
 }
