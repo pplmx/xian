@@ -21731,21 +21731,45 @@ async function taskReadOnlyTab() {
        * 上一版只数 0/1,于是「页面还没起来」「起来了但判成只读」「浏览器慢」
        * 三种完全不同的原因长成同一条红,查起来只能靠猜。
        */
-      const settled = await reader
+      /*
+       * 「等」与「量」必须是**同一次**求值。
+       *
+       * 上一版先 waitForFunction 等锁到手,再单独 evaluate 数一次 —— 两次调用
+       * 之间文档可能又换了一茬(实测刷新后接连发生两次导航:1818ms 与 1951ms,
+       * 相隔 133ms;hash 初始化与路由守卫各一次)。新文档刚起来时外壳未挂载、
+       * 顶层 await 的单写者判定还没跑完,于是量到 held=0 而 wait 明明已经成功过。
+       * 现场快照里 shell:false / held:[] / readyState:complete 正是这个中间态。
+       *
+       * 现在把条件与读数收进一次求值:返回持有数,不为 1 就让 waitForFunction
+       * 继续轮询 —— 短暂的空窗不再被当成结论。
+       */
+      /*
+       * 而且要**连续两次**求值都成立才算落定。
+       *
+       * 单看一次不够:现场快照出现过 readyState:"interactive" —— 那一刻新文档
+       * 正在解析,外壳还没挂上,锁也还没申请。刷新会接连触发两次导航(hash
+       * 初始化与路由守卫各一次),中间这段空窗若恰好被采样,就会把
+       * 「正在重建」误判成「刷新拿不到写权」。
+       *
+       * 判据要问的是**稳定态**:外壳在、锁在,且隔一拍再问一次仍然如此。
+       */
+      const settledHandle = await reader
         .waitForFunction(
           async () => {
-            if (!document.querySelector("[data-game-shell]")) return false;
-            const state = await navigator.locks.query();
-            return (state.held || []).some((l) => l.name === "xuanshu.save-writer");
+            const probe = async () => {
+              if (!document.querySelector("[data-game-shell]")) return 0;
+              const state = await navigator.locks.query();
+              return (state.held || []).filter((l) => l.name === "xuanshu.save-writer").length;
+            };
+            if ((await probe()) !== 1) return false;
+            await new Promise((r) => setTimeout(r, 250));
+            return (await probe()) === 1 ? 1 : false;
           },
           { timeout: 20000 },
         )
-        .then(() => true)
-        .catch(() => false);
-      const held = await reader.evaluate(async () => {
-        const state = await navigator.locks.query();
-        return (state.held || []).filter((l) => l.name === "xuanshu.save-writer").length;
-      });
+        .catch(() => null);
+      const settled = settledHandle !== null;
+      const held = settled ? Number(await settledHandle.jsonValue()) : 0;
       checked += 1;
       if (held !== 1) {
         const snapshot = await reader.evaluate(async () => {
