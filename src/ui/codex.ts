@@ -34,7 +34,14 @@ import { PILLS } from "@/data/pills";
 import { EVENTS } from "@/data/events";
 import { chainOfEvent } from "@/data/chains";
 import { TALENTS, TALENT_GRADE_COLORS } from "@/data/talents";
-import type { ArtifactDef, CollectionCategory, EquipmentTemplate, PetDef, PillDef } from "@/types";
+import type {
+  ArtifactDef,
+  CollectionCategory,
+  EquipmentTemplate,
+  PetDef,
+  PillDef,
+  QualityId,
+} from "@/types";
 import { useInventoryStore } from "@/stores/inventory";
 import { useLoreStore } from "@/stores/lore";
 import { useCultivationStore } from "@/stores/cultivation";
@@ -70,6 +77,12 @@ export interface CodexEntry {
   /** 章形图标(灵兽册这类重在"貌"的条目带图标,已收录 chip 前置一枚小章) */
   icon?: string;
   color?: string;
+  /**
+   * 这一条对应的品阶 —— 九册里只有装备/法宝/丹药/灵兽/功法那几册有档,
+   * 灵材、见闻、成就与悟道分支没有(undefined)。详情页据它报「品评」
+   * (见 data/qualityVerdicts):没有品阶的册子不该被硬安一句「山野之物」。
+   */
+  quality?: QualityId;
   /** 收录深度:0 未收录,≥1 已收录 */
   stage: number;
   /** 该深度的名目 */
@@ -255,6 +268,8 @@ export function describeBranch(def: GongfaBranchDef, stage: number, note?: DaoNo
       .join("\n"),
     meta: g ? `${g.name} · ${GONGFA_TYPE_NAMES[g.type]} · ${qualityDef(g.quality).name}` : "",
     color: lv >= BRANCH_STAGE_MAX ? PICKED_COLOR : g ? qualityDef(g.quality).color : undefined,
+    // 分支继承所属功法的品阶 —— 悟道录里也读得到那一档的品评
+    quality: g?.quality,
     stage: lv,
     stageName: BRANCH_STAGE_NAMES[lv]!,
     badge: lv >= BRANCH_STAGE_MAX ? "择" : "",
@@ -365,6 +380,7 @@ export function describeEquipment(
     name: def.name,
     desc: lines.join("\n"),
     meta: equipMetaText(def),
+    quality: seen ? qualityOfRank(seen.q).id : undefined,
     stage,
     stageName: EQUIP_STAGE_NAMES[stage]!,
     badge: stage >= EQUIP_STAGE_MAX ? "极" : "",
@@ -407,6 +423,7 @@ export function describeArtifact(def: ArtifactDef, level: number, collected: boo
     desc: [def.desc, artifactFuncText(def, level)].filter(Boolean).join("\n"),
     meta: artifactMetaText(def),
     color: qualityDef(def.quality).color,
+    quality: def.quality,
     stage,
     stageName: ARTIFACT_STAGE_NAMES[stage]!,
     badge: stage >= ARTIFACT_STAGE_MAX ? "满" : "",
@@ -456,6 +473,7 @@ export function describePill(def: PillDef, collected: boolean, mastery: number):
     desc: [def.desc, pillFuncText(def)].filter(Boolean).join("\n"),
     meta: pillMetaText(def),
     color: qualityDef(def.quality).color,
+    quality: def.quality,
     stage,
     stageName: PILL_STAGE_NAMES[stage]!,
     badge: top && stage >= PILL_STAGE_MAX ? "通" : "",
@@ -599,6 +617,7 @@ export function describePet(def: PetDef, stage: number, collectedAt?: number): C
     meta: q.name,
     icon: def.icon,
     color: q.color,
+    quality: def.quality,
     stage: lv,
     stageName: PET_STAGE_NAMES[lv]!,
     badge: lv >= PET_STAGE_MAX ? "伴" : "",
@@ -644,7 +663,15 @@ function makeCollectionCat(
   key: CollectionCategory,
   name: string,
   ownedIds: string[],
-  defs: { id: string; name: string; desc?: string; meta?: string; color?: string; rank?: number }[],
+  defs: {
+    id: string;
+    name: string;
+    desc?: string;
+    meta?: string;
+    color?: string;
+    rank?: number;
+    quality?: QualityId;
+  }[],
 ): CodexCat {
   const quests = useQuestsStore();
   const owned = new Set(ownedIds);
@@ -658,6 +685,7 @@ function makeCollectionCat(
         desc: d.desc ?? "",
         meta: d.meta ?? "",
         color: d.color,
+        quality: d.quality,
         stage: owned.has(d.id) ? 1 : 0,
         stageName: "",
         badge: "",
@@ -692,6 +720,7 @@ export function collectionCodex(): CodexCat[] {
         meta: gongfaMetaText(g),
         color: qualityDef(g.quality).color,
         rank: qualityDef(g.quality).rank,
+        quality: g.quality,
       })),
     ),
     branchCodex(),

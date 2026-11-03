@@ -19,6 +19,13 @@
         <div class="equip-dossier__identity">
           <p class="equip-dossier__eyebrow">
             <span class="equip-dossier__quality">{{ qualityName }}</span>
+            <!-- 品评 —— 这一档凭什么(见 data/qualityVerdicts);与品阶名同处眉题,不另起一行 -->
+            <span
+              v-if="verdictLine"
+              class="equip-dossier__verdict-line"
+              data-equipment-verdict-line
+              >{{ verdictLine }}</span
+            >
             <span>{{ EQUIP_SLOT_NAMES[template.slot] }}</span>
             <span>{{ worldNameOfTier(inst.tier) }}</span>
             <span class="tabular">{{ inst.tier }} 阶</span>
@@ -281,6 +288,7 @@ import { useResourcesStore } from "@/stores/resources";
 import { refundRateText, salvageOf } from "@/core/salvage";
 import { detectBuild } from "@/core/buildDetect";
 import { qualityDef } from "@/data/qualities";
+import { qualityVerdict } from "@/data/qualityVerdicts";
 import { usePlayerStore } from "@/stores/player";
 import { formatGN, formatPercent, formatSignedPercent } from "@/utils/format";
 import { isZero, sub } from "@/utils/gnum";
@@ -425,6 +433,8 @@ const setInfo = computed(() => {
 const affixCap = computed(() => (inst.value ? qualityDef(inst.value.quality).affixes[1] : 0));
 const quality = computed(() => (inst.value ? qualityDef(inst.value.quality) : null));
 const qualityName = computed(() => quality.value?.name ?? "");
+/** 品评一句话(见 data/qualityVerdicts);认不得的档给空串,整格不出 */
+const verdictLine = computed(() => (inst.value ? qualityVerdict(inst.value.quality) : ""));
 const rare = computed(() => (inst.value ? isRareQuality(inst.value.quality) : false));
 const dossierStyle = computed<Record<string, string>>(() => {
   const q = quality.value;

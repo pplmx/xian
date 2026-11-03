@@ -357,6 +357,7 @@ const CATEGORIES = [
       "gateWiring",
       "veinText",
       "statNames.spec",
+      "qualityVerdicts",
     ],
   },
   {

@@ -1,5 +1,6 @@
 import { EQUIP_SLOT_NAMES, equipmentTemplate } from "@/data/equipment";
 import { qualityDef } from "@/data/qualities";
+import { qualityVerdict } from "@/data/qualityVerdicts";
 import { AFFIX_RARITY_META, modsText } from "@/data/statNames";
 import { equipPowerComparison } from "@/core/equipBest";
 import { equipSetDef } from "@/core/equipSet";
@@ -34,6 +35,8 @@ export interface MarketEquipView {
   template: EquipmentTemplate;
   quality: QualityId;
   qualityName: string;
+  /** 这一档的品评(见 data/qualityVerdicts)—— 买前验货与详情页读同一句 */
+  verdict: string;
   color: string;
   textColor: string;
   rare: boolean;
@@ -120,6 +123,7 @@ export function marketEquipView(
     template,
     quality: item.quality,
     qualityName: quality.name,
+    verdict: qualityVerdict(item.quality),
     color: quality.color,
     textColor: qualityTextColor(item.quality),
     rare: isRareQuality(item.quality),

@@ -383,6 +383,16 @@
    * 器铭 —— 验货签上的一行出身。与详情页同一条画法(铭名楷体、铭文退说明档、
    * 成色单独一枚读数),只是这里不得另起一张卡:它落在正文账线上。
    */
+  /*
+   * 品评 —— 摊签上那一档凭什么(见 data/qualityVerdicts)。
+   * 与品阶名同一行,退到说明档:它是「为什么值得买」,不是价格。
+   */
+  .market-good__verdict {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.04em;
+  }
   .market-good__inscription {
     display: flex;
     min-width: 0;

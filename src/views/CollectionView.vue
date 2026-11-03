@@ -401,6 +401,10 @@
           <span v-if="detail.entry.meta" class="collection-detail__line">{{
             detail.entry.meta
           }}</span>
+          <!-- 品评 —— 这一档凭什么(见 data/qualityVerdicts);只在对得上品质的册目里出 -->
+          <span v-if="detailVerdict" class="collection-detail__verdict" data-codex-verdict>{{
+            detailVerdict
+          }}</span>
         </div>
         <p class="collection-detail__desc">
           {{ detail.entry.desc || "此物玄妙,难以言表。" }}
@@ -426,6 +430,7 @@ import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";
 import { ACHIEVEMENTS } from "@/data/achievements";
 import { qualityDef } from "@/data/qualities";
+import { qualityVerdict } from "@/data/qualityVerdicts";
 import { collectionCodex, type CodexCat, type CodexEntry } from "@/ui/codex";
 import { achievementDirection } from "@/ui/achievementHint";
 import {
@@ -851,6 +856,18 @@ function catComplete(cat: CodexCat): boolean {
 // 脚注各类口径不同(旧七类记收录时日、灵材记照面回数、悟道记所属功法),
 // 故由条目自带 foot,此处不再拼装
 const detail = ref<{ catName: string; entry: CodexEntry } | null>(null);
+
+/**
+ * 藏珍详情的品评 —— 只在这条目真带品阶时出。
+ *
+ * `CodexEntry.quality` 是可选:九册里只有装备/法宝/丹药/灵兽/功法与悟道分支有档,
+ * 灵材、见闻、成就没有。没有档的册子整句不出 —— 宁可少一行,
+ * 也不要给「见闻志」硬安一句「山野之物」。
+ */
+const detailVerdict = computed(() => {
+  const quality = detail.value?.entry.quality;
+  return quality ? qualityVerdict(quality) : "";
+});
 
 function openDetail(cat: CodexCat, entry: CodexEntry): void {
   detail.value = { catName: cat.name, entry };

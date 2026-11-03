@@ -607,6 +607,16 @@
     font-size: var(--type-body);
     letter-spacing: 0.16em;
   }
+  /*
+   * 品评 —— 这一档凭什么(见 data/qualityVerdicts)。
+   * 与眉题同一行:品阶名之后、器类之前。不铺底、不加字号(它读的是「为什么」,
+   * 不是标题),只用品阶色把这一句托出来 —— 九档的口气各差一层,读起来才不像广告。
+   */
+  .equip-dossier__verdict-line {
+    color: var(--equip-text);
+    font-family: var(--font-kai);
+    letter-spacing: 0.04em;
+  }
   .equip-dossier__desc {
     margin-top: 0.28rem;
     color: rgb(var(--color-ink-soft-rgb));

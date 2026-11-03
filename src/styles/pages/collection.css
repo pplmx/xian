@@ -696,6 +696,17 @@
     font-size: var(--type-body);
   }
 
+  /*
+   * 品评 —— 藏珍详情里「这一档凭什么」的那一句(见 data/qualityVerdicts)。
+   * 排在 meta 之后、正文之前:先报品类与出处,再报这一档的分量,最后才是这一件的故事。
+   */
+  .collection-detail__verdict {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    letter-spacing: 0.04em;
+  }
+
   .collection-detail__desc {
     margin-top: 0.66rem;
     color: rgb(var(--color-ink-soft-rgb));

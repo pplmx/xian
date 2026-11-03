@@ -254,6 +254,7 @@ import { GONGFA } from "../src/data/gongfa.ts";
 import { branchesFor } from "../src/data/gongfaBranches.ts";
 import { ACHIEVEMENTS } from "../src/data/achievements.ts";
 import { qualityDef } from "../src/data/qualities.ts";
+import { QUALITY_VERDICTS, qualityVerdict } from "../src/data/qualityVerdicts.ts";
 import { NAVIGATION_ENTRIES, NAVIGATION_SECTIONS } from "../src/ui/navigation.ts";
 import { folioLayoutOf } from "../src/ui/folioSpread.ts";
 import { mkdirSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
@@ -9220,6 +9221,169 @@ async function taskRebirthFolio() {
 
     if (pageErrors.length)
       failures.push(`[390] 往生帖场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
+ * 品评 —— 九档各一句「这一档凭什么」,四处读同一份,且放得进一行。
+ *
+ * 必须真浏览器量的两件事:
+ *   一 它是**一行**。品评排在器评帖的眉题行里(与品阶名、器类、阶数同一行),
+ *      写长一点就会把首行折成两行 —— 源码判据量不到这件事;
+ *   二 九档都要有,不能只有贵的那几档有话说。
+ *
+ * 判据:
+ *   一 天品与神品的器评帖上都出现品评,且与 data/qualityVerdicts 逐字相同;
+ *   二 品评那一段在首页首行之内(顶不会低到把眉题折行);
+ *   三 藏珍详情里对得上品质的条目也带同一句;对不上品质的册子不带。
+ */
+async function taskQualityVerdict() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  const items = [
+    { uid: "qv_heaven", templateId: "h_miwu", quality: "heaven" },
+    { uid: "qv_divine", templateId: "w_xuantie", quality: "divine" },
+  ].map((row) => ({
+    ...row,
+    tier: 20,
+    level: 0,
+    affixes: [{ id: "hp3", roll: 0.5 }],
+  }));
+  try {
+    if (items.some((it) => !qualityVerdict(it.quality))) {
+      throw new Error("品评夹具:没有可用的品评");
+    }
+    const slices = showcaseSlices("light");
+    slices.inventory = {
+      ...slices.inventory,
+      items: [...items, ...slices.inventory.items],
+      equipped: {},
+      seenUids: items.map((it) => it.uid),
+      seenSeeded: true,
+    };
+    /*
+     * 藏珍默认落在「功名榜」,而空档的九柜一件未收 —— 要核品评得先有收录。
+     * 装备册按**模板 id** 记(id 不是实例 uid,见 ui/codex 的 equipStage)。
+     */
+    slices.quests = {
+      ...slices.quests,
+      collections: {
+        ...slices.quests.collections,
+        equip: items.map((it) => it.templateId),
+      },
+    };
+    /*
+     * 装备条目的品阶来自**见闻**(lore.equipLore:见过的最好一件),
+     * 不是模板自带的 —— 没记过见闻就没有档,品评也就无从谈起。
+     */
+    slices.lore = {
+      ...slices.lore,
+      equipLore: Object.fromEntries(
+        items.map((it) => [it.templateId, { q: qualityDef(it.quality).rank, t: it.tier, u: 1 }]),
+      ),
+    };
+    await seedSave(ctx, slices, "__qualityVerdictFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    for (const item of items) {
+      const want = qualityVerdict(item.quality);
+      await openRoute(page, "/inventory", 900);
+      await clearOverlays(page);
+      await page.locator(`main button[data-uid="${item.uid}"]`).first().click({ timeout: 4000 });
+      await page.waitForTimeout(450);
+      checked += 1;
+      const got = await page.evaluate(() => {
+        const line = document.querySelector("[data-equipment-verdict-line]");
+        const eyebrow = document.querySelector(".equip-dossier__eyebrow");
+        const qualityEl = document.querySelector(".equip-dossier__quality");
+        if (!line) return { present: false };
+        const rect = line.getBoundingClientRect();
+        return {
+          present: true,
+          text: (line.textContent || "").replace(/\s+/g, " ").trim(),
+          // 与品阶名是否同一条基线(相差不超过一行高的一半就算同一行)
+          sameLine: qualityEl
+            ? Math.abs(rect.top - qualityEl.getBoundingClientRect().top) <= rect.height * 0.6
+            : false,
+          overflow: eyebrow ? eyebrow.scrollWidth - eyebrow.clientWidth : 0,
+        };
+      });
+      if (!got.present) {
+        failures.push(`[390] 品评场景:${item.quality} 的器评帖上没有品评`);
+      } else {
+        if (got.text !== want)
+          failures.push(`[390] 品评场景:${item.quality} 的品评与表不一致「${got.text}」`);
+        if (!got.sameLine)
+          failures.push(`[390] 品评场景:${item.quality} 的品评被挤到眉题之外的另一行`);
+        if (got.overflow > 1)
+          failures.push(`[390] 品评场景:${item.quality} 的眉题横向溢出 ${got.overflow}px`);
+      }
+      for (let i = 0; i < 3 && (await page.locator(".modal-panel").count()) > 0; i += 1) {
+        await page.keyboard.press("Escape").catch(() => {});
+        await page.waitForTimeout(200);
+      }
+    }
+
+    // 藏珍详情:对得上品质的条目带同一句。
+    // ① 藏珍默认在「功名榜」,要先切到「藏珍阁」;② 一次只展开一柜,再点开「装备」柜。
+    await openRoute(page, "/collection?tab=collection", 900);
+    await clearOverlays(page);
+    checked += 1;
+    const openedShelf = await page.evaluate(() => {
+      const toggle = document.querySelector('[data-collection-category-toggle="equip"]');
+      if (toggle) toggle.click();
+      return Boolean(toggle);
+    });
+    if (!openedShelf) {
+      failures.push("[390] 品评场景:藏珍里找不到「装备」柜的展开签");
+    } else {
+      await page.waitForTimeout(400);
+    }
+    const codex = await page.evaluate(() => {
+      const token = document.querySelector('[data-codex-entry="equip"]');
+      if (!token) return { found: false };
+      token.click();
+      return { found: true };
+    });
+    if (!codex.found) {
+      failures.push("[390] 品评场景:装备柜展开后仍没有已收录条目(夹具的装备册是空的?)");
+    } else {
+      await page.waitForTimeout(450);
+      const detail = await page.evaluate(() => {
+        const el = document.querySelector("[data-codex-verdict]");
+        return {
+          present: Boolean(el),
+          text: (el?.textContent ?? "").replace(/\s+/g, " ").trim(),
+        };
+      });
+      if (!detail.present) {
+        failures.push("[390] 品评场景:藏珍详情没有品评");
+      } else if (!Object.values(QUALITY_VERDICTS).includes(detail.text)) {
+        failures.push(`[390] 品评场景:藏珍详情的品评不是九句里的任何一句「${detail.text}」`);
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 品评场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n品评:天品/神品各在眉题同一行说出自己的分量(${qualityVerdict("divine")})`);
+    }
   } finally {
     await ctx.close();
   }
@@ -22698,6 +22862,7 @@ const TASKS = [
   ["器铭的出身与逐件不同", taskInscription],
   ["灵兽契语只在相伴处出声", taskPetVow],
   ["道记留得住择道那一刻", taskDaoNote],
+  ["品评说得出一档的分量", taskQualityVerdict],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
   ["一键分解先勾后点", taskDecompose],

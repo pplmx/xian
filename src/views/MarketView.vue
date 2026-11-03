@@ -645,6 +645,10 @@ function bountyReady(o: BountySlot): boolean {
                 <span class="market-good__quality">
                   · {{ previewFor(slot)!.qualityName }} · {{ slot.tier }}阶
                 </span>
+                <!-- 品评 —— 买之前就该知道这一档凭什么(见 data/qualityVerdicts) -->
+                <span v-if="previewFor(slot)!.verdict" class="market-good__verdict">{{
+                  previewFor(slot)!.verdict
+                }}</span>
               </span>
               <span class="market-good__note">
                 {{ previewFor(slot)!.meta }} · {{ previewFor(slot)!.desc }}
