@@ -21715,23 +21715,46 @@ async function taskReadOnlyTab() {
         failures.push("[只读页 · 恢复] 按了「刷新本页」之后横幅还在 —— 没真正回到写者态");
       // 刷新后新文档会先短暂没有横幅,main.ts 仍在申请 Web Lock;
       // 必须等外壳回来且锁真的落手,不能拿这一瞬间的空窗当“已恢复”。
-      await reader
+      /*
+       * 等锁落手。超时要留够:刷新之后新文档要先跑到 main.ts 的
+       * acquireSaveWriterRole,而它自己就允许 500ms 的探测超时才 fail-open;
+       * 机器忙时(这套门是并发跑的)整条链要几秒。
+       *
+       * 失败时把**此刻的现场**一起打出来,而不是只报一句「锁持有者 0」——
+       * 上一版只数 0/1,于是「页面还没起来」「起来了但判成只读」「浏览器慢」
+       * 三种完全不同的原因长成同一条红,查起来只能靠猜。
+       */
+      const settled = await reader
         .waitForFunction(
           async () => {
             if (!document.querySelector("[data-game-shell]")) return false;
             const state = await navigator.locks.query();
             return (state.held || []).some((l) => l.name === "xuanshu.save-writer");
           },
-          { timeout: 12000 },
+          { timeout: 20000 },
         )
-        .catch(() => undefined);
+        .then(() => true)
+        .catch(() => false);
       const held = await reader.evaluate(async () => {
         const state = await navigator.locks.query();
         return (state.held || []).filter((l) => l.name === "xuanshu.save-writer").length;
       });
       checked += 1;
       if (held !== 1) {
-        failures.push(`[只读页 · 恢复] 刷新后没拿到写权(锁持有者 ${held})—— 刷新也只是白刷`);
+        const snapshot = await reader.evaluate(async () => {
+          const state = await navigator.locks.query();
+          return {
+            shell: Boolean(document.querySelector("[data-game-shell]")),
+            banner: Boolean(document.querySelector("[data-save-reader]")),
+            held: (state.held || []).map((l) => l.name),
+            pending: (state.pending || []).map((l) => l.name),
+            readyState: document.readyState,
+          };
+        });
+        failures.push(
+          `[只读页 · 恢复] 刷新后没拿到写权(锁持有者 ${held},等锁${settled ? "已成功" : "超时"})—— 刷新也只是白刷;` +
+            `现场 ${JSON.stringify(snapshot)}`,
+        );
       }
     }
   } finally {
