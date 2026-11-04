@@ -18,6 +18,7 @@ import { recipeCraft, type SkillId } from "@/data/crafting";
 import { pillDef, PILLS } from "@/data/pills";
 import { enemyDef } from "@/data/enemies";
 import { bearableRank } from "./craftability";
+import { recipeReachable } from "./recipeGate";
 import { softChance } from "wanxiang-engine";
 import { useLoreStore } from "@/stores/lore";
 import { useDongfuStore } from "@/stores/dongfu";
@@ -334,9 +335,14 @@ export function studyEta(): StudyEta | null {
  */
 export function studiableRecipes(major: number, masteryOf: (id: string) => number): PillDef[] {
   const ceiling = bearableRank(major) + STUDY_REACH_OVER;
+  const gate = { major, ceiling };
   const rankOf = (p: PillDef): number => recipeCraft(p)?.rank ?? Number.MAX_SAFE_INTEGER;
   return PILLS.filter(
-    (p) => p.recipe && masteryOf(p.id) <= 0 && p.minRealm <= major && rankOf(p) <= ceiling,
+    (p) =>
+      p.recipe &&
+      masteryOf(p.id) <= 0 &&
+      // 两道门槛收在 core/recipeGate 一处:境界 + 阶位,与「不看炉子等级」这条口径同源
+      recipeReachable({ minRealm: p.minRealm, rank: rankOf(p) }, gate),
   ).sort((a, b) => rankOf(a) - rankOf(b) || a.minRealm - b.minRealm);
 }
 
@@ -450,10 +456,23 @@ export function seedLoreIfNeeded(): void {
   for (const id of STARTER_RECIPES) {
     if (lore.recipeMastery(id) <= 0) studyRecipe(id, 1);
   }
+  /*
+   * 补账读的是 `alchemyLevel <= 炉子等级`,**与「藏经阁翻方」刻意不同**。
+   *
+   * 这里容易看成一个矛盾(同一字段,两处两种读法),但它不是:
+   * `recipeCraft` 把 `alchemyLevel` 读作**阶位**(这张方子有多难,给当下的翻方算上限),
+   * 而这一段是**旧口径的一次性迁移** —— 它要补的是「旧版游戏里,凭丹炉够级就能炼、
+   * 却没有被记成掌握度的那些方子」。旧版的门槛就是炉子等级,所以这一处必须按旧口径算。
+   *
+   * 反过来改(让它与 `studiableRecipes` 同一条判据)会把**当前境界够得着的新方子**
+   * 一并折成 0.7 掌握度 —— 那等于白送,`loreService.spec` 的
+   * 「金丹期挂机终能翻出灵乳的方子」当场打红:它断言补账之后该方仍是 0。
+   */
   for (const p of PILLS) {
     if (!p.recipe) continue;
-    const reachable = (p.alchemyLevel ?? 1) <= dongfu.alchemyLevel && p.minRealm <= player.major;
-    if (reachable && lore.recipeMastery(p.id) <= 0) studyRecipe(p.id, LEGACY_MASTERY);
+    const legacyReachable =
+      (p.alchemyLevel ?? 1) <= dongfu.alchemyLevel && p.minRealm <= player.major;
+    if (legacyReachable && lore.recipeMastery(p.id) <= 0) studyRecipe(p.id, LEGACY_MASTERY);
   }
   // 入门方子里的药必然见过,否则新号连第一炉都开不出来
   for (const id of STARTER_RECIPES) {

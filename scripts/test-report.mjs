@@ -371,6 +371,7 @@ const CATEGORIES = [
       "shortfallText",
       "deadFallback",
       "artifactBeat",
+      "recipeGate",
     ],
   },
   {
