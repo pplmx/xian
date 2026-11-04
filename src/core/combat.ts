@@ -11,6 +11,7 @@ import type {
   FoeOrigin,
   FoeOriginPart,
   GNum,
+  QualityId,
   StatMods,
 } from "@/types";
 import type { RandomService } from "@/utils/random";
@@ -220,8 +221,18 @@ export function resolveCombat(
     side: CombatLogEntry["side"],
     text: string,
     dmg?: GNum,
+    quality?: QualityId,
   ): void => {
-    log.push({ t, side, text, dmg: dmg ? formatGN(dmg) : undefined, php: hpPct(p), ehp: hpPct(e) });
+    log.push({
+      t,
+      side,
+      text,
+      dmg: dmg ? formatGN(dmg) : undefined,
+      php: hpPct(p),
+      ehp: hpPct(e),
+      // 只有法宝出手那几行带品阶 —— 其余行不许凭空多一个字段(见 types 的注释)
+      ...(quality ? { quality } : {}),
+    });
   };
 
   /**
@@ -496,26 +507,40 @@ export function resolveCombat(
       if (eff.type === "damage") {
         const dmgAmt = mulN(self.snap.attack, values.amount);
         applyDamage(self, foe, dmgAmt);
-        push("proc", side, `${name}的【${art.name}】自行出手——${art.active.name}!`, dmgAmt);
+        push(
+          "proc",
+          side,
+          `${name}的【${art.name}】自行出手——${art.active.name}!`,
+          dmgAmt,
+          art.quality,
+        );
       } else if (eff.type === "drain") {
         // 吸命:伤害与回复是同一件事的两面 —— 打出多少,按比例补回自身
         const dmgAmt = mulN(self.snap.attack, values.amount);
         applyDamage(self, foe, dmgAmt);
         const returned = mulN(dmgAmt, values.heal ?? 0);
         healSelf(self, returned);
-        push("proc", side, `${name}的【${art.name}】吸取敌手精血——${art.active.name}!`, dmgAmt);
+        push(
+          "proc",
+          side,
+          `${name}的【${art.name}】吸取敌手精血——${art.active.name}!`,
+          dmgAmt,
+          art.quality,
+        );
       } else if (eff.type === "shield") {
         gainShield(self, mulN(self.snap.maxHp, values.amount));
-        push("shield", side, `【${art.name}】灵光大盛,护盾加身。`);
+        push("shield", side, `【${art.name}】灵光大盛,护盾加身。`, undefined, art.quality);
       } else if (eff.type === "heal") {
         healSelf(self, mulN(self.snap.maxHp, values.amount));
-        push("heal", side, `【${art.name}】洒下灵光,${name}伤势恢复。`);
+        push("heal", side, `【${art.name}】洒下灵光,${name}伤势恢复。`, undefined, art.quality);
       } else if (eff.type === "stun") {
         if (tryStun(foe)) {
           push(
             "proc",
             side,
             `【${art.name}】摄住${foe.snap.isPlayer ? "你" : `【${foe.snap.name}】`}的心神,那一手没能出。`,
+            undefined,
+            art.quality,
           );
         }
       } else if (eff.type === "sunder") {
@@ -524,6 +549,8 @@ export function resolveCombat(
           "proc",
           side,
           `【${art.name}】${art.active.name},${foe.snap.isPlayer ? "你的" : `【${foe.snap.name}】的`}护体被撕开一道口子。`,
+          undefined,
+          art.quality,
         );
       } else {
         // 与 sunder 同策略:多件削弱法宝同回合触发时取最强,不 after-write-wins ——
@@ -533,6 +560,8 @@ export function resolveCombat(
           "proc",
           side,
           `【${art.name}】发威,${foe.snap.isPlayer ? "你" : `【${foe.snap.name}】`}的攻势被削弱了。`,
+          undefined,
+          art.quality,
         );
       }
     }

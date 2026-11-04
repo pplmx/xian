@@ -15180,9 +15180,31 @@ async function taskEnemyCard() {
                 stunnedTurns: 0,
               },
             },
+            /*
+             * 战报里塞三行法宝出手:神品 / 凡品 / 无品阶各一 —— 品阶描色那条判据
+             * 要两侧都量(该染的要染,不该染的一枚都不许多)。
+             */
             log: [
               { t: "atk", side: "p", text: "你挥剑直取,", php: 1, ehp: 0.8 },
               { t: "crit", side: "p", text: "会心一击!", dmg: "12", php: 1, ehp: 0.4 },
+              {
+                t: "proc",
+                side: "p",
+                text: "你的【混沌钟】自行出手——混沌钟鸣!",
+                dmg: "205",
+                php: 1,
+                ehp: 0.3,
+                quality: "divine",
+              },
+              {
+                t: "heal",
+                side: "p",
+                text: "【墨玉葫芦】洒下灵光,你伤势恢复。",
+                php: 0.9,
+                ehp: 0.3,
+                quality: "mortal",
+              },
+              { t: "info", side: "sys", text: "一记寻常攻势,", php: 0.9, ehp: 0.3 },
               { t: "win", side: "sys", text: "你胜了。", php: 0.62, ehp: 0 },
             ],
           },
@@ -15308,14 +15330,21 @@ async function taskEnemyCard() {
           const report = document.querySelector(".combat-report__scroll");
           const paper = document.querySelector(".combat-intel__paper");
           const ledgerBox = box(ledgerEl);
-          const logs = [...document.querySelectorAll("[data-battle-log]")].map((el) => ({
-            clip: el.scrollWidth > el.clientWidth + 1,
-            outside:
-              !!ledgerBox &&
-              (el.getBoundingClientRect().left < ledgerBox.left - 1 ||
-                el.getBoundingClientRect().right > ledgerBox.right + 1),
-            text: (el.textContent || "").trim(),
-          }));
+          const logs = [...document.querySelectorAll("[data-battle-log]")].map((el) => {
+            const cs = getComputedStyle(el);
+            return {
+              clip: el.scrollWidth > el.clientWidth + 1,
+              outside:
+                !!ledgerBox &&
+                (el.getBoundingClientRect().left < ledgerBox.left - 1 ||
+                  el.getBoundingClientRect().right > ledgerBox.right + 1),
+              text: (el.textContent || "").trim(),
+              // 品阶通道:天/仙/神那三档才挂这个属性,其余行没有
+              quality: el.getAttribute("data-log-quality"),
+              color: cs.color,
+              borderWidth: Number.parseFloat(cs.borderLeftWidth) || 0,
+            };
+          });
           const dataRows = [...document.querySelectorAll(".combat-intel__data-row")].map((el) => ({
             clip: el.scrollWidth > el.clientWidth + 1,
             text: (el.textContent || "").replace(/\s+/g, " ").trim(),
@@ -15436,6 +15465,33 @@ async function taskEnemyCard() {
             if (badLogs.length) {
               failures.push(
                 `[${vp.tag}-battle] 战报行越出账页或被裁:${badLogs.map((row) => row.text).join(" | ")}`,
+              );
+            }
+            /*
+             * 战报的品阶通道 —— 此处此前是全作唯一没有品阶的一屏:
+             * 凡品回血与神品出手都是同一片灰字。两侧都量:
+             * 神品那行要染上该档色且竖线更厚,凡品那行**不许挂品阶落点**。
+             */
+            checked += 1;
+            const divineLine = ledger.logs.find((row) => row.text.includes("混沌钟"));
+            const plainLine = ledger.logs.find((row) => row.text.includes("墨玉葫芦"));
+            if (!divineLine || !plainLine) {
+              failures.push(`[${vp.tag}-battle] 战报里找不到那两行法宝出手 —— 品阶判据无从量起`);
+            } else if (divineLine.quality !== "top") {
+              failures.push(
+                `[${vp.tag}-battle] 神品法宝出手那行没有品阶落点(实见 ${divineLine.quality})`,
+              );
+            } else if (divineLine.color === plainLine.color) {
+              failures.push(
+                `[${vp.tag}-battle] 神品与凡品的战报行同色 —— 攒到的好东西在回放里认不出(${divineLine.color})`,
+              );
+            } else if (divineLine.borderWidth <= plainLine.borderWidth) {
+              failures.push(
+                `[${vp.tag}-battle] 神品那行没有更重(竖线 ${divineLine.borderWidth} vs ${plainLine.borderWidth})`,
+              );
+            } else if (plainLine.quality) {
+              failures.push(
+                `[${vp.tag}-battle] 凡品那行也挂了品阶落点 —— 人人有色等于无色(${plainLine.quality})`,
               );
             }
           }

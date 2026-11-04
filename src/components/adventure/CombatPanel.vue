@@ -241,6 +241,8 @@
               data-battle-log
               class="combat-report__line text-body"
               :data-log-kind="entry.t"
+              :data-log-quality="logQualityAttr(entry.quality)"
+              :style="entry.quality ? logQualityStyle(entry.quality) : undefined"
             >
               <span>{{ entry.text }}</span>
               <strong
@@ -300,6 +302,34 @@ import GameIcon from "@/components/common/GameIcon.vue";
 import BattleIntelPanel from "@/components/adventure/BattleIntelPanel.vue";
 import { nemesisAvengedText, nemesisChipText } from "@/ui/nemesisChip";
 import { chipsOf, type CombatChip } from "@/ui/combatChips";
+import { logQualityTone } from "@/ui/combatLogTone";
+import { qualityDef } from "@/data/qualities";
+import type { QualityId } from "@/types";
+
+/**
+ * 战报一行的品阶色 —— 只用在该档真写着色的那几个 token 上。
+ *
+ * 与 flashTier / toastLife 同一条理由:品质表里是 `var(--color-*)` 调色板 token,
+ * 纯函数求不了值,故由界面在这里取一次。
+ * 寻常档(color 为 ink-faint 那类)不描色 —— 战报密排几十行,人人有色就等于无色。
+ */
+/**
+ * 品阶落点 —— **只有真染了色才挂**。
+ *
+ * 凡品与老战报都走 `plain`(不着色),它们的行上不该有 `data-log-quality`:
+ * 那道属性是"这一行比寻常重"的记号,人人有记号就等于没有记号。
+ */
+function logQualityAttr(quality: QualityId | undefined): string | undefined {
+  if (!quality) return undefined;
+  const tone = logQualityTone(quality);
+  return tone === "plain" ? undefined : tone;
+}
+
+function logQualityStyle(quality: QualityId): Record<string, string> | undefined {
+  const tone = logQualityTone(quality);
+  if (tone === "plain") return undefined;
+  return { "--log-quality": qualityDef(quality).color };
+}
 
 const adventure = useAdventureStore();
 const player = usePlayerStore();

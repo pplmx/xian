@@ -406,6 +406,7 @@ const CATEGORIES = [
       "qualityPeak",
       "inventorySeatSeal",
       "achievementSeal",
+      "combatLogTone",
     ],
   },
   {

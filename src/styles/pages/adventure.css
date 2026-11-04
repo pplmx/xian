@@ -1557,6 +1557,23 @@
     color: rgb(var(--color-cinnabar-rgb));
     font-family: var(--font-kai);
   }
+  /*
+   * 法宝那一行的品阶色 —— 战报此前是全作唯一没有品阶通道的一屏:
+   * 凡品墨玉葫芦回血与神品混沌钟轰出单位伤害都是同一片灰字。
+   *
+   * 放在 `data-log-kind` 那几条**之后**:proc 本来有自己的紫(「特殊触发」),
+   * 品阶要能盖过它 —— 同优先级下后写的赢。只选 [data-log-quality] 两档,
+   * 字重与竖线厚按档加深;色值由行内 --log-quality 给,与光/声/停留时长同源。
+   */
+  .combat-report__line[data-log-quality="rare"],
+  .combat-report__line[data-log-quality="top"] {
+    border-left-color: var(--log-quality, currentColor);
+    color: var(--log-quality, currentColor);
+  }
+  .combat-report__line[data-log-quality="top"] {
+    border-left-width: 3px;
+    font-weight: 500;
+  }
   .combat-report__damage {
     flex: none;
     font-weight: 600;
