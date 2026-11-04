@@ -216,6 +216,33 @@ describe("此刻最该做的一件事 · 纯函数", () => {
 });
 
 describe("此刻最该做的一件事 · 真接线", () => {
+  it("那行字可以点 —— 它说「该去哪」,就真的能去", () => {
+    /*
+     * 初版它只是 `<p>`:写着「关隘已开,可去破境」而不能点。
+     * 一句话指出去处却不给路,等于让玩家自己去导航里找 —— 那是把成本推回给他。
+     * 这一条钉住:那行字是一枚可点的控件,且去向取自同一份 nextStep.route。
+     */
+    /*
+     * 去注释再取块:上面那条注释正当解释着「眉批:此刻最该做的一件事」,
+     * 而它排在 <button> 之前 —— 不去注释,切出来的是注释里的那几个字。
+     * 本仓这类误伤已出现六次,一律先去注释。
+     */
+    const header = readSource("src/components/common/FolioPageHeader.vue")
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/\/\*[\s\S]*?\*\//g, "");
+    const at = header.indexOf("data-folio-next-step");
+    expect(at, "眉批那枚控件不见了").toBeGreaterThan(0);
+    /*
+     * 从**标签开头**切:`data-folio-next-step` 在属性区,而它是 <button> 还是 <p>
+     * 写在标签名上、位于切点之前。向前退到最近的 `<`。
+     */
+    const tagStart = header.lastIndexOf("<", at);
+    const block = header.slice(tagStart, at + 900);
+    expect(block, "该是一枚按钮").toMatch(/<(button|a)\b/);
+    expect(block, "点击要真的跳").toContain("@click");
+    expect(block, "去向取自同一份判定").toContain("nextStep.route");
+  });
+
   it("卷首有一处稳定的落点", () => {
     const header = readSource("src/components/common/FolioPageHeader.vue");
     expect(header, "卷首要能接这句话").toContain("data-folio-next-step");

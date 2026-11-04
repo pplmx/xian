@@ -1800,6 +1800,45 @@
   .folio-masthead__next {
     margin-top: 0.125rem;
     color: rgb(var(--color-qing-rgb));
+    /*
+     * 它是一枚按钮,但**不该长得像按钮** —— 眉批是这一页的第一句话,
+     * 铺底色或加边框会把它变成工具箱里的一格。可点感只靠三件事:
+     * 悬停时那枚小箭头向右挪一点、按下时色深一档、指针变手。
+     */
+    cursor: pointer;
+    text-align: left;
+    background: none;
+    border: 0;
+    /*
+     * 可点区域补到 28×28(触控下限),但**不把这行撑高**。
+     *
+     * 它变成 <button> 之后高只有 17.9px —— 布局门当场报「可点元素过小」。
+     * 用负外边距 + 等量内边距把热区上下各扩 5px,视觉位置与行高都不动:
+     * 眉批仍紧贴副题,而手指按得中。左右不扩 —— 那会与旁边的法球抢热区。
+     */
+    padding-block: 6px;
+    margin-block: -6px;
+  }
+  .folio-masthead__next-cue {
+    color: rgb(var(--color-qing-rgb) / 0.55);
+    transition: transform 0.12s ease;
+  }
+  /*
+   * 悬停反馈要包在「真悬停设备」的守卫里(与 tailwind 的 hoverable: 同一条媒体查询)。
+   * 裸 :hover 在触屏上会黏住 —— 点过之后那枚箭头一直偏着,直到玩家点别处。
+   * uiLayering 的「触屏的滚动与悬停只说真话」抓到的正是这个。
+   */
+  @media (hover: hover) and (pointer: fine) {
+    .folio-masthead__next:hover .folio-masthead__next-cue {
+      transform: translateX(2px);
+    }
+  }
+  .folio-masthead__next:active:not(:disabled) {
+    color: rgb(var(--color-qing-rgb) / 0.75);
+  }
+  .folio-masthead__next:focus-visible {
+    outline: 1px solid rgb(var(--color-qing-rgb) / 0.6);
+    outline-offset: 2px;
   }
   .folio-masthead__next-mark {
     color: rgb(var(--color-qing-rgb) / 0.5);

@@ -91,16 +91,27 @@
           这一句说的是**眼下该去哪**。指向本页的建议不出(玩家已经站在那儿了),
           一条都没有时整行不渲染:界面上不占位置,也不说废话。
         -->
-        <p
+        <!--
+          那句话是可以点的:它说「该去哪」,就真的把玩家送过去。
+          初版是一枚 <p> —— 写着「关隘已开,可去破境」却不能点,
+          等于把"去导航里找"的成本又推回给玩家。
+          语义上它是一枚按钮而不是链接:站内单页应用,没有可分享的 URL 语义;
+          用 <button> 也让读屏软件念得出「按一下会离开本页」。
+        -->
+        <button
           v-if="nextStep"
+          type="button"
           class="folio-masthead__next flex items-center gap-1 t-body text-qing"
           data-folio-next-step
           :data-next-step-id="nextStep.id"
           :data-next-step-route="nextStep.route"
+          :aria-label="`${nextStep.text},前往${nextStepRouteLabel}`"
+          @click="goNextStep"
         >
           <span class="folio-masthead__next-mark" aria-hidden="true">》</span>
           <span>{{ nextStep.text }}</span>
-        </p>
+          <span class="folio-masthead__next-cue" aria-hidden="true">›</span>
+        </button>
       </div>
       <div
         v-if="$slots.visual"
@@ -150,6 +161,26 @@ const route = useRoute();
 const router = useRouter();
 /** 眉批那一句 —— 与全站共用同一份判定,不在各页各算一次 */
 const nextStep = useNextStep(() => route.name);
+
+/**
+ * 那行字指向的那一页叫什么 —— 给 aria-label 用。
+ *
+ * 读屏软件念到「关隘已开,可去破境」时,玩家还得知道这一按会去哪。
+ * 名字取自导航表(与本页眉那枚图标同源),不另写一份。
+ */
+const nextStepRouteLabel = computed(() => {
+  const step = nextStep.value;
+  if (!step) return "";
+  return navigationPositionOf(step.route)?.entry.label ?? "那处";
+});
+
+/** 按下去:去那一页。同一路由不重复 push(会多出一条历史) */
+function goNextStep(): void {
+  const step = nextStep.value;
+  if (!step) return;
+  if (route.name === step.route) return;
+  void router.push({ name: step.route });
+}
 const position = computed(() => navigationPositionOf(route.name));
 const navigation = computed(() => position.value?.entry);
 const chapterItems = computed(() => chapterRailItems(route.name));

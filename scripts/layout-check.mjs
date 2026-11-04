@@ -9579,6 +9579,61 @@ async function taskNextStep() {
       }
     }
 
+    /*
+     * 五 那行字可以点,而且真的把人送过去。
+     * 初版它只是 <p>:写着「可去破境」却不能点 —— 一句话指出去处却不给路,
+     * 等于把"自己去导航里找"的成本推回给玩家。这一条量真实跳转。
+     */
+    checked += 1;
+    {
+      const clickSlices = showcaseSlices("light");
+      clickSlices.adventure = {
+        ...(clickSlices.adventure ?? {}),
+        session: null,
+        pendingEventId: null,
+      };
+      clickSlices.endgame = { ...(clickSlices.endgame ?? {}), daoPath: null };
+      clickSlices.inventory = {
+        ...clickSlices.inventory,
+        artifacts: [
+          { defId: "af_muyu", level: 0 },
+          { defId: "af_lihuo", level: 0 },
+        ],
+        equippedArtifacts: ["af_muyu"],
+        items: [],
+      };
+      await seedSave(ctx, clickSlices, "__nextStep_click");
+      await page.reload({ waitUntil: "load" });
+      await page.waitForTimeout(800);
+      await openRoute(page, "/cultivation", 900);
+      await clearOverlays(page);
+      const before = new URL(page.url()).hash;
+      const btn = page.locator("[data-folio-next-step]").first();
+      if ((await btn.count()) === 0) {
+        failures.push("[390] 下一步:可点那一条 —— 修行页上没有眉批");
+      } else {
+        const tag = await btn.evaluate((el) => el.tagName.toLowerCase());
+        if (tag !== "button") {
+          failures.push(`[390] 下一步:眉批是 <${tag}>,不是一枚可点的控件`);
+        }
+        // 先记下它当时指的是哪一处,再核跳转是否真去了那一处
+        const wantRoute = await btn.getAttribute("data-next-step-route");
+        await btn.click({ timeout: 4000 }).catch(() => {});
+        await page.waitForTimeout(700);
+        const after = new URL(page.url()).hash;
+        if (after === before) {
+          failures.push(`[390] 下一步:点了眉批没有离开 «${before}»`);
+        } else if (wantRoute && !after.includes(wantRoute)) {
+          failures.push(`[390] 下一步:眉批写着去 «${wantRoute}»,点了却到了 «${after}»`);
+        }
+        // 到了那一页,指向本页的建议就该消失 —— 否则会自己叫自己去自己这儿
+        const here = await readStep();
+        if (here && wantRoute && here.route === wantRoute) {
+          failures.push(`[390] 下一步:到了 «${wantRoute}» 之后,还在建议去 «${wantRoute}»`);
+        }
+      }
+    }
+
     if (pageErrors.length) {
       failures.push(`[390] 下一步页面异常:${[...new Set(pageErrors)].join(" | ")}`);
     }
