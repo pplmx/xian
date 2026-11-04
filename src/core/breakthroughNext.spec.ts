@@ -72,6 +72,44 @@ describe("突破失败之后 · 弹窗要说下一步", () => {
   });
 });
 
+describe("突破失败之后 · 渡劫跬步那一支真的成立吗", () => {
+  it("免败只护一次 —— 判定本身写在 consumeHeritageUse 里", () => {
+    /*
+     * 第 39 轮写这段时只验了「普通失败」那一支,「渡劫跬步护住」那一支
+     * 是照着读代码推出来的。这一条把它的语义钉住。
+     *
+     * 这里不跑真实 store:`layeringAudit` 有一条「core 用例对 Pinia 的依赖
+     * 只许收拢」—— 为了让一条断言跑起来而抬高那个基线,是把成本挪给了整个仓库。
+     * 判定逻辑本身很短,静态核它的条件即可;真行为由浏览器判据覆盖
+     * (那里造了带 dubu 的存档,量到「渡劫跬步护住了这一身修为」)。
+     */
+    const src = readSource("src/stores/player.ts");
+    const at = src.indexOf("function consumeHeritageUse(");
+    expect(at, "判定函数要还在").toBeGreaterThan(0);
+    const block = src.slice(at, at + 400);
+    expect(block, "没有这份传承时不护").toContain("heritage.includes(id)");
+    expect(block, "用过的不再护").toMatch(/used\s*>=\s*max/);
+  });
+
+  it("那句「渡劫跬步护住了这一身修为」与判定的返回**同一个值**", () => {
+    /*
+     * 这一条防的是变量被误用:若哪天有人把 `sparedByHeritage` 的赋值挪到
+     * `loseExpPct` 之后,或者干脆用 `!sparedByHeritage` 去拼那句话,
+     * 文案就会与结算相反 —— 明明折了修为,却说"护住了"。
+     */
+    const src = readSource("src/core/breakthrough.ts");
+    const at = src.indexOf("const sparedByHeritage");
+    expect(at, "那个变量要还在").toBeGreaterThan(0);
+    const block = src.slice(at, at + 1200);
+    // 折损判定用的是它本身(不是取反)
+    expect(block, "折损该看它是否为 false").toMatch(
+      /if\s*\(\s*!sparedByHeritage\s*\)\s*player\.loseExpPct/,
+    );
+    // 免损话术也用它本身(不是取反)
+    expect(block, "免损话术该看它是否为 true").toMatch(/if\s*\(\s*sparedByHeritage\s*\)/);
+  });
+});
+
 describe("突破失败之后 · 类型与展示", () => {
   it("BreakthroughView 上那个字段是可选的 —— 成功时没有下一步", () => {
     const types = readSource("src/types/index.ts");

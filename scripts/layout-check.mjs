@@ -9430,7 +9430,7 @@ async function taskBreakthroughNext() {
     slices.resources = { ...slices.resources, qi: 1e12 };
     await seedSave(ctx, slices, "__btNext");
 
-    const page = await ctx.newPage();
+    let page = await ctx.newPage();
     await page.addInitScript(() => {
       Math.random = () => 0.999;
     });
@@ -9472,11 +9472,60 @@ async function taskBreakthroughNext() {
       }
     }
 
+    /*
+     * 二 渡劫跬步那一支 —— 第 39 轮写这段时只验了普通失败,「护住修为」这一支
+     * 是照着读代码推的。这里造一份带 dubu 传承的存档,再打一次失败,
+     * 看那一步是不是改成「渡劫跬步护住了这一身修为」。
+     */
+    checked += 1;
+    {
+      const spared = showcaseSlices("light");
+      spared.player = {
+        ...spared.player,
+        major: 1,
+        sub: 0,
+        exp: { m: 9, e: 18 },
+        reincarnation: {
+          ...(spared.player.reincarnation ?? {}),
+          heritage: ["dubu"],
+          heritageUses: {},
+        },
+      };
+      spared.resources = { ...spared.resources, qi: 1e12 };
+      await seedSave(ctx, spared, "__btSpared");
+    }
+    await page.close();
+    page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.999;
+    });
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/cultivation", 900);
+    await clearOverlays(page);
+    {
+      const b2 = page.locator('[data-cultivation-primary-action="breakthrough"]').first();
+      if ((await b2.count()) > 0 && !(await b2.isDisabled().catch(() => false))) {
+        await b2.click({ timeout: 4000 }).catch(() => {});
+        await page.waitForTimeout(900);
+      }
+    }
+    const sparedStep = await page.evaluate(() => {
+      const el = document.querySelector("[data-breakthrough-next]");
+      return el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null;
+    });
+    if (!sparedStep) {
+      failures.push("[390] 突破下一步:带渡劫跬步时也没有那一步");
+    } else if (!sparedStep.includes("渡劫跬步")) {
+      failures.push(`[390] 突破下一步:跬步该护住修为,那一步却没说 «${sparedStep}»`);
+    } else if (sparedStep.includes("修为折损")) {
+      failures.push(`[390] 突破下一步:跬步护住了却仍报折损 «${sparedStep}»`);
+    }
+
     if (pageErrors.length) {
       failures.push(`[390] 突破下一步页面异常:${[...new Set(pageErrors)].join(" | ")}`);
     }
     if (failures.length === 0) {
-      console.log(`\n突破下一步:«${shown.next}»`);
+      console.log(`\n突破下一步:普通 «${shown.next}» ；跬步 «${sparedStep}»`);
     } else {
       console.log(`\n突破下一步[未通过]:${JSON.stringify(shown)}`);
     }
