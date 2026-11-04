@@ -379,6 +379,7 @@ const CATEGORIES = [
       "nextStep",
       "nextStepSources",
       "titleMoment",
+      "lifespanWarning",
     ],
   },
   {

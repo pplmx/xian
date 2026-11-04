@@ -9375,6 +9375,153 @@ async function taskQualityLadder() {
 }
 
 /**
+ * 寿元将尽要说得出。
+ *
+ * 这条警告从没被任何判据读过 —— 全仓模板里 780 个 `data-*` 落点、判据读了 523 个,
+ * 而 `data-lifespan-warning` 在那 257 个没读过的里面。它管的是玩家的生死。
+ *
+ * 触发条件只有一个比较、样式只有一条,所以**很久没坏过,也就很久没人看过**。
+ * 而它一旦坏掉,坏法是安静的:比例算错、颜色被后面的规则盖掉、阈值改了没同步 ——
+ * 表现都只是「寿元将尽的玩家没被提醒」。
+ *
+ * 判据**两侧都量**:将尽的要变朱砂,充裕的不许变。
+ * 只核"出现过"会漏掉「谁的寿元都被标红」这种更坏的情形。
+ */
+async function taskLifespanWarning() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const pageErrors = [];
+    const read = async (page) =>
+      page.evaluate(() => {
+        const el = document.querySelector(".folio-head__lifespan");
+        if (!el) return null;
+        const style = getComputedStyle(el);
+        return {
+          marked: el.hasAttribute("data-lifespan-warning"),
+          color: style.color,
+          text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+        };
+      });
+
+    /*
+     * 寿数(lifespanMax)是**算出来的**:境界基础寿命 × (1 + 寿元加成) + 加成年。
+     * 它不是存档里能直接写的字段 —— 首版写了 `lifespanMax: 100`,被无视,
+     * 于是顶栏读成「95/1亿载」,比例仍是满的,警告自然不出现。
+     *
+     * 故这里反过来:先读页面上真实的寿数,再按**比例**推年龄。
+     */
+    /*
+     * 寿数上限可能带「万/亿」,解析它不如**直接试**:年龄从 1 起翻倍,
+     * 直到那格出现警告(说明剩余比例已经低于阈值)—— 页面自己会告诉我们到了没有。
+     * 这比"先把 1亿 解析成数字再乘"笨,但它不依赖任何显示格式。
+     */
+    const seedUntilWarned = async (tag) => {
+      for (const age of [1, 1000, 100000, 10000000, 100000000]) {
+        const slices = showcaseSlices("light");
+        slices.player = { ...slices.player, age };
+        await seedSave(ctx, slices, `__lifespan_${tag}_${age}`);
+        // 每个年龄换一页:连着 reload 会让文档在加载途中抢不到 localStorage
+        await page.close();
+        page = await ctx.newPage();
+        await page.addInitScript(() => {
+          Math.random = () => 1;
+        });
+        watchPageErrors(page, pageErrors);
+        await openRoute(page, "/cultivation", 900);
+        await clearOverlays(page);
+        const got = await read(page);
+        if (got && got.marked) return true;
+      }
+      return false;
+    };
+
+    let page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    watchPageErrors(page, pageErrors);
+
+    // 一 将尽:剩余 5%,低于 15% 阈值
+    checked += 1;
+    const nearOk = await seedUntilWarned("near");
+    const near = await read(page);
+    if (!nearOk) {
+      failures.push(
+        `[390] 寿元警告:把年龄推到 1 亿岁也没触发警告(«${near?.text ?? "读不到"}»)` +
+          ` —— 要么阈值判错了,要么落点没挂上`,
+      );
+    }
+    if (!near) {
+      failures.push("[390] 寿元警告:顶栏读不到寿元那一格");
+    } else {
+      if (!near.marked) {
+        failures.push(`[390] 寿元警告:剩 5% 了却没有落点(«${near.text}»)`);
+      }
+      /*
+       * 朱砂 = 本作的警示色。这里不比对具体色值(主题会换),只核
+       * 「它与充裕时那一格不是同一个颜色」—— 那正是玩家能看见的差别。
+       */
+    }
+
+    // 二 充裕:刚入道,年龄 1
+    checked += 1;
+    {
+      const fresh = showcaseSlices("light");
+      fresh.player = { ...fresh.player, age: 1 };
+      await seedSave(ctx, fresh, "__lifespan_plenty");
+    }
+    /*
+     * 新开一页而不是 reload:连着 reload 五六次之后,页面会在加载途中
+     * 抢不到 localStorage(SecurityError —— 文档还没拿到同源上下文)。
+     * 换页不会有这个问题,而且语义上更清楚:这是另一份存档。
+     */
+    await page.close();
+    page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/cultivation", 900);
+    await clearOverlays(page);
+    const plenty = await read(page);
+    if (!plenty) {
+      failures.push("[390] 寿元警告:充裕档也读不到那一格");
+    } else {
+      if (plenty.marked) {
+        failures.push(`[390] 寿元警告:剩 80% 也被标了警告(«${plenty.text}»)`);
+      }
+    }
+
+    // 三 两档的颜色必须真的不同 —— 只加属性不加样式等于没提醒
+    checked += 1;
+    if (near && plenty && near.marked && near.color === plenty.color) {
+      failures.push(`[390] 寿元警告:警告态的色与常态一样 «${near.color}» —— 标了等于没标`);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 寿元警告页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(
+        `\n寿元警告:将尽 «${near?.text}» ${near?.color} · 充裕 «${plenty?.text}» ${plenty?.color}`,
+      );
+    } else {
+      console.log(`\n寿元警告[未通过]:${JSON.stringify({ near, plenty })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 称号的道历 —— 得它的那一刻写得出来。
  *
  * 图鉴每一条都有「第 N 世 · M 岁」的收录读数,而称号一直只有个 id 数组:
@@ -25362,6 +25509,7 @@ const TASKS = [
   ["闪光的分量跟着品阶走", taskFlashTier],
   ["卷首眉批说得出下一步", taskNextStep],
   ["称号记得住得它的那一刻", taskTitleMoment],
+  ["寿元将尽要说得出", taskLifespanWarning],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
