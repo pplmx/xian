@@ -9496,9 +9496,32 @@ async function taskFlashTier() {
     if (pageErrors.length) {
       failures.push(`[390] 闪光分量页面异常:${[...new Set(pageErrors)].join(" | ")}`);
     }
+    /*
+     * 声与光同一份判定:那一层光上写着它这一响是哪一声(data-rare-flash-sfx)。
+     * 判据核的是**两侧不许分叉** —— 光说「plain」而声说「rareTop」,
+     * 就是玩家看到轻闪、听见重响。
+     */
+    checked += 1;
+    if (flash) {
+      const sfx = await page.evaluate(() => {
+        const el = document.querySelector(".rare-flash");
+        return el ? (el.getAttribute("data-rare-flash-sfx") ?? "") : "";
+      });
+      const expectedByTier = { plain: "rare", rare: "rareHigh", top: "rareTop" };
+      const want = expectedByTier[flash.tier];
+      if (!sfx) {
+        failures.push("[390] 闪光分量:那层光没有带这一响的标记");
+      } else if (want && sfx !== want) {
+        failures.push(
+          `[390] 闪光分量:光与声分叉了 —— 光档 «${flash.tier}» 却配了 «${sfx}»(该 ${want})`,
+        );
+      }
+      flash.sfx = sfx;
+    }
+
     if (failures.length === 0) {
       console.log(
-        `\n闪光分量:灵品 «${flash?.tier}» ${flash?.duration} 默认金 · 神品档 ${plans.top} / 天仙档 ${plans.rare}`,
+        `\n闪光分量:灵品 «${flash?.tier}» ${flash?.duration} 默认金 声«${flash?.sfx}» · 神品档 ${plans.top} / 天仙档 ${plans.rare}`,
       );
     } else {
       console.log(`\n闪光分量[未通过]:${JSON.stringify({ flash, plans })}`);

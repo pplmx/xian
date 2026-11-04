@@ -32,6 +32,7 @@
  */
 import type { QualityId } from "@/types";
 import { qualityDef } from "@/data/qualities";
+import { rareSfxOf, type RareSfxTier } from "./rareSfx";
 
 /** 这道光有多重 */
 export type FlashTier = "plain" | "rare" | "top";
@@ -46,10 +47,22 @@ export interface FlashPlan {
    *   否则 —— 一个调色板 token,界面拿它去求值
    */
   colorToken: string | null;
+  /**
+   * 这一道该配哪一声(见 ui/rareSfx)。
+   *
+   * 放在这里而不是让提示条各算一次:光与声是同一件事的两面,同一条提示
+   * 不该出现「光按神品闪、声按灵品响」这种分叉。
+   */
+  sfx: RareSfxTier;
 }
 
 /** 没有品阶印时的那道光 —— 与改造前完全一致,不惊动转世 / 突破 / 里程碑 */
-export const FLASH_DEFAULT: FlashPlan = { tier: "plain", seconds: 1.1, colorToken: null };
+export const FLASH_DEFAULT: FlashPlan = {
+  tier: "plain",
+  seconds: 1.1,
+  colorToken: null,
+  sfx: "rare",
+};
 
 /**
  * 品阶印 → 那道光。
@@ -71,5 +84,6 @@ export function flashPlanOf(quality: QualityId | undefined): FlashPlan {
     tier: rank >= 8 ? "top" : "rare",
     seconds: rank >= 8 ? 1.6 : 1.35,
     colorToken: def.color,
+    sfx: rareSfxOf(rank),
   };
 }

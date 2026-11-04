@@ -19,6 +19,7 @@
       :key="flashId"
       class="rare-flash"
       :data-rare-flash-tier="flashPlan.tier"
+      :data-rare-flash-sfx="flashPlan.sfx"
       :style="flashStyle"
     />
     <!--
@@ -185,10 +186,16 @@ watch(
     if (newest <= lastAnnouncedId) return;
     for (const t of ui.toasts) {
       if (t.id <= lastAnnouncedId) continue;
-      playSfx(KIND_SFX[t.kind]);
+      /*
+       * 稀有那一响按品阶分层(见 ui/rareSfx):灵/玄/地是原来那一响,
+       * 天仙升一档、神品再升一档。视觉层早已分层(边框、全屏光、提示条上的印),
+       * 声音层不该继续在说「都一样」。
+       */
       if (t.kind === "rare") {
         // 这一道的分量跟着那一条的品阶印走(见 ui/flashTier)
         flashPlan.value = flashPlanOf(t.seal);
+        // 声与光同一份判定:同一条提示不许光按神品闪、声按灵品响
+        playSfx(flashPlan.value.sfx);
         flashId.value = t.id;
         setTimeout(
           () => {
@@ -197,6 +204,8 @@ watch(
           // 摘得比动画晚一点:动画自己 forwards 收尾,提前摘会看见它闪回去
           Math.ceil(flashPlan.value.seconds * 1000) + 120,
         );
+      } else {
+        playSfx(KIND_SFX[t.kind]);
       }
       lastAnnouncedId = t.id;
     }

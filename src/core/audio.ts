@@ -15,6 +15,8 @@ export type SfxName =
   | "warn"
   | "info"
   | "rare"
+  | "rareHigh"
+  | "rareTop"
   | "win"
   | "lose"
   | "breakthrough"
@@ -513,6 +515,22 @@ export function playSfx(name: SfxName): void {
       // 管钟一撞,金声玉振
       bellSampler?.triggerAttackRelease("D5", "1n", now, 0.6);
       chimeSampler?.triggerAttackRelease("D7", "1n", now + 0.15, 0.2);
+      break;
+    case "rareHigh":
+      /*
+       * 天 / 仙 —— 同一口钟,敲在更高的地方(见 ui/rareSfx)。
+       * 用音高与声部数分层,不用音量:音量在手机扬声器上几乎听不出差别,
+       * 而和声的厚度会变。三层始终留在管钟这一族,不刮奏 ——
+       * 刮奏冲顶是「大境界突破」的语义,借过来会把那件事稀释。
+       */
+      bellSampler?.triggerAttackRelease("F5", "1n", now, 0.62);
+      chimeSampler?.triggerAttackRelease("A7", "1n", now + 0.15, 0.22);
+      break;
+    case "rareTop":
+      /* 神 —— 更高一档,并补一个低八度作根基:同一口钟,底座更厚 */
+      bellSampler?.triggerAttackRelease("A5", "1n", now, 0.65);
+      bellSampler?.triggerAttackRelease("A3", "1n", now, 0.5);
+      chimeSampler?.triggerAttackRelease("A7", "1n", now + 0.15, 0.24);
       break;
     case "win":
       gliss(["D5", "E5", "F#5", "A5", "B5"], 0.09);

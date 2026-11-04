@@ -58,6 +58,32 @@ describe("闪光的分量 · 稀有段分层", () => {
   });
 });
 
+describe("闪光的分量 · 声与光同一份判定", () => {
+  it("三档的光各自配一声,且与稀有段同一条界", () => {
+    expect(flashPlanOf(undefined).sfx).toBe("rare");
+    expect(flashPlanOf("earth").sfx, "灵/玄/地不升声").toBe("rare");
+    expect(flashPlanOf("heaven").sfx).toBe("rareHigh");
+    expect(flashPlanOf("immortal").sfx).toBe("rareHigh");
+    expect(flashPlanOf("divine").sfx).toBe("rareTop");
+  });
+
+  it("光升一档,声也升一档 —— 两件事不许分叉", () => {
+    const tian = flashPlanOf("heaven");
+    const shen = flashPlanOf("divine");
+    expect(tian.tier).toBe("rare");
+    expect(tian.sfx).toBe("rareHigh");
+    expect(shen.tier).toBe("top");
+    expect(shen.sfx).toBe("rareTop");
+    // 没有一种组合是「光到顶了,声还在底」或反过来
+    for (const q of QUALITIES) {
+      const plan = flashPlanOf(q.id);
+      const lightRank = plan.tier === "top" ? 2 : plan.tier === "rare" ? 1 : 0;
+      const soundRank = plan.sfx === "rareTop" ? 2 : plan.sfx === "rareHigh" ? 1 : 0;
+      expect(soundRank, `${q.name} 的光与声档位分叉了`).toBe(lightRank);
+    }
+  });
+});
+
 describe("闪光的分量 · 只是分类", () => {
   it("不碰 DOM、不碰结算 —— 色值留给界面求", () => {
     const src = readSource("src/ui/flashTier.ts")
@@ -69,7 +95,8 @@ describe("闪光的分量 · 只是分类", () => {
     // 只许 import 品质表(那是数据的唯一来源)
     const imports = [...src.matchAll(/^import[^;]*from ["']([^"']+)["']/gm)].map((m) => m[1]!);
     for (const from of imports) {
-      expect(from, `不该 import ${from}`).toMatch(/^@\/data\/qualities$|^@\/types$/);
+      // 只许品质表(数据的唯一来源)与同层的 rareSfx(声与光同一份判定)
+      expect(from, `不该 import ${from}`).toMatch(/^@\/data\/qualities$|^@\/types$|^\.\/rareSfx$/);
     }
   });
 });
