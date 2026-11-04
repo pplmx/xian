@@ -239,7 +239,19 @@
                     >
                       <GameIcon :name="activePet.def.icon" :size="17" />
                     </span>
+                    <!--
+                      天品起盖一枚品阶阴文章 —— 与功法书目、法宝行卡、装备格同一枚
+                      (见 ui/qualityTier 的注释:「稀有档另有 QualitySeal 角章作形状线索」)。
+                      颜色是顺序标尺、章是离散标记:前者要比较,后者扫一眼就有。
+                    -->
                     <strong>{{ activePet.def.name }}</strong>
+                    <QualitySeal
+                      v-if="isRareQuality(activePet.def.quality)"
+                      :quality="activePet.def.quality"
+                      :size="14"
+                      class="shrink-0"
+                      data-pet-quality-seal="active"
+                    />
                     <span class="name-beast-focus__state">{{
                       qualityDef(activePet.def.quality).name
                     }}</span>
@@ -330,6 +342,14 @@
                 <div class="name-ledger__copy">
                   <template v-if="row.owned">
                     <p class="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                      <!-- 稀有档的形状线索:四十只同屏滚动,颜色相近的邻行挨得最近 -->
+                      <QualitySeal
+                        v-if="isRareQuality(row.def.quality)"
+                        :quality="row.def.quality"
+                        :size="14"
+                        class="shrink-0"
+                        data-pet-quality-seal="row"
+                      />
                       <span
                         class="name-ledger__name"
                         :style="{ color: qualityDef(row.def.quality).color }"
@@ -449,6 +469,8 @@ import {
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
+import QualitySeal from "@/components/common/QualitySeal.vue";
+import { isRareQuality } from "@/ui/qualityTier";
 import NameBeastSwitch from "@/components/common/NameBeastSwitch.vue";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import {

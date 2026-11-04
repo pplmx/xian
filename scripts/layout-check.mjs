@@ -10824,10 +10824,11 @@ async function taskMultText() {
  * 这一轮顺着同一根线看到 `quests.petCompanions` 同样只是个 id 数组 ——
  * 玩家有一园灵兽,却分不出哪只是**这一世**结的缘。
  *
- * 判据三件:
+ * 判据四件:
  *   一 已结缘的那只带着道历读数,写法与称号、图鉴同一种(「第 N 世 · M 岁」);
  *   二 旧档(有灵兽、无时刻)照实说「早年收录」,不编一个;
- *   三 未结缘的那只不显示这一刻。
+ *   三 未结缘的那只不显示这一刻;
+ *   四 高档那几只盖品阶角章、低档的不盖 —— 见下「形状线索」那一段。
  */
 async function taskPetMoment() {
   const failures = [];
@@ -10942,6 +10943,78 @@ async function taskPetMoment() {
     const none = await read(page, petIds[1]);
     if (none && none.text !== null) {
       failures.push(`[390] 契兽道历:未结缘的那只也印了一行 «${none.text}»`);
+    }
+
+    /*
+     * 四 形状线索 —— 高档盖品阶角章,低档不盖。
+     *
+     * `ui/qualityTier` 写着「稀有档另有 QualitySeal 角章作形状线索 —— 色弱玩家
+     * 不靠颜色也能分档」,而灵兽谱此前是全库唯一没兑现这句话的长名册。
+     * 判据两侧都量:该盖的必须盖,**不该盖的一枚都不许有** ——
+     * 只核「出现过」会漏掉「四十只全盖上」那种更坏的情形(人人有章等于人人无章)。
+     */
+    checked += 1;
+    {
+      /*
+       * 只量**已结缘**的行:未结缘那一支是刻意的显示「???」——
+       * 名都不给看,自然也不该透露品阶(那是「去结缘」的钩子)。
+       * 故夹具里种三只已拥有的(神品 / 仙品 / 精品各一),两侧一起量:
+       * 高档的要盖,精品的不许盖。
+       */
+      const ownedSlices = showcaseSlices("light");
+      ownedSlices.quests = {
+        ...(ownedSlices.quests ?? {}),
+        collections: {
+          ...(ownedSlices.quests?.collections ?? {}),
+          pet: ["pet_kunpeng", "pet_yinglong", "pet_qingyu"],
+        },
+        petCompanions: [],
+        petMoments: {},
+      };
+      await seedSave(ctx, ownedSlices, "__petSealFixture");
+      await page.reload({ waitUntil: "load" });
+      await page.waitForTimeout(900);
+      await openRoute(page, "/titles", 900);
+      await clearOverlays(page);
+      if ((await petTab.count()) > 0) {
+        await petTab.click({ timeout: 3000 }).catch(() => {});
+        await page.waitForTimeout(500);
+      }
+      const sealTruth = await page.evaluate(() => {
+        const rows = [...document.querySelectorAll("[data-pet-row]")];
+        return {
+          owned: rows
+            .filter((row) => row.getAttribute("data-pet-state") !== "locked")
+            .map((row) => ({
+              id: row.getAttribute("data-pet-row"),
+              sealed: Boolean(row.querySelector("[data-pet-quality-seal]")),
+            })),
+        };
+      });
+      // 稀有界与界面同源(ui/qualityTier 的 isRareQuality = rank >= 6),
+      // 这里不另写一个 6 —— 界挪了,门要跟着挪
+      const RARE_RANK = qualityDef("heaven").rank;
+      const isRare = (id) => {
+        const def = PETS.find((p) => p.id === id);
+        return def ? qualityDef(def.quality).rank >= RARE_RANK : false;
+      };
+      const wrongSealed = sealTruth.owned.filter((row) => row.sealed && !isRare(row.id));
+      const missing = sealTruth.owned.filter((row) => !row.sealed && isRare(row.id));
+      if (sealTruth.owned.length < 3) {
+        failures.push(
+          `[390] 灵兽谱:已结缘的行只有 ${sealTruth.owned.length} 只,量不到两侧(夹具未收录?)`,
+        );
+      }
+      if (wrongSealed.length > 0) {
+        failures.push(
+          `[390] 灵兽谱:低档的也盖了品阶角章 —— 人人有章等于人人无章(${wrongSealed.map((r) => r.id).join(",")})`,
+        );
+      }
+      if (missing.length > 0) {
+        failures.push(
+          `[390] 灵兽谱:高档灵兽没盖角章 —— 色弱玩家只能靠颜色分档(${missing.map((r) => r.id).join(",")})`,
+        );
+      }
     }
 
     if (pageErrors.length) {
