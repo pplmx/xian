@@ -380,6 +380,7 @@ const CATEGORIES = [
       "nextStepSources",
       "titleMoment",
       "lifespanWarning",
+      "reincarnationWarning",
     ],
   },
   {
