@@ -382,6 +382,7 @@ const CATEGORIES = [
       "lifespanWarning",
       "reincarnationWarning",
       "reincarnationOpen",
+      "rngBoundary",
     ],
   },
   {

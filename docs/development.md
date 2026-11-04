@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 473 个 spec;本作自己那部分 393 个) |
+| `bun run test` | 全量用例(全量 474 个 spec;本作自己那部分 394 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -98,7 +98,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 473 个 spec(本作自己那部分 393 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 474 个 spec(本作自己那部分 394 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -724,30 +724,24 @@ git push origin main v0.0.2
 body，`page.locator(...)` 的作用域在这儿不稳，页内在 `querySelector` 上点更可靠；
 两处按钮文案都含「进入第」，按文案认会点同一颗。
 
-还有一条**尚未查明的异常**：点 `data-rebirth-enter` 时页面抛
-`TypeError: Cannot read properties of undefined (reading 'id')`。
+还有一条**已查明**的异常（2026 年第 32 轮结案）：
 
-2026 年追了两轮，已知与未知如下——记在这里，免得下一轮重走：
+`TypeError: Cannot read properties of undefined (reading 'id')`，点 `data-rebirth-enter` 时出现。
 
-**已知**
+**根因是探针，不是代码**：探针用 `Math.random = () => 1` 钉死随机源，而 `rng.pick` 取的是
+`arr[Math.floor(rand() * arr.length)]` —— `rand() === 1` 时下标正好等于 `arr.length`，**越界**，
+返回 `undefined`。`Math.random()` 的值域是 `[0, 1)`，永远不会是 1；探针违反了这个前提。
+于是 `offerThemes` 收进一个 `undefined`，下游 `x.id` 当场炸，而堆栈指向了另一个函数。
 
-- 堆栈落在 `reincarnationDesk` 那一支，`Array.filter` 的回调里（压缩后是 `ie`），不在
-  `prepareReincarnation()` 内部（第 29 轮的初判错了）
-- 夹具无论怎么调（`major` 2/3/9、有无 `dead`、年龄大小）都会撞上
-- 复现之后页面**停在死亡态**（`stages: ["death"]`），第二程没有挂上来；
-  `[data-reincarnation-critical-row]` 数为 0 —— 那正是「渲染到那一支就中止」的样子
-- **单测复现不了**：`samsaraLedger → samsaraBalance → criticalSamsaraRows` 全链路在
-  `_rep2.spec` 里跑通（3 组 / 36 行 / 8 条 critical），数据 `HERITAGE` 全部有 `id`
+**怎么查出来的**：第 29–31 三轮回荡在「读源码猜」上（猜了六种全错）。第 32 轮改成
+**运行日志取证**——在被怀疑的函数里打一行入参，构建后跑一次，日志显示数据完全正常
+（`criticalSamsaraRows in: [12,4,20]`）。数据正常而仍然崩，就只剩「崩的根本不在那里」一种可能。
+反查打包产物，堆栈里的 `ie` 是 `prepareReincarnation`。
 
-**未知**
+**为什么不全局换成 0.5**：试过，当场三十余条红——`Math.random = () => 1` 在 46 处探针里是
+**刻意**的（让随机选择落到数组最后一项，断言据此写死）。全局改动会打破整屏的对比度与货架判据。
+故只改该改的，其余保留。
 
-- 这条异常依赖浏览器里的哪一份状态。静态阅读已排除：`HermesMODE` 常量、`HERITAGE` 数据、
-  双重映射（`criticalSamsaraRows` 的签名本就接已映射好的 ledger，不会重映）
-
-**测试上的意义**：单测抓不到它，因为它们**从不走「点兵解」这条路**——直接调终点函数、
-用自己造的完整夹具。不可逆操作在测试上的固有盲区就在这里：两道确认门之间的那份状态，
-没有单测走过。`ui/reincarnationOpen.spec` 只守住外围（入口共用、防御未退回、三程末才落定），
-**不会因为它复现而红**。
-
-**下一步该怎么查**：在浏览器里对 `criticalRows` 那个 v-for 上游逐个求值（而不是继续读源码），
-看 `ledger.value` 里是否真有空元素——那一处是唯一在 `.map` 里读 `.id` 的地方。
+**留给后人的**：`rng.pick` 的签名 `pick<T>(arr): T` 在撒谎——它可能返回 `undefined`，
+非空断言把越界藏起来了。默认随机源下安全，谁注入自定义随机源谁就会撞上。这条已写进
+`src/utils/random.ts` 的注释，并由 `core/rngBoundary.spec` 钉住。

@@ -45,6 +45,19 @@ export class RandomService {
     return this.rand() < p;
   }
 
+  /**
+   * 从数组里取一个。
+   *
+   * **边界**:`rand() === 1` 时下标等于 `length`,**越界**,返回 `undefined` ——
+   * 而签名说它返回 `T`。`Math.random()` 的值域是 `[0, 1)`,永远不会是 1,
+   * 故所有走默认随机源的调用都安全;但**注入的随机源**可以返回 1
+   * (测试桩、固定种子的探针都这么干过),那时这里的非空断言就是在撒谎。
+   *
+   * 2026 年为此栽过三轮回溯:探针把 `Math.random` 钉成 `1`,于是 `offerThemes`
+   * 收进了一个 `undefined`,下游 `e.id` 当场炸,而堆栈指向另一个函数。
+   * 探针侧已改钉 `0.5`(见 core/rngBoundary.spec);这里保留该行为不改 ——
+   * 改它会悄悄改变所有既有概率逻辑的下标分布。
+   */
   pick<T>(arr: readonly T[]): T {
     return arr[Math.floor(this.rand() * arr.length)]!;
   }
