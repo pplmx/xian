@@ -724,9 +724,30 @@ git push origin main v0.0.2
 body，`page.locator(...)` 的作用域在这儿不稳，页内在 `querySelector` 上点更可靠；
 两处按钮文案都含「进入第」，按文案认会点同一颗。
 
-还有一条**根因**：点 `data-rebirth-enter` 时页面抛
-`TypeError: Cannot read properties of undefined (reading 'id')`（在 `prepareReincarnation()` 里）。
-夹具怎么调都绕不开，故那条浏览器判据没留下来。单测一条都没红——因为它们**从不走「点兵解」
-这条路**，而是直接调终点函数、用自己造的完整夹具。不可逆操作在测试上的固有盲区就在这里：
-两道确认门之间的那份状态，没有单测走过。这条异常尚未查明，`ui/reincarnationOpen.spec`
-只守住外围（入口共用、防御未退回、三程末才落定），**不会因为它复现而红**。
+还有一条**尚未查明的异常**：点 `data-rebirth-enter` 时页面抛
+`TypeError: Cannot read properties of undefined (reading 'id')`。
+
+2026 年追了两轮，已知与未知如下——记在这里，免得下一轮重走：
+
+**已知**
+
+- 堆栈落在 `reincarnationDesk` 那一支，`Array.filter` 的回调里（压缩后是 `ie`），不在
+  `prepareReincarnation()` 内部（第 29 轮的初判错了）
+- 夹具无论怎么调（`major` 2/3/9、有无 `dead`、年龄大小）都会撞上
+- 复现之后页面**停在死亡态**（`stages: ["death"]`），第二程没有挂上来；
+  `[data-reincarnation-critical-row]` 数为 0 —— 那正是「渲染到那一支就中止」的样子
+- **单测复现不了**：`samsaraLedger → samsaraBalance → criticalSamsaraRows` 全链路在
+  `_rep2.spec` 里跑通（3 组 / 36 行 / 8 条 critical），数据 `HERITAGE` 全部有 `id`
+
+**未知**
+
+- 这条异常依赖浏览器里的哪一份状态。静态阅读已排除：`HermesMODE` 常量、`HERITAGE` 数据、
+  双重映射（`criticalSamsaraRows` 的签名本就接已映射好的 ledger，不会重映）
+
+**测试上的意义**：单测抓不到它，因为它们**从不走「点兵解」这条路**——直接调终点函数、
+用自己造的完整夹具。不可逆操作在测试上的固有盲区就在这里：两道确认门之间的那份状态，
+没有单测走过。`ui/reincarnationOpen.spec` 只守住外围（入口共用、防御未退回、三程末才落定），
+**不会因为它复现而红**。
+
+**下一步该怎么查**：在浏览器里对 `criticalRows` 那个 v-for 上游逐个求值（而不是继续读源码），
+看 `ledger.value` 里是否真有空元素——那一处是唯一在 `.map` 里读 `.id` 的地方。
