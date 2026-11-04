@@ -103,61 +103,24 @@
                   <p v-if="adaptReveal" class="combat-combatant__reason tabular">
                     {{ adaptReveal }}
                   </p>
-                  <p
-                    v-if="battle && (battle.isBoss || isNemesisFoe || shownTraits.length)"
-                    class="combat-combatant__chips"
-                  >
-                    <span
-                      v-if="battle.isBoss"
-                      class="chip-ink border-cinnabar/60 text-note text-cinnabar"
-                      >首领</span
-                    >
-                    <!--
-                      宿敌章写全:不只两个字(见 ui/nemesisChip)。
-                      lossCount 就在 NemesisRecord 上,界面上从前一次都没用过 ——
-                      而"输给它三次"与"输给它七次"在玩家心里是完全不同的两个数。
-                    -->
-                    <span
-                      v-if="nemesisChip"
-                      class="chip-ink border-cinnabar/80 bg-cinnabar/6 text-note text-cinnabar"
-                      data-combat-nemesis
-                      >{{ nemesisChip }}</span
-                    >
-
-                    <span
-                      v-for="t in shownTraits"
-                      :key="t"
-                      class="chip-ink border-violet-ink/50 text-note text-violet-ink"
-                    >
-                      {{ TRAIT_NAMES[t] }}
-                    </span>
-                  </p>
                   <!--
-                    雪耻之后那一句 —— 放在 chips 块**之外**。
-                    那块的条件是 `isBoss || isNemesisFoe || shownTraits.length`,
-                    而雪耻一过 `isNemesisFoe` 就是 false —— 挂在里面永远显示不出来。
-                    (首版正是挂在里面,探针量到 chipsWrap 为 0 才发现。)
+                    这一块的显示与否 = `combatantChips` 是否为空,块内渲染的也是它。
+                    从前这里写的是 `isBoss || isNemesisFoe || shownTraits.length` ——
+                    那串「每一枚章的条件之或」正是第 42 / 43 轮两次踩坑的根因:
+                    加一枚新章忘了改它,屏幕上一片空白,而编译、类型、单测全绿。
+                    现在条件与内容同源,构造上不可能不一致(见 ui/combatChips)。
                   -->
-                  <p
-                    v-if="nemesisAvenged"
-                    class="combat-combatant__avenged text-note text-jade"
-                    data-combat-nemesis-avenged
-                  >
-                    {{ nemesisAvenged }}
-                  </p>
-                  <!--
-                    初次相逢 —— 一百四十个凶物里,这一只是头一回遇见(见 ui/firstSight)。
-                    与上面那句同理,**必须放在 chips 块之外**:那一块的条件是
-                    `isBoss || isNemesisFoe || shownTraits.length`,一只寻常凶物
-                    三条都不满足 —— 挂进去就永远显示不出来。(第 42 轮在宿敌那句上
-                    刚踩过同一个坑。)
-                  -->
-                  <p
-                    v-if="firstSight"
-                    class="combat-combatant__first-sight text-jade"
-                    data-combat-first-sight
-                  >
-                    初见
+                  <p v-if="combatantChips.length" class="combat-combatant__chips">
+                    <span
+                      v-for="chip in combatantChips"
+                      :key="chip.id"
+                      class="chip-ink text-note"
+                      :class="chipClass(chip)"
+                      :data-combat-nemesis="chip.id === 'nemesis' ? '' : undefined"
+                      :data-combat-first-sight="chip.id === 'firstSight' ? '' : undefined"
+                      :data-combat-nemesis-avenged="chip.id === 'avenged' ? '' : undefined"
+                      >{{ chipText(chip) }}</span
+                    >
                   </p>
                   <ProgressBar
                     :value="ehp"
@@ -328,7 +291,6 @@ import {
   type RegionEcology,
 } from "@/core/buildAdvisor";
 import { detectBuild } from "@/core/buildDetect";
-import { isNemesis } from "@/core/worldMemory";
 import { sessionStatRows } from "@/ui/adventureText";
 import { enemyDef } from "@/data/enemies";
 import { enemyLoreView } from "@/ui/enemyLore";
@@ -337,6 +299,7 @@ import ProgressBar from "@/components/common/ProgressBar.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import BattleIntelPanel from "@/components/adventure/BattleIntelPanel.vue";
 import { nemesisAvengedText, nemesisChipText } from "@/ui/nemesisChip";
+import { chipsOf, type CombatChip } from "@/ui/combatChips";
 
 const adventure = useAdventureStore();
 const player = usePlayerStore();
@@ -464,10 +427,6 @@ const adaptReveal = computed(() =>
 );
 
 /** 宿敌标记:此敌曾败我 ≥3 次且尚未雪耻 */
-const isNemesisFoe = computed(() => {
-  const id = battle.value?.enemyId;
-  return id ? isNemesis(player.nemeses, id) : false;
-});
 
 /** 这一场的对手在宿敌账上的记录 —— 章与雪耻那句都从它取 */
 const nemesisRecord = computed(() => {
@@ -481,6 +440,51 @@ const nemesisChip = computed(() =>
 );
 /** 这一场的对手是不是头一回遇见 —— 判定是纯的,登记在结算处 */
 const firstSight = computed(() => battle.value?.firstSight === true);
+
+/**
+ * 该显示哪几枚章 —— 块的显示与否与块内的内容**都读它**。
+ * 这一处是本轮的重点:从前那个 v-if 是"每枚章条件之或",加一枚章忘了改就是一片空白。
+ */
+const combatantChips = computed(() =>
+  chipsOf({
+    isBoss: Boolean(battle.value?.isBoss),
+    nemesis: nemesisChip.value,
+    traits: shownTraits.value,
+    firstSight: firstSight.value,
+    avenged: nemesisAvenged.value,
+  }),
+);
+
+/** 每枚章的样式 —— 与原来那几枚各写一份 class 的观感一致 */
+function chipClass(chip: CombatChip): string {
+  switch (chip.id) {
+    case "boss":
+      return "border-cinnabar/60 text-cinnabar";
+    case "nemesis":
+      return "border-cinnabar/80 bg-cinnabar/6 text-cinnabar";
+    case "firstSight":
+    case "avenged":
+      return "border-jade/60 text-jade";
+    default:
+      return "border-violet-ink/50 text-violet-ink";
+  }
+}
+
+/** 每枚章写什么字 */
+function chipText(chip: CombatChip): string {
+  switch (chip.id) {
+    case "boss":
+      return "首领";
+    case "nemesis":
+      return nemesisChip.value;
+    case "firstSight":
+      return "初见";
+    case "avenged":
+      return nemesisAvenged.value;
+    default:
+      return chip.traitId ? (TRAIT_NAMES[chip.traitId as keyof typeof TRAIT_NAMES] ?? "") : "";
+  }
+}
 /** 雪耻之后那一句 */
 const nemesisAvenged = computed(() =>
   nemesisRecord.value ? nemesisAvengedText(nemesisRecord.value) : "",

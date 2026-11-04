@@ -9388,6 +9388,133 @@ async function taskQualityLadder() {
  * 只核"出现过"会漏掉「谁的寿元都被标红」这种更坏的情形。
  */
 /**
+ * 那一块章 —— 条件与内容是同一件事。
+ *
+ * 连续两轮(第 42 / 43)把新加的章挂进 `.combat-combatant__chips`,而那块的条件是
+ * 「每枚章条件之或」,挂进去就永远不显示。第 44 轮把条件与内容收进同一个 computed。
+ *
+ * 判据两件:
+ *   一 一只寻常凶物、没有任何章时,那块**整块不渲染**(不留一条空行);
+ *   二 只有一枚章时,那块要渲染 —— 这一条正是从前会失败的那种情形。
+ */
+async function taskCombatChips() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const mkSession = (lastBattle) => ({
+      session: {
+        regionId: "qingyun",
+        mode: "normal",
+        startedAt: Date.now() - 60_000,
+        endsAt: Date.now() + 3600_000,
+        nextBattleAt: Date.now() + 60_000,
+        wins: 0,
+        losses: 0,
+        events: 0,
+        stoneGain: { m: 0, e: 0 },
+        expGain: { m: 0, e: 0 },
+        itemGain: 0,
+        wudaoGain: 0,
+      },
+      lastBattle,
+    });
+    const mkBattle = (extra) => ({
+      enemyId: "e_sword_guard",
+      enemyName: "守剑石人",
+      enemyIcon: "sword",
+      at: Date.now() - 60_000,
+      result: {
+        win: true,
+        log: [{ t: "info", text: "守剑石人横剑而立。" }],
+        rounds: 3,
+        playerHpPct: 60,
+      },
+      ...extra,
+    });
+
+    let page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    const read = async () =>
+      page.evaluate(() => {
+        const blocks = [...document.querySelectorAll(".combat-combatant__chips")];
+        const last = blocks[blocks.length - 1];
+        return {
+          blocks: blocks.length,
+          chips:
+            last === undefined
+              ? null
+              : [...last.querySelectorAll("span")].map((e) => (e.textContent || "").trim()),
+        };
+      });
+
+    // 一 没有章:整块不渲染
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.adventure = {
+        ...(slices.adventure ?? {}),
+        ...mkSession(mkBattle({ isBoss: false, firstSight: false })),
+      };
+      await seedSave(ctx, slices, "__chipsNone");
+    }
+    await openRoute(page, "/adventure", 900);
+    await clearOverlays(page);
+    const none = await read();
+    if (none.blocks > 0) {
+      failures.push(`[390] 章块:一只寻常凶物却渲染了 ${none.blocks} 块章 «${none.chips}»`);
+    }
+
+    // 二 只有一枚「初见」:块要渲染
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.adventure = {
+        ...(slices.adventure ?? {}),
+        ...mkSession(mkBattle({ isBoss: false, firstSight: true })),
+      };
+      await seedSave(ctx, slices, "__chipsOne");
+    }
+    await page.close();
+    page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/adventure", 900);
+    await clearOverlays(page);
+    const one = await read();
+    if (one.blocks === 0) {
+      failures.push("[390] 章块:只有一枚章时整块没渲染 —— 正是从前会失败的那种情形");
+    } else if (!one.chips || one.chips.length !== 1 || one.chips[0] !== "初见") {
+      failures.push(`[390] 章块:那一枚章没出来 «${JSON.stringify(one.chips)}»`);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 章块页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log("\n章块:无章时不渲染 · 只有一枚「初见」时也渲染");
+    } else {
+      console.log(`\n章块[未通过]:${JSON.stringify({ none, one })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 初次相逢 —— 头一回遇见的凶物,该有一枚章。
  *
  * 世界里已经有敌人的**认知**系统(core/loreService 的 noteEnemy):打得多就提示
@@ -26626,6 +26753,7 @@ const TASKS = [
   ["重复遭遇认得出上一次", taskEventRecall],
   ["宿敌章写得出结怨深浅", taskNemesisChip],
   ["头一回遇见的凶物有标记", taskFirstSight],
+  ["章块的条件与内容同源", taskCombatChips],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],

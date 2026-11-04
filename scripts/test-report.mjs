@@ -392,6 +392,7 @@ const CATEGORIES = [
       "eventRecall",
       "nemesisChip",
       "firstSight",
+      "combatChips",
     ],
   },
   {
