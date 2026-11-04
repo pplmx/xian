@@ -393,6 +393,7 @@ const CATEGORIES = [
       "nemesisChip",
       "firstSight",
       "combatChips",
+      "dailySettle",
     ],
   },
   {

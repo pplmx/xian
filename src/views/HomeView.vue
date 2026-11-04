@@ -196,6 +196,14 @@
           <span class="home-card__rule" aria-hidden="true" />
           <span class="home-card__count tabular">{{ dailyDoneCount }}/{{ dailyRows.length }}</span>
         </header>
+        <!--
+          结契印 —— 日课全清那一刻的收束(见 ui/dailySettle)。
+          从前全清只有三处静态文字变化,屏幕上没有发生任何**事件**。
+          这枚印用朱砂(行动色:这是你做成的一件事),落款不编号 —— 本作没有累计天数的账。
+        -->
+        <p v-if="dailyAllDone" class="home-daily__seal" data-home-seal-settled>
+          <span class="home-daily__seal-mark">{{ dailySettleSeal() }}</span>
+        </p>
         <div class="home-daily__summary">
           <div
             class="home-daily__ring"
@@ -337,6 +345,7 @@ import ProgressBar from "@/components/common/ProgressBar.vue";
 import CultivationOrb from "@/components/common/CultivationOrb.vue";
 import InstallToHomeNotice from "@/components/common/InstallToHomeNotice.vue";
 import { keepNumberUnit } from "@/utils/keepNumberUnit";
+import { dailySettleSeal } from "@/ui/dailySettle";
 
 const player = usePlayerStore();
 const ui = useUiStore();

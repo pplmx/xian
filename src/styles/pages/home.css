@@ -1035,6 +1035,36 @@
     box-shadow: inset 2px 0 0 rgb(var(--color-cinnabar-rgb) / 0.56);
   }
 
+  /*
+   * 结契印 —— 日课全清那一刻的收束(见 ui/dailySettle)。
+   *
+   * 与上面那枚「通途印」区分:那是导航的记号(石青、细线、无框);
+   * 这一枚是**做成一件事**的落款,故用朱砂实框、微微斜一点,像真盖下去的一方印。
+   * 落下去用既有的 rise-in 动效 —— 不新造一套。
+   */
+  .home-daily__seal {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0 0.35rem;
+  }
+  .home-daily__seal-mark {
+    display: inline-block;
+    padding: 0.16rem 0.42rem;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.72);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.16em;
+    line-height: 1.2;
+    animation: rise-in 0.42s cubic-bezier(0.22, 0.9, 0.3, 1) both;
+  }
+  /* 印是盖上去的,有一点角度才像手落 —— 0.8 度足够,再多就歪了 */
+  @media (prefers-reduced-motion: no-preference) {
+    .home-daily__seal-mark {
+      transform: rotate(-0.8deg);
+    }
+  }
+
   .home-passage__seal {
     display: grid;
     width: 2.65rem;

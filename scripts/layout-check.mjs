@@ -247,6 +247,7 @@ import {
 import { SAVE_PREFIX } from "../src/utils/storage.ts";
 import { TITLES } from "../src/data/titles.ts";
 import { PETS } from "../src/data/pets.ts";
+import { DAILY_TASKS } from "../src/data/quests.ts";
 import { PET_VOWS } from "../src/data/petVows.ts";
 import { EQUIPMENT_TEMPLATES } from "../src/data/equipment.ts";
 import { EVENTS } from "../src/data/events.ts";
@@ -9387,6 +9388,114 @@ async function taskQualityLadder() {
  * 判据**两侧都量**:将尽的要变朱砂,充裕的不许变。
  * 只核"出现过"会漏掉「谁的寿元都被标红」这种更坏的情形。
  */
+/**
+ * 日课结契 —— 全清那一刻,该有一笔收束。
+ *
+ * 首页「今日日课」做得细(进度环、逐笔进度、奖励同格摊开),但全清那一刻从前只有
+ * 三处静态文字变化 —— 屏幕上没有发生任何**事件**。日课是玩家每天都会经过一次的
+ * 那条路径,也是放置游戏里最容易被忽略的节拍。
+ *
+ * 判据两件:
+ *   一 六笔日课全结清时,那枚「日课已结」的印要出现;
+ *   二 差一笔时不出现 —— 印盖早了就是假话。
+ */
+async function taskDailySeal() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    /*
+     * 日课按日期重置,故 date 必须是今天,否则读档时会被判过期。
+     * 格式与 utils/time.ts 的 todayStr 一致:`YYYY-M-D`(月日**不补零**)。
+     * 首版用了 toISOString().slice(0,10)(`YYYY-MM-DD`),于是永远对不上,日课被重置成空。
+     */
+    const now = new Date();
+    const today = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+    /*
+     * 从数据源取全部日课 id —— 首版手写了六个,而实际有八条,
+     * 于是 done 列表盖不满,印永远不出现。这类"数少了"的错最难看出来:
+     * 界面上八行都在,只有那枚印安静地不在。
+     */
+    const ALL_DAILY = DAILY_TASKS.map((t) => t.id);
+    const read = async (page) =>
+      page.evaluate(() => {
+        const el = document.querySelector("[data-home-seal-settled]");
+        return {
+          text: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null,
+          rows: document.querySelectorAll("[data-daily-row]").length,
+        };
+      });
+
+    let page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    // 一 全清:印出现
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.quests = {
+        ...(slices.quests ?? {}),
+        daily: { date: today, base: {}, done: [...ALL_DAILY] },
+      };
+      await seedSave(ctx, slices, "__dailySealDone");
+    }
+    await openRoute(page, "/", 900);
+    await clearOverlays(page);
+    const done = await read(page);
+    if (done.rows === 0) {
+      failures.push("[390] 日课结契:首页没有渲染任何日课行,夹具没生效");
+    } else if (done.text === null) {
+      failures.push("[390] 日课结契:全部结清却没有那枚印");
+    } else if (!done.text.includes("日课") || !done.text.includes("结")) {
+      failures.push(`[390] 日课结契:印上的字不对 «${done.text}»`);
+    }
+
+    // 二 差一笔:印不出现
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.quests = {
+        ...(slices.quests ?? {}),
+        daily: { date: today, base: {}, done: ALL_DAILY.slice(0, 5) },
+      };
+      await seedSave(ctx, slices, "__dailySealPartial");
+    }
+    await page.close();
+    page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/", 900);
+    await clearOverlays(page);
+    const partial = await read(page);
+    if (partial.text !== null) {
+      failures.push(`[390] 日课结契:还差一笔就盖了印 «${partial.text}»`);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 日课结契页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n日课结契:全部结清 «${done.text}» · 差一笔不盖印`);
+    } else {
+      console.log(`\n日课结契[未通过]:${JSON.stringify({ done, partial })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
 /**
  * 那一块章 —— 条件与内容是同一件事。
  *
@@ -26754,6 +26863,7 @@ const TASKS = [
   ["宿敌章写得出结怨深浅", taskNemesisChip],
   ["头一回遇见的凶物有标记", taskFirstSight],
   ["章块的条件与内容同源", taskCombatChips],
+  ["日课全清盖一枚结契印", taskDailySeal],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
