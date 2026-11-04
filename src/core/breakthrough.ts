@@ -267,11 +267,36 @@ export function attemptBreakthrough(): BreakthroughView | null {
   } else {
     const mods = player.finalStats.mods;
     const refund = Math.min(0.8, modOf(mods, "breakRefund"));
-    // 渡劫跬步(宿命传承):本世首次渡劫失败,修为不散
-    if (!player.consumeHeritageUse("dubu")) player.loseExpPct(BT_FAIL_EXP_LOSS * (1 - refund));
+    /*
+     * 渡劫跬步(宿命传承):本世首次渡劫失败,修为不散。
+     * `consumeHeritageUse` 返回 true 表示「这一次被免掉了」—— 要记下来,
+     * 因为失败弹窗那一行下一步得说「此番未损修为」而不是「修为已折」。
+     */
+    const sparedByHeritage = player.consumeHeritageUse("dubu");
+    if (!sparedByHeritage) player.loseExpPct(BT_FAIL_EXP_LOSS * (1 - refund));
     cultivation.addBuff("injury", Date.now());
     track("breakthroughFails");
     playSfx("fail");
+    /*
+     * 失败之后那一步 —— 从结算里取,不手写。
+     *
+     * 三件事在刚才那一瞬同时发生了:准备加成被 consumeBreakthroughPrep() 取走
+     * (失败也不退)、挂上了伤势、修为掉了一截。而这是一扇全屏弹窗,
+     * 玩家在这一屏看不到修行页上那些「静坐调息 / 聚气丹」按钮。
+     * 故这一行要按**实际发生了什么**来说。
+     *
+     * 准备状态一定已是空的(判定时取走了),所以照实说「要再准备一次」——
+     * 若哪天结算改成失败返还,这条会自己变得不再成立,判据与代码一起提醒。
+     */
+    const prepUsed = !breakthroughPrepState().ready;
+    const parts: string[] = [];
+    if (sparedByHeritage) {
+      parts.push("渡劫跬步护住了这一身修为");
+    } else {
+      parts.push(`修为折损 ${formatPercent(BT_FAIL_EXP_LOSS * (1 - refund))}`);
+    }
+    parts.push("伤势要先调息");
+    if (prepUsed) parts.push("下一次突破仍需重新准备");
     view = {
       success: false,
       fromLabel,
@@ -281,6 +306,7 @@ export function attemptBreakthrough(): BreakthroughView | null {
       message: info.needTribulation
         ? "天威难测,此番渡劫失利。所幸道基未毁,来日再战。"
         : "灵气逆冲,功亏一篑。你吐出一口淤血,盘膝疗伤。",
+      nextStep: parts.join(" · "),
     };
   }
   showBreakthrough(view);

@@ -1252,6 +1252,14 @@ export interface BreakthroughView {
   isMajor: boolean;
   tribulationLog: string[];
   message: string;
+  /**
+   * 失败之后那一步(成功时没有)。
+   *
+   * 为什么需要它:失败那一刻有三件事同时发生 —— 准备加成被消费掉、挂上伤势、
+   * 修为掉一截 —— 而弹窗是全屏的,遮住了修行页上那些准备按钮。
+   * 只说「来日再战」等于让玩家自己回想刚才少了什么。
+   */
+  nextStep?: string;
 }
 
 /** 上一世的回顾(Phase 32.5)—— 轮回界面第一屏要说清楚"你刚刚过完了怎样的一生" */

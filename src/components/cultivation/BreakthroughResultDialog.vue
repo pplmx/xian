@@ -51,6 +51,19 @@
         </p>
       </div>
       <p class="mt-3 t-body text-ink-faint">{{ view.message }}</p>
+      <!--
+        失败之后那一步(见 core/breakthrough 的 nextStep)。
+        安慰话说完还不够 —— 那一刻有三件事同时变了:准备加成被消费掉、挂上伤势、
+        修为掉一截,而这一屏是全屏的,遮住了修行页上那些准备按钮。
+        用石青(信息色)而不是朱砂:它是"接下来怎么做",不是又一条警示。
+      -->
+      <p
+        v-if="view.nextStep"
+        class="breakthrough-next mt-2 t-body text-qing"
+        data-breakthrough-next
+      >
+        {{ view.nextStep }}
+      </p>
     </div>
     <template #footer>
       <button class="btn-seal w-full" @click="close">

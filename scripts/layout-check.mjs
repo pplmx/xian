@@ -9388,6 +9388,105 @@ async function taskQualityLadder() {
  * 只核"出现过"会漏掉「谁的寿元都被标红」这种更坏的情形。
  */
 /**
+ * 突破失败之后 —— 「来日再战」说完,得说下一步做什么。
+ *
+ * 失败那一刻有三件事同时发生:准备加成被消费掉(失败也不退)、挂上伤势、
+ * 修为掉一截 —— 而这是一扇全屏弹窗,遮住了修行页上那些准备按钮。
+ * 只说「来日再战」等于让玩家自己回想刚才少了什么。
+ *
+ * 判据两件:
+ *   一 失败弹窗里有那一步,且它提到了修为折损与伤势(与结算同一批事实);
+ *   二 成功弹窗里没有这一行 —— 成功时没有"下一步"可提醒。
+ */
+async function taskBreakthroughNext() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    /*
+     * 走**真实路径**:修为拉满、灵气拉满,点突破钮。
+     * 随机源钉 0.999 —— `chance(p)` 是 `rand() < p`,0.999 几乎必定落败,
+     * 于是弹窗走失败那一支。
+     *
+     * 首版想直接往 pinia 里写一份弹窗视图,但本仓没有把 pinia 暴露到 window 上
+     * (也没有理由为了测试去暴露)。走真实路径反而更短。
+     */
+    const slices = showcaseSlices("light");
+    slices.player = {
+      ...slices.player,
+      major: 1,
+      sub: 0,
+      exp: { m: 9, e: 18 },
+    };
+    /*
+     * 灵气是**普通数字**,不是 GNum —— 首版写成 { m: 9, e: 18 },读出来是 0,
+     * 于是突破钮一直显示「灵气不足」。修为 exp 才是 GNum。
+     */
+    slices.resources = { ...slices.resources, qi: 1e12 };
+    await seedSave(ctx, slices, "__btNext");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.999;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/cultivation", 900);
+    await clearOverlays(page);
+
+    checked += 1;
+    // 精确落点:突破钮挂 data-cultivation-primary-action(文案带空格,按文字认不稳)
+    const btn = page.locator('[data-cultivation-primary-action="breakthrough"]').first();
+    if ((await btn.count()) === 0) {
+      failures.push("[390] 突破下一步:修行页找不到突破钮");
+    } else if (await btn.isDisabled().catch(() => false)) {
+      const why = ((await btn.textContent()) || "").replace(/\s+/g, " ").trim();
+      failures.push(`[390] 突破下一步:突破钮不可点 «${why}» —— 夹具条件没齐`);
+    } else {
+      await btn.click({ timeout: 4000 }).catch(() => {});
+      await page.waitForTimeout(900);
+    }
+
+    const shown = await page.evaluate(() => {
+      const el = document.querySelector("[data-breakthrough-next]");
+      const dlg = document.querySelector('[aria-label="突破结果"]');
+      return {
+        next: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null,
+        hasDialog: Boolean(dlg),
+      };
+    });
+    if (!shown.hasDialog) {
+      failures.push("[390] 突破下一步:点了突破没有结果弹窗");
+    } else if (!shown.next) {
+      failures.push("[390] 突破下一步:失败弹窗里没有那一步");
+    } else {
+      for (const must of ["修为", "伤势"]) {
+        if (!shown.next.includes(must)) {
+          failures.push(`[390] 突破下一步:那一步没提到${must} «${shown.next}»`);
+        }
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 突破下一步页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n突破下一步:«${shown.next}»`);
+    } else {
+      console.log(`\n突破下一步[未通过]:${JSON.stringify(shown)}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 起名的上限 —— 四个地方都是八个字,现在读同一个常数。
  *
  * 第 37 轮把道号的上限收进了 store;第 38 轮发现另外三处(构筑名、挑战书名、
@@ -26061,6 +26160,7 @@ const TASKS = [
   ["同一份倍数两处印得一样", taskMultText],
   ["道号八个字顶栏放得下", taskPlayerName],
   ["起名的上限只有一处", taskNameLimit],
+  ["突破失败之后说得出下一步", taskBreakthroughNext],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],

@@ -1457,3 +1457,13 @@
     }
   }
 }
+
+/*
+ * 突破失败之后那一步(见 core/breakthrough 的 nextStep)。
+ * 与上面那句安慰话拉开层次:字号不变,用石青(信息)而不是淡墨 ——
+ * 安慰是"过去的事",这一句是"接下来做什么"。
+ */
+.breakthrough-next {
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+}

@@ -388,6 +388,7 @@ const CATEGORIES = [
       "daoFruitMargin",
       "playerName",
       "nameLimit",
+      "breakthroughNext",
     ],
   },
   {
