@@ -84,6 +84,7 @@ function seedSession(mode: "normal" | "deep" | "risky" | "prolonged"): void {
     expGain: gn(0),
     itemGain: 0,
     wudaoGain: 0,
+    dustGain: 0,
   });
 }
 

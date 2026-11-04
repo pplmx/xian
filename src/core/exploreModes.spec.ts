@@ -53,6 +53,7 @@ describe("历练时长档", () => {
       expGain: { m: 0, e: 0 },
       itemGain: 0,
       wudaoGain: 0,
+      dustGain: 0,
     });
     adventure.sanitize();
     expect(adventure.session?.mode, "长线云游会话不该被洗掉").toBe("prolonged");

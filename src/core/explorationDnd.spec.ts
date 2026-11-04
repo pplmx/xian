@@ -53,6 +53,7 @@ function forgeSession(now: number, nextBattleAt = now - 1): void {
     stoneGain: { m: 0, e: 0 },
     expGain: { m: 0, e: 0 },
     wudaoGain: 0,
+    dustGain: 0,
   });
 }
 

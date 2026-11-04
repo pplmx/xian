@@ -498,6 +498,7 @@ describe("闭关(Phase 28 · 接线后:buff 注册/互斥守卫/buff 到期)", (
       expGain: gnZero(),
       itemGain: 0,
       wudaoGain: 0,
+      dustGain: 0,
     });
     expect(startRetreat()).toBe(false);
     expect(useCultivationStore().hasBuff("retreat")).toBe(false);

@@ -138,6 +138,7 @@ export function startExploration(regionId: string, mode: ExploreMode): boolean {
     losses: 0,
     events: 0,
     stoneGain: gnZero(),
+    dustGain: 0,
     expGain: gnZero(),
     itemGain: 0,
     wudaoGain: 0,
@@ -397,6 +398,7 @@ function runBattle(now: number): void {
       expGain: add(s.expGain, drops.exp),
       itemGain: s.itemGain + drops.items,
       wudaoGain: s.wudaoGain + drops.wudao + (streakReward?.wudao ?? 0),
+      dustGain: s.dustGain + drops.dust,
       nextBattleAt: nextBattleTime(now),
     });
     if (eDef.isBoss) {

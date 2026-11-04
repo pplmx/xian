@@ -54,6 +54,16 @@ export interface DropSummary {
   wudao: number;
   /** 战报里真正新增的实物条数(残页/装备/丹药/法宝);重复法宝折化只计悟道,不算拾获 */
   items: number;
+  /**
+   * 本场自动折算掉的装备换来的**器灵尘** —— 与上面 `acquireEquipment` 里
+   * `addSmall("dust", …)` 的同一份数。
+   *
+   * 行囊满、或智能留取判定把某件判为不值留时,那件当场折成尘(+ 退灵石);
+   * 尘真的进了账,玩家在行囊里看得到,而「本次所得」此前只报灵石与修为 ——
+   * 少报的恰是"玩家自己没看见就已经没了"的那部分。与 `wudao` 同一条纪律:
+   * 结算里发生的事,总结要报。
+   */
+  dust: number;
 }
 
 export interface AcquireResult {
@@ -369,6 +379,8 @@ export function afterWin(
   let biasHit = false;
   let items = 0;
   let wudao = 0;
+  /** 自动折算掉的装备换来的器灵尘(见 DropSummary.dust) */
+  let dust = 0;
   const tier = region.tier;
   const bossMult = isBoss ? 4 : 1;
   // 福缘的翻倍判定同样先归一:倍率叠出 1 以上时,"翻倍"不该变成"必翻"
@@ -458,7 +470,10 @@ export function afterWin(
             rng,
             isBoss ? { luck, minQualityRank: 1 } : { luck },
           );
-          lines.push(acquireEquipment(inst).line);
+          const acquired = acquireEquipment(inst);
+          lines.push(acquired.line);
+          // 被自动折算的那件,尘要报出来(见 DropSummary.dust)
+          dust += acquired.dust;
           items += 1;
           break;
         }
@@ -494,7 +509,7 @@ export function afterWin(
 
   // 「所钟」应验了才写:文案与乘区同源(core/mortalBias 的 label),不是另一处手写
   if (biasHit && biasEffect) lines.push(`所钟 · ${biasEffect.label}`);
-  return { lines, stone: stoneGained, exp, wudao, items };
+  return { lines, stone: stoneGained, exp, wudao, items, dust };
 }
 
 /**

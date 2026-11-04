@@ -99,6 +99,7 @@ describe("事件收益入会话账(haul 与战斗面板要有数可报)", () => 
         expGain: gn(0),
         itemGain: 0,
         wudaoGain: 0,
+        dustGain: 0,
       },
     });
     const def = eventDef("ev_formation")!;
@@ -139,6 +140,7 @@ describe("事件收益入会话账(haul 与战斗面板要有数可报)", () => 
         expGain: gn(0),
         itemGain: 0,
         wudaoGain: 0,
+        dustGain: 0,
       },
     });
     const stoneBefore = { ...resources.spiritStone };
@@ -325,6 +327,7 @@ describe("事件装备回执 · 离线卷轴要能列出来", () => {
         expGain: gn(0),
         itemGain: 0,
         wudaoGain: 0,
+        dustGain: 0,
       },
     });
     const wudao = resources.wudao;
@@ -373,6 +376,7 @@ describe("事件装备回执 · 离线卷轴要能列出来", () => {
         expGain: gn(0),
         itemGain: 0,
         wudaoGain: 0,
+        dustGain: 0,
       },
     });
     const def: EventDef = {
@@ -470,6 +474,7 @@ describe("奇缘授方 · 文案承诺必须落成知识", () => {
         expGain: gn(0),
         itemGain: 0,
         wudaoGain: 0,
+        dustGain: 0,
       },
     });
     const wudao = resources.wudao;
@@ -508,6 +513,7 @@ describe("奇缘授方 · 文案承诺必须落成知识", () => {
         expGain: gn(0),
         itemGain: 0,
         wudaoGain: 0,
+        dustGain: 0,
       },
     });
     const page = resources.page;

@@ -13919,6 +13919,93 @@ async function taskToastSeal() {
  * 判据走真路径:种一件仙品(a_q8「神品」因此差一档)→ 记下读数 →
  * 用器评帖页脚的垃圾桶真分解掉 → 读数必须一模一样。
  */
+/**
+ * 器灵尘进「本次所得」—— 自动折算掉的那件,玩家该看见它变成了什么。
+ *
+ * 行囊满、或智能留取把某件判为不值留时,`acquireEquipment` 会把它当场折成
+ * 器灵尘(+ 退灵石)并 `addSmall("dust", …)` —— 尘真的进了账,行囊里看得到。
+ * 而「本次所得」此前只报灵石与修为,少报的恰是"玩家自己没看见就已经没了"那部分。
+ *
+ * 判据两侧都量:有尘的一档要真报出那个数,没尘的一档一个字都不许多
+ * —— 后者防的是"这一行常驻 0"。
+ */
+async function taskCombatDustLedger() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const now = Date.now();
+    const run = async (dustGain, guard) => {
+      const slices = showcaseSlices("light");
+      slices.adventure = {
+        ...slices.adventure,
+        unlocked: ["qingyun", "luoxia", "heifeng", "leichi"],
+        cleared: ["qingyun", "luoxia"],
+        session: {
+          regionId: "leichi",
+          mode: "risky",
+          startedAt: now - 60000,
+          endsAt: now + 3600000,
+          nextBattleAt: now + 3600000,
+          wins: 4,
+          losses: 1,
+          events: 1,
+          stoneGain: { m: 1.2, e: 6 },
+          expGain: { m: 3.4, e: 6 },
+          itemGain: 3,
+          wudaoGain: 12,
+          dustGain,
+        },
+      };
+      await seedSave(ctx, slices, guard);
+      const probe = await ctx.newPage();
+      const probeErrors = [];
+      watchPageErrors(probe, probeErrors);
+      await openRoute(probe, "/adventure", 1400);
+      await clearOverlays(probe);
+      const got = await probe.evaluate(() => {
+        const box = document.querySelector("[data-combat-session]");
+        const dust = document.querySelector("[data-combat-dust]");
+        return {
+          text: (box?.innerText || "").replace(/\s+/g, " ").trim(),
+          dust: dust ? (dust.textContent || "").trim() : null,
+        };
+      });
+      await probe.close();
+      return got;
+    };
+
+    checked += 1;
+    const withDust = await run(340, "__combatDustYes");
+    const noDust = await run(0, "__combatDustNo");
+    if (!withDust.text.includes("本次所得")) {
+      failures.push(`[390] 器灵尘:战报会话栏没渲染出来 —— 判据无从量起`);
+    } else if (withDust.dust !== "+340") {
+      failures.push(
+        `[390] 器灵尘:这一场折算得 340 尘,「本次所得」却写 «${withDust.dust}»` +
+          ` —— 少报的恰是玩家没看见就没了的那些`,
+      );
+    } else if (noDust.dust !== null) {
+      failures.push(
+        `[390] 器灵尘:这一场没折算任何装备,却仍写着 «${noDust.dust}» —— 这一行不许常驻`,
+      );
+    } else if (noDust.text.includes("器灵尘")) {
+      failures.push(`[390] 器灵尘:没尘的那一档仍出现了「器灵尘」字样`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n器灵尘:折算 340 → «本次所得 · 器灵尘 +340»;未折算则整格不出现`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
 async function taskQualityPeakMonotonic() {
   const failures = [];
   let checked = 0;
@@ -28198,6 +28285,7 @@ const TASKS = [
   ["天界内层三册的章节与并读", taskCelestialInnerVolumes],
   ["界域志首屏的此刻优先", taskCodexFold],
   ["成就谱首屏的眼下可追", taskAchievementFold],
+  ["器灵尘进本次所得", taskCombatDustLedger],
   ["品质读数只增不减", taskQualityPeakMonotonic],
   ["品质成就的报喜盖品阶印", taskAchievementSeal],
   ["藏珍双阁的九柜换屉", taskCollectionFold],

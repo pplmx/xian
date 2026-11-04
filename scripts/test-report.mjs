@@ -410,6 +410,7 @@ const CATEGORIES = [
       "companionTime",
       "petCompanionState",
       "lifeTrialArchive",
+      "lootDustLedger",
     ],
   },
   {

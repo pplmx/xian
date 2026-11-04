@@ -38,6 +38,15 @@
           <strong class="text-gold-ink">+{{ gains.stone }}</strong>
           <span>修为</span>
           <strong class="text-jade">+{{ gains.exp }}</strong>
+          <!--
+            器灵尘 —— 行囊满或智能留取把某件判为不值留时,那件当场折成尘。
+            它是"玩家没看见就已经没了"的那部分,这一行是唯一能知道它变成了什么的地方。
+            与悟道点同一条纪律(见 types 的 AdventureSession.wudaoGain 注释)。
+          -->
+          <template v-if="gains.dust > 0">
+            <span>器灵尘</span>
+            <strong class="text-qing" data-combat-dust>+{{ gains.dust }}</strong>
+          </template>
         </p>
       </div>
     </section>
@@ -409,7 +418,11 @@ const lowHpGimmick = computed(() => {
 const gains = computed(() => {
   const s = session.value;
   if (!s) return null;
-  return { stone: formatGN(s.stoneGain), exp: formatGN(s.expGain) };
+  return {
+    stone: formatGN(s.stoneGain),
+    exp: formatGN(s.expGain),
+    dust: Math.max(0, Math.floor(s.dustGain ?? 0)),
+  };
 });
 
 /** 距区域之主还差几胜(已靖的地界不再提示) */

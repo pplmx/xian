@@ -78,6 +78,7 @@ describe("离线结算 · 随机状态不变量", () => {
         expGain: gn(0),
         itemGain: 0,
         wudaoGain: 0,
+        dustGain: 0,
       } as never);
       adventure.setMortalWorld(bias ? ({ bias, chain: [] } as never) : null);
 

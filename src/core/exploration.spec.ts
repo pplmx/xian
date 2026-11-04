@@ -98,6 +98,7 @@ function forgeSession(now: number, regionId = "qingyun"): void {
     expGain: gnZero(),
     itemGain: 0,
     wudaoGain: 0,
+    dustGain: 0,
   });
 }
 
