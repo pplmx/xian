@@ -8,8 +8,19 @@
     z-70 才真正代表「提示始终压在浮层上」。
   -->
   <Teleport to="body">
-    <!-- 稀有天降:全屏金光一闪 -->
-    <div v-if="flashId !== null" :key="flashId" class="rare-flash" />
+    <!--
+      稀有天降:全屏一闪。
+      光的分量按品阶分层(见 ui/flashTier):神品比灵品停得更久、用的是那一档的色。
+      没有品阶印的提示(转世/突破/里程碑)读 CSS 的默认值 —— 一个像素都不变。
+      rgb 由界面在这里求:品质表里是调色板 token,纯函数不该假装知道它的 RGB。
+    -->
+    <div
+      v-if="flashId !== null"
+      :key="flashId"
+      class="rare-flash"
+      :data-rare-flash-tier="flashPlan.tier"
+      :style="flashStyle"
+    />
     <!--
       外框不吃事件(留出底下页面的点击),但**提示条本身要吃** ——
       它挂着 @click 关掉自己,也写着 cursor-pointer 与按下反馈。
@@ -69,11 +80,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useUiStore } from "@/stores/ui";
 import type { Toast } from "@/types";
 import { playSfx, type SfxName } from "@/core/audio";
 import { qualityDef } from "@/data/qualities";
+import { FLASH_DEFAULT, flashPlanOf, type FlashPlan } from "@/ui/flashTier";
 import { colorWithAlpha } from "@/ui/colorVar";
 import type { QualityId } from "@/types";
 
@@ -118,6 +130,33 @@ const ui = useUiStore();
 const TOAST_ANIM_MS = 250;
 
 const flashId = ref<number | null>(null);
+/** 当前这一道光的分量(见 ui/flashTier)—— 随那一条提示的品阶印而定 */
+const flashPlan = ref<FlashPlan>(FLASH_DEFAULT);
+
+/**
+ * 那道光的两枚变量:色与时长。
+ *
+ * 色取自品质表里的调色板 token,**必须在这里求值** —— 纯函数那侧只回答
+ * 「哪一档、多久、色从哪儿取」,不假装知道 RGB(品质表里写的是 var(--color-*))。
+ */
+const flashStyle = computed(() => {
+  const style: Record<string, string> = { "--flash-ms": `${flashPlan.value.seconds}s` };
+  const token = flashPlan.value.colorToken;
+  if (token) {
+    const probe = document.createElement("span");
+    probe.style.color = token;
+    probe.style.display = "none";
+    document.body.append(probe);
+    const resolved = getComputedStyle(probe).color;
+    probe.remove();
+    const m = /rgba?\(([^)]+)\)/.exec(resolved);
+    if (m) {
+      const [r, g, b] = m[1]!.split(",").map((x) => Number(x.trim()));
+      style["--flash-rgb"] = `${r} ${g} ${b}`;
+    }
+  }
+  return style;
+});
 
 const KIND_CLASS: Record<Toast["kind"], string> = {
   info: "border-ink/25 text-ink-soft bg-paper",
@@ -148,10 +187,16 @@ watch(
       if (t.id <= lastAnnouncedId) continue;
       playSfx(KIND_SFX[t.kind]);
       if (t.kind === "rare") {
+        // 这一道的分量跟着那一条的品阶印走(见 ui/flashTier)
+        flashPlan.value = flashPlanOf(t.seal);
         flashId.value = t.id;
-        setTimeout(() => {
-          if (flashId.value === t.id) flashId.value = null;
-        }, 1200);
+        setTimeout(
+          () => {
+            if (flashId.value === t.id) flashId.value = null;
+          },
+          // 摘得比动画晚一点:动画自己 forwards 收尾,提前摘会看见它闪回去
+          Math.ceil(flashPlan.value.seconds * 1000) + 120,
+        );
       }
       lastAnnouncedId = t.id;
     }

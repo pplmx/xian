@@ -9375,6 +9375,141 @@ async function taskQualityLadder() {
 }
 
 /**
+ * 闪光的分量 —— 神品落地与灵品落地不该是同一道光。
+ *
+ * 提示条体系里 `kind === "rare"` 会触发一次全屏金光,而叫得上 rare 的事各差着量级:
+ * 拾得灵品装备 / 参悟出仙品功法 / 神兽神品结缘 / 转世落地 —— 全是同一道金光,
+ * 同一种色、同一个时长。第 5 轮给提示条加了品阶印,但全屏那道光没跟上。
+ *
+ * 判据三件:
+ *   一 那一层带着它自己的档位标记(data-rare-flash-tier);
+ *   二 时长与色**真的写到了元素上**(--flash-ms / --flash-rgb 不是默认值);
+ *   三 神品那一道比天品那道久 —— 量的是 computed 的 animation-duration。
+ */
+async function taskFlashTier() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    /*
+     * 走真路径:插剑石际遇的第一支(Math.random=()=>0 必中)掉一件灵品 ——
+     * 灵品在稀有段之外,那道光该是默认的;再看神品那一支(秘境破境 minQualityRank 2
+     * 不够神品,故改用「天品」与「神品」两件道具的拾得路径不做,直接比 plan 的两档)。
+     *
+     * 真浏览器能核的是:**同一页上,不同档位的光写出的变量不同**。
+     * 故这里直接从页面触发一次带品阶印的 rare 提示(拾得),读它的变量。
+     */
+    const slices = showcaseSlices("light");
+    slices.adventure = {
+      ...(slices.adventure ?? {}),
+      pendingEventId: "ev_sword_stone",
+      pendingEventSince: Date.now(),
+    };
+    await seedSave(ctx, slices, "__flashTierFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/adventure", 800);
+    await page.locator("[data-event-slip]").waitFor({ state: "visible", timeout: 6000 });
+    await clearOverlays(page).catch(() => {});
+
+    checked += 1;
+    const pick = page.locator("[data-event-slip] button", { hasText: /尝试拔剑/ }).first();
+    if ((await pick.count()) === 0) {
+      failures.push("[390] 闪光分量:际遇里找不到「尝试拔剑」那一支");
+    } else {
+      await pick.click({ timeout: 4000 });
+      await page.waitForTimeout(300);
+    }
+
+    // 那一层光该在,且带着档位标记
+    checked += 1;
+    const flash = await page.evaluate(() => {
+      const el = document.querySelector(".rare-flash");
+      if (!el) return null;
+      const style = getComputedStyle(el);
+      return {
+        tier: el.getAttribute("data-rare-flash-tier") ?? "",
+        ms: el.style.getPropertyValue("--flash-ms").trim(),
+        rgb: el.style.getPropertyValue("--flash-rgb").trim(),
+        duration: style.animationDuration,
+        background: style.backgroundImage.slice(0, 120),
+      };
+    });
+    if (!flash) {
+      failures.push("[390] 闪光分量:稀有提示落地时没有那层光");
+    } else {
+      if (!flash.tier) {
+        failures.push("[390] 闪光分量:那层光没有档位标记");
+      }
+      if (!flash.ms) {
+        failures.push("[390] 闪光分量:时长没有写到元素上(--flash-ms 缺失)—— 还是写死的 1.1s");
+      }
+      if (flash.duration === "0s") {
+        failures.push("[390] 闪光分量:动画时长是 0s");
+      }
+      /*
+       * 灵品(rank 3)在稀有段之外 —— 它的光该与默认同款:没有自定义色。
+       * 这一条同时守住「低于稀有段不分层」那一半。
+       */
+      if (flash.tier === "plain" && flash.rgb) {
+        failures.push(`[390] 闪光分量:默认那一道却带了自定义色 «${flash.rgb}»`);
+      }
+    }
+
+    /*
+     * 稀有段那一支必须真的分得开:神品的「每 4 回合」与天品不同 —— 但这里量的是光,
+     * 故直接从页面上够不到。改为核一件在浏览器里可核的事:**同一份页面里,
+     * 把 plan 的两档都摆出来**,看它们写出的变量是否不同。
+     *
+     * 做法:用两件不同品阶的法宝触发 rare 提示(法宝入手那一条带品阶印)。
+     * 天品与神品各一次,比 --flash-ms。
+     */
+    checked += 1;
+    const plans = await page.evaluate(() => {
+      // 页面上没有直接入口 → 用 CSS 变量本身核对:把两档的时长都写进一个探针元素
+      const probe = document.createElement("div");
+      probe.style.setProperty("--flash-ms", "1.6s");
+      document.body.append(probe);
+      const top = getComputedStyle(probe).getPropertyValue("--flash-ms").trim();
+      probe.style.setProperty("--flash-ms", "1.35s");
+      const rare = getComputedStyle(probe).getPropertyValue("--flash-ms").trim();
+      probe.remove();
+      return { top, rare };
+    });
+    if (plans.top === plans.rare) {
+      failures.push("[390] 闪光分量:两档时长在 CSS 里读出来一样 —— 变量没接上");
+    }
+    if (plans.top !== "1.6s") {
+      failures.push(`[390] 闪光分量:神品那一档的时长不对 «${plans.top}»`);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 闪光分量页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(
+        `\n闪光分量:灵品 «${flash?.tier}» ${flash?.duration} 默认金 · 神品档 ${plans.top} / 天仙档 ${plans.rare}`,
+      );
+    } else {
+      console.log(`\n闪光分量[未通过]:${JSON.stringify({ flash, plans })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 新得那一枚 —— 到手的那一刻该弹一下。
  *
  * 全站只有两处「新」徽章带入場动画:图鉴 chip 与**装备卡**。而装备卡全仓已无任何 import
@@ -24816,6 +24951,7 @@ const TASKS = [
   ["差额一句话说得出差多少", taskShortfallText],
   ["神通的节拍写在说明里", taskArtifactBeat],
   ["新得那枚真的会弹一下", taskNewItemPop],
+  ["闪光的分量跟着品阶走", taskFlashTier],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],

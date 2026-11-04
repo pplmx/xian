@@ -374,6 +374,7 @@ const CATEGORIES = [
       "recipeGate",
       "qualityTier",
       "assertionLiveness",
+      "flashTier",
     ],
   },
   {

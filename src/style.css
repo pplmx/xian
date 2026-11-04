@@ -3609,7 +3609,14 @@
   }
   .hit-shake-hard {
     animation: hit-shake-hard 0.4s ease-out;
-  } /* 稀有天降:全屏金光一闪(叠在 toast 之下) */
+  } /*
+ * 稀有天降:全屏一闪(叠在 toast 之下)。
+ *
+ * 光的分量按品阶分层(见 ui/flashTier):色由 --flash-rgb 给(默认是原来那道金色),
+ * 时长由 --flash-ms 给(默认 1100ms)。两者都是**变量而不是字面量** ——
+ * 此前写死 1.1s + 金色,于是神品与灵品落地时,屏幕上最重的那一层完全同款。
+ * 没有品阶印的提示(转世 / 突破 / 里程碑)仍读默认值,一个像素都不变。
+ */
   .rare-flash {
     position: fixed;
     inset: 0;
@@ -3617,11 +3624,11 @@
     pointer-events: none;
     background: radial-gradient(
       ellipse at 50% 28%,
-      rgb(200 160 60 / 0.3),
-      rgb(200 160 60 / 0.08) 45%,
+      rgb(var(--flash-rgb, 200 160 60) / 0.3),
+      rgb(var(--flash-rgb, 200 160 60) / 0.08) 45%,
       transparent 72%
     );
-    animation: rare-flash 1.1s ease-out forwards;
+    animation: rare-flash var(--flash-ms, 1.1s) ease-out forwards;
   } /* 突破成功:朱砂墨点自印心迸溅 */
   .ink-burst {
     position: absolute;
