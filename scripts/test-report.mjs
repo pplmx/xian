@@ -412,6 +412,7 @@ const CATEGORIES = [
       "lifeTrialArchive",
       "lootDustLedger",
       "sessionHaul",
+      "dustFormat",
     ],
   },
   {

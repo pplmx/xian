@@ -45,7 +45,7 @@
           -->
           <template v-if="gains.dust > 0">
             <span>器灵尘</span>
-            <strong class="text-qing" data-combat-dust>+{{ gains.dust }}</strong>
+            <strong class="text-qing" data-combat-dust>+{{ formatGN(gains.dust) }}</strong>
           </template>
         </p>
       </div>
@@ -421,6 +421,12 @@ const gains = computed(() => {
   return {
     stone: formatGN(s.stoneGain),
     exp: formatGN(s.expGain),
+    /*
+     * 器灵尘保留原始值(判空用),展示时与灵石/修为走同一个 formatGN。
+     * 「本次所得」是一场会话的**累计**,而最长的长线云游是 4 小时(上千场),
+     * 累计到五位数是正常量级;那时灵石写着「+1.2亿」、尘写着「+123456」,
+     * 同一行读起来是两个世界。
+     */
     dust: Math.max(0, Math.floor(s.dustGain ?? 0)),
   };
 });
