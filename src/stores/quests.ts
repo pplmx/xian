@@ -1,4 +1,5 @@
 /** 任务 / 成就 / 称号 / 图鉴 / 计数器 */
+import { QUALITIES } from "@/data/qualities";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import type { CollectionCategory, CounterKey } from "@/types";
@@ -40,6 +41,17 @@ export const useQuestsStore = defineStore(
   "quests",
   () => {
     const counters = ref<Partial<Record<CounterKey, number>>>({});
+    /**
+     * 持有过的最高装备品质 rank —— **只增不减**。
+     *
+     * 品质型成就读的是「曾得过哪一档」,而此前那个读数每次从 `inventory.items`
+     * 现算:分解掉那一件,进度条就跟着倒退,同一屏还会与「已达成」打脸
+     * (见 core/qualityPeak 的注释)。与 `player.reincarnation.peakMajor`
+     * (历世最远那一境)同一条规矩:一次性事实只记高,不跟着当下走。
+     *
+     * 旧档没有这一栏 —— sanitize 时按当前持有回填一次(见下方),不编更高的值。
+     */
+    const peakQualityRank = ref(0);
     const achieved = ref<string[]>([]);
     /** 各成就达成那一刻的掉落层级(灵石实发=该 tier 折实;成就页据此重排不掉价) */
     const achievedTiers = ref<Record<string, number>>({});
@@ -89,6 +101,18 @@ export const useQuestsStore = defineStore(
     /** 存档修复:计数/图鉴表被写坏会让成就判定与图鉴页在渲染期抛错 */
     function sanitize(): void {
       counters.value = asNumberRecord(counters.value, 0);
+      /*
+       * 品质峰值:夹回合法档位。旧档没有这一栏(读到 0)时按**当前持有**回填一次 ——
+       * 照实说「我记得的就这么多」,不按成就反推一个更高的值。
+       * 之后的抬升由 noteQualityPeak 在拾得时写,分解不再让它回落。
+       */
+      peakQualityRank.value = Math.max(
+        0,
+        Math.min(
+          Math.max(0, QUALITIES.length - 1),
+          Math.trunc(asFiniteNumber(peakQualityRank.value, 0, 0)) || 0,
+        ),
+      );
       achieved.value = uniqueKnown(asStringArray(achieved.value), (id) =>
         ACHIEVEMENTS.some((a) => a.id === id),
       );
@@ -212,6 +236,19 @@ export const useQuestsStore = defineStore(
       achieved.value = [...ids];
     }
 
+    /**
+     * 记一笔「见过这一档」。
+     *
+     * 只增不减:与 peakRealm 同一条规矩 —— 分解、转世、清空背包都不让它回落。
+     * 调用点只有一处(拾得装备时),与 `notePeak` 同一条纪律:
+     * 抬升只在一个地方写,两个调用点就是两本账。
+     */
+    function noteQualityPeak(rank: number): void {
+      const next = Math.max(0, Math.min(Math.max(0, QUALITIES.length - 1), Math.trunc(rank) || 0));
+      if (next <= peakQualityRank.value) return;
+      peakQualityRank.value = next;
+    }
+
     /** 记下某成就达成时的掉落层级 —— 成就页「实发额」按它重排,不再随当前层级漂移 */
     function recordAchievedTier(id: string, tier: number): void {
       achievedTiers.value = { ...achievedTiers.value, [id]: tier };
@@ -303,6 +340,8 @@ export const useQuestsStore = defineStore(
       inc,
       hasAchieved,
       setAchieved,
+      peakQualityRank,
+      noteQualityPeak,
       recordAchievedTier,
       advanceMain,
       setMainIndex,

@@ -437,7 +437,6 @@
 import "@/styles/pages/titles.css";
 import { focusListRow } from "@/composables/useListFocus";
 import { computed, nextTick, ref } from "vue";
-import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
 import { ACHIEVEMENTS } from "@/data/achievements";
@@ -450,6 +449,7 @@ import { PERSONALITY_NAMES, personalityDesc } from "@/core/petPersonality";
 import type { StatMods } from "@/types";
 import { petTraitText } from "@/ui/itemText";
 import { qualityDef } from "@/data/qualities";
+import { peakQualityFromStores } from "@/ui/qualityPeakStores";
 import { modsText } from "@/data/statNames";
 import { CODEX_SOURCES } from "@/ui/codex";
 import { cnNumber } from "@/utils/format";
@@ -483,7 +483,6 @@ import { useRouteTab } from "@/composables/useRouteTab";
 import { TITLES_CHAPTERS } from "@/ui/navigation";
 
 const player = usePlayerStore();
-const inventory = useInventoryStore();
 const quests = useQuestsStore();
 
 const tab = useRouteTab(TITLES_CHAPTERS, "title");
@@ -496,9 +495,13 @@ const ownedCount = computed(
 const titlesAllOwned = computed(() => ownedCount.value === TITLES.length && TITLES.length > 0);
 const titleMeter = computed(() => nameBeastMeter(ownedCount.value, TITLES.length));
 
-const maxQualityRank = computed(() =>
-  inventory.items.reduce((max, item) => Math.max(max, qualityDef(item.quality).rank), 0),
-);
+/*
+ * 品质读数 —— 「持有过最高的那一件」,不是「此刻包里最高的那一件」。
+ * 分解会把那一件从 items 里拿掉,就地 reduce 会让进度条倒退;
+ * 而成就一旦解锁不会掉回,同一屏就会出现「已达成」与「0/6 尚未达成」并存。
+ * 四类(装备/法宝/灵兽/功法)一起算,见 core/qualityPeak。
+ */
+const maxQualityRank = computed(() => peakQualityFromStores());
 const titleProgress = computed(() =>
   titleProgressRows(TITLES, ACHIEVEMENTS, {
     achieved: quests.achieved,

@@ -403,6 +403,7 @@ const CATEGORIES = [
       "petQualitySeal",
       "toastLife",
       "equipHistory",
+      "qualityPeak",
     ],
   },
   {

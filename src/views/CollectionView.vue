@@ -426,10 +426,9 @@
 import "@/styles/pages/collection.css";
 import { computed, nextTick, onUnmounted, ref, useTemplateRef, watch } from "vue";
 import { useQuestsStore } from "@/stores/quests";
-import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";
 import { ACHIEVEMENTS } from "@/data/achievements";
-import { qualityDef } from "@/data/qualities";
+import { peakQualityFromStores } from "@/ui/qualityPeakStores";
 import { qualityVerdict } from "@/data/qualityVerdicts";
 import { collectionCodex, type CodexCat, type CodexEntry } from "@/ui/codex";
 import { achievementDirection } from "@/ui/achievementHint";
@@ -466,7 +465,6 @@ import { useRouteTab } from "@/composables/useRouteTab";
 import { COLLECTION_CHAPTERS } from "@/ui/navigation";
 
 const quests = useQuestsStore();
-const inventory = useInventoryStore();
 const player = usePlayerStore();
 
 const tab = useRouteTab(COLLECTION_CHAPTERS, "achievement");
@@ -488,9 +486,13 @@ const gateEls = useTemplateRef<HTMLButtonElement[]>("gateEls");
 type AchievementRow = AchievementProgressRow & { direction: string; rewardText: string };
 
 /** 品质型成就的进度只看当前持有最高品质；它是 "现持" 口径，不是历史最高记录。 */
-const maxQualityRank = computed(() =>
-  inventory.items.reduce((max, item) => Math.max(max, qualityDef(item.quality).rank), 0),
-);
+/*
+ * 品质读数 —— 「持有过最高的那一件」,不是「此刻包里最高的那一件」。
+ * 分解会把那一件从 items 里拿掉,就地 reduce 会让进度条倒退;
+ * 而成就一旦解锁不会掉回,同一屏就会出现「已达成」与「0/6 尚未达成」并存。
+ * 四类(装备/法宝/灵兽/功法)一起算,见 core/qualityPeak。
+ */
+const maxQualityRank = computed(() => peakQualityFromStores());
 
 /**
  * 成就谱不再把未达成者遮成「???」:名称、条件与可量化进度全部摊开。

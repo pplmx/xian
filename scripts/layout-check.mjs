@@ -13778,6 +13778,184 @@ async function taskToastSeal() {
 }
 
 /**
+ * 品质读数只增不减 —— 分解掉那一件,成就谱上那条进度不许倒退。
+ *
+ * 复现出来的事故:品质型成就的进度条读的是**此刻包里**最高那件
+ * (`inventory.items.reduce(...)`),而分解会把它从 items 里拿掉。
+ * 于是「得仙品 → 7/8 → 分解 → 0/8」。更糟的是已解锁的成就不掉回,
+ * 同一屏会出现「✓ 已达成」与「0% 尚未达成」并存 —— 两张卡互相打脸。
+ *
+ * 判据走真路径:种一件仙品(a_q8「神品」因此差一档)→ 记下读数 →
+ * 用器评帖页脚的垃圾桶真分解掉 → 读数必须一模一样。
+ */
+async function taskQualityPeakMonotonic() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    /*
+     * 夹具必须把**其余三类清空** —— 否则册里随便哪件高档都会把读数顶住,
+     * 分解掉指定的那件也不掉,判据就成了空转(实测踩过:展品档自带神品法宝)。
+     */
+    const slices = showcaseSlices("light");
+    const peakItem = {
+      uid: "peak_immortal",
+      templateId: "w_zhuqing",
+      // 仙品(rank 7):a_q6/a_q7 解锁,而 a_q8(神品)仍差一档 ——
+      // 那一行读「现持 仙品 → 神品」,分解之后才会真的倒退。
+      quality: "immortal",
+      tier: 18,
+      level: 0,
+      affixes: [{ id: "hp1", roll: 1 }],
+    };
+    slices.inventory = {
+      ...slices.inventory,
+      items: [peakItem],
+      equipped: {},
+      artifacts: [],
+      equippedArtifacts: [],
+      pills: {},
+      seenUids: [peakItem.uid],
+      seenSeeded: true,
+    };
+    slices.quests = {
+      ...slices.quests,
+      collections: { ...slices.quests.collections, pet: [], artifact: [], gongfa: [], equip: [] },
+      collectedMoment: {},
+    };
+    slices.cultivation = { ...slices.cultivation, learned: {} };
+    await seedSave(ctx, slices, "__qualityPeakFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    /** 读「神物自晦」(a_q8)那一行的进度文案 */
+    const readRow = () =>
+      page.evaluate(() => {
+        const row = document.querySelector('[data-achievement-id="a_q8"]');
+        if (!row) return null;
+        const label =
+          row
+            .querySelector(".achievement-entry__progress")
+            ?.textContent?.replace(/\s+/g, " ")
+            .trim() ?? "";
+        return { label };
+      });
+
+    /*
+     * a_q8 落在「掉落与鉴宝」那一组(见 ui/achievementHint:quality → 掉落与鉴宝),
+     * 而成就谱按组折叠 —— 不先展开,那一行根本不在 DOM 上。
+     */
+    const expand = async () => {
+      const toggle = page.locator('[data-achievement-group-toggle="掉落与鉴宝"]').first();
+      if ((await toggle.count()) > 0) {
+        if ((await toggle.getAttribute("aria-expanded")) !== "true") {
+          await toggle.click({ timeout: 3000 }).catch(() => {});
+          await page.waitForTimeout(350);
+        }
+      }
+      await page
+        .locator('[data-achievement-id="a_q8"]')
+        .first()
+        .scrollIntoViewIfNeeded()
+        .catch(() => {});
+      await settleVisuals(page);
+    };
+
+    await openRoute(page, "/collection", 900);
+    await clearOverlays(page);
+    await expand();
+    const before = await readRow();
+    checked += 1;
+    if (!before || !before.label) {
+      failures.push("[390] 品质读数:成就谱上读不到「神物自晦」那一行的进度");
+    } else if (!/仙品/.test(before.label)) {
+      failures.push(`[390] 品质读数:持仙品时该读「现持 仙品 → 神品」,实见 «${before.label}»`);
+    }
+
+    // 真路径:行囊 → 器评帖 → 垃圾桶 → 确认分解
+    await openRoute(page, "/inventory", 900);
+    await clearOverlays(page);
+    checked += 1;
+    const opened = await page
+      .locator(`main button[data-uid="${peakItem.uid}"]`)
+      .first()
+      .click({ timeout: 4000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!opened) {
+      failures.push("[390] 品质读数:行囊里找不到那件仙品,分解路径没走成");
+    } else {
+      await page.waitForTimeout(500);
+      /*
+       * 用真点击,不是页内 el.click():按钮的 disabled 与 title 都由 Vue 算,
+       * 页内点击绕过它、也走不进 @click 的响应式路径。
+       */
+      const trash = page.locator('button[aria-label="分解这件装备"]').first();
+      if ((await trash.count()) > 0) {
+        await trash.click({ timeout: 3000 }).catch(() => {});
+        await page.waitForTimeout(400);
+        await page
+          .locator("button")
+          .filter({ hasText: "确认分解" })
+          .first()
+          .click({ timeout: 3000 })
+          .catch(() => {});
+        await page.waitForTimeout(800);
+      }
+    }
+
+    /*
+     * 先证「那一件真的没了」—— 否则整条判据会空转:包没分解掉,读数当然不变,
+     * 而门看起来是绿的。(这一版最初就栽在这里,补了这条才现形。)
+     */
+    checked += 1;
+    await openRoute(page, "/inventory", 900);
+    await clearOverlays(page);
+    const stillThere = await page.evaluate(
+      (uid) => Boolean(document.querySelector(`main button[data-uid="${uid}"]`)),
+      peakItem.uid,
+    );
+    if (stillThere) {
+      failures.push("[390] 品质读数:那件仙品没被分解掉 —— 读数不变只是因为东西还在,判据空转");
+    }
+
+    await openRoute(page, "/collection", 900);
+    await clearOverlays(page);
+    await expand();
+    const after = await readRow();
+    checked += 1;
+    if (!after || !after.label) {
+      failures.push("[390] 品质读数:分解之后成就谱上那一行不见了");
+    } else if (before && after.label !== before.label) {
+      failures.push(
+        `[390] 品质读数:分解掉那一件让进度倒退了 —— «${before.label}» → «${after.label}»` +
+          `（「曾得」是一次性事实,与历世最远那一境同一条规矩）`,
+      );
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 品质读数页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n品质读数:分解前后都读 «${before?.label}» —— 只增不减`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 品评 —— 九档各一句「这一档凭什么」,四处读同一份,且放得进一行。
  *
  * 必须真浏览器量的两件事:
@@ -27640,6 +27818,7 @@ const TASKS = [
   ["天界内层三册的章节与并读", taskCelestialInnerVolumes],
   ["界域志首屏的此刻优先", taskCodexFold],
   ["成就谱首屏的眼下可追", taskAchievementFold],
+  ["品质读数只增不减", taskQualityPeakMonotonic],
   ["藏珍双阁的九柜换屉", taskCollectionFold],
   ["藏珍两章续卷与桌面并读", taskCollectionRegister],
   ["减少动效真的减到了", taskReduceMotion],

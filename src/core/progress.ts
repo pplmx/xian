@@ -220,6 +220,13 @@ export function checkAchievements(): void {
 /** 品质成就(获得装备时显式调用) */
 export function checkQualityAchievement(rank: number): void {
   const quests = useQuestsStore();
+  /*
+   * 先记峰值,再判成就 —— 峰值是**只增不减**的那份读数(见 core/qualityPeak):
+   * 拾得时抬升,分解、转世、清空背包都不让它回落。
+   * 记在这里而不是拾取处:凡是"见过这一档"的路径都从这一处过,
+   * 两个调用点就是两本账(与 player 的 notePeak 同一条纪律)。
+   */
+  quests.noteQualityPeak(rank);
   for (const def of ACHIEVEMENTS) {
     if (def.cond.type === "quality" && !quests.hasAchieved(def.id) && rank >= def.cond.rank) {
       unlockAchievement(def.id);
