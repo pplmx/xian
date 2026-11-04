@@ -9375,6 +9375,135 @@ async function taskQualityLadder() {
 }
 
 /**
+ * 新得那一枚 —— 到手的那一刻该弹一下。
+ *
+ * 全站只有两处「新」徽章带入場动画:图鉴 chip 与**装备卡**。而装备卡全仓已无任何 import
+ * (行囊早换成 InventoryCollectionRow)—— 那一枚动画跟着旧组件一起沉了下去。
+ * `uiLayering.spec` 那条断言一直是绿的,玩家打开行囊看到的新件却是静态的:
+ * 判据守住了字面,没守住那件事。
+ *
+ * 判据三件:
+ *   一 新得的那一格,标记上有入场动画(computed animation-name 含 new-pop);
+ *   二 非新得的相邻格**没有**这个动画 —— 旧藏不该跟着一起跳;
+ *   三 动画真的跑起来了(animation-name 不是 none),且时长有限。
+ */
+async function taskNewItemPop() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const mk = (uid, templateId, tier) => ({
+      uid,
+      templateId,
+      quality: "fine",
+      tier,
+      level: 0,
+      affixes: [{ id: "atk1", roll: 1 }],
+    });
+    const fresh = mk("np_fresh", "w_xuantie", 2);
+    const old = mk("np_old", "h_xuantie", 4);
+    const slices = showcaseSlices("light");
+    slices.inventory = {
+      ...slices.inventory,
+      items: [fresh, old],
+      equipped: {},
+      // 「新」= 不在 seenUids 里。故只把 old 记成见过
+      seenUids: [old.uid],
+      seenSeeded: true,
+    };
+    await seedSave(ctx, slices, "__newItemPopFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/inventory", 900);
+    await clearOverlays(page);
+
+    checked += 1;
+    const rows = await page.evaluate(() => {
+      const out = [];
+      for (const uid of ["np_fresh", "np_old"]) {
+        const card = document.querySelector(`main button[data-uid="${uid}"]`);
+        if (!card) continue;
+        // 标记那一枚是卡里带 animate-new-pop 的那个 span(或其内层)
+        const pop = card.querySelector(".animate-new-pop");
+        const marks = card.querySelector(".inventory-item__marks");
+        const target = pop ?? marks;
+        const style = target ? getComputedStyle(target) : null;
+        out.push({
+          uid,
+          isNew: card.getAttribute("data-equipment-new") === "true",
+          hasPop: Boolean(pop),
+          animationName: style ? style.animationName : "",
+          animationDuration: style ? style.animationDuration : "",
+          display: style ? style.display : "",
+        });
+      }
+      return out;
+    });
+    const freshRow = rows.find((r) => r.uid === "np_fresh");
+    const oldRow = rows.find((r) => r.uid === "np_old");
+
+    if (!freshRow || !oldRow) {
+      failures.push(`[390] 新得入场:行囊里只量到 ${rows.length}/2 件`);
+    } else {
+      checked += 1;
+      if (!freshRow.isNew) {
+        failures.push("[390] 新得入场:夹具里的新件没被标成新得(data-equipment-new)");
+      }
+      if (!freshRow.hasPop) {
+        failures.push("[390] 新得入场:新得的那一枚没有入场动画(animate-new-pop 缺失)");
+      }
+      if (!/new-pop/.test(freshRow.animationName)) {
+        failures.push(`[390] 新得入场:动画没真跑起来 —— animation-name«${freshRow.animationName}»`);
+      }
+      if (freshRow.animationDuration === "0s") {
+        failures.push("[390] 新得入场:动画时长是 0s —— 挂了个空壳");
+      }
+      /*
+       * `scale` 对纯 inline 元素不生效:不设 inline-block,类名在、动画在,
+       * 屏幕上却一点都不动。这一条量的是那条最容易漏的样式。
+       */
+      if (freshRow.display === "inline") {
+        failures.push("[390] 新得入场:那枚标记是 inline —— scale 动画不会生效");
+      }
+      // 旧藏不该跟着跳
+      checked += 1;
+      if (oldRow.isNew) {
+        failures.push("[390] 新得入场:夹具里的旧件被标成了新得");
+      }
+      if (oldRow.hasPop) {
+        failures.push("[390] 新得入场:旧藏那一枚也挂了入场动画 —— 只有新得该跳");
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 新得入场页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(
+        `\n新得入场:新件动画 «${freshRow?.animationName}» / ${freshRow?.animationDuration} · 旧藏无动画`,
+      );
+    } else {
+      console.log(
+        `\n新得入场[未通过]:${rows.map((r) => `${r.uid} new=${r.isNew} pop=${r.hasPop} anim=${r.animationName} disp=${r.display}`).join(" · ")}`,
+      );
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 神通的节拍 —— 一件法宝多久出手一次。
  *
  * 法宝谱上写着神通的**效果**,却没写它的**节拍**:同样的效果,每 2 回合一次与
@@ -24686,6 +24815,7 @@ const TASKS = [
   ["成色的话把数字译成判断", taskTemperGrade],
   ["差额一句话说得出差多少", taskShortfallText],
   ["神通的节拍写在说明里", taskArtifactBeat],
+  ["新得那枚真的会弹一下", taskNewItemPop],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],

@@ -1498,6 +1498,14 @@
     white-space: nowrap;
   }
 
+  /*
+   * 新得那枚的入场动画(见 InventoryCollectionRow)。
+   * 内层要 inline-block:`scale` 对纯 inline 元素不生效 —— 不设它,动画类挂上去
+   * 也不会有任何视觉变化(而判据只查类名在不在,查不出这件事)。
+   */
+  .inventory-item__marks-pop {
+    display: inline-block;
+  }
   .inventory-item__marks.is-worn {
     border-left-color: rgb(var(--color-qing-rgb) / 0.6);
     color: rgb(var(--color-qing-rgb));

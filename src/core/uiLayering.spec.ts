@@ -256,9 +256,10 @@ describe("界面分层 · 浮层只有一个出处", () => {
     ).toEqual([]);
   });
 
-  it("装备卡与连战场次按钮有稳定可访问名", () => {
-    const card = FILES.find((f) => f.path === "components/equipment/EquipmentCard.vue");
-    expect(card?.src, "装备卡要把截断名之外的佩/锁/共鸣写进 aria-label").toContain("aria-label");
+  it("行囊格与连战场次按钮有稳定可访问名", () => {
+    // 同样改守在用的那个:装备卡已无 import,行囊格是 InventoryCollectionRow
+    const card = FILES.find((f) => f.path === "components/inventory/InventoryCollectionRow.vue");
+    expect(card?.src, "行囊格要把截断名之外的佩/锁/共鸣写进 aria-label").toContain("aria-label");
     expect(card?.src).toContain("佩戴中");
     const gauntlet = FILES.find((f) => f.path === "components/celestial/GauntletPanel.vue");
     expect(gauntlet?.src, "连战场次按钮不能只念一个数字").toContain("aria-label");
@@ -353,11 +354,17 @@ describe("界面分层 · 浮层只有一个出处", () => {
       "tab.name === 'cultivation' && canBreakthrough",
     );
     expect(nav?.src, "可破境用玉色圆点(与背包的朱砂计数徽标区分)").toContain("bg-jade");
-    // 两枚「新」徽章(装备卡 / 图鉴 chip)都有入场动画:新件到手、再开包那一瞬齐齐弹起,
+    // 两枚「新」徽章(行囊格 / 图鉴 chip)都有入场动画:新件到手、再开包那一瞬齐齐弹起,
     // 一眼扫到哪些是新入的。animate-new-pop 走独立 scale 属性、不碰 transform
-    // (装备卡徽章靠 -translate-x-1/2 居中,凡动 transform 都会横跳)—— 帧与映射删了下面都红。
-    const card = FILES.find((f) => f.path === "components/equipment/EquipmentCard.vue");
-    expect(card?.src, "装备卡「新」徽章要有入场动画(animate-new-pop)").toContain("animate-new-pop");
+    // (徽章靠 -translate-x-1/2 居中,凡动 transform 都会横跳)—— 帧与映射删了下面都红。
+    //
+    // 这一条原先守的是 `components/equipment/EquipmentCard.vue` —— 而那个组件全仓
+    // 已无任何 import(行囊早已换成 InventoryCollectionRow)。断言一直是绿的,
+    // 玩家看到的却是静态的新件:判据守住了字面,没守住那件事。故改守**在用的那个**。
+    const card = FILES.find((f) => f.path === "components/inventory/InventoryCollectionRow.vue");
+    expect(card?.src, "行囊格的「新得」徽章要有入场动画(animate-new-pop)").toContain(
+      "animate-new-pop",
+    );
     expect(codex?.src, "图鉴 chip 的「新」徽章要有入场动画(animate-new-pop)").toContain(
       "animate-new-pop",
     );

@@ -218,7 +218,7 @@ describe("排版量法口径", () => {
 
   it("背包 300 件不许把全部装备卡塞进首帧 —— 分批放出并与运行时门同一条预算", () => {
     /*
-     * 300 件时每张 EquipmentCard 都是一枚按钮加分角标,全量渲染实测 DOM 约 1955;
+     * 300 件时每个行囊格都是一枚按钮加分角标,全量渲染实测 DOM 约 1955;
      * 帧率尚绿不代表没有维护成本,后续加一枚词条/印章都会再乘 300。背包先放首批,
      * 余下由玩家显式续开;每张卡只接收父级算好的 isNew,不再各自订阅库存单例。
      */
@@ -235,16 +235,20 @@ describe("排版量法口径", () => {
     expect(view).toContain("data-inventory-prev");
     expect(view).toContain("itemPage.hidden > 0");
 
+    /*
+     * 改守在用的那个组件:`components/equipment/EquipmentCard.vue` 全仓已无 import
+     * (行囊早换成 InventoryCollectionRow),而这条判据一直对着旧文件断言 ——
+     * 「每张卡只接收父级算好的 isNew」这件事在新的那个上面才成立或不成立。
+     */
     const card = readFileSync(
-      resolve(__dirname, "../components/equipment/EquipmentCard.vue"),
+      resolve(__dirname, "../components/inventory/InventoryCollectionRow.vue"),
       "utf-8",
     );
     expect(card).toContain("isNew?: boolean");
     expect(card).not.toContain('from "@/stores/inventory"');
-    expect(card, "空格位也会按卡数进 DOM —— 标记带用 ml-auto 对齐即可").not.toContain(
-      'class="w-2.5"',
-    );
-    expect(card).toContain('v-if="setName || props.item.level > 0"');
+    // 共鸣与强化要进那一行标记 —— 卡面在窄格子里截断,这两样不能只活在图里
+    expect(card, "共鸣要进标记").toContain("setName.value ? `共鸣 ${setName.value}`");
+    expect(card, "强化等级要进标记").toContain("props.item.level > 0");
 
     const perf = readFileSync(resolve(__dirname, "../../scripts/perf-profile.mjs"), "utf-8");
     expect(perf).toContain("maxDomByView");

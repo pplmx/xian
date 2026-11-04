@@ -23,7 +23,15 @@
       class="inventory-item__marks"
       :class="{ 'is-new': isNew, 'is-worn': !isNew && equipped }"
     >
-      {{ marksText }}
+      <!--
+        新得的那一枚弹一下(见 uiLayering 的「两枚新徽章都有入场动画」)。
+        动画跟着一个用不着的旧组件(EquipmentCard)沉了下去:行囊换成本组件之后,
+        那一枚留在原地,玩家打开行囊看到的新件是静态的。
+        `new-pop` 走独立 scale 属性、不碰 transform,故挨着它的排版不会横跳。
+        只挂「新得」——「佩」「锁」「共」是状态,不该在落地时跳。
+      -->
+      <span v-if="isNew" class="inventory-item__marks-pop animate-new-pop">{{ marksText }}</span>
+      <template v-else>{{ marksText }}</template>
     </span>
   </button>
 </template>
