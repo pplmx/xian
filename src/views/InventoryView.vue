@@ -205,12 +205,27 @@
                     :style="{ color: qualityDef(row.item.quality).color }"
                   />
                   <span class="inventory-seat__piece-copy">
-                    <span
-                      class="inventory-seat__piece-name"
-                      :style="{ color: qualityDef(row.item.quality).color }"
-                    >
-                      {{ row.template.name }}
-                      <span v-if="row.item.level > 0" class="tabular">+{{ row.item.level }}</span>
+                    <span class="inventory-seat__piece-line">
+                      <!--
+                        稀有档的形状线索 —— 与候选清单、功法书目、法宝行卡、灵兽谱同一枚
+                        (见 ui/qualityTier:「稀有档另有 QualitySeal 角章作形状线索」)。
+                        九佩是每局都在眼前的那一屏,九张并排、颜色相近的邻格挨得最近;
+                        同一件装备在候选清单里有章、在这里没有,是两处长得不一样。
+                      -->
+                      <QualitySeal
+                        v-if="isRareQuality(row.item.quality)"
+                        :quality="row.item.quality"
+                        :size="13"
+                        class="inventory-seat__seal"
+                        data-inventory-seat-seal
+                      />
+                      <span
+                        class="inventory-seat__piece-name"
+                        :style="{ color: qualityDef(row.item.quality).color }"
+                      >
+                        {{ row.template.name }}
+                        <span v-if="row.item.level > 0" class="tabular">+{{ row.item.level }}</span>
+                      </span>
                     </span>
                     <span v-if="row.item.note" class="inventory-seat__note">{{
                       row.item.note
@@ -618,6 +633,8 @@ import { useUiStore } from "@/stores/ui";
 import { useSettingsStore } from "@/stores/settings";
 import { useCultivationStore } from "@/stores/cultivation";
 import { qualityDef } from "@/data/qualities";
+import QualitySeal from "@/components/common/QualitySeal.vue";
+import { isRareQuality } from "@/ui/qualityTier";
 import { pillDef } from "@/data/pills";
 import { activeBuffsOf, buffOverflowOf, buffStackCount } from "@/core/engineBuffs";
 import type { BuffOverflow } from "@/core/engineBuffs";

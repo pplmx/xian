@@ -1396,6 +1396,21 @@
     gap: 0.06rem;
   }
 
+  /*
+   * 件名那一行:稀有档的角章贴在名字前(见 ui/qualityTier)。
+   * 用 inline-flex + baseline 对齐,章不会把行高顶起来 —— 九宫格里九张卡
+   * 若有的一张高一点,整片网格就会歪。
+   */
+  .inventory-seat__piece-line {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    gap: 0.24rem;
+  }
+  .inventory-seat__seal {
+    flex: none;
+    align-self: center;
+  }
   .inventory-seat__piece-name {
     min-width: 0;
     overflow-wrap: anywhere;

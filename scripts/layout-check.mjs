@@ -6255,6 +6255,33 @@ async function taskInventoryTabRegisters() {
       artifacts: [],
       equippedArtifacts: [],
     };
+    /*
+     * 九佩要为「稀有档角章」留两侧:把武器与头冠各摆一件——
+     * 一件天品(该有章)、一件凡品(不许有章)。展品档那九件都不到稀有段,
+     * 照搬的话「该有章」那半边永远量不到(判据会一路绿着而没有信息)。
+     */
+    /*
+     * 模板必须与**槽位**对得上:拿一把剑去填头冠那一席,入库层会当场把它丢掉,
+     * 于是「凡品那席不该有章」那半边根本没渲染 —— 判据空转还不报红(实测踩过)。
+     */
+    const seatItem = (uid, templateId, quality) => ({
+      uid,
+      templateId,
+      quality,
+      tier: 14,
+      level: 0,
+      affixes: [{ id: "sa1", roll: 0.5 }],
+    });
+    inventorySlices.inventory = {
+      ...inventorySlices.inventory,
+      items: [
+        seatItem("seat_rare", "w_zhuqing", "heaven"),
+        seatItem("seat_plain", "h_muzan", "mortal"),
+      ],
+      equipped: { weapon: "seat_rare", head: "seat_plain" },
+      seenUids: ["seat_rare", "seat_plain"],
+      seenSeeded: true,
+    };
     await seedSave(ctx, inventorySlices, "__inventoryTabRegisters");
     const page = await ctx.newPage();
     const pageErrors = [];
@@ -6507,6 +6534,46 @@ async function taskInventoryTabRegisters() {
     }
     if (SHOTS) {
       await page.screenshot({ path: join(SHOTS_DIR, "390-inventory-artifact-register.png") });
+    }
+
+    /*
+     * 九佩的稀有档角章 —— 与候选清单、功法书目、法宝行卡、灵兽谱同一枚。
+     *
+     * 同一件装备:候选清单里盖了章(见 SlotCandidatesDialog),主页那九张席位卡
+     * 此前只有名字的字色 —— 两处长得不一样。九佩是每局都在眼前的那一屏。
+     * 两侧都量:天品那席要有章,凡品那席一枚都不许多。
+     */
+    await page.getByRole("tab", { name: "装备" }).click({ timeout: 3000 });
+    await settleVisuals(page);
+    checked += 1;
+    {
+      const seals = await page.evaluate(() => {
+        const read = (slot) => {
+          const el = document.querySelector(`[data-equip-slot="${slot}"]`);
+          if (!el) return null;
+          // 这一席到底有没有件 —— 没有件就没有「该不该盖章」这回事,判据会空转
+          return {
+            piece: Boolean(el.querySelector(".inventory-seat__piece-name")),
+            sealed: Boolean(el.querySelector("[data-inventory-seat-seal]")),
+          };
+        };
+        return { weapon: read("weapon"), head: read("head") };
+      });
+      if (!seals.weapon?.piece || !seals.head?.piece) {
+        failures.push(
+          `[390-九佩] 两席里有一席没装上件 —— 角章判据会空转(${JSON.stringify(seals)})`,
+        );
+      }
+      if (seals.weapon?.sealed !== true) {
+        failures.push(
+          `[390-九佩] 天品那一席没有品阶角章 —— 色弱玩家只能靠字色分档(${JSON.stringify(seals)})`,
+        );
+      }
+      if (seals.head?.sealed !== false) {
+        failures.push(
+          `[390-九佩] 凡品那一席也盖了角章 —— 人人有章等于人人无章(${JSON.stringify(seals)})`,
+        );
+      }
     }
 
     await page.setViewportSize({ width: 1280, height: 900 });

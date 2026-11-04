@@ -404,6 +404,7 @@ const CATEGORIES = [
       "toastLife",
       "equipHistory",
       "qualityPeak",
+      "inventorySeatSeal",
     ],
   },
   {
