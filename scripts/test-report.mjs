@@ -409,6 +409,7 @@ const CATEGORIES = [
       "combatLogTone",
       "companionTime",
       "petCompanionState",
+      "lifeTrialArchive",
     ],
   },
   {

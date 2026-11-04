@@ -24676,7 +24676,11 @@ async function taskLegacyHistoryOverflow() {
         themeId: null,
         themeResult: null,
         insight: 17 + i,
-        trialId: null,
+        /*
+         * 逆旅契:前两世各签一契,其余不签 —— 判据要两侧都量。
+         * 履历上该只在那两世出现,且是那一契自己的名字与印。
+         */
+        trialId: index === 1 ? "tr_gu" : index === 2 ? "tr_ji" : null,
         bond: null,
         at: now - (30 - i) * 86400000,
       };
@@ -24847,6 +24851,52 @@ async function taskLegacyHistoryOverflow() {
       }
     }
 
+    /*
+     * 逆旅契进履历 —— data/lifeTrials 的文件头写着:四条给收益的路全被出口空间
+     * 审计堵死,「剩下的只有『这一世确实与众不同,且它被记住了』」。
+     * core/reincarnation 照做了(写 LifeRecord.trialId),而这一屏此前从没读过它 ——
+     * 契约唯一承诺的东西没兑现。两侧都量:签过的两世要有那一行,其余不许有。
+     *
+     * 这一段必须跑在**上面那串续开/回翻之后**:签过契的是第 1、2 世,
+     * 它们在履历最末一页。自己另点一次「再看」会与既有的 waitForFunction 抢状态。
+     */
+    checked += 1;
+    {
+      const moreAgain = page.locator("[data-life-more]").first();
+      if ((await moreAgain.count()) > 0) {
+        await moreAgain.click({ timeout: 5000 }).catch(() => {});
+        await page.waitForTimeout(600);
+      }
+      const allTrials = await page.evaluate(() =>
+        [...document.querySelectorAll("[data-life-row]")].map((el) => ({
+          idx: el.getAttribute("data-life-row"),
+          trial: (el.querySelector("[data-life-trial]")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+        })),
+      );
+      const signed = allTrials.filter((row) => row.trial);
+      const first = allTrials.find((row) => row.idx === "1");
+      const second = allTrials.find((row) => row.idx === "2");
+      const third = allTrials.find((row) => row.idx === "3");
+      if (!first || !second) {
+        failures.push(
+          `[320] 逆旅契:履历里找不到签过契的那两世(实见 ${allTrials.length} 行)` +
+            ` —— 判据无从量起`,
+        );
+      } else if (!first.trial.includes("孤行契")) {
+        failures.push(
+          `[320] 逆旅契:签过契的那一世在履历里没有记录(${JSON.stringify(first.trial)})` +
+            ` —— 「被记住」是这份契约唯一的回报`,
+        );
+      } else if (!second.trial.includes("疾行契")) {
+        failures.push(`[320] 逆旅契:第二世的契名读错了(${JSON.stringify(second.trial)})`);
+      } else if (third && third.trial) {
+        failures.push(`[320] 逆旅契:没签过契的那一世也印了一行(${JSON.stringify(third.trial)})`);
+      } else if (signed.length !== 2) {
+        failures.push(`[320] 逆旅契:履历上应只有两世带契,实见 ${signed.length} 世`);
+      }
+    }
     const fateTab = page.getByRole("tab", { name: /缘\s*迹/ }).first();
     if ((await fateTab.count()) === 0) {
       failures.push("[195] 修仙录找不到「缘迹」页签");

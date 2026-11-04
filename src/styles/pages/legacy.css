@@ -599,6 +599,26 @@
   .legacy-history__theme {
     margin-top: 0.04rem;
   }
+  /*
+   * 逆旅契那一行 —— 与命题并排但分量不同:命题是你立的题(有成败),
+   * 契是你自己挑的逆境(只有记下)。故用朱砂印 + 常规墨字,不做成败着色。
+   */
+  .legacy-history__trial {
+    display: flex;
+    align-items: baseline;
+    gap: 0.34rem;
+    margin-top: 0.06rem;
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .legacy-history__trial-seal {
+    flex: none;
+    padding: 0 0.2rem;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.42);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-size: var(--type-note);
+    line-height: 1.35;
+  }
   .legacy-history__insight {
     color: var(--color-gold-ink);
     font-size: var(--type-note);

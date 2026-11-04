@@ -230,6 +230,16 @@
                     {{ l.themeName }} · {{ l.resultText }}
                   </p>
                   <p v-else class="legacy-history__quiet">此世未立命题</p>
+                  <!--
+                    逆旅契:那一世你自己挑的逆境。契文只加难,故它不是成就而是行迹 ——
+                    与命题那一行并排,各说一件事(一个是你立的题,一个是你签的契)。
+                  -->
+                  <p v-if="l.trial" class="legacy-history__trial" data-life-trial>
+                    <span class="legacy-history__trial-seal font-kai" aria-hidden="true">{{
+                      l.trial.seal
+                    }}</span>
+                    <span>{{ l.trial.name }}</span>
+                  </p>
                 </div>
                 <span class="legacy-history__insight tabular">宿慧 +{{ l.insight }}</span>
               </article>
@@ -664,6 +674,7 @@ import {
   previousListStep,
 } from "@/core/listRender";
 import { legacyCoverage, legacyMeter, legacyStageMeter } from "@/ui/legacyDesk";
+import { lifeTrialArchive } from "@/ui/lifeTrialArchive";
 import { formatDate } from "@/utils/time";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LegacyWheel from "@/components/common/LegacyWheel.vue";
@@ -777,6 +788,13 @@ const lifeRows = computed(() =>
         themeName: l.themeId ? (lifeThemeDef(l.themeId)?.name ?? null) : null,
         resultText: RESULT_TEXTS[result],
         resultColor: RESULT_COLORS[result],
+        /*
+         * 逆旅契 —— 这是这份契约**唯一**的回报:被记住(见 data/lifeTrials 文件头)。
+         * 转世时 core/reincarnation 已把它写进 LifeRecord.trialId,而这一屏此前
+         * 从头到尾没读过那一栏:玩家花道果买下一世的逆境,转世后翻履历,
+         * 看到的与从没签过契的那一世一模一样。
+         */
+        trial: lifeTrialArchive(l.trialId),
       };
     }),
 );
