@@ -606,7 +606,9 @@ const ownedPetCount = computed(() => PETS.filter((p) => ownedPetIds.value.has(p.
 const petsAllOwned = computed(() => PETS.length > 0 && ownedPetCount.value === PETS.length);
 const petMeter = computed(() => nameBeastMeter(ownedPetCount.value, PETS.length));
 
-/** 全册陈列:当前相伴 → 已结缘 → 品阶降序;未结缘者也占位(盖成「???」) */
+/** 唤作过伴的灵兽 —— 与图鉴 (`ui/codex`) 读的是同一份 quests.petCompanions */
+const petCompanionIds = computed(() => new Set(quests.petCompanions));
+
 const petRows = computed(() =>
   PETS.map((def) => {
     const owned = ownedPetIds.value.has(def.id);
@@ -625,11 +627,22 @@ const petRows = computed(() =>
       traitText: petTraitText(def),
       /** 结缘那一刻 —— 与称号同一份道历;未结缘的没有这一刻 */
       momentText: owned ? codexMomentText(quests.petMoments[def.id]) : "",
-      state: petEntryState({ owned, active }),
+      /*
+       * 曾相伴 —— 名册与图鉴读同一处 quests.petCompanions。
+       * 此前这里只传两个布尔,于是"唤作过伴、后来换了伙伴"的灵兽落回「已结缘」,
+       * 那段同行在名册里根本不存在(见 ui/titlesDesk 的注释)。
+       */
+      state: petEntryState({ owned, active, wasCompanion: petCompanionIds.value.has(def.id) }),
     };
   }).sort(
+    /*
+     * 相伴中 → 曾相伴 → 已结缘 → 未结缘,组内品阶降序。
+     * 与卷首那句「相伴置顶 · 已契次之 · 品阶降序」逐字对齐 ——
+     * 此前排序键里只有 active,「曾相伴」那一档不存在,提示语也就只有半句是真的。
+     */
     (a, b) =>
       Number(b.active) - Number(a.active) ||
+      Number(b.state.state === "companion") - Number(a.state.state === "companion") ||
       Number(b.owned) - Number(a.owned) ||
       qualityDef(b.def.quality).rank - qualityDef(a.def.quality).rank,
   ),

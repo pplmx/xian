@@ -14,7 +14,7 @@ export interface NameBeastMeter {
 }
 
 export interface NameBeastEntryState {
-  state: "active" | "owned" | "locked";
+  state: "active" | "companion" | "owned" | "locked";
   mark: string;
   label: string;
 }
@@ -56,9 +56,23 @@ export function titleEntryState(row: { owned: boolean; worn: boolean }): NameBea
   return { state: "locked", mark: "未", label: "未获得" };
 }
 
-/** 灵兽行的「伴 / 契 / 未」只看当前相伴与结缘状态。 */
-export function petEntryState(row: { owned: boolean; active: boolean }): NameBeastEntryState {
+/**
+ * 灵兽行的「伴 / 曾 / 契 / 未」。
+ *
+ * 四档与图鉴 (`ui/codex` 的 `PET_STAGE_NAMES`) 对齐 —— 此前这里只收
+ * `{ owned, active }`,于是**曾经相伴、此刻不随行**的灵兽落回「已结缘」,
+ * 那段同行在名册里根本不存在。而 `quests.petCompanions` 的注释明写着它是
+ * 「曾相伴/相伴中」档的**唯一来源**,图鉴照做了,名册没读。
+ *
+ * 底线与 `petStage` 同一条:没结的缘不认相伴标记 —— 旧档里留着标记也不发明一段相遇。
+ */
+export function petEntryState(row: {
+  owned: boolean;
+  active: boolean;
+  wasCompanion?: boolean;
+}): NameBeastEntryState {
+  if (!row.owned) return { state: "locked", mark: "未", label: "未结缘" };
   if (row.active) return { state: "active", mark: "伴", label: "相伴中" };
-  if (row.owned) return { state: "owned", mark: "契", label: "已结缘" };
-  return { state: "locked", mark: "未", label: "未结缘" };
+  if (row.wasCompanion) return { state: "companion", mark: "曾", label: "曾相伴" };
+  return { state: "owned", mark: "契", label: "已结缘" };
 }

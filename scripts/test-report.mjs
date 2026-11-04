@@ -408,6 +408,7 @@ const CATEGORIES = [
       "achievementSeal",
       "combatLogTone",
       "companionTime",
+      "petCompanionState",
     ],
   },
   {

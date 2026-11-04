@@ -423,6 +423,14 @@
   .name-beast-ledger[data-kind="pet"] .pet-ledger__mark[data-state="owned"] {
     color: var(--color-qing);
   }
+  /*
+   * 曾相伴 —— 一段真发生过、但已不在身上的同行。
+   * 比「相伴中」淡一档、比「已结缘」实一档:用 ink-soft 而非石青,
+   * 因为它既不是此刻的关系(石青留给相伴中),也不只是收录。
+   */
+  .name-beast-ledger[data-kind="pet"] .pet-ledger__mark[data-state="companion"] {
+    color: var(--color-ink-soft);
+  }
   .name-ledger__copy {
     display: grid;
     min-width: 0;

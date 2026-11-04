@@ -10912,7 +10912,11 @@ async function taskPetMoment() {
         const row = document.querySelector(`[data-pet-row="${petId}"]`);
         if (!row) return null;
         const el = row.querySelector("[data-pet-moment]");
-        return { text: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null };
+        return {
+          text: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null,
+          state: row.getAttribute("data-pet-state"),
+          label: (row.querySelector(".name-ledger__state")?.textContent || "").trim(),
+        };
       }, id);
 
     /*
@@ -10964,6 +10968,66 @@ async function taskPetMoment() {
     } else if (fresh.text !== "第 4 世 · 37 岁") {
       failures.push(`[390] 契兽道历:印的不是存档里那一对读数 «${fresh.text}»`);
     }
+
+    /*
+     * 一·五 「曾相伴」—— 唤作过伴、此刻不随行的那一档。
+     *
+     * quests.petCompanions 的注释写着它是「曾相伴/相伴中」档的**唯一来源**,
+     * 图鉴照做了(四档),而名号页此前只收 { owned, active } —— 于是那样一只灵兽
+     * 落回「已结缘」,与从没相伴过的长得一模一样。
+     *
+     * 两侧都量:A 有结缘 + 有相伴标记 + 不是当前伴 → 必须是「曾相伴」;
+     *        B 有结缘 + 无相伴标记 → 必须仍是「已结缘」(不许人人都是曾相伴)。
+     */
+    checked += 1;
+    {
+      const probePet = petIds[0];
+      /*
+       * 每次探针单开一页、单用一个守卫键 —— `seedSave` 是一个只跑一次的
+       * addInitScript(靠 localStorage 上的守卫位),同一页再种第二次不会生效,
+       * 第二次就还读着上一次的存档(实测踩过:两侧都读成「曾相伴」)。
+       */
+      const run = async (companions, guard) => {
+        const slices = showcaseSlices("light");
+        slices.quests = {
+          ...(slices.quests ?? {}),
+          collections: { ...(slices.quests?.collections ?? {}), pet: [probePet] },
+          petCompanions: companions,
+          petMoments: {},
+        };
+        slices.player = { ...slices.player, petId: null };
+        await seedSave(ctx, slices, guard);
+        const probe = await ctx.newPage();
+        const probeErrors = [];
+        watchPageErrors(probe, probeErrors);
+        await openRoute(probe, "/titles", 900);
+        await clearOverlays(probe);
+        const tab = probe.getByRole("tab", { name: /灵兽/ }).first();
+        if ((await tab.count()) > 0) {
+          await tab.click({ timeout: 3000 }).catch(() => {});
+          await probe.waitForTimeout(500);
+        }
+        const got = await read(probe, probePet);
+        await probe.close();
+        return got;
+      };
+      const wasCompanion = await run([probePet], "__petCompanionWas");
+      const neverCompanion = await run([], "__petCompanionNever");
+      if (!wasCompanion || !neverCompanion) {
+        failures.push(`[390] 曾相伴:灵兽谱里找不到探针那一只 —— 判据无从量起`);
+      } else if (wasCompanion.label !== "曾相伴") {
+        failures.push(
+          `[390] 曾相伴:唤作过伴的灵兽仍写成「${wasCompanion.label}」` +
+            ` —— 那段同行在名册里不存在`,
+        );
+      } else if (neverCompanion.label !== "已结缘") {
+        failures.push(
+          `[390] 曾相伴:从没相伴过的也写成「${neverCompanion.label}」—— 人人曾相伴等于没有这一档`,
+        );
+      }
+    }
+    await openRoute(page, "/titles", 900);
+    await clearOverlays(page);
 
     // 二 旧档:有灵兽、无时刻 → 早年收录
     checked += 1;

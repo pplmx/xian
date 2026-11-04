@@ -84,7 +84,8 @@ describe("名兽案 · 双契总览直接接卷首,当前、可追与全谱各�
     expect(view).toContain("nameBeastMeter(ownedCount.value, TITLES.length)");
     expect(view).toContain("nameBeastMeter(ownedPetCount.value, PETS.length)");
     expect(view).toContain("titleEntryState({ owned, worn })");
-    expect(view).toContain("petEntryState({ owned, active })");
+    // 灵兽那一档要带上曾相伴标记 —— 名册与图鉴读同一份 quests.petCompanions
+    expect(view).toMatch(/petEntryState\(\{[^}]*wasCompanion/);
     expect(switcher, "双契总览要真的是两个可键盘漫游的页签").toContain('role="tablist"');
     expect(switcher).toContain('role="tab"');
     expect(switcher).toContain(':aria-selected="model === choice.id"');
