@@ -54,6 +54,7 @@ import { PERSONALITY_NAMES, personalityDesc } from "@/core/petPersonality";
 import { clampBlueprintMastery, isBlueprintMastered } from "@/core/blueprintMastery";
 import { cnNumber, formatPercent, yearsShown } from "@/utils/format";
 import { modsText } from "../data/statNames";
+import { artifactBeatIsAlways, artifactBeatText } from "./artifactBeat";
 import {
   artifactFuncText,
   artifactMetaText,
@@ -421,7 +422,17 @@ export function describeArtifact(def: ArtifactDef, level: number, collected: boo
   return {
     id: def.id,
     name: def.name,
-    desc: [def.desc, artifactFuncText(def, level)].filter(Boolean).join("\n"),
+    desc: [
+      def.desc,
+      artifactFuncText(def, level),
+      /*
+       * 节拍(见 ui/artifactBeat)—— 图鉴与法宝谱读同一份。
+       * 「随身常在」的那一件不写:它的 desc 已经说了常在,再说一遍是同屏两遍。
+       */
+      artifactBeatIsAlways(def) ? "" : `节拍 · ${artifactBeatText(def)}`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
     meta: artifactMetaText(def),
     color: qualityDef(def.quality).color,
     quality: def.quality,

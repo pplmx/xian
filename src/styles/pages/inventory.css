@@ -424,6 +424,15 @@
     margin-top: 0.45rem;
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
   }
+  /*
+   * 神通的节拍 —— 「每 4 回合」贴在效果说明后面(见 ui/artifactBeat)。
+   * 与说明之间留一道细缝;字退一档:它是那句话的时间注解,不是另一个效果。
+   */
+  .artifact-row__beat {
+    margin-left: 0.35rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    white-space: nowrap;
+  }
   .artifact-row__fact {
     display: grid;
     grid-template-columns: 4.8rem minmax(0, 1fr);

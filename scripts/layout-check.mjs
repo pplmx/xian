@@ -9240,6 +9240,126 @@ async function taskRebirthFolio() {
 }
 
 /**
+ * 神通的节拍 —— 一件法宝多久出手一次。
+ *
+ * 法宝谱上写着神通的**效果**,却没写它的**节拍**:同样的效果,每 2 回合一次与
+ * 每 5 回合一次是两件不同的东西。这条事实只活在战斗那一侧
+ * (`round % art.active.interval === 0`),界面上一直没写。
+ *
+ * 判据三件:
+ *   一 每一行神通都带一句节拍,且读作「每 N 回合」或「随身常在」;
+ *   二 绝不出现「每 1 回合」—— 那是与事实相反的意思(那几件是随身常在);
+ *   三 回合数是正整数,且节拍与那句效果说明在同一行里读得通。
+ *      (44 件的节拍分布与取值由 ui/artifactBeat.spec 在单测里核 —— 那边能直接读数据。)
+ */
+async function taskArtifactBeat() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    /*
+     * 收几件不同节拍的法宝,让三种说法一次量齐。
+     *
+     * 这里**不 import data/artifacts**:那个模块有运行时的 `@/utils/format` 依赖,
+     * Node 侧解析不到别名。真浏览器判据本来也不该重算一遍数据 ——
+     * 它量的是「页面上写出来的那句节拍像不像话、与它自己的 interval 对不对」,
+     * 而 44 件的节拍分布由 ui/artifactBeat.spec 在单测里核过。
+     * 收哪几件由 showcaseSlices 的现成清单给:取前四件即可(它们分属不同节拍)。
+     */
+    /*
+     * 三件各占一种说法:af_wuxiangzhu 间隔 1(随身常在)、af_lihuo 间隔 3、af_muyu 间隔 4。
+     * 这三个 id 直接写在这里而不是从 data/artifacts 读 —— 那个模块有运行时的
+     * `@/utils/format` 依赖,Node 侧解析不到别名(见上方注释)。
+     */
+    const ownedIds = ["af_wuxiangzhu", "af_lihuo", "af_muyu"];
+    const slices = showcaseSlices("light");
+    slices.inventory = {
+      ...slices.inventory,
+      artifacts: ownedIds.map((defId) => ({ defId, level: 0 })),
+      equippedArtifacts: ownedIds.slice(1, 2),
+    };
+    await seedSave(ctx, slices, "__artifactBeatFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/inventory", 900);
+    await clearOverlays(page);
+    // 法宝册在行囊的第三签
+    const tab = page.getByRole("tab", { name: /法宝/ }).first();
+    if ((await tab.count()) > 0) {
+      await tab.click({ timeout: 3000 }).catch(() => {});
+      await page.waitForTimeout(500);
+    }
+
+    checked += 1;
+    const rows = await page.evaluate(() => {
+      return [...document.querySelectorAll("[data-artifact-row]")].map((row) => {
+        const beat = row.querySelector("[data-artifact-beat]");
+        return {
+          id: row.getAttribute("data-artifact-row"),
+          beat: beat ? (beat.textContent || "").replace(/\s+/g, " ").trim() : "",
+          text: (row.textContent || "").replace(/\s+/g, " ").trim(),
+        };
+      });
+    });
+    if (rows.length === 0) {
+      failures.push("[390] 神通的节拍:法宝册里没有任何一行");
+    } else {
+      for (const row of rows) {
+        if (!row.beat) {
+          failures.push(`[390] 神通的节拍:${row.id} 的神通没有节拍`);
+          continue;
+        }
+        if (!/^(随身常在|每 \d+ 回合)$/.test(row.beat)) {
+          failures.push(`[390] 神通的节拍:${row.id} 读成了 «${row.beat}»`);
+        }
+        if (row.beat === "每 1 回合") {
+          failures.push(`[390] 神通的节拍:${row.id} 被写成了「每 1 回合」—— 那件是随身常在`);
+        }
+        // 回合数要是正整数(不出现「每 0 回合」「每 2.5 回合」)
+        const m = /^每 (\d+) 回合$/.exec(row.beat);
+        if (m && Number(m[1]) < 2) {
+          failures.push(`[390] 神通的节拍:${row.id} 写成「每 ${m[1]} 回合」—— 那该读常在`);
+        }
+        // 节拍该与那句效果说明在同一行里读得通(它不能孤零零浮在别处)
+        if (!row.text.includes(row.beat)) {
+          failures.push(`[390] 神通的节拍:${row.id} 的节拍不在神通那一行里`);
+        }
+      }
+      // 三种说法至少出现两种(说明不是写死的一句话)
+      const kinds = new Set(rows.map((r) => (/^每/.test(r.beat) ? "periodic" : "always")));
+      if (rows.length >= 2 && kinds.size < 2) {
+        failures.push("[390] 神通的节拍:几种法宝读出来全是同一类节拍");
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 神通的节拍页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n神通的节拍:${rows.map((r) => `${r.id}→${r.beat}`).join(" · ")}`);
+    } else {
+      // 失败时把量到的东西打出来,省下一轮猜
+      console.log(
+        `\n神通的节拍[未通过]:${rows.map((r) => `${r.id}→«${r.beat}»`).join(" · ") || "无行"}`,
+      );
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 差额一句话 —— 被拦下时说得清差多少。
  *
  * 这几处拦截(强化/祭炼/重铸/封存/熔炉)都在**动作层**:按钮那一侧通常已置灰,
@@ -24430,6 +24550,7 @@ const TASKS = [
   ["提示条的去路真能点开", taskToastTarget],
   ["成色的话把数字译成判断", taskTemperGrade],
   ["差额一句话说得出差多少", taskShortfallText],
+  ["神通的节拍写在说明里", taskArtifactBeat],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
   ["一键分解先勾后点", taskDecompose],

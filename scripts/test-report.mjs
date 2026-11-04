@@ -370,6 +370,7 @@ const CATEGORIES = [
       "temperGrade",
       "shortfallText",
       "deadFallback",
+      "artifactBeat",
     ],
   },
   {

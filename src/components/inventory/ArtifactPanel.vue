@@ -146,7 +146,17 @@
                 -->
                 <div class="artifact-row__fact">
                   <dt>神通「{{ row.def.active.name }}」</dt>
-                  <dd>{{ artifactActiveText(row.def, row.owned.level) }}</dd>
+                  <dd>
+                    {{ artifactActiveText(row.def, row.owned.level) }}
+                    <!--
+                      节拍 —— 多久出手一次(见 ui/artifactBeat)。
+                      同样的效果,每 2 回合一次与每 5 回合一次是两件不同的东西,
+                      而这条只活在战斗那一侧(`round % interval === 0`),界面上一直没写。
+                    -->
+                    <span class="artifact-row__beat tabular" data-artifact-beat>{{
+                      artifactBeatText(row.def)
+                    }}</span>
+                  </dd>
                 </div>
                 <!--
                   下一重给多少:按钮只报代价,玩家得自己按 ×1.08 心算 —— 而「值不值」
@@ -267,6 +277,7 @@ import {
   ARTIFACT_SLOT_UNLOCK_MAJOR,
   artifactSlotsFor,
 } from "@/data/artifacts";
+import { artifactBeatText } from "@/ui/artifactBeat";
 import { artifactSlotBonus } from "@/core/heritageEffects";
 import { artifactDeskSummary, planArtifactPlacement } from "@/core/artifactDesk";
 import { REALMS } from "@/data/realms";
