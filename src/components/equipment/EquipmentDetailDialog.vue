@@ -58,6 +58,17 @@
               }}</span>
             </span>
           </p>
+          <!--
+            行迹 —— 它**经历过什么**(见 ui/equipHistory)。
+            器铭讲的是「它生来是谁」,这一行讲「它后来成了什么」:炼过几重、洗过几次、
+            封存过几条。四笔账早就记在实例上了,只是器评帖一直没读 ——
+            玩家点开一件跟了自己几百场的旧器,此前看到的全是出厂信息。
+            什么都没做过的一件整段不出,不占地方。
+          -->
+          <p v-if="historyText" class="equip-dossier__history" data-equipment-history>
+            <span class="equip-dossier__history-caption">行迹</span>
+            <span class="equip-dossier__history-text tabular">{{ historyText }}</span>
+          </p>
         </div>
         <button
           class="equip-dossier__lock"
@@ -300,6 +311,7 @@ import { temperGradeText } from "@/ui/temperGrade";
 import { equipPowerComparison } from "@/core/equipBest";
 import { worldNameOfTier } from "@/core/formulas";
 import { inscriptionFor } from "@/core/inscription";
+import { equipHistoryText } from "@/ui/equipHistory";
 import { resolveEquipStats } from "@/core/equipGen";
 import { equipUpgradeCost, upgradeEquipment } from "@/core/forge";
 import { useResourcesStore } from "@/stores/resources";
@@ -376,6 +388,11 @@ const resolved = computed(() => (inst.value ? resolveEquipStats(inst.value) : nu
  * 与战力、词条、工坊都不联动:它是「这一件是谁」,不是第二条选件依据。
  */
 const inscription = computed(() => (inst.value ? inscriptionFor(inst.value) : null));
+/**
+ * 这一件的行迹 —— 炼过几重、洗过几次、封存过几条(见 ui/equipHistory)。
+ * 与器铭并排两件事:上面那句讲它生来是谁,这一行讲它后来成了什么。
+ */
+const historyText = computed(() => equipHistoryText(inst.value));
 const isEquipped = computed(() =>
   inst.value && template.value ? inventory.equipped[template.value.slot] === inst.value.uid : false,
 );

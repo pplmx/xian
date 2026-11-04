@@ -12226,7 +12226,22 @@ async function taskTemperGrade() {
     level: 0,
     affixes: rolls.map((roll, i) => ({ id: `hp${i + 1}`, roll })),
   });
-  const items = [mk("tg_low", [0.1]), mk("tg_mid", [0.67]), mk("tg_perfect", [1, 1])];
+  /*
+   * 上一件带**行迹**(炼过几重 / 洗过几次 / 封过一条),另一件全新 ——
+   * 器评帖上的那一行「行迹」两侧都要量:做过的要说得清,没做过的一句都不出。
+   */
+  const items = [
+    { ...mk("tg_low", [0.1]), level: 7, reforgeCount: 3, sealedAffixIds: [] },
+    {
+      ...mk("tg_mid", [
+        { id: "hp1", roll: 0.67 },
+        { id: "hp2", roll: 0.5 },
+      ]),
+      reforgeCount: 2,
+      sealedAffixIds: ["hp1"],
+    },
+    mk("tg_perfect", [1, 1]),
+  ];
   try {
     const slices = showcaseSlices("light");
     slices.inventory = {
@@ -12295,6 +12310,45 @@ async function taskTemperGrade() {
           failures.push(`[390] 成色的话:${item.uid} 那一句里没有「成色» «${read.text}»`);
         }
         rows.push({ uid: item.uid, grade: read.grade, text: read.text });
+      }
+
+      /*
+       * 行迹 —— 它经历过什么(见 ui/equipHistory)。
+       *
+       * 四笔账早就记在实例上,器评帖一直没读。这里两侧都量:
+       * 炼过的那件要真读得出「第 N 重 / 重铸 N 次 / 封存 N/M」,
+       * 全新那件**一个字都不许多说**(印一句「尚无经历」比不印更糟)。
+       */
+      checked += 1;
+      const history = await page.evaluate(() => {
+        const node = document.querySelector("[data-equipment-history]");
+        return node ? (node.textContent || "").replace(/\s+/g, " ").trim() : null;
+      });
+      const expects = {
+        tg_low: { level: 7, reforge: 3, seal: null },
+        tg_mid: { level: 0, reforge: 2, seal: "封存 1/1" },
+        tg_perfect: null,
+      }[item.uid];
+      if (expects === null) {
+        if (history !== null) {
+          failures.push(`[390] 行迹:全新的一件不该有行迹,实见 «${history}»`);
+        }
+      } else if (!history) {
+        failures.push(`[390] 行迹:${item.uid} 做过工序,器评帖上却没有行迹`);
+      } else {
+        if (expects.level && !history.includes(`第 ${expects.level} 重`)) {
+          failures.push(`[390] 行迹:${item.uid} 缺「第 ${expects.level} 重」 «${history}»`);
+        }
+        if (expects.reforge && !history.includes(`重铸 ${expects.reforge} 次`)) {
+          failures.push(`[390] 行迹:${item.uid} 缺「重铸 ${expects.reforge} 次」 «${history}»`);
+        }
+        if (expects.seal && !history.includes(expects.seal)) {
+          failures.push(`[390] 行迹:${item.uid} 缺「${expects.seal}」 «${history}»`);
+        }
+        // 没做过的那几笔不许凭空出现
+        if (!expects.level && /第 \d+ 重/.test(history)) {
+          failures.push(`[390] 行迹:${item.uid} 没炼过却印了等级 «${history}»`);
+        }
       }
       for (let i = 0; i < 3 && (await page.locator(".modal-panel").count()) > 0; i += 1) {
         await page.keyboard.press("Escape").catch(() => {});

@@ -686,6 +686,36 @@
   .equip-dossier__inscription-units {
     color: rgb(var(--color-ink-faint-rgb));
   }
+  /*
+   * 行迹 —— 它经历过什么(见 ui/equipHistory)。
+   *
+   * 与上面那行器铭同一套排法(虚线分隔、note 字号、可折行),只是不另起一种分隔符:
+   * 同一张器评帖里出现两种分隔线,读起来像两套账。
+   * 印「行迹」两字在左,数值在右,与器铭的「铭名 + 铭文 + 成色」同一节奏。
+   */
+  .equip-dossier__history {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.1rem 0.5rem;
+    margin-top: 0.3rem;
+    padding-top: 0.3rem;
+    border-top: 1px dashed rgb(var(--color-ink-rgb) / 0.12);
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .equip-dossier__history-caption {
+    flex: none;
+    color: var(--color-ink-soft);
+    letter-spacing: 0.12em;
+  }
+  .equip-dossier__history-text {
+    min-width: 0;
+    flex: 1 1 8rem;
+    overflow-wrap: anywhere;
+  }
   .equip-dossier__lock {
     display: inline-flex;
     min-width: 28px;
