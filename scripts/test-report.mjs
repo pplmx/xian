@@ -376,6 +376,7 @@ const CATEGORIES = [
       "assertionLiveness",
       "flashTier",
       "rareSfx",
+      "nextStep",
     ],
   },
   {

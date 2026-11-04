@@ -85,6 +85,22 @@
           {{ description }}
         </p>
         <slot name="meta" />
+        <!--
+          眉批:此刻最该做的一件事(见 ui/nextStep)。
+          它与上面那句 description 分工不同 —— description 说的是**本页是什么**,
+          这一句说的是**眼下该去哪**。指向本页的建议不出(玩家已经站在那儿了),
+          一条都没有时整行不渲染:界面上不占位置,也不说废话。
+        -->
+        <p
+          v-if="nextStep"
+          class="folio-masthead__next flex items-center gap-1 t-body text-qing"
+          data-folio-next-step
+          :data-next-step-id="nextStep.id"
+          :data-next-step-route="nextStep.route"
+        >
+          <span class="folio-masthead__next-mark" aria-hidden="true">》</span>
+          <span>{{ nextStep.text }}</span>
+        </p>
       </div>
       <div
         v-if="$slots.visual"
@@ -114,6 +130,7 @@ import { cnNumber } from "@/utils/format";
 import { chapterRailItems } from "@/ui/folioIndexRail";
 import { folioOrdinalMark } from "@/ui/folioOrdinal";
 import { navigationPositionOf } from "@/ui/navigation";
+import { useNextStep } from "@/ui/useNextStep";
 import FolioIndexRail from "./FolioIndexRail.vue";
 import GameIcon from "./GameIcon.vue";
 
@@ -131,6 +148,8 @@ const props = withDefaults(
 
 const route = useRoute();
 const router = useRouter();
+/** 眉批那一句 —— 与全站共用同一份判定,不在各页各算一次 */
+const nextStep = useNextStep(() => route.name);
 const position = computed(() => navigationPositionOf(route.name));
 const navigation = computed(() => position.value?.entry);
 const chapterItems = computed(() => chapterRailItems(route.name));

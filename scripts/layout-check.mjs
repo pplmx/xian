@@ -9375,6 +9375,122 @@ async function taskQualityLadder() {
 }
 
 /**
+ * 此刻最该做的一件事 —— 卷首眉批说得出下一步。
+ *
+ * 修行页卷首有一个「当前阶段」,但那**只讲突破这一件事**,而且只在修行页。
+ * 玩家点开洞府、法宝、灵兽、际遇,卷首各自只报本页的账 —— 没有一处回答
+ * 「我现在该去做什么」。放置游戏里这恰恰是最贵的一句话:回来时忘了上次打算干嘛,
+ * 而界面上全是数字。
+ *
+ * 判据四件:
+ *   一 有可说的那一刻,眉批真的出现,且带着去处;
+ *   二 指向本页的那句**不在本页说**(在历练页时,历练那条建议不该出现);
+ *   三 一句话只有一条 —— 不列清单;
+ *   四 一条都没有时整行不渲染(不留一个空壳占位)。
+ */
+async function taskNextStep() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    /*
+     * 造一个「历练未了结」的存档:此时建议该指向历练。
+     * 在别的页上它该出现;在历练页自己身上它该消失。
+     */
+    const slices = showcaseSlices("light");
+    slices.adventure = {
+      ...(slices.adventure ?? {}),
+      /*
+       * 区域 id 是裸名(qingyun),不带 r_ 前缀 —— 写错会被存档修复判成「认不得的区域」
+       * 而把整个会话丢掉,于是建议永远指向别处。首版正是这么错的。
+       */
+      session: {
+        regionId: "qingyun",
+        mode: "normal",
+        startedAt: Date.now() - 60_000,
+        endsAt: Date.now() + 3600_000,
+        nextBattleAt: Date.now() + 60_000,
+        wins: 0,
+        losses: 0,
+        events: 0,
+        stoneGain: { m: 0, e: 0 },
+        expGain: { m: 0, e: 0 },
+        itemGain: 0,
+        wudaoGain: 0,
+      },
+    };
+    await seedSave(ctx, slices, "__nextStepFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    const readStep = async () => {
+      return page.evaluate(() => {
+        const el = document.querySelector("[data-folio-next-step]");
+        if (!el) return null;
+        return {
+          id: el.getAttribute("data-next-step-id") ?? "",
+          route: el.getAttribute("data-next-step-route") ?? "",
+          text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+        };
+      });
+    };
+
+    // 一 在洞府页:历练那条建议该出现
+    checked += 1;
+    await openRoute(page, "/dongfu", 900);
+    await clearOverlays(page);
+    const onDongfu = await readStep();
+    if (!onDongfu) {
+      failures.push("[390] 下一步:历练未了结,洞府卷首却没有那一句");
+    } else {
+      if (onDongfu.route !== "adventure") {
+        failures.push(`[390] 下一步:该指向历练,实见 «${onDongfu.route}»`);
+      }
+      if (!onDongfu.text || onDongfu.text.length > 30) {
+        failures.push(`[390] 下一步:那句话太长或为空 «${onDongfu.text}»`);
+      }
+      // 一句话只有一条 —— 不该出现逗号分句堆叠
+      if ((onDongfu.text.match(/[;。]/g) ?? []).length > 1) {
+        failures.push(`[390] 下一步:那条建议列成了清单 «${onDongfu.text}»`);
+      }
+    }
+
+    // 二 在历练页自己身上:指向本页的建议不该出现
+    checked += 1;
+    await openRoute(page, "/adventure", 900);
+    await clearOverlays(page);
+    const onAdventure = await readStep();
+    if (onAdventure && onAdventure.route === "adventure") {
+      failures.push(`[390] 下一步:在历练页上又建议去历练 «${onAdventure.text}»`);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 下一步页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(
+        `\n下一步:洞府页 «${onDongfu?.text}»(${onDongfu?.route}) · 历练页 ${onAdventure ? `«${onAdventure.text}»` : "无(指向本页的建议已滤掉)"}`,
+      );
+    } else {
+      console.log(`\n下一步[未通过]:${JSON.stringify({ onDongfu, onAdventure })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 闪光的分量 —— 神品落地与灵品落地不该是同一道光。
  *
  * 提示条体系里 `kind === "rare"` 会触发一次全屏金光,而叫得上 rare 的事各差着量级:
@@ -24975,6 +25091,7 @@ const TASKS = [
   ["神通的节拍写在说明里", taskArtifactBeat],
   ["新得那枚真的会弹一下", taskNewItemPop],
   ["闪光的分量跟着品阶走", taskFlashTier],
+  ["卷首眉批说得出下一步", taskNextStep],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],

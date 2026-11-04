@@ -1783,6 +1783,28 @@
       height: 1.8rem;
     }
   }
+  /*
+   * 眉批:此刻最该做的一件事(见 ui/nextStep)。
+   * 用石青 —— 它是「信息」那一色,而这句话正是信息,不是行动按钮。
+   * 前面那枚「》」是墨引,不是可点的箭头:整行不接事件,免得看着像按钮。
+   */
+  /*
+   * 眉批贴着副题排,**不额外占一行高度**。
+   *
+   * 首版给它 mt-1.5 单独一行,于是每一页的卷首整体高了 20 余 px ——
+   * 历练页本来就没有余量,首个地界的行动入口当场被推到折线以下
+   * (layout-check 的 [390-adventure] 行动入口判据抓到的正是这个)。
+   * 那句话的价值远小于把按钮挤出首屏,故改为与副题同段:
+   * 有副题时接在它后面,没有副题时它就是那一行。
+   */
+  .folio-masthead__next {
+    margin-top: 0.125rem;
+    color: rgb(var(--color-qing-rgb));
+  }
+  .folio-masthead__next-mark {
+    color: rgb(var(--color-qing-rgb) / 0.5);
+    font-family: var(--font-kai);
+  }
   .folio-masthead {
     position: relative;
     border: 0;
