@@ -381,6 +381,7 @@ const CATEGORIES = [
       "titleMoment",
       "lifespanWarning",
       "reincarnationWarning",
+      "reincarnationOpen",
     ],
   },
   {
