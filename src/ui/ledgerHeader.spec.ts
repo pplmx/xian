@@ -20,8 +20,10 @@ describe("深页案头 · 同一枚印、同一条身份栏与总账席", () => 
   });
 
   it("深页与流派未成卷全部改读共享案头,不再各手搓一套章首", () => {
+    // 数量按「这一页有几个分册案头」钉住:新增分册要一并改这个数,顺手确认
+    // 它是用共享案头写的,而不是又手搓了一层。LegacyView 6 → 7 是加「行年」那一册。
     const cases = [
-      { file: "src/views/LegacyView.vue", count: 6 },
+      { file: "src/views/LegacyView.vue", count: 7 },
       { file: "src/components/build/BuildDiscovery.vue", count: 1 },
       { file: "src/views/MortalWorldView.vue", count: 2 },
       { file: "src/views/RealmCodexView.vue", count: 1 },

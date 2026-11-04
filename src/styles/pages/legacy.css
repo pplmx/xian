@@ -283,6 +283,17 @@
   .legacy-chapter-rail__tab:nth-child(n + 3) {
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
   }
+  /*
+   * 五册的末一枚整宽收束。
+   *
+   * 2×2 之后剩一格 —— 若让它落到第二列,册口会读成「3 行 × 2 列,右下空着」,
+   * 那不像收束,像少了一册。整宽独占一行则读作这一册的收尾,顺便给「第 N 世」
+   * 这类事实多一倍的行内宽度(390 上 179px → 363px)。
+   */
+  .legacy-chapter-rail__tab:nth-child(5) {
+    grid-column: 1 / -1;
+    border-left: 0;
+  }
   .legacy-chapter-rail__tab::after {
     position: absolute;
     right: 0.72rem;
@@ -732,7 +743,8 @@
   }
   @media (min-width: 620px) {
     .legacy-chapter-rail__tabs {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      /* 五册并读:620 起每枚仍有 ~120px,与四列时同一档触达宽度 */
+      grid-template-columns: repeat(5, minmax(0, 1fr));
     }
 
     .legacy-chapter-rail__tab:nth-child(even),
@@ -743,6 +755,11 @@
 
     .legacy-chapter-rail__tab + .legacy-chapter-rail__tab {
       border-left: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    }
+
+    /* 手机那一档让末枚整宽收束;并读档五列等分,要把那条取消掉 */
+    .legacy-chapter-rail__tab:nth-child(5) {
+      grid-column: auto;
     }
 
     .legacy-profile {
@@ -793,6 +810,133 @@
     .legacy-tab--split > .legacy-ledger + .legacy-ledger .legacy-loss__row {
       padding-inline: 0.55rem;
     }
+  }
+  /*
+   * 行年 —— 三处道历合成的一条年谱。
+   *
+   * 版式只做一件事:让「第几世」与「多少岁」在竖读时对齐成一列可扫的刻度。
+   * 印沿用全站那枚小方印(见 .legacy-duel__mark):四类各一字,不另造记号。
+   * 刻度线走 ink 13%,与征程那一栏的时间轴同一条浓度 —— 同页两种线宽会显得脏。
+   */
+  .legacy-chronicle__headline {
+    margin-top: 0.5rem;
+    padding-inline: 0.86rem;
+    color: var(--color-ink-soft);
+    font-size: var(--type-body);
+    line-height: 1.6;
+    text-wrap: pretty;
+  }
+  .legacy-chronicle__legacy {
+    margin-top: 0.18rem;
+    padding-inline: 0.86rem;
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .legacy-chronicle__kinds {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 0.28rem 0.72rem;
+    margin-top: 0.52rem;
+    padding-inline: 0.86rem;
+  }
+  .legacy-chronicle__kind {
+    display: inline-flex;
+    min-width: 0;
+    align-items: baseline;
+    gap: 0.28rem;
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+  }
+  .legacy-chronicle__kind strong {
+    color: var(--color-ink-soft);
+  }
+  .legacy-chronicle__kind-mark {
+    color: var(--color-gold-ink);
+    font-family: var(--font-kai);
+  }
+  .legacy-chronicle__volumes {
+    display: grid;
+    min-width: 0;
+    gap: 0.62rem;
+    margin-top: 0.62rem;
+  }
+  .legacy-chronicle__volume {
+    display: grid;
+    min-width: 0;
+    gap: 0.4rem;
+    padding: 0.62rem 0.86rem 0.68rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+  }
+  .legacy-chronicle__volume-head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.14rem 0.34rem;
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+  }
+  .legacy-chronicle__volume-head strong {
+    color: var(--color-ink-soft);
+    font-size: var(--type-body);
+  }
+  .legacy-chronicle__volume-mark {
+    color: var(--color-ink-faint);
+    font-family: var(--font-kai);
+  }
+  .legacy-chronicle__here {
+    padding-inline: 0.24rem;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.3);
+    color: var(--color-cinnabar);
+    font-family: var(--font-kai);
+    line-height: 1.4;
+  }
+  .legacy-chronicle__volume-count {
+    margin-left: auto;
+  }
+  .legacy-chronicle__rows {
+    display: grid;
+    min-width: 0;
+    gap: 0.34rem;
+    padding-left: 0.2rem;
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.13);
+  }
+  .legacy-chronicle__row {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+    align-items: start;
+    gap: 0.42rem;
+    padding-left: 0.42rem;
+  }
+  .legacy-chronicle__mark {
+    display: grid;
+    width: 1.5rem;
+    height: 1.5rem;
+    place-items: center;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
+    color: var(--color-ink-faint);
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  /* 旧世那一卷是归档,不是这一世新得的 —— 印压一档,与"此世所得"分得开 */
+  .legacy-chronicle__mark[data-kind="life"] {
+    border-style: dashed;
+  }
+  .legacy-chronicle__more {
+    margin-top: 0.42rem;
+    margin-left: 1.92rem;
+  }
+  .legacy-chronicle__text {
+    min-width: 0;
+    color: var(--color-ink-soft);
+    font-size: var(--type-note);
+    line-height: 1.55;
+    text-wrap: pretty;
+    overflow-wrap: anywhere;
   }
   @media (max-width: 220px) {
     .legacy-chapter-rail__tabs {

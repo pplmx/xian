@@ -398,6 +398,7 @@ const CATEGORIES = [
       "weatherSky",
       "skyRoot",
       "lifeName",
+      "lifeChronicle",
     ],
   },
   {

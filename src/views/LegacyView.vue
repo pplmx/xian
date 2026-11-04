@@ -263,6 +263,122 @@
       </section>
 
       <section
+        v-else-if="tab === 'chronicle'"
+        id="legacy-panel-chronicle"
+        class="legacy-tab"
+        role="tabpanel"
+        aria-labelledby="legacy-tab-chronicle"
+        data-legacy-tab="chronicle"
+      >
+        <section class="legacy-ledger" data-legacy-chronicle>
+          <LedgerHeader
+            seal="年"
+            eyebrow="按年岁读的账"
+            title="行年"
+            description="图鉴、名号与灵兽三处各记了「何时得来的」，这里按世与岁排成一条年谱；旧世只有终局一笔。"
+            score-label="此世"
+            :score-value="chronicleHead.count"
+            score-suffix="笔"
+          />
+
+          <!--
+            卷首一句只报**此刻这一世**的账：别的世的笔数在下面的分卷里。
+            报总数会读成「这一世做了 N 件事」。
+          -->
+          <p class="legacy-chronicle__headline" data-legacy-chronicle-headline>
+            {{ chronicleHead.text }}
+          </p>
+          <p
+            v-if="chronicleLegacy > 0"
+            class="legacy-chronicle__legacy"
+            data-legacy-chronicle-legacy
+          >
+            另有 {{ chronicleLegacy }} 笔早年的账未记道历，只能留在原来那几册里。
+          </p>
+
+          <div v-if="chronicleVolumes.length" class="legacy-chronicle__kinds" aria-label="笔数按类">
+            <span v-for="k in chronicleKindRows" :key="k.kind" class="legacy-chronicle__kind">
+              <span class="legacy-chronicle__kind-mark" aria-hidden="true">{{ k.mark }}</span>
+              {{ k.name }}
+              <strong class="tabular">{{ k.count }}</strong>
+            </span>
+          </div>
+
+          <div v-if="chronicleVolumes.length" class="legacy-chronicle__volumes">
+            <article
+              v-for="volume in chroniclePage.visible"
+              :key="volume.life"
+              class="legacy-chronicle__volume"
+              :data-state="volume.current ? 'current' : 'past'"
+              :data-legacy-chronicle-volume="volume.life"
+            >
+              <p class="legacy-chronicle__volume-head">
+                <span class="legacy-chronicle__volume-mark" aria-hidden="true">第</span>
+                <strong class="tabular">{{ volume.life }}</strong>
+                <span>世</span>
+                <span v-if="volume.current" class="legacy-chronicle__here">此世</span>
+                <!-- 报本卷**共有**几笔,不报这一帧铺了几行 —— 后者是个会随续开变动的实现细节 -->
+                <span class="legacy-chronicle__volume-count tabular">{{ volume.total }} 笔</span>
+              </p>
+              <ol class="legacy-chronicle__rows">
+                <li
+                  v-for="row in chronicleRowsOf(volume).rows"
+                  :key="row.id"
+                  class="legacy-chronicle__row"
+                  :data-legacy-chronicle-row="row.id"
+                >
+                  <span class="legacy-chronicle__mark" :data-kind="row.kind" aria-hidden="true">{{
+                    row.kindLabel
+                  }}</span>
+                  <span class="legacy-chronicle__text">{{ chronicleRowText(row) }}</span>
+                </li>
+              </ol>
+              <!--
+                本卷还有没铺的行:说清余几笔,并给一个真正能续开的入口。
+                后期此世光图鉴就两百多条,一帧全铺会让这一册比同页其余几册重一个量级。
+              -->
+              <button
+                v-if="chronicleRowsOf(volume).hidden > 0"
+                type="button"
+                class="chip-ink legacy-chronicle__more !whitespace-normal text-center t-note text-cinnabar active:scale-95"
+                :data-chronicle-row-more="volume.life"
+                :data-promised="chronicleRowPromise(volume)"
+                :aria-label="moreChronicleRowsText(volume)"
+                @click="showMoreChronicleRows(volume.life)"
+              >
+                {{ moreChronicleRowsText(volume) }}
+              </button>
+            </article>
+
+            <div v-if="chroniclePage.start > 0 || chroniclePage.hidden > 0" class="legacy-pager">
+              <button
+                v-if="chroniclePage.start > 0"
+                type="button"
+                data-chronicle-prev
+                class="chip-ink !whitespace-normal text-center t-note text-ink-soft active:scale-95"
+                :aria-label="previousChronicleText()"
+                @click="showPreviousChronicle"
+              >
+                {{ previousChronicleText() }}
+              </button>
+              <button
+                v-if="chroniclePage.hidden > 0"
+                type="button"
+                data-chronicle-more
+                class="chip-ink !whitespace-normal text-center t-note text-cinnabar active:scale-95"
+                :aria-label="moreChronicleText()"
+                :data-promised="chroniclePromise"
+                @click="showMoreChronicle"
+              >
+                {{ moreChronicleText() }}
+              </button>
+            </div>
+          </div>
+          <p v-else class="legacy-empty">年谱尚白。图鉴、名号与灵兽各自入册之日，这里自会起笔。</p>
+        </section>
+      </section>
+
+      <section
         v-else-if="tab === 'journey'"
         id="legacy-panel-journey"
         class="legacy-tab"
@@ -557,12 +673,25 @@ import LegacyChapterRail from "@/components/legacy/LegacyChapterRail.vue";
 import { useRouteTab } from "@/composables/useRouteTab";
 import { LEGACY_CHAPTERS } from "@/ui/navigation";
 import { clampPercent } from "@/utils/unitRatio";
+import { useQuestsStore } from "@/stores/quests";
+import {
+  buildLifeChronicle,
+  chronicleHeadline,
+  chronicleLegacyCount,
+  chronicleRowText,
+  countChronicleByKind,
+  CHRONICLE_ROW_BATCH,
+  groupChronicleByLife,
+  renderChronicleRow,
+  type ChronicleGroup,
+} from "@/ui/lifeChronicle";
 
-/** 长卷分册:轮回(本世与历世)/ 征程(节点与宿敌)/ 缘迹(奇缘与行迹)/ 纪录 */
+/** 长卷分册:轮回(本世与历世)/ 征程(节点与宿敌)/ 缘迹(奇缘与行迹)/ 行年 / 纪录 */
 const tab = useRouteTab(LEGACY_CHAPTERS, "samsara");
 
 const endgame = useEndgameStore();
 const player = usePlayerStore();
+const quests = useQuestsStore();
 const adventure = useAdventureStore();
 const lore = useLoreStore();
 const RECIPE_TOTAL = PILLS.filter((pill) => pill.recipe).length;
@@ -748,6 +877,122 @@ function showPreviousLoss(): void {
   focusListRow("[data-loss-row]");
 }
 
+/**
+ * 行年 —— 三处道历(图鉴 / 称号 / 灵兽)加历世归档,排成一条按岁读的谱。
+ *
+ * 三张表各按自己那一册的规矩排是那三册的正事;合成一件"我这一世做了什么"的故事,
+ * 是这一册的正事(见 ui/lifeChronicle)。这里只递数据、分页,不重排逻辑。
+ */
+const chronicleRows = computed(() =>
+  buildLifeChronicle({
+    collectionMoments: quests.collectedMoment,
+    titleMoments: quests.titleMoments,
+    petMoments: quests.petMoments,
+    lives: player.reincarnation.lives,
+    lifeNow: currentLife.value,
+  }),
+);
+const chronicleHead = computed(() => chronicleHeadline(chronicleRows.value, currentLife.value));
+const chronicleLegacy = computed(() =>
+  chronicleLegacyCount({
+    collectionMoments: quests.collectedMoment,
+    titleMoments: quests.titleMoments,
+    petMoments: quests.petMoments,
+    lives: player.reincarnation.lives,
+    lifeNow: currentLife.value,
+  }),
+);
+const chronicleKindRows = computed(() => {
+  const counts = countChronicleByKind(chronicleRows.value);
+  return [
+    { kind: "collection" as const, mark: "册", name: "图鉴", count: counts.collection },
+    { kind: "title" as const, mark: "名", name: "名号", count: counts.title },
+    { kind: "pet" as const, mark: "兽", name: "灵兽", count: counts.pet },
+    { kind: "life" as const, mark: "世", name: "旧世", count: counts.life },
+  ];
+});
+/** 一「卷」是一世 —— 分页按卷走,不把同一世拆到两段里 */
+const chronicleVolumes = computed(() =>
+  groupChronicleByLife(chronicleRows.value, currentLife.value),
+);
+const CHRONICLE_RENDER_BATCH = 3;
+const CHRONICLE_RENDER_WINDOW = CHRONICLE_RENDER_BATCH * 2;
+const chronicleLimit = ref(CHRONICLE_RENDER_BATCH);
+const chroniclePage = computed(() =>
+  listWindow(chronicleVolumes.value, chronicleLimit.value, CHRONICLE_RENDER_WINDOW),
+);
+/**
+ * 卷内已铺到第几行:按世的键记一份,各卷互不影响。
+ *
+ * 全铺/续开都用 `listWindow` 那一族(见 ui/lifeChronicle 的 renderChronicleRow),
+ * 这里只记住"这一卷开到了第几行"。
+ */
+const chronicleRowLimits = ref<Record<number, number>>({});
+
+function chronicleRowsOf(volume: ChronicleGroup) {
+  return renderChronicleRow(volume, chronicleRowLimits.value[volume.life] ?? CHRONICLE_ROW_BATCH);
+}
+
+function chronicleRowPromise(volume: ChronicleGroup): number {
+  return nextRevealCount(chronicleRowsOf(volume).hidden, CHRONICLE_ROW_BATCH);
+}
+
+function moreChronicleRowsText(volume: ChronicleGroup): string {
+  const page = chronicleRowsOf(volume);
+  return `再看 ${nextRevealCount(page.hidden, CHRONICLE_ROW_BATCH)} 笔 · 余 ${page.hidden}`;
+}
+
+function showMoreChronicleRows(life: number): void {
+  const volume = chronicleVolumes.value.find((item) => item.life === life);
+  if (!volume) return;
+  const current = chronicleRowsOf(volume).shown;
+  chronicleRowLimits.value = {
+    ...chronicleRowLimits.value,
+    [life]: nextListLimit(current, volume.total, CHRONICLE_ROW_BATCH),
+  };
+}
+
+/** 这一批真正放出多少卷 —— 按钮文案与 data-promised 共用,不许各算一遍 */
+const chroniclePromise = computed(() =>
+  nextRevealCount(chroniclePage.value.hidden, CHRONICLE_RENDER_BATCH),
+);
+
+function moreChronicleText(): string {
+  return `再看 ${chroniclePromise.value} 世 · 余 ${chroniclePage.value.hidden}`;
+}
+
+function previousChronicleText(): string {
+  const step = previousListStep(
+    chroniclePage.value.shown,
+    chronicleVolumes.value.length,
+    CHRONICLE_RENDER_BATCH,
+  );
+  return `前一批 ${step} 世`;
+}
+
+function showMoreChronicle(): void {
+  const shownBefore = chroniclePage.value.shown;
+  const shownAfter = nextListLimit(
+    shownBefore,
+    chronicleVolumes.value.length,
+    CHRONICLE_RENDER_BATCH,
+  );
+  chronicleLimit.value = shownAfter;
+  focusListRow(
+    "[data-legacy-chronicle-volume]",
+    firstNewVisibleIndex(shownBefore, shownAfter, CHRONICLE_RENDER_WINDOW),
+  );
+}
+
+function showPreviousChronicle(): void {
+  chronicleLimit.value = previousListLimit(
+    chroniclePage.value.shown,
+    chronicleVolumes.value.length,
+    CHRONICLE_RENDER_BATCH,
+  );
+  focusListRow("[data-legacy-chronicle-volume]");
+}
+
 const profile = computed(() => cultivatorProfile(endgame.marks));
 
 /** 奇缘录:只有起了头的缘才露面(往后的路不说破) */
@@ -801,7 +1046,7 @@ const overviewStats = computed(() => [
   { key: "chains", label: "未了缘", value: unfinishedChains.value },
 ]);
 
-const LEGACY_RAIL_MARKS = ["轮", "程", "缘", "极"] as const;
+const LEGACY_RAIL_MARKS = ["轮", "程", "缘", "年", "极"] as const;
 const legacyRailTabs = computed(() =>
   LEGACY_CHAPTERS.map((chapter, index) => ({
     ...chapter,
@@ -813,7 +1058,9 @@ const legacyRailTabs = computed(() =>
           ? `${milestoneRows.value.length}/${MILESTONE_DEFS.length}`
           : chapter.id === "fate"
             ? `${unfinishedChains.value} 未了`
-            : `${recordCount.value}/${RECORD_DEFS.length}`,
+            : chapter.id === "chronicle"
+              ? `${chronicleHead.value.count} 笔`
+              : `${recordCount.value}/${RECORD_DEFS.length}`,
   })),
 );
 </script>

@@ -80,7 +80,22 @@ export function lateSlices(theme = "dark") {
         daoFruit: 12,
         talents: [],
         insight: 400,
-        lives: [],
+        /*
+         * 三生录的「行年」要靠历世归档才排得出旧世那一卷;空数组时那一册只剩此世,
+         * 于是「旧世 / 此世分卷」这条判据永远量不到。留一世真实的终局即可。
+         */
+        lives: [
+          {
+            index: 1,
+            major: 8,
+            realmLabel: "炼虚境",
+            age: 1460,
+            themeId: null,
+            themeResult: null,
+            insight: 46,
+            at: now,
+          },
+        ],
         vow: null,
         trial: null,
         bonds: [],
@@ -250,7 +265,19 @@ export function showcaseSlices(theme = "light") {
         daoFruit: 12,
         talents: [],
         insight: 260,
-        lives: [],
+        // 同上:行年那一册要真排得出旧世卷,截图与排版门才有东西可看
+        lives: [
+          {
+            index: 1,
+            major: 6,
+            realmLabel: "化神境",
+            age: 980,
+            themeId: null,
+            themeResult: null,
+            insight: 32,
+            at: now,
+          },
+        ],
         vow: null,
         trial: null,
         bonds: [],
@@ -325,16 +352,38 @@ export function showcaseSlices(theme = "light") {
       mainIdx: 22,
       daily: { date: "", base: {}, done: [] },
       titlesOwned: SHOWCASE_TITLES,
+      /*
+       * 图鉴要真有收录:行年那一册的道历只在「这一条真在册上」时才留得住
+       * (stores/quests 的 sanitize 按 collections 裁 collectedMoment)。
+       * 从前这里全是空数组,于是夹具里没有任何收录 —— 图鉴与行年都只剩空态,
+       * 「满册怎么排」这件事从来没有被任何一道门量到。
+       */
       collections: {
-        equip: [],
-        gongfa: [],
+        equip: ["w_zhuqing"],
+        gongfa: ["m_taixuan"],
         pill: [],
         artifact: [],
         pet: [],
         event: [],
         talent: [],
       },
-      collectedAt: {},
+      collectedAt: {
+        "equip:w_zhuqing": now,
+        "gongfa:m_taixuan": now,
+      },
+      /*
+       * 三生录「行年」的三张道历表。空着也能渲染,但那一册就只剩一句「尚白」——
+       * 排版门量不到行、空态与满态也分不开。种几条**真内容 id**(名字才解析得出来),
+       * 两世都有,「旧世 / 此世分卷」才量得到。
+       */
+      collectedMoment: {
+        "gongfa:m_taixuan": { life: 3, age: 21 },
+        "equip:w_zhuqing": { life: 3, age: 37 },
+      },
+      titleMoments: {
+        [SHOWCASE_TITLES[0] ?? "ti_churu"]: { life: 2, age: 96 },
+      },
+      petMoments: {},
       lastCollectionViewAt: now,
       petCompanions: [],
     },

@@ -2060,6 +2060,17 @@ async function measureTabRail(page) {
   });
 }
 
+/**
+ * 行年一行里有没有漏出内部 id。
+ *
+ * 年谱写给人读,`m_taixuan` / `ti_churu` / `pet_qingyu` 这类键一旦印出来就是事故;
+ * 而它长得像中文,静默溜过去也不会有别的判据喊。判定口径取"整段里出现
+ * 带下划线的 ASCII 词"—— 本作的界面文案里没有这种词,内容表的中文名也不会有。
+ */
+function rowsWithRawId(text) {
+  return /[a-z]+_[a-z0-9_]+/.test(String(text ?? ""));
+}
+
 /** 页签吸顶读数 → 失败清单(null = 这一页没有页签栏,不判) */
 function railProblems(rail) {
   const out = [];
@@ -23451,7 +23462,7 @@ async function taskMarketRegisterFold() {
 /**
  * 三生录的册口与当前正文同住一册。
  *
- * 390 量 2×2、195 量单列、1280 量四列与双账并读；四处册口报出的真值必须与
+ * 390 量 2×2 + 整宽末枚、195 量单列、1280 量五列与双账并读；册口报出的真值必须与
  * 本页账首 / 卷首一致。方向键、Home、End 要同时移动选中态、焦点和唯一 tabpanel。
  */
 async function taskLegacyRegisterFold() {
@@ -23582,15 +23593,23 @@ async function taskLegacyRegisterFold() {
       failures.push(`[390-legacy] 画像、册口与正文没有按序续排:${JSON.stringify(mobile.order)}`);
     }
     checked += 1;
+    /*
+     * 册口 2×2 之后接一枚整宽的「行年」—— 五册不是把 2×2 硬撑成 3 列:
+     * 三列在 390 上每枚只剩 130px,「第 N 世」那类事实会折行;而单枚独占一行,
+     * 反而把它读成这一册的收束。判据按"前四枚两两成对、第五枚整宽"钉。
+     */
     if (
       mobile.tabColumns !== 2 ||
-      mobile.tabs.length !== 4 ||
+      mobile.tabs.length !== 5 ||
       mobile.tabs[0].top !== mobile.tabs[1].top ||
       mobile.tabs[2].top <= mobile.tabs[0].top ||
-      mobile.tabs[0].left !== mobile.tabs[2].left
+      mobile.tabs[0].left !== mobile.tabs[2].left ||
+      mobile.tabs[4].top <= mobile.tabs[2].top ||
+      mobile.tabs[4].left !== mobile.tabs[0].left ||
+      mobile.tabs[4].width <= mobile.tabs[0].width
     ) {
       failures.push(
-        `[390-legacy] 四册册口没有铺成 2×2:${JSON.stringify({
+        `[390-legacy] 五册册口没有铺成 2×2 + 整宽末枚:${JSON.stringify({
           columns: mobile.tabColumns,
           tabs: mobile.tabs,
         })}`,
@@ -23634,6 +23653,10 @@ async function taskLegacyRegisterFold() {
         } else if (tabId === "fate") {
           const count = /(\d+)\s*条/.exec(score);
           expected = count ? `${count[1]} 未了` : "";
+        } else if (tabId === "chronicle") {
+          // 行年册口报的是「此世 N 笔」—— 与卷首那一句同源(都取 chronicleHead.count)
+          const count = /(\d+)\s*笔/.exec(score);
+          expected = count ? `${count[1]} 笔` : "";
         } else {
           const pair = /(\d+)\s*\/\s*(\d+)/.exec(score);
           expected = pair ? `${pair[1]}/${pair[2]}` : "";
@@ -23650,7 +23673,7 @@ async function taskLegacyRegisterFold() {
       }, id);
     }
 
-    for (const id of ["samsara", "journey", "fate", "record"]) {
+    for (const id of ["samsara", "journey", "fate", "chronicle", "record"]) {
       await page.locator(`[data-legacy-rail-tab="${id}"]`).click();
       await page.waitForSelector(`#legacy-panel-${id}`, { timeout: 3000 });
       await settleVisuals(page);
@@ -23665,6 +23688,78 @@ async function taskLegacyRegisterFold() {
         truth.panelLabelledby !== `legacy-tab-${id}`
       ) {
         failures.push(`[390-legacy] ${id} 册口与当前正文不同源:${JSON.stringify(truth)}`);
+      }
+    }
+
+    /*
+     * 行年那一册必须**真有内容** —— 这一条是这道门最容易被糊弄的地方。
+     *
+     * 空谱也会渲染出一句「年谱尚白」,册口也会报「0 笔」,两边同源、全都自洽,
+     * 一道只看"渲染了没有"的判据会一路绿着,而玩家看到的是一条空册。
+     * 故:夹具里种了道历与历世,这里要求真数出行数,并要求每行都写得出
+     * 「N岁」与「·」(见 ui/lifeChronicle 的 chronicleRowText),且旧世那一卷在。
+     */
+    await page.locator('[data-legacy-rail-tab="chronicle"]').click();
+    await page.waitForSelector("#legacy-panel-chronicle", { timeout: 3000 });
+    await settleVisuals(page);
+    const chronicle = await page.evaluate(() => {
+      const rows = [...document.querySelectorAll("[data-legacy-chronicle-row]")].map((row) =>
+        (row.textContent || "").replace(/\s+/g, " ").trim(),
+      );
+      return {
+        rows: rows.length,
+        sample: rows[0] ?? "",
+        maleSamples: rows.filter((text) => /岁/.test(text) && /·/.test(text)).length,
+        volumes: document.querySelectorAll("[data-legacy-chronicle-volume]").length,
+        hasPast: Boolean(
+          document.querySelector('[data-legacy-chronicle-volume][data-state="past"]'),
+        ),
+        hasCurrent: Boolean(
+          document.querySelector('[data-legacy-chronicle-volume][data-state="current"]'),
+        ),
+        legacy: Boolean(document.querySelector("[data-legacy-chronicle-legacy]")),
+      };
+    });
+    checked += 1;
+    if (chronicle.rows < 3 || chronicle.volumes < 2) {
+      failures.push(
+        `[390-legacy] 行年册没有真排开年会:${JSON.stringify(chronicle)} —— ` +
+          "空谱与「夹具没种道历」都会长这样",
+      );
+    }
+    checked += 1;
+    if (chronicle.maleSamples !== chronicle.rows) {
+      failures.push(`[390-legacy] 行年有一行读不出「N岁 · 何物」:${JSON.stringify(chronicle)}`);
+    }
+    checked += 1;
+    if (!chronicle.hasPast || !chronicle.hasCurrent) {
+      failures.push(`[390-legacy] 行年没有把旧世与此世分成两卷:${JSON.stringify(chronicle)}`);
+    }
+    checked += 1;
+    if (rowsWithRawId(chronicle.sample)) {
+      failures.push(`[390-legacy] 行年印出了内部 id:${JSON.stringify(chronicle.sample)}`);
+    }
+
+    /*
+     * 卷内续开要真的续开:后期此世两百多条,一帧全铺会让这一册比同页其余几册
+     * 重一个量级。判据看「点一下真的多出行」—— 按钮在、数也对、但点了不动,
+     * 正是这类分页最常见的坏法。
+     */
+    const rowMore = page.locator("[data-chronicle-row-more]").first();
+    if ((await rowMore.count()) === 0) {
+      failures.push(
+        `[390-legacy] 行年有 ${chronicle.rows} 行却一个续开入口都没有 —— 长年谱被铺满了一帧`,
+      );
+    } else {
+      const rowsBefore = chronicle.rows;
+      await rowMore.click();
+      await settleVisuals(page);
+      const rowsAfter = await page.evaluate(
+        () => document.querySelectorAll("[data-legacy-chronicle-row]").length,
+      );
+      checked += 1;
+      if (rowsAfter <= rowsBefore) {
+        failures.push(`[390-legacy] 行年的续开按了没动:${rowsBefore} → ${rowsAfter} 行`);
       }
     }
 
@@ -23720,7 +23815,7 @@ async function taskLegacyRegisterFold() {
     checked += 1;
     if (
       zoom.tabColumns !== 1 ||
-      zoom.tabs.length !== 4 ||
+      zoom.tabs.length !== 5 ||
       zoom.tabs.some((tab, index) => index > 0 && tab.top <= zoom.tabs[index - 1].top)
     ) {
       failures.push(
@@ -23741,12 +23836,12 @@ async function taskLegacyRegisterFold() {
     const desktop = await readFold();
     checked += 1;
     if (
-      desktop.tabColumns !== 4 ||
-      desktop.tabs.length !== 4 ||
+      desktop.tabColumns !== 5 ||
+      desktop.tabs.length !== 5 ||
       desktop.tabs.some((tab) => tab.top !== desktop.tabs[0].top)
     ) {
       failures.push(
-        `[1280-legacy] 桌面四册册口没有并读:${JSON.stringify({
+        `[1280-legacy] 桌面五册册口没有并读:${JSON.stringify({
           columns: desktop.tabColumns,
           tabs: desktop.tabs,
         })}`,

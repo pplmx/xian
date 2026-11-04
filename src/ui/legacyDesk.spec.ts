@@ -157,8 +157,15 @@ describe("三生案 · 本世、所知与旧缘同读此刻", () => {
     expect(css).toMatch(
       /\.legacy-chapter-rail__tabs\s*\{[\s\S]{0,180}?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/,
     );
+    /*
+     * 五册:手机上 2×2 之后末一枚整宽收束,620 起五列并读。
+     * 这两条一起钉 —— 只钉列数会漏掉「末枚掉进第二列」那种半格空着的读法。
+     */
     expect(css).toMatch(
-      /@media \(min-width: 620px\)\s*\{[\s\S]{0,900}?\.legacy-chapter-rail__tabs\s*\{[\s\S]{0,100}?repeat\(4, minmax\(0, 1fr\)\)/,
+      /\.legacy-chapter-rail__tab:nth-child\(5\)\s*\{[\s\S]{0,120}?grid-column: 1 \/ -1;/,
+    );
+    expect(css).toMatch(
+      /@media \(min-width: 620px\)\s*\{[\s\S]{0,900}?\.legacy-chapter-rail__tabs\s*\{[\s\S]{0,100}?repeat\(5, minmax\(0, 1fr\)\)/,
     );
     expect(css).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,1400}?\.legacy-chapter-rail__tabs\s*\{[\s\S]{0,100}?minmax\(0, 1fr\)/,

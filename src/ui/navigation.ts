@@ -189,6 +189,12 @@ export const LEGACY_CHAPTERS = [
     keywords: ["缘迹", "奇缘", "行迹", "旧缘"],
   },
   {
+    id: "chronicle",
+    label: "行年",
+    description: "此世与旧世的年谱 —— 几笔账按年岁排开",
+    keywords: ["行年", "年谱", "年岁", "何时", "履历", "旧世"],
+  },
+  {
     id: "record",
     label: "纪录",
     description: "跨世纪录与旧世归档",
