@@ -8,6 +8,7 @@
  * 原则:不改经济,只改认知——名称语义/用途说明/即时因果解释/
  *       首次教学/软上限白话。全部为展示层与一次性标记。
  */
+import { formatPercent } from "@/utils/format";
 import { useEndgameStore } from "@/stores/endgame";
 import { WORLD_BREAK_MAJOR } from "@/data/realms";
 import { usePlayerStore } from "@/stores/player";
@@ -97,8 +98,19 @@ export function fruitMarginalInfo(): {
   const fruit = Math.max(0, player.reincarnation.daoFruit);
   const eff = effectiveDaoFruit(fruit);
   const nextEff = effectiveDaoFruit(fruit + 1);
-  // 下轮有效道果收益的增长率(当前为基础,展示边际递减)
-  const delta = ((nextEff - eff) / Math.max(1, eff)) * 100;
+  /*
+   * 下轮有效道果收益的增长率(当前为基础,展示边际递减)。
+   *
+   * 比率原样交给 formatPercent,不在这里乘 100 —— 那一份会乘、会处理上溢
+   * (eff 极小时比率可以是 Infinity)、也会把「取整之后仍是零」的极小值收成 0%。
+   * 从前这里是 `delta.toFixed(2)` 拼一个 `%`:它印得出「Infinity%」,
+   * 也与全仓一百多处的百分数写法分成了两种。
+   *
+   * 分辨率取两位而**不是**全仓默认的整数位:这个数在软上限后掉到 0.9% 一带,
+   * 取整会把它压成 1% 或 0%,而 0% 会让玩家以为「再攒一枚也没用」——
+   * 那与事实相反(它仍是永久的)。
+   */
+  const delta = (nextEff - eff) / Math.max(1, eff);
   return {
     total: fruit,
     effective: eff,
@@ -106,7 +118,8 @@ export function fruitMarginalInfo(): {
     effectiveText: fruitEffectiveText(eff),
     nextEffectiveText: fruitEffectiveText(nextEff),
     cultBonusText: fruitCultBonusText(eff),
-    deltaPct: delta.toFixed(2),
+    // formatPercent 自带 %;模板那一侧还会拼一个 %,故这里把尾符摘掉,契约不变
+    deltaPct: formatPercent(delta, 2).replace(/%$/, ""),
   };
 }
 

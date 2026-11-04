@@ -140,9 +140,17 @@ export function formatPercent(x: number, dp = 1): string {
   const v = x * 100;
   // x 有限但 x*100 上溢(约 1e306 以上)时,v 会变 Infinity —— 同样要给占位,不能吐「Infinity%」
   if (!Number.isFinite(v)) return NOT_AVAILABLE;
-  // -0.001% 这类连一位小数都到不了的极小值,不该显示成「-0%」吓人
-  if (Math.abs(v) < Math.pow(10, -dp)) return "0%";
-  const s = Number.isInteger(v) ? String(v) : v.toFixed(dp);
+  /*
+   * -0.001% 这类**四舍五入之后仍然是零**的值,不该显示成「-0%」吓人。
+   *
+   * 这里看的是取整之后的结果,不是取整之前的量级 —— 从前写的是
+   * `Math.abs(v) < 10^-dp`,那个阈值把「该进位到 1%」的值也一起清零了:
+   * dp=0 时阈值是 1,于是 0.9% 也走这一支,印成「0%」。而 0.9% 四舍五入就是 1%,
+   * 抹掉它等于凭空否定一次真实的收益(道果边际在软上限后就落在这个量级)。
+   */
+  const rounded = Number(v.toFixed(dp));
+  if (rounded === 0) return "0%";
+  const s = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(dp);
   return `${trimZero(s)}%`;
 }
 

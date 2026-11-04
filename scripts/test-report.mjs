@@ -385,6 +385,7 @@ const CATEGORIES = [
       "rngBoundary",
       "petMoment",
       "multText",
+      "daoFruitMargin",
     ],
   },
   {

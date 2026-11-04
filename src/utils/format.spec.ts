@@ -216,6 +216,28 @@ describe("数值格式化", () => {
     expect(formatPercent(1e305)).not.toBe("--");
   });
 
+  it("极小值按**取整之后**是否为零来判,不按取整前的量级", () => {
+    /*
+     * 从前的守卫是 `Math.abs(v) < 10^-dp` —— dp=0 时阈值是 1,于是 0.9% 也被清零,
+     * 印成「0%」。而 0.9% 四舍五入就是 1%,抹掉它等于凭空否定一次真实的收益
+     * (道果边际在软上限后就落在这个量级)。
+     *
+     * 现在看的是取整之后的结果:该进位的进位,真到不了的才归零。
+     */
+    expect(formatPercent(0.009, 0), "0.9% 该进位到 1%").toBe("1%");
+    expect(formatPercent(0.005, 0)).toBe("1%");
+    expect(formatPercent(0.004, 0), "0.4% 取整确实是 0").toBe("0%");
+    expect(formatPercent(0.00001, 0)).toBe("0%");
+    // 一位、两位的档位不受影响
+    expect(formatPercent(0.009, 1)).toBe("0.9%");
+    expect(formatPercent(0.00001, 1)).toBe("0%");
+  });
+
+  it("负号那侧同理 —— -0.9% 该是 -1%,不是「-0%」", () => {
+    expect(formatPercent(-0.009, 0)).toBe("-1%");
+    expect(formatPercent(-0.004, 0)).toBe("0%");
+  });
+
   it("非法时长显示 --", () => {
     expect(formatDuration(NaN)).toBe("--");
     expect(formatDuration(Infinity)).toBe("--");
