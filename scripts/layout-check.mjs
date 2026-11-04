@@ -27015,44 +27015,70 @@ async function taskArtifactListOverflow() {
         const refined = await readList();
         checked += 1;
         /*
-         * 炼化会改同品阶内的次序,卡片可能跨出当前滑窗 —— 组件那时把窗口
-         * 重开到「焦点卡新位置所在批次的末尾」(见 ArtifactPanel.focusArtifactRowById:
-         * pageEnd = ceil((index+1)/batch)*batch)。
+         * 炼化会改同品阶内的次序 —— 焦点卡换位之后,窗口得跟着走,
+         * 否则玩家点完「炼化」会掉到一个看不见它自己的位置。
          *
-         * 判据守的是**那条规则**,不是某个具体页码:从前这里写死
-         * `refined.shown === backStart`,只在焦点卡恰好仍落在第 0 批时成立。
-         * 后来法宝池多了一件(天品),焦点卡换位更远,窗口按同一条规则开到第 3 批的
-         * 末尾 —— 组件是对的,判据把"恰好"当成了契约。
+         * ## 这里为什么不写死「重开到第 N 批末尾」
          *
-         * 三条不变量:批次边界上(shows % 12 === 0 或已到全量)、窗口属于该批次、
-         * 焦点卡真在新窗口里。
+         * 组件 `focusArtifactRowById` 有两条路:
+         *   一 新位置仍在当前窗口里 → 直接 focus,窗口不动;
+         *   二 掉出窗口 → 把上限设到「新位置所在批次的末尾」再 focus。
+         *
+         * 从前这条路写死成断言一(`refined.shown === backStart`),只在焦点卡
+         * 恰好仍落第 0 批时成立;法宝池变成 46 件后它红了,而组件是对的 ——
+         * 判据把"恰好"当成了契约。
+         *
+         * 改成写死断言二也不行:实测(见下面那条反空转)同品阶只有 6 件、
+         * 批次也是 6 件,单次 +1 级**不可能**把卡推出同一批 —— 那条路在当前的
+         * 数据与排序规则下走不到。守一条走不到的路,等于没有判据。
+         *
+         * 故这里守**两条路都成立的共同承诺**:焦点还在那张卡上、窗口覆盖它,
+         * 且窗口始终停在批次边界上(这样"重开"无论走哪条路都不会露出半批)。
+         * 若哪天真跨了窗,前三条会自动把重开后的形状也约束住。
          */
-        /*
-         * 批次常量从组件源码读,不手抄 —— 手抄一份就成了第二本账,
-         * 组件改批大小时这里会静默失准(实测:先抄成 12,而组件是 6)。
-         */
+
         const batch = Number(
           (readFileSync(resolve(ROOT, "src/components/inventory/ArtifactPanel.vue"), "utf8").match(
             /const ARTIFACT_RENDER_BATCH = (\d+);/,
           ) ?? [])[1],
         );
         const windowSize = batch * 2;
+        const covers = refined.ids.includes(upgradeId);
         const atBatchEdge = refined.shown === refined.total || refined.shown % batch === 0;
         if (
           !Number.isFinite(batch) ||
           batch <= 0 ||
           refined.focus !== upgradeId ||
-          !refined.ids.includes(upgradeId) ||
+          !covers ||
+          !atBatchEdge ||
           refined.count !== Math.min(windowSize, refined.shown) ||
-          refined.start !== Math.max(0, refined.shown - windowSize) ||
-          !atBatchEdge
+          refined.start !== Math.max(0, refined.shown - windowSize)
         ) {
           failures.push(
-            `[195] 法宝炼化越过窗界后没有按新位置重开窗:` +
-              `应落在批次末尾(shows 为 12 的倍数或全量)、start 为上一批边界、焦点 ${upgradeId},` +
+            `[195] 法宝炼化后焦点卡没有留在看得见的位置:` +
+              `焦点 ${upgradeId} / 窗口应停在批次边界(能被 ${batch} 整除或全量)、` +
+              `宽 ${windowSize}、start 为上一批边界;` +
               `实见焦点 ${refined.focus ?? "无"} / shown ${refined.shown} / ` +
               `start ${refined.start} / ${refined.count} 件 / 全量 ${refined.total}`,
           );
+        }
+        /*
+         * 反空转:同品阶件数决定单次炼化能不能跨批。若哪天子品阶件数超过批次,
+         * 「重开窗口」那条路就真的走得通了 —— 那时这段该换成对它的定向判据,
+         * 而不是继续用共同承诺兜着。这条只是把那个前提量出来并报出来。
+         */
+        checked += 1;
+        {
+          const sameQuality = artifactRows.filter((artifact) => {
+            const current = artifactRows.find((row) => row.defId === upgradeId);
+            return current && artifact.quality === current.quality;
+          }).length;
+          if (sameQuality > batch) {
+            failures.push(
+              `[195] 法宝同品阶已 ${sameQuality} 件、超过批次 ${batch} —— ` +
+                `「炼化跨窗重开」这条路现在走得通了,该为它补一条定向判据`,
+            );
+          }
         }
       }
     }
