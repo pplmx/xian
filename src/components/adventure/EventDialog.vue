@@ -34,6 +34,16 @@
         <p>{{ def.text }}</p>
       </blockquote>
 
+      <!--
+        你自己那侧的记忆:重复遭遇时必出,不掷骰(见 ui/eventRecall)。
+        与下面那块「余波」分工不同 —— 余波是**世界**那侧的、偶发的(二成概率);
+        这一句是**你**那侧的、每次都有的,只陈述上次走了哪条。
+        故它排在正经正文之后、世界的话之前:先认自己的账,再听世界说。
+      -->
+      <p v-if="recallLine" class="event-slip__recall" data-event-recall>
+        {{ recallLine }}
+      </p>
+
       <!-- Phase 31.3 遗产回声:曾弃之缘,世界记得(叙事,无数值) -->
       <aside v-if="echo" class="event-slip__marginal is-echo" data-event-echo>
         <span class="event-slip__marginal-label">旧影</span>
@@ -185,6 +195,7 @@ import BaseModal from "@/components/common/BaseModal.vue";
 import { EVENT_AUTO_RESOLVE_SECONDS } from "@/data/constants";
 import { useNow } from "@/composables/useNow";
 import { cnNumber, formatCountdown } from "@/utils/format";
+import { recallText } from "@/ui/eventRecall";
 
 const adventure = useAdventureStore();
 const now = useNow();
@@ -277,6 +288,18 @@ const echo = computed(() => {
 });
 
 /** 世界记忆:此事件是否已完过,若是则按概率决定余波文案 */
+/**
+ * 你自己那侧的重复记忆 —— 与余波互补,不掷骰。
+ *
+ * 见 ui/eventRecall 的文件头:余波要 times ≥ 2 且只二成概率,
+ * 于是第二次遭遇完全没有标记。这一句必出,补的就是那一格。
+ */
+const recallLine = computed<string>(() => {
+  if (!def.value || result.value) return "";
+  const mem = adventure.eventMemories[def.value.id];
+  return recallText(mem, (i) => def.value?.choices[i]?.label);
+});
+
 const aftermath = computed<string | null>(() => {
   if (!def.value || result.value) return null;
   const mem = adventure.eventMemories[def.value.id];

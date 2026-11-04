@@ -782,6 +782,19 @@
     font-size: var(--type-note);
     line-height: 1.5;
   }
+  /*
+   * 你自己那侧的重复记忆(见 ui/eventRecall)。
+   * 与正文拉开层次靠**字号与颜色**,不靠透明度(本作文字不叠透明度)。
+   * 用石青:它是"信息"那一色 —— 这一句是账,不是景。
+   */
+  .event-slip__recall {
+    margin: 0.45rem 0 0;
+    padding-left: 0.54rem;
+    border-left: 1px solid rgb(var(--color-qing-rgb) / 0.35);
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+    line-height: 1.6;
+  }
   .event-slip__narrative {
     display: grid;
     min-width: 0;

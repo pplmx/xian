@@ -389,6 +389,7 @@ const CATEGORIES = [
       "playerName",
       "nameLimit",
       "breakthroughNext",
+      "eventRecall",
     ],
   },
   {

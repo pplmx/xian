@@ -9388,6 +9388,112 @@ async function taskQualityLadder() {
  * 只核"出现过"会漏掉「谁的寿元都被标红」这种更坏的情形。
  */
 /**
+ * 见过第二次 —— 重复遭遇时该有一句「你想起上一次」。
+ *
+ * 九十五个事件里只有八个标了 `once`,其余八十七个可以反复出现,而第二次遇到时
+ * 标题正文选项一字不差。事件弹窗里那块「余波」要 times ≥ 2 且只二成概率,
+ * 于是**第二次遭遇完全没有标记**。
+ *
+ * 判据两件:
+ *   一 初遇(times 缺省)时那一行不出现 —— 初遇没什么可想的;
+ *   二 第二次(times=1)时出现,且说得出上次走了哪一条。
+ */
+async function taskEventRecall() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const eventId = "ev_sword_stone";
+    const read = async (page) =>
+      page.evaluate(() => {
+        const el = document.querySelector("[data-event-recall]");
+        return {
+          text: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null,
+          hasSlip: Boolean(document.querySelector("[data-event-slip]")),
+        };
+      });
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    // 一 初遇:没有那一行
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.adventure = {
+        ...(slices.adventure ?? {}),
+        pendingEventId: eventId,
+        pendingEventSince: Date.now(),
+        eventMemories: {},
+      };
+      await seedSave(ctx, slices, "__recall_first");
+    }
+    await openRoute(page, "/adventure", 800);
+    await page.locator("[data-event-slip]").waitFor({ state: "visible", timeout: 6000 });
+    const first = await read(page);
+    if (!first.hasSlip) {
+      failures.push("[390] 事件回忆:初遇时弹窗没打开,判据没法做");
+    } else if (first.text !== null) {
+      failures.push(`[390] 事件回忆:初遇也印了一行 «${first.text}»`);
+    }
+
+    // 二 第二次:有那一行,且带上次的选项
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.adventure = {
+        ...(slices.adventure ?? {}),
+        pendingEventId: eventId,
+        pendingEventSince: Date.now(),
+        eventMemories: {
+          [eventId]: { eventId, times: 1, lastAt: Date.now() - 60000, lastChoiceIdx: 0 },
+        },
+      };
+      await seedSave(ctx, slices, "__recall_second");
+    }
+    await page.reload({ waitUntil: "load" });
+    await page.waitForTimeout(900);
+    await openRoute(page, "/adventure", 800);
+    await page.locator("[data-event-slip]").waitFor({ state: "visible", timeout: 6000 });
+    const second = await read(page);
+    if (second.text === null) {
+      failures.push("[390] 事件回忆:第二次遭遇却没有那一行");
+    } else {
+      if (!second.text.includes("第")) {
+        failures.push(`[390] 事件回忆:没说是第几次 «${second.text}»`);
+      }
+      if (!second.text.includes("「")) {
+        failures.push(`[390] 事件回忆:没带上次走的那一条 «${second.text}»`);
+      }
+      if (/NaN/.test(second.text)) {
+        failures.push(`[390] 事件回忆:印出了 NaN «${second.text}»`);
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 事件回忆页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n事件回忆:初遇不印 · 再遇 «${second.text}»`);
+    } else {
+      console.log(`\n事件回忆[未通过]:${JSON.stringify({ first, second })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 突破失败之后 —— 「来日再战」说完,得说下一步做什么。
  *
  * 失败那一刻有三件事同时发生:准备加成被消费掉(失败也不退)、挂上伤势、
@@ -26210,6 +26316,7 @@ const TASKS = [
   ["道号八个字顶栏放得下", taskPlayerName],
   ["起名的上限只有一处", taskNameLimit],
   ["突破失败之后说得出下一步", taskBreakthroughNext],
+  ["重复遭遇认得出上一次", taskEventRecall],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
