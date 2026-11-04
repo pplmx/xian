@@ -405,6 +405,7 @@ const CATEGORIES = [
       "equipHistory",
       "qualityPeak",
       "inventorySeatSeal",
+      "achievementSeal",
     ],
   },
   {

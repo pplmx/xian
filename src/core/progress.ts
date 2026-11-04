@@ -34,6 +34,7 @@ import { useInventoryStore } from "@/stores/inventory";
 import type { GoalCond, GoalEnv } from "wanxiang-engine";
 import { evalGoal } from "wanxiang-engine";
 import { notify } from "./notify";
+import { achievementSealOf } from "@/ui/achievementSeal";
 
 /**
  * 本作的条件 → 库的条件。
@@ -195,7 +196,13 @@ function announceAchievement(def: AchievementDef): void {
     // quiet=false:配称号的成就让「获得名号」真实报喜,不再因硬吞 true 而永远死码
     grantReward(def.reward, false);
   }
-  notify(`成就达成「${def.name}」`, "rare");
+  /*
+   * 品质型成就带上它那一档的印 —— 与拾得那件装备本身的提示同一分量
+   * (见 ui/achievementSeal):「神物自晦」的条件就是"获得一件神品装备",
+   * 从前它的提示却与「初有积蓄」同款,比那件装备本身轻一整个量级。
+   * 其余成就没有品阶这回事,`achievementSealOf` 给 undefined —— 退回原样。
+   */
+  notify(`成就达成「${def.name}」`, "rare", achievementSealOf(def));
 }
 
 /** 检查所有可自动判定的成就 */

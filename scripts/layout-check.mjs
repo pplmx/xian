@@ -14023,6 +14023,127 @@ async function taskQualityPeakMonotonic() {
 }
 
 /**
+ * 品质成就的报喜也盖品阶印 —— 「神物自晦」不该与「初有积蓄」长得一样。
+ *
+ * `progress.announceAchievement` 对**所有**成就发同一条提示:`notify(..., "rare")`。
+ * 而 rare 这一族早按品阶分层了(印 / 光 / 声 / 停留时长)。于是拾得一件神品装备
+ * 那条提示盖着「神」印、闪着神品的光,而它**触发的那条成就提示**什么都没有 ——
+ * 同一件事的两次报喜,分量差着量级。
+ *
+ * 判据走真路径:老档自愈(身上有一件神品、成就还没解锁 → 启动补扫)触发报喜,
+ * 量那条提示条上有没有「神」印,以及未到稀有档的成就不许有印。
+ */
+async function taskAchievementSeal() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    /*
+     * 身上摆一件神品装备,但把品质成就从 achieved 里摘掉 ——
+     * 启动补扫因此会真的解锁一次并报喜(见 progress 的周期自愈)。
+     * 同时保留若干非品质成就,量「它们一枚印都没有」。
+     */
+    const divine = {
+      uid: "ach_seal_divine",
+      templateId: "w_zhuqing",
+      quality: "divine",
+      tier: 18,
+      level: 0,
+      affixes: [{ id: "hp1", roll: 1 }],
+    };
+    slices.inventory = {
+      ...slices.inventory,
+      items: [divine],
+      equipped: {},
+      artifacts: [],
+      equippedArtifacts: [],
+      pills: {},
+      seenUids: [divine.uid],
+      seenSeeded: true,
+    };
+    slices.quests = {
+      ...slices.quests,
+      achieved: ["a_eq10"],
+      peakQualityRank: 0,
+      collections: { ...slices.quests.collections, equip: [] },
+      collectedMoment: {},
+    };
+    await seedSave(ctx, slices, "__achievementSealFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/", 1200);
+
+    checked += 1;
+    const toasts = await page.evaluate(() =>
+      [...document.querySelectorAll("[data-toast]")].map((n) => ({
+        text: (n.textContent || "").replace(/\s+/g, " ").trim(),
+        seal: n.getAttribute("data-toast-seal"),
+      })),
+    );
+    /*
+     * 判「哪条该有印」必须读**真相源**(ACHIEVEMENTS 的 cond),不能靠名字猜:
+     * 第一版把「玄光初现 / 天命之子 / 仙缘深厚」当成非品质成就,而它们**正是**
+     * 品质成就(rank 4/6/7)—— 判据当场把自己举报了。
+     */
+    const qualityNames = new Set(
+      ACHIEVEMENTS.filter((a) => a.cond.type === "quality").map((a) => a.name),
+    );
+    const achToasts = toasts.filter((t) => /成就达成/.test(t.text));
+    if (achToasts.length === 0) {
+      failures.push(
+        `[390] 成就报喜:启动补扫没有报出成就 —— 判据无从量起(实见 ${JSON.stringify(toasts)})`,
+      );
+    } else {
+      const divineToast = achToasts.find((t) => /神物自晦/.test(t.text));
+      if (!divineToast) {
+        failures.push(
+          `[390] 成就报喜:神品那一条没报到(实见 ${JSON.stringify(achToasts.map((t) => t.text))})`,
+        );
+      } else if (divineToast.seal !== "divine") {
+        failures.push(
+          `[390] 成就报喜:神品成就的提示没盖「神」印(实见 seal=${divineToast.seal})` +
+            ` —— 同一件事的两次报喜不该差着量级`,
+        );
+      }
+      /*
+       * 反方向:非品质成就一枚印都不许多。这一条防的是「所有成就都盖最后一档的印」
+       * 那种更坏的写法 —— 只核"出现过"会漏掉它。
+       */
+      const wrong = achToasts.filter(
+        (t) => t.seal && ![...qualityNames].some((n) => t.text.includes(n)),
+      );
+      if (wrong.length > 0) {
+        failures.push(
+          `[390] 成就报喜:非品质成就也盖了印 —— 它们没有「品阶」这回事(${JSON.stringify(wrong)})`,
+        );
+      }
+    }
+    checked += 1;
+
+    if (pageErrors.length) {
+      failures.push(`[390] 成就报喜页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n成就报喜:神品那条自带「神」印,其余不成就不盖`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 品评 —— 九档各一句「这一档凭什么」,四处读同一份,且放得进一行。
  *
  * 必须真浏览器量的两件事:
@@ -27886,6 +28007,7 @@ const TASKS = [
   ["界域志首屏的此刻优先", taskCodexFold],
   ["成就谱首屏的眼下可追", taskAchievementFold],
   ["品质读数只增不减", taskQualityPeakMonotonic],
+  ["品质成就的报喜盖品阶印", taskAchievementSeal],
   ["藏珍双阁的九柜换屉", taskCollectionFold],
   ["藏珍两章续卷与桌面并读", taskCollectionRegister],
   ["减少动效真的减到了", taskReduceMotion],
