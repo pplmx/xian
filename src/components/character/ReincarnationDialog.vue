@@ -103,6 +103,18 @@
         <span class="reincarnation-head__seal font-kai" aria-hidden="true">照</span>
         <div class="reincarnation-head__identity">
           <p class="reincarnation-head__eyebrow">第二程 · 回照 · 第 {{ view.review.index }} 世</p>
+          <!--
+            这一世的名号 —— 回照说的是**刚过完的这一生**,故读 review 上的快照。
+            确认页会让玩家改下一世的名字,若在这里读当下的玩家,回照就会印成新名。
+            空名整行不出:旧档可能没有名字(save.ts 另有「无名散修」兜底)。
+          -->
+          <p
+            v-if="view.review.name"
+            class="reincarnation-head__name font-kai"
+            data-reincarnation-name
+          >
+            {{ view.review.name }}
+          </p>
           <h2 class="reincarnation-head__title">
             {{ view.review.realmLabel }}
             <span>{{ view.review.age }} 载</span>
@@ -714,6 +726,21 @@ watch(view, (next) => {
   gap: 0.6rem 0.72rem;
   border-bottom: 1px solid var(--reincarnation-line);
   padding-bottom: 0.8rem;
+}
+
+/*
+ * 这一世的名号 —— 碑上的名字。
+ *
+ * 字号在眉批与标题之间、用楷体、字距略宽:它比「第二程 · 回照」那句话重,
+ * 比「元婴 · 八百六十载」轻 —— 人的名字该在境界之上先被念到,但不该压过一生的读数。
+ * 颜色取正文墨(不用淡墨):这一行是**被称呼**,不是注解。
+ */
+.reincarnation-head__name {
+  margin: 0.06rem 0 0;
+  color: rgb(var(--color-ink-rgb));
+  font-size: var(--type-title);
+  letter-spacing: 0.1em;
+  line-height: 1.25;
 }
 
 .reincarnation-head__seal {

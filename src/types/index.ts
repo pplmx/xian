@@ -1266,6 +1266,13 @@ export interface BreakthroughView {
 export interface LifeReview {
   /** 刚结束的是第几世(1 起) */
   index: number;
+  /**
+   * 这一世的名号 —— **那一刻的快照**,不是玩家的当前名。
+   *
+   * 转世确认页会让玩家掷/改下一世的新道号(见 core/reincarnation 的 nextName),
+   * 若回照那一屏读 `player.name`,就会印成"下一世的名"。故与 index/age 一样存进这里。
+   */
+  name: string;
   realmLabel: string;
   age: number;
   /** 本世立的题;未立题为 null */

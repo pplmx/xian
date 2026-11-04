@@ -9389,6 +9389,93 @@ async function taskQualityLadder() {
  * 只核"出现过"会漏掉「谁的寿元都被标红」这种更坏的情形。
  */
 /**
+ * 这一世的名号 —— 一生回顾里该有你叫什么。
+ *
+ * 转世的「回照」那一屏已经写得很细:第几世、什么境界、活了多少载、立的什么命题、
+ * 得的什么宿慧。唯独**没有名字**。而玩家给自己起过道号,转世时还会重掷一个 ——
+ * 这个世界却从没在叙事里叫过他的名字。
+ *
+ * 判据两件:
+ *   一 回照那一屏印出存档里的道号;
+ *   二 它读的是**那一刻的快照**,不是当下的玩家名 —— 故用一份名字特别的存档,
+ *      进入回照后核对印出来的正是那个名字。
+ */
+async function taskLifeName() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const MY_NAME = "李长风踏雪";
+    const slices = showcaseSlices("light");
+    slices.player = { ...slices.player, name: MY_NAME };
+    await seedSave(ctx, slices, "__lifeName");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    /*
+     * 往生帖在**人物页**(`RebirthDialog` 由 CharacterView 挂载),不在传承页。
+     * 入口是那张「轮 回」索引行(标题带空格,按文字认不稳,先点开再找弹窗里的钮)。
+     */
+    await openRoute(page, "/character", 900);
+    await clearOverlays(page);
+    const row = page.locator("button, [role='button']", { hasText: /轮\s*回/ }).first();
+    if ((await row.count()) > 0) {
+      await row.click({ timeout: 4000 }).catch(() => {});
+      await page.waitForTimeout(700);
+    }
+
+    // 往生帖 → 回照(第二程)
+    const enter = page.locator("[data-rebirth-enter]").first();
+    if ((await enter.count()) === 0) {
+      failures.push("[390] 名号:找不到往生帖入口");
+    } else {
+      await page.evaluate(() => {
+        const el = document.querySelector("[data-rebirth-enter]");
+        if (el) el.click();
+      });
+      await page.waitForTimeout(1200);
+    }
+
+    checked += 1;
+    const seen = await page.evaluate(() => {
+      const el = document.querySelector("[data-reincarnation-name]");
+      return {
+        text: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null,
+        inReview: Boolean(document.querySelector("[data-reincarnation-review]")),
+      };
+    });
+    if (!seen.inReview) {
+      failures.push("[390] 名号:没进到回照那一屏");
+    } else if (seen.text === null) {
+      failures.push("[390] 名号:回照那一屏没有名字");
+    } else if (seen.text !== MY_NAME) {
+      failures.push(`[390] 名号:印的不是存档里那个名 «${seen.text}»`);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 名号页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n名号:回照印出 «${seen.text}»`);
+    } else {
+      console.log(`\n名号[未通过]:${JSON.stringify({ seen })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 同一片天 —— 首页与修行页的星空该是同一份天时。
  *
  * 两页各有一片星空,星样式逐字相同。第 47 轮让首页那片跟着天时变,修行页没跟 ——
@@ -27130,6 +27217,7 @@ const TASKS = [
   ["大境那一关另有分量", taskMajorBreak],
   ["首页夜色随天时", taskWeatherSky],
   ["两页的星空是同一片天", taskSkySameAcrossPages],
+  ["回照记得这一世的名号", taskLifeName],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],

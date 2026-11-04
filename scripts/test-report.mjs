@@ -397,6 +397,7 @@ const CATEGORIES = [
       "majorBreak",
       "weatherSky",
       "skyRoot",
+      "lifeName",
     ],
   },
   {

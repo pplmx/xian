@@ -83,6 +83,8 @@ function reviewLastLife(): LifeReview {
   const themeInsight = result === "done" && def ? def.insight : 0;
   return {
     index: player.reincarnation.count + 1,
+    // 这一世的名号在这一刻取定 —— 确认页会改下一世的名字,回照不能跟着变
+    name: player.name,
     realmLabel: player.realmName,
     age: yearsShown(player.age),
     themeId: vow?.themeId ?? null,
