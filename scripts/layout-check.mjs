@@ -9388,6 +9388,122 @@ async function taskQualityLadder() {
  * 只核"出现过"会漏掉「谁的寿元都被标红」这种更坏的情形。
  */
 /**
+ * 初次相逢 —— 头一回遇见的凶物,该有一枚章。
+ *
+ * 世界里已经有敌人的**认知**系统(core/loreService 的 noteEnemy):打得多就提示
+ * 「你摸清了它的招式」。那套是关于熟识的。而「第一次」这件事它没有 ——
+ * 第一次遇见山魈与第十次看到的界面完全一样。
+ *
+ * 判据两件:
+ *   一 战报上 firstSight 为真时,战斗界面挂出「初见」;
+ *   二 为假时不挂 —— 常打的那只不该每次都盖一枚章。
+ */
+async function taskFirstSight() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const mkSession = (lastBattle) => ({
+      session: {
+        regionId: "qingyun",
+        mode: "normal",
+        startedAt: Date.now() - 60_000,
+        endsAt: Date.now() + 3600_000,
+        nextBattleAt: Date.now() + 60_000,
+        wins: 0,
+        losses: 0,
+        events: 0,
+        stoneGain: { m: 0, e: 0 },
+        expGain: { m: 0, e: 0 },
+        itemGain: 0,
+        wudaoGain: 0,
+      },
+      lastBattle,
+    });
+    const mkBattle = (firstSight) => ({
+      enemyId: "e_sword_guard",
+      enemyName: "守剑石人",
+      enemyIcon: "sword",
+      isBoss: false,
+      at: Date.now() - 60_000,
+      firstSight,
+      result: {
+        win: true,
+        log: [{ t: "info", text: "守剑石人横剑而立。" }],
+        rounds: 3,
+        playerHpPct: 60,
+      },
+    });
+
+    let page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    const read = async () =>
+      page.evaluate(() => {
+        const el = document.querySelector("[data-combat-first-sight]");
+        return el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null;
+      });
+
+    // 一 初见:挂章
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.adventure = { ...(slices.adventure ?? {}), ...mkSession(mkBattle(true)) };
+      await seedSave(ctx, slices, "__firstSightYes");
+    }
+    await openRoute(page, "/adventure", 900);
+    await clearOverlays(page);
+    const yes = await read();
+    if (yes === null) {
+      failures.push("[390] 初见:战报上 firstSight 为真,界面却没有那枚章");
+    } else if (yes !== "初见") {
+      failures.push(`[390] 初见:那枚章的字不对 «${yes}»`);
+    }
+
+    // 二 不是初见:不挂
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.adventure = { ...(slices.adventure ?? {}), ...mkSession(mkBattle(false)) };
+      await seedSave(ctx, slices, "__firstSightNo");
+    }
+    await page.close();
+    page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/adventure", 900);
+    await clearOverlays(page);
+    const no = await read();
+    if (no !== null) {
+      failures.push(`[390] 初见:常打的那只也盖了一枚章 «${no}»`);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 初见页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n初见:头一回 «${yes}» · 已识得的不挂章`);
+    } else {
+      console.log(`\n初见[未通过]:${JSON.stringify({ yes, no })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 宿敌那一枚章 —— 只写「宿敌」两个字,不够。
  *
  * 同一个敌人打败玩家三次之后挂一枚章。章背后有两个字段一直没上界面:
@@ -26509,6 +26625,7 @@ const TASKS = [
   ["突破失败之后说得出下一步", taskBreakthroughNext],
   ["重复遭遇认得出上一次", taskEventRecall],
   ["宿敌章写得出结怨深浅", taskNemesisChip],
+  ["头一回遇见的凶物有标记", taskFirstSight],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],

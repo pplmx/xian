@@ -69,6 +69,8 @@ import { regionEventDef } from "./regionEvent";
 import { noteEnemy } from "./loreService";
 import { noteTaboo } from "./samsaraService";
 import { useInventoryStore } from "@/stores/inventory";
+import { useLoreStore } from "@/stores/lore";
+import { isFirstSight } from "@/ui/firstSight";
 import {
   advanceRoute,
   canEnterRegion,
@@ -358,6 +360,11 @@ function runBattle(now: number): void {
     isBoss: Boolean(eDef.isBoss),
     result,
     at: now,
+    /*
+     * 初见判定必须在**记照面之前**取 —— 下面那句 noteEnemy 会把照面次数 +1,
+     * 之后界面再查就永远是 false 了(见 ui/firstSight 的文件头)。
+     */
+    firstSight: isFirstSight(useLoreStore().enemySeenOf(eDef.id)),
   };
   adventure.recordBattle(view);
   track("battles");

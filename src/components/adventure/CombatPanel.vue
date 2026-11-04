@@ -145,6 +145,20 @@
                   >
                     {{ nemesisAvenged }}
                   </p>
+                  <!--
+                    初次相逢 —— 一百四十个凶物里,这一只是头一回遇见(见 ui/firstSight)。
+                    与上面那句同理,**必须放在 chips 块之外**:那一块的条件是
+                    `isBoss || isNemesisFoe || shownTraits.length`,一只寻常凶物
+                    三条都不满足 —— 挂进去就永远显示不出来。(第 42 轮在宿敌那句上
+                    刚踩过同一个坑。)
+                  -->
+                  <p
+                    v-if="firstSight"
+                    class="combat-combatant__first-sight text-jade"
+                    data-combat-first-sight
+                  >
+                    初见
+                  </p>
                   <ProgressBar
                     :value="ehp"
                     color="var(--color-cinnabar)"
@@ -465,6 +479,8 @@ const nemesisRecord = computed(() => {
 const nemesisChip = computed(() =>
   nemesisRecord.value ? nemesisChipText(nemesisRecord.value) : "",
 );
+/** 这一场的对手是不是头一回遇见 —— 判定是纯的,登记在结算处 */
+const firstSight = computed(() => battle.value?.firstSight === true);
 /** 雪耻之后那一句 */
 const nemesisAvenged = computed(() =>
   nemesisRecord.value ? nemesisAvengedText(nemesisRecord.value) : "",

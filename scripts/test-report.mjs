@@ -391,6 +391,7 @@ const CATEGORIES = [
       "breakthroughNext",
       "eventRecall",
       "nemesisChip",
+      "firstSight",
     ],
   },
   {
