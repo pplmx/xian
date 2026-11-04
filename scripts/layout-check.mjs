@@ -27014,18 +27014,44 @@ async function taskArtifactListOverflow() {
         await waitForFocus(upgradeId);
         const refined = await readList();
         checked += 1;
+        /*
+         * 炼化会改同品阶内的次序,卡片可能跨出当前滑窗 —— 组件那时把窗口
+         * 重开到「焦点卡新位置所在批次的末尾」(见 ArtifactPanel.focusArtifactRowById:
+         * pageEnd = ceil((index+1)/batch)*batch)。
+         *
+         * 判据守的是**那条规则**,不是某个具体页码:从前这里写死
+         * `refined.shown === backStart`,只在焦点卡恰好仍落在第 0 批时成立。
+         * 后来法宝池多了一件(天品),焦点卡换位更远,窗口按同一条规则开到第 3 批的
+         * 末尾 —— 组件是对的,判据把"恰好"当成了契约。
+         *
+         * 三条不变量:批次边界上(shows % 12 === 0 或已到全量)、窗口属于该批次、
+         * 焦点卡真在新窗口里。
+         */
+        /*
+         * 批次常量从组件源码读,不手抄 —— 手抄一份就成了第二本账,
+         * 组件改批大小时这里会静默失准(实测:先抄成 12,而组件是 6)。
+         */
+        const batch = Number(
+          (readFileSync(resolve(ROOT, "src/components/inventory/ArtifactPanel.vue"), "utf8").match(
+            /const ARTIFACT_RENDER_BATCH = (\d+);/,
+          ) ?? [])[1],
+        );
+        const windowSize = batch * 2;
+        const atBatchEdge = refined.shown === refined.total || refined.shown % batch === 0;
         if (
+          !Number.isFinite(batch) ||
+          batch <= 0 ||
           refined.focus !== upgradeId ||
           !refined.ids.includes(upgradeId) ||
-          refined.shown !== backStart ||
-          refined.start !== backStart - 12 ||
-          refined.count !== 12
+          refined.count !== Math.min(windowSize, refined.shown) ||
+          refined.start !== Math.max(0, refined.shown - windowSize) ||
+          !atBatchEdge
         ) {
           failures.push(
             `[195] 法宝炼化越过窗界后没有按新位置重开窗:` +
-              `应 12 件 / start ${backStart - 12} / shown ${backStart} / 焦点 ${upgradeId},` +
+              `应落在批次末尾(shows 为 12 的倍数或全量)、start 为上一批边界、焦点 ${upgradeId},` +
               `实见焦点 ${refined.focus ?? "无"} / shown ${refined.shown} / ` +
-              `start ${refined.start} / ${refined.count} 件`,
+              `start ${refined.start} / ${refined.count} 件 / 全量 ${refined.total}`,
           );
         }
       }

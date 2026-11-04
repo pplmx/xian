@@ -414,6 +414,7 @@ const CATEGORIES = [
       "sessionHaul",
       "dustFormat",
       "soulTallyFields",
+      "artifactQualityLadder",
     ],
   },
   {
