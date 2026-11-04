@@ -413,6 +413,7 @@ const CATEGORIES = [
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",
+      "soulTallyFields",
     ],
   },
   {

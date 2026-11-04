@@ -631,9 +631,15 @@ type SoulLedgerId = "active" | "idle" | "refine";
 /** 三席阵账的三枚账格与先手共读同一份 soulPulse。 */
 const soulLedgerRows = computed(() => [
   {
+    /*
+     * 印「席」标的是这本账,状态要答「这个数是什么」。
+     * 原先 label 写「三席」:印、状态、量词三个「席」叠在一起,
+     * 而另两格都是干净的「印 / 状态 / 量词」(闲·闲置·缕、凝·可凝·件)。
+     * 见 ui/soulTallyFields.spec。
+     */
     id: "active" as const,
     mark: "席",
-    label: "三席",
+    label: "已用",
     value: soulPulse.value.activeCount,
     total: soulPulse.value.slotTotal,
     unit: "席",
