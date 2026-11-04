@@ -9388,6 +9388,147 @@ async function taskQualityLadder() {
  * 只核"出现过"会漏掉「谁的寿元都被标红」这种更坏的情形。
  */
 /**
+ * 契兽的道历 —— 何时与它结的缘。
+ *
+ * 第 27 轮给称号补「得它的那一刻」时,判据是「图鉴有、称号没有」。当时只修了称号那条;
+ * 这一轮顺着同一根线看到 `quests.petCompanions` 同样只是个 id 数组 ——
+ * 玩家有一园灵兽,却分不出哪只是**这一世**结的缘。
+ *
+ * 判据三件:
+ *   一 已结缘的那只带着道历读数,写法与称号、图鉴同一种(「第 N 世 · M 岁」);
+ *   二 旧档(有灵兽、无时刻)照实说「早年收录」,不编一个;
+ *   三 未结缘的那只不显示这一刻。
+ */
+async function taskPetMoment() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const read = async (page, id) =>
+      page.evaluate((petId) => {
+        const row = document.querySelector(`[data-pet-row="${petId}"]`);
+        if (!row) return null;
+        const el = row.querySelector("[data-pet-moment]");
+        return { text: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null };
+      }, id);
+
+    /*
+     * 取两只**首屏里就有**的灵兽 —— 谱是分批放的(PET_RENDER_BATCH),
+     * 拿 PETS 前两只（pet_qingyu 之类）会落在第二页，页面上根本找不到。
+     * 这段 id 取自实测的首屏顺序。
+     */
+    const petIds = ["pet_kunpeng", "pet_taotie"];
+
+    const page = await ctx.newPage();
+    // 不用 1:Math.random 的值域是 [0,1),1 会让 rng.pick 越界(见 rngBoundary.spec)
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    // 一 新结缘:带道历
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.quests = {
+        ...(slices.quests ?? {}),
+        /*
+         * 谱上「拥有」看的是 collections.pet；petCompanions 是「相伴过」的记录，
+         * 两者不是一回事 —— 首版只设了后者，于是那行渲染成未结缘，读数自然没有。
+         */
+        collections: { ...(slices.quests?.collections ?? {}), pet: [petIds[0]] },
+        petCompanions: [petIds[0]],
+        petMoments: { [petIds[0]]: { life: 4, age: 37 } },
+      };
+      await seedSave(ctx, slices, "__petMomentNew");
+    }
+    await openRoute(page, "/titles", 900);
+    await clearOverlays(page);
+    // 灵兽谱在「灵兽」页签下 —— 不切过去,页面上一条 [data-pet-row] 都没有
+    const petTab = page.getByRole("tab", { name: /灵兽/ }).first();
+    if ((await petTab.count()) > 0) {
+      await petTab.click({ timeout: 3000 }).catch(() => {});
+      await page.waitForTimeout(500);
+    }
+    const fresh = await read(page, petIds[0]);
+    if (!fresh) {
+      failures.push(`[390] 契兽道历:灵兽谱里找不到 ${petIds[0]}`);
+    } else if (fresh.text === null) {
+      failures.push(`[390] 契兽道历:已结缘的 ${petIds[0]} 没有那一刻的读数`);
+    } else if (!/^第 \d+ 世 · \d+ 岁$/.test(fresh.text)) {
+      failures.push(`[390] 契兽道历:写法不是道历 «${fresh.text}»`);
+    } else if (fresh.text !== "第 4 世 · 37 岁") {
+      failures.push(`[390] 契兽道历:印的不是存档里那一对读数 «${fresh.text}»`);
+    }
+
+    // 二 旧档:有灵兽、无时刻 → 早年收录
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.quests = {
+        ...(slices.quests ?? {}),
+        collections: { ...(slices.quests?.collections ?? {}), pet: [petIds[0]] },
+        petCompanions: [petIds[0]],
+        petMoments: {},
+      };
+      await seedSave(ctx, slices, "__petMomentOld");
+    }
+    await page.reload({ waitUntil: "load" });
+    await page.waitForTimeout(900);
+    await openRoute(page, "/titles", 900);
+    await clearOverlays(page);
+    if ((await petTab.count()) > 0) {
+      await petTab.click({ timeout: 3000 }).catch(() => {});
+      await page.waitForTimeout(500);
+    }
+    const old = await read(page, petIds[0]);
+    if (!old || old.text === null) {
+      failures.push("[390] 契兽道历:旧档里那只连「早年收录」都没说");
+    } else if (old.text !== "早年收录") {
+      failures.push(`[390] 契兽道历:旧档被编了一个时刻 «${old.text}»`);
+    }
+
+    // 三 未结缘的不显示
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.quests = { ...(slices.quests ?? {}), petCompanions: [], petMoments: {} };
+      await seedSave(ctx, slices, "__petMomentNone");
+    }
+    await page.reload({ waitUntil: "load" });
+    await page.waitForTimeout(900);
+    await openRoute(page, "/titles", 900);
+    await clearOverlays(page);
+    if ((await petTab.count()) > 0) {
+      await petTab.click({ timeout: 3000 }).catch(() => {});
+      await page.waitForTimeout(500);
+    }
+    const none = await read(page, petIds[1]);
+    if (none && none.text !== null) {
+      failures.push(`[390] 契兽道历:未结缘的那只也印了一行 «${none.text}»`);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 契兽道历页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n契兽道历:新结缘 «${fresh?.text}» · 旧档 «${old?.text}» · 未结缘不印`);
+    } else {
+      console.log(`\n契兽道历[未通过]:${JSON.stringify({ fresh, old, none })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 转世前那条警告 —— 不可逆的代价要说全。
  *
  * 第 29–31 三轮没能留下这条判据,原因有两个,都记在 docs/development.md:
@@ -25656,6 +25797,7 @@ const TASKS = [
   ["称号记得住得它的那一刻", taskTitleMoment],
   ["寿元将尽要说得出", taskLifespanWarning],
   ["转世的代价说全", taskReincarnationLosses],
+  ["契兽记得住结缘的那一刻", taskPetMoment],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],

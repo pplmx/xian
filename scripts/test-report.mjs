@@ -383,6 +383,7 @@ const CATEGORIES = [
       "reincarnationWarning",
       "reincarnationOpen",
       "rngBoundary",
+      "petMoment",
     ],
   },
   {

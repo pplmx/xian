@@ -73,6 +73,8 @@ export const useQuestsStore = defineStore(
     const collectedMoment = ref<Record<string, { life: number; age: number }>>({});
     /** 每一枚称号得手时的道历(见 ownTitle)。旧档里没有这一项的称号照实说「早年收录」 */
     const titleMoments = ref<Record<string, { life: number; age: number }>>({});
+    /** 每一只灵兽结缘时的道历(见 recordPetCompanion)。与称号同一份口径 */
+    const petMoments = ref<Record<string, { life: number; age: number }>>({});
     /**
      * 图鉴「新得」的界:上次打开图鉴的时刻。收录发生在界后的条目挂「新」,
      * 打开图鉴(markCollectionSeen)把界推进到此刻 —— 新韵只这一遍见(见 quests.spec 图鉴新得)。
@@ -123,6 +125,7 @@ export const useQuestsStore = defineStore(
         titleMoments.value = nextMoments;
       }
       petCompanions.value = uniqueKnown(asStringArray(petCompanions.value), (id) => !!petDef(id));
+      // 灵兽道历同理:只保留仍在谱上的,且不补造
       const cats = asRecord<string[]>(collections.value);
       collections.value = {
         equip: uniqueKnown(asStringArray(cats.equip), (id) => !!equipmentTemplate(id)),
@@ -252,9 +255,17 @@ export const useQuestsStore = defineStore(
     }
 
     /** 唤伴即记档:同一只只记一次,暂别/换伴都不清 */
+    /**
+     * 记一只灵兽入谱,并记下结缘的那一刻。
+     *
+     * 与称号(ownTitle)、图鉴(collect)同一类事实:何时得到它的。
+     * 转世会把灵兽清零(见 player.rebirth),故谱上每一只都是**这一世**结的缘 ——
+     * 但玩家记不住这一点,二十只并排时没有时间读数就分不出哪只是刚遇见的。
+     */
     function recordPetCompanion(id: string): void {
       if (!id || petCompanions.value.includes(id)) return;
       petCompanions.value = [...petCompanions.value, id];
+      petMoments.value = { ...petMoments.value, [id]: codexMomentOfPlayer(usePlayerStore()) };
     }
 
     /**
@@ -299,6 +310,7 @@ export const useQuestsStore = defineStore(
       collect,
       recordPetCompanion,
       petCompanions,
+      petMoments,
       rolloverDaily,
       setDailyState,
       sanitize,

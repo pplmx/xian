@@ -347,6 +347,14 @@
                     <p v-if="row.modText" class="name-ledger__effect tabular">
                       {{ row.modText }}
                     </p>
+                    <!--
+                      结缘的那一刻 —— 与称号「得它的那一刻」同一份道历(见 ui/codexMoment)。
+                      转世会把灵兽清零,故谱上每一只都是这一世结的缘;但没有时间读数时,
+                      二十只并排就分不出哪只是刚遇见的。
+                    -->
+                    <p v-if="row.momentText" class="name-ledger__moment tabular" data-pet-moment>
+                      {{ row.momentText }}
+                    </p>
                     <!-- 性格 + 数值并一行:定性的话之外还要给数(换不换这只伙伴,靠「更容易」三个字算不出来) -->
                     <p class="name-beast-ledger__trait">
                       {{ row.personalityName }}
@@ -590,6 +598,8 @@ const petRows = computed(() =>
       personalityName: PERSONALITY_NAMES[def.personality],
       personalityDesc: personalityDesc(def.personality),
       traitText: petTraitText(def),
+      /** 结缘那一刻 —— 与称号同一份道历;未结缘的没有这一刻 */
+      momentText: owned ? codexMomentText(quests.petMoments[def.id]) : "",
       state: petEntryState({ owned, active }),
     };
   }).sort(

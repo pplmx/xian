@@ -470,6 +470,19 @@
     font-size: var(--type-note);
     line-height: 1.5;
   }
+  /*
+   * 「何时得到它的」—— 称号与灵兽共用这一档字(见 ui/codexMoment)。
+   *
+   * 退一档、用淡墨:它是注脚,不是效果。与上面那句 effect 拉开层次的办法是
+   * **字号与颜色**,不是透明度 —— 本作文字不叠透明度(见 AGENTS.md 的丹青纪律)。
+   */
+  .name-ledger__moment,
+  .name-beast-focus__moment {
+    margin-top: 0.1rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
   .name-ledger__source {
     margin-top: 0.05rem;
   }
