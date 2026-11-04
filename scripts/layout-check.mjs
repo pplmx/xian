@@ -9375,6 +9375,115 @@ async function taskQualityLadder() {
 }
 
 /**
+ * 称号的道历 —— 得它的那一刻写得出来。
+ *
+ * 图鉴每一条都有「第 N 世 · M 岁」的收录读数,而称号一直只有个 id 数组:
+ * 玩家有一排功名,却分不出哪个是刚才得的、哪个是上一世就挂在那里的。
+ *
+ * 判据三件:
+ *   一 佩上的那枚称号带着道历读数,写法与图鉴同一种(「第 N 世 · M 岁」或「早年收录」);
+ *   二 旧档(有称号、无时刻)照实说「早年收录」,不编一个;
+ *   三 未到手的称号不显示这一刻。
+ */
+async function taskTitleMoment() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const read = async () =>
+      page.evaluate(() => {
+        const el = document.querySelector("[data-title-moment]");
+        return {
+          text: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null,
+        };
+      });
+    let page;
+
+    // 一 新得:带道历
+    {
+      const slices = showcaseSlices("light");
+      slices.quests = {
+        ...(slices.quests ?? {}),
+        titlesOwned: ["ti_churu"],
+        titleMoments: { ti_churu: { life: 3, age: 42 } },
+      };
+      slices.player = { ...slices.player, titleId: "ti_churu" };
+      await seedSave(ctx, slices, "__titleMoment_new");
+      page = await ctx.newPage();
+      await page.addInitScript(() => {
+        Math.random = () => 1;
+      });
+      const pageErrors = [];
+      watchPageErrors(page, pageErrors);
+      await openRoute(page, "/titles", 900);
+      await clearOverlays(page);
+      checked += 1;
+      const got = await read();
+      if (got.text === null) {
+        failures.push("[390] 称号道历:佩上的称号没有那一刻的读数");
+      } else if (!/^第 \d+ 世 · \d+ 岁$/.test(got.text)) {
+        failures.push(`[390] 称号道历:写法不是道历 «${got.text}»`);
+      } else if (!/第 3 世 · 42 岁/.test(got.text)) {
+        failures.push(`[390] 称号道历:印的不是存档里那一对读数 «${got.text}»`);
+      }
+
+      // 二 旧档:有称号、无时刻 → 早年收录
+      checked += 1;
+      const oldSlices = showcaseSlices("light");
+      oldSlices.quests = {
+        ...(oldSlices.quests ?? {}),
+        titlesOwned: ["ti_churu"],
+        titleMoments: {},
+      };
+      oldSlices.player = { ...oldSlices.player, titleId: "ti_churu" };
+      await seedSave(ctx, oldSlices, "__titleMoment_old");
+      await page.reload({ waitUntil: "load" });
+      await page.waitForTimeout(900);
+      await openRoute(page, "/titles", 900);
+      await clearOverlays(page);
+      const old = await read();
+      if (old.text === null) {
+        failures.push("[390] 称号道历:旧档里那枚称号连「早年收录」都没说");
+      } else if (old.text !== "早年收录") {
+        failures.push(`[390] 称号道历:旧档被编了一个时刻 «${old.text}»`);
+      }
+
+      // 三 未到手的不显示
+      checked += 1;
+      const noneSlices = showcaseSlices("light");
+      noneSlices.quests = { ...(noneSlices.quests ?? {}), titlesOwned: [], titleMoments: {} };
+      noneSlices.player = { ...(noneSlices.player ?? {}), titleId: null };
+      await seedSave(ctx, noneSlices, "__titleMoment_none");
+      await page.reload({ waitUntil: "load" });
+      await page.waitForTimeout(900);
+      await openRoute(page, "/titles", 900);
+      await clearOverlays(page);
+      const none = await read();
+      if (none.text !== null) {
+        failures.push(`[390] 称号道历:没有佩印时也印了一行 «${none.text}»`);
+      }
+
+      if (pageErrors.length) {
+        failures.push(`[390] 称号道历页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+      }
+      if (failures.length === 0) {
+        console.log(`\n称号道历:新得 «${got.text}» · 旧档 «${old.text}» · 未佩不印`);
+      } else {
+        console.log(`\n称号道历[未通过]:${JSON.stringify({ got, old, none })}`);
+      }
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 此刻最该做的一件事 —— 卷首眉批说得出下一步。
  *
  * 修行页卷首有一个「当前阶段」,但那**只讲突破这一件事**,而且只在修行页。
@@ -25252,6 +25361,7 @@ const TASKS = [
   ["新得那枚真的会弹一下", taskNewItemPop],
   ["闪光的分量跟着品阶走", taskFlashTier],
   ["卷首眉批说得出下一步", taskNextStep],
+  ["称号记得住得它的那一刻", taskTitleMoment],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],

@@ -52,6 +52,17 @@
                   <p v-if="wornTitle.modText" class="name-beast-focus__effect tabular">
                     {{ wornTitle.modText }}
                   </p>
+                  <!--
+                    得它的那一刻:与图鉴页脚同一份道历。此前称号只有个 id 数组,
+                    玩家有一排功名,却分不出哪个是刚才得的、哪个是上一世挂着的。
+                  -->
+                  <p
+                    v-if="wornTitle.momentText"
+                    class="name-beast-focus__moment tabular"
+                    data-title-moment
+                  >
+                    {{ wornTitle.momentText }}
+                  </p>
                 </template>
                 <template v-else>
                   <p class="name-beast-focus__line"><strong>尚未佩印</strong></p>
@@ -403,6 +414,7 @@ import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
 import { ACHIEVEMENTS } from "@/data/achievements";
 import { TITLES } from "@/data/titles";
+import { codexMomentText } from "@/ui/codexMoment";
 import { PETS, petDef } from "@/data/pets";
 import { petVow } from "@/data/petVows";
 import { notify } from "@/core/notify";
@@ -482,6 +494,12 @@ const titleRows = computed(() => {
         worn,
         modText: modsText(row.def.mods),
         state: titleEntryState({ owned, worn }),
+        /*
+         * 得它的那一刻 —— 与图鉴同一份道历(见 ui/codexMoment)。
+         * 未到手的称号没有这一刻;旧档里已到手的也没有,那时 codexMomentText
+         * 会照实说「早年收录」,不假装是这一世得的。
+         */
+        momentText: owned ? codexMomentText(quests.titleMoments[row.def.id]) : "",
       };
     })
     .sort((a, b) => Number(b.worn) - Number(a.worn) || Number(b.owned) - Number(a.owned));

@@ -34,6 +34,20 @@
  * 删掉就等于图鉴只剩物,没有拿到它的那一刻。
  */
 
+/**
+ * 从玩家身上取一份道历读数 —— 收录、授称号都用它。
+ *
+ * 时与岁都是已有事实(见文件头),这里只取一次,不另记一份钟。
+ * 抽成函数是为了让「第几世」这一处的算法只有一份:从前 collect 里就地写了一遍
+ * `player.reincarnation.count + 1`,授称号要再写一遍的话,两处迟早会差 1。
+ */
+export function codexMomentOfPlayer(player: {
+  reincarnation: { count: number };
+  age: number;
+}): CodexMoment {
+  return { life: player.reincarnation.count + 1, age: Math.floor(player.age) };
+}
+
 /** 一条收录记录的世界内读数 */
 export interface CodexMoment {
   /** 第几世(1 起) */

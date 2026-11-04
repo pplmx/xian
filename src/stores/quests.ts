@@ -3,6 +3,7 @@ import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import type { CollectionCategory, CounterKey } from "@/types";
 import { persistConfig } from "@/utils/storage";
+import { codexMomentOfPlayer } from "@/ui/codexMoment";
 import { MAIN_QUESTS } from "@/data/quests";
 import { ACHIEVEMENTS } from "@/data/achievements";
 import { artifactDef } from "@/data/artifacts";
@@ -70,6 +71,8 @@ export const useQuestsStore = defineStore(
      * 旧档没有这一栏 —— 那些条目照实说「早年收录」,不按现在的年岁往回编。
      */
     const collectedMoment = ref<Record<string, { life: number; age: number }>>({});
+    /** 每一枚称号得手时的道历(见 ownTitle)。旧档里没有这一项的称号照实说「早年收录」 */
+    const titleMoments = ref<Record<string, { life: number; age: number }>>({});
     /**
      * 图鉴「新得」的界:上次打开图鉴的时刻。收录发生在界后的条目挂「新」,
      * 打开图鉴(markCollectionSeen)把界推进到此刻 —— 新韵只这一遍见(见 quests.spec 图鉴新得)。
@@ -103,6 +106,22 @@ export const useQuestsStore = defineStore(
         done: asStringArray(d?.done),
       };
       titlesOwned.value = uniqueKnown(asStringArray(titlesOwned.value), (id) => !!titleDef(id));
+      /*
+       * 称号道历只保留仍然到手的那些 —— 但不补造:旧档里已到手的称号
+       * 没有这一对读数,照实说「早年收录」,不假装是这一世得的。
+       */
+      {
+        const raw = asRecord(titleMoments.value);
+        const nextMoments: Record<string, { life: number; age: number }> = {};
+        for (const id of titlesOwned.value) {
+          const v = raw[id];
+          if (!v || typeof v !== "object") continue;
+          const life = asFiniteNumber((v as { life?: unknown }).life, 0, 0);
+          const age = asFiniteNumber((v as { age?: unknown }).age, 0, 0);
+          if (life >= 1) nextMoments[id] = { life: Math.floor(life), age: Math.floor(age) };
+        }
+        titleMoments.value = nextMoments;
+      }
       petCompanions.value = uniqueKnown(asStringArray(petCompanions.value), (id) => !!petDef(id));
       const cats = asRecord<string[]>(collections.value);
       collections.value = {
@@ -204,9 +223,17 @@ export const useQuestsStore = defineStore(
       mainIdx.value = Math.max(0, Math.floor(index));
     }
 
+    /**
+     * 授一枚称号,并记下得它的那一刻。
+     *
+     * 图鉴每一条都有「第 N 世 · M 岁」的收录读数,而称号一直只有个 id 数组 ——
+     * 玩家有一排功名,却分不出哪个是刚才得的、哪个是上一世就挂在那里的。
+     * 这是同一类事实,故用同一份道历(见 ui/codexMoment),不另写一套历法。
+     */
     function ownTitle(id: string): boolean {
       if (titlesOwned.value.includes(id)) return false;
       titlesOwned.value = [...titlesOwned.value, id];
+      titleMoments.value = { ...titleMoments.value, [id]: codexMomentOfPlayer(usePlayerStore()) };
       return true;
     }
 
@@ -217,10 +244,9 @@ export const useQuestsStore = defineStore(
       collections.value = { ...collections.value, [category]: [...list, id] };
       collectedAt.value = { ...collectedAt.value, [key]: Date.now() };
       // 道历读数取自玩家自身:第几世与这一世活到几岁,都是已有事实,不另记一份钟
-      const player = usePlayerStore();
       collectedMoment.value = {
         ...collectedMoment.value,
-        [key]: { life: player.reincarnation.count + 1, age: Math.floor(player.age) },
+        [key]: codexMomentOfPlayer(usePlayerStore()),
       };
       return true;
     }
@@ -253,6 +279,7 @@ export const useQuestsStore = defineStore(
       mainIdx,
       daily,
       titlesOwned,
+      titleMoments,
       collections,
       collectedAt,
       collectedMoment,

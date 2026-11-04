@@ -378,6 +378,7 @@ const CATEGORIES = [
       "rareSfx",
       "nextStep",
       "nextStepSources",
+      "titleMoment",
     ],
   },
   {
