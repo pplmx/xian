@@ -11,6 +11,16 @@
           <span v-for="i in 10" :key="i" />
         </div>
         <span v-if="view.success" class="burst-ring" />
+        <!--
+          大境之槛的那道光环 —— 同一个 burst-ring 加大加慢,不新造动效。
+          十次突破里只有一次真换了重天;从前它与小层在视觉上几乎一样,
+          只多一个「大 境」小章。金=里程碑赏,与那枚金章同一色。
+        -->
+        <span
+          v-if="view.success && view.isMajor"
+          class="burst-ring burst-ring--major"
+          data-breakthrough-major-halo
+        />
         <div
           class="grid h-20 w-20 place-items-center rounded-full border-2 font-kai text-4xl animate-ink-pop"
           :class="

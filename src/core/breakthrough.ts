@@ -242,7 +242,8 @@ export function attemptBreakthrough(): BreakthroughView | null {
     track("breakthroughs");
     trackRealm();
     checkStateAchievements();
-    playSfx("breakthrough");
+    // 大境之槛另有一声:十次突破里只有一次真换了重天(见 core/audio 的 majorBreak)
+    playSfx(info.isMajor ? "majorBreak" : "breakthrough");
     const realm = player.realm;
     // 跨界飞升:渡劫→真仙入仙界,大罗→神人入神界,神帝→混沌真灵入混沌海。
     // 这三步是全流程仅有的「换一片天」,给独立叙事与跨世节点(人间界入口不算)

@@ -9389,6 +9389,109 @@ async function taskQualityLadder() {
  * 只核"出现过"会漏掉「谁的寿元都被标红」这种更坏的情形。
  */
 /**
+ * 大境之槛 —— 十次突破里只有一次真的换了一重天。
+ *
+ * 每重境界十个小层,故大境是十次里的一次:境界名变了、寿元涨了、叙事换成
+ * 「境界跃迁,天地翻覆」。而从前的界面上这两件事分量几乎一样 —— 同一枚「破」印、
+ * 同一个墨点迸溅、同一圈金环,大境只多一个「大 境」小章;音效更是同一句。
+ *
+ * 判据两件:
+ *   一 大境成功时,那道加大的光环在;
+ *   二 小层成功时不在 —— 它不该被牵连。
+ */
+async function taskMajorBreak() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const read = async (page) =>
+      page.evaluate(() => ({
+        halo: Boolean(document.querySelector("[data-breakthrough-major-halo]")),
+        dialog: Boolean(document.querySelector('[aria-label="突破结果"]')),
+      }));
+
+    /*
+     * 走真实路径:修为与灵气拉满,随机源钉 0.05(`chance(p)` 是 `rand() < p`,
+     * 0.05 低于任何成功率) → 必成。再把 sub 放在 SUB_LEVELS-1 上造大境。
+     */
+    const mkSlices = (major, sub) => {
+      const slices = showcaseSlices("light");
+      slices.player = { ...slices.player, major, sub, exp: { m: 9, e: 18 } };
+      slices.resources = { ...slices.resources, qi: 1e12 };
+      return slices;
+    };
+
+    let page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    const runOnce = async (major, sub, key) => {
+      await page.close();
+      page = await ctx.newPage();
+      await page.addInitScript(() => {
+        Math.random = () => 0;
+      });
+      watchPageErrors(page, pageErrors);
+      await seedSave(ctx, mkSlices(major, sub), key);
+      await openRoute(page, "/cultivation", 900);
+      await clearOverlays(page);
+      const btn = page.locator('[data-cultivation-primary-action="breakthrough"]').first();
+      if ((await btn.count()) === 0) return { noBtn: true };
+      if (await btn.isDisabled().catch(() => false)) {
+        return { disabled: ((await btn.textContent()) || "").replace(/\s+/g, " ").trim() };
+      }
+      await btn.click({ timeout: 4000 }).catch(() => {});
+      await page.waitForTimeout(900);
+      return read(page);
+    };
+
+    /*
+     * 一 大境:sub 在末层。
+     * 大境必渡劫(`needTribulation = isMajor`)。渡劫的每道伤害乘一个
+     * `rng.float(0.85, 1.15)` 的浮动,故把随机源钉成 0 就是**取下限**,
+     * 这是能给到的最有利条件。波数随 major 涨,故用最低的可用大境。
+     * 首版用 major=3(七道劫)直接被打死;major=0 时突破钮不可点(炼气是起始境)。
+     */
+    checked += 1;
+    const majorView = await runOnce(1, 9, "__majorBreak");
+    if (!majorView || !majorView.dialog) {
+      failures.push("[390] 大境之槛:大境突破没弹出结果");
+    } else if (!majorView.halo) {
+      failures.push("[390] 大境之槛:大境成功却没有那道光环");
+    }
+
+    // 二 小层:sub 不在末层
+    checked += 1;
+    const minorView = await runOnce(3, 2, "__minorBreak");
+    if (!minorView || !minorView.dialog) {
+      failures.push("[390] 大境之槛:小层突破没弹出结果");
+    } else if (minorView.halo) {
+      failures.push("[390] 大境之槛:小层突破也点了光环 —— 它不该被牵连");
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 大境之槛页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log("\n大境之槛:大境有光环 · 小层没有");
+    } else {
+      console.log(`\n大境之槛[未通过]:${JSON.stringify({ majorView, minorView })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 日课结契 —— 全清那一刻,该有一笔收束。
  *
  * 首页「今日日课」做得细(进度环、逐笔进度、奖励同格摊开),但全清那一刻从前只有
@@ -26864,6 +26967,7 @@ const TASKS = [
   ["头一回遇见的凶物有标记", taskFirstSight],
   ["章块的条件与内容同源", taskCombatChips],
   ["日课全清盖一枚结契印", taskDailySeal],
+  ["大境那一关另有分量", taskMajorBreak],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],

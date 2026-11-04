@@ -394,6 +394,7 @@ const CATEGORIES = [
       "firstSight",
       "combatChips",
       "dailySettle",
+      "majorBreak",
     ],
   },
   {

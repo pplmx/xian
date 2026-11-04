@@ -3766,6 +3766,13 @@
     border: 2px solid var(--color-gold-ink);
     pointer-events: none;
     animation: burst-ring 0.9s ease-out 0.1s both;
+  } /* 大境之槛:同一道光环,更大更缓 —— 十次突破里只有一次真换了重天 */
+  .burst-ring--major {
+    inset: -0.6rem;
+    border-width: 1px;
+    opacity: 0.75;
+    animation-duration: 1.5s;
+    animation-delay: 0.12s;
   } /* 突破成功:全屏墨色冲击波,自印心荡向天际 */
   .ink-wave {
     position: fixed;

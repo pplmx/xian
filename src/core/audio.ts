@@ -20,6 +20,7 @@ export type SfxName =
   | "win"
   | "lose"
   | "breakthrough"
+  | "majorBreak"
   | "fail"
   | "worldRise";
 
@@ -543,6 +544,22 @@ export function playSfx(name: SfxName): void {
       // 整条刮奏冲顶 + 管钟定音
       gliss(["F#3", "A3", "B3", "D4", "E4", "F#4", "A4", "B4", "D5"], 0.075, 0.6);
       bellSampler?.triggerAttackRelease("D5", "1n", now + 0.8, 0.7);
+      break;
+    case "majorBreak":
+      /*
+       * 大境之槛 —— 介于 breakthrough 与 worldRise 之间。
+       *
+       * 十次突破里只有一次是大境(SUB_LEVELS = 10)。从前两者共用 breakthrough 那一声,
+       * 听觉上差着十倍的稀有度却完全一样。这一档的分量靠三样拉开,不另创乐汇:
+       *   更低更久的底钟(先落地,给"重"的底)
+       *   更宽的上行刮奏(两个八度,比小层的九音更远)
+       *   双钟叠定音(同音两根,一根长一根短 —— 像两次心跳)
+       */
+      bellSampler?.triggerAttackRelease("F#2", "2n", now, 0.72);
+      taiko?.triggerAttackRelease("F2", "2n", now + 0.08, 0.55);
+      gliss(["F#3", "A3", "B3", "D4", "E4", "F#4", "A4", "B4", "D5", "E5", "F#5"], 0.082, 0.66);
+      bellSampler?.triggerAttackRelease("D5", "1n", now + 0.92, 0.75);
+      bellSampler?.triggerAttackRelease("A5", "2n", now + 1.02, 0.5);
       break;
     case "fail":
       gliss(["A3", "E3", "D3"], 0.24, 0.5);
