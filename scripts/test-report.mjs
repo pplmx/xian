@@ -407,6 +407,7 @@ const CATEGORIES = [
       "inventorySeatSeal",
       "achievementSeal",
       "combatLogTone",
+      "companionTime",
     ],
   },
   {

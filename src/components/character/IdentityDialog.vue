@@ -18,6 +18,20 @@
           <div v-if="traitWords.length" class="identity-head__traits" data-identity-traits>
             <span v-for="word in traitWords" :key="word">{{ word }}</span>
           </div>
+          <!--
+            道龄 —— 「这一号人物,你陪他走了多久」(见 ui/companionTime)。
+            读的是 game.totalPlaySec:那条被钉死语义的存档事实(缺席时段不进它,
+            挂机一晚不白得八小时),此前全仓只有星宿对齐读过,界面上一个字都没有。
+            放在画像而不是顶栏:顶栏是此刻的读数,道龄是累计事实。
+          -->
+          <p class="identity-head__companion" data-identity-companion>
+            <span class="identity-head__companion-label">{{
+              companionTimeLabel(game.totalPlaySec)
+            }}</span>
+            <span class="identity-head__companion-value tabular">{{
+              companionTimeText(game.totalPlaySec)
+            }}</span>
+          </p>
         </div>
       </header>
 
@@ -136,6 +150,8 @@ import { buildIdentity } from "@/core/identityService";
 import BaseModal from "@/components/common/BaseModal.vue";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import { cnNumber, formatNum } from "@/utils/format";
+import { useGameStore } from "@/stores/game";
+import { companionTimeLabel, companionTimeText } from "@/ui/companionTime";
 
 /**
  * 修行画像不再只是一段总结加四行字：它把 core 归纳出的三层事实按人物册续开。
@@ -146,6 +162,7 @@ import { cnNumber, formatNum } from "@/utils/format";
 const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 
+const game = useGameStore();
 const identity = computed(() => buildIdentity());
 
 const identityRoots = computed(() => {
@@ -274,6 +291,37 @@ const riskLine = computed(() => {
   border-left: 2px solid rgb(var(--color-qing-rgb) / 0.46);
   color: rgb(var(--color-qing-rgb));
   font-size: var(--type-note);
+  line-height: 1.55;
+}
+
+/*
+ * 道龄 —— 累计事实,与上面那几个「词」同一处收尾。
+ * 比 traits 再淡一档(ink-faint):它不是这一号人物的"特点",是你们之间的时间。
+ * 数值用正文色,让读数本身仍是可读的主角。
+ */
+.identity-head__companion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.18rem 0.44rem;
+  margin-top: 0.4rem;
+  padding-top: 0.34rem;
+  border-top: 1px dashed rgb(var(--color-ink-rgb) / 0.1);
+}
+
+.identity-head__companion-label {
+  color: var(--color-ink-faint);
+  font-family: var(--font-kai);
+  font-size: var(--type-note);
+  letter-spacing: 0.14em;
+  line-height: 1.55;
+}
+
+.identity-head__companion-value {
+  min-width: 0;
+  color: var(--color-ink-soft);
+  font-family: var(--font-kai);
+  font-size: var(--type-body);
   line-height: 1.55;
 }
 

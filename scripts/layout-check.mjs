@@ -16827,6 +16827,12 @@ async function taskIdentityFolio() {
     };
     slices.player.petId = "pet_qingyu";
     slices.quests.counters = { kills: 214, explores: 38, breakthroughs: 9 };
+    /*
+     * 道龄夹具:种一个**确定的**活跃时长(45 天),判据才能拿它对着读。
+     * 用 45 天而不是几小时 —— 一天以上那条取整分支(「N 天」不带小时)
+     * 只有跨过一天才量得到。
+     */
+    slices.game = { ...slices.game, totalPlaySec: 45 * 86400 };
     await seedSave(ctx, slices, "__identityFolio");
 
     const page = await ctx.newPage();
@@ -16909,6 +16915,7 @@ async function taskIdentityFolio() {
               value: textOf(row.querySelector(".identity-trait__value")),
             })),
             risk: textOf(root?.querySelector("[data-identity-risk]")),
+            companion: textOf(root?.querySelector("[data-identity-companion]")),
             cardShells: root?.querySelectorAll(".card-ink").length ?? -1,
             eventCardShells:
               root?.querySelectorAll(
@@ -16965,6 +16972,21 @@ async function taskIdentityFolio() {
         !mobile.pet.line.includes("稀有之物")
       ) {
         failures.push(`[390-identity] 灵兽仍只报随行,没有姓名与性格:${JSON.stringify(mobile.pet)}`);
+      }
+      /*
+       * 道龄 —— 「你陪这一号人物走了多久」(见 ui/companionTime)。
+       * 读的是 game.totalPlaySec:那条被钉死语义的存档事实,此前全仓只有星宿对齐读过。
+       * 夹具种 45 天,一天以上那条分支取整成「45 天」且不带小时。
+       */
+      checked += 1;
+      if (!/45\s*天/.test(mobile.companion)) {
+        failures.push(
+          `[390-identity] 画像上没有道龄读数 —— 玩了多久在这页看不见(${JSON.stringify(mobile.companion)})`,
+        );
+      } else if (/小时|分钟|秒/.test(mobile.companion)) {
+        failures.push(
+          `[390-identity] 道龄超过一天还带着更小的单位 —— 累计读数不该报秒级(${JSON.stringify(mobile.companion)})`,
+        );
       }
       checked += 1;
       if (
