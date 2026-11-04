@@ -33,9 +33,21 @@ import { describe, expect, it } from "vite-plus/test";
 import { readSource } from "@/test/readSource";
 
 describe("名字的长度 · 上限只有一个来源", () => {
-  it("store 里导出那个上限,且它等于创建页的 maxlength", () => {
+  it("store 导出那个上限,创建页读它 —— 定义已挪到 utils/nameLimit", () => {
+    /*
+     * 第 38 轮把定义的**位置**挪了:这个 8 不只属于道号,构筑名、挑战书名、
+     * 转世名号草稿都用它,放在 store 里会让那三处为了一个常数去 import player store。
+     * 故定义搬到 `utils/nameLimit` 的 NAME_MAX,`PLAYER_NAME_MAX` 保留为别名,
+     * 第 37 轮建立的调用方一个都不用改。
+     *
+     * 判据按**意图**改:上限仍只有一个来源,只是那个来源换了地方。
+     */
+    const limit = readSource("src/utils/nameLimit.ts");
+    expect(limit, "上限该在 utils/nameLimit 里定义").toMatch(/export const NAME_MAX\s*=\s*8/);
     const store = readSource("src/stores/player.ts");
-    expect(store, "上限要在 store 里定义").toMatch(/export const PLAYER_NAME_MAX\s*=\s*8/);
+    expect(store, "PLAYER_NAME_MAX 该是那个常数的别名").toMatch(
+      /export const PLAYER_NAME_MAX\s*=\s*NAME_MAX/,
+    );
     const view = readSource("src/views/CreateView.vue");
     expect(view, "创建页的 maxlength 要读同一个常数").toContain("PLAYER_NAME_MAX");
     expect(view, "不许再手写 8").not.toMatch(/maxlength="8"/);

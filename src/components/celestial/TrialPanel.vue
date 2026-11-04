@@ -384,7 +384,7 @@
             <div v-else class="celestial-challenge-step__body">
               <input
                 v-model="draft.name"
-                maxlength="8"
+                :maxlength="NAME_MAX"
                 aria-label="为此挑战书命名(最多八个字)"
                 class="celestial-challenge-name text-[16px]"
                 placeholder="为此挑战书命名(如《无盾求生》)"
@@ -497,6 +497,7 @@ import { useDaoEntry } from "@/composables/useDaoEntry";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import SecretRealmCard from "@/components/adventure/SecretRealmCard.vue";
 import type { ReportView } from "@/components/celestial/reportView";
+import { NAME_MAX } from "@/utils/nameLimit";
 
 /**
  * 试炼面板:今日天道/天道变数/天道试炼/天道挑战书,整域自洽(自读 pinia)。

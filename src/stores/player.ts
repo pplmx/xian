@@ -1,5 +1,6 @@
 /** 玩家状态 —— 境界 / 修为 / 寿元 / 灵根 / 最终属性汇总 */
 import { defineStore } from "pinia";
+import { NAME_MAX } from "@/utils/nameLimit";
 import { computed, ref } from "vue";
 import type { FinalStats, GNum, LinggenProfile, StatMods } from "@/types";
 import { gn, gnZero, add, gte, mulN, progress, subClamp } from "@/utils/gnum";
@@ -38,17 +39,13 @@ import { liveRegionEvent, rollNewRegionEvent } from "@/core/regionEvent";
 import { rng } from "@/utils/random";
 
 /**
- * 道号至多八个字。
+ * 道号至多八个字 —— `NAME_MAX` 的别名。
  *
- * 这是**唯一一处**定义:创建页的输入框上限与提交时的裁剪都读它。
- * 此前这个 8 只手写在创建页的两行里,而 store 的 `setName` 完全不裁 ——
- * 契约活在页面上,谁都能从代码里调 store 把它绕过去。
- *
- * 为什么是 8:顶栏那行名字(`folio-head__name`)在 390 宽下大约放得下八个汉字,
- * 再多就靠 `truncate` 截了。截断是必要的兜底(旧档里可能有更长的名字),
- * 但**新输入**不该依赖它 —— 玩家敲进去的字被悄悄削掉,不会报错也不会提示。
+ * 定义已挪到 `utils/nameLimit`(那里同时管构筑名、挑战书名、转世名号草稿 ——
+ * 它们是同一件事的不同场合)。这里保留这个别名,因为第 37 轮建立的调用方
+ * 已经在读它,再改一遍接口的收益不抵风险。
  */
-export const PLAYER_NAME_MAX = 8;
+export const PLAYER_NAME_MAX = NAME_MAX;
 
 export const usePlayerStore = defineStore(
   "player",

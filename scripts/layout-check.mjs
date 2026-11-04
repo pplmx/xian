@@ -9388,6 +9388,92 @@ async function taskQualityLadder() {
  * 只核"出现过"会漏掉「谁的寿元都被标红」这种更坏的情形。
  */
 /**
+ * 起名的上限 —— 四个地方都是八个字,现在读同一个常数。
+ *
+ * 第 37 轮把道号的上限收进了 store;第 38 轮发现另外三处(构筑名、挑战书名、
+ * 转世名号草稿)**仍然各写一个 8**。同一天里两次踩到「同一个数散在几处」。
+ *
+ * 判据量的是**输入框真的会被截在八位**:在构筑命名框里敲十二个字,
+ * 看值是不是停在八。静态判据能证明它读了同一个常数,证明不了浏览器真的拦住了。
+ */
+async function taskNameLimit() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    await seedSave(ctx, slices, "__nameLimitFixture");
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/build", 900);
+    await clearOverlays(page);
+
+    // 打开「存为构筑」
+    checked += 1;
+    // 按钮文案是「+ 存当前构筑」;「存为构筑」是弹窗标题,不是入口
+    const openBtn = page.locator("button", { hasText: /存当前构筑/ }).first();
+    if ((await openBtn.count()) === 0) {
+      failures.push("[390] 起名上限:构筑页找不到「存当前构筑」入口");
+    } else {
+      await openBtn.click({ timeout: 4000 }).catch(() => {});
+      await page.waitForTimeout(500);
+      /*
+       * 必须**逐字敲**。首版用 setter + input 事件赋值,那是程序化写入 ——
+       * `maxlength` 只拦真实键入,不拦赋值,于是它收下了十二个字,
+       * 看起来像功能坏了,其实是量法不对。
+       * 这一课与本仓那条「Math.random 钉 1 越界」同类:量法本身改变被测行为。
+       */
+      const input = page.locator('input[aria-label*="构筑"]').first();
+      const exists = (await input.count()) > 0;
+      if (!exists) {
+        failures.push("[390] 起名上限:找不到构筑命名输入框");
+      } else {
+        await input.click({ timeout: 3000 }).catch(() => {});
+        await input.pressSequentially("一二三四五六七八九十十一", { delay: 15 });
+        await page.waitForTimeout(200);
+      }
+      const typed = exists
+        ? await page.evaluate(() => {
+            const el = document.querySelector('input[aria-label*="构筑"]');
+            return el ? { value: el.value, maxLength: el.maxLength, len: el.value.length } : null;
+          })
+        : null;
+      if (!typed) {
+        failures.push("[390] 起名上限:找不到构筑命名输入框");
+      } else {
+        if (typed.maxLength !== 8) {
+          failures.push(`[390] 起名上限:输入框的 maxLength 是 ${typed.maxLength},该是 8`);
+        }
+        if (typed.len > 8) {
+          failures.push(`[390] 起名上限:敲了十二个字,输入框收了 ${typed.len} 个 «${typed.value}»`);
+        }
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 起名上限页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log("\n起名上限:构筑命名框 maxLength=8,超长输入被拦在八位");
+    } else {
+      console.log(`\n起名上限[未通过]:${JSON.stringify({ failures })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 名字的长度 —— 至多八个字,顶栏才放得下。
  *
  * 契约原先只写在创建页那两行(`maxlength="8"` 与 `slice(0, 8)`),而 store 的
@@ -25974,6 +26060,7 @@ const TASKS = [
   ["契兽记得住结缘的那一刻", taskPetMoment],
   ["同一份倍数两处印得一样", taskMultText],
   ["道号八个字顶栏放得下", taskPlayerName],
+  ["起名的上限只有一处", taskNameLimit],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],

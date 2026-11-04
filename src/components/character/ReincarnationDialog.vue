@@ -407,7 +407,7 @@
         <div class="reincarnation-name__row">
           <input
             v-model="nameDraft"
-            maxlength="8"
+            :maxlength="NAME_MAX"
             aria-label="新一世的道号"
             class="reincarnation-name__input text-[16px]"
             :placeholder="view.nameDraft"
@@ -619,6 +619,7 @@ import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import ReincarnationStageRail from "@/components/character/ReincarnationStageRail.vue";
+import { NAME_MAX } from "@/utils/nameLimit";
 
 const ui = useUiStore();
 const player = usePlayerStore();

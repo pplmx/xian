@@ -12,6 +12,7 @@ import { useInventoryStore } from "@/stores/inventory";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useDongfuStore } from "@/stores/dongfu";
 import { useLoadoutsStore, MAX_LOADOUTS } from "@/stores/loadouts";
+import { NAME_MAX } from "@/utils/nameLimit";
 import { detectBuild } from "./buildDetect";
 import { notify } from "./notify";
 
@@ -40,7 +41,7 @@ export function captureLoadout(name: string): Loadout | null {
   const detected = detectBuild(player.finalStats.mods);
   const loadout: Loadout = {
     id: uid(),
-    name: name.trim().slice(0, 8) || detected?.style.name || "无名构筑",
+    name: name.trim().slice(0, NAME_MAX) || detected?.style.name || "无名构筑",
     seal: detected?.style.seal ?? "道",
     mainGongfa: cultivation.mainGongfa,
     subGongfa: [...cultivation.subGongfa],

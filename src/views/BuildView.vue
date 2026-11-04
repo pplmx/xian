@@ -406,7 +406,7 @@
       <p class="text-body text-ink-faint">将当前功法 / 法宝 / 整身装备存为一套，可随时一键切换。</p>
       <input
         v-model="saveName"
-        maxlength="8"
+        :maxlength="NAME_MAX"
         aria-label="给这套构筑起个名字"
         class="mt-2 w-full rounded-[2px] border border-ink/20 bg-paper-deep/60 px-3 py-2 text-[16px] outline-none focus:border-cinnabar/50 t-card"
         placeholder="给这套构筑起个名字"
@@ -445,6 +445,7 @@ import { endgameUnlocked, snapFromReplay } from "@/core/endgameService";
 import { useEndgameStore } from "@/stores/endgame";
 import { applyLoadout, captureLoadout, deleteLoadout } from "@/core/loadoutService";
 import { useLoadoutsStore, MAX_LOADOUTS } from "@/stores/loadouts";
+import { NAME_MAX } from "@/utils/nameLimit";
 import { cnNumber, formatPercent } from "@/utils/format";
 import { firstNewVisibleIndex, listWindow, nextListLimit } from "@/core/listRender";
 import { buildCoreGaps, buildStageMeter } from "@/ui/buildDesk";

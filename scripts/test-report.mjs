@@ -387,6 +387,7 @@ const CATEGORIES = [
       "multText",
       "daoFruitMargin",
       "playerName",
+      "nameLimit",
     ],
   },
   {
