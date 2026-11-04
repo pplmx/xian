@@ -12,8 +12,9 @@ import {
 } from "@/data/artifacts";
 import { EQUIP_MAX_LEVEL_BASE } from "@/data/constants";
 import { stoneByTier, upgradeCost } from "./formulas";
-import { add, gnZero, gte, isZero, sub } from "@/utils/gnum";
-import { formatGN } from "@/utils/format";
+import { add, gnZero, gte, isZero, sub, subClamp } from "@/utils/gnum";
+import { formatExact, formatGN } from "@/utils/format";
+import { blockedBy, type Shortfall } from "@/ui/shortfallText";
 import { refundRateText, salvageOf } from "./salvage";
 import { modOf } from "./statsCalc";
 import { noteSmithingUsed } from "./loreService";
@@ -86,6 +87,24 @@ export function planEquipmentUpgradeAll(uid: string): EquipmentUpgradePlan | nul
 }
 
 /**
+ * 强化差额 —— 器灵尘与灵石各差多少。
+ *
+ * 代价取自 `equipUpgradeCost`(与按钮置灰、实际扣款同一处),持有取自 resources。
+ * 这里不另算一份价:两处各算,迟早会在某次调价后分叉。
+ */
+function upgradeShortfall(uid: string): Shortfall[] {
+  const resources = useResourcesStore();
+  const cost = equipUpgradeCost(uid);
+  if (!cost) return [];
+  const rows: Shortfall[] = [];
+  if (resources.dust < cost.dust)
+    rows.push({ name: "器灵尘", amount: `×${formatExact(cost.dust - resources.dust)}` });
+  if (!resources.hasStone(cost.stone))
+    rows.push({ name: "灵石", amount: formatGN(subClamp(cost.stone, resources.spiritStone)) });
+  return rows;
+}
+
+/**
  * 单次强化的校验与结算(静默)。
  * 返回本次消耗;到顶/非背包返回 "max",器灵尘或灵石不足返回 "broke"。
  * 单点强化与「连强到顶」共用这一步 —— 两条路一处记账,不会各自漂移。
@@ -121,7 +140,12 @@ export function upgradeEquipment(uid: string): boolean {
     return false;
   }
   if (res === "broke") {
-    notify("器灵尘或灵石不足", "warn");
+    /*
+     * 差额要给出来:「器灵尘或灵石不足」定不了下一步 —— 差 8 尘与差 8 万灵石
+     * 是两种境遇。代价与持有都从同一处读(upgradeCost 与 resources),与按钮置灰同源。
+     */
+    const shortfall = upgradeShortfall(uid);
+    notify(blockedBy("强化不成", shortfall), "warn");
     return false;
   }
   const inst = useInventoryStore().findItem(uid)!;
@@ -161,7 +185,7 @@ export function upgradeEquipmentAll(uid: string): UpgradeBatchResult {
   const ended = count === plan.count ? plan.ended : "broke";
   if (count === 0) {
     // 一步都没强成(多半按钮被灰拦着,这里兜底防手滑空点):照单点那分支的措辞报
-    notify(ended === "max" ? "已达强化上限" : "器灵尘或灵石不足", "warn");
+    notify(ended === "max" ? "已达强化上限" : blockedBy("强化不成", upgradeShortfall(uid)), "warn");
     return { count, dust, stone, ended: "unchanged" };
   }
   const inst = useInventoryStore().findItem(uid);
@@ -277,7 +301,12 @@ export function upgradeArtifact(defId: string): boolean {
     return false;
   }
   if (!resources.hasSmall("wudao", cost.wudao) || !resources.hasStone(cost.stone)) {
-    notify("悟道点或灵石不足", "warn");
+    const rows: Shortfall[] = [];
+    if (resources.wudao < cost.wudao)
+      rows.push({ name: "悟道点", amount: formatExact(cost.wudao - resources.wudao) });
+    if (!resources.hasStone(cost.stone))
+      rows.push({ name: "灵石", amount: formatGN(subClamp(cost.stone, resources.spiritStone)) });
+    notify(blockedBy("祭炼不成", rows), "warn");
     return false;
   }
   resources.spendSmall("wudao", cost.wudao);

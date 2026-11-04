@@ -13,7 +13,7 @@
  * 原则:不为消耗而消耗——每一笔花销都在改变构筑,而非购买数值。
  */
 import type { AffixDef, EquipmentInstance, GNum } from "@/types";
-import { add, gnZero } from "@/utils/gnum";
+import { add, gnZero, subClamp } from "@/utils/gnum";
 import { rng } from "@/utils/random";
 import { AFFIXES, affixDef } from "@/data/affixes";
 import { equipmentTemplate } from "@/data/equipment";
@@ -37,7 +37,8 @@ import { useInventoryStore } from "@/stores/inventory";
 import { useLoreStore } from "@/stores/lore";
 import { useResourcesStore } from "@/stores/resources";
 import { notify } from "./notify";
-import { formatPercent } from "@/utils/format";
+import { blockedBy, type Shortfall } from "@/ui/shortfallText";
+import { formatPercent, formatGN, formatExact } from "@/utils/format";
 import { INSIGHT_PER_BLUEPRINT } from "@/data/samsara";
 
 export interface ReforgeCost {
@@ -149,7 +150,18 @@ export function reforgeEquipment(uid: string, quiet = false): boolean {
     return false;
   }
   if (!resources.hasStone(cost.stone) || !resources.hasSmall("dust", cost.dust)) {
-    if (!quiet) notify("灵石或器灵尘不足", "warn");
+    /*
+     * 报差额,不只报"不足" —— 重铸是玩家反复按的动作,差 8 尘与差 8 万灵石
+     * 决定的是"再洗一次"还是"先去历练一趟"。代价取自同一个 cost,持有取自 resources。
+     */
+    if (!quiet) {
+      const rows: Shortfall[] = [];
+      if (resources.dust < cost.dust)
+        rows.push({ name: "器灵尘", amount: `×${formatExact(cost.dust - resources.dust)}` });
+      if (!resources.hasStone(cost.stone))
+        rows.push({ name: "灵石", amount: formatGN(subClamp(cost.stone, resources.spiritStone)) });
+      notify(blockedBy("重铸不成", rows), "warn");
+    }
     return false;
   }
 
@@ -231,7 +243,12 @@ export function sealAffix(uid: string, affixId: string): boolean {
     return false;
   }
   if (!resources.hasStone(cost)) {
-    notify("灵石不足", "warn");
+    notify(
+      blockedBy("封存不成", [
+        { name: "灵石", amount: formatGN(subClamp(cost, resources.spiritStone)) },
+      ]),
+      "warn",
+    );
     return false;
   }
   resources.spendStone(cost);

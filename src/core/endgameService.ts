@@ -4,6 +4,7 @@
 import type { ArtifactDef, CombatantSnap, CombatRules, DaoMark, DaoPathId } from "@/types";
 import { mulberry32, RandomService } from "@/utils/random";
 import { formatGN } from "@/utils/format";
+import { subClamp } from "@/utils/gnum";
 import { artifactDef } from "@/data/artifacts";
 import { pactDef } from "@/data/pacts";
 import { mutatorDef } from "@/data/mutators";
@@ -37,6 +38,7 @@ import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useEndgameStore } from "@/stores/endgame";
 import { notify } from "./notify";
+import { blockedBy } from "@/ui/shortfallText";
 
 /**
  * 真仙(仙界门槛)方可踏足天界。
@@ -124,7 +126,13 @@ export function furnaceConvertStone(): boolean {
   const endgame = useEndgameStore();
   const cost = furnaceStoneCost();
   if (!resources.spendStone(cost)) {
-    notify("灵石不足", "warn");
+    // 熔炉这一步也报差额:差多少灵石决定"再刷一趟"还是"改熔别的"
+    notify(
+      blockedBy("灵石不足", [
+        { name: "灵石", amount: formatGN(subClamp(cost, resources.spiritStone)) },
+      ]),
+      "warn",
+    );
     return false;
   }
   endgame.addDaoSource(FURNACE_STONE_DAO_SOURCE);

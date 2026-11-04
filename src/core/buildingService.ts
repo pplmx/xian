@@ -96,10 +96,13 @@ export function upgradeBuilding(id: BuildingId): boolean {
     notify(info.reason, "warn");
     return false;
   }
-  if (!resources.hasStone(info.stone) || !resources.hasSmall("ore", info.ore)) {
-    notify("灵石或玄铁不足", "warn");
-    return false;
-  }
+  /*
+   * 这里原本还有一段 `if (!hasStone || !hasSmall("ore")) { notify("灵石或玄铁不足") }`。
+   * 它是**走不到的死代码**:上面的 `!info.canUpgrade` 已经把资源不足一并拦下,
+   * 而 `buildingUpgradeInfo` 在那时把差额写进了 `reason`（见它的注释）。
+   * 留着只有坏处——那句提示比 reason 宽泛得多（不说差多少），
+   * 而后来改文案的人会以为这里真有一句提示。
+   */
   resources.spendStone(info.stone);
   resources.spendSmall("ore", info.ore);
   dongfu.setLevel(id, info.nextLevel);

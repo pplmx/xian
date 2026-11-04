@@ -9240,6 +9240,97 @@ async function taskRebirthFolio() {
 }
 
 /**
+ * 差额一句话 —— 被拦下时说得清差多少。
+ *
+ * 这几处拦截(强化/祭炼/重铸/封存/熔炉)都在**动作层**:按钮那一侧通常已置灰,
+ * 故它们其实是第二层兜底。但兜底也不是白写的 —— 并发(同一帧里别处花掉了灵石)、
+ * 离线结算、一键连强跑到料尽,都会真走到这里,而那时玩家唯一的信息就是这一句。
+ *
+ * 判据只量一件真浏览器里量得到的事:**那一刻屏幕上的字里带着确切的差额**,
+ * 而不是一句「灵石不足」。造场景的办法是把资源掐到只差一点点,再走一条
+ * 上层没有置灰的入口 —— 洞府升级在**没有差价提示的旧路径**上会被拦,
+ * 而现在它的 reason 与点下去说的必须是同一句。
+ */
+async function taskShortfallText() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    // 把灵石与玄铁都掐到几乎为零:洞府任一升级都会因资源不足被拦
+    slices.resources = { ...slices.resources, spiritStone: { m: 0, e: 0 }, ore: 0 };
+    await seedSave(ctx, slices, "__shortfallFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/dongfu", 900);
+    await clearOverlays(page);
+
+    /*
+     * 洞府的升级钮在资源不足时置灰 —— 而它旁边那句 reason 就是「尚差 …」。
+     * 这一条核的是**同一句话已经摆在按钮上**:玩家不必点下去才知道差多少。
+     */
+    checked += 1;
+    const ledger = await page.evaluate(() => {
+      const rows = [...document.querySelectorAll("[data-dongfu-building-row]")];
+      const blocked = rows
+        .map((row) => {
+          // 精确落在**升级/建造那一颗**上:行里还有一枚展开详情的钮,它不是这一件事
+          const btn = row.querySelector("[data-building-action]");
+          return {
+            id: row.getAttribute("data-dongfu-building-row"),
+            text: (btn?.textContent || "").replace(/\s+/g, " ").trim(),
+            disabled: btn ? btn.disabled : null,
+          };
+        })
+        .filter((row) => row.disabled);
+      return { total: rows.length, blocked };
+    });
+    if (ledger.total === 0) {
+      failures.push("[390] 差额一句话:洞府里没有可量的建筑行");
+    } else if (ledger.blocked.length === 0) {
+      failures.push("[390] 差额一句话:资源掐到零了,洞府却没有一行被拦下");
+    } else {
+      const withGap = ledger.blocked.filter((row) => /尚差/.test(row.text));
+      if (withGap.length === 0) {
+        failures.push(
+          `[390] 差额一句话:${ledger.blocked.length} 行被拦,却没有一行写出「尚差 …»` +
+            ` «${ledger.blocked[0]?.text?.slice(0, 60)}»`,
+        );
+      }
+      // 差额必须是一个真数字,不是「尚差 0」
+      for (const row of withGap) {
+        const m = /尚差\s*([\d.]+(?:万|亿)?)\s*石/.exec(row.text);
+        if (m && Number(m[1]) === 0) {
+          failures.push(`[390] 差额一句话:${row.id} 说「尚差 0 石» —— 那等于没说`);
+        }
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 差额一句话页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(
+        `\n差额一句话:洞府 ${ledger.blocked.length} 行被拦,各写出确切差额(«${ledger.blocked[0]?.text?.slice(0, 40)}»)`,
+      );
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 成色的话 —— 一个 0~100 的数字要说得清它是好是差。
  *
  * 器评帖上写着「成色 67 / 100」。67 是什么水平?满掷才算好?及格就行?
@@ -24338,6 +24429,7 @@ const TASKS = [
   ["册目读法一句话一种数字", taskFolioPosition],
   ["提示条的去路真能点开", taskToastTarget],
   ["成色的话把数字译成判断", taskTemperGrade],
+  ["差额一句话说得出差多少", taskShortfallText],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
   ["一键分解先勾后点", taskDecompose],

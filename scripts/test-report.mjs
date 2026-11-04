@@ -368,6 +368,8 @@ const CATEGORIES = [
       "folioPosition",
       "toastTarget",
       "temperGrade",
+      "shortfallText",
+      "deadFallback",
     ],
   },
   {
