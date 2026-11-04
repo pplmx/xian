@@ -13,8 +13,19 @@
       当前身份 / 修行状态 / 今日天时 / 修为法球 / 今日一步,先让玩家知道“现在该做什么”。
     -->
     <section class="home-deck__hero" data-home-hero>
-      <div class="home-deck__hero-art" aria-hidden="true">
-        <span v-for="i in 11" :key="i" class="home-deck__star" :style="{ '--star': i }" />
+      <!--
+        星空随今日天时变(见 ui/weatherSky):星的颜色、亮度、多寡各按三档调。
+        这是本作里唯一一个完全没有功能的东西 —— 不提示、不奖励、不判定,
+        只让"今天"与"昨天"在抬头时不一样。
+      -->
+      <div
+        class="home-deck__hero-art"
+        aria-hidden="true"
+        data-home-sky
+        :data-home-sky-tier="sky.tier"
+        :style="skyStyle"
+      >
+        <span v-for="i in sky.stars" :key="i" class="home-deck__star" :style="{ '--star': i }" />
         <svg viewBox="0 0 420 160" preserveAspectRatio="none">
           <path
             class="home-deck__hero-mountain"
@@ -346,6 +357,7 @@ import CultivationOrb from "@/components/common/CultivationOrb.vue";
 import InstallToHomeNotice from "@/components/common/InstallToHomeNotice.vue";
 import { keepNumberUnit } from "@/utils/keepNumberUnit";
 import { dailySettleSeal } from "@/ui/dailySettle";
+import { skyOfWeather } from "@/ui/weatherSky";
 
 const player = usePlayerStore();
 const ui = useUiStore();
@@ -393,6 +405,13 @@ const statusText = computed(() =>
 
 // Phase 31 A1:今日天时(确定性,refreshed 每游戏日)
 const weather = computed(() => todayWeather());
+/** 今日夜色 —— 只给那片装饰用的星空用,不碰任何数值 */
+const sky = computed(() => skyOfWeather(weather.value.id));
+/** 星的色与亮交给 CSS 变量,样式表那一侧不写死 */
+const skyStyle = computed(() => ({
+  "--sky-star-rgb": `var(${sky.value.tint})`,
+  "--sky-brightness": String(sky.value.brightness),
+}));
 /** 天时的确定效果(照 mods 真值摊开;清和这类无词条的不显行) */
 const weatherModText = computed(() => modsText(weather.value.mods));
 /** 同一个 modsText 拆成可扫读的短签,不另造第二套天时说明。 */

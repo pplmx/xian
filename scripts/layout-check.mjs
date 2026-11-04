@@ -9389,6 +9389,91 @@ async function taskQualityLadder() {
  * 只核"出现过"会漏掉「谁的寿元都被标红」这种更坏的情形。
  */
 /**
+ * 夜色随天时 —— 首页那片星空跟着今日天时变。
+ *
+ * 首页顶上有「今日天时 · 凝霜 · 尚余 2:14」这一行,信息是对的。但那片星空**永远一个样**:
+ * 十一颗金星、同样的亮度、同样的呼吸 —— 玩家读到「月蚀」两个字,抬头看到一片明亮的星空,
+ * 那两个字就白写了。
+ *
+ * 判据量三档之间的**读数差**:沉档星少且暗、暖档偏浓、清档最平常。
+ * 只比相对关系,不钉具体色值 —— 色值会随色板调整,而"月蚀比天朗暗"这件事不会。
+ */
+async function taskWeatherSky() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const read = async (page) =>
+      page.evaluate(() => {
+        const sky = document.querySelector("[data-home-sky]");
+        if (!sky) return null;
+        const stars = [...sky.querySelectorAll(".home-deck__star")];
+        const first = stars[0];
+        return {
+          tier: sky.getAttribute("data-home-sky-tier"),
+          count: stars.length,
+          // 星的实际颜色与不透明度(由 CSS 变量算出来的最终值)
+          color: first ? getComputedStyle(first).backgroundColor : null,
+        };
+      });
+
+    const seedWith = async (weatherId, key) => {
+      const slices = showcaseSlices("light");
+      // 天时是算出来的(见 core/weather),这里改不了 —— 故只核对**当前**那一档
+      await seedSave(ctx, slices, key);
+      return weatherId;
+    };
+
+    let page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    checked += 1;
+    await seedWith(null, "__skyNow");
+    await openRoute(page, "/", 900);
+    await clearOverlays(page);
+    const now = await read(page);
+    if (!now) {
+      failures.push("[390] 夜色:首页读不到那片星空");
+    } else {
+      if (!now.tier) {
+        failures.push("[390] 夜色:星空上没有档位落点");
+      }
+      // 星数与档位要对得上:沉档露六颗,其余十一颗
+      if (now.tier === "dim" && now.count !== 6) {
+        failures.push(`[390] 夜色:沉档该露六颗星,实见 ${now.count} 颗`);
+      }
+      if (now.tier !== "dim" && now.count !== 11) {
+        failures.push(`[390] 夜色:${now.tier} 档该露十一颗星,实见 ${now.count} 颗`);
+      }
+      if (!now.color || now.color === "rgba(0, 0, 0, 0)") {
+        failures.push(`[390] 夜色:星没有颜色 «${now.color}»`);
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 夜色页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n夜色:今朝 «${now.tier}» 档 · ${now.count} 颗星 · ${now.color}`);
+    } else {
+      console.log(`\n夜色[未通过]:${JSON.stringify({ now })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 大境之槛 —— 十次突破里只有一次真的换了一重天。
  *
  * 每重境界十个小层,故大境是十次里的一次:境界名变了、寿元涨了、叙事换成
@@ -26968,6 +27053,7 @@ const TASKS = [
   ["章块的条件与内容同源", taskCombatChips],
   ["日课全清盖一枚结契印", taskDailySeal],
   ["大境那一关另有分量", taskMajorBreak],
+  ["首页夜色随天时", taskWeatherSky],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],

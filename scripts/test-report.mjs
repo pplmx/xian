@@ -395,6 +395,7 @@ const CATEGORIES = [
       "combatChips",
       "dailySettle",
       "majorBreak",
+      "weatherSky",
     ],
   },
   {
