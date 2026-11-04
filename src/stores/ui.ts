@@ -13,6 +13,7 @@ import type {
 } from "@/types";
 import { QUALITIES } from "@/data/qualities";
 import { toastTargetOf } from "@/ui/toastTarget";
+import { toastLifeMs } from "@/ui/toastLife";
 
 /**
  * 认得的品阶 id 集合 —— 提示条要盖印时先在这里对一次账。
@@ -61,7 +62,12 @@ export const useUiStore = defineStore("ui", () => {
     // 去路同样先对一次账:点了没反应的提示比不可点的提示更让人困惑
     const way = toastTargetOf(target) ?? undefined;
     toasts.value = [...toasts.value.slice(-4), { id, text, kind, seal: stamped, target: way }];
-    const ttl = kind === "rare" ? 4200 : 2600;
+    /*
+     * 停多久也跟着品阶走 —— 与那道光(ui/flashTier)、那一声(ui/rareSfx)同一把尺。
+     * 从前只有两档:`rare ? 4200 : 2600`,于是神品与灵品停一样久。
+     * 寻常提示与没有印的 rare 逐位不变,只有稀有段那两档加时。
+     */
+    const ttl = toastLifeMs({ kind, seal: stamped });
     setTimeout(() => {
       toasts.value = toasts.value.filter((t) => t.id !== id);
     }, ttl);

@@ -13571,6 +13571,128 @@ async function taskToastSeal() {
       }
     }
 
+    /*
+     * 停多久 —— 四条感官里唯一看不见的那一条。
+     *
+     * 光有颜色与时长(ui/flashTier)、声有音高(ui/rareSfx),而「它什么时候消失」
+     * 只能实测。这条判据的核心是**同一条链路上的两档对比**:神品那条必须比
+     * 灵品那条停得久,而不是只核「代码里有个函数」。
+     *
+     * 做法:直接按 store 的入口发三条提示(神品 / 灵品 / 无印 rare),读出
+     * `data-toast-life`,再核它们之间的相对关系与绝对档位。
+     */
+    checked += 1;
+    const lives = await page.evaluate(async () => {
+      // 从页面里拿 store 不方便,改读已经渲染出来的那几条 —— 参悟那条本身就带印
+      const nodes = [...document.querySelectorAll("[data-toast]")].map((n) => ({
+        seal: n.getAttribute("data-toast-seal"),
+        life: Number(n.getAttribute("data-toast-life")),
+      }));
+      return nodes;
+    });
+    const sealedLives = lives.filter((n) => n.seal && Number.isFinite(n.life));
+    if (sealedLives.length === 0) {
+      failures.push(
+        `[390] 提示条停留:带印的那条没有 data-toast-life —— 时长无从复核(${JSON.stringify(lives)})`,
+      );
+    } else {
+      for (const row of sealedLives) {
+        if (!(row.life > 0)) {
+          failures.push(`[390] 提示条停留:«${row.seal}» 那条的时长不是正数(${row.life})`);
+        }
+        // 稀有段以上必须比寻常 rare(4200)停得久;不到稀有段则仍停在 4200
+        if (qualityDef(row.seal).rank >= 6) {
+          if (!(row.life > 4200)) {
+            failures.push(
+              `[390] 提示条停留:«${row.seal}» 是稀有档,却只停 ${row.life}ms(应 > 4200)`,
+            );
+          }
+        } else if (row.life !== 4200) {
+          failures.push(`[390] 提示条停留:«${row.seal}» 不到稀有段,时长该是 4200,实见 ${row.life}`);
+        }
+      }
+    }
+
+    // 两档的**相对关系**:稀有档严格长于寻常 rare(这一条防的是「全部涨成同一档」)
+    checked += 1;
+    const tiers = await page.evaluate(() => {
+      const seen = new Map();
+      for (const node of document.querySelectorAll("[data-toast]")) {
+        const seal = node.getAttribute("data-toast-seal");
+        if (!seal) continue;
+        seen.set(seal, Number(node.getAttribute("data-toast-life")));
+      }
+      return [...seen.entries()];
+    });
+    const rareLives = tiers.filter(([seal]) => qualityDef(seal).rank >= 6).map(([, life]) => life);
+    if (rareLives.length > 0 && !rareLives.every((life) => life > 4200)) {
+      failures.push(`[390] 提示条停留:稀有档没有全部长于寻常 rare(${JSON.stringify(tiers)})`);
+    }
+
+    /*
+     * 两档对比 —— 这条才是「时长跟着品阶走」的真正判据。
+     *
+     * 上面量的是**一档**在正确档位上;但「神品比灵品停得久」这句话,
+     * 只有把两档真凑到同一个页面里比才成立。重复同一条真路径(藏经阁参悟),
+     * 只把「池里剩下的那一部」换成另一档的功法 —— 走的是同一条链,
+     * 差只差在品阶。
+     */
+    checked += 1;
+    {
+      const order = [...GONGFA]
+        .filter((g) => g.minRealm <= slices.player.major + 1)
+        .sort((a, b) => qualityDef(b.quality).rank - qualityDef(a.quality).rank);
+      const topGongfa = order[0];
+      const lowGongfa = order.at(-1);
+      const readLifeFor = async (gongfa) => {
+        const slices2 = showcaseSlices("light");
+        const pool2 = GONGFA.filter((g) => g.minRealm <= slices2.player.major + 1);
+        slices2.cultivation = {
+          ...slices2.cultivation,
+          learned: Object.fromEntries(
+            pool2.filter((g) => g.id !== gongfa.id).map((g) => [g.id, 1]),
+          ),
+          mainGongfa: null,
+          subGongfa: [],
+          gongfaBranch: {},
+          daoNotes: {},
+        };
+        slices2.resources = { ...slices2.resources, page: COMPREHEND_PAGE_COST * 2 };
+        await seedSave(ctx, slices2, `__toastLife_${gongfa.id}`);
+        await page.reload({ waitUntil: "load" });
+        await page.waitForTimeout(800);
+        await openRoute(page, "/cultivation", 900);
+        await clearOverlays(page);
+        const btn = page.locator("button.cultivation-gongfa__comprehend").first();
+        if ((await btn.count()) === 0) return null;
+        await btn.click({ timeout: 4000 }).catch(() => {});
+        await page.waitForTimeout(450);
+        const got = await page.evaluate(() => {
+          const hit = [...document.querySelectorAll("[data-toast]")]
+            .filter((n) => n.getAttribute("data-toast-seal"))
+            .at(-1);
+          return hit
+            ? {
+                life: Number(hit.getAttribute("data-toast-life")),
+                seal: hit.getAttribute("data-toast-seal"),
+              }
+            : null;
+        });
+        return got;
+      };
+      const topLife = topGongfa ? await readLifeFor(topGongfa) : null;
+      const lowLife = lowGongfa ? await readLifeFor(lowGongfa) : null;
+      if (!topLife || !lowLife) {
+        failures.push(`[390] 提示条停留:两档对比没凑齐(${JSON.stringify({ topLife, lowLife })})`);
+      } else if (!(topLife.life > lowLife.life)) {
+        failures.push(
+          `[390] 提示条停留:高档没有比低档停得久 —— ` +
+            `${topLife.seal} ${topLife.life}ms ≤ ${lowLife.seal} ${lowLife.life}ms` +
+            `（「神品比灵品久」这句话在屏幕上兑现不了）`,
+        );
+      }
+    }
+
     // 不带印的提示里一枚印都没有 —— 绝大多数提示不该因为这项改动多出个空格
     checked += 1;
     const plainStamped = await page.evaluate(() => {

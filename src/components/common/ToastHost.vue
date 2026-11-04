@@ -49,6 +49,7 @@
           :class="KIND_CLASS[t.kind]"
           :data-toast-seal="t.seal"
           :data-toast-target="t.target?.kind"
+          :data-toast-life="toastLifeOf(t)"
           @click="ui.openToastTarget(t.id)"
         >
           <!--
@@ -87,8 +88,20 @@ import type { Toast } from "@/types";
 import { playSfx, type SfxName } from "@/core/audio";
 import { qualityDef } from "@/data/qualities";
 import { FLASH_DEFAULT, flashPlanOf, type FlashPlan } from "@/ui/flashTier";
+import { toastLifeMs } from "@/ui/toastLife";
 import { colorWithAlpha } from "@/ui/colorVar";
 import type { QualityId } from "@/types";
+
+/**
+ * 这一条会停多久 —— 落成 `data-toast-life`,给真浏览器复核。
+ *
+ * 停留时长是四条感官里唯一**看不见**的那一条:光有颜色与时长、声有音高,
+ * 而「它什么时候消失」只能实测。故把算出来的毫秒摊到 DOM 上,
+ * 门才能量「神品那条真的比灵品停得久」,而不是只看代码里有个函数。
+ */
+function toastLifeOf(t: Toast): number {
+  return toastLifeMs({ kind: t.kind, seal: t.seal });
+}
 
 /**
  * 那枚印的画法 —— 色与名目全取自品质表,调用方只说「哪一档」。

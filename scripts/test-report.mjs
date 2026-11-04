@@ -401,6 +401,7 @@ const CATEGORIES = [
       "lifeChronicle",
       "artifactMoment",
       "petQualitySeal",
+      "toastLife",
     ],
   },
   {
