@@ -9517,11 +9517,47 @@ async function taskNextStep() {
         },
       },
     ];
+    let endgameStep = null;
+    /*
+     * 四 终局已至:道途选定的存档上,眉批该说「可谋来世」并指向传承页。
+     * 这一条同时守住「夹具里那句 daoPath 不是摆设」—— 它是这一项唯一的来源。
+     */
+    checked += 1;
+    {
+      const endSlices = showcaseSlices("light");
+      endSlices.adventure = { ...(endSlices.adventure ?? {}), session: null, pendingEventId: null };
+      endSlices.endgame = { ...(endSlices.endgame ?? {}), daoPath: "sword" };
+      endSlices.inventory = {
+        ...endSlices.inventory,
+        artifacts: [],
+        equippedArtifacts: [],
+        items: [],
+      };
+      await seedSave(ctx, endSlices, "__nextStep_endgame");
+      await page.reload({ waitUntil: "load" });
+      await page.waitForTimeout(800);
+      await openRoute(page, "/dongfu", 900);
+      await clearOverlays(page);
+      const endStep = await readStep();
+      endgameStep = endStep;
+      if (!endStep) {
+        failures.push("[390] 下一步:道途已定,卷首却没有那一句");
+      } else if (endStep.id !== "endgame" || endStep.route !== "legacy") {
+        failures.push(`[390] 下一步:道途已定该指向传承,实见 «${endStep.id}» → «${endStep.route}»`);
+      }
+    }
+
     for (const kase of cases) {
       checked += 1;
       const sliced = showcaseSlices("light");
       // 清掉历练与际遇,让台面上只剩这一条
       sliced.adventure = { ...(sliced.adventure ?? {}), session: null, pendingEventId: null };
+      /*
+       * 夹具默认已选定道途(daoPath: "sword"),于是每个场景都成了「终局已至」,
+       * 而那条建议排在法宝与装备之前 —— 首版这两个场景全被它顶掉了。
+       * 这里清掉道途,代表一个中盘玩家:终局那条不该在这种存档上抢位置。
+       */
+      sliced.endgame = { ...(sliced.endgame ?? {}), daoPath: null };
       kase.patch(sliced);
       await seedSave(ctx, sliced, `__nextStep_${kase.id}`);
       await page.reload({ waitUntil: "load" });
@@ -9548,7 +9584,7 @@ async function taskNextStep() {
     }
     if (failures.length === 0) {
       console.log(
-        `\n下一步:洞府页 «${onDongfu?.text}»(${onDongfu?.route}) · 历练页 ${onAdventure ? `«${onAdventure.text}»` : "无(指向本页的建议已滤掉)"}`,
+        `\n下一步:历练未结 «${onDongfu?.text}» · 本页不出 ${onAdventure ? `«${onAdventure.text}»` : "✓"} · 终局 «${endgameStep?.text}»`,
       );
     } else {
       console.log(`\n下一步[未通过]:${JSON.stringify({ onDongfu, onAdventure })}`);

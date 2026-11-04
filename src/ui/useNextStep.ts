@@ -30,6 +30,7 @@ import { buildingUpgradeInfo } from "@/core/buildingService";
 import { breakthroughInfo } from "@/core/breakthrough";
 import { currentMainQuestProgress } from "@/core/questProgress";
 import { artifactSeatCap } from "@/core/loadoutService";
+import { useEndgameStore } from "@/stores/endgame";
 import {
   nextStepForPage,
   nextStepOf,
@@ -96,6 +97,7 @@ export function currentNextStepInput(): NextStepInput {
   const player = usePlayerStore();
   const adventure = useAdventureStore();
   const inventory = useInventoryStore();
+  const endgame = useEndgameStore();
   const bt = breakthroughInfo();
 
   return {
@@ -121,7 +123,12 @@ export function currentNextStepInput(): NextStepInput {
     artifactSeatOpen: anyArtifactSeatOpen(),
     // 未领的赏:与领赏判定同一份 —— 主线任务进度说 done,就是 done
     rewardReady: currentMainQuestProgress()?.done === true,
-    endgameReached: false,
+    /*
+     * 此生道途已定 —— 道途一旦选定就不可改(来世方可另择,见 chooseDaoPath 的提示),
+     * 故「选过了」就是「终局已至」。判定读 endgame store 上的那份状态,
+     * 不另存一份布尔。
+     */
+    endgameReached: !!endgame.daoPath,
   };
 }
 

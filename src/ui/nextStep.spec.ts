@@ -120,6 +120,65 @@ describe("此刻最该做的一件事 · 不在本页说", () => {
 });
 
 describe("此刻最该做的一件事 · 措辞", () => {
+  it("每一条都用这本书自己的话说 —— 不是通知体", () => {
+    /*
+     * 初版是通知体:「有一桩际遇正等你决断」「洞府有可收的一笔」——
+     * 意思没错,但那是系统在播报,不是这本书在跟你说话。
+     * 这一条把八句的最终措辞钉住:改文案时若退回通知体,判据会红。
+     */
+    const EXPECTED: Record<string, string> = {
+      event: "一桩际遇候你决断",
+      explore: "此程未完,且先走完",
+      breakthrough: "关隘已开,可去破境",
+      endgame: "此生道途已定,可谋来世",
+      reward: "有赏未领",
+      dongfu: "洞府有可收的一笔",
+      artifact: "法宝有位,尚缺一件上阵",
+      equip: "行囊里有未上阵的一件",
+      gate: "修为已满,还需过「某关」",
+    };
+    const inputs: NextStepInput[] = [
+      withX({ pendingEvent: true }),
+      withX({ exploring: true }),
+      withX({ expFull: true, breakthroughReady: true }),
+      withX({ endgameReached: true }),
+      withX({ rewardReady: true }),
+      withX({ dongfuAffordable: true }),
+      withX({ artifactSeatOpen: true }),
+      withX({ betterEquipAvailable: true }),
+      withX({ expFull: true, breakthroughReason: "某关" }),
+    ];
+    for (const input of inputs) {
+      const step = nextStepOf(input)!;
+      expect(step.text, `${step.id} 的文案变了`).toBe(EXPECTED[step.id]);
+    }
+  });
+
+  it("没有一句带通知体的虚字 —— 「正」「已经」「手里还有」", () => {
+    /*
+     * 这一条不是文风洁癖:虚字会把一句话撑长,而这句话要在一行之内容下。
+     * 磨掉的正是那些能磨的字 —— 意思一个不少,字少了四处。
+     */
+    const BANNED = ["正等", "已经", "手里还有", "尚未了结", "可进行", "请注意"];
+    const inputs: NextStepInput[] = [
+      withX({ pendingEvent: true }),
+      withX({ exploring: true }),
+      withX({ expFull: true, breakthroughReady: true }),
+      withX({ endgameReached: true }),
+      withX({ rewardReady: true }),
+      withX({ dongfuAffordable: true }),
+      withX({ artifactSeatOpen: true }),
+      withX({ betterEquipAvailable: true }),
+      withX({ expFull: true, breakthroughReason: "某关" }),
+    ];
+    for (const input of inputs) {
+      const step = nextStepOf(input)!;
+      for (const word of BANNED) {
+        expect(step.text, `「${step.text}」里还留着通知体的「${word}」`).not.toContain(word);
+      }
+    }
+  });
+
   it("每一条都指向一个去处,没有一条是纯形容词", () => {
     const inputs: NextStepInput[] = [
       withX({ pendingEvent: true }),
@@ -135,7 +194,8 @@ describe("此刻最该做的一件事 · 措辞", () => {
     for (const input of inputs) {
       const step = nextStepOf(input)!;
       expect(step, "每一种状态都该给出建议").not.toBeNull();
-      expect(step.text.length, `「${step.text}」太长了`).toBeLessThanOrEqual(20);
+      // 一行之内说得完:眉批与副题同段,长一句就会把下面挤走
+      expect(step.text.length, `「${step.text}」太长了`).toBeLessThanOrEqual(14);
       expect(step.text.trim()).toBe(step.text);
       // 去处在路由枚举里
       expect(["cultivation", "adventure", "dongfu", "inventory", "legacy", "collection"]).toContain(

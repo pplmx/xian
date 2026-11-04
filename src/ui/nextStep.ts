@@ -10,6 +10,13 @@
  * 「我现在该去做什么」。放置游戏里这恰恰是最贵的一句话:玩家回来时常常忘了
  * 上次打算干嘛,而界面上全是数字,没有一句「先做这个」。
  *
+ * ## 语气:是书在跟你说话,不是系统在播报
+ *
+ * 初版是通知体(「有一桩际遇正等你决断」「有已得的赏未领」)—— 意思对,
+ * 但那不是这本书的口吻。八句都收短、去掉「正」「已经」「手里还有」这类
+ * 播报用的虚字,留下的都是动作与去处。「此程未完,且先走完」比
+ * 「这一程尚未了结,先走完它」少六个字,意思一点没丢。
+ *
  * ## 这一句为什么只能是"一件事"
  *
  * 列三条建议等于没建议 —— 玩家还是要自己排优先级。故这里按**卡住了什么**
@@ -91,10 +98,10 @@ export interface NextStepInput {
  */
 export function nextStepOf(input: NextStepInput): NextStep | null {
   if (input.pendingEvent) {
-    return { id: "event", text: "有一桩际遇正等你决断", route: "adventure" };
+    return { id: "event", text: "一桩际遇候你决断", route: "adventure" };
   }
   if (input.exploring) {
-    return { id: "explore", text: "这一程尚未了结,先走完它", route: "adventure" };
+    return { id: "explore", text: "此程未完,且先走完", route: "adventure" };
   }
   if (input.expFull && input.breakthroughReady) {
     /*
@@ -107,13 +114,13 @@ export function nextStepOf(input: NextStepInput): NextStep | null {
     return { id: "endgame", text: "此生道途已定,可谋来世", route: "legacy" };
   }
   if (input.rewardReady) {
-    return { id: "reward", text: "有已得的赏未领", route: "collection" };
+    return { id: "reward", text: "有赏未领", route: "collection" };
   }
   if (input.dongfuAffordable) {
     return { id: "dongfu", text: "洞府有可收的一笔", route: "dongfu" };
   }
   if (input.artifactSeatOpen) {
-    return { id: "artifact", text: "法宝有空位,手里还有未上阵的", route: "inventory" };
+    return { id: "artifact", text: "法宝有位,尚缺一件上阵", route: "inventory" };
   }
   if (input.betterEquipAvailable) {
     /*

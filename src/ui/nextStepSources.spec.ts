@@ -26,6 +26,16 @@ import { describe, expect, it } from "vite-plus/test";
 import { readSource } from "@/test/readSource";
 
 describe("眉批三项取数 · 不许再有写死的 false", () => {
+  it("endgameReached 也接了真来源 —— 道途一旦选定即此生已定", () => {
+    const src = readSource("src/ui/useNextStep.ts")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "");
+    const m = /endgameReached:\s*([^,\n]+)/.exec(src);
+    expect(m, "endgameReached 在映射里不见了").not.toBeNull();
+    expect(m![1]!.trim(), "仍写死成 false").not.toBe("false");
+    expect(src, "要读道途").toContain("endgame.daoPath");
+  });
+
   it("rewardReady / artifactSeatOpen / betterEquipAvailable 三项都接了真来源", () => {
     const src = readSource("src/ui/useNextStep.ts")
       .replace(/\/\*[\s\S]*?\*\//g, "")
