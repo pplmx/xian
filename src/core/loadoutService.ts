@@ -16,6 +16,18 @@ import { detectBuild } from "./buildDetect";
 import { notify } from "./notify";
 
 /** 保存当前构筑为快照 */
+/**
+ * 法宝席位上限 —— 基础位 + 传承加成。
+ *
+ * 这里只有一处定义:整理装配表要用它,而卷首眉批也要用它判断「手里还有没上阵的」。
+ * 两处各拼一次「artifactSlotsFor(major) + artifactSlotBonus(heritage)」，
+ * 迟早会在某次改动后分叉 —— 那时眉批会建议「法宝有空位」而装配页说没有。
+ */
+export function artifactSeatCap(): number {
+  const player = usePlayerStore();
+  return artifactSlotsFor(player.major) + artifactSlotBonus(player.reincarnation.heritage);
+}
+
 export function captureLoadout(name: string): Loadout | null {
   const inventory = useInventoryStore();
   const cultivation = useCultivationStore();
@@ -46,7 +58,6 @@ export function applyLoadout(id: string): boolean {
   const inventory = useInventoryStore();
   const cultivation = useCultivationStore();
   const dongfu = useDongfuStore();
-  const player = usePlayerStore();
   const loadouts = useLoadoutsStore();
   const loadout = loadouts.list.find((l) => l.id === id);
   if (!loadout) return false;
@@ -83,8 +94,7 @@ export function applyLoadout(id: string): boolean {
   const subOverCap = Math.max(0, learnedSubs.length - subCap);
   cultivation.subGongfa = learnedSubs.filter((g) => g !== loadout.mainGongfa).slice(0, subCap);
   // 法宝
-  const artifactCap =
-    artifactSlotsFor(player.major) + artifactSlotBonus(player.reincarnation.heritage);
+  const artifactCap = artifactSeatCap();
   const owned = new Set(inventory.artifacts.map((a) => a.defId));
   const ownedArts = loadout.artifactIds.filter((a) => owned.has(a));
   missing += loadout.artifactIds.length - ownedArts.length;

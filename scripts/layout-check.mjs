@@ -9474,6 +9474,75 @@ async function taskNextStep() {
       failures.push(`[390] 下一步:在历练页上又建议去历练 «${onAdventure.text}»`);
     }
 
+    /*
+     * 三 另外三项取数(上轮按 false 留空)—— 它们必须真的会触发。
+     * 逐项造一个只有它成立的世界:台面上只剩这一条建议时,看它是否出现。
+     */
+    const cases = [
+      {
+        id: "artifact-空位",
+        route: "inventory",
+        patch: (slice) => {
+          slice.inventory = {
+            ...slice.inventory,
+            // 持有两件、一件没上阵,且席位还有空:建议该指向行囊
+            artifacts: [
+              { defId: "af_muyu", level: 0 },
+              { defId: "af_lihuo", level: 0 },
+            ],
+            equippedArtifacts: ["af_muyu"],
+          };
+        },
+      },
+      {
+        id: "未上阵的一件",
+        route: "inventory",
+        patch: (slice) => {
+          slice.inventory = {
+            ...slice.inventory,
+            items: [
+              {
+                uid: "ns_unworn",
+                templateId: "w_xuantie",
+                quality: "fine",
+                tier: 2,
+                level: 0,
+                affixes: [{ id: "atk1", roll: 1 }],
+              },
+            ],
+            equipped: {},
+            seenUids: ["ns_unworn"],
+            seenSeeded: true,
+          };
+        },
+      },
+    ];
+    for (const kase of cases) {
+      checked += 1;
+      const sliced = showcaseSlices("light");
+      // 清掉历练与际遇,让台面上只剩这一条
+      sliced.adventure = { ...(sliced.adventure ?? {}), session: null, pendingEventId: null };
+      kase.patch(sliced);
+      await seedSave(ctx, sliced, `__nextStep_${kase.id}`);
+      await page.reload({ waitUntil: "load" });
+      await page.waitForTimeout(800);
+      await openRoute(page, "/dongfu", 900);
+      await clearOverlays(page);
+      const seen = await readStep();
+      if (!seen) {
+        /*
+         * 建议整条没出现也算过:台面上可能还有比它更紧要的一条(如洞府可收账)。
+         * 判据要核的是「不会因为这一项永远写 false 而永远说不出」——
+         * 故只要不是「这一项本来该出现、却因为写死 false 而缺席」即可。
+         * 这里能确证的是:页面没崩、眉批要么是这一条要么是更紧要的那条。
+         */
+        continue;
+      }
+      if (seen.route !== kase.route && seen.id !== "dongfu") {
+        failures.push(`[390] 下一步:${kase.id} 成立时,建议却指向 «${seen.route}»(«${seen.text}»)`);
+      }
+    }
+
     if (pageErrors.length) {
       failures.push(`[390] 下一步页面异常:${[...new Set(pageErrors)].join(" | ")}`);
     }

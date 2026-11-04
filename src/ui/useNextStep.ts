@@ -24,9 +24,12 @@ import { computed } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import { useAdventureStore } from "@/stores/adventure";
 import { useDongfuStore } from "@/stores/dongfu";
+import { useInventoryStore } from "@/stores/inventory";
 import { buildingDef, BUILDINGS } from "@/data/buildings";
 import { buildingUpgradeInfo } from "@/core/buildingService";
 import { breakthroughInfo } from "@/core/breakthrough";
+import { currentMainQuestProgress } from "@/core/questProgress";
+import { artifactSeatCap } from "@/core/loadoutService";
 import {
   nextStepForPage,
   nextStepOf,
@@ -76,10 +79,23 @@ export function anyDongfuUpgradeAffordable(): boolean {
   return false;
 }
 
+/**
+ * 法宝位有没有空,且手里有没上阵的。
+ *
+ * 席位上限读 `artifactSeatCap`(与整理装配表同一份),不在这里重拼一次
+ * 「基础位 + 传承加成」—— 那样两处随时会分叉。
+ */
+export function anyArtifactSeatOpen(): boolean {
+  const inventory = useInventoryStore();
+  if (inventory.artifacts.length <= inventory.equippedArtifacts.length) return false;
+  return inventory.equippedArtifacts.length < artifactSeatCap();
+}
+
 /** 此刻的世界状态 → 规则要的那份离散输入 */
 export function currentNextStepInput(): NextStepInput {
   const player = usePlayerStore();
   const adventure = useAdventureStore();
+  const inventory = useInventoryStore();
   const bt = breakthroughInfo();
 
   return {
@@ -90,10 +106,21 @@ export function currentNextStepInput(): NextStepInput {
     exploring: !!adventure.session,
     pendingEvent: !!adventure.pendingEventId,
     dongfuAffordable: anyDongfuUpgradeAffordable(),
-    // 见文件头:这几项暂时没有干净来源,按 false 传 —— 缺一句好过说岔一句
-    betterEquipAvailable: false,
-    artifactSeatOpen: false,
-    rewardReady: false,
+    /*
+     * 「更合手的一件」不做换装模拟:那要跑一遍 finalStats,到这里只会变成又一份账
+     * (与人物页、装备页各自的判定分叉)。退一步用「行囊里有没穿上的」作近似 ——
+     * 它不会说错方向(确实有没穿上的),只是可能不够精确。
+     *
+     * 文案也随之收敛:「行囊里有更合手的一件」改成「行囊里有未上阵的一件」,
+     * 说到的正好是它知道的那件事。
+     */
+    betterEquipAvailable: (() => {
+      const worn = new Set(Object.values(inventory.equipped));
+      return inventory.items.some((it) => !worn.has(it.uid));
+    })(),
+    artifactSeatOpen: anyArtifactSeatOpen(),
+    // 未领的赏:与领赏判定同一份 —— 主线任务进度说 done,就是 done
+    rewardReady: currentMainQuestProgress()?.done === true,
     endgameReached: false,
   };
 }

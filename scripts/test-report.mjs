@@ -377,6 +377,7 @@ const CATEGORIES = [
       "flashTier",
       "rareSfx",
       "nextStep",
+      "nextStepSources",
     ],
   },
   {

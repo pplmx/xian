@@ -116,7 +116,11 @@ export function nextStepOf(input: NextStepInput): NextStep | null {
     return { id: "artifact", text: "法宝有空位,手里还有未上阵的", route: "inventory" };
   }
   if (input.betterEquipAvailable) {
-    return { id: "equip", text: "行囊里有更合手的一件", route: "inventory" };
+    /*
+     * 措辞只说得出「未上阵」这一件事 —— 判据那边用的是「行囊里有没穿上的」,
+     * 而不是一次真正的换装模拟。说「更合手」会超出它知道的范围。
+     */
+    return { id: "equip", text: "行囊里有未上阵的一件", route: "inventory" };
   }
   if (input.expFull && input.breakthroughReason.trim()) {
     const reason = input.breakthroughReason.trim();
