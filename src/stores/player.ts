@@ -37,6 +37,19 @@ import { birthMajorFloor, craftGuaranteeCrafts } from "@/core/heritageEffects";
 import { liveRegionEvent, rollNewRegionEvent } from "@/core/regionEvent";
 import { rng } from "@/utils/random";
 
+/**
+ * 道号至多八个字。
+ *
+ * 这是**唯一一处**定义:创建页的输入框上限与提交时的裁剪都读它。
+ * 此前这个 8 只手写在创建页的两行里,而 store 的 `setName` 完全不裁 ——
+ * 契约活在页面上,谁都能从代码里调 store 把它绕过去。
+ *
+ * 为什么是 8:顶栏那行名字(`folio-head__name`)在 390 宽下大约放得下八个汉字,
+ * 再多就靠 `truncate` 截了。截断是必要的兜底(旧档里可能有更长的名字),
+ * 但**新输入**不该依赖它 —— 玩家敲进去的字被悄悄削掉,不会报错也不会提示。
+ */
+export const PLAYER_NAME_MAX = 8;
+
 export const usePlayerStore = defineStore(
   "player",
   () => {
@@ -460,9 +473,16 @@ export const usePlayerStore = defineStore(
       lifespanBonusYears.value += years;
     }
 
-    /** 改道号/名号(非建号流程专用;转世重拟名号用) */
+    /**
+     * 改道号/名号(非建号流程专用;转世重拟名号用)。
+     *
+     * 裁到 `PLAYER_NAME_MAX` —— 这是公开接口,不能指望每个调用方都记得先裁。
+     * 全空白时保留原名(不存空串):顶栏那行是每一页都看得见的,空名字等于一片空白。
+     */
     function setName(newName: string): void {
-      name.value = newName;
+      const trimmed = newName.trim();
+      if (!trimmed) return;
+      name.value = trimmed.slice(0, PLAYER_NAME_MAX);
     }
 
     function setTitle(id: string | null): void {

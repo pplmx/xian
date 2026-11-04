@@ -386,6 +386,7 @@ const CATEGORIES = [
       "petMoment",
       "multText",
       "daoFruitMargin",
+      "playerName",
     ],
   },
   {

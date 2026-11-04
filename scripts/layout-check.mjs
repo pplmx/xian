@@ -9388,6 +9388,98 @@ async function taskQualityLadder() {
  * 只核"出现过"会漏掉「谁的寿元都被标红」这种更坏的情形。
  */
 /**
+ * 名字的长度 —— 至多八个字,顶栏才放得下。
+ *
+ * 契约原先只写在创建页那两行(`maxlength="8"` 与 `slice(0, 8)`),而 store 的
+ * `setName` 完全不裁。这一轮把上限收进 store(PLAYER_NAME_MAX),两处读同一个数。
+ *
+ * 判据两件:
+ *   一 名字栏里放八个汉字时,顶栏那行**没有被截断**;
+ *   二 超长的名字(旧档里可能有)不许把版面撑破 —— 顶栏仍是一行高。
+ */
+async function taskPlayerName() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const readHead = async (page) =>
+      page.evaluate(() => {
+        const el = document.querySelector(".folio-head__name");
+        if (!el) return null;
+        return {
+          text: (el.textContent || "").trim(),
+          // 被截断时 scrollWidth 会大于 clientWidth
+          clipped: el.scrollWidth > el.clientWidth + 1,
+          h: Math.round(el.getBoundingClientRect().height),
+        };
+      });
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    // 一 八个汉字:不截断
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.player = { ...slices.player, name: "李长风踏雪寻梅" };
+      await seedSave(ctx, slices, "__nameMax");
+    }
+    await openRoute(page, "/cultivation", 900);
+    await clearOverlays(page);
+    const eight = await readHead(page);
+    if (!eight) {
+      failures.push("[390] 名字长度:顶栏读不到名字那一行");
+    } else {
+      if (eight.text !== "李长风踏雪寻梅") {
+        failures.push(`[390] 名字长度:八字的道号没原样显示 «${eight.text}»`);
+      }
+      if (eight.clipped) {
+        failures.push("[390] 名字长度:八个字在顶栏被截断了");
+      }
+    }
+
+    // 二 旧档里的超长名:允许截断,但不许撑破版面
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.player = { ...slices.player, name: "一二三四五六七八九十十一十二" };
+      await seedSave(ctx, slices, "__nameOverflow");
+    }
+    await page.reload({ waitUntil: "load" });
+    await page.waitForTimeout(900);
+    await openRoute(page, "/cultivation", 900);
+    await clearOverlays(page);
+    const long = await readHead(page);
+    if (!long) {
+      failures.push("[390] 名字长度:超长名时读不到顶栏");
+    } else if (long.h > 40) {
+      failures.push(`[390] 名字长度:超长名把顶栏撑到了 ${long.h}px 高`);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 名字长度页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n名字长度:八字 «${eight?.text}» 未截断 · 超长名仍是一行(${long?.h}px)`);
+    } else {
+      console.log(`\n名字长度[未通过]:${JSON.stringify({ eight, long })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 倍数的写法 —— 同一个 ×1.2,不许两处印成两个样子。
  *
  * 这一作里「倍数」到处都有:灵根成长、宗门契合、时间兑换、共鸣厚度。而它的写法
@@ -25881,6 +25973,7 @@ const TASKS = [
   ["转世的代价说全", taskReincarnationLosses],
   ["契兽记得住结缘的那一刻", taskPetMoment],
   ["同一份倍数两处印得一样", taskMultText],
+  ["道号八个字顶栏放得下", taskPlayerName],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],

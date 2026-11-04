@@ -41,7 +41,7 @@
           <div class="opening-create__name-row">
             <input
               v-model="name"
-              maxlength="8"
+              :maxlength="PLAYER_NAME_MAX"
               aria-label="道号"
               class="opening-create__name-input text-[16px]"
               placeholder="取一个道号"
@@ -175,7 +175,7 @@ import { learnGongfa } from "@/core/gongfaService";
 import { seedLoreIfNeeded } from "@/core/loreService";
 import { equipmentTemplate } from "@/data/equipment";
 import { useGameStore } from "@/stores/game";
-import { usePlayerStore } from "@/stores/player";
+import { PLAYER_NAME_MAX, usePlayerStore } from "@/stores/player";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useInventoryStore } from "@/stores/inventory";
 import { useUiStore } from "@/stores/ui";
@@ -239,7 +239,7 @@ function randomName(): void {
 function begin(): void {
   if (starting.value) return;
   starting.value = true;
-  const finalName = name.value.trim().slice(0, 8) || "无名散修";
+  const finalName = name.value.trim().slice(0, PLAYER_NAME_MAX) || "无名散修";
   player.initCharacter(finalName, profile.value);
   learnGongfa("m_taixuan");
   cultivation.equipMain("m_taixuan");
