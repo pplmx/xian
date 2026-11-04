@@ -8213,7 +8213,7 @@ async function taskInventoryAccounting() {
      *
      * 从前这里写死了「青云道袍」:内容一改名(这件后来按地界改成「风林道袍」),
      * 点击就静默落空,场景报的是「判据没跑到东西」,而真相只是名字变了。
-     * 装备卡带上 data-uid(见 EquipmentCard),这一处从此与命名无关。
+     * 行囊格带上 data-uid(见 inventory 的部位行),这一处从此与命名无关。
      */
     const BAG_UID = "b_1";
     await page.locator(`main button[data-uid="${BAG_UID}"]`).first().click({ timeout: 3000 });
@@ -9233,6 +9233,141 @@ async function taskRebirthFolio() {
 
     if (pageErrors.length)
       failures.push(`[390] 往生帖场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
+ * 顶三阶的视觉阶梯 —— 天、仙、神不该长得一样。
+ *
+ * `qualityTierStyle` 把九档折成三段晕染(这是对的:九档颜色线性排下来记不住),
+ * 但末端塌了:天 6 / 仙 7 / 神 8 全落在同一个 `{0.85, 0.13}` 上。
+ * 而这三档恰是玩家真正会摆在一起比的东西。
+ *
+ * 量的是器评帖——**唯一真正消费这份强度的地方**(它把强度写进 --equip-edge /
+ * --equip-wash 两个变量)。行囊的格匣走 ledger 模式(细线网格,刻意不铺色),
+ * 那里没有强度可言,故不在这里量。
+ *
+ * 判据三件:
+ *   一 三件的 --equip-edge 两两不同;
+ *   二 浓度按 天 < 仙 < 神 递增(第 6 位是 #RRGGBBAA 的 alpha);
+ *   三 天品仍是 0.85 —— 已经发到玩家眼里的那一档不许动。
+ */
+async function taskQualityLadder() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const mk = (uid, quality, tier) => ({
+      uid,
+      templateId: "h_miwu",
+      quality,
+      tier,
+      level: 0,
+      affixes: [{ id: "hp3", roll: 0.5 }],
+    });
+    const items = [
+      mk("ql_tian", "heaven", 16),
+      mk("ql_xian", "immortal", 20),
+      mk("ql_shen", "divine", 24),
+    ];
+    const slices = showcaseSlices("light");
+    slices.inventory = {
+      ...slices.inventory,
+      items,
+      equipped: {},
+      seenUids: items.map((it) => it.uid),
+      seenSeeded: true,
+    };
+    await seedSave(ctx, slices, "__qualityLadderFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    const rows = [];
+    for (const item of items) {
+      await openRoute(page, "/inventory", 900);
+      await clearOverlays(page);
+      checked += 1;
+      const opened = await page.evaluate((uid) => {
+        const btn = document.querySelector(`main button[data-uid="${uid}"]`);
+        if (!btn) return false;
+        btn.click();
+        return true;
+      }, item.uid);
+      if (!opened) {
+        failures.push(`[390] 品阶阶梯:行囊里找不到 ${item.uid}`);
+        continue;
+      }
+      await page.waitForTimeout(450);
+      const read = await page.evaluate(() => {
+        const dossier = document.querySelector("[data-equipment-dossier]");
+        if (!dossier) return null;
+        const style = getComputedStyle(dossier);
+        return {
+          edge: style.getPropertyValue("--equip-edge").trim(),
+          wash: style.getPropertyValue("--equip-wash").trim(),
+        };
+      });
+      if (!read) {
+        failures.push(`[390] 品阶阶梯:${item.uid} 的器评帖没打开`);
+      } else {
+        rows.push({ uid: item.uid, ...read });
+      }
+      for (let i = 0; i < 3 && (await page.locator(".modal-panel").count()) > 0; i += 1) {
+        await page.keyboard.press("Escape").catch(() => {});
+        await page.waitForTimeout(200);
+      }
+    }
+
+    if (rows.length < 3) {
+      failures.push(`[390] 品阶阶梯:只量到 ${rows.length}/3 件,判据没覆盖全`);
+    } else {
+      checked += 1;
+      if (new Set(rows.map((r) => r.edge)).size < 3) {
+        failures.push(
+          `[390] 品阶阶梯:顶三阶的边没拉开 —— ${rows.map((r) => `${r.uid}=${r.edge}`).join(" / ")}`,
+        );
+      }
+      if (new Set(rows.map((r) => r.wash)).size < 3) {
+        failures.push(`[390] 品阶阶梯:顶三阶的底没拉开`);
+      }
+      // #RRGGBBAA 的末两位就是浓度
+      const alphaOf = (hex) =>
+        /^#[0-9a-fA-F]{8}$/.test(hex) ? parseInt(hex.slice(7, 9), 16) : NaN;
+      const a = rows.map((r) => alphaOf(r.edge));
+      if (a.every((x) => Number.isFinite(x))) {
+        if (!(a[0] < a[1] && a[1] < a[2])) {
+          failures.push(
+            `[390] 品阶阶梯:浓度没有递增 —— 天 ${a[0]} / 仙 ${a[1]} / 神 ${a[2]}(按 0~255)`,
+          );
+        }
+        // 0.85 × 255 ≈ 217;允许 1 的舍入
+        if (Math.abs(a[0] - 217) > 2) {
+          failures.push(`[390] 品阶阶梯:天品浓度动了(该≈217,实见 ${a[0]})`);
+        }
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 品阶阶梯页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n品阶阶梯:${rows.map((r) => `${r.uid} 边 ${r.edge}`).join(" · ")}`);
+    } else {
+      console.log(`\n品阶阶梯[未通过]:${rows.map((r) => `${r.uid} 边 ${r.edge}`).join(" · ")}`);
+    }
   } finally {
     await ctx.close();
   }
@@ -24551,6 +24686,7 @@ const TASKS = [
   ["成色的话把数字译成判断", taskTemperGrade],
   ["差额一句话说得出差多少", taskShortfallText],
   ["神通的节拍写在说明里", taskArtifactBeat],
+  ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
   ["一键分解先勾后点", taskDecompose],

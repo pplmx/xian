@@ -372,6 +372,7 @@ const CATEGORIES = [
       "deadFallback",
       "artifactBeat",
       "recipeGate",
+      "qualityTier",
     ],
   },
   {
