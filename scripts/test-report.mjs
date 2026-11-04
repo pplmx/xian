@@ -399,6 +399,7 @@ const CATEGORIES = [
       "skyRoot",
       "lifeName",
       "lifeChronicle",
+      "artifactMoment",
     ],
   },
   {

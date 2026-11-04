@@ -135,6 +135,16 @@
             <div class="artifact-row__read">
               <p class="artifact-row__description">{{ row.def.desc }}</p>
               <dl class="artifact-row__ledger">
+                <!--
+                  它何时来的 —— 与灵兽谱「结缘的那一刻」、称号谱「得它的那一刻」同一行位置、
+                  同一份道历(见 ui/codexMoment)。法宝是四类里最稀缺的一类,此前却是
+                  唯一不报这一刻的:册子里分不出哪件是刚得的、哪件早已在册。
+                  旧档没有读数时说的是「早年收录」,不补造 —— 与其余三册同一条诚实口径。
+                -->
+                <div v-if="row.momentText" class="artifact-row__fact" data-artifact-moment>
+                  <dt>何时得来</dt>
+                  <dd class="tabular">{{ row.momentText }}</dd>
+                </div>
                 <div class="artifact-row__fact">
                   <dt>被动</dt>
                   <dd>{{ passiveLines(row.def.id, row.owned.level).join(" · ") }}</dd>
@@ -290,6 +300,8 @@ import {
   previousListLimit,
   previousListStep,
 } from "@/core/listRender";
+import { codexMomentText } from "@/ui/codexMoment";
+import { useQuestsStore } from "@/stores/quests";
 import { cnNumber, formatGN, formatPercent, formatSignedPercent } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import { STAT_NAMES } from "@/data/statNames";
@@ -298,6 +310,7 @@ import type { AnyStatKey } from "@/types";
 const inventory = useInventoryStore();
 const resources = useResourcesStore();
 const player = usePlayerStore();
+const quests = useQuestsStore();
 const ui = useUiStore();
 
 const artifactSlots = computed(
@@ -332,6 +345,15 @@ const artifactRows = computed(() =>
           placement.action === "replaced" && replacedDef
             ? { def: replacedDef, seat: (placement.removedIndex ?? 0) + 1 }
             : null,
+        /**
+         * 它何时来的 —— 与装备图鉴、丹药图鉴、灵兽谱、称号谱同一份道历
+         * (见 ui/codexMoment)。法宝是最稀缺的一类,却此前是四册里唯一不报这一刻的:
+         * 收进册里的一件,分不出是刚得的还是早就有的。
+         *
+         * 键名必须与 collect() 写的一致(`${category}:${id}`);旧档没有读数时
+         * codexMomentText 会照实说「早年收录」,不补造。
+         */
+        momentText: codexMomentText(quests.collectedMoment[`artifact:${a.defId}`]),
       };
     })
     .filter((row): row is NonNullable<typeof row> => row !== null)

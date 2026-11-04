@@ -6243,7 +6243,19 @@ async function taskInventoryTabRegisters() {
     hasTouch: true,
   });
   try {
-    await seedSave(ctx, showcaseSlices("light"), "__inventoryTabRegisters");
+    /*
+     * 这一任务量的是**四签收成同一册**,其中法宝那一签要量的是「空册也收成一页阵位长账」——
+     * 故这里显式把法宝清空。展品档现在带两件法宝(见 lib/saveFixture 的注释:
+     * 从前恒为空,法宝行卡的分支一个都没被量到),若照搬会给出一条有货的册,
+     * 空态那半边就再也没有判据量它了。要什么前提就摆什么前提,不靠夹具恰好为空。
+     */
+    const inventorySlices = showcaseSlices("light");
+    inventorySlices.inventory = {
+      ...inventorySlices.inventory,
+      artifacts: [],
+      equippedArtifacts: [],
+    };
+    await seedSave(ctx, inventorySlices, "__inventoryTabRegisters");
     const page = await ctx.newPage();
     const pageErrors = [];
     watchPageErrors(page, pageErrors);
@@ -25684,6 +25696,24 @@ async function taskArtifactListOverflow() {
       artifacts: artifactRows.map(({ defId, level }) => ({ defId, level })),
       equippedArtifacts: equippedIds,
     };
+    /*
+     * 全册法宝也要有「何时得来」的读数 —— 这一栏读的是 collect 写下的道历,
+     * 夹具若不给,行卡上那一行永远不出,判据就无从量起。
+     * 与 collections/collectedAt 一起种:quests 的 sanitize 按 collections 裁道历。
+     */
+    slices.quests = {
+      ...slices.quests,
+      collections: {
+        ...slices.quests.collections,
+        artifact: artifactRows.map((row) => row.defId),
+      },
+      collectedAt: Object.fromEntries(
+        artifactRows.map((row) => [`artifact:${row.defId}`, Date.now()]),
+      ),
+      collectedMoment: Object.fromEntries(
+        artifactRows.map((row, i) => [`artifact:${row.defId}`, { life: 3, age: 20 + i }]),
+      ),
+    };
     await seedSave(ctx, slices, "__artifactListFixture");
 
     const page = await ctx.newPage();
@@ -25766,6 +25796,38 @@ async function taskArtifactListOverflow() {
           `card-ink ${overview.cardInk} / 四边行 ${overview.boxedRows}`,
       );
     }
+    /*
+     * 「何时得来」—— 法宝册是四册里最后一册补上这一刻的。
+     *
+     * 装备图鉴、丹药图鉴、灵兽谱、称号谱早就用同一份道历(见 ui/codexMoment)报
+     * 「第 N 世 · M 岁」,法宝册此前是唯一不报的:册里分不出哪件是刚得的、
+     * 哪件早已在册。判据量两件事 —— 每张行卡都真出了这一行,且读得出那一对读数。
+     */
+    const moments = await page.evaluate(() => {
+      const rows = [...document.querySelectorAll("[data-artifact-row]")];
+      const holders = rows.map((row) => row.querySelector("[data-artifact-moment]"));
+      return {
+        rows: rows.length,
+        shown: holders.filter(Boolean).length,
+        texts: holders
+          .filter(Boolean)
+          .map((node) => (node.textContent || "").replace(/\s+/g, " ").trim()),
+      };
+    });
+    checked += 1;
+    if (moments.shown !== moments.rows) {
+      failures.push(
+        `[320] 法宝册的「何时得来」没有每行都有:${moments.shown}/${moments.rows} 件` +
+          ` —— 这一栏掉一颗,册里就分不出哪件是刚得的`,
+      );
+    }
+    checked += 1;
+    if (!moments.texts.every((text) => /第\s*\d+\s*世/.test(text) && /岁/.test(text))) {
+      failures.push(
+        `[320] 法宝的「何时得来」读不出道历:${JSON.stringify(moments.texts.slice(0, 3))}`,
+      );
+    }
+
     await settleVisuals(page);
     if (SHOTS) {
       await page.screenshot({ path: join(SHOTS_DIR, "320_artifact.png") });

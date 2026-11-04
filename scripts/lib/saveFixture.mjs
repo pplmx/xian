@@ -340,8 +340,16 @@ export function showcaseSlices(theme = "light") {
         p_dahuan: 2,
         p_jiuzhuan: 1,
       },
-      artifacts: [],
-      equippedArtifacts: [],
+      /*
+       * 法宝册要真有货:此前这里恒为空数组,于是法宝册在**所有**截图与排版门里
+       * 都是空态 —— 行卡上的被动、神通节拍、下一重、何时得来,一个分支都没被量到。
+       * 取一件神品(混沌钟)+ 一件凡品(墨玉葫芦),高档与低档的行卡都在场。
+       */
+      artifacts: [
+        { defId: "af_hundun", level: 3 },
+        { defId: "af_muyu", level: 1 },
+      ],
+      equippedArtifacts: ["af_hundun"],
     },
     endgame: { daoPath: "sword", daoSource: 1200, souls: [], equippedSouls: [] },
     // 长期道途早已推过前半程;资格名号也收了一批,免得首页还挂着开局的「主线 1/32」
@@ -362,7 +370,7 @@ export function showcaseSlices(theme = "light") {
         equip: ["w_zhuqing"],
         gongfa: ["m_taixuan"],
         pill: [],
-        artifact: [],
+        artifact: ["af_hundun", "af_muyu"],
         pet: [],
         event: [],
         talent: [],
@@ -370,6 +378,8 @@ export function showcaseSlices(theme = "light") {
       collectedAt: {
         "equip:w_zhuqing": now,
         "gongfa:m_taixuan": now,
+        "artifact:af_hundun": now,
+        "artifact:af_muyu": now,
       },
       /*
        * 三生录「行年」的三张道历表。空着也能渲染,但那一册就只剩一句「尚白」——
@@ -379,6 +389,9 @@ export function showcaseSlices(theme = "light") {
       collectedMoment: {
         "gongfa:m_taixuan": { life: 3, age: 21 },
         "equip:w_zhuqing": { life: 3, age: 37 },
+        // 法宝那一行要真读得出道历(旧档没有读数时才会退成「早年收录」)
+        "artifact:af_hundun": { life: 2, age: 140 },
+        "artifact:af_muyu": { life: 3, age: 8 },
       },
       titleMoments: {
         [SHOWCASE_TITLES[0] ?? "ti_churu"]: { life: 2, age: 96 },
