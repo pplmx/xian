@@ -745,3 +745,13 @@ body，`page.locator(...)` 的作用域在这儿不稳，页内在 `querySelecto
 **留给后人的**：`rng.pick` 的签名 `pick<T>(arr): T` 在撒谎——它可能返回 `undefined`，
 非空断言把越界藏起来了。默认随机源下安全，谁注入自定义随机源谁就会撞上。这条已写进
 `src/utils/random.ts` 的注释，并由 `core/rngBoundary.spec` 钉住。
+
+**第 33 轮把那条判据补上了**，路径终于走通。还差最后一块拼图：链上**没有**
+`data-reincarnation-begin` —— 那个落点属于第一程（`step === "death"`），而第一程的条件是
+`ui.deathDialog && !view`，点过兵解之后 `view` 就有了，第一程不再渲染。兵解直接把人送到
+第二程（`review`）。所以正确的链是 `[data-rebirth-enter] → [data-reincarnation-review-next]`，
+两跳到底。
+
+另记一条阈值经验：清单与「踏入轮回」的距离按**屏数**算，不拍像素数。1257px 在 844 高的屏上
+约一屏半，第三程本来就长（命题、天赋、灵根、道号都在这一屏），滚一屏半是正常的；
+要拦的是「被挤到好几屏之外」。故取三屏为界。

@@ -9387,6 +9387,151 @@ async function taskQualityLadder() {
  * 判据**两侧都量**:将尽的要变朱砂,充裕的不许变。
  * 只核"出现过"会漏掉「谁的寿元都被标红」这种更坏的情形。
  */
+/**
+ * 转世前那条警告 —— 不可逆的代价要说全。
+ *
+ * 第 29–31 三轮没能留下这条判据,原因有两个,都记在 docs/development.md:
+ *   ① 我自己调 clearOverlays 把刚打开的往生帖关掉了
+ *   ② 探针把 Math.random 钉成 1,让 rng.pick 越界,prepareReincarnation 一路炸
+ *      (第 32 轮结案,见 core/rngBoundary.spec)
+ *
+ * 这一轮两处都改掉:随机源钉 **0.5**(取中位,任何长度的数组都安全),
+ * 清残留只做一次且必须在点开之前。
+ *
+ * 路径:轮回 → 往生帖 → data-rebirth-enter → 三程第一程 → 第二程 → 第三程
+ * (「落印之前」在第三程)。
+ */
+async function taskReincarnationLosses() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    slices.player = { ...slices.player, age: 999999999, major: 3 };
+    await seedSave(ctx, slices, "__reincLossFixture");
+
+    const page = await ctx.newPage();
+    // 不用 1:Math.random 的值域是 [0,1),1 会让 rng.pick 越界(见 rngBoundary.spec)
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/character", 900);
+    // 只清**点击之前**的残留;点开之后一律不再清
+    await clearOverlays(page);
+
+    checked += 1;
+    const entered = await page.evaluate(() => {
+      const b = [...document.querySelectorAll("main button")].find((x) =>
+        /轮\s*回/.test(x.textContent || ""),
+      );
+      if (!b) return false;
+      b.click();
+      return true;
+    });
+    if (!entered) {
+      failures.push("[390] 转世代价:人物页找不到「轮回」入口");
+    }
+    await page.waitForTimeout(900);
+
+    /*
+     * 往生帖 → 三程,逐档推进。
+     *
+     * `data-reincarnation-begin` 属于**第一程**(`step === "death"`),而第一程的条件是
+     * `ui.deathDialog && !view` —— 点过兵解之后 `view` 就有了,第一程不再渲染。
+     * 故这条链上**没有 begin**:兵解直接把人送到第二程(`review`)。
+     * 首版把它列进来,于是每轮都在等一个永远不会出现的按钮。
+     */
+    const chain = ["[data-rebirth-enter]", "[data-reincarnation-review-next]"];
+    for (const sel of chain) {
+      if ((await page.locator("[data-reincarnation-final-warning]").count()) > 0) break;
+      const ok = await page
+        .locator(sel)
+        .first()
+        .waitFor({ state: "attached", timeout: 6000 })
+        .then(() => true)
+        .catch(() => false);
+      if (!ok) {
+        failures.push(`[390] 转世代价:${sel} 没有出现`);
+        break;
+      }
+      await page.evaluate((q) => {
+        const el = document.querySelector(q);
+        if (el) el.click();
+      }, sel);
+      await page.waitForTimeout(1000);
+    }
+
+    checked += 1;
+    const chapter = await page.evaluate(() => {
+      const el = document.querySelector("[data-reincarnation-final-warning]");
+      if (!el) return null;
+      const row = document.querySelector("[data-reincarnation-final-losses]");
+      return { losses: row ? (row.textContent || "").replace(/\s+/g, " ").trim() : null };
+    });
+    if (!chapter) {
+      failures.push("[390] 转世代价:末程找不到「落印之前」那一章");
+    } else if (!chapter.losses) {
+      failures.push("[390] 转世代价:那一章里没有代价清单");
+    } else {
+      for (const must of ["洞府", "弟子"]) {
+        if (!chapter.losses.includes(must)) {
+          failures.push(`[390] 转世代价:清单没点出${must} «${chapter.losses}»`);
+        }
+      }
+      for (const lie of ["随时可以", "可以撤回", "不会失去"]) {
+        if (chapter.losses.includes(lie)) {
+          failures.push(`[390] 转世代价:清单里出现了 «${lie}»`);
+        }
+      }
+      // 清单与确认钮不该隔开一整屏:隔着十屏才看见等于没说
+      checked += 1;
+      const gap = await page.evaluate(() => {
+        const loss = document.querySelector("[data-reincarnation-final-losses]");
+        const btn = document.querySelector("[data-reincarnation-confirm]");
+        if (!loss || !btn) return null;
+        return Math.round(
+          Math.abs(btn.getBoundingClientRect().top - loss.getBoundingClientRect().bottom),
+        );
+      });
+      /*
+       * 阈值按**屏数**算,不是拍一个像素数。1257px 在 844 高的屏上约一屏半 ——
+       * 第三程本来就长(命题、天赋、灵根、道号都在这一屏),滚一屏半是正常的;
+       * 要拦的是「清单被挤到好几屏之外、玩家根本不会滚到那里」。
+       * 故取三屏(约 2500px)为界。
+       */
+      const screenH = 844;
+      if (gap === null) {
+        failures.push("[390] 转世代价:量不到清单与确认钮之间的距离");
+      } else if (gap > screenH * 3) {
+        failures.push(
+          `[390] 转世代价:清单与「踏入轮回」隔了 ${gap}px(约 ${(gap / screenH).toFixed(1)} 屏)`,
+        );
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 转世代价页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n转世代价:«${chapter?.losses}»`);
+    } else {
+      console.log(
+        `\n转世代价[未通过]:${JSON.stringify({ chapter, errs: pageErrors.slice(0, 2) })}`,
+      );
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
 async function taskLifespanWarning() {
   const failures = [];
   let checked = 0;
@@ -25510,6 +25655,7 @@ const TASKS = [
   ["卷首眉批说得出下一步", taskNextStep],
   ["称号记得住得它的那一刻", taskTitleMoment],
   ["寿元将尽要说得出", taskLifespanWarning],
+  ["转世的代价说全", taskReincarnationLosses],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
