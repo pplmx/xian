@@ -349,7 +349,7 @@
           index="壹"
           title="来世根骨"
           hint="灵根所见即所得；道果只入永世底账，不再回到本世皮囊。"
-          :fact="`修行 ×${view.nextLinggen.growthMult}`"
+          :fact="`修行 ${multText(view.nextLinggen.growthMult)}`"
         />
 
         <div class="reincarnation-choice__grid">
@@ -591,6 +591,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import { multText } from "@/ui/multText";
 import { useRouter } from "vue-router";
 import { useUiStore } from "@/stores/ui";
 import { usePlayerStore } from "@/stores/player";

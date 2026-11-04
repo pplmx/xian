@@ -384,6 +384,7 @@ const CATEGORIES = [
       "reincarnationOpen",
       "rngBoundary",
       "petMoment",
+      "multText",
     ],
   },
   {

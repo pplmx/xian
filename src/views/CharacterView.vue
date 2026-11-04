@@ -105,9 +105,9 @@
               <div class="character-dossier__roots-head">
                 <span class="character-dossier__label">灵 根</span>
                 <span class="character-dossier__grade">{{ player.linggen?.gradeName }}</span>
-                <span class="character-dossier__growth tabular">
-                  ×{{ player.linggen?.growthMult.toFixed(2) }}
-                </span>
+                <span class="character-dossier__growth tabular" data-character-growth>{{
+                  multText(player.linggen?.growthMult ?? 1)
+                }}</span>
               </div>
               <div class="character-dossier__root-list">
                 <span
@@ -496,6 +496,7 @@ import { mentorVerdict } from "@/core/mentorService";
 import { buildIdentity } from "@/core/identityService";
 import { rootElements, tendencyLines } from "@/core/linggenAffinity";
 import { cnNumber, formatNum, formatPercent } from "@/utils/format";
+import { multText } from "@/ui/multText";
 import { add, gn, mulN, ratio } from "@/utils/gnum";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LedgerHeader from "@/components/common/LedgerHeader.vue";

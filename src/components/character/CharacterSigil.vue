@@ -69,8 +69,8 @@
       >
         {{ nameMark }}
       </text>
-      <text class="character-sigil__mult" x="70" y="83" text-anchor="middle">
-        ×{{ growthMult.toFixed(2) }}
+      <text class="character-sigil__mult" x="70" y="83" text-anchor="middle" data-sigil-growth>
+        {{ multText(growthMult) }}
       </text>
     </svg>
   </div>
@@ -81,6 +81,7 @@ import { computed } from "vue";
 import type { SpiritRoot } from "@/types";
 import { ELEMENTS } from "@/data/linggen";
 import { clampPercent } from "@/utils/unitRatio";
+import { multText } from "@/ui/multText";
 
 const props = defineProps<{
   name: string;

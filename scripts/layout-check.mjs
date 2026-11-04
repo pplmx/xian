@@ -9388,6 +9388,88 @@ async function taskQualityLadder() {
  * 只核"出现过"会漏掉「谁的寿元都被标红」这种更坏的情形。
  */
 /**
+ * 倍数的写法 —— 同一个 ×1.2,不许两处印成两个样子。
+ *
+ * 这一作里「倍数」到处都有:灵根成长、宗门契合、时间兑换、共鸣厚度。而它的写法
+ * 至少有三种,同一份值在人物页印「×1.20」、在别处印「×1.2」,看上去像两个精度。
+ *
+ * 判据量的是**同一份值在两个落点上印出来一样**:人物页的灵根倍率与
+ * 印心那枚 SVG 里的倍率。两处读的是同一个 `player.linggen.growthMult`,
+ * 故字面必须逐字相同。
+ */
+async function taskMultText() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    // 用一份倍率带尾零的灵根:3.10 这类最容易暴露两种写法
+    const slices = showcaseSlices("light");
+    slices.player = {
+      ...slices.player,
+      linggen: { ...(slices.player.linggen ?? {}), growthMult: 1.2 },
+    };
+    await seedSave(ctx, slices, "__multTextFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/character", 900);
+    await clearOverlays(page);
+
+    checked += 1;
+    const seen = await page.evaluate(() => {
+      const pick = (sel) => {
+        const el = document.querySelector(sel);
+        return el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null;
+      };
+      return { dossier: pick("[data-character-growth]"), sigil: pick("[data-sigil-growth]") };
+    });
+
+    if (!seen.dossier) {
+      failures.push("[390] 倍数写法:人物页量不到灵根倍率那一格");
+    }
+    if (!seen.sigil) {
+      failures.push("[390] 倍数写法:印心上量不到倍率那一格");
+    }
+    if (seen.dossier && seen.sigil && seen.dossier !== seen.sigil) {
+      failures.push(
+        `[390] 倍数写法:同一份值印成两个样子 —— 人物页 «${seen.dossier}» / 印心 «${seen.sigil}»`,
+      );
+    }
+    // 都该是「×1.2」而不是「×1.20」或「×1.2000000001」
+    for (const [where, text] of Object.entries(seen)) {
+      if (!text) continue;
+      if (!/^×\d+(\.\d{1,2})?$/.test(text)) {
+        failures.push(`[390] 倍数写法:${where} 的 «${text}» 不是统一写法(应为 ×1.2 这种)`);
+      }
+      if (/\.\d0$/.test(text)) {
+        failures.push(`[390] 倍数写法:${where} 的 «${text}» 还留着尾部零`);
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 倍数写法页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n倍数写法:人物页 «${seen.dossier}» · 印心 «${seen.sigil}»(逐字相同)`);
+    } else {
+      console.log(`\n倍数写法[未通过]:${JSON.stringify(seen)}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 契兽的道历 —— 何时与它结的缘。
  *
  * 第 27 轮给称号补「得它的那一刻」时,判据是「图鉴有、称号没有」。当时只修了称号那条;
@@ -25798,6 +25880,7 @@ const TASKS = [
   ["寿元将尽要说得出", taskLifespanWarning],
   ["转世的代价说全", taskReincarnationLosses],
   ["契兽记得住结缘的那一刻", taskPetMoment],
+  ["同一份倍数两处印得一样", taskMultText],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
