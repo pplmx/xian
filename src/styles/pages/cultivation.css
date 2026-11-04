@@ -97,13 +97,19 @@
     opacity: 0.1;
   }
 
+  /*
+   * 星的颜色与亮度随今日天时 —— 与首页那片**同一组变量**(见 ui/weatherSky)。
+   * 变量挂在页面根节点上,一处算、两处继承:同一天里抬头看到的该是同一片天。
+   * 两处都留缺省值,没有天时的场合仍是金色。
+   */
   .cultivation-masthead__star {
     position: absolute;
     width: 2px;
     height: 2px;
     border-radius: 50%;
-    background: rgb(var(--color-gold-ink-rgb) / 0.62);
-    box-shadow: 0 0 8px rgb(var(--color-gold-ink-rgb) / 0.42);
+    background: rgb(var(--sky-star-rgb, var(--color-gold-ink-rgb)) / var(--sky-brightness, 0.62));
+    box-shadow: 0 0 8px
+      rgb(var(--sky-star-rgb, var(--color-gold-ink-rgb)) / calc(var(--sky-brightness, 0.62) * 0.68));
     animation: cultivation-stage-star 5.2s ease-in-out infinite;
     animation-delay: calc(var(--star) * -0.31s);
   }

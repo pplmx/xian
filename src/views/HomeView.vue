@@ -1,5 +1,5 @@
 <template>
-  <div class="home-deck folio-page stagger-in" data-page-rhythm="command-deck">
+  <div class="home-deck folio-page stagger-in" data-page-rhythm="command-deck" :style="skyStyle">
     <!-- 读屏起手句:创角踏入仙途后补念「你已入此世…」,只在那一趟有值(CreateView 交接、读完即清) -->
     <p aria-live="polite" class="sr-only">{{ bootLine }}</p>
     <!--
@@ -23,7 +23,6 @@
         aria-hidden="true"
         data-home-sky
         :data-home-sky-tier="sky.tier"
-        :style="skyStyle"
       >
         <span v-for="i in sky.stars" :key="i" class="home-deck__star" :style="{ '--star': i }" />
         <svg viewBox="0 0 420 160" preserveAspectRatio="none">

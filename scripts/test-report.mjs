@@ -396,6 +396,7 @@ const CATEGORIES = [
       "dailySettle",
       "majorBreak",
       "weatherSky",
+      "skyRoot",
     ],
   },
   {

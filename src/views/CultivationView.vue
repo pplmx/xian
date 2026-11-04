@@ -2,6 +2,7 @@
   <div
     class="cultivation-page folio-page folio-page--stack stagger-in"
     data-page-rhythm="inner-view"
+    :style="skyStyle"
   >
     <FolioPageHeader
       class="cultivation-masthead"
@@ -431,6 +432,8 @@ import BreakthroughCard from "@/components/cultivation/BreakthroughCard.vue";
 import RetreatCard from "@/components/cultivation/RetreatCard.vue";
 import QiShortfallNote from "@/components/cultivation/QiShortfallNote.vue";
 import { cultivationChapter } from "@/ui/cultivationDesk";
+import { skyOfWeather } from "@/ui/weatherSky";
+import { todayWeather } from "@/core/weather";
 
 const player = usePlayerStore();
 const resources = useResourcesStore();
@@ -461,6 +464,13 @@ const now = useNow();
  * 破境增益/准备选项/突破钮/短差行)已随本体迁入 BreakthroughCard,不再两份。
  */
 const btInfo = computed(() => breakthroughInfo());
+/** 今日夜色 —— 与首页同一份(见 ui/weatherSky),挂在根上让那片星空继承 */
+const sky = computed(() => skyOfWeather(todayWeather().id));
+const skyStyle = computed(() => ({
+  "--sky-star-rgb": `var(${sky.value.tint})`,
+  "--sky-brightness": String(sky.value.brightness),
+}));
+
 const stage = computed(() =>
   cultivationStageOf({
     expFull: player.expFull,

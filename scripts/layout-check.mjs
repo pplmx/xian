@@ -9389,6 +9389,81 @@ async function taskQualityLadder() {
  * 只核"出现过"会漏掉「谁的寿元都被标红」这种更坏的情形。
  */
 /**
+ * 同一片天 —— 首页与修行页的星空该是同一份天时。
+ *
+ * 两页各有一片星空,星样式逐字相同。第 47 轮让首页那片跟着天时变,修行页没跟 ——
+ * 同一天里首页抬头是稀星,翻到修行页却是满天亮星。**两处说的是同一片天,却各说各的。**
+ *
+ * 判据量的是**两处算出来的颜色与不透明度逐字相同** —— 不必知道今天是哪种天时,
+ * 只要两页一致即可。这个比法在任何天时下都成立。
+ */
+async function taskSkySameAcrossPages() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    await seedSave(ctx, slices, "__skySame");
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    const readStar = async (sel) =>
+      page.evaluate((s) => {
+        const el = document.querySelector(s);
+        if (!el) return null;
+        const cs = getComputedStyle(el);
+        return { color: cs.backgroundColor, shadow: cs.boxShadow };
+      }, sel);
+
+    checked += 1;
+    await openRoute(page, "/", 900);
+    await clearOverlays(page);
+    const home = await readStar(".home-deck__star");
+
+    checked += 1;
+    await openRoute(page, "/cultivation", 900);
+    await clearOverlays(page);
+    const practice = await readStar(".cultivation-masthead__star");
+
+    if (!home) failures.push("[390] 同一片天:首页读不到星");
+    if (!practice) failures.push("[390] 同一片天:修行页读不到星");
+    if (home && practice) {
+      if (home.color !== practice.color) {
+        failures.push(
+          `[390] 同一片天:两页的星色不同 —— 首页 «${home.color}» / 修行 «${practice.color}»`,
+        );
+      }
+      if (home.shadow !== practice.shadow) {
+        failures.push(
+          `[390] 同一片天:两页的星晕不同 —— 首页 «${home.shadow}» / 修行 «${practice.shadow}»`,
+        );
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 同一片天页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n同一片天:两页的星同色同晕 «${home.color}»`);
+    } else {
+      console.log(`\n同一片天[未通过]:${JSON.stringify({ home, practice })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 夜色随天时 —— 首页那片星空跟着今日天时变。
  *
  * 首页顶上有「今日天时 · 凝霜 · 尚余 2:14」这一行,信息是对的。但那片星空**永远一个样**:
@@ -27054,6 +27129,7 @@ const TASKS = [
   ["日课全清盖一枚结契印", taskDailySeal],
   ["大境那一关另有分量", taskMajorBreak],
   ["首页夜色随天时", taskWeatherSky],
+  ["两页的星空是同一片天", taskSkySameAcrossPages],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
