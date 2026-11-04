@@ -373,6 +373,7 @@ const CATEGORIES = [
       "artifactBeat",
       "recipeGate",
       "qualityTier",
+      "assertionLiveness",
     ],
   },
   {

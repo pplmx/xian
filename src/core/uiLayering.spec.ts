@@ -36,6 +36,33 @@ function walkByExt(dir: string, ext: string, out: string[] = []): string[] {
   return out;
 }
 
+/**
+ * 按路径取一份源文件 —— **找不到就当场失败**。
+ *
+ * 为什么不用裸的 `FILES.find(...)`:
+ * 这个文件里二十多条断言写的是 `expect(x?.src).not.toContain("某段坏代码")`。
+ * 文件**存在**时它守着一件事;文件被改名或删掉之后,`x` 是 `undefined`,
+ * `x?.src` 也是 `undefined`,而 `expect(undefined).not.toContain(...)` **永远通过**。
+ * 于是「把坏代码删干净」与「把整个文件删掉」在判据眼里没有分别 ——
+ * 前者是它想守的,后者是它该报的。
+ *
+ * 上一轮就撞到过这条线的另一半:`EquipmentCard.vue` 早无 import,而两条断言
+ * 仍对着它写。那次是 `.toContain`(会红),换一条 `.not.toContain` 就会静默。
+ * 故把查找本身收成这一处:路径写错、文件改名、组件删掉,都在**取的那一刻**报红,
+ * 而不是在那条断言的运气上。
+ */
+function fileAt(path: string): { path: string; src: string } {
+  const hit = FILES.find((f) => f.path === path);
+  if (!hit) {
+    throw new Error(
+      `判据要看的文件不在了:「${path}」。` +
+        `要么路径写错了,要么这个组件/视图被改名或删除 —— ` +
+        `后者意味着这条断言已经失去对象,该改守新的那个或删掉它。`,
+    );
+  }
+  return hit;
+}
+
 const FILES = walkFiles(SRC, isVueFile)
   .filter(
     (f) => f.includes(`${join("src", "components")}`) || f.includes(`${join("src", "views")}`),
@@ -230,12 +257,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 契约:栈必须是共用模块、返回键要先问栈。栈内部的顺序与「不可关的层挡住返回」
      * 由 ui/modalStack.spec 钉。
      */
-    const modal = FILES.find((f) => f.path === BASE_MODAL);
+    const modal = fileAt(BASE_MODAL);
     expect(modal?.src, "BaseModal 要注册进共用弹窗栈").toContain("@/ui/modalStack");
     expect(modal?.src, "栈不许再退回 BaseModal 的私有数组").not.toContain("const activeModals");
     expect(modal?.src, "Esc 也走同一个出口").toContain("closeTopModal()");
 
-    const exit = FILES.find((f) => f.path === "components/common/ExitConfirmDialog.vue");
+    const exit = fileAt("components/common/ExitConfirmDialog.vue");
     const src = exit?.src ?? "";
     expect(src, "返回键要问共用栈").toContain("closeTopModal");
     const closeAt = src.indexOf("closeTopModal()");
@@ -258,10 +285,10 @@ describe("界面分层 · 浮层只有一个出处", () => {
 
   it("行囊格与连战场次按钮有稳定可访问名", () => {
     // 同样改守在用的那个:装备卡已无 import,行囊格是 InventoryCollectionRow
-    const card = FILES.find((f) => f.path === "components/inventory/InventoryCollectionRow.vue");
+    const card = fileAt("components/inventory/InventoryCollectionRow.vue");
     expect(card?.src, "行囊格要把截断名之外的佩/锁/共鸣写进 aria-label").toContain("aria-label");
     expect(card?.src).toContain("佩戴中");
-    const gauntlet = FILES.find((f) => f.path === "components/celestial/GauntletPanel.vue");
+    const gauntlet = fileAt("components/celestial/GauntletPanel.vue");
     expect(gauntlet?.src, "连战场次按钮不能只念一个数字").toContain("aria-label");
     expect(gauntlet?.src).toMatch(/第 \$\{i \+ 1\} 场/);
     // 终局战报的每一行既要文字也要伤害数字 —— 主历练 CombatPanel 早把 entry.dmg
@@ -274,15 +301,15 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("问卦剩余与顿悟/巡游窗口在暂停时不空耗墙上时钟", () => {
-    const codex = FILES.find((f) => f.path === "views/RealmCodexView.vue");
+    const codex = fileAt("views/RealmCodexView.vue");
     // 问卦倒计时走暂停感知时钟(gameNow):暂停时 activeDivination 因 gameNow() 冻结不散
     // (exploration.spec 钉死「暂停中卦力不得因墙上时钟散掉」),倒计时若用墙上钟会在暂停里
     // 一路归零、恢复后又跳回 —— 与结算同源,故与顿悟/巡游同纪律,不允许 useNow。
     expect(codex?.src).toContain("gameNow");
     expect(codex?.src).toMatch(/expiresAt - now\.value/);
-    const cave = FILES.find((f) => f.path === "components/dongfu/CaveEventModal.vue");
+    const cave = fileAt("components/dongfu/CaveEventModal.vue");
     expect(cave?.src).toContain("gameNow");
-    const enlighten = FILES.find((f) => f.path === "components/cultivation/EnlightenmentModal.vue");
+    const enlighten = fileAt("components/cultivation/EnlightenmentModal.vue");
     expect(enlighten?.src).toContain("gameNow");
   });
 
@@ -290,11 +317,11 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 两扇引擎弹窗共用一张机缘卷,临散前若还是金色,读长文案的玩家会白丢这份
     // 增益(巡游关掉当天就没了)。阈值单源(URGENT_COUNTDOWN_SEC),颜色就是「快选」;
     // 阈值或急色只许落在共享卷里,宿主双写、组件改回金身,下面这条都红。
-    const sheet = FILES.find((f) => f.path === "components/earlygame/OpportunityScroll.vue");
+    const sheet = fileAt("components/earlygame/OpportunityScroll.vue");
     expect(sheet?.src).toContain("props.remainingSec <= URGENT_COUNTDOWN_SEC");
     expect(sheet?.src.match(/'is-urgent': urgent/g)).toHaveLength(2);
-    const cave = FILES.find((f) => f.path === "components/dongfu/CaveEventModal.vue");
-    const enlighten = FILES.find((f) => f.path === "components/cultivation/EnlightenmentModal.vue");
+    const cave = fileAt("components/dongfu/CaveEventModal.vue");
+    const enlighten = fileAt("components/cultivation/EnlightenmentModal.vue");
     expect(cave?.src).not.toContain("URGENT_COUNTDOWN_SEC");
     expect(enlighten?.src).not.toContain("URGENT_COUNTDOWN_SEC");
     const constants = readFileSync(resolve(__dirname, "../data/constants.ts"), "utf-8");
@@ -302,7 +329,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("历练页复聚/已守跟 useNow 走,倒计时不会定格", () => {
-    const adv = FILES.find((f) => f.path === "views/AdventureView.vue");
+    const adv = fileAt("views/AdventureView.vue");
     expect(adv?.src).toContain("useNow");
     expect(adv?.src).toMatch(/hoursUntilRevive\([^)]*now\.value/);
   });
@@ -311,10 +338,10 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 两处「新」角标(背包/图鉴)共享同一清账纪律:挂载清会把首帧刚渲染的「新」
     // 立刻抹掉;图鉴默认页签是成就,只看成就就离开也不该推进界(评审 MEDIUM-1)。
     // 违反的两种回退(无条件挂载清 / 图鉴碑掉 sawCollectionTab 门)下面都红。
-    const bag = FILES.find((f) => f.path === "views/InventoryView.vue");
+    const bag = fileAt("views/InventoryView.vue");
     expect(bag?.src).toMatch(/onUnmounted\(\(\).*markInventorySeen\(\)/);
     expect(bag?.src).not.toMatch(/onMounted\(\(\).*markInventorySeen/);
-    const codex = FILES.find((f) => f.path === "views/CollectionView.vue");
+    const codex = fileAt("views/CollectionView.vue");
     expect(codex?.src).toContain("sawCollectionTab");
     expect(codex?.src).toMatch(/if \(sawCollectionTab\.value\) quests\.markCollectionSeen\(\)/);
     expect(codex?.src).not.toMatch(/onMounted\(\(\).*markCollectionSeen/);
@@ -327,7 +354,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 底部导航的背包点:任何页都看得见「有新货」,挂在 inventory.newItemCount 上(删则全局退回看不见)。
     // 量价分档:恰好一件 = 原来的小点(轻晃不吵),≥2 件才升级成计数徽标「N」、9+ 封顶 ——
     // 别退回「只有有没有量」的老点、也别把「1」也做成满格徽标(越吵越没人看)。
-    const nav = FILES.find((f) => f.path === "components/common/BottomNavigation.vue");
+    const nav = fileAt("components/common/BottomNavigation.vue");
     expect(nav?.src).toContain("bagNewCount");
     expect(nav?.src).toContain("tab.name === 'inventory'");
     expect(nav?.src).toContain("bagNewCount >= 2");
@@ -361,7 +388,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 这一条原先守的是 `components/equipment/EquipmentCard.vue` —— 而那个组件全仓
     // 已无任何 import(行囊早已换成 InventoryCollectionRow)。断言一直是绿的,
     // 玩家看到的却是静态的新件:判据守住了字面,没守住那件事。故改守**在用的那个**。
-    const card = FILES.find((f) => f.path === "components/inventory/InventoryCollectionRow.vue");
+    const card = fileAt("components/inventory/InventoryCollectionRow.vue");
     expect(card?.src, "行囊格的「新得」徽章要有入场动画(animate-new-pop)").toContain(
       "animate-new-pop",
     );
@@ -382,7 +409,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 玩家看到徽标却找不到是哪几件。卷首要能报新得数、切到只看新得,藏品组内
      * 先新后旧;一键换装也要报出真正会动的槽,不能只写一句「换最强」。
      */
-    const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
+    const inv = fileAt("views/InventoryView.vue");
     expect(inv?.src, "藏品排序要走先新后旧的唯一函数").toContain("sortInventoryForAttention(");
     expect(inv?.src, "每行把 isNew 一并交给排序与卡片").toMatch(
       /inventory\.items\.map\(\(item\) => \(\{[\s\S]{0,180}?isNew:\s*inventory\.isNewItem\(item\.uid\)/,
@@ -422,8 +449,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 死类名全仓唯一出处就在这里 —— 改回真类(jade / gold-ink / cinnabar),改半截就红。
     // 拆分后 rateClass 函数体在 composables/useBrewing.ts(.ts 不入 FILES,直读源码),
     // 死类名排查要盖住页面与新弹窗两份模板。
-    const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
-    const dialog = FILES.find((f) => f.path === "components/inventory/BrewingDialog.vue");
+    const inv = fileAt("views/InventoryView.vue");
+    const dialog = fileAt("components/inventory/BrewingDialog.vue");
     const brew = readFileSync(join(SRC, "composables/useBrewing.ts"), "utf-8");
     expect(inv?.src).not.toMatch(/text-(?:jade|crimson)-ink/);
     expect(dialog?.src).not.toMatch(/text-(?:jade|crimson)-ink/);
@@ -436,7 +463,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // SoulsView 曾为「滤掉 0 值词条」自造一份本地 modsText,与库分叉成两套口径
     // (器魂低品键会带 0 → 库版印「+0%」、本地版不印)。单源 = 过滤收进库(见
     // statNames.spec),界面只 import。谁再在视图里起手 function modsText(,下面红。
-    const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
+    const souls = fileAt("views/SoulsView.vue");
     expect(souls?.src).not.toMatch(/function modsText\(/);
     expect(souls?.src).toMatch(
       /import[\s\S]{0,300}?modsText[\s\S]{0,80}?from ['"]@\/data\/statNames/,
@@ -447,7 +474,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 这是全库最后一个还手写"尚余 {m} 分 {sec} 秒"的倒计时:秒级心跳下位数不定
     // (5分3秒→5分30秒→9秒),行内每秒都跳。其余倒计时(状态胶囊/突破准备/闭关)
     // 早就统一进 formatCountdown + .countdown-slot 定宽槽,这里不许再退回去。
-    const codex = FILES.find((f) => f.path === "views/RealmCodexView.vue");
+    const codex = fileAt("views/RealmCodexView.vue");
     expect(codex?.src).toContain("formatCountdown(sec)");
     expect(codex?.src).toContain("countdown-slot");
     expect(codex?.src).not.toMatch(/尚余 \$\{m\} 分/);
@@ -474,7 +501,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
         const hosts = TIMER_HOSTS[f.path];
         if (!hosts) return [`${f.path}: 自身没有秒级心跳`];
         const missing = hosts.filter((path) => {
-          const host = FILES.find((candidate) => candidate.path === path);
+          const host = fileAt(path);
           return !host || !HEARTBEAT.test(host.src);
         });
         return missing.length ? [`${f.path}: 宿主缺心跳 ${missing.join(", ")}`] : [];
@@ -488,7 +515,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // totalPlaySec(5 秒一涨),于是整枚胶囊 5 秒跳一次;同时「加成 +8% 就绪」与
     // 成功率瓦片也会晚 5 秒才翻 —— 两处都是同一枚坏钟。
     // 判据:卡片必须用 useGameNow,且 btInfo 的 computed 里读它(接上心跳,不是只 import)。
-    const card = FILES.find((f) => f.path === "components/cultivation/BreakthroughCard.vue");
+    const card = fileAt("components/cultivation/BreakthroughCard.vue");
     expect(card?.src).toContain("useGameNow");
     expect(card?.src).toMatch(/const btInfo = computed\(\(\) => \{\s*void gameNowSec\.value;/);
   });
@@ -497,7 +524,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 契签不下只有两个理由:本世已签过(整组灰)/道果不足。别退回只有灰没有话:
     // 已签时应说「此生已签」,缺果子时按差数报「尚差 N 道果」(聚气丹/建筑同款)。
     // 拆分后轮回/逆旅契两浮层归 RebirthDialog,判据随本体改指子面板
-    const charv = FILES.find((f) => f.path === "components/character/RebirthDialog.vue");
+    const charv = fileAt("components/character/RebirthDialog.vue");
     expect(charv?.src).toContain("此生已签");
     expect(charv?.src).toMatch(/尚差 \$\{t\.cost - player\.reincarnation\.daoFruit\} 道果/);
     expect(charv?.src).not.toMatch(/t\.cost \} 道果/);
@@ -507,7 +534,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 列表按主修/辅修/秘术分签。一门皆空时不能只剩滚动容器;
     // 一部都没有时仍把参悟递到手边,有别的门时只说这一门还空。
     // 拆分后功法区归 GongfaSection,判据随本体改指子面板
-    const cult = FILES.find((f) => f.path === "components/cultivation/GongfaSection.vue");
+    const cult = fileAt("components/cultivation/GongfaSection.vue");
     expect(cult?.src).toContain('role="tablist"');
     expect(cult?.src).toContain("尚无一部习得之法");
     expect(cult?.src).toContain("此门尚无习得");
@@ -519,7 +546,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 文字不叠透明度。选中=6% 朱砂淡底 + 墨字,未选中=淡墨不铺底。
     // 若有人把分类签改回 .btn-seal 实心印面,下面的守卫红 —— 不许悄悄退化。
     // 拆分后功法区归 GongfaSection,判据随本体改指子面板
-    const cult = FILES.find((f) => f.path === "components/cultivation/GongfaSection.vue");
+    const cult = fileAt("components/cultivation/GongfaSection.vue");
     // 选中签:6% 朱砂淡底 + 墨字(不是奶油字印面)
     expect(cult?.src).toContain("bg-cinnabar/6 text-ink");
     // 未选中:淡墨,不铺 6% 底
@@ -531,7 +558,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("已习功法按门分批回看 —— 不得再把整门书册一次铺进 DOM", () => {
     // 主修终局 28 部,外层的 max-h-72 只裁视觉不裁 DOM。门内清单与换签后的窗口
     // 都要走 core/listRender;续开后的焦点按新露出的第一项落位,不能还停在旧批。
-    const cult = FILES.find((f) => f.path === "components/cultivation/GongfaSection.vue");
+    const cult = fileAt("components/cultivation/GongfaSection.vue");
     expect(cult?.src).toContain("const GONGFA_RENDER_BATCH = 12");
     expect(cult?.src).toContain("const GONGFA_RENDER_WINDOW = GONGFA_RENDER_BATCH * 2");
     expect(cult?.src).toContain('v-for="def in gongfaPage.visible"');
@@ -548,7 +575,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 沉到底不报差,与法宝炼化的「尚差」句式不一致。两者一起钉死:
     // 十株有其自己的 affordability 判定与短差,买10 不许再退回单株价放行。
     // 灵草坊弹窗拆出后判据随本体走(components/inventory/HerbShopDialog.vue)。
-    const shop = FILES.find((f) => f.path === "components/inventory/HerbShopDialog.vue");
+    const shop = fileAt("components/inventory/HerbShopDialog.vue");
     expect(shop?.src).toContain("affordable10");
     expect(shop?.src).toContain(':disabled="!row.affordable10"');
     expect(shop?.src).toContain("formatGN(row.short)");
@@ -560,7 +587,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 五品各包一张 bg-paper-deep 纸卡时,195 CSS px 下印章、正文与两枚动作仍横向
     // 硬排:品名被挤成逐字竖排,买十还越出面板右界。长账去掉行内卡壳;极窄档让
     // 品阶印与品名独占一层,读数续排,两枚动作落到独立动作区等宽并排。
-    const shop = FILES.find((f) => f.path === "components/inventory/HerbShopDialog.vue");
+    const shop = fileAt("components/inventory/HerbShopDialog.vue");
     expect(shop?.src, "灵草坊要收成一册连续长账").toContain("data-herb-shop-ledger");
     expect(shop?.src, "灵草账只留上下账线与行间线").toMatch(
       /class="[^"]*divide-y[^"]*border-y[^"]*"[\s\S]{0,120}?data-herb-shop-ledger/,
@@ -592,8 +619,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 这一品的方子。改逐品列表(与灵草坊 held 同源,走 herbOf,不拼第二套分档)。
     // 开炉弹窗拆出后炼丹头在 BrewingDialog;灵草坊拆出后账在 composables/useHerbShop.ts
     // (.ts 不入 FILES,直读源码) —— 各读各的。
-    const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
-    const brew = FILES.find((f) => f.path === "components/inventory/BrewingDialog.vue");
+    const inv = fileAt("views/InventoryView.vue");
+    const brew = fileAt("components/inventory/BrewingDialog.vue");
     const shop = readFileSync(join(SRC, "composables/useHerbShop.ts"), "utf-8");
     expect(brew?.src, "炼丹头必须逐品列出(不得再回资源的合计)").toMatch(
       /v-for="g in HERB_GRADES"[\s\S]{0,120}?herbGradeHeld\(g\)/,
@@ -615,7 +642,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 点开详情才对。行级差值必须 vs 当前佩戴件(equipPowerComparison,与详情同一份换装账),
     // 佩戴中的底行自己不报差(它即基线)、空槽不报差(无对比对象)。
     // 弹窗拆出后判据随本体走(components/inventory/SlotCandidatesDialog.vue)。
-    const picker = FILES.find((f) => f.path === "components/inventory/SlotCandidatesDialog.vue");
+    const picker = fileAt("components/inventory/SlotCandidatesDialog.vue");
     expect(picker?.src).toContain("equipPowerComparison(row.item, occupant)");
     expect(picker?.src).toContain("战 +${formatGN(Math.round(delta))}");
     expect(picker?.src).toContain("row.delta !== null");
@@ -626,7 +653,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 大行囊按部位摊开后仍可能把几十条候选一次塞进弹窗;换装后佩戴件又会按排序
     // 跳到顶部,若窗口还停在后面,玩家刚点的选项会从 DOM 里消失并带走焦点。
     // 候选表因此与背包/图鉴/名号共用同一套分批、滑窗、回翻与聚焦规则。
-    const picker = FILES.find((f) => f.path === "components/inventory/SlotCandidatesDialog.vue");
+    const picker = fileAt("components/inventory/SlotCandidatesDialog.vue");
     expect(picker?.src, "候选表要复用长列表窗口").toMatch(
       /import\s*\{[\s\S]*?listWindow[\s\S]*?\}\s*from\s*"@\/core\/listRender"/,
     );
@@ -657,7 +684,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(picker?.src, "换装后要回首批并把焦点送到新佩戴件").toMatch(
       /candidateLimit\.value\s*=\s*SLOT_CANDIDATE_RENDER_BATCH[\s\S]{0,160}focusCandidateById\(uid\)/,
     );
-    const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
+    const inv = fileAt("views/InventoryView.vue");
     expect(inv?.src, "槽位入口要有稳定落点,运行时门才能真点开候选表").toContain(
       ':data-equip-slot="row.slot"',
     );
@@ -674,7 +701,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 的族规。钉死:付不起真禁用,禁用态**压色不压字**(底色与边框让位,字一个不降),
     // 行内代价换口「尚差 N 石/道源」。
     // 「压色不压字」落地后置灰不再靠元素级透明度:那会把「尚差 N」这行字一起压到读不出。
-    const sr = FILES.find((f) => f.path === "components/adventure/SecretRealmCard.vue");
+    const sr = fileAt("components/adventure/SecretRealmCard.vue");
     expect(sr?.src).toContain(':disabled="!canPay(r)"');
     expect(sr?.src, "禁用态压色不压字:改挂淡边框").toContain("'border border-ink/10': !canPay(r)");
     expect(sr?.src, "付不起不许再靠 opacity 假装灰").not.toMatch(/opacity-\d+['"]?: !canPay/);
@@ -695,7 +722,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(offenders, `手写百分比残留:${offenders.join(",")}`).toEqual([
       "components/cultivation/RetreatCard.vue",
     ]);
-    const retreatCard = FILES.find((f) => f.path === "components/cultivation/RetreatCard.vue");
+    const retreatCard = fileAt("components/cultivation/RetreatCard.vue");
     expect(retreatCard?.src).toMatch(/const retreatPct = Math\.round\(/);
   });
 
@@ -703,7 +730,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 出手与受击是同一因果环的两半:浮伤与震颤都挂在受击方,「谁在出手」此前完全静态。
     // 这半边(攻击方 strike)朝敌阵横踏一步(方向见 style.css 的 --strike-y),与受击方
     // 震颤成对 —— 删绑、把横踏挪到受击方、或卸掉帧定义,下面都红。
-    const fight = FILES.find((f) => f.path === "components/adventure/CombatPanel.vue");
+    const fight = fileAt("components/adventure/CombatPanel.vue");
     expect(fight?.src, "攻击方要有横踏绑点(strikeCls),不许只有受击方震颤").toContain("strikeCls.e");
     expect(fight?.src).toContain("strikeCls.p");
     expect(fight?.src, "横踏必须挂在出手方(entry.side)上 —— 挪到受击方就重复震颤了").toMatch(
@@ -720,7 +747,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("换敌有入场 —— 新敌上台带一声轻起,不许退回硬切", () => {
     // 每场战罢敌角整个换人,却没有任何「换了」的信号;按 battle.at 键控重挂,
     // 让入场动画在换敌那一瞬重放(enemy-enter 轻版:淡入+上浮)。删键控或删帧,下面红。
-    const fight = FILES.find((f) => f.path === "components/adventure/CombatPanel.vue");
+    const fight = fileAt("components/adventure/CombatPanel.vue");
     expect(fight?.src).toContain(':key="battle?.at"');
     expect(fight?.src).toContain("enemy-enter");
     const css = readStyleCss();
@@ -735,7 +762,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 三件套钉死:图标挂朱砂呼吸光环(animate-glow-pulse)、名字转朱砂(boss 名
     // 不再与小怪同色)、登场宣告(boss-reveal 居中淡入定住再散,随 battle.at
     // 键控重挂每场重放) —— 拆掉其中任何一件,下面红。
-    const fight = FILES.find((f) => f.path === "components/adventure/CombatPanel.vue");
+    const fight = fileAt("components/adventure/CombatPanel.vue");
     expect(fight?.src, "首领图标要有朱砂光环(animate-glow-pulse),与小怪图标分开").toMatch(
       /battle\?\.isBoss[\s\S]{0,120}animate-glow-pulse/,
     );
@@ -760,7 +787,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
       ':data-world="player.world.id"',
     );
     expect(appSrc, "越界宣告组件要挂在壳上").toContain("<WorldTransitionVeil");
-    const home = FILES.find((f) => f.path === "views/HomeView.vue");
+    const home = fileAt("views/HomeView.vue");
     expect(home?.src, "远山要读世界的山色变量(--world-mountain)").toContain(
       "var(--world-mountain)",
     );
@@ -781,9 +808,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(css).toMatch(/data-world="god"\][\s\S]{0,180}--world-bar/);
     expect(css).toMatch(/data-world="chaos"\][\s\S]{0,180}--world-bar/);
     // 世界身份落地到最常看的两处:修炼页「此刻的界」+ 界域志的「色卡地图」
-    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    const cult = fileAt("views/CultivationView.vue");
     expect(cult?.src, "修炼页世界名要读世界信标色(world-label)").toContain("world-label");
-    const codex = FILES.find((f) => f.path === "views/RealmCodexView.vue");
+    const codex = fileAt("views/RealmCodexView.vue");
     expect(codex?.src, "界域志每一个世界段要带自己的 data-world(色卡靠它分界)").toContain(
       ':data-world="row.world.id"',
     );
@@ -800,7 +827,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("界域志先报此刻,再把四界收成可展开的卷目", () => {
     // 从前界域册从炼气起排,已经飞升的玩家要滚过整个人间界才看见自己。
     // 现在卷首先报当前境与前后境,四界默认只开当前卷;典籍互链跳回来时也要先开目标卷。
-    const codex = FILES.find((f) => f.path === "views/RealmCodexView.vue");
+    const codex = fileAt("views/RealmCodexView.vue");
     expect(codex?.src, "卷首要标出当前境,运行时判据靠它找首屏").toContain("data-realm-current");
     expect(codex?.src, "当前境与前后境要从 realmCodex 纯函数派生").toContain(
       "realmCodexCurrent(player.major)",
@@ -824,7 +851,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("今日日课全毕有关闭感 —— 「今天做完了」不许再哑掉", () => {
     // 三条日课都结清后只有各自一个「已成」,没有「今天没漏事」的一句话 ——
     // 放置玩家的"可以放手挂机"该有一声。判据与发赏同源(每行 done),不许另起一套。
-    const home = FILES.find((f) => f.path === "views/HomeView.vue");
+    const home = fileAt("views/HomeView.vue");
     expect(home?.src).toContain("dailyAllDone");
     expect(home?.src).toContain("今日已毕");
     expect(home?.src, "判据必须读日课行的 done(= 已结算),不自己数进度").toMatch(
@@ -836,7 +863,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 分目进度只有「12/20」的淡暗计数,集齐也没有任何表示 —— 收集的圆满
     // 是该册自己说的话。判据 = 全体条目 stage>=1(空目不算),全收后「去哪儿找」
     // 让位给石绿「尽收」行。
-    const col = FILES.find((f) => f.path === "views/CollectionView.vue");
+    const col = fileAt("views/CollectionView.vue");
     expect(col?.src).toContain("catComplete");
     expect(col?.src).toContain("尽收");
     expect(col?.src, "判据必须读 entry.stage(收录/认知),不另起一套").toMatch(
@@ -848,7 +875,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 66 个「???」既不给条件也不给距离,玩家无法据此安排下一步。
     // 判据:进度由 achievementProgress 派生;卷首先列最近三枚;名称与条件直接露;
     // 每个方向是带 aria-expanded / aria-controls 的真按钮,默认只开最近的一组。
-    const col = FILES.find((f) => f.path === "views/CollectionView.vue");
+    const col = fileAt("views/CollectionView.vue");
     expect(col?.src).toContain("achievementProgressRows");
     expect(col?.src).toContain("nearestAchievementRows(achievementRows.value, 3)");
     expect(col?.src).toContain("data-achievement-hero");
@@ -868,8 +895,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("藏珍阁先报新得或将满，九柜只抽开一屉并给读屏稳定落点", () => {
     // 九柜同铺时,首屏不该变成一面「???」墙。柜面自己报数、新得与缺口;
     // 点一格只抽开对应柜屉,而不是把九册全部展开成九条通用账行。
-    const col = FILES.find((f) => f.path === "views/CollectionView.vue");
-    const cabinet = FILES.find((f) => f.path === "components/common/CollectionCabinet.vue");
+    const col = fileAt("views/CollectionView.vue");
+    const cabinet = fileAt("components/common/CollectionCabinet.vue");
     expect(col?.src).toContain("collectionProgressOverview");
     expect(col?.src).toContain("data-collection-hero");
     expect(cabinet?.src).toContain("data-collection-cabinet");
@@ -902,8 +929,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 人物页入口此前按 quests.collections 的 id 另数一遍,藏珍页按 CodexEntry.stage 汇总。
     // 两边现在碰巧一样,不代表以后一样:装备「已入目」、灵材「已辨识」、悟道「已见」
     // 都是 stage 语义,不能退回到只数收藏 id。九册装配与汇总统一收进 codex/core。
-    const char = FILES.find((f) => f.path === "views/CharacterView.vue");
-    const col = FILES.find((f) => f.path === "views/CollectionView.vue");
+    const char = fileAt("views/CharacterView.vue");
+    const col = fileAt("views/CollectionView.vue");
     const codex = readFileSync(resolve(__dirname, "../ui/codex.ts"), "utf8");
     expect(codex, "九册装配要住在图鉴模块").toContain("export function collectionCodex");
     expect(char?.src, "人物页读同一份九册").toContain("collectionCodex()");
@@ -924,7 +951,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * UNKNOWN_CAP。继续前翻会滑掉最早一批，并留「前一批」回看，
      * 所以全清单仍可达而 DOM 有硬顶。
      */
-    const col = FILES.find((f) => f.path === "views/CollectionView.vue");
+    const col = fileAt("views/CollectionView.vue");
     expect(col?.src).toMatch(/listWindow\(\s*known,/);
     expect(col?.src).toMatch(/nextListLimit\([\s\S]{0,100}COLLECTION_RENDER_BATCH[\s\S]{0,40}\)/);
     expect(col?.src).toContain("COLLECTION_RENDER_WINDOW");
@@ -970,7 +997,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 键盘用户点完仍停在旧内容；读屏也听不到刚展开的那一批。统一让核心函数算
      * 新露出的第一件在当前窗口里的索引，三个长列表都接同一把尺。
      */
-    const market = FILES.find((f) => f.path === "views/MarketView.vue");
+    const market = fileAt("views/MarketView.vue");
     expect(market?.src, "寄卖续开焦点要落到新批").toMatch(
       /const shownBefore = consignPage\.value\.shown[\s\S]{0,320}firstNewVisibleIndex\(\s*shownBefore,\s*shownAfter,\s*MARKET_RENDER_WINDOW\s*\)/,
     );
@@ -978,12 +1005,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
       /const shownBefore = equipCandidatePage\.value\.shown[\s\S]{0,360}firstNewVisibleIndex\(\s*shownBefore,\s*shownAfter,\s*MARKET_RENDER_WINDOW\s*\)/,
     );
 
-    const col = FILES.find((f) => f.path === "views/CollectionView.vue");
+    const col = fileAt("views/CollectionView.vue");
     expect(col?.src, "图鉴续开焦点要落到新批").toMatch(
       /const shownBefore = cat\.knownShown[\s\S]{0,420}firstNewVisibleIndex\(\s*shownBefore,\s*shownAfter,\s*COLLECTION_RENDER_WINDOW\s*\)/,
     );
 
-    const inventory = FILES.find((f) => f.path === "views/InventoryView.vue");
+    const inventory = fileAt("views/InventoryView.vue");
     expect(inventory?.src, "背包也接同一把焦点尺").toMatch(
       /const shownBefore = itemPage\.value\.shown[\s\S]{0,320}firstNewVisibleIndex\(\s*shownBefore,\s*shownAfter,\s*INVENTORY_RENDER_WINDOW\s*\)/,
     );
@@ -994,12 +1021,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 300→288 时可见窗只换回 12 件,旧标签却按 min(32, start) 报「前一批 32 件」。
      * 回翻标签与按钮动作必须共用同一个步长真值，运行时门也要核对实际新露件数。
      */
-    const inventory = FILES.find((f) => f.path === "views/InventoryView.vue");
+    const inventory = fileAt("views/InventoryView.vue");
     expect(inventory?.src, "背包回翻标签要读真实步长").toMatch(
       /previousItemsLabel[\s\S]{0,500}previousListStep\(\s*itemPage\.value\.shown,\s*visibleItems\.value\.length,\s*INVENTORY_RENDER_BATCH,?\s*\)/,
     );
 
-    const market = FILES.find((f) => f.path === "views/MarketView.vue");
+    const market = fileAt("views/MarketView.vue");
     expect(market?.src, "贡器回翻标签要读真实步长").toMatch(
       /equipCandidatePrevLabel[\s\S]{0,500}previousListStep\(\s*equipCandidatePage\.value\.shown,\s*equipCandidates\.value\.length,\s*INVENTORY_RENDER_BATCH,?\s*\)/,
     );
@@ -1007,7 +1034,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
       /consignPrevLabel[\s\S]{0,500}previousListStep\(\s*consignPage\.value\.shown,\s*inventory\.bagItems\.length,\s*INVENTORY_RENDER_BATCH,?\s*\)/,
     );
 
-    const col = FILES.find((f) => f.path === "views/CollectionView.vue");
+    const col = fileAt("views/CollectionView.vue");
     expect(col?.src, "图鉴回翻标签要读真实步长").toMatch(
       /previousKnownLabel\(cat: \{ knownShown: number; knownTotal: number \}\)[\s\S]{0,300}previousListStep\(\s*cat\.knownShown,\s*cat\.knownTotal,\s*COLLECTION_RENDER_BATCH,?\s*\)/,
     );
@@ -1026,7 +1053,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 名号页此前只显「14/30 · 佩一枚」的计数,三十顶全齐也没有任何表示 ——
     // 收集的终点(境界阶梯 + 成就赏走完)该有一声,与图鉴「尽收」同族。
     // 判据必须读同一个 ownedCount(与标题计数同源),不许另起一套数法。
-    const tit = FILES.find((f) => f.path === "views/TitlesView.vue");
+    const tit = fileAt("views/TitlesView.vue");
     expect(tit?.src).toContain("titlesAllOwned");
     expect(tit?.src, "名号尽收要与计数同源,不许另算一遍").toMatch(
       /titlesAllOwned = computed\([\s\S]{0,80}ownedCount\.value === TITLES\.length/,
@@ -1037,7 +1064,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("名号页先报下一顶 —— 来源、进度与缺口都从发放成就来", () => {
     // 名号表只有名字/描述/词条,来源在成就 reward.titleId 上。
     // 页首若只按拥有状态平铺,玩家看不到「下一顶从哪来、还差多少」。
-    const tit = FILES.find((f) => f.path === "views/TitlesView.vue");
+    const tit = fileAt("views/TitlesView.vue");
     expect(tit?.src, "名号来源要由 core 按 reward.titleId 对齐").toContain(
       "titleProgressRows(TITLES, ACHIEVEMENTS",
     );
@@ -1053,7 +1080,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("名号与灵兽两册渐进铺开 —— 当前相伴置顶,余册可续开与回翻", () => {
-    const tit = FILES.find((f) => f.path === "views/TitlesView.vue");
+    const tit = fileAt("views/TitlesView.vue");
     expect(tit?.src, "两册都要复用长列表窗口,不许各自整册铺进 DOM").toMatch(
       /import\s*\{[\s\S]*?listWindow[\s\S]*?\}\s*from\s*"@\/core\/listRender"/,
     );
@@ -1106,7 +1133,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("法宝全册渐进铺开 —— 祭炼与随身改序后焦点不许丢", () => {
     // 45 件法宝每行都是名/描述/被动/神通/代价/双按钮的长账,整册铺开会把
     // 背包法宝页变成一场 DOM 洪峰。与其它长列表共用同一套分批、滑窗、回翻与聚焦规则。
-    const panel = FILES.find((f) => f.path === "components/inventory/ArtifactPanel.vue");
+    const panel = fileAt("components/inventory/ArtifactPanel.vue");
     expect(panel?.src, "法宝册要复用长列表窗口").toMatch(
       /import\s*\{[\s\S]*?listWindow[\s\S]*?\}\s*from\s*"@\/core\/listRender"/,
     );
@@ -1152,7 +1179,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("开炉丹方渐进铺开 —— 搜索重置窗口,炼制后焦点留在原方", () => {
     // 54 张丹方每张都摊代价、成品、把握、双成、存货与两枚动作。整册塞进
     // max-h-64 只是视觉上滚动,DOM 仍会一次铺满;长列表规则必须进开炉弹窗。
-    const dialog = FILES.find((f) => f.path === "components/inventory/BrewingDialog.vue");
+    const dialog = fileAt("components/inventory/BrewingDialog.vue");
     expect(dialog?.src, "丹方册要复用长列表窗口").toMatch(
       /import\s*\{[\s\S]*?listWindow[\s\S]*?\}\s*from\s*"@\/core\/listRender"/,
     );
@@ -1205,7 +1232,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("词条转移候选渐进铺开 —— 大行囊不许整册塞进小滚动框", () => {
     // 转移候选是整包装备的横切面:不限部位的词条能落到所有藏品上。max-h-24
     // 只裁掉眼睛看到的部分,DOM 仍会随行囊长满;候选也要走同一套长列表规则。
-    const xfer = FILES.find((f) => f.path === "components/equipment/AffixTransferPanel.vue");
+    const xfer = fileAt("components/equipment/AffixTransferPanel.vue");
     expect(xfer?.src, "转移候选要复用长列表窗口").toMatch(
       /import\s*\{[\s\S]*?listWindow[\s\S]*?\}\s*from\s*"@\/core\/listRender"/,
     );
@@ -1254,7 +1281,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 各卡到了顶只会各自说「已至顶档」,整座洞府全满却没有一句话 —— 家业
     // 经营到头的圆满该有一声(与图鉴尽收/名号尽收同族)。判据读 store 的
     // allBuildingsMaxed(与卡面 N/M 的 capOfBuilding 同源),不许视图另数一遍。
-    const dv = FILES.find((f) => f.path === "views/DongfuView.vue");
+    const dv = fileAt("views/DongfuView.vue");
     expect(dv?.src, "视图必须读 store 的全满 boolean,不许自己数一遍").toContain(
       "dongfu.allBuildingsMaxed",
     );
@@ -1273,9 +1300,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 已营座数此前只在首页入口右侧现算,洞府页自己反倒没有(「家业总览」的主角位
     // 缺一角)。收进 store 的 builtCount,洞府营造题头与首页入口同读 —— 退回任何
     // 一处自己 filter 一遍,下面红。
-    const dv = FILES.find((f) => f.path === "views/DongfuView.vue");
+    const dv = fileAt("views/DongfuView.vue");
     expect(dv?.src, "营造题头要挂上已营座数").toContain("dongfu.builtCount");
-    const home = FILES.find((f) => f.path === "views/HomeView.vue");
+    const home = fileAt("views/HomeView.vue");
     expect(home?.src, "首页入口也读 store,不许自己数一遍").toMatch(
       /已营 \{\{ dongfu\.builtCount \}\}/,
     );
@@ -1288,7 +1315,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("洞府营造先于山门续账 —— 先给能动手的营造,再给七作与家业", () => {
     // 洞府页的第一任务是把材料变成建筑等级;七作、家业与灵脉都沿续账后置。
     // 390 首屏里家业入口曾把首座建筑的升级键整个推到折线以下,故顺序本身要钉住。
-    const dv = FILES.find((f) => f.path === "views/DongfuView.vue");
+    const dv = fileAt("views/DongfuView.vue");
     const buildAt = dv?.src.indexOf('data-dongfu-ledger-chapter="summary"') ?? -1;
     const registerAt = dv?.src.indexOf("data-dongfu-register") ?? -1;
     expect(buildAt, "营造总账首章要定位得到").toBeGreaterThan(-1);
@@ -1300,7 +1327,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 主页 hero 的「现在在干嘛」(修炼/闭关/历练…)此前整行 text-ink-faint,紧邻
     // 下方的次要天时反而 font-kai 披金 —— 层级倒挂。提一档 ink-soft 并配楷体,
     // 寿元告急那一路仍走朱砂;退回 faint 或拆掉 kai,下面红。
-    const home = FILES.find((f) => f.path === "views/HomeView.vue");
+    const home = fileAt("views/HomeView.vue");
     const css = readStyleCss();
     expect(home?.src, "状态行仍要有独立运行时落点").toContain('class="home-deck__status"');
     expect(css, "状态行要配楷体与对位主角比肩").toMatch(
@@ -1321,7 +1348,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 拆分轮盲区收口:第三行(耗灵气)随破境卡本体迁入 BreakthroughCard ——
     // 只查宿主 = 假绿(同资源叫法条全域化先例),查宿主 + 破境卡两处之和。
     const domain = ["views/CultivationView.vue", "components/cultivation/BreakthroughCard.vue"]
-      .map((p) => FILES.find((f) => f.path === p)?.src ?? "")
+      .map((p) => fileAt(p).src)
       .join("\n");
     const rows = domain.match(/data-value-row[\s\S]{0,90}text-ink-soft/g) ?? [];
     expect(rows.length, "修为/灵气/耗灵气主值行都要在 ink-soft 或更上").toBeGreaterThanOrEqual(3);
@@ -1335,7 +1362,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(style, "card-ink 要带按压滑移").toMatch(
       /^[ \t]*\.card-ink \{[\s\S]{0,600}transition: transform 0\.12s ease;/m,
     );
-    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    const cult = fileAt("views/CultivationView.vue");
     expect(cult?.src, "境界名要进主册开卷卷首").toMatch(
       /<FolioPageHeader[\s\S]{0,240}\bfeatured\b/,
     );
@@ -1344,7 +1371,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
       /\.folio-masthead::after \{[\s\S]{0,260}var\(--world-bar\)/,
     );
     expect(style, "主册开卷版式要能加粗这道卷边").toContain(".folio-masthead--featured");
-    const wel = FILES.find((f) => f.path === "views/WelcomeView.vue");
+    const wel = fileAt("views/WelcomeView.vue");
     expect(wel?.src, "首屏主钮要有柔辉").toMatch(/btn-seal animate-glow-pulse/);
     /*
      * 极窄档(195 CSS px)实测:旧欢迎页的 17px 主钮加 0.3em 字距放不下,当场折成
@@ -1360,7 +1387,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(wel?.src, "底链自身不许再折(短动作词锁一行)").toMatch(
       /-my-1\.5 shrink-0 py-1\.5 whitespace-nowrap active:text-ink-soft/,
     );
-    const home = FILES.find((f) => f.path === "views/HomeView.vue");
+    const home = fileAt("views/HomeView.vue");
     expect(home?.src, "法球要有同世界色的落地影").toContain(
       'style="background: var(--world-mountain)"',
     );
@@ -1372,7 +1399,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("全库弹窗标题统一笔杆 —— 页面每节有世界色书脊,弹窗标题不许孤悬", () => {
     // BaseModal 是全库复用的浮层原语,标题此前是悬空一行楷体。弹窗标题必须与
     // 卷首页框共用世界色笔杆 —— 一处改动罩住全库每个弹窗;拆掉杆(或挪到别处),下面红。
-    const modal = FILES.find((f) => f.path === "components/common/BaseModal.vue");
+    const modal = fileAt("components/common/BaseModal.vue");
     expect(modal?.src, "弹窗标题要挂世界色 brush-bar").toMatch(
       /<span[\s\S]{0,40}v-if="props\.title"[\s\S]{0,80}class="brush-bar h-3 w-0\.75 rounded-\[2px\] bg-\[var\(--world-bar\)\]"/,
     );
@@ -1395,7 +1422,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 有 card-flash)。「这件事发生在我这张卡上」的 idiom 对闭关同样成立 ——
     // 拆掉 card-flash、或把触发改成别的时机,下面红。
     // 拆分后闭关卡归 RetreatCard,判据随本体改指子面板
-    const retreatCard = FILES.find((f) => f.path === "components/cultivation/RetreatCard.vue");
+    const retreatCard = fileAt("components/cultivation/RetreatCard.vue");
     expect(retreatCard?.src, "闭关卡要挂 card-flash").toMatch(/retreatFlash \? 'card-flash'/);
     expect(retreatCard?.src, "闪的触发是 retreating 由假转真那一瞬(5 分钟到时不再闪)").toMatch(
       /nv && !ov\) retreatFlash\.value = true/,
@@ -1409,7 +1436,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("境遇结算收益行要逐行晕开 —— 与离线卷轴同款节奏,不许瞬时同现", () => {
     // 结果句已经 animate-ink-pop,紧随的收益列表却裸 `space-y-1.5` 瞬时同现;
     // 同一语义(收益清点)离线卷轴有 stagger-in,这里没有就是不一致。拆掉,红。
-    const ev = FILES.find((f) => f.path === "components/adventure/EventDialog.vue");
+    const ev = fileAt("components/adventure/EventDialog.vue");
     expect(ev?.src, "收益列表必须走 stagger-in").toMatch(
       /ul v-if="result\.lines\.length" class="stagger-in /,
     );
@@ -1418,7 +1445,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("器魂沿用册页卷首 —— 道源读数收进独立动作槽", () => {
     // 详情页不再各手搓一条「返回 / 标题 / 读数」三栏。统一卷首把道源放进
     // action 槽,标题天然按册页左缘落位,不再随数字位数或返回文案漂移。
-    const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
+    const souls = fileAt("views/SoulsView.vue");
     expect(souls?.src, "器魂页要接共同卷首").toMatch(/<FolioPageHeader[\s\S]{0,180}title="器 魂"/);
     expect(souls?.src, "天界返回兜底要写清").toContain('back-to="celestial"');
     expect(souls?.src, "道源读数要进独立动作槽").toMatch(/<template[\s\S]{0,80}#action>/);
@@ -1442,7 +1469,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 浏览器那一遍另有通用判据(layout-check 的 deadControls + 本轮新增的 nesting),
      * 这条守的是写法不回退。
      */
-    const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
+    const souls = fileAt("views/SoulsView.vue");
     const shell = /<div\s+v-for="i in SOUL_SLOTS"[\s\S]*?>/.exec(souls?.src ?? "")?.[0];
     expect(shell, "槽位卡壳要定位得到 —— 定位不到这条就是空转").toBeTruthy();
     expect(
@@ -1474,7 +1501,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * **没有可装的东西时它就不是按钮**(v-if 掉整枚 <button>),而不是灰着一枚
      * 让人以为漏了什么。点开的是那张清单由玩家挑一缕,不是替玩家装某不知名的魂。
      */
-    const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
+    const souls = fileAt("views/SoulsView.vue");
     expect(souls?.src, "空槽的装配入口要有条件").toMatch(
       /<template v-else>[\s\S]*?v-if="soulPulse\.idleSouls\.length > 0"[\s\S]*?@click="idleOpen = true"/,
     );
@@ -1495,7 +1522,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 阈值写成数字是刻意的:它是**排版档位**而不是会被常数改动的数值(与「写常量即撒谎」
      * 那一族无关),改它就得同时重测三档 —— 所以判据把两件事一起钉住。
      */
-    const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
+    const souls = fileAt("views/SoulsView.vue");
     const grid = /class="(soul-array__seats[^"]*)"/.exec(souls?.src ?? "")?.[1];
     const css = readStyleCss();
     expect(grid, "槽位网格要能定位到").toBeTruthy();
@@ -1529,7 +1556,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      *   行藏行常态已是单列账;极窄档把来源数退到名称下方,主值与展开口仍各守一格。
      * 320 / 390 两档实测读数一分未动。
      */
-    const ch = FILES.find((f) => f.path === "views/CharacterView.vue");
+    const ch = fileAt("views/CharacterView.vue");
     expect(ch?.src, "道躯总案要定位得到 —— 定位不到这条就是空转").toContain(
       "data-character-dossier",
     );
@@ -1563,7 +1590,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 极窄档收成 12px:面板 171px、行内 145px,两段并排也放得下。
      * 这是全库所有弹窗共用的原语,故在它身上收一次,而不是逐个弹窗各自补。
      */
-    const bm = FILES.find((f) => f.path === "components/common/BaseModal.vue");
+    const bm = fileAt("components/common/BaseModal.vue");
     const padded = [...(bm?.src ?? "").matchAll(/class="([^"]*\bpx-5\b[^"]*)"/g)].map((m) => m[1]!);
     expect(padded.length, "四层内边距要定位得到 —— 定位不到这条就是空转").toBe(4);
     for (const cls of padded) expect(cls, "极窄档收窄").toContain("tinylens:px-3");
@@ -1576,7 +1603,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 只剩 113px,「修为」与「+46.39兆」并排时各自折成两行,整行 58px。
      * 改极窄档上下叠:标签一行、数值一行,各自都读得完整。
      */
-    const off = FILES.find((f) => f.path === "components/offline/OfflineRewardDialog.vue");
+    const off = fileAt("components/offline/OfflineRewardDialog.vue");
     const rows = [
       ...(off?.src ?? "").matchAll(
         /class="(flex items-center justify-between rounded-\[2px\] bg-paper-deep\/70 px-3 py-2[^"]*)"/g,
@@ -1602,7 +1629,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      *   四 修炼页灵气主值行:一段「灵气 +X/秒」92px 加一段「现值 · 已封顶」85px 挤在
      *      128px 里,「· 已封顶」被甩到第二行(主值行折行判据红);改极窄档上下两段。
      */
-    const dv = FILES.find((f) => f.path === "views/DongfuView.vue");
+    const dv = fileAt("views/DongfuView.vue");
     const css = readStyleCss();
     expect(dv?.src, "七作与家业同住一条续账").toContain("data-dongfu-register");
     expect(css, "七作续账常态单列").toMatch(
@@ -1613,17 +1640,17 @@ describe("界面分层 · 浮层只有一个出处", () => {
       /\.dongfu-building__body\s*\{[\s\S]{0,180}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
 
-    const sr = FILES.find((f) => f.path === "components/adventure/SecretRealmCard.vue");
+    const sr = fileAt("components/adventure/SecretRealmCard.vue");
     expect(sr?.src, "在途秘境的两枚动作键极窄档要上下叠").toMatch(
       /class="mt-2 flex gap-2 tinylens:flex-col"/,
     );
 
-    const exp = FILES.find((f) => f.path === "components/celestial/ExpeditionPanel.vue");
+    const exp = fileAt("components/celestial/ExpeditionPanel.vue");
     expect(exp?.src, "远征择路极窄档要单列").toMatch(
       /class="stagger-in grid grid-cols-2 gap-2 tinylens:grid-cols-1"/,
     );
 
-    const cv = FILES.find((f) => f.path === "views/CultivationView.vue");
+    const cv = fileAt("views/CultivationView.vue");
     // 两条主值行都带 data-value-row,灵气那条是唯一要求极窄档上下两段的
     const qiRows = [...(cv?.src ?? "").matchAll(/data-value-row[\s\S]{0,240}?class="([^"]*)"/g)]
       .map((m) => m[1]!)
@@ -1705,7 +1732,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 实测六枚全折成两行。极窄档收到 11px 并去字距后,文字 22px 留出余量,但仍会
      * 因边界抖动折行,故两条一起要:字号收口 + tracking 归零 + nowrap。
      */
-    const tabs = FILES.find((f) => f.path === "components/common/InkTabs.vue");
+    const tabs = fileAt("components/common/InkTabs.vue");
     const cls = /class="([^"]*font-kai[^"]*)"/.exec(tabs?.src ?? "")?.[1];
     expect(cls, "页签的类名要定位得到 —— 定位不到这条就是空转").toBeTruthy();
     expect(cls, "常态保留那口呼吸(字距 0.2em)").toContain("tracking-[0.2em]");
@@ -1714,7 +1741,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("页签选中态走极淡纸光 + 朱砂游标,不压成实心墨块", () => {
-    const tabs = FILES.find((f) => f.path === "components/common/InkTabs.vue");
+    const tabs = fileAt("components/common/InkTabs.vue");
     const css = readStyleCss();
     expect(css, "选中态要留一档极淡纸光").toMatch(
       /\.folio-tab-index__tab\[aria-selected="true"\] \{[\s\S]{0,180}?rgb\(var\(--color-ink-rgb\) \/ 0\.025\)/,
@@ -1737,8 +1764,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 放开后(顶栏纵向堆叠、名称块占满整行):113 / 120 / 86px,标题 129px / 4 行。
      * 320 / 390 两档读数一分未动 —— 所以只钉"极窄档那一侧有放开",不钉具体高度。
      */
-    const market = FILES.find((f) => f.path === "views/MarketView.vue");
-    const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
+    const market = fileAt("views/MarketView.vue");
+    const appr = fileAt("views/ApprenticeView.vue");
     // 坊市卷首动作 + 三册共享章首 + 货架/悬赏行
     expect(market?.src, "坊市要接共同卷首").toContain("<FolioPageHeader");
     expect(market?.src, "坊市卷首动作极窄档落整行").toContain(
@@ -1840,7 +1867,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("门庭收徒按钮收进卷首动作槽 —— 长价签不挤册名", () => {
     // 收徒按钮文案在「收徒 · 尚差 X 石 / 收徒 NNN 石 / 已收满 N/M」之间换长。
     // 统一卷首把动作放在标题之外,极窄档再让它独占一行。
-    const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
+    const appr = fileAt("views/ApprenticeView.vue");
     expect(appr?.src, "门庭要接共同卷首").toContain("<FolioPageHeader");
     expect(appr?.src, "卷首册名要写「门庭有徒」").toContain('title="门庭有徒"');
     expect(appr?.src, "收徒按钮要进独立动作槽").toContain("<template #action>");
@@ -1859,7 +1886,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 不把产出文案挤成窄胶囊。图标取任务数据里的 icon,选中态用淡朱砂边底报出,
      * 但选中本身不再派出 —— 票面上的确认钮才是唯一落库动作。
      */
-    const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
+    const appr = fileAt("views/ApprenticeView.vue");
     const apprCss = readStyleCss();
     expect(appr?.src, "派活卡要排成稳定网格").toContain('class="apprentice-task-choice-grid"');
     expect(apprCss, "每枚任务卡占满单元格并留足触达高度").toMatch(
@@ -1882,7 +1909,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     //    尘/灵石两枚投入数被省略号藏在截断线之后,玩家按「凝炼」前看不到代价;
     //  · 坊市悬赏的「贡一柄 ≥N 阶兵刃」—— N(要交几阶)被裁掉,无从挑件。
     // truncate 不产生溢出,排版自检量不到;它们只在本 spec 里被钉住:这两行一律不许 nowrap。
-    const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
+    const souls = fileAt("views/SoulsView.vue");
     const sClass = souls?.src.match(
       /<p[\s\S]{0,200}?v-if="row\.invested && row\.investedCost"[\s\S]{0,120}?class="([^"]*)"/,
     )?.[1];
@@ -1891,7 +1918,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
       "已淬养警示须可换行(投入尘/灵石不许被省略号裁)—— 手写 leading-relaxed 或角色类 .t-note 都算数",
     ).toMatch(/\bleading-relaxed\b|\bt-note\b/);
     if (sClass) expect(sClass, "已淬养警示不许 nowrap 裁掉投入数").not.toMatch(/\btruncate\b/);
-    const market = FILES.find((f) => f.path === "views/MarketView.vue");
+    const market = fileAt("views/MarketView.vue");
     const mClass = market?.src.match(
       /<p[\s\S]{0,120}?class="([^"]*)"[\s\S]{0,80}?贡一柄 ≥\{\{ o\.tier \}\}/,
     )?.[1];
@@ -1903,7 +1930,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 五档都是静态上限,却曾把已过档整排铺成朱砂实底,看起来像五个可点按钮,
     // 夜间尤其刺眼。现在过去 / 现档 / 未来由同一份纯函数分流,现档只留石青圆印,
     // 朱砂继续专供真正的行动。
-    const dv = FILES.find((f) => f.path === "views/DongfuView.vue");
+    const dv = fileAt("views/DongfuView.vue");
     const css = readStyleCss();
     expect(dv?.src, "离线上限五档要收成有序连续刻度").toContain(
       '<ol class="dongfu-ledger__ladder"',
@@ -1924,7 +1951,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("图鉴详情要有视觉锚 —— 带 icon 的收录物,详情不许丢章", () => {
     // 灵兽册这类带 icon 的条目,收集 chip 上有枚小章,点开详情却整块丢成纯文字;
     // 详情的头部就该亮出这一枚(与丹房/材料详情同构,有 icon 才渲染)。
-    const col = FILES.find((f) => f.path === "views/CollectionView.vue");
+    const col = fileAt("views/CollectionView.vue");
     expect(col?.src, "详情那扇要亮出 icon 色章(有才渲染)").toMatch(
       /v-if="detail\.entry\.icon"[\s\S]{0,80}grid h-12 w-12/,
     );
@@ -1934,7 +1961,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 历练页在「战斗面板 / 区域列表」之间切换,是这页最大的一次同页置换,从前
     // 整屏闪变;两分支要包进同一扇 page-fade 过渡,列表分支还得有单一根(div)——
     // Transition 不给 fragment 上动画。
-    const adv = FILES.find((f) => f.path === "views/AdventureView.vue");
+    const adv = fileAt("views/AdventureView.vue");
     expect(adv?.src, "两分支要包进同一扇 page-fade 过渡").toContain(
       '<Transition name="page-fade" mode="out-in">',
     );
@@ -1951,7 +1978,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 根本走不到区域账),离线也只记胜场 —— 这个数从来就是「胜场」。字段名沿用
     // 旧名(改名要迁存档),但用户面文案一律「胜」:退回「7/20 战」读着像胜败
     // 都算,曾经正是这歧义诱导过一次把离线败场塞进区域账的坏修复。
-    const adv = FILES.find((f) => f.path === "views/AdventureView.vue");
+    const adv = fileAt("views/AdventureView.vue");
     expect(adv?.src, "地界行要写「N/N 胜」").toContain(
       "{{ row.progress.wins }}/{{ row.progress.needWins }} 胜",
     );
@@ -1970,7 +1997,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 非交互 span 的 :title 上,触屏上点了没反应 = 死提示。方向名改可点、理由
     // 内联展开(与适配理由/天赋芯片同族);退回 span + title,下面红。
     // 分析面板自 CombatPanel 拆出(拆分第六刀),钉随本体改指 BattleIntelPanel
-    const cp = FILES.find((f) => f.path === "components/adventure/BattleIntelPanel.vue");
+    const cp = fileAt("components/adventure/BattleIntelPanel.vue");
     expect(cp?.src, "方向名要是带展开语义的可点按钮").toContain(
       ':aria-expanded="directionTap === d.styleName"',
     );
@@ -1982,7 +2009,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("适配星级的理由也点得开 —— 同方向族,不许退回 hover 死提示", () => {
     // 敌名行那颗「★★★」的适配星级同样把原因只挂 :title —— 手机无 hover 就是死提示。
     // 星级改可点、原因在名字行下直出;退回 span + title,下面红。
-    const cp = FILES.find((f) => f.path === "components/adventure/CombatPanel.vue");
+    const cp = fileAt("components/adventure/CombatPanel.vue");
     expect(cp?.src, "星级要带上展开语义").toContain(
       ':aria-expanded="adaptTap === foeAdaptation.stars"',
     );
@@ -2022,7 +2049,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
       ["components/dongfu/BuildingLedgerRow.vue", ':aria-expanded="detailsOpen"'],
     ];
     for (const [path, needle] of checks) {
-      const f = FILES.find((x) => x.path === path);
+      const f = fileAt(path);
       expect(f?.src, `${path} 的展开控制要带上 aria-expanded,不许退回裸 button`).toContain(needle);
     }
   });
@@ -2032,7 +2059,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // .reduce-motion 只压 CSS 动画,盖不住它 —— 关动效的人每次历练开打仍被迫
     // 逐条看。天界 GauntletPanel 早已判 settings.reduceMotion 直给结果,历练
     // 这份漏了。不许退回「只压 CSS、JS 回放照播」的两套待遇。
-    const cp = FILES.find((f) => f.path === "components/adventure/CombatPanel.vue");
+    const cp = fileAt("components/adventure/CombatPanel.vue");
     expect(cp?.src, "历练回放要判 reduceMotion").toContain("settings.reduceMotion");
     expect(cp?.src, "关动效时要直给结果(进 instant 即全量呈现)").toMatch(
       /settings\.reduceMotion && !instant/,
@@ -2042,7 +2069,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("页签条是整套 tab 模式 —— role=tablist + roving tabindex + 方向键漫游", () => {
     // InkTabs 供 5 个页共用,此前只贴了 role=tab / aria-selected,缺外壳 tablist、
     // 每次只留一个在 Tab 序、以及方向键漫游 —— 半套 tab 模式对读屏是残缺的。
-    const tabs = FILES.find((f) => f.path === "components/common/InkTabs.vue");
+    const tabs = fileAt("components/common/InkTabs.vue");
     expect(tabs?.src, "外壳要有 role=tablist,不许裸 div 装着 tab").toContain('role="tablist"');
     expect(tabs?.src, "每次只留一个页签在 Tab 序(roving tabindex)").toContain(
       ':tabindex="model === t.id ? 0 : -1"',
@@ -2057,7 +2084,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 一个 tab 与它控制的 panel 对应起来 —— 补上 id/aria-controls(tab 侧)与
     // id/aria-labelledby(panel 侧),正是 WAI-ARIA 的 tab 模式。
     // 拆分后功法区归 GongfaSection,判据随本体改指子面板
-    const cult = FILES.find((f) => f.path === "components/cultivation/GongfaSection.vue");
+    const cult = fileAt("components/cultivation/GongfaSection.vue");
     expect(cult?.src, "功法 tab 要带自己的 id 与 aria-controls").toContain(
       ':aria-controls="`gongfa-cat-panel-${g.type}`"',
     );
@@ -2073,7 +2100,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 自动重铸的「洗到这些词条出现就停」多选格:选中态此前只靠朱砂描边+字色,
     // 读屏根本听不出哪几个被选中,等于无法操作自动重铸。与 InventoryView 的
     // smartKeep(minQuality 用 aria-pressed 同款)应同一条口径。
-    const eq = FILES.find((f) => f.path === "components/equipment/EquipReforgePanel.vue");
+    const eq = fileAt("components/equipment/EquipReforgePanel.vue");
     expect(eq?.src, "词条格选中态要报给读屏").toContain(':aria-pressed="isAutoTarget(af.id)"');
   });
 
@@ -2081,7 +2108,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 「自动重铸 / 词条转移」是点开才出现的折叠面板,此前只靠文案「收起/⋯」暗示,
     // 读屏不知道展开没展开。与 CombatPanel 的 showLore/showAnalysis 的
     // aria-expanded 同一条口径(揭开的 disclosure 一定要把状态报出来)。
-    const eq = FILES.find((f) => f.path === "components/equipment/EquipReforgePanel.vue");
+    const eq = fileAt("components/equipment/EquipReforgePanel.vue");
     expect(eq?.src, "自动重铸折叠要报展开态").toContain(':aria-expanded="autoOpen"');
     expect(eq?.src, "词条转移折叠要报展开态").toContain(':aria-expanded="transferOpen"');
   });
@@ -2090,7 +2117,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 五维评级的每一维可点开看词条明细,点开状态此前只靠下钻块是否可见传意,
     // 读屏不知道哪一维开着。补 aria-expanded(报当前维开/合)与 aria-controls
     // → id(把按钮和它控制的明细块拴起来)。
-    const build = FILES.find((f) => f.path === "views/BuildView.vue");
+    const build = fileAt("views/BuildView.vue");
     expect(build?.src, "评级维展开态报给读屏").toContain(':aria-expanded="dimKey === l.key"');
     expect(build?.src, "评级维的明细块要带配对 id").toContain(':id="`build-dim-panel-${l.key}`"');
   });
@@ -2099,7 +2126,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 突破幕此前小境/大境共用同一枚朱砂「破」印 —— 天劫既渡的里程碑式突破
     // (筑基→金丹等一境一次)和普通层推进毫无区分。金色「大境」章(gold=里程碑赏)
     // 钉在印下,小破不显示;拆了 v-if、或改成与小破同色,下面红。
-    const dlg = FILES.find((f) => f.path === "components/cultivation/BreakthroughResultDialog.vue");
+    const dlg = fileAt("components/cultivation/BreakthroughResultDialog.vue");
     expect(dlg?.src, "大境成功要有金章区分,不许只靠朱砂破印").toContain(
       `view.success && view.isMajor`,
     );
@@ -2112,7 +2139,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 「这一击被躲过了」没有画面。而若随手让闪避也走 hit-shake,就成了
     // 「打中了但没伤害」的假反馈。故盯死:闪避(dodge)必须触发受击方 flicker
     // 侧让、且不得走震颤那半边(triggerShake)。
-    const fight = FILES.find((f) => f.path === "components/adventure/CombatPanel.vue");
+    const fight = fileAt("components/adventure/CombatPanel.vue");
     expect(fight?.src, "闪避要有侧让绑点(flickerCls)").toContain("flickerCls.e");
     expect(fight?.src).toContain("flickerCls.p");
     expect(fight?.src, "dodge 行必须触发侧让").toMatch(
@@ -2133,7 +2160,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 只落在日志一行淡字 —— 防御姿态的呈现本该是一道金色屏壁。判定:
     // shield 行必须触发 triggerShield(护盾方亮 shield-rise),且不得误走横踏
     // (shield 无出手方)或震颤(那是对「打中了」的反馈)。
-    const fight = FILES.find((f) => f.path === "components/adventure/CombatPanel.vue");
+    const fight = fileAt("components/adventure/CombatPanel.vue");
     expect(fight?.src, "护盾成形要有绑点(shieldCls)").toContain("shieldCls.e");
     expect(fight?.src).toContain("shieldCls.p");
     expect(fight?.src, "shield 行必须触发护盾成形").toMatch(
@@ -2151,7 +2178,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 「这一场我赢了」的视觉句点。光圈绕头像荡一圈收拢(victory-seal,
     // 石绿=胜/完成,与败方灰化成对) —— 只挂在敌败(defeated==='e')那侧,
     // 自己输了不庆祝对手。拆了绑、挪了侧、或删了帧,下面红。
-    const fight = FILES.find((f) => f.path === "components/adventure/CombatPanel.vue");
+    const fight = fileAt("components/adventure/CombatPanel.vue");
     expect(fight?.src, "胜方要有定音(foe-victorious),不许只让败方灰化").toContain(
       `defeated === 'e' ? 'foe-victorious'`,
     );
@@ -2165,7 +2192,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 技艺表里看得到 —— 炼器的地方看不见自己在长,等于没长。钉死:装备详情
     // 弹窗必须有锻打/铭纹两项的技艺进度,判据与技艺表同源(skillStageName/
     // skillStageProgress),不许退回「去丹房翻」。
-    const dlg = FILES.find((f) => f.path === "components/equipment/EquipmentDetailDialog.vue");
+    const dlg = fileAt("components/equipment/EquipmentDetailDialog.vue");
     expect(dlg?.src, "装备详情要有炼器技艺进度(forgeSkills)").toContain("forgeSkills");
     expect(dlg?.src, "必须含锻打与铭纹两项(set of smithing/inscribe)").toContain(
       '"smithing", "inscribe"',
@@ -2178,11 +2205,11 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("读通的器谱也是轮回遗产 —— 宿慧里计一份,轮回录里看得见", () => {
-    const legacy = FILES.find((f) => f.path === "views/LegacyView.vue");
+    const legacy = fileAt("views/LegacyView.vue");
     expect(legacy?.src, "轮回录要列读通的器谱数").toContain("masteredBlueprintCount");
     expect(legacy?.src, "器谱要与灵材、丹方、敌手同处「随神魂不灭」一栏").toContain("读通器谱");
 
-    const rebirth = FILES.find((f) => f.path === "components/character/ReincarnationDialog.vue");
+    const rebirth = fileAt("components/character/ReincarnationDialog.vue");
     expect(rebirth?.src, "转世说明要把器谱列进随神魂带走的认知").toContain("器谱");
 
     const codex = readFileSync(resolve(__dirname, "../ui/codex.ts"), "utf8");
@@ -2190,7 +2217,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("铭纹的用处露在重铸决策点 —— 不只长一条进度", () => {
-    const panel = FILES.find((f) => f.path === "components/equipment/EquipReforgePanel.vue");
+    const panel = fileAt("components/equipment/EquipReforgePanel.vue");
     expect(panel?.src, "重铸面板要读取铭纹保底(与核心同一函数)").toContain("inscribeRollFloor");
     expect(panel?.src, "器谱要与铭纹合成实际保底,不许各算一套").toContain(
       "effectiveReforgeRollFloor",
@@ -2204,7 +2231,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("自动重铸给出真实目标次数,不可达目标不许继续烧钱", () => {
-    const panel = FILES.find((f) => f.path === "components/equipment/EquipReforgePanel.vue");
+    const panel = fileAt("components/equipment/EquipReforgePanel.vue");
     expect(panel?.src, "候选池与核心同源").toContain("reforgeAffixPool");
     expect(panel?.src, "选中目标要按当前阈值重算次数").toMatch(
       /triesOf\(\w+\.affixId,\s*\w+\.minRoll/,
@@ -2219,7 +2246,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 「进修」曾永不置灰,资源不足只弹一句笼统 toast「悟道点或残页不足」,
     // 不报缺哪样也不说差多少 —— 与全仓“付不起置灰+列差”族规脱节。修法与
     // 聚气丹/建筑/法宝同款:按钮 disabled + 行内「尚差 N 悟道 · M 残页」。
-    const gongfa = FILES.find((f) => f.path === "components/cultivation/GongfaDialog.vue");
+    const gongfa = fileAt("components/cultivation/GongfaDialog.vue");
     expect(gongfa?.src, "进修按钮必须有 disabled(upAffordable)").toContain(
       ':disabled="!upAffordable"',
     );
@@ -2234,7 +2261,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 疯狂点选的人以为没点到,又是重复点。上限既然有(CHALLENGE_MAX_MUTATORS),
     // 未选中的芯片在满员时就该置灰禁用 + title 说明 —— 别让「按了没反应」发生。
     // 试炼域(挑战书)拆出后判据随本体走 components/celestial/TrialPanel.vue
-    const cel = FILES.find((f) => f.path === "components/celestial/TrialPanel.vue");
+    const cel = fileAt("components/celestial/TrialPanel.vue");
     expect(cel?.src, "变数满员要有置灰判据(draftFull)").toContain("draftFull");
     expect(cel?.src, "满员时未选芯片必须 disabled").toContain(
       ':disabled="!draft.mutatorIds.includes(m.id) && draftFull"',
@@ -2253,7 +2280,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 与「道源→道果」永远可点、点了才 toast「灵石不足/道源不足 N」。
     // 与其余消费点同族:付不起置灰 + 内联「尚差 N 石/道源」,不许只有点了才响。
     // 熔炉弹窗拆出后判据随本体走(components/celestial/FurnaceDialog.vue)。
-    const cel = FILES.find((f) => f.path === "components/celestial/FurnaceDialog.vue");
+    const cel = fileAt("components/celestial/FurnaceDialog.vue");
     expect(cel?.src, "灵石行付不起要置灰(stoneShort)").toContain(':disabled="stoneShort > 0"');
     expect(cel?.src, "灵石行要换口「尚差 N 石」").toContain("尚差 {{ formatGN(stoneShort) }} 石");
     expect(cel?.src, "道果行付不起要置灰(daoShort)").toContain(':disabled="daoShort > 0"');
@@ -2274,7 +2301,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 同族规(强化/重铸/封存都「尚差 N」,见 EquipmentDetailDialog):词条转移此前
     // 只报「灵石不足/器灵尘不足」,付不起看不到差多少。补齐并钉死:短差必须走
     // GNum 指数感知减法(与重铸同款),不许退回裸定性词。
-    const xfer = FILES.find((f) => f.path === "components/equipment/AffixTransferPanel.vue");
+    const xfer = fileAt("components/equipment/AffixTransferPanel.vue");
     // 短差要列出来(判据的实质),数字格式走 formatGN(同屏灵石已是那个格式)
     expect(xfer?.src, "转移付不起要列器灵尘差").toContain(
       "器灵尘×{{ formatGN(Math.max(0, plan.cost.dust - resources.dust)) }}",
@@ -2289,7 +2316,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("坊市售料不足列差额 —— 与悬赏「需 N X,缺 M」同源", () => {
     // 买卖一族里买货、悬赏每单都列缺,唯独「售灵草/售玄铁」不足时只置灰不报差。
     // 补齐并钉死:不足时按钮换口「尚差 N 灵草/玄铁」,与货架/悬赏同一纪律。
-    const market = FILES.find((f) => f.path === "views/MarketView.vue");
+    const market = fileAt("views/MarketView.vue");
     expect(market?.src, "售灵草不足要列差").toContain("尚差 ${herbSellShort} 灵草");
     expect(market?.src, "售玄铁不足要列差").toContain("尚差 ${oreSellShort} 玄铁");
   });
@@ -2301,7 +2328,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 可买 / 可交 / 寄售真值直接切册;可交数与逐单缺口必须共用
      * core/marketOverview 的一份判据,不许册口另算一遍「看起来能交」。
      */
-    const market = FILES.find((f) => f.path === "views/MarketView.vue");
+    const market = fileAt("views/MarketView.vue");
     expect(market?.src, "卷首市况要走 core/marketOverview").toContain("marketOverview(");
     expect(market?.src, "逐单缺口与可交数要共用 bountyStatus").toContain(
       "bountyStatus(o, bountyHoldings.value)",
@@ -2324,7 +2351,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     //    「再看 N 件」显式续开 —— 既不许静默截断,也不许把 120 枚横条一次塞进 DOM。
     // ② 售丹按钮写「(N)」读起来像卖一整类,实际一按只出一颗且零反馈;
     //    改成「现持 N」点明数量,并给每颗成功/失败的 toast,不许闷声。
-    const market = FILES.find((f) => f.path === "views/MarketView.vue");
+    const market = fileAt("views/MarketView.vue");
     expect(market?.src, "寄卖要列全背包,不许 slice 截断").not.toContain(
       "inventory.bagItems.slice(0, 12)",
     );
@@ -2351,7 +2378,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 店员误买装备在行囊满时被退回(store.buy 的 bagfull 门),但按钮只因 sold/
     // 没灵石置灰 —— 行囊满时还可点,点了才弹「行囊已满,灵石已退回」,白点一下。
     // 与「付不起置灰+就地列因」同族:装备槽行囊满就该置灰并改口「行囊已满」。
-    const market = FILES.find((f) => f.path === "views/MarketView.vue");
+    const market = fileAt("views/MarketView.vue");
     expect(market?.src, "装备买入行囊满要置灰(bagFull)").toContain(
       "slot.kind === 'equipment' && inventory.bagFull",
     );
@@ -2373,7 +2400,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // ① 丹药详情「服 用」顶满仍可点,按下就真·白吃一颗(修炼快捷卡对同一
     //    buffOverflowOf 判据置灰「已顶」,两视图原先相反);② 兵解转世未达金丹仍
     //    可点、点了才 toast 拦。同族规:不可行就置灰 + 就地列因,别让点下去才知道。
-    const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
+    const inv = fileAt("views/InventoryView.vue");
     expect(inv?.src, "丹药顶满要置灰(判据 currentPillOverflow)").toContain(
       ":disabled=\"currentPillOverflow === 'full'\"",
     );
@@ -2384,7 +2411,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
       "buffOverflowOf(cult.buffs, def.buffId, now.value)",
     );
     // 拆分后轮回弹窗归 RebirthDialog,兵解置灰判据随本体改指子面板
-    const char = FILES.find((f) => f.path === "components/character/RebirthDialog.vue");
+    const char = fileAt("components/character/RebirthDialog.vue");
     expect(char?.src, "兵解未达境要置灰(canRebirth)").toContain(':disabled="!canRebirth"');
     expect(char?.src, "兵解置灰要列门槛境名,不许只有定性").toContain("境方可自行兵解");
   });
@@ -2392,7 +2419,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("修行快捷丹药超过四味要报余量并直达丹匣,不许静默截断", () => {
     // 修行页按品阶取前四味做速服入口；玩家收着更多可服丹药时，旧实现直接 slice，
     // 既不说还有几味，也没有去丹匣的入口 —— 最该服的那几味反而可能永远看不见。
-    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    const cult = fileAt("views/CultivationView.vue");
     expect(cult?.src, "快捷栏要先保留完整候选再切前四味").toMatch(
       /const quickPills = computed\(\(\) => quickPillRows\.value\.slice\(0, QUICK_PILL_LIMIT\)\)/,
     );
@@ -2404,7 +2431,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
       /<RouterLink[\s\S]{0,300}path:\s*['"]\/inventory['"][\s\S]{0,120}tab:\s*['"]pill['"]/,
     );
 
-    const inv = FILES.find((f) => f.path === "views/InventoryView.vue");
+    const inv = fileAt("views/InventoryView.vue");
     expect(inv?.src, "背包要认 ?tab=pill，否则直达入口仍落在装备页").toContain(
       'useRouteTab(INVENTORY_CHAPTERS, "equip")',
     );
@@ -2416,7 +2443,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("构筑对照不许只给最近八则 —— 道痕余量可续开,旧构筑仍可达", () => {
     // 道痕最多留 60 则，构筑对照却只切最近 8 则：再往前的历史构筑既没有计数，
     // 也没有续开入口，玩家会以为道痕里只剩这些。全量候选与可见窗必须分开。
-    const build = FILES.find((f) => f.path === "views/BuildView.vue");
+    const build = fileAt("views/BuildView.vue");
     expect(build?.src, "先保留全部可比道痕").toContain("const compareRows = computed");
     expect(build?.src, "可见窗走长列表同一把尺").toMatch(
       /const comparePage = computed\([\s\S]{0,160}listWindow\(compareRows\.value, compareLimit\.value\)/,
@@ -2429,7 +2456,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("历世履历再长也要分批回看 —— 不许把整部家谱一次塞进 DOM", () => {
-    const legacy = FILES.find((f) => f.path === "views/LegacyView.vue");
+    const legacy = fileAt("views/LegacyView.vue");
     expect(legacy?.src, "履历要有独立的可见窗").toMatch(
       /const lifePage = computed\([\s\S]{0,160}listWindow\(\s*lifeRows\.value,\s*lifeLimit\.value,\s*LIFE_RENDER_WINDOW,?\s*\)/,
     );
@@ -2443,7 +2470,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("行迹录只列八则时也要有回头路 —— 总数与清单必须同源", () => {
-    const legacy = FILES.find((f) => f.path === "views/LegacyView.vue");
+    const legacy = fileAt("views/LegacyView.vue");
     expect(legacy?.src, "旧回响不许被 slice 永久藏掉").not.toContain(".slice(0, 8)");
     expect(legacy?.src, "总数直接取完整清单").toMatch(
       /const lossTotal = computed\(\(\) => lossRows\.value\.length\)/,
@@ -2462,7 +2489,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("历世同行再长也只铺当前窗 —— 最近一段先见，旧缘仍可回看", () => {
     // 道侣履历每世追加一笔，却没有上限；弹窗曾把整份履历一次铺进固定滚动框，
     // 而且按追加顺序最旧在前 —— 玩家打开只看见最早几世，最近一段反而埋在底部。
-    const bond = FILES.find((f) => f.path === "components/character/BondDialog.vue");
+    const bond = fileAt("components/character/BondDialog.vue");
     expect(bond?.src, "最近一段同行先出现").toContain("[...pastBonds.value].reverse()");
     expect(bond?.src, "履历走同一套长列表窗口").toMatch(
       /const pastBondPage = computed\([\s\S]{0,180}listWindow\(\s*pastBondRows\.value,\s*bondHistoryLimit\.value,\s*BOND_HISTORY_RENDER_WINDOW,?\s*\)/,
@@ -2475,7 +2502,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("器魂两册再长也只铺当前窗 —— 闲置形意与可凝法器都能分批回看", () => {
     // 器魂没有持有上限，可凝法器也会随背包一起增长；两册若整份铺进 max-h-64，
     // DOM 会跟着存档无限长大。两册都走同一套列表窗口，并让高品阶先见。
-    const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
+    const souls = fileAt("views/SoulsView.vue");
     expect(souls?.src, "闲置形意按品阶降序").toMatch(
       /const idleSoulRows = computed\([\s\S]{0,220}\.sort\(\s*\(a, b\) =>[\s\S]{0,80}b\.grade - a\.grade/,
     );
@@ -2503,14 +2530,14 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("器魂卷首、天界入口与凝炼台共用一份可凝与道源汇总", () => {
     // 「可凝」曾只数行囊资格:道源不够时入口仍写 N 件可凝,点进去才看到付不起。
     // 现在卷首、入口、凝炼台与天界入口都读 core/soulOverview 的同一份账。
-    const souls = FILES.find((f) => f.path === "views/SoulsView.vue");
+    const souls = fileAt("views/SoulsView.vue");
     expect(souls?.src, "卷首先报此刻").toContain("data-soul-pulse");
     expect(souls?.src, "可做判据收进 core").toContain("soulOverview(");
     expect(souls?.src, "入口读同一份可凝数").toContain("soulPulse.affordableRefines");
     expect(souls?.src, "付不起要列短差").toContain("soulPulse.shortfall");
     expect(souls?.src, "视图不再自行过滤可凝件").not.toContain("const refinable = computed");
 
-    const celestial = FILES.find((f) => f.path === "views/CelestialView.vue");
+    const celestial = fileAt("views/CelestialView.vue");
     expect(celestial?.src, "天界入口也读同一份槽位账").toContain("soulOverview(");
     expect(celestial?.src, "入口报的是同一份已凝数").toContain("soulPulse.activeCount");
   });
@@ -2520,12 +2547,12 @@ describe("界面分层 · 浮层只有一个出处", () => {
     //    价签若一视同仁 formatGN(o.reward) 就亮「0 灵石」——对不上任何结算的假数。
     //    只在贡器单亮「≥X 石」底线(同源下限),不许退回占位 0。② 功法辅修席满时「放入
     //    辅修席」不许再可点等 toast 拦,须置灰就地列因(与同一弹窗进修「尚差」同族)。
-    const market = FILES.find((f) => f.path === "views/MarketView.vue");
+    const market = fileAt("views/MarketView.vue");
     expect(market?.src, "贡器单要单独报下限(equip)").toContain('o.kind === "equip"');
     expect(market?.src, "贡器具现下限走 equipBountyReward(tier,0)").toContain(
       "equipBountyReward(o.tier, 0).stone",
     );
-    const gongfa = FILES.find((f) => f.path === "components/cultivation/GongfaDialog.vue");
+    const gongfa = fileAt("components/cultivation/GongfaDialog.vue");
     expect(gongfa?.src, "辅修席满要置灰(subFull)").toContain(':disabled="subFull"');
     expect(gongfa?.src, "席满拦因要显在按钮上,不许只有定性").toContain("辅修席满");
   });
@@ -2534,7 +2561,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 突破按钮前只摊「耗灵气 N」,失败的真实代价(损修为 ×BT_FAIL_EXP_LOSS)一字不露,
     // 玩家不知道破境还有修为折损。代价要读常量(改常数不撒谎),并点出返还/跬步对冲。
     // 代价行自 CultivationView 拆出随本体迁入 BreakthroughCard —— 钉随走(拆分第五轮 · 一)。
-    const cult = FILES.find((f) => f.path === "components/cultivation/BreakthroughCard.vue");
+    const cult = fileAt("components/cultivation/BreakthroughCard.vue");
     expect(cult?.src, "突破不成要摊损修为,读 BT_FAIL_EXP_LOSS 常量").toContain(
       "formatPercent(BT_FAIL_EXP_LOSS)",
     );
@@ -2546,7 +2573,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 持传承时会看到一个其实必成的炉报「把握 60%」—— 结算与界面两本账。行构造器读同源余量,
     // 窗口期把把握换成「必成」并报剩几炉;总数读 craftGuaranteeCrafts,不许手写 3。
     // (弹窗拆出后这套展示在 components/inventory/BrewingDialog.vue)
-    const brew = FILES.find((f) => f.path === "components/inventory/BrewingDialog.vue");
+    const brew = fileAt("components/inventory/BrewingDialog.vue");
     expect(brew?.src, "保底余量与结算同源(craftGuaranteeCrafts)").toContain(
       "craftGuaranteeCrafts(",
     );
@@ -2561,7 +2588,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 也照炼不误,炼出来白占一格。方子行亮「存 N」(读 inventory.pills,与丹匣同一份账),
     // 增益丹再亮药力状态(已顶/将顶);判据与服用侧同一把尺(buffOverflowOf)+
     // 同一把响应式钟(useNow),拆分后都住在 composables/useBrewing.ts。
-    const brew = FILES.find((f) => f.path === "components/inventory/BrewingDialog.vue");
+    const brew = fileAt("components/inventory/BrewingDialog.vue");
     expect(brew?.src, "方子行要亮存 N").toContain("存 {{ r.stock }}");
     expect(brew?.src, "顶满要就地写「已顶」(与服用侧同族措辞)").toContain("已顶");
     expect(brew?.src, "将顶要亮(amber 金赭,与突破已封顶同族)").toContain("将顶");
@@ -2578,7 +2605,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 拆分后比率算在 composables/useBrewing.ts(FILES 只收 .vue,直读源码)、
     // 「炸炉返草 ~」的成本行展示在 BrewingDialog 模板 —— 两处各自盯。
     const brew = readFileSync(join(SRC, "composables/useBrewing.ts"), "utf-8");
-    const dialog = FILES.find((f) => f.path === "components/inventory/BrewingDialog.vue");
+    const dialog = fileAt("components/inventory/BrewingDialog.vue");
     expect(brew, "返草要读 salvageRatio(同源)").toContain("salvageRatio(");
     expect(dialog?.src, "返草要显在炉台成本行").toContain("炸炉返草 ~");
   });
@@ -2588,7 +2615,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 去留一览(samsaraAudit)写着法宝 reset(归尘)、功法 partial(回一层)—— 同屏两本账。
     // 一句话要与结算同源:保留随魂之物,功法回一层,法宝归尘。不许退回旧假账。
     // 拆分后轮回弹窗归 RebirthDialog,判据随本体改指子面板
-    const char = FILES.find((f) => f.path === "components/character/RebirthDialog.vue");
+    const char = fileAt("components/character/RebirthDialog.vue");
     expect(char?.src, "功法是回一层非折半").toContain("功法回一层");
     expect(char?.src, "法宝是归尘非保留").toContain("法宝归尘");
     expect(char?.src, "不许再手写旧假账(保留法宝/折半)").not.toMatch(/天赋 \/ 法宝|功法折半/);
@@ -2597,7 +2624,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("弟子历练的灵石奖励要露 —— 尘与石都拼上,不许链式早退吞掉石头", () => {
     // 历练(baseSpoils)同时产灵石(随境界折算的大头)与器尘,但 reapText/taskYield 原先都
     // 是单个 early-return 链,器尘排在前 → 灵石永远不显示。奖励要拼全(parts.join),不退回「只报一种」。
-    const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
+    const appr = fileAt("views/ApprenticeView.vue");
     expect(appr?.src, "要拼器尘").toContain("parts.push(`器灵尘");
     expect(appr?.src, "要拼灵石").toContain("parts.push(`灵石 ");
     expect(appr?.src, "不许单值早退").toContain("parts.join(");
@@ -2609,7 +2636,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 人物页盾值对不上。data 回归「只写 hook」的注释本意;显示处读常量拼值。
     const data = readFileSync(resolve(__dirname, "../data/equipSets.ts"), "utf-8");
     expect(data, "data 的 effectDesc 不许手写护盾百分比").not.toMatch(/护盾\s*\+[0-9.]+%/);
-    const equip = FILES.find((f) => f.path === "components/equipment/EquipmentDetailDialog.vue");
+    const equip = fileAt("components/equipment/EquipmentDetailDialog.vue");
     expect(equip?.src, "显示要读 ASTRAL_SET_SHIELD,不许另打一份").toContain(
       "formatPercent(ASTRAL_SET_SHIELD)",
     );
@@ -2619,7 +2646,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 闭关决意原先只给「修炼 +150%」的定性;在已有速度增益时按「每秒×2.5」预估会虚高。
     // 要按现倍率折算 base 再算(factor×现倍率+buff),并把「闭关后每秒 / 多收」摊成数。
     // 拆分后闭关卡归 RetreatCard,判据随本体改指子面板
-    const retreatCard = FILES.find((f) => f.path === "components/cultivation/RetreatCard.vue");
+    const retreatCard = fileAt("components/cultivation/RetreatCard.vue");
     expect(retreatCard?.src, "要摊闭关后每秒").toContain("闭关后每秒");
     expect(retreatCard?.src, "按现倍率折算,不手写常数").toContain("mult + r");
   });
@@ -2747,7 +2774,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("灵气积余备注不手写倍数 —— 与「容量的 N 倍」同源,改常数不撒谎", () => {
     // 同文件兄弟行已用 QI_BANK_MULT;唯独 qiDetailNote 把「10」字面量钉死,
     // 常量一改详情页就撒谎。判据要求它像那行一样读常量,不许手写任一数字倍数。
-    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    const cult = fileAt("views/CultivationView.vue");
     expect(cult?.src, "积余备注要读 QI_BANK_MULT").toContain("容量的 ${QI_BANK_MULT} 倍)");
     expect(cult?.src, "不许手写「= 容量的 10 倍」这类字面量").not.toMatch(/= 容量的 \d+ 倍/);
   });
@@ -2756,7 +2783,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // Phase 19.5 的关键设计(多来源边际递减、混合构筑更值)此前只活在公司注释与引擎
     // 文档里:明细每一份虽是打完折的真值,玩家对着两三个来源看不出「第三个被砍半」。
     // 点开多源明细时,把递减权重序从 DIMINISH_WEIGHTS 本体读出来,不许手抄 "50%/25%"。
-    const char = FILES.find((f) => f.path === "views/CharacterView.vue");
+    const char = fileAt("views/CharacterView.vue");
     expect(char?.src, "递减说明要读 DIMINISH_WEIGHTS 本体").toContain("DIMINISH_WEIGHTS");
     expect(char?.src, "递减排重序从权重逐个换算且统走 formatPercent").toContain(
       "formatPercent(w, 0)",
@@ -2768,7 +2795,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("词条转移拦因要说清 —— 品质不够报缺哪档,落位不可报为什么", () => {
     // 候选「品质不够」太笼统 —— 玩家看不出该把目标件升到哪一档;落位「不可」也不
     // 说原因。两处都换口具体理由,与「决策信息完整」同族。
-    const xfer = FILES.find((f) => f.path === "components/equipment/AffixTransferPanel.vue");
+    const xfer = fileAt("components/equipment/AffixTransferPanel.vue");
     expect(xfer?.src, "品质不够要直说缺哪一档").toContain("需 ≥ ${minQualityName()}");
     expect(xfer?.src, "落位不可要报具体原因(读 transferBlockText)").toContain(
       "transferBlockText(l.check.block, affixId!)",
@@ -2780,7 +2807,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 护盾至多覆盖最大气血 50% 此前只活在 combat 常量,玩家堆盾前完全不知道这道顶。
     // 面它摆进有盾系词条时的人物卡(与「进阶成功率只作用于小进阶」同一族边界注),
     // 只在真相关时出现、不占常驻字数;百分比从 SHIELD_CAP_RATIO 本体读,不手写 "50%"。
-    const char = FILES.find((f) => f.path === "views/CharacterView.vue");
+    const char = fileAt("views/CharacterView.vue");
     expect(char?.src, "护盾上限说明要读 SHIELD_CAP_RATIO 本体").toContain("SHIELD_CAP_RATIO");
     expect(char?.src, "只在有盾系词条时亮(v-if=hasShieldMods)").toContain('v-if="hasShieldMods"');
     expect(char?.src, "上限说明要点破「顶不破这道上限」").toContain("顶不破这道上限");
@@ -2789,7 +2816,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("收徒归来要有一声 —— 资材不清进入账,界面要报「XX 归来,带回…」", () => {
     // 弟子完工此前被一拍 disable 的 collectFinished 静默收割:资材悄悄入账、弟子无声
     // 变回闲置,玩家盯着归期看却不报。「已归,待领」那格还因同一拍清 task 而永远亮不了。
-    const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
+    const appr = fileAt("views/ApprenticeView.vue");
     expect(appr?.src, "归来要消费 collectFinished 的尾账").toContain(
       "announceReaps(appr.collectFinished",
     );
@@ -2805,7 +2832,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 弟子卡原先只在路上时给一个倒计时,页面上没有一眼可读的「几个人在家、几个人
     // 在途、最近谁先回来」;一键派发也不报这次会派走几人。汇总若散在模板里各数一遍,
     // 迟早出现卷首与按钮对不上。故卷首、按钮与逐单进度都接同一份 core 真值。
-    const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
+    const appr = fileAt("views/ApprenticeView.vue");
     expect(appr?.src, "门庭汇总要调 apprenticeOverview").toContain("apprenticeOverview(");
     expect(appr?.src, "卷首要挂稳定落点").toContain("data-apprentice-pulse");
     expect(appr?.src, "在途/闲置读同一份 pulse").toContain("pulse.away");
@@ -2820,7 +2847,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 「派闲置弟子去最缺的门」与回执「已派往最缺的门」在**并列**时是假的 ——
     // 调度案无单门胜出会退回各自专职,两句文案却没换口。判定与文案必须
     // 同源(apprenticeDispatchPlan / taskDef),并列、单门两种话术都钉在这里,不许只报一种。
-    const appr = FILES.find((f) => f.path === "views/ApprenticeView.vue");
+    const appr = fileAt("views/ApprenticeView.vue");
     expect(appr?.src, "派发文案要读 apprenticeDispatchPlan(单门/并列的唯一判据)").toContain(
       "apprenticeDispatchPlan",
     );
@@ -2834,7 +2861,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("引气疗伤付不起列短差与回够时长 —— 同文件突破钮已内化的口径此处不许漏", () => {
     // 疗伤钮是最老的「只说不许不报差」式样:灰钮只报「需 X」,不差多少、不回够多久。
     // 同文件突破钮 btQiBlock 已补齐短差+ETA,此处照同一口径收口。
-    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    const cult = fileAt("views/CultivationView.vue");
     expect(cult?.src, "疗伤灰钮要现算短差").toMatch(/const repairBlock = computed\(/);
     expect(cult?.src, "没有伤势时连入口都不出现,短差句也不许单独挂出来").toContain(
       "if (!repair.value.injured || repair.value.affordable) return null;",
@@ -2847,7 +2874,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("出秘境要二步确认 —— 付过门票的独一份内容,误触不该直接清空", () => {
     // 整趟秘境是付过门票、层数战利「出则散」的独一份内容,此前点「出秘境」一拍即清,
     // 误触即血亏 —— 与删快照同族,进确认态再动手。
-    const sr = FILES.find((f) => f.path === "components/adventure/SecretRealmCard.vue");
+    const sr = fileAt("components/adventure/SecretRealmCard.vue");
     expect(sr?.src, "出秘境要先进确认态").toContain("confirmAbandon = true");
     expect(sr?.src, "确认态要点破「弃境」").toContain("确认弃境");
     expect(sr?.src, "确认态要有取消兜底").toContain("confirmAbandon = false");
@@ -2855,7 +2882,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
 
   it("灵脉全域满要自报 —— 单脉未满却被总量卡死,不许只印费用", () => {
     // 单脉未满、钱够、却被 7 座总容量卡死时,此前按钮置灰却印着费用,像还能投。
-    const vein = FILES.find((f) => f.path === "components/dongfu/VeinInvestCard.vue");
+    const vein = fileAt("components/dongfu/VeinInvestCard.vue");
     expect(vein?.src, "全域满要换口「总容量已满」").toContain("总容量已满");
     const capAt = vein?.src.indexOf("总容量已满") ?? -1;
     const shortAt = vein?.src.indexOf("尚差") ?? -1;
@@ -2869,7 +2896,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 按钮、读屏名、批量调用三处同源:批量指改 VEIN_BATCH 一处生效,
     // 而不是「+5」「连投 5 点」「investVeinBatch(id, 5)」各写一遍、改常量就撒谎
     // (与连炼×5 / 建筑连升同一种有界批量,药那侧已有 pillBatch.spec 单源钉住)。
-    const vein = FILES.find((f) => f.path === "components/dongfu/VeinInvestCard.vue");
+    const vein = fileAt("components/dongfu/VeinInvestCard.vue");
     expect(vein?.src, "连投按钮要读常量 VEIN_BATCH").toMatch(/\+{{\s*VEIN_BATCH\s*}}/);
     expect(vein?.src, "连投读屏名要与批量数同源").toContain("连投 ${VEIN_BATCH} 点");
     expect(vein?.src, "批量调用要传 VEIN_BATCH 而非字面量").toContain(
@@ -2885,7 +2912,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 刻度格复用 REALMS 渲染,唯一会把「有几境」写死的是读屏 aria-label「仙路 21 境」:
     // 将来增删境界,刻度会跟着变,这句读名却停在 21 —— 又是「写常量即撒谎」。
     // 境数必须取自 points(即 REALMS.length),不许留数字字面量。
-    const lad = FILES.find((f) => f.path === "components/cultivation/RealmLadder.vue");
+    const lad = fileAt("components/cultivation/RealmLadder.vue");
     expect(lad?.src, "仙路 aria-label 的境数要读 points.length").toContain(
       "仙路 ${points.length} 境",
     );
@@ -2896,7 +2923,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 建筑卡的连升按钮文本与批量调用都读 BUILD_BATCH,唯一漏的是读屏
     // aria-label「连升 5 级」—— 批量指变了,按钮与调用跟着变,读名却停在 5,
     // 又是「写常量即撒谎」(与灵脉连投 / 仙路境数同族)。
-    const b = FILES.find((f) => f.path === "components/dongfu/BuildingLedgerRow.vue");
+    const b = fileAt("components/dongfu/BuildingLedgerRow.vue");
     expect(b?.src, "建筑连升读屏名要插批量常量").toContain("`连升 ${BUILD_BATCH} 级`");
     expect(b?.src, "不许退回手写「连升 5 级」").not.toContain('aria-label="连升 5 级"');
   });
@@ -2905,7 +2932,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 一条账行同时铺当前效果、下一级、连升成本、连升净得与联动信息会失去轻重。
     // 账面只留「当前首项 + 下一级首项 + 主键」,完整效果、联动与连升账收进
     // disclosure;展开态必须报给读屏。
-    const b = FILES.find((f) => f.path === "components/dongfu/BuildingLedgerRow.vue");
+    const b = fileAt("components/dongfu/BuildingLedgerRow.vue");
     expect(b?.src, "主升级键要有稳定运行时指纹").toContain("data-building-action");
     expect(b?.src, "详情开关要有稳定运行时指纹").toContain("data-building-detail-toggle");
     expect(b?.src, "详情开关要把展开态报给读屏").toContain(':aria-expanded="detailsOpen"');
@@ -2935,7 +2962,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 阈值数字本就随 QI_RICH_THRESHOLD_RATIO(结算同源)现算,可括号里的形容
     // 「容量一半」是手写的:比例一旦从 0.5 改走,数字跟着变、这句形容却停在一半,
     // 又是不许手写会被常数改动的字(「改常数就撒谎」)。
-    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    const cult = fileAt("views/CultivationView.vue");
     expect(cult?.src, "阈值比率要用 formatPercent 现算").toContain(
       "formatPercent(QI_RICH_THRESHOLD_RATIO)",
     );
@@ -2946,7 +2973,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 天时剩余是主页上唯一每秒在变的活值:最后 1 小时逐秒走字(formatDuration 变宽,
     // 「9分59秒」→「10分0秒」字数还会缩),必须走 formatCountdown 逐位补零 + countdown-slot
     // 定宽槽,整行才不随倒数左右跳(与状态胶囊同一条抖动纪律,见 style.css 的注释)。
-    const home = FILES.find((f) => f.path === "views/HomeView.vue");
+    const home = fileAt("views/HomeView.vue");
     expect(home?.src).toContain("formatCountdown(weatherRemainingSec())");
     expect(home?.src).toContain("countdown-slot");
     expect(home?.src, "不许退回会变宽的 formatDuration").not.toContain(
@@ -2959,7 +2986,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 名被压成竖排(25px×54px,layout-check vertical-texts 报过),倒计时还会越界撞到右侧
     // 修炼球(overlap=true)。修法:整行 flex-wrap 让倒计时装不下就换行,天时名 shrink-0
     // 不折 —— 既消竖排又不撞球。退化成只 nowrap 不 wrap 的写法,倒计时照样盖到球上。
-    const home = FILES.find((f) => f.path === "views/HomeView.vue");
+    const home = fileAt("views/HomeView.vue");
     const css = readStyleCss();
     const row = home?.src.match(/<div class="home-deck__weather-line">[\s\S]{0,420}/)?.[0] ?? "";
     expect(row, "天气行要有独立运行时落点").not.toBe("");
@@ -3004,7 +3031,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     ];
     const problems: string[] = [];
     for (const [path, word, arm] of family) {
-      const f = FILES.find((x) => x.path === path);
+      const f = fileAt(path);
       if (!f) {
         problems.push(`${path}: 文件不见了`);
         continue;
@@ -3014,14 +3041,14 @@ describe("界面分层 · 浮层只有一个出处", () => {
       // 取消词全库一律「再想想」—— 分解另禁「算了」回潮
       if (!f.src.includes("再想想")) problems.push(`${path}: 取消词须是「再想想」`);
     }
-    const eq = FILES.find((f) => f.path === "components/equipment/EquipDecomposePanel.vue");
+    const eq = fileAt("components/equipment/EquipDecomposePanel.vue");
     expect(eq?.src, "分解取消不许再写「算了」").not.toContain("算了");
     expect(problems, `话术或武装态各说各话:${problems.join(" | ")}`).toEqual([]);
   });
 
   it("洞府巡游的离开键只留动作,后果单独说 —— 195px 下短标签不许被括号挤折", () => {
-    const cave = FILES.find((f) => f.path === "components/dongfu/CaveEventModal.vue");
-    const sheet = FILES.find((f) => f.path === "components/earlygame/OpportunityScroll.vue");
+    const cave = fileAt("components/dongfu/CaveEventModal.vue");
+    const sheet = fileAt("components/earlygame/OpportunityScroll.vue");
     expect(cave?.src, "离开后的后果要单独成行").toContain("离开后,今日不再巡游");
     expect(cave?.src, "按钮只留短动作").toContain('leave-label="离 开"');
     expect(sheet?.src, "共享卷尾动作锁满一行").toContain(
@@ -3035,7 +3062,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 导入备份会把本机全部进度替换掉、不可逆,却曾与重置不对称:重置有整整一个
     // 确认弹窗,导入却在选中文件后直接 importSaveText + reloadGame,一句话带过。
     // 现在导入也会先进确认态(读到文本挂起、引擎暂停),确认才替换(与重置/删构筑/分解同族)。
-    const s = FILES.find((f) => f.path === "views/SettingsView.vue");
+    const s = fileAt("views/SettingsView.vue");
     expect(s?.src, "选中文件后要先开确认态,不许直接落库").toContain("importConfirm.value = true");
     expect(s?.src, "确认弹窗要点破「整体替换」").toContain("整体替换");
     expect(s?.src, "确认成功走专门的 confirmImport,不在 onFilePicked 里顺带落库").toContain(
@@ -3063,7 +3090,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 声息、观照、行止、存续、留痕、卷末按顺序续排。
      * 故障注入 = 任一章重新套 SectionTitle / LedgerHeader / 四边卡,下面必红。
      */
-    const view = FILES.find((f) => f.path === "views/SettingsView.vue");
+    const view = fileAt("views/SettingsView.vue");
     const css = readFileSync(resolve(__dirname, "../styles/pages/settings.css"), "utf8");
     const register = view?.src.slice(
       view.src.indexOf("data-settings-console"),
@@ -3098,7 +3125,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 共用一个 data-realm-codex-folio,内部只以章节头与分段线续排;故障注入 =
      * 任一册另起 card-ink,或外层补回左右边框/圆角/投影,下面必红。
      */
-    const view = FILES.find((f) => f.path === "views/RealmCodexView.vue");
+    const view = fileAt("views/RealmCodexView.vue");
     const css = readFileSync(resolve(__dirname, "../styles/pages/realm-codex.css"), "utf8");
 
     expect(view?.src, "六册要共用一个连续账页").toContain("data-realm-codex-folio");
@@ -3123,7 +3150,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     const eqFiles = FILES.filter((f) => f.path.startsWith("components/equipment/"))
       .map((f) => f.src)
       .join("\n");
-    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    const cult = fileAt("views/CultivationView.vue");
     expect(eqFiles, "品阶名不许叠 opacity 淡化").not.toMatch(/text-\[9px\] opacity-80/);
     expect(cult?.src, "buff 叠数不许叠 opacity 淡化").not.toMatch(/text-\[9px\] opacity-80/);
   });
@@ -3148,7 +3175,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 六大流派短名此前在空态与 buildSim 矩阵各抄一份,新增/改名一侧另一侧不跟。
     const bd = readFileSync(resolve(__dirname, "../core/buildDetect.ts"), "utf-8");
     expect(bd, "发现页读数要从 BUILD_STYLES 逐路计算").toContain("BUILD_STYLES.map");
-    const discovery = FILES.find((f) => f.path === "components/build/BuildDiscovery.vue");
+    const discovery = fileAt("components/build/BuildDiscovery.vue");
     expect(discovery?.src, "每一路的名字从行数据读").toContain("{{ row.style.name }}");
     expect(discovery?.src, "发现页不手抄任何流派名").not.toMatch(
       /背水流|罡盾流|反震流|连击流|沐泽流|锋芒流/,
@@ -3163,7 +3190,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 未择道途时整块消失,玩家切到试炼页找不到今日天道,会以为 bug。类目下
     // 「天道变数/试炼」都常驻,唯独这块没空态。补一句「择定道途后在此展开」。
     // 试炼域拆出后判据随本体走 components/celestial/TrialPanel.vue
-    const cel = FILES.find((f) => f.path === "components/celestial/TrialPanel.vue");
+    const cel = fileAt("components/celestial/TrialPanel.vue");
     expect(cel?.src, "今日天道未择道途要有占位(v-else)").toMatch(/<section v-else>/);
     expect(cel?.src, "占位要直说「随道途而定」").toContain("今日天道随道途而定");
     expect(cel?.src, "占位要指明去道途页择定").toContain("择定");
@@ -3173,7 +3200,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 创角「灵根鉴定」全屏定格是核心结果播报,却对读屏完全无声(动画期间
     // pointer-events:none、无 aria-live)—— 视障玩家看完一屏动画仍不知道
     // 测出哪条根。定格那一瞬(animating=false)必须用 aria-live=polite 念真名。
-    const reveal = FILES.find((f) => f.path === "components/common/SpiritRootReveal.vue");
+    const reveal = fileAt("components/common/SpiritRootReveal.vue");
     expect(reveal?.src, "鉴定结果必须挂 aria-live 播报区").toContain('aria-live="polite"');
     expect(reveal?.src, "播报区必须在定稿件时出现(animating=false)").toMatch(/v-if="!animating"/);
     expect(reveal?.src, "要念出「灵根鉴定完毕」的真名").toContain("灵根鉴定完毕");
@@ -3200,7 +3227,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 最早的履历会无声消失。封顶 = 要留意(琥珀族,同突破已封顶/遇事勿扰),
     // 判据必须读 store 的 marksFull(与 addMark 的封顶同源),不许视图另数一遍。
     // 道痕 tab 拆出后判据随本体走(components/celestial/MarksPanel.vue)。
-    const cel = FILES.find((f) => f.path === "components/celestial/MarksPanel.vue");
+    const cel = fileAt("components/celestial/MarksPanel.vue");
     expect(cel?.src, "天界道痕区要挂满卷提示").toContain("endgame.marksFull");
     expect(cel?.src, "满卷要是要留意的琥珀,不是普通淡字").toMatch(
       /endgame\.marksFull[\s\S]{0,80}text-amber-ink/,
@@ -3219,7 +3246,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("道痕是独立册 —— 道途页不许混入履历,marks 页签必须真挂面板", () => {
     // 拆分面板时,条件一度写成 celTab === 'dao':于是道途册同时铺下道途与整卷道痕,
     // 而点「道痕」册反而什么都不出现。这不是布局噪声,是页签承诺与内容对不上。
-    const cel = FILES.find((f) => f.path === "views/CelestialView.vue");
+    const cel = fileAt("views/CelestialView.vue");
     expect(cel?.src, "道痕面板必须挂在 marks 页签").toMatch(
       /<MarksPanel\s+v-else-if="celTab === 'marks'"/,
     );
@@ -3231,7 +3258,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("道痕 60 则按批回看 —— 只铺当前窗,续开与回翻都把焦点送到新内容", () => {
     // max-h-64 只裁眼睛看到的高度,不裁 DOM。满卷 60 则每则都带忆战/重写动作,
     // 整卷铺开会把页签切换拖成一次大渲染;窗口仍须覆盖完整履历并可前后回看。
-    const cel = FILES.find((f) => f.path === "components/celestial/MarksPanel.vue");
+    const cel = fileAt("components/celestial/MarksPanel.vue");
     expect(cel?.src, "道痕要使用共享窗口而不是整卷 v-for").toContain("listWindow(endgame.marks,");
     expect(cel?.src, "每批 12 则、最多同时保留两批").toMatch(
       /MARKS_RENDER_BATCH = 12[\s\S]{0,120}MARKS_RENDER_WINDOW = MARKS_RENDER_BATCH \* 2/,
@@ -3260,7 +3287,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 表彰不该偏废:归总是「此行已结」的完成态,该有自己的印。语义色族规不变:
     // 朱砂=里程碑(突破/首领),石绿=完成/结清(今日已毕/尽收/归来) —— 谁把
     // 归来印换成朱砂,或者把印拆回一行字,下面红。
-    const dlg = FILES.find((f) => f.path === "components/offline/OfflineRewardDialog.vue");
+    const dlg = fileAt("components/offline/OfflineRewardDialog.vue");
     expect(dlg?.src, "归来卷轴要有石绿「归」印(animate-seal-breathe + border-jade)").toContain(
       "animate-seal-breathe",
     );
@@ -3297,7 +3324,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 修为/灵石已走 formatGN,灵气等大数资源却裸整数 —— 同列的 tabular 对齐被
     // 一串 10~20 位裸数字撑破(顶栏都缩写 qi,离线卷轴却给原数)。同一列、同一把尺:
     // 大资源全部 formatNum 缩写,小值它也会原数显示,不吞精度。
-    const dlg = FILES.find((f) => f.path === "components/offline/OfflineRewardDialog.vue");
+    const dlg = fileAt("components/offline/OfflineRewardDialog.vue");
     expect(dlg?.src, "灵气要缩写").toContain("+${formatNum(s.qi)}");
     expect(dlg?.src, "灵草要缩写").toContain("+${formatNum(s.herb)}");
     expect(dlg?.src, "玄铁要缩写").toContain("+${formatNum(s.ore)}");
@@ -3315,7 +3342,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // toast 几乎通报了每一笔获得与每一处不足,ToastHost 却没有 live region ——
     // 视觉玩家有滑入的音画,读屏玩家点完只听个静默。挂在容器上:TransitionGroup
     // + :key=id 保证新 toast 只新增一个节点,念出的是新条;旧条移除不发声。
-    const host = FILES.find((f) => f.path === "components/common/ToastHost.vue");
+    const host = fileAt("components/common/ToastHost.vue");
     expect(host?.src, "toast 容器要挂 aria-live=polite").toContain('aria-live="polite"');
     expect(host?.src, "toast 要标明自己的多行语义").toContain("data-toast");
     const layout = readFileSync(resolve(__dirname, "../../scripts/layout-check.mjs"), "utf8");
@@ -3327,7 +3354,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 若 toast 音效只盯「最后一条」,Vue 批处理后只对末条 info 发声 —— 转世那下
     // 金光与稀有音效被静态吃掉(玩家守着屏幕重活一世,却只见一条普通提示)。
     // 改盯「新增了哪些」:id 单调递增,凡超过已播最大 id 的新条各有其类型声。
-    const host = FILES.find((f) => f.path === "components/common/ToastHost.vue");
+    const host = fileAt("components/common/ToastHost.vue");
     const w = host?.src.match(/let lastAnnouncedId[\s\S]{0,320}/)?.[0] ?? "";
     expect(host?.src, "要记录已播过的最大 toast id").toContain("let lastAnnouncedId");
     expect(w, "要遍历所有超过已播 id 的新 toast,不许只取末条").toMatch(
@@ -3341,7 +3368,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 没有 toast 可依 —— 不念一句,读屏玩家就只知道它没了。以「有无」布尔为
     // 观察对象(每秒心跳都在换新对象,watch 身份只会每秒误触发),只在真→假那
     // 一瞬开口。成卦有 toast(live 区落地即念),不重报。
-    const codex = FILES.find((f) => f.path === "views/RealmCodexView.vue");
+    const codex = fileAt("views/RealmCodexView.vue");
     expect(codex?.src, "散卦要用有无布尔翻转触发,不许 watch 每秒心跳换的对象").toMatch(
       /watch\(hasReading/,
     );
@@ -3354,7 +3381,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 定格有 SpiritRootReveal 的播报,途中「逆天改命」重掷却只换画面不出声 ——
     // 同一个交互族的一半开了口、一半还哑着。rollSeq 只在成功重掷自增,以它为
     // 观察对象:每次重掷念一遍新牌。
-    const create = FILES.find((f) => f.path === "views/CreateView.vue");
+    const create = fileAt("views/CreateView.vue");
     expect(create?.src, "重掷结果要挂 aria-live=polite 播报区").toContain('aria-live="polite"');
     expect(create?.src, "播报区要视觉隐藏(用 Tailwind 全局 sr-only)").toContain("sr-only");
     expect(create?.src, "观察对象要是只增不减的 rollSeq").toMatch(/watch\(rollSeq/);
@@ -3368,7 +3395,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 返回 false 后静默 return —— 玩家按一下什么都没有,只会以为按钮坏了。
      * 「不可行就置灰 + 说清为什么」是仓库纪律,这条分支得先写好。
      */
-    const create = FILES.find((f) => f.path === "views/CreateView.vue");
+    const create = fileAt("views/CreateView.vue");
     const src = create?.src ?? "";
     expect(src, "要有「额度已尽」的判定").toMatch(/rerollExhausted\s*=\s*computed\(/);
     expect(src, "按钮要读它置灰").toMatch(/:disabled="[^"]*rerollExhausted/);
@@ -3383,7 +3410,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("问卦付不起就置灰+列差 —— 缺哪样、直说,不许点了才弹", () => {
     // 此前按只在「卦在身」时限灰:悟道点不足时照常可点,点下去才弹 warn toast。
     // 与进修/熔炉同款纪律:付不起的按钮当场置灰、内联写出差额(防御臂仍在 core)。
-    const codex = FILES.find((f) => f.path === "views/RealmCodexView.vue");
+    const codex = fileAt("views/RealmCodexView.vue");
     expect(codex?.src, "按钮要绑合成的 disabled(卦在身或不足都灰)").toMatch(
       /:disabled="askDisabled"/,
     );
@@ -3466,18 +3493,18 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // (破全球「尚差 X 石」)、进修按钮悟道 vs 顶部悟道点、建筑卡 50 铁 vs 玄铁 N 块、
     // 装备重铸 尘×N vs 强化 器灵尘×N(同 toast 前后脚)。
     // 灵草坊弹窗拆出后判据随本体走(components/inventory/HerbShopDialog.vue)。
-    const shop = FILES.find((f) => f.path === "components/inventory/HerbShopDialog.vue");
+    const shop = fileAt("components/inventory/HerbShopDialog.vue");
     expect(shop?.src, "灵草坊尚差要跟全球「尚差 N 石」口风").toMatch(
       /尚差 \{\{ formatGN\(row\.short\) \}\} 石/,
     );
     expect(shop?.src, "灵草坊价目行要全称「灵石」").toContain(
       "单价 {{ formatGN(row.price) }} 灵石",
     );
-    const gongfa = FILES.find((f) => f.path === "components/cultivation/GongfaDialog.vue");
+    const gongfa = fileAt("components/cultivation/GongfaDialog.vue");
     expect(gongfa?.src, "进修按钮与横幅都要全称「悟道点」").toContain(
       "悟道点 · {{ upCost.page }} 残页",
     );
-    const equip = FILES.find((f) => f.path === "components/equipment/EquipReforgePanel.vue");
+    const equip = fileAt("components/equipment/EquipReforgePanel.vue");
     // 实质是「用全称而不是裸『尘×』」;数字走 formatGN,与同屏灵石同一个读法
     expect(equip?.src, "重铸行要用全称「器灵尘」").toContain(
       "器灵尘×{{ formatGN(reforgeCostVal.dust) }}",
@@ -3486,7 +3513,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     const service = readFileSync(resolve(__dirname, "../core/buildingService.ts"), "utf-8");
     expect(service, "建筑尚差两臂同用简称「铁」").toContain("} 铁`");
     expect(service, "不许尚差里又冒回「玄铁 N 块」").not.toMatch(/玄铁 `|玄铁 \$\{/);
-    const cel = FILES.find((f) => f.path === "components/celestial/TutorialDialog.vue");
+    const cel = fileAt("components/celestial/TutorialDialog.vue");
     expect(cel?.src, "真仙导览散文要用全称「功法残页」").toContain("功法残页、灵石");
     // 散文 toast 里的读数同样全称 —— 连胜赏赐与历练回执都曾写「悟道 N」,
     // 与 d7783ee 收口的「混排零容忍」同类(同 toast 里灵石=N、悟道=N 直接展示裂痕)
@@ -3505,10 +3532,10 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 与另三路同形按钮完全相反:远征正跑时立约被静默置灰、而试炼/变数/今题
     // 依旧可点,玩家看不出凭什么。四路都是即时单场,统一都不受远征在途拦。
     // 远征域拆出后:守 run 的两键随本体走 ExpeditionPanel
-    const exped = FILES.find((f) => f.path === "components/celestial/ExpeditionPanel.vue");
+    const exped = fileAt("components/celestial/ExpeditionPanel.vue");
     expect(exped?.src, "启程/破界两键仍要守 run(它们是真远征)").toMatch(/:disabled="run !== null/);
     // 立约钮随试炼域在 TrialPanel,负断言随本体走
-    const cel = FILES.find((f) => f.path === "components/celestial/TrialPanel.vue");
+    const cel = fileAt("components/celestial/TrialPanel.vue");
     expect(cel?.src, "立约不许再挂 run 锁 —— 与试炼/变数/今题同族即时单场").not.toMatch(
       /!\s*challengeVerdict\?\.ok \|\| run !== null/,
     );
@@ -3527,7 +3554,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
       /^[ \t]*\.chip-ink \{[\s\S]{0,300}transition:/m,
     );
     // 拆分后逆旅契试炼卡归 RebirthDialog,判据随本体改指子面板
-    const char = FILES.find((f) => f.path === "components/character/RebirthDialog.vue");
+    const char = fileAt("components/character/RebirthDialog.vue");
     expect(char?.src, "卡状可点元素(试炼卡)也要带按压反馈").toContain("active:scale-99");
   });
 
@@ -3550,9 +3577,9 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 读屏可能当场切断;而首页此前全无 aria-live。CreateView 跳转前把起手句交给
     // ui store(worldEnter),首页挂载时用自家 aria-live 补念,读完即清 ——
     // 只在创角→首页这一趟念,日常回首页不重复。
-    const create = FILES.find((f) => f.path === "views/CreateView.vue");
+    const create = fileAt("views/CreateView.vue");
     expect(create?.src, "跳转前要把起手句交给 ui store").toContain("ui.worldEnter =");
-    const home = FILES.find((f) => f.path === "views/HomeView.vue");
+    const home = fileAt("views/HomeView.vue");
     expect(home?.src, "首页要挂 aria-live 播报区").toContain('aria-live="polite"');
     expect(home?.src, "首页要读 ui store 的 worldEnter").toContain("ui.worldEnter");
     const ui = readFileSync(resolve(__dirname, "../stores/ui.ts"), "utf-8");
@@ -3563,7 +3590,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // /titles /collection /build /legacy 都是 CharacterView 的子目标。统一卷首
     // 保留父页兜底,冷启动直达时也不会被裸 back() 送出游戏。
     for (const f of ["TitlesView", "CollectionView", "BuildView", "LegacyView"]) {
-      const src = FILES.find((x) => x.path === `views/${f}.vue`)?.src ?? "";
+      const src = fileAt(`views/${f}.vue`).src;
       expect(src, `${f} 要接共同卷首`).toContain("<FolioPageHeader");
       expect(src, `${f} 的返回兜底要指向人物`).toContain('back-to="character"');
       expect(src, `${f} 的返回文案要写「人物」`).toContain('back-label="人物"');
@@ -3580,7 +3607,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 现在灵气走 useProgressEta(与修炼页同构),灵石给一句用途。
      * 这条判据钉的是「带上下文」,不是具体措辞。
      */
-    const bar = FILES.find((f) => f.path === "components/common/TopStatusBar.vue")?.src ?? "";
+    const bar = fileAt("components/common/TopStatusBar.vue")?.src ?? "";
     expect(bar, "没取到顶栏,判据在空转").toContain("data-resource-detail");
     expect(bar, "灵气浮层要接同构的进度上下文").toContain("useProgressEta");
     expect(bar, "灵气要把 rows 交给 TapNumber").toMatch(
@@ -3624,7 +3651,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     const fallback = /row\.hint \?\? "([^"]+)"/.exec(dialog)?.[1] ?? "";
     expect(fallback, "默认句里不该出现「速率」——它对战力行不成立").not.toContain("速率");
 
-    const char = FILES.find((f) => f.path === "views/CharacterView.vue")?.src ?? "";
+    const char = fileAt("views/CharacterView.vue")?.src ?? "";
     expect(char, "战力权重行要自带 hint").toMatch(/label: '战力权重'[\s\S]{0,120}?hint:/);
     expect(char, "占战力行要自带 hint").toMatch(/label: '占战力'[\s\S]{0,120}?hint:/);
     expect(char, "没取到人物页,判据在空转").toContain("powerDetailRows");
@@ -3759,7 +3786,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     const progress = readFileSync(resolve(__dirname, "../core/progress.ts"), "utf-8");
     expect(progress, "成就赏与 toast 要写字面「名号」").toContain("名号「");
     expect(progress, "赏赐 toast 要念「获得名号」").toContain("获得名号「");
-    const char = FILES.find((f) => f.path === "views/CharacterView.vue");
+    const char = fileAt("views/CharacterView.vue");
     expect(char?.src, "人物页无称号时的占位要写「未佩名号」").toContain("未佩名号");
     const itemText = readFileSync(resolve(__dirname, "../ui/itemText.ts"), "utf-8");
     expect(itemText, "装备/图鉴的属性平铺 maxHp 要写「气血」").toContain('maxHp: "气血"');
@@ -3767,15 +3794,15 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(statNames, "气血上限与气血同一族 —— maxHpPct 不许单独留在「生命上限」").toContain(
       'maxHpPct: "气血上限"',
     );
-    const equip = FILES.find((f) => f.path === "components/equipment/EquipmentDetailDialog.vue");
+    const equip = fileAt("components/equipment/EquipmentDetailDialog.vue");
     expect(equip?.src, "装备详情的三围平铺要随全票叫「气血」").toContain(
       'push("气血", r.flats.maxHp',
     );
-    const cult = FILES.find((f) => f.path === "views/CultivationView.vue");
+    const cult = fileAt("views/CultivationView.vue");
     // 拆分后劫势详情归 TribulationPanel、破境卡归 BreakthroughCard —— 气血/速度/名号
     // 叫法守卫要查全域(宿主+两块子卡),不许只查宿主(假绿,同资源叫法条全域化先例)
-    const trib = FILES.find((f) => f.path === "components/cultivation/TribulationPanel.vue");
-    const btc = FILES.find((f) => f.path === "components/cultivation/BreakthroughCard.vue");
+    const trib = fileAt("components/cultivation/TribulationPanel.vue");
+    const btc = fileAt("components/cultivation/BreakthroughCard.vue");
     const cultDomain = [cult?.src, trib?.src, btc?.src].join("\n");
     expect(btc?.src, "破境益的散文脚注也要说「名号」,不许留「装备·称号」混排").toContain(
       "装备·名号·天时",
@@ -3787,7 +3814,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
       cultDomain,
       "修炼速度一族全票认 canonical(STAT_NAMES),修行速度/修为速率不许回来",
     ).not.toMatch(/修行速度|修为速率/);
-    const create = FILES.find((f) => f.path === "views/CreateView.vue");
+    const create = fileAt("views/CreateView.vue");
     expect(create?.src, "重掷念白要读 gradeName,不许句尾再缀「灵根」").toMatch(
       /重掷得「\$\{p\.gradeName\}」,/,
     );
@@ -3819,7 +3846,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 接管历练:历练走 explorationRules 只并大道/命途规则,world.rules 仅在模拟
     // spec 里用过。旧文案「此世笼罩:生机凋敝」读起来像本世正受这条弱化压制,
     // 实为界面撒谎。改成「此世命数」作气象之名,并明说其律尚未显化于历练。
-    const mw = FILES.find((f) => f.path === "views/MortalWorldView.vue");
+    const mw = fileAt("views/MortalWorldView.vue");
     expect(mw?.src, "境律要作「命数」之名,不许说成笼罩").toContain("此世命数:");
     expect(mw?.src, "不许退回「此世笼罩」的生效口吻").not.toContain("此世笼罩:");
     // 措辞可以变,意思不能丢:它参与成形校准,但**不改写历练里的战斗**。
@@ -3829,7 +3856,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("锁定路线只把可行动的那一段说一次,后段不再逐卡复读", () => {
-    const worldView = FILES.find((f) => f.path === "views/MortalWorldView.vue");
+    const worldView = fileAt("views/MortalWorldView.vue");
     expect(worldView?.src, "路线阶段提示要来自统一判据").toContain("mortalStageStatuses");
     expect(worldView?.src, "眼下可去的那一段要有明确记号").toContain("眼下可往");
     expect(worldView?.src, "紧随其后的锁定段要给唯一前置").toContain("须先通");
@@ -3846,7 +3873,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
      * 「须先通」,而玩家从历练页其实能直接出发。两个入口对同一处地界说
      * 两套话,正是这轮要收掉的裂缝。
      */
-    const worldView = FILES.find((f) => f.path === "views/MortalWorldView.vue");
+    const worldView = fileAt("views/MortalWorldView.vue");
     expect(worldView?.src, "出发资格要读统一准入谓词").toMatch(
       /function canDepart\(regionId: string\): boolean \{\s*return canEnterRegion\(regionId\);/,
     );
@@ -3858,7 +3885,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("山河行旅图三种阶段同时有图形、文字与读屏名,不只靠颜色", () => {
-    const map = FILES.find((f) => f.path === "components/world/MortalRouteMap.vue");
+    const map = fileAt("components/world/MortalRouteMap.vue");
     expect(map?.src, "路线图要挂稳定落点,运行时与判据才认得出它").toContain("data-world-route-map");
     expect(map?.src, "图本身要有随阶段与段数变化的可访问名").toContain("mapLabel");
     expect(map?.src, "已通不能只剩绿色圆点").toContain(">已通");
@@ -3874,8 +3901,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("历练页的行旅条复用世界视图与阶段判据,不另造一套进度", () => {
-    const adventure = FILES.find((f) => f.path === "views/AdventureView.vue");
-    const ribbon = FILES.find((f) => f.path === "components/world/MortalWorldRibbon.vue");
+    const adventure = fileAt("views/AdventureView.vue");
+    const ribbon = fileAt("components/world/MortalWorldRibbon.vue");
     expect(adventure?.src, "历练页要真的挂上行旅条").toContain("<MortalWorldRibbon");
     expect(adventure?.src, "首次进历练时本世之界要凝成,不能只等观象页").toContain(
       "if (!adventure.mortalWorld) ensureMortalWorld()",
@@ -3889,21 +3916,21 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("历练首屏先给主线:卷首在秘境支线之前,支线默认收口", () => {
-    const adventure = FILES.find((f) => f.path === "views/AdventureView.vue");
+    const adventure = fileAt("views/AdventureView.vue");
     const src = adventure?.src ?? "";
     const titleAt = src.search(/<FolioPageHeader[\s\S]{0,180}\btitle="历练"/);
     const secretAt = src.indexOf("<SecretRealmCard");
     expect(titleAt, "历练卷首要能找到").toBeGreaterThan(-1);
     expect(secretAt, "秘境卡要能找到").toBeGreaterThan(titleAt);
     expect(src, "地界列表要挂稳定落点").toContain("data-adventure-regions");
-    const secret = FILES.find((f) => f.path === "components/adventure/SecretRealmCard.vue");
+    const secret = fileAt("components/adventure/SecretRealmCard.vue");
     expect(secret?.src, "未入秘境时卡默认收起").toContain("const cardExpanded = ref(false)");
     expect(secret?.src, "收起态要留展开入口").toContain("data-secret-realm-card-toggle");
     expect(secret?.src, "只有展开或已在境中才露出名录").toContain('v-show="state || cardExpanded"');
   });
 
   it("行旅条说眼下可往时,历练列表必须把同一段路摆在可见首位", () => {
-    const adventure = FILES.find((f) => f.path === "views/AdventureView.vue");
+    const adventure = fileAt("views/AdventureView.vue");
     expect(adventure?.src, "可见范围要收口到可单测的同一实现").toContain("visibleRegionRows(");
     expect(adventure?.src, "当前段要从阶段判据反查区域,不许另猜").toContain("currentRouteRegionId");
     expect(adventure?.src, "当前段与首个可行动段都是可见钉子").toContain("pinned");
@@ -3918,7 +3945,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("历练页的锁定原因只留一条:路线内说路线,路线外才退回旧链", () => {
-    const adventure = FILES.find((f) => f.path === "views/AdventureView.vue");
+    const adventure = fileAt("views/AdventureView.vue");
     expect(adventure?.src, "旧链的「需先击败」只能在路线判据没有给出理由时兜底").toContain(
       'v-if="!row.canEnter && !row.blockReason"',
     );
@@ -3926,7 +3953,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   });
 
   it("前尘山河要把跨世世界史摊开,不让去重记录只活在 store 里", () => {
-    const world = FILES.find((f) => f.path === "views/MortalWorldView.vue");
+    const world = fileAt("views/MortalWorldView.vue");
     expect(world?.src, "世界页要读取最近几世的历史").toContain("mortalWorldHistory");
     expect(world?.src, "历史行要复用当前世界的同一份视图翻译").toContain("historyRows");
     expect(world?.src, "历史册要有稳定落点给运行时门").toContain("data-world-history");
@@ -4261,7 +4288,7 @@ describe("修炼页 · 字号收六档", () => {
     ];
     let total = 0;
     for (const path of domain) {
-      const sizes = usedSizes(FILES.find((f) => f.path === path)?.src ?? "");
+      const sizes = usedSizes(fileAt(path).src);
       total += sizes.length;
       const off = [...new Set(sizes)].filter((n) => !PAGE_TIERS.includes(n));
       expect(off, `${path} 冒出了六档以外的字号:${off.join(", ")}`).toEqual([]);
@@ -4418,15 +4445,15 @@ describe("主巡页 · 字阶同一套", () => {
 
   for (const path of pages) {
     it(`${path} 不冒出页面字阶以外的私档`, () => {
-      const view = FILES.find((f) => f.path === path);
+      const view = fileAt(path);
       let src = view?.src ?? "";
       if (path === "views/DongfuView.vue") {
         const css = readStyleCss();
         const start = css.indexOf(".dongfu-masthead__meta");
         const end = css.indexOf("/*\n   * 道躯案", start);
         src += [
-          FILES.find((f) => f.path === "components/dongfu/DongfuAtlas.vue")?.src ?? "",
-          FILES.find((f) => f.path === "components/dongfu/DongfuGatewayRow.vue")?.src ?? "",
+          fileAt("components/dongfu/DongfuAtlas.vue")?.src ?? "",
+          fileAt("components/dongfu/DongfuGatewayRow.vue")?.src ?? "",
           css.slice(start, end),
         ].join("\n");
       }
@@ -4443,7 +4470,7 @@ describe("主巡页 · 字阶同一套", () => {
         const start = css.indexOf(".folio-ledger-head {");
         const end = css.indexOf("@media (max-width: 220px)", start);
         src += [
-          FILES.find((f) => f.path === "components/common/LedgerHeader.vue")?.src ?? "",
+          fileAt("components/common/LedgerHeader.vue")?.src ?? "",
           css.slice(start, end),
         ].join("\n");
       }
@@ -4514,7 +4541,7 @@ describe("底部导航 · 当前位置与角标都要说给读屏", () => {
    * 破境」,而这恰好是本作最要紧的一次点击提示。两处都补 sr-only 等价物。
    */
   const nav = (): { path: string; src: string } | undefined =>
-    FILES.find((f) => f.path === "components/common/BottomNavigation.vue");
+    fileAt("components/common/BottomNavigation.vue");
 
   it("当前页签状态由 RouterLink 提供,不手写第二份", () => {
     expect(nav(), "底部导航不在扫描面里(判据会假绿)").toBeTruthy();
@@ -5011,7 +5038,7 @@ describe("人物页 · 可点行要说出自己是可点的", () => {
    *   二 选中行有左侧朱砂短笔与极淡底(否则展开一块正文,看不出点的是哪一行);
    *   三 来源拆卷只在**已展开**时出现,且能原地合上。
    */
-  const char = (): string => FILES.find((f) => f.path === "views/CharacterView.vue")?.src ?? "";
+  const char = (): string => fileAt("views/CharacterView.vue")?.src ?? "";
 
   it("mod 行带展开指示,且有选中态", () => {
     const src = char();
@@ -5069,7 +5096,7 @@ describe("入口卡 —— 一件,不是九件", () => {
    * 现在它们都走 common/NavCard.vue。这条判据只盯一件事:
    * 人物页三大入口区里不许再出现手写的入口卡骨架。
    */
-  const char = (): string => FILES.find((f) => f.path === "views/CharacterView.vue")?.src ?? "";
+  const char = (): string => fileAt("views/CharacterView.vue")?.src ?? "";
 
   it("人物页的册目都走 CharacterIndexRow", () => {
     const src = char();
@@ -5138,7 +5165,7 @@ describe("滚动区 —— 还有下文时要说出来", () => {
   it("长列表自带滚动区,不靠整块面板滚", () => {
     // 面板滚的话,列表尾会被页脚按钮齐齐切掉(这正是这条判据的由来)
     // 拆分后去留一览归 RebirthDialog,判据随本体改指子面板
-    const char = FILES.find((f) => f.path === "components/character/RebirthDialog.vue")?.src ?? "";
+    const char = fileAt("components/character/RebirthDialog.vue")?.src ?? "";
     expect(char, "去留一览要有自己的 max-h + overflow-y-auto").toMatch(/max-h-64 overflow-y-auto/);
     expect(char, "外圈要套 scroll-fade").toContain("scroll-fade");
   });
