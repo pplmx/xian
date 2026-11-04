@@ -3520,9 +3520,19 @@ describe("界面分层 · 浮层只有一个出处", () => {
     const early = readFileSync(resolve(__dirname, "../core/earlyGameService.ts"), "utf-8");
     expect(early, "连胜赏赐散文 toast 要全称「悟道点」").toContain("· 悟道点 ${reward.wudao}");
     expect(early, "连胜 toast 不许再写裸「悟道 N」").not.toContain("悟道 ${reward.wudao}");
+    /*
+     * 历练回执那句散文已抽成纯函数 ui/adventureText.sessionHaulText
+     * (为了可测,且器灵尘也要报)。全称「悟道点」这条不变 —— 判据跟到新出处。
+     */
+    const haulText = readFileSync(resolve(__dirname, "../ui/adventureText.ts"), "utf-8");
+    expect(haulText, "历练回执散文要全称「悟道点」").toContain("`悟道点 ${wudao}`");
+    expect(haulText, "历练回执散文要全称「器灵尘」").toContain("`器灵尘 ${dust}`");
+    expect(haulText, "历练回执不许写裸「、悟道 N」").not.toContain("、悟道 ${");
+    // 原文那句手拼的模板字面量已从 exploration 移走 —— 不许又冒回来一份
     const explore = readFileSync(resolve(__dirname, "../core/exploration.ts"), "utf-8");
-    expect(explore, "历练回执散文要全称「悟道点」").toContain("、悟道点 ${s.wudaoGain}");
-    expect(explore, "历练回执不许写裸「、悟道 N」").not.toContain("、悟道 ${s.wudaoGain}");
+    expect(explore, "收尾改用 sessionHaulText,不再自己拼一份").not.toContain(
+      "const haul = `得灵石",
+    );
   });
 
   it("五路天机一视同仁 —— 立约/试炼/变数/今题不受远征在途拦,只有真远征受", () => {

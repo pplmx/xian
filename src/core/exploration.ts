@@ -29,7 +29,7 @@ import type { RegionEventId } from "./regionEvent";
 import { mergeRules } from "./gauntlet";
 import { suppressRateLine } from "./suppress";
 import { regionRecallFor } from "./worldMemory";
-import { sessionRecordText } from "@/ui/adventureText";
+import { sessionHaulText, sessionRecordText } from "@/ui/adventureText";
 import { lifeTrialRules } from "./lifeTrialService";
 import { buildPlayerSnap } from "./playerSnap";
 import { currentDaoRules } from "./endgameService";
@@ -180,9 +180,13 @@ export function stopExploration(reason: "manual" | "defeat" | "complete"): void 
   // 战绩报「胜/负」两本账:只报胜场时,「胜 2 场」分不出是两战全胜还是九战两胜,
   // 而这恰恰是「这趟值不值得再来」与「胜+负 ≥3 才算走过一趟」要看的数。
   const record = sessionRecordText(s);
-  const haul = `得灵石 ${formatGN(s.stoneGain)}、修为 ${formatGN(s.expGain)}${
-    s.wudaoGain > 0 ? `、悟道点 ${s.wudaoGain}` : ""
-  }${s.itemGain > 0 ? `、拾获 ${s.itemGain} 件` : ""}`;
+  const haul = sessionHaulText({
+    stone: formatGN(s.stoneGain),
+    exp: formatGN(s.expGain),
+    wudaoGain: s.wudaoGain,
+    itemGain: s.itemGain,
+    dustGain: s.dustGain,
+  });
   if (reason === "complete") {
     notify(`此行${region?.name ?? ""}历练圆满,${record},际遇 ${s.events} 次;${haul}`, "success");
   } else if (reason === "defeat") {

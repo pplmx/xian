@@ -411,6 +411,7 @@ const CATEGORIES = [
       "petCompanionState",
       "lifeTrialArchive",
       "lootDustLedger",
+      "sessionHaul",
     ],
   },
   {
