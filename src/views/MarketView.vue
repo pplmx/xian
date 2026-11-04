@@ -733,7 +733,9 @@ function bountyReady(o: BountySlot): boolean {
                 </span>
                 <span>{{ previewFor(slot)!.inscription!.verse.text }}</span>
                 <span class="market-good__inscription-temper tabular">
-                  成色 {{ previewFor(slot)!.inscription!.temper }}/100
+                  成色 {{ previewFor(slot)!.inscription!.temper }}/100{{
+                    previewFor(slot)!.temperGrade ? ` · ${previewFor(slot)!.temperGrade}` : ""
+                  }}
                 </span>
               </p>
 

@@ -9240,6 +9240,146 @@ async function taskRebirthFolio() {
 }
 
 /**
+ * 成色的话 —— 一个 0~100 的数字要说得清它是好是差。
+ *
+ * 器评帖上写着「成色 67 / 100」。67 是什么水平?满掷才算好?及格就行?
+ * 同品的另一件是 82,差多少?一个既像分数、又没有任何标尺的数,
+ * 是界面里最容易让人误读的东西。评语把它翻译成人能用的判断。
+ *
+ * 判据三件:
+ *   一 评语与那个数**并排**在同一行(成色 67/100 · 中上),不被挤到下一行;
+ *   二 评语取自同一档口径:把成色读回来,与 ui/temperGrade 的分档对得上;
+ *   三 两端改口:掷满的那件读「掷满」,不读一个与中段同形的词。
+ */
+async function taskTemperGrade() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  /*
+   * 三件天品,词条掷点分别落在低/中/满三段 —— 成色由掷点均值定(见 core/inscription),
+   * 故直接给 roll 就能把三档逼出来,不必碰随机。
+   */
+  const mk = (uid, rolls) => ({
+    uid,
+    templateId: "h_miwu",
+    quality: "heaven",
+    tier: 16,
+    level: 0,
+    affixes: rolls.map((roll, i) => ({ id: `hp${i + 1}`, roll })),
+  });
+  const items = [mk("tg_low", [0.1]), mk("tg_mid", [0.67]), mk("tg_perfect", [1, 1])];
+  try {
+    const slices = showcaseSlices("light");
+    slices.inventory = {
+      ...slices.inventory,
+      items,
+      equipped: {},
+      seenUids: items.map((it) => it.uid),
+      seenSeeded: true,
+    };
+    await seedSave(ctx, slices, "__temperGradeFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    const rows = [];
+    for (const item of items) {
+      await openRoute(page, "/inventory", 900);
+      await clearOverlays(page);
+      checked += 1;
+      const opened = await page.evaluate((uid) => {
+        const btn = document.querySelector(`main button[data-uid="${uid}"]`);
+        if (!btn) return false;
+        btn.click();
+        return true;
+      }, item.uid);
+      if (!opened) {
+        failures.push(`[390] 成色的话:行囊里找不到 ${item.uid}`);
+        continue;
+      }
+      await page.waitForTimeout(450);
+      const read = await page.evaluate(() => {
+        const holder = document.querySelector("[data-equipment-inscription-temper]");
+        const grade = document.querySelector("[data-equipment-temper-grade]");
+        if (!holder || !grade) return null;
+        const holderBox = holder.getBoundingClientRect();
+        const gradeBox = grade.getBoundingClientRect();
+        return {
+          text: (holder.textContent || "").replace(/\s+/g, " ").trim(),
+          grade: (grade.textContent || "").trim(),
+          // 评语顶与数字顶同高(允许一点基线差),即"并排"而不是"另起一行"
+          sameRow: Math.abs(gradeBox.top - holderBox.top) <= gradeBox.height * 1.2,
+          insideHolder: gradeBox.right <= holderBox.right + 1,
+          overflow: holder.scrollWidth - holder.clientWidth,
+        };
+      });
+      if (!read) {
+        failures.push(`[390] 成色的话:${item.uid} 的器评帖上没有成色的话`);
+      } else {
+        if (!read.grade) {
+          failures.push(`[390] 成色的话:${item.uid} 的评语是空的`);
+        }
+        if (!read.sameRow) {
+          failures.push(`[390] 成色的话:${item.uid} 的评语被挤到了另一行`);
+        }
+        if (!read.insideHolder) {
+          failures.push(`[390] 成色的话:${item.uid} 的评语溢出了成色那一格`);
+        }
+        if (read.overflow > 1) {
+          failures.push(`[390] 成色的话:${item.uid} 的成色行横向溢出 ${read.overflow}px`);
+        }
+        if (!read.text.includes("成色")) {
+          failures.push(`[390] 成色的话:${item.uid} 那一句里没有「成色» «${read.text}»`);
+        }
+        rows.push({ uid: item.uid, grade: read.grade, text: read.text });
+      }
+      for (let i = 0; i < 3 && (await page.locator(".modal-panel").count()) > 0; i += 1) {
+        await page.keyboard.press("Escape").catch(() => {});
+        await page.waitForTimeout(200);
+      }
+    }
+
+    // 三件的评语该各不同:低 / 中 / 满不能读成一个词
+    checked += 1;
+    if (rows.length === 3) {
+      const distinct = new Set(rows.map((r) => r.grade));
+      if (distinct.size < 3) {
+        failures.push(
+          `[390] 成色的话:三档掷点读出 ${distinct.size} 种评语 «${rows.map((r) => r.grade).join("/")}»`,
+        );
+      }
+      const perfect = rows.find((r) => r.uid === "tg_perfect");
+      if (perfect && !/满/.test(perfect.grade)) {
+        failures.push(`[390] 成色的话:掷满的那件该读「掷满»,实见 «${perfect.grade}»`);
+      }
+      const low = rows.find((r) => r.uid === "tg_low");
+      if (low && /满/.test(low.grade)) {
+        failures.push(`[390] 成色的话:低掷的那件被读成了「满» «${low.grade}»`);
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 成色的话页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n成色的话:${rows.map((r) => `${r.uid}→${r.grade}`).join(" · ")}(与数字并排)`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 提示条的去路 —— 拾得高品那条要能点开看。
  *
  * 「灵光乍现,拾得「灵品·古剑」」是玩家唯一看见「我得到了什么」的地方,几秒后消失。
@@ -24197,6 +24337,7 @@ const TASKS = [
   ["册次水印写汉字且说得清第几册", taskFolioOrdinal],
   ["册目读法一句话一种数字", taskFolioPosition],
   ["提示条的去路真能点开", taskToastTarget],
+  ["成色的话把数字译成判断", taskTemperGrade],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],
   ["一键分解先勾后点", taskDecompose],

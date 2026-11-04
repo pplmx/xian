@@ -48,6 +48,14 @@
               <span>成色</span>
               <strong class="tabular">{{ inscription.temper }}</strong>
               <span class="equip-dossier__inscription-units">/100</span>
+              <!--
+                成色的话 —— 67 是什么水平?(见 ui/temperGrade)
+                一个既像分数、又没有任何标尺的数,是界面里最容易让人误读的东西;
+                评语把它翻译成人能用的判断。
+              -->
+              <span class="equip-dossier__temper-grade" data-equipment-temper-grade>{{
+                temperGradeText(inscription.temper)
+              }}</span>
             </span>
           </p>
         </div>
@@ -288,6 +296,7 @@ import { useInventoryStore } from "@/stores/inventory";
 import { EQUIPMENT_TEMPLATES, equipmentTemplate, EQUIP_SLOT_NAMES } from "@/data/equipment";
 import { equipSetDef, setCounts, ASTRAL_SET_SHIELD } from "@/core/equipSet";
 import { resonanceGap, templatesOfSet } from "@/ui/resonanceGap";
+import { temperGradeText } from "@/ui/temperGrade";
 import { equipPowerComparison } from "@/core/equipBest";
 import { worldNameOfTier } from "@/core/formulas";
 import { inscriptionFor } from "@/core/inscription";

@@ -367,6 +367,7 @@ const CATEGORIES = [
       "folioOrdinal",
       "folioPosition",
       "toastTarget",
+      "temperGrade",
     ],
   },
   {

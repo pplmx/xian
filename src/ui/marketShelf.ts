@@ -1,6 +1,7 @@
 import { EQUIP_SLOT_NAMES, equipmentTemplate } from "@/data/equipment";
 import { qualityDef } from "@/data/qualities";
 import { qualityVerdict } from "@/data/qualityVerdicts";
+import { temperGradeText } from "@/ui/temperGrade";
 import { AFFIX_RARITY_META, modsText } from "@/data/statNames";
 import { equipPowerComparison } from "@/core/equipBest";
 import { equipSetDef } from "@/core/equipSet";
@@ -37,6 +38,8 @@ export interface MarketEquipView {
   qualityName: string;
   /** 这一档的品评(见 data/qualityVerdicts)—— 买前验货与详情页读同一句 */
   verdict: string;
+  /** 成色的话(见 ui/temperGrade)—— 67 是什么水平,买之前就该看得懂 */
+  temperGrade: string;
   color: string;
   textColor: string;
   rare: boolean;
@@ -124,6 +127,7 @@ export function marketEquipView(
     quality: item.quality,
     qualityName: quality.name,
     verdict: qualityVerdict(item.quality),
+    temperGrade: inscription ? temperGradeText(inscription.temper) : "",
     color: quality.color,
     textColor: qualityTextColor(item.quality),
     rare: isRareQuality(item.quality),

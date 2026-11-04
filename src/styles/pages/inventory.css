@@ -617,6 +617,17 @@
     font-family: var(--font-kai);
     letter-spacing: 0.04em;
   }
+  /*
+   * 成色的话 —— 与那个数并排,不加粗、不换色(它是那个数的注解,不是另一个读数)。
+   * 与数字之间用一道细空隙分开,读起来是「成色 67 /100 · 中上」一整句。
+   */
+  .equip-dossier__temper-grade {
+    color: var(--color-ink-faint);
+    font-family: var(--font-kai);
+    /* 与 "/100" 之间多留一道缝:让「成色 67 /100 · 中上」读成一整句,
+       而不是三个并排的碎片。容器是 inline-flex,gap 已给 0.18rem,这里补差额 */
+    padding-left: 0.12rem;
+  }
   .equip-dossier__desc {
     margin-top: 0.28rem;
     color: rgb(var(--color-ink-soft-rgb));
