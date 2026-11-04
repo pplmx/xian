@@ -9388,6 +9388,197 @@ async function taskQualityLadder() {
  * 只核"出现过"会漏掉「谁的寿元都被标红」这种更坏的情形。
  */
 /**
+ * 宿敌那一枚章 —— 只写「宿敌」两个字,不够。
+ *
+ * 同一个敌人打败玩家三次之后挂一枚章。章背后有两个字段一直没上界面:
+ * lossCount(输给它几次)与 avengedAt(哪一次赢回来的)。
+ * 雪耻那一刻尤其安静:打赢之后章**直接消失**,玩家看到的是「什么都没发生」。
+ *
+ * 判据两件:
+ *   一 未雪耻时章上带得出「已败三次」;
+ *   二 雪耻之后换成「旧仇已雪」,且那枚「宿敌」章不再出现。
+ */
+async function taskNemesisChip() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const read = async (page) =>
+      page.evaluate(() => {
+        const chip = document.querySelector("[data-combat-nemesis]");
+        const avenged = document.querySelector("[data-combat-nemesis-avenged]");
+        return {
+          chip: chip ? (chip.textContent || "").replace(/\s+/g, " ").trim() : null,
+          avenged: avenged ? (avenged.textContent || "").replace(/\s+/g, " ").trim() : null,
+        };
+      });
+
+    let page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    /*
+     * 造一场正在打的战斗,对手是宿敌。`lastBattle` 是 CombatPanel 读的那份视图;
+     * 直接把它塞进存档的 adventure 段(与既有的战斗回放探针同一处)。
+     */
+    /*
+     * 按 `LastBattleView` 的**真实形状**造(见 types):result 是 CombatResult,
+     * 战报在 result.log 里。首版把 win/log 写在顶层,于是面板读 result.log 时炸。
+     */
+    const mkBattle = () => ({
+      enemyId: "e_sword_guard",
+      enemyName: "守剑石人",
+      enemyIcon: "sword",
+      isBoss: false,
+      at: Date.now() - 60_000,
+      result: {
+        win: false,
+        log: [{ t: "info", text: "守剑石人横剑而立。" }],
+        rounds: 3,
+        playerHpPct: 0,
+      },
+    });
+
+    // 一 未雪耻
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.player = {
+        ...slices.player,
+        nemeses: [
+          {
+            enemyId: "e_sword_guard",
+            enemyName: "守剑石人",
+            regionId: "qingyun",
+            lossCount: 5,
+            lastLossAt: Date.now() - 3600_000,
+          },
+        ],
+      };
+      /*
+       * 战斗面板是 `<CombatPanel v-if="adventure.sessionActive" />` ——
+       * 没有活跃历练会话时整块不渲染。首版只塞了 lastBattle,于是页面上什么都没有。
+       */
+      slices.adventure = {
+        ...(slices.adventure ?? {}),
+        session: {
+          regionId: "qingyun",
+          mode: "normal",
+          startedAt: Date.now() - 60_000,
+          endsAt: Date.now() + 3600_000,
+          nextBattleAt: Date.now() + 60_000,
+          wins: 0,
+          losses: 0,
+          events: 0,
+          stoneGain: { m: 0, e: 0 },
+          expGain: { m: 0, e: 0 },
+          itemGain: 0,
+          wudaoGain: 0,
+        },
+        lastBattle: mkBattle(),
+      };
+      await seedSave(ctx, slices, "__nemesisOpen");
+    }
+    await openRoute(page, "/adventure", 900);
+    await clearOverlays(page);
+    const open = await read(page);
+    if (open.chip === null) {
+      failures.push("[390] 宿敌章:未雪耻时没有那枚章");
+    } else {
+      if (!open.chip.includes("三次")) {
+        failures.push(`[390] 宿敌章:章上没写结怨的深浅 «${open.chip}»`);
+      }
+      if (open.chip.includes("五")) {
+        failures.push(`[390] 宿敌章:实际次数进了章里 «${open.chip}»`);
+      }
+      if (open.avenged !== null) {
+        failures.push(`[390] 宿敌章:未雪耻就印了「旧仇已雪»`);
+      }
+    }
+
+    // 二 已雪耻
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.player = {
+        ...slices.player,
+        nemeses: [
+          {
+            enemyId: "e_sword_guard",
+            enemyName: "守剑石人",
+            regionId: "qingyun",
+            lossCount: 5,
+            lastLossAt: Date.now() - 3600_000,
+            avengedAt: Date.now() - 600_000,
+          },
+        ],
+      };
+      slices.adventure = {
+        ...(slices.adventure ?? {}),
+        session: {
+          regionId: "qingyun",
+          mode: "normal",
+          startedAt: Date.now() - 60_000,
+          endsAt: Date.now() + 3600_000,
+          nextBattleAt: Date.now() + 60_000,
+          wins: 0,
+          losses: 0,
+          events: 0,
+          stoneGain: { m: 0, e: 0 },
+          expGain: { m: 0, e: 0 },
+          itemGain: 0,
+          wudaoGain: 0,
+        },
+        lastBattle: mkBattle(),
+      };
+      await seedSave(ctx, slices, "__nemesisAvenged");
+    }
+    /*
+     * 换一页而不是 reload:两档夹具的差别只在 nemeses,而 reload 之后
+     * 页面在加载途中可能还没拿到新档(首版这里 chipsWrap 是 0,整块战斗界面没渲染)。
+     * 与第一档同一条路径最稳。
+     */
+    await page.close();
+    page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/adventure", 900);
+    await clearOverlays(page);
+    const done = await read(page);
+    if (done.chip !== null) {
+      failures.push(`[390] 宿敌章:雪耻之后那枚「宿敌」章还在 «${done.chip}»`);
+    }
+    if (done.avenged === null) {
+      failures.push("[390] 宿敌章:雪耻之后没有任何一句 —— 玩家看到的是「什么都没发生」");
+    } else if (!done.avenged.includes("雪")) {
+      failures.push(`[390] 宿敌章:雪耻那句不对 «${done.avenged}»`);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 宿敌章页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n宿敌章:未雪耻 «${open.chip}» · 已雪耻 «${done.avenged}»`);
+    } else {
+      console.log(`\n宿敌章[未通过]:${JSON.stringify({ open, done })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 见过第二次 —— 重复遭遇时该有一句「你想起上一次」。
  *
  * 九十五个事件里只有八个标了 `once`,其余八十七个可以反复出现,而第二次遇到时
@@ -26317,6 +26508,7 @@ const TASKS = [
   ["起名的上限只有一处", taskNameLimit],
   ["突破失败之后说得出下一步", taskBreakthroughNext],
   ["重复遭遇认得出上一次", taskEventRecall],
+  ["宿敌章写得出结怨深浅", taskNemesisChip],
   ["顶三阶摆在一起看得出差别", taskQualityLadder],
   ["背包四签同住一册续卷", taskInventoryTabRegisters],
   ["门庭先报今日", taskApprenticePulse],

@@ -112,11 +112,18 @@
                       class="chip-ink border-cinnabar/60 text-note text-cinnabar"
                       >首领</span
                     >
+                    <!--
+                      宿敌章写全:不只两个字(见 ui/nemesisChip)。
+                      lossCount 就在 NemesisRecord 上,界面上从前一次都没用过 ——
+                      而"输给它三次"与"输给它七次"在玩家心里是完全不同的两个数。
+                    -->
                     <span
-                      v-if="isNemesisFoe"
+                      v-if="nemesisChip"
                       class="chip-ink border-cinnabar/80 bg-cinnabar/6 text-note text-cinnabar"
-                      >宿敌</span
+                      data-combat-nemesis
+                      >{{ nemesisChip }}</span
                     >
+
                     <span
                       v-for="t in shownTraits"
                       :key="t"
@@ -124,6 +131,19 @@
                     >
                       {{ TRAIT_NAMES[t] }}
                     </span>
+                  </p>
+                  <!--
+                    雪耻之后那一句 —— 放在 chips 块**之外**。
+                    那块的条件是 `isBoss || isNemesisFoe || shownTraits.length`,
+                    而雪耻一过 `isNemesisFoe` 就是 false —— 挂在里面永远显示不出来。
+                    (首版正是挂在里面,探针量到 chipsWrap 为 0 才发现。)
+                  -->
+                  <p
+                    v-if="nemesisAvenged"
+                    class="combat-combatant__avenged text-note text-jade"
+                    data-combat-nemesis-avenged
+                  >
+                    {{ nemesisAvenged }}
                   </p>
                   <ProgressBar
                     :value="ehp"
@@ -302,6 +322,7 @@ import type { CombatLogEntry } from "@/types";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import BattleIntelPanel from "@/components/adventure/BattleIntelPanel.vue";
+import { nemesisAvengedText, nemesisChipText } from "@/ui/nemesisChip";
 
 const adventure = useAdventureStore();
 const player = usePlayerStore();
@@ -433,6 +454,21 @@ const isNemesisFoe = computed(() => {
   const id = battle.value?.enemyId;
   return id ? isNemesis(player.nemeses, id) : false;
 });
+
+/** 这一场的对手在宿敌账上的记录 —— 章与雪耻那句都从它取 */
+const nemesisRecord = computed(() => {
+  const id = battle.value?.enemyId;
+  if (!id) return null;
+  return player.nemeses.find((n) => n.enemyId === id) ?? null;
+});
+/** 未雪耻时的章文案(不到门槛或已雪耻时为空,章不渲染) */
+const nemesisChip = computed(() =>
+  nemesisRecord.value ? nemesisChipText(nemesisRecord.value) : "",
+);
+/** 雪耻之后那一句 */
+const nemesisAvenged = computed(() =>
+  nemesisRecord.value ? nemesisAvengedText(nemesisRecord.value) : "",
+);
 
 /** 当前构筑对此敌的适配(战力之外的胜负参考) */
 const foeAdaptation = computed(() => {

@@ -390,6 +390,7 @@ const CATEGORIES = [
       "nameLimit",
       "breakthroughNext",
       "eventRecall",
+      "nemesisChip",
     ],
   },
   {
