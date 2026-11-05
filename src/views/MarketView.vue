@@ -611,7 +611,17 @@ function bountyReady(o: BountySlot): boolean {
                 {{ pillDef(slot.pillId)?.name ?? slot.pillId }}
                 <span class="market-good__count">×{{ slot.count }}</span>
               </p>
-              <p class="market-good__note">一枚丹方之味 · 免去集草开炉</p>
+              <!--
+                这一格原先对所有丹药写同一句「一枚丹方之味 · 免去集草开炉」。
+                而 data/pills 里每枚丹都有自己的话(万寿金丹「金丹光华内蕴,寿数绵长」、
+                灵乳「万年钟乳凝成的灵液,一口涤尽枯竭」)—— 模板把那些话盖住了。
+
+                更要紧的是这句讲的是**怎么得到它**,不讲**它有什么用**。而这两枚丹用途
+                完全不同(一延寿、一回气),玩家掏 875 灵石之前唯一能读到的却是获取方式。
+              -->
+              <p v-if="pillDef(slot.pillId)?.desc" class="market-good__note">
+                {{ pillDef(slot.pillId)!.desc }}
+              </p>
             </div>
             <div v-else-if="slot.kind === 'material'" class="market-good__body">
               <p class="market-good__name">

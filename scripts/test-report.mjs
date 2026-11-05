@@ -451,6 +451,7 @@ const CATEGORIES = [
       "apprenticeWaterline",
       "exploreSessionResume",
       "pauseShiftsAllClocks",
+      "marketPillNote",
       "daoPathCoverage",
     ],
   },
