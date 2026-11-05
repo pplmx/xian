@@ -4978,7 +4978,11 @@ async function taskReincarnation() {
         saveVersion: 2,
         createdAt: Date.now() - 86400000 * 60,
         lastActiveAt: Date.now(),
-        totalPlaySec: 0,
+        /*
+         * 道龄判据要有值可量:写 0 的话「至今共 0 天」也在,但那说明不了这一行
+         * 读的是**账号级**活跃时长。给一个明显的量级(45 天)才对得上读数。
+         */
+        totalPlaySec: 45 * 86400,
         createRerolls: 8,
         createProfile: null,
       },
@@ -5185,6 +5189,31 @@ async function taskReincarnation() {
     };
 
     const death = await step("读档后(辞世)", /往生 · 辞世/);
+    /*
+     * 道龄 —— 「你陪这一号人物走了多久」(见 ui/companionTime)。
+     * 辞世屏是本世收官的那一屏,header 里已有「行世 N 载」(本世寿数);
+     * 道龄读的是**账号级**活跃时长,两件不同的量并排,故文案要带「至今」。
+     * 夹具给了 45 天,判据据此对读数。
+     */
+    checked += 1;
+    {
+      const companion = await page.evaluate(() => {
+        const el = document.querySelector("[data-reincarnation-companion]");
+        return el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null;
+      });
+      if (companion === null) {
+        failures.push(`[390] 转世场景:辞世屏没有道龄读数 —— 这一世收官时看不见陪了多久`);
+      } else if (!/45\s*天/.test(companion)) {
+        failures.push(
+          `[390] 转世场景:道龄没读出夹具那 45 天(实见 «${companion}»)—— 读的不是账号级时长?`,
+        );
+      } else if (!/至今/.test(companion)) {
+        failures.push(
+          `[390] 转世场景:道龄那一行没标累计(«${companion}»)—— ` +
+            `与本世「行世 N 载」并排会读成一回事`,
+        );
+      }
+    }
     if (death) {
       checked += 1;
       if (

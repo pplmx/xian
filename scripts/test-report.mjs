@@ -416,6 +416,7 @@ const CATEGORIES = [
       "soulTallyFields",
       "artifactQualityLadder",
       "gongfaRealmCoverage",
+      "rebirthCompanion",
     ],
   },
   {

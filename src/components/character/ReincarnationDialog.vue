@@ -17,6 +17,17 @@
               player.realmName
             }}。皮囊坐化，神魂仍可再启一程。
           </p>
+          <!--
+            道龄 —— 「你陪这一号人物走了多久」(见 ui/companionTime)。
+            与上面那句是两件不同的量:上面「行世 N 载」是**这一世**的寿数(游戏内时间),
+            这里读的是账号级的活跃游玩时长(缺席时段不进它,见 core/engine 的注释)。
+            故文案必须带「至今」这类累计标记 —— 只说「伴道 45 天」,
+            玩家会以为这一世玩了 45 天。
+          -->
+          <p class="reincarnation-head__companion tabular" data-reincarnation-companion>
+            <span>{{ companionTimeLabel(game.totalPlaySec) }}</span>
+            <strong>至今共 {{ companionTimeText(game.totalPlaySec) }}</strong>
+          </p>
         </div>
         <p class="reincarnation-score tabular">
           <span>道果</span>
@@ -627,6 +638,8 @@ import {
 } from "@/ui/reincarnationDesk";
 import { engine } from "@/core/engine";
 import { formatNum, yearsShown } from "@/utils/format";
+import { useGameStore } from "@/stores/game";
+import { companionTimeLabel, companionTimeText } from "@/ui/companionTime";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
@@ -635,6 +648,7 @@ import { NAME_MAX } from "@/utils/nameLimit";
 
 const ui = useUiStore();
 const player = usePlayerStore();
+const game = useGameStore();
 const router = useRouter();
 
 const RESULT_NAMES: Record<"done" | "unfinished" | "broken", string> = {
@@ -792,6 +806,32 @@ watch(view, (next) => {
   color: var(--color-ink-soft);
   font-size: var(--type-body);
   line-height: 1.65;
+}
+
+/*
+ * 道龄 —— 比本世寿数那一句再淡一档:寿数是有结局的(止步于某境),
+ * 陪伴是仍在继续的。故标签用 ink-faint、读数用 ink-soft,不加着色。
+ */
+.reincarnation-head__companion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+  color: var(--color-ink-soft);
+  font-size: var(--type-note);
+  line-height: 1.5;
+}
+
+.reincarnation-head__companion span {
+  color: var(--color-ink-faint);
+  font-family: var(--font-kai);
+  letter-spacing: 0.14em;
+}
+
+.reincarnation-head__companion strong {
+  font-family: var(--font-kai);
+  font-weight: 400;
 }
 
 .reincarnation-score {
