@@ -418,6 +418,7 @@ const CATEGORIES = [
       "gongfaRealmCoverage",
       "rebirthCompanion",
       "petWorldBand",
+      "codexScale",
     ],
   },
   {
