@@ -116,6 +116,41 @@ const CLAIMS: Claim[] = [
   { label: "器魂槽位", actual: SOUL_SLOTS, patterns: [/(\d+) 个槽位/g] },
 ];
 
+/**
+ * 玩法文档里该有一节讲触感 —— 新功能不许只在设置页出现。
+ *
+ * 触感(见 ui/haptics)是第五个感官:稀有报喜时手机轻震一下,三档与那道光、
+ * 那一声同一条界。它此前只在设置页有一个开关,玩家文档里一个字都没有 ——
+ * 而 docs/usage.md 的体例正是「一个机制一节」(神通的节拍、提示条的去路、道历
+ * 都是这样写进去的)。新增感官若不同步进这一册,玩家只能靠误触设置页发现它。
+ *
+ * 判据只核三件事:小节在、三档说法都在、以及那两个开关的独立性说清了。
+ */
+describe("玩法文档 · 触感这一节", () => {
+  const doc = readFileSync(resolve(__dirname, "../../docs/usage.md"), "utf8");
+
+  it("有「触感」这一节", () => {
+    expect(doc, "usage.md 该有一节讲触感").toMatch(/^## 触感[：:]/m);
+  });
+
+  it("三档的说法都在 —— 与 ui/haptics 的型样同一套档位", () => {
+    const at = doc.search(/^## 触感[：:]/m);
+    expect(at, "该找得到那一节").toBeGreaterThan(0);
+    const section = doc.slice(at, at + 1400);
+    for (const tier of ["灵", "天", "神"]) {
+      expect(section, `该说到「${tier}」这一档`).toContain(tier);
+    }
+    expect(section, "该说明档位越高震得越重").toMatch(/三下|两下/);
+  });
+
+  it("说清两个开关各管各的,以及减少动效会一并关掉", () => {
+    const at = doc.search(/^## 触感[：:]/m);
+    const section = doc.slice(at, at + 1400);
+    expect(section, "该说触感开关与音效独立").toMatch(/独立|各管各的|各自/);
+    expect(section, "该说减少动效会一并关掉触感").toContain("减少动效");
+  });
+});
+
 /** 逐条核账:返回所有「找不到」与「对不上」;空数组才算过 */
 function auditUsageDoc(text: string): string[] {
   const bad: string[] = [];
