@@ -258,6 +258,7 @@ export function attemptBreakthrough(): BreakthroughView | null {
       fromLabel,
       toLabel: player.realmName,
       isMajor: info.isMajor,
+      toRealmName: realm.name,
       tribulationLog,
       message: !info.isMajor
         ? "灵台清明,经脉拓宽,修为更上一层。"
@@ -303,6 +304,8 @@ export function attemptBreakthrough(): BreakthroughView | null {
       fromLabel,
       toLabel: info.targetLabel,
       isMajor: info.isMajor,
+      // 失败时印面走「滞」,不用它;类型要求完整故照实给(仍是当前那一境)
+      toRealmName: player.realm.name,
       tribulationLog,
       message: info.needTribulation
         ? "天威难测,此番渡劫失利。所幸道基未毁,来日再战。"

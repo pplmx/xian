@@ -1275,6 +1275,14 @@ export interface BreakthroughView {
   fromLabel: string;
   toLabel: string;
   isMajor: boolean;
+  /**
+   * 跨到的那一境的**名**(「玄仙」,不含层数)。
+   *
+   * 大境突破的印面印它 —— 印里那两个字就是玩家刚挣到的那一重天。
+   * 由 core 在造 view 时从 `realm.name` 给,弹窗不切 `toLabel` 的字符串、
+   * 也不另 import 境界表(那会与读数分成两本账)。
+   */
+  toRealmName: string;
   tribulationLog: string[];
   message: string;
   /**

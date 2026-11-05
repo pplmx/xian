@@ -4,7 +4,12 @@
     <div v-if="view?.success" class="ink-wave" />
   </Teleport>
   <BaseModal :open="view !== null" :closable="false" aria-label="突破结果">
-    <div v-if="view" class="text-center">
+    <div
+      v-if="view"
+      class="text-center"
+      data-breakthrough-result
+      :data-breakthrough-outcome="view.success ? (view.isMajor ? 'major' : 'success') : 'fail'"
+    >
       <!-- 印心:成功时朱砂墨点迸溅、金环荡开 -->
       <div class="relative mx-auto mt-2 h-20 w-20">
         <div v-if="view.success" class="ink-burst">
@@ -21,19 +26,38 @@
           class="burst-ring burst-ring--major"
           data-breakthrough-major-halo
         />
+        <!--
+          印面 —— 小层印「破」(一世几十次的节拍器),大境印**刚跨过的那一重天**。
+
+          一层一小境、九层一大境,而全作二十一道境界:小突破是节拍器,大境是里程碑。
+          里程碑最该说的是「你跨过了哪道门」—— 真仙·圆满 → 玄仙·一层不是
+          「五层变一层」,是从真仙这一重天跨进玄仙这一重天。而原先这一屏把它压成了
+          同一行箭头字,大境与小层只差一枚 px-2 的金章与一道更粗的光环。
+
+          印不新造:同一枚圆印、同一套朱砂,只换里面的字。境界名从 view.toRealmName 读
+          (由 core 造 view 时给),这里不切 toLabel、也不另 import 境界表。
+          三字境名(如「太乙玄仙」这类)放不下 4xl,故按字数收一档。
+        -->
         <div
-          class="grid h-20 w-20 place-items-center rounded-full border-2 font-kai text-4xl animate-ink-pop"
-          :class="
+          class="grid h-20 w-20 place-items-center rounded-full border-2 font-kai animate-ink-pop"
+          :class="[
             view.success
               ? 'border-cinnabar text-cinnabar bg-cinnabar/5 animate-glow-pulse'
-              : 'border-ink-faint text-ink-faint bg-ink/5'
-          "
+              : 'border-ink-faint text-ink-faint bg-ink/5',
+            majorSealText.length > 2 ? 'text-title tracking-[0.06em]' : 'text-4xl',
+          ]"
+          :data-breakthrough-major-seal="view.success && view.isMajor ? majorSealText : undefined"
         >
-          {{ view.success ? "破" : "滞" }}
+          {{ majorSealText }}
         </div>
       </div>
+      <!--
+        标题 —— 小层写「突破成功」(那本来就只是成功,没有门可跨);
+        大境写「跨入玄仙」:印里已经印着境界名了,标题再说一句「突破成功」就与印重复,
+        而这一屏真正要说的是「你跨过了哪道门」。
+      -->
       <p class="mt-3 font-kai text-section tracking-[0.3em] text-ink">
-        {{ view.success ? "突破成功" : "突破失败" }}
+        {{ !view.success ? "突破失败" : view.isMajor ? `跨入${view.toRealmName}` : "突破成功" }}
       </p>
       <!--
         大境之槛:一境一次的里程碑,与每层小推进共用同一枚「破」印还不够 ——
@@ -91,6 +115,23 @@ import BaseModal from "@/components/common/BaseModal.vue";
 const ui = useUiStore();
 
 const view = computed(() => ui.breakthrough);
+
+/**
+ * 印面文字。
+ *
+ *   成功 · 小层 —— 「破」,一世几十次的节拍器
+ *   成功 · 大境 —— 刚跨过的那一境的**名**(「玄仙」),里程碑
+ *   失败       —— 「滞」
+ *
+ * 大境那一档取 `view.toRealmName`,由 core 造 view 时从 `realm.name` 给出;
+ * 这个组件不切 `toLabel` 的字符串,也不 import 境界表。
+ */
+const majorSealText = computed(() => {
+  const v = view.value;
+  if (!v) return "破";
+  if (!v.success) return "滞";
+  return v.isMajor ? v.toRealmName : "破";
+});
 
 function close(): void {
   ui.breakthrough = null;

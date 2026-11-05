@@ -4884,9 +4884,19 @@ async function taskTribulation() {
       await tribBtn.click({ timeout: 3000 }).catch(() => {});
       await page.waitForTimeout(1600);
       const view = await page.evaluate(() => {
-        // 只认**突破结果**那一扇:屏幕上可能同时浮着别的(顿悟/巡游),拿错扇就诊断错人
+        /*
+         * 只认**突破结果**那一扇:屏幕上可能同时浮着别的(顿悟/巡游),拿错扇就诊断错人。
+         *
+         * 认人用落点不用文案 —— 原先写的是 `/突破成功|突破失败/`,而大境成功的标题
+         * 现在是「跨入玄仙」(印里印境界名、标题说跨进了哪一重天),于是这条判据
+         * 把一个**开着的结果弹窗**判成了「没有开出」,报错还自相矛盾地说
+         * 「此刻开着的是:突破结果」。文案会改,落点不会。
+         */
         const panels = [...document.querySelectorAll(".modal-panel")];
-        const panel = panels.find((p) => /突破成功|突破失败/.test(p.innerText || "")) ?? null;
+        const panel =
+          panels.find((p) => p.querySelector("[data-breakthrough-result]")) ??
+          panels.find((p) => /突破成功|突破失败|跨入/.test(p.innerText || "")) ??
+          null;
         const text = panel?.innerText || "";
         return {
           found: !!panel,
@@ -4902,7 +4912,12 @@ async function taskTribulation() {
             .join("、"),
           text,
           label: panel?.getAttribute("aria-label") ?? null,
-          outcome: /突破成功/.test(text) ? "成功" : /突破失败/.test(text) ? "失败" : null,
+          // 成败也走落点,不靠文案 —— 大境成功的标题是「跨入玄仙」,不含「成功」二字
+          outcome:
+            panel
+              ?.querySelector("[data-breakthrough-outcome]")
+              ?.getAttribute("data-breakthrough-outcome") ??
+            (/突破成功/.test(text) ? "成功" : /突破失败/.test(text) ? "失败" : null),
           hasWave: /共\s*\d+\s*道/.test(text),
           // 页面上当前境界(成功之后应当已经换名)
           realm: (document.body.innerText.match(/炼气|筑基/) || [""])[0],
