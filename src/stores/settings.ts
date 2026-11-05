@@ -26,6 +26,16 @@ export const useSettingsStore = defineStore(
         ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
         : false,
     );
+    /**
+     * 触感 —— 稀有报喜时震一下(见 ui/haptics)。
+     *
+     * 与 `sfxOn` **各自独立**:想听声不要震的(手机放桌上)、想要震不要声的
+     * (深夜戴耳机)都常见。绑在同一个开关上,玩家就只能在两者间二选一。
+     *
+     * 实际震动还要同时满足「没开减少动效」—— 那个开关的语义是「别给我动的东西」,
+     * 而震动比动画更直接作用在身体上。故调用方传的是 `hapticsOn && !reduceMotion`。
+     */
+    const hapticsOn = ref(true);
     /** 战报播放速度倍率 */
     const battleSpeed = ref<1 | 2 | 4>(1);
     /** 一键分解勾选的品质 rank 列表(持久化,免得每次重勾) */
@@ -99,6 +109,7 @@ export const useSettingsStore = defineStore(
       musicVol,
       sfxVol,
       reduceMotion,
+      hapticsOn,
       battleSpeed,
       decomposeRanks,
       smartKeep,

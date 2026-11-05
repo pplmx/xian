@@ -172,12 +172,15 @@ describe("天机案 · 设置卷首与三案同读此刻", () => {
     );
   });
 
-  it("六组设置选择共用可点账签,不再留 38×22 的小号开关", () => {
+  it("七组设置选择共用可点账签,不再留 38×22 的小号开关", () => {
     const view = source("src/views/SettingsView.vue");
     const choice = source("src/components/common/InkChoice.vue");
     const css = source("src/style.css");
 
-    expect(view.match(/<InkChoice\b/g) ?? [], "声息/观照/行止共六组选择").toHaveLength(6);
+    expect(
+      view.match(/<InkChoice\b/g) ?? [],
+      "声息共七组选择(音乐 / 音效 / 触感 + 观照 / 行止四组)",
+    ).toHaveLength(7);
     expect(view, "设置页不再保留原生 checkbox").not.toContain('type="checkbox"');
     expect(view, "旧开关类名不得回流").not.toContain("toggle-ink");
     expect(choice, "每个选项都报同一个 aria-pressed 事实").toContain(

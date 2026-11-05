@@ -11,7 +11,9 @@ import type {
   ReincarnationView,
   Toast,
 } from "@/types";
-import { QUALITIES } from "@/data/qualities";
+import { QUALITIES, qualityDef } from "@/data/qualities";
+import { hapticTierOf, pulseHaptics } from "@/ui/haptics";
+import { useSettingsStore } from "@/stores/settings";
 import { toastTargetOf } from "@/ui/toastTarget";
 import { toastLifeMs } from "@/ui/toastLife";
 
@@ -26,6 +28,8 @@ const QUALITY_IDS = new Set<string>(QUALITIES.map((q) => q.id));
 let toastSeq = 1;
 
 export const useUiStore = defineStore("ui", () => {
+  // 触感要读两个开关(hapticsOn / reduceMotion);settings 不依赖 ui,不构成环
+  const settings = useSettingsStore();
   const toasts = ref<Toast[]>([]);
   const offlineSummary = ref<OfflineSummary | null>(null);
   const breakthrough = ref<BreakthroughView | null>(null);
@@ -71,6 +75,19 @@ export const useUiStore = defineStore("ui", () => {
     setTimeout(() => {
       toasts.value = toasts.value.filter((t) => t.id !== id);
     }, ttl);
+    /*
+     * 触感 —— 第五个感官(见 ui/haptics)。与那道光的倍率、那一声的档位同一把尺:
+     * 用 `stamped` 反查 rank,再交给 hapticTierOf 走声音那条界,不在这里另写一份。
+     *
+     * 只在**稀有**提示上震:寻常提示(infra/info)每分钟都有几条,每条都震
+     * 就是骚扰。没有印的 rare(转世/突破/里程碑)仍然走 rare 档,不另立一档。
+     */
+    if (kind === "rare") {
+      const rank = stamped ? qualityDef(stamped).rank : undefined;
+      pulseHaptics(hapticTierOf(rank), {
+        enabled: settings.hapticsOn && !settings.reduceMotion,
+      });
+    }
   }
 
   /*

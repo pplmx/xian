@@ -2806,10 +2806,10 @@ async function taskPageTour(vp) {
       }
       if (
         settingsDesk.choices.map((group) => group.name).join(",") !==
-        "music,sfx,theme,battle-speed,motion,dnd"
+        "music,sfx,haptics,theme,battle-speed,motion,dnd"
       ) {
         failures.push(
-          `[${vp.tag}] /settings 六组账签顺序不对:${settingsDesk.choices
+          `[${vp.tag}] /settings 七组账签顺序不对:${settingsDesk.choices
             .map((group) => group.name)
             .join(" / ")}`,
         );

@@ -123,6 +123,29 @@
               <span class="settings-level__value tabular">{{ soundReadout.sfx }}</span>
             </div>
           </div>
+          <div class="settings-control" data-settings-haptics>
+            <div class="settings-control__head">
+              <span class="settings-control__label">触感</span>
+              <span class="settings-control__value tabular">
+                {{ settings.hapticsOn ? "开 · 稀有报喜轻震" : "关" }}
+              </span>
+            </div>
+            <!--
+              与音效**各自独立**:想听声不要震的(手机放桌上)、想要震不要声的
+              (深夜戴耳机)都常见。绑在一个开关上,玩家就只能在两者之间二选一。
+              震动还要同时满足「未开减少动效」,故下面那行把这两件事说穿。
+            -->
+            <InkChoice
+              label="触感开关"
+              name="haptics"
+              :model-value="settings.hapticsOn ? 'on' : 'off'"
+              :options="AUDIO_OPTIONS"
+              @update:model-value="settings.hapticsOn = $event === 'on'"
+            />
+            <p v-if="settings.hapticsOn && settings.reduceMotion" class="settings-register__note">
+              已开「减少动效」—— 触感也随之关闭，两处要一起开才会震。
+            </p>
+          </div>
           <p class="settings-register__note">声音开关只影响播放，不改变修行结算。</p>
         </div>
       </section>

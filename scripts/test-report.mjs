@@ -420,6 +420,7 @@ const CATEGORIES = [
       "petWorldBand",
       "codexScale",
       "flavorTextNoNumbers",
+      "haptics",
     ],
   },
   {
