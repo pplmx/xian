@@ -109,7 +109,15 @@
                     {{ soulSeal(soulAt(i)!) }}
                   </span>
                   <span class="soul-seat__copy">
-                    <span class="soul-seat__name">{{ soulLabel(soulAt(i)!) }}</span>
+                    <span class="soul-seat__name">
+                      <!-- 阶的形意章 —— 六阶的第二条线索,色弱也分得出(见 SoulGradeSeal) -->
+                      <SoulGradeSeal
+                        :grade="soulAt(i)!.grade"
+                        :size="13"
+                        data-soul-grade-seal="seat"
+                      />
+                      {{ soulLabel(soulAt(i)!) }}
+                    </span>
                     <span class="soul-seat__mods">{{ soulModText(soulAt(i)!) }}</span>
                   </span>
                 </button>
@@ -289,6 +297,12 @@
           </span>
           <div class="min-w-0">
             <p class="text-body" :style="{ color: soulColor(soulDetail) }">
+              <SoulGradeSeal
+                :grade="soulDetail.grade"
+                :size="15"
+                class="mr-1 align-middle"
+                data-soul-grade-seal="detail"
+              />
               {{ soulGradeDef(soulDetail.grade).name }}·{{
                 soulTypeDef(soulDetail.type)?.name ?? "器魂"
               }}
@@ -339,6 +353,12 @@
           >
             <div class="min-w-0">
               <p class="truncate text-body" :style="{ color: soulColor(soul) }">
+                <SoulGradeSeal
+                  :grade="soul.grade"
+                  :size="13"
+                  class="mr-1 align-middle"
+                  data-soul-grade-seal="idle"
+                />
                 {{ soulLabel(soul) }}
               </p>
               <p class="t-note text-ink-faint">
@@ -445,6 +465,12 @@
               <p class="truncate text-body text-ink-soft">{{ row.name }}</p>
               <p class="truncate text-note text-ink-faint">
                 将凝出
+                <SoulGradeSeal
+                  :grade="row.gradeRank"
+                  :size="13"
+                  class="mr-1 align-middle"
+                  data-soul-grade-seal="forge"
+                />
                 <span :style="{ color: soulGradeDef(row.gradeRank).color }"
                   >{{ soulGradeDef(row.gradeRank).name }}·{{ row.typeName }}</span
                 >
@@ -537,6 +563,7 @@ import {
   soulTypeDef,
   type SoulInstance,
 } from "@/data/souls";
+import SoulGradeSeal from "@/components/common/SoulGradeSeal.vue";
 import { realmDef, WORLD_BREAK_MAJOR } from "@/data/realms";
 import {
   dissolveSoul,

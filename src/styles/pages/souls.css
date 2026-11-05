@@ -290,6 +290,14 @@
     overflow-wrap: anywhere;
   }
   .soul-seat__name {
+    /*
+     * 阶名前面挂了一枚形意章(见 SoulGradeSeal)—— 故这一行要能并排,
+     * 且章与字之间留一道细缝。改成 inline-flex 而不是继续 inline:
+     * 章是定宽方块(13px),让它参与基线与换行计算,长阶名才不会把章挤到第二行。
+     */
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
     color: rgb(var(--color-ink-soft-rgb));
     font-family: var(--font-kai);
     font-size: var(--type-body);

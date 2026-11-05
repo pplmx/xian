@@ -255,6 +255,7 @@ import { GONGFA } from "../src/data/gongfa.ts";
 import { branchesFor } from "../src/data/gongfaBranches.ts";
 import { ACHIEVEMENTS } from "../src/data/achievements.ts";
 import { qualityDef } from "../src/data/qualities.ts";
+import { SOUL_GRADES, soulGradeSeal } from "../src/data/souls.ts";
 import { orderPetsByFate } from "../src/core/petFateOrder.ts";
 import { PET_ENTRY_DEPTH } from "../src/ui/titlesDesk.ts";
 import { REALMS } from "../src/data/realms.ts";
@@ -9377,6 +9378,120 @@ async function taskRebirthFolio() {
  *   二 浓度按 天 < 仙 < 神 递增(第 6 位是 #RRGGBBAA 的 alpha);
  *   三 天品仍是 0.85 —— 已经发到玩家眼里的那一档不许动。
  */
+/**
+ * 器魂阶的形意章 —— 六阶的第二条线索,色弱也分得出。
+ *
+ * ## 为什么只能在真浏览器里量
+ *
+ * 源码判据(`ui/soulGradeSeal.spec`)能证明「视图里有这个落点」,但证明不了两件事:
+ *   一 章真的**渲染出来**了(而不是被 `v-if` 或样式藏掉);
+ *   二 章里的字真的**对上那一阶** —— 三席、闲置行、凝炼预览三处的 grade 来源不同,
+ *      接错一处源码判据看不出来。
+ *
+ * ## 判据
+ *
+ *   一 三席里装了器魂的那几席,各有一枚章,且**字 = data/souls 该阶首字**;
+ *   二 六阶首字两两不同(否则「分档」这件事本身虚假);
+ *   三 章不是零尺寸(被样式压掉的那种「在但不显示」)。
+ */
+async function taskSoulGradeSeal() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    // 六阶首字先在这里核一次:它是下面逐枚核对的分母
+    const heads = SOUL_GRADES.map((g) => soulGradeSeal(g.rank));
+    if (new Set(heads).size !== heads.length) {
+      throw new Error(`器魂阶章夹具:六阶首字撞了(${heads.join(" / ")}),逐枚核对失去意义`);
+    }
+
+    const slices = showcaseSlices("light");
+    /*
+     * 装两缕不同阶的器魂:只装一缕只能量到一个首字,而这一条要证明的是
+     * 「不同阶盖不同的字」—— 一个样本证明不了分档。
+     * 阶取首尾两端(0 朦胧 / 5 化真),中间那几阶的文字由上面的两两不同覆盖。
+     */
+    const fixtureSouls = [
+      { uid: "gs_low", type: "fengmang", grade: 0, fromName: "旧剑" },
+      { uid: "gs_high", type: "beishui", grade: 5, fromName: "残戟" },
+    ];
+    slices.endgame = {
+      ...slices.endgame,
+      souls: fixtureSouls,
+      equippedSouls: ["gs_low", "gs_high"],
+    };
+    await seedSave(ctx, slices, "__soulGradeSealFixture");
+
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 1;
+    });
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    await openRoute(page, "/souls", 900);
+    await clearOverlays(page);
+    checked += 1;
+
+    const seen = await page.evaluate(() =>
+      [...document.querySelectorAll("[data-soul-grade-seal]")].map((el) => {
+        const rect = el.getBoundingClientRect();
+        return {
+          slot: el.getAttribute("data-soul-grade-seal"),
+          text: (el.textContent || "").trim(),
+          w: Math.round(rect.width),
+          h: Math.round(rect.height),
+        };
+      }),
+    );
+
+    if (seen.length === 0) {
+      failures.push("[390] 器魂阶章:/souls 上一枚都没渲染出来(落点写对了但没进 DOM?)");
+    }
+    // 三席那两处必须各有一枚,且字要对上各自那一阶
+    for (const soul of fixtureSouls) {
+      const want = soulGradeSeal(soul.grade);
+      const hit = seen.find((row) => row.slot === "seat" && row.text === want);
+      if (!hit) {
+        failures.push(
+          `[390] 器魂阶章:装了 ${soul.grade} 阶的那一席没有「${want}」这一枚` +
+            `(量到 ${JSON.stringify(seen.filter((r) => r.slot === "seat").map((r) => r.text))})`,
+        );
+        continue;
+      }
+      if (hit.w <= 0 || hit.h <= 0) {
+        failures.push(`[390] 器魂阶章:${soul.grade} 阶那一枚被压成 ${hit.w}×${hit.h}`);
+      }
+    }
+    // 两阶的章不许是同一个字 —— 那等于没分档
+    const seatHeads = [...new Set(seen.filter((r) => r.slot === "seat").map((r) => r.text))];
+    if (seatHeads.length > 1 === false && fixtureSouls.length > 1) {
+      failures.push(`[390] 器魂阶章:两席不同阶却盖同一个字(${seatHeads.join("/")})`);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 器魂阶章:页面有报错 → ${pageErrors.join(" / ")}`);
+    }
+  } catch (err) {
+    failures.push(`[390] 器魂阶章:${err instanceof Error ? err.message : String(err)}`);
+  } finally {
+    await ctx.close();
+  }
+  return {
+    failures,
+    checked,
+    pageErrors: [],
+    contrastFails: [],
+    pixelContrastFails: [],
+    zoomFails: [],
+  };
+}
+
 async function taskQualityLadder() {
   const failures = [];
   let checked = 0;
@@ -28549,6 +28664,7 @@ const TASKS = [
   ["器铭的出身与逐件不同", taskInscription],
   ["灵兽契语只在相伴处出声", taskPetVow],
   ["道记留得住择道那一刻", taskDaoNote],
+  ["器魂阶的形意章盖得出档次", taskSoulGradeSeal],
   ["品评说得出一档的分量", taskQualityVerdict],
   ["品阶印跟着高品落地", taskToastSeal],
   ["历世足迹留得住到过的地方", taskPeakRealm],

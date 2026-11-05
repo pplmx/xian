@@ -426,6 +426,7 @@ const CATEGORIES = [
       "petFateMark",
       "routeBreadth",
       "gongfaQualityLadder",
+      "soulGradeSeal",
       "daoPathCoverage",
     ],
   },

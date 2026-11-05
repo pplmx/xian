@@ -163,3 +163,25 @@ export function soulName(soul: SoulInstance): string {
   const def = soulTypeDef(soul.type);
   return `${soulGradeDef(soul.grade).name}·${def?.name ?? "器魂"}`;
 }
+
+/**
+ * 阶名的首字 —— 器魂阶的**形状线索**,与 QualitySeal 同一套阴文口径。
+ *
+ * ## 为什么器魂也需要一枚章
+ *
+ * 九档品质那侧早有一条纪律(见 `ui/qualityTier`):
+ *
+ *   > 稀有档另有角章作形状线索 —— 色弱玩家不靠颜色也能分档。
+ *
+ * 而器魂六阶此前只有两样东西:阶色与阶名。色弱玩家分不出「朦胧」与「凝实」的
+ * 那一格颜色差,而六阶的倍率是 1.0 → 2.3(化真比朦胧多 130%)—— 不是可以忽略的差别。
+ *
+ * 六阶没有「稀有段」那回事:六阶本身就是它全部的分档,故**每一阶都盖**,
+ * 不像九档那边只给天/仙/神。界不同,纪律相同。
+ *
+ * 首字两两不同(朦/清/凝/通/显/化),由 `ui/soulGradeSeal.spec` 机械守着 ——
+ * 将来若改阶名改出两个同首字,章就分不出那一档。
+ */
+export function soulGradeSeal(grade: number): string {
+  return soulGradeDef(grade).name.charAt(0);
+}
