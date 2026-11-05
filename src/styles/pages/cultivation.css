@@ -380,6 +380,19 @@
     margin-top: 0.8rem;
   }
 
+  /*
+   * 灵气那一格的说明分两行:主句「还差多少」在上,门槛与加成在下(见视图里的注释)。
+   * 两行都沿用原来那套淡墨小字,只是把一串三层括号拆成两句。
+   */
+  .cultivation-ledger__meter-main,
+  .cultivation-ledger__meter-sub {
+    display: block;
+  }
+  .cultivation-ledger__meter-sub {
+    margin-top: 0.1rem;
+    font-size: var(--type-note);
+    opacity: 0.85;
+  }
   .cultivation-masthead__readout {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

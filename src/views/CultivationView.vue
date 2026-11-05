@@ -204,12 +204,23 @@
                 <template v-if="qiRichInfo.on"
                   >灵气充盈 —— 修炼速度 +{{ formatPercent(QI_RICH_BONUS) }}</template
                 >
+                <!--
+                  空格分两句说,而不是原来那串三层括号:
+                  「距灵气充盈尚差 N 灵气(灵气 ≥ M(容量 50%)→ 修炼 +15%)」
+                  一条 44 字的句子,读者要在括号里再开一层括号才看得懂门槛。
+                  主句先给「还差多少」(这是玩家真要的那个数),门槛与加成降为下一行。
+                  数字全部照旧读常数与现算值,一个字都没手抄。
+                -->
                 <template v-else>
-                  距灵气充盈尚差 {{ formatNum(qiRichInfo.gap) }} 灵气(灵气 ≥
-                  {{ formatNum(qiRichInfo.threshold) }}(容量
-                  {{ formatPercent(QI_RICH_THRESHOLD_RATIO) }})→ 修炼 +{{
-                    formatPercent(QI_RICH_BONUS)
-                  }})
+                  <span class="cultivation-ledger__meter-main"
+                    >距灵气充盈尚差 {{ formatNum(qiRichInfo.gap) }}
+                  </span>
+                  <span class="cultivation-ledger__meter-sub tabular"
+                    >门槛 {{ formatNum(qiRichInfo.threshold) }} ·
+                    {{ formatPercent(QI_RICH_THRESHOLD_RATIO) }} 容量 · 修炼 +{{
+                      formatPercent(QI_RICH_BONUS)
+                    }}</span
+                  >
                 </template>
               </p>
               <button
