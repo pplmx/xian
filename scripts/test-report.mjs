@@ -437,6 +437,7 @@ const CATEGORIES = [
       "quickPillQuality",
       "qualityNotColorOnly",
       "breakthroughSeal",
+      "offlineExpProgress",
       "daoPathCoverage",
     ],
   },

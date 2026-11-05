@@ -124,7 +124,9 @@
 <script setup lang="ts">
 import { computed, watch } from "vue";
 import { useUiStore } from "@/stores/ui";
-import { formatDuration, formatGN, formatNum } from "@/utils/format";
+import { usePlayerStore } from "@/stores/player";
+import { formatDuration, formatGN, formatNum, formatPercent } from "@/utils/format";
+import { toNum } from "@/utils/gnum";
 import { qualityDef } from "@/data/qualities";
 import { playSfx } from "@/core/audio";
 import BaseModal from "@/components/common/BaseModal.vue";
@@ -133,6 +135,7 @@ import QualitySeal from "@/components/common/QualitySeal.vue";
 import SectionMark from "@/components/common/SectionMark.vue";
 
 const ui = useUiStore();
+const player = usePlayerStore();
 
 const summary = computed(() => ui.offlineSummary);
 
@@ -155,8 +158,37 @@ const rows = computed<RewardRow[]>(() => {
   const s = summary.value;
   if (!s) return [];
   const list: RewardRow[] = [];
-  if (s.exp.m > 0)
-    list.push({ icon: "flame", label: "修为", value: `+${formatGN(s.exp)}`, gain: true });
+  if (s.exp.m > 0) {
+    /*
+     * 修为那一行要带上「本境推进」——「+42亿」只是个抽象大数:它可能是一个时辰的量,
+     * 也可能是一天一夜的量,玩家没有参照。醒来真正想问的是「那我推到哪儿了」。
+     *
+     * 分母读 player.expReq(与修行页进度条同一份),现算不另存。
+     * 修为本来按真实离线时长全额入账(见 core/offline 那段注释),这里只补展示。
+     */
+    /*
+     * 修为是 GNum(大数结构),不能直接做算术 —— 走 gnum 的 ratio 取比值。
+     *
+     * 只在**真有意义时**才报:本境需求从炼气 92 涨到混沌海 2e19(跨 17 个数量级),
+     * 而离线收益大致按时间线性长。于是在高境界,一次通宵挂机可能只占本境需求的
+     * 万分之几 —— 写成「本境 0%」等于没说,反而占了一行宽度。
+     * 故:推得动一层就报层数;不足一层的,过 1% 才报百分比;再小就不占字。
+     */
+    /*
+     * 不用 utils/gnum 的 ratio:它把指数差钳在 ±15(那是给血量百分比 / 胜率估算用的),
+     * 「离线修为 / 本境所需」在极端量级下会被它截断,算出假的层数。
+     * toNum 是精确展开,再相除即可。
+     */
+    const reqNum = toNum(player.expReq);
+    const layers = reqNum > 0 ? toNum(s.exp) / reqNum : 0;
+    const push =
+      layers >= 1
+        ? ` · 本境推 ${layers.toFixed(layers >= 10 ? 0 : 1)} 层`
+        : layers >= 0.01
+          ? ` · 本境 ${formatPercent(layers, 0)}`
+          : "";
+    list.push({ icon: "flame", label: "修为", value: `+${formatGN(s.exp)}${push}`, gain: true });
+  }
   if (s.stone.m > 0)
     list.push({ icon: "gem", label: "灵石", value: `+${formatGN(s.stone)}`, gain: true });
   if (s.qi > 0)
