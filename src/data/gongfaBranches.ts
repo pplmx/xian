@@ -632,6 +632,33 @@ export const GONGFA_BRANCHES: GongfaBranchDef[] = [
     damageReduction: 0.06,
     maxHpPct: 0.03,
   }),
+  // ---- 合体:玄牝合真经(地品,九档补缺那一档) ----
+  /*
+   * 地品的份额夹在玄(7.5~9)与天(11~12)之间 —— 两条都落在 10.0,比值 1.0。
+   * 一条走「气机不断」(修速 + 灵气 + 气血),一条走「撼不动」(防御 + 减免 + 气血):
+   * 同一部功法两条路给的是两种活法,不是同一组词条换个顺序。
+   */
+  b("m_xuanpin", "b_xuanpin_baoyi", "抱一", "抱一不离,气机自循", {
+    cultivationSpeed: 0.09,
+    qiRegen: 0.16,
+    maxHpPct: 0.09,
+  }),
+  b("m_xuanpin", "b_xuanpin_shouzhong", "守中", "守中致柔,撼之不动", {
+    defensePct: 0.12,
+    damageReduction: 0.06,
+    maxHpPct: 0.09,
+  }),
+  // ---- 大乘:流云遁空篇(地品,辅修) ----
+  b("s_liuyun", "b_liuyun_juechen", "绝尘", "一去绝尘,踪迹难寻", {
+    dodgeRate: 0.1,
+    explorationSpeed: 0.14,
+    speed: 0.05,
+  }),
+  b("s_liuyun", "b_liuyun_yuxu", "御虚", "御虚而行,来去自如", {
+    speed: 0.05,
+    dodgeRate: 0.08,
+    attackPct: 0.08,
+  }),
   // ---- 合体:形神合一诀 ----
   b("s_xingshen", "b_xingshen_yi", "合一", "形与神合,伤处自弥", {
     maxHpPct: 0.18,

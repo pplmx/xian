@@ -425,6 +425,7 @@ const CATEGORIES = [
       "petFateOrder",
       "petFateMark",
       "routeBreadth",
+      "gongfaQualityLadder",
       "daoPathCoverage",
     ],
   },
