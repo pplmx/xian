@@ -100,8 +100,28 @@
               :style="{ color: qualityDef(r.def.quality).color }"
             />
             <div class="min-w-0 grow">
+              <!--
+                方名旁先报品阶 —— 这一行是玩家选炼哪一炉时唯一读得到的「这一炉多好」。
+                原先品阶只在那枚 18px 图标的前景色上,而图标是**方子形状**(丹炉 / 药壶 /
+                茶叶),颜色是附着在图形上的第二属性:扫读一串方名时视线落在字上,
+                落在图标上的机会很少。聚气散(凡品)与聚气丹(良品)名字只差一个字、
+                品阶差两档,原先在纸面上几乎读不出区别。
+                「N 阶」是丹方阶位(craftability.rank),说的是这一方多难;
+                品阶说的是这一炉多好 —— 两个维度并列写,谁也不顶替谁。
+              -->
               <p class="flex items-center gap-2">
                 <span class="whitespace-nowrap font-kai text-title text-ink">{{ r.def.name }}</span>
+                <!--
+                  品阶名加一道字重:凡品与良品的色值分别是 rgb(105,100,88) 与
+                  rgb(84,106,88),都是低饱和度灰调,在纸面上并列时几乎分不出。
+                  字重让它在扫读时从旁边的「N 阶」里跳出来 —— 这也是全站对高档位
+                  一贯的做法(见 ui/qualityTier:颜色之外另给一条形状/重量线索)。
+                -->
+                <span
+                  class="whitespace-nowrap font-medium text-note"
+                  :style="{ color: qualityDef(r.def.quality).color }"
+                  >{{ qualityDef(r.def.quality).name }}</span
+                >
                 <span class="whitespace-nowrap text-note text-ink-faint">{{ r.able.rank }} 阶</span>
                 <span v-if="r.able.overReach > 0" class="whitespace-nowrap text-note text-cinnabar"
                   >越阶 {{ r.able.overReach }}</span

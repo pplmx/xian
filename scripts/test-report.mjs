@@ -433,6 +433,7 @@ const CATEGORIES = [
       "gongfaBranchUnique",
       "folioVisualScale",
       "offlineQualitySeal",
+      "brewRecipeQuality",
       "daoPathCoverage",
     ],
   },
