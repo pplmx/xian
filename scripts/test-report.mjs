@@ -442,6 +442,7 @@ const CATEGORIES = [
       "eventNoClash",
       "homeRealmOnce",
       "apprenticeAwayOnce",
+      "reincarnationBacktrack",
       "daoPathCoverage",
     ],
   },

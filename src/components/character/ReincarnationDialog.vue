@@ -607,6 +607,23 @@
           <span>踏入轮回</span>
           <small>{{ confirmGate.short }}</small>
         </button>
+        <!--
+          退路 —— 前两程各写着「尚未写入轮回……真正不可撤回的落子,是三程末的
+          『踏入轮回』」。这句承诺此前**没有对应入口**:step 只有一条单向赋值
+          (`step = 'choice'`),三程又都是 closable=false,于是玩家进了第三程
+          就再也回不到回照 —— 想改天赋、想再看一眼账,只能一路按到底。
+
+          退路放在这里(而不是第二程):第二程是纯回顾,第三程才是点选天赋 / 姓名 /
+          命题的地方,想改主意也只会发生在这。
+        -->
+        <button
+          type="button"
+          class="btn-ghost reincarnation-actions__back"
+          data-reincarnation-back
+          @click="step = 'review'"
+        >
+          再看一眼回照
+        </button>
       </div>
     </template>
   </BaseModal>
@@ -973,6 +990,24 @@ watch(view, (next) => {
   grid-template-columns: minmax(0, 1fr);
   align-items: stretch;
   gap: 0.52rem;
+}
+
+/*
+ * 第三程的退路 —— 「再看一眼回照」。
+ *
+ * 它是**次级**动作:主按钮是「踏入轮回」(朱砂实心),这一枚只给一条虚线般的
+ * 细边与淡墨字,并压在按钮之下。不能让两枚看起来一样重 —— 那会稀释那个
+ * 不可撤回的动作。
+ */
+.reincarnation-actions__back {
+  justify-self: center;
+  color: rgb(var(--color-ink-soft-rgb));
+  font-family: var(--font-kai);
+  font-size: var(--type-note);
+  letter-spacing: 0.1em;
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--color-ink-rgb) / 0.28);
+  text-underline-offset: 0.28em;
 }
 
 .reincarnation-actions__gate {
