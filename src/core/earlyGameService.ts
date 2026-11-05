@@ -19,6 +19,15 @@ import { gn, toNum } from "@/utils/gnum";
 import { formatNum } from "@/utils/format";
 import { todayLocalNum } from "@/utils/time";
 import { caveOptionEffectText, enlightenmentEffectText } from "@/ui/earlyGameText";
+/*
+ * 浮层是否占着屏幕 —— 直接读 ui/modalStack 的 hasOpenModal,不另立一份 flag。
+ * 那套栈已经是「最上面那一层」的唯一出处(BaseModal 压栈/出栈,Esc 与安卓返回键
+ * 两个消费者),再维护一个「界面忙不忙」就是两本账,迟早对不上。
+ *
+ * 方向也是干净的:core/earlyGameService → ui/modalStack,而 modalStack 不认识任何
+ * 具体弹窗、也不 import store(它是纯数组 + 读写函数),不会形成环。
+ */
+import { hasOpenModal } from "@/ui/modalStack";
 import { gameNow } from "./enginePause";
 import { notify } from "./notify";
 
@@ -48,6 +57,15 @@ export function getCurrentEnlightenment(): EnlightenmentEvent | null {
  * 刷新一次页面就等于把 5 分钟冷却清掉 —— 那是「重开页面刷顿悟」。
  */
 export function mayTriggerEnlightenment(): void {
+  /*
+   * 界面正忙时这一拍不触发 —— 顿悟的弹窗挂在全局图层,而 BaseModal 没有互斥。
+   * 玩家若正开着兵解往生(三程契约)或突破结果,机缘卷会直接叠上去:
+   * 那一签的倒计时在跑,玩家又不敢扔下手上的事。
+   *
+   * 注意这里**不消费冷却、不清窗口**:心跳每拍都会再来问,玩家合上手上那扇,
+   * 下一次自然就触发了。若忙时直接 return 且算作已尝试,惊喜就真被吞掉了。
+   */
+  if (hasOpenModal()) return;
   const player = usePlayerStore();
   const now = Date.now();
   if (now - player.enlightenmentAt < 300000) return; // 5分钟冷却
@@ -308,6 +326,9 @@ export function recordWinStreakBatch(wins: number, losses: number): StreakBatchR
 /** 触发洞府巡游(每日一次) */
 export function mayTriggerCaveEvent(): CaveEvent | null {
   if (caveEvent) return caveEvent; // 已有未处理事件
+  // 界面正忙时不开新的一扇(同 mayTriggerEnlightenment 的理由)。
+  // 已存在的事件照旧返回 —— 那是「有件旧事还没处理」,不是新惊喜。
+  if (hasOpenModal()) return null;
 
   const player = usePlayerStore();
   const today = todayLocalNum();

@@ -2253,6 +2253,51 @@ GongfaSection / ArtifactPanel / SlotCandidatesDialog / TitlesView / InventoryVie
 判据 `ui/offlineQualitySeal.spec` 三条:有章 / 章盖在拾得装备循环的每一件上
 (只 import 不渲染不算)/ 品阶色仍在(双线索)。
 
+### 顿悟不该在玩家正读往生契约时砸下来
+
+`core/engine.ts` 的心跳里**无条件**调一次 `mayTriggerEnlightenment()`,
+而它只看两件事:5 分钟冷却、境界存在感 —— **不问界面上此刻开着什么**。
+
+`EnlightenmentModal` 与 `CaveEventModal` 挂在 `App.vue` 的全局图层(那里的注释
+自己写着「挂在全局才不会漏掉窗口期」),而 `BaseModal` 没有全局互斥。于是:
+
+- 玩家正开着兵解往生(三程契约要走)时,顿悟叠上来;
+- 玩家正看突破结果时,洞府事件叠上来;
+- 玩家正在确认重置 / 导入时,机缘卷叠在确认窗上。
+
+而机缘卷本身**有时限**(那一签的倒计时在跑)—— 撞车时玩家要么仓促择签,
+要么眼睁睁看它散掉。惊喜变成了打断。
+
+#### 改法:复用已有的浮层栈
+
+我一开始新建了一个 `core/uiBusy.ts`(照 `enginePause` 的模式:独立模块 + setter)。
+写完才发现 `ui/modalStack` 早就有 `hasOpenModal()` —— 它已经是「最上面那一层」的
+唯一出处,有两个消费者(BaseModal 的 Esc 与 ExitConfirmDialog 的安卓返回键)。
+
+再维护一个「界面忙不忙」就是**两本账**。故删掉新模块,直接读栈。
+
+方向也是干净的:`core/earlyGameService → ui/modalStack`,而 `modalStack` 不认识
+任何具体弹窗、也不 import store(纯数组 + 读写函数),不会形成环。
+
+#### 语义:延后,不是丢弃
+
+忙时**只是这一拍不触发**,不消费冷却、不清窗口。心跳每拍都会再来问,玩家合上
+手上那扇,下一次自然就触发。若忙时直接 return 且算作「已尝试」,惊喜就真被吞了。
+
+#### 这条判据是用行为测的
+
+`earlyGameService.spec` 加了一条:压一扇进栈 → 确认不触发且 `enlightenmentAt`
+仍是 0(没消费冷却)→ 出栈 → 确认照常触发。
+
+压栈后必须保证出栈:断言若中途失败,那扇浮层会留在模块级栈里,污染后面每一条
+「掷中则该出现」的测试。故用 `try/finally` 就地清理。
+
+**破坏实验**:删掉 `if (hasOpenModal()) return;` 之后,那条测试精确地单独变红,
+其余 28 条不受污染 —— 这才是一条干净的行为测试。
+
+判据 `ui/eventNoClash.spec`:复用浮层栈不自建 flag / 两个触发函数都要过闸 /
+core 不 import ui store / 洞府事件也走同一道闸。
+
 ### 道果的「+7.47%」是谁的 7.47%
 
 兵解往生「贰 随魂所积」一节原本这样排:

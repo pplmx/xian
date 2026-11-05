@@ -9,6 +9,7 @@ import { useAdventureStore } from "@/stores/adventure";
 import { useUiStore } from "@/stores/ui";
 import { gn, gnZero, toNum } from "@/utils/gnum";
 import { todayLocalNum } from "@/utils/time";
+import { pushModal, removeModal } from "@/ui/modalStack";
 import {
   dismissCaveEvent,
   dismissEnlightenment,
@@ -95,6 +96,37 @@ describe("悟道顿悟(Phase 28)", () => {
 
     dismissEnlightenment();
     expect(getCurrentEnlightenment()).toBeNull();
+    vi.restoreAllMocks();
+  });
+
+  it("浮层占着屏幕时不触发 —— 而合上之后照常触发", () => {
+    /*
+     * 顿悟的弹窗挂在 App.vue 的全局图层,而 BaseModal 没有互斥:玩家开着兵解往生
+     * (三程契约)时,机缘卷会直接叠上去。故触发前读 ui/modalStack 的 hasOpenModal。
+     *
+     * 这条测的是**行为**,不只是源码里有那句话:
+     *   一 栈里压一扇 → 不触发;
+     *   二 出栈 → 照常触发(证明是「延后」不是「吞掉」)。
+     */
+    vi.spyOn(Math, "random").mockReturnValue(0.001);
+    const entry = { closable: true, close: () => {} };
+    pushModal(entry);
+    /*
+     * 压栈后必须保证出栈 —— 断言若中途失败,这扇浮层会留在模块级栈里,
+     * 污染后面每一条「掷中则该出现」的测试(它们会全被闸门挡掉)。
+     * 用 try/finally 而不是 afterEach:栈是模块级的,就地清理最不容易漏。
+     */
+    try {
+      mayTriggerEnlightenment();
+      expect(getCurrentEnlightenment(), "浮层开着时不该弹顿悟").toBeNull();
+      const player = usePlayerStore();
+      expect(player.enlightenmentAt, "被挡下时不该消费冷却 —— 否则惊喜就真被吞了").toBe(0);
+    } finally {
+      removeModal(entry);
+    }
+
+    mayTriggerEnlightenment();
+    expect(getCurrentEnlightenment(), "合上浮层后照常触发(延后,不是丢弃)").not.toBeNull();
     vi.restoreAllMocks();
   });
 
