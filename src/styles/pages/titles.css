@@ -479,6 +479,43 @@
     line-height: 1.5;
   }
   /*
+   * 命途印 —— 灵兽的走法(贪宝/慢稳/好战/谨慎/疾行/守拙,见 data/petTraits)。
+   *
+   * 灵兽谱已按命途聚排好,这一枚小印把「这一段是哪一种走法」写成可扫的离散标记:
+   * 四十只同屏滚动时,同种走法挨着、同一种印挨着,一眼认得出这一段在讲什么。
+   *
+   * 语言取「墨字 + 淡底 + 朱砂小印」,不加第三个强色(见 docs/design 的配色契约)。
+   * 朱砂小印指名字前的一点朱色竖笔 —— 它是本作唯一的行动色,这里只当"标记位",
+   * 不给整枚印铺色底(实心彩色胶囊是明确不引入的界面语言)。
+   */
+  .pet-fate-mark {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    padding: 0 0.34rem 0 0.42rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
+    border-radius: 2px;
+    background: rgb(var(--color-ink-rgb) / 0.035);
+    color: var(--color-ink-soft);
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.12em;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .pet-fate-mark::before {
+    position: absolute;
+    top: 0.28rem;
+    bottom: 0.28rem;
+    left: 0.14rem;
+    width: 2px;
+    border-radius: 1px;
+    background: var(--color-cinnabar);
+    content: "";
+  }
+
+  /*
    * 「何时得到它的」—— 称号与灵兽共用这一档字(见 ui/codexMoment)。
    *
    * 退一档、用淡墨:它是注脚,不是效果。与上面那句 effect 拉开层次的办法是

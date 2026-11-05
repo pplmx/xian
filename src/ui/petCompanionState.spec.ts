@@ -24,13 +24,15 @@
  *
  * `petEntryState` 加收 `wasCompanion`,档位与 `PET_STAGE_NAMES` 对齐
  * (只是名册不需要"未录"那一档,它本来就把未结缘的写「未结缘」)。
- * 排序也跟着「相伴中 → 曾相伴 → 已结缘 → 未结缘」—— 与提示语一致。
+ * 排序也跟着「相伴中 → 曾相伴 → 已结缘 → 未结缘」—— 与提示语一致。这条深浅梯子在
+ * `core/petFateOrder` 按命途聚排之后仍然作数,只是挪到了**段内**那一根键上(见
+ * `PET_ENTRY_DEPTH` 下面的用例):同一种走法里,同行深一点的先浮上来。
  *
  * 两本书从此读同一处 `quests.petCompanions`,不再各抄一半。
  */
 import { describe, expect, it } from "vite-plus/test";
 import { readSource } from "@/test/readSource";
-import { petEntryState } from "./titlesDesk";
+import { petEntryState, PET_ENTRY_DEPTH } from "./titlesDesk";
 
 describe("名号页灵兽态 · 四档与图鉴对齐", () => {
   it("仍在相伴 —— 最高一档", () => {
@@ -118,5 +120,31 @@ describe("名号页灵兽态 · 只是状态文案", () => {
     const view = readSource("src/views/TitlesView.vue");
     expect(view, "名册要读 quests.petCompanions").toContain("petCompanions");
     expect(view, "要把 wasCompanion 递给 petEntryState").toContain("wasCompanion");
+  });
+});
+
+describe("灵兽谱段内排序用的深浅刻度 —— 与图鉴同一把尺", () => {
+  it("四态的数值序 = 图鉴 PET_STAGE_NAMES 的下标序", async () => {
+    const { PET_STAGE_NAMES } = await import("./codex");
+    const ladder = [
+      ["locked", "未录"],
+      ["owned", "已结缘"],
+      ["companion", "曾相伴"],
+      ["active", "相伴中"],
+    ] as const;
+    ladder.forEach(([state, stageName], i) => {
+      // 名册说「未结缘」、图鉴说「未录」—— 同一件事的两种说法,刻度必须是同一个数
+      expect(PET_STAGE_NAMES[i], `图鉴第 ${i} 档不是「${stageName}」了`).toBe(stageName);
+      expect(
+        PET_ENTRY_DEPTH[state],
+        `刻度「${state}」应为 ${i}(与图鉴第 ${i} 档对齐)—— 灵兽谱段内排序就靠这把尺`,
+      ).toBe(i);
+    });
+  });
+
+  it("刻度四档齐备且严格递增 —— 漏一档就是视图取不到值", () => {
+    const values = Object.values(PET_ENTRY_DEPTH);
+    expect(values).toHaveLength(4);
+    expect([...values].sort((a, b) => a - b)).toEqual([0, 1, 2, 3]);
   });
 });

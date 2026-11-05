@@ -76,3 +76,18 @@ export function petEntryState(row: {
   if (row.wasCompanion) return { state: "companion", mark: "曾", label: "曾相伴" };
   return { state: "owned", mark: "契", label: "已结缘" };
 }
+
+/**
+ * 四态的**深浅刻度** —— 数值序就是那段同行的深浅:
+ * 未结缘 0 < 已结缘 1 < 曾相伴 2 < 相伴中 3(与图鉴 `PET_STAGE_NAMES` 的下标同一条 ladder)。
+ *
+ * 灵兽谱按命途聚排之后,这一刻度还多担一件事:同一种走法里,「我与它同行到哪一步」
+ * 比品阶更该先看 —— 未逢的那几只该沉在段尾,而不是凭高品阶插进已结缘者中间
+ * (见 `core/petFateOrder` 的排序键)。刻度只在这里定一份,视图与排序都引它。
+ */
+export const PET_ENTRY_DEPTH: Record<NameBeastEntryState["state"], number> = {
+  locked: 0,
+  owned: 1,
+  companion: 2,
+  active: 3,
+};

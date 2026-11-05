@@ -255,6 +255,8 @@ import { GONGFA } from "../src/data/gongfa.ts";
 import { branchesFor } from "../src/data/gongfaBranches.ts";
 import { ACHIEVEMENTS } from "../src/data/achievements.ts";
 import { qualityDef } from "../src/data/qualities.ts";
+import { orderPetsByFate } from "../src/core/petFateOrder.ts";
+import { PET_ENTRY_DEPTH } from "../src/ui/titlesDesk.ts";
 import { REALMS } from "../src/data/realms.ts";
 import { QUALITY_VERDICTS, qualityVerdict } from "../src/data/qualityVerdicts.ts";
 import { COMPREHEND_PAGE_COST } from "../src/data/constants.ts";
@@ -11174,6 +11176,102 @@ async function taskPetMoment() {
         failures.push(
           `[390] 灵兽谱:高档灵兽没盖角章 —— 色弱玩家只能靠颜色分档(${missing.map((r) => r.id).join(",")})`,
         );
+      }
+
+      /*
+       * 五 按命途聚 —— 已契那一段按走法成段,段内按同行深浅与品阶沉底。
+       *
+       * `core/petFateOrder` 把谱排好,这里在真浏览器里量同一件事。四件可扫的事实:
+       *
+       *   一 每一行**已结缘的**都盖得出命途印(data-pet-fate-mark);未逢的行是「???」,
+       *      它不声称任何命途 —— 界面上没写的东西也不许写进 DOM(否则探针量到的是假账)。
+       *   二 已契的一律排在未契之前(排序的第二根键)。
+       *   三 除开被置顶的那只相伴灵兽,每一种命途**只占一段连续区间**。热度打平的两条
+       *      走法若按品阶交错,这里当场红 —— 这一处正是这一版在真浏览器里查出来的。
+       *   四 同一段里深浅刻度(伴 3 > 曾 2 > 契 1 > 未 0,与 ui/titlesDesk 的
+       *      PET_ENTRY_DEPTH 同一把尺)只降不升。
+       */
+      checked += 1;
+      const fateTruth = await page.evaluate(() => {
+        const rows = [...document.querySelectorAll("[data-pet-row]")];
+        return rows.map((row) => ({
+          id: row.getAttribute("data-pet-row"),
+          fate: row.getAttribute("data-fate"),
+          marked: Boolean(row.querySelector("[data-pet-fate-mark]")),
+          state: row.getAttribute("data-pet-state"),
+          active: row.getAttribute("data-pet-state") === "active",
+        }));
+      });
+      const fated = fateTruth.filter((row) => row.fate !== null && row.fate !== undefined);
+      if (fated.length < 3) {
+        failures.push(`[390] 灵兽谱:只量到 ${fated.length} 行命途,量不到分组(夹具未收录?)`);
+      }
+      // 一 印与命途要同进退:认了命途的行才盖印,「???」那一段一枚都不许盖
+      const unmarked = fated.filter((row) => !row.marked);
+      if (unmarked.length > 0) {
+        failures.push(
+          `[390] 灵兽谱:这些已结缘的行缺命途印 —— 走法不可扫(${unmarked.map((r) => r.id).join(",")})`,
+        );
+      }
+      const leaked = fateTruth.filter((row) => row.fate === null && row.marked);
+      if (leaked.length > 0) {
+        failures.push(
+          `[390] 灵兽谱:尚未结缘的行盖了命途印 —— 界面上写着「???」,DOM 却认了走法(${leaked
+            .map((r) => r.id)
+            .join(",")})`,
+        );
+      }
+      // 二 已契在前:未逢的那一段该整体沉底
+      const firstLocked = fateTruth.findIndex((row) => row.state === "locked");
+      const ownedAfterLocked =
+        firstLocked < 0 ? [] : fateTruth.slice(firstLocked).filter((row) => row.state !== "locked");
+      if (ownedAfterLocked.length > 0) {
+        failures.push(
+          `[390] 灵兽谱:已结缘的被未逢的插到了前面(${ownedAfterLocked.map((r) => r.id).join(",")})`,
+        );
+      }
+      // 三 命途只占一段连续区间(相伴中被置顶,它从自己那一段里让出来,不算交错)
+      const seenFates = new Set();
+      let lastFate = null;
+      const interleaved = [];
+      for (const row of fated) {
+        if (row.active) continue;
+        if (row.fate !== lastFate) {
+          if (seenFates.has(row.fate)) interleaved.push(`${row.id}(${row.fate})`);
+          seenFates.add(row.fate);
+          lastFate = row.fate;
+        }
+      }
+      if (interleaved.length > 0) {
+        failures.push(`[390] 灵兽谱:命途被打散 —— 同种走法没挨着(${interleaved.join(",")})`);
+      }
+      // 四 段内深浅只降不升(同样跳过被置顶的那一行)
+      const DEPTH = { active: 3, companion: 2, owned: 1, locked: 0 };
+      const depthJumps = [];
+      let prevFate = null;
+      let prevDepth = null;
+      for (const row of fated) {
+        const depth = DEPTH[row.state];
+        if (depth === undefined || row.active) continue;
+        if (row.fate !== prevFate) {
+          prevFate = row.fate;
+          prevDepth = depth;
+          continue;
+        }
+        if (prevDepth !== null && depth > prevDepth) {
+          depthJumps.push(`${row.id}(${row.state} 压在上一行深一档的伙伴之前)`);
+        }
+        prevDepth = depth;
+      }
+      if (depthJumps.length > 0) {
+        failures.push(`[390] 灵兽谱:同一段命途里深浅没排好(${depthJumps.join(",")})`);
+      }
+      // 相伴置顶仍是第一行(排序的最高一层键)
+      if (fateTruth.length > 0) {
+        const activeIdx = fateTruth.findIndex((r) => r.active);
+        if (activeIdx > 0) {
+          failures.push(`[390] 灵兽谱:相伴中的那只不在第一行(第 ${activeIdx + 1} 行)`);
+        }
       }
     }
 
@@ -25959,11 +26057,19 @@ async function taskTitlePetOverflow() {
     if (!activePet || !wornTitle) throw new Error("名号 / 灵兽夹具取不到首尾条目");
     const activePetId = activePet.id;
     const wornTitleId = wornTitle.id;
-    const petSorted = [...PETS].sort(
-      (a, b) =>
-        Number(b.id === activePetId) - Number(a.id === activePetId) ||
-        qualityDef(b.quality).rank - qualityDef(a.quality).rank,
-    );
+    // 谱的实际次序由 core/petFateOrder 决定 —— 这里引同一个函数算期望,不在门里另写一份
+    // 比较器(另写一份就等于给排序立第二本账,改core门就悄悄红了)。
+    // 夹具:全收录 + 全相伴过 + PETS[0] 正伴着,所以深浅只有「相伴中 / 曾相伴」两档。
+    const petSorted = orderPetsByFate(
+      PETS.map((pet) => ({
+        id: pet.id,
+        active: pet.id === activePetId,
+        owned: true,
+        personality: pet.personality,
+        depthRank: pet.id === activePetId ? PET_ENTRY_DEPTH.active : PET_ENTRY_DEPTH.companion,
+        qualityRank: qualityDef(pet.quality).rank,
+      })),
+    ).map((row) => row.id);
     const titleSorted = [wornTitle, ...TITLES.filter((title) => title.id !== wornTitleId)];
     const slices = showcaseSlices("light");
     slices.player = {
@@ -26563,7 +26669,7 @@ async function taskTitlePetOverflow() {
       label: "灵兽册",
       unit: "只",
       total: PETS.length,
-      sortedIds: petSorted.map((pet) => pet.id),
+      sortedIds: petSorted,
     });
 
     if (pageErrors.length)

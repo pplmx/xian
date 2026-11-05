@@ -1110,9 +1110,40 @@ describe("界面分层 · 浮层只有一个出处", () => {
     }
     // 当前相伴是玩家现在的选择,必须排在已结缘者里的第一行;
     // 原实现先按品阶排,低品阶的相伴灵兽会被更高品阶的旧收藏压到后面。
-    expect(tit?.src, "相伴灵兽必须早于品阶排序,不能只当同品阶的次序键").toMatch(
-      /Number\(b\.active\)\s*-\s*Number\(a\.active\)[\s\S]{0,160}qualityDef\(b\.def\.quality\)\.rank/,
-    );
+    //
+    // 排序规则已收进 core/petFateOrder(纯函数,可直接测),视图不再手写比较器 ——
+    // 故这里改为量**接线**:视图调 orderPetsByFate,且该纯函数里六根键的**次序**就是
+    // 这册的读法(相伴置顶 > 已契在前 > 命途热度 > 命途定序 > 同行深浅 > 品阶 > id)。
+    // 次序是这里唯一要守的事:键少了、或品阶抢到了深浅前面,谱就读错了。
+    expect(tit?.src, "灵兽谱排序要走共享的 orderPetsByFate").toContain("orderPetsByFate");
+    // 排序纯函数不在 components/views 扫描面内,直接读源文件
+    const fateSrc = readFileSync(resolve(SRC, "core/petFateOrder.ts"), "utf8");
+    // 键的**先后**就是这册的读法,所以量的是出现次序而不是邻近度 —— 注释加长不该让判据变松。
+    // 相伴置顶 > 已契在前 > 命途热度 > 命途定序 > 同行深浅 > 品阶 > id 兜底。
+    const sortBody = fateSrc.slice(fateSrc.indexOf("Number(b.active)"));
+    const keyOrder = [
+      "Number(b.active)",
+      "Number(b.owned)",
+      "heat(b) - heat(a)",
+      "fateIndex(a.personality)",
+      "b.depthRank - a.depthRank",
+      "b.qualityRank - a.qualityRank",
+      "a.id.localeCompare(b.id)",
+    ];
+    keyOrder.forEach((key, i) => {
+      const at = sortBody.indexOf(key);
+      expect(at, `排序键「${key}」没出现在 orderPetsByFate 里`).toBeGreaterThan(-1);
+      if (i > 0) {
+        expect(at, `排序键「${key}」的次序不对:它该排在「${keyOrder[i - 1]}」之后`).toBeGreaterThan(
+          sortBody.indexOf(keyOrder[i - 1]!),
+        );
+      }
+    });
+    // 刻度只有一个出处:视图递进去的 depthRank 必须取自共享的 PET_ENTRY_DEPTH
+    expect(
+      tit?.src,
+      "灵兽行的深浅刻度要引 ui/titlesDesk 的 PET_ENTRY_DEPTH,不在视图里另写一份数字",
+    ).toMatch(/depthRank:\s*PET_ENTRY_DEPTH\[/);
     // 换佩/换伴会改排序:若窗口仍停在第 N 页,新选项会被排到顶部却不在 DOM 里。
     // 换选后回首批,并把焦点送到新选那一行;卸下则停在首批首行。
     expect(tit?.src, "换名号后要回首批并把焦点送到新佩项").toMatch(

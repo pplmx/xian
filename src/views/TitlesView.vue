@@ -316,7 +316,7 @@
             index="贰"
             eyebrow="已契与未逢"
             title="灵兽谱"
-            hint="相伴置顶 · 已契次之 · 品阶降序"
+            hint="相伴置顶 · 已契在前 · 按命途聚 · 品阶降序"
             :fact="`现看 ${petPage.start + 1}–${petPage.shown} · 共 ${petRows.length} 只`"
           />
 
@@ -326,6 +326,7 @@
               :key="row.def.id"
               :data-pet-row="row.def.id"
               :data-pet-state="row.state.state"
+              :data-fate="row.owned ? row.personality : null"
               tabindex="-1"
               class="name-ledger__entry pet-ledger__entry flex items-start justify-between gap-3 tinylens:flex-col tinylens:items-stretch tinylens:gap-2"
             >
@@ -361,6 +362,14 @@
                         :style="{ color: qualityDef(row.def.quality).color }"
                         >{{ qualityDef(row.def.quality).name }}</span
                       >
+                      <!--
+                        命途印 —— 灵兽的走法(见 data/petTraits 六种性格)。
+                        谱按命途聚排好,这一枚小印让「这一段是哪一种走法」一眼认得出;
+                        墨字 + 淡底 + 朱砂小印,不加第三个强色(见 docs/design 的配色契约)。
+                      -->
+                      <span class="pet-fate-mark" :data-fate="row.personality" data-pet-fate-mark>{{
+                        row.personalityName
+                      }}</span>
                       <span class="name-ledger__state">{{ row.state.label }}</span>
                     </p>
                     <p class="name-ledger__desc">{{ row.def.desc }}</p>
@@ -471,11 +480,13 @@ import ProgressBar from "@/components/common/ProgressBar.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import QualitySeal from "@/components/common/QualitySeal.vue";
 import { isRareQuality } from "@/ui/qualityTier";
+import { orderPetsByFate } from "@/core/petFateOrder";
 import NameBeastSwitch from "@/components/common/NameBeastSwitch.vue";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import {
   nameBeastMeter,
   petEntryState,
+  PET_ENTRY_DEPTH,
   titleEntryState,
   type NameBeastChoice,
 } from "@/ui/titlesDesk";
@@ -613,8 +624,20 @@ const petRows = computed(() =>
   PETS.map((def) => {
     const owned = ownedPetIds.value.has(def.id);
     const active = player.petId === def.id;
+    /*
+     * 曾相伴 —— 名册与图鉴读同一处 quests.petCompanions。
+     * 此前这里只传两个布尔,于是"唤作过伴、后来换了伙伴"的灵兽落回「已结缘」,
+     * 那段同行在名册里根本不存在(见 ui/titlesDesk 的注释)。
+     */
+    const petState = petEntryState({
+      owned,
+      active,
+      wasCompanion: petCompanionIds.value.has(def.id),
+    });
     return {
       def,
+      /** 排序键之一:orderPetsByFate 用 id 作稳定兜底键 */
+      id: def.id,
       owned,
       active,
       // 相伴中的显示放大后的真值(灵兽园 × 安抚,与人物页属性明细同源 —— 都是 finalStats 的「灵兽」行);
@@ -627,26 +650,25 @@ const petRows = computed(() =>
       traitText: petTraitText(def),
       /** 结缘那一刻 —— 与称号同一份道历;未结缘的没有这一刻 */
       momentText: owned ? codexMomentText(quests.petMoments[def.id]) : "",
-      /*
-       * 曾相伴 —— 名册与图鉴读同一处 quests.petCompanions。
-       * 此前这里只传两个布尔,于是"唤作过伴、后来换了伙伴"的灵兽落回「已结缘」,
-       * 那段同行在名册里根本不存在(见 ui/titlesDesk 的注释)。
+      state: petState,
+      /** 命途(性格 id)—— 供 core/petFateOrder 把同种走法聚在一起 */
+      personality: def.personality as string,
+      /**
+       * 同行深浅 —— 与这一行「伴 / 曾 / 契 / 未」那一枚印同源(刻度写在
+       * ui/titlesDesk 的 PET_ENTRY_DEPTH,与图鉴同一把尺)。
        */
-      state: petEntryState({ owned, active, wasCompanion: petCompanionIds.value.has(def.id) }),
+      depthRank: PET_ENTRY_DEPTH[petState.state],
+      /** 品阶序号,组内降序;排序键走共享的 orderPetsByFate,不在这里手写比较 */
+      qualityRank: qualityDef(def.quality).rank,
     };
-  }).sort(
-    /*
-     * 相伴中 → 曾相伴 → 已结缘 → 未结缘,组内品阶降序。
-     * 与卷首那句「相伴置顶 · 已契次之 · 品阶降序」逐字对齐 ——
-     * 此前排序键里只有 active,「曾相伴」那一档不存在,提示语也就只有半句是真的。
-     */
-    (a, b) =>
-      Number(b.active) - Number(a.active) ||
-      Number(b.state.state === "companion") - Number(a.state.state === "companion") ||
-      Number(b.owned) - Number(a.owned) ||
-      qualityDef(b.def.quality).rank - qualityDef(a.def.quality).rank,
-  ),
+  }),
 );
+/*
+ * 灵兽谱的顺序:相伴中置顶 → 已契在前 → 已契那一段按命途聚 → 段内同行深的在前 → 品阶降序。
+ * 排序规则收在 core/petFateOrder(纯函数、可直接测),视图只调它、不再手写比较 —
+ * 与卷首那句「相伴置顶 · 已契在前 · 按命途聚 · 品阶降序」逐字对齐。
+ */
+const petRowsOrdered = computed(() => orderPetsByFate(petRows.value));
 const activePet = computed(() => petRows.value.find((row) => row.active) ?? null);
 
 const nameBeastChoices = computed<NameBeastChoice<"title" | "pet">[]>(() => {
@@ -696,7 +718,7 @@ const nameBeastChoices = computed<NameBeastChoice<"title" | "pet">[]>(() => {
 const PET_RENDER_BATCH = 12;
 const PET_RENDER_WINDOW = PET_RENDER_BATCH * 2;
 const petLimit = ref(PET_RENDER_BATCH);
-const petPage = computed(() => listWindow(petRows.value, petLimit.value, PET_RENDER_WINDOW));
+const petPage = computed(() => listWindow(petRowsOrdered.value, petLimit.value, PET_RENDER_WINDOW));
 /** 这一批真正放出多少件 —— 按钮文案与 data-promised 共用,不许各算一遍 */
 const petPromise = computed(() => nextRevealCount(petPage.value.hidden, PET_RENDER_BATCH));
 
@@ -706,19 +728,23 @@ function morePetText(): string {
 }
 
 function previousPetText(): string {
-  const step = previousListStep(petPage.value.shown, petRows.value.length, PET_RENDER_BATCH);
+  const step = previousListStep(petPage.value.shown, petRowsOrdered.value.length, PET_RENDER_BATCH);
   return `前一批 ${step} 只`;
 }
 
 function showMorePets(): void {
   const shownBefore = petPage.value.shown;
-  const shownAfter = nextListLimit(shownBefore, petRows.value.length, PET_RENDER_BATCH);
+  const shownAfter = nextListLimit(shownBefore, petRowsOrdered.value.length, PET_RENDER_BATCH);
   petLimit.value = shownAfter;
   focusListRow("[data-pet-row]", firstNewVisibleIndex(shownBefore, shownAfter, PET_RENDER_WINDOW));
 }
 
 function showPreviousPets(): void {
-  petLimit.value = previousListLimit(petPage.value.shown, petRows.value.length, PET_RENDER_BATCH);
+  petLimit.value = previousListLimit(
+    petPage.value.shown,
+    petRowsOrdered.value.length,
+    PET_RENDER_BATCH,
+  );
   focusListRow("[data-pet-row]");
 }
 
