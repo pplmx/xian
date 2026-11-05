@@ -255,7 +255,7 @@ import { GONGFA } from "../src/data/gongfa.ts";
 import { branchesFor } from "../src/data/gongfaBranches.ts";
 import { ACHIEVEMENTS } from "../src/data/achievements.ts";
 import { qualityDef } from "../src/data/qualities.ts";
-import { SOUL_GRADES, soulGradeSeal } from "../src/data/souls.ts";
+import { SOUL_GRADES, soulGradeSeal, soulTypeDesc } from "../src/data/souls.ts";
 import { orderPetsByFate } from "../src/core/petFateOrder.ts";
 import { PET_ENTRY_DEPTH } from "../src/ui/titlesDesk.ts";
 import { REALMS } from "../src/data/realms.ts";
@@ -9472,6 +9472,35 @@ async function taskSoulGradeSeal() {
     const seatHeads = [...new Set(seen.filter((r) => r.slot === "seat").map((r) => r.text))];
     if (seatHeads.length > 1 === false && fixtureSouls.length > 1) {
       failures.push(`[390] 器魂阶章:两席不同阶却盖同一个字(${seatHeads.join("/")})`);
+    }
+
+    /*
+     * 形意来历(见 data/souls.soulTypeDesc)—— 六句话写了很久、一个字都没进过界面。
+     * 这里核两件事:详情面板真的渲染出来,且逐字等于 data 里那一句。
+     * 换成别的类就换成别的句子 —— 只核"有字"证明不了接对了。
+     */
+    checked += 1;
+    const opened = await page.evaluate(() => {
+      const btn = document.querySelector('[data-soul-seat-index="1"] .soul-seat__detail');
+      if (!btn) return false;
+      btn.click();
+      return true;
+    });
+    if (!opened) {
+      failures.push("[390] 器魂形意来历:点不开第一席的详情");
+    } else {
+      await page.waitForTimeout(450);
+      const lore = await page.evaluate(() => {
+        const el = document.querySelector("[data-soul-type-lore]");
+        return el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null;
+      });
+      // 第一席装的是 gs_low(grade 0,风芒/锋魂)
+      const want = soulTypeDesc("fengmang");
+      if (lore === null) {
+        failures.push("[390] 器魂形意来历:详情面板上没有那一句(数据在而界面不读)");
+      } else if (lore !== want) {
+        failures.push(`[390] 器魂形意来历:面板写「${lore}」,表里是「${want}」`);
+      }
     }
 
     if (pageErrors.length) {
@@ -28664,7 +28693,7 @@ const TASKS = [
   ["器铭的出身与逐件不同", taskInscription],
   ["灵兽契语只在相伴处出声", taskPetVow],
   ["道记留得住择道那一刻", taskDaoNote],
-  ["器魂阶的形意章盖得出档次", taskSoulGradeSeal],
+  ["器魂阶章与形意来历都读得到", taskSoulGradeSeal],
   ["品评说得出一档的分量", taskQualityVerdict],
   ["品阶印跟着高品落地", taskToastSeal],
   ["历世足迹留得住到过的地方", taskPeakRealm],

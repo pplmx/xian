@@ -310,6 +310,15 @@
             <p class="text-note text-ink-faint">凝自「{{ soulDetail.fromName }}」</p>
           </div>
         </div>
+        <!--
+          形意来历 —— 它原先属于什么样的器物、经历过什么(见 data/souls.soulTypeDesc)。
+          这一屏此前只有类型名、阶名与一行词条账:一个编号加一串数,
+          没有一句说「形意是什么」。而器魂是从别的器物上剥下来的,那正是它唯一的身世。
+          与下面那行词条账分工固定:这一行答「它从哪来」,那一行答「它给你什么」。
+        -->
+        <p v-if="soulDetailLore" class="mt-2 t-body text-ink-soft" data-soul-type-lore>
+          {{ soulDetailLore }}
+        </p>
         <p class="mt-3 t-body text-ink-soft">{{ soulModText(soulDetail) }}</p>
       </template>
       <template #footer>
@@ -476,6 +485,13 @@
                 >
               </p>
               <!-- 给什么要有数:魂效果是确定的,就在入炉前说出来(与闲置形意的读数同款) -->
+              <!-- 入炉之前就该知道会凝出什么样的形意 —— 与详情面板读同一句(见 soulTypeDesc) -->
+              <p
+                v-if="row.typeId && forgeLore(row.typeId)"
+                class="truncate text-note text-ink-faint"
+              >
+                {{ forgeLore(row.typeId) }}
+              </p>
               <p v-if="modsText(row.mods)" class="truncate text-note text-ink-soft">
                 {{ modsText(row.mods) }}
               </p>
@@ -560,6 +576,7 @@ import {
   soulGradeDef,
   soulMods,
   soulName,
+  soulTypeDesc,
   soulTypeDef,
   type SoulInstance,
 } from "@/data/souls";
@@ -838,6 +855,8 @@ const refinableCards = computed(() =>
       inst,
       name: equipmentTemplate(inst.templateId)?.name ?? "无名法器",
       typeName: preview.type?.name ?? "器魂",
+      /** 将凝出的形意类型 —— 入炉前那句来历要在模板里按它取(见 soulTypeDesc) */
+      typeId: preview.type?.id ?? null,
       gradeRank: preview.gradeRank,
       // 将凝出的器的数值模组 —— 预览即成品(soulForge.previewSoul.mods)
       mods: preview.mods,
@@ -943,6 +962,19 @@ function soulColor(soul: SoulInstance): string {
 }
 function soulModText(soul: SoulInstance): string {
   return modsText(soulMods(soul));
+}
+
+/**
+ * 详情面板那一句形意来历(见 data/souls.soulTypeDesc)。
+ * 认不得的类型给空串,整段不出 —— 与契语、品评同一条兜底口径。
+ */
+const soulDetailLore = computed(() =>
+  soulDetail.value ? soulTypeDesc(soulDetail.value.type) : "",
+);
+
+/** 凝炼预览那一句:入炉之前就该知道会凝出什么样的形意 */
+function forgeLore(type: string): string {
+  return soulTypeDesc(type as never);
 }
 
 /** 席位序号只做方位提示；有无器魂仍只由 soulAt 判断。 */

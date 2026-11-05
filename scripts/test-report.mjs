@@ -427,6 +427,7 @@ const CATEGORIES = [
       "routeBreadth",
       "gongfaQualityLadder",
       "soulGradeSeal",
+      "soulTypeLore",
       "daoPathCoverage",
     ],
   },
