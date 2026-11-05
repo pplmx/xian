@@ -441,6 +441,7 @@ const CATEGORIES = [
       "daoFruitDelta",
       "eventNoClash",
       "homeRealmOnce",
+      "apprenticeAwayOnce",
       "daoPathCoverage",
     ],
   },

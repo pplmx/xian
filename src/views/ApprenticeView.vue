@@ -317,7 +317,12 @@ const apprenticeLedgerRows = computed(() => [
     label: "在途",
     value: pulse.value.away,
     unit: "人",
-    detail: pulse.value.away > 0 ? "各按归期回门" : "无人在途",
+    /*
+     * 没人在外时不再写「无人在途」—— 那两字由 value 的「0 人」已经说尽,
+     * 而右边「最近归来」格的主值正是「无人在途」:同一个事实会在首屏出现两遍。
+     * 这一格此时该回答的是**玩家能做什么**(派一个出去)。
+     */
+    detail: pulse.value.away > 0 ? "各按归期回门" : "下一单随时可派",
   },
   {
     id: "next",
