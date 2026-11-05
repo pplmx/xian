@@ -429,6 +429,7 @@ const CATEGORIES = [
       "soulGradeSeal",
       "soulTypeLore",
       "mastheadCompact",
+      "artifactActiveUnique",
       "daoPathCoverage",
     ],
   },
