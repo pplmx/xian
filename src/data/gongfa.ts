@@ -1,4 +1,4 @@
-/** 功法库 —— 66 部:主修 28 / 辅修 23 / 秘术 15,每境都有新东西可参 */
+/** 功法库 —— 68 部:主修 28 / 辅修 24 / 秘术 16,每境都有新东西可参 */
 import type { GongfaDef, GongfaType, QualityId, StatMods } from "@/types";
 
 function g(
@@ -316,6 +316,22 @@ export const GONGFA: GongfaDef[] = [
     { lifespanPct: 0.06, maxHpPct: 0.08 },
     { lifespanPct: 0.012, maxHpPct: 0.012 },
   ),
+  /*
+   * 元婴境(4)此前一部辅修、一部秘术都没有 —— 那一境只有两部**主修**,
+   * 而主修席唯一,于是「参悟」在元婴境其实没有选择可言。
+   * 补这一部,正是 data/gongfa 里那句注释认定的缺陷:
+   * 「主修只此一部、辅修只此一部的时候,参悟这件事就没有选择可言」。
+   */
+  g(
+    "s_yuanying",
+    "元神灵动篇",
+    "sub",
+    "profound",
+    4,
+    "元婴初成,神魂未凝,正当以静养之",
+    { cultivationSpeed: 0.11, breakthroughRate: 0.02 },
+    { cultivationSpeed: 0.018, breakthroughRate: 0.004 },
+  ),
   g(
     "s_zhoutian",
     "周天星辰图",
@@ -376,6 +392,20 @@ export const GONGFA: GongfaDef[] = [
     "开天眼,窥机缘",
     { luck: 0.06, eventLuck: 0.08 },
     { luck: 0.02, eventLuck: 0.03 },
+  ),
+  /*
+   * 同上:元婴境缺一部秘术。秘术占辅修席(见 AGENTS.md「secret 装配时也占辅修席」),
+   * 故它与上面那部辅修一样,给的是"主修之外还能装什么"。
+   */
+  g(
+    "x_yuanying",
+    "婴火炼神术",
+    "secret",
+    "profound",
+    4,
+    "以婴火温养神识,神完则形不亏",
+    { maxHpPct: 0.1, cultivationSpeed: 0.08 },
+    { maxHpPct: 0.018, cultivationSpeed: 0.012 },
   ),
   g(
     "x_jingang",

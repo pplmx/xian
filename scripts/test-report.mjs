@@ -415,6 +415,7 @@ const CATEGORIES = [
       "dustFormat",
       "soulTallyFields",
       "artifactQualityLadder",
+      "gongfaRealmCoverage",
     ],
   },
   {

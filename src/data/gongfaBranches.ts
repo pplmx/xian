@@ -336,6 +336,21 @@ export const GONGFA_BRANCHES: GongfaBranchDef[] = [
     luck: 0.02,
   }),
 
+  // ---- 辅修:元神灵动篇(玄品) ----
+  /*
+   * 元婴境(4)此前只有两部主修,而主修席唯一 —— 那一境「参悟」没有选择可言。
+   * 这两条分支与同一部功法里补的辅修配套,见 data/gongfa 的注释。
+   */
+  b("s_yuanying", "b_yuanying_jing", "静养", "神凝于内,进境自稳", {
+    cultivationSpeed: 0.1,
+    breakthroughRate: 0.03,
+  }),
+  b("s_yuanying", "b_yuanying_you", "神游", "神游太虚,契阔天地", {
+    eventLuck: 0.12,
+    cultivationSpeed: 0.06,
+    luck: 0.03,
+  }),
+
   // ---- 辅修:万剑归宗图(玄品) ----
   b("s_wanjian", "b_wanjian_chao", "朝宗", "万剑齐出,连绵不绝", {
     comboRate: 0.12,
@@ -353,6 +368,16 @@ export const GONGFA_BRANCHES: GongfaBranchDef[] = [
   b("x_tianyan", "b_tianyan_bao", "照宝", "宝气入眼,所获不空", {
     dropRate: 0.12,
     doubleDropRate: 0.12,
+  }),
+
+  // ---- 秘术:婴火炼神术(玄品) ----
+  b("x_yuanying", "b_yuanying_wen", "温养", "婴火温养,形神俱足", {
+    maxHpPct: 0.1,
+    damageReduction: 0.03,
+  }),
+  b("x_yuanying", "b_yuanying_lian", "炼神", "以火炼神,神旺则道明", {
+    cultivationSpeed: 0.11,
+    breakthroughRate: 0.02,
   }),
 
   // ---- 秘术:金刚不坏身(灵品) ----

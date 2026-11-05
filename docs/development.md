@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 506 个 spec;本作自己那部分 426 个) |
+| `bun run test` | 全量用例(全量 507 个 spec;本作自己那部分 427 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -98,7 +98,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 506 个 spec(本作自己那部分 426 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 507 个 spec(本作自己那部分 427 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -305,7 +305,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 新露出第一件在当前窗口里的索引,背包、坊市、图鉴统一按它聚焦;回翻则落到当前页首件。
 运行时门会核对 `document.activeElement` 确实属于新批 —— 焦点被旧批首件抢回同样报红。
 
-修行页的主修 / 辅修 / 秘术三册终局共 66 部。门内的 `max-h-72` 只裁视觉、不裁 DOM,
+修行页的主修 / 辅修 / 秘术三册终局共 68 部。门内的 `max-h-72` 只裁视觉、不裁 DOM,
 故每门按 12 部一批、最多保留 24 部;续开聚焦新露出的第一行,回翻落当前窗首行。
 换门就是换一份书册,窗口回首批且焦点留在页签;装配会改门内排序,若详情正开着,
 窗口按目标新位置所在批重开,关闭后焦点仍还给同一部。全习得夹具实测三册依次
