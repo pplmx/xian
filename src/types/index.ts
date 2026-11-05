@@ -744,7 +744,14 @@ export interface TitleDef {
 }
 
 /** 灵兽性格 —— 定义在此处(petPersonality 行为表与 PETS 数据同源,不再各写一份联合类型) */
-export type PetPersonality = "greedy" | "steady" | "fierce" | "cautious";
+/**
+ * 灵兽性格 id —— 与 `data/petTraits` 的 `PetPersonalityId` 是同一组。
+ *
+ * 两处各写一份是历史原因(types 不许 import data)。加性格时**两边都要改**:
+ * 只改一处,`data/pets` 里那些新性格会在这里报「不可赋值」。
+ * 判据见 core/petTraitBreadth.spec(表的 id 集合)与 engineParity.spec(与库对账)。
+ */
+export type PetPersonality = "greedy" | "steady" | "fierce" | "cautious" | "rapid" | "wary";
 
 export interface PetDef {
   id: string;

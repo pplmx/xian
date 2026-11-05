@@ -139,7 +139,7 @@ export const PETS: PetDef[] = [
     family: "bear",
     quality: "earth",
     mods: { defensePct: 0.09, maxHpPct: 0.06, damageReduction: 0.07 },
-    personality: "steady",
+    personality: "wary",
   },
   {
     id: "pet_zhuifeng",
@@ -149,7 +149,7 @@ export const PETS: PetDef[] = [
     family: "bird",
     quality: "earth",
     mods: { speed: 0.07, dodgeRate: 0.07, attackPct: 0.1 },
-    personality: "fierce",
+    personality: "rapid",
   },
   {
     id: "pet_shijingchan",
@@ -220,7 +220,7 @@ export const PETS: PetDef[] = [
     family: "puppet",
     quality: "heaven",
     mods: { breakthroughRate: 0.05, cultivationSpeed: 0.1, qiCapPct: 0.11 },
-    personality: "steady",
+    personality: "wary",
   },
   {
     id: "pet_taiyin",
@@ -271,7 +271,7 @@ export const PETS: PetDef[] = [
     family: "bird",
     quality: "immortal",
     mods: { attackPct: 0.16, critRate: 0.08, critDamage: 0.15 },
-    personality: "fierce",
+    personality: "rapid",
   },
   {
     id: "pet_mingshuijiao",
@@ -353,7 +353,7 @@ export const PETS: PetDef[] = [
     family: "turtle",
     quality: "divine",
     mods: { defensePct: 0.18, maxHpPct: 0.18, damageReduction: 0.08 },
-    personality: "steady",
+    personality: "wary",
   },
   {
     id: "pet_zhulong",
@@ -373,7 +373,7 @@ export const PETS: PetDef[] = [
     family: "bird",
     quality: "divine",
     mods: { attackPct: 0.2, critRate: 0.12, critDamage: 0.24 },
-    personality: "fierce",
+    personality: "rapid",
   },
   {
     id: "pet_haiwujing",

@@ -1263,6 +1263,9 @@ describe("对账 · 灵兽性格与词条(库的伙伴系统 与 冻结的旧表
     steady: { exploreDurMult: 1.1, dangerMult: 0.98, dropLuck: 0, lossReduction: 0.02 },
     fierce: { exploreDurMult: 1.0, dangerMult: 1.15, dropLuck: 0.02, lossReduction: 0 },
     cautious: { exploreDurMult: 0.95, dangerMult: 0.95, dropLuck: -0.02, lossReduction: 0.04 },
+    // 后补的两种:只加性格、不加维度,复用同一组键
+    rapid: { exploreDurMult: 0.88, dangerMult: 1.08, dropLuck: 0.01, lossReduction: 0 },
+    wary: { exploreDurMult: 1.15, dangerMult: 0.92, dropLuck: -0.03, lossReduction: 0.06 },
   };
   const NEUTRAL = { exploreDurMult: 1, dangerMult: 1, dropLuck: 0, lossReduction: 0 };
   const refEffects = (petId: string | null) => {
@@ -1287,7 +1290,7 @@ describe("对账 · 灵兽性格与词条(库的伙伴系统 与 冻结的旧表
     expect(COMPANION_SYSTEM.modsOf(null)).toEqual({});
   });
 
-  it("性格内容表就是本作那四条(名字与说明仍归作品)", () => {
+  it("性格内容表就是本作那六条(名字与说明仍归作品)", () => {
     expect(COMPANION_SYSTEM.traits.map((t) => t.id).sort()).toEqual(
       Object.keys(REF_EFFECTS).sort(),
     );

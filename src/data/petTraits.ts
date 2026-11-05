@@ -10,7 +10,7 @@
  */
 import type { TraitDef } from "wanxiang-engine";
 
-export type PetPersonalityId = "greedy" | "steady" | "fierce" | "cautious";
+export type PetPersonalityId = "greedy" | "steady" | "fierce" | "cautious" | "rapid" | "wary";
 
 export const PET_TRAITS: TraitDef[] = [
   {
@@ -37,6 +37,23 @@ export const PET_TRAITS: TraitDef[] = [
     desc: "谨慎避祸,掉落则稍稍寻常。",
     mods: { exploreDurMult: 0.95, dangerMult: 0.95, dropLuck: -0.02, lossReduction: 0.04 },
   },
+  /*
+   * 后补的两种 —— 四种摊在四十只灵兽上,平均每种十只,「选伙伴 = 选走法」就
+   * 退化成"先看数值、再看凑不凑得上性格"。只加性格、**不加维度**:新两种复用
+   * 那四个键,取一组与现有四档错开的系数(见 core/petTraitBreadth.spec)。
+   */
+  {
+    id: "rapid",
+    name: "疾行",
+    desc: "来去如风,一程走得更快,险处也去得更急。",
+    mods: { exploreDurMult: 0.88, dangerMult: 1.08, dropLuck: 0.01, lossReduction: 0 },
+  },
+  {
+    id: "wary",
+    name: "守拙",
+    desc: "不争先,只在最稳的那条路上走;好东西也少有。",
+    mods: { exploreDurMult: 1.15, dangerMult: 0.92, dropLuck: -0.03, lossReduction: 0.06 },
+  },
 ];
 
 export const PERSONALITY_NAMES: Record<PetPersonalityId, string> = {
@@ -44,6 +61,8 @@ export const PERSONALITY_NAMES: Record<PetPersonalityId, string> = {
   steady: "慢稳",
   fierce: "好战",
   cautious: "谨慎",
+  rapid: "疾行",
+  wary: "守拙",
 };
 
 /** 性格一句话说明(选灵兽 UI) */

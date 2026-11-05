@@ -421,6 +421,7 @@ const CATEGORIES = [
       "codexScale",
       "flavorTextNoNumbers",
       "haptics",
+      "petTraitBreadth",
     ],
   },
   {
