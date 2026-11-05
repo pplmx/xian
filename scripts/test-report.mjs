@@ -424,6 +424,7 @@ const CATEGORIES = [
       "petTraitBreadth",
       "petFateOrder",
       "petFateMark",
+      "routeBreadth",
       "daoPathCoverage",
     ],
   },
