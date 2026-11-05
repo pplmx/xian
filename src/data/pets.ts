@@ -1,8 +1,11 @@
-/** 灵兽 —— 事件与灵兽园获得,佩戴一只;全表 40 只,按品阶自低而高排列
+/** 灵兽 —— 事件与灵兽园获得,佩戴一只;全表 42 只,按品阶自低而高排列
  * Phase 31.0 S4:增加性格(personality)—— 历练时的行为倾向,
  * 让玩家选伙伴而非只看数值
  *
  * 品阶阶梯已补齐为九档中的七档:精品 → 灵品 → 玄品 → 地品 → 天品 → 仙品 → 神品。
+ *
+ * 性格六种(贪宝 / 慢稳 / 好战 / 谨慎 / 疾行 / 守拙)。四种加六种那次只加性格、
+ * 不加维度,并补了开局三档的分配 —— 否则新走法只在境界三十以上才见得到。
  * 地品(earth)是后补的一档,从此九级品质里灵兽不再跳过第 5 级 ——
  * 「玄品之上、天品之下」也有物可挑,而不是玄品直接跳到天品。
  *
@@ -47,6 +50,21 @@ export const PETS: PetDef[] = [
     quality: "excellent",
     mods: { attackPct: 0.08, speed: 0.05 },
     personality: "fierce",
+  },
+  /*
+   * 后补的两种性格(疾行 / 守拙)原本只落在地品以上 —— 开局三档(精品/灵品/玄品)
+   * 的十一只全是原来那四种走法,补性格的意义就落空了。这三只补在开局段,
+   * 预算各按同档已有的量级(见 core/petQuality.spec 的品阶不回落)。
+   */
+  {
+    id: "pet_tashou",
+    name: "踏霜鹿",
+    desc: "蹄下不沾雪,一程走得比谁都快",
+    icon: "deer",
+    family: "deer",
+    quality: "excellent",
+    mods: { explorationSpeed: 0.09, speed: 0.05 },
+    personality: "rapid",
   },
   {
     id: "pet_bimao",
@@ -98,6 +116,16 @@ export const PETS: PetDef[] = [
     quality: "spirit",
     mods: { spiritStoneGain: 0.15, luck: 0.05 },
     personality: "greedy",
+  },
+  {
+    id: "pet_shouyan",
+    name: "守岩貘",
+    desc: "卧在洞口不动,来去的路它都记得",
+    icon: "bear",
+    family: "bear",
+    quality: "spirit",
+    mods: { explorationSpeed: 0.12, damageReduction: 0.06 },
+    personality: "wary",
   },
   // ---- 玄品 ----
   {

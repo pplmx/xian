@@ -83,6 +83,19 @@ describe("灵兽性格 · 六种", () => {
     );
   });
 
+  it("每种性格在开局三档里都见得到 —— 只在境界 30+ 出现等于没加", () => {
+    // 精品 / 灵品 / 玄品 是玩家前中期的全部选择。新性格若只落在地品以上,
+    // 开局那十来只照旧只有原来四种走法 —— 补性格的意义就落空了。
+    const LOW = ["excellent", "spirit", "profound"];
+    const lowPets = PETS.filter((p) => LOW.includes(p.quality));
+    const seen = new Set(lowPets.map((p) => p.personality));
+    const missing = PET_TRAITS.map((t) => t.id).filter((id) => !seen.has(id as never));
+    expect(
+      missing,
+      `这些性格在开局三档(精品/灵品/玄品)里一只都没有:${missing.join(" / ")}`,
+    ).toEqual([]);
+  });
+
   it("危险度与掉落运气不许同时更优 —— 每种走法都要付点代价", () => {
     // 参照档:贪宝(危险 +5%、掉落 +0.06)是最"赌"的一种
     for (const trait of PET_TRAITS) {
