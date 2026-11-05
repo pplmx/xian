@@ -29,6 +29,20 @@
           >第 {{ level }}/{{ def.maxLevel }} 层</span
         >
       </div>
+      <!--
+        品评 —— 这一档凭什么(见 data/qualityVerdicts)。
+        与品阶名同处眉题之下第一行:上面那一行报「这是哪一档」,这一行报「那一档凭什么」。
+        此前只有器评帖有这一句,而功法的眉题上同样挂着品阶名 —— 同一件事在界面上
+        成了半句话。不铺底、不加字号(它读的是「为什么」,不是标题),只用品阶色托出来。
+      -->
+      <p
+        v-if="verdictLine"
+        class="mt-1.5 font-kai text-body"
+        :style="{ color: qualityTextColor(def.quality) }"
+        data-gongfa-verdict-line
+      >
+        {{ verdictLine }}
+      </p>
       <p class="mt-2 t-body text-ink-faint">{{ def.desc }}</p>
       <p v-if="!learned && def.minRealm > player.major" class="mt-1 text-body text-cinnabar">
         需 {{ realmDef(def.minRealm)?.name ?? `第${def.minRealm}境` }} 境方可参悟其精义
@@ -263,6 +277,8 @@ import type { AnyStatKey } from "@/types";
 import BaseModal from "@/components/common/BaseModal.vue";
 import BatchSpendLedger from "@/components/common/BatchSpendLedger.vue";
 import QualityTag from "@/components/common/QualityTag.vue";
+import { qualityVerdict } from "@/data/qualityVerdicts";
+import { qualityTextColor } from "@/ui/qualityTier";
 
 const ui = useUiStore();
 const cultivation = useCultivationStore();
@@ -271,6 +287,11 @@ const player = usePlayerStore();
 const resources = useResourcesStore();
 
 const def = computed(() => (ui.gongfaDetailId ? gongfaDef(ui.gongfaDetailId) : undefined));
+/**
+ * 品评一句话(见 data/qualityVerdicts)—— 与器评帖、藏珍详情读同一份。
+ * 认不得的档给空串,整行不出(宁可少一行,也不要空一句)。
+ */
+const verdictLine = computed(() => (def.value ? qualityVerdict(def.value.quality) : ""));
 const level = computed(() => (def.value ? (cultivation.learned[def.value.id] ?? 0) : 0));
 const learned = computed(() => level.value > 0);
 const upCost = computed(() => (def.value ? gongfaUpgradeCost(def.value.id) : null));

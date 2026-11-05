@@ -420,6 +420,17 @@
     font-size: var(--type-note);
     line-height: 1.5;
   }
+  /*
+   * 品评 —— 这一档凭什么(见 data/qualityVerdicts)。
+   * 落在说明之下、账簿之上:说明答「它是什么」,这一句答「这一档凭什么」。
+   * 不铺底、不加字号,只用品阶色托出来(与器评帖那一行同一条口径)。
+   */
+  .artifact-row__verdict {
+    margin-top: 0.2rem;
+    font-size: var(--type-note);
+    line-height: 1.5;
+    letter-spacing: 0.04em;
+  }
   .artifact-row__ledger {
     margin-top: 0.45rem;
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);

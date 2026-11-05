@@ -134,6 +134,19 @@
           <div class="artifact-row__body">
             <div class="artifact-row__read">
               <p class="artifact-row__description">{{ row.def.desc }}</p>
+              <!--
+                品评 —— 这一档凭什么(见 data/qualityVerdicts)。
+                眉题那一行只报「这是哪一档」,这一句才说那一档凭什么;
+                与器评帖、藏珍详情、功法详情、丹药详情读同一份。
+              -->
+              <p
+                v-if="row.verdict"
+                class="artifact-row__verdict font-kai"
+                :style="{ color: qualityTextColor(row.def.quality) }"
+                :data-artifact-verdict="row.def.id"
+              >
+                {{ row.verdict }}
+              </p>
               <dl class="artifact-row__ledger">
                 <!--
                   它何时来的 —— 与灵兽谱「结缘的那一刻」、称号谱「得它的那一刻」同一行位置、
@@ -268,7 +281,8 @@ import GameIcon from "@/components/common/GameIcon.vue";
 import QualityTag from "@/components/common/QualityTag.vue";
 import QualitySeal from "@/components/common/QualitySeal.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
-import { isRareQuality, qualityTierStyle as tierOf } from "@/ui/qualityTier";
+import { isRareQuality, qualityTextColor, qualityTierStyle as tierOf } from "@/ui/qualityTier";
+import { qualityVerdict } from "@/data/qualityVerdicts";
 import { colorWithAlpha } from "@/ui/colorVar";
 import { useInventoryStore } from "@/stores/inventory";
 import { useResourcesStore } from "@/stores/resources";
@@ -354,6 +368,11 @@ const artifactRows = computed(() =>
          * codexMomentText 会照实说「早年收录」,不补造。
          */
         momentText: codexMomentText(quests.collectedMoment[`artifact:${a.defId}`]),
+        /**
+         * 品评 —— 这一档凭什么(见 data/qualityVerdicts)。
+         * 行卡上只报「这是哪一档」,而这一档为什么值得,与器评帖读同一份。
+         */
+        verdict: qualityVerdict(def.quality),
       };
     })
     .filter((row): row is NonNullable<typeof row> => row !== null)

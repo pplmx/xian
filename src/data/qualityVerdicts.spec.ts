@@ -81,4 +81,39 @@ describe("品评 · 与规则表分开", () => {
     // 品质名仍从规则表取,两处不打架
     expect(dialog).toContain("qualityDef(");
   });
+
+  /**
+   * 带品阶的**每一张详情**都读同一句 —— 不能只有装备那一张有。
+   *
+   * ## 缺口:同一档品质,点开详情反而读不到「凭什么」
+   *
+   * 品评原本落在三处(器评帖眉题、坊市验货签、藏珍详情)。而另外三类也有
+   * 「点开看详情」这一屏,那一屏的眉题上同样挂着品阶名,却没有品评:
+   *
+   *   功法详情(GongfaDialog)  只有一枚 QualityTag
+   *   丹药详情(InventoryView) 只有一行「灵品」
+   *   法宝行卡(ArtifactPanel) 只有一枚 QualityTag 与角章
+   *
+   * 于是同一件事在界面语言里分成了两种:装备「品阶名 + 凭什么」,
+   * 其余三类只有「品阶名」。玩家读到的是半句话。
+   *
+   * ## 判据守什么
+   *
+   * 只说一件事:这几张详情各自都调 `qualityVerdict(`。它不规定排在哪一行、
+   * 什么字号、要不要加分隔符 —— 那是版式的事,由各自的用例与真浏览器量。
+   */
+  it("带品阶的每一张详情都读品评 —— 不能只有装备那一张有", () => {
+    const surfaces: [string, string][] = [
+      ["功法详情", "src/components/cultivation/GongfaDialog.vue"],
+      ["丹药详情", "src/views/InventoryView.vue"],
+      ["法宝行卡", "src/components/inventory/ArtifactPanel.vue"],
+    ];
+    const missing = surfaces
+      .filter(([, path]) => !readSource(path).includes("qualityVerdict("))
+      .map(([name, path]) => `${name}(${path})`);
+    expect(
+      missing,
+      `这些详情挂着品阶名,却没有那句「这一档凭什么」—— 同一件事在界面上成了半句话:\n  ${missing.join("\n  ")}`,
+    ).toEqual([]);
+  });
 });

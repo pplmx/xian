@@ -516,6 +516,18 @@
             <p class="text-body text-ink-faint tabular">持有 ×{{ currentPill.count }}</p>
           </div>
         </div>
+        <!--
+          品评 —— 这一档凭什么(见 data/qualityVerdicts)。上面那一行只报「这是哪一档」,
+          这一句才说那一档凭什么;与器评帖、藏珍详情、功法详情读同一份。
+        -->
+        <p
+          v-if="pillVerdictLine"
+          class="mt-2 font-kai text-body"
+          :style="{ color: qualityTextColor(currentPill.def.quality) }"
+          data-pill-verdict-line
+        >
+          {{ pillVerdictLine }}
+        </p>
         <p class="mt-3 t-body text-ink-soft">{{ currentPill.def.desc }}</p>
         <!-- 效果与来路:丹药卡片此前只有风味与数量,服下去会怎样一个字都没说 -->
         <p class="mt-2 whitespace-pre-line t-body text-qing">
@@ -634,7 +646,8 @@ import { useSettingsStore } from "@/stores/settings";
 import { useCultivationStore } from "@/stores/cultivation";
 import { qualityDef } from "@/data/qualities";
 import QualitySeal from "@/components/common/QualitySeal.vue";
-import { isRareQuality } from "@/ui/qualityTier";
+import { isRareQuality, qualityTextColor } from "@/ui/qualityTier";
+import { qualityVerdict } from "@/data/qualityVerdicts";
 import { pillDef } from "@/data/pills";
 import { activeBuffsOf, buffOverflowOf, buffStackCount } from "@/core/engineBuffs";
 import type { BuffOverflow } from "@/core/engineBuffs";
@@ -1003,6 +1016,14 @@ const currentMaterial = computed(
 const pillDetail = ref<string | null>(null);
 const currentPill = computed(() =>
   pillDetail.value ? (pillRows.value.find((r) => r.def?.id === pillDetail.value) ?? null) : null,
+);
+
+/**
+ * 丹药详情的品评(见 data/qualityVerdicts)—— 与器评帖、藏珍详情、功法详情读同一份。
+ * 认不得的档给空串,整行不出。
+ */
+const pillVerdictLine = computed(() =>
+  currentPill.value?.def ? qualityVerdict(currentPill.value.def.quality) : "",
 );
 
 /**
