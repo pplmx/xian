@@ -22009,7 +22009,12 @@ async function taskDialogZoom() {
   });
   // 人物页的详情浮层(点第一枚读数卡)与设置页的两份长文 —— 长文是 195 宽下最挤的一类
   await probe("人物读数详情", "/character", async () => {
-    await page.locator("main button").first().click({ timeout: 3000 });
+    /*
+     * 点「第一枚读数卡」不能写成 main 里的第一个 button —— 卷首加了「观 象」之后,
+     * 那个位置被它占了,这条判据就会去量观象弹框(实测当场红,报的却是
+     * 「人物读数详情」,名不副实)。改用 TapNumber 自己的落点。
+     */
+    await page.locator("main [data-tap-number]").first().click({ timeout: 3000 });
   });
   await probe("一键分解", "/inventory", async () => {
     await page

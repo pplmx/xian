@@ -1920,10 +1920,27 @@
     }
   }
   /* 观象弹框里的主视觉:居中摆放,不再参与卷首那一行的挤压 */
+  /*
+   * 观象弹框里的主视觉 —— **放大**过。
+   *
+   * 卷首那几张图是「一眼扫过」的尺寸(140~168px),因为它们得在题头那一行里
+   * 与册名并排;而玩家点开「观象」是想看清:七座建筑的方位、二十一道刻度走到哪、
+   * 灵根两根各占几分。给他一张和刚才一样大的图,这个动作就白点了。
+   *
+   * 放大走 transform: scale —— 只影响绘制、不动布局盒。改 width/height 会让同一个
+   * 组件在两种场合有两套尺寸语义(那几个实尺寸还被 cultivationDesk.spec 等判据钉着),
+   * 下一个读它的人得先判断「我现在在哪儿」才知道 140 是什么意思。
+   *
+   * 容器高度按最宽的那张图给足:168 × 1.3 ≈ 218px,再留一道呼吸缝。
+   */
   .folio-visual-folio {
     display: grid;
     place-items: center;
-    min-height: 9rem;
+    min-height: 13.5rem;
+  }
+  .folio-visual-folio > * {
+    transform: scale(1.3);
+    transform-origin: center;
   }
   .folio-masthead--featured {
     border-left-width: 0;

@@ -15,6 +15,7 @@
   <button
     type="button"
     class="-mx-1.5 -my-1 inline-flex min-h-[30px] min-w-[28px] items-center justify-center px-1.5 tabular underline decoration-dotted decoration-ink/35 underline-offset-2 active:opacity-60"
+    data-tap-number
     @click="open"
   >
     <slot>{{ formatGN(value) }}</slot>

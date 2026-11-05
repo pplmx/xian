@@ -431,6 +431,7 @@ const CATEGORIES = [
       "mastheadCompact",
       "artifactActiveUnique",
       "gongfaBranchUnique",
+      "folioVisualScale",
       "daoPathCoverage",
     ],
   },

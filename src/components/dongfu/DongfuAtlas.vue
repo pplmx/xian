@@ -5,6 +5,22 @@
   -->
   <div class="dongfu-atlas" data-dongfu-atlas aria-hidden="true">
     <svg viewBox="0 0 168 146" role="presentation">
+      <!--
+        山脚渐隐 —— 两条地形路径都收在画布底边(y=144 那条直线),小图上看着
+        像「山脚齐平」,放进观象弹框放大 1.3 倍之后那条直线切口就现形了。
+        用线性渐变把下缘化开,路径形状一个字不动(节点位置与 level/cap 现算
+        都挂在同一张图上,改形状等于动整幅)。
+      -->
+      <defs>
+        <linearGradient id="dongfu-atlas-foot-far" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="55%" stop-color="rgb(var(--color-ink-rgb) / 0.045)" />
+          <stop offset="100%" stop-color="rgb(var(--color-ink-rgb) / 0)" />
+        </linearGradient>
+        <linearGradient id="dongfu-atlas-foot-near" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="55%" stop-color="rgb(var(--color-ink-rgb) / 0.08)" />
+          <stop offset="100%" stop-color="rgb(var(--color-ink-rgb) / 0)" />
+        </linearGradient>
+      </defs>
       <path
         class="dongfu-atlas__terrain dongfu-atlas__terrain--far"
         d="M2 117 C21 100 30 104 44 88 C58 72 72 82 85 76 C102 68 113 84 128 80 C142 76 154 87 166 101 V144 H2 Z"
@@ -146,11 +162,11 @@ const placedNodes = computed(() =>
 }
 
 .dongfu-atlas__terrain--far {
-  fill: rgb(var(--color-ink-rgb) / 0.035);
+  fill: url(#dongfu-atlas-foot-far);
 }
 
 .dongfu-atlas__terrain--near {
-  fill: rgb(var(--color-ink-rgb) / 0.065);
+  fill: url(#dongfu-atlas-foot-near);
 }
 
 .dongfu-atlas__way {
