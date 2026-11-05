@@ -55,6 +55,18 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
     expect(view, "递减说明仍读常数表").toContain("DIMINISH_WEIGHTS");
     expect(view, "进阶成功率边界仍保留").toContain("进阶成功率只作用于小进阶");
     expect(view, "护盾上限边界仍保留").toContain("SHIELD_CAP_RATIO");
+
+    /*
+     * 边界注是**规则解释**,不是此刻的读数 —— 它与四组行藏抢同一块版面时,
+     * 会把正文拖长(三条约 110 字)。故默认收起,点「注」展开:
+     *   · 有展开键、带 aria-expanded(读屏知道它可开可合);
+     *   · 正文默认不见(v-show="notesOpen",初始 false);
+     *   · 文案本身仍在 —— 收的是版面,不是内容。
+     */
+    expect(view, "边界注要有一个展开键").toContain("data-character-modifier-notes");
+    expect(view, "展开键要报开合状态").toContain(':aria-expanded="notesOpen"');
+    expect(view, "边界注正文默认收起").toContain('v-show="notesOpen"');
+    expect(view, "收起态的初值必须是 false").toMatch(/const notesOpen = ref\(false\)/);
   });
 
   it("九处去向收成一页卷末目录,三组同席而非三张长卡", () => {

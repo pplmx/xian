@@ -239,6 +239,22 @@
     margin-top: 0.28rem;
     color: rgb(var(--color-cinnabar-rgb));
   }
+  /*
+   * 边界注的展开键 —— 三条规则解释默认收起(见 CharacterView 那段注释)。
+   * 键本身按行高与 28px 触达下限给;展开后的正文沿用原来那套淡墨小字。
+   */
+  .character-modifier-notes__toggle {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+  }
+  .character-modifier-notes__toggle:active {
+    opacity: 0.6;
+  }
+  .character-modifier-notes__body {
+    margin-top: 0.3rem;
+  }
   .character-modifier-notes {
     margin-top: 0.55rem;
     padding-top: 0.45rem;

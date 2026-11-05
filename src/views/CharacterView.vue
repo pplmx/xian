@@ -263,22 +263,46 @@
             </template>
           </BaseModal>
 
+          <!--
+            边界注 —— 这三条都是**规则解释**(进阶成功率只管小进阶 / 护盾有 50% 顶 /
+            软上限后递减),不是此刻的读数。它们默认收起:一屏已经排满了四组行藏,
+            成段的规则话压在底下会把正文拖长,而玩家真正想先看的是「我有多少」。
+            要解释时点「注」展开 —— 与「来源拆卷进浮层」同一条纪律:解释归解释,
+            读数归读数,两者不该抢同一块版面。
+          -->
           <div
             v-if="hasAdvanceRate || hasShieldMods || softCappedNotes.length"
             class="character-modifier-notes"
+            data-character-modifier-notes
           >
-            <p v-if="hasAdvanceRate">
-              进阶成功率只作用于小进阶;大关须渡天劫,看的是劫型与四维准备度(护持/恢复/抗性/爆发)。
-            </p>
-            <p v-if="hasShieldMods">
-              护盾至多覆盖最大气血的 {{ formatPercent(SHIELD_CAP_RATIO, 0) }} ——
-              盾系堆得再多也顶不破这道上限。
-            </p>
-            <p v-if="softCappedNotes.length" class="character-modifier-notes__warning">
-              标「软」者已达软上限:{{
-                softCappedNotes.join("、")
-              }}。极限堆叠到此后收益递减,不是面板被削。
-            </p>
+            <button
+              type="button"
+              class="character-modifier-notes__toggle tap-row"
+              :aria-expanded="notesOpen"
+              aria-controls="character-modifier-notes-body"
+              @click="notesOpen = !notesOpen"
+            >
+              <span aria-hidden="true">{{ notesOpen ? "▾" : "▸" }}</span>
+              注 · 这三项的算法边界
+            </button>
+            <div
+              v-show="notesOpen"
+              id="character-modifier-notes-body"
+              class="character-modifier-notes__body"
+            >
+              <p v-if="hasAdvanceRate">
+                进阶成功率只作用于小进阶;大关须渡天劫,看的是劫型与四维准备度(护持/恢复/抗性/爆发)。
+              </p>
+              <p v-if="hasShieldMods">
+                护盾至多覆盖最大气血的 {{ formatPercent(SHIELD_CAP_RATIO, 0) }} ——
+                盾系堆得再多也顶不破这道上限。
+              </p>
+              <p v-if="softCappedNotes.length" class="character-modifier-notes__warning">
+                标「软」者已达软上限:{{
+                  softCappedNotes.join("、")
+                }}。极限堆叠到此后收益递减,不是面板被削。
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -608,6 +632,9 @@ const modifierFact = computed(() =>
     ? `${modifierSummary.value.active} 项在身 · ${modifierSummary.value.groups} 类`
     : "尚无行藏",
 );
+
+/** 边界注是否展开 —— 默认收起:它是规则解释,不是此刻的读数 */
+const notesOpen = ref(false);
 
 /** 面板上是否需要那句「进阶成功率只作用于小进阶」的边界说明 */
 const hasAdvanceRate = computed(() => modOf(stats.value.mods, "breakthroughRate") !== 0);
