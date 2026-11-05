@@ -419,6 +419,7 @@ const CATEGORIES = [
       "rebirthCompanion",
       "petWorldBand",
       "codexScale",
+      "flavorTextNoNumbers",
     ],
   },
   {
