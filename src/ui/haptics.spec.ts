@@ -30,6 +30,7 @@
  * 这不是错误,是「这个设备没有这个感官」—— 静默跳过,不抛错、不报警。
  */
 import { describe, expect, it } from "vite-plus/test";
+import { readSource } from "@/test/readSource";
 import { rareSfxOf } from "@/ui/rareSfx";
 import {
   hapticPatternFor,
@@ -80,6 +81,31 @@ describe("触感 · 与声音同一条界,不许各写一份", () => {
       expect(() => hapticTierOf(bad)).not.toThrow();
     }
     expect(hapticTierOf(Number.POSITIVE_INFINITY)).toBe(rareSfxOf(Number.POSITIVE_INFINITY));
+  });
+});
+
+describe("触感 · 设置页的说法", () => {
+  it("触感开关不用音频那两句(静音 / 开声)", () => {
+    // 「开声」说的是声音 —— 触感不会发声。一个震动的开关写着「开声」,
+    // 玩家会以为这里还有一个喇叭。上一轮就是这么接错了一版。
+    const view = readSource("src/views/SettingsView.vue");
+    const at = view.indexOf("触感开关");
+    expect(at, "设置页该有触感开关").toBeGreaterThan(0);
+    const block = view.slice(Math.max(0, at - 900), at + 300);
+    expect(block, "触感组该用自己的选项,不该沿用 AUDIO_OPTIONS").not.toContain(
+      ':options="AUDIO_OPTIONS"',
+    );
+    expect(block, "触感组该用 HAPTIC_OPTIONS").toContain("HAPTIC_OPTIONS");
+  });
+
+  it("触感那两个选项说它真正在做的事", () => {
+    const view = readSource("src/views/SettingsView.vue");
+    expect(view, "该有一组触感专用选项").toContain("HAPTIC_OPTIONS");
+    const at = view.indexOf("const HAPTIC_OPTIONS");
+    const block = view.slice(at, at + 300);
+    expect(block, "关那一档该说「不震」这类触觉词").toMatch(/不震|关闭|无/);
+    expect(block, "开那一档该说「轻震」这类触觉词").toMatch(/轻震|震/);
+    expect(block, "不该出现「开声」——那说的是声音").not.toContain("开声");
   });
 });
 

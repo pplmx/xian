@@ -139,7 +139,7 @@
               label="触感开关"
               name="haptics"
               :model-value="settings.hapticsOn ? 'on' : 'off'"
-              :options="AUDIO_OPTIONS"
+              :options="HAPTIC_OPTIONS"
               @update:model-value="settings.hapticsOn = $event === 'on'"
             />
             <p v-if="settings.hapticsOn && settings.reduceMotion" class="settings-register__note">
@@ -682,6 +682,17 @@ type ChoiceOption = { value: string; label: string };
 const AUDIO_OPTIONS: readonly ChoiceOption[] = [
   { value: "off", label: "静音" },
   { value: "on", label: "开声" },
+] as const;
+
+/**
+ * 触感用的选项 —— 不能沿用音频那两句。
+ *
+ * 「静音 / 开声」说的是声音:触感不会发声,一个震动的开关写着「开声」,
+ * 玩家会以为这里还有一个喇叭。故单独一组,说它真正在做的事。
+ */
+const HAPTIC_OPTIONS: readonly ChoiceOption[] = [
+  { value: "off", label: "不震" },
+  { value: "on", label: "轻震" },
 ] as const;
 
 const THEME_OPTIONS: readonly ChoiceOption[] = [
