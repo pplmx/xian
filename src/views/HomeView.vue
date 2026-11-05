@@ -23,6 +23,7 @@
         aria-hidden="true"
         data-home-sky
         :data-home-sky-tier="sky.tier"
+        :data-home-sky-known="skyKnown"
       >
         <span v-for="i in sky.stars" :key="i" class="home-deck__star" :style="{ '--star': i }" />
         <svg viewBox="0 0 420 160" preserveAspectRatio="none">
@@ -356,7 +357,7 @@ import CultivationOrb from "@/components/common/CultivationOrb.vue";
 import InstallToHomeNotice from "@/components/common/InstallToHomeNotice.vue";
 import { keepNumberUnit } from "@/utils/keepNumberUnit";
 import { dailySettleSeal } from "@/ui/dailySettle";
-import { skyOfWeather } from "@/ui/weatherSky";
+import { knowsWeather, skyOfWeather } from "@/ui/weatherSky";
 
 const player = usePlayerStore();
 const ui = useUiStore();
@@ -406,6 +407,15 @@ const statusText = computed(() =>
 const weather = computed(() => todayWeather());
 /** 今日夜色 —— 只给那片装饰用的星空用,不碰任何数值 */
 const sky = computed(() => skyOfWeather(weather.value.id));
+/**
+ * 这一条天时在夜色表里有没有落处。
+ *
+ * `skyOfWeather` 分不出「归清」与「没进表」—— 两者都返回 CLEAR。这个落点是给
+ * **将来加天时的人**看的:新写一种天时忘了进夜色表,`data-home-sky-known` 会是
+ * false,拿浏览器一查就知道,不必去读 `tier` 猜它是「本来就清」还是「漏了」。
+ * (本轮回过头补的那六种神界 / 混沌海天时,正是这样漏了整整一界。)
+ */
+const skyKnown = computed(() => knowsWeather(weather.value.id));
 /** 星的色与亮交给 CSS 变量,样式表那一侧不写死 */
 const skyStyle = computed(() => ({
   "--sky-star-rgb": `var(${sky.value.tint})`,

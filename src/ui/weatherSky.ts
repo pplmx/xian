@@ -72,25 +72,53 @@ const DIM: WeatherSky = {
 };
 
 /**
- * 十二种天时各归哪一档。
+ * 十八种天时各归哪一档 —— 四界全覆盖。
  *
- * 读解:月蚀(月色被吞)、罡风(风刃割面)、仙劫日(劫云压顶)、雷鸣(雷声隐隐)
- * 四者都是"天被挡住了" → 沉。赤阳(烈日)、霞光(云霞染天)、紫气东来(紫气)
- * 三者都是"天被染上颜色" → 暖。其余五者天干净着 → 清。
+ * 读解,按「天此刻是什么样子」:
+ *
+ *   天被挡住了 → 沉   月蚀(月色被吞) 罡风(风刃割面) 仙劫日(劫云压顶)
+ *                     雷鸣(雷声隐隐) 法则潮(潮涌笼罩) 混沌潮(混沌覆天)
+ *                     神威日(众神威压)
+ *   天被照亮/染色 → 暖  赤阳(烈日) 霞光(云霞染天) 紫气东来(紫气)
+ *                     神辉(神光普照) 本源涌动(本源翻涌)
+ *   天干净着 → 清     清和 天朗 凝霜 灵雨 仙雨 道音(虚空澄明)
+ *
+ * ## 补全神界与混沌海那一半(飞升之后抬头要看得见换了个世界)
+ *
+ * 这张表原先只写前十二种(人界 9 + 仙界 3)。神界的神辉 / 法则潮 / 神威日
+ * 与混沌海的混沌潮 / 本源涌动 / 道音**一个都没进来**,全走 `?? CLEAR` 兜底 ——
+ * 玩家飞升之后,顶上写着「今日天时 · 神辉」,抬头还是人间界「天朗」那片星空。
+ *
+ * `weather.ts` 的文件头自己写着「飞升之后天象随界域而变」。界域名变了、
+ * 境界名变了、天时名变了,只有那片天没变 —— 飞升最该有的体感正在这里失守。
+ *
+ * 三档够不够:够。这三档量的是「天此刻是什么样子」,与在哪个界无关;
+ * 神辉与赤阳同为「被照亮」,归暖是对的。要的是**跨界之后夜色换了调子**,
+ * 不是给十八个天时各写一套。
  */
 const BY_WEATHER: Record<string, WeatherSky> = {
+  // 人界
   yueshi: DIM,
   gangfeng: DIM,
-  xianjie: DIM,
   leiming: DIM,
   chiyang: WARM,
   xiaguang: WARM,
-  ziqi: WARM,
   qinghe: CLEAR,
   tianlang: CLEAR,
   ningshuang: CLEAR,
   lingyu: CLEAR,
+  // 仙界
+  xianjie: DIM,
+  ziqi: WARM,
   xianyu: CLEAR,
+  // 神界 —— 这一半原先整块漏着
+  shenwei: DIM,
+  faze: DIM,
+  shenhui: WARM,
+  // 混沌海 —— 同上
+  hundunchao: DIM,
+  benyuan: WARM,
+  daoyin: CLEAR,
 };
 
 /**
@@ -100,4 +128,15 @@ const BY_WEATHER: Record<string, WeatherSky> = {
 export function skyOfWeather(id: string | undefined | null): WeatherSky {
   if (!id) return CLEAR;
   return BY_WEATHER[id] ?? CLEAR;
+}
+
+/**
+ * 这个天时在表里有没有落处 —— 与 `skyOfWeather` 分开,是因为**「归清」与
+ * 「没认出来」读出来是同一个值**(两者都返回 CLEAR)。
+ *
+ * 判据需要分得开这两件事:「道音」归清是对的(虚空澄明,天是干净的),
+ * 而「神辉」走兜底是漏的。只看返回值分不出,故另开一只眼。
+ */
+export function knowsWeather(id: string | undefined | null): boolean {
+  return Boolean(id) && id! in BY_WEATHER;
 }

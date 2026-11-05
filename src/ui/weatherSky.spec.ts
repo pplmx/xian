@@ -113,3 +113,131 @@ describe("夜色随天时 · 只做装饰", () => {
     expect(home, "要有落点").toContain("data-home-sky");
   });
 });
+
+describe("夜色随天时 · 飞升之后的天也不该和人间一样", () => {
+  /**
+   * ## 复现:神界与混沌海的六种天时全都落到默认档
+   *
+   * `weather.ts` 里一共 18 种天时,分属四界:
+   *
+   *   人界 9   灵雨 赤阳 月蚀 雷鸣 清和 罡风 凝霜 霞光 天朗
+   *   仙界 3   仙雨 紫气东来 仙劫日
+   *   神界 3   神辉 法则潮 神威日
+   *   混沌海 3  混沌潮 本源涌动 道音
+   *
+   * 而 `BY_WEATHER` 只写了前十二种。神界与混沌海那六种**一个都没进去** ——
+   * 它们全走 `?? CLEAR` 兜底。
+   *
+   * 于是玩家飞升神界,顶上写着「今日天时 · 神辉」,抬头还是人间界「天朗」
+   * 那片一模一样的星空。**飞升最该有的体感——「世界变了」——正是在这里失守的**:
+   * 界域名、境界名、天时名全变了,只有那片天没变。
+   *
+   * 这与本文件开头那段话直接矛盾:
+   *
+   *   > 玩家读到「月蚀」两个字,抬头看到一片明亮的星空 —— 那两个字就白写了。
+   *
+   * 只不过这次白写的是「神辉」「混沌潮」「道音」。
+   */
+  const CROSS_WORLD: Record<string, string> = {
+    shenhui: "神辉",
+    faze: "法则潮",
+    shenwei: "神威日",
+    hundunchao: "混沌潮",
+    benyuan: "本源涌动",
+    daoyin: "道音",
+  };
+
+  it("神界与混沌海的六种天时都认得出 —— 不许落到默认档", async () => {
+    /*
+     * 判「认不认得」用 `knowsWeather`,不用「返回值与兜底档是否相同」——
+     * 后者分不出「归清」与「没进表」(两者都返回 CLEAR):道音归清是对的,
+     * 神辉走兜底是漏的,而它们读出来一模一样。
+     */
+    const { knowsWeather } = await import("@/ui/weatherSky");
+    const missed = Object.keys(CROSS_WORLD).filter((id) => !knowsWeather(id));
+    expect(
+      missed.map((id) => `${CROSS_WORLD[id]}(${id})`),
+      "这些天时没进表,走的是兜底档 —— 飞升之后抬头还是人间界那片天",
+    ).toEqual([]);
+  });
+
+  it("十八种天时每一种都有落处", async () => {
+    const { skyOfWeather, SKY_TIERS } = await import("@/ui/weatherSky");
+    const all = [
+      "lingyu",
+      "chiyang",
+      "yueshi",
+      "leiming",
+      "qinghe",
+      "gangfeng",
+      "ningshuang",
+      "xiaguang",
+      "tianlang",
+      "xianyu",
+      "ziqi",
+      "xianjie",
+      "shenhui",
+      "faze",
+      "shenwei",
+      "hundunchao",
+      "benyuan",
+      "daoyin",
+    ];
+    expect(all.length, "天数变了 —— 这张表要跟着改").toBe(18);
+    for (const id of all) {
+      expect(SKY_TIERS, `${id} 落到了表外的档`).toContain(skyOfWeather(id).tier);
+    }
+  });
+
+  it("十八种天时全都进表 —— 一个都不许走兜底", async () => {
+    const { knowsWeather, skyOfWeather } = await import("@/ui/weatherSky");
+    const all = [
+      "lingyu",
+      "chiyang",
+      "yueshi",
+      "leiming",
+      "qinghe",
+      "gangfeng",
+      "ningshuang",
+      "xiaguang",
+      "tianlang",
+      "xianyu",
+      "ziqi",
+      "xianjie",
+      "shenhui",
+      "faze",
+      "shenwei",
+      "hundunchao",
+      "benyuan",
+      "daoyin",
+    ];
+    const missed = all.filter((id) => !knowsWeather(id));
+    expect(missed, `这些天时走的是兜底档:${missed.join(" ")}`).toEqual([]);
+    // 反空转:认不得的确实认得出来是认不得
+    expect(knowsWeather("no_such_weather"), "判据不认得「认不得」就等于没在判").toBe(false);
+    expect(knowsWeather(undefined)).toBe(false);
+    // 兜底仍然给最平常那一档(不抛错、不空白)
+    expect(skyOfWeather("no_such_weather").tier).toBe(skyOfWeather("tianlang").tier);
+  });
+
+  it("飞升之后的天与人间界的不一样 —— 至少有一条读数不同", async () => {
+    const { skyOfWeather } = await import("@/ui/weatherSky");
+    // 人间界最平常的一档
+    const mortal = skyOfWeather("tianlang");
+    const reads = (s: { tint: string; brightness: number; stars: number }) =>
+      `${s.tint}|${s.brightness}|${s.stars}`;
+    /*
+     * 六种里面至少要有四种读起来与「天朗」不同 ——
+     * 神辉与本源涌动着偏暖、法则潮与混沌潮偏沉、神威日偏沉,道音偏清。
+     * 不要求六种两两不同(三档本来就是给「有个调子」用的),
+     * 但要求**跨界的整体不能再是人间界那一片**。
+     */
+    const distinct = Object.keys(CROSS_WORLD).filter(
+      (id) => reads(skyOfWeather(id)) !== reads(mortal),
+    );
+    expect(
+      distinct.length,
+      `飞升 heavens 六种天时里只有 ${distinct.length} 种与人间界「天朗」不同 —— 抬头看不出换了世界`,
+    ).toBeGreaterThanOrEqual(4);
+  });
+});
