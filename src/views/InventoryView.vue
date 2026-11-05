@@ -1,6 +1,11 @@
 <template>
   <div class="folio-page folio-page--stack stagger-in">
-    <FolioPageHeader title="行囊" subtitle="九佩随身,余珍入藏" featured>
+    <!--
+      compact:行囊页的主视觉是九佩陈列(InventoryReliquary),卷首因此占 205px。
+      它是「一眼看个大概」的图,不是此刻要操作的东西 —— 收进「观 象」,
+      首屏让给今日检点与九席。
+    -->
+    <FolioPageHeader title="行囊" subtitle="九佩随身,余珍入藏" featured compact>
       <template #meta>
         <div class="inventory-masthead__meta">
           <span

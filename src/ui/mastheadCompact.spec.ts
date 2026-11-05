@@ -97,6 +97,7 @@ describe("卷首 · 哪些页开了 compact", () => {
       ["修行", "src/views/CultivationView.vue"],
       ["洞府", "src/views/DongfuView.vue"],
       ["藏珍", "src/views/CollectionView.vue"],
+      ["行囊", "src/views/InventoryView.vue"],
     ] as const;
     const missing = dense
       .filter(([, path]) => !/\bcompact\b/.test(readSource(path)))
