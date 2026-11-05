@@ -65,15 +65,28 @@
               <GameIcon name="backpack" :size="15" class="text-ink-faint" />
               拾得装备 ×{{ savedEquipment.length }}
             </p>
-            <p class="flex flex-wrap gap-x-3 gap-y-1">
+            <!--
+              每一件都盖品阶章 —— 这一块原先只把品阶体现为文字颜色。
+              而全集其余每一处都盖 QualitySeal,它的理由写在那个组件头上:
+              良品(jade)与精品(qing)同属青绿系、纸面上几乎难分,色弱玩家更是
+              一条色带都读不出档;章是不靠颜色单打的**形状线索**。
+
+              离线归来恰恰最该有它:玩家离开几小时再回来,「拾得装备」是这一屏里
+              唯一可能出现高品阶的段落,而它们是一串平铺的名字 —— 挂着机捡到一件
+              神品的那一瞬间,不该只剩一行稍深一点的枣红色字。
+            -->
+            <p class="flex flex-wrap items-center gap-x-3 gap-y-1">
               <span
                 v-for="(eq, i) in savedEquipment"
                 :key="i"
-                class="font-kai text-body"
+                class="inline-flex items-center gap-1 font-kai text-body"
                 :style="{ color: qualityDef(eq.quality).color }"
               >
-                {{ qualityDef(eq.quality).name }}·{{ eq.name
-                }}<template v-if="eq.inscription"> · 铭「{{ eq.inscription }}」</template>
+                <QualitySeal :quality="eq.quality" :size="14" />
+                <span
+                  >{{ qualityDef(eq.quality).name }}·{{ eq.name
+                  }}<template v-if="eq.inscription"> · 铭「{{ eq.inscription }}」</template></span
+                >
               </span>
             </p>
           </li>
@@ -116,6 +129,7 @@ import { qualityDef } from "@/data/qualities";
 import { playSfx } from "@/core/audio";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
+import QualitySeal from "@/components/common/QualitySeal.vue";
 import SectionMark from "@/components/common/SectionMark.vue";
 
 const ui = useUiStore();

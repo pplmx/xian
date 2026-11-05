@@ -432,6 +432,7 @@ const CATEGORIES = [
       "artifactActiveUnique",
       "gongfaBranchUnique",
       "folioVisualScale",
+      "offlineQualitySeal",
       "daoPathCoverage",
     ],
   },
