@@ -2131,6 +2131,48 @@ usage.md 的部数与分支数(151→155)、`CollectionView.vue` 的「九册全
 判据 `core/gongfaBranchUnique.spec` 四条:分支名整组不许撞 / 描述不许跨功法逐字相同 /
 名字与词条同时整组相同才算复刻 / 反空转。
 
+### 修行页最常点的那一处,品阶反而最省
+
+「品阶只有颜色」这件事,前面两轮已经修了离线归来与开炉炼丹。这一轮换个做法:
+不再逐个看,而是**机械统计一遍**,看谁真的没有第二条线索。
+
+对每个用到 `qualityDef(...).color` 的文件数两个数:
+
+```text
+文件                        QualitySeal  品阶名
+CombatPanel.vue                 0           0    ← 已核实合格(见下)
+CultivationView.vue             0           0    ← 这一处真缺
+OfflineRewardDialog.vue         3           1    (上上轮已修)
+BrewingDialog.vue               0           1    (上轮已修)
+GongfaSection / ArtifactPanel / SlotCandidatesDialog / TitlesView / InventoryView
+                               ≥2          ≥1
+```
+
+两个 `0 / 0` 里,`CombatPanel` 是**合格的**:战报走 `data-log-quality` +
+1px/3px 竖线粗细 + 字重,共三重线索。剩下 `CultivationView` 的「以药辅道」
+快捷行是真的什么都没有。
+
+而它恰恰是**玩家每天都会点**的地方:服丹、续药、看顶没顶。夹具里同一屏四行是:
+
+```text
+九转还魂丹  天品
+大还丹      玄品
+聚灵丹      精品
+回灵丹      良品
+```
+
+四档横跨「良与精同属青绿系」(几乎难分)与「玄品另一色」——原先全靠一枚 16px
+图标的前景色。而图标是**丹药形状**,颜色附着在图形上是第二属性;扫读一串丹名时
+视线落在字上,落在图标上的机会很少。
+
+补法:品阶名跟在品名之后、同一行内,`--type-note` 小一号 + `font-weight: 500`。
+**行高零变化**(390 下 45~46px、195 下 62~63px,改前改后一致),不另起一行。
+
+#### 这条统计值得留下
+
+「逐个看」靠的是注意力,而注意力会漏。两个 `0 / 0` 是一次 grep 出来的:
+哪天又多一处只上颜色的品阶,同一个查询就能把它捞出来。
+
 ### 开炉炼丹:九档品阶,行上只写「1 阶」
 
 丹方行上那两个字是 `{{ r.able.rank }} 阶` —— 而 `rank` 是 `craftability.ts` 里的

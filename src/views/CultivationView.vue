@@ -352,7 +352,23 @@
                   :style="{ color: qualityDef(p.def!.quality).color }"
                 />
                 <span class="cultivation-pill-row__copy">
-                  <span class="cultivation-pill-row__name">{{ p.def!.name }}</span>
+                  <!--
+                    品名旁先报品阶 —— 这一行是全站最常点的地方(服丹 / 续药 / 看顶没顶),
+                    原先品阶只由那枚 16px 图标的前景色承担。夹具里同一屏三行恰好是
+                    大还丹(玄品) / 聚灵丹(精品) / 回灵丹(良品):良品与精品同属青绿系,
+                    纸面上几乎难分(见 QualitySeal 文件头);而图标是丹药形状,颜色附着在
+                    图形上是第二属性,扫读一串丹名时视线落在字上。
+
+                    只在名称那一行加,不另起一段:这一行 46px 高、已装四样信息。
+                  -->
+                  <span class="cultivation-pill-row__name">
+                    {{ p.def!.name }}
+                    <span
+                      class="cultivation-pill-row__quality"
+                      :style="{ color: qualityDef(p.def!.quality).color }"
+                      >{{ qualityDef(p.def!.quality).name }}</span
+                    >
+                  </span>
                   <span class="cultivation-pill-row__brief tabular">
                     存 {{ p.count
                     }}<template v-if="quickPillBrief(p.def!)"

@@ -1060,6 +1060,19 @@
     min-width: 0;
   }
 
+  /*
+   * 品阶名 —— 跟在品名之后、同一行内(见视图里的注释)。
+   * 用 note 档小一号、字重加一道:凡品与良品的色值都是低饱和灰调,
+   * 在纸面上并列时几乎分不出,字重让它在扫读时跳出来。
+   */
+  .cultivation-pill-row__quality {
+    margin-left: 0.34rem;
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+
   .cultivation-pill-row__name {
     display: block;
     overflow: hidden;

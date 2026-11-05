@@ -434,6 +434,7 @@ const CATEGORIES = [
       "folioVisualScale",
       "offlineQualitySeal",
       "brewRecipeQuality",
+      "quickPillQuality",
       "daoPathCoverage",
     ],
   },
