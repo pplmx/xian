@@ -422,6 +422,7 @@ const CATEGORIES = [
       "flavorTextNoNumbers",
       "haptics",
       "petTraitBreadth",
+      "daoPathCoverage",
     ],
   },
   {

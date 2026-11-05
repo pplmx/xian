@@ -994,7 +994,8 @@ export type DaoPathId =
   | "slaughter"
   | "lianzhu"
   | "jieshi"
-  | "xuehe";
+  | "xuehe"
+  | "zhenyue";
 
 export interface DaoPathDef {
   id: DaoPathId;

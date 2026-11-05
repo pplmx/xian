@@ -26,6 +26,33 @@ export const DAO_PATHS: DaoPathDef[] = [
     ],
   },
   {
+    /*
+     * 镇岳道 —— 护盾流的终局之路。
+     *
+     * 补它的理由:构筑判定只认六种形状(core/buildSim 的 BUILD_PROFILES),
+     * 其中罡盾流的核心是起手给盾与盾的厚度;而七条道途里没有一条打这张牌 ——
+     * 剑道甚至带 damageReduction -0.1,对它是反向的。走罡盾流到终局的玩家
+     * 七选一,每一条都等于把构筑的一半丢掉。判据见 core/daoPathCoverage.spec。
+     */
+    id: "zhenyue",
+    name: "镇岳道",
+    seal: "岳",
+    desc: "以身为岳,先立于不败。护持越厚,反击的余地越大",
+    ruleText: ["起手获得护盾 18%,护盾强度 +14%", "自身造成伤害 -12%"],
+    rules: {
+      playerExtraMods: {
+        shieldOnStart: 0.18,
+        shieldPower: 0.14,
+        // 代价:护持换走锋芒 —— 与剑道「锋锐换厚重」正相反的一条路
+        damageBonus: -0.1,
+      },
+    },
+    deepText: [
+      "岳意:道途越纯,岳势越沉——主流派成形、不涉副体系、法宝不过一件,至多四层,每层护盾强度 +6%、减伤 +2%",
+      "远征蓄势:每胜一场,岳势再添一层",
+    ],
+  },
+  {
     id: "longevity",
     name: "长生道",
     seal: "寿",
