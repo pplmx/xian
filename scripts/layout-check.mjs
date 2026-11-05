@@ -28300,12 +28300,137 @@ async function taskAtlasNavigation() {
 }
 
 /** 任务的顺序就是报告里失败清单的顺序 —— 与串行时代逐块打印的顺序一致 */
+/**
+ * 五个感官对得上 —— 印 / 光 / 声 / 停留 / 触感,同一份品阶说同一件事。
+ *
+ * 前四个都有判据或明显的落点(印看 astro、光看 flashTier 的时长、声看 rareSfx
+ * 的档位、停留看 toastLifeMs),而**触感是新加的、且只有真浏览器能验证**:
+ * `navigator.vibrate` 在 Node 里不存在,单测只能验型样表本身。
+ *
+ * 这条在真页面里做四件事:
+ *   1. 换掉 navigator.vibrate 记录调用,从 pinia 拿 ui store 发真提示;
+ *   2. 三档品质(after war:凡 / 天 / 神)要震出**三组不同型样**,且逐档变长;
+ *   3. `hapticsOn: false` 与 `reduceMotion: true` 各自都能压住 —— 两个开关
+ *      不是"任一即可",是**两个都得开**;
+ *   4. 寻常提示(kind = info)一条都不许震 —— 它每分钟好几条,每条都震是骚扰。
+ *
+ * 从 pinia 取 store 而不是点 UI:要覆盖三种品质与两个开关的交叉,点 UI 凑不齐。
+ */
+async function taskSensoryParity() {
+  const failures = [];
+  let checked = 0;
+  const contrastFails = [];
+  const pixelContrastFails = [];
+  const zoomFails = [];
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 } });
+  try {
+    await ctx.addInitScript(() => {
+      window.__vib = [];
+      Object.defineProperty(navigator, "vibrate", {
+        value: (pattern) => {
+          window.__vib.push(pattern);
+          return true;
+        },
+        configurable: true,
+      });
+    });
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await seedSave(ctx, showcaseSlices("light"), "__sensory");
+    await page.goto(INDEX, { waitUntil: "load" });
+    await page.waitForTimeout(1500);
+
+    /** 发一串提示,返回每次震动的型样 */
+    const fire = (cases, settingsPatch) =>
+      page.evaluate(
+        ({ cases, settingsPatch }) => {
+          const app = document.querySelector("#app").__vue_app__;
+          const pinia = app.config.globalProperties.$pinia;
+          const ui = pinia._s.get("ui");
+          const settings = pinia._s.get("settings");
+          if (settingsPatch) Object.assign(settings, settingsPatch);
+          window.__vib.length = 0;
+          for (const c of cases) ui.toast(c.text, c.kind, c.seal);
+          const vib = window.__vib.map((p) => p.join("+"));
+          // 把 settings 还原,免得后一个用例带上一个的补丁
+          if (settingsPatch) {
+            for (const k of Object.keys(settingsPatch)) {
+              settings[k] = k === "hapticsOn" ? true : false;
+            }
+          }
+          return vib;
+        },
+        { cases, settingsPatch },
+      );
+
+    // 1) 三档品质 → 三组不同型样,且逐档变长
+    const tiers = await fire([
+      { text: "凡品落地", kind: "rare", seal: "mortal" },
+      { text: "天品落地", kind: "rare", seal: "heaven" },
+      { text: "神品落地", kind: "rare", seal: "divine" },
+    ]);
+    checked += 1;
+    if (tiers.length !== 3) {
+      failures.push(`[390] 五感:三档品质只震了 ${tiers.length} 次,应三次`);
+    } else if (new Set(tiers).size !== 3) {
+      failures.push(`[390] 五感:三档品质震出了重复型样 ${JSON.stringify(tiers)} —— 档位没有分开`);
+    } else {
+      const total = (pat) => pat.split("+").reduce((a, b) => a + Number(b), 0);
+      const [low, mid, high] = tiers.map(total);
+      if (!(low < mid && mid < high)) {
+        failures.push(
+          `[390] 五感:三档总震动时长没有逐档变长(${low} / ${mid} / ${high}) —— ` +
+            `与那道光、那一声『越重越长』是同一把尺`,
+        );
+      }
+    }
+
+    // 2) 关掉触感 → 不震
+    const off = await fire([{ text: "神品落地", kind: "rare", seal: "divine" }], {
+      hapticsOn: false,
+    });
+    checked += 1;
+    if (off.length !== 0) failures.push(`[390] 五感:关掉触感后仍震了 ${JSON.stringify(off)}`);
+
+    // 3) 减少动效 → 也不震(两个开关都得开)
+    const reduced = await fire([{ text: "神品落地", kind: "rare", seal: "divine" }], {
+      reduceMotion: true,
+    });
+    checked += 1;
+    if (reduced.length !== 0) {
+      failures.push(
+        `[390] 五感:开了「减少动效」仍震了 ${JSON.stringify(reduced)} —— 两个开关该是「都得开」`,
+      );
+    }
+
+    // 4) 寻常提示不震
+    const info = await fire([
+      { text: "寻常提示一", kind: "info" },
+      { text: "寻常提示二", kind: "success" },
+    ]);
+    checked += 1;
+    if (info.length !== 0) {
+      failures.push(
+        `[390] 五感:寻常提示也震了 ${JSON.stringify(info)} —— 每分钟好几条,每条都震是骚扰`,
+      );
+    }
+
+    if (pageErrors.length)
+      failures.push(`[390] 五感场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
+}
+
 const TASKS = [
   ...VIEWPORTS.map((vp) => [`页面巡游[${vp.tag}]`, () => taskPageTour(vp)]),
   ["存档写不进去 · 设置页必须说话", taskSaveUnwritable],
   ["弹窗的键盘与焦点", taskModalFocus],
   ["Tab 焦点看得见", taskTabFocus],
   ["浮出的提示条点得掉", taskToastDismiss],
+  ["五个感官对得上", taskSensoryParity],
   ["引擎概率弹窗(顿悟 / 洞府巡游)", taskEngineModals],
   ["冷启动落在子页的返回", taskColdStartBack],
   ["后期档逐页复核", taskLateTour],
