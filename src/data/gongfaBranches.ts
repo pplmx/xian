@@ -539,21 +539,34 @@ export const GONGFA_BRANCHES: GongfaBranchDef[] = [
     maxHpPct: 0.2,
     damageReduction: 0.1,
   }),
-  // 主修:混元无极经
-  b("m_hunyuan", "b_hunyuan_hua", "化形", "混元化形,四象俱足", {
-    attackPct: 0.24,
-    defensePct: 0.24,
-    maxHpPct: 0.24,
+  // ---- 主修:混元无极经(神品·混沌) ----
+  /*
+   * 三条道写它自己的立意:混元无极 = **未分**、**浑然**、**无终**。
+   *
+   * 原先这三条是《混沌一气功》(天品·境 6)那三条的放大版 —— 名字全同(化形 /
+   * 归元 / 开天)、「归元」的描述一字不差、「开天」只改两个字、词条结构一致、
+   * 数值约两倍。玩家从人间界练到神界,翻开神品功法,看到的是当年那三条道的复刻。
+   *
+   * 两部功法说的本来不是一回事:一气功说的是「万法归一,一气化混沌」——**一→万**;
+   * 无极经说的是「混元无极」——**万→未分**。方向相反,枝条不该长成同一组。
+   *
+   * 份量仍在原档(约 23~28)。同门三条比值 28:23 = 1.22,守着
+   * gongfaBranch.spec 的「同一功法各分支份量相当(≤2)」。
+   */
+  b("m_hunyuan", "b_hunyuan_weipan", "未判", "未判之际,攻守未分", {
+    attackPct: 0.26,
+    defensePct: 0.26,
+    maxHpPct: 0.2,
   }),
-  b("m_hunyuan", "b_hunyuan_gui", "归元", "万法归元,道基自厚", {
+  b("m_hunyuan", "b_hunyuan_hunran", "浑然", "浑然一体,内外无隙", {
+    maxHpPct: 0.3,
+    damageReduction: 0.1,
+    regenPerRound: 0.05,
+  }),
+  b("m_hunyuan", "b_hunyuan_wushi", "无始", "无始无终,气机不竭", {
     cultivationSpeed: 0.3,
     qiRegen: 0.28,
     breakthroughRate: 0.06,
-  }),
-  b("m_hunyuan", "b_hunyuan_kai", "开天", "无极开天,一击破界", {
-    attackPct: 0.28,
-    armorPen: 0.2,
-    critDamage: 0.6,
   }),
   // 辅修:混沌体术
   b("s_hundunti", "b_hundunti_gu", "固本", "混沌磐身,万击不摇", { maxHpPct: 0.3, defensePct: 0.3 }),

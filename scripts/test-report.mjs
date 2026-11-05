@@ -430,6 +430,7 @@ const CATEGORIES = [
       "soulTypeLore",
       "mastheadCompact",
       "artifactActiveUnique",
+      "gongfaBranchUnique",
       "daoPathCoverage",
     ],
   },
