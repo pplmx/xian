@@ -440,6 +440,7 @@ const CATEGORIES = [
       "offlineExpProgress",
       "daoFruitDelta",
       "eventNoClash",
+      "homeRealmOnce",
       "daoPathCoverage",
     ],
   },

@@ -42,7 +42,14 @@
           <span aria-hidden="true">/</span>
           <span>{{ player.worldName }}</span>
         </p>
-        <span class="home-deck__realm">{{ player.realmName }}</span>
+        <!--
+          这里原有一枚右上角境界抬头(报 player.realmName)—— 与法球下那句
+          「修为 0% · 真仙·四层」在首屏说了两遍同一个境界。
+
+          删的是这一处而不是法球那处:左边 eyebrow 已经交代了「玄枢 · 洞府 / 仙界」,
+          界域信息不缺;而法球下那个百分比脱离境界就没有意义(0% 的什么?哪一境的 0%?),
+          两者是一句话,拆不开。
+        -->
       </header>
 
       <div class="home-deck__stage">

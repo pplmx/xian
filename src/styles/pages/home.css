@@ -209,20 +209,6 @@
     line-height: 1.45;
   }
 
-  .home-deck__realm {
-    flex: none;
-    padding: 0.18rem 0;
-    border: 0;
-    border-bottom: 1px solid rgb(var(--color-gold-ink-rgb) / 0.34);
-    background: transparent;
-    color: rgb(var(--color-ink-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    letter-spacing: 0.12em;
-    line-height: 1.2;
-    white-space: nowrap;
-  }
-
   .home-deck__stage {
     position: relative;
     z-index: 1;
