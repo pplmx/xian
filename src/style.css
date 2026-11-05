@@ -1881,6 +1881,10 @@
     display: inline-grid;
     place-items: center;
     min-height: 1.75rem;
+    /*
+     * 它是题头右侧的取用键(与册名同一条基线),不把标题块往下拽。
+     * 窄档见下方 tinylens 的整行退回规则。
+     */
     padding: 0.15rem 0.6rem;
     border: 0;
     border-radius: 2px;
@@ -1893,6 +1897,27 @@
   }
   .folio-masthead__visual-open:active {
     background: rgb(var(--color-ink-rgb) / 0.09);
+  }
+  /*
+   * 极窄档(≤220 CSS px = 200% 缩放)让观象键退回**归档块同一行之后**的独立一行。
+   *
+   * 它若仍与册名抢同一行:195 档下册名只剩 ~40px 宽,「洞府营造」被压成
+   * 一字一行的竖排(实测截图),那是比「多占一行」严重得多的坏。
+   * 退回整行之后它与册名各占一行,两行都读得顺。
+   */
+  @media (max-width: 220px) {
+    /*
+     * 窄档把观象键「排到」标题块之后,而不是继续跟它抢同一行 —— flex-wrap 下
+     * 只要它在同一行里,册名就会被压成一字一行。order 让它整行落到后面,
+     * flex-basis:100% 逼它自己起一行;册名因此拿回整行宽度。
+     */
+    .folio-masthead__visual-open {
+      order: 1;
+      flex-basis: 100%;
+      width: 100%;
+      margin-top: 0.25rem;
+      text-align: center;
+    }
   }
   /* 观象弹框里的主视觉:居中摆放,不再参与卷首那一行的挤压 */
   .folio-visual-folio {

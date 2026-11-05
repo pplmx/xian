@@ -382,7 +382,7 @@
 
   .cultivation-masthead__readout {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     overflow: hidden;
     border-top: 1px solid rgb(var(--color-ink-soft-rgb) / 0.16);
     border-bottom: 1px solid rgb(var(--color-ink-soft-rgb) / 0.1);
@@ -394,20 +394,30 @@
     padding: 0.55rem 0.15rem;
   }
 
-  .cultivation-masthead__readout-cell:first-child {
-    grid-column: 1 / -1;
-    padding-bottom: 0.65rem;
-    border-bottom: 1px solid rgb(var(--color-ink-soft-rgb) / 0.12);
+  /*
+   * 三格并排(本境 / 此刻行速 / 灵气)。
+   *
+   * 从前第一格独占整行(本境余程那条进度读数),下面两格两栏 —— 共 140px 高。
+   * 卷首瘦身之后那三格已各自只报一件短事(本境·四层 / 亿每秒 / 0%),
+   * 没有一条需要整行,三格并排就够,卷首因此矮下约 60px。
+   *
+   * 极窄档(tinylens)退回单列:195 CSS px 下三栏每栏只剩不到 60px,
+   * 「2.355亿/秒」这种七字读数会被压成两行甚至竖排 —— 那是排版门钉死过的坏形状。
+   */
+  @media (max-width: 220px) {
+    /* 极窄档三栏太挤,退回单列;分隔线也从左改为上 */
+    .cultivation-masthead__readout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .cultivation-masthead__readout-cell + .cultivation-masthead__readout-cell {
+      padding-left: 0.15rem;
+      border-left: 0;
+      border-top: 1px solid rgb(var(--color-ink-soft-rgb) / 0.12);
+    }
   }
-
-  .cultivation-masthead__readout-cell:nth-child(2n) {
+  .cultivation-masthead__readout-cell + .cultivation-masthead__readout-cell {
     padding-left: 0.7rem;
     border-left: 1px solid rgb(var(--color-ink-soft-rgb) / 0.12);
-  }
-
-  .cultivation-masthead__readout-cell:nth-child(3) {
-    padding-left: 0;
-    border-left: 0;
   }
 
   .cultivation-masthead__readout-label {

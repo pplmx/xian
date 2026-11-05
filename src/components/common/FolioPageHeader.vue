@@ -116,25 +116,26 @@
           <span>{{ nextStep.text }}</span>
           <span class="folio-masthead__next-cue" aria-hidden="true">›</span>
         </button>
-        <!--
-          compact 档的观象入口 —— 主视觉那张圆环 / 山门图 / 法球不再常驻占掉
-          四分之一屏,改成这里一枚小印;点开才是那张图,走全站共享的 BaseModal
-          (焦点、Esc、读屏语义一并继承)。
-
-          位置必须在**标题块内部**:让它单独占卷首那一行的右侧,200% 缩放档
-          (195 CSS px)会把旁边那句眉批挤到 36px 宽、折成竖排 —— 排版门当场撞红。
-        -->
-        <button
-          v-if="compact && $slots.visual"
-          type="button"
-          class="folio-masthead__visual-open tap-row mt-1"
-          data-folio-visual-open
-          :aria-label="`观象:${title}`"
-          @click="visualOpen = true"
-        >
-          <span aria-hidden="true">观 象</span>
-        </button>
       </div>
+      <!--
+        compact 档的观象入口 —— 主视觉那张圆环 / 山门图 / 法球不再常驻,
+        改成这里一枚小印;点开才是那张图,走全站共享的 BaseModal。
+
+        位置贴着标题块**右侧**、与册名同一条基线:它是一枚「这一页的图」的
+        取用键,归在题头那一行,而不是另起一行的动作。窄档(compact 断点)让它
+        退回标题块下方整行 —— 390 及其以上不换行,195 档也不会把旁边那句眉批
+        挤成竖排(排版门当场撞红过)。
+      -->
+      <button
+        v-if="compact && $slots.visual"
+        type="button"
+        class="folio-masthead__visual-open tap-row self-start"
+        data-folio-visual-open
+        :aria-label="`观象:${title}`"
+        @click="visualOpen = true"
+      >
+        <span aria-hidden="true">观 象</span>
+      </button>
       <div
         v-if="$slots.visual && !compact"
         class="folio-masthead__visual ml-auto shrink-0 compact:hidden tinylens:hidden"
