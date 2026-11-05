@@ -435,6 +435,7 @@ const CATEGORIES = [
       "offlineQualitySeal",
       "brewRecipeQuality",
       "quickPillQuality",
+      "qualityNotColorOnly",
       "daoPathCoverage",
     ],
   },

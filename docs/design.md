@@ -2168,10 +2168,27 @@ GongfaSection / ArtifactPanel / SlotCandidatesDialog / TitlesView / InventoryVie
 补法:品阶名跟在品名之后、同一行内,`--type-note` 小一号 + `font-weight: 500`。
 **行高零变化**(390 下 45~46px、195 下 62~63px,改前改后一致),不另起一行。
 
-#### 这条统计值得留下
+#### 这条统计留下了 —— 升成常驻判据
 
-「逐个看」靠的是注意力,而注意力会漏。两个 `0 / 0` 是一次 grep 出来的:
-哪天又多一处只上颜色的品阶,同一个查询就能把它捞出来。
+「逐个看」靠的是注意力,而注意力会漏。两个 `0 / 0` 是一次 grep 出来的。
+故把它固成 `ui/qualityNotColorOnly.spec`:凡模板里用了 `qualityDef(...).color`
+的文件,必须**要么**用 `QualitySeal`、**要么**写出 `qualityDef(...).name`,
+否则红。
+
+三轮修的是同一个病,但每次都是逐个看发现的 —— 这一条判据之后不必再靠谁想起来。
+
+白名单只放两处,各写明理由:
+
+- **QualitySeal.vue** —— 它就是那个章本身,`tone` 是实现细节,不必给自己盖章;
+- **CombatPanel.vue** —— 战报走 `data-log-quality` + 竖线粗细(1px/3px)+ 字重,
+  盖章会让逐行滚动的战报碎掉。这一条另由 `uiLayering.spec` 单独守着。
+
+另配一条「白名单不腐烂」:列进去的文件若已不再用品质色,判据会点名删它 ——
+留着的白名单会掩盖将来新加的违规。
+
+判据写好之后先做了一次**真实破坏实验**:把 `BrewingDialog` 的品阶名删掉,
+判据当场点名 `components/inventory/BrewingDialog.vue(章:false 名:false)`;
+恢复后转绿。只信单元里的反空转样本不够 —— 得让它在真实文件上咬一次。
 
 ### 开炉炼丹:九档品阶,行上只写「1 阶」
 
