@@ -447,6 +447,7 @@ const CATEGORIES = [
       "openingStepCount",
       "openingGift",
       "saveSanitizeCoverage",
+      "realmOverviewSum",
       "daoPathCoverage",
     ],
   },

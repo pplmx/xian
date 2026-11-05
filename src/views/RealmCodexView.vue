@@ -9,8 +9,8 @@
     >
       <template #meta>
         <p class="mt-1.5 text-note text-ink-faint">
-          已至「{{ realmDef(player.major).name }}」 · 已渡 {{ realmOverview.passed }} 境 · 尚余
-          {{ realmOverview.remaining }} 境
+          已至「{{ realmDef(player.major).name }}」 · 已渡 {{ realmOverview.passed }} 境 · 脚下第
+          {{ realmOverview.position }} 境 · 尚余 {{ realmOverview.remaining }} 境
         </p>
       </template>
       <template #visual>

@@ -2253,6 +2253,52 @@ GongfaSection / ArtifactPanel / SlotCandidatesDialog / TitlesView / InventoryVie
 判据 `ui/offlineQualitySeal.spec` 三条:有章 / 章盖在拾得装备循环的每一件上
 (只 import 不渲染不算)/ 品阶色仍在(双线索)。
 
+### 界域志卷首:「已渡 9 境 · 尚余 11 境」加起来不是 21
+
+界域志卷首原本写着:
+
+```text
+已至「真仙」 · 已渡 9 境 · 尚余 11 境
+```
+
+而全作共 21 境。9 + 11 = 20,少了一个。
+
+两个数各自都对,只是**中间那个没说出来**:
+
+| 变量 | 值 | 含义 |
+| --- | --- | --- |
+| `passed = current.index` | 9 | **已经走完**的境数 |
+| `remaining = total - globalPosition` | 11 | **脚下之后**还剩的境数 |
+| (缺) | 1 | **脚下这一境** |
+
+`passed + remaining = total - 1`,中间那一个正是玩家此刻站着的境。
+
+#### 第一版改错了,被既有判据拦住
+
+我最初想统一口径 —— 把 `passed` 改成 `current.globalPosition`(9 → 10),让
+`passed + remaining = total` 直接闭合。
+
+`realmCodexDesk.spec` 当场红:`passed: 9` → `passed: 10`。那条判据用 `toEqual`
+固定了整个 overview 对象,而它钉的是一个**正确的语义**:「已渡」就是已经走完的境,
+不含脚下。
+
+判据是对的,我的改动是错的 —— 改 `passed` 会让「已渡」这个词撒谎。
+
+#### 正确改法:把缺的那一个说出来
+
+`passed` 与 `remaining` 都不动,只在卷首补上「脚下第 N 境」:
+
+```text
+已至「真仙」 · 已渡 9 境 · 脚下第 10 境 · 尚余 11 境
+```
+
+9 + 1 + 11 = 21,玩家做减法闭合了。实测 390 档折成两行,版式未坏。
+
+`realmCodexOverview` 为此多给一个 `position: current.globalPosition`(已走完的境数
+与脚下序号是两个事实,前者不能顶替后者)。
+
+判据 `ui/realmOverviewSum.spec`:overview 要给出脚下序号 / 卷首真的念出来。
+
 ### 十七个落盘 store,十七个 sanitize —— 但没人守着这个数
 
 顺着「关键路径有没有判据」这条线查到一个更基础的东西:这个仓库有 **17 个 store

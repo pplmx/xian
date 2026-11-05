@@ -83,7 +83,13 @@ describe("界域案 · 四界先成谱,境界再逐格展开", () => {
     const overview = realmCodexOverview(realmCodexCurrent(9), rows);
 
     expect(overview).toEqual({
+      /*
+       * passed 与 remaining 都不含脚下这一境,故 passed + remaining = 20,
+       * 而 total = 21 —— 中间那一个正是 position。卷首要把三个数都说出来,
+       * 玩家做减法才闭合(见 ui/realmOverviewSum.spec)。
+       */
       passed: 9,
+      position: 10,
       total: 21,
       remaining: 11,
       ratio: 10 / 21,

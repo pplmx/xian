@@ -81,8 +81,12 @@ export interface RealmCodexAtlasRow extends RealmCodexWorldRow {
 }
 
 export interface RealmCodexOverview {
+  /** 已经走完的境数(不含脚下这一境) */
   passed: number;
+  /** 脚下这一境的全路序号(从 1 起) */
+  position: number;
   total: number;
+  /** 脚下之后还剩的境数(不含脚下这一境) */
   remaining: number;
   ratio: number;
   worldPosition: number;
@@ -130,7 +134,17 @@ export function realmCodexOverview(
   const total = rows.reduce((sum, row) => sum + row.total, 0);
   const worldIndex = rows.findIndex((row) => row.world.id === current.world.id) + 1;
   return {
+    /*
+     * passed 是**已经走完**的境数(不含脚下这一境),remaining 是**脚下之后**还剩
+     * 的境数(也不含脚下)—— 两者相加等于 total - 1,因为中间那一个正是玩家此刻
+     * 站着的境。
+     *
+     * 这不是错,但卷首那句话若只写「已渡 N 境 · 尚余 M 境」,玩家会验算 N+M 是否
+     * 等于总境数,然后发现差一。故视图那侧要**把脚下这一境也说出来**,
+     * 让「已渡 + 脚下 + 尚余 = 总境数」闭合(见 RealmCodexView 卷首)。
+     */
     passed: current.index,
+    position: current.globalPosition,
     total,
     remaining: Math.max(0, total - current.globalPosition),
     ratio: total > 0 ? current.globalPosition / total : 0,
