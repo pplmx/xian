@@ -450,6 +450,7 @@ const CATEGORIES = [
       "realmOverviewSum",
       "apprenticeWaterline",
       "exploreSessionResume",
+      "pauseShiftsAllClocks",
       "daoPathCoverage",
     ],
   },

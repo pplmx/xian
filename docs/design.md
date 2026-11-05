@@ -2253,6 +2253,56 @@ GongfaSection / ArtifactPanel / SlotCandidatesDialog / TitlesView / InventoryVie
 判据 `ui/offlineQualitySeal.spec` 三条:有章 / 章盖在拾得装备循环的每一件上
 (只 import 不渲染不算)/ 品阶色仍在(双线索)。
 
+### 引擎暂停时,所有时限一起顺延 —— 8 个字段,零条判据
+
+上一轮确认了「存绝对时刻、不存相对量」这条原则。这一轮顺着它扫全站,看还有没有别的
+时限状态,结果发现原则执行得**非常彻底**:
+
+```text
+player.ts      expiresAt = now + 60000 / + 120000      卜卦、区域事件、突破准备、顿悟冷却
+cultivation.ts endsAt = lim                             修为 buff
+regionEvent.ts endsAt = now + durationMin * 60_000      区域随机事件
+```
+
+没有一处是「累加 elapsed / remaining--」。
+
+#### 但这条原则反过来带出一个要求
+
+绝对时刻不会自己等。引擎**暂停**时(开局引导、弹窗、切后台)墙钟仍在走,
+暂停多久,那些时限就被吃掉多久。`shiftTimedState` 的注释把代价写清楚了:
+
+> Duration clocks (held time / revival / prosperity idle) use "since" stamps.
+> If they stay put, a pause eats revive hours and inflates 已守.
+
+于是引擎恢复时统一顺延一次,覆盖 **8 个字段**,分在四处:
+
+| 调用 | 管的字段 |
+| --- | --- |
+| `cultivation.shiftBuffEnds` | 修为 buff 的 `endsAt` |
+| `player.shiftTimedState` | 卜卦 / 区域事件 / 突破准备 / 顿悟冷却 / 镇压 `suppressedSince` / 区域统计 `lastUpdateAt` |
+| `adventure.shiftTimedState` | 历练会话的 `endsAt` 与 `nextBattleAt` |
+| `shiftEarlyGameWindows` | 开局引导的时间窗 |
+
+#### 缺口:这一层一条用例都没有
+
+`shiftTimedState` 与 `shiftBuffEnds` 加起来覆盖 8 个字段,而全仓搜不到一条针对它们的
+用例。漏掉任何一个的代价是**静默**的:玩家在弹窗里待了五分钟,那个五分钟的 buff 就
+白少五分钟;卦象本来还剩两分钟,变成已经过期。没人会来报 —— 玩家只会觉得「运气不好」。
+
+而这类字段还会继续长(每加一个新机制就可能多一个时限状态)。故判据守的**不是现在这
+8 个字段**,而是「新增时限状态时,别忘了把它接进顺延」这件事:
+
+- 第一条:引擎暂停恢复时必须调用**全部四处**;
+- 第二条:顺延函数要真的按 `pausedMs` 平移(不是传进去就完事)。
+
+#### 两次破坏实验
+
+- 删掉 `shiftBuffEnds(pausedMs)` 这一行 → 报「暂停恢复时漏了顺延:修为 buff 的
+  `endsAt` —— 暂停多久,那些时限就被吃掉多久」;
+- 把顿悟冷却的 `+= pausedMs` 改成 `+= 0` → 报「顿悟冷却没顺延」。
+
+两次都精确命中,恢复后转绿。
+
 ### 关掉页面时正在突破准备 —— 三种中断态都验过
 
 承上节：历练会话已经用判据钉住了。这一轮把其余三种「有时间流逝的中间态」也走了一遍：
