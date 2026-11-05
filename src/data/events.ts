@@ -1381,8 +1381,15 @@ export const EVENTS: EventDef[] = [
   ev(
     "ev_baize_duanbei",
     "断碑白泽",
-    "神迹荒原的断碑旁卧着一头白泽。它睁眼看你,碑上残字竟自行浮起,一笔一笔拼出你的名字。",
-    ["general", "god"],
+    "混沌之滨的断碑旁卧着一头白泽。它睁眼看你,碑上残字竟自行浮起,一笔一笔拼出你的名字。",
+    /*
+     * 白泽是**神品**,而神品一律不收进 god 带(见本段上方的境界带纪律)。
+     * 它此前挂在 minRealm 15 / god 上,是规则收紧后没被回头清理的一处 ——
+     * 神界就能开出神品,「混沌海才有的东西」这层稀缺就没了。
+     * 预算上它本就是最低的神品(1.64,比最高的仙品还低),挪到混沌海不改变任何曲线。
+     * 判据见 core/petWorldBand.spec。
+     */
+    ["general", "chaos"],
     [
       c(
         "听其言",
@@ -1401,7 +1408,7 @@ export const EVENTS: EventDef[] = [
       ),
       c("躬身不问", [o(1, "你拱手一礼,不去惊扰它读碑。", { type: "exp", secs: 30 })]),
     ],
-    { minRealm: 15 },
+    { minRealm: 18 },
   ),
   ev(
     "ev_shenbing_canfeng",

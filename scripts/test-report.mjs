@@ -417,6 +417,7 @@ const CATEGORIES = [
       "artifactQualityLadder",
       "gongfaRealmCoverage",
       "rebirthCompanion",
+      "petWorldBand",
     ],
   },
   {
