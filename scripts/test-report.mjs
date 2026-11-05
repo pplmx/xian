@@ -448,6 +448,7 @@ const CATEGORIES = [
       "openingGift",
       "saveSanitizeCoverage",
       "realmOverviewSum",
+      "apprenticeWaterline",
       "daoPathCoverage",
     ],
   },

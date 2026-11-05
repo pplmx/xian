@@ -836,6 +836,27 @@
       border-left: 0;
     }
   }
+  /*
+   * 320 小屏档(布局视口 ≤359 CSS px):四门存底的读数换行到第二行。
+   *
+   * 存底格原本是 `图标 | 名称 1fr | 读数 auto` 三列。读数写成「灵草 360 · 水位 30」
+   * 之后它在 320 档占到 65px,把中间的名称挤到 21px —— 「悟道点」三个字放不下,
+   * 被压成 17px 宽的竖排(排版门当场撞红)。
+   *
+   * 收字不是办法:「水位」两个字被砍掉,这一处就退回到「360/30」那个被读成
+   * 「上限」的歧义里。故让读数整行落到下面,名称独占第一行。
+   */
+  @media (max-width: 359px) {
+    .apprentice-depot__row {
+      grid-template-columns: 1.18rem minmax(0, 1fr);
+      row-gap: 0.14rem;
+    }
+
+    .apprentice-depot__value {
+      grid-column: 2;
+    }
+  }
+
   @media (max-width: 220px) {
     .apprentice-order {
       grid-template-columns: 1.65rem minmax(0, 1fr);

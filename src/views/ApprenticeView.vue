@@ -533,8 +533,17 @@ function dispatchSelected(a: OwnedApprentice): void {
                   :class="{ 'is-fallback': row.resource === null }"
                 >
                   <template v-if="row.resource === null">保底</template>
+                  <!--
+                    库存与水位线之间**不写裸斜杠** —— 全站其余每一处 `/` 都读作
+                    「当前 / 上限」(Lv1/20、1/3 席、10/21 境、16/66),而这里的
+                    waterline 是**派差的水位线**:「库存到这条线才算够」,是个目标值。
+                    写成「灵草 360/30」会被读成「有 360,上限 30」—— 一个溢出十倍的
+                    危险信号,或者干脆读成算错了。而真相是库存充足、毫无问题。
+
+                    这一格正是玩家派差时判断「哪一门缺料」的读数来源,读错就会派错门。
+                  -->
                   <template v-else
-                    >{{ row.stock }}<small>/{{ row.waterline }}</small></template
+                    >{{ row.stock }}<small> · 水位 {{ row.waterline }}</small></template
                   >
                 </span>
                 <span class="apprentice-depot__meter" aria-hidden="true">
