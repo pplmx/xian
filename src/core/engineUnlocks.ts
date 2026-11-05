@@ -1,5 +1,5 @@
 /**
- * 成就对库的接入 —— 内容(`data/achievements` 的 62 枚)、判据(仍是 `progress.evalCond`)
+ * 成就对库的接入 —— 内容(`data/achievements` 的 66 枚)、判据(仍是 `progress.evalCond`)
  * 与奖励都住在本作,库只给"一次性解锁"的登记簿骨架(见 packages/engine 的 unlocks)。
  *
  * 搬过来的是四条口径:只登记一次、一次扫描可解多条且顺序即声明顺序、未达成不登记、

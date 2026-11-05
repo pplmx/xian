@@ -9,8 +9,8 @@
  * 谁改了内容忘了改注释,这里立刻红。
  */
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readFileSync, readdirSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { AFFIXES } from "@/data/affixes";
 import { ARTIFACTS } from "@/data/artifacts";
 import { EQUIPMENT_TEMPLATES } from "@/data/equipment";
@@ -79,6 +79,71 @@ describe("数据表头计数 · 与真实数组长度一致", () => {
         t.length,
       );
     }
+  });
+});
+
+/**
+ * 别处代码注释里对「某张表有多少条」的引用,也得跟着表走。
+ *
+ * 数据文件自己的头注由上面那条守着,文档由下面那条守着 —— 而**代码注释**两头都没管。
+ * 实测 `core/engineUnlocks.ts` 的头注释写着「`data/achievements` 的 62 枚」,
+ * 而成就是 66 枚:这行字不参与任何计算、没有任何判据会红,
+ * 只是让读它的人按错的分母理解「成就对库的接入」这件事。
+ *
+ * 这类注释有个可机器识别的形状:**反引号包住的 `data/<表名>` + 一个数 + 量词**。
+ * 判据只认这个形状 —— 认宽了会把散文里所有数字都当成承诺,那是另一种噪音;
+ * 认这个形状,既能抓住真实引用,也不会误伤普通叙述。
+ *
+ * 新增一处这类引用会被自动纳入;删掉它,这条判据也不会因为没东西可查而变成空转
+ * (下面另有一条反空转)。
+ */
+describe("代码注释 · 引用数据表规模的数字", () => {
+  /** 源码文本(排除 data/ 自己的头注与 spec 本身,它们各有判据) */
+  const SOURCE_FILES = (() => {
+    const out: Record<string, string> = {};
+    const walk = (dir: string): void => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else if (/\.(ts|vue)$/.test(entry.name)) out[full] = readFileSync(full, "utf8");
+      }
+    };
+    walk(resolve(__dirname, ".."));
+    return out;
+  })();
+
+  /** 表名 → 真实条数;数据文件头注那条判据用的同一份 TABLES */
+  const REAL_LENGTH = new Map<string, { n: number; label: string }>();
+  for (const t of TABLES) REAL_LENGTH.set(t.file, { n: t.length, label: t.label });
+
+  /** 在注释行里找「`data/xxx` 的 N 量词」 */
+  function claimIn(text: string): { file: string; n: number }[] {
+    const out: { file: string; n: number }[] = [];
+    // 引用写成 `data/achievements`(反引号里不带 .ts)或 `data/achievements.ts`,两种都认
+    const re = /`data\/([a-zA-Z]+)(?:\.ts)?`\s*的\s*(\d+)\s*(?:枚|条|件|部|个|种|只)/g;
+    for (const m of text.matchAll(re)) out.push({ file: `${m[1]}.ts`, n: Number(m[2]) });
+    return out;
+  }
+
+  it("注释里写的表规模与真实条数一致", () => {
+    const bad: string[] = [];
+    let seen = 0;
+    for (const [path, text] of Object.entries(SOURCE_FILES)) {
+      if (path.includes("/data/") || path.endsWith(".spec.ts")) continue;
+      for (const claim of claimIn(text)) {
+        const real = REAL_LENGTH.get(claim.file);
+        if (!real) {
+          bad.push(`${path}:引用了不存在的表 data/${claim.file}`);
+          continue;
+        }
+        seen += 1;
+        if (claim.n !== real.n) {
+          bad.push(`${path}:注释写 data/${claim.file} 有 ${claim.n},实际 ${real.n} ${real.label}`);
+        }
+      }
+    }
+    expect(bad, `这些注释里的规模数已过期:\n  ${bad.join("\n  ")}`).toEqual([]);
+    expect(seen, `一处这类引用都没扫到 —— 判据退化成空转了`).toBeGreaterThan(0);
   });
 });
 
