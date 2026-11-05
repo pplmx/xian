@@ -445,6 +445,7 @@ const CATEGORIES = [
       "reincarnationBacktrack",
       "resetShowsLoss",
       "openingStepCount",
+      "openingGift",
       "daoPathCoverage",
     ],
   },

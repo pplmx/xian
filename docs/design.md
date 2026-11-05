@@ -2253,6 +2253,60 @@ GongfaSection / ArtifactPanel / SlotCandidatesDialog / TitlesView / InventoryVie
 判据 `ui/offlineQualitySeal.spec` 三条:有章 / 章盖在拾得装备循环的每一件上
 (只 import 不渲染不算)/ 品阶色仍在(双线索)。
 
+### 开局赠礼:五件东西一直是对的,但一直没人守
+
+`CreateView` 的 `begin()` 在把玩家送进游戏之前做了五件事:
+
+```ts
+player.initCharacter(finalName, profile);
+learnGongfa("m_taixuan");
+cultivation.equipMain("m_taixuan");
+const starter = generateEquipment(1, random, { slot: "weapon" });
+acquireEquipment(starter, { quiet: true, forceKeep: true });
+inventory.equip(starter.uid, tpl.slot);
+acquirePill("p_jvqisan", 3);
+```
+
+这五件每一件都对应玩家第一天必须做的事:
+
+| 赠礼 | 缺了会怎样 |
+| --- | --- |
+| 一部主修功法 | 「功法」页是空的,而修炼速度靠它 |
+| 主修已上主修席 | 只学不装等于没学(装配是独立一步) |
+| 一件武器 | 第一天要去历练,没武器打得过谁 |
+| 武器已穿上 | 进货不穿上,面板上还是赤手 |
+| 三枚聚气散 | 第一次「以药辅道」的引子,也是炼丹的入口 |
+
+而**这五件事没有任何判据守着**。删掉其中任何一行,静态门全绿、测试全绿 ——
+只有真跑一遍开局才看得出来,而那一刻玩家已经进来了。
+
+#### 先验证,再钉住
+
+真跑了一遍完整开局(欢迎页 → 入山契 → 建号 → 踏入仙途 → 首页),读 store 确认:
+
+```text
+mainGongfa: "m_taixuan"        equipCount: 1
+equippedSlots: ["weapon"]      pills: { p_jvqisan: 3 }
+spiritStone: {m: 2.4, e: 1}    ← 屏幕上角也是「24」
+```
+
+五件全部到账 —— 现状是对的,于是把「对」钉下来。
+
+> 判据不只为主持错误而写,也为**防止将来改错**而写。这一段代码属于「初始化路径」,
+> 最容易被后来的重构顺手改掉,而它出错的代价是玩家第一天就卡住。
+
+#### 判据与两次破坏实验
+
+`ui/openingGift.spec` 三条:五件事都在 `begin()` 里 / `markStarted` 在它们之后
+(先标记开始再发东西,中途抛错会留下「已开局但一无所有」的存档) / 送的功法与丹药
+id 非空。
+
+- 删掉 `acquirePill` → 判据报「begin() 里少了:要送聚气散 —— 新玩家第一天会卡住」;
+- 把 `markStarted` 提到最前 → 判据报「这些调用排在 markStarted 之后:
+  learnGongfa / acquireEquipment / acquirePill」。
+
+两次都精确命中,恢复后转绿。
+
 ### 建号页的「02 / 03」—— 第三步不存在
 
 建号页顶上原本写着:
