@@ -2253,6 +2253,37 @@ GongfaSection / ArtifactPanel / SlotCandidatesDialog / TitlesView / InventoryVie
 判据 `ui/offlineQualitySeal.spec` 三条:有章 / 章盖在拾得装备循环的每一件上
 (只 import 不渲染不算)/ 品阶色仍在(双线索)。
 
+### 十七个落盘 store,十七个 sanitize —— 但没人守着这个数
+
+顺着「关键路径有没有判据」这条线查到一个更基础的东西:这个仓库有 **17 个 store
+落盘**(`persist`),它们**每一个都定义了 `sanitize()`**。执行得很彻底。
+
+但这件事**没有判据守着**。新写一个 store、忘了写 sanitize,静态门全绿、测试全绿。
+
+而漏掉的代价很重:落盘的值会随存档穿过版本、穿过导入、穿过手改的 JSON。一个字段是
+`NaN`、是 `undefined`、是被旧版本写成字符串的数字,进到界面就是「NaN 天前」这类东西。
+`saveBackup.spec` 的注释里写过同一句:
+
+> 「NaN 天前」。sanitize 会修它,但界面不该赌 sanitize 已经跑过。
+
+那句说的是界面。**界面之所以敢不赌,是因为每个 store 都真的 sanitize 过** ——
+这条判据守的就是那个前提。
+
+#### 口径:按特征认人,不按文件清单
+
+凡 `src/stores/*.ts` 里出现 `persist` 的,必须同时定义 `function sanitize`。
+两个豁免:`ui.ts`(纯界面态,不落盘,本就不在扫描面里)与 `.spec.ts`。
+
+**为什么不列清单**:手写清单的通病是它不会自己长。前几轮「品阶不许只靠颜色」那条
+判据吃过的亏就在这里 —— 逐个看修了三次(离线、炼丹、速服行),改成一扫全库之后
+才收干净。这一条从一开始就按特征认人,新加 store 自动进扫描面。
+
+判据另配两条自检:防空转(扫到的 store 数 ≥10)/ 反空转(认得出「落盘但无 sanitize」
+的坏样本)/ ui store 的豁免要成立(它真的没有 persist)。
+
+**破坏实验**:新建一个落盘但无 sanitize 的 store,判据立刻点名并打出
+「存档里一个 NaN 就会一路带进界面」;删掉临时文件后转绿。
+
 ### 开局赠礼:五件东西一直是对的,但一直没人守
 
 `CreateView` 的 `begin()` 在把玩家送进游戏之前做了五件事:

@@ -446,6 +446,7 @@ const CATEGORIES = [
       "resetShowsLoss",
       "openingStepCount",
       "openingGift",
+      "saveSanitizeCoverage",
       "daoPathCoverage",
     ],
   },
