@@ -510,6 +510,37 @@
         <span class="text-cinnabar">彻底抹去</span>
         本机的一切修行痕迹，包括转世收获，且无法恢复。
       </p>
+      <!--
+        摊开「会失去什么」—— 与旁边那扇导入确认同一条规矩(那边写着
+        「决策前摊数字契约」,连备份的版本与导出时间都列了)。
+        而重置只想反:它比导入**更彻底**(导入至少还有备份可回头),却只有一句
+        定性的话。
+
+        更要紧的是它出现在设置页 —— 那一列开关大多是「改了还能改回来」的,
+        在一列可逆开关中间放一个不可逆的重磅动作、只给一句形容词,玩家很容易
+        按设置页的常规节奏滑过去。故把这一按会抹掉的三样摆出来。
+      -->
+      <dl
+        v-if="saveSnapshot"
+        class="mt-3 rounded-[2px] bg-paper-deep/60 px-3 py-2 t-body"
+        data-reset-loses
+      >
+        <p class="text-note text-ink-faint">这一按会抹掉：</p>
+        <div class="mt-1 grid gap-x-3 gap-y-0.5 tinylens:gap-y-1">
+          <div class="flex items-baseline justify-between gap-2">
+            <dt class="text-ink-soft">已历世数</dt>
+            <dd class="tabular text-ink">{{ saveSnapshot.lifeText }}</dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-2">
+            <dt class="text-ink-soft">此世境界</dt>
+            <dd class="text-ink">{{ saveSnapshot.realmText }}</dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-2">
+            <dt class="text-ink-soft">随魂道果</dt>
+            <dd class="tabular text-ink">{{ saveSnapshot.fruitText }}</dd>
+          </div>
+        </div>
+      </dl>
       <template #footer>
         <div class="flex gap-2">
           <button class="btn-ghost flex-1" @click="closeReset">再想想</button>
@@ -581,6 +612,7 @@
 import "@/styles/pages/settings.css";
 import { computed, ref, useTemplateRef, onUnmounted } from "vue";
 import { useSettingsStore } from "@/stores/settings";
+import { usePlayerStore } from "@/stores/player";
 import { useGameStore } from "@/stores/game";
 import { useUiStore } from "@/stores/ui";
 import { engine } from "@/core/engine";
@@ -593,7 +625,7 @@ import {
 } from "@/core/save";
 import { exportSaveToDevice } from "@/core/savePlatform";
 import { shouldPromptBackup } from "@/core/saveBackup";
-import { formatDuration } from "@/utils/format";
+import { formatDuration, formatNum } from "@/utils/format";
 import {
   SAVE_VERSION,
   STORE_NAMES,
@@ -615,6 +647,27 @@ import { backupDesk, diagDesk, soundDesk, themeDesk } from "@/ui/settingsDesk";
 const settings = useSettingsStore();
 const game = useGameStore();
 const ui = useUiStore();
+const player = usePlayerStore();
+
+/**
+ * 重置确认里要摊开的三样 —— 这一按会抹掉什么。
+ *
+ * 读数全部现取(第几世从 reincarnation.count、境界从 player.realmName、
+ * 道果从 reincarnation.daoFruit),不在这里手抄任何一个数。
+ *
+ * 存档还没开始时(玩家在欢迎页)为 null —— 那种场合重置框根本不会开,
+ * 但组件仍要能渲染,故给个空值而不是抛。
+ */
+const saveSnapshot = computed(() => {
+  if (!game.started) return null;
+  const lives = player.reincarnation.count;
+  const fruit = player.reincarnation.daoFruit;
+  return {
+    lifeText: lives > 0 ? `第 ${lives} 世` : "初世",
+    realmText: player.realmName,
+    fruitText: fruit > 0 ? `${formatNum(fruit)} 枚` : "尚无",
+  };
+});
 const diag = useDiagStore();
 
 /** 写盘失败状态:进页面先读一次,之后随订阅翻转 */

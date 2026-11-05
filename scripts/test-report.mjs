@@ -443,6 +443,7 @@ const CATEGORIES = [
       "homeRealmOnce",
       "apprenticeAwayOnce",
       "reincarnationBacktrack",
+      "resetShowsLoss",
       "daoPathCoverage",
     ],
   },
