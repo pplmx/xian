@@ -90,10 +90,19 @@
                 <dd>{{ fruitInfo.cultBonusText }}</dd>
               </div>
               <div>
+                <!--
+                  `deltaPct` 是**有效道果的增长率**,不是修行加成的增幅 ——
+                  它与上面那行「修行加成 +28.1%」是两个量纲,而原先两者上下并排、
+                  都带 `+`、都以 `%` 收尾,读者几乎必然读成「修行加成再加 7.47%」。
+                  实际上再加一枚后修行加成从 +28.1% 涨到约 +30.2%(28.1 × 1.0747)。
+
+                  这是玩家决定要不要继续攒道果的那一格,而道果是跨世唯一的永久积累。
+                  故把量纲写在数前面。
+                -->
                 <dt>再凝一枚</dt>
                 <dd>
                   有效 {{ fruitInfo.nextEffectiveText }} 枚
-                  <span class="tabular">· +{{ fruitInfo.deltaPct }}%</span>
+                  <span class="tabular">· 道果 +{{ fruitInfo.deltaPct }}%</span>
                 </dd>
               </div>
             </dl>

@@ -438,6 +438,7 @@ const CATEGORIES = [
       "qualityNotColorOnly",
       "breakthroughSeal",
       "offlineExpProgress",
+      "daoFruitDelta",
       "daoPathCoverage",
     ],
   },
