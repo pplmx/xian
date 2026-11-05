@@ -1,11 +1,17 @@
 <template>
   <div class="folio-page folio-page--stack stagger-in collection-page">
+    <!--
+      compact:藏珍是全站正文最长的一页(实测 1485 字 / 3.3 屏)。
+      卷首没有主视觉槽,故这一档在这里只起「副题收起」的作用 —— 那句
+      「功名入榜 · 九柜纳珍」答的是「这一页是什么」,首屏先让给两扇门与柜面。
+    -->
     <FolioPageHeader
       title="藏 珍"
       subtitle="功名入榜 · 九柜纳珍"
       back-to="character"
       back-label="人物"
       featured
+      compact
     />
 
     <!--

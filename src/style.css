@@ -1872,6 +1872,34 @@
     pointer-events: none;
     user-select: none;
   }
+  /*
+   * compact 档的「观」印 —— 主视觉不再常驻,这里一枚小章代替它。
+   * 与卷首那枚册印同一套口径(墨字、淡底、不加第三个强色);触达高度按全站
+   * 28px 下限给足,不因为它是小章就压扁。
+   */
+  .folio-masthead__visual-open {
+    display: inline-grid;
+    place-items: center;
+    min-height: 1.75rem;
+    padding: 0.15rem 0.6rem;
+    border: 0;
+    border-radius: 2px;
+    background: rgb(var(--color-ink-rgb) / 0.05);
+    color: var(--world-accent);
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    letter-spacing: 0.1em;
+    line-height: 1;
+  }
+  .folio-masthead__visual-open:active {
+    background: rgb(var(--color-ink-rgb) / 0.09);
+  }
+  /* 观象弹框里的主视觉:居中摆放,不再参与卷首那一行的挤压 */
+  .folio-visual-folio {
+    display: grid;
+    place-items: center;
+    min-height: 9rem;
+  }
   .folio-masthead--featured {
     border-left-width: 0;
     background: transparent;

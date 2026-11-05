@@ -11,6 +11,7 @@
       :title="player.realm.name"
       :subtitle="player.realm.desc"
       featured
+      compact
     >
       <template #backdrop>
         <div class="cultivation-masthead__backdrop" aria-hidden="true">
@@ -40,11 +41,12 @@
             <span aria-hidden="true" />
             {{ stage.label }}
           </span>
-          <span class="cultivation-masthead__ordinal tabular">{{
-            realmOrdinalText(player.major)
-          }}</span>
+          <!--
+            界序号（第 N / 21 境）只在章首右侧读数席出现一次 —— 那里是境界线的起点，
+            也是玩家判断「还有多远」时真正会看的位置。卷首这一格让它退休：
+            390×844 实测同一行读数曾在首屏说了两遍。
+          -->
         </div>
-        <p class="cultivation-masthead__state">{{ stage.hint }}</p>
         <details class="cultivation-masthead__lore">
           <summary>典籍所据 · {{ player.realm.basis }}</summary>
           <p>「{{ player.realm.basis }}」{{ player.realm.lore }}</p>
@@ -54,12 +56,17 @@
         <CultivationDial />
       </template>
       <div class="cultivation-masthead__readout" data-cultivation-stage-readout>
+        <!--
+          本境这一格只报**此刻站在哪一层**。百分比、还剩多少、约多久一律归正文那张
+          行功账(它本来就是进度条 + 还剩 N% + 时长);同一眼里不许说两遍
+          —— 与「此刻行速归内观台、正文不再复读」同一条纪律。
+        -->
         <div class="cultivation-masthead__readout-cell">
-          <span class="cultivation-masthead__readout-label">本境余程</span>
-          <strong class="cultivation-masthead__readout-value tabular">
-            {{ player.expFull ? "圆满" : formatPercent(1 - player.expProgress, 0) }}
+          <span class="cultivation-masthead__readout-label">本境</span>
+          <strong class="cultivation-masthead__readout-value">
+            {{ player.expFull ? `${player.subName} · 圆满` : player.subName }}
           </strong>
-          <span class="cultivation-masthead__readout-note">{{ expEtaText }}</span>
+          <span class="cultivation-masthead__readout-note">{{ stage.hint }}</span>
         </div>
         <div class="cultivation-masthead__readout-cell">
           <span class="cultivation-masthead__readout-label">此刻行速</span>
@@ -75,9 +82,9 @@
           <strong class="cultivation-masthead__readout-value tabular">{{
             formatPercent(qiFillRatio, 0)
           }}</strong>
-          <span class="cultivation-masthead__readout-note tabular"
-            >+{{ formatRate(player.qiRegenPerSec) }} · {{ qiRichInfo.on ? "充盈" : "未充盈" }}</span
-          >
+          <span class="cultivation-masthead__readout-note tabular">{{
+            qiRichInfo.on ? "充盈 · 修炼加成" : "未充盈 · 见下文还差多少"
+          }}</span>
         </div>
       </div>
     </FolioPageHeader>

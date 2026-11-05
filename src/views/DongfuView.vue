@@ -1,6 +1,6 @@
 <template>
   <div class="folio-page folio-page--stack stagger-in">
-    <FolioPageHeader title="洞府营造" back-to="home" back-label="返回" featured>
+    <FolioPageHeader title="洞府营造" back-to="home" back-label="返回" featured compact>
       <template #meta>
         <p class="dongfu-masthead__meta">
           <span

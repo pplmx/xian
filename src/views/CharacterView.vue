@@ -1,6 +1,6 @@
 <template>
   <div class="folio-page folio-page--stack stagger-in">
-    <FolioPageHeader title="道躯" subtitle="根骨、灵根与道途" featured>
+    <FolioPageHeader title="道躯" subtitle="根骨、灵根与道途" featured compact>
       <template #meta>
         <p class="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-body">
           <span class="whitespace-nowrap">

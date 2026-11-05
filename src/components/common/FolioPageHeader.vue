@@ -81,7 +81,11 @@
           底色被压暗后 ink-faint 只剩 4.41:1(需 4.5)。换深一档是 7.03:1,
           且它与标题之间仍拉开层次(小一号、非楷体、不占主线)。
         -->
-        <p v-if="description" class="mt-1 t-body text-ink-soft">
+        <!--
+          compact 档把副题收进观象弹框 —— 它答的是「这一页是关于什么」,
+          与下面 meta 读数的「现在怎么样」不是同一件事。首屏留给后者。
+        -->
+        <p v-if="description && !compact" class="mt-1 t-body text-ink-soft">
           {{ description }}
         </p>
         <slot name="meta" />
@@ -112,9 +116,27 @@
           <span>{{ nextStep.text }}</span>
           <span class="folio-masthead__next-cue" aria-hidden="true">›</span>
         </button>
+        <!--
+          compact 档的观象入口 —— 主视觉那张圆环 / 山门图 / 法球不再常驻占掉
+          四分之一屏,改成这里一枚小印;点开才是那张图,走全站共享的 BaseModal
+          (焦点、Esc、读屏语义一并继承)。
+
+          位置必须在**标题块内部**:让它单独占卷首那一行的右侧,200% 缩放档
+          (195 CSS px)会把旁边那句眉批挤到 36px 宽、折成竖排 —— 排版门当场撞红。
+        -->
+        <button
+          v-if="compact && $slots.visual"
+          type="button"
+          class="folio-masthead__visual-open tap-row mt-1"
+          data-folio-visual-open
+          :aria-label="`观象:${title}`"
+          @click="visualOpen = true"
+        >
+          <span aria-hidden="true">观 象</span>
+        </button>
       </div>
       <div
-        v-if="$slots.visual"
+        v-if="$slots.visual && !compact"
         class="folio-masthead__visual ml-auto shrink-0 compact:hidden tinylens:hidden"
       >
         <slot name="visual" />
@@ -127,6 +149,19 @@
       </div>
     </div>
 
+    <!--
+      观象弹框:compact 档把主视觉与副题收在这里(见 FolioVisualFolio)。
+      正文与导航一寸不动 —— 收的是装饰,不是行动。
+    -->
+    <FolioVisualFolio
+      :open="visualOpen"
+      :title="title"
+      :description="description"
+      @close="visualOpen = false"
+    >
+      <slot name="visual" />
+    </FolioVisualFolio>
+
     <div v-if="$slots.default" class="relative z-10 mt-3" data-folio-default>
       <slot />
     </div>
@@ -134,7 +169,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { goBack } from "@/router/goBack";
 import { cnNumber } from "@/utils/format";
@@ -142,6 +177,7 @@ import { chapterRailItems } from "@/ui/folioIndexRail";
 import { folioOrdinalMark } from "@/ui/folioOrdinal";
 import { navigationPositionOf } from "@/ui/navigation";
 import { useNextStep } from "@/ui/useNextStep";
+import FolioVisualFolio from "./FolioVisualFolio.vue";
 import FolioIndexRail from "./FolioIndexRail.vue";
 import GameIcon from "./GameIcon.vue";
 
@@ -153,12 +189,27 @@ const props = withDefaults(
     backLabel?: string;
     /** 主册与人间共用的开卷版式:更大的册名、印章和可铺开的卷首正文 */
     featured?: boolean;
+    /**
+     * 卷首瘦身档 —— 只给**内容确实过密**的页开(道躯 / 修行 / 洞府 / 藏珍)。
+     *
+     * 那四页实测卷首吃掉首屏 24%~44%,其中最大一块是装饰性的主视觉
+     * (圆环 / 山门图 / 法球,140~151px)。开了这一档:
+     *   · 主视觉不再常驻,收进一枚「观」印 → BaseModal;
+     *   · 副题一并收进那个弹框(它答「这一页是关于什么」,不是「现在怎么样」);
+     *   · 册名、返回、册目、meta 读数、眉批「下一步」全部保留 —— 收的是装饰,
+     *     不是导航与行动。
+     *
+     * 默认 false:十六页里其余十页本来就不挤,一并改会把它们掏空。
+     */
+    compact?: boolean;
   }>(),
-  { subtitle: "", backTo: "", backLabel: "返回", featured: false },
+  { subtitle: "", backTo: "", backLabel: "返回", featured: false, compact: false },
 );
 
 const route = useRoute();
 const router = useRouter();
+/** compact 档的观象弹框是否打开 */
+const visualOpen = ref(false);
 /** 眉批那一句 —— 与全站共用同一份判定,不在各页各算一次 */
 const nextStep = useNextStep(() => route.name);
 

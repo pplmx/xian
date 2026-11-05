@@ -308,21 +308,11 @@
     color: rgb(var(--color-gold-ink-rgb));
   }
 
-  .cultivation-masthead__ordinal {
-    margin-left: auto;
-    color: rgb(var(--color-ink-soft-rgb));
-    font-size: var(--type-note);
-    white-space: nowrap;
-  }
-
-  .cultivation-masthead__state {
-    max-width: 28rem;
-    margin-top: 0.32rem;
-    color: rgb(var(--color-ink-soft-rgb));
-    font-family: var(--font-kai);
-    font-size: var(--type-note);
-    line-height: 1.55;
-  }
+  /*
+   * 这里原先还有一条 .cultivation-masthead__ordinal(界序号)与一条 __state(阶段一句)。
+   * 两者都已从卷首撤下:界序号归章首右侧读数席、阶段一句归内观台「本境」那一格 ——
+   * 390×844 实测它们都曾在首屏说两遍。class 与样式一并删掉,不留孤儿。
+   */
 
   .cultivation-masthead__lore {
     max-width: 29rem;

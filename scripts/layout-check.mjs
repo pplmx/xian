@@ -11015,13 +11015,31 @@ async function taskMultText() {
     await clearOverlays(page);
 
     checked += 1;
+    /*
+     * 印心（CharacterSigil）在 compact 卷首里收进了「观」弹框 —— 它不再常驻首屏。
+     * 那不影响这条判据想守的事（同一份倍率两处印得一样），但读它的方式要跟着变：
+     * 先点开观象，再取那一格。这也正是玩家真能看到它的路径。
+     */
     const seen = await page.evaluate(() => {
       const pick = (sel) => {
         const el = document.querySelector(sel);
         return el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null;
       };
-      return { dossier: pick("[data-character-growth]"), sigil: pick("[data-sigil-growth]") };
+      const dossier = pick("[data-character-growth]");
+      const opener = document.querySelector("[data-folio-visual-open]");
+      if (!opener) return { dossier, sigil: pick("[data-sigil-growth]"), opened: false };
+      opener.click();
+      return { dossier, sigil: null, opened: true };
     });
+    if (seen.opened) {
+      await page.waitForTimeout(450);
+      Object.assign(seen, {
+        sigil: await page.evaluate(() => {
+          const el = document.querySelector("[data-sigil-growth]");
+          return el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null;
+        }),
+      });
+    }
 
     if (!seen.dossier) {
       failures.push("[390] 倍数写法:人物页量不到灵根倍率那一格");
@@ -11036,6 +11054,8 @@ async function taskMultText() {
     }
     // 都该是「×1.2」而不是「×1.20」或「×1.2000000001」
     for (const [where, text] of Object.entries(seen)) {
+      // opened 是本轮加的「是否点开了观象」标记，不是读数 —— 不参与格式核对
+      if (where === "opened") continue;
       if (!text) continue;
       if (!/^×\d+(\.\d{1,2})?$/.test(text)) {
         failures.push(`[390] 倍数写法:${where} 的 «${text}» 不是统一写法(应为 ×1.2 这种)`);

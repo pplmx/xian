@@ -428,6 +428,7 @@ const CATEGORIES = [
       "gongfaQualityLadder",
       "soulGradeSeal",
       "soulTypeLore",
+      "mastheadCompact",
       "daoPathCoverage",
     ],
   },
