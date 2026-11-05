@@ -2253,6 +2253,42 @@ GongfaSection / ArtifactPanel / SlotCandidatesDialog / TitlesView / InventoryVie
 判据 `ui/offlineQualitySeal.spec` 三条:有章 / 章盖在拾得装备循环的每一件上
 (只 import 不渲染不算)/ 品阶色仍在(双线索)。
 
+### 关掉页面时正在突破准备 —— 三种中断态都验过
+
+承上节：历练会话已经用判据钉住了。这一轮把其余三种「有时间流逝的中间态」也走了一遍：
+
+| 中间态 | 存的是什么 | 关掉页面再回来 | 结论 |
+| --- | --- | --- | --- |
+| 历练会话 | `startedAt` / `endsAt` / `nextBattleAt`（绝对时刻） | 计时继续、进度继续 | 已由 `ui/exploreSessionResume.spec` 钉住 |
+| 闭关 | buff 的 `endsAt`（绝对时刻） | 剩余时长照算 | `earlyGameService.spec` 覆盖 |
+| 突破准备（静坐 3 分钟） | `readyAt`（绝对时刻） | 坐满照转「就绪」 | `earlyGameService.spec` 用假时钟覆盖到「一次性取走即空」 |
+
+三者**形态一致**：都存绝对时刻，不存「已经过了多少」。这是同一个设计决定的三处落点，
+也是这一作「放置」承诺能成立的技术前提。
+
+顺带确认了两条边界：
+
+- 突破本身（`attemptBreakthrough`）是**同步一次算完**的，没有中间态 —— 所以
+  「关页面时正在突破」不是真实场景，不必为它加状态。
+- 炼丹（`useBrewing`）同样是即时结算，也没有中间态。
+
+#### 一处观察到但**没有改**的设计
+
+`breakthroughPrepState()` 里，坐满之后就是 `ready: true`，**没有时效上限**：
+
+```ts
+const remainSec = Math.ceil((state.readyAt - gameNow()) / 1000);
+if (remainSec > 0) return { sitting: true, ... };
+return { sitting: false, ready: true, bonus: state.bonus, kind: state.kind };
+```
+
+转世会清空它（`rebirth` 里 `breakthroughPrep.value = null`），但**同一世内可以无限期留着**。
+于是玩家可以提前很久备好一个 +8%，等境界更高、突破更值钱时再用。
+
+这未必是缺陷 —— 也可能是「准备好了再破」的刻意设计。但它让一次**针对眼前这次突破**的
+准备，变成了一张可以囤的券，价值随境界上涨。这属于**玩法平衡**，不是表达缺陷，
+故只记在这里，不擅自改。
+
 ### 关掉页面再回来,这一趟历练要接着走
 
 最长的一档历练是**四小时**(长线云游)。四小时里玩家必然关掉页面、锁屏、换设备 ——
