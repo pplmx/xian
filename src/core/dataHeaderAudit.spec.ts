@@ -183,6 +183,46 @@ describe("玩法文档 · 数字与表一致", () => {
     expect(missing, missing.join("\n")).toEqual([]);
   });
 
+  /**
+   * usage.md 里那句「全库 N 件的节拍分布:每 4 回合 a 件、每 3 回合 b 件、随身常在 c 件」。
+   *
+   * 这一句曾经写着「44 件 / 27 / 17 / 1」—— 总数与「每 3 回合」两处都过时
+   * (补了天品法宝之后实际是 46 件 / 27 / 18 / 1),而且 27 + 17 + 1 = 45 与写着的 44
+   * 自相矛盾,只是没人加过一遍。分档数字是最容易安静过期的:加一件法宝只要它的
+   * interval 落在某一档,那句话就有三处要改。
+   */
+  it("神通的节拍分布与法宝表一致 —— 总数与分档都不许过期", () => {
+    const tiers = new Map<string, number>();
+    for (const def of ARTIFACTS) {
+      const iv = def.active?.interval ?? 0;
+      const key = iv <= 1 ? "常在" : iv >= 2 ? String(iv) : "0";
+      tiers.set(key, (tiers.get(key) ?? 0) + 1);
+    }
+    const always = tiers.get("常在") ?? 0;
+    // 文档那句话的三种读法:每 4 回合 / 每 3 回合 / 随身常在
+    const m = readme.match(
+      /全库\s*(\d+)\s*件的节拍分布[：:]\*\*每 4 回合 (\d+) 件、每 3 回合 (\d+) 件、随身常在 (\d+) 件/,
+    );
+    expect(m, "usage.md 里该有那句节拍分布").not.toBeNull();
+    const groups = m!.slice(1).map(Number);
+    const [total, four, three, alwaysShown] = [
+      groups[0] ?? 0,
+      groups[1] ?? 0,
+      groups[2] ?? 0,
+      groups[3] ?? 0,
+    ];
+    expect(total, `文档写全库 ${total} 件,实际 ${ARTIFACTS.length} 件`).toBe(ARTIFACTS.length);
+    expect(four, `文档写每 4 回合 ${four} 件,实际 ${tiers.get("4") ?? 0} 件`).toBe(
+      tiers.get("4") ?? 0,
+    );
+    expect(three, `文档写每 3 回合 ${three} 件,实际 ${tiers.get("3") ?? 0} 件`).toBe(
+      tiers.get("3") ?? 0,
+    );
+    expect(alwaysShown, `文档写随身常在 ${alwaysShown} 件,实际 ${always} 件`).toBe(always);
+    // 三档之和必须正好是全库 —— 27 + 17 + 1 = 45 ≠ 44 那种自相矛盾不许再出现
+    expect(four + three + alwaysShown, "三档之和该正好是全库件数").toBe(ARTIFACTS.length);
+  });
+
   it("系统一览表的每一行,数字也与表一致", () => {
     const rows: [string, string][] = [
       ["境界", `| 境界 | ${WORLDS.length} 界域 × ${REALMS.length} 境`],
