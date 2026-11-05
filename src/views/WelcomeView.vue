@@ -12,7 +12,8 @@
           <h1 class="font-kai text-[40px] leading-none text-ink">玄枢录</h1>
           <p class="opening-gate__motto">玄之又玄 · 众妙之门</p>
         </div>
-        <span class="opening-gate__folio">卷一 · 入世</span>
+        <!-- 与建号页同一套分步编号:开局两步,这里是第一步 -->
+        <span class="opening-gate__folio">卷一 · 入世 <span class="tabular">01 / 02</span></span>
       </header>
 
       <div class="opening-gate__register" data-opening-gate-register>

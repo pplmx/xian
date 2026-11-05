@@ -10,7 +10,12 @@
         >
           ← 欢迎
         </RouterLink>
-        <p>卷一 · 立命 <span class="tabular">02 / 03</span></p>
+        <!--
+        分步编号的分母是**真实步数** —— 开局只有两步(入世 → 立命),建号完直接进游戏。
+        原先写的是 02 / 03,而全仓搜不到 01 / 03 与 03 / 03:玩家会等一个不会来的
+        第三步,在开局第一屏就怀疑「是不是漏了什么」。
+      -->
+        <p>卷一 · 立命 <span class="tabular">02 / 02</span></p>
       </header>
 
       <header class="opening-create__masthead">

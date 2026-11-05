@@ -444,6 +444,7 @@ const CATEGORIES = [
       "apprenticeAwayOnce",
       "reincarnationBacktrack",
       "resetShowsLoss",
+      "openingStepCount",
       "daoPathCoverage",
     ],
   },
