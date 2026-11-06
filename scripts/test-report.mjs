@@ -458,6 +458,7 @@ const CATEGORIES = [
       "recordBrokenNotice",
       "titleModsNotice",
       "gongfaTypeNotice",
+      "branchModsNotice",
       "daoPathCoverage",
     ],
   },

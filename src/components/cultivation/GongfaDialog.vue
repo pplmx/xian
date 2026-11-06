@@ -416,7 +416,15 @@ function choose(branchId: string): void {
     sub: player.sub,
   });
   if (ok) {
-    ui.toast(`已悟道「${gongfaBranchDef(branchId)?.name ?? ""}」`, "rare");
+    /*
+     * 带上这条道给了什么 —— 悟道是**一次性且不可逆**的(满级后各择一条,择过就定了,
+     * 转世才另算)。玩家在这一刻最想知道「我选了它,它给了我什么」,而原先只报名字。
+     *
+     * 加成文案走 modsText,与装备词条、称号、buff 同一口径,不在这里手拼百分数。
+     */
+    const b = gongfaBranchDef(branchId);
+    const bonus = b ? modsText(b.mods) : "";
+    ui.toast(`已悟道「${b?.name ?? ""}」${bonus ? ` —— ${bonus}` : ""}`, "rare");
   }
 }
 
