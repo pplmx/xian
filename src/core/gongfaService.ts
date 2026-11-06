@@ -2,7 +2,7 @@
  * 功法服务 —— 参悟 / 习得 / 升级
  */
 import { rng } from "@/utils/random";
-import { GONGFA, gongfaDef } from "@/data/gongfa";
+import { GONGFA, GONGFA_TYPE_NAMES, gongfaDef } from "@/data/gongfa";
 import { qualityDef } from "@/data/qualities";
 import { COMPREHEND_PAGE_COST } from "@/data/constants";
 import { GONGFA_SYSTEM } from "./engineWorld";
@@ -88,7 +88,12 @@ export function comprehendGongfa(): boolean {
   const learnt = learnRandomGongfa();
   if (learnt) {
     // 高品功法盖这一档的印:参悟出天品与参悟出凡品,分量不该一样
-    notify(`残卷拼合,你参悟出《${learnt.name}》`, "rare", learnt.quality);
+    // 门类要说穿(与奇遇那一条同口径):主修占唯一主修席、秘术装配时也占辅修席
+    notify(
+      `残卷拼合,你参悟出《${learnt.name}》· ${GONGFA_TYPE_NAMES[learnt.type]}`,
+      "rare",
+      learnt.quality,
+    );
     return true;
   }
   return false;

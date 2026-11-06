@@ -34,6 +34,7 @@ import { expFromSecs, stoneByTier } from "./formulas";
 import { generateEquipment } from "./equipGen";
 import { acquireArtifact, acquireEquipment, randomDropArtifact } from "./loot";
 import { learnRandomGongfa } from "./gongfaService";
+import { GONGFA_TYPE_NAMES } from "@/data/gongfa";
 import { discoverRecipe } from "./loreService";
 import { fortuneAffinity, rootElements } from "./linggenAffinity";
 import { acquirePill, collect, track } from "./progress";
@@ -366,7 +367,13 @@ function applyEffect(effect: EventEffect, ctx: EventApplyContext): AppliedEventE
     case "gongfa": {
       const learnt = learnRandomGongfa(effect.id);
       if (learnt) {
-        const line = `习得功法《${learnt.name}》`;
+        /*
+         * 带上门类 —— 主修占唯一主修席、辅修占辅修席、秘术装配时也占辅修席
+         * (见 AGENTS.md「功法:主 / 辅 / 秘是装配规则」)。而习得的那一刻正是玩家
+         * 第一个会问「这部能不能上身、占了什么」的时候:主修席只有一个,主修却有 29 部。
+         * 门类名走 GONGFA_TYPE_NAMES,不在这里另写一遍。
+         */
+        const line = `习得功法《${learnt.name}》· ${GONGFA_TYPE_NAMES[learnt.type]}`;
         // 功法也有品阶:天品法门落地时同样该带一枚印(见 types 的 Toast.seal)
         notify(line, "rare", learnt.quality);
         return applied(line, { receipt: line });

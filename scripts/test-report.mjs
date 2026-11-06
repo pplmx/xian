@@ -457,6 +457,7 @@ const CATEGORIES = [
       "offlineEventTier",
       "recordBrokenNotice",
       "titleModsNotice",
+      "gongfaTypeNotice",
       "daoPathCoverage",
     ],
   },
