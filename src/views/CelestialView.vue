@@ -31,7 +31,32 @@
           </button>
         </div>
       </template>
+    </FolioPageHeader>
 
+    <!-- 未至真仙:封卷页把门限、当前境界与下一步一起摊开 -->
+    <UnopenedFolio
+      v-if="!unlocked"
+      title="天界"
+      eyebrow="天门未启"
+      lead="仙光垂落而不可及。先走完凡界诸境，再叩天门。"
+      hint="这一册不催你提前攒道源;破境之后，道途、远征、试炼与道痕会在此展开。"
+      :current-realm="player.realmName"
+      :current-major="player.major"
+      :gate-realm="realmDef(WORLD_BREAK_MAJOR).name"
+      :gate-major="WORLD_BREAK_MAJOR"
+    />
+
+    <template v-else>
+      <!--
+        今日天门总账搬出卷首。
+
+        它此前住在 `FolioPageHeader` 里,卷首因此长到 571px —— 占 736px 首屏的 68%,
+        是全站单块最高的卷首。卷首该只答「这是哪一页」,而这张总账答的是
+        「今天先做哪一册」,属于正文的第一件事。坊市页早就把同类总账放在
+        `</FolioPageHeader>` 之后、页签之前,这里与它对齐。
+
+        搬的是位置,不是内容:四册读数、可点的状态与那四个运行时落点一字不动。
+      -->
       <LedgerPulse
         v-if="unlocked"
         class="celestial-pulse"
@@ -73,22 +98,7 @@
           />
         </template>
       </LedgerPulse>
-    </FolioPageHeader>
 
-    <!-- 未至真仙:封卷页把门限、当前境界与下一步一起摊开 -->
-    <UnopenedFolio
-      v-if="!unlocked"
-      title="天界"
-      eyebrow="天门未启"
-      lead="仙光垂落而不可及。先走完凡界诸境，再叩天门。"
-      hint="这一册不催你提前攒道源;破境之后，道途、远征、试炼与道痕会在此展开。"
-      :current-realm="player.realmName"
-      :current-major="player.major"
-      :gate-realm="realmDef(WORLD_BREAK_MAJOR).name"
-      :gate-major="WORLD_BREAK_MAJOR"
-    />
-
-    <template v-else>
       <!-- 页签:长卷分册 -->
       <InkTabs v-model="celTab" :tabs="celTabRows" />
 

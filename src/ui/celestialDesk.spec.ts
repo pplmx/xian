@@ -29,10 +29,20 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
   it("今日天门把道途、远征、试炼与道痕收成一张总账并可直接切册", () => {
     const view = source("src/views/CelestialView.vue");
     const markers = view.match(/data-celestial-pulse(?![-\\w])/g) ?? [];
-    const pulse = view.slice(
+    const pulse = view.slice(view.indexOf("data-celestial-pulse"), view.indexOf("</LedgerPulse>"));
+    /*
+     * 总账不许回卷首。
+     *
+     * 它此前住在 `FolioPageHeader` 里,卷首因此 571px —— 占 736 首屏的 68%,
+     * 全站单块最高的卷首。卷首答「这是哪一页」,这张总账答「今天先做哪一册」,
+     * 属于正文第一件事;坊市页早就把同类总账放在 `</FolioPageHeader>` 之后。
+     */
+    const mastheadEnd = view.indexOf("</FolioPageHeader>");
+    expect(mastheadEnd, "卷首要能定位到").toBeGreaterThan(-1);
+    expect(
       view.indexOf("data-celestial-pulse"),
-      view.indexOf("</FolioPageHeader>"),
-    );
+      "今日天门总账又搬回卷首了 —— 它会重新把首屏吃成只剩页头",
+    ).toBeGreaterThan(mastheadEnd);
 
     expect(markers, "总账运行时落点只能有一个").toHaveLength(1);
     expect(view, "汇总仍走 core/celestialOverview 唯一一份").toContain("celestialOverview({");
