@@ -7840,6 +7840,12 @@ async function taskDongfuBuild() {
     const oreBefore = await readOre();
     await page.goto(INDEX + "#" + "/dongfu", { waitUntil: "load" });
     await page.waitForTimeout(900);
+    // 七作默认收成一枚账行 —— 先展开,才能点到逐作的升级键
+    const chaptersToggle = page.locator("[data-dongfu-chapters-toggle]").first();
+    if ((await chaptersToggle.count()) > 0) {
+      await chaptersToggle.click({ timeout: 3000 }).catch(() => {});
+      await page.waitForTimeout(200);
+    }
     // 账行的现效、主键与代价各自成段;按稳定指纹找第一枚真可动的营造键,
     // 不再依赖按钮文案里某个分隔符的排版。
     const buildBtn = page.locator("main [data-building-action]:not([disabled])").first();
@@ -16343,6 +16349,20 @@ async function taskDongfuFold() {
     if (rendered === 0) {
       failures.push("[390-dongfu] 洞府页没渲染出来,首屏判据没量到东西");
     } else {
+      /*
+       * 七作默认收成一枚账行。先量合着的那一面(账行在、七行不在视口),
+       * 再展开量七行的行宽、升级键与详情开关 —— 后面的判据都在展开态上量。
+       */
+      const chaptersToggle = page.locator("[data-dongfu-chapters-toggle]").first();
+      const chaptersClosedByDefault =
+        (await chaptersToggle.getAttribute("aria-expanded").catch(() => null)) === "false";
+      await chaptersToggle.click({ timeout: 3000 }).catch(() => {});
+      await page.waitForTimeout(180);
+      checked += 1;
+      if (!chaptersClosedByDefault) {
+        failures.push("[390-dongfu] 七作账行默认应是合着的");
+      }
+
       const fold = await page.evaluate(() => {
         const nav = document.querySelector("[data-folio-dock]")?.getBoundingClientRect();
         const ledgerRegister = document.querySelector("[data-dongfu-ledger-register]");
@@ -16483,7 +16503,7 @@ async function taskDongfuFold() {
         fold.ledgerHeads.map((head) => head.index).join(",") !== "壹,贰" ||
         fold.ledgerHeads.map((head) => head.title).join(",") !== "七作营造,山门续账" ||
         !/^已营 \d+\/7$/.test(fold.ledgerHeads[0]?.fact || "") ||
-        !/^\d+\/7 已营 · \d+ 时离线$/.test(fold.ledgerHeads[1]?.fact || "") ||
+        fold.ledgerHeads[1]?.fact !== "七作 · 家业 · 灵脉" ||
         fold.pulseHasLedgerHead ||
         fold.legacyChapterHeads !== 0
       ) {

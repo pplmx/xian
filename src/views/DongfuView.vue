@@ -162,31 +162,65 @@
           eyebrow="营造之后"
           title="山门续账"
           hint="七作、家业与灵脉沿同一条账线续排"
-          :fact="`${dongfu.builtCount}/${BUILDINGS.length} 已营 · ${offlineCapHours} 时离线`"
+          :fact="'七作 · 家业 · 灵脉'"
         />
         <div class="dongfu-register" data-dongfu-register>
-          <div class="dongfu-register__chapters">
-            <section
-              v-for="group in buildingChapters"
-              :key="group.key"
-              class="dongfu-register__chapter"
-              :data-dongfu-chapter="group.key"
-              :data-dongfu-group="group.key"
+          <div class="dongfu-register__chapters" data-dongfu-chapters>
+            <!--
+              七作默认收成一枚账行。
+
+              章壹已经报过「已营 7/7」与「眼前一锤」—— 这一章再铺七行逐作,
+              玩家一眼看到的仍是同一件事的三份说法。故页上只留这一行:
+              报可动工座数与下一座,要逐作比较时再展开(账行本身不删,展开后一项不少)。
+            -->
+            <button
+              type="button"
+              class="dongfu-register__chapters-toggle"
+              :aria-expanded="chaptersOpen"
+              :aria-controls="chaptersBodyId"
+              data-dongfu-chapters-toggle
+              @click="chaptersOpen = !chaptersOpen"
             >
-              <header class="dongfu-register__chapter-head">
-                <span class="dongfu-register__chapter-index tabular">{{ group.index }}</span>
-                <div class="dongfu-register__chapter-copy">
-                  <h3 class="dongfu-register__chapter-title">{{ group.title }}</h3>
-                  <p class="dongfu-register__chapter-hint">{{ group.hint }}</p>
+              <span class="dongfu-register__chapters-mark" aria-hidden="true">营</span>
+              <span class="dongfu-register__chapters-copy">
+                <strong>七作营造</strong>
+                <small>{{ chaptersHint }}</small>
+              </span>
+              <span class="dongfu-register__chapters-count tabular"
+                >{{ dongfu.builtCount }}/{{ BUILDINGS.length }} 已营</span
+              >
+              <span class="dongfu-register__chapters-action">{{
+                chaptersOpen ? "收 起" : "展开七作"
+              }}</span>
+            </button>
+            <div
+              v-show="chaptersOpen"
+              :id="chaptersBodyId"
+              class="dongfu-register__chapters-body"
+              data-dongfu-chapters-body
+            >
+              <section
+                v-for="group in buildingChapters"
+                :key="group.key"
+                class="dongfu-register__chapter"
+                :data-dongfu-chapter="group.key"
+                :data-dongfu-group="group.key"
+              >
+                <header class="dongfu-register__chapter-head">
+                  <span class="dongfu-register__chapter-index tabular">{{ group.index }}</span>
+                  <div class="dongfu-register__chapter-copy">
+                    <h3 class="dongfu-register__chapter-title">{{ group.title }}</h3>
+                    <p class="dongfu-register__chapter-hint">{{ group.hint }}</p>
+                  </div>
+                  <span class="dongfu-register__chapter-count tabular">
+                    {{ groupBuiltCount(group.ids) }}/{{ group.ids.length }} 已营
+                  </span>
+                </header>
+                <div class="dongfu-register__rows">
+                  <BuildingLedgerRow v-for="def in group.defs" :key="def.id" :def="def" />
                 </div>
-                <span class="dongfu-register__chapter-count tabular">
-                  {{ groupBuiltCount(group.ids) }}/{{ group.ids.length }} 已营
-                </span>
-              </header>
-              <div class="dongfu-register__rows">
-                <BuildingLedgerRow v-for="def in group.defs" :key="def.id" :def="def" />
-              </div>
-            </section>
+              </section>
+            </div>
           </div>
 
           <section
@@ -360,6 +394,26 @@ const nextBuild = computed(() => {
     }
   }
   return null;
+});
+
+/**
+ * 七作账行的开合 —— 默认合着。
+ *
+ * 页上只留「可动工几座 + 下一座」;逐作比较(造价、现/将、连升)展开再看。
+ * 收的是版面,不是内容:展开后七行一项不少,连升与详情仍在行内。
+ */
+const chaptersOpen = ref(false);
+const chaptersBodyId = "dongfu-chapters-body";
+const affordableCount = computed(
+  () => BUILDINGS.filter((def) => buildingUpgradeInfo(def.id).canUpgrade).length,
+);
+const chaptersHint = computed(() => {
+  if (dongfu.allBuildingsMaxed) return "七作俱已至顶";
+  if (affordableCount.value === 0) return "眼下没有料足可动的营造";
+  const next = nextBuild.value;
+  return next
+    ? `眼下可动工 ${affordableCount.value} 座 · 下一座 ${next.def.name} ${next.level} → ${next.info.nextLevel} 级`
+    : `眼下可动工 ${affordableCount.value} 座`;
 });
 
 const firstBlockedReason = computed(() => {

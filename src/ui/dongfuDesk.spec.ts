@@ -115,8 +115,11 @@ describe("洞府案 · 山门图先立意,总账再摊开七作", () => {
     expect(view, "总账章内真值读同一条 store 汇总").toContain(
       ':fact="`已营 ${dongfu.builtCount}/${BUILDINGS.length}`"',
     );
-    expect(view, "续账章内真值也读 store").toContain(
-      ':fact="`${dongfu.builtCount}/${BUILDINGS.length} 已营 · ${offlineCapHours} 时离线`"',
+    expect(view, "续账章首只报结构,不重复总账的已营/离线读数").toContain(
+      `:fact="'七作 · 家业 · 灵脉'"`,
+    );
+    expect(view, "已营座数改在七作账行上报,仍读同一条 store").toContain(
+      "{{ dongfu.builtCount }}/{{ BUILDINGS.length }} 已营",
     );
     expect(head).toContain("data-folio-chapter-head");
     expect(head).toContain("folio-chapter-head__index");
@@ -172,6 +175,25 @@ describe("洞府案 · 山门图先立意,总账再摊开七作", () => {
     expect(view, "七作、家业与灵脉同住一条续账").toContain("data-dongfu-register");
     expect(view, "每章带稳定运行时指纹").toContain("data-dongfu-chapter");
     expect(view, "旧分组卡片网格不再出现").not.toContain("dongfu-workshop__grid");
+  });
+
+  it("七作默认收成一枚账行:先报可动工几座,展开才铺七行", () => {
+    const view = source("src/views/DongfuView.vue");
+
+    /*
+     * 章壹已经报过「已营 7/7」与「眼前一锤」,章贰再铺七行逐作,
+     * 同一件事在首屏说了三遍。现在页上只留一枚账行:
+     * 报可动工座数与下一座,要逐作比较时再展开 —— 账行本身不删,展开后一项不少。
+     */
+    expect(view, "七作要有账行开关").toContain("data-dongfu-chapters-toggle");
+    expect(view, "开关要报开合").toContain(':aria-expanded="chaptersOpen"');
+    expect(view, "开关要关联账身").toContain(':aria-controls="chaptersBodyId"');
+    expect(view, "账身默认收起").toContain('v-show="chaptersOpen"');
+    expect(view, "默认合着").toMatch(/const chaptersOpen = ref\(false\)/);
+    expect(view, "账行报可动工座数").toContain("affordableCount");
+    expect(view, "账行报下一座与级差").toContain("下一座 ${next.def.name}");
+    expect(view, "七行仍原样在账身里").toContain('v-for="group in buildingChapters"');
+    expect(view, "展开后七座一座不少").toContain("<BuildingLedgerRow");
   });
 
   it("建筑从独立卡收成可展开账行:现效、将至与主键先露,完整账再展开", () => {

@@ -316,6 +316,70 @@
   .dongfu-register__chapter {
     min-width: 0;
   }
+  /*
+   * 七作账行 —— 章内第一行,默认合着。
+   * 四栏:印 / 题与下一座 / 已营 / 展开。窄档退两行(见 220 媒体块)。
+   */
+  .dongfu-register__chapters-toggle {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: 1.38rem minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 0.18rem 0.55rem;
+    border: 0;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    background: transparent;
+    padding: 0.62rem 0.1rem;
+    text-align: left;
+    transition: background-color 0.12s ease;
+  }
+  .dongfu-register__chapters-toggle:active {
+    background: rgb(var(--color-ink-rgb) / 0.03);
+  }
+  .dongfu-register__chapters-mark {
+    display: grid;
+    width: 1.38rem;
+    height: 1.38rem;
+    place-items: center;
+    border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.7);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  .dongfu-register__chapters-copy {
+    display: grid;
+    min-width: 0;
+    gap: 0.06rem;
+  }
+  .dongfu-register__chapters-copy strong {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    line-height: 1.35;
+  }
+  .dongfu-register__chapters-copy small {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+  .dongfu-register__chapters-count {
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .dongfu-register__chapters-action {
+    color: rgb(var(--color-qing-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
   .dongfu-register__chapter + .dongfu-register__chapter {
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
   }
@@ -691,6 +755,18 @@
     .dongfu-ledger__quick {
       align-items: flex-start;
       flex-direction: column;
+    }
+
+    .dongfu-register__chapters-toggle {
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .dongfu-register__chapters-count,
+    .dongfu-register__chapters-action {
+      grid-column: 2;
+      justify-self: start;
+      white-space: normal;
     }
 
     .dongfu-register__chapter-head {
