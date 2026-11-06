@@ -459,6 +459,7 @@ const CATEGORIES = [
       "titleModsNotice",
       "gongfaTypeNotice",
       "branchModsNotice",
+      "mortalFateNotInCombat",
       "daoPathCoverage",
     ],
   },

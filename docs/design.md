@@ -2253,6 +2253,57 @@ GongfaSection / ArtifactPanel / SlotCandidatesDialog / TitlesView / InventoryVie
 判据 `ui/offlineQualitySeal.spec` 三条:有章 / 章盖在拾得装备循环的每一件上
 (只 import 不渲染不算)/ 品阶色仍在(双线索)。
 
+### 「不改写历练里的战斗」—— 文案有判据,实现没有
+
+凡界卷首写着:
+
+```text
+此世命数: 破甲难防
+这条命数只参与成形时的难度校准,不改写历练里的战斗。
+```
+
+这句话是**准确的**,而且有来历:凡界世界每个 `mortalWorld` 都带一份
+`rules: CombatRules`,那份规则**真的**在生成器里被用过 —— `mortalWorldGen` 用
+`resolveCombat(..., w.rules)` 做新颖度与可玩性审计(「≥3 可行构筑、无接近必胜」)。
+
+同一个 `w.rules`,**在生成器里生效、在历练里不生效**。历练战斗走的是另一条:
+
+```ts
+const result = resolveCombat(pSnap, eSnap, rng, explorationRules());
+```
+
+#### 缺口:判据只守着那句话在不在
+
+`uiLayering.spec` 有一条:
+
+```ts
+expect(mw?.src, "要明说它不改写战斗,免得玩家以为真被降能").toContain("不改写历练里的战斗");
+```
+
+它守的是**这句话在不在**。而这句话对不对,没有任何判据在管。
+
+这个区别很容易被后来的人抹平 —— 谁要是顺手把 `explorationRules()` 改成合并
+`w.rules`(看起来更「一致」),那句话当场变成假话,而上面那条判据仍然全绿。
+玩家读到的承诺就成了谎言:他以为「破甲难防」只是世界成形时校准难度用的,
+实际每场战斗敌人都多 30% 破防。
+
+#### 补的判据
+
+`core/mortalFateNotInCombat.spec` 三条:
+
+- 历练里的 `resolveCombat` 只吃 `explorationRules()`;
+- `explorationRules()` 自身不去读 `mortalWorld`;
+- 那句话仍在(措辞可改,意思不能丢)。
+
+**破坏实验**:把历练战斗改成 `{ ...explorationRules(), ...w0.rules }` → 判据当场报
+「历练战斗把 mortalWorld.rules 并进去了 —— 那句『不改写历练里的战斗』就成了假话」。
+
+#### 这一类的形状
+
+前面几类多是「该说没说」。这一处不同:**说了,而且说得对,但没人守着它一直对。**
+
+判据守措辞,不守语义。而措辞是语义的投影 —— 投影会留下来,本体可能被改掉。
+
 ### 悟道择一 —— 一次不可逆的选择,只说选了什么
 
 功法修满之后要在几条道里择一。选中之后,提示写的是:
