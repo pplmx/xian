@@ -464,6 +464,7 @@ const CATEGORIES = [
       "samsaraInsightOnly",
       "powerRatingNoRank",
       "qualityDropCurve",
+      "themeLegacyHint",
       "daoPathCoverage",
     ],
   },

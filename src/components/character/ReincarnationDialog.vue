@@ -531,6 +531,19 @@
             </span>
             <span class="reincarnation-theme-choice__vow">{{ t.vow }}</span>
             <span class="reincarnation-theme-choice__goal">{{ t.goal }}</span>
+            <!--
+              做到之后你会记住什么 —— `legacy` 是这条命题的**回报**那一半。
+
+              此前它只在达成后的回照里出现一次,立题那一刻看不到。而这是 17 条命题里
+              写得最好的部分(「你记得结丹那一刻气机是怎么盘拢的——往后每一世都少走一段
+              弯路」),把它放在**已经做完之后**才看得到的位置,等于最好的一句用在了最不
+              需要它的地方。
+
+              同一张卡上「忌:…」(代价)是显示了的,缺的正是回报这一半。
+            -->
+            <span v-if="t.legacy" class="reincarnation-theme-choice__legacy">
+              {{ t.legacy }}
+            </span>
             <span v-if="t.taboo" class="reincarnation-theme-choice__taboo">
               忌：{{ TABOO_NAMES[t.taboo] }} —— 一世守之，破之题废，无所得
             </span>
@@ -1579,6 +1592,19 @@ watch(view, (next) => {
   color: var(--color-ink-faint);
   font-size: var(--type-note);
   line-height: 1.6;
+}
+
+/*
+ * 达成后的所得 —— 与「判据」那行分开:上面那行是**要做到什么**(硬性的、可验的),
+ * 这一行是**做到之后你记住什么**(叙事)。两者都淡,但语气不同,故加一道极浅的分隔,
+ * 不另起一块。
+ */
+.reincarnation-theme-choice__legacy {
+  overflow-wrap: anywhere;
+  color: var(--color-qing);
+  font-family: var(--font-kai);
+  font-size: var(--type-note);
+  line-height: 1.65;
 }
 
 .reincarnation-theme-choice__taboo {
