@@ -172,6 +172,49 @@ describe("藏珍双阁 · 功名入榜，九柜纳珍", () => {
     expect(view, "未达成者的条件仍直接露出来").toContain("{{ row.def.desc }}");
   });
 
+  it("已达成收成一叠,默认合着,点开才铺赏格与达成记录", () => {
+    const view = source("src/views/CollectionView.vue");
+    const entry = source("src/components/collection/AchievementEntry.vue");
+    const css = source("src/styles/pages/collection.css");
+
+    /*
+     * 一条功名只有一个渲染来源:在追与已成两叠共用同一枚组件。
+     * 手抄两遍之后,进度条、赏格与读屏文案迟早漂成两套。
+     */
+    expect(entry, "行组件要带稳定落点").toContain(':data-achievement-id="row.def.id"');
+    expect(entry, "达成行的赏格仍在行内").toContain("achievement-entry__reward");
+    expect(view, "两叠共用同一枚行组件").toContain(
+      'import AchievementEntry from "@/components/collection/AchievementEntry.vue"',
+    );
+    expect(view.match(/<AchievementEntry/g)?.length, "在追与已成各铺一次").toBe(2);
+    expect(view, "手抄的行已退场").not.toContain('class="achievement-entry"');
+
+    /*
+     * 展开一组是来看「还差什么」的:达成行是档案,默认合着。
+     * 收的是版面,不是内容 —— 每一行的条件、进度与赏格仍在,只是不抢这一屏。
+     */
+    expect(view, "在追与已成分开取数").toContain("activeRowsOf(g)");
+    expect(view, "在追与已成分开取数").toContain("doneRowsOf(g)");
+    expect(view, "已达成要有独立展开键").toContain("data-achievement-done-toggle");
+    expect(view, "展开键要报开合状态").toContain(':aria-expanded="doneDirection === g.direction"');
+    expect(view, "达成叠默认不见").toContain('v-show="doneDirection === g.direction"');
+    expect(view, "默认合着").toMatch(/const doneDirection = ref<string \| null>\(null\)/);
+    expect(view, "键上直接报枚数").toContain("已达成 {{ g.done }} 枚");
+    expect(view, "换方向时不继承上一组的展开态").toMatch(
+      /function toggleGroup[\s\S]{0,180}?doneDirection\.value = null/,
+    );
+    expect(view, "跳到别的方向时也收回达成叠").toMatch(
+      /function revealAchievement[\s\S]{0,220}?doneDirection\.value = null/,
+    );
+
+    expect(css, "达成叠只留账线,不另起一张卡").toMatch(
+      /\.achievement-scroll__done \{[\s\S]{0,220}?border: 0;/,
+    );
+    expect(css, "枚数用与章名同一支楷体").toMatch(
+      /\.achievement-scroll__done-count \{[\s\S]{0,160}?font-family: var\(--font-kai\)/,
+    );
+  });
+
   it("九柜是三列柜架，功名榜同排榜牌，极窄档退回两列仍可读", () => {
     const css = source("src/style.css");
     const cabinet = source("src/components/common/CollectionCabinet.vue");

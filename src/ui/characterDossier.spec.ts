@@ -69,6 +69,50 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
     expect(view, "收起态的初值必须是 false").toMatch(/const notesOpen = ref\(false\)/);
   });
 
+  it("四类行藏默认只铺四行账目,逐项清单收进「行藏全册」浮层", () => {
+    const view = source("src/views/CharacterView.vue");
+    const desk = source("src/ui/characterDesk.ts");
+
+    /*
+     * 页面上这一章只留四行账目:每行读「类名 + 项数 + 组内头两条读数」。
+     * 21 行逐项摊开曾把这一页拖到 3.1 屏 —— 而它们是参考读数,不是此刻要做的决定。
+     */
+    expect(view, "四类各收成一行账目").toContain('v-for="group in visibleModifierGroups"');
+    expect(view, "行上仍挂稳定落点").toContain(':data-character-modifier-group="group.key"');
+    expect(view, "整行可点开全册").toContain('@click="openModifierFolio(group.key)"');
+    expect(view, "行上仍报项数").toContain("{{ group.rows.length }} 项");
+    expect(view, "行上仍报头两条真值").toContain("modifierGroupHeadline(group)");
+    expect(desk, "抬头读数收在纯函数里,视图只做接线").toContain(
+      "export function modifierGroupHeadline(",
+    );
+
+    // 逐项清单不在页面这一层 —— 页面里点得到的是四行账目,不是 21 行按钮
+    const beforeFolio = view.split("data-character-modifier-folio")[0] ?? "";
+    expect(beforeFolio, "页面默认不再直接铺 21 行").not.toContain("<CharacterModifierRow");
+
+    /*
+     * 全册走共享 BaseModal:四组各成一段、逐项仍由同一个 CharacterModifierRow 渲染,
+     * 默认关着(`modifierFolioOpen = ref(false)`),点哪一组就把哪一组滚到卷身顶部。
+     */
+    expect(view, "全册走共享浮层原语").toMatch(
+      /<BaseModal[\s\S]{0,240}?:open="modifierFolioOpen"[\s\S]{0,240}?title="行藏周天"/,
+    );
+    expect(view, "全册要有稳定落点").toContain("data-character-modifier-folio");
+    expect(view, "四组各成一段").toContain(':data-character-modifier-folio-group="group.key"');
+    expect(view, "逐项仍走同一行组件").toContain("<CharacterModifierRow");
+    expect(view, "默认关着").toMatch(/const modifierFolioOpen = ref\(false\)/);
+    expect(view, "从哪组点进来就滚到哪组").toContain("modifierFolioGroup.value = groupKey");
+    expect(view, "全册有合上键").toContain("data-character-modifier-folio-close");
+
+    /*
+     * 来源明细要叠在全册之上:那扇浮层原来与全册同为 z-50,不声明 top 就会被盖住。
+     * BaseModal 的 top 是 z-60 —— 这是全库浮层栈早就有的约定。
+     */
+    expect(view, "来源明细叠在全册之上").toMatch(
+      /<BaseModal[\s\S]{0,120}?:open="breakdownRows\.length[\s\S]{0,120}?\btop\b/,
+    );
+  });
+
   it("九处去向收成一页卷末目录,三组同席而非三张长卡", () => {
     const view = source("src/views/CharacterView.vue");
     const wayAt = view.indexOf('data-character-index="way"');

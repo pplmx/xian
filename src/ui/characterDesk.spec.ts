@@ -8,6 +8,7 @@ import {
   characterChapters,
   characterModifierDesk,
   characterModifierSummary,
+  modifierGroupHeadline,
 } from "@/ui/characterDesk";
 
 const source = readSource;
@@ -20,7 +21,7 @@ describe("道躯案 · 三章连续卷与行藏周天", () => {
       { key: "catalog", index: "叁", title: "卷末云笈" },
     ]);
     expect(characterChapter("modifiers")).toMatchObject({
-      hint: "修行、历练、斗法与百艺,点一行拆其来路",
+      hint: "修行、历练、斗法与百艺,四类收成一册,拆卷再看逐项来路",
     });
 
     const copy = characterChapters();
@@ -72,6 +73,32 @@ describe("道躯案 · 三章连续卷与行藏周天", () => {
       groups: 3,
       softCapped: 1,
     });
+  });
+
+  it("四类行藏收成四行账目时,组抬头读组内头两项的同一份值", () => {
+    const groups = characterModifierDesk(
+      {
+        cultivationSpeed: 1.105,
+        qiRegen: 0.03,
+        breakthroughRate: 0.02,
+        attackPct: 0.729,
+        defensePct: 0.809,
+      },
+      [],
+    );
+    const practice = groups.find((group) => group.key === "practice")!;
+    const combat = groups.find((group) => group.key === "combat")!;
+    const craft = groups.find((group) => group.key === "craft")!;
+
+    // 抬头不按数值大小重排 —— 键序就是重要度序,同一份存档每次读到的都是同一批位置
+    expect(modifierGroupHeadline(practice)).toBe("修炼速度 +110.5% · 灵气恢复 +3%");
+    expect(modifierGroupHeadline(combat)).toBe("攻击 +72.9% · 防御 +80.9%");
+    expect(modifierGroupHeadline(practice, 1)).toBe("修炼速度 +110.5%");
+    expect(modifierGroupHeadline(craft)).toBe("");
+    // 格式与行内同一枚 formatPercent,不另造口径
+    expect(modifierGroupHeadline(combat)).toContain(
+      `+${(combat.rows[0]!.value * 100).toFixed(1)}%`,
+    );
   });
 
   it("人物页三章同住一册开口续卷,旧属性卡与双列小字不再退回", () => {

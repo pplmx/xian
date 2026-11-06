@@ -173,49 +173,41 @@
                     >
                   </header>
 
-                  <article
-                    v-for="row in g.rows"
-                    :key="row.def.id"
-                    :data-achievement-id="row.def.id"
-                    class="achievement-entry"
+                  <AchievementEntry v-for="row in activeRowsOf(g)" :key="row.def.id" :row="row" />
+
+                  <!--
+                    已达成收成一叠,默认合着。
+
+                    一组里「在追」与「已成」原是同一条长队:境界精进那组 21 行,
+                    其中 10 行是档案。玩家展开一组是来看「还差什么」,不是来数
+                    已经拿过什么 —— 档案默认收起来,要看赏格再点开这一叠。
+                    收的是版面,不是内容:每一行的条件、进度与赏格一项不少。
+                  -->
+                  <button
+                    v-if="g.done > 0"
+                    type="button"
+                    class="achievement-scroll__done"
+                    :aria-expanded="doneDirection === g.direction"
+                    :aria-controls="doneBodyId(gi)"
+                    data-achievement-done-toggle
+                    @click="toggleDone(g.direction)"
                   >
-                    <span
-                      class="achievement-entry__state"
-                      :class="{
-                        'is-done': row.done,
-                        'is-live': !row.done && row.target !== null,
-                      }"
+                    <span class="achievement-scroll__done-count text-body tabular"
+                      >已达成 {{ g.done }} 枚</span
                     >
-                      {{ row.done ? "成" : row.percent === null ? "未" : `${row.percent}%` }}
-                    </span>
-                    <div class="achievement-entry__copy">
-                      <div class="achievement-entry__line">
-                        <p class="text-body" :class="row.done ? 'text-ink' : 'text-ink-soft'">
-                          {{ row.def.name }}
-                        </p>
-                        <span
-                          class="achievement-entry__progress tabular"
-                          :class="row.done ? 'text-gold-ink' : 'text-qing'"
-                          >{{ row.label }}</span
-                        >
-                      </div>
-                      <p class="achievement-entry__desc">{{ row.def.desc }}</p>
-                      <ProgressBar
-                        v-if="!row.done && row.target !== null"
-                        class="achievement-entry__meter"
-                        :value="row.ratio"
-                        color="var(--color-cinnabar)"
-                        :height="2"
-                      />
-                      <!-- 达成才现赏:名目成时、所获同露 —— 称号是成就赏的大头,一颗不漏 -->
-                      <p
-                        v-if="row.done && row.rewardText"
-                        class="achievement-entry__reward tabular"
-                      >
-                        {{ row.rewardText }}
-                      </p>
-                    </div>
-                  </article>
+                    <span class="achievement-scroll__done-hint">赏格与达成记录收在这一叠</span>
+                    <span class="achievement-scroll__done-arrow" aria-hidden="true">{{
+                      doneDirection === g.direction ? "▾" : "▸"
+                    }}</span>
+                  </button>
+                  <div
+                    v-show="doneDirection === g.direction"
+                    :id="doneBodyId(gi)"
+                    class="achievement-scroll__done-list"
+                    data-achievement-done-list
+                  >
+                    <AchievementEntry v-for="row in doneRowsOf(g)" :key="row.def.id" :row="row" />
+                  </div>
                 </template>
               </section>
             </template>
@@ -225,7 +217,7 @@
           </div>
 
           <p class="collection-page__footnote">
-            未达成也写明条件；榜牌只开一路，最近三策可直接落到对应条目。
+            未达成也写明条件；榜牌只开一路，最近三策可直接落到对应条目；已达成收成一叠，点开回看赏格。
           </p>
         </section>
       </template>
@@ -461,12 +453,12 @@ import {
   collectionCabinetCells as buildCollectionCabinetCells,
   collectionCategoryMark,
 } from "@/ui/collectionDesk";
-import ProgressBar from "@/components/common/ProgressBar.vue";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import CollectionCabinet from "@/components/common/CollectionCabinet.vue";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
+import AchievementEntry from "@/components/collection/AchievementEntry.vue";
 import { useRouteTab } from "@/composables/useRouteTab";
 import { COLLECTION_CHAPTERS } from "@/ui/navigation";
 
@@ -591,8 +583,41 @@ function isGroupOpen(direction: string): boolean {
   return openDirection.value === direction;
 }
 
+/**
+ * 「已达成」那一叠的展开态 —— 与方向卷目分开记账。
+ *
+ * 展开一组是来看「还差什么」的:达成行是档案,默认合着;换一组时也不继承
+ * 上一组的展开态,免得点开另一路时底下忽然多出十几行旧账。
+ */
+const doneDirection = ref<string | null>(null);
+
+type AchievementGroupRow = {
+  direction: string;
+  rows: AchievementRow[];
+  done: number;
+  total: number;
+  nearest: AchievementRow | null;
+};
+
+function activeRowsOf(group: AchievementGroupRow): AchievementRow[] {
+  return group.rows.filter((row) => !row.done);
+}
+
+function doneRowsOf(group: AchievementGroupRow): AchievementRow[] {
+  return group.rows.filter((row) => row.done);
+}
+
+function toggleDone(direction: string): void {
+  doneDirection.value = doneDirection.value === direction ? null : direction;
+}
+
+function doneBodyId(index: number): string {
+  return `achievement-done-body-${index}`;
+}
+
 function toggleGroup(direction: string): void {
   openDirection.value = openDirection.value === direction ? null : direction;
+  doneDirection.value = null;
 }
 
 function groupBodyId(index: number): string {
@@ -601,6 +626,7 @@ function groupBodyId(index: number): string {
 
 function revealAchievement(row: AchievementRow): void {
   openDirection.value = row.direction;
+  doneDirection.value = null;
   void nextTick(() => {
     const target = document.querySelector<HTMLElement>(`[data-achievement-id="${row.def.id}"]`);
     target?.scrollIntoView({ block: "center", behavior: "smooth" });

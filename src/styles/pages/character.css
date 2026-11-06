@@ -42,16 +42,22 @@
     grid-template-columns: minmax(0, 1fr);
   }
   .character-modifier-group {
-    min-width: 0;
-    padding: 0.5rem 0 0.6rem;
-    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
-  }
-  .character-modifier-group__head {
     display: grid;
+    width: 100%;
     min-width: 0;
     grid-template-columns: 1.65rem minmax(0, 1fr) auto;
-    align-items: center;
+    align-items: start;
     gap: 0.5rem;
+    padding: 0.58rem 0.05rem 0.62rem;
+    border: 0;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    transition: background-color 0.12s ease;
+  }
+  .character-modifier-group:active {
+    background: rgb(var(--color-ink-rgb) / 0.035);
   }
   .character-modifier-group__mark {
     display: grid;
@@ -65,6 +71,11 @@
     line-height: 1;
   }
   .character-modifier-group__copy {
+    display: grid;
+    min-width: 0;
+    gap: 0.06rem;
+  }
+  .character-modifier-group__title-line {
     display: flex;
     min-width: 0;
     flex-wrap: wrap;
@@ -83,16 +94,93 @@
     font-size: var(--type-note);
     line-height: 1.45;
   }
+  .character-modifier-group__headline {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
   .character-modifier-group__count {
-    align-self: start;
     color: rgb(var(--color-qing-rgb));
     font-size: var(--type-note);
     line-height: 1.5;
     white-space: nowrap;
   }
+  .character-modifier-group__open {
+    align-self: center;
+    color: rgb(var(--color-qing-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
   .character-modifier-group__rows {
     margin-top: 0.38rem;
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  }
+  .character-modifier-folio {
+    display: grid;
+    min-width: 0;
+    gap: 0.4rem;
+  }
+  .character-modifier-folio__lead {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .character-modifier-folio__group {
+    min-width: 0;
+    padding: 0.55rem 0 0.65rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
+  }
+  .character-modifier-folio__group:last-child {
+    border-bottom: 0;
+  }
+  .character-modifier-folio__group.is-focus {
+    background: rgb(var(--color-cinnabar-rgb) / 0.035);
+  }
+  .character-modifier-folio__head {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.65rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .character-modifier-folio__mark {
+    display: grid;
+    width: 1.65rem;
+    height: 1.65rem;
+    place-items: center;
+    border-left: 1px solid rgb(var(--color-qing-rgb) / 0.62);
+    color: rgb(var(--color-qing-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  .character-modifier-folio__copy {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.03rem 0.45rem;
+  }
+  .character-modifier-folio__copy strong {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    font-weight: 400;
+    letter-spacing: 0.14em;
+  }
+  .character-modifier-folio__copy small {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .character-modifier-folio__count {
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+    white-space: nowrap;
   }
   .character-modifier-row {
     display: grid;
@@ -622,17 +710,28 @@
     }
   }
   @media (max-width: 220px) {
-    .character-modifier-group__head {
+    .character-modifier-group {
       grid-template-columns: 1.4rem minmax(0, 1fr);
       align-items: start;
     }
 
-    .character-modifier-group__mark {
+    .character-modifier-group__mark,
+    .character-modifier-folio__mark {
       width: 1.4rem;
       height: 1.4rem;
     }
 
-    .character-modifier-group__count {
+    .character-modifier-group__open {
+      grid-column: 2;
+      justify-self: start;
+    }
+
+    .character-modifier-folio__head {
+      grid-template-columns: 1.4rem minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .character-modifier-folio__count {
       grid-column: 2;
       justify-self: start;
     }

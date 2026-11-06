@@ -165,35 +165,42 @@
           <p v-if="modRows.length === 0" class="character-modifier-desk__empty">
             此刻尚无行藏加成。功法、装备、丹药与天时落定后,四类行藏会在这里逐项现身。
           </p>
+          <!--
+            四类行藏默认只报「类名 + 项数 + 头两条读数」,逐项清单收进「行藏全册」浮层。
+
+            21 行逐项摊开是这一页最长的一段(390×844 实测约 1000px / 1.2 屏),
+            而它们是**参考读数**,不是此刻要做的决定:战力与三围已经在上一章摊平,
+            行藏回答的是「加成从哪来」。故页面上留四行账目,要拆项时再开册 ——
+            与「来源明细进浮层」同一条纪律:解释归解释,读数归读数。
+            收的是版面,不是内容:全册里四组一项不少,点一行仍拆它的来源。
+          -->
           <div v-else class="character-modifier-groups">
-            <section
-              v-for="group in modifierGroups.filter((entry) => entry.rows.length > 0)"
+            <button
+              v-for="group in visibleModifierGroups"
               :key="group.key"
+              type="button"
               class="character-modifier-group"
               :data-character-modifier-group="group.key"
+              :aria-label="`${group.title},${group.rows.length} 项,展开行藏全册`"
+              @click="openModifierFolio(group.key)"
             >
-              <header class="character-modifier-group__head">
-                <span class="character-modifier-group__mark" aria-hidden="true">{{
-                  group.mark
-                }}</span>
-                <span class="character-modifier-group__copy">
+              <span class="character-modifier-group__mark" aria-hidden="true">{{
+                group.mark
+              }}</span>
+              <span class="character-modifier-group__copy">
+                <span class="character-modifier-group__title-line">
                   <strong>{{ group.title }}</strong>
-                  <small>{{ group.hint }}</small>
+                  <span class="character-modifier-group__count tabular"
+                    >{{ group.rows.length }} 项</span
+                  >
                 </span>
-                <span class="character-modifier-group__count tabular"
-                  >{{ group.rows.length }} 项</span
-                >
-              </header>
-              <div class="character-modifier-group__rows">
-                <CharacterModifierRow
-                  v-for="row in group.rows"
-                  :key="row.key"
-                  :row="row"
-                  :active="breakdownKey === row.key && breakdownRows.length > 0"
-                  @select="toggleBreakdown"
-                />
-              </div>
-            </section>
+                <small>{{ group.hint }}</small>
+                <span class="character-modifier-group__headline tabular">{{
+                  modifierGroupHeadline(group)
+                }}</span>
+              </span>
+              <span class="character-modifier-group__open" aria-hidden="true">拆卷</span>
+            </button>
           </div>
 
           <!--
@@ -210,6 +217,7 @@
           <BaseModal
             :open="breakdownRows.length !== 0"
             size="wide"
+            top
             :title="`${STAT_NAMES[breakdownKey!]} · 来源明细`"
             @close="breakdownKey = null"
           >
@@ -257,6 +265,68 @@
                 class="btn-ghost w-full"
                 data-character-modifier-close
                 @click="breakdownKey = null"
+              >
+                合上
+              </button>
+            </template>
+          </BaseModal>
+
+          <!--
+            行藏全册 —— 页面上四行账目点开后看到的那一册。
+
+            为什么是浮层而不是把四组重新铺回页面:行数最多的一组有 11 项,
+            摊回去这一页就又是 3 屏。浮层里四组同席,点任意一行仍开「来源明细」
+            (那扇浮层带 top,叠在这册之上),合上即回到四行账目。
+          -->
+          <BaseModal
+            :open="modifierFolioOpen"
+            size="wide"
+            title="行藏周天"
+            @close="closeModifierFolio"
+          >
+            <div class="character-modifier-folio" data-character-modifier-folio>
+              <p class="character-modifier-folio__lead">
+                四类行藏共 {{ modRows.length }} 项。点一行拆它的来源,合上这册仍回到四行账目。
+              </p>
+              <section
+                v-for="group in visibleModifierGroups"
+                :key="group.key"
+                class="character-modifier-folio__group"
+                :class="{ 'is-focus': modifierFolioGroup === group.key }"
+                :data-character-modifier-folio-group="group.key"
+                :data-character-modifier-folio-focus="
+                  modifierFolioGroup === group.key ? 'true' : undefined
+                "
+              >
+                <header class="character-modifier-folio__head">
+                  <span class="character-modifier-folio__mark" aria-hidden="true">{{
+                    group.mark
+                  }}</span>
+                  <span class="character-modifier-folio__copy">
+                    <strong>{{ group.title }}</strong>
+                    <small>{{ group.hint }}</small>
+                  </span>
+                  <span class="character-modifier-folio__count tabular"
+                    >{{ group.rows.length }} 项</span
+                  >
+                </header>
+                <div class="character-modifier-group__rows">
+                  <CharacterModifierRow
+                    v-for="row in group.rows"
+                    :key="row.key"
+                    :row="row"
+                    :active="breakdownKey === row.key && breakdownRows.length > 0"
+                    @select="toggleBreakdown"
+                  />
+                </div>
+              </section>
+            </div>
+            <template #footer>
+              <button
+                type="button"
+                class="btn-ghost w-full"
+                data-character-modifier-folio-close
+                @click="closeModifierFolio"
               >
                 合上
               </button>
@@ -494,7 +564,7 @@
 <script setup lang="ts">
 import "@/styles/pages/character.css";
 import { realmOrdinalText } from "@/core/realmLadder";
-import { computed, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import { STAGE_NAMES } from "@/data/daolu";
 import { useQuestsStore } from "@/stores/quests";
@@ -542,6 +612,7 @@ import {
   characterChapters,
   characterModifierDesk,
   characterModifierSummary,
+  modifierGroupHeadline,
 } from "@/ui/characterDesk";
 
 const player = usePlayerStore();
@@ -625,6 +696,10 @@ const tendencies = computed(() => tendencyLines(rootElements(player.linggen?.roo
 const modifierGroups = computed(() =>
   characterModifierDesk(stats.value.mods, stats.value.breakdown),
 );
+/** 有真值的组才上账 —— 空组仍留在 modifierGroups 里,分组结构是稳定事实 */
+const visibleModifierGroups = computed(() =>
+  modifierGroups.value.filter((group) => group.rows.length > 0),
+);
 const modRows = computed(() => modifierGroups.value.flatMap((group) => group.rows));
 const modifierSummary = computed(() => characterModifierSummary(modifierGroups.value));
 const modifierFact = computed(() =>
@@ -660,6 +735,36 @@ const breakdownRows = computed(() => {
 
 function toggleBreakdown(key: AnyStatKey): void {
   breakdownKey.value = breakdownKey.value === key ? null : key;
+}
+
+/**
+ * 行藏全册:页面上只留四行账目,逐项清单在这扇浮层里。
+ *
+ * `modifierFolioGroup` 记住是从哪一组点进来的 —— 打开后把那一组滚到卷身顶部,
+ * 点「斗法」就看到斗法,而不是每次从「修行」重新找。合上时一并清空来源明细,
+ * 免得下次开册时上一扇浮层还叠着。
+ */
+const modifierFolioOpen = ref(false);
+const modifierFolioGroup = ref<string | null>(null);
+
+function openModifierFolio(groupKey: string): void {
+  modifierFolioGroup.value = groupKey;
+  modifierFolioOpen.value = true;
+  void nextTick(() => {
+    const pane = document.querySelector<HTMLElement>("[data-folio-modal] .scroll-pane");
+    const target = pane?.querySelector<HTMLElement>(
+      `[data-character-modifier-folio-group="${groupKey}"]`,
+    );
+    if (!pane || !target) return;
+    const offset = target.getBoundingClientRect().top - pane.getBoundingClientRect().top;
+    pane.scrollTop += offset;
+  });
+}
+
+function closeModifierFolio(): void {
+  modifierFolioOpen.value = false;
+  modifierFolioGroup.value = null;
+  breakdownKey.value = null;
 }
 
 /**

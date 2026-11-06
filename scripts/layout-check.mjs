@@ -17073,7 +17073,9 @@ async function taskCharacterFold() {
           cardShells: register?.querySelectorAll(".card-ink").length ?? -1,
           groups: groups.length,
           groupKeys: groups.map((group) => group.getAttribute("data-character-modifier-group")),
+          groupLabels: groups.map((group) => (group.textContent || "").replace(/\s+/g, " ").trim()),
           rows: rows.length,
+          folioBefore: Boolean(document.querySelector("[data-character-modifier-folio]")),
           detailBefore: Boolean(detail),
           groupTops: groups.map((group) => Math.round(group.getBoundingClientRect().top)),
         };
@@ -17102,14 +17104,63 @@ async function taskCharacterFold() {
           `[390-character] 行藏没有分成修行、历练、斗法、百艺四组:${fold.groupKeys.join(" / ")}`,
         );
       }
-      if (fold.rows < 8) {
-        failures.push(`[390-character] 行藏账只铺出 ${fold.rows} 项,来源拆解失去入口`);
+      if (fold.rows !== 0) {
+        failures.push(`[390-character] 行藏页面上又直接铺了 ${fold.rows} 项逐项账,应只留四行账目`);
+      }
+      if (fold.folioBefore) {
+        failures.push("[390-character] 行藏全册默认应是合上的");
+      }
+      if (
+        fold.groupLabels.length !== 4 ||
+        fold.groupLabels.some((label) => !/\d+\s*项/.test(label) || !/%/.test(label))
+      ) {
+        failures.push(
+          `[390-character] 四行行藏账没有报出项数与真值:${fold.groupLabels.join(" / ")}`,
+        );
       }
       if (fold.detailBefore) {
         failures.push("[390-character] 未点行时就摊开了来源拆卷");
       }
       if (fold.groupTops.some((top, index) => index > 0 && top <= fold.groupTops[index - 1])) {
         failures.push(`[390-character] 手机四组行藏没有按序单列:${fold.groupTops.join(" / ")}`);
+      }
+
+      /*
+       * 点一行账目打开「行藏全册」:四组一项不少,且卷身落在刚点的那一组。
+       * 这一条同时守住「全册默认合着」—— 上面 folioBefore 量的是合上的那一面。
+       */
+      await page.locator('[data-character-modifier-group="practice"]').click();
+      const folioOpened = await page
+        .waitForSelector("[data-character-modifier-folio]", { timeout: 2000 })
+        .then(() => true)
+        .catch(() => false);
+      const folio = await page.evaluate(() => {
+        const root = document.querySelector("[data-character-modifier-folio]");
+        const groups = [...(root?.querySelectorAll("[data-character-modifier-folio-group]") ?? [])];
+        const rows = [...(root?.querySelectorAll("[data-character-modifier]") ?? [])];
+        const focus = groups.find(
+          (group) => group.getAttribute("data-character-modifier-folio-focus") === "true",
+        );
+        return {
+          groups: groups.length,
+          groupKeys: groups.map((group) =>
+            group.getAttribute("data-character-modifier-folio-group"),
+          ),
+          rows: rows.length,
+          focus: focus?.getAttribute("data-character-modifier-folio-group") ?? null,
+        };
+      });
+      checked += 1;
+      if (
+        !folioOpened ||
+        folio.groups !== 4 ||
+        folio.groupKeys.join("|") !== "practice|journey|combat|craft" ||
+        folio.rows < 8
+      ) {
+        failures.push(`[390-character] 行藏全册没有铺出四组逐项:${JSON.stringify(folio)}`);
+      }
+      if (folio.focus !== "practice") {
+        failures.push(`[390-character] 从「修行」点进全册,卷身没有落在这组:${folio.focus}`);
       }
 
       const probe = page.locator('[data-character-modifier="cultivationSpeed"]').first();
@@ -17210,6 +17261,13 @@ async function taskCharacterFold() {
           await page.waitForTimeout(200);
         }
       }
+
+      // 合上全册再量桌面双栏 —— 浮层开着时页面在遮罩后面,量到的位置不作数
+      await page
+        .locator("[data-character-modifier-folio-close]")
+        .click({ timeout: 3000 })
+        .catch(() => {});
+      await page.waitForTimeout(200);
 
       await page.setViewportSize({ width: 1280, height: 800 });
       await settleVisuals(page);
@@ -19396,6 +19454,9 @@ async function taskAchievementFold() {
             },
           );
           const open = toggles.filter((row) => row.expanded === "true");
+          const doneToggle = document.querySelector("[data-achievement-done-toggle]");
+          const doneListId = doneToggle?.getAttribute("aria-controls") || "";
+          const doneList = doneListId ? document.getElementById(doneListId) : null;
           return {
             navTop: nav?.top ?? innerHeight,
             heroTop: heroRect?.top ?? null,
@@ -19411,6 +19472,18 @@ async function taskAchievementFold() {
             jumps,
             toggles,
             open,
+            done: doneToggle
+              ? {
+                  expanded: doneToggle.getAttribute("aria-expanded"),
+                  visible: Boolean(
+                    doneList &&
+                    getComputedStyle(doneList).display !== "none" &&
+                    doneList.getBoundingClientRect().height > 0,
+                  ),
+                  rows: doneList?.querySelectorAll("[data-achievement-id]").length ?? 0,
+                  text: (doneList?.textContent || "").replace(/\s+/g, " ").trim(),
+                }
+              : null,
           };
         });
 
@@ -19452,6 +19525,65 @@ async function taskAchievementFold() {
         fold.open[0]?.bodyText.includes("???")
       ) {
         failures.push("[390-achievement] 默认展开的成就行没有直接写明条件,仍在用「???」遮名");
+      }
+
+      /*
+       * 已达成是档案,不是「还差什么」:默认收成一叠,点开才铺赏格与记录。
+       * 量的是真浏览器里的开合 —— 只看 DOM 里有没有那几行,收着也照样绿。
+       *
+       * 默认开的那一路由「最近三策」决定,未必有达成行(夹具里是击败数那一路);
+       * 故先换到确有达成记录的「境界精进」量这一叠,量完再换回原路,
+       * 后面的跳转与开合判据仍在同一默认态上量。
+       */
+      const doneGroup = page.locator('[data-achievement-group-toggle="境界精进"]').first();
+      if ((await doneGroup.count()) === 0) {
+        failures.push("[390-achievement] 找不到有达成记录的方向卷目(境界精进)");
+      } else {
+        await doneGroup.click({ timeout: 3000 }).catch(() => {});
+        await page.waitForTimeout(200);
+        const folded = await readGroups();
+        if (
+          !folded.done ||
+          folded.done.expanded !== "false" ||
+          folded.done.visible ||
+          folded.done.rows < 1
+        ) {
+          failures.push(`[390-achievement] 已达成应默认收成一叠:${JSON.stringify(folded.done)}`);
+        } else {
+          await page
+            .locator("[data-achievement-done-toggle]")
+            .click({ timeout: 3000 })
+            .catch(() => {});
+          await page.waitForTimeout(150);
+          checked += 1;
+          const doneOpen = await readGroups();
+          if (
+            !doneOpen.done ||
+            doneOpen.done.expanded !== "true" ||
+            !doneOpen.done.visible ||
+            doneOpen.done.rows < 1 ||
+            !/灵石|名号|称号|尘/.test(doneOpen.done.text)
+          ) {
+            failures.push(
+              `[390-achievement] 点「已达成」没有铺出达成记录:${JSON.stringify(doneOpen.done)}`,
+            );
+          }
+          // 收回,换回原路时仍在「合着」的默认态上
+          await page
+            .locator("[data-achievement-done-toggle]")
+            .click({ timeout: 3000 })
+            .catch(() => {});
+          await page.waitForTimeout(150);
+        }
+        const backDirection = fold.open[0]?.direction ?? "";
+        if (backDirection) {
+          await page
+            .locator(`[data-achievement-group-toggle="${backDirection}"]`)
+            .first()
+            .click({ timeout: 3000 })
+            .catch(() => {});
+          await page.waitForTimeout(200);
+        }
       }
 
       const currentDirection = fold.open[0]?.direction ?? "";

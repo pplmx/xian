@@ -407,6 +407,48 @@
     white-space: nowrap;
   }
 
+  .achievement-scroll__done {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.12rem 0.6rem;
+    border: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    background: rgb(var(--color-ink-rgb) / 0.018);
+    padding: 0.55rem 0.12rem;
+    text-align: left;
+    transition: background-color 0.12s ease;
+  }
+
+  .achievement-scroll__done:active {
+    background: rgb(var(--color-ink-rgb) / 0.045);
+  }
+
+  .achievement-scroll__done-count {
+    color: rgb(var(--color-gold-ink-rgb));
+    font-family: var(--font-kai);
+    letter-spacing: 0.08em;
+  }
+
+  .achievement-scroll__done-hint {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+
+  .achievement-scroll__done-arrow {
+    margin-left: auto;
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+  }
+
+  .achievement-scroll__done-list {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.06);
+    background: rgb(var(--color-ink-rgb) / 0.014);
+  }
+
   .achievement-entry {
     display: grid;
     min-width: 0;

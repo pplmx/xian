@@ -1,5 +1,6 @@
 import { isSoftCapped, modOf } from "@/core/statsCalc";
 import { STAT_NAMES } from "@/data/statNames";
+import { formatPercent } from "@/utils/format";
 import type { AnyStatKey, StatMods, StatSourceRow } from "@/types";
 
 export type CharacterChapterKey = "foundation" | "modifiers" | "catalog";
@@ -22,7 +23,7 @@ const CHAPTERS: readonly CharacterChapter[] = [
     key: "modifiers",
     index: "贰",
     title: "行藏周天",
-    hint: "修行、历练、斗法与百艺,点一行拆其来路",
+    hint: "修行、历练、斗法与百艺,四类收成一册,拆卷再看逐项来路",
   },
   {
     key: "catalog",
@@ -197,4 +198,18 @@ export function characterModifierSummary(
     groups: groups.filter((group) => group.rows.length > 0).length,
     softCapped: rows.filter((row) => row.capped).length,
   };
+}
+
+/**
+ * 一组行藏收成一行账时的那条抬头读数。
+ *
+ * 取组内前 `limit` 项,而不是按数值大小重排 —— `GROUP_SEEDS` 的键序就是重要度序
+ * (修炼速度、攻击、气血这类先写),换一个组、换一份存档,读到的都是同一批位置,
+ * 玩家第二次打开不用重新找。数值格式与行内同一枚 `formatPercent`,不另造口径。
+ */
+export function modifierGroupHeadline(group: CharacterModifierGroup, limit = 2): string {
+  return group.rows
+    .slice(0, limit)
+    .map((row) => `${row.label} ${row.value > 0 ? "+" : ""}${formatPercent(row.value)}`)
+    .join(" · ");
 }
