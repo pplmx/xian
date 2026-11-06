@@ -2253,6 +2253,65 @@ GongfaSection / ArtifactPanel / SlotCandidatesDialog / TitlesView / InventoryVie
 判据 `ui/offlineQualitySeal.spec` 三条:有章 / 章盖在拾得装备循环的每一件上
 (只 import 不渲染不算)/ 品阶色仍在(双线索)。
 
+### 「轮回阶只开见识」—— 本作最重的那条取舍,没人守着
+
+界面上(`LegacyView` 卷首)写着:
+
+```text
+轮回阶只开见识;灵材、丹方、器谱与敌手路数才是跨世不灭的底账。
+```
+
+`data/samsara.ts` 的头注说得更重:
+
+> 属性收益仍走道果与天赋的老路(见 core/formulas.ts),此处**一分不加** ——
+> 这是本 Phase 的核心取舍:永久继承的重心从「+攻击」移到「你知道什么」。
+
+#### 缺口
+
+`core/samsara.spec` 有十条用例:门槛递增、能力只增不减、顶阶覆盖全部灵材……
+但**没有一条**守着「轮回阶不加属性」。
+
+而这一条恰恰最容易被一次「顺手」改掉:往后想给轮回阶一点实惠,最自然的写法就是往
+`SamsaraStageDef` 上加一个 `mods?: StatMods`,然后挂几行代码。那一刻界面那句承诺与
+文件头那段设计取舍同时变成假话,而十条既有用例全绿 —— 它们守的是「见识开了多少」,
+不是「属性有没有多」。
+
+#### 判据被自己的第一个版本骗了一次
+
+第一版只查运行时对象:
+
+```ts
+const extra = Object.keys(stage).filter((k) => !INSIGHT_KEYS.has(k));
+```
+
+全绿。破坏实验 —— 往某一阶的 caps 里塞 `{ mods: { cultivationSpeed: 0.1 } }` ——
+**仍然全绿**。
+
+原因:阶定义走的是个工厂:
+
+```ts
+function s(index, id, name, insight, desc, caps) {
+  return {
+    index, id, name, desc, insight,
+    knownMaterialRank: caps.knownMaterialRank ?? 0,
+    ... // 只返回固定十个字段
+  };
+}
+```
+
+工厂**只返回固定十个字段**,多传的键被静默丢掉。于是运行时形状永远干净 ——
+判据看的是一个必然干净的对象。
+
+真正要守的是**源码里传了什么**:那是后来的人动手的地方。补上一条查源码的判据之后,
+同一个破坏当场被抓住:
+
+```text
+阶定义里传了见识以外的键:mods, cultivationSpeed —— 工厂会静默丢掉它,但意图已经写在那里了
+```
+
+> 教训:判据要盯**人动手的地方**,不是**数据最终的样子**。中间隔着一层工厂/归一化时,
+> 运行时的形状是被它清洗过的产物。
+
 ### 「积余……不白攒」—— 同一类的第二处
 
 修行页的「积余」行写着:

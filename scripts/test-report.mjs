@@ -461,6 +461,7 @@ const CATEGORIES = [
       "branchModsNotice",
       "mortalFateNotInCombat",
       "expBankedCarries",
+      "samsaraInsightOnly",
       "daoPathCoverage",
     ],
   },
