@@ -463,6 +463,7 @@ const CATEGORIES = [
       "expBankedCarries",
       "samsaraInsightOnly",
       "powerRatingNoRank",
+      "qualityDropCurve",
       "daoPathCoverage",
     ],
   },
