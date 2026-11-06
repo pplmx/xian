@@ -2253,6 +2253,55 @@ GongfaSection / ArtifactPanel / SlotCandidatesDialog / TitlesView / InventoryVie
 判据 `ui/offlineQualitySeal.spec` 三条:有章 / 章盖在拾得装备循环的每一件上
 (只 import 不渲染不算)/ 品阶色仍在(双线索)。
 
+### 道果经济:这一处不需要我补判据 —— 它已经有了
+
+上一轮说「下轮量道果经济闭环」。量完之后结论是:**这一处做得很严密,没有可补的地方。**
+
+记下来,免得下次再从头查一遍。
+
+#### 一、废弃参数清得干净
+
+`core/daoFruitCurve.ts` 的头注记着一次**被回滚的调参**:
+
+> 口径警告(saveCalibration 用真实存档验出):本模块所有小时数经 progressionSim 得出,
+> 而后者**高估约 100~400 倍**,且假设「每世修满真仙」—— 实测玩家在元婴到合体之间就转世,
+> 十八世总共只玩 22.7 小时。……曾据此定过 `DAO_FRUIT_KNEE=672`,已因基线错误回滚。
+
+搜 `DAO_FRUIT_KNEE`,全仓只有这一行注释,**代码里已彻底移除**。
+
+#### 二、出口是审计过才放行的
+
+`core/fruitOutlets` 把「道果能换什么」做成一张表,每条出口标注它经不经得起效率链。
+逆旅契的文件头把「**刻意不做的事**」列成四条禁令:
+
+- `player.addDaoFruit` —— 自供能循环:道果生道果
+- `player.addInsight` —— 宿慧 → aptitudeFloor → growthMult → 修炼速度
+- 任何资源发放 —— 灵石/丹药 → 强化 → 战力 → 历练更快
+- 任何 `StatMods` —— 直接落在效率链上
+
+「履历是唯一合格的回报:它不进任何计算。」
+
+#### 三、禁令有源码扫描判据守着,而且是真守
+
+`lifeTrialService.spec` 里三条**互相补位**的判据:
+
+```ts
+expect(SERVICE_CODE).not.toMatch(/addDaoFruit/);            // 直接回流
+expect(SERVICE_CODE).not.toMatch(/daoFruitGain|DAO_FRUIT_/); // 间接增产
+expect(player.reincarnation.daoFruit, "净支出").toBeLessThan(before); // 行为兜底
+```
+
+`SERVICE_CODE` 读的是**真实源文件**并剥掉注释 —— 注释里正大光明写着
+`player.addDaoFruit` 这些名字,不会被误报成违规。
+
+#### 四、长线数值也不会溢出
+
+修为需求全境最大 1e19,而 JS Number 上限约 1e308 —— **289 个数量级的余量**。
+`GNum` 的指数设计正是为这个准备。
+
+> 连续两轮(掉落曲线、道果经济)量完的结论分别是「注释有数但没守着」与「守着且守得严」。
+> 两种结论都有价值:前者要补,后者要记 —— 记下来,下一个人就不必再查一遍。
+
 ### 掉落曲线:注释里的数字是准的,但没人守着它
 
 `data/constants.ts` 在 `QUALITY_WEIGHTS` 上方写着:
