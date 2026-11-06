@@ -2099,6 +2099,25 @@ function railProblems(rail) {
  * 固定等待**保留在**就绪探测之后:有些判据量的是「过了这么久之后的稳定态」
  * (动画收敛、引擎跑过几拍),换成就绪即测会改掉它们量的东西。
  */
+/**
+ * 打开名号册 / 灵兽谱的「逐顶查阅」账行。
+ *
+ * 这两册是参考目录(三十顶名号、四十只灵兽逐条查),默认合着 —— 页上只留一枚
+ * 账行,此刻佩印与此刻相伴在章壹。v-show 把行留在 DOM 里,故「DOM 里有没有」
+ * 那类判据照旧;但**量几何、点行内按钮**的判据必须先打开它,否则量到的是
+ * display:none 的盒子(高度 0 → 那条判据会以「没有」告终,而不是以「坏了」)。
+ *
+ * @param kind "title" | "pet"
+ */
+async function openNameBeastBook(page, kind) {
+  const toggle = page.locator(`[data-${kind}-book-toggle]`).first();
+  if ((await toggle.count()) === 0) return false;
+  if ((await toggle.getAttribute("aria-expanded")) === "true") return true;
+  await toggle.click({ timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(220);
+  return (await toggle.getAttribute("aria-expanded")) === "true";
+}
+
 async function openRoute(page, route, settleMs) {
   await page.goto(INDEX + "#" + route, { waitUntil: "load" });
   await page
@@ -10079,7 +10098,7 @@ async function taskDailySeal() {
     {
       const slices = showcaseSlices("light");
       slices.quests = {
-        ...(slices.quests ?? {}),
+        ...slices.quests,
         daily: { date: today, base: {}, done: [...ALL_DAILY] },
       };
       await seedSave(ctx, slices, "__dailySealDone");
@@ -10100,7 +10119,7 @@ async function taskDailySeal() {
     {
       const slices = showcaseSlices("light");
       slices.quests = {
-        ...(slices.quests ?? {}),
+        ...slices.quests,
         daily: { date: today, base: {}, done: ALL_DAILY.slice(0, 5) },
       };
       await seedSave(ctx, slices, "__dailySealPartial");
@@ -10208,7 +10227,7 @@ async function taskCombatChips() {
     {
       const slices = showcaseSlices("light");
       slices.adventure = {
-        ...(slices.adventure ?? {}),
+        ...slices.adventure,
         ...mkSession(mkBattle({ isBoss: false, firstSight: false })),
       };
       await seedSave(ctx, slices, "__chipsNone");
@@ -10225,7 +10244,7 @@ async function taskCombatChips() {
     {
       const slices = showcaseSlices("light");
       slices.adventure = {
-        ...(slices.adventure ?? {}),
+        ...slices.adventure,
         ...mkSession(mkBattle({ isBoss: false, firstSight: true })),
       };
       await seedSave(ctx, slices, "__chipsOne");
@@ -10329,7 +10348,7 @@ async function taskFirstSight() {
     checked += 1;
     {
       const slices = showcaseSlices("light");
-      slices.adventure = { ...(slices.adventure ?? {}), ...mkSession(mkBattle(true)) };
+      slices.adventure = { ...slices.adventure, ...mkSession(mkBattle(true)) };
       await seedSave(ctx, slices, "__firstSightYes");
     }
     await openRoute(page, "/adventure", 900);
@@ -10345,7 +10364,7 @@ async function taskFirstSight() {
     checked += 1;
     {
       const slices = showcaseSlices("light");
-      slices.adventure = { ...(slices.adventure ?? {}), ...mkSession(mkBattle(false)) };
+      slices.adventure = { ...slices.adventure, ...mkSession(mkBattle(false)) };
       await seedSave(ctx, slices, "__firstSightNo");
     }
     await page.close();
@@ -10456,7 +10475,7 @@ async function taskNemesisChip() {
        * 没有活跃历练会话时整块不渲染。首版只塞了 lastBattle,于是页面上什么都没有。
        */
       slices.adventure = {
-        ...(slices.adventure ?? {}),
+        ...slices.adventure,
         session: {
           regionId: "qingyun",
           mode: "normal",
@@ -10510,7 +10529,7 @@ async function taskNemesisChip() {
         ],
       };
       slices.adventure = {
-        ...(slices.adventure ?? {}),
+        ...slices.adventure,
         session: {
           regionId: "qingyun",
           mode: "normal",
@@ -10609,7 +10628,7 @@ async function taskEventRecall() {
     {
       const slices = showcaseSlices("light");
       slices.adventure = {
-        ...(slices.adventure ?? {}),
+        ...slices.adventure,
         pendingEventId: eventId,
         pendingEventSince: Date.now(),
         eventMemories: {},
@@ -10630,7 +10649,7 @@ async function taskEventRecall() {
     {
       const slices = showcaseSlices("light");
       slices.adventure = {
-        ...(slices.adventure ?? {}),
+        ...slices.adventure,
         pendingEventId: eventId,
         pendingEventSince: Date.now(),
         eventMemories: {
@@ -10771,7 +10790,7 @@ async function taskBreakthroughNext() {
         sub: 0,
         exp: { m: 9, e: 18 },
         reincarnation: {
-          ...(spared.player.reincarnation ?? {}),
+          ...spared.player.reincarnation,
           heritage: ["dubu"],
           heritageUses: {},
         },
@@ -11022,7 +11041,7 @@ async function taskMultText() {
     const slices = showcaseSlices("light");
     slices.player = {
       ...slices.player,
-      linggen: { ...(slices.player.linggen ?? {}), growthMult: 1.2 },
+      linggen: { ...slices.player.linggen, growthMult: 1.2 },
     };
     await seedSave(ctx, slices, "__multTextFixture");
 
@@ -11155,12 +11174,12 @@ async function taskPetMoment() {
     {
       const slices = showcaseSlices("light");
       slices.quests = {
-        ...(slices.quests ?? {}),
+        ...slices.quests,
         /*
          * 谱上「拥有」看的是 collections.pet；petCompanions 是「相伴过」的记录，
          * 两者不是一回事 —— 首版只设了后者，于是那行渲染成未结缘，读数自然没有。
          */
-        collections: { ...(slices.quests?.collections ?? {}), pet: [petIds[0]] },
+        collections: { ...slices.quests?.collections, pet: [petIds[0]] },
         petCompanions: [petIds[0]],
         petMoments: { [petIds[0]]: { life: 4, age: 37 } },
       };
@@ -11168,11 +11187,15 @@ async function taskPetMoment() {
     }
     await openRoute(page, "/titles", 900);
     await clearOverlays(page);
-    // 灵兽谱在「灵兽」页签下 —— 不切过去,页面上一条 [data-pet-row] 都没有
+    // 灵兽谱在「灵兽」页签下 —— 不切过去,页面上一条 [data-pet-row] 都没有;
+    // 而谱本身默认合着(v-show),量道历前要先打开展。
     const petTab = page.getByRole("tab", { name: /灵兽/ }).first();
     if ((await petTab.count()) > 0) {
       await petTab.click({ timeout: 3000 }).catch(() => {});
       await page.waitForTimeout(500);
+    }
+    if (!(await openNameBeastBook(page, "pet"))) {
+      failures.push("[390] 契兽道历:灵兽谱账行打不开,谱上的道历量不到");
     }
     const fresh = await read(page, petIds[0]);
     if (!fresh) {
@@ -11206,8 +11229,8 @@ async function taskPetMoment() {
       const run = async (companions, guard) => {
         const slices = showcaseSlices("light");
         slices.quests = {
-          ...(slices.quests ?? {}),
-          collections: { ...(slices.quests?.collections ?? {}), pet: [probePet] },
+          ...slices.quests,
+          collections: { ...slices.quests?.collections, pet: [probePet] },
           petCompanions: companions,
           petMoments: {},
         };
@@ -11250,8 +11273,8 @@ async function taskPetMoment() {
     {
       const slices = showcaseSlices("light");
       slices.quests = {
-        ...(slices.quests ?? {}),
-        collections: { ...(slices.quests?.collections ?? {}), pet: [petIds[0]] },
+        ...slices.quests,
+        collections: { ...slices.quests?.collections, pet: [petIds[0]] },
         petCompanions: [petIds[0]],
         petMoments: {},
       };
@@ -11276,7 +11299,7 @@ async function taskPetMoment() {
     checked += 1;
     {
       const slices = showcaseSlices("light");
-      slices.quests = { ...(slices.quests ?? {}), petCompanions: [], petMoments: {} };
+      slices.quests = { ...slices.quests, petCompanions: [], petMoments: {} };
       await seedSave(ctx, slices, "__petMomentNone");
     }
     await page.reload({ waitUntil: "load" });
@@ -11310,9 +11333,9 @@ async function taskPetMoment() {
        */
       const ownedSlices = showcaseSlices("light");
       ownedSlices.quests = {
-        ...(ownedSlices.quests ?? {}),
+        ...ownedSlices.quests,
         collections: {
-          ...(ownedSlices.quests?.collections ?? {}),
+          ...ownedSlices.quests?.collections,
           pet: ["pet_kunpeng", "pet_yinglong", "pet_qingyu"],
         },
         petCompanions: [],
@@ -11327,6 +11350,8 @@ async function taskPetMoment() {
         await petTab.click({ timeout: 3000 }).catch(() => {});
         await page.waitForTimeout(500);
       }
+      // 谱默认合着 —— 量品阶章与命途分组前先打开展(v-show 让行留在 DOM,但量不到几何/角章)
+      await openNameBeastBook(page, "pet");
       const sealTruth = await page.evaluate(() => {
         const rows = [...document.querySelectorAll("[data-pet-row]")];
         return {
@@ -11787,7 +11812,7 @@ async function taskTitleMoment() {
     {
       const slices = showcaseSlices("light");
       slices.quests = {
-        ...(slices.quests ?? {}),
+        ...slices.quests,
         titlesOwned: ["ti_churu"],
         titleMoments: { ti_churu: { life: 3, age: 42 } },
       };
@@ -11815,7 +11840,7 @@ async function taskTitleMoment() {
       checked += 1;
       const oldSlices = showcaseSlices("light");
       oldSlices.quests = {
-        ...(oldSlices.quests ?? {}),
+        ...oldSlices.quests,
         titlesOwned: ["ti_churu"],
         titleMoments: {},
       };
@@ -11835,8 +11860,8 @@ async function taskTitleMoment() {
       // 三 未到手的不显示
       checked += 1;
       const noneSlices = showcaseSlices("light");
-      noneSlices.quests = { ...(noneSlices.quests ?? {}), titlesOwned: [], titleMoments: {} };
-      noneSlices.player = { ...(noneSlices.player ?? {}), titleId: null };
+      noneSlices.quests = { ...noneSlices.quests, titlesOwned: [], titleMoments: {} };
+      noneSlices.player = { ...noneSlices.player, titleId: null };
       await seedSave(ctx, noneSlices, "__titleMoment_none");
       await page.reload({ waitUntil: "load" });
       await page.waitForTimeout(900);
@@ -11892,7 +11917,7 @@ async function taskNextStep() {
      */
     const slices = showcaseSlices("light");
     slices.adventure = {
-      ...(slices.adventure ?? {}),
+      ...slices.adventure,
       /*
        * 区域 id 是裸名(qingyun),不带 r_ 前缀 —— 写错会被存档修复判成「认不得的区域」
        * 而把整个会话丢掉,于是建议永远指向别处。首版正是这么错的。
@@ -12013,8 +12038,8 @@ async function taskNextStep() {
     checked += 1;
     {
       const endSlices = showcaseSlices("light");
-      endSlices.adventure = { ...(endSlices.adventure ?? {}), session: null, pendingEventId: null };
-      endSlices.endgame = { ...(endSlices.endgame ?? {}), daoPath: "sword" };
+      endSlices.adventure = { ...endSlices.adventure, session: null, pendingEventId: null };
+      endSlices.endgame = { ...endSlices.endgame, daoPath: "sword" };
       endSlices.inventory = {
         ...endSlices.inventory,
         artifacts: [],
@@ -12039,13 +12064,13 @@ async function taskNextStep() {
       checked += 1;
       const sliced = showcaseSlices("light");
       // 清掉历练与际遇,让台面上只剩这一条
-      sliced.adventure = { ...(sliced.adventure ?? {}), session: null, pendingEventId: null };
+      sliced.adventure = { ...sliced.adventure, session: null, pendingEventId: null };
       /*
        * 夹具默认已选定道途(daoPath: "sword"),于是每个场景都成了「终局已至」,
        * 而那条建议排在法宝与装备之前 —— 首版这两个场景全被它顶掉了。
        * 这里清掉道途,代表一个中盘玩家:终局那条不该在这种存档上抢位置。
        */
-      sliced.endgame = { ...(sliced.endgame ?? {}), daoPath: null };
+      sliced.endgame = { ...sliced.endgame, daoPath: null };
       kase.patch(sliced);
       await seedSave(ctx, sliced, `__nextStep_${kase.id}`);
       await page.reload({ waitUntil: "load" });
@@ -12076,11 +12101,11 @@ async function taskNextStep() {
     {
       const clickSlices = showcaseSlices("light");
       clickSlices.adventure = {
-        ...(clickSlices.adventure ?? {}),
+        ...clickSlices.adventure,
         session: null,
         pendingEventId: null,
       };
-      clickSlices.endgame = { ...(clickSlices.endgame ?? {}), daoPath: null };
+      clickSlices.endgame = { ...clickSlices.endgame, daoPath: null };
       clickSlices.inventory = {
         ...clickSlices.inventory,
         artifacts: [
@@ -12170,7 +12195,7 @@ async function taskFlashTier() {
      */
     const slices = showcaseSlices("light");
     slices.adventure = {
-      ...(slices.adventure ?? {}),
+      ...slices.adventure,
       pendingEventId: "ev_sword_stone",
       pendingEventSince: Date.now(),
     };
@@ -12522,7 +12547,7 @@ async function taskArtifactBeat() {
         }
       }
       // 三种说法至少出现两种(说明不是写死的一句话)
-      const kinds = new Set(rows.map((r) => (/^每/.test(r.beat) ? "periodic" : "always")));
+      const kinds = new Set(rows.map((r) => (r.beat.startsWith("每") ? "periodic" : "always")));
       if (rows.length >= 2 && kinds.size < 2) {
         failures.push("[390] 神通的节拍:几种法宝读出来全是同一类节拍");
       }
@@ -12857,7 +12882,7 @@ async function taskToastTarget() {
   try {
     const slices = showcaseSlices("light");
     slices.adventure = {
-      ...(slices.adventure ?? {}),
+      ...slices.adventure,
       pendingEventId: "ev_sword_stone",
       pendingEventSince: Date.now(),
     };
@@ -15004,6 +15029,10 @@ async function taskPetVow() {
     if ((await petTab.count()) === 0) throw new Error("灵兽页签找不到");
     await petTab.click({ timeout: 3000 });
     await page.waitForTimeout(400);
+    // 谱默认合着 —— 点行内「唤来」之前要先打开展
+    if (!(await openNameBeastBook(page, "pet"))) {
+      failures.push("[390] 契语场景:灵兽谱账行打不开,连逐行都量不到");
+    }
 
     // 唤来之前:面板上没有契语(此刻无伴),逐行里也不该有
     checked += 1;
@@ -26701,7 +26730,17 @@ async function taskTitlePetOverflow() {
           })),
           current: box(document.querySelector("[data-title-current]")),
           guide: box(document.querySelector("[data-title-guide]")),
-          firstAction: box(document.querySelector("[data-title-row] button")),
+          /*
+           * 「首屏还够得着谱」的落点。
+           *
+           * 名号谱与灵兽谱现在默认合着(参考目录,不是此刻要做的决定),
+           * 故首屏上第一个真能点到的东西是那枚**账行**,不是谱里的第一枚按钮 ——
+           * 谱收着时后者的盒子是 0×0、top 0,拿它判「首屏装得下」会永远绿,
+           * 而绿得毫无意义(量的是一个不可见元素)。谱打开时才回落到行内按钮。
+           */
+          firstAction:
+            box(document.querySelector("[data-title-book-toggle], [data-pet-book-toggle]")) ??
+            box(document.querySelector("[data-title-row] button, [data-pet-row] button")),
           dockTop,
           documentOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
         };
@@ -26961,9 +27000,18 @@ async function taskTitlePetOverflow() {
       );
     }
 
+    /*
+     * 从 320 起，这本账要**打开**量：账行（可点）与谱（默认合着）是两件事。
+     * 先量合着态（首屏装得下账行），再开谱量逐行与分批 —— 两态都量，
+     * 免得「收起来了但收得不对」被当成通过。
+     */
     await page.setViewportSize({ width: 320, height: 568 });
     await settleVisuals(page);
     await checkNameBeastOverview("320", 2);
+    if (!(await openNameBeastBook(page, "title"))) {
+      failures.push("[320] 名号册账行打不开 —— 逐行判据量不到东西");
+    }
+    await settleVisuals(page);
 
     await page.setViewportSize({ width: 1280, height: 800 });
     await settleVisuals(page);
@@ -26991,6 +27039,8 @@ async function taskTitlePetOverflow() {
 
     await petTab.click({ timeout: 5000 });
     await page.locator("[data-pet-total]").waitFor({ state: "visible", timeout: 5000 });
+    await openNameBeastBook(page, "pet");
+    await settleVisuals(page);
     const petCurrentText =
       (await page.locator("[data-pet-current]").first().textContent())?.replace(/\s+/g, " ") ?? "";
     checked += 1;

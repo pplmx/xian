@@ -242,27 +242,31 @@
             </p>
           </div>
         </div>
+        <!--
+          日课也分两层:还没做的留在页上(那是今天要动的手),已经做完的收成一叠。
+
+          此前八行同权铺开,常驻 571px —— 占首页 39%,而其中已经做完的那几行
+          不再回答「今天该做什么」。这与 `docs/design.md` 那条分层纪律一致:
+          决策行留在页上,档案收进册;藏珍的「已达成」、洞府的「七作」、
+          道躯的「行藏」都是同一种收法,这里是第四处。
+          收的是版面,不是内容:每一行的进度与赏格仍逐行可达。
+        -->
         <ul v-if="dailyRows.length" class="home-daily__list">
           <li
-            v-for="(t, index) in dailyRows"
+            v-for="t in dailyPendingRows"
             :key="t.id"
             class="home-daily__row"
-            :class="{ 'is-done': t.done }"
             :data-daily-row="t.id"
-            :data-daily-done="t.done ? 'true' : 'false'"
+            data-daily-done="false"
           >
             <span class="home-daily__mark" aria-hidden="true">{{
-              t.done ? "✓" : String(index + 1).padStart(2, "0")
+              String(t.ordinal).padStart(2, "0")
             }}</span>
             <span class="home-daily__body">
-              <span class="home-daily__copy" :class="{ 'line-through': t.done }">{{
-                keepNumberUnit(t.desc)
-              }}</span>
+              <span class="home-daily__copy">{{ keepNumberUnit(t.desc) }}</span>
               <span class="home-daily__reward tabular">得 {{ rewardText(t.reward) }}</span>
             </span>
-            <span class="home-daily__count tabular" :class="{ 'is-done': t.done }">
-              {{ t.done ? "已成" : `${t.progress}/${t.target}` }}
-            </span>
+            <span class="home-daily__count tabular">{{ t.progress }}/{{ t.target }}</span>
             <span class="home-daily__track" aria-hidden="true">
               <span
                 :style="{
@@ -272,7 +276,59 @@
             </span>
           </li>
         </ul>
-        <p v-else class="home-card__quiet">今日没有排定日课。</p>
+        <p v-if="dailyRows.length && !dailyPendingRows.length" class="home-daily__row">
+          <span class="home-daily__mark" aria-hidden="true">✓</span>
+          <span class="home-daily__body">
+            <span class="home-daily__copy">今日 {{ cnNumber(dailyRows.length) }} 笔俱已入账</span>
+            <span class="home-daily__reward">赏格已落袋,不必再翻</span>
+          </span>
+        </p>
+        <p v-else-if="!dailyRows.length" class="home-card__quiet">今日没有排定日课。</p>
+        <button
+          v-if="dailyDoneRows.length"
+          type="button"
+          class="home-daily__done-toggle"
+          :aria-expanded="dailyDoneOpen"
+          aria-controls="home-done-stack"
+          data-home-done-stack-toggle
+          @click="dailyDoneOpen = !dailyDoneOpen"
+        >
+          <span class="home-daily__done-count tabular">已成 {{ dailyDoneRows.length }} 笔</span>
+          <span class="home-daily__done-hint">达成的进度与赏格收在这一叠</span>
+          <span class="home-daily__done-arrow" aria-hidden="true">{{
+            dailyDoneOpen ? "▾" : "▸"
+          }}</span>
+        </button>
+        <ul
+          v-show="dailyDoneOpen"
+          id="home-done-stack"
+          class="home-daily__list home-daily__list--done"
+          data-home-done-stack-body
+        >
+          <li
+            v-for="t in dailyDoneRows"
+            :key="t.id"
+            class="home-daily__row is-done"
+            :data-daily-row="t.id"
+            data-daily-done="true"
+          >
+            <span class="home-daily__mark" aria-hidden="true">{{
+              t.done ? "✓" : String(t.ordinal).padStart(2, "0")
+            }}</span>
+            <span class="home-daily__body">
+              <span class="home-daily__copy line-through">{{ keepNumberUnit(t.desc) }}</span>
+              <span class="home-daily__reward tabular">得 {{ rewardText(t.reward) }}</span>
+            </span>
+            <span class="home-daily__count tabular is-done">{{ t.progress }}/{{ t.target }}</span>
+            <span class="home-daily__track" aria-hidden="true">
+              <span
+                :style="{
+                  width: `${Math.min(100, (t.progress / Math.max(1, t.target)) * 100)}%`,
+                }"
+              />
+            </span>
+          </li>
+        </ul>
         <p v-if="dailyAllDone" class="home-daily__all-done">
           <span>今日已毕</span>
           日课全做完了,该收的都收了 —— 可安心挂机
@@ -348,7 +404,7 @@ import { VEIN_UNLOCK_MAJOR } from "@/data/constants";
 import { LIFESPAN_WARN_RATIO } from "@/data/constants";
 import { WORLD_BREAK_MAJOR } from "@/data/realms";
 import { todayWeather, upcomingWeather, weatherRemainingSec } from "@/core/weather";
-import { formatCountdown, formatPercent } from "@/utils/format";
+import { cnNumber, formatCountdown, formatPercent } from "@/utils/format";
 import { generateCurrentGoal, type Goal } from "@/core/goal";
 import { currentMainQuestProgress } from "@/core/questProgress";
 import { currentFirstStep, homeStatusText } from "@/core/firstStep";
@@ -479,6 +535,19 @@ const dailyAllDone = computed(
   () => dailyRows.value.length > 0 && dailyRows.value.every((r) => r.done),
 );
 const dailyDoneCount = computed(() => dailyRows.value.filter((r) => r.done).length);
+/**
+ * 日课分两叠:未做的留在页上,已做的收成一叠(默认合着)。
+ *
+ * `ordinal` 是它在**原始八笔里的位次**(1 起) —— 两叠都读它,免得收起来之后
+ * 「03」变成「01」:行号是这笔课在今天的序,不是它在本叠里的序。
+ */
+const dailyOrderedRows = computed(() =>
+  dailyRows.value.map((row, index) => ({ ...row, ordinal: index + 1 })),
+);
+const dailyPendingRows = computed(() => dailyOrderedRows.value.filter((row) => !row.done));
+const dailyDoneRows = computed(() => dailyOrderedRows.value.filter((row) => row.done));
+/** 「已达成」那一叠的开合 —— 与藏珍、洞府、道躯同一套:默认合着 */
+const dailyDoneOpen = ref(false);
 const dailyRatio = computed(() =>
   dailyRows.value.length ? dailyDoneCount.value / dailyRows.value.length : 0,
 );

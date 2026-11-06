@@ -227,41 +227,47 @@
           />
           <div class="soul-register__body">
             <div class="soul-principle__sheet">
-              <div class="soul-principle__lead">
-                <span class="soul-principle__seal" aria-hidden="true">魂</span>
-                <p>
-                  凡器入炉,锋芒被天道磨去几分,那份
-                  <span class="text-gold-ink">路数</span>却留了下来 —— 攻防血照常作数,
-                  器魂是在其上多给一条路数。
-                </p>
-              </div>
+              <!--
+                章法是**解释**,不是此刻的三席读数(三席在章壹的总账里,一枚不少)。
+                故与门规、历练三档同归共享原语 FolioNote:一行抬头、默认合着、
+                aria-expanded 报开合,点开一字不删。
 
-              <div class="soul-principle__steps">
-                <p v-for="step in SOUL_STEPS" :key="step.mark" class="soul-principle__step">
-                  <span class="soul-principle__step-mark" aria-hidden="true">{{ step.mark }}</span>
-                  <span>
-                    <strong>{{ step.title }}</strong>
-                    <small>{{ step.detail }}</small>
-                  </span>
-                </p>
-              </div>
+                此前这一章常驻约 280px:先摊一段引子,再铺三步,再挂一枚「怎么个章法」
+                的二级开合 —— 两套开合叠在同一章里,读的人要点两次才看到全部。
+                收成一条注之后,页上只留抬头;三步与两段细读一并进注身。
+              -->
+              <FolioNote name="soul-principle" label="注 · 器魂章法(入炉三步与堆叠之应)">
+                <div class="soul-principle__lead">
+                  <span class="soul-principle__seal" aria-hidden="true">魂</span>
+                  <p>
+                    凡器入炉,锋芒被天道磨去几分,那份
+                    <span class="text-gold-ink">路数</span>却留了下来 —— 攻防血照常作数,
+                    器魂是在其上多给一条路数。
+                  </p>
+                </div>
 
-              <button
-                class="tap-row soul-principle__toggle -mx-1.5 inline-flex min-h-[28px] min-w-[28px] items-center justify-center px-1.5 text-note text-ink-faint active:opacity-60"
-                :aria-expanded="soulIntroOpen"
-                @click="soulIntroOpen = !soulIntroOpen"
-              >
-                {{ soulIntroOpen ? "▾ 收起章法" : "▸ 怎么个章法" }}
-              </button>
-              <div v-if="soulIntroOpen" class="soul-principle__more">
-                <p>
-                  以凡器入炉,形销而意存,得器魂一缕。神魂只容 {{ SOUL_SLOTS }} 缕 —— 取舍便是构筑。
-                </p>
-                <p>
-                  至于堆叠本身,天道自有应对:构筑越厚,守关者的道之理解越深;境界未及此界者,
-                  还会被境界压制。
-                </p>
-              </div>
+                <div class="soul-principle__steps">
+                  <p v-for="step in SOUL_STEPS" :key="step.mark" class="soul-principle__step">
+                    <span class="soul-principle__step-mark" aria-hidden="true">{{
+                      step.mark
+                    }}</span>
+                    <span>
+                      <strong>{{ step.title }}</strong>
+                      <small>{{ step.detail }}</small>
+                    </span>
+                  </p>
+                </div>
+
+                <div class="soul-principle__more">
+                  <p>
+                    以凡器入炉,形销而意存,得器魂一缕。神魂只容 {{ SOUL_SLOTS }} 缕 —— 取舍便是构筑。
+                  </p>
+                  <p>
+                    至于堆叠本身,天道自有应对:构筑越厚,守关者的道之理解越深;境界未及此界者,
+                    还会被境界压制。
+                  </p>
+                </div>
+              </FolioNote>
             </div>
           </div>
         </section>
@@ -605,6 +611,7 @@ import {
 import { useEndgameStore } from "@/stores/endgame";
 import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";
+import FolioNote from "@/components/common/FolioNote.vue";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LedgerPulse from "@/components/common/LedgerPulse.vue";
 import LedgerTally from "@/components/common/LedgerTally.vue";
@@ -620,8 +627,6 @@ const router = useRouter();
 const unlocked = computed(() => endgameUnlocked());
 const idleOpen = ref(false);
 const forgeOpen = ref(false);
-/** 「何谓器魂」的细读段:默认收起,只留一句结论 */
-const soulIntroOpen = ref(false);
 /** 已装配器魂的详情弹窗对象;非 null 时展示该缕 */
 const soulDetail = ref<SoulInstance | null>(null);
 

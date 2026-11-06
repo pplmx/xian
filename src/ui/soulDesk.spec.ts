@@ -87,7 +87,18 @@ describe("器魂案 · 题签只报道源,三席阵账紧随卷首", () => {
     expect(view, "章法保留不可逆代价").toContain("原器即毁");
     expect(view, "章法炉费读机制常量").toContain("SOUL_REFINE_COST");
     expect(view, "章法席数读机制常量").toContain("SOUL_SLOTS");
-    expect(view, "章法仍可展开细读").toContain("soulIntroOpen");
+    /*
+     * 章法整章是**解释**,不是三席读数 —— 与门规、历练三档同归共享原语 FolioNote:
+     * 一行抬头、默认合着、aria-expanded 报开合,三步与两段细读一并进注身。
+     * 此前它常驻约 280px,而且章内还叠了第二套开合(「怎么个章法」),
+     * 读全一段要连点两次。
+     */
+    expect(view, "章法挂在共享「注」原语上").toContain(
+      'import FolioNote from "@/components/common/FolioNote.vue"',
+    );
+    expect(view, "章法有稳定注落点").toContain('<FolioNote name="soul-principle"');
+    expect(view, "章法不再自铺第二套开合").not.toContain("soulIntroOpen");
+    expect(view, "三步细读仍一字不少").toContain('v-for="step in SOUL_STEPS"');
   });
 
   it("手机三章续排,620 起门径并读,960 起门径与章法并读,220 以下退单列", () => {

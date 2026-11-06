@@ -355,6 +355,75 @@
   .name-beast-focus__progress {
     margin-top: 0.42rem;
   }
+  /*
+   * 名号谱 / 灵兽谱的账行 —— 参考目录默认合着,页上只留这一行。
+   *
+   * 与洞府的「七作营造」、藏珍的「已达成」同一副形制:一枚落款印 + 一句读法
+   * + 一个真值计数 + 一个开合动作。收的是版面,不是内容。
+   */
+  .name-beast-ledger__toggle {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    min-height: 28px;
+    grid-template-columns: 1.38rem minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 0.18rem 0.55rem;
+    margin-top: 0.28rem;
+    border: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    background: transparent;
+    padding: 0.58rem 0.1rem;
+    text-align: left;
+  }
+  .name-beast-ledger__toggle:active {
+    opacity: 0.6;
+  }
+  .name-beast-ledger__toggle-mark {
+    display: grid;
+    width: 1.38rem;
+    height: 1.38rem;
+    place-items: center;
+    border-left: 2px solid rgb(var(--name-beast-accent-rgb) / 0.7);
+    color: rgb(var(--name-beast-accent-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  .name-beast-ledger__toggle-copy {
+    display: grid;
+    min-width: 0;
+    gap: 0.06rem;
+  }
+  .name-beast-ledger__toggle-copy strong {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    line-height: 1.35;
+  }
+  .name-beast-ledger__toggle-copy small {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+  .name-beast-ledger__toggle-count {
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+  .name-beast-ledger__toggle-action {
+    color: rgb(var(--color-qing-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
   .name-ledger__list {
     position: relative;
     z-index: 1;

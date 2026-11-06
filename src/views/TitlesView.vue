@@ -125,10 +125,44 @@
             eyebrow="佩印与旧藏"
             title="名号谱"
             hint="佩印置顶 · 已藏次之 · 未得照写来路"
-            :fact="`现看 ${titlePage.start + 1}–${titlePage.shown} · 共 ${titleRows.length} 顶`"
+            :fact="`已藏 ${titleMeter.owned}/${titleRows.length} 顶`"
           />
 
-          <div class="name-ledger__list">
+          <!--
+            名号谱是**参考目录**(三十顶逐条查),不是此刻要做的决定 —— 此刻那一行
+            在章壹「此刻佩印」。故默认合着:页上只留这枚账行,点开才铺全谱。
+
+            此前它与章壹同时摊开,这一册正文实测 1220px:玩家要先滚过三十顶
+            才够得着灵兽那一册。这与藏珍的「已达成」、洞府的「七作」、道躯的
+            「行藏」是同一条纪律 —— 收的是版面,不是内容(三十顶一项不少)。
+          -->
+          <button
+            type="button"
+            class="name-beast-ledger__toggle"
+            :aria-expanded="titleBookOpen"
+            :aria-controls="titleBookBodyId"
+            data-title-book-toggle
+            @click="titleBookOpen = !titleBookOpen"
+          >
+            <span class="name-beast-ledger__toggle-mark" aria-hidden="true">谱</span>
+            <span class="name-beast-ledger__toggle-copy">
+              <strong>逐顶查阅</strong>
+              <small>{{ titleBookHint }}</small>
+            </span>
+            <span class="name-beast-ledger__toggle-count tabular"
+              >{{ titleMeter.owned }}/{{ titleRows.length }}</span
+            >
+            <span class="name-beast-ledger__toggle-action">{{
+              titleBookOpen ? "收 起" : "开 谱"
+            }}</span>
+          </button>
+
+          <div
+            v-show="titleBookOpen"
+            :id="titleBookBodyId"
+            class="name-ledger__list"
+            data-title-book-body
+          >
             <article
               v-for="row in titlePage.visible"
               :key="row.def.id"
@@ -173,7 +207,11 @@
             </article>
           </div>
 
-          <div v-if="titlePage.start > 0 || titlePage.hidden > 0" class="name-beast-pager">
+          <!-- 翻页键跟着账身走:册合着时页上只剩那枚账行,不该还挂着一枚点了没反应的「再看」 -->
+          <div
+            v-if="titleBookOpen && (titlePage.start > 0 || titlePage.hidden > 0)"
+            class="name-beast-pager"
+          >
             <button
               v-if="titlePage.start > 0"
               type="button"
@@ -317,10 +355,37 @@
             eyebrow="已契与未逢"
             title="灵兽谱"
             hint="相伴置顶 · 已契在前 · 按命途聚 · 品阶降序"
-            :fact="`现看 ${petPage.start + 1}–${petPage.shown} · 共 ${petRows.length} 只`"
+            :fact="`已契 ${petMeter.owned}/${petRows.length} 只`"
           />
 
-          <div class="name-ledger__list">
+          <!-- 与名号谱同一条:参考目录默认合着,此刻相伴那一行在章壹 -->
+          <button
+            type="button"
+            class="name-beast-ledger__toggle"
+            :aria-expanded="petBookOpen"
+            :aria-controls="petBookBodyId"
+            data-pet-book-toggle
+            @click="petBookOpen = !petBookOpen"
+          >
+            <span class="name-beast-ledger__toggle-mark" aria-hidden="true">谱</span>
+            <span class="name-beast-ledger__toggle-copy">
+              <strong>逐只查阅</strong>
+              <small>{{ petBookHint }}</small>
+            </span>
+            <span class="name-beast-ledger__toggle-count tabular"
+              >{{ petMeter.owned }}/{{ petRows.length }}</span
+            >
+            <span class="name-beast-ledger__toggle-action">{{
+              petBookOpen ? "收 起" : "开 谱"
+            }}</span>
+          </button>
+
+          <div
+            v-show="petBookOpen"
+            :id="petBookBodyId"
+            class="name-ledger__list"
+            data-pet-book-body
+          >
             <article
               v-for="row in petPage.visible"
               :key="row.def.id"
@@ -413,7 +478,10 @@
             </article>
           </div>
 
-          <div v-if="petPage.start > 0 || petPage.hidden > 0" class="name-beast-pager">
+          <div
+            v-if="petBookOpen && (petPage.start > 0 || petPage.hidden > 0)"
+            class="name-beast-pager"
+          >
             <button
               v-if="petPage.start > 0"
               type="button"
@@ -505,6 +573,24 @@ const ownedCount = computed(
 /** 名号尽收:全齐才算(与标题计数同源,不另起一套判据) */
 const titlesAllOwned = computed(() => ownedCount.value === TITLES.length && TITLES.length > 0);
 const titleMeter = computed(() => nameBeastMeter(ownedCount.value, TITLES.length));
+/**
+ * 名号谱 / 灵兽谱的开合 —— 两册各自记账,默认都合着。
+ *
+ * 这两章是**参考目录**:三十顶名号、四十只灵兽逐条查,回答「为什么 / 从哪来」,
+ * 不回答「现在做什么」(此刻佩印与此刻相伴都在章壹)。页上只留一枚账行,
+ * 要逐条对读时再打开展。
+ */
+const titleBookOpen = ref(false);
+const petBookOpen = ref(false);
+const titleBookBodyId = "name-beast-title-book-body";
+const petBookBodyId = "name-beast-pet-book-body";
+/** 账行上那一句读法 —— 与章首 fact 同源,不另算一套计数 */
+const titleBookHint = computed(
+  () => `${titleMeter.value.owned} 顶尖已藏 · 首行是佩印 · 未得的照写来路`,
+);
+const petBookHint = computed(
+  () => `${petMeter.value.owned} 只已结缘 · 相伴置顶 · 按命途聚 · 品阶降序`,
+);
 
 /*
  * 品质读数 —— 「持有过最高的那一件」,不是「此刻包里最高的那一件」。

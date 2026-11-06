@@ -841,6 +841,63 @@
     background: transparent;
   }
 
+  /*
+   * 「已成」那一叠 —— 与藏珍的已达成、洞府的七作、道躯的行藏同一种收法:
+   * 未做的留在页上(今天要动的手),做完的收成一叠(已是档案)。
+   * 默认合着;拉一条账线把它与上面那几行分开,不让两叠连成一条八行长队。
+   */
+  .home-daily__list--done {
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    padding-bottom: 0.2rem;
+  }
+
+  .home-daily__done-toggle {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 28px;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.1rem 0.5rem;
+    margin-top: 0.35rem;
+    border: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.1);
+    background: transparent;
+    padding: 0.55rem 0 0.35rem;
+    text-align: left;
+  }
+
+  .home-daily__done-toggle:active {
+    opacity: 0.6;
+  }
+
+  .home-daily__done-count {
+    color: rgb(var(--color-jade-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    letter-spacing: 0.06em;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+
+  .home-daily__done-hint {
+    min-width: 0;
+    flex: 1;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .home-daily__done-arrow {
+    flex: none;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+
   .home-daily__row.is-done {
     border-bottom-color: rgb(var(--color-jade-rgb) / 0.18);
     background: linear-gradient(90deg, rgb(var(--color-jade-rgb) / 0.035), transparent 72%);

@@ -117,6 +117,35 @@ describe("名兽案 · 双契总览直接接卷首,当前、可追与全谱各�
     expect(view, "名号谱与灵兽谱继续只循环当前窗口").not.toContain('v-for="row in titleRows"');
   });
 
+  it("名号谱与灵兽谱默认合着 —— 参考目录不进首屏", () => {
+    const view = source("src/views/TitlesView.vue");
+
+    /*
+     * 这两章是**参考目录**:三十顶名号、四十只灵兽逐条查,回答「为什么 / 从哪来」,
+     * 不回答「现在做什么」—— 此刻佩印与此刻相伴都在章壹。此前两章同时摊开,
+     * 实测正文 1220px,玩家要先滚过三十顶才够得着灵兽那一册。
+     * 与藏珍的「已达成」、洞府的「七作」、道躯的「行藏」同一条收法。
+     */
+    expect(view, "名号谱有开合账行").toContain("data-title-book-toggle");
+    expect(view, "灵兽谱有开合账行").toContain("data-pet-book-toggle");
+    expect(view, "名号谱账行报开合状态").toContain(':aria-expanded="titleBookOpen"');
+    expect(view, "灵兽谱账行报开合状态").toContain(':aria-expanded="petBookOpen"');
+    expect(view, "名号谱默认合着").toMatch(/const titleBookOpen = ref\(false\)/);
+    expect(view, "灵兽谱默认合着").toMatch(/const petBookOpen = ref\(false\)/);
+    expect(view, "名号谱由 v-show 收起(行仍在 DOM,判据与读屏照旧找得到)").toContain(
+      'v-show="titleBookOpen"',
+    );
+    expect(view, "灵兽谱由 v-show 收起").toContain('v-show="petBookOpen"');
+    expect(view, "账行要指向自己那一册").toContain(':aria-controls="titleBookBodyId"');
+    expect(view, "账行要指向自己那一册").toContain(':aria-controls="petBookBodyId"');
+    expect(view, "收的是版面不是内容:两册的行循环都还在").toContain(
+      'v-for="row in titlePage.visible"',
+    );
+    expect(view).toContain('v-for="row in petPage.visible"');
+    expect(view, "账行读数走同一份 total/owned,不另数一遍").toContain("titleMeter.value.owned");
+    expect(view, "账行读数走同一份 total/owned,不另数一遍").toContain("petMeter.value.owned");
+  });
+
   it("双契总览、此刻与全谱并回连续纸面,不再一页套三层边框", () => {
     const view = source("src/views/TitlesView.vue");
     const switcher = source("src/components/common/NameBeastSwitch.vue");

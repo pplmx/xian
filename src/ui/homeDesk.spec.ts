@@ -99,11 +99,39 @@ describe("首页指挥台 · 先给今日一步，再摊长期账", () => {
     );
     expect(view).toContain("dailyRowsOf(dailyStateOf(quests.daily), quests.counters)");
     expect(view).toMatch(/\{\{ dailyDoneCount \}\}\/\{\{ dailyRows\.length \}\}/);
-    expect(view).toContain('v-for="(t, index) in dailyRows"');
     expect(view).toContain("keepNumberUnit(t.desc)");
     expect(view).toContain("得 {{ rewardText(t.reward) }}");
     expect(view).toMatch(/t\.progress \/ Math\.max\(1, t\.target\)/);
-    expect(view).toContain('t.done ? "已成" : `${t.progress}/${t.target}`');
+    expect(view).toContain("{{ t.progress }}/{{ t.target }}");
+  });
+
+  it("日课分两叠:未做的留在页上,已做的收成一叠 —— 收的是版面,不是内容", () => {
+    const view = source("src/views/HomeView.vue");
+    const css = source("src/styles/pages/home.css");
+
+    /*
+     * 八行同权铺开常驻 571px —— 占首页 39%,而其中已经做完的那几行不再回答
+     * 「今天该做什么」。这与藏珍的「已达成」、洞府的「七作」、道躯的「行藏」
+     * 是同一条分层纪律的第四处。
+     */
+    expect(view, "两叠从同一组 dailyRows 分出").toContain(
+      "dailyOrderedRows.value.filter((row) => !row.done)",
+    );
+    expect(view, "已成那一叠从同一组 dailyRows 分出").toContain(
+      "dailyOrderedRows.value.filter((row) => row.done)",
+    );
+    expect(view, "行号是它在今天八笔里的位次,不是本叠里的位次").toContain(
+      "dailyRows.value.map((row, index) => ({ ...row, ordinal: index + 1 }))",
+    );
+    expect(view, "未做的逐行仍铺在页上").toContain('v-for="t in dailyPendingRows"');
+    expect(view, "已成收成一叠").toContain('v-for="t in dailyDoneRows"');
+    expect(view, "达成叠默认合着").toMatch(/const dailyDoneOpen = ref\(false\)/);
+    expect(view, "达成叠由 v-show 收起(行仍在 DOM)").toContain('v-show="dailyDoneOpen"');
+    expect(view, "展开键要报开合状态").toContain(':aria-expanded="dailyDoneOpen"');
+    expect(view, "展开键要指向自己那一叠").toContain('aria-controls="home-done-stack"');
+    expect(view, "两叠的每一行仍带同一种日课指纹").toContain(':data-daily-row="t.id"');
+    expect(view, "赏格与进度一字不少").toContain("得 {{ rewardText(t.reward) }}");
+    expect(css, "达成叠要有自己的样式入口").toContain(".home-daily__done-toggle");
   });
 
   it("主线与门径仍报决策真值，不给假按钮或另写一套数", () => {
@@ -116,8 +144,27 @@ describe("首页指挥台 · 先给今日一步，再摊长期账", () => {
     expect(home).toContain("离线 {{ offlineHrs }} 时");
     expect(home).toContain("已营 {{ dongfu.builtCount }}/{{ BUILDINGS.length }}");
     expect(home).toContain("今日天道未做");
-    expect(home).not.toContain('role="button"');
-    expect(home).not.toContain("<button");
+    /*
+     * 首页不摆「假按钮」——写着一个动作用、按下去什么都不发生的那种。
+     *
+     * 原判据是「模板里一个 <button> 都没有」,那是**当年**的近似:当时首页确实
+     * 全是只读账行,一个真动作用都没有。现在日课的「已成 N 笔」要开合一叠档案,
+     * 那是一枚真控件(有 aria-expanded / aria-controls / 真的会变),不是假按钮。
+     * 故判据收到它真正要守的那件事上:页上的 <button> 必须都带开合或跳转语义 ——
+     * 不许出现没有任何 ARIA、点了也不走的裸按钮。
+     */
+    const buttons = [...home.matchAll(/<button\b[^>]*>/g)].map((m) => m[0]);
+    for (const tag of buttons) {
+      const isReal =
+        /aria-expanded=/.test(tag) ||
+        /@click=/.test(tag) ||
+        /:to=/.test(tag) ||
+        /disabled/.test(tag);
+      expect(isReal, `首页出现了一枚只挂着样子、没有动作语义的 <button>:${tag.slice(0, 90)}`).toBe(
+        true,
+      );
+    }
+    expect(home, "首页仍不许摆 role=button 的假控件").not.toContain('role="button"');
   });
 
   it("620px 起道途与日课并读，今日一步横排报签，359px 以下先收装饰法球", () => {

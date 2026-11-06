@@ -502,14 +502,10 @@
     line-height: 1.55;
     overflow-wrap: anywhere;
   }
-  .soul-principle__toggle {
-    margin-top: 0.4rem;
-    color: rgb(var(--color-ink-faint-rgb));
-  }
   .soul-principle__more {
     display: grid;
     gap: 0.36rem;
-    margin-top: 0.36rem;
+    margin-top: 0.44rem;
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.07);
     padding-top: 0.44rem;
     color: rgb(var(--color-ink-faint-rgb));
