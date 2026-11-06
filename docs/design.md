@@ -2253,6 +2253,62 @@ GongfaSection / ArtifactPanel / SlotCandidatesDialog / TitlesView / InventoryVie
 判据 `ui/offlineQualitySeal.spec` 三条:有章 / 章盖在拾得装备循环的每一件上
 (只 import 不渲染不算)/ 品阶色仍在(双线索)。
 
+### 破了自己的纪录 —— 返回值写了 boolean,四处调用都没接
+
+`endgame.updateRecord()` 会告诉你「这次是不是刷新了纪录」:
+
+```ts
+function updateRecord(id, value, life, note, better): boolean {
+  const prev = records.value[id];
+  if (prev && (better === "min" ? value >= prev.value : value <= prev.value)) return false;
+  records.value = { ...records.value, [id]: { value, life, note } };
+  return true;   // ← 就是它
+}
+```
+
+而**四处调用全都没接**:
+
+```ts
+endgame.updateRecord("fastest_world", totalRounds, life, worldName, "min");   // 丢掉
+endgame.updateRecord("highest_pact", ...);                                   // 丢掉
+endgame.updateRecord("biggest_reward", ...);                                 // 丢掉
+endgame.updateRecord("best_custom", ...);                                    // 丢掉
+```
+
+于是玩家打出自己最短的一次破界、最厚的一笔道源,屏幕上一句话都没有 —— 纪录只悄悄
+落在履历页的数字里,而放置游戏的玩家几乎不会主动去翻那一页。
+
+#### 为什么这一处值得修
+
+「胜于旧我」这一族在这一作里是被认真对待过的:重写道痕打赢当年之我,会给一条
+`【胜于旧我】…回合 → …回合` 的 rare 提示。**破纪录是同一件事的另一种形态**,
+报喜的规格也该一致。
+
+而返回值本来就摆在那里 —— 写了 `boolean` 却没人读,等于机制做了、线没接。
+
+#### 改法:合成一句,不是各报一条
+
+一次破界可能同时刷新两三项(最短回合 + 最高风险 + 最厚之赏)。各报一条会让那次远征
+连弹三条提示。故先收齐再合:
+
+```text
+【胜于旧我】最快破界 12 回合 · 最高风险 ×1.8 · 单程最厚之赏 2,400 道源
+```
+
+没有刷新则一声不响 —— 纪录每程都可能平掉,报了就是噪音。
+
+`best_custom` 那条另作处理:它本来就有「挑战书《X》功成!道源 +N」的提示,破纪录时
+在末尾追加「 —— 也是你写过的最厚一笔」,不另起一条。
+
+判据 `ui/recordBrokenNotice.spec`:`trackClearRecords` 要把 `updateRecord` 的返回
+当条件用(不是文件里出现过 `notify`)/ 报喜要在刷新时才发生 / 四项纪录仍各自更新。
+
+#### 这一类的形状
+
+前几轮找到的多是「数据有、界面没用」或「该说没说」。这一处更接近**接线漏了**:
+函数签名把「是否刷新」交出来了,调用方没接。扫法是看**返回 boolean 的函数,
+调用处有没有用它的值** —— 这类漏接不会报错,只会让一段逻辑白写。
+
 ### 离线归来:三档际遇在那一屏上塌成了一档
 
 历练途中的际遇分三档,这一作把它做得很清楚(历练页上直接写着):

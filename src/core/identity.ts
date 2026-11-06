@@ -8,6 +8,8 @@ import { NO_PACT_MULT, pactDef } from "@/data/pacts";
 import { PACT_END_HP_FLOOR } from "@/data/constants";
 import { usePlayerStore } from "@/stores/player";
 import { useEndgameStore } from "@/stores/endgame";
+import { notify } from "./notify";
+import { formatNum } from "@/utils/format";
 
 /** 无伤契哪一档气血 —— 与契约判定同读 PACT_END_HP_FLOOR,不在这里另写「八成」 */
 const WUSHANG_HP_TEXT = `${PACT_END_HP_FLOOR * 100}%`;
@@ -218,16 +220,42 @@ export function trackClearRecords(
   const endgame = useEndgameStore();
   const player = usePlayerStore();
   const life = player.reincarnation.count + 1;
-  endgame.updateRecord("fastest_world", totalRounds, life, worldName, "min");
+  /**
+   * 破了自己的纪录,要说一声。
+   *
+   * `updateRecord` 一直返回「这次是不是刷新了」,但四处调用都把返回值丢了 ——
+   * 于是玩家打出最短的一次破界、最厚的一笔道源,屏幕上一句话都没有,纪录只悄悄
+   * 落在履历页的数字里。而放置游戏的玩家几乎不会主动去翻那一页。
+   *
+   * 「胜于旧我」这一族在这一作里是被认真对待过的:重写道痕打赢当年之我会给一条
+   * `【胜于旧我】…回合 → …回合` 的 rare 提示。破纪录是同一件事的另一种形态,
+   * 报喜的规格也该一致。
+   *
+   * 一次破界可能同时刷新两三项 —— 不能各报一条(那次远征会连弹三条)。故先收齐,
+   * 再合成一句话报。没有刷新则一声不响:纪录本来就每程都可能平掉,报了就是噪音。
+   */
+  const broken: string[] = [];
+  if (endgame.updateRecord("fastest_world", totalRounds, life, worldName, "min")) {
+    broken.push(`最快破界 ${totalRounds} 回合`);
+  }
   if (pactId) {
     const mult = pactDef(pactId)?.sourceMult ?? NO_PACT_MULT;
-    endgame.updateRecord(
-      "highest_pact",
-      Math.round(mult * 10) / 10,
-      life,
-      `${worldName}·${pactDef(pactId)?.name ?? ""}`,
-      "max",
-    );
+    if (
+      endgame.updateRecord(
+        "highest_pact",
+        Math.round(mult * 10) / 10,
+        life,
+        `${worldName}·${pactDef(pactId)?.name ?? ""}`,
+        "max",
+      )
+    ) {
+      broken.push(`最高风险 ×${Math.round(mult * 10) / 10}`);
+    }
   }
-  if (reward > 0) endgame.updateRecord("biggest_reward", reward, life, worldName, "max");
+  if (reward > 0 && endgame.updateRecord("biggest_reward", reward, life, worldName, "max")) {
+    broken.push(`单程最厚之赏 ${formatNum(reward)} 道源`);
+  }
+  if (broken.length > 0) {
+    notify(`【胜于旧我】${broken.join(" · ")}`, "rare");
+  }
 }

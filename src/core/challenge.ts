@@ -169,8 +169,18 @@ export function undertakeChallenge(
     if (!init.isDaily) {
       recordMilestone("first_custom");
       const player2 = usePlayerStore();
-      endgame.updateRecord("best_custom", reward, player2.reincarnation.count + 1, name, "max");
-      notify(`挑战书《${name}》功成!道源 +${reward}`, "rare");
+      // 纪录刷新与「功成」是两件事:功成每场都报,破纪录只在那一次多说一句
+      const brokeCustomRecord = endgame.updateRecord(
+        "best_custom",
+        reward,
+        player2.reincarnation.count + 1,
+        name,
+        "max",
+      );
+      notify(
+        `挑战书《${name}》功成!道源 +${reward}${brokeCustomRecord ? " —— 也是你写过的最厚一笔" : ""}`,
+        "rare",
+      );
     } else {
       notify(`今日《${name}》功成!道源 +${reward}`, "rare");
     }
