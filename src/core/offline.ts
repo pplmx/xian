@@ -225,10 +225,19 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
     recycledEquipment += res.recycledEquipment;
     if (res.notableLines.length === 0) return;
     const same = eventReceipts.find(
-      (r) => r.title === res.title && r.lines.join("\n") === res.notableLines.join("\n"),
+      (r) =>
+        r.title === res.title &&
+        r.tier === res.eventTier &&
+        r.lines.join("\n") === res.notableLines.join("\n"),
     );
     if (same) same.count += 1;
-    else eventReceipts.push({ title: res.title, lines: res.notableLines, count: 1 });
+    else
+      eventReceipts.push({
+        title: res.title,
+        tier: res.eventTier,
+        lines: res.notableLines,
+        count: 1,
+      });
   };
 
   // ---- 修炼 ----

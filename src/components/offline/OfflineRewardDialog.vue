@@ -98,7 +98,26 @@
             <ul class="space-y-2">
               <li v-for="(receipt, i) in eventReceipts" :key="i">
                 <p class="flex items-baseline justify-between gap-2 text-body">
-                  <span class="font-kai text-ink-soft">{{ receipt.title }}</span>
+                  <span class="flex items-baseline gap-1.5 min-w-0">
+                    <span class="font-kai text-ink-soft">{{ receipt.title }}</span>
+                    <!--
+                      档位印 —— 三档稀度差着量级(约每 9 / 20 / 450 程一次),而离线归来
+                      这一屏原先把三档塌成了一档:一次千载难逢的机缘与一次路边小事并排
+                      摆着、长得一样。玩家不在时发生的一切,只有这一屏能告诉他。
+
+                      形制沿用「墨字 + 淡底」,不加第三个强色(见 docs/design 的配色契约);
+                      色取 eventTierDef 的 color,与历练页上那三档同源。
+                    -->
+                    <span
+                      class="shrink-0 rounded-[2px] border px-1 py-px text-note leading-none"
+                      :style="{
+                        color: eventTierDef(receipt.tier).color,
+                        borderColor: eventTierDef(receipt.tier).color,
+                      }"
+                      :data-offline-event-tier="receipt.tier"
+                      >{{ eventTierDef(receipt.tier).name }}</span
+                    >
+                  </span>
                   <span v-if="receipt.count > 1" class="tabular text-ink-faint">
                     ×{{ receipt.count }}
                   </span>
@@ -128,6 +147,7 @@ import { usePlayerStore } from "@/stores/player";
 import { formatDuration, formatGN, formatNum, formatPercent } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import { qualityDef } from "@/data/qualities";
+import { eventTierDef } from "@/core/eventTier";
 import { playSfx } from "@/core/audio";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";

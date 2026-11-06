@@ -1188,6 +1188,14 @@ export interface OfflineSummary {
 
 export interface OfflineEventReceipt {
   title: string;
+  /**
+   * 这次际遇属于哪一档(际遇 / 奇缘 / 机缘)。
+   *
+   * 三档的稀度差着量级(约每 9 程 / 20 程 / 450 程),但离线归来的回执原先只有
+   * 标题与明细 —— 一次千载难逢的机缘和一次路边小事并排摆着、长得一样。
+   * 玩家不在的时候发生的一切,只有这一屏能告诉他。
+   */
+  tier: import("@/core/eventTier").EventTier;
   /** 同一次际遇的可辨认结果;资源类已由上方总账汇总,这里不重复 */
   lines: string[];
   /** 同名同结果折叠次数 */

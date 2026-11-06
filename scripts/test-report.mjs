@@ -454,6 +454,7 @@ const CATEGORIES = [
       "marketPillNote",
       "breakthroughLore",
       "breakthroughFailInjury",
+      "offlineEventTier",
       "daoPathCoverage",
     ],
   },

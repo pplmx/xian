@@ -8,6 +8,7 @@ import { add, subClamp } from "@/utils/gnum";
 import { EVENTS, FORTUNE_EVENTS, eventDef } from "@/data/events";
 import { CHAINS, CHAIN_EVENTS, chainOfEvent } from "@/data/chains";
 import { realmDef } from "@/data/realms";
+import { eventTierOf, type EventTier } from "./eventTier";
 // 三档触发概率是同一份数据(见 data/constants 那段注释):际遇在 exploration 掷,
 // 奇缘与机缘在这里从上一步的结果里再掷一次。数字不在本文件另写一遍 ——
 // core/eventTier 要把这条乘法链讲给玩家听,两边各写一份就会互相撒谎。
@@ -452,6 +453,8 @@ function randomEventPill(major: number): string | null {
 
 export interface EventResolution {
   title: string;
+  /** 这次际遇的档位 —— 由事件 id 经 eventTierOf 推出,不在这里另立判据 */
+  eventTier: EventTier;
   outcomeText: string;
   lines: string[];
   /** 离线归来回执要单独说明的所得;资源类只说来源,不重抄总账数字 */
@@ -567,6 +570,8 @@ export function resolveEventChoice(
   }
   return {
     title: def.title,
+    // 档位从事件 id 推 —— 三档的口径只在 core/eventTier 一处,这里不再判一遍
+    eventTier: eventTierOf(def.id),
     outcomeText: receipt.text,
     lines: receipt.lines,
     notableLines: applyCtx.notableLines,
