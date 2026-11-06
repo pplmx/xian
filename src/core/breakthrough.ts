@@ -2,7 +2,9 @@
  * 突破服务 —— 成功率计算 / 天劫 / 结算
  */
 import { mulberry32, rng } from "@/utils/random";
-import { formatPercent } from "@/utils/format";
+import { formatDuration, formatPercent } from "@/utils/format";
+import { buffDef } from "@/data/buffs";
+import { modsText } from "@/data/statNames";
 import { realmDef, realmLabel, worldOf, isWorldEntry } from "@/data/realms";
 import {
   BT_FAIL_EXP_LOSS,
@@ -298,7 +300,22 @@ export function attemptBreakthrough(): BreakthroughView | null {
     } else {
       parts.push(`修为折损 ${formatPercent(BT_FAIL_EXP_LOSS * (1 - refund))}`);
     }
-    parts.push("伤势要先调息");
+    /*
+     * 伤势这一句要摊开 —— 「要先调息」是形容词,玩家读不出代价。
+     *
+     * 实际是 150 秒里修炼速度砍半、攻防各降两成(buffDef 的数据),而这一屏是全屏
+     * 弹窗,正盖在修行页那些「静坐调息 / 聚气丹」按钮上,玩家在这里看不到 buff 列表
+     * (见 AGENTS.md「决策信息完整」:代价、生效时长都要摊开,不能只给定性形容词)。
+     *
+     * 时长取 buffDef 的 durationSec、效果取它的 mods 交给 modsText —— 两样都不手抄,
+     * 该常数一改,这一句自己跟着变。
+     */
+    const injury = buffDef("injury");
+    parts.push(
+      injury
+        ? `伤势 ${formatDuration(injury.durationSec)} —— ${modsText(injury.mods)}`
+        : "伤势要先调息",
+    );
     if (prepUsed) parts.push("下一次突破仍需重新准备");
     view = {
       success: false,
