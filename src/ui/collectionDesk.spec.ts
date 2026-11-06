@@ -215,6 +215,71 @@ describe("藏珍双阁 · 功名入榜，九柜纳珍", () => {
     );
   });
 
+  it("一组只先铺一批「在追」—— 新号不该一开页就撞见十九行境界", () => {
+    const view = source("src/views/CollectionView.vue");
+    const css = source("src/styles/pages/collection.css");
+
+    /*
+     * 实测(390×844,新号夹具):整组一次铺开时 `/collection` 是 2550px = 3.02 屏,
+     * 全站最长的一页。其中 1260px 是「境界精进」那 19 行 —— 第一行叫「金丹得道」,
+     * 而玩家还在炼气。那是「以后再说」,不该与「现在能做什么」抢同一屏。
+     *
+     * 与九柜、名号谱、法宝册同一条纪律:先给一批,玩家显式续开再放下一批,
+     * 排序与整份清单仍留在数据层。收的是版面,不是内容。
+     */
+    expect(view, "一组每次只铺一批").toMatch(/const ACHIEVEMENT_GROUP_BATCH = \d+/);
+    expect(view, "在追按窗口取").toMatch(/active\.slice\(0, Math\.max\(ACHIEVEMENT_GROUP_BATCH/);
+    expect(view, "要能算出这一组还剩几枚没铺").toContain("function groupHiddenOf(");
+    expect(view, "续开只放一批,不放零头").toMatch(
+      /Math\.min\(ACHIEVEMENT_GROUP_BATCH, groupHiddenOf\(group\)\)/,
+    );
+    expect(view, "续开键只在这组确实还有余量时出现").toContain('v-if="groupHiddenOf(g) > 0"');
+    expect(view, "续开键带稳定落点").toContain(':data-achievement-more="g.direction"');
+    expect(view, "续开键报下一批件数(与名号谱·法宝册同款 data-promised)").toContain(
+      ':data-promised="nextGroupBatchOf(g)"',
+    );
+    expect(view, "换一路要回到首批,不继承上一路翻到第几批").toMatch(
+      /function toggleGroup[\s\S]{0,260}?groupLimits\.value = \{\}/,
+    );
+
+    expect(css, "续开键用账线收口,不另起一张卡").toMatch(
+      /\.achievement-scroll__more \{[\s\S]{0,260}?border-top:/,
+    );
+    expect(css, "续开键是行动色").toMatch(
+      /\.achievement-scroll__more \{[\s\S]{0,420}?color: rgb\(var\(--color-cinnabar-rgb\)\)/,
+    );
+  });
+
+  it("最近三策跳得到分批窗口之外的那一行 —— 跳不过去不许静默", () => {
+    const view = source("src/views/CollectionView.vue");
+
+    /*
+     * 这一条是分批引入的回归,而且是**最坏的那种**:静默失败。
+     *
+     * 一组只先铺一批,而「最近三策」可能指向第 9 行以后 —— 那时
+     * `[data-achievement-id]` 根本没进 DOM,`scrollIntoView` 拿 null 之后
+     * `?.` 直接跳过:玩家点了「02 金丹得道」,页面上什么都没发生,控制台也没有
+     * 一条错。判据因此必须钉住「先开窗、再滚动」这个顺序本身。
+     */
+    const revealStart = view.indexOf("function revealAchievement(row: AchievementRow): void {");
+    const reveal = view.slice(revealStart, view.indexOf("const collectionCats", revealStart));
+    expect(reveal, "跳转前要按目标位次把窗口开到它出现").toContain(
+      "groupLimits.value = { ...groupLimits.value, [row.direction]: batch }",
+    );
+    expect(reveal, "窗口按批边界取整,不逐枚 +1").toContain(
+      "Math.ceil((index + 1) / ACHIEVEMENT_GROUP_BATCH) * ACHIEVEMENT_GROUP_BATCH",
+    );
+    // 开窗在前、滚动在后 —— 反过来就还是「滚一个不存在的元素」。
+    // 用最后一次出现:注释里也会写 scrollIntoView(解释这条判据守什么),不能撞上。
+    expect(
+      reveal.indexOf("groupLimits.value = "),
+      "必须先开窗再 scrollIntoView,否则滚的是一个还没渲染的元素",
+    ).toBeLessThan(reveal.lastIndexOf("scrollIntoView"));
+    expect(reveal, "目标不在窗口里时要能算出来").toContain(
+      "findIndex((r) => r.def.id === row.def.id)",
+    );
+  });
+
   it("九柜是三列柜架，功名榜同排榜牌，极窄档退回两列仍可读", () => {
     const css = source("src/style.css");
     const cabinet = source("src/components/common/CollectionCabinet.vue");

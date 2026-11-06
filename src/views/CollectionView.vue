@@ -176,6 +176,29 @@
                   <AchievementEntry v-for="row in activeRowsOf(g)" :key="row.def.id" :row="row" />
 
                   <!--
+                    一组只先铺一批「在追」。
+
+                    此前是整组一次铺开:境界精进那组 21 行,新号打开藏珍页就有 19 行
+                    同时进 DOM —— 那一组的第一行是「金丹得道」,而玩家还在炼气。
+                    实测新号 `/collection` 2550px(3.02 屏),是全站最长的一页,
+                    而这 1260px 里绝大多数是同一屏里互相挤位的「以后再说」。
+
+                    与九柜、名号谱、法宝册同一条:先给一批,玩家显式续开再放下一批,
+                    排序与整份清单仍留在数据层。收的是版面,不是内容 ——
+                    逐行的条件、进度与赏格一条不少,只是不再同时铺在屏上。
+                  -->
+                  <button
+                    v-if="groupHiddenOf(g) > 0"
+                    type="button"
+                    class="achievement-scroll__more"
+                    :data-achievement-more="g.direction"
+                    :data-promised="nextGroupBatchOf(g)"
+                    @click="showMoreGroup(g)"
+                  >
+                    再看 {{ nextGroupBatchOf(g) }} 枚 · 余 {{ groupHiddenOf(g) }}
+                  </button>
+
+                  <!--
                     已达成收成一叠,默认合着。
 
                     一组里「在追」与「已成」原是同一条长队:境界精进那组 21 行,
@@ -599,8 +622,37 @@ type AchievementGroupRow = {
   nearest: AchievementRow | null;
 };
 
+/**
+ * 一组「在追」的分批窗口。
+ *
+ * 与九柜(COLLECTION_RENDER_BATCH)同一条纪律:一次只铺一批,玩家显式续开再放下一批。
+ * 展开态换组时把窗口也归零 —— 换一路是来看**那一路**还差什么,不该继承上一路翻到第几批。
+ */
+const ACHIEVEMENT_GROUP_BATCH = 8;
+const groupLimits = ref<Record<string, number>>({});
+
 function activeRowsOf(group: AchievementGroupRow): AchievementRow[] {
-  return group.rows.filter((row) => !row.done);
+  const active = group.rows.filter((row) => !row.done);
+  const limit = groupLimits.value[group.direction] ?? ACHIEVEMENT_GROUP_BATCH;
+  return active.slice(0, Math.max(ACHIEVEMENT_GROUP_BATCH, limit));
+}
+
+/** 这一组还有多少枚在追的没铺出来 */
+function groupHiddenOf(group: AchievementGroupRow): number {
+  return group.rows.filter((row) => !row.done).length - activeRowsOf(group).length;
+}
+
+/** 续开一次放几枚 —— 与一批同宽,不让末次开出一个奇怪的零头 */
+function nextGroupBatchOf(group: AchievementGroupRow): number {
+  return Math.min(ACHIEVEMENT_GROUP_BATCH, groupHiddenOf(group));
+}
+
+function showMoreGroup(group: AchievementGroupRow): void {
+  const now = groupLimits.value[group.direction] ?? ACHIEVEMENT_GROUP_BATCH;
+  groupLimits.value = {
+    ...groupLimits.value,
+    [group.direction]: now + ACHIEVEMENT_GROUP_BATCH,
+  };
 }
 
 function doneRowsOf(group: AchievementGroupRow): AchievementRow[] {
@@ -618,6 +670,8 @@ function doneBodyId(index: number): string {
 function toggleGroup(direction: string): void {
   openDirection.value = openDirection.value === direction ? null : direction;
   doneDirection.value = null;
+  // 换一路就回到首批 —— 展开一组是来看那一路还差什么,不是接着上一路翻
+  groupLimits.value = {};
 }
 
 function groupBodyId(index: number): string {
@@ -627,6 +681,24 @@ function groupBodyId(index: number): string {
 function revealAchievement(row: AchievementRow): void {
   openDirection.value = row.direction;
   doneDirection.value = null;
+  /*
+   * 跳过去之前先把窗口开到**那一行确实在 DOM 里**。
+   *
+   * 一组只先铺一批(ACHIEVEMENT_GROUP_BATCH),而「最近三策」可能指向第 9 行以后 ——
+   * 那时 `[data-achievement-id]` 根本没渲染,scrollIntoView 拿 null 静默跳过,
+   * 玩家点了「02 金丹得道」却什么都没发生,而且**没有任何报错**。
+   * 故先按目标行在本组「在追」里的位次把窗口放大到够它出现,再滚过去。
+   */
+  const group = achievementGroups.value.find((g) => g.direction === row.direction);
+  if (group) {
+    const active = group.rows.filter((r) => !r.done);
+    const index = active.findIndex((r) => r.def.id === row.def.id);
+    if (index >= (groupLimits.value[row.direction] ?? ACHIEVEMENT_GROUP_BATCH)) {
+      // 开窗开到这个位次上取整的那一批边界,不逐枚 +1 地开
+      const batch = Math.ceil((index + 1) / ACHIEVEMENT_GROUP_BATCH) * ACHIEVEMENT_GROUP_BATCH;
+      groupLimits.value = { ...groupLimits.value, [row.direction]: batch };
+    }
+  }
   void nextTick(() => {
     const target = document.querySelector<HTMLElement>(`[data-achievement-id="${row.def.id}"]`);
     target?.scrollIntoView({ block: "center", behavior: "smooth" });

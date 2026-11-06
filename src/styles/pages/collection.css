@@ -407,6 +407,36 @@
     white-space: nowrap;
   }
 
+  /*
+   * 「再看 N 枚 · 余 M」—— 一组在追的分批续开。
+   *
+   * 与九柜的 .collection-paging 同一条纪律:先给一批,玩家显式续开再放下一批。
+   * 用账线收口而不是另起一张卡 —— 它接在逐行清单末尾,是清单的续页,不是新的分区。
+   */
+  .achievement-scroll__more {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 28px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.12rem 0.4rem;
+    border: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    background: transparent;
+    padding: 0.55rem 0.12rem;
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.06em;
+    text-align: center;
+  }
+
+  .achievement-scroll__more:active {
+    opacity: 0.6;
+  }
+
   .achievement-scroll__done {
     display: flex;
     width: 100%;
