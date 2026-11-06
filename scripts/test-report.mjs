@@ -462,6 +462,7 @@ const CATEGORIES = [
       "mortalFateNotInCombat",
       "expBankedCarries",
       "samsaraInsightOnly",
+      "powerRatingNoRank",
       "daoPathCoverage",
     ],
   },
