@@ -16,6 +16,7 @@ import { ACHIEVEMENTS } from "@/data/achievements";
 import { MAIN_QUESTS } from "@/data/quests";
 import { LIFESPAN_CRITICAL_RATIO } from "@/data/constants";
 import { titleDef } from "@/data/titles";
+import { modsText } from "@/data/statNames";
 import { qualityDef } from "@/data/qualities";
 import { pillDef } from "@/data/pills";
 import { stoneByTier } from "./formulas";
@@ -130,7 +131,20 @@ export function grantReward(bundle: RewardBundle, quiet = false): string[] {
   if (bundle.titleId && titleDef(bundle.titleId)) {
     if (quests.ownTitle(bundle.titleId)) {
       lines.push(`名号「${titleDef(bundle.titleId)!.name}」`);
-      if (!quiet) notify(`获得名号「${titleDef(bundle.titleId)!.name}」`, "rare");
+      /*
+       * 名号要说清它给了什么。29 个称号**全部带 mods**,而原先这一行只报名字 ——
+       * 称号价值的一半在加成上,玩家拿到手却读不到。
+       *
+       * 而名号页是**要专门去翻**的:刚打完一场只看到一行「获得名号」,不会立刻想到
+       * 「我去名号页看看它加了什么」;等想起来,那一刻已经过去了。
+       *
+       * 加成文案走 modsText —— 与装备词条、buff 同一口径,不在这里另拼一份百分数。
+       */
+      if (!quiet) {
+        const t = titleDef(bundle.titleId)!;
+        const bonus = modsText(t.mods);
+        notify(`获得名号「${t.name}」${bonus ? ` —— ${bonus}` : ""}`, "rare");
+      }
     }
   }
   return lines;

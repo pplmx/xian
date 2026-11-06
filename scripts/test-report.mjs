@@ -456,6 +456,7 @@ const CATEGORIES = [
       "breakthroughFailInjury",
       "offlineEventTier",
       "recordBrokenNotice",
+      "titleModsNotice",
       "daoPathCoverage",
     ],
   },

@@ -16,6 +16,7 @@ import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { resetWorld } from "./parityShared";
 import { ACHIEVEMENTS } from "@/data/achievements";
 import { titleDef } from "@/data/titles";
+import { modsText } from "@/data/statNames";
 import {
   checkAchievements,
   checkCustomAchievement,
@@ -89,8 +90,15 @@ describe("成就解锁对账 —— 解几枚、按什么顺序、发什么", ()
       const expected: string[] = [];
       for (const id of frozen) {
         const def = ACHIEVEMENTS.find((a) => a.id === id)!;
-        if (def.reward?.titleId && titleDef(def.reward.titleId))
-          expected.push(`获得名号「${titleDef(def.reward.titleId)!.name}」`);
+        if (def.reward?.titleId && titleDef(def.reward.titleId)) {
+          /*
+           * 名号的报喜带上它的加成(见 ui/titleModsNotice.spec)—— 这里同步,且**照样
+           * 从数据现取**:判据仍守「解锁了哪些、顺序对不对」这条实质,不把文案格式钉死。
+           */
+          const t = titleDef(def.reward.titleId)!;
+          const bonus = modsText(t.mods);
+          expected.push(`获得名号「${t.name}」${bonus ? ` —— ${bonus}` : ""}`);
+        }
         expected.push(`成就达成「${def.name}」`);
       }
       expect(toasts, label).toEqual(expected);
