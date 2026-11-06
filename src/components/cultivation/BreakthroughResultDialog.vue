@@ -69,6 +69,22 @@
       >
         大 境
       </p>
+      <!--
+        这一重天的来历 —— 界域志里那句 lore,挪到**刚跨进去的这一刻**说。
+
+        印里印着它是哪一境、章里说这是大境,而它「是什么」一直没被说出来。而 lore
+        本来讲的就是这重天的出处(「承渡劫。《钟吕传道集》分仙为五等……」)——
+        在界域志里读到,和在天劫刚渡完的那一瞬读到,分量完全不同。
+
+        只在大境显示:小层推进是节拍器,不该每次都念一段出处。
+      -->
+      <p
+        v-if="view.success && view.isMajor && view.toRealmLore"
+        class="t-body mx-auto mt-2 max-w-[46ch] text-ink-soft"
+        data-breakthrough-lore
+      >
+        {{ view.toRealmLore }}
+      </p>
       <p class="mt-1 text-title text-ink-soft">
         {{ view.fromLabel }}
         <span class="mx-1 text-ink-faint">→</span>

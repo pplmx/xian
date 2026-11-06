@@ -1283,6 +1283,14 @@ export interface BreakthroughView {
    * 也不另 import 境界表(那会与读数分成两本账)。
    */
   toRealmName: string;
+  /**
+   * 跨到的那一境的**来历**(境界表里的 `lore`:这重天怎么来的、出处何在)。
+   *
+   * 与 `toRealmName` 同一条纪律:由 core 从境界表取,弹窗不自己查表。
+   * 大境那一刻是这一作最重的里程碑,印与章都做好了,唯独没说它是什么 ——
+   * 而 `lore` 这句话本来就是为这一刻写的。
+   */
+  toRealmLore: string;
   tribulationLog: string[];
   message: string;
   /**

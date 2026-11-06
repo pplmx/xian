@@ -452,6 +452,7 @@ const CATEGORIES = [
       "exploreSessionResume",
       "pauseShiftsAllClocks",
       "marketPillNote",
+      "breakthroughLore",
       "daoPathCoverage",
     ],
   },
