@@ -67,20 +67,22 @@
                   <span class="adventure-briefing__eyebrow">途中三档</span>
                   <span>{{ chainPending ? "缘在续,奇缘会来" : "缘未起,奇缘暂不现身" }}</span>
                 </div>
-                <div class="adventure-briefing__tier-grid">
-                  <div
-                    v-for="t in EVENT_TIERS"
-                    :key="t.id"
-                    :data-event-tier="t.id"
-                    class="adventure-briefing__tier"
-                    :style="{ '--tier-color': t.color }"
-                  >
-                    <span class="adventure-briefing__tier-mark" aria-hidden="true" />
-                    <span class="adventure-briefing__tier-name">{{ t.name }}</span>
-                    <span class="adventure-briefing__tier-brief">{{ t.brief }}</span>
-                    <strong class="tabular">{{ tierOddsText(t.id, chainPending) }}</strong>
+                <FolioNote name="adventure-tiers" label="注 · 三档来由与概率">
+                  <div class="adventure-briefing__tier-grid">
+                    <div
+                      v-for="t in EVENT_TIERS"
+                      :key="t.id"
+                      :data-event-tier="t.id"
+                      class="adventure-briefing__tier"
+                      :style="{ '--tier-color': t.color }"
+                    >
+                      <span class="adventure-briefing__tier-mark" aria-hidden="true" />
+                      <span class="adventure-briefing__tier-name">{{ t.name }}</span>
+                      <span class="adventure-briefing__tier-brief">{{ t.brief }}</span>
+                      <strong class="tabular">{{ tierOddsText(t.id, chainPending) }}</strong>
+                    </div>
                   </div>
-                </div>
+                </FolioNote>
               </div>
               <div
                 v-if="player.suppressedRegions.length > 0 || settings.dndEvents"
@@ -499,12 +501,15 @@
               <span class="adventure-register__state">镇服 · 复聚</span>
             </header>
             <div class="adventure-register__body">
-              <p class="adventure-rules__copy">
-                镇压门槛:胜 {{ SUPPRESS_THRESHOLDS.minWins }} 场 · 均
-                {{ SUPPRESS_THRESHOLDS.maxAvgRounds }} 回合 · 受伤 ≤{{
-                  formatPercent(SUPPRESS_THRESHOLDS.maxAvgDamageTaken, 0)
-                }}; 资格永久,守满 {{ REVIVE_AFTER_HOURS }} 小时妖气复聚。
-              </p>
+              <!-- 规则解释默认收成一行「注」—— 收的是版面,不是内容 -->
+              <FolioNote name="adventure-rules" label="注 · 镇压门槛与复聚">
+                <p class="adventure-rules__copy">
+                  镇压门槛:胜 {{ SUPPRESS_THRESHOLDS.minWins }} 场 · 均
+                  {{ SUPPRESS_THRESHOLDS.maxAvgRounds }} 回合 · 受伤 ≤{{
+                    formatPercent(SUPPRESS_THRESHOLDS.maxAvgDamageTaken, 0)
+                  }}; 资格永久,守满 {{ REVIVE_AFTER_HOURS }} 小时妖气复聚。
+                </p>
+              </FolioNote>
             </div>
           </section>
         </article>
@@ -663,6 +668,7 @@ import {
 } from "@/core/buildAdvisor";
 import { formatDuration, formatGN, formatPercent } from "@/utils/format";
 import GameIcon from "@/components/common/GameIcon.vue";
+import FolioNote from "@/components/common/FolioNote.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import CombatPanel from "@/components/adventure/CombatPanel.vue";
 import { useNow } from "@/composables/useNow";

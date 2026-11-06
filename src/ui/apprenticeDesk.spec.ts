@@ -241,6 +241,27 @@ describe("门庭案 · 先落一令,再核四门存底与值日簿", () => {
     expect(view, "票面时长由同一枚差事常数换算").toContain("selectedTask.minutes");
   });
 
+  it("门规收成一行「注」:默认合着,点开四条一字不少", () => {
+    const view = source("src/views/ApprenticeView.vue");
+    const note = source("src/components/common/FolioNote.vue");
+
+    /*
+     * 四条门规是规则解释,不是此刻的读数。收成一行「注」:
+     * 默认合着,点开四条一字不少 —— 收的是版面,不是内容。
+     */
+    expect(view, "门规走共享注原语").toContain(
+      'import FolioNote from "@/components/common/FolioNote.vue"',
+    );
+    expect(view, "门规要挂在稳定落点上").toContain('<FolioNote name="apprentice-rules"');
+    expect((view.match(/class="apprentice-rules__item"/g) ?? []).length, "四条门规仍在注里").toBe(
+      4,
+    );
+    expect(note, "注要报开合状态").toContain(':aria-expanded="open"');
+    expect(note, "注要关联正文").toContain(':aria-controls="bodyId"');
+    expect(note, "注的正文默认收起").toContain('v-show="open"');
+    expect(note, "收起态的初值必须是 false").toMatch(/const open = ref\(false\)/);
+  });
+
   it("门规只读机制常量,收徒价与天赋、等级、真传门槛不另写一遍", () => {
     const view = source("src/views/ApprenticeView.vue");
 
@@ -299,7 +320,11 @@ describe("门庭案 · 先落一令,再核四门存底与值日簿", () => {
     expect(apprenticeCss).toMatch(
       /\.apprentice-rules\s*\{[\s\S]{0,140}grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
-    expect(apprenticeCss).toMatch(
+    /*
+     * 门规四条收成一行「注」之后,不再在 620 档铺成 2×2:
+     * 正文默认不见,展开后单列续读 —— 2×2 是为常驻版面准备的,折叠后不再成立。
+     */
+    expect(apprenticeCss, "门规不再铺成常驻 2×2").not.toMatch(
       /@media \(min-width: 620px\)\s*\{[\s\S]{0,3000}\.apprentice-rules\s*\{[\s\S]{0,120}repeat\(2, minmax\(0, 1fr\)\)/,
     );
     expect(apprenticeCss, "960 起正文与门规左右并读").toMatch(

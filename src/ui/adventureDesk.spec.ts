@@ -133,6 +133,23 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
     );
   });
 
+  it("途中三档与行旅之则收成两行「注」:默认合着,文案一字不少", () => {
+    const view = source("src/views/AdventureView.vue");
+
+    /*
+     * 三档概率是参考、镇压规则是解释 —— 都不是此刻要做的决定。
+     * 两处收成同一枚「注」原语:默认合着,点开一字不少;三档的缘起状态留在注外。
+     */
+    expect(view, "两处说明走同一枚注原语").toContain(
+      'import FolioNote from "@/components/common/FolioNote.vue"',
+    );
+    expect(view, "三档挂在稳定落点上").toContain('<FolioNote name="adventure-tiers"');
+    expect(view, "行旅之则挂在稳定落点上").toContain('<FolioNote name="adventure-rules"');
+    expect(view, "三档仍读唯一档位表").toContain('v-for="t in EVENT_TIERS"');
+    expect(view, "镇压规则仍读同一份常数").toContain("SUPPRESS_THRESHOLDS.minWins");
+    expect(view, "三档的缘起状态仍留在注外").toContain('class="adventure-briefing__tier-head"');
+  });
+
   it("今日行旅、山河路账、秘境与行旅之则共成一张开口长卷", () => {
     const view = source("src/views/AdventureView.vue");
     const css = source("src/styles/pages/adventure.css");

@@ -46,6 +46,7 @@ import LedgerTally from "@/components/common/LedgerTally.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
+import FolioNote from "@/components/common/FolioNote.vue";
 import ApprenticeCourt from "@/components/apprentice/ApprenticeCourt.vue";
 
 const appr = useApprenticeStore();
@@ -791,45 +792,53 @@ function dispatchSelected(a: OwnedApprentice): void {
           :fact="`${slots} 席 · ${APPRENTICE_MAX_LEVEL} 级封顶`"
         />
         <div class="apprentice-rules">
-          <article class="apprentice-rules__item">
-            <span class="apprentice-rules__index tabular" aria-hidden="true">壹</span>
-            <div>
-              <h3 class="apprentice-rules__title">收徒与席位</h3>
-              <p class="apprentice-rules__copy">
-                本境开 {{ slots }} 席；价签按当前境界现算,槽满即止。
-              </p>
-            </div>
-          </article>
-          <article class="apprentice-rules__item">
-            <span class="apprentice-rules__index tabular" aria-hidden="true">贰</span>
-            <div>
-              <h3 class="apprentice-rules__title">本命天赋</h3>
-              <p class="apprentice-rules__copy">
-                本命门类产出 ×{{ APPRENTICE_TALENT_BONUS }},时长仍按任务簿。
-              </p>
-            </div>
-          </article>
-          <article class="apprentice-rules__item">
-            <span class="apprentice-rules__index tabular" aria-hidden="true">叁</span>
-            <div>
-              <h3 class="apprentice-rules__title">等级与羁绊</h3>
-              <p class="apprentice-rules__copy">
-                每完工一趟升一级(封顶
-                {{ APPRENTICE_MAX_LEVEL }}
-                级),等级越高带回越多；羁绊只记称谓,不另加产出。抵达「真传」({{ BOND_TRUECODE_MIN }}
-                趟)后,转世时凝一缕跨世之缘,来世情谊随魂而来。
-              </p>
-            </div>
-          </article>
-          <article class="apprentice-rules__item">
-            <span class="apprentice-rules__index tabular" aria-hidden="true">肆</span>
-            <div>
-              <h3 class="apprentice-rules__title">墙钟与归来</h3>
-              <p class="apprentice-rules__copy">
-                差事按墙钟走,关闭页面亦照算；归来自动入账,并逐名通报带回之物。
-              </p>
-            </div>
-          </article>
+          <!--
+            四条门规是**规则解释**,不是此刻的读数。默认收成一行「注」——
+            收的是版面,不是内容:点开后四条一字不少。
+          -->
+          <FolioNote name="apprentice-rules" label="注 · 门规四条">
+            <article class="apprentice-rules__item">
+              <span class="apprentice-rules__index tabular" aria-hidden="true">壹</span>
+              <div>
+                <h3 class="apprentice-rules__title">收徒与席位</h3>
+                <p class="apprentice-rules__copy">
+                  本境开 {{ slots }} 席；价签按当前境界现算,槽满即止。
+                </p>
+              </div>
+            </article>
+            <article class="apprentice-rules__item">
+              <span class="apprentice-rules__index tabular" aria-hidden="true">贰</span>
+              <div>
+                <h3 class="apprentice-rules__title">本命天赋</h3>
+                <p class="apprentice-rules__copy">
+                  本命门类产出 ×{{ APPRENTICE_TALENT_BONUS }},时长仍按任务簿。
+                </p>
+              </div>
+            </article>
+            <article class="apprentice-rules__item">
+              <span class="apprentice-rules__index tabular" aria-hidden="true">叁</span>
+              <div>
+                <h3 class="apprentice-rules__title">等级与羁绊</h3>
+                <p class="apprentice-rules__copy">
+                  每完工一趟升一级(封顶
+                  {{ APPRENTICE_MAX_LEVEL }}
+                  级),等级越高带回越多；羁绊只记称谓,不另加产出。抵达「真传」({{
+                    BOND_TRUECODE_MIN
+                  }}
+                  趟)后,转世时凝一缕跨世之缘,来世情谊随魂而来。
+                </p>
+              </div>
+            </article>
+            <article class="apprentice-rules__item">
+              <span class="apprentice-rules__index tabular" aria-hidden="true">肆</span>
+              <div>
+                <h3 class="apprentice-rules__title">墙钟与归来</h3>
+                <p class="apprentice-rules__copy">
+                  差事按墙钟走,关闭页面亦照算；归来自动入账,并逐名通报带回之物。
+                </p>
+              </div>
+            </article>
+          </FolioNote>
         </div>
       </section>
     </article>
