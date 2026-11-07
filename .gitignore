@@ -58,3 +58,7 @@ core.[0-9]*
 # agent 工具链的皮肤/插件缓存(实测落进来一份 catalog.json + tgz,三兆多),
 # 与 .workbuddy/ 同属宿主工具的运行时副产物,不是本仓库的内容。
 .tmp-skin/
+# 临时调试脚本 —— 这类文件从没进过库,却会把工作区算成「不干净」,
+# 而 release-check 与 pre-commit 都是按 `git status --porcelain` 判的。
+# 实测:一个 11 月 7 日留下的 .tmp-foe2.mjs 挡住了 v0.0.2 的发版体检。
+.tmp-*.mjs
