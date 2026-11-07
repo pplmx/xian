@@ -82,6 +82,39 @@ git subtree pull --prefix=packages/engine engine main  # 库 → 本作
 
 改完 `packages/engine` 之后**先推独立仓(一条 `bun run sync:engine`)**,再推本仓。漏推会被 `bun run check:engine` 的第 ⑧ 步拦住:本仓 `packages/engine` 与独立仓 `main` 必须是同一棵树 —— 且它报错时把补救命令 `sync:engine` 一起打印出来,照着敲就行。
 
+### 第 ⑧ 步红了,先分清是哪种
+
+它报的都是「本仓 packages/engine 与独立仓不是同一棵树」,但成因有两种,**处置完全不同**:
+
+| 成因 | 怎么认 | 怎么办 |
+| --- | --- | --- |
+| 改了库、忘了推 | `git status --short packages/engine` 干净 | `bun run sync:engine`(报错里打印的就是它) |
+| 库里有**未提交**改动 | 那条命令会列出改动文件 | 先提交,再 `bun run sync:engine` |
+
+第二种值得单独说,因为**照着报错敲 `sync:engine` 是无效的**:
+`git subtree push` 打的是**提交树**,工作区里没提交的那部分根本不在里面 ——
+它会正常跑完、不报错,然后第 ⑧ 步照样红。实测:
+
+```bash
+$ cat pkg/f.txt          # 工作区
+committed
+uncommitted
+$ git show HEAD:pkg/f.txt # 提交树(这正是 subtree push 会带走的)
+committed
+```
+
+典型触发:把 `packages/engine/package.json` 的某个 devDependency 升了版本
+(如 `vite-plus` 1.0.0 → 1.4.0),`bun.lock` 随之重排几百行,而独立仓还停在旧版本。
+此时第 ⑧ 步的比对是**对的** —— 那个升级确实还没进库。
+
+只想验证其余部分(不想动引擎仓)时,把这两处先挪开再跑:
+
+```bash
+git stash push -- packages/engine/package.json bun.lock
+bun run check:engine          # 此时应当绿
+git stash pop
+```
+
 | 命令 | 钉住的事 |
 | --- | --- |
 | `bun run check:engine` | 产物入口齐全、能被 Node import、换皮世界跑通一圈、坏配置被拦住、发布包内容与"真装一遍"、宿主引用方式、**独立仓与本仓同树** |
