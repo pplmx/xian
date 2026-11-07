@@ -82,8 +82,15 @@
           <strong class="cultivation-masthead__readout-value tabular">{{
             formatPercent(qiFillRatio, 0)
           }}</strong>
+          <!--
+            这一格报「充盈之后拿到什么」,不再用一句指着下文的空话占位。
+            原先那句一个数字都没有,只是指路 —— 而「还差多少」下面已经说了两遍
+            (账首 hint 报时间、灵气条主行报数量),两条各答各的都该留,
+            卷首这一行却只是占着位置指路。
+            充盈后的加成是「值不值得等」的答案,那两处都没说,正好由这一格给。
+          -->
           <span class="cultivation-masthead__readout-note tabular">{{
-            qiRichInfo.on ? "充盈 · 修炼加成" : "未充盈 · 见下文还差多少"
+            qiRichInfo.on ? "充盈 · 修炼加成" : `充盈后修炼 +${formatPercent(QI_RICH_BONUS)}`
           }}</span>
         </div>
       </div>

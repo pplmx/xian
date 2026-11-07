@@ -1,3 +1,28 @@
+describe("卷首灵气一格:别只写「见下文」", () => {
+  /*
+   * 修行页 1942px(2.30 屏),其中「还差多少」这件事实**说了三遍**:
+   *
+   *   卷首灵气格  「未充盈 · 见下文还差多少」   0 个数字,纯指路
+   *   账首 hint    「充盈还差约 3分42秒」        时间口径
+   *   灵气条主行    「距灵气充盈尚差 9.866亿」    数量口径
+   *
+   * 后两条各答各的(还差多久 / 还差多少),都该留;第一条什么也没说 ——
+   * 卷首这一格已经报了「灵气 0%」,再补一句「见下文」等于占着一行位置指路。
+   *
+   * 该报的是**这一格自己的实质**:充盈之后拿到什么。那是玩家看一眼就想要的答案,
+   * 也是下面两处都没说的(它们只报差多少,不报「值不值得等」)。
+   */
+  it("未充盈时报「充盈后能拿到什么」,不写「见下文」", () => {
+    const view = readSource("src/views/CultivationView.vue");
+    /*
+     * 只在**模板表达式**里查:注释里提到这句话是记录来由(说明「原先写的是它」),
+     * 那是该留的;要拦的是它被写进渲染路径。
+     */
+    expect(view, "不许再拿「见下文还差多少」当渲染文案").not.toMatch(/"[^"]*见下文还差多少[^"]*"/);
+    expect(view, "要报充盈之后的收益").toContain("充盈后修炼 +${formatPercent(QI_RICH_BONUS)}");
+  });
+});
+
 import { describe, expect, it } from "vite-plus/test";
 import { readSource } from "@/test/readSource";
 import { cultivationChapter, cultivationChapters } from "@/ui/cultivationDesk";
