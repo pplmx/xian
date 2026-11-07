@@ -15522,6 +15522,82 @@ async function taskCombatReplay() {
 
 /** 敌人卡最挤的一档 */
 /**
+ * 已殁之身 —— 这一世结束了,玩家必须走得下去。
+ *
+ * 两件事,都是「只在关过页面之后才出现」的那一类,开发时连着不关永远撞不到:
+ *
+ *   ① 读入一份**已死**存档时,往生那一关要补开。`checkDeath` 的第一行对
+ *      「已经死了」直接返回,而 `deathAnnounced` / `ui.deathDialog` 都是内存态
+ *      不落盘 —— 于是玩家寿终那一刻若没关页面就正常,关过之后再进来,
+ *      首页写着「陨落」却既不能继续也不能重开。
+ *   ② 已殁不该再摆一枚能按的「出发」。点下去模式窗照开、选完一档什么都不发生。
+ */
+async function taskDeadExit() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    // 已死,但年龄没超上限 —— 正是「寿终那一刻关掉了页面」之后存下来的那一份
+    slices.player.dead = true;
+    slices.player.age = 320;
+    await seedSave(ctx, slices, "__deadExit");
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/", 1800);
+    await clearOverlays(page);
+
+    const home = await page.evaluate(() => ({
+      dialogs: [...document.querySelectorAll('[role="dialog"]')].map((d) =>
+        (d.getAttribute("aria-label") || "").trim(),
+      ),
+      // 往生卷会写这一句;它是玩家走出去的唯一入口
+      hasReincarnation: /往生|辞世|轮回/.test(document.body.innerText),
+    }));
+    checked += 1;
+    if (home.dialogs.length === 0 && !home.hasReincarnation) {
+      failures.push(
+        "[390-dead] 读入已死存档:首页既没有往生卷、也没有任何「往生/转世」入口 —— 这一世结束却走不出去",
+      );
+    }
+
+    await openRoute(page, "/adventure", 1200);
+    const adv = await page.evaluate(() => ({
+      goButtons: [...document.querySelectorAll("[data-region-action]")].filter(
+        (b) => /出发/.test(b.textContent || "") && b.getBoundingClientRect().width > 0,
+      ).length,
+      claim: (
+        document.querySelector("[data-adventure-regions] .adventure-register__state")
+          ?.textContent || ""
+      ).trim(),
+    }));
+    checked += 1;
+    if (adv.goButtons > 0) {
+      failures.push(
+        `[390-dead] 已殁之身在历练页仍有 ${adv.goButtons} 枚可点的「出发」—— 点下去什么都不发生`,
+      );
+    }
+    if (!/^0 处|先看路线/.test(adv.claim)) {
+      failures.push(`[390-dead] 已殁之身章首仍报着「${adv.claim}」`);
+    }
+    if (pageErrors.length)
+      failures.push(`[390-dead] 页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    console.log(
+      `\n已殁:往生卷 ${home.dialogs.length} 张 · 历练页出发键 ${adv.goButtons} 枚 · 章首 «${adv.claim}»`,
+    );
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 际遇帖压住的那两分钟 —— 玩家还知不知道自己在哪一趟里。
  *
  * 两件事:
@@ -29778,6 +29854,7 @@ const TASKS = [
   ["出行模式窗的整趟账", taskExploreModes],
   ["收兵与上一程的结账", taskTripLedger],
   ["际遇压住时的上下文与收尾", taskEventTripContext],
+  ["已殁之身要走得下去", taskDeadExit],
   ["前尘山河三世同册", taskWorldHistory],
   ["本世山河案首屏", taskWorldDesk],
   ["切后台立即落盘", taskPersistTiming],

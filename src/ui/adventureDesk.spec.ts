@@ -62,7 +62,19 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
     expect(view, "首项要有独立视觉态").toContain(
       "'adventure-region--next': row.id === nextActionableId",
     );
-    expect(view, "出发按钮仍只认统一准入").toContain('v-if="row.canEnter && !row.suppressed"');
+    /*
+     * 出发键的显示条件 = 统一准入 + 未镇压 + **未殁**。
+     *
+     * 前两项是原来的判据;第三项是后来补的:已死之身仍摆着一枚能按的「出发」,
+     * 按下去模式窗照开、选完一档什么都不发生(见 ui/deathExit.spec)。
+     * 守的仍是「这枚键只由准入谓词决定、不由别处再判一遍」,故断言放宽到
+     * 「三个条件都在」,不钉死整串字面量。
+     */
+    const goTag = view.match(/<button\s+v-if="(row\.canEnter[^"]*)"/);
+    expect(goTag, "出发键的显示条件找不到").not.toBeNull();
+    expect(goTag![1], "出发键仍只认统一准入").toContain("row.canEnter");
+    expect(goTag![1], "镇压收益中的地界不该摆出发键").toContain("!row.suppressed");
+    expect(goTag![1], "已殁不该再摆能按的出发键").toContain("!player.dead");
     expect(view, "当前路线仍排在同界域最前").toContain(
       "Number(b.isRouteCurrent) - Number(a.isRouteCurrent)",
     );

@@ -83,6 +83,26 @@ class GameEngine {
         this.reportError("engine.progress", "启动进度补扫异常", err);
       }
     }
+    /*
+     * 读进来的是一份**已死**的存档时,往生那一关要补开。
+     *
+     * `checkDeath` 的第一行是 `if (player.dead …) return` —— 它只在「寿元刚够」
+     * 那一瞬负责把玩家判死并开卷,而 `deathAnnounced` 与 `ui.deathDialog` 都是
+     * **内存态**(不落盘)。于是:玩家寿终的那一刻没关页面 → 正常;但若在那一刻
+     * 之前就关掉(或崩溃、或换了设备),下次读档 `dead` 已经是 true,
+     * `checkDeath` 直接返回,`deathAnnounced` 也还是 false 却永远轮不到它 -
+     *
+     * 实测(390×844,夹具 `player.dead = true`):首页顶栏写着「陨落」,
+     * 而全页没有任何 `[role="dialog"]`,也没有任何「往生 / 转世」入口 ——
+     * 这一世已经结束,玩家却既不能继续也不能重开。这是彻底的死局。
+     *
+     * 补在启动链路里,与成就补扫同一个位置、同一套兜底:它只负责把**已经**
+     * 成立的事实(dead)对应的那一屏补开,不改任何存档字段。
+     */
+    if (game.started && usePlayerStore().dead && !this.deathAnnounced) {
+      this.deathAnnounced = true;
+      setDeathDialog(true);
+    }
     game.stampActive(now);
     this.lastTickAt = now;
     this.lastStampAt = now;

@@ -326,8 +326,14 @@
                 首领已清之后进去仍能刷杂兵、拾遗、碰机缘;而旧地界放久了妖气复聚
                 (见 core/regionRevival),旧主会回来,那时它又是一处有首领的地界
               -->
+                          <!--
+                            已殁就别再摆一枚能按的「出发」:引擎那边会拒(并报一句
+                            「此身已殁」),但界面先一步不给你按,才是同一件事的正面说法。
+                            setup 里 startExploration 的注释写着「拒绝必须让玩家看见」,
+                            而更前一步是**根本不摆出那个可点的东西**。
+                          -->
                           <button
-                            v-if="row.canEnter && !row.suppressed"
+                            v-if="row.canEnter && !row.suppressed && !player.dead"
                             data-region-action
                             class="adventure-region__action btn-seal shrink-0 !px-4 !py-2 !text-title tinylens:!px-2.5 tinylens:!py-1 tinylens:!text-body"
                             @click="chooseMode(row.def)"
@@ -1023,8 +1029,16 @@ const visibleRows = computed(() => {
 const nextActionableId = computed(
   () => visibleRows.value.find((row) => row.canEnter && !row.suppressed)?.id ?? null,
 );
+/**
+ * 「此刻真能出发几处」。
+ *
+ * 死亡状态也在这里收口:`canEnter` 判的是**路通不通**,而这一格报的是
+ * 「眼下点得动几处」。已殁时按钮一枚都不摆,这个数就该是 0 ——
+ * 否则章首说「2 处可出发」、屏上一枚出发键都没有,又是同一屏两本账。
+ * (第贰章那份读数也走这个计数,见「眼下可往」章首。)
+ */
 const actionableCount = computed(
-  () => visibleRows.value.filter((row) => row.canEnter && !row.suppressed).length,
+  () => visibleRows.value.filter((row) => row.canEnter && !row.suppressed && !player.dead).length,
 );
 
 type RegionRow = (typeof regionRows.value)[number];

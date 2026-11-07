@@ -107,7 +107,19 @@ export function startExploration(regionId: string, mode: ExploreMode): boolean {
   const adventure = useAdventureStore();
   const player = usePlayerStore();
   const region = regionDef(regionId);
-  if (!region || player.dead) return false;
+  /*
+   * 已殁不该再出门 —— 但**拒绝要让玩家看见**。
+   *
+   * 这一句原先与 `!region` 并在一起静默 `return false`,恰好与下面那句注释
+   * 「拒绝必须让玩家看见 —— 静默 return false 在界面上等同于『点了没反应』」
+   * 自相矛盾:实测已死存档(夹具 `player.dead = true`)在历练页点「出发」,
+   * 模式窗照开、选完一档后什么都不发生 —— 不进军、不报错、弹窗也不关。
+   */
+  if (!region) return false;
+  if (player.dead) {
+    notify("此身已殁,当先往生再来", "warn");
+    return false;
+  }
   // Phase 28 闭关禁令:闭关期间不得外出历练(与 startRetreat 的互斥守卫配对,双向互斥)
   if (isRetreating()) {
     notify("你正在闭关静修,心无旁骛,暂勿外出历练", "warn");
