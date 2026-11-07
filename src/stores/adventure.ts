@@ -273,7 +273,11 @@ export const useAdventureStore = defineStore(
       }
     }
 
-    function recordBattle(view: LastBattleView): void {
+    /**
+     * 记下最近一战。传 null 表示「这一程还没有交过手」——
+     * 起新一趟时 core/exploration 会清掉它,战局面板才不会挂着上一趟的敌人与胜负。
+     */
+    function recordBattle(view: LastBattleView | null): void {
       lastBattle.value = view;
     }
 

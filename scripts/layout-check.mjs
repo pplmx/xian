@@ -15492,6 +15492,193 @@ async function taskCombatReplay() {
 }
 
 /** 敌人卡最挤的一档 */
+/**
+ * 出行模式窗 —— 四笔**整趟**的账。
+ *
+ * 这一窗此前把「每场」的掉落期望当「整趟」摆出来:一个「寻常游历」写着
+ * `预计材料 ≈ 1.9 件 / 装备 约 3.2 趟一件`,而它实际是 132 场战斗、整趟装备约 41 件。
+ * 单位错了三个数量级,而它恰好是「多花一倍时间值不值」的唯一依据。
+ *
+ * 判据三件事,都要在**真渲染**上量:
+ *   ① 每一档都写得出一趟的场次,且数字与 `core/explorationPlan` 的规模账一致
+ *      (`data-explore-mode-battles` 是那一份现算的结果,判据拿它与页面上印的字比对);
+ *   ② 场次随档位严格递增 —— 时间真的换来了更多场,不是四行一样的数;
+ *   ③ 三档宽度(390 / 320 / 195)都不许把风险词挤折、不许数字与量词分家、
+ *      不许行内横向溢出。此前 390 上「安稳」被压成「安 / 稳」两行。
+ */
+async function taskExploreModes() {
+  const failures = [];
+  let checked = 0;
+  const seen = [];
+
+  for (const vp of [
+    { width: 390, height: 844, tag: "390" },
+    { width: 320, height: 568, tag: "320" },
+    { width: 195, height: 400, tag: "195" },
+  ]) {
+    const ctx = await auditContext({
+      viewport: { width: vp.width, height: vp.height },
+      deviceScaleFactor: 2,
+      isMobile: true,
+      hasTouch: true,
+    });
+    try {
+      await seedSave(ctx, showcaseSlices("light"), `__exploreModes${vp.tag}`);
+      const page = await ctx.newPage();
+      const pageErrors = [];
+      watchPageErrors(page, pageErrors);
+      await openRoute(page, "/adventure", 700);
+
+      const trigger = page.locator("[data-region-action]").filter({ hasText: "出发" }).first();
+      if ((await trigger.count()) === 0) {
+        failures.push(`[${vp.tag}-modes] 找不到任何一个「出发」入口,模式窗没开成`);
+        continue;
+      }
+      await trigger.click({ timeout: 4000 }).catch(() => {});
+      await page.waitForTimeout(400);
+      await settleVisuals(page);
+
+      const info = await page.evaluate(() => {
+        const modeRows = [...document.querySelectorAll("[data-explore-mode]")];
+        if (modeRows.length === 0) return null;
+        const UNITS = "石铁尘株张载年次件层场阶枚缕分秒";
+        const rectAt = (node, i) => {
+          const r = document.createRange();
+          r.setStart(node, i);
+          r.setEnd(node, i + 1);
+          const box = r.getBoundingClientRect();
+          return box.width > 0 || box.height > 0 ? box : null;
+        };
+        /**
+         * 风险词与档名各自一行文字:量它们自己的行数。
+         * 挤成竖排时盒宽会掉到十几 px 而高度翻两三倍 —— 只看 scrollWidth 查不出来。
+         */
+        const linesOf = (el) => {
+          if (!el) return 0;
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          return new Set([...range.getClientRects()].map((x) => Math.round(x.top))).size;
+        };
+        const unitBreaks = [];
+        const overflow = [];
+        const vertical = [];
+        for (const row of modeRows) {
+          const id = row.getAttribute("data-explore-mode-id");
+          if (row.scrollWidth > row.clientWidth + 1) {
+            overflow.push(`${id}(${row.scrollWidth}>${row.clientWidth})`);
+          }
+          const risk = row.querySelector(".adventure-mode__risk");
+          const name = row.querySelector(".adventure-mode__name");
+          if (risk && linesOf(risk) > 1) {
+            vertical.push(`${id} 风险词折成 ${linesOf(risk)} 行`);
+          }
+          if (name && linesOf(name) > 1) {
+            vertical.push(`${id} 档名折成 ${linesOf(name)} 行`);
+          }
+          if (risk && risk.getBoundingClientRect().width < 20) {
+            vertical.push(
+              `${id} 风险词只有 ${Math.round(risk.getBoundingClientRect().width)}px 宽`,
+            );
+          }
+          // 数字与量词不许被换行拆开
+          const walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT);
+          let node = walker.nextNode();
+          while (node) {
+            const t = node.nodeValue || "";
+            if (t.trim().length <= 24 && /[\d,.][\s]*[石铁尘株张载年次件层场阶枚缕分秒]/.test(t)) {
+              for (let i = 1; i < t.length; i += 1) {
+                if (!UNITS.includes(t[i])) continue;
+                let j = i - 1;
+                while (j >= 0 && /\s/.test(t[j])) j -= 1;
+                if (j < 0 || !/[\d,.]/.test(t[j])) continue;
+                const a = rectAt(node, j);
+                const b = rectAt(node, i);
+                if (a && b && Math.abs(a.top - b.top) > 4) {
+                  unitBreaks.push(`${id} «${t.trim().slice(0, 16)}»`);
+                  break;
+                }
+              }
+            }
+            node = walker.nextNode();
+          }
+        }
+        return {
+          rows: modeRows.map((row) => ({
+            id: row.getAttribute("data-explore-mode-id"),
+            battles: Number(row.getAttribute("data-explore-mode-battles")),
+            text: (row.textContent || "").replace(/\s+/g, " ").trim(),
+          })),
+          unitBreaks,
+          overflow,
+          vertical,
+        };
+      });
+
+      if (!info) {
+        failures.push(`[${vp.tag}-modes] 点了「出发」却没有模式窗,判据没量到东西`);
+        continue;
+      }
+      checked += 1;
+      seen.push({ tag: vp.tag, rows: info.rows });
+
+      // ① 每一档都写得出场次,且与页面上印的数字一致
+      for (const row of info.rows) {
+        if (!Number.isFinite(row.battles) || row.battles <= 0) {
+          failures.push(`[${vp.tag}-modes] ${row.id} 没报出这一趟的场次(${row.battles})`);
+          continue;
+        }
+        if (!row.text.includes(`约 ${row.battles} 场`)) {
+          failures.push(
+            `[${vp.tag}-modes] ${row.id} 报的场次与规模账对不上(账:${row.battles};屏:${row.text.slice(0, 60)})`,
+          );
+        }
+        if (!/整趟约/.test(row.text)) {
+          failures.push(`[${vp.tag}-modes] ${row.id} 只说每场、没说整趟产出`);
+        }
+        if (/趟一件|趟一枚/.test(row.text)) {
+          failures.push(
+            `[${vp.tag}-modes] ${row.id} 又用「趟一件/趟一枚」给每场读数当单位 —— 那正是差三个数量级的老毛病`,
+          );
+        }
+      }
+      // ② 场次随档位严格递增
+      for (let i = 1; i < info.rows.length; i += 1) {
+        if (!(info.rows[i].battles > info.rows[i - 1].battles)) {
+          failures.push(
+            `[${vp.tag}-modes] ${info.rows[i].id}(${info.rows[i].battles} 场)没有比 ${info.rows[i - 1].id}(${info.rows[i - 1].battles} 场)更多`,
+          );
+        }
+      }
+      // ③ 挤压
+      for (const bad of info.overflow) failures.push(`[${vp.tag}-modes] 模式行横向溢出:${bad}`);
+      for (const bad of info.vertical) failures.push(`[${vp.tag}-modes] 挤压:${bad}`);
+      for (const bad of info.unitBreaks) failures.push(`[${vp.tag}-modes] 数字与量词分家:${bad}`);
+      if (pageErrors.length)
+        failures.push(`[${vp.tag}-modes] 模式窗页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    } finally {
+      await ctx.close();
+    }
+  }
+
+  /*
+   * ④ 三档宽度的场次必须是同一批数(窗里报的是规模账,与视口无关)。
+   * 这条防的是「某档宽下某一行没渲染出来,于是它恰好与上一档相等」这类假绿。
+   */
+  const byTag = new Map(seen.map((s) => [s.tag, s.rows.map((r) => `${r.id}:${r.battles}`)]));
+  if (byTag.size > 1) {
+    const values = [...byTag.values()].map((v) => v.join("|"));
+    if (new Set(values).size > 1) {
+      failures.push(`模式窗的场次读数随视口变了 —— 规模账该与屏宽无关:${values.join(" / ")}`);
+    }
+  }
+
+  if (checked > 0) {
+    const sample = seen[0]?.rows.map((r) => `${r.id} ${r.battles} 场`).join(" · ") ?? "";
+    console.log(`\n出行模式窗:${sample}`);
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
 async function taskEnemyCard() {
   const failures = [];
   let checked = 0;
@@ -29000,6 +29187,7 @@ const TASKS = [
   ["敌人卡最挤的一档", taskEnemyCard],
   ["秘境卡在境中的窄屏一档", taskSecretRealm320],
   ["历练首屏主线优先", taskAdventureFold],
+  ["出行模式窗的整趟账", taskExploreModes],
   ["前尘山河三世同册", taskWorldHistory],
   ["本世山河案首屏", taskWorldDesk],
   ["切后台立即落盘", taskPersistTiming],

@@ -513,13 +513,17 @@ export function afterWin(
 }
 
 /**
- * 一趟历练的材料期望件数 —— 派发前那一行「预计材料 ≈ N 件」用。
+ * **一场胜战**的材料期望件数。
  *
  * 只算材料三渠道(灵草/玄铁/书页):它们有份数区间,期望是 `命中率 × 平均份数`,
  * 再乘「翻倍」触发率。装备与丹药走各自的稀有度叙事,不在这行里报。
- * 口径:只给件数、不给概率。
+ *
+ * ⚠ 分母是**场**,不是趟。这个函数读的 `dropEntriesFor` 就是 `afterWin` 用的那张表,
+ * 而 `afterWin` 每胜一场调一次。要报「整趟」的读数,乘上规模账的场次
+ * (见 `core/explorationPlan` 与 `ui/exploreModeText`)—— 从前这里叫
+ * `expectedMaterialsPerRun` 且被当整趟摆上界面,差了 126~1008 倍。
  */
-export function expectedMaterialsPerRun(input: {
+export function expectedMaterialsPerBattle(input: {
   bias?: string;
   mods: Parameters<typeof modOf>[0];
   rewardMult: number;
@@ -545,12 +549,15 @@ export function expectedMaterialsPerRun(input: {
 }
 
 /**
- * 一趟历练出装备的期望「趟数」—— 派发前那一行用「约 N 趟一件」而不是百分比。
+ * **一场胜战**出装备的期望间隔,单位是「场一件」—— 不是「趟一件」。
  *
  * 装备命中率有 90% 上限(不给必出神品的口子),按 `EQUIP_DROP_CHANCE × 模式倍率 ×
- * (1 + 掉落率词条)` 归一后取倒数;命中率为 0 时给 null(不写「无穷趟」)。
+ * (1 + 掉落率词条)` 归一后取倒数;命中率为 0 时给 null(不写「无穷场」)。
+ *
+ * 一趟是一两百场(见 `core/explorationPlan`),故「约 3.2 场一件」与
+ * 「整趟约 38 件」是同一件事的两种说法 —— 界面上报后者。
  */
-export function expectedEquipmentTripsPerRun(input: {
+export function expectedEquipmentBattlesPerPiece(input: {
   mods: Parameters<typeof modOf>[0];
   rewardMult: number;
   isBoss: boolean;
@@ -565,25 +572,25 @@ export function expectedEquipmentTripsPerRun(input: {
 }
 
 /**
- * 一趟历练出丹药的期望「趟数」 —— 与装备同一口径(只给趟数,不给概率)。
+ * **一场胜战**出丹药的期望间隔(场一枚) —— 与装备同一口径(只给场数,不给概率)。
  * 丹药命中率含所钟与模式倍率,首领战另 ×3;派发前的预览按普通战算,故 isBoss 传 false。
  */
-export function expectedPillTripsPerRun(input: {
+export function expectedPillBattlesPerPiece(input: {
   bias?: string;
   rewardMult: number;
   isBoss: boolean;
 }): number | null {
   const { bias, rewardMult, isBoss } = input;
-  return tripsFromChance(
+  return battlesFromChance(
     PILL_DROP_CHANCE * rewardMult * (isBoss ? 3 : 1) * biasChanceMult(bias, "pill"),
   );
 }
 
 /**
- * 命中率 → 「约几趟一次」。三个期望读数共用这一处换算:
- * 概率一律先钳到 [0, cap],为 0 时给 null(不编「无穷趟」),下限 1(不到一趟不可能)。
+ * 命中率 → 「约几场一次」。三个期望读数共用这一处换算:
+ * 概率一律先钳到 [0, cap],为 0 时给 null(不编「无穷场」),下限 1(不到一场不可能)。
  */
-function tripsFromChance(chance: number, cap = 1): number | null {
+function battlesFromChance(chance: number, cap = 1): number | null {
   const p = clamp(chance, 0, cap);
   if (!(p > 0)) return null;
   return Math.max(1, Math.round((1 / p) * 10) / 10);

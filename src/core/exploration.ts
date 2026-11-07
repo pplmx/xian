@@ -55,6 +55,7 @@ import {
   ECHO_GHOST_CHANCE,
 } from "./worldMemory";
 import { personalityEffects } from "./petPersonality";
+import { exploreDurationSec, explorationSpeedMult } from "./explorationPlan";
 import { petVow } from "@/data/petVows";
 import { notify } from "./notify";
 // 连胜与宿敌各有一个 recordLoss,一个管连胜清空、一个管宿敌(败北阈值):
@@ -124,16 +125,18 @@ export function startExploration(regionId: string, mode: ExploreMode): boolean {
   offerBondEvent("enterPlace");
   const now = Date.now();
   const modeDef = EXPLORE_MODES[mode];
-  const speed = 1 + modOf(player.finalStats.mods, "explorationSpeed");
-  // Phase 31 S4:灵兽性格影响历练时长(慢稳更久)
-  const petEff = personalityEffects(player.petId);
-  const durationSec = Math.round(modeDef.durationSec * petEff.exploreDurMult);
+  /*
+   * 时长与间隔都走 core/explorationPlan 的同一份实现 —— 出行模式窗要报
+   * 「这一趟多久、几场」,若两边各算一遍,改了灵兽性格或历练速度就会各说各话。
+   */
+  const durationSec = exploreDurationSec(mode, player.petId);
+  const cadenceSec = EXPLORE_BATTLE_INTERVAL / explorationSpeedMult(player.finalStats.mods);
   const session: AdventureSession = {
     regionId,
     mode,
     startedAt: now,
     endsAt: now + durationSec * 1000,
-    nextBattleAt: now + (EXPLORE_BATTLE_INTERVAL * 1000) / speed,
+    nextBattleAt: now + cadenceSec * 1000,
     wins: 0,
     losses: 0,
     events: 0,
@@ -144,6 +147,18 @@ export function startExploration(regionId: string, mode: ExploreMode): boolean {
     wudaoGain: 0,
   };
   adventure.setSession(session);
+  /*
+   * 起新一程前把上一个地界的战报清掉。
+   *
+   * 战局面板读的是 `adventure.lastBattle`,而它只在**打到一场**时才被写 ——
+   * 不清就会留着上一趟的敌人与胜负。实测:刚出发、一场未打的面板上写着
+   * 「胜 0 场」却配着另一只敌人的完整战报、胜败结论与「本战所得」——
+   * 这一趟的账和上一趟的战果并排挂在同一屏,玩家分不清哪个是真的。
+   *
+   * 「最近一战」这一格本来就是**这一程**的上下文:新一程开始,它就该是空的,
+   * 让「搜寻猎物中」如实说话。跨趟的战史另有去处(宿敌账、认知层、行年)。
+   */
+  adventure.recordBattle(null);
   // 起新一程前清掉历史遗留的待处理事件。
   // 正常情况下事件只能挂在「正在进行的会话」上(stopExploration/afterEventResolved 都会清),
   // 但损坏存档里可能出现「会话被 sanitize 修成 null、pendingEventId 却仍是合法串」的形态 ——
@@ -527,8 +542,8 @@ export function clearRegionAndUnlockNext(regionId: string): void {
 
 function nextBattleTime(now: number): number {
   const player = usePlayerStore();
-  const speed = 1 + modOf(player.finalStats.mods, "explorationSpeed");
-  return now + (EXPLORE_BATTLE_INTERVAL * 1000) / speed;
+  // 间隔的唯一出处(与 startExploration、出行模式窗的规模账、离线结算同一份)
+  return now + (EXPLORE_BATTLE_INTERVAL / explorationSpeedMult(player.finalStats.mods)) * 1000;
 }
 
 /**

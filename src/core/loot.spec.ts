@@ -8,9 +8,9 @@ import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 import { rng } from "@/utils/random";
 import {
-  expectedMaterialsPerRun,
-  expectedEquipmentTripsPerRun,
-  expectedPillTripsPerRun,
+  expectedMaterialsPerBattle,
+  expectedEquipmentBattlesPerPiece,
+  expectedPillBattlesPerPiece,
   afterWin,
   acquireEquipment,
   ARTIFACT_NEAR_BONUS,
@@ -513,9 +513,9 @@ describe("forge · 连强本轮总账预览与实付同账", () => {
   });
 });
 
-describe("派发前的材料期望 · 只给件数不给概率", () => {
+describe("派发前的材料期望 · 每场,只给件数不给概率", () => {
   const run = (rewardMult: number) =>
-    expectedMaterialsPerRun({
+    expectedMaterialsPerBattle({
       mods: {} as never,
       rewardMult,
       isBoss: false,
@@ -537,10 +537,14 @@ describe("派发前的材料期望 · 只给件数不给概率", () => {
   });
 });
 
-describe("派发前的装备期望 · 用趟数说话", () => {
-  it("倍率越高,需要的趟数越少,且恒 ≥ 1", () => {
-    const slow = expectedEquipmentTripsPerRun({ mods: {} as never, rewardMult: 1, isBoss: false })!;
-    const fast = expectedEquipmentTripsPerRun({
+describe("派发前的装备期望 · 用场数说话,不是趟数", () => {
+  it("倍率越高,需要的场数越少,且恒 ≥ 1", () => {
+    const slow = expectedEquipmentBattlesPerPiece({
+      mods: {} as never,
+      rewardMult: 1,
+      isBoss: false,
+    })!;
+    const fast = expectedEquipmentBattlesPerPiece({
       mods: {} as never,
       rewardMult: 1.6,
       isBoss: false,
@@ -550,24 +554,28 @@ describe("派发前的装备期望 · 用趟数说话", () => {
   });
 
   it("自证:同参数两次一致", () => {
-    const a = expectedEquipmentTripsPerRun({ mods: {} as never, rewardMult: 1.2, isBoss: false });
+    const a = expectedEquipmentBattlesPerPiece({
+      mods: {} as never,
+      rewardMult: 1.2,
+      isBoss: false,
+    });
     expect(a).toBe(
-      expectedEquipmentTripsPerRun({ mods: {} as never, rewardMult: 1.2, isBoss: false }),
+      expectedEquipmentBattlesPerPiece({ mods: {} as never, rewardMult: 1.2, isBoss: false }),
     );
   });
 });
 
 describe("派发前的丹药期望 · 与装备同口径", () => {
-  it("倍率越高趟数越少,且恒 ≥ 1", () => {
-    const slow = expectedPillTripsPerRun({ rewardMult: 1, isBoss: false })!;
-    const fast = expectedPillTripsPerRun({ rewardMult: 1.6, isBoss: false })!;
+  it("倍率越高场数越少,且恒 ≥ 1", () => {
+    const slow = expectedPillBattlesPerPiece({ rewardMult: 1, isBoss: false })!;
+    const fast = expectedPillBattlesPerPiece({ rewardMult: 1.6, isBoss: false })!;
     expect(fast).toBeLessThan(slow);
     expect(fast).toBeGreaterThanOrEqual(1);
   });
 
-  it("首领战比普通战更密 —— ×3 真的换来了更少的趟数", () => {
-    const normal = expectedPillTripsPerRun({ rewardMult: 1, isBoss: false })!;
-    const boss = expectedPillTripsPerRun({ rewardMult: 1, isBoss: true })!;
+  it("首领战比普通战更密 —— ×3 真的换来了更少的场数", () => {
+    const normal = expectedPillBattlesPerPiece({ rewardMult: 1, isBoss: false })!;
+    const boss = expectedPillBattlesPerPiece({ rewardMult: 1, isBoss: true })!;
     expect(boss).toBeLessThan(normal);
   });
 });

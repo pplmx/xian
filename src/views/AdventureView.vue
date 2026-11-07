@@ -396,6 +396,21 @@
                                 </span>
                               </template>
                               <span v-else class="ml-1.5 text-ink-faint">尚无战绩</span>
+                              <!--
+                                三条判据都达标、却还压不住 —— 这只可能是**换了二世**:
+                                regionStats 是「世界记得你」的战绩,随神魂不灭;
+                                镇压资格令是经济权柄,转世清空(见 stores/player 的
+                                resetForRebirth,那里的注释写着为什么不能跨世)。
+                                从前这里只把三种绿字摆完就没了,玩家看到「20/20 胜 ·
+                                均 2.5 回合 · 均受伤 5%」三项全过、却没有「转为镇压收益」,
+                                只能猜是自己看错了 —— 数据其实都对,缺的是那一句「还得再打一场」。
+                              -->
+                              <span
+                                v-if="row.progress.qualified"
+                                data-suppress-relearn
+                                class="mt-0.5 block text-cinnabar"
+                                >本世尚未取得资格令 —— 再胜一场即可镇压(前世战绩仍记于此)</span
+                              >
                             </p>
                             <!-- 进不去时,理由指向眼下就能去的那一段,不让玩家自己排先后 -->
                             <p v-if="row.blockReason" class="mt-1 text-body text-cinnabar">
@@ -507,7 +522,17 @@
                   镇压门槛:胜 {{ SUPPRESS_THRESHOLDS.minWins }} 场 · 均
                   {{ SUPPRESS_THRESHOLDS.maxAvgRounds }} 回合 · 受伤 ≤{{
                     formatPercent(SUPPRESS_THRESHOLDS.maxAvgDamageTaken, 0)
-                  }}; 资格永久,守满 {{ REVIVE_AFTER_HOURS }} 小时妖气复聚。
+                  }}。<br />
+                  <!--
+                    「资格永久」是句会被转世拆穿的承诺。
+                    资格令确实**本世**永久(取得后随时可在历练/收益之间一键切回),
+                    但转世会清空它 —— 那不是遗漏,是刻意的:旧世压下的远境若跨世,
+                    新世炼气仍按旧阶位派发高阶装备/灵石,数值当场爆炸(见
+                    stores/player 的 resetForRebirth 注释)。战绩(regionStats)倒是
+                    随神魂不灭 —— 故新一世会看到「20/20 胜」却压不住,那句话正好解释它。
+                  -->
+                  资格本世永久,取得后随时可在历练与收益之间切换;转世重证(战绩仍记于彼处)。 守满
+                  {{ REVIVE_AFTER_HOURS }} 小时妖气复聚。
                 </p>
               </FolioNote>
             </div>
@@ -570,40 +595,59 @@
       <p class="text-body text-ink-faint">此行欲作何打算?</p>
       <!-- 灵兽之性会改动出行时长与遇险:结算读了它,弹窗就必须摊开(见 exploration 的乘积) -->
       <p v-if="petLine" class="mt-1 text-note text-violet-ink tabular">{{ petLine }}</p>
+      <!--
+        四个档位各是一笔**整趟**的账。
+
+        从前这里写着「30分 / 预计材料 ≈ 1.9 件 / 装备 约 3.2 趟一件」——
+        那三个期望值算的是**一场胜战**(core/loot 读的就是 afterWin 那张掉落表),
+        却摆在时长旁边、措辞用「趟」,读起来是整趟所得。实际一场寻常游历是 126 场战斗,
+        整趟材料约 240 件、装备约 38 件 —— 界面上的数小了三个数量级,
+        而「值不值得多花一倍时间」正是靠这几个数判断的。
+
+        现在先报这一趟的规模(几场 / 多久一场 / 途中几次际遇),再报整趟产出,
+        每场读数退到第三行当换算率。单位一律用「场」——「趟」指整趟,不再一物二名。
+      -->
       <div class="mt-3 space-y-2">
         <button
-          v-for="m in MODE_LIST"
+          v-for="m in modeRows"
           :key="m.id"
-          class="flex w-full items-center justify-between rounded-sm border border-ink/20 px-4 py-3 text-left active:scale-98 active:bg-ink/5"
+          data-explore-mode
+          :data-explore-mode-id="m.id"
+          :data-explore-mode-battles="m.battles"
+          class="adventure-mode flex w-full flex-col gap-1 rounded-sm border border-ink/20 px-4 py-3 text-left active:scale-98 active:bg-ink/5"
           @click="begin(m.id)"
         >
-          <span>
-            <span class="t-card">{{ EXPLORE_MODES[m.id].name }}</span>
+          <span class="adventure-mode__head">
+            <span class="adventure-mode__name">{{ m.name }}</span>
+            <!--
+              风险词自己一格、且不折行:此前它与档名同挤在一行,390 上「安稳」被挤成
+              「安 / 稳」两行,320 上更窄 —— 那一个字正是这一档最要紧的那一个。
+            -->
             <span
-              class="ml-2 text-body"
-              :class="m.id === 'risky' || m.id === 'prolonged' ? 'text-cinnabar' : 'text-ink-faint'"
+              class="adventure-mode__risk"
+              :class="m.dangerMult > 1 ? 'text-cinnabar' : 'text-ink-faint'"
               >{{ m.risk }}</span
             >
+            <span class="adventure-mode__duration tabular">{{ m.durationText }}</span>
           </span>
+          <!-- 规模:这一趟到底有多长、打几场 -->
+          <span class="adventure-mode__scale tabular">{{ tripScaleText(m) }}</span>
+          <!-- 整趟产出:与上面那条规模同源,乘出来的 -->
+          <span class="adventure-mode__haul tabular">{{ tripHaulText(m) }}</span>
           <!--
-            收益一直是亮着的,危险却是暗的:四档里敌人差了 2.6 倍,玩家却只看得到钱。
-            两个数并排摆出来,「要不要涉险」才是个可算的账。
+            收益与敌势仍并排摆出来:四档里敌人差了 2.6 倍,玩家却只看得到钱。
+            两个数摆在一起,「要不要涉险」才是个可算的账。
           -->
-          <span class="text-right text-body text-ink-faint tabular">
-            {{ formatDuration(EXPLORE_MODES[m.id].durationSec) }}
-            <br />
-            预计材料 ≈ {{ expectedMaterials(m.id) }} 件<br />
-            装备 约 {{ expectedEquipTrips(m.id) }} 趟一件 · 丹药 约
-            {{ expectedPillTrips(m.id) }} 趟一枚<br />
-            收益 ×{{ EXPLORE_MODES[m.id].rewardMult }} · 敌势
-            <span :class="EXPLORE_MODES[m.id].dangerMult > 1 ? 'text-cinnabar' : ''"
-              >×{{ EXPLORE_MODES[m.id].dangerMult }}</span
-            >
+          <span class="adventure-mode__odds tabular">
+            收益 ×{{ m.rewardMult }} · 敌势
+            <span :class="m.dangerMult > 1 ? 'text-cinnabar' : ''">×{{ m.dangerMult }}</span>
           </span>
         </button>
       </div>
-      <!-- 上面两行按普通战算:首领战装备 ×2.5、法宝 ×6,不写清会让人以为亘古不变 -->
-      <p class="mt-2 t-note text-ink-faint">以上按普通战计;首领战的装备与法宝产出另计,高于此数。</p>
+      <!-- 上面按普通战算:首领战装备 ×2.5、法宝 ×6,且战败会当场结束整趟 -->
+      <p class="mt-2 t-note text-ink-faint">
+        以上按普通战计;首领战的装备与法宝产出另计,高于此数。途中战败会当场结束这一趟。
+      </p>
     </BaseModal>
   </div>
 </template>
@@ -616,10 +660,12 @@ import type { ExploreMode, RegionDef, RegionRecall, WorldId } from "@/types";
 import { useAdventureStore } from "@/stores/adventure";
 import { useGameStore } from "@/stores/game";
 import {
-  expectedEquipmentTripsPerRun,
-  expectedMaterialsPerRun,
-  expectedPillTripsPerRun,
+  expectedEquipmentBattlesPerPiece,
+  expectedMaterialsPerBattle,
+  expectedPillBattlesPerPiece,
 } from "@/core/loot";
+import { exploreTripPlan } from "@/core/explorationPlan";
+import { exploreModeRow, tripHaulText, tripScaleText } from "@/ui/exploreModeText";
 import { currentWorldBias } from "@/core/mortalWorldService";
 import { usePlayerStore } from "@/stores/player";
 import { useSettingsStore } from "@/stores/settings";
@@ -646,7 +692,12 @@ import { biasEffectOf } from "@/core/mortalBias";
 import { isRetreating } from "@/core/earlyGameService";
 import { REALMS } from "@/data/realms";
 import { EXPLORE_MODES } from "@/data/constants";
-import { regionFoeOrigin, regionRealmPressure, startExploration } from "@/core/exploration";
+import {
+  exploreEventChance,
+  regionFoeOrigin,
+  regionRealmPressure,
+  startExploration,
+} from "@/core/exploration";
 import { EVENT_TIERS, tierOddsText } from "@/core/eventTier";
 import { pendingChainStages } from "@/core/eventEngine";
 import { foeOriginPartsText } from "@/core/battleAnalysis";
@@ -666,7 +717,7 @@ import {
   regionEcology,
   starsText,
 } from "@/core/buildAdvisor";
-import { formatDuration, formatGN, formatPercent } from "@/utils/format";
+import { formatGN, formatPercent } from "@/utils/format";
 import GameIcon from "@/components/common/GameIcon.vue";
 import FolioNote from "@/components/common/FolioNote.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
@@ -942,36 +993,47 @@ function heldText(regionId: string): string {
 }
 
 /**
- * 「预计材料 ≈ N 件」—— 派发前给玩家一个可算的盼头。
- * 区域事件尚未揭晓,故倍率只取模式本身的 rewardMult(措辞用「预计」)。
+ * 出行模式窗的四笔**整趟**账。
+ *
+ * 每个档位先算规模账(多久、几场、途中几次际遇,见 core/explorationPlan),
+ * 再把每场的掉落期望乘上场次 —— 于是「整趟约 N 件」与结算同源。
+ * 每场读数仍留在第三行:它是换算率,也是玩家核对的口径,但不该冒充整趟。
+ *
+ * 场次读的是**当前这个地界**的际遇概率(带今日星象之利):值日之宿所利之地
+ * 际遇更多、交手随之更少,这是玩家在这里就能看见的差别。
  */
-function expectedMaterials(modeId: keyof typeof EXPLORE_MODES): number {
-  return expectedMaterialsPerRun({
-    bias: currentWorldBias(),
-    mods: player.finalStats.mods,
-    rewardMult: EXPLORE_MODES[modeId].rewardMult,
-    isBoss: false,
-    luck: 0,
-  });
-}
-
-/** 装备的期望「趟数」—— 与材料同一行,但用趟数说话(不给概率) */
-function expectedEquipTrips(modeId: keyof typeof EXPLORE_MODES): string {
-  const v = expectedEquipmentTripsPerRun({
-    mods: player.finalStats.mods,
-    rewardMult: EXPLORE_MODES[modeId].rewardMult,
-    isBoss: false,
-  });
-  return v === null ? "—" : String(v);
-}
-
-/** 丹药的期望「趟数」—— 与装备同一行,同样不给概率 */
-function expectedPillTrips(modeId: keyof typeof EXPLORE_MODES): string {
-  const v = expectedPillTripsPerRun({
-    bias: currentWorldBias(),
-    rewardMult: EXPLORE_MODES[modeId].rewardMult,
-    isBoss: false,
-  });
-  return v === null ? "—" : String(v);
-}
+const modeRows = computed(() => {
+  const region = modeTarget.value;
+  const eventChance = region
+    ? exploreEventChance(region.id, player.finalStats.mods, game.totalPlaySec)
+    : 0;
+  return MODE_LIST.map((m) =>
+    exploreModeRow({
+      plan: exploreTripPlan({
+        mode: m.id,
+        petId: player.petId,
+        mods: player.finalStats.mods,
+        eventChance,
+      }),
+      materialsPerBattle: expectedMaterialsPerBattle({
+        bias: currentWorldBias(),
+        mods: player.finalStats.mods,
+        rewardMult: EXPLORE_MODES[m.id].rewardMult,
+        isBoss: false,
+        luck: 0,
+      }),
+      equipBattlesPerPiece: expectedEquipmentBattlesPerPiece({
+        mods: player.finalStats.mods,
+        rewardMult: EXPLORE_MODES[m.id].rewardMult,
+        isBoss: false,
+      }),
+      pillBattlesPerPiece: expectedPillBattlesPerPiece({
+        bias: currentWorldBias(),
+        rewardMult: EXPLORE_MODES[m.id].rewardMult,
+        isBoss: false,
+      }),
+      risk: m.risk,
+    }),
+  );
+});
 </script>

@@ -2280,4 +2280,89 @@
       gap: 0.06rem;
     }
   }
+
+  /*
+   * 出行方式行 —— 一笔整趟的账。
+   *
+   * 从前一个档位是一枚「左名右数」的两栏按钮:左边档名与风险词挤在一行、
+   * 右边四行读数右对齐。390 上量过:「安稳」被压成「安 / 稳」两行(税前 11px 宽),
+   * 320 上右边那栏只剩 142px,「装备 约 3.2 趟一件 · 丹药 约 12.5 趟一枚」
+   * 折成十段 —— 数字与量词分家,读起来是两个数。
+   *
+   * 现在是四行左对齐的账:①档名 · 风险词 · 时长,②这一趟的规模,③整趟产出,
+   * ④收益/敌势/每场换算率。风险词自己一格且 nowrap(它是这一档最要紧的那个字),
+   * 时长同样 nowrap;下面三行允许换行,但都以整句为单位断,不拆「数与量词」。
+   */
+  .adventure-mode {
+    row-gap: 0.22rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .adventure-mode__head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.1rem 0.5rem;
+  }
+  .adventure-mode__name {
+    flex: none;
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+  .adventure-mode__risk {
+    flex: none;
+    font-size: var(--type-body);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+  .adventure-mode__duration {
+    margin-left: auto;
+    flex: none;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-body);
+    white-space: nowrap;
+  }
+  .adventure-mode__scale {
+    display: block;
+    color: rgb(var(--color-ink-soft-rgb));
+    overflow-wrap: anywhere;
+  }
+  .adventure-mode__haul {
+    display: block;
+    color: rgb(var(--color-gold-ink-rgb));
+    overflow-wrap: anywhere;
+  }
+  .adventure-mode__odds {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 220px) {
+    /* 195 档:时长从右端退回自己一行,别把档名挤扁 */
+    .adventure-mode__duration {
+      margin-left: 0;
+    }
+  }
+
+  /*
+   * 「距下一场还有多久」—— 与「搜寻猎物中」同排的一格小字。
+   *
+   * 它答的是「在等」还是「卡住了」:没有它的时候,那一行是敌人名 + 三点省略号,
+   * 首战 12 秒的空窗看不出有没有在走。定宽槽(.countdown-slot)保证秒针顺走时行宽不变。
+   */
+  .combat-combatant__next {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.18rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    white-space: nowrap;
+  }
+  .combat-combatant__next-unit {
+    flex: none;
+  }
 }

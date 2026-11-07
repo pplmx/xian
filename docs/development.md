@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 557 个 spec;本作自己那部分 477 个) |
+| `bun run test` | 全量用例(全量 559 个 spec;本作自己那部分 479 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -98,7 +98,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 557 个 spec(本作自己那部分 477 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 559 个 spec(本作自己那部分 479 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -796,8 +796,14 @@ git push origin main v0.0.2
 两次都不可靠:同文件里先跑一次结算会污染基准(180 vs 204),两次结算塞进同一 it 又串单例。
 注入 `player.major` 实测:判据当场变红。
 
-已完成的近期项,留档备查:掉落期望读数(`expectedMaterialsPerRun` / `expectedEquipmentTripsPerRun`,
-显示在派发前的模式行)、洗练的「约 N 次」、镇压收益的界面说明。
+已完成的近期项,留档备查:掉落期望读数(`expectedMaterialsPerBattle` / `expectedEquipmentBattlesPerPiece` /
+`expectedPillBattlesPerPiece`,经 `core/explorationPlan` 的规模账换算成**整趟**读数后显示在派发前的模式行)、
+洗练的「约 N 次」、镇压收益的界面说明。
+
+> 这三个函数曾叫 `…PerRun`,而它们读的是 `afterWin` 那张**每场**掉落表 —— 派发前的模式行把
+> 「每场」当「整趟」印了整整一版,差了两三个数量级(寻常游历是 132 场)。改名与规模账
+> (`core/explorationPlan`)是同一轮修的;判据在 `explorationPlan.spec`,真浏览器那条是
+> `layout-check` 的「出行模式窗的整趟账」。
 
 ### 判据不许空转：`fileAt` 与裸 `FILES.find`
 

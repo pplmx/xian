@@ -233,6 +233,8 @@ const CATEGORIES = [
       "layoutMeasure",
       "adventureText",
       "adventureDesk",
+      "explorationPlan",
+      "adventureWiring",
       "scriptDepsAudit",
       "suppress",
       "game.spec",

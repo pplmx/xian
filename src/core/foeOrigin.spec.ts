@@ -361,9 +361,20 @@ describe("来源到屏幕的接线", () => {
     const view = src("../views/AdventureView.vue");
     expect(view, "选地卡片该摊开层级补偿与地界凶险").toContain("regionFoeOrigin(");
     expect(view, "卡片与战报共用同一个格式化").toContain("foeOriginPartsText(");
-    expect(view, "出行方式的危险倍率必须可见(收益一直亮着,危险却暗着)").toMatch(
-      /EXPLORE_MODES\[m\.id\]\.dangerMult/,
+    /*
+     * 出行方式的危险倍率必须可见(收益一直亮着,危险却暗着)。
+     *
+     * 这一条原先钉的是模板里那个字面量 `EXPLORE_MODES[m.id].dangerMult`。出行模式窗
+     * 后来改成一笔整趟的账(见 ui/exploreModeText):倍率仍取自 EXPLORE_MODES —— 只是
+     * 先汇进 ExploreModeRow 再由模板渲染。守的东西不变,故判据跟着搬,并**加严**:
+     * 数据侧(取自唯一档位表)与渲染侧(真的印上屏)两边都钉。
+     */
+    const rowSource = src("./../ui/exploreModeText.ts");
+    expect(rowSource, "危险倍率仍只从 EXPLORE_MODES 取,不许在文案层另写一份").toMatch(
+      /dangerMult: mode\.dangerMult/,
     );
+    expect(view, "出行模式窗要把那一档的敌势倍数真的印出来").toContain("m.dangerMult");
+    expect(view, "收益与敌势同排,「要不要涉险」才是个可算的账").toContain("m.rewardMult");
   });
 
   it("天界战报(试炼/变数/忆战/重写/挑战)也读它,不再只有远征能说清判定", () => {

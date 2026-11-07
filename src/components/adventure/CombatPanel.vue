@@ -95,6 +95,23 @@
                         <span />
                         <span />
                       </span>
+                      <!--
+                        「下一战还要多久」—— 这个数一直都在会话里(nextBattleAt),
+                        六处写、零处读。于是屏上只有一句「搜寻猎物中」加三点省略号,
+                        分不出「正在等」与「卡住了」。首战固定等 12 秒,四小时档要等
+                        一千多次,每一回都只能干看着。
+
+                        倒数到 0 时不写「0 秒」—— 那一瞬正是战斗开打、敌人名字换上来的
+                        同一拍,写个 0 只会闪一下;低于 1 秒就整句收起。
+                      -->
+                      <span
+                        v-if="nextBattleIn > 0"
+                        data-combat-next
+                        class="combat-combatant__next tabular"
+                      >
+                        <span class="countdown-slot">{{ formatCountdown(nextBattleIn) }}</span>
+                        <span class="combat-combatant__next-unit">后现身</span>
+                      </span>
                     </template>
                     <span v-if="foeAdaptation" class="combat-combatant__stars">
                       <button
@@ -390,6 +407,21 @@ const timeLeft = computed(() =>
   session.value ? Math.max(0, (session.value.endsAt - now.value) / 1000) : 0,
 );
 const modeName = computed(() => (session.value ? EXPLORE_MODES[session.value.mode].name : ""));
+
+/**
+ * 距下一场交手的秒数。
+ *
+ * `nextBattleAt` 是会话里早就存着的绝对时间戳(引擎每 tick 拿它比对),
+ * 但界面从来没读过它 —— 于是「搜寻猎物中」那种等待看上去与「卡住了」一模一样。
+ * 与整趟倒计时共用 `useNow` 的秒级心跳,故它真的在走。
+ *
+ * 已经到点(`<= 0`)时返回 0,由模板整句收起:那一拍正是战斗换上新敌人名的同一帧。
+ */
+const nextBattleIn = computed(() => {
+  const s = session.value;
+  if (!s) return 0;
+  return Math.max(0, Math.ceil((s.nextBattleAt - now.value) / 1000));
+});
 const sessionStats = computed(() => sessionStatRows(session.value));
 
 /** 连胜与下一档赏赐:冲档要有距离感 —— 3/5/10 档的赏赐发给谁,先得让人看得见自己在几连胜 */
