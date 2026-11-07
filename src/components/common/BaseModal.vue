@@ -164,7 +164,12 @@ const route = useRoute();
  */
 const panelSizeClass = computed(() => {
   if (props.size === "max") return "max-w-[68rem]";
-  if (props.size === "wide" || props.wide) return "max-w-100 desk:max-w-[46rem]";
+  /*
+   * 宽档在桌面上放到 52rem:器评帖这类「四块内容」的浮层,46rem 分两栏后
+   * 每栏只有 200 出头,词条名一字一行反而更费高度(实测卷身 1.53 屏,差一点
+   * 够不到 1.5 的上限)。
+   */
+  if (props.size === "wide" || props.wide) return "max-w-100 desk:max-w-[52rem]";
   return "max-w-90 desk:max-w-[34rem]";
 });
 const modalPosition = computed(() => {

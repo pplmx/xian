@@ -29817,10 +29817,102 @@ async function taskSensoryParity() {
   return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
 }
 
+/**
+ * 桌面浮层里的卷身 —— 「放宽到 34rem / 46rem」之后,内容滚动还剩几屏。
+ *
+ * ## 为什么量这个
+ *
+ * `BaseModal` 的宽度在 ≥960px 时放宽(默认 34rem、宽档 46rem),见设计稿第五批。
+ * 但**放宽不等于够用**:藏珍详情里那件器评帖内容 1039px,视口 800,卷身可视区
+ * 只有 491px —— 要在里面滚 2.12 屏才能读完。
+ *
+ * 判据守的是「桌面读一扇浮层不该比读整页还累」:
+ *
+ * ```text
+ *   整页(390 竖屏)平均 1.60 屏   ← docs/design.md 的现行读数
+ *   桌面浮层上限 1.5 屏           ← 超过这个数,把内容摊成全页反而更好读
+ * ```
+ *
+ * 只查 1280 档:桌面是放宽后才有意义的那个档;手机本来就该一屏一屏滚。
+ */
+/**
+ * 桌面浮层卷身的屏数上限。
+ *
+ * 参考口径:整页(390 竖屏)平均 1.60 屏(docs/design.md 现行读数)。
+ * 浮层是「读一小块」的地方,不该比读整页还累 —— 1.5 屏是那条线的下限。
+ * 超过它,内容就该摊成全页,而不是塞进一扇浮层让人滚两屏多。
+ */
+const DESKTOP_MODAL_MAX_SCROLL = 1.5;
+
+async function taskDesktopModalDepth() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 1280, height: 800 },
+    deviceScaleFactor: 1,
+  });
+  try {
+    await seedSave(ctx, showcaseSlices("light"), "__desktopModalDepth");
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await page.goto(`${INDEX}#/inventory`, { waitUntil: "load" });
+    await settleVisuals(page);
+    await page.waitForTimeout(700);
+    await clearOverlays(page);
+
+    /*
+     * 打开一件器评帖(藏珍详情)。入口是收藏格的第一格 —— 与 taskInventorySeat
+     * 用的是同一个落点;找不到就报出来,别静默跳过(静默跳过的判据等于没有)。
+     */
+    const opened = await page.evaluate(() => {
+      const cell = document.querySelector(".inventory-collection__grid > *");
+      if (!cell) return false;
+      cell.click();
+      return true;
+    });
+    if (!opened) {
+      failures.push("[1280] 桌面浮层深度:藏珍格里找不到可点的一格(取景没收拾干净)");
+      return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+    }
+    await page.waitForTimeout(700);
+
+    const depth = await page.evaluate(() => {
+      const panel = document.querySelector("[data-folio-modal]");
+      if (!panel) return null;
+      const body = panel.querySelector("[data-folio-modal-scroll]") ?? panel;
+      const viewportH = window.innerHeight;
+      return {
+        width: Math.round(panel.getBoundingClientRect().width),
+        content: Math.round(body.scrollHeight),
+        view: Math.round(body.clientHeight),
+        /** 卷身要滚几屏(以卷身自己的可视高为分母) */
+        scrollScreens: body.clientHeight > 0 ? body.scrollHeight / body.clientHeight : 0,
+        /** 内容本身有几屏(以窗口为分母)—— 用于报告,不判定 */
+        contentScreens: body.scrollHeight / viewportH,
+      };
+    });
+    checked += 1;
+    if (!depth) {
+      failures.push("[1280] 桌面浮层深度:点了藏珍格却没打开浮层(判据没跑到东西)");
+    } else if (depth.scrollScreens > DESKTOP_MODAL_MAX_SCROLL) {
+      failures.push(
+        `[1280] 桌面浮层的卷身要滚 ${depth.scrollScreens.toFixed(2)} 屏` +
+          `(上限 ${DESKTOP_MODAL_MAX_SCROLL};卷身 ${depth.content}px 挤在 ${depth.view}px 里,` +
+          `浮层宽 ${depth.width}px)—— 内容摊进这么窄的一条,不如放到整页`,
+      );
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
 const TASKS = [
   ...VIEWPORTS.map((vp) => [`页面巡游[${vp.tag}]`, () => taskPageTour(vp)]),
   ["存档写不进去 · 设置页必须说话", taskSaveUnwritable],
   ["弹窗的键盘与焦点", taskModalFocus],
+  ["桌面浮层的卷身深度", taskDesktopModalDepth],
   ["Tab 焦点看得见", taskTabFocus],
   ["浮出的提示条点得掉", taskToastDismiss],
   ["五个感官对得上", taskSensoryParity],

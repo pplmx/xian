@@ -570,12 +570,48 @@
   .equip-dossier {
     min-width: 0;
   }
+  /*
+   * 桌面(≥960)把器评帖摊成两列 —— 放宽浮层宽度只解决了一半。
+   *
+   * 实测 1280 档:浮层已放宽到 544px,但卷身 1039px 仍要滚 2.12 屏
+   * (判据 `taskDesktopModalDepth` 的上限是 1.5)。原因不是宽度不够,是
+   * **内容仍然单列往下摞**:拿到宽屏之后,多出来的横向空间一直空着。
+   *
+   * 分组按「读数 / 去向」:
+   *   左列 —— 战力、词条明细、词条(这一件现在是什么)
+   *   右列 —— 换装后的流派、炼器进度、工坊(拿它去做什么)
+   * hero(标题、品阶、来路)照旧跨两列,它是一条横条而不是一块内容。
+   *
+   * 只改栅格,不动 DOM:子元素用 grid-column 落到左右两列,手机上仍是单列原样。
+   */
+  @media (min-width: 960px) {
+    /*
+     * 桌面(≥960)把器评帖摊成两栏 —— 放宽浮层宽度只解决了一半。
+     *
+     * 实测 1280 档:浮层已放宽到 544px,但卷身 1039px 仍要滚 2.12 屏
+     * (判据 taskDesktopModalDepth 的上限是 1.5)。原因不是宽度不够,是
+     * **内容仍单列往下摞**,多出来的横向空间一直空着。
+     *
+     * 为什么用 `columns` 而不是 grid:试过两次 grid 显式分列,都不如预期 ——
+     * 各块高度不均(器性 108 / 词条 305 / 换装流派 115 / 工坊 375),
+     * 手工指定哪块去哪列,总高永远由最长的那列决定,换一分法就涨一截
+     * (实测 1039 → 1068 → 1106,反而更差)。多栏流会自己按高度平衡。
+     *
+     * hero(标题、品阶、来路)是一条横条,不适合被切开,故 `column-span: all`。
+     */
+    .equip-dossier {
+      columns: 2;
+      column-gap: 0.9rem;
+    }
+  }
   .equip-dossier__hero {
     position: relative;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: start;
     gap: 0.68rem;
+    /* 桌面两栏流里,器首是一条横条而不是一块内容 —— 跨过两栏,不许被切开 */
+    column-span: all;
     overflow: hidden;
     padding: 0.72rem 0.78rem;
     border: 0;
@@ -742,6 +778,8 @@
     letter-spacing: 0.08em;
   }
   .equip-dossier__power {
+    /* 两栏流里不许被劈开:一条读数读到一半换栏,比多滚半屏更难受 */
+    break-inside: avoid;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     margin-top: 0.55rem;
@@ -821,6 +859,7 @@
     line-height: 1.55;
   }
   .equip-dossier__sheet {
+    break-inside: avoid;
     margin-top: 0.6rem;
     overflow: hidden;
     border: 0;
@@ -890,6 +929,7 @@
     line-height: 1.5;
   }
   .equip-dossier__line-ledger {
+    break-inside: avoid;
     margin-top: 0.6rem;
     padding: 0.5rem 0.62rem 0.58rem;
     border: 0;
@@ -905,6 +945,7 @@
     line-height: 1.55;
   }
   .equip-dossier__workshop {
+    break-inside: avoid;
     margin-top: 0.75rem;
     padding: 0.55rem 0.65rem 0.65rem;
     border: 0;

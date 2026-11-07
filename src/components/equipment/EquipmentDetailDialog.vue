@@ -1,5 +1,10 @@
 <template>
-  <BaseModal :open="inst !== undefined" :title="template?.name ?? ''" top @close="close">
+  <!--
+    宽档:这是全作**内容最多的一扇浮层**(器性 + 词条 + 换装流派 + 工坊四块)。
+    桌面分两栏之后,默认档 34rem 每栏只剩 200 出头,词条名一字一行 ——
+    实测卷身 1.53 屏,差一点够不到判据的 1.5 上限。宽档在桌面给 52rem。
+  -->
+  <BaseModal :open="inst !== undefined" :title="template?.name ?? ''" top wide @close="close">
     <div
       v-if="inst && template && resolved"
       class="equip-dossier"
