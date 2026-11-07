@@ -89,6 +89,23 @@ export interface ExploreModeRow {
   materialsPerBattle: string;
   rewardMult: number;
   dangerMult: number;
+  /**
+   * 这一档在**当前地界与灵兽之性**下的实发敌势总数。
+   *
+   * `dangerMult` 只是档位自己的倍率(normal 1 / deep 1.45 / risky 2.1),
+   * 而真正落到战场上的还要乘灵兽之性与区域事件(见 `dangerFactorFor`)。
+   * 从前界面把 `dangerMult` 写成「敌势 ×N」—— 带着「好战」灵兽时它恒小于实发值,
+   * 玩家按 ×2.1 估算风险,实际是 ×2.42。
+   */
+  dangerTotal: number;
+  /**
+   * 敌势的来源 —— 与本次选择有关的那几项(档位 / 灵兽之性 / 区域事件)。
+   *
+   * `dangerMult` 是个**笼统的乘数**:玩家看到一个 ×2.1,不知道它从哪来、
+   * 哪几项是自己改得动的(换档位能改,妖潮只能等)。这一栏把那笔乘法摊开。
+   * 已过滤掉 ×1 的项:没做的事不必占字数。空数组表示这一档敌势没有额外来源。
+   */
+  foeParts: string[];
 }
 
 /**
@@ -108,6 +125,13 @@ export function exploreModeRow(input: {
   risk: string;
   /** 行囊还能再装几件(只算包里的,不算已穿在身上的) */
   bagFree: number;
+  /** 敌势来源:档位 / 灵兽之性 / 区域事件 —— 已摊好的文案,空的表示都不扰动 */
+  foeParts?: string[];
+  /**
+   * 实发敌势总数 —— 档位 × 灵兽之性 × 区域事件(与 `dangerFactorFor` 同一份乘法)。
+   * 不给则退回档位自己的倍率(旧行为)。
+   */
+  dangerTotal?: number;
 }): ExploreModeRow {
   const { plan } = input;
   const mode = EXPLORE_MODES[plan.mode];
@@ -115,6 +139,7 @@ export function exploreModeRow(input: {
     id: plan.mode,
     name: mode.name,
     risk: input.risk,
+    foeParts: input.foeParts ?? [],
     durationText: formatDuration(plan.durationSec),
     battles: plan.battles,
     events: plan.events,
@@ -132,6 +157,7 @@ export function exploreModeRow(input: {
     pillPerTrip: perTrip(input.pillBattlesPerPiece, plan.battles),
     rewardMult: mode.rewardMult,
     dangerMult: mode.dangerMult,
+    dangerTotal: input.dangerTotal ?? mode.dangerMult,
   };
 }
 

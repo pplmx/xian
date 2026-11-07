@@ -61,6 +61,11 @@ release. Add a tool name to select part of the graph. For example, run
 - 先写用例（RED）→ 最小实现（GREEN）：新功能必带测试；纯逻辑进 `core` 并可直接测，视图只做薄接线。
 - commitlint 走 conventional（类型：feat/fix/refactor/test/docs/chore/…）。
 - commit message 用 bullet 一条条说明改了什么、为什么，不写一句话流水账。
+- **提交前核对暂存区**：`git add` 之后、`git commit` 之前跑一次
+  `git diff --cached --name-only`，逐行确认都在本次意图之内。工作区里他人/既有的
+  未提交改动必须先 `git stash push -- <那几条路径>` 挪走，不要靠「我只 add 了自己的文件」
+  这个假设。踩过一次：`AdventureView.vue` 的 58 行业务改动被带进一个 tests 提交，
+  已推送无法改写，只能留一条名不副实的提交记录。
 
 ## 测试与事实源
 

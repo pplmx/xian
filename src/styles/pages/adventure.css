@@ -2417,6 +2417,19 @@
    * 它答的是「那些装不下的去哪了」,属于同一档的账,故紧跟 haul 而不另起一块。
    * 用 faint 一档而非正文色:它是补充说明,不是又一个要读的数。
    */
+  /*
+   * 敌势的来源 —— 一行小字,压在同一档的 odds 后面。
+   *
+   * `敌势 ×2.1` 是个笼统的乘数:玩家不知道哪几项是自己改得动的
+   * (换档位能改,妖潮只能等)。故用 faint 一档,它是补充,不是又一个要读的数。
+   */
+  .adventure-mode__foe {
+    display: block;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
   .adventure-mode__overflow {
     display: block;
     color: rgb(var(--color-ink-faint-rgb));
