@@ -312,6 +312,16 @@ if (median(swap) > BUDGETS.fontSwap)
 // 防空转:量不到楷体(字体没进产物/名字写错)时,那条预算永远绿
 if (!runs[0].marks.kaiUsable)
   failures.push("楷体没被用上(dist 里没有字体、或 family 名对不上)—— 字体那条预算空转了");
+/*
+ * 而且「可用」不等于「量到了」:kaiUsable 走的是 document.fonts.check(),
+ * 只证明这个 family 注册过, 不证明首屏真下载了哪几片。下面那种空转实测出现过 ——
+ * 同一份 dist 连跑两遍, 其中一遍打印「取了 0 份 · 0KB」而判据照样绿。
+ * 成因是上面 page.on("response") 里 resp.body() 拿不到体时被 catch 吞掉,
+ * 那个请求就不计入 resources; 400ms 的结算窗口对慢机器不够时尤其容易。
+ * 故这里加一条下限: 一片都没量到 = 判据空转, 不许绿。
+ */
+if (fontReqs.length === 0)
+  failures.push("首屏楷体切片量到 0 份 —— 响应体没读出来(结算窗口太短或请求被中止),判据空转");
 if (runs[0].marks.fcp === null) failures.push("拿不到 FCP —— 判据空转了");
 if (fontBytes > BUDGETS.fontBytes * 1024)
   failures.push(
