@@ -249,6 +249,7 @@ const CATEGORIES = [
       "utils/saveShape",
       "settings.spec",
       "settingsSanitize",
+      "exploreModeRowFoe",
       "settingsDesk",
       "savePlatform",
       "saveRoundTrip",
