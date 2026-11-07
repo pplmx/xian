@@ -98,7 +98,22 @@ describe("联动审计 · ④共鸣非最优套装化", () => {
     // 历史暗伤:astral 三套声明「开战护盾+5%」、UI 显示「共鸣」,战斗却零消费
     // (ironwall 有 ironwallBrace 物化点)。声明即承诺,判据拿着 playerSnap 源码
     // 与共鸣定义对账:每一类钩子,源码里都必须写着同一钩子名的物化点。
+    /*
+     * 「物化点」的判法:钩子名要出现在 playerSnap **或它调用的共鸣 mods 表**里。
+     *
+     * 上一版只读 playerSnap.ts 一个文件 —— 每个 hook 各写一段 if 时那是对的;
+     * 但四套共鸣的 mods 表后来收进了 equipSet.SET_HOOK_MODS(单一出处,换装推演
+     * lab 也读它,免得两处漂)。于是 `astral` 这个字面量搬了家,判据却仍只读
+     * playerSnap —— 红的是判据的**实现**老化了,不是钩子没兑现。
+     *
+     * 判据要守的仍是那件事:声明的钩子必须有物化点。故两处源码合起来看,
+     * 并要求 playerSnap 确实**调用**了那张表(不能只把字面量放在别处而不接)。
+     */
     const src = readFileSync(resolve(__dirname, "./playerSnap.ts"), "utf8");
+    const shared = readFileSync(resolve(__dirname, "./equipSet.ts"), "utf8");
+    expect(src, "playerSnap 没调用共鸣 mods 表 —— 钩子写在别处也不会生效").toContain(
+      "setHookMods(",
+    );
     const hooks = [
       ...new Set(
         EQUIPMENT_TEMPLATES.map((t) => (t.set ? equipSetDef(t.set)?.hook : undefined)).filter(
@@ -109,7 +124,10 @@ describe("联动审计 · ④共鸣非最优套装化", () => {
     expect(hooks.length).toBeGreaterThanOrEqual(2);
     for (const hook of hooks) {
       expect(
-        src.includes(`"${hook}"`),
+        // 表里的键是标识符写法(astral: {...}),不是字符串字面量 —— 两种都算
+        src.includes(`"${hook}"`) ||
+          shared.includes(`"${hook}"`) ||
+          new RegExp(`\\b${hook}\\s*:`).test(shared),
         `playerSnap 未物化共鸣钩子 \`${hook}\` —— 套装声明了效果,战斗却不会兑现`,
       ).toBe(true);
     }

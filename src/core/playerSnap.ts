@@ -9,7 +9,7 @@ import { useEndgameStore } from "@/stores/endgame";
 import { modOf } from "./statsCalc";
 import { detectBuild } from "./buildDetect";
 import { stackedMods, swordPurity, SWORD_LAYER_MODS } from "./daoDepth";
-import { hasActiveSet, ASTRAL_SET_SHIELD } from "./equipSet";
+import { hasActiveSet, setHookMods } from "./equipSet";
 
 /**
  * 构建玩家战斗快照。
@@ -45,9 +45,18 @@ export function buildPlayerSnap(celestial = false): CombatantSnap {
   // Phase 31 S5:astral 共鸣(同套 2 件 → 开战时护盾+5%)——并入盾 mod,与词条/功法
   // 同走 shieldOnStart 一条道,combat 开战盾逻辑(read mods.shieldOnStart)直接生效,
   // powerRating/战报随 mods 透明展示。不进 finalStats:机制钩子不改面板与流派检测。
-  if (hasActiveSet(inventory.equippedItems, "astral")) {
-    mods = stackedMods(mods, { shieldOnStart: ASTRAL_SET_SHIELD }, 1);
-  }
+  /*
+   * 全部「并入型」共鸣:astral(星斗,8 阶开战 +5% 盾)· sunder(仙甲,23 阶破甲)·
+   * thorns(神铠,28 阶反震)· primordial(混沌,31 阶本源盾)。
+   *
+   * 并进快照 mods,由 combat 现成的读取点直接生效 —— 不新开引擎接口。
+   * 表在 equipSet 的 SET_HOOK_MODS 里是**单一出处**,换装推演(lab)读同一张表,
+   * 两处不会漂。
+   *
+   * 四套此前共用两个 hook(28 阶神铠 = 2 阶铁壁、23 阶仙甲与 31 阶混沌 = 8 阶星斗),
+   * 玩家越到后期凑齐一套越难,拿到的却和早期一模一样。现在各有一套真机制。
+   */
+  mods = stackedMods(mods, setHookMods(inventory.equippedItems), 1);
 
   return {
     name: player.name,

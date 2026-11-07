@@ -11,7 +11,7 @@ import { equipmentTemplate } from "@/data/equipment";
 import { STAT_NAMES } from "@/data/statNames";
 import { buildPlayerSnap } from "./playerSnap";
 import { detectBuild, type BuildDetection } from "./buildDetect";
-import { ASTRAL_SET_SHIELD, hasActiveSet } from "./equipSet";
+import { hasActiveSet, setHookMods } from "./equipSet";
 import { resolveEquipStats } from "./equipGen";
 import { celestialFoeCaliber, mergeRules, runGauntlet, worldFoeSnap } from "./gauntlet";
 import { currentDaoRules } from "./endgameService";
@@ -110,13 +110,24 @@ export function whatIfEquip(uid: string): WhatIfReport | null {
     currentUid === null || !equipped.some((it) => it.uid === currentUid)
       ? [...equipped, item] // 空位补穿
       : equipped.map((it) => (it.uid === currentUid ? item : it));
-  const astralBefore = hasActiveSet(equipped, "astral");
-  const astralAfter = hasActiveSet(inserted, "astral");
+  /*
+   * 共鸣要按**假想配装**重算 mods,不能继承当前穿戴 —— 否则脱下一件星斗套仍带着
+   * 5% 盾,推演虚胖生存。
+   *
+   * 算法是「差量」:把「当前已生效的共鸣 mods」减掉、再把「假想配装生效的」加上。
+   * mods 表由 equipSet.setHookMods 给(**单一出处**,与玩家快照同源)—— 上一版
+   * 这里只硬编码了 astral 一条,加后段三套(破甲/反震/本源盾)时就会漏,
+   * 推演说这套能过、实战过不去。
+   */
+  const hookBefore = setHookMods(equipped);
+  const hookAfter = setHookMods(inserted);
   const modsAfter: StatMods = { ...mods };
-  if (astralAfter && !astralBefore)
-    modsAfter.shieldOnStart = (modsAfter.shieldOnStart ?? 0) + ASTRAL_SET_SHIELD;
-  if (astralBefore && !astralAfter)
-    modsAfter.shieldOnStart = Math.max(0, (modsAfter.shieldOnStart ?? 0) - ASTRAL_SET_SHIELD);
+  const modOf2 = (m: StatMods, k: string): number => (m as Record<string, number>)[k] ?? 0;
+  for (const k of new Set([...Object.keys(hookBefore), ...Object.keys(hookAfter)])) {
+    const delta = modOf2(hookAfter, k) - modOf2(hookBefore, k);
+    if (delta === 0) continue;
+    modsAfter[k as never] = Math.max(0, modOf2(modsAfter, k) + delta) as never;
+  }
   const after: CombatantSnap = {
     ...before,
     mods: modsAfter,
