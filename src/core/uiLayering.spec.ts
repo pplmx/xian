@@ -1696,6 +1696,32 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
+  it("连点不许放大页面 —— 可点元素一律 touch-action:manipulation", () => {
+    /*
+     * 玩家反馈:两下点得interval 短的时候,页面会**放大**。
+     *
+     * 那是浏览器的双击缩放(double-tap zoom):viewport 不禁缩放(这是无障碍要求,
+     * 见下一条判据 —— 低视力用户要能放大,所以不能用 user-scalable=no 关掉),
+     * 于是连续两次落在同一个可点元素上时,浏览器把它当「双击」并放大一档。
+     * 实测全站 31 个可点元素**一个都没声明** touch-action,全是 auto。
+     *
+     * 修法是 touch-action: manipulation:它只关掉**双击缩放**,单指滑动、
+     * 双指捏合缩放照旧 —— 既能连点按钮,又不牺牲放大能力。这正是那条无障碍判据
+     * 要的组合:不禁缩放,但也不让双击误触。
+     */
+    const css = readStyleCss();
+    expect(css, "可点元素要声明 touch-action: manipulation").toMatch(
+      /button[\s,][\s\S]{0,400}touch-action:\s*manipulation/,
+    );
+    /*
+     * 反例守卫:别顺手写成 touch-action: none —— 那会把滑动与双指缩放一起废掉,
+     * 是「关缩放」的另一种写法,与上面那条无障碍判据打架。
+     */
+    expect(css, "不许用 touch-action:none 把滑动与双指缩放一起废掉").not.toMatch(
+      /touch-action:\s*none/,
+    );
+  });
+
   it("页面不许禁掉缩放 —— 那正是这一部在防的那档被自己关了门", () => {
     /*
      * index.html 的 viewport 从首个版本起写着 `maximum-scale=1.0, user-scalable=no` ——

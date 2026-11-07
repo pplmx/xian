@@ -4071,6 +4071,35 @@
   }
   * {
     -webkit-tap-highlight-color: transparent;
+  }
+  /*
+   * 连点两次不许把页面放大 —— 浏览器把「短间隔内两次落在同一处」认作双击缩放。
+   *
+   * 玩家实际撞到过:修行页连着点两下「静坐调息」,页面放大一档,整个布局跟着位移。
+   * viewport 那边**不能**用 user-scalable=no 关掉缩放(低视力用户要靠它放大,
+   * 见 uiLayering.spec 那条无障碍判据),故这里逐个可点元素声明:
+   *
+   *   touch-action: manipulation —— 只关**双击缩放**;
+   *   单指滑动(滚动、横滑轨)与双指捏合缩放**照旧可用**。
+   *
+   * 为什么不写 `none`:那会把滚动与双指缩放一起废掉,等于换个名字关掉缩放,
+   * 与上面那条判据打架。判据会当场拦住这个写法(uiLayering.spec)。
+   *
+   * 只列真正的可点/可交互宿主,不用 `*`:正文与卡片要能正常选中、拖拽与滚动,
+   * 给全站元素挂上会改变文字选择与滚动惯性。
+   */
+  button,
+  a[href],
+  [role="button"],
+  [role="tab"],
+  [role="radio"],
+  summary,
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]),
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
   } /* 滚动条 */
   *::-webkit-scrollbar {
     width: 3px;
