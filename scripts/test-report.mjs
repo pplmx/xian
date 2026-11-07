@@ -430,6 +430,7 @@ const CATEGORIES = [
       "suppressCurve",
       "statDefenseLayers",
       "modalDepth",
+      "folioNotePrimitive",
       "rebirthCompanion",
       "petWorldBand",
       "codexScale",
