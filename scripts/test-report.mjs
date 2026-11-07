@@ -248,6 +248,7 @@ const CATEGORIES = [
       "useServiceWorkerUpdate",
       "utils/saveShape",
       "settings.spec",
+      "settingsSanitize",
       "settingsDesk",
       "savePlatform",
       "saveRoundTrip",

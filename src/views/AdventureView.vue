@@ -774,7 +774,18 @@
           -->
           <span class="adventure-mode__odds tabular">
             收益 ×{{ m.rewardMult }} · 敌势
-            <span :class="m.dangerMult > 1 ? 'text-cinnabar' : ''">×{{ m.dangerMult }}</span>
+            <span :class="m.dangerTotal > 1 ? 'text-cinnabar' : ''">×{{ m.dangerTotal }}</span>
+          </span>
+          <!--
+            敌势 ×2.1 是个**笼统的乘数**:玩家不知道它从哪来、哪几项是自己能改的。
+            选地卡上那行「此地之敌:层级补偿 ×1.25 · 地界凶险 ×1.05」的注释写着
+            「出行方式与灵兽之性那一半在出行弹窗里摊开」—— 而弹窗此前只报了个总数。
+
+            这里把与**这一次选择**有关的部分摊开:档位、灵兽之性、区域事件。
+            层级补偿不在这里(它由地界层级定,选地卡已经报过,同一件事不说两遍)。
+          -->
+          <span v-if="m.foeParts.length" class="adventure-mode__foe">
+            {{ m.foeParts.join(" · ") }}
           </span>
         </button>
       </div>
@@ -830,6 +841,7 @@ import {
   worldView,
 } from "@/core/mortalWorldService";
 import { biasEffectOf } from "@/core/mortalBias";
+import { regionEventDef } from "@/core/regionEvent";
 import { isRetreating } from "@/core/earlyGameService";
 import { REALMS } from "@/data/realms";
 import { BAG_CAPACITY, EXPLORE_MODES, EXPLORE_TRIP_MIN_BATTLES } from "@/data/constants";
@@ -1179,6 +1191,41 @@ function heldText(regionId: string): string {
  * 场次读的是**当前这个地界**的际遇概率(带今日星象之利):值日之宿所利之地
  * 际遇更多、交手随之更少,这是玩家在这里就能看见的差别。
  */
+/**
+ * 这一档的敌势由哪几项乘起来 —— 与 `explorationFoeDanger` 同一批输入、同一份乘法。
+ *
+ * 只列**与这一次选择有关**的三项(档位倍率 / 灵兽之性 / 区域事件):
+ * 层级补偿由地界层级定、地界凶险由地界定,选地卡上已经报过一遍,
+ * 同一件事不在两处各说一次。
+ *
+ * 复刻一份乘法是不该做的事(两本账迟早对不上),故这里只做「取哪几项」的挑选,
+ * 倍数直接从同一批数据源读:`EXPLORE_MODES[].dangerMult`、`personalityEffects`、
+ * `regionEventDef`。
+ */
+function foeLineFor(
+  mode: ExploreMode,
+  region: RegionDef | null,
+): { total: number; parts: string[] } {
+  const modeMult = EXPLORE_MODES[mode].dangerMult;
+  if (!region) return { total: modeMult, parts: [] };
+  const ev = player.currentRegionEvent(region.id);
+  const evDef = ev ? regionEventDef(ev.eventId, player.major) : undefined;
+  const petName = player.petId ? petDef(player.petId)?.name : undefined;
+  const petMult = personalityEffects(player.petId).dangerMult;
+  const evMult = evDef?.dangerMult ?? 1;
+  /*
+   * 只摊**档位之外**的那几项。档位倍率自己就在上一行「敌势 ×N」里,
+   * 再在下面写一遍「涉险求机 ×2.1」等于同一件事说两遍。
+   */
+  const parts = [
+    { label: petName ? `${petName}之性` : "灵兽之性", ratio: petMult },
+    { label: evDef?.name ?? "", ratio: evMult },
+  ]
+    .filter((p) => p.label && p.ratio !== 1)
+    .map((p) => `${p.label} ×${Number(p.ratio.toFixed(2))}`);
+  return { total: Number((modeMult * petMult * evMult).toFixed(2)), parts };
+}
+
 const modeRows = computed(() => {
   const region = modeTarget.value;
   const eventChance = region
@@ -1210,6 +1257,15 @@ const modeRows = computed(() => {
         isBoss: false,
       }),
       risk: m.risk,
+      /*
+       * 敌势的来源 —— 只摊**与这一次选择有关**的那三项:
+       * 档位倍率、灵兽之性、区域事件(妖潮等)。
+       * 层级补偿与地界凶险由地界定,选地卡上已经报过,这里不重复。
+       */
+      ...(() => {
+        const f = foeLineFor(m.id, region);
+        return { foeParts: f.parts, dangerTotal: f.total };
+      })(),
       /*
        * 行囊还能再装几件 —— 整趟的装备期望远超这个数时,模式窗要把差额说出来。
        * 只算**包里的**,不算已穿在身上的(那 120 格是包,不是全身)。
