@@ -5,6 +5,54 @@ import { qualityTextColor } from "@/ui/qualityTier";
 
 const source = readSource;
 
+describe("坊市的倒计时不许在首屏报三遍", () => {
+  /*
+   * 实测(390×844 展品档):「换货 01时59分」同一个读数在首屏出现**三次** ——
+   *
+   *   @181px  countdown-slot                «01时59分»        页头时钟
+   *   @497px  folio-ledger-tally__detail    «换货 01时59分»    卷首总账
+   *   @556px  folio-ledger-head__meta       «换货 01时59分»    货架章账首
+   *
+   * 后两处都读 `remainingSec`,文案一字不差,相距 59px。
+   *
+   * 三处职责其实不同,但**同一个数只能有一个出处**:
+   *   - 页头时钟跟随当前册变化(切到悬赏就报换榜),是「随时可见的钟」,留;
+   *   - 货架章账首是本册的核心读数,判据已钉着(「货架章首报真实换货时钟」),留;
+   *   - 卷首总账那格是**导航摘要**,它的职责是「哪册有什么、点哪去」,
+   *     不该把账首的时钟再抄一遍。
+   *
+   * 故这一格改报该摊独有的事实,不再复述倒计时。
+   */
+  it("卷首总账不再复述账首已经报过的倒计时", () => {
+    const view = source("src/views/MarketView.vue");
+    /* 账首那处留着(它是本册读数) */
+    expect(view, "货架章首仍要报真实换货时钟").toContain(
+      ':meta="`换货 ${formatCountdown(remainingSec)}`"',
+    );
+    /*
+     * 按「从 id 起到下一个 id 或数组结束」切一格 —— 不能用 `}: {`,
+     * 每格的结束是 `  },` 而不是 `}: {`(第一版就是这么写错的,判据空转成 "").
+     */
+    const rowOf = (id: string): string => {
+      const start = view.indexOf(`id: "${id}" as const`);
+      if (start < 0) return "";
+      const next = view.indexOf(`id: "`, start + 10);
+      return view.slice(start, next < 0 ? start + 900 : next);
+    };
+    const shelfRow = rowOf("shelf");
+    expect(shelfRow, "找不到卷首总账的货架格(判据空转)").toBeTruthy();
+    expect(
+      shelfRow,
+      "卷首总账的货架格又抄了一遍倒计时 —— 首屏会出现同一个「换货 01:59」三次",
+    ).not.toContain("formatCountdown(remainingSec");
+    const bountyRow = rowOf("bounty");
+    expect(bountyRow, "找不到卷首总账的悬赏格(判据空转)").toBeTruthy();
+    expect(bountyRow, "卷首总账的悬赏格抄了一遍换榜倒计时").not.toContain(
+      "formatCountdown(bountyRemainingSec",
+    );
+  });
+});
+
 describe("坊市案 · 市桥图先立意，三册再落到摊签", () => {
   it("品名在各自的品阶晕染上都留足正文可读性", () => {
     expect(qualityTextColor("mortal")).toBe("var(--color-ink)");

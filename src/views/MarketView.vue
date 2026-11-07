@@ -167,7 +167,20 @@ const marketLedgerRows = computed(() => [
     value: marketPulse.value.availableGoods,
     total: marketPulse.value.goodsTotal,
     unit: "件可买",
-    detail: `换货 ${formatCountdown(remainingSec.value)}`,
+    /*
+     * 这一格不再复述换货时钟 —— 账首(货架章)已经在同一屏报了同一个数,
+     * 两处相距 59px、文案一字不差,首屏等于把同一个「换货 01:59」说了两遍
+     * (页头时钟之外的第二、第三遍)。
+     *
+     * 改报这一摊**独有**的另一半:几件已经卖掉了。`value/total` 只说「还剩几件可买」,
+     * 「卖掉几件」是同一件事的另一面,却是备货与补货时真正要看的那个数。
+     * 判据 `[390-market] 三摊册口没有并排报出真值` 要求三格都报非空事实,
+     * 这一格不能留空。
+     */
+    detail:
+      marketPulse.value.goodsTotal - marketPulse.value.availableGoods > 0
+        ? `已售罄 ${marketPulse.value.goodsTotal - marketPulse.value.availableGoods} 件`
+        : "一架未动",
   },
   {
     id: "bounty" as const,
@@ -176,7 +189,15 @@ const marketLedgerRows = computed(() => [
     value: marketPulse.value.claimableBounties,
     total: marketPulse.value.openBounties,
     unit: "单可交",
-    detail: `换榜 ${formatCountdown(bountyRemainingSec(bounty.bountyAt, now.value))}`,
+    /*
+     * 换榜时钟同样归账首报(第贰册)。这里改报该摊**独有**的一件事:
+     * 有几单能一键交 —— 那是「现在点进去能得到什么」,总账摘要就该答这个,
+     * 而且与 `marketLead` 的「其中 N 单可一键交」同一份数据。
+     */
+    detail:
+      marketPulse.value.autoClaimableBounties > 0
+        ? `${marketPulse.value.autoClaimableBounties} 单可一键交`
+        : "",
   },
   {
     id: "sell" as const,
