@@ -74,7 +74,8 @@ export const BUFFS: BuffDef[] = [
     "pill",
     900,
     "护体如金刚,开阵便有盾在",
-    { maxHpPct: 0.2, shieldOnStart: 0.1 },
+    // 开阵护盾 10% → 18%:罡气散(境 1)是 15%,金刚液(境 2、草 26 vs 18)反而更低。
+    { maxHpPct: 0.2, shieldOnStart: 0.18 },
     "mountain",
   ),
   b(
@@ -294,7 +295,9 @@ export const BUFFS: BuffDef[] = [
     "pill",
     1200,
     "神威临世,诸邪辟易,身亦不损",
-    { damageBonus: 0.25, damageReduction: 0.12 },
+    // 减伤 12% → 18%:护心丹(境 1、草 16)是 15%,神威(境 15、草 360)反而更低至 12% ——
+    // 玩家付二十倍灵草拿到更弱的减伤。法则 J 钉住「同词条随境界不降」。
+    { damageBonus: 0.25, damageReduction: 0.18 },
     "crown",
   ),
   b(
@@ -368,7 +371,9 @@ export const BUFFS: BuffDef[] = [
     "pill",
     1200,
     "神将临阵,攻伐无双,身亦不损",
-    { attackPct: 0.45, critDamage: 0.3, damageReduction: 0.1 },
+    // 暴伤 30% → 42%:原先与仙力丹(境 10、草 240)撞成同一个 30%,而神将贵 33%。
+    // 减伤 10% → 16%:原先低于更低境界的护心丹(15%)—— 同词条倒挂,法则 J 会红。
+    { attackPct: 0.45, critDamage: 0.42, damageReduction: 0.16 },
     "sword",
   ),
   // ---- 气运爆点(P2 首落):不是天运的弱化版,是高量级短窗「赌一把」—— 天运 15% 它 50% ----

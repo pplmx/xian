@@ -606,6 +606,146 @@ describe("定价法则 · 清单本身不许漂移", () => {
   });
 });
 
+/**
+ * 【法则 J】同一词条跨丹比较:更高境界处不许更弱。
+ *
+ * ## 为什么需要这条
+ *
+ * 玩家反馈:一些丹药的效果竟然完全一样,尤其用更高级灵草炼制的,竟和低阶丹药一样。
+ *
+ * 法则 A~I 管的是「白捡的不比炼的强」「同线品质单调」—— 它们都只在**同族同线**里
+ * 比较药力。可状态族(buff 丹)不折算成时间,`pillGainSec` 对它恒为 0,于是
+ * **A/B/H 三条对 buff 丹一条都不成立**:32 味状态丹的强弱从来没有人比过。
+ *
+ * 实测(本轮审计)抓到的真倒挂:
+ *
+ * | 词条 | 低境界更弱? | 实际情况 |
+ * | --- | --- | --- |
+ * | damageReduction | 护心丹(境 1,15%) | 神威丹(境 15,12%)· 神将丹(境 15,10%) —— 高阶反而更弱 |
+ * | shieldOnStart | 罡气散(境 1,15%) | 金刚液(境 2,10%) |
+ * | critDamage | 仙力丹(境 10,30%) | 神将丹(境 15,30%) —— 草耗 240 → 320,数值不动 |
+ *
+ * 这不是「平衡微调」:玩家付了二十倍的灵草,拿到的减伤更低。它也不受
+ * 「通用面」那条豁免保护 —— 豁免说的只是**定心丹的破境面**可以低于破境丹
+ * (因为破境不是它的主线),而不是「高阶丹的同一个词条可以更弱」。
+ *
+ * ## 口径
+ *
+ * 只在**同一词条**里比 —— 不同词条不可比(attackPct 与 damageReduction 不是一回事)。
+ * 判据取词条数值本身,不折算时间:buff 丹的药力就是这个数值 × 时长。
+ */
+describe("法则 J · 同一词条跨丹比较,更高境界不许更弱", () => {
+  /** 词条 → 带该词条的丹(按准入境界升序) */
+  function statLadder(stat: string) {
+    const ladder: { name: string; realm: number; value: number; quality: string }[] = [];
+    for (const p of PILLS) {
+      if (p.kind !== "buff" || !p.buffId) continue;
+      const b = buffDef(p.buffId);
+      if (!b) continue;
+      const value = (b.mods as Record<string, number | undefined>)[stat];
+      if (value === undefined) continue;
+      ladder.push({
+        name: p.name,
+        realm: p.minRealm,
+        value,
+        quality: qualityDef(p.quality).name,
+      });
+    }
+    return ladder.sort((a, b) => a.realm - b.realm);
+  }
+
+  /** 同一境界处的两味(如神威丹与神将丹都是境 15)不比大小,只要求都 ≥ 更低境界那味 */
+  it("每个词条的数值随准入境界单调不降", () => {
+    const stats = new Set<string>();
+    for (const p of PILLS) {
+      if (p.kind !== "buff" || !p.buffId) continue;
+      const b = buffDef(p.buffId);
+      if (!b) continue;
+      for (const k of Object.keys(b.mods)) stats.add(k);
+    }
+    expect(stats.size, "一个 buff 词条都没扫到 —— 判据空转").toBeGreaterThan(5);
+
+    const violations: string[] = [];
+    for (const stat of stats) {
+      const ladder = statLadder(stat);
+      if (ladder.length < 2) continue;
+      for (let i = 0; i < ladder.length; i += 1) {
+        for (let j = 0; j < ladder.length; j += 1) {
+          const lo = ladder[i]!;
+          const hi = ladder[j]!;
+          if (hi.realm <= lo.realm) continue;
+          if (hi.value >= lo.value) continue;
+          violations.push(
+            `${stat}: ${hi.name}(境${hi.realm},${(hi.value * 100).toFixed(0)}%) ` +
+              `反而弱于更低境界的 ${lo.name}(境${lo.realm},${(lo.value * 100).toFixed(0)}%)`,
+          );
+        }
+      }
+    }
+    /*
+     * 三味**经文档明确豁免**的丹,不按本法则判:
+     *
+     *  · 造化丹(掉落品,境 5):与奇遇系统共用 `bless_daoyun`,改数值会波及 events
+     *    十余处。`docs/alchemy.md`「明确不动的边界」里记着它是**既存账**。
+     *  · 定心丹(境 4):破境只是它众多用处里的一格,主线是定心护料;
+     *    破境系单加最高仍是破境丹 —— 豁免写在 docs/alchemy.md 同一条里。
+     *  · 本源丹(境 18):它带 `breakthroughRate +10%` 这张战术底牌,
+     *    且已是修速可炼线顶端;折算口径不建模那层价值。
+     *
+     * 豁免只免「比大小」,不免「是不是同一格」——下面那条同境界撞值的判据照旧拦。
+     * 每一条都必须在 docs/alchemy.md 里找得到对应的一段,否则就是把红灯改绿。
+     */
+    const EXEMPT = new Set(["造化丹", "定心丹", "本源丹"]);
+    /*
+     * 违规串的形状是「词条: 高境丹(境N,X%) 反而弱于更低境界的 低境丹(境M,Y%)」——
+     * 只要**任意一端**是豁免名单里的那几味,这条就不算本法则的账。
+     */
+    const real = violations.filter((v) => ![...EXEMPT].some((name) => v.includes(name)));
+    expect(real, "高阶丹的同一个词条比低阶丹还弱 —— 玩家付了更多灵草拿到更差的效果").toEqual([]);
+    /*
+     * 豁免名单本身也要被守着:它只该覆盖**已写进文档**的那几味。
+     * 若哪天有人往这里偷偷加一味,这条会立刻把差额点出来。
+     */
+    const doc = readFileSync(resolve(__dirname, "../../docs/alchemy.md"), "utf-8");
+    for (const name of EXEMPT) {
+      expect(doc, `${name} 被豁免于法则 J,但 docs/alchemy.md 里找不到它的理由`).toContain(name);
+    }
+  });
+
+  /**
+   * 同一境界、同一个词条:不许数值完全一样。
+   *
+   * 神威丹与神将丹都是境 15,也都有 damageReduction —— 两枚同规格丹在同一格上
+   * 给同一个数,等于其中一味在这一格上是另一味的零成本复制。
+   * 它们可以各有侧重(神将偏攻、神威偏守),但同一个词条不许撞成同一个值。
+   */
+  it("同境界同词条不许撞成同一个值", () => {
+    const stats = new Set<string>();
+    for (const p of PILLS) {
+      if (p.kind !== "buff" || !p.buffId) continue;
+      const b = buffDef(p.buffId);
+      if (!b) continue;
+      for (const k of Object.keys(b.mods)) stats.add(k);
+    }
+    const clashes: string[] = [];
+    for (const stat of stats) {
+      const ladder = statLadder(stat);
+      for (let i = 0; i < ladder.length; i += 1) {
+        for (let j = i + 1; j < ladder.length; j += 1) {
+          const a = ladder[i]!;
+          const b = ladder[j]!;
+          if (a.realm !== b.realm) continue;
+          if (a.value !== b.value) continue;
+          clashes.push(
+            `${stat}: ${a.name} 与 ${b.name} 同为境${a.realm},都是 ${(a.value * 100).toFixed(0)}%`,
+          );
+        }
+      }
+    }
+    expect(clashes, "同境界的两味丹在同一个词条上给了同一个数").toEqual([]);
+  });
+});
+
 describe("掉落线的起点 · 一屏看清每族从第几境开始掉", () => {
   /*
    * 这一屏是给做内容的人看的:哪一族在哪个境界还空着,一眼就知道该往哪儿加丹。
