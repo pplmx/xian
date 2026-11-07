@@ -634,8 +634,23 @@ async function measurePage(page) {
         if (!main) return [];
         const seen = new Map();
         const repeats = [];
-        for (const el of main.querySelectorAll("*")) {
-          if (el.children.length > 0) continue;
+        /*
+         * 「读数席容器」也要扫 —— 只扫叶子会漏掉拼出来的读数。
+         *
+         * 实测漏网:`<p class="folio-ledger-head__score"><span>第</span>
+         * <strong>10</strong><span>/ 21 境</span></p>` 有三个子元素,
+         * 叶子过滤把它整个跳过,于是三个叶子分别是「第」「10」「/ 21 境」——
+         * 单个都不满足「≥3 字且含数字」,一处也扫不到。
+         * 道躯页因此把「第 10 / 21 境」在首屏说了两遍而判据全绿
+         * (破坏注入确认:把重复加回去,退出码 0、「说了两遍」0 次)。
+         *
+         * 只认**已知的读数席**(章首 fact / 账首 score):它们本来就是
+         * 「这一章的唯一读数」,拼装是实现细节。不能对所有多子元素容器开这个口子 ——
+         * 那会把整段正文按拼接文本参与比对,误报遍地。
+         */
+        const READING_SEAT = ".folio-chapter-head__fact, .folio-ledger-head__score";
+        for (const el of main.querySelectorAll(`*, ${READING_SEAT}`)) {
+          if (el.children.length > 0 && !el.matches(READING_SEAT)) continue;
           const text = (el.textContent || "").trim().replace(/\s+/g, " ");
           /*
            * 字数下限从 6 降到 3,并要求**含数字** —— 这是量出来的口径,不是猜的。
@@ -708,7 +723,15 @@ async function measurePage(page) {
            */
           const digitsOf = (node, t) => {
             const m = t.match(/\d+(?:\.\d+)?(?:\s*[/／]\s*\d+(?:\.\d+)?)?/g);
-            return m && m.length ? m.join(" ") : null;
+            if (!m || !m.length) return null;
+            /*
+             * 归一化再比 —— 同一读数在不同席位上的**拼装方式不同**,空格会不一样。
+             * 实测漏网:章首 fact 是「第 10 / 21 境」(斜杠两侧都有空格),
+             * 账首 score 是三块 prop 拼的「第10/ 21 境」(斜杠前没有)。
+             * 原口径直接 join(" ") 保留原样,两个 key 不相等,判据全绿 ——
+             * 而玩家在首屏读到的是同一个「10 / 21」两遍。
+             */
+            return m.map((seg) => seg.replace(/\s+/g, "")).join(" ");
           };
           const factHere = isFactSeat(el);
           const key = factHere ? (digitsOf(el, text) ?? text) : text;
