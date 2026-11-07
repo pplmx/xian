@@ -159,7 +159,9 @@ export const GONGFA: GongfaDef[] = [
     "心如玄冰,道心通明",
     { cultivationSpeed: 0.18, defensePct: 0.12, damageReduction: 0.04 },
     { cultivationSpeed: 0.025, defensePct: 0.015 },
-    { element: "ice", skill: { name: "冰封千里", mult: 2.0, rate: 0.24 } },
+    // ×2.0 → ×2.3:境 3 的顶原先低于境 2 的紫霄神雷(×2.2)—— 招式越练越弱。
+    // 判据 gongfaEffectAudit 按「每境最高招式」比,这条回落当场红。
+    { element: "ice", skill: { name: "冰封千里", mult: 2.3, rate: 0.24 } },
   ),
   g(
     "m_guangming",
@@ -614,8 +616,18 @@ export const GONGFA: GongfaDef[] = [
     "immortal",
     13,
     "大罗天上,万法归真",
-    { attackPct: 0.26, maxHpPct: 0.2, damageReduction: 0.08 },
-    { attackPct: 0.028, maxHpPct: 0.02 },
+    /*
+     * 境 13 的仙品主修。此前它**既无 skill 也无 cultivationSpeed** ——
+     * 29 部主修里唯一的两样皆无:戴上之后既不能加速进阶,也打不出功法招式。
+     *
+     * 主修席只有一格,它得值那一格。这里补两样:
+     *  · 招式「大罗天章」×3.4(境 12 太乙金光 ×3.3 → 境 13 ×3.4,阶梯不断)
+     *  · 修速 +18%(境 11~13 这一段的进阶流此前最高只能停在境 10 的 72%)
+     * 攻击与气血不动:它仍是攻击向,只是不再是「什么都没有」的那一部。
+     */
+    { cultivationSpeed: 0.18, attackPct: 0.26, maxHpPct: 0.2, damageReduction: 0.08 },
+    { cultivationSpeed: 0.02, attackPct: 0.028, maxHpPct: 0.02 },
+    { element: "light", skill: { name: "大罗天章", mult: 3.4, rate: 0.26 } },
   ),
   g(
     "m_shenxiao",
@@ -732,7 +744,8 @@ export const GONGFA: GongfaDef[] = [
     "太乙救苦,一诵经则伤者自起",
     { maxHpPct: 0.22, regenPerRound: 0.018, damageReduction: 0.06 },
     { maxHpPct: 0.022, damageReduction: 0.012 },
-    { element: "light", skill: { name: "太乙金光", mult: 3.0, rate: 0.25 } },
+    // ×3.0 → ×3.3:境 12 的顶原先低于境 11 的金阙剑气(×3.2),同上。
+    { element: "light", skill: { name: "太乙金光", mult: 3.3, rate: 0.25 } },
   ),
   g(
     "s_luotian",

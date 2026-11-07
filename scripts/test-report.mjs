@@ -422,6 +422,7 @@ const CATEGORIES = [
       "soulTallyFields",
       "artifactQualityLadder",
       "gongfaRealmCoverage",
+      "gongfaEffectAudit",
       "rebirthCompanion",
       "petWorldBand",
       "codexScale",
