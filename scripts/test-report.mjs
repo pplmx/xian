@@ -426,6 +426,7 @@ const CATEGORIES = [
       "regionDanger",
       "artifactGrowth",
       "stackCap",
+      "dodgeCap",
       "rebirthCompanion",
       "petWorldBand",
       "codexScale",

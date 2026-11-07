@@ -352,7 +352,17 @@ export function resolveCombat(
      * 「N 次出手落空,连击与暴击难以衔接」。故这里让攻击方的命中按百分点
      * 相减(不为负)——堆命中的代价是一整条词条位,换的是「打得中」。
      */
-    const dodge = Math.max(0, modOf(tMods, "dodgeRate") - modOf(aMods, "accuracy"));
+    /*
+     * 闪避封顶 0.95 —— 与库那一侧同一个数(`packages/engine/src/combat.ts` 里
+     * `Math.min(0.95, ...)`)。此前这里只有 `Math.max(0, ...)`,没有上限:
+     * 同一个概念在宿主与库得到不同结果,是两本账。
+     *
+     * 为什么是 95% 而不是 100%:满闪避会让「谁先手」之外的整场战斗失去意义 ——
+     * 敌方一次都打不中,战报读起来像坏了。留 5% 的窗口,堆闪避仍然是条强路,
+     * 但不是无敌路。玩家侧实测可达 87%(辅修 + 装备 + 丹药),净闪避(扣掉
+     * 命中)约 67%,所以这道顶平时摸不到,它守的是极端堆叠。
+     */
+    const dodge = Math.min(0.95, Math.max(0, modOf(tMods, "dodgeRate") - modOf(aMods, "accuracy")));
     if (rng.chance(dodge)) {
       target.stats.dodges += 1;
       attacker.stats.missedHits += 1;
