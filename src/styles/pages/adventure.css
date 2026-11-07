@@ -2580,4 +2580,21 @@
       margin-top: 0.34rem;
     }
   }
+
+  /*
+   * 际遇帖里的「这一程还剩 N 分」。
+   *
+   * 弹窗不可关且最多压 120 秒,期间战局面板被整个盖住 —— 这一行是那两分钟里
+   * 唯一提醒「你还在一趟历练途中」的地方,故排在题签之后、正文之前。
+   * 墨色用 ink-soft:它是上下文,不该与「此事何择」抢注意力。
+   */
+  .event-slip__trip {
+    margin: 0 0.78rem 0.2rem;
+    padding: 0.24rem 0 0.24rem 0.5rem;
+    border-left: 2px solid rgb(var(--color-qing-rgb) / 0.45);
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
 }

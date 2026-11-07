@@ -616,6 +616,33 @@ export function tickExploration(now: number, totalPlaySec: number): void {
   const s = adventure.session;
   if (!s || player.dead) return;
 
+  /*
+   * 到点收尾排在**事件之前**判 —— 这一条从前排在事件之后,于是有一个死结:
+   *
+   *   际遇最多阻塞 `EVENT_AUTO_RESOLVE_SECONDS`(120 秒),而陌上那一段的收尾
+   *   只看 `endsAt`。若一趟只剩 30 秒时撞上际遇,`now >= endsAt` 会成立,
+   *   可那行在事件分支的 `return` 之下 —— 永远走不到。实测:倒计时走到
+   *   「余 00分00秒」,而弹窗还写着「逾时默选 · 余 01分39秒」,这一趟就这么
+   *   僵着:不收尾、不出「上一程」、也不能再交兵。
+   *
+   * 收尾要认的是「时间到了」,不是「手上没有事」—— 玩家等的正是这一程的结账。
+   * 故把它提到最前:到点就结账,并把还挂着的事件按超时同一条路当场结清
+   * (奖励照拿,只是不再等他点)。
+   */
+  if (now >= s.endsAt) {
+    if (adventure.pendingEventId) {
+      const pid = adventure.pendingEventId;
+      const res = autoResolveEvent(pid, regionDef(s.regionId)?.tier ?? 1);
+      adventure.setPendingEvent(null, now);
+      const curEv = eventDef(pid);
+      if (res && curEv) announceAutoResolution(curEv, res);
+      const cur = adventure.session;
+      if (cur) adventure.setSession({ ...cur, events: cur.events + 1 });
+    }
+    stopExploration("complete");
+    return;
+  }
+
   // 待处理事件:阻塞战斗;超时自动按默认选项处理
   if (adventure.pendingEventId) {
     if (now - adventure.pendingEventSince > EVENT_AUTO_RESOLVE_SECONDS * 1000) {
@@ -629,11 +656,6 @@ export function tickExploration(now: number, totalPlaySec: number): void {
       if (cur)
         adventure.setSession({ ...cur, events: cur.events + 1, nextBattleAt: nextBattleTime(now) });
     }
-    return;
-  }
-
-  if (now >= s.endsAt) {
-    stopExploration("complete");
     return;
   }
 

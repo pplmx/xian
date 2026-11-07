@@ -124,3 +124,24 @@ describe("上一程的结账回执留得住", () => {
     expect(block, "坏 shape 的 reason 要落回安全默认").toContain('"manual" as const');
   });
 });
+
+describe("际遇帖要说得出「你还在哪一趟里」", () => {
+  it("弹窗不可关、最多压 120 秒 —— 那两分钟里战局面板被整个盖住", () => {
+    const dialog = source("src/components/adventure/EventDialog.vue");
+    // 前提判据:这个弹窗确实不可关(否则这一行没有存在的必要)
+    expect(dialog, "际遇帖不可关:必须作答").toContain(':closable="false"');
+    expect(dialog, "它确实压得住整屏").toContain('size="wide"');
+  });
+
+  it("题签之后补一行「地界 · 档位 · 这一程还剩 N」", () => {
+    const dialog = source("src/components/adventure/EventDialog.vue");
+    expect(dialog, "要有稳定落点供真浏览器复核").toContain("data-event-trip");
+    expect(dialog, "只在历练途中说 —— 洞府巡游那类同组件弹窗不在这一趟里").toMatch(
+      /v-if="tripLine"/,
+    );
+    expect(dialog, "余时取自会话的 endsAt,与战局的整趟倒计时同源").toMatch(
+      /const tripLine = computed\(\(\) => \{[\s\S]{0,400}s\.endsAt/,
+    );
+    expect(dialog, "档名取唯一那一份档位表,不另写").toContain("EXPLORE_MODES[s.mode].name");
+  });
+});

@@ -29,6 +29,18 @@
         <p class="event-slip__source">{{ tierDef.source }}</p>
       </header>
 
+      <!--
+        这一程的上下文 —— 「我正在哪儿历练、还剩多久」。
+
+        际遇最多阻塞 120 秒,而它是一整屏不可关的弹窗(BaseModal 的遮罩点不掉、
+        也没有关闭键:必须作答)。那两分钟里玩家看不到战局面板,于是**唯一**
+        还能提醒他「你还在一趟历练里、这一趟还剩 N 分钟」的地方就是这里 ——
+        此前这里一个字都没有。
+      -->
+      <p v-if="tripLine" class="event-slip__trip tabular" data-event-trip>
+        {{ tripLine }}
+      </p>
+
       <blockquote class="event-slip__narrative" data-event-narrative>
         <span class="event-slip__mark" aria-hidden="true">遇</span>
         <p>{{ def.text }}</p>
@@ -192,7 +204,7 @@ import { aftermathText, shouldTriggerAftermath } from "@/core/worldMemory";
 import { echoFor, rollEcho, ECHO_CHANCE } from "@/core/fortuneEcho";
 import { eventTierDef, eventTierOf, tierOddsText, type EventTier } from "@/core/eventTier";
 import BaseModal from "@/components/common/BaseModal.vue";
-import { EVENT_AUTO_RESOLVE_SECONDS } from "@/data/constants";
+import { EVENT_AUTO_RESOLVE_SECONDS, EXPLORE_MODES } from "@/data/constants";
 import { useNow } from "@/composables/useNow";
 import { cnNumber, formatCountdown } from "@/utils/format";
 import { recallText } from "@/ui/eventRecall";
@@ -255,6 +267,24 @@ const tierOdds = computed(() => tierOddsText(tierId.value, chainPending.value));
 const chainPending = computed(() => pendingChainStages(usePlayerStore().major).length > 0);
 const tier = computed(() => adventure.currentRegion?.tier ?? 1);
 const open = computed(() => def.value !== undefined || result.value !== null);
+/**
+ * 这一程的上下文一行:「青云山麓 · 寻常游历 · 这一程还剩 12 分」。
+ *
+ * 弹窗不可关(必须作答)且最多压 120 秒,期间战局面板整个被盖住 ——
+ * 若这行不写,玩家在那两分钟里完全看不出自己还在一趟历练途中。
+ *
+ * 两个数都现算:地界与档名取自会话,余时取自 `endsAt - now`(与战局的整趟倒计时同源)。
+ * 没有会话时整行不出现 —— 洞府巡游那类同用本组件的弹窗不在历练里。
+ */
+const tripLine = computed(() => {
+  const s = adventure.session;
+  if (!s) return "";
+  const region = adventure.currentRegion;
+  const leftSec = Math.max(0, Math.floor((s.endsAt - now.value) / 1000));
+  const parts = [region?.name ?? "", EXPLORE_MODES[s.mode].name].filter(Boolean);
+  return `${parts.join(" · ")} · 这一程还剩 ${formatCountdown(leftSec)}`;
+});
+
 const autoResolveText = computed(() => {
   const since = adventure.pendingEventSince;
   if (!since) return `逾时默选 · ${EVENT_AUTO_RESOLVE_SECONDS} 秒`;

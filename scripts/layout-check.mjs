@@ -15493,6 +15493,166 @@ async function taskCombatReplay() {
 
 /** 敌人卡最挤的一档 */
 /**
+ * 际遇帖压住的那两分钟 —— 玩家还知不知道自己在哪一趟里。
+ *
+ * 两件事:
+ *   ① 弹窗不可关(必须作答)、最多压 120 秒,期间战局面板被整屏盖住。
+ *      判据:它必须自己说出「地界 · 档位 · 这一程还剩 N」,否则玩家在那两分钟里
+ *      完全看不出自己还在一趟历练途中。
+ *   ② 到点收尾必须排在事件之前判。从前它排在事件分支的 `return` 底下,于是
+ *      「这一趟只剩 30 秒时撞上际遇」会僵死:倒计时走到 余 00分00秒,
+ *      而弹窗还写着「逾时默选 · 余 01分39秒」—— 不收尾、不出「上一程」、不能交兵。
+ */
+async function taskEventTripContext() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const now = Date.now();
+    const slices = showcaseSlices("light");
+    slices.adventure = {
+      session: {
+        regionId: "qingyun",
+        mode: "deep",
+        startedAt: now - 600_000,
+        endsAt: now + 3_000_000,
+        nextBattleAt: now + 900_000,
+        wins: 4,
+        losses: 1,
+        events: 1,
+        stoneGain: { m: 120, e: 4 },
+        expGain: { m: 30, e: 5 },
+        itemGain: 2,
+        wudaoGain: 3,
+        dustGain: 40,
+      },
+      pendingEventId: "ev_old_man",
+      pendingEventSince: now - 9_000,
+    };
+    await seedSave(ctx, slices, "__eventTrip");
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/adventure", 700);
+    await page.locator("[data-event-slip]").waitFor({ state: "visible", timeout: 5000 });
+    await settleVisuals(page);
+
+    const info = await page.evaluate(() => {
+      const trip = document.querySelector("[data-event-trip]");
+      const panel = document.querySelector(".modal-panel");
+      const auto = document.querySelector("[data-event-auto]");
+      const r = trip?.getBoundingClientRect();
+      return {
+        hasTrip: Boolean(trip),
+        tripText: trip ? (trip.textContent || "").replace(/\s+/g, " ").trim() : null,
+        visible: Boolean(
+          r && r.width > 0 && r.height > 0 && getComputedStyle(trip).display !== "none",
+        ),
+        autoText: auto ? (auto.textContent || "").trim() : null,
+        panelHasTrip: panel ? /这一程还剩/.test(panel.textContent || "") : false,
+      };
+    });
+    checked += 1;
+    if (!info.hasTrip) {
+      failures.push("[390-event] 际遇帖没有说「你还在哪一趟里」—— 那两分钟战局面板被整屏盖住");
+    } else {
+      if (!info.visible) failures.push("[390-event] 历练上下文在 DOM 里但看不见");
+      if (!/这一程还剩/.test(info.tripText ?? "")) {
+        failures.push(`[390-event] 上下文没报这一程还剩多久:«${info.tripText}»`);
+      }
+      if (!/青云山麓|寒潭|万妖|落霞|古战场/.test(info.tripText ?? "")) {
+        failures.push(`[390-event] 上下文没报地界名:«${info.tripText}»`);
+      }
+      if (!/寻常游历|深入探寻|涉险求机|长线云游/.test(info.tripText ?? "")) {
+        failures.push(`[390-event] 上下文没报档位名:«${info.tripText}»`);
+      }
+      // 与「逾时默选」那一格分开:两个倒计时说的不是一件事,不许混成一格
+      if (info.autoText && info.autoText.includes("这一程还剩")) {
+        failures.push(
+          "[390-event] 「逾时默选」与「这一程还剩」被并成了一格 —— 两个倒计时各说一件事",
+        );
+      }
+    }
+    if (pageErrors.length)
+      failures.push(`[390-event] 页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    console.log(`\n际遇帖:«${(info.tripText ?? "").slice(0, 40)}» · 逾时格 «${info.autoText}»`);
+
+    /*
+     * ② 死结的端到端复现:把这一程的 endsAt 拨到 8 秒后,事件仍压着。
+     * 14 秒后这一程必须已经收尾(回「今日行旅」+ 留下「上一程」),
+     * 而不是停在「余 00分00秒 + 逾时默选 · 余 1 分多」。
+     */
+    const ctx2 = await auditContext({
+      viewport: { width: 390, height: 844 },
+      deviceScaleFactor: 2,
+      isMobile: true,
+      hasTouch: true,
+    });
+    try {
+      const now2 = Date.now();
+      const s2 = showcaseSlices("light");
+      s2.adventure = {
+        session: {
+          regionId: "qingyun",
+          mode: "normal",
+          startedAt: now2 - 1_790_000,
+          endsAt: now2 + 8_000,
+          nextBattleAt: now2 + 900_000,
+          wins: 12,
+          losses: 2,
+          events: 3,
+          stoneGain: { m: 200, e: 4 },
+          expGain: { m: 50, e: 5 },
+          itemGain: 4,
+          wudaoGain: 6,
+          dustGain: 90,
+        },
+        pendingEventId: "ev_old_man",
+        pendingEventSince: now2 - 5_000,
+      };
+      await seedSave(ctx2, s2, "__eventExpiry");
+      const p2 = await ctx2.newPage();
+      const errs2 = [];
+      watchPageErrors(p2, errs2);
+      await openRoute(p2, "/adventure", 700);
+      await p2.waitForTimeout(15_000);
+      const expired = await p2.evaluate(() => ({
+        stillBlocked: Boolean(document.querySelector("[data-event-slip]")),
+        inCombat: Boolean(document.querySelector("[data-combat-session]")),
+        lastTrip: Boolean(document.querySelector("[data-adventure-lasttrip]")),
+        clock: document.querySelector("[data-combat-clock]")
+          ? (document.querySelector("[data-combat-clock]").textContent || "")
+              .replace(/\s+/g, " ")
+              .trim()
+          : null,
+      }));
+      checked += 1;
+      if (expired.stillBlocked || expired.inCombat) {
+        failures.push(
+          `[390-event] 这一程到点了却还卡在际遇弹窗里(clock=«${expired.clock}»)—— 收尾要排在事件之前判`,
+        );
+      }
+      if (!expired.lastTrip) {
+        failures.push("[390-event] 到点收尾后页上没有「上一程」回执");
+      }
+      if (errs2.length)
+        failures.push(`[390-event] 到点收尾页面异常:${[...new Set(errs2)].join(" | ")}`);
+      console.log(`\n际遇压着时到点:已收尾=${!expired.inCombat} · 上一程=${expired.lastTrip}`);
+    } finally {
+      await ctx2.close();
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 收兵与「上一程」—— 这一趟算不算数,按下之前说得出、按下之后留得住。
  *
  * 两件事:
@@ -29419,6 +29579,7 @@ const TASKS = [
   ["历练首屏主线优先", taskAdventureFold],
   ["出行模式窗的整趟账", taskExploreModes],
   ["收兵与上一程的结账", taskTripLedger],
+  ["际遇压住时的上下文与收尾", taskEventTripContext],
   ["前尘山河三世同册", taskWorldHistory],
   ["本世山河案首屏", taskWorldDesk],
   ["切后台立即落盘", taskPersistTiming],

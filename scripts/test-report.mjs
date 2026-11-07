@@ -234,6 +234,7 @@ const CATEGORIES = [
       "adventureText",
       "adventureDesk",
       "explorationPlan",
+      "explorationExpiry",
       "adventureWiring",
       "tripLedger",
       "scriptDepsAudit",

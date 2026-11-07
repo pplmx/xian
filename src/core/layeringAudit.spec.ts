@@ -98,8 +98,15 @@ const STATEFUL_CORE = new Set<string>([
 // storeResilience 与本基线对新增持久化 store 天然相抵,每 +1 都是新增系统的正当代价。
 // 158 → 159:reincarnation.ts 接上收徒的转世凝缘(resetForRebirth),同属新系统的转世接线代价。
 const CORE_STORE_SITES = 159;
-/** core 用例里需要 Pinia 的文件数基线(只许减)—— 「core 逻辑绑在 Pinia 上」的硬读数 */
-const CORE_PINIA_SPECS = 109;
+/**
+ * core 用例里需要 Pinia 的文件数基线(只许减)—— 「core 逻辑绑在 Pinia 上」的硬读数
+ *
+ * 109 → 110:explorationExpiry.spec 要复现「际遇压着时到点却不收尾」那个死结,
+ * 而它只能从 tickExploration 这一层量(会话、待处理事件、到点判定三者都在 store 上)。
+ * 这是被测量对象本身就要 Pinia,不是把逻辑往 Pinia 上搬 —— 与 market/bounty 那几笔
+ * 新增持久化 store 的代价同一类。抬高要在注释里写清理由(见本文件既有做法)。
+ */
+const CORE_PINIA_SPECS = 110;
 
 function sources(dir: string): { name: string; text: string }[] {
   return readdirSync(dir)
