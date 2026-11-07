@@ -8512,6 +8512,15 @@ async function taskEventSlip() {
         if (!slip || !panel) return null;
         const p = panel.getBoundingClientRect();
         const s = slip.getBoundingClientRect();
+        /*
+         * 可见性的参照是**卷身**(`[data-folio-modal-scroll]`),不是面板。
+         *
+         * 面板底部还压着题签与页脚,而真正裁掉内容的是那个 overflow-y:auto 的盒子。
+         * 用面板去比会把「被卷身裁掉、但在面板范围内」的那一截漏掉 ——
+         * 那正是 320 上第一个选项的情况(底边超卷身 13px)。
+         */
+        const scroller = panel.querySelector("[data-folio-modal-scroll]");
+        const viewport = scroller ? scroller.getBoundingClientRect() : p;
         const choices = [...slip.querySelectorAll("[data-event-choice]")].map((el) => {
           const r = el.getBoundingClientRect();
           return {
@@ -8519,9 +8528,13 @@ async function taskEventSlip() {
             width: r.width,
             scrollWidth: el.scrollWidth,
             clientWidth: el.clientWidth,
+            // 整块的**任何一部分**落在卷身可视区内就算看得见(滚一下能看到全部)
+            inView: r.top < viewport.bottom && r.bottom > viewport.top,
           };
         });
         return {
+          choiceCount: choices.length,
+          choicesVisible: choices.filter((c) => c.inView).length,
           panel: {
             left: p.left,
             right: p.right,
@@ -8556,6 +8569,22 @@ async function taskEventSlip() {
       if (!info) {
         failures.push(`${label} 际遇帖没有出现`);
         return;
+      }
+      /*
+       * 必答题的选项不许**全都**落在卷身之外。
+       *
+       * 这是一张 `:closable="false"` 的弹窗 —— 玩家必须作答,不能关掉。
+       * 与下面那条横向挤压是两件事:那个管「挤不挤」,这个管「看不看得到」——
+       * 此前只量前者,于是窄屏上「选项滚出卷身」一路全绿。
+       *
+       * 阈值取「一个都看不见」而不是「必须全见」:这张帖在 320×568 上本来就要滚
+       * (卷身 405 / 内容 547),只要**第一项露得出来**,玩家就有路往下走。
+       * 这一条防的是最坏形态:打开时眼前一个可选的答案都没有。
+       */
+      if (typeof info.choicesVisible === "number" && info.choicesVisible === 0) {
+        failures.push(
+          `${label} 际遇帖:${info.choiceCount ?? "?"} 个选项全都落在卷身之外 —— 必答题却看不见可选的答案`,
+        );
       }
       if (
         info.panel.left < -1 ||
