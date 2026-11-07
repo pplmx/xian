@@ -178,6 +178,13 @@ export default {
       addVariant("compact", "@media (max-width: 359px)");
       addVariant("phone", "@media (max-width: 430px)");
       addVariant("bookfold", "@media (max-width: 279px)");
+      /*
+       * desk: —— 「桌面书桌档」(≥960,与 style.css 里书脊/双页的断点同一个数)。
+       *
+       * 全站的 960 断点目前只写在 CSS 里;浮层要跟着书桌一起展开(见 BaseModal
+       * 的 panelSizeClass),模板那一侧需要一个同名变体,否则同一件事要维护两个口径。
+       */
+      addVariant("desk", "@media (min-width: 960px)");
     },
   ],
 };

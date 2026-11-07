@@ -151,10 +151,21 @@ const props = withDefaults(
 
 const emit = defineEmits<{ close: [] }>();
 const route = useRoute();
+/*
+ * 面板宽度 —— 手机按原样,桌面书桌上**跟着书桌一起展开**。
+ *
+ * 原先三档都是手机量级(22.5rem / 25rem / 68rem)。在 390 视口上 90% 宽是对的;
+ * 可在 1280 的桌面上,器评帖仍只有 360px(视口 28%)—— 1178px 的内容要滚进
+ * 468px 的可视区,比手机上还难读。屏幕宽了 3.3 倍,可读高度反而更少。
+ *
+ * 故 960px 起(桌面书桌的起点,与 DesignerSpine 同一个断点):
+ *   默认 → 34rem(约两屏手机宽),宽档 → 46rem,最高档仍是 68rem。
+ * 手机与横屏不受影响:那一档的 `w-full` 与视口约束本来就把面板压在 90% 以内。
+ */
 const panelSizeClass = computed(() => {
   if (props.size === "max") return "max-w-[68rem]";
-  if (props.size === "wide" || props.wide) return "max-w-100";
-  return "max-w-90";
+  if (props.size === "wide" || props.wide) return "max-w-100 desk:max-w-[46rem]";
+  return "max-w-90 desk:max-w-[34rem]";
 });
 const modalPosition = computed(() => {
   const position = navigationPositionOf(route.name);
