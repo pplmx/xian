@@ -26,6 +26,42 @@
           <MortalWorldRibbon :view="worldOverview" :statuses="worldStatuses" />
         </FolioPageHeader>
 
+        <!--
+          上一程的结账回执 —— 收兵/战败/走满时长之后留在这里。
+          从前这一整份总结只交给一条 2.6 秒的提示条(还常与成就、日课、任务挤在一起),
+          四小时「长线云游」的全部结果就那样飘过去,错过遍寻不见。
+          只记**最近一程**,不是流水账;点开才铺全,收的是版面不是内容。
+        -->
+        <aside
+          v-if="lastTrip"
+          class="adventure-lasttrip folio-span-all"
+          data-adventure-lasttrip
+          :data-last-trip-counted="lastTrip.counted ? 'true' : 'false'"
+        >
+          <div class="adventure-lasttrip__head">
+            <span class="adventure-lasttrip__eyebrow">上一程</span>
+            <span class="adventure-lasttrip__region font-kai">{{ lastTrip.regionName }}</span>
+            <span class="adventure-lasttrip__when tabular">{{ lastTripWhen }}</span>
+            <!--
+              「算不算一次历练」是这一栏最要紧的一件事:满 3 场才计入成就与日课,
+              而未满的收兵从前一个字都不说,玩家以为自己走完了一趟。
+            -->
+            <span
+              class="adventure-lasttrip__counted"
+              :class="lastTrip.counted ? 'is-counted' : 'is-uncounted'"
+            >
+              {{
+                lastTrip.counted ? "已计一次历练" : `未满 ${EXPLORE_TRIP_MIN_BATTLES} 场 · 未计历练`
+              }}
+            </span>
+          </div>
+          <p class="adventure-lasttrip__line tabular">{{ lastTrip.record }}</p>
+          <p class="adventure-lasttrip__line tabular">{{ lastTrip.haul }}</p>
+          <p v-if="lastTrip.events > 0" class="adventure-lasttrip__line tabular">
+            际遇 {{ lastTrip.events }} 次
+          </p>
+        </aside>
+
         <article
           class="adventure-register folio-span-all"
           data-adventure-register
@@ -691,7 +727,7 @@ import {
 import { biasEffectOf } from "@/core/mortalBias";
 import { isRetreating } from "@/core/earlyGameService";
 import { REALMS } from "@/data/realms";
-import { EXPLORE_MODES } from "@/data/constants";
+import { EXPLORE_MODES, EXPLORE_TRIP_MIN_BATTLES } from "@/data/constants";
 import {
   exploreEventChance,
   regionFoeOrigin,
@@ -747,6 +783,25 @@ const ui = useUiStore();
 const now = useNow();
 
 const modeTarget = ref<RegionDef | null>(null);
+
+/** 上一程的结账回执(收兵时写,纯读)—— 与提示条同一份文案,只是留得住 */
+const lastTrip = computed(() => adventure.lastTrip);
+
+/**
+ * 「上一程」是什么时候的事。
+ *
+ * 用相对时间而不是日期:这一栏就挂在「今日行旅」上面,玩家关心的是「刚才那一趟」
+ * 还是「昨天那一趟」。与归来回执的措辞同族(见 core/offline 的时长口径)。
+ */
+const lastTripWhen = computed(() => {
+  const t = lastTrip.value;
+  if (!t) return "";
+  const sec = Math.max(0, Math.floor((now.value - t.at) / 1000));
+  if (sec < 60) return "方才";
+  if (sec < 3600) return `${Math.floor(sec / 60)} 分前`;
+  if (sec < 86400) return `${Math.floor(sec / 3600)} 时前`;
+  return `${Math.floor(sec / 86400)} 日前`;
+});
 
 /**
  * 有没有缘在续 —— 三档的稀度**此刻**是多少,取决于这个。

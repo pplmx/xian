@@ -15493,6 +15493,167 @@ async function taskCombatReplay() {
 
 /** 敌人卡最挤的一档 */
 /**
+ * 收兵与「上一程」—— 这一趟算不算数,按下之前说得出、按下之后留得住。
+ *
+ * 两件事:
+ *   ① 「收兵回府」是本作唯一会退出历练的动作,从前一键即走。而它有一个玩家看不见的
+ *      门槛(满 EXPLORE_TRIP_MIN_BATTLES 场才计一次历练,成就与日课都读那个计数)。
+ *      判据:第一下不得退出,必须进武装态并**把「本趟几场、算不算」摊成一行**;
+ *      「再想想」能退回;「确认收兵」才真走。
+ *   ② 一趟历练的全部总结从前只交给一条 2.6 秒的提示条,四小时档的结果就那样飘过去。
+ *      判据:收兵之后历练页上要留得下一份回执,并明说算不算一次历练。
+ */
+async function taskTripLedger() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    await seedSave(ctx, showcaseSlices("light"), "__tripLedger");
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/adventure", 700);
+
+    const trigger = page.locator("[data-region-action]").filter({ hasText: "出发" }).first();
+    if ((await trigger.count()) === 0) {
+      failures.push("[trip] 找不到「出发」入口,收兵判据没量到东西");
+      return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+    }
+    await trigger.click({ timeout: 4000 }).catch(() => {});
+    await page.waitForTimeout(400);
+    await page
+      .locator(".modal-panel button")
+      .filter({ hasText: "寻常游历" })
+      .first()
+      .click({ timeout: 4000 })
+      .catch(() => {});
+    await page.waitForTimeout(1600);
+    await clearOverlays(page);
+
+    const stopBtn = page.locator(".combat-actions button").filter({ hasText: "收兵回府" }).first();
+    if ((await stopBtn.count()) === 0) {
+      failures.push("[trip] 战局面板上找不到「收兵回府」");
+      return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+    }
+
+    // ① 第一下只武装,不许退出
+    await stopBtn.click({ timeout: 4000 }).catch(() => {});
+    await page.waitForTimeout(400);
+    const armed = await page.evaluate(() => {
+      const ask = document.querySelector("[data-combat-leave-ask]");
+      const confirm = document.querySelector("[data-combat-leave-confirm]");
+      const labels = [...document.querySelectorAll(".combat-actions button")].map((b) =>
+        (b.textContent || "").trim(),
+      );
+      return {
+        stillInCombat: Boolean(document.querySelector("[data-combat-session]")),
+        ask: ask ? (ask.textContent || "").replace(/\s+/g, " ").trim() : null,
+        hasConfirm: Boolean(confirm),
+        labels,
+        // 那一行问句必须真的在屏上(不是 display:none 藏在 DOM 里)
+        askVisible: ask
+          ? (() => {
+              const r = ask.getBoundingClientRect();
+              return r.width > 0 && r.height > 0 && getComputedStyle(ask).display !== "none";
+            })()
+          : false,
+      };
+    });
+    checked += 1;
+    if (!armed.stillInCombat) {
+      failures.push("[trip] 收兵第一下就退出了历练 —— 二段确认没生效(本作唯一会退出历练的动作)");
+    }
+    if (!armed.hasConfirm) failures.push("[trip] 武装后没有「确认收兵」");
+    if (!armed.askVisible) failures.push("[trip] 武装后那一行「本趟几场、算不算」没摆出来");
+    else {
+      if (!/本趟/.test(armed.ask ?? "")) {
+        failures.push(`[trip] 确认行没报本趟战绩:«${armed.ask}»`);
+      }
+      // 门槛从常量取,文案里不许写死 3
+      if (!/未满 \d+ 场|已足 \d+ 场/.test(armed.ask ?? "")) {
+        failures.push(`[trip] 确认行没把「算不算一次历练」的门槛说清:«${armed.ask}»`);
+      }
+      if (!/计为一次历练|不计为一次历练/.test(armed.ask ?? "")) {
+        failures.push(`[trip] 确认行没给结论(算不算数):«${armed.ask}»`);
+      }
+    }
+    if (!armed.labels.includes("再想想")) {
+      failures.push(`[trip] 取消词与全站不一致(该是「再想想」):${JSON.stringify(armed.labels)}`);
+    }
+
+    // ② 「再想想」能退回一键初始态
+    const thinkAgain = page.locator(".combat-actions button").filter({ hasText: "再想想" }).first();
+    if ((await thinkAgain.count()) > 0) {
+      await thinkAgain.click({ timeout: 3000 }).catch(() => {});
+      await page.waitForTimeout(300);
+      const back = await page.evaluate(() => ({
+        stillInCombat: Boolean(document.querySelector("[data-combat-session]")),
+        hasStop: [...document.querySelectorAll(".combat-actions button")].some((b) =>
+          /收兵回府/.test(b.textContent || ""),
+        ),
+        askGone: !document.querySelector("[data-combat-leave-ask]"),
+      }));
+      checked += 1;
+      if (!back.stillInCombat) failures.push("[trip] 点了「再想想」还是退出了历练");
+      if (!back.hasStop) failures.push("[trip] 「再想想」之后没有退回初始的「收兵回府」");
+      if (!back.askGone) failures.push("[trip] 「再想想」之后确认行仍挂在屏上");
+    }
+
+    // ③ 真收兵 → 页上留得下一份回执
+    await page
+      .locator(".combat-actions button")
+      .filter({ hasText: "收兵回府" })
+      .first()
+      .click({ timeout: 3000 })
+      .catch(() => {});
+    await page.waitForTimeout(300);
+    await page
+      .locator("[data-combat-leave-confirm]")
+      .click({ timeout: 3000 })
+      .catch(() => {});
+    await page.waitForTimeout(900);
+    const after = await page.evaluate(() => {
+      const el = document.querySelector("[data-adventure-lasttrip]");
+      if (!el) return { left: !document.querySelector("[data-combat-session]"), receipt: null };
+      const r = el.getBoundingClientRect();
+      return {
+        left: !document.querySelector("[data-combat-session]"),
+        receipt: (el.textContent || "").replace(/\s+/g, " ").trim(),
+        counted: el.getAttribute("data-last-trip-counted"),
+        visible: r.width > 0 && r.height > 0 && getComputedStyle(el).display !== "none",
+        overflow: el.scrollWidth > el.clientWidth + 1,
+      };
+    });
+    checked += 1;
+    if (!after.left) failures.push("[trip] 点了「确认收兵」仍停在战局面板");
+    if (!after.receipt) {
+      failures.push("[trip] 收兵之后历练页上没有「上一程」回执 —— 2.6 秒的提示条是唯一去处");
+    } else {
+      if (!after.visible) failures.push("[trip] 「上一程」回执在 DOM 里但看不见");
+      if (after.overflow) failures.push("[trip] 「上一程」回执横向溢出");
+      if (!/上一程/.test(after.receipt)) failures.push(`[trip] 回执没自报家门:«${after.receipt}»`);
+      if (!/计为一次历练|未计历练/.test(after.receipt)) {
+        failures.push(`[trip] 回执没明说这一趟算不算一次历练:«${after.receipt}»`);
+      }
+      if (after.counted !== "true" && after.counted !== "false") {
+        failures.push(`[trip] 回执缺可供断言的状态(data-last-trip-counted=${after.counted})`);
+      }
+    }
+    if (pageErrors.length)
+      failures.push(`[trip] 收兵场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    console.log(`\n收兵:二段确认(再想想可退) · 上一程回执«${(after.receipt ?? "").slice(0, 40)}…»`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
  * 出行模式窗 —— 四笔**整趟**的账。
  *
  * 这一窗此前把「每场」的掉落期望当「整趟」摆出来:一个「寻常游历」写着
@@ -29188,6 +29349,7 @@ const TASKS = [
   ["秘境卡在境中的窄屏一档", taskSecretRealm320],
   ["历练首屏主线优先", taskAdventureFold],
   ["出行模式窗的整趟账", taskExploreModes],
+  ["收兵与上一程的结账", taskTripLedger],
   ["前尘山河三世同册", taskWorldHistory],
   ["本世山河案首屏", taskWorldDesk],
   ["切后台立即落盘", taskPersistTiming],

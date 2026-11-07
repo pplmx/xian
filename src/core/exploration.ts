@@ -19,6 +19,7 @@ import {
   EXPLORE_BATTLE_INTERVAL,
   EXPLORE_EVENT_CHANCE,
   EXPLORE_MODES,
+  EXPLORE_TRIP_MIN_BATTLES,
 } from "@/data/constants";
 import { mansionEventLuck } from "./astronomy";
 import type { LastBattleView, StatMods } from "@/types";
@@ -188,7 +189,8 @@ export function stopExploration(reason: "manual" | "defeat" | "complete"): void 
   const region = regionDef(s.regionId);
   adventure.setSession(null);
   adventure.setPendingEvent(null, 0);
-  if (s.wins + s.losses >= 3 || reason === "complete") {
+  const counted = s.wins + s.losses >= EXPLORE_TRIP_MIN_BATTLES || reason === "complete";
+  if (counted) {
     track("explores");
   }
   // 总结带上这一趟的实际所得 —— 战斗 afterWin 与际遇结算写进同一份会话账。
@@ -209,6 +211,24 @@ export function stopExploration(reason: "manual" | "defeat" | "complete"): void 
   } else {
     notify(`你收拾行囊,提前结束了这次历练;此行${record},${haul}`, "info");
   }
+  /*
+   * 同一份账再留一页 —— 提示条只停 2.6 秒(还常与成就/日课/任务挤在一起),
+   * 而四小时「长线云游」的全部结果就是那样飘过去的。错过之后页面上再没有任何
+   * 地方能看回来,而「这一趟值不值再来 / 我算不算走完一次历练」正是要回看的两个问题。
+   *
+   * 记的是**结账那一刻**的事实:会话对象下一行就被清空了,事后再想重算这些数
+   * 已经无从算起(灵石与修为是逐场累计的)。故落盘,且纯读、不进任何结算。
+   */
+  adventure.setLastTrip({
+    regionName: region?.name ?? "",
+    reason,
+    at: Date.now(),
+    battles: s.wins + s.losses,
+    record,
+    haul,
+    events: s.events,
+    counted,
+  });
 }
 
 /**

@@ -1407,6 +1407,35 @@ export interface LastBattleView {
   firstSight?: boolean;
 }
 
+/**
+ * 上一程历练的结账回执 —— 收兵/战败/走满时长之后留在页面上的一份小结。
+ *
+ * 由来:一场历练的全部总结原先只交给一条 `notify`(停 2.6 秒,且常与成就、日课、
+ * 任务的四五条挤在一起)。四小时「长线云游」的全部结果,就是那样一条飘过去的提示条,
+ * 错过之后再没有任何地方能看回来 —— 而它恰恰是「这一趟值不值再来」的唯一凭据。
+ *
+ * 记的是**结账那一刻的事实**(境界名、所得、场次),不是事后能重算的:
+ * 会话对象在收兵时就被清空了。故必须落盘,且不进任何结算。
+ */
+export interface TripSummary {
+  /** 地界名(旧档/坏档可能为空串) */
+  regionName: string;
+  /** 收场方式 —— 决定那句话的语气,也是「这一趟算不算数」的一半 */
+  reason: "manual" | "defeat" | "complete";
+  /** 结账时刻(墙钟毫秒) */
+  at: number;
+  /** 这一趟打了几场(胜 + 负)—— 与 EXPLORE_TRIP_MIN_BATTLES 比,决定算不算一次历练 */
+  battles: number;
+  /** 战绩一句「胜 4 场 · 负 1 场」(ui/adventureText 的同一份实现) */
+  record: string;
+  /** 所得一句「得灵石 …、修为 …」(ui/adventureText 的同一份实现) */
+  haul: string;
+  /** 际遇几次 */
+  events: number;
+  /** 是否计入了「完成历练」这个计数 */
+  counted: boolean;
+}
+
 /** 图鉴分类 */
 export type CollectionCategory =
   | "equip"

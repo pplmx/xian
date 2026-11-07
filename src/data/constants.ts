@@ -552,6 +552,16 @@ export const EXPLORE_BATTLE_INTERVAL = 12;
  * 从前两边各写一遍字面量 10,改一处就会让离线抢跑解锁下一区。
  */
 export const EXPLORE_BOSS_AFTER_WINS = 10;
+/**
+ * 一趟历练要打满几场,才算「完成一次历练」。
+ *
+ * 这个数被 `track("explores")` 用作门槛,而它供着:成就「行万里路 / 踏遍山河」
+ * (10 / 50 次)、日课「每日历练」、人生主题「行万里路」(60 次)。
+ * 从前它是 `stopExploration` 里一个手写的字面量 3 —— 于是「收兵回府」按下去之前,
+ * 没有任何地方能把「这一趟算不算」说出来,而按下之后只飘一条 2.6 秒的提示条。
+ * 提成常量,是让界面与结算读同一份数(界面写「未满 3 场不计」时不会与结算分叉)。
+ */
+export const EXPLORE_TRIP_MIN_BATTLES = 3;
 export const EXPLORE_EVENT_CHANCE = 0.16;
 /**
  * 历练里三档触发的概率 —— **一条乘法链,不是一个一个独立数字**。

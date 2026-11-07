@@ -86,6 +86,15 @@ export const useAdventureStore = defineStore(
     const pendingEventSince = ref(0);
     const seenOnceEvents = ref<string[]>([]);
     const lastBattle = ref<LastBattleView | null>(null);
+    /**
+     * 上一程历练的结账回执 —— 收兵那一刻的事实。
+     *
+     * 一场历练的全部总结原先只交给一条 2.6 秒的提示条(还常与成就/日课/任务挤在
+     * 一起),错过就再也找不回来。而「这一趟值不值再来」「我算不算走完一次历练」
+     * 正是玩家回头看时会问的。故留一份落盘的、可在历练页卷首查看的小结 ——
+     * 纯读,不进任何结算。
+     */
+    const lastTrip = ref<import("@/types").TripSummary | null>(null);
     /** Phase 30.9 世界记忆:已完成事件的结果记录 */
     const eventMemories = ref<Record<string, import("@/types").EventMemory>>({});
 
@@ -169,6 +178,26 @@ export const useAdventureStore = defineStore(
         ? { ...lb, loot: lb.loot === undefined ? undefined : asStringArray(lb.loot) }
         : null;
       eventMemories.value = asRecord(eventMemories.value);
+      /**
+       * 结账回执:旧档没有这一栏(undefined),不当成坏档 —— 它只是「还没有上一程」。
+       * 有值时才修形状:缺字段退回安全默认,免得一行坏数据让历练页渲染期抛错。
+       */
+      const tripRaw = asObjectOrNull<import("@/types").TripSummary>(lastTrip.value);
+      lastTrip.value = tripRaw
+        ? {
+            regionName: typeof tripRaw.regionName === "string" ? tripRaw.regionName : "",
+            reason:
+              tripRaw.reason === "defeat" || tripRaw.reason === "complete"
+                ? tripRaw.reason
+                : ("manual" as const),
+            at: asFiniteNumber(tripRaw.at, 0, 0),
+            battles: asFiniteNumber(tripRaw.battles, 0, 0),
+            record: typeof tripRaw.record === "string" ? tripRaw.record : "",
+            haul: typeof tripRaw.haul === "string" ? tripRaw.haul : "",
+            events: asFiniteNumber(tripRaw.events, 0, 0),
+            counted: tripRaw.counted === true,
+          }
+        : null;
       const hadMortalWorld = mortalWorld.value !== null && mortalWorld.value !== undefined;
       const restoredWorld = restoreMortalWorld(mortalWorld.value);
       mortalWorld.value = restoredWorld;
@@ -281,6 +310,11 @@ export const useAdventureStore = defineStore(
       lastBattle.value = view;
     }
 
+    /** 记下这一程的结账回执(只在收兵时写一次) */
+    function setLastTrip(summary: import("@/types").TripSummary | null): void {
+      lastTrip.value = summary;
+    }
+
     /**
      * 把一世世界放进前尘与生成去重历史。
      *
@@ -335,6 +369,8 @@ export const useAdventureStore = defineStore(
       pendingEventSince,
       seenOnceEvents,
       lastBattle,
+      lastTrip,
+      setLastTrip,
       eventMemories,
       sessionActive,
       currentRegion,

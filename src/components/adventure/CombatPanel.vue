@@ -288,10 +288,35 @@
       </div>
     </section>
 
+    <!--
+      收兵回府 —— 本作**唯一**会退出历练的动作,从前一键即走。
+
+      按下去之前没有任何地方说得出「这一趟算不算数」,而按下之后只有一条 2.6 秒的
+      提示条飘过去。而门槛确实存在(见 EXPLORE_TRIP_MIN_BATTLES):不满 3 场的收兵
+      **不计入**「完成历练」—— 而成就「行万里路 / 踏遍山河」、日课「每日历练」、
+      人生主题全读那个计数。玩家攒了 2 场手动收兵,以为走完一趟,实际什么也没算。
+
+      同仓别的不可逆动作都做了二段式并摊开后果(远征「确认中道而返」、秘境「确认弃境」),
+      只有这个最高频的是一键走。现在补齐,并把「本趟几场、算不算」摊在确认行里 ——
+      这个数用 sessionRecordText,与收尾播报同一份实现,不另拼一遍。
+    -->
     <div class="combat-actions">
-      <button class="btn-ghost combat-actions__stop text-body" @click="stopExploration('manual')">
-        收兵回府
-      </button>
+      <template v-if="!leaveArmed">
+        <button class="btn-ghost combat-actions__stop text-body" @click="leaveArmed = true">
+          收兵回府
+        </button>
+      </template>
+      <template v-else>
+        <p class="combat-actions__ask text-note" data-combat-leave-ask>
+          {{ leaveAskText }}
+        </p>
+        <div class="combat-actions__armed">
+          <button class="btn-ghost flex-1 text-body" @click="leaveArmed = false">再想想</button>
+          <button class="btn-seal flex-1 text-body" data-combat-leave-confirm @click="confirmLeave">
+            确认收兵
+          </button>
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -306,6 +331,7 @@ import {
   COMBAT_PLAYBACK_BASE_MS,
   COMBAT_PLAYBACK_MIN_MS,
   EXPLORE_MODES,
+  EXPLORE_TRIP_MIN_BATTLES,
   LOW_HP_THRESHOLD,
 } from "@/data/constants";
 import { WIN_STREAK_REWARDS } from "@/data/earlyGame";
@@ -319,7 +345,7 @@ import {
   type RegionEcology,
 } from "@/core/buildAdvisor";
 import { detectBuild } from "@/core/buildDetect";
-import { sessionStatRows } from "@/ui/adventureText";
+import { sessionRecordText, sessionStatRows } from "@/ui/adventureText";
 import { enemyDef } from "@/data/enemies";
 import { enemyLoreView } from "@/ui/enemyLore";
 import type { CombatLogEntry } from "@/types";
@@ -417,6 +443,34 @@ const modeName = computed(() => (session.value ? EXPLORE_MODES[session.value.mod
  *
  * 已经到点(`<= 0`)时返回 0,由模板整句收起:那一拍正是战斗换上新敌人名的同一帧。
  */
+/**
+ * 收兵的第二步是否已武装 —— 与远征「中道而返」、秘境「弃境」同一条交互纪律。
+ * 「收兵」是本作唯一会退出历练的动作,而它有一个玩家看不见的门槛(满 3 场才计一次)。
+ */
+const leaveArmed = ref(false);
+
+/**
+ * 武装之后的确认行:这一趟打了什么、算不算数。
+ *
+ * 门槛从 `EXPLORE_TRIP_MIN_BATTLES` 现取,与结算里 `track("explores")` 同一个数 ——
+ * 文案里写死的「3」会在改常数那天变成假话。
+ */
+const leaveAskText = computed(() => {
+  const s = session.value;
+  if (!s) return "";
+  const fought = s.wins + s.losses;
+  const record = sessionRecordText(s);
+  if (fought >= EXPLORE_TRIP_MIN_BATTLES) {
+    return `本趟${record} —— 已足 ${EXPLORE_TRIP_MIN_BATTLES} 场,收兵计为一次历练;余下时段不再交兵。`;
+  }
+  return `本趟${record} —— 未满 ${EXPLORE_TRIP_MIN_BATTLES} 场,收兵不计为一次历练(成就与日课都不认)。`;
+});
+
+function confirmLeave(): void {
+  leaveArmed.value = false;
+  stopExploration("manual");
+}
+
 const nextBattleIn = computed(() => {
   const s = session.value;
   if (!s) return 0;

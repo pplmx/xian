@@ -2365,4 +2365,98 @@
   .combat-combatant__next-unit {
     flex: none;
   }
+
+  /*
+   * 「上一程」—— 收兵之后留在页上的一份结账回执。
+   *
+   * 它答的是「刚才那一趟带回了什么、算不算数」。从前这两件事只有一条 2.6 秒的
+   * 提示条,四小时档的全部结果就那样飘过去。这一栏不抢首屏:排在卷首之下、
+   * 正文之上,一行抬 + 三行账,收起时也读得出「地界 · 何时 · 算不算」。
+   */
+  .adventure-lasttrip {
+    display: grid;
+    min-width: 0;
+    gap: 0.14rem;
+    margin-bottom: 0.6rem;
+    padding: 0.52rem 0.78rem 0.58rem;
+    border-left: 2px solid rgb(var(--color-ink-rgb) / 0.22);
+    background: linear-gradient(96deg, rgb(var(--color-ink-rgb) / 0.035), transparent 62%);
+  }
+  .adventure-lasttrip__head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.1rem 0.5rem;
+  }
+  .adventure-lasttrip__eyebrow {
+    flex: none;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.16em;
+  }
+  .adventure-lasttrip__region {
+    flex: none;
+    color: rgb(var(--color-ink-rgb));
+    font-size: var(--type-body);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+  .adventure-lasttrip__when {
+    flex: none;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    white-space: nowrap;
+  }
+  /*
+   * 「算不算一次历练」—— 这一栏最要紧的一格,故不与其它读数同色。
+   * 计入了用石青(信息),未计入用朱砂(要拦住你):这正是「收兵前没说的话」。
+   */
+  .adventure-lasttrip__counted {
+    margin-left: auto;
+    flex: none;
+    font-size: var(--type-note);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .adventure-lasttrip__counted.is-counted {
+    color: rgb(var(--color-qing-rgb));
+  }
+  .adventure-lasttrip__counted.is-uncounted {
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  .adventure-lasttrip__line {
+    min-width: 0;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 220px) {
+    /* 195 档:那一格退回自己一行,不把地界名挤扁 */
+    .adventure-lasttrip__counted {
+      margin-left: 0;
+    }
+  }
+
+  /*
+   * 收兵的二段确认 —— 本作唯一会退出历练的动作。
+   *
+   * 从前它一键即走,而它有一个玩家看不见的门槛(满 EXPLORE_TRIP_MIN_BATTLES 场
+   * 才计一次历练)。武装之后把「本趟几场、算不算」摊成一行问句,两个按键各半宽:
+   * 「再想想」在左、「确认收兵」在右 —— 与远征的中道而返、秘境的确认弃境同一套话术。
+   */
+  .combat-actions__ask {
+    min-width: 0;
+    margin-bottom: 0.4rem;
+    color: rgb(var(--color-ink-soft-rgb));
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+  .combat-actions__armed {
+    display: flex;
+    min-width: 0;
+    gap: 0.5rem;
+  }
 }
