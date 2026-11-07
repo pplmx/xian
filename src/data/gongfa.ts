@@ -484,8 +484,8 @@ export const GONGFA: GongfaDef[] = [
     "spirit",
     3,
     "法身金刚,不坏不灭",
-    { damageReduction: 0.06, lowHpReduction: 0.15 },
-    { damageReduction: 0.015, lowHpReduction: 0.05 },
+    { damageReduction: 0.08, lowHpReduction: 0.15 },
+    { damageReduction: 0.02, lowHpReduction: 0.05 },
   ),
   g(
     "x_jianxin",
@@ -662,8 +662,8 @@ export const GONGFA: GongfaDef[] = [
     "divine",
     16,
     "神火炼体,身成不灭",
-    { damageReduction: 0.04, maxHpPct: 0.2, lowHpReduction: 0.4 },
-    { damageReduction: 0.0115, maxHpPct: 0.024 },
+    { damageReduction: 0.1, maxHpPct: 0.2, lowHpReduction: 0.4 },
+    { damageReduction: 0.022, maxHpPct: 0.024 },
   ),
   g(
     "m_hunyuan",
@@ -683,7 +683,7 @@ export const GONGFA: GongfaDef[] = [
     "divine",
     19,
     "以混沌之气淬体,身与道同,不增不减",
-    { maxHpPct: 0.24, defensePct: 0.2, damageReduction: 0.05 },
+    { maxHpPct: 0.24, defensePct: 0.2, damageReduction: 0.08 },
     { maxHpPct: 0.026, defensePct: 0.018 },
   ),
   g(
@@ -770,8 +770,8 @@ export const GONGFA: GongfaDef[] = [
     "divine",
     14,
     "藐姑射之山有神人居焉,不食五谷,吸风饮露",
-    { damageReduction: 0.07, maxHpPct: 0.16, dodgeRate: 0.04 },
-    { damageReduction: 0.015, maxHpPct: 0.022 },
+    { damageReduction: 0.1, maxHpPct: 0.16, dodgeRate: 0.04 },
+    { damageReduction: 0.02, maxHpPct: 0.022 },
   ),
   g(
     "m_tianguan",

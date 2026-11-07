@@ -57,7 +57,7 @@ export const BUFFS: BuffDef[] = [
     { attackPct: 0.2, defensePct: 0.1 },
     "sword",
   ),
-  b("buff_huxin", "护心", "pill", 900, "护住心脉,外伤难侵", { damageReduction: 0.09 }, "shield"),
+  b("buff_huxin", "护心", "pill", 900, "护住心脉,外伤难侵", { damageReduction: 0.15 }, "shield"),
   b(
     "buff_shenxing",
     "神行",
@@ -298,7 +298,7 @@ export const BUFFS: BuffDef[] = [
     // 减伤 12% → 14%:护心丹(境 1、草 16)是 15%,神威(境 15、草 360)不该更低。
     // 但也不能抬太多 —— 减伤是多来源可叠加词条,堆过 90% 之后引擎封底、白投入
     // (见 core/stackCap.spec 的上限判据)。故只抬到「略高于护心丹」。
-    { damageBonus: 0.25, damageReduction: 0.14 },
+    { damageBonus: 0.25, damageReduction: 0.18 },
     "crown",
   ),
   b(
@@ -375,7 +375,7 @@ export const BUFFS: BuffDef[] = [
     // 暴伤 30% → 42%:原先与仙力丹(境 10、草 240)撞成同一个 30%,而神将贵 33%。
     // 减伤 10% → 12%:原先低于更低境界的护心丹(15%)。只抬到 12% 而非更高,
     // 理由同神威丹(G 减伤可叠加,过顶即浪费)。
-    { attackPct: 0.45, critDamage: 0.42, damageReduction: 0.12 },
+    { attackPct: 0.45, critDamage: 0.42, damageReduction: 0.16 },
     "sword",
   ),
   // ---- 气运爆点(P2 首落):不是天运的弱化版,是高量级短窗「赌一把」—— 天运 15% 它 50% ----
