@@ -2288,6 +2288,99 @@ offline 的胜利路径),而能打赢就必然已经进去过 —— 所以**正
 守的东西不变,给后续再加条件留了缝。`adventureWiring.spec` 另补两条(条件里必须有
 `!row.suppressed`;镇压态自己的产出条与停取入口仍在)。
 
+### 关过页面再进来,已死之身走不出去
+
+这是本作最难看的一种缺陷:**整局卡死,而开发时永远撞不到。**
+
+#### 怎么卡死的
+
+`checkDeath` 的第一行是:
+
+```ts
+if (player.dead || player.age < player.lifespanMax) return;
+```
+
+它只在「寿元刚够」的那一瞬负责判死并开卷。而 `deathAnnounced`(引擎私有字段)
+与 `ui.deathDialog`(ui store 的 ref)**都是内存态,不落盘**。
+
+于是有条谁也走不出去的路径:
+
+```text
+玩家寿终的那一刻还开着页面  → checkDeath 判死、开往生卷 → 正常
+那一刻之前就关掉了(或崩溃、或换了设备)
+  → 下次读档 player.dead 已经是 true
+  → checkDeath 第一行直接返回
+  → deathAnnounced 仍是 false,却永远轮不到它
+  → 首页写着「陨落」,全页没有 [role=dialog],也没有任何「往生 / 转世」入口
+```
+
+实测(390×844,存档 `player.dead = true`):
+
+```text
+首页:  dialogs=[]  bodyHasDeathWord=true  canReincarnate=false
+历练页: dialogs=[]  goBtns=1
+```
+
+这一世已经结束,玩家**既不能继续,也不能重开**。
+
+#### 为什么开发时撞不到
+
+因为开发时一路连着不关页面 —— 判死那一刻进程还在,`deathAnnounced` 还在内存里,
+往生卷正常打开。**这条路径只在「关过页面」之后出现**,而那正是玩家的常态
+(一天打开十几次)。
+
+#### 修法
+
+启动链路里补一次,与成就补扫同一个位置、同一套兜底:
+
+```ts
+if (game.started && usePlayerStore().dead && !this.deathAnnounced) {
+  this.deathAnnounced = true;
+  setDeathDialog(true);
+}
+```
+
+条件要「已死 **+** 还没宣布过」:只看 `dead` 会在每次转世后被上一次的 true 挡住,
+只看 `announced` 又会在「本来就死了」的档上永远不触发。它只负责把**已经成立**的
+事实(`dead`)对应的那一屏补开,不改任何存档字段。
+
+真走一遍:辞世 → 回照 → 择生,三程都在。
+
+#### 同一份存档的第二处:已殁还能按「出发」
+
+历练页仍摆着可点的出发键。点下去模式窗照开,选完一档**什么都不发生** ——
+不进军、不报错、弹窗也不关。根因是这一句:
+
+```ts
+if (!region || player.dead) return false;
+```
+
+而它下面几行正写着:
+
+> 拒绝必须让玩家看见 —— 静默 return false 在界面上等同于「点了没反应」
+
+同一份文件里，一条纪律与一行实现互相打架。拆开：
+
+```ts
+if (!region) return false;
+if (player.dead) {
+  notify("此身已殁,当先往生再来", "warn");
+  return false;
+}
+```
+
+界面先一步不摆那枚按不动的东西:出发键的条件加 `!player.dead`,`actionableCount`
+一并收口 —— 否则章首说「N 处可出发」而屏上一枚都没有,又是同屏两本账。
+
+#### 判据
+
+`ui/deathExit.spec` 五条:启动必须补开(并把它依赖的前提 —— `checkDeath` 对
+已死直接返回 —— 一起钉住)、死亡提示不落盘这个前提、静默 return 不许回潮、
+出发键排除已殁、可出发计数跟着收。三条破坏实验各自红。
+
+真浏览器探针是 `layout-check` 的「已殁之身要走得下去」:读入已死存档后,
+首页必须有往生卷、历练页必须一枚出发键都没有、章首必须报「0 处可出发」。
+
 ### 320 窄屏:打开历练页,首屏一个「出发」都没有
 
 这一页最高频的动作是「出发」。而 320×568 上它不在首屏里。
