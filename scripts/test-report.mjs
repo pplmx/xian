@@ -236,6 +236,7 @@ const CATEGORIES = [
       "explorationPlan",
       "explorationExpiry",
       "deathExit",
+      "bagOverflow",
       "adventureWiring",
       "tripLedger",
       "scriptDepsAudit",

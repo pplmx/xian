@@ -72,6 +72,17 @@ export interface ExploreModeRow {
   materialsPerTrip: string;
   /** 整趟的装备期望件数 */
   equipPerTrip: string;
+  /**
+   * 这一趟的装备期望**超过行囊能装多少** —— 超出部分当场折成器灵尘。
+   *
+   * 光报「整趟约 814 件」是半句话:行囊只有 120 格,而且装备进门还要过
+   * 收纳裁决(自动回收 / 腾位 / 满包折算,见 core/loot 的 EQUIP_INTAKE)。
+   * 玩家看到 814 会以为背包里会多出 814 件 —— 实际绝大多数变成尘进了资源账,
+   * 而「变成尘」这件事此前只活在 core/loot 的注释里。
+   *
+   * 为 0 时不渲染这一句(短档本来装得下,加一句只是噪音)。
+   */
+  equipOverflow: number;
   /** 整趟的丹药期望枚数 */
   pillPerTrip: string;
   /** 每场材料期望(保留一位小数)—— 与上面同源,只是换个分母 */
@@ -95,6 +106,8 @@ export function exploreModeRow(input: {
   /** 每场出丹药的期望「场数之一」 */
   pillBattlesPerPiece: number | null;
   risk: string;
+  /** 行囊还能再装几件(只算包里的,不算已穿在身上的) */
+  bagFree: number;
 }): ExploreModeRow {
   const { plan } = input;
   const mode = EXPLORE_MODES[plan.mode];
@@ -109,6 +122,13 @@ export function exploreModeRow(input: {
     materialsPerBattle: countText(input.materialsPerBattle),
     materialsPerTrip: countText(input.materialsPerBattle * plan.battles),
     equipPerTrip: perTrip(input.equipBattlesPerPiece, plan.battles),
+    equipOverflow: Math.max(
+      0,
+      Math.round(
+        (input.equipBattlesPerPiece ? plan.battles / input.equipBattlesPerPiece : 0) -
+          Math.max(0, input.bagFree),
+      ),
+    ),
     pillPerTrip: perTrip(input.pillBattlesPerPiece, plan.battles),
     rewardMult: mode.rewardMult,
     dangerMult: mode.dangerMult,
@@ -145,6 +165,29 @@ export function tripHaulParts(row: ExploreModeRow): string[] {
     `丹药 ${row.pillPerTrip} 枚`,
     `材料 ${row.materialsPerTrip} 件`,
   ];
+}
+
+/**
+ * 「行囊装不下」那一句 —— 整趟装备期望超过余位时才有话要说。
+ *
+ * 光报「整趟约 814 件」是半句话:行囊只有 120 格,装备进门还要过收纳裁决
+ * (`core/loot` 的 EQUIP_INTAKE:自动回收 / 腾位 / 满包折算)。玩家看到 814
+ * 会以为包里会多出 814 件,实际绝大多数当场折成器灵尘进了资源账 ——
+ * 而「变成尘」这件事此前只活在 core/loot 的注释里。
+ *
+ * 报**差额**而不是「会折多少」:折尘数取决于品质分布(每档 1~256 尘),
+ * 那是估计值,报出来就是假精度。差额是确定的减法。
+ *
+ * 为 0 时返回 null,模板不渲染 —— 短档本来装得下,加一句只是噪音。
+ */
+export function bagOverflowText(row: ExploreModeRow): string | null {
+  /*
+   * 差一两件不值得单独说一句 —— 那是「背包边缘」的正常摩擦,不是这一档的账:
+   * 玩家自己挪一下就解决了,报出来只是噪音。197 / 700 这种量级才是真的
+   * 「改档位才装得下」。
+   */
+  if (row.equipOverflow <= 3) return null;
+  return `余 ${row.equipOverflow} 件装不下,当场折作器灵尘`;
 }
 
 /** 规模的分段形式(同上:给极窄档按句断行) */

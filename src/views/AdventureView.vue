@@ -761,6 +761,14 @@
             <span v-for="(part, i) in tripHaulParts(m)" :key="i">{{ part }}</span>
           </span>
           <!--
+            行囊装不下那一截 —— 整趟 814 件而包只有 120 格。
+            不报这一句,「整趟约 814 件」就是半句话:玩家会以为包里真会多出 814 件,
+            实际绝大多数当场折成器灵尘(见 core/loot 的 EQUIP_INTAKE)。
+          -->
+          <span v-if="bagOverflowText(m)" class="adventure-mode__overflow">
+            {{ bagOverflowText(m) }}
+          </span>
+          <!--
             收益与敌势仍并排摆出来:四档里敌人差了 2.6 倍,玩家却只看得到钱。
             两个数摆在一起,「要不要涉险」才是个可算的账。
           -->
@@ -785,6 +793,7 @@ import { useRoute, useRouter } from "vue-router";
 import type { ExploreMode, RegionDef, RegionRecall, WorldId } from "@/types";
 import { useAdventureStore } from "@/stores/adventure";
 import { useGameStore } from "@/stores/game";
+import { useInventoryStore } from "@/stores/inventory";
 import {
   expectedEquipmentBattlesPerPiece,
   expectedMaterialsPerBattle,
@@ -792,6 +801,7 @@ import {
 } from "@/core/loot";
 import { exploreTripPlan } from "@/core/explorationPlan";
 import {
+  bagOverflowText,
   exploreModeRow,
   tripCadenceText,
   tripHaulParts,
@@ -822,7 +832,7 @@ import {
 import { biasEffectOf } from "@/core/mortalBias";
 import { isRetreating } from "@/core/earlyGameService";
 import { REALMS } from "@/data/realms";
-import { EXPLORE_MODES, EXPLORE_TRIP_MIN_BATTLES } from "@/data/constants";
+import { BAG_CAPACITY, EXPLORE_MODES, EXPLORE_TRIP_MIN_BATTLES } from "@/data/constants";
 import {
   exploreEventChance,
   regionFoeOrigin,
@@ -860,6 +870,7 @@ const game = useGameStore();
 const route = useRoute();
 const router = useRouter();
 const player = usePlayerStore();
+const inventory = useInventoryStore();
 const settings = useSettingsStore();
 
 /** 灵兽之性对出行的修正:慢稳更久、好战更险 —— 出行弹窗是最后一个算账点,选前要看得见 */
@@ -1199,6 +1210,11 @@ const modeRows = computed(() => {
         isBoss: false,
       }),
       risk: m.risk,
+      /*
+       * 行囊还能再装几件 —— 整趟的装备期望远超这个数时,模式窗要把差额说出来。
+       * 只算**包里的**,不算已穿在身上的(那 120 格是包,不是全身)。
+       */
+      bagFree: Math.max(0, BAG_CAPACITY - inventory.bagItems.length),
     }),
   );
 });

@@ -143,6 +143,7 @@ describe("模式窗文案 · 整趟读数必须是乘出来的", () => {
       equipBattlesPerPiece: 3.2,
       pillBattlesPerPiece: 12.5,
       risk: "安稳",
+      bagFree: 120,
     });
 
   it("整趟材料 = 每场期望 × 场次 —— 不是把每场那个数原样搬上来", () => {
@@ -174,6 +175,7 @@ describe("模式窗文案 · 整趟读数必须是乘出来的", () => {
       equipBattlesPerPiece: null,
       pillBattlesPerPiece: 0,
       risk: "安稳",
+      bagFree: 120,
     });
     expect(r.equipPerTrip).toBe("—");
     expect(r.pillPerTrip).toBe("—");

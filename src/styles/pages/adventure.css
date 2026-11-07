@@ -2411,6 +2411,19 @@
     display: block;
     overflow-wrap: anywhere;
   }
+  /*
+   * 「余 N 件装不下」—— 一行小字,压在同档的产出后面。
+   *
+   * 它答的是「那些装不下的去哪了」,属于同一档的账,故紧跟 haul 而不另起一块。
+   * 用 faint 一档而非正文色:它是补充说明,不是又一个要读的数。
+   */
+  .adventure-mode__overflow {
+    display: block;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
   @media (max-width: 220px) {
     /* 195 档:时长从右端退回自己一行,别把档名挤扁 */
     .adventure-mode__duration {
