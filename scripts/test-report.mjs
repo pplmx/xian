@@ -429,6 +429,7 @@ const CATEGORIES = [
       "dodgeCap",
       "suppressCurve",
       "statDefenseLayers",
+      "modalDepth",
       "rebirthCompanion",
       "petWorldBand",
       "codexScale",

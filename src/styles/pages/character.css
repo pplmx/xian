@@ -124,11 +124,17 @@
     gap: 0.4rem;
   }
   .character-modifier-folio__lead {
+    /* 桌面两栏流里,说明行是一条横条而不是一块内容 —— 跨过两栏,不许被切开 */
+    column-span: all;
     color: rgb(var(--color-ink-faint-rgb));
     font-size: var(--type-note);
     line-height: 1.55;
   }
   .character-modifier-folio__group {
+    /* 一组的行不许被栏缝劈开:拆到两栏就得上下找,比多滚半屏更难受。
+       实测允许拆开可省 0.16 屏(1.33 → 1.17),但斗法那组 11 项会跨栏断开 ——
+       完整性比那 0.16 屏重要。 */
+    break-inside: avoid;
     min-width: 0;
     padding: 0.55rem 0 0.65rem;
     border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
@@ -707,6 +713,28 @@
     .character-catalog__group + .character-catalog__group {
       border-top: 0;
       border-left: 1px solid rgb(var(--color-ink-rgb) / 0.11);
+    }
+
+    /*
+     * 「行藏周天」在桌面上摊成两栏 —— 与器评帖同一种病、同一种修法。
+     *
+     * 实测 1280 档:浮层已是宽档(size=wide,832px),内容却仍单列,
+     * 卷身 2.23 屏(判据上限 1.5)。每一行只有「名称 …… 数值」,
+     * 右侧大片空白 —— 横向空间一直空着,高度白堆。
+     *
+     * 为什么用 columns 而不是 grid:四组高度差得很远(222 / 222 / 516 / 137,
+     * 战法那组 11 项最长),手工指定哪组去哪栏,总高永远由最长那栏决定。
+     * 多栏流会自己按高度平衡 —— 这一条与器评帖那边是同一个结论。
+     */
+    .character-modifier-folio {
+      /*
+       * `columns` 对 grid / flex 容器**无效** —— 原规则是 `display: grid`,
+       * 只写 columns 会静默失效(实测 columnCount 已是 2,但子元素全在同一列)。
+       * 多栏流要的是块容器,故这里一并换掉 display。
+       */
+      display: block;
+      columns: 2;
+      column-gap: 1.1rem;
     }
   }
   @media (max-width: 220px) {
