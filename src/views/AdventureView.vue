@@ -156,7 +156,16 @@
                 <span class="adventure-register__eyebrow">山河 · 本世</span>
                 <h2 class="adventure-register__title">眼下可往</h2>
               </span>
-              <span class="adventure-register__state tabular">{{ visibleRows.length }} 处已显</span>
+              <!--
+                这一格报的是**几处此刻真能出发**,不是「列表里有几行」。
+
+                从前报的是**可见行数**(「3 处已显」),而列表按设计要往前
+                多露面一处未解锁的地界(保持神秘感,见 visibleRegionRows)。于是
+                「眼下可往」这个标题下面挂着 3,其中一处写着「需先击败青云山麓之主」——
+                章首那个数与它自己管的那件事不是同一件。第壹章早就是「N 处可出发」,
+                这一章跟着用同一个计数即可,不必另造一个。
+              -->
+              <span class="adventure-register__state tabular">{{ actionableCount }} 处可出发</span>
             </header>
 
             <div class="adventure-register__body adventure-regions__body">

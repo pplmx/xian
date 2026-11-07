@@ -16921,6 +16921,38 @@ async function taskAdventureFold() {
       if (fold.secretHeight === null || fold.secretHeight > 80) {
         failures.push(`[390-adventure] 秘境支线收口后仍占 ${fold.secretHeight ?? "?"}px,超过 80px`);
       }
+      /*
+       * 章首那个数必须与屏上真按得到的「出发」对得上。
+       *
+       * 「眼下可往」这一章从前报的是**可见行数** —— 而列表按设计要多露面一处
+       * 未解锁的地界(保持神秘感),于是标题说「3 处已显」而屏上只有 2 个出发键,
+       * 其中一处写着「需先击败…」。章首的数与它自己管的那件事必须是同一件。
+       */
+      const countClaim = await page.evaluate(() => {
+        const regions = document.querySelector("[data-adventure-regions]");
+        if (!regions) return null;
+        const state = (
+          regions.querySelector(".adventure-register__state")?.textContent || ""
+        ).trim();
+        const claimed = Number((state.match(/(\d+)\s*处可出发/) || [])[1] ?? NaN);
+        const realGo = [...regions.querySelectorAll("[data-region-action]")].filter(
+          (b) => /出发/.test(b.textContent || "") && b.getBoundingClientRect().width > 0,
+        ).length;
+        return { state, claimed, realGo };
+      });
+      if (!countClaim) {
+        failures.push("[390-adventure] 找不到「眼下可往」章首那个数");
+      } else {
+        if (!Number.isFinite(countClaim.claimed)) {
+          failures.push(
+            `[390-adventure] 章首没有报「N 处可出发」:«${countClaim.state}» —— 这一章叫「眼下可往」,数要与可去的地方一致`,
+          );
+        } else if (countClaim.claimed !== countClaim.realGo) {
+          failures.push(
+            `[390-adventure] 章首说 ${countClaim.claimed} 处可出发,屏上只有 ${countClaim.realGo} 个出发键 —— 把锁着的一处也算进去了`,
+          );
+        }
+      }
       if (fold.actionTop === null || fold.actionBottom === null) {
         failures.push("[390-adventure] 首屏找不到任何地界行动入口");
       } else {

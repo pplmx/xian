@@ -312,4 +312,29 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
     );
     expect(layout, "真浏览器要核战卷不再逐段套卡").toContain("[data-combat-ledger]");
   });
+
+  it("章首那个数说的是「几处真能出发」,不是「列表有几行」", () => {
+    /*
+     * 列表按设计要往前多露面一处未解锁的地界(保持神秘感,见 visibleRegionRows),
+     * 于是「3 处已显」里有 1 处是锁着的。而这一章叫「眼下可往」——
+     * 章首那个数与它自己管的那件事必须是同一件,否则玩家数得出矛盾:
+     * 标题说 3 处可往,屏上只有 2 个「出发」。
+     *
+     * 第壹章早就是「N 处可出发」,用的是 actionableCount(统一准入且排除镇压态)。
+     * 这一条钉住两章用同一个数,且不许退回按行数报。
+     */
+    const view = source("src/views/AdventureView.vue");
+    const regionsAt = view.indexOf("data-adventure-regions");
+    const secretAt = view.indexOf("data-adventure-secret");
+    const regions = view.slice(regionsAt, secretAt);
+    expect(regions, "章首那个数要走「真能出发」的那份计数").toContain("actionableCount");
+    expect(regions, "不许退回按可见行数报 —— 那会把锁着的一处也算成可往").not.toContain(
+      "visibleRows.length",
+    );
+    // 两章报的是同一个来源:一致不是巧合
+    expect(view, "第壹章也用同一个计数").toMatch(/\$\{actionableCount\} 处可出发/);
+    expect(view, "计数的口径:统一准入且排除镇压态").toMatch(
+      /actionableCount[\s\S]{0,160}row\.canEnter && !row\.suppressed/,
+    );
+  });
 });
