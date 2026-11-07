@@ -397,8 +397,18 @@
                 路线内已有统一理由时,不再同时念旧链前置 —— 两套顺序可能指向不同地界,
                 同屏两句会把「眼下该往哪」说成互相打架的两件事。
               -->
+                            <!--
+                              路锁理由要再加一条 `!row.suppressed`:镇压收益中的地界
+                              必然**打赢过**才压得住,它不可能是「还没踏足」的。
+
+                              正常流程走不到这两个条件同时成立(镇压只发生在胜利分支里),
+                              但坏档/旧档能构造出来:实测一份夹具同时摆 suppressedRegions
+                              与空的 unlocked,屏上就出现「已镇压 · 自动产出 376灵石/时」
+                              配「需先击败青云山麓之主,方可踏足此地」—— 两句话直接打架。
+                              少说一句,坏档也读得通。
+                            -->
                             <p
-                              v-if="!row.canEnter && !row.blockReason"
+                              v-if="!row.canEnter && !row.blockReason && !row.suppressed"
                               class="mt-1 text-body text-ink-faint"
                             >
                               需先击败{{ prevRegionName(row.def) }}之主,方可踏足此地。

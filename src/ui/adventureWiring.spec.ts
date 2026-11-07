@@ -109,3 +109,28 @@ describe("镇压资格的两本账要在界面上说清", () => {
     );
   });
 });
+
+describe("地界卡不许同时说「已镇压」和「还没踏足」", () => {
+  it("路锁理由要排除镇压收益态 —— 镇压过就必然踏足过", () => {
+    /*
+     * 镇压只发生在胜利分支里(runBattle 的 result.win / offline 的胜利路径),
+     * 故正常流程走不到「已镇压 + 进不去」。但坏档能构造出来:一份夹具同时摆
+     * suppressedRegions 与空的 unlocked,屏上就出现
+     * 「已镇压 · 自动产出 376灵石/时」配「需先击败青云山麓之主,方可踏足此地」。
+     * 两句话直接打架,而玩家没有别的线索判断哪个是真的。
+     */
+    const view = source("src/views/AdventureView.vue");
+    const at = view.indexOf("需先击败{{ prevRegionName(row.def) }}之主");
+    expect(at, "路锁理由那句话找不到 —— 判据会空转").toBeGreaterThan(-1);
+    // 取它所在的整段 <p ...> 开标签
+    const tagStart = view.lastIndexOf("<p", at);
+    const tag = view.slice(tagStart, at);
+    expect(tag, "路锁理由必须排除镇压收益态").toContain("!row.suppressed");
+  });
+
+  it("镇压态本身仍要照常显示产出与停取入口(排除的是那句话,不是这张卡)", () => {
+    const view = source("src/views/AdventureView.vue");
+    expect(view, "镇压中的产出条仍在").toContain("data-suppress-info");
+    expect(view, "「停取收益,改去历练」仍在").toContain("停取收益,改去历练");
+  });
+});

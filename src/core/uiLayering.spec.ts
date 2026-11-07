@@ -3987,9 +3987,19 @@ describe("界面分层 · 浮层只有一个出处", () => {
 
   it("历练页的锁定原因只留一条:路线内说路线,路线外才退回旧链", () => {
     const adventure = fileAt("views/AdventureView.vue");
-    expect(adventure?.src, "旧链的「需先击败」只能在路线判据没有给出理由时兜底").toContain(
-      'v-if="!row.canEnter && !row.blockReason"',
-    );
+    /*
+     * 这条守的是「同屏不许有两句互相打架的先后」:
+     *   路线内的拦截理由由 blockReason 说;
+     *   旧链的「需先击败某某之主」只在路线没给理由时兜底。
+     * 后来又补了第三个条件 `!row.suppressed` —— 镇压收益中的地界必然打赢过,
+     * 它不可能「还没踏足」;坏档能构造出两者同时成立(实测屏上直接打架)。
+     * 守的东西不变,判据跟着放宽到「这三个条件都在」,而不是钉死整串字面量。
+     */
+    const tag = adventure?.src.match(/<p\s+v-if="(!row\.canEnter[^"]*)"[\s\S]{0,200}?需先击败/);
+    expect(tag, "旧链那句「需先击败」找不到,或它的显示条件不再是准入兜底").not.toBeNull();
+    const cond = tag![1]!;
+    expect(cond, "旧链理由只能在路线判据没有给出理由时兜底").toContain("!row.blockReason");
+    expect(cond, "镇压收益中的地界不可能是「还没踏足」").toContain("!row.suppressed");
     expect(adventure?.src, "路线内的拦截理由仍要显示").toContain('v-if="row.blockReason"');
   });
 
