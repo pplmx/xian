@@ -202,8 +202,15 @@ describe("历练案 · 先看今日行旅,再把第一个可行方向摆到眼�
     expect(view, "390 先收起重复正文的装饰罗盘,把首屏让给首个出发键").toMatch(
       /<template #visual>\s*<div class="phone:hidden">[\s\S]{0,260}<AdventureCompass/,
     );
+    /*
+     * 窄屏章首要收薄 —— 不能只靠藏一张图。
+     *
+     * 原先钉的是具体值 `0.62rem 0.48rem`;后来为了把首个出发键塞进 320×568 的首屏,
+     * 这个值又收了一档(0.42rem 0.34rem)。守的是「窄屏有一档更薄的章首」,
+     * 不是那个小数本身,故断言放宽成「430 断点里确实给章首重设了 padding-block」。
+     */
     expect(css, "390 章首与卷间也要收薄,不能只靠藏一张图").toMatch(
-      /@media \(max-width: 430px\)\s*\{[\s\S]{0,700}\.adventure-register__head\s*\{[\s\S]{0,100}padding-block:\s*0\.62rem 0\.48rem/,
+      /@media \(max-width: 430px\)\s*\{[\s\S]{0,900}\.adventure-register__head\s*\{[\s\S]{0,120}padding-block:\s*0\.\d+rem/,
     );
     expect(css, "桌面让山河主册占右侧大栏,今日账与旁路留左栏").toMatch(
       /@media \(min-width: 960px\)\s*\{[\s\S]{0,1600}\.adventure-register__chapter--regions\s*\{[\s\S]{0,180}grid-column:\s*5 \/ -1;[\s\S]{0,120}grid-row:\s*1 \/ span 3/,

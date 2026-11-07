@@ -16866,6 +16866,105 @@ async function taskSecretRealm320() {
   return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
 }
 
+/**
+ * 历练首屏 · 320 窄屏 —— 首个出发键必须在首屏里。
+ *
+ * 已有的 `taskAdventureFold` 只量 390。而这一页的矛盾恰恰出在**更窄更矮**那一档:
+ * 320×568 实测,卷首 221 + 行旅条 72 之后正文只剩 167px,而一张地界卡要 190 ——
+ * 首屏一个「出发」都没有(首个落在 633px,底栏 515px)。玩家读得到
+ * 「6 处可出发」却点不着任何一个,而那是这一页最高频的动作。
+ *
+ * 修法是把窄屏上的参考内容收起来(行旅条、星象注、三档抬头、副题),收的
+ * 全是「答为什么 / 答从哪来」的那一类,一个字没删。修完首个出发键落在 457px。
+ *
+ * 这条判据钉三件:
+ *   ① 320×568 首屏里真的按得到一个「出发」;
+ *   ② 收起来的东西仍然点得开(不是删掉);
+ *   ③ 界域章头仍在 —— 跨界的存档里它是唯一能看出「这一段是人间界」的那条线。
+ */
+async function taskAdventureFold320() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 320, height: 568 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    await seedSave(ctx, showcaseSlices("light"), "__adventureFold320");
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/adventure", 900);
+    await clearOverlays(page);
+    await settleVisuals(page);
+
+    const fold = await page.evaluate(() => {
+      const dock = document.querySelector("[data-folio-dock]")?.getBoundingClientRect();
+      const btns = [
+        ...document.querySelectorAll("[data-adventure-regions] [data-region-action]"),
+      ].filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && /出发/.test(el.textContent || "");
+      });
+      const first = btns[0]?.getBoundingClientRect();
+      const ribbon = document.querySelector("[data-world-ribbon]");
+      const worldChapter = document.querySelector(".adventure-atlas__chapter");
+      return {
+        dockTop: dock?.top ?? innerHeight,
+        firstTop: first?.top ?? null,
+        firstBottom: first?.bottom ?? null,
+        buttonCount: btns.length,
+        ribbonShown: ribbon
+          ? getComputedStyle(ribbon).display !== "none" && ribbon.getBoundingClientRect().height > 0
+          : false,
+        omenNotePresent: Boolean(document.querySelector('[data-folio-note="adventure-omen"]')),
+        tiersNotePresent: Boolean(document.querySelector('[data-folio-note="adventure-tiers"]')),
+        worldChapterShown: worldChapter
+          ? getComputedStyle(worldChapter).display !== "none" &&
+            worldChapter.getBoundingClientRect().height > 0
+          : false,
+        worldChapterText: (worldChapter?.textContent || "").replace(/\s+/g, " ").trim(),
+      };
+    });
+    checked += 1;
+
+    if (fold.buttonCount === 0) {
+      failures.push("[320-adventure] 首屏找不到任何「出发」键,判据没量到东西");
+    } else if (fold.firstBottom === null || fold.firstBottom > fold.dockTop + 1) {
+      failures.push(
+        `[320-adventure] 首个「出发」键落在折线以下(first bottom ${Math.round(fold.firstBottom ?? -1)} / dock top ${Math.round(fold.dockTop)}) —— 这一页最高频的动作要滚动才点得到`,
+      );
+    }
+    if (fold.ribbonShown) {
+      failures.push("[320-adventure] 行旅条在 320 上仍占着首屏 —— 与今日行旅章重复,该收");
+    }
+    if (!fold.omenNotePresent) {
+      failures.push("[320-adventure] 星象那一段不是「收起来」而是丢了 —— 注不在 DOM 里");
+    }
+    if (!fold.tiersNotePresent) {
+      failures.push("[320-adventure] 三档概率那一段不是「收起来」而是丢了 —— 注不在 DOM 里");
+    }
+    if (!fold.worldChapterShown) {
+      failures.push(
+        "[320-adventure] 界域章头被整块删了 —— 跨界存档里它是唯一能看出这一段属哪一界的东西",
+      );
+    }
+    if (!/人间界|仙界|神界|混沌海/.test(fold.worldChapterText)) {
+      failures.push(`[320-adventure] 界域章头读不出界名:«${fold.worldChapterText}»`);
+    }
+    if (pageErrors.length)
+      failures.push(`[320-adventure] 页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    console.log(
+      `\n320 首屏:首个出发键 bottom ${Math.round(fold.firstBottom ?? -1)} / 底栏 ${Math.round(fold.dockTop)} · 界域章头 «${fold.worldChapterText}»`,
+    );
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
 /** 历练首屏的主线优先:秘境支线默认收口,首个地界行动要在首屏里看得见 */
 async function taskAdventureFold() {
   const failures = [];
@@ -29646,6 +29745,7 @@ const TASKS = [
   ["敌人卡最挤的一档", taskEnemyCard],
   ["秘境卡在境中的窄屏一档", taskSecretRealm320],
   ["历练首屏主线优先", taskAdventureFold],
+  ["历练首屏 320 窄屏", taskAdventureFold320],
   ["出行模式窗的整趟账", taskExploreModes],
   ["收兵与上一程的结账", taskTripLedger],
   ["际遇压住时的上下文与收尾", taskEventTripContext],

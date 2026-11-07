@@ -22,8 +22,20 @@
               />
             </div>
           </template>
-          <!-- 本世行旅条:路线进度、眼下去处与世界详情仍只认世界页同一份视图。 -->
-          <MortalWorldRibbon :view="worldOverview" :statuses="worldStatuses" />
+          <!--
+            本世行旅条 —— 路线进度、眼下去处与世界详情仍只认世界页同一份视图。
+
+            窄屏(≤430px)把它收起来:它不是没用的东西,而是**这一页的第二个路线概览** ——
+            正文「今日行旅」章已经报了眼下的去处,世界页也一直在。320×568 实测:
+            卷首 221 + 本行 72 之后正文只剩 167px,而一张地界卡要 190 —— 于是首屏
+            **一个「出发」都没有**,玩家看到「6 处可出发」却点不着任何一个。
+            收掉它之后首个出发键落回 495px(底栏 515px),回到首屏内。
+
+            宽屏照常显示:那里高度够,不必为高度让步。
+          -->
+          <div class="adventure-ribbon-slot">
+            <MortalWorldRibbon :view="worldOverview" :statuses="worldStatuses" />
+          </div>
         </FolioPageHeader>
 
         <!--
@@ -85,23 +97,44 @@
             </header>
 
             <div class="adventure-register__body adventure-briefing__ledger">
-              <div class="adventure-briefing__omen">
-                <span class="adventure-briefing__eyebrow">星象值日</span>
-                <p>
-                  {{ mansionLine }} —— 利
-                  <strong>{{ favoredWorldName }}</strong>
-                  ,在其地历练际遇概率{{ mansionLuckText() }},他处不加。
-                </p>
-              </div>
-              <div v-if="biasLabel" data-bias-hint class="adventure-briefing__fact">
-                <span class="adventure-briefing__eyebrow">本世所钟</span>
-                <strong>{{ biasLabel }}</strong>
-                <p>只放大此路所得。</p>
-              </div>
+              <!--
+                窄屏(≤430px)把星象与本世所钟收进一枚「注」—— 只在这个宽度上收。
+
+                320×568 实测:卷首 221 + 行旅条 72 + 本章 288 = 581px,而底栏在 515px,
+                于是首屏**一个「出发」都没有**(首个按钮落在 756px)。玩家打开历练页,
+                看到的是「6 处可出发」,却看不见任何一个可点的入口 —— 这一页最高频的
+                那个动作被推到了折线以下。把这两段收进来之后首个按钮回到 468px。
+
+                收的是**版面,不是内容**:星象、所钟一字不少,点开即读。
+                宽度够的地方(≥431px)照旧全展开 —— 那里不需要为高度让步。
+              -->
+              <FolioNote name="adventure-omen" label="注 · 星象与本世所钟" class="narrow-only-note">
+                <div class="adventure-briefing__omen">
+                  <span class="adventure-briefing__eyebrow">星象值日</span>
+                  <p>
+                    {{ mansionLine }} —— 利
+                    <strong>{{ favoredWorldName }}</strong>
+                    ,在其地历练际遇概率{{ mansionLuckText() }},他处不加。
+                  </p>
+                </div>
+                <div v-if="biasLabel" data-bias-hint class="adventure-briefing__fact">
+                  <span class="adventure-briefing__eyebrow">本世所钟</span>
+                  <strong>{{ biasLabel }}</strong>
+                  <p>只放大此路所得。</p>
+                </div>
+              </FolioNote>
               <div class="adventure-briefing__tiers">
+                <!--
+                  窄屏把这一行抬头收掉,只留下面那枚「注」的一行。
+                  它答的是「三种事多久撞见一次」(参考),窄屏上连抬头都省:
+                  状态那句(缘在续/缘未起)已经在注里说得更准(按当前档位现算)。
+                  320×568 实测:收掉它之后首个出发键落回 495px,进入首屏。
+                -->
                 <div class="adventure-briefing__tier-head">
                   <span class="adventure-briefing__eyebrow">途中三档</span>
-                  <span>{{ chainPending ? "缘在续,奇缘会来" : "缘未起,奇缘暂不现身" }}</span>
+                  <span class="adventure-briefing__tier-state">{{
+                    chainPending ? "缘在续,奇缘会来" : "缘未起,奇缘暂不现身"
+                  }}</span>
                 </div>
                 <FolioNote name="adventure-tiers" label="注 · 三档来由与概率">
                   <div class="adventure-briefing__tier-grid">
@@ -374,7 +407,9 @@
                                 :class="row.def.danger >= 4 ? 'text-cinnabar' : 'text-ink-soft'"
                                 >{{ DANGER_NAMES[row.def.danger] }}</span
                               >
-                              <span v-if="row.pressure.active" class="ml-1 text-cinnabar"
+                              <span
+                                v-if="row.pressure.active"
+                                class="pressure-mark ml-1 text-cinnabar"
                                 >· {{ row.pressure.label }},仍可凭战力硬闯</span
                               >
                               <!-- 复聚要说出"该怎么办":旧主归来了,再历一程即可复靖 -->

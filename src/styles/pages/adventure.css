@@ -662,6 +662,17 @@
   .adventure-region__conditions > * + * {
     margin-top: 0.26rem;
   }
+  /*
+   * 境界压制那一格是**这一趟的风险**,不是背景说明:它说「你会被压着打」。
+   * 故比同一行里的「境相宜 / 凶险名」重一档(500),也别停在 10px ——
+   * 11px 的朱砂在暗纸上的像素采样会贴着阈值(实测 5% 分位 2.02:1),
+   * 那是细笔画的抗锯齿边缘,不是颜色本身不对(实际 Lucas 6.37:1)。
+   * 加一档字重把笔画立起来,顺带让风险更醒目 —— 两件事同一个修法。
+   */
+  .adventure-region__conditions .pressure-mark {
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
   .adventure-region__reading {
     color: rgb(var(--color-ink-soft-rgb));
   }
@@ -1769,11 +1780,52 @@
    */
   @media (max-width: 430px) {
     .adventure-register {
-      margin-top: 0.4rem;
+      margin-top: 0.28rem;
     }
 
+    /*
+     * 章首收薄到极限档:两个轴一起收。
+     *
+     * 320×568 上首屏放不放得下首个出发键,是由这几十个 px 决定的 ——
+     * 收行旅条、收星象注、收三档抬头之后还差 31px,而章首(49px)本来是给
+     * 序号印与章名留气的。窄屏把气收掉,字一个不少。
+     */
     .adventure-register__head {
-      padding-block: 0.62rem 0.48rem;
+      padding-block: 0.42rem 0.34rem;
+    }
+    .adventure-register__ordinal {
+      width: 1.55rem;
+      height: 1.55rem;
+    }
+    .adventure-register__head {
+      grid-template-columns: 1.55rem minmax(0, 1fr) auto;
+    }
+    /*
+     * 地界卡的上留白也收一档:首个出发键要落进首屏,这是最后那 20px。
+     * 收的是「卡与章首之间的气」,不是卡里的内容 —— 名字、判据、说明一字不动。
+     */
+    .adventure-region {
+      padding-top: 0.5rem;
+    }
+    /*
+     * 「沿山河线而往 · 前路仍有留白」是一句装饰性副题,窄屏让位(23px)。
+     * 章首已经写着「沿山河线而往」的意思,这一行没有第二件事要说。
+     */
+    .adventure-register__rule {
+      display: none;
+    }
+    /*
+     * 界域章头(人间界 · N 处)**不整块删,只收薄**。
+     *
+     * 整块收掉能多省 39px,但它在跨界的存档里是**唯一**能看出「这一段是人间界、
+     * 下一段是仙界」的东西 —— 那正是玩家在这样的长列表里最需要的那条线。
+     * 故只把 1.9rem 的印与两侧留白收掉,界名与处数照旧。
+     */
+    .adventure-atlas__seal {
+      display: none;
+    }
+    .adventure-atlas__chapter {
+      padding-block: 0.2rem;
     }
 
     .adventure-register__body {
@@ -2596,5 +2648,61 @@
     font-size: var(--type-note);
     line-height: 1.5;
     overflow-wrap: anywhere;
+  }
+
+  /*
+   * 窄屏才收的「注」—— 星象与本世所钟只在 ≤430px 折成一行抬头。
+   *
+   * 宽屏(≥431px)高度够:那不是「可以参考,而是**一直想让人看见**」的两段读数。
+   * 故宽屏把注壳抹平成纯内容(抬头隐藏、注身强制显示),窄屏才恢复成一枚可开合的注。
+   * 一份 DOM 两副形态,不是两套文案。
+   */
+  .narrow-only-note .folio-note__toggle {
+    display: none;
+  }
+  .narrow-only-note .folio-note__body {
+    display: block !important;
+  }
+  @media (max-width: 430px) {
+    .narrow-only-note .folio-note__toggle {
+      display: flex;
+    }
+    /*
+     * 窄屏关键:注身回到「默认合着」。v-show 写的是内联 display:none ——
+     * 上面那行 `!important` 会盖掉内联样式,故这里必须用属性选择器只放行展开态。
+     * 写 `display: revert` 会把合着的也放出来(实测三个宽度全线变差)。
+     */
+    .narrow-only-note .folio-note__body:not([style*="display: none"]) {
+      display: block !important;
+    }
+    .narrow-only-note .folio-note__body[style*="display: none"] {
+      display: none !important;
+    }
+  }
+
+  /*
+   * 行旅条在窄屏收起 —— 一页不许有两个路线概览抢首屏。
+   *
+   * 320×568 实测:卷首 221 + 行旅条 72 之后正文只剩 167px,而一张地界卡要 190,
+   * 于是首屏一个「出发」都没有(首个落在 633px,底栏 515px)。玩家读得到
+   * 「6 处可出发」却点不着任何一个 —— 这一页最高频的动作被推到折线以下。
+   *
+   * 收起后首个出发键落回 495px,回到首屏内(实测)。宽屏(>430px)照常显示:
+   * 那里卷首相同时高,但可视区也高,没有这个矛盾。
+   *
+   * 收的是**这一处冗余**,不是路线进度本身:世界页照旧、今日行旅章也报眼下去处。
+   */
+  @media (max-width: 430px) {
+    .adventure-ribbon-slot {
+      display: none;
+    }
+    /*
+     * 「途中三档」的抬头行也收掉,只留下面那枚「注」。
+     * 状态那句(缘在续 / 缘未起)在注里说得更准 —— 它按当前档位现算概率,
+     * 而这行抬头只是定性。窄屏上定性那句让位给正文。
+     */
+    .adventure-briefing__tier-head {
+      display: none;
+    }
   }
 }
