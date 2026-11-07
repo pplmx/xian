@@ -158,3 +158,58 @@ describe("楷体子集 · 覆盖", () => {
     expect(strays.join(""), `这些首屏楷体字被挤出第一片:${strays.join("")}`).toBe("");
   });
 });
+
+/**
+ * 首屏字表要**跟上开卷文案** —— 只验「表里的字都在第一片」是不够的。
+ *
+ * ## 缺口(实测踩到)
+ *
+ * 上面那条判据验的是「`BOOT_FONT_CHARS` 里的每个字都在第一片的 unicode-range 内」。
+ * 但它不验**反方向**:首屏真正用到的字,是否都在这张表里。
+ *
+ * 于是开卷页文案一改,新字就漏到第二、三片去,首屏从 1 片涨到 3 片 ——
+ * 而判据全绿。实测:
+ *
+ * ```text
+ *   开卷页 eyebrow 写着「山门未闭」,其中 门 / 未 / 闭 不在表里;
+ *   「四 方」里的 方 也不在。
+ *   → 首屏楷体请求从 1 片 41KB 变成 3 片 134KB(+93KB)
+ *   → FCP 余量从 7.4%(1304/1400)缩到 2.0%(1372/1400)
+ * ```
+ *
+ * 这条退化是 2026-11-02 之后一周内 300 个提交累积出来的,没人发现 ——
+ * 因为没有任何判据把「文案」和「首屏字表」这两头连起来。
+ *
+ * ## 判据守什么
+ *
+ * 开卷页那几个**楷体渲染**的文案字段(eyebrow / title / hint),里面每个汉字
+ * 都必须在 `BOOT_FONT_CHARS` 里。这样改文案时,漏字会当场红,而不是等到
+ * 首屏多拉两片字体、FCP 悄悄逼近预算。
+ */
+describe("首屏字表要跟上开卷文案", () => {
+  it("开卷页楷体文案里的每个字都在首屏字表里", () => {
+    const script = readFileSync(BUILD_SCRIPT, "utf-8");
+    const boot = new Set(/BOOT_FONT_CHARS = set\("([^"]+)"\)/.exec(script)?.[1] ?? "");
+    expect(boot.size, "读不到首屏字表 —— 判据会空转").toBeGreaterThan(0);
+
+    /*
+     * 开卷页的楷体文案:eyebrow / title / hint 三个属性。
+     * 只取这三个,不扫全文 —— 正文用系统字体,不该进首屏字表。
+     */
+    const welcome = readFileSync(resolve(ROOT, "src/views/WelcomeView.vue"), "utf-8");
+    const fields = [...welcome.matchAll(/(?:eyebrow|title|hint)="([^"{]+)"/g)].map((m) => m[1]!);
+    expect(fields.length, "没取到开卷页的楷体文案字段(判据空转)").toBeGreaterThan(0);
+
+    const chars = new Set<string>();
+    for (const text of fields) {
+      for (const ch of text) if (/[\u4e00-\u9fa5]/.test(ch)) chars.add(ch);
+    }
+    const missing = [...chars].filter((ch) => !boot.has(ch));
+    expect(
+      missing.join(""),
+      `这些字出现在开卷页的楷体文案里、却不在首屏字表里 —— 它们会散到第二、三片,` +
+        `首屏字体请求跟着涨(实测 1 片 41KB → 3 片 134KB)。` +
+        `把它们补进 scripts/fonts/build-kai-font.py 的 BOOT_FONT_CHARS 并重跑生成脚本:${missing.join("")}`,
+    ).toBe("");
+  });
+});
