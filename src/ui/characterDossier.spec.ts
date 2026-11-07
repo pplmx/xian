@@ -1,3 +1,31 @@
+describe("道躯页的同一条读数不许说两遍", () => {
+  /*
+   * 实测(390×844 展品档):「第 10 / 21 境」在首屏出现**两次**,相距 42px ——
+   *
+   *   @240px  folio-chapter-head__fact  «第 10 / 21 境»   ← 章首读数席
+   *   @282px  folio-ledger-head__aside  «第10/ 21 境»     ← 账首读数席
+   *
+   * 后者的拼接还漏了空格(第10/ 21 境),因为它是三块 prop 拼出来的。
+   *
+   * 这同一条读数在本仓有专门的出处 `realmOrdinalText()`,而
+   * `cultivationDesk.spec` 的注释里写明了纪律:「从前这里钉的是拼接式
+   * `第 ${player.major + 1} / ${REALMS.length} 境`,而全站另有三处同款读数
+   * 各写一遍 —— 抽出来之后,钉的是「读同一份」」。道躯页的账首是漏网的那一处。
+   */
+  it("账首不再拼第二个境界读数,章首那一个是唯一出口", () => {
+    const view = source("src/views/CharacterView.vue");
+    /* 章首读数席保留 —— 那是对的出口 */
+    expect(view, "章首的境界读数席没了").toContain(':fact="realmOrdinalText(player.major)"');
+    /* 账首不许再拼一个 */
+    expect(view, "账首又拼了一个境界读数 —— 首屏会出现两处「第 N / M 境」").not.toMatch(
+      /score-label="第"[\s\S]{0,200}?player\.major \+ 1/,
+    );
+    expect(view, "账首仍用拼接式分母(REALMS.length)—— 应读 realmOrdinalText 同一份").not.toMatch(
+      /score-suffix="`\/ \$\{REALMS\.length\} 境`"/,
+    );
+  });
+});
+
 import { describe, expect, it } from "vite-plus/test";
 import { readSource } from "@/test/readSource";
 

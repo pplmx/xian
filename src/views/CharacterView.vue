@@ -40,14 +40,13 @@
           :fact="realmOrdinalText(player.major)"
         />
         <div class="character-dossier" data-character-dossier>
-          <LedgerHeader
-            seal="躯"
-            eyebrow="本世根骨"
-            title="战力与灵根"
-            score-label="第"
-            :score-value="player.major + 1"
-            :score-suffix="`/ ${REALMS.length} 境`"
-          />
+          <!--
+            账首不再报「第 N / M 境」—— 章首(folio-chapter-head__fact)已经报过,
+            两处相距 42px,首屏内同一条读数说两遍。而且它是三块 prop 拼的,
+            渲染成「第10/ 21 境」(数字之间没空格),与章首那处格式还对不上。
+            境界位置统一走 `realmOrdinalText()`,出口只留章首一个。
+          -->
+          <LedgerHeader seal="躯" eyebrow="本世根骨" title="战力与灵根" />
 
           <div class="character-dossier__grid">
             <section class="character-dossier__power" data-character-power>
