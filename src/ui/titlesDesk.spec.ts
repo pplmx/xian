@@ -146,6 +146,35 @@ describe("名兽案 · 双契总览直接接卷首,当前、可追与全谱各�
     expect(view, "账行读数走同一份 total/owned,不另数一遍").toContain("petMeter.value.owned");
   });
 
+  it("同一个「已藏 N/M」在一屏里只说一遍", () => {
+    const view = source("src/views/TitlesView.vue");
+
+    /*
+     * 真浏览器实测:展品档下名号页首屏出现 `13/29` **四遍** ——
+     *   213px 双契切换签(两册各收多少,跨册比较,该留)· 338px 章壹 fact
+     *   「已藏 13/29」· 608px 章贰 fact「已藏 13/29 顶」· 656px 名号谱账行尾数。
+     * 后三处都在说**同一册**的同一个比数,而它们彼此相距不到 350px。
+     *
+     * 收法不是把所有计数都删掉 —— 读者需要知道还差多少。故:
+     *   · 章壹报「此刻佩印」与下一印还差几步,不报「已藏 N/M」;
+     *   · 章贰报的是**还差多少**(「余 N 顶未得」)—— 翻开参考目录时真正要问的
+     *     是「还有什么没拿到」,而不是再念一遍总数;
+     *   · 开合账行只负责开合,尾数不再报第二份同一个比数。
+     * 灵兽册同一条。
+     */
+    for (const [label, ownedExpr, totalExpr] of [
+      ["名号", "titleMeter.owned", "titleMeter.total"],
+      ["灵兽", "petMeter.owned", "petMeter.total"],
+    ] as const) {
+      const fullRatio = new RegExp(
+        `\\$\\{${ownedExpr.replace(/\\./g, "\\.")}}/\\$\\{${totalExpr.replace(/\\./g, "\\.")}}`,
+      );
+      expect(view, `${label}册不许把「owned/total」这个完整比数写进页里`).not.toMatch(fullRatio);
+    }
+
+    expect(view, "章贰报的是还差多少,不是再念一遍已藏").toContain("未得");
+  });
+
   it("双契总览、此刻与全谱并回连续纸面,不再一页套三层边框", () => {
     const view = source("src/views/TitlesView.vue");
     const switcher = source("src/components/common/NameBeastSwitch.vue");

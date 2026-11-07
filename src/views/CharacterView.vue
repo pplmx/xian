@@ -131,23 +131,35 @@
                   >
                 </span>
               </div>
-              <p class="character-dossier__roots-copy">
-                灵根倍率作用于修行所得；五行只定亲近之路,不分高低。
-              </p>
-              <div v-if="tendencies.length" class="character-dossier__tendencies">
-                <p
-                  v-for="t in tendencies"
-                  :key="t.element"
-                  class="character-dossier__tendency t-body"
-                >
-                  <span
-                    class="character-dossier__tendency-mark"
-                    :style="{ color: ELEMENTS[t.element].color }"
-                    >{{ ELEMENTS[t.element].char }}</span
-                  >
-                  <span>{{ t.text }}</span>
+              <!--
+                灵根那一段解释收成一条「注」。
+
+                它答的是「倍率怎么算、五行管什么」—— 都是**为什么**,不是此刻的读数;
+                此刻的读数(真灵根 / ×1.2 / 水 63 木 44)全在上面,不点也知道。
+                390×844 实测:这一段占 171px 中的约 120px,把「贰 行藏周天」推到 685px。
+
+                与门规、历练三档、器魂章法同归共享原语 FolioNote:一行抬头、默认合着、
+                点开一字不少 —— 收的是版面,不是内容。
+              -->
+              <FolioNote name="character-roots" label="注 · 倍率口径与五行牌面">
+                <p class="character-dossier__roots-copy">
+                  灵根倍率作用于修行所得；五行只定亲近之路,不分高低。
                 </p>
-              </div>
+                <div v-if="tendencies.length" class="character-dossier__tendencies">
+                  <p
+                    v-for="t in tendencies"
+                    :key="t.element"
+                    class="character-dossier__tendency t-body"
+                  >
+                    <span
+                      class="character-dossier__tendency-mark"
+                      :style="{ color: ELEMENTS[t.element].color }"
+                      >{{ ELEMENTS[t.element].char }}</span
+                    >
+                    <span>{{ t.text }}</span>
+                  </p>
+                </div>
+              </FolioNote>
             </section>
           </div>
         </div>
@@ -599,6 +611,7 @@ import type { AnyStatKey } from "@/types";
 import { STAT_NAMES } from "@/data/statNames";
 import { achievementCounts, achievementStateOf } from "@/core/engineUnlocks";
 import CharacterIndexRow from "@/components/character/CharacterIndexRow.vue";
+import FolioNote from "@/components/common/FolioNote.vue";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import CharacterModifierRow from "@/components/character/CharacterModifierRow.vue";
 import CharacterSigil from "@/components/character/CharacterSigil.vue";

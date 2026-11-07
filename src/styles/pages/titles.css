@@ -359,7 +359,11 @@
    * 名号谱 / 灵兽谱的账行 —— 参考目录默认合着,页上只留这一行。
    *
    * 与洞府的「七作营造」、藏珍的「已达成」同一副形制:一枚落款印 + 一句读法
-   * + 一个真值计数 + 一个开合动作。收的是版面,不是内容。
+   * + 一个开合动作。收的是版面,不是内容。
+   *
+   * 从前这里还有第四格「真值计数」(owned/total),但它与本章章首的 fact 是同一个比数,
+   * 首屏因此把这个数说了三遍(章壹 fact / 章贰 fact / 账行尾数,实测 213~656px)。
+   * 计数归章首一处;账行只负责开合。
    */
   .name-beast-ledger__toggle {
     position: relative;
@@ -368,7 +372,7 @@
     width: 100%;
     min-width: 0;
     min-height: 28px;
-    grid-template-columns: 1.38rem minmax(0, 1fr) auto auto;
+    grid-template-columns: 1.38rem minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.18rem 0.55rem;
     margin-top: 0.28rem;
@@ -410,12 +414,6 @@
     font-size: var(--type-note);
     line-height: 1.5;
     overflow-wrap: anywhere;
-  }
-  .name-beast-ledger__toggle-count {
-    color: rgb(var(--color-qing-rgb));
-    font-size: var(--type-note);
-    line-height: 1.5;
-    white-space: nowrap;
   }
   .name-beast-ledger__toggle-action {
     color: rgb(var(--color-qing-rgb));

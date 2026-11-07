@@ -27,13 +27,19 @@
           data-name-beast-book="title-focus"
           data-kind="title"
         >
+          <!--
+            章壹的 fact 报「此刻佩在身上的是哪一印」—— 这是它真正回答的问题。
+            此前报的是「已藏 N/M」,而那一个是**章贰**的问题(谱里收了多少):
+            真浏览器实测这一页首屏 `13/29` 出现了四遍(切换签 + 两枚章首 fact + 账行尾数)。
+            现在章壹报当前状态、章贰报余量,两枚章首各答各的。
+          -->
           <FolioChapterHead
             data-name-beast-chapter-head
             index="壹"
             eyebrow="名号 · 当前与可追"
             title="此刻佩印"
             hint="佩印一枚入行藏 · 下一印按成就进度"
-            :fact="`已藏 ${titleMeter.owned}/${titleMeter.total}`"
+            :fact="wornTitle ? `${wornTitle.def.name} · 已佩` : '尚未佩印'"
           />
 
           <div class="name-beast-focus__panels">
@@ -119,13 +125,17 @@
           :data-title-shown="titlePage.shown"
           :data-title-start="titlePage.start"
         >
+          <!--
+            章首报「已藏 N/M」,账行尾数不再报第二份同一个比数 ——
+            账行本身是这枚比数的**开关**(开谱看逐项),读数只该有一处出处。
+          -->
           <FolioChapterHead
             data-name-beast-chapter-head
             index="贰"
             eyebrow="佩印与旧藏"
             title="名号谱"
             hint="佩印置顶 · 已藏次之 · 未得照写来路"
-            :fact="`已藏 ${titleMeter.owned}/${titleRows.length} 顶`"
+            :fact="`余 ${titleMeter.total - titleMeter.owned} 顶未得`"
           />
 
           <!--
@@ -149,9 +159,6 @@
               <strong>逐顶查阅</strong>
               <small>{{ titleBookHint }}</small>
             </span>
-            <span class="name-beast-ledger__toggle-count tabular"
-              >{{ titleMeter.owned }}/{{ titleRows.length }}</span
-            >
             <span class="name-beast-ledger__toggle-action">{{
               titleBookOpen ? "收 起" : "开 谱"
             }}</span>
@@ -252,13 +259,14 @@
           data-name-beast-book="pet-focus"
           data-kind="pet"
         >
+          <!-- 与名号章壹同一条:报「此刻相伴的是哪一只」,收了多少归章贰 -->
           <FolioChapterHead
             data-name-beast-chapter-head
             index="壹"
             eyebrow="灵兽 · 同行与结缘"
             title="此刻相伴"
             hint="相伴一只入总案 · 加成取人物明细真值"
-            :fact="`已契 ${petMeter.owned}/${petMeter.total}`"
+            :fact="activePet ? `${activePet.def.name} · 在伴` : '尚未结契'"
           />
 
           <div class="name-beast-focus__panels">
@@ -355,7 +363,7 @@
             eyebrow="已契与未逢"
             title="灵兽谱"
             hint="相伴置顶 · 已契在前 · 按命途聚 · 品阶降序"
-            :fact="`已契 ${petMeter.owned}/${petRows.length} 只`"
+            :fact="`余 ${petMeter.total - petMeter.owned} 只未逢`"
           />
 
           <!-- 与名号谱同一条:参考目录默认合着,此刻相伴那一行在章壹 -->
@@ -372,9 +380,6 @@
               <strong>逐只查阅</strong>
               <small>{{ petBookHint }}</small>
             </span>
-            <span class="name-beast-ledger__toggle-count tabular"
-              >{{ petMeter.owned }}/{{ petRows.length }}</span
-            >
             <span class="name-beast-ledger__toggle-action">{{
               petBookOpen ? "收 起" : "开 谱"
             }}</span>
@@ -584,13 +589,11 @@ const titleBookOpen = ref(false);
 const petBookOpen = ref(false);
 const titleBookBodyId = "name-beast-title-book-body";
 const petBookBodyId = "name-beast-pet-book-body";
-/** 账行上那一句读法 —— 与章首 fact 同源,不另算一套计数 */
+/** 账行上那一句读法 —— 章首已经报过计数,这里只讲怎么读,不再复述比数 */
 const titleBookHint = computed(
-  () => `${titleMeter.value.owned} 顶尖已藏 · 首行是佩印 · 未得的照写来路`,
+  () => `共 ${titleRows.value.length} 顶 · 首行是佩印 · 未得的照写来路`,
 );
-const petBookHint = computed(
-  () => `${petMeter.value.owned} 只已结缘 · 相伴置顶 · 按命途聚 · 品阶降序`,
-);
+const petBookHint = computed(() => `相伴置顶 · 按命途聚 · 品阶降序`);
 
 /*
  * 品质读数 —— 「持有过最高的那一件」,不是「此刻包里最高的那一件」。
@@ -765,11 +768,12 @@ const nameBeastChoices = computed<NameBeastChoice<"title" | "pet">[]>(() => {
         ? `下一印「${nextTitle.value.def.name}」 · ${nextTitle.value.progress.label}`
         : `下一印「${nextTitle.value.def.name}」 · 尚差 ${nextTitle.value.progress.gap}`
       : "名号谱已无待取之印";
-  const petNote = petsAllOwned.value
-    ? "灵兽尽收 · 全谱可回看"
-    : `已结缘 ${petMeter.value.owned}/${petMeter.value.total} · 尚余 ${
-        petMeter.value.total - petMeter.value.owned
-      }`;
+  /*
+   * 灵兽那一段不再报任何比数 —— 同一张卡的上方已经有「0/42」。
+   * 写「尚余 42 只未逢」也是同一个 42(owned = 0 时 total - owned 就等于 total),
+   * 读起来仍是同一眼说两遍。这里只答「翻开谱怎么读」。
+   */
+  const petNote = petsAllOwned.value ? "灵兽尽收 · 全谱可回看" : "全谱按命途聚 · 相伴置顶";
 
   return [
     {

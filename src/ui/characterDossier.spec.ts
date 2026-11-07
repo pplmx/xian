@@ -40,6 +40,33 @@ describe("道躯案 · 命盘先立意象,总案再摊开战力与灵根", () =>
     expect(view, "旧的三枚裸读数按钮已撤").not.toContain('title="攻击"');
   });
 
+  it("灵根解释收成一条「注」:默认合着,倍率口径与五行牌面一字不少", () => {
+    const view = source("src/views/CharacterView.vue");
+    const note = source("src/components/common/FolioNote.vue");
+
+    /*
+     * 灵根那一块原本常驻三段:倍率口径一句、五行牌面两条、还有一条「倍率作用于
+     * 修行所得」—— 都是**解释**(答「为什么」),不是此刻的读数。此刻的读数
+     * (真灵根 / ×1.2 / 水 63 木 44)留在页上,不点也知道。
+     *
+     * 390×844 实测:这段解释占 171px 中的约 120px,把「贰 行藏周天」推到 685px。
+     * 按 docs/design.md 的分层纪律(解释归解释,读数归读数)收成一条注。
+     */
+    expect(view, "灵根解释走共享注原语").toContain(
+      'import FolioNote from "@/components/common/FolioNote.vue"',
+    );
+    expect(view, "灵根解释挂在稳定落点上").toContain('<FolioNote name="character-roots"');
+    // 收的是版面,不是内容:两句口径与牌面都还在
+    expect(view, "倍率口径一字不少").toContain("灵根倍率作用于修行所得");
+    expect(view, "五行牌面一字不少").toContain('v-for="t in tendencies"');
+    expect(note, "注要报开合状态").toContain(':aria-expanded="open"');
+    expect(note, "注的正文默认收起").toContain('v-show="open"');
+    expect(note, "收起态的初值必须是 false").toMatch(/const open = ref\(false\)/);
+    // 此刻读数不进注:它们仍在页上
+    expect(view, "灵根名号与倍率仍常驻").toContain("player.linggen?.gradeName");
+    expect(view, "资质读数仍常驻").toContain('class="character-dossier__root-aptitude tabular"');
+  });
+
   it("行藏加成继续读引擎合并结果,点开来源、软上限与边界仍可解释", () => {
     const view = source("src/views/CharacterView.vue");
     const desk = source("src/ui/characterDesk.ts");
