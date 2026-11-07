@@ -36,7 +36,12 @@ import {
   exploreTripPlan,
   explorationSpeedMult,
 } from "./explorationPlan";
-import { exploreModeRow, tripHaulText, tripScaleText } from "@/ui/exploreModeText";
+import {
+  exploreModeRow,
+  tripCadenceText,
+  tripHaulParts,
+  tripScaleParts,
+} from "@/ui/exploreModeText";
 
 const ORDER: ExploreMode[] = ["normal", "deep", "risky", "prolonged"];
 const NO_MODS = {} as StatMods;
@@ -174,22 +179,50 @@ describe("模式窗文案 · 整趟读数必须是乘出来的", () => {
     expect(r.pillPerTrip).toBe("—");
   });
 
-  it("一行文案说全:「约 N 场 · 每 X 秒一场 · 途中约 K 次际遇」与整趟产出", () => {
+  /*
+   * 模板渲染的是**分段**(每段一格、各自 nowrap),因为极窄档上整句会在
+   * 「约 132 / 场」这种地方折断。判据拼回整句来读 —— 断行是呈现,不是文案。
+   */
+  const scaleText = (r: ReturnType<typeof row>) => tripScaleParts(r).join(" · ");
+  const haulText = (r: ReturnType<typeof row>) => tripHaulParts(r).join(" · ");
+
+  it("一行文案说全:「约 N 场 · 途中约 K 次际遇」与整趟产出", () => {
     const r = row("normal");
-    const scale = tripScaleText(r);
+    const scale = scaleText(r);
     expect(scale).toContain(`约 ${r.battles} 场`);
-    expect(scale).toMatch(/约每 [\d.]+ 秒一场/);
     expect(scale, "际遇要单独报 —— 它不交战").toContain("次际遇");
-    const haul = tripHaulText(r);
+    const haul = haulText(r);
     expect(haul).toContain(`装备 ${r.equipPerTrip} 件`);
     expect(haul).toContain(`丹药 ${r.pillPerTrip} 枚`);
     expect(haul).toContain(`材料 ${r.materialsPerTrip} 件`);
   });
 
+  it("分段不许把数与量词拆开 —— 每一段自己就是一个完整读数", () => {
+    const r = row("normal");
+    for (const part of tripHaulParts(r)) {
+      // 一段里若出现数字,它后面必须紧跟量词(不会在段内被折断)
+      if (/\d/.test(part)) expect(part).toMatch(/\d[^\d]*[件枚场次]/);
+    }
+    for (const part of tripScaleParts(r)) {
+      if (/\d/.test(part)) expect(part).toMatch(/\d[^\d]*[件枚场次]/);
+    }
+  });
+
   it("界面上不许再出现「趟一件 / 趟一枚」这种把每场当整趟的措辞", () => {
     const r = row("normal");
-    for (const text of [tripScaleText(r), tripHaulText(r)]) {
+    for (const text of [scaleText(r), haulText(r)]) {
       expect(text, "「趟」只指整趟,不许拿来给每场读数当单位").not.toMatch(/趟一件|趟一枚/);
     }
+  });
+
+  it("交兵间隔不在每行里重复 —— 四档共用一个数,只报一次", () => {
+    /*
+     * 间隔只取决于历练速度词条(EXPLORE_BATTLE_INTERVAL / speed),与档位无关。
+     * 从前写进每一行,是同一件事说四遍,还把矮窗上的行高压到 134px。
+     */
+    expect(scaleText(row("normal")), "每行的规模句里不该带间隔").not.toMatch(/秒一场/);
+    const cadences = ORDER.map((m) => tripCadenceText(row(m)));
+    expect(new Set(cadences).size, "四档的间隔本来就该是同一个数").toBe(1);
+    expect(cadences[0]).toMatch(/约每 [\d.]+ 秒一场/);
   });
 });

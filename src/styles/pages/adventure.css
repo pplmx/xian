@@ -2327,15 +2327,33 @@
     font-size: var(--type-body);
     white-space: nowrap;
   }
+  /*
+   * 规模与整趟产出都按**分句**渲染成一串小格:宽档用中点连成一句,
+   * 极窄档折在格与格之间 —— 永远不会折在「约 132 / 场」这种数与量词中间。
+   */
+  .adventure-mode__scale,
+  .adventure-mode__haul {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.28rem;
+  }
   .adventure-mode__scale {
-    display: block;
     color: rgb(var(--color-ink-soft-rgb));
-    overflow-wrap: anywhere;
   }
   .adventure-mode__haul {
-    display: block;
     color: rgb(var(--color-gold-ink-rgb));
-    overflow-wrap: anywhere;
+  }
+  .adventure-mode__scale > span,
+  .adventure-mode__haul > span {
+    white-space: nowrap;
+  }
+  /* 中点只挂在「后面还有一段」的格子上 —— 折行时中点跟着前一句,不会孤零零留在行首 */
+  .adventure-mode__scale > span:not(:last-child)::after,
+  .adventure-mode__haul > span:not(:last-child)::after {
+    content: " ·";
+    color: rgb(var(--color-ink-faint-rgb));
   }
   .adventure-mode__odds {
     display: block;
@@ -2438,6 +2456,20 @@
     .adventure-lasttrip__counted {
       margin-left: 0;
     }
+
+    /*
+     * 195 档:模式行的一段规模 / 整趟产出在 147px 里必然折行,
+     * 而「约 132 / 场」这种把数与量词拆开的折法读起来是两个数。
+     * 故按**分句**拆成独立行,每句自己 nowrap —— 折在分号处,不折在数字中间。
+     * 与地界卡、天界等处的同一条处理(见 design.md 的挤压判据之二)。
+     */
+    .adventure-mode__scale,
+    .adventure-mode__haul,
+    .adventure-mode__odds {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0 0.3rem;
+    }
   }
 
   /*
@@ -2458,5 +2490,94 @@
     display: flex;
     min-width: 0;
     gap: 0.5rem;
+  }
+
+  /*
+   * 出行窗里的适配预览 —— 默认合着,一行抬头。
+   *
+   * 它答的是「此地合不合我这套打法」,而这一窗要回答的是「走哪一档」。
+   * 320×568 上整段摊开占卷身 176px / 405px(43%),四个档位只剩一个在屏内。
+   */
+  .adventure-preview__toggle {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 28px;
+    align-items: baseline;
+    gap: 0.35rem;
+    border: 0;
+    background: transparent;
+    padding: 0.2rem 0;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-body);
+    text-align: left;
+  }
+  .adventure-preview__toggle:active {
+    opacity: 0.6;
+  }
+  .adventure-preview__arrow {
+    flex: none;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .adventure-preview__summary {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .adventure-preview__body {
+    padding-top: 0.1rem;
+  }
+  /* 境界压制不许收进「注」里 —— 它是这一趟的风险,要一直露在外面 */
+  .adventure-preview__pressure {
+    margin-top: 0.5rem;
+    border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.55);
+    padding-left: 0.62rem;
+  }
+
+  /* 交兵间隔 —— 四档共用一个数,只报一次,排在那四行账之前 */
+  .adventure-mode-rate {
+    margin-top: 0.5rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  /*
+   * 矮窗(≤640px 高,如 320×568 / 375×667)—— 模式窗的卷身只有四百来 px,
+   * 四档各三行账放不满。这里收的是行内留白与账距,一个字不删:
+   * 每行 119 → 约 100px,四行省出 76px。
+   *
+   * 收完仍然要滚动(四行 438px vs 卷身 405px),这是**取舍不是漏修**:
+   * 要把四档全塞进 320×568,只能砍掉「整趟约 装备 N 件…」那一行 —— 而它正是
+   * 这一窗要回答的问题(见前一节:那个数从前差三个数量级)。宁可滚,不许撒谎。
+   * 判据钉的是「滚得动、不挤压、每档都读得出」,不钉「全见」。
+   *
+   * 390×844 那一档收完是 616/616 —— 四档全见,一次都不用滚。
+   *
+   * 阈值取 640 而不是既有的 560:560 这一档是给「横屏手机 / 桌面矮窗」用的,
+   * 而 320×568 的视口高度是 568 —— 差 8px 匹配不上,规则等于白写(实测过)。
+   */
+  @media (max-height: 640px) {
+    /*
+     * !important 在这里是有理由的:模板上那串 Tailwind 工具类(`py-3`)住在
+     * `app-utilities` 层,而本册在 `page` 层 —— 层序在后,不吃 !important 压不住。
+     * 只压这一处留白,不动颜色、字号之外的任何东西。
+     */
+    .adventure-mode {
+      padding-block: 0.5rem !important;
+      row-gap: 0.1rem;
+    }
+    .adventure-mode__name {
+      font-size: var(--type-body);
+    }
+    .adventure-mode__haul,
+    .adventure-mode__odds {
+      font-size: var(--type-note);
+      line-height: 1.4;
+    }
+    .adventure-mode-rate {
+      margin-top: 0.34rem;
+    }
   }
 }

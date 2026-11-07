@@ -15810,10 +15810,79 @@ async function taskExploreModes() {
           );
         }
       }
-      // ③ 挤压
+      // ③ 交兵间隔只报一次(四档共用一个数)
+      const cadence = await page.evaluate(() => {
+        const el = document.querySelector("[data-explore-cadence]");
+        return el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null;
+      });
+      if (!cadence) {
+        failures.push(`[${vp.tag}-modes] 没有把交兵间隔报出来(它会随历练速度变)`);
+      }
+      const repeated = info.rows.filter((r) => /秒一场/.test(r.text)).length;
+      if (repeated > 0) {
+        failures.push(
+          `[${vp.tag}-modes] 交兵间隔在 ${repeated} 个档位行里重复了 —— 四档是同一个数,只该报一次`,
+        );
+      }
+      // ④ 挤压
       for (const bad of info.overflow) failures.push(`[${vp.tag}-modes] 模式行横向溢出:${bad}`);
       for (const bad of info.vertical) failures.push(`[${vp.tag}-modes] 挤压:${bad}`);
       for (const bad of info.unitBreaks) failures.push(`[${vp.tag}-modes] 数字与量词分家:${bad}`);
+      /*
+       * ⑤ 适配预览默认合着 —— 它答的是「此地合不合我这套打法」(参考),
+       * 而这一窗要回答的是「走哪一档」(决定)。320×568 上整段摊开曾占卷身 43%,
+       * 四档只剩一个在屏内。
+       */
+      const previewState = await page.evaluate(() => {
+        const box = document.querySelector("[data-adventure-preview]");
+        const toggle = box?.querySelector("[aria-controls='adventure-preview-body']");
+        const body = document.getElementById("adventure-preview-body");
+        const pressure = document.querySelector("[data-realm-pressure]");
+        return {
+          hasToggle: Boolean(toggle),
+          expanded: toggle?.getAttribute("aria-expanded") ?? null,
+          bodyVisible: body
+            ? getComputedStyle(body).display !== "none" && body.getBoundingClientRect().height > 0
+            : false,
+          // 境界压制是这一趟的风险,不许跟着收进去
+          pressureVisible: pressure
+            ? getComputedStyle(pressure).display !== "none" &&
+              pressure.getBoundingClientRect().height > 0
+            : null,
+        };
+      });
+      if (!previewState.hasToggle) {
+        failures.push(`[${vp.tag}-modes] 适配预览没有开合入口`);
+      }
+      if (previewState.expanded !== "false") {
+        failures.push(
+          `[${vp.tag}-modes] 适配预览没有默认合着(aria-expanded=${previewState.expanded})`,
+        );
+      }
+      if (previewState.bodyVisible) {
+        failures.push(`[${vp.tag}-modes] 适配预览合着却仍铺着正文`);
+      }
+      if (previewState.pressureVisible === false) {
+        failures.push(`[${vp.tag}-modes] 境界压制被收进了折叠区 —— 它是这一趟的风险,该一直露着`);
+      }
+      // ⑥ 390 一档四行必须全部落在卷身内(实测 616/616,一次都不用滚)
+      if (vp.tag === "390") {
+        const fit = await page.evaluate(() => {
+          const sc = document.querySelector(".modal-panel [data-folio-modal-scroll]");
+          if (!sc) return null;
+          const s = sc.getBoundingClientRect();
+          const rows = [...document.querySelectorAll("[data-explore-mode]")].map((r) => {
+            const b = r.getBoundingClientRect();
+            return b.top >= s.top - 1 && b.bottom <= sc.getBoundingClientRect().bottom + 1;
+          });
+          return { allFit: rows.every(Boolean), count: rows.length };
+        });
+        if (!fit || !fit.allFit) {
+          failures.push(
+            `[390-modes] 四个档位没有全部落在卷身内(${fit?.count ?? 0} 行)—— 决定要看全四档才做得出`,
+          );
+        }
+      }
       if (pageErrors.length)
         failures.push(`[${vp.tag}-modes] 模式窗页面异常:${[...new Set(pageErrors)].join(" | ")}`);
     } finally {

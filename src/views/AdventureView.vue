@@ -583,45 +583,64 @@
       :title="modeTarget?.name ?? ''"
       @close="modeTarget = null"
     >
-      <!-- 适配预览 -->
-      <div v-if="preview" class="mb-3 rounded-[2px] bg-ink/4 px-3 py-2.5">
-        <template v-if="preview.mine && currentBuild">
-          <p class="flex items-center justify-between text-body">
-            <span class="text-ink-soft">
-              当前构筑:
-              <span class="font-kai text-ink">{{ currentBuild.displayName }}</span>
-            </span>
-            <span class="tabular text-gold-ink">{{ starsText(preview.mine.stars) }}</span>
-          </p>
-          <p
-            v-for="(r, i) in preview.mine.reasons"
-            :key="i"
-            class="mt-0.5 text-note text-ink-faint"
-          >
-            {{ r }}
-          </p>
-        </template>
-        <p v-else class="text-body text-ink-faint">尚未成流派,此地对各路数一视同仁。</p>
-        <div class="ink-divider my-2" />
-        <p class="text-note text-ink-faint">此地相性(机制契合度,并非胜率):</p>
-        <p class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
-          <span
-            v-for="rec in preview.recs"
-            :key="rec.style.id"
-            class="text-body text-ink-soft tabular"
-          >
-            {{ rec.style.name }}
-            <span class="text-gold-ink">{{ starsText(rec.adaptation.stars) }}</span>
-          </span>
-        </p>
-        <p class="mt-1.5 text-note text-ink-faint tabular">
-          战力 {{ formatGN(player.finalStats.power) }} · 装备成色、词条与临场随机仍定成败
-        </p>
-        <div
-          v-if="preview.pressure.active"
-          data-realm-pressure
-          class="mt-2 border-l-2 border-cinnabar/55 pl-2.5"
+      <!--
+        适配预览 —— **默认合着**,只留一行抬头。
+
+        这一窗要回答的是「走哪一档」;而适配那一段答的是「此地与我这套打法合不合」,
+        属于参考,不是此刻的决定。320×568 上实测:它在 405px 的卷身里占 176px(43%),
+        四个档位只有一个能完整落在屏内,另三档要滚动才看得见 ——
+        而「窄屏只留关键信息,详情进弹层」正是本仓的既有纪律(见 AGENTS.md)。
+
+        境界压制不在此列:它是**这一趟的风险**,压在决定之前说得过去,故仍在外面常驻。
+      -->
+      <div v-if="preview" class="mb-3 rounded-[2px] bg-ink/4 px-3 py-2.5" data-adventure-preview>
+        <button
+          type="button"
+          class="adventure-preview__toggle"
+          :aria-expanded="previewOpen"
+          aria-controls="adventure-preview-body"
+          @click="previewOpen = !previewOpen"
         >
+          <span class="adventure-preview__arrow" aria-hidden="true">{{
+            previewOpen ? "▾" : "▸"
+          }}</span>
+          <span v-if="preview.mine && currentBuild" class="adventure-preview__summary">
+            当前构筑 {{ currentBuild.displayName }}
+            <span class="tabular text-gold-ink">{{ starsText(preview.mine.stars) }}</span>
+          </span>
+          <span v-else class="adventure-preview__summary">尚未成流派 · 各路数一视同仁</span>
+        </button>
+        <div v-show="previewOpen" id="adventure-preview-body" class="adventure-preview__body">
+          <template v-if="preview.mine && currentBuild">
+            <p
+              v-for="(r, i) in preview.mine.reasons"
+              :key="i"
+              class="mt-0.5 text-note text-ink-faint"
+            >
+              {{ r }}
+            </p>
+          </template>
+          <div class="ink-divider my-2" />
+          <p class="text-note text-ink-faint">此地相性(机制契合度,并非胜率):</p>
+          <p class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+            <span
+              v-for="rec in preview.recs"
+              :key="rec.style.id"
+              class="text-body text-ink-soft tabular"
+            >
+              {{ rec.style.name }}
+              <span class="text-gold-ink">{{ starsText(rec.adaptation.stars) }}</span>
+            </span>
+          </p>
+          <p class="mt-1.5 text-note text-ink-faint tabular">
+            战力 {{ formatGN(player.finalStats.power) }} · 装备成色、词条与临场随机仍定成败
+          </p>
+        </div>
+        <!--
+          境界压制**留在外面**:它说的是「这一趟你会被压着打」,
+          是决定本身的一部分,不是参考。收进去等于把风险藏起来。
+        -->
+        <div v-if="preview.pressure.active" data-realm-pressure class="adventure-preview__pressure">
           <p class="text-body text-cinnabar tabular">{{ preview.pressure.summary }}</p>
           <p class="mt-0.5 t-note text-ink-faint">
             {{ preview.pressure.guidance }}
@@ -643,6 +662,13 @@
         现在先报这一趟的规模(几场 / 多久一场 / 途中几次际遇),再报整趟产出,
         每场读数退到第三行当换算率。单位一律用「场」——「趟」指整趟,不再一物二名。
       -->
+      <!--
+        交兵间隔只报一次 —— 它只取决于历练速度词条,四个档位是同一个数。
+        写进每一行就是同一件事说四遍,还把 320 上的行高压到 134px。
+      -->
+      <p v-if="modeRows.length" class="adventure-mode-rate tabular" data-explore-cadence>
+        此行{{ tripCadenceText(modeRows[0]!) }}
+      </p>
       <div class="mt-3 space-y-2">
         <button
           v-for="m in modeRows"
@@ -666,10 +692,14 @@
             >
             <span class="adventure-mode__duration tabular">{{ m.durationText }}</span>
           </span>
-          <!-- 规模:这一趟到底有多长、打几场 -->
-          <span class="adventure-mode__scale tabular">{{ tripScaleText(m) }}</span>
+          <!-- 规模:这一趟到底有多长、打几场。逐句成格,极窄档折在「·」处而不是数字中间 -->
+          <span class="adventure-mode__scale tabular">
+            <span v-for="(part, i) in tripScaleParts(m)" :key="i">{{ part }}</span>
+          </span>
           <!-- 整趟产出:与上面那条规模同源,乘出来的 -->
-          <span class="adventure-mode__haul tabular">{{ tripHaulText(m) }}</span>
+          <span class="adventure-mode__haul tabular">
+            <span v-for="(part, i) in tripHaulParts(m)" :key="i">{{ part }}</span>
+          </span>
           <!--
             收益与敌势仍并排摆出来:四档里敌人差了 2.6 倍,玩家却只看得到钱。
             两个数摆在一起,「要不要涉险」才是个可算的账。
@@ -701,7 +731,12 @@ import {
   expectedPillBattlesPerPiece,
 } from "@/core/loot";
 import { exploreTripPlan } from "@/core/explorationPlan";
-import { exploreModeRow, tripHaulText, tripScaleText } from "@/ui/exploreModeText";
+import {
+  exploreModeRow,
+  tripCadenceText,
+  tripHaulParts,
+  tripScaleParts,
+} from "@/ui/exploreModeText";
 import { currentWorldBias } from "@/core/mortalWorldService";
 import { usePlayerStore } from "@/stores/player";
 import { useSettingsStore } from "@/stores/settings";
@@ -783,6 +818,12 @@ const ui = useUiStore();
 const now = useNow();
 
 const modeTarget = ref<RegionDef | null>(null);
+/**
+ * 出行窗里那段适配预览是否展开 —— 默认合着。
+ * 它答的是「此地合不合我这套打法」(参考),而这一窗要回答的是「走哪一档」(决定);
+ * 320 上它曾占卷身 43%,把四个档位挤到只剩一个在屏内。
+ */
+const previewOpen = ref(false);
 
 /** 上一程的结账回执(收兵时写,纯读)—— 与提示条同一份文案,只是留得住 */
 const lastTrip = computed(() => adventure.lastTrip);
@@ -983,6 +1024,8 @@ function chooseMode(region: RegionDef): void {
     ui.toast("你正在闭关静修,心无旁骛,暂勿外出历练", "warn");
     return;
   }
+  // 换一处地界就回到合着:上一处的展开态不该继承到下一处(与「藏珍换方向不继承」同一条)
+  previewOpen.value = false;
   modeTarget.value = region;
 }
 

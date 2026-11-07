@@ -116,17 +116,40 @@ export function exploreModeRow(input: {
 }
 
 /**
- * 这一趟的规模一句话:「约 126 场 · 每 12 秒一场 · 途中约 24 次际遇」。
+ * 遭遇间隔 —— 四个档位共用一个数,故在列表上方报**一次**。
  *
- * 场次与际遇分开报:际遇不交战,掉落另算 —— 把它们并成「150 次遭遇」会让
- * 「一场战斗」与「一次际遇」看起来一样,而玩家关心的是其中哪一半给东西。
+ * 它只取决于历练速度词条(`EXPLORE_BATTLE_INTERVAL / speed`),与档位无关;
+ * 写进每一行就是同一件事说四遍(见「同一件事不在首屏说三遍」)。
+ * 它同时是「这一趟有多密」的换算率:玩家看到「30 分 ≈ 132 场」再看到
+ * 「约每 11.2 秒一场」,两句话互相验证。
  */
-export function tripScaleText(row: ExploreModeRow): string {
-  const events = row.events > 0 ? ` · 途中约 ${row.events} 次际遇` : "";
-  return `约 ${row.battles} 场 · ${row.cadenceText}${events}`;
+export function tripCadenceText(row: ExploreModeRow): string {
+  return row.cadenceText;
 }
 
-/** 整趟产出一句话:「整趟约 装备 38 件 · 丹药 10 枚 · 材料 240 件」 */
-export function tripHaulText(row: ExploreModeRow): string {
-  return `整趟约 装备 ${row.equipPerTrip} 件 · 丹药 ${row.pillPerTrip} 枚 · 材料 ${row.materialsPerTrip} 件`;
+/**
+ * 整趟产出的**分段**形式 —— 给模板逐段渲染用。
+ *
+ * 极窄档(≤220 CSS px,即 390 宽机型按 200% 放大后的 195)上,卷身只有 147px:
+ * 一整句「整趟约 装备 814 件 · 丹药 203 枚 · 材料 2116 件」必然折行,
+ * 而默认的折法会在「约 132 / 场」这种地方把数与量词拆开 —— 读起来是两个数。
+ *
+ * 故文案层给出**分句**,模板按段各占一格、各自 nowrap:折只折在「·」处。
+ * 宽档仍是一行(分段之间用中点连),所以两档读到的是同一份数、
+ * 同一份措辞,只是断行位置不同 —— 不是两套文案。
+ */
+export function tripHaulParts(row: ExploreModeRow): string[] {
+  return [
+    "整趟约",
+    `装备 ${row.equipPerTrip} 件`,
+    `丹药 ${row.pillPerTrip} 枚`,
+    `材料 ${row.materialsPerTrip} 件`,
+  ];
+}
+
+/** 规模的分段形式(同上:给极窄档按句断行) */
+export function tripScaleParts(row: ExploreModeRow): string[] {
+  const parts = [`约 ${row.battles} 场`];
+  if (row.events > 0) parts.push(`途中约 ${row.events} 次际遇`);
+  return parts;
 }
