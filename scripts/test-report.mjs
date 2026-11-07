@@ -423,6 +423,7 @@ const CATEGORIES = [
       "artifactQualityLadder",
       "gongfaRealmCoverage",
       "gongfaEffectAudit",
+      "regionDanger",
       "rebirthCompanion",
       "petWorldBand",
       "codexScale",

@@ -572,7 +572,13 @@ export interface RegionDef {
   tier: number;
   /** 推荐大境界序号 */
   minRealm: number;
-  danger: 1 | 2 | 3 | 4 | 5;
+  /**
+   * 地界凶险档 —— 刻度见 data/regions 的 DANGER_NAMES。
+   *
+   * 原先是 `1|2|3|4|5` 五档,撞了上限:tier 15 之后 29 处区域全挤在「绝地」,
+   * 这一项在终局那一段变成死刻度(见 core/regionDanger.spec)。扩到八档。
+   */
+  danger: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
   enemies: string[];
   boss: string;
   eventTags: string[];
