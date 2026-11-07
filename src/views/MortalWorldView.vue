@@ -60,9 +60,16 @@
               <span class="text-cinnabar">此世命数:</span>
               <strong>{{ view.ruleText }}</strong>
             </p>
-            <p class="world-masthead__note text-note">
-              这条命数只参与成形时的难度校准,不改写历练里的战斗。
-            </p>
+            <!--
+              口径说明,不是读数:此刻的命数由上面那行「此世命数」报、
+              所钟由下面「此地所钟」报,这一句只解释前者管到哪。
+              归 FolioNote —— 默认合着,点开一字不少。
+            -->
+            <FolioNote name="world-rule-scope" label="注 · 命数管到哪">
+              <p class="world-masthead__note text-note">
+                这条命数只参与成形时的难度校准,不改写历练里的战斗。
+              </p>
+            </FolioNote>
             <!--
               资源偏向必须写明兑现方式:摘要里那句「矿脉深厚之地」若没有数字跟着,
               玩家会把它当纯flavor —— 而它现在真的乘在玄铁掉率上(见 core/mortalBias)。
@@ -320,6 +327,7 @@ import "@/styles/pages/world.css";
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
+import FolioNote from "@/components/common/FolioNote.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import MortalRouteMap from "@/components/world/MortalRouteMap.vue";

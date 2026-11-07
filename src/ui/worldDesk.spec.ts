@@ -1,3 +1,25 @@
+describe("卷首命数:口径收成一注", () => {
+  /*
+   * 卷首那句「这条命数只参与成形时的难度校准,不改写历练里的战斗」是**口径说明**,
+   * 不是读数 —— 此刻的命数由上面那行「此世命数:生机断绝的杂涌之世」报,
+   * 所钟由「此地所钟 灵石收益 +15%」报。这一句只解释前者管到哪。
+   *
+   * 归 FolioNote:默认合着,点开一字不少。与门规、功名墙排序、道躯灵根同一归处。
+   *
+   * 换界那句「已走的本世路线会清零」**不动** —— 它写在按钮下方是刻意的:
+   * setMortalWorld 会清零路线进度,只说价不说会清进度等于让人不知情丢路。
+   */
+  it("命数口径走共享注原语,换界代价仍留在按钮下", () => {
+    const view = readSource("src/views/MortalWorldView.vue");
+    expect(view, "口径说明要用共享注原语").toContain(
+      'import FolioNote from "@/components/common/FolioNote.vue"',
+    );
+    expect(view, "命数口径收成一注").toContain('name="world-rule-scope"');
+    expect(view, "口径原文保留").toMatch(/只参与成形时的难度校准[，,]/);
+    expect(view, "换界代价不许收进注 —— 它必须在按钮下可见").toContain("已走的本世路线会清零");
+  });
+});
+
 import { describe, expect, it } from "vite-plus/test";
 import { readSource } from "@/test/readSource";
 import { mortalStageStatuses, type PlaceView } from "@/core/mortalWorldService";
