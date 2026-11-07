@@ -425,6 +425,7 @@ const CATEGORIES = [
       "gongfaEffectAudit",
       "regionDanger",
       "artifactGrowth",
+      "stackCap",
       "rebirthCompanion",
       "petWorldBand",
       "codexScale",

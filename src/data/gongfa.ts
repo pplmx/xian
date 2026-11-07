@@ -484,8 +484,8 @@ export const GONGFA: GongfaDef[] = [
     "spirit",
     3,
     "法身金刚,不坏不灭",
-    { damageReduction: 0.08, lowHpReduction: 0.15 },
-    { damageReduction: 0.02, lowHpReduction: 0.05 },
+    { damageReduction: 0.06, lowHpReduction: 0.15 },
+    { damageReduction: 0.015, lowHpReduction: 0.05 },
   ),
   g(
     "x_jianxin",
@@ -620,13 +620,18 @@ export const GONGFA: GongfaDef[] = [
      * 境 13 的仙品主修。此前它**既无 skill 也无 cultivationSpeed** ——
      * 29 部主修里唯一的两样皆无:戴上之后既不能加速进阶,也打不出功法招式。
      *
-     * 主修席只有一格,它得值那一格。这里补两样:
-     *  · 招式「大罗天章」×3.4(境 12 太乙金光 ×3.3 → 境 13 ×3.4,阶梯不断)
-     *  · 修速 +18%(境 11~13 这一段的进阶流此前最高只能停在境 10 的 72%)
-     * 攻击与气血不动:它仍是攻击向,只是不再是「什么都没有」的那一部。
+     * 补的是招式,不是修速。修速先加过一版(+18%),后来又撤了 ——
+     * 因为**主修从境 11 起是严格二选一**:纯战斗向(金阙玉章 0/38%、太乙 0/0、
+     * 天关 0/45%、神王 0/48%、神帝 0/52%、神魔 0/54%)与纯进阶向
+     * (玄仙御气经 72/0%、神霄九变 80/38%、混元无极 98/44%)。
+     * 中间塞一个「修速 34% + 攻击 48%」的双高,等于在二选一的格局里开了一个
+     * 没有代价的例外 —— 那比原来「什么都没有」更糟。
+     *
+     * 现在它站纯战斗向那一边:攻击 48.4% + 气血 36% + 减伤 8% + 招式「大罗天章」×3.4
+     * (境 12 太乙金光 ×3.3 → 境 13 ×3.4,阶梯不断)。
      */
-    { cultivationSpeed: 0.18, attackPct: 0.26, maxHpPct: 0.2, damageReduction: 0.08 },
-    { cultivationSpeed: 0.02, attackPct: 0.028, maxHpPct: 0.02 },
+    { attackPct: 0.26, maxHpPct: 0.2, damageReduction: 0.08 },
+    { attackPct: 0.028, maxHpPct: 0.02 },
     { element: "light", skill: { name: "大罗天章", mult: 3.4, rate: 0.26 } },
   ),
   g(
@@ -657,8 +662,8 @@ export const GONGFA: GongfaDef[] = [
     "divine",
     16,
     "神火炼体,身成不灭",
-    { damageReduction: 0.1, maxHpPct: 0.2, lowHpReduction: 0.4 },
-    { damageReduction: 0.022, maxHpPct: 0.024 },
+    { damageReduction: 0.04, maxHpPct: 0.2, lowHpReduction: 0.4 },
+    { damageReduction: 0.0115, maxHpPct: 0.024 },
   ),
   g(
     "m_hunyuan",
@@ -678,7 +683,7 @@ export const GONGFA: GongfaDef[] = [
     "divine",
     19,
     "以混沌之气淬体,身与道同,不增不减",
-    { maxHpPct: 0.24, defensePct: 0.2, damageReduction: 0.08 },
+    { maxHpPct: 0.24, defensePct: 0.2, damageReduction: 0.05 },
     { maxHpPct: 0.026, defensePct: 0.018 },
   ),
   g(
@@ -765,8 +770,8 @@ export const GONGFA: GongfaDef[] = [
     "divine",
     14,
     "藐姑射之山有神人居焉,不食五谷,吸风饮露",
-    { damageReduction: 0.1, maxHpPct: 0.16, dodgeRate: 0.04 },
-    { damageReduction: 0.02, maxHpPct: 0.022 },
+    { damageReduction: 0.07, maxHpPct: 0.16, dodgeRate: 0.04 },
+    { damageReduction: 0.015, maxHpPct: 0.022 },
   ),
   g(
     "m_tianguan",
