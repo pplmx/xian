@@ -23,10 +23,15 @@
         <strong>{{ hasTrace ? closest.style.name : `${cnNumber(rows.length)}路未起` }}</strong>
       </p>
       <p>
-        <span>{{ hasTrace ? "契合" : "雏形线" }}</span>
-        <strong class="tabular">{{
-          hasTrace ? formatPercent(closest.affinity, 0) : formatPercent(STYLE_EMERGENCE_AFFINITY, 0)
-        }}</strong>
+        <!--
+          这一格报**雏形线**，不报契合度。
+          契合度已经由账首的 score 报过（「最近契合 N%」），两者同源
+          （都是 closest.affinity），同屏出现就是一句话说两遍 ——
+          实测 layout-check 在 320×568 上抓到过 «6%» 重复。
+          雏形线是恒定参考值，账首没有它，而它正好解释下一行「距雏形」怎么算出来的。
+        -->
+        <span>雏形线</span>
+        <strong class="tabular">{{ formatPercent(STYLE_EMERGENCE_AFFINITY, 0) }}</strong>
       </p>
       <p>
         <span>{{ hasTrace ? "距雏形" : "下一步" }}</span>

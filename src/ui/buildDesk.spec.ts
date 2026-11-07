@@ -195,3 +195,43 @@ describe("铸道章首 · 报缺口不复述当前值", () => {
     );
   });
 });
+
+describe("铸道案 · 同一个契合度不许在首屏说两遍", () => {
+  /*
+   * 实测(`layout-check` 连跑四遍,其中一遍红):
+   *
+   *   ✗ [320] /build 首屏把同一句说了两遍:«6%»
+   *
+   * 两个来源:
+   *   @251  LedgerHeader 的 :score-value → formatPercent(closest.affinity, 0)
+   *   @500  build-discovery__ledger 第三行 → formatPercent(closest.affinity, 0)
+   *
+   * 只要 hasTrace 为真,两处**必然**是同一个数;偶发是因为台账第三行
+   * 有时落在 320×568 的首屏之外。终局里读者会看到「最近契合 6%」
+   * 与「契合 6%」同屏,中间只隔两行台账。
+   *
+   * 账首报的是「最近那条路有多契合」(摘要),台账那格该报的是
+   * **雏形线**——账首从来没有这个数,它正好解释第四行「距雏形」怎么算出来的。
+   */
+  it("账首报最近契合,台账那格只报雏形线 —— 两处不许同源", () => {
+    const discovery = source("src/components/build/BuildDiscovery.vue");
+
+    const head = discovery.match(/:score-value="([^"]+)"/)?.[1] ?? "";
+    expect(head, "账首那句 score 定位不到 —— 判据会空转").toContain("closest.affinity");
+
+    // 台账第三行(「契合」/「雏形线」那一格)不许再念一遍 closest.affinity
+    // 注释也算进来会误伤:说明里提到这个字段名是正常的,只有模板表达式才算
+    const ledger = (discovery.match(/data-build-ledger([\s\S]*?)<\/div>/)?.[1] ?? "")
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(ledger.trim().length, "台账定位不到 —— 判据会空转").toBeGreaterThan(0);
+    expect(
+      (ledger.match(/closest\.affinity/g) ?? []).length,
+      "台账里又念了一遍 closest.affinity —— 它与账首的 score 是同一个数,首屏会说两遍",
+    ).toBe(0);
+    // 无词条那一档仍要说出雏形线是多少,别把这一格留空
+    expect(ledger, "台账那格要报雏形线(有词条/无词条都得有数)").toContain(
+      "STYLE_EMERGENCE_AFFINITY",
+    );
+  });
+});
