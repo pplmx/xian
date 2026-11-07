@@ -124,18 +124,23 @@
       </BaseModal>
 
       <section class="world-ledger folio-span-all" data-world-desk>
+        <!--
+          案头报「余 N 程」,不再复述卷首那句「已行 N / M」。
+
+          真浏览器实测:同一个 `已行 0 / 6` 在 132px(卷首 meta)与 349px(这里)
+          各一遍 —— 两处相距 217px、都在首屏。卷首那一份留着(此刻读数);
+          案头该答的是「站到正文前还想问什么」:还要走几程。
+        -->
         <LedgerHeader
           seal="山"
           eyebrow="本世山河案"
           title="山河行旅"
-          score-label="已行"
-          :score-value="meter.cleared"
-          :score-suffix="`/ ${meter.total}`"
+          score-label="余"
+          :score-value="meter.remaining"
+          score-suffix="程"
         >
           <template #description>
-            <span>
-              {{ currentRouteText }} · 余 <span class="tabular">{{ meter.remaining }}</span> 程
-            </span>
+            <span>{{ currentRouteText }}</span>
           </template>
         </LedgerHeader>
 

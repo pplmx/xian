@@ -77,6 +77,28 @@ describe("本世山河案 · 卷首山图与路线账同读一份阶段结果", 
     });
   });
 
+  it("卷首与山河案头不报同一个「已行」—— 两处各答各的", () => {
+    const view = source("src/views/MortalWorldView.vue");
+
+    /*
+     * 真浏览器实测(390×844、展品档):「已行」与「0 / 6」在首屏里出现两遍 ——
+     *   132px 卷首 meta 的「已行 0 / 6」· 349px 山河行旅案头的总账席「已行 0 / 6」。
+     * 两者相距 217px、都在首屏,说的是完完全全同一个读数。
+     *
+     * 卷首那一份留着:它答「我走到哪了」,是此刻读数(第一类)。
+     * 案头改答「还剩多少」—— 站到这一章的正文前,玩家要问的是「还要走几程」,
+     * 而不是再读一遍已经走过几程。
+     */
+    expect(view, "卷首 meta 仍报已行").toMatch(
+      /<span>已行<\/span>\s*<strong[^>]*>\{\{ meter\.cleared \}\} \/ \{\{ meter\.total \}\}/,
+    );
+    expect(view, "案头改报余程,不再复述已行").toContain('score-label="余"');
+    expect(view, "余程数量读同一个 meter").toMatch(
+      /score-label="余"[\s\S]{0,120}:score-value="meter\.remaining"/,
+    );
+    expect(view, "案头不再把「已行」同时写进 label").not.toMatch(/score-label="已行"/);
+  });
+
   it("卷首山图、全图、路线账与前尘册各有稳定落点", () => {
     const view = source("src/views/MortalWorldView.vue");
     const atlas = source("src/components/world/WorldAtlas.vue");
