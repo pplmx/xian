@@ -300,6 +300,7 @@ const CATEGORIES = [
       "inscriptionText",
       "characterDesk",
       "characterDossier",
+      "elementNeutral",
       "dongfuDesk",
       "desktopSpine",
       "useMediaQuery",
