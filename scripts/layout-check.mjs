@@ -15803,6 +15803,43 @@ async function taskTripLedger() {
       if (after.counted !== "true" && after.counted !== "false") {
         failures.push(`[trip] 回执缺可供断言的状态(data-last-trip-counted=${after.counted})`);
       }
+      /*
+       * 极窄档(195 = 390 宽机型 200% 缩放)复核同一栏:它在这一档最容易
+       * 把地界名与「方才」压成竖排、把「120万」拆成两行。收兵那一步已在 390 量过,
+       * 这里把视口压到 195 再量一次同一份回执 —— 不是重跑同一件事,是换一档挤压。
+       */
+      await page.setViewportSize({ width: 195, height: 400 });
+      await page.waitForTimeout(300);
+      const narrow = await page.evaluate(() => {
+        const el = document.querySelector("[data-adventure-lasttrip]");
+        if (!el) return null;
+        const vertical = [...el.querySelectorAll("*")].filter((x) => {
+          const t = (x.textContent || "").trim();
+          if (t.length < 3) return false;
+          if (x.querySelector("span, p, div")) return false;
+          const b = x.getBoundingClientRect();
+          if (b.width <= 0 || b.width >= 40) return false;
+          const lh = parseFloat(getComputedStyle(x).lineHeight) || 16;
+          return b.height > lh * 2.5;
+        }).length;
+        return {
+          overflow: el.scrollWidth > el.clientWidth + 1,
+          vertical,
+          text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+        };
+      });
+      checked += 1;
+      if (!narrow) {
+        failures.push("[trip] 195 档「上一程」回执不见了");
+      } else {
+        if (narrow.overflow) failures.push("[trip] 195 档「上一程」横向溢出");
+        if (narrow.vertical > 0) {
+          failures.push(`[trip] 195 档「上一程」有 ${narrow.vertical} 处文字被挤成竖排`);
+        }
+        if (!/计为一次历练|未计历练/.test(narrow.text)) {
+          failures.push("[trip] 195 档「上一程」丢了「算不算」那一格");
+        }
+      }
     }
     if (pageErrors.length)
       failures.push(`[trip] 收兵场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
