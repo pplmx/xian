@@ -637,7 +637,31 @@ async function measurePage(page) {
         for (const el of main.querySelectorAll("*")) {
           if (el.children.length > 0) continue;
           const text = (el.textContent || "").trim().replace(/\s+/g, " ");
-          if (text.length < 6 || text.length > 40) continue;
+          /*
+           * 字数下限从 6 降到 3,并要求**含数字** —— 这是量出来的口径,不是猜的。
+           *
+           * 6 字下限放过的是本仓最会重复的那一类:**短读数**。名号页曾把 `13/29`
+           * 在首屏说了四遍(切换签 / 两枚章首 fact / 账行尾数,213~656px),而它只有
+           * 5 个字符 —— 旧阈值一条都没抓到。
+           *
+           * 为什么不直接降到 2 字(设计稿 7.1 的初版):实测 2 字会在十七页里产出
+           * 16 处,全是「历练 / 行囊 / 静音 / 开声 / 日间」这类**页名与选项标签** ——
+           * 它们的重复是设计,不是复读。收到 3 字 + 含数字之后是 1 处(见下条豁免)。
+           */
+          if (text.length < 3 || text.length > 40) continue;
+          if (!/\d/.test(text)) continue;
+          /*
+           * 只豁免**选项组里的选中标签本身**([data-ink-choice] 那类「×1 / ×2 / ×4」),
+           * 不豁免整条 tablist —— 页签上的读数(名号册的 `13/29`)是真读数,
+           * 它正是这一轮要抓的那一处(实测在 264px 的切换签上)。
+           */
+          if (el.closest("[data-ink-choice], [role=radiogroup]")) continue;
+          /*
+           * 同一张网格里并列的**同构兄弟**也不算:九佩每张卡都报「1 候」(候补件数),
+           * 功名墙上多枚榜牌都报「0/2」—— 那是并列数据,不是同一页说了两遍。
+           * 判据只报「结构上不相干的两处说了同一个数」。
+           */
+          if (el.closest("[data-inventory-equipment], .achievement-wall")) continue;
           // 隐藏的、或被 display:none 的祖先藏起来的都不算
           if (!el.offsetParent) continue;
           const cs = getComputedStyle(el);
@@ -662,14 +686,41 @@ async function measurePage(page) {
               host ?? node.closest("section, article, header, li, footer") ?? node.parentElement
             );
           };
-          const key = text;
+          /*
+           * 章首 fact 与账格计数是**跨块**也要比的两类 —— 设计稿 7.1 那条「跨层」。
+           *
+           * 上面那条「同块才算」是为了放过铸道页「尚差 21%」那种巧合同值;
+           * 但它也放过了名号页的真复读:`13/29` 在切换签、两枚章首 fact、账行尾数
+           * 上各一遍,四处分属不同 section,旧口径一处都判不出来(实测破坏注入全绿)。
+           * 章首 fact 是「这一章的唯一读数席」,账格计数是「这一格的读数」——
+           * 这两处报同一个数,读者就是读到了两遍。
+           */
+          const isFactSeat = (node) =>
+            Boolean(node.closest("[data-folio-chapter-head], [data-folio-ledger-head]")) &&
+            !node.closest("[data-folio-chapter-head] aside") &&
+            node.matches(".folio-chapter-head__fact, .folio-ledger-head__score");
+          /*
+           * 比的是**读数**,不是整句文本。
+           *
+           * 名号页那四处分别是「13/29」「已藏 13/29」「已藏 13/29 顶」「13/29」——
+           * 以整句为 key 一处都配不上对,破坏注入全绿。故章首 fact 这类带措辞的
+           * 读数席,取其中的数字段当身份:「已藏 13/29 顶」与「13/29」都是 `13/29`。
+           */
+          const digitsOf = (node, t) => {
+            const m = t.match(/\d+(?:\.\d+)?(?:\s*[/／]\s*\d+(?:\.\d+)?)?/g);
+            return m && m.length ? m.join(" ") : null;
+          };
+          const factHere = isFactSeat(el);
+          const key = factHere ? (digitsOf(el, text) ?? text) : text;
           if (seen.has(key)) {
             const { top, block } = seen.get(key);
-            // 竖直方向紧挨着的同名行多半是列表数据,不算;不同区块里的同值也不算
-            if (Math.abs(box.top - top) > 8 && block === blockOf(el)) repeats.push(text);
-          } else {
-            seen.set(key, { top: box.top, block: blockOf(el) });
+            // 只要有一端坐在章首的事实读数席上,跨块也比
+            const crossBlock = factHere || isFactSeat(seen.get(key).node);
+            if (Math.abs(box.top - top) > 8 && (block === blockOf(el) || crossBlock))
+              repeats.push(text);
+            continue;
           }
+          seen.set(key, { top: box.top, block: blockOf(el), node: el });
         }
         return [...new Set(repeats)];
       })(),
