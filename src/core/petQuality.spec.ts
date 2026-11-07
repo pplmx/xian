@@ -16,7 +16,7 @@
  */
 import { describe, expect, it } from "vite-plus/test";
 import { PETS } from "@/data/pets";
-import { qualityDef } from "@/data/qualities";
+import { QUALITIES, qualityDef } from "@/data/qualities";
 import type { AnyStatKey, PetDef } from "@/types";
 
 /** 粗略会计:Σ|词条数值|。不引 ruleBudget —— 那把尺子的 KEY_REFS 只覆盖战斗词条 */
@@ -42,6 +42,45 @@ describe("灵兽品质 ↔ 效果匹配(预算)", () => {
         ).toBeGreaterThanOrEqual(petBudget(lo) - 1e-9);
       }
     }
+  });
+
+  /**
+   * 同品阶内不许「全面压过」—— 两只同为神品,一只在每个词条上都更高,另一只就没有
+   * 存在理由。灵兽位只有一个,玩家凭什么带那只全面更弱的?
+   *
+   * 上面两条都只跨品阶比较,同品阶内部从没被查过。实测抓到的两对:
+   *
+   * | 被压过 | 压过它的 | 逐条 |
+   * | --- | --- | --- |
+   * | 鲲鹏(41%) | 海蜃鲸(67%) | 历练 25→36 · 际遇 12→22 · 闪避 8→9,且**性格同为 cautious** |
+   * | 玄冥玄武(44%) | 镇岳尊(76%) | 防御 18→28 · 气血 18→28 · 减伤 8→14 |
+   *
+   * 鲲鹏是《逍遥游》那个意象,却成了海蜃鲸的严格下位 —— 不是取舍,是没配平。
+   *
+   * 判据只查**同品阶**:跨品阶的高下是设计(高品就该更强),同品阶内的全面压过
+   * 不是。也不查「预算相同」—— 同品内部专精不同,总预算允许拉开。
+   */
+  it("同品阶内不许一只在每个词条上都压过另一只", () => {
+    const dominated: string[] = [];
+    for (let qr = 0; qr < QUALITIES.length; qr += 1) {
+      const group = PETS.filter((p) => qualityDef(p.quality).rank === qr);
+      for (const a of group) {
+        for (const b of group) {
+          if (a.id === b.id) continue;
+          const bKeys = Object.keys(b.mods) as AnyStatKey[];
+          // a 必须覆盖 b 的全部词条,并且逐条 ≥ b
+          if (!bKeys.every((k) => a.mods[k] !== undefined)) continue;
+          const allGe = bKeys.every((k) => a.mods[k]! >= b.mods[k]! - 1e-9);
+          const anyGt = bKeys.some((k) => a.mods[k]! > b.mods[k]! + 1e-9);
+          if (allGe && anyGt) {
+            dominated.push(
+              `${b.name}(预算 ${petBudget(b).toFixed(2)}) 被同品阶的 ${a.name}(${petBudget(a).toFixed(2)}) 在每个词条上压过`,
+            );
+          }
+        }
+      }
+    }
+    expect(dominated, "同品阶的灵兽被全面压过 —— 灵兽位只有一个,它没有存在理由").toEqual([]);
   });
 
   it("同一词条键跨品阶不回落:高品阶数值 ≥ 低品阶同键数值", () => {

@@ -350,7 +350,16 @@ export const PETS: PetDef[] = [
     icon: "bird",
     family: "bird",
     quality: "divine",
-    mods: { explorationSpeed: 0.25, dodgeRate: 0.08, eventLuck: 0.12 },
+    /*
+     * 原先 历练 25 · 闪避 8 · 际遇 12,被同为神品的海蜃鲸(36/9/22)在**每个词条上**
+     * 压过,连性格都一样(cautious)—— 灵兽位只有一个,它没有存在理由。
+     *
+     * 改法不是把海蜃鲸压下去,而是让鲲鹏在自己的方向上更强:
+     * 历练速度 25 → 42(超过海蜃鲸的 36,「扶摇直上九万里」本就该是赶路最快的那只),
+     * 闪避 8 → 9(与海蜃鲸持平,也守住跨品阶不回落的地品 7%),
+     * 际遇 12 → 14 保持低于海蜃鲸的 22 —— 两只各有所长。
+     */
+    mods: { explorationSpeed: 0.42, eventLuck: 0.14, dodgeRate: 0.09 },
     personality: "cautious",
   },
   {
@@ -380,7 +389,14 @@ export const PETS: PetDef[] = [
     icon: "turtle",
     family: "turtle",
     quality: "divine",
-    mods: { defensePct: 0.18, maxHpPct: 0.18, damageReduction: 0.08 },
+    /*
+     * 原先 防御 18 · 气血 18 · 减伤 8,被同为神品的镇岳尊(28/28/14)逐条压过。
+     *
+     * 玄冥玄武的意象是「背负玄龟之甲,万法难伤」—— 它该是那只**最耐打**的:
+     * 气血 18 → 30(超过镇岳尊的 28),防御与减伤各抬一点但保持低于镇岳尊。
+     * 这样两只各有强项(镇岳尊硬在减伤与濒危,玄冥厚在血量),不再是谁的严格下位。
+     */
+    mods: { maxHpPct: 0.3, defensePct: 0.2, damageReduction: 0.1 },
     personality: "wary",
   },
   {
