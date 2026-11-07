@@ -172,6 +172,28 @@ describe("藏珍双阁 · 功名入榜，九柜纳珍", () => {
     expect(view, "未达成者的条件仍直接露出来").toContain("{{ row.def.desc }}");
   });
 
+  it("功名墙说得出这 16 路是按什么排的", () => {
+    const view = source("src/views/CollectionView.vue");
+
+    /*
+     * 章首写着「按方向收榜」,榜牌上写着每路的进度与最近一枚 —— 但从头到尾
+     * 没有一处说**这些方向之间的顺序**是按什么定的。
+     *
+     * 规则其实就在 achievementsGroups 里(未走完的在前 → 最近完成比例高者在前
+     * → 已成多者在前),可它只活在注释里。这是设计稿 6.3 点名的缺口:
+     * 「收起一个东西之前先问它答的是哪个问题」的反面 —— 排序是「为什么」类内容,
+     * 玩家看不出顺序由来时,那 16 枚榜牌读起来就是一堵墙。
+     */
+    expect(view, "排序说明走共享注原语").toContain(
+      'import FolioNote from "@/components/common/FolioNote.vue"',
+    );
+    expect(view, "排序说明挂在稳定落点上").toContain('<FolioNote name="collection-order"');
+    // 说明里的三条必须与实现同源,不是另写一份话
+    expect(view, "说明说得出「未走完的在前」").toContain("未走完的在前");
+    expect(view, "说明说得出「按完成比例」").toContain("完成比例");
+    expect(view, "说明说得出「此路已尽落到最后」").toContain("已尽");
+  });
+
   it("已达成收成一叠,默认合着,点开才铺赏格与达成记录", () => {
     const view = source("src/views/CollectionView.vue");
     const entry = source("src/components/collection/AchievementEntry.vue");

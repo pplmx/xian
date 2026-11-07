@@ -113,6 +113,22 @@
             :fact="`${achievementGroups.length} 路 · ${doneCount}/${ACHIEVEMENTS.length}`"
           />
 
+          <!--
+            这 16 路按什么排 —— 排序规则一直只在代码注释里,页上一个字没说。
+            章首写着「按方向收榜」、榜牌上写着每路进度,可玩家看不出**方向之间**
+            的顺序从哪来,那 16 枚读起来就是一堵墙。
+
+            三条与 achievementGroups 的 sort 逐条对应(未走完的在前 → 最近完成比例
+            高者在前 → 已成多者在前),不是另写一份说法。与门规、历练三档同归
+            FolioNote:默认合着,要查时点开。
+          -->
+          <FolioNote name="collection-order" label="注 · 这十六路按什么排">
+            <p class="collection-order__copy">
+              先看还没走完的路，再按最近一枚的完成比例从高到低；已成多者在前。
+              此路已尽的落到最后——那一行是回看，不是待办。
+            </p>
+          </FolioNote>
+
           <div class="achievement-wall" role="list" aria-label="功名方向榜">
             <button
               v-for="(g, gi) in achievementGroups"
@@ -479,6 +495,7 @@ import {
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import CollectionCabinet from "@/components/common/CollectionCabinet.vue";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
+import FolioNote from "@/components/common/FolioNote.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import AchievementEntry from "@/components/collection/AchievementEntry.vue";

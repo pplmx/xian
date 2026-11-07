@@ -247,6 +247,12 @@
     line-height: 1.6;
   }
 
+  /* 功名墙排序说明的正文 —— 与门规、历练三档的注身同一档淡墨 */
+  .collection-order__copy {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.58;
+  }
   .achievement-wall {
     display: grid;
     min-width: 0;
