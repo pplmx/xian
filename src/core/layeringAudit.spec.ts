@@ -105,8 +105,14 @@ const CORE_STORE_SITES = 159;
  * 而它只能从 tickExploration 这一层量(会话、待处理事件、到点判定三者都在 store 上)。
  * 这是被测量对象本身就要 Pinia,不是把逻辑往 Pinia 上搬 —— 与 market/bounty 那几笔
  * 新增持久化 store 的代价同一类。抬高要在注释里写清理由(见本文件既有做法)。
+ *
+ * 110 → 111:suppressCurve.spec 量的是「开局玩家几时够得上镇压资格」——
+ * 那条曲线的自变量是**真实玩家的战斗快照**(buildPlayerSnap 直接读 store:
+ * 属性、功法、装备三处都在 Pinia 上)。它测的正是「玩家身上那套东西」,
+ * 换一个手工拼的快照就不是开局玩家了,判据会失去它唯一的意义。
+ * 同属「被测量对象本身就要 Pinia」。
  */
-const CORE_PINIA_SPECS = 110;
+const CORE_PINIA_SPECS = 111;
 
 function sources(dir: string): { name: string; text: string }[] {
   return readdirSync(dir)

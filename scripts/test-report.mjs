@@ -427,6 +427,7 @@ const CATEGORIES = [
       "artifactGrowth",
       "stackCap",
       "dodgeCap",
+      "suppressCurve",
       "rebirthCompanion",
       "petWorldBand",
       "codexScale",
