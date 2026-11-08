@@ -1067,6 +1067,19 @@ for (const name of plainApis) { assert.ok(name in engine, …); }               
 
 修法:`assert.ok(plainApis.size >= 8, …)` 一句即可(`factories` 那条就是现成的样子)。
 
+**其余六处收集型判据都查过了,只有这一处缺**(2026-11-09):
+
+| 收集变量 | 防空转的来源 |
+| --- | --- |
+| `factories` | 自己的 `size >= 8` |
+| `promised` / `knobs` | `length >= 40` / `knobs >= promised` |
+| `throwCodes` | `length >= 20`(`legacyThrows` 靠它间接保障 —— 循环跑过就有输入) |
+| `versionRefs` | `length >= 4` |
+| `deadLinks` | 独立计数器 `linkCount >= 20` |
+| `missingRefs` | 独立计数器 `docCommands >= 10` / `docPaths >= 20` |
+| `badSpecs` | **无下限**,但循环跑在 `readdirSync(src)` 的结果上,摘要行会打印文件数,基本不会空转 |
+| `plainApis` | **无下限,且正则依赖反引号写法** —— 这一处才值得修 |
+
 ## 设计规范
 
 配色、版式、字体子集与动效见 [design.md](./design.md)。
