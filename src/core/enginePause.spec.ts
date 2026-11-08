@@ -64,6 +64,15 @@ describe("心跳暂停 · 墙上时钟冻在暂停那一刻", () => {
     setEnginePaused(false);
     expect(enginePaused.value).toBe(false);
     expect(pauseElapsedMs()).toBe(0);
-    expect(gameNow()).toBe(Date.now());
+    /*
+     * 用**区间**而不是 `toBe`:恢复后 `gameNow()` 直接返回 `Date.now()`,
+     * 但两次调用之间可能跨过一毫秒边界 —— `toBe` 会偶发红,而它想断言的
+     * 只是「回到了真实时钟」这件事。取一个足够紧的窗口:两次调用间隔远小于它。
+     */
+    const before = Date.now();
+    const now = gameNow();
+    const after = Date.now();
+    expect(now, "恢复后 gameNow 没回到真实时钟").toBeGreaterThanOrEqual(before);
+    expect(now).toBeLessThanOrEqual(after);
   });
 });
