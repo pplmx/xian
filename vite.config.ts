@@ -1,4 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { availableParallelism } from "node:os";
 import { resolve } from "node:path";
 import { defineConfig, lazyPlugins } from "vite-plus";
 import vue from "@vitejs/plugin-vue";
@@ -391,9 +392,13 @@ export default defineConfig({
      * savePlatform 的 20s 超时、offlineFuzz 的随机不变量),单独跑都绿 —— 典型的
      * 资源争用,不是产品缺陷。故这里换的不是速度,是**「全绿」这两个字可不可信**。
      *
-     * 12 是这台机的实测值;换机器按核数四分之一上下调,别按核数开满。
+     * 取值按核数自适应,**带上下限**:
+     *   · 上限 12 是这台 128 核机的实测值;
+     *   · 下限 4 是为了别把少核 CI 卡死 —— 上一版硬编码 12,注释里写「换机器按核数
+     *     四分之一调」,可真到 4 核的机器上按四分之一算就是 1,等于串行跑 580 个文件。
+     *     一句写字板上的建议不能代替一个能在少核机上工作的默认值。
      */
-    maxWorkers: 12,
+    maxWorkers: Math.min(12, Math.max(4, Math.floor(availableParallelism() / 4))),
     // 应用自身的用例在 src/,公共库的用例在 packages/engine —— 两边都要跑
     include: ["src/**/*.spec.ts", "packages/engine/**/*.spec.ts"],
     // 平衡审计类用例(buildSim / celestialSim / synergyScan / worldGen 等)

@@ -805,52 +805,67 @@ describe("npm 钩子 · 指向 vite task 的 pre* 一定是死代码", () => {
  */
 describe("测试并发 · 不许按核数开满", () => {
   const VITE = readFileSync(join(ROOT, "vite.config.ts"), "utf8");
+  /*
+   * 注释必须**整段**剥,不能逐行剥:`/* … *\/` 在本文件里是多行的(实测表格就在
+   * 注释里),逐行剥只吃掉首尾两行,中间的 `maxWorkers:12` 会留下 —— 于是把真正的
+   * 配置行删掉,判据仍能命中注释、照样全绿(Round 9 注入时当场撞到)。
+   */
+  const LIVE = VITE.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
   it("threads 池配了 maxWorkers", () => {
-    /*
-     * **先剥注释再断言** —— 这条判据被它自己的文档绊过一次:上面那段实测表格里
-     * 写着 `maxWorkers:12`,于是把真正的配置行删掉后,`/maxWorkers:\s*\d+/`
-     * 照样命中注释、判据全绿(注入验证时当场发现)。
-     */
-    /*
-     * 注释必须**整段**剥,不能逐行剥:`/* … *\/` 在本文件里是多行的(实测表格就在
-     * 注释里),逐行剥只吃掉第一行与最后一行,中间那些 `maxWorkers:12` 会留下 ——
-     * 于是把真正的配置行删掉,判据仍能命中注释、照样全绿(注入时当场撞到)。
-     */
-    const live = VITE.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-    expect(live, "pool 不再是 threads —— 这条判据的前提变了,请重看注释").toContain(
+    expect(LIVE, "pool 不再是 threads —— 这条判据的前提变了,请重看注释").toContain(
       'pool: "threads"',
     );
     expect(
-      live,
+      LIVE,
       "threads 池没配 maxWorkers —— 核多的机器上会按核数开满," +
         "580 个 spec 同时起上百个 worker(每个约 3.1s 启动),实测 2/7 轮出现资源争用导致的假红",
-    ).toMatch(/maxWorkers:\s*\d+/);
+    ).toContain("maxWorkers");
   });
 
-  it("上限是个具体数,不是按核数算的表达式", () => {
+  it("上限被钳住 —— 不许裸按核数开满", () => {
     /*
-     * 写成 `cpus().length` 之类就回到原点了 —— 那正是「按核数开满」。
-     * 12 是这台机的实测值;换机器要人看一眼再改,不该自动跟随。
+     * ## 守的是什么
+     *
+     * 要拦的从来不是"表达式",是**按核数开满**:128 核机上 580 个 spec 会同时起
+     * 上百个 worker,净剩上下文切换与内存争用(实测 2/7 轮出现假红)。
+     *
+     * ## 为什么不再要求"写死一个数字"
+     *
+     * Round 9 写这条时要求 maxWorkers 是数值字面量,理由是不想让机器一变就跟着涨。
+     * 但那个写法有个真问题:注释里只能写"换机器按核数四分之一调"—— 而到了 4 核
+     * 的 CI 机上,四分之一就是 1,580 个文件等于串行跑。**一句写字板上的建议,
+     * 不能代替一个在少核机上也能工作的默认值。**
+     *
+     * 故改成要求"带**上限**的表达式":既在 128 核机上钳住,又在 4 核机上留出并行。
+     * 判定方法:配置行里必须出现 `Math.min(`(钳上限),且上限那个数不超过 32。
      */
-    /*
-     * 两种「等于没限制」都要拦:
-     *   ① 按核数算的表达式(`cpus().length` 等)—— 机器一变就跟着涨;
-     *   ② **硬编码一个大数**(128、64 之类)—— 效果与 ① 相同。
-     * 第二种是注入时发现的:判据原先只拦 ①,把 12 改成 128 照样绿。
-     */
-    const line =
-      VITE.replace(/\/\*[\s\S]*?\*\//g, "")
-        .split("\n")
-        .find((l) => /maxWorkers:/.test(l)) ?? "";
-    expect(line, "maxWorkers 用了按核数计算的表达式 —— 等于没限制").not.toMatch(
-      /cpus\(\)|length|availableParallelism|nproc/,
-    );
-    const value = Number(/(\d+)/.exec(line)?.[1] ?? NaN);
-    expect(Number.isFinite(value), "maxWorkers 不是一个数值字面量").toBe(true);
+    const line = LIVE.split("\n").find((l) => /maxWorkers:/.test(l)) ?? "";
     expect(
-      value,
-      "maxWorkers 硬编码成了一个大数 —— 与「按核数开满」效果相同,拦的是同一个问题",
-    ).toBeLessThanOrEqual(32);
+      line,
+      "maxWorkers 没钳上限 —— 不是 Math.min(上限, …) 的写法,机器一多就会按核数开满",
+    ).toContain("Math.min(");
+    /*
+     * 上限必须是**字面量**,不能是 `availableParallelism()` 本身 ——
+     * `Math.min(availableParallelism(), …)` 等于没钳。
+     */
+    const cap = /Math\.min\(\s*(\d+)\s*,/.exec(line)?.[1];
+    expect(cap, "Math.min 的第一个参数不是数值字面量 —— 上限没真的钳住").toBeTruthy();
+    expect(Number(cap), "上限超过 32 与「按核数开满」差别不大").toBeLessThanOrEqual(32);
+
+    // 反向:硬编码一个大数也不许(那是另一种"没钳")
+    const literal = /^maxWorkers:\s*(\d+),?$/.exec(line.trim());
+    if (literal) {
+      expect(Number(literal[1]), "maxWorkers 硬编码成了一个大数").toBeLessThanOrEqual(32);
+    }
+  });
+
+  it("少核机器上不会退化成串行", () => {
+    /*
+     * 下限存在的理由:4 核 CI 机上 `availableParallelism() / 4` = 1,
+     * 若不设下限,580 个文件就等于一个个跑。这条盯住那个 `Math.max(4, …)`。
+     */
+    const line = LIVE.split("\n").find((l) => /maxWorkers:/.test(l)) ?? "";
+    expect(line, "maxWorkers 没有下限 —— 少核机器上会退化成串行").toMatch(/Math\.max\(\s*\d+\s*,/);
   });
 });
