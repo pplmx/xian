@@ -12,6 +12,9 @@ import { usePlayerStore } from "@/stores/player";
 import { resolveEventChoice } from "./eventEngine";
 import { eventDef, FORTUNE_EVENTS } from "@/data/events";
 
+/** 边缘读一次 —— 被测函数是纯的,取舍记录由调用方给 */
+const choices = () => usePlayerStore().fortuneChoices;
+
 describe("遗产回声(fortuneEcho)", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
@@ -20,15 +23,15 @@ describe("遗产回声(fortuneEcho)", () => {
   it("新玩家:永不回声(无 leave 记录)", () => {
     const player = usePlayerStore();
     player.setFortuneChoices({}); // 无记录
-    expect(echoEligible("ft_reclusive_elder")).toBe(false);
-    expect(echoFor("ft_reclusive_elder")).toBeNull();
+    expect(echoEligible("ft_reclusive_elder", choices())).toBe(false);
+    expect(echoFor("ft_reclusive_elder", choices())).toBeNull();
   });
 
   it("leave 过的机缘可回声", () => {
     const player = usePlayerStore();
     player.setFortuneChoices({ ft_reclusive_elder: "leave" });
-    expect(echoEligible("ft_reclusive_elder")).toBe(true);
-    const echo = echoFor("ft_reclusive_elder")!;
+    expect(echoEligible("ft_reclusive_elder", choices())).toBe(true);
+    const echo = echoFor("ft_reclusive_elder", choices())!;
     expect(echo.line).toContain("原来是你");
     expect(echo.form).toBe("recognize");
   });
@@ -36,17 +39,17 @@ describe("遗产回声(fortuneEcho)", () => {
   it("take 过的机缘不触发 leave-回声(它已是你的缘)", () => {
     const player = usePlayerStore();
     player.setFortuneChoices({ ft_reclusive_elder: "take" });
-    expect(echoEligible("ft_reclusive_elder")).toBe(false);
+    expect(echoEligible("ft_reclusive_elder", choices())).toBe(false);
   });
 
   it("多次 leave 不叠加(布尔判定)", () => {
     const player = usePlayerStore();
     player.setFortuneChoices({ ft_sword_remnant: "leave", ft_ancient_elixir: "leave" });
-    expect(echoFor("ft_sword_remnant")?.form).toBe("traces");
-    expect(echoFor("ft_ancient_elixir")?.form).toBe("fate-over");
+    expect(echoFor("ft_sword_remnant", choices())?.form).toBe("traces");
+    expect(echoFor("ft_ancient_elixir", choices())?.form).toBe("fate-over");
     // 同一机缘重复 leave 不被特殊处理(只存一次)
     player.setFortuneChoices({ ft_sword_remnant: "leave" });
-    expect(echoEligible("ft_sword_remnant")).toBe(true);
+    expect(echoEligible("ft_sword_remnant", choices())).toBe(true);
   });
 
   it("回声纯叙事:不改变奖励 / 资源 / 属性 / 战斗规则", () => {
@@ -67,7 +70,7 @@ describe("遗产回声(fortuneEcho)", () => {
     for (const id of fs) {
       player.setFortuneChoices({ [id]: "leave" });
       // leave 后必可回声,且文本非空
-      const echo = echoFor(id);
+      const echo = echoFor(id, choices());
       expect(echo, `${id} 应有回声文本`).not.toBeNull();
       expect(echo!.line.length).toBeGreaterThan(5);
     }

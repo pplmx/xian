@@ -7,7 +7,6 @@
  */
 import type { MentorId } from "@/data/mentors";
 import { mentorDef, MENTORS } from "@/data/mentors";
-import { useQuestsStore } from "@/stores/quests";
 
 export interface MentorVerdict {
   mentor: ReturnType<typeof mentorDef>;
@@ -26,10 +25,19 @@ const MENTOR_WEIGHTS: Record<MentorId, Partial<Record<string, number>>> = {
   hunter: { explores: 1, equipsGained: 1, events: 0.5, buildingUpgrades: -0.6 },
 };
 
-/** 判别契合度:按师承权重对计数器归一化(加权和,阈值切档) */
-export function mentorVerdict(mentorId: MentorId | null): MentorVerdict | null {
+/**
+ * 判别契合度:按师承权重对计数器归一化(加权和,阈值切档)。
+ *
+ * **纯函数**:计数器经 `counter` 参数进来,不自己取 store。
+ * 这一层原本 import `useQuestsStore` 只为读一个计数(判据 `layeringAudit.spec` 的
+ * `STATEFUL_CORE` 名单点名要求只许减),代价是「测这个叙事函数要先建一整套 Pinia」,
+ * 而这函数本身跟状态没关系 —— 给它计数器就能算。
+ */
+export function mentorVerdict(
+  mentorId: MentorId | null,
+  counter: (key: string) => number,
+): MentorVerdict | null {
   if (!mentorId) return null;
-  const quests = useQuestsStore();
   const def = mentorDef(mentorId);
   if (!def) return null;
 
@@ -38,7 +46,7 @@ export function mentorVerdict(mentorId: MentorId | null): MentorVerdict | null {
   let total = 0;
   for (const [key, w] of Object.entries(weights)) {
     if (!w) continue;
-    const v = quests.counter(key as never);
+    const v = counter(key);
     score += v * (w as number);
     total += (w as number) ** 2;
   }

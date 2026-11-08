@@ -14,7 +14,6 @@
  *   - 曾 take: 不触发 leave-回声(它已是你的缘)
  *   - 多次 leave: 效果不叠加(布尔判断)
  */
-import { usePlayerStore } from "@/stores/player";
 import { rng } from "@/utils/random";
 
 /** 回声触发概率(稀有,5%) */
@@ -86,9 +85,18 @@ const FORTUNE_ECHO_TEXTS: Record<string, { form: EchoForm; line: string }> = {
   },
 };
 
-/** 机缘是否有回声资格(曾放弃) */
-export function echoEligible(eventId: string): boolean {
-  return usePlayerStore().fortuneChoices[eventId] === "leave";
+/**
+ * 机缘是否有回声资格(曾放弃)。
+ *
+ * **纯函数**:`choices` 由调用方给(玩家对每个机缘的取舍记录),不自己取 store。
+ * 这一层原为读一个字段而 import `usePlayerStore`(`layeringAudit.spec` 的
+ * `STATEFUL_CORE` 名单点名要求只许减)—— 一个纯判定不该为它拖进整套 Pinia。
+ */
+export function echoEligible(
+  eventId: string,
+  choices: Readonly<Record<string, string | undefined>>,
+): boolean {
+  return choices[eventId] === "leave";
 }
 
 /** 判定本次是否触发回声(纯概率一把 roll,与特定事件无关) */
@@ -97,8 +105,11 @@ export function rollEcho(): number {
 }
 
 /** 组装回声(事件 id 有回声文本时;否则 null) */
-export function echoFor(eventId: string): FortuneEcho | null {
-  if (!echoEligible(eventId)) return null;
+export function echoFor(
+  eventId: string,
+  choices: Readonly<Record<string, string | undefined>>,
+): FortuneEcho | null {
+  if (!echoEligible(eventId, choices)) return null;
   const data = FORTUNE_ECHO_TEXTS[eventId];
   if (!data) return null;
   return { eventId, form: data.form, line: data.line };

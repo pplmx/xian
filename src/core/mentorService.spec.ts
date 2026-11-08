@@ -7,6 +7,12 @@ import { createPinia, setActivePinia } from "pinia";
 import { mentorVerdict, mentorChoices } from "./mentorService";
 import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
+
+/** 边缘读一次 —— 被测函数是纯的,计数器由调用方给 */
+const counters = (): ((k: string) => number) => {
+  const quests = useQuestsStore();
+  return (k) => quests.counter(k as never);
+};
 import { modOf } from "./statsCalc";
 
 describe("师承(mentor)", () => {
@@ -44,7 +50,7 @@ describe("师承(mentor)", () => {
     const quests = useQuestsStore();
     quests.inc("kills", 500);
     quests.inc("bossKills", 30);
-    const verdict = mentorVerdict(player.mentor);
+    const verdict = mentorVerdict(player.mentor, counters());
     expect(verdict).not.toBeNull();
     console.log(`[师承叙事] ${verdict!.line}`);
     expect(verdict!.affinity).toBeGreaterThan(0);
@@ -52,7 +58,7 @@ describe("师承(mentor)", () => {
   });
 
   it("未拜师时无评价", () => {
-    expect(mentorVerdict(null)).toBeNull();
+    expect(mentorVerdict(null, counters())).toBeNull();
   });
 
   it("行为相左亦可判「未纯」:契合度为负,不再永远非负(未纯叙事可达)", () => {
@@ -60,7 +66,7 @@ describe("师承(mentor)", () => {
     player.adoptMentor("alchemist"); // 丹修
     const quests = useQuestsStore();
     quests.inc("kills", 600); // 却常年杀戮(相左)
-    const verdict = mentorVerdict(player.mentor)!;
+    const verdict = mentorVerdict(player.mentor, counters())!;
     expect(verdict.affinity).toBeLessThan(-0.2);
     expect(verdict.line, "应落入「未纯」叙事而非契合").toContain("丹炉");
   });
@@ -72,7 +78,7 @@ describe("师承(mentor)", () => {
     quests.inc("kills", 500);
     quests.inc("bossKills", 30);
     quests.inc("pillsCrafted", 200); // 顺手炼药,不推翻剑心
-    const verdict = mentorVerdict(player.mentor)!;
+    const verdict = mentorVerdict(player.mentor, counters())!;
     expect(verdict.affinity).toBeGreaterThan(0.2);
     expect(verdict.line).toContain("剑");
   });

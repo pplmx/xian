@@ -209,6 +209,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
 import { usePlayerStore } from "@/stores/player";
+import { useQuestsStore } from "@/stores/quests";
 import { mentorChoices, mentorVerdict } from "@/core/mentorService";
 import { mentorHint } from "@/core/fortuneChain";
 import { modsPills, modsText } from "@/data/statNames";
@@ -226,8 +227,9 @@ const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 
 const player = usePlayerStore();
-const mentorVer = computed(() => mentorVerdict(player.mentor));
-const hintMentor = computed(() => mentorHint());
+const quests = useQuestsStore();
+const mentorVer = computed(() => mentorVerdict(player.mentor, (k) => quests.counter(k as never)));
+const hintMentor = computed(() => mentorHint(player.fortuneChoices));
 const choices = computed(() => mentorChoices());
 const closeButton = ref<HTMLButtonElement | null>(null);
 

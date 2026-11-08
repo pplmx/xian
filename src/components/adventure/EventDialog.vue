@@ -314,7 +314,7 @@ const echo = computed(() => {
     echoRolled = true;
     echoActive = rollEcho() < ECHO_CHANCE;
   }
-  return echoActive ? echoFor(evId) : null;
+  return echoActive ? echoFor(evId, usePlayerStore().fortuneChoices) : null;
 });
 
 /** 世界记忆:此事件是否已完过,若是则按概率决定余波文案 */

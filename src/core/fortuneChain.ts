@@ -23,15 +23,19 @@ export function recordFortuneChoice(fortuneId: string, choice: FortuneChoice): v
 /**
  * 师承顺水:根据机缘记忆,推荐最契合的师承
  * 剑痕取 → 剑修;丹方取 → 丹修;秘术取 → 阵修;妖兽认主 → 猎修
+ *
+ * `choices` 由调用方给(玩家对每个机缘的取舍记录)—— 判定本身与状态无关,
+ * 只为读这一个字段而让整个模块背着 store,会让「测一个映射表」也要先建 Pinia。
  */
-export function mentorHint(): "swordsman" | "alchemist" | "arraymaster" | "hunter" | null {
+export function mentorHint(
+  choices: Readonly<Record<string, string | undefined>>,
+): "swordsman" | "alchemist" | "arraymaster" | "hunter" | null {
   const map: Record<string, "swordsman" | "alchemist" | "arraymaster" | "hunter"> = {
     ft_sword_remnant: "swordsman",
     ft_ancient_elixir: "alchemist",
     ft_blood_contract: "arraymaster",
     ft_beast_pledge: "hunter",
   };
-  const choices = usePlayerStore().fortuneChoices;
   for (const [fid, hint] of Object.entries(map)) {
     if (choices[fid] === "take") return hint;
   }

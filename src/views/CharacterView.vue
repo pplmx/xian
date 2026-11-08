@@ -825,7 +825,7 @@ const { bond, bondDef, pastBonds, hasBondWord } = useBondOverview();
 
 // Phase 31 S1 师承(弹窗归 MentorDialog;mentorVer 入口卡与本组件各算一份纯投影)
 const mentorDialog = ref(false);
-const mentorVer = computed(() => mentorVerdict(player.mentor));
+const mentorVer = computed(() => mentorVerdict(player.mentor, (k) => quests.counter(k as never)));
 // Phase 31.2 修行画像
 const identityOpen = ref(false);
 const identity = computed(() => buildIdentity());
