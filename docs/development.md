@@ -86,7 +86,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
-| `vp run verify` | 一键整链:确认 → 全量测试 → 例数对账 → 生产构建 → 引擎同树 → 独立仓模拟(cache:false 每次都真跑;提交/推送前跑它,最不会漏的就是后两项) |
+| `vp run verify` | 一键整链:`clean-dist` → `check` → `test` → `test:report` → `vp build` → `check:engine` → `check:engine:standalone`(`cache:false` 每次都真跑;提交/推送前跑它,最不会漏的就是后两项)。**耗时构成**(2026-11-09 实测):引擎那两条合计 **35s**(`engine-dist` 28s + `engine-sync` 2s + `standalone` 6s),余下是 `check` 与全量测试 |
 | `vp check` | Vite+ 内置:全仓格式 + lint + 类型一次过(不是 `bun run check` 脚本) |
 
 > **别用 `bun test`。** 那是 Bun 自带的测试器,不读本仓库的路径别名(`@/…`),
