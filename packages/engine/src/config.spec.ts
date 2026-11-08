@@ -464,3 +464,38 @@ describe("配置校验 · 副本那一段的 13 个错误码都要报得出来",
     });
   }
 });
+
+describe("配置校验 · 形状那一段的三个码 + 它的提前返回", () => {
+  /*
+   * 形状检查(300–375 行)是**先于一切**的前置:一节整个缺了 / 不是对象 / 少字段,
+   * 都必须在逐条对账之前报出来。否则下面的 `config.realms.worlds` 会在
+   * undefined 上崩 —— 使用者拿到的不是「你少写了一节」而是一句 TypeError。
+   *
+   * 这一段即将抽成 `validateShape()`,抽取时要保住两件事:
+   *   ① 三个码各报各的(SECTION_MISSING / SECTION_SHAPE / FIELD_SHAPE);
+   *   ② **形状不对就不再往下对账** —— 抽完若忘了提前返回,后面的代码会在
+   *      undefined 上崩,而那时报出来的是一堆 TypeError 而不是这一条。
+   */
+  it("整节不是对象 → CONFIG_SECTION_SHAPE,且不再往下对账", () => {
+    const cfg = { ...baseConfig(), equipment: "不是对象" } as unknown as GameConfig;
+    const issues = validateGame(cfg);
+    expect(issues.some((i) => i.code === "CONFIG_SECTION_SHAPE")).toBe(true);
+    // 提前返回:不该出现后面那些逐条对账的码
+    expect(issues.some((i) => i.code.startsWith("EQUIP_"))).toBe(false);
+  });
+
+  it("省略一节(undefined)→ CONFIG_SECTION_MISSING,且不再往下对账", () => {
+    const cfg = { ...baseConfig() } as Record<string, unknown>;
+    delete cfg.dungeons;
+    const issues = validateGame(cfg as unknown as GameConfig);
+    expect(issues.some((i) => i.code === "CONFIG_SECTION_MISSING")).toBe(true);
+    expect(issues.some((i) => i.code.startsWith("DUNGEON_"))).toBe(false);
+  });
+
+  it("显式写 null = 明确不要这一层,不报缺节", () => {
+    const cfg = { ...baseConfig(), equipment: null } as unknown as GameConfig;
+    const issues = validateGame(cfg);
+    expect(issues.some((i) => i.code === "CONFIG_SECTION_MISSING")).toBe(false);
+    expect(issues.some((i) => i.code === "CONFIG_SECTION_SHAPE")).toBe(false);
+  });
+});

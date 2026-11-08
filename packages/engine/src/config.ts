@@ -289,13 +289,22 @@ function validateDungeons<T>(
   }
 }
 
-export function validateGame<T = number>(config: GameConfig<T>): ValidationIssue[] {
-  const issues: ValidationIssue[] = [];
-  const err = (code: string, message: string): void =>
-    void issues.push({ level: "error", code, message });
-  const warn = (code: string, message: string): void =>
-    void issues.push({ level: "warning", code, message });
-
+/**
+ * 节形状 —— **先于一切**的前置检查。
+ *
+ * 为什么单独成一段:下面那些对账是"逐字段互相引用"(槽位 / 属性键 / 区域 / 敌人),
+ * 一旦某一节整个缺了或形状错了,它们读到的是 `undefined.map(...)` ——
+ * 使用者拿到的不是"你少写了一节",而是一句 `Cannot read properties of undefined`。
+ *
+ * 两件事在这里定死:
+ *   ① **缺节 = 报错**,并告诉他"没有这一层就显式写 null"(省略是静默的,那正是要拦的);
+ *   ② 返回 false 表示"形状不对",调用方应立即停止后续对账 —— 在没有形状的前提下
+ *      继续跑只会再崩一次。
+ */
+function validateShape<T>(
+  config: GameConfig<T>,
+  err: (code: string, message: string) => void,
+): boolean {
   /**
    * ---- 节形状:先于一切 ----
    *
@@ -369,9 +378,28 @@ export function validateGame<T = number>(config: GameConfig<T>): ValidationIssue
         ]);
   // 形状不对就不再往下逐条对账(继续跑只会以 TypeError 再崩一次)
   if (!realmsOk || !attributesOk || config.equipment === undefined || config.dungeons === undefined)
-    return issues;
-  if (config.equipment !== null && !equipmentOk) return issues;
-  if (config.dungeons !== null && !dungeonsOk) return issues;
+    // 形状不对就不再往下逐条对账(继续跑只会以 TypeError 再崩一次)
+    if (
+      !realmsOk ||
+      !attributesOk ||
+      config.equipment === undefined ||
+      config.dungeons === undefined
+    )
+      return false;
+  if (config.equipment !== null && !equipmentOk) return false;
+  if (config.dungeons !== null && !dungeonsOk) return false;
+  return true;
+}
+
+export function validateGame<T = number>(config: GameConfig<T>): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  const err = (code: string, message: string): void =>
+    void issues.push({ level: "error", code, message });
+  const warn = (code: string, message: string): void =>
+    void issues.push({ level: "warning", code, message });
+
+  // 形状不对就不再往下逐条对账(继续跑只会以 TypeError 再崩一次)
+  if (!validateShape(config, err)) return issues;
 
   // ---- 等级 ----
   const worldIds = new Set<string>();
