@@ -360,9 +360,56 @@ async function runRoute(route) {
     await page.waitForTimeout(80);
   }
 
+  /*
+   * ── 破坏性按钮:单独一轮,用**新 context** ──
+   *
+   * `SKIP` 那张表里的 187 处（分解 / 转世 / 清空 / 重置 / 兵解 / 导入…）此前完全没有
+   * 运行时验证 —— 静态判据只查「有没有置灰 / 文案对不对」,查不出「点下去会不会炸」,
+   * 而这正是后果最重的一类交互。
+   *
+   * 之前跳过它们的理由是不能把冒烟盘玩坏;但 `makeContext()` 每页各建一份独立会话
+   * （夹具也各注一份），本体跑到这里已经结束了 —— 再开一个 context 专门点它们,
+   * 点坏也不影响任何读数。
+   *
+   * 只收 `pageerror` 与被 catch 住的 `console.error`:点击后的界面状态本来就会被
+   * 重置,断言「点了之后长什么样」没有意义,问的是「炸不炸」。
+   */
+  const risky = await makeContext();
+  let riskyClicks = 0;
+  try {
+    const rPage = await risky.context.newPage();
+    const rErrors = [];
+    watchPageErrors(rPage, (msg) => rErrors.push({ where: `${route} 破坏性按钮`, msg }));
+    await rPage.goto(`${INDEX}#${route}`, { waitUntil: "load" });
+    await rPage.waitForTimeout(400);
+    for (const b of (await rPage.getByRole("button").elementHandles()).slice(0, 40)) {
+      const label = await b.innerText().catch(() => "");
+      const text = (label || "").replace(/\s+/g, " ").trim();
+      if (!text || !SKIP.test(text)) continue;
+      if (!(await b.isVisible().catch(() => false))) continue;
+      if (await b.isDisabled().catch(() => false)) continue;
+      await b.click({ timeout: 800 }).catch(() => {});
+      riskyClicks += 1;
+      await rPage.waitForTimeout(140);
+      // 有确认弹窗就一路确认下去(危险动作大多要过一道)
+      for (let round = 0; round < 2; round += 1) {
+        const panel = rPage.locator(".modal-panel").first();
+        if (!(await panel.count())) break;
+        const ok = panel.getByRole("button", { name: /确定|确认|是|继续/ }).first();
+        if (!(await ok.count())) break;
+        await ok.click({ timeout: 600 }).catch(() => {});
+        await rPage.waitForTimeout(120);
+      }
+    }
+    errors.push(...rErrors);
+  } finally {
+    await risky.context.close();
+  }
+
   await context.close();
   return {
     route,
+    riskyClicks,
     errors,
     silent,
     slowSteps,
@@ -692,7 +739,11 @@ for (const r of results) {
 
 const blockedTotal = results.reduce((n, r) => n + r.blocked, 0);
 
-console.log(`\n界面冒烟:${ROUTES.length} 页,点击 ${clicked} 次(每页上限 ${DEPTH})`);
+const riskyTotal = results.reduce((n, r) => n + (r.riskyClicks ?? 0), 0);
+console.log(
+  `\n界面冒烟:${ROUTES.length} 页,点击 ${clicked} 次(每页上限 ${DEPTH})` +
+    `· 另点破坏性按钮 ${riskyTotal} 次(单独一轮,SKIP 表里的)`,
+);
 // 计时读数:总墙钟、单页耗时 top10、建号/首跳固定开销占墙钟比例(并发摊薄后)。
 // 只报数,不判成败 —— 用途是给「14 分钟在哪」这类问题供数据。
 const byTime = [...results].sort((a, b) => b.ms - a.ms);
