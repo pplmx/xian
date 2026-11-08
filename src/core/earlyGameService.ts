@@ -461,6 +461,18 @@ export function resetCaveEvent(): void {
   caveEvent = null;
 }
 
+/**
+ * 清空未处理的悟道顿悟弹窗(测试隔离钩子)。
+ *
+ * 与 `resetCaveEvent` 同一个理由:`enlightenmentEvent` 是**模块态「当下的弹窗」**,
+ * 不随 pinia 重置而清。原先只有 `caveEvent` 有重置钩子,顿悟这条漏了 ——
+ * 结果是打乱用例顺序后,`earlyGameService.spec` 的「浮层占着屏幕时不触发」
+ * 会读到上一个用例留下的那枚事件(实测 seed=2/3 各红 2 条,默认顺序看不出来)。
+ */
+export function resetEnlightenmentEvent(): void {
+  enlightenmentEvent = null;
+}
+
 function applyCaveBuff(buffId: string, cult: ReturnType<typeof useCultivationStore>, now: number) {
   cult.addBuff(buffId, now);
 }

@@ -28,6 +28,19 @@ export const saveReader = ref(false);
 /** 锁名:一个字符串域,与存档前缀同源,便于在 DevTools 里认出来 */
 export const SAVE_WRITER_LOCK = "xuanshu.save-writer";
 
+/**
+ * 复位「本页只读」这个模块态(测试隔离钩子)。
+ *
+ * `saveReader` 是模块级 ref,**不随 pinia 重置**。任何用例跑过一次
+ * `acquireSaveWriterRole` 并落进只读分支,后面所有读它的用例就都以为自己是只读页 ——
+ * 实测打乱用例顺序后,`apprentice.spec` 的「开局白送一名入门弟子」直接读到
+ * `sync()` 提前返回(`if (saveReader.value) return`),断言 `length` 为 0。
+ * 默认顺序下恰好没撞上,所以一直没被发现。
+ */
+export function resetSaveReader(): void {
+  saveReader.value = false;
+}
+
 /** 只用到 request / query 两个方法;抽出来是为了在用例里换掉实现 */
 export type LockLike = {
   request: (

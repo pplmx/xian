@@ -9,6 +9,7 @@
  */
 import { describe, expect, it, beforeEach } from "vite-plus/test";
 import { setActivePinia, createPinia } from "pinia";
+import { resetSaveReader } from "@/core/singleWriter";
 import { useApprenticeStore } from "./apprentice";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
@@ -22,7 +23,15 @@ function seed(): void {
 }
 
 describe("收徒 store", () => {
-  beforeEach(() => setActivePinia(createPinia()));
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    /*
+     * `saveReader` 是 `core/singleWriter` 的模块级 ref,不随 pinia 重置。
+     * 它一旦是 true,`sync()` 会在第一行就 return(只读页不白送弟子),
+     * 于是「开局白送一名入门弟子」读到 0 个 —— 打乱顺序后实测复现。
+     */
+    resetSaveReader();
+  });
 
   it("sync:开局白送一名入门弟子,且仅此一次", () => {
     seed();

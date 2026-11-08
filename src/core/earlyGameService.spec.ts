@@ -16,6 +16,7 @@ import {
   getCurrentCaveEvent,
   getCurrentEnlightenment,
   resetCaveEvent,
+  resetEnlightenmentEvent,
   mayTriggerCaveEvent,
   mayTriggerEnlightenment,
   recordWin,
@@ -85,6 +86,12 @@ describe("洞府巡游(Phase 28)", () => {
 describe("悟道顿悟(Phase 28)", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    /*
+     * 顿悟弹窗也是**模块态「当下的那一个」**,不随 pinia 重置而清。
+     * 不打乱顺序时,文件里前一个 describe 不会留下它;一打乱就会 ——
+     * 「浮层占着屏幕时不触发」会读到上一例留下的那枚(实测 seed=2/3 各红 2 条)。
+     */
+    resetEnlightenmentEvent();
   });
 
   it("忽略后模块态清空,getCurrentEnlightenment 取不到", () => {
@@ -414,6 +421,12 @@ describe("前期事件衰减(EARLY_EVENT_DECAY · TASK-028 接线后)", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     resetCaveEvent();
+    /*
+     * 冷却确实已移进 player store(随 pinia 重置),但**弹窗本身还是模块态** ——
+     * `getCurrentEnlightenment()` 会先返回那个还活着的事件,于是"高随机数不再触发"
+     * 读到的仍是上一例留下的那一枚。
+     */
+    resetEnlightenmentEvent();
   });
 
   // 顿悟的 5 分钟冷却 Phase 34.6 起存在 player store(随档),不再跨用例泄漏 ——

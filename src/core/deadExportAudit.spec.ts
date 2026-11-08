@@ -445,6 +445,16 @@ describe("死导出审计", () => {
     // 销账:把 caveEvent 移进 player store(随 store 重置即得隔离)后删除本导出并移出此表。
     resetCaveEvent:
       "测试隔离钩子:清空模块态巡游弹窗,供早期服务洞府用例在 beforeEach 里重置,防跨用例残留闪红",
+    // 同上的另一半:顿悟弹窗同样是模块态「当下的那一个」,原先只清了巡游、漏了顿悟,
+    // 打乱用例顺序时 earlyGameService.spec 会读到上一例留下的事件。
+    // 销账:把 enlightenmentEvent 移进 store(随 store 重置即得隔离)后删除本导出并移出此表。
+    resetEnlightenmentEvent:
+      "测试隔离钩子:清空模块态顿悟弹窗,供早期服务顿悟用例在 beforeEach 里重置,防跨用例残留闪红",
+    // 第三处同类:saveReader 是模块级 ref,不随 pinia 重置;它一旦为 true,
+    // 所有读它判断「本页是不是只读」的 store 都会走只读分支(收徒 sync 直接 return)。
+    // 销账:把 saveReader 移进一个随档重置的 store 后删除本导出并移出此表。
+    resetSaveReader:
+      "测试隔离钩子:复位「本页只读」模块态,供 singleWriter 与收徒用例在用例间重置,防跨用例闪红",
     // 时制反查器(文案 → 秒)。timeUnits 此前只被自己的 spec 够到,整份算"审计工具";
     // 顿悟/巡游的时长行改由 ui/earlyGameText 现算后,它进了运行时可达集,这条才被扫到。
     // 销账:哪天运行时真要"把文案读回时长"(如导入旧档的文案),接上它即可。

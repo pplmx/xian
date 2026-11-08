@@ -5,13 +5,14 @@
  * 拿到 null、立刻交还、把自己标成只读。老内核没有 LockManager 时 fail-open,
  * 退回旧行为而不是让游戏起不来。
  */
-import { describe, expect, it, vi } from "vite-plus/test";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import {
   SAVE_WRITER_LOCK,
   acquireSaveWriterRole,
   saveReader,
   saveWriterFree,
   type LockLike,
+  resetSaveReader,
 } from "./singleWriter";
 
 /** 极简 LockManager:同名锁同一时刻只有一个持有者,`ifAvailable` 拿不到就回 null */
@@ -35,6 +36,16 @@ function makeLocks(): { locks: LockLike; release: () => void } {
     },
   };
 }
+
+/*
+ * 每个用例后把模块态复位 —— `saveReader` 是模块级 ref,不随 pinia 重置。
+ * 漏了它,任何一次 `acquireSaveWriterRole` 落进只读分支后,后面所有读它的用例
+ * (以及**别的 spec 文件**)都会以为自己是只读页。
+ */
+afterEach(() => {
+  resetSaveReader();
+  vi.unstubAllGlobals();
+});
 
 describe("单写者 · 先到先写,后来的只读", () => {
   it("空场:本页是写者", async () => {
@@ -127,7 +138,18 @@ describe("只读页 · 席位空出来没有", () => {
   });
 
   it("问不出来就答 false —— 不能让玩家白刷新", async () => {
-    expect(await saveWriterFree(undefined), "没有 LockManager").toBe(false);
+    /*
+     * `undefined` 会命中默认参数 `locks = defaultLocks()`,而 **Node 26 自带
+     * `navigator.locks`** —— 于是这条根本走不到 `!locks` 分支,断言的是真实锁的
+     * 当下状态。默认顺序下碰巧为 false,打乱后别的用例让它变成 true(实测 seed=3 红)。
+     * 要测"没有 LockManager",得把 navigator 临时摘掉,而不是传 undefined。
+     */
+    vi.stubGlobal("navigator", undefined);
+    try {
+      expect(await saveWriterFree(undefined), "没有 LockManager").toBe(false);
+    } finally {
+      vi.unstubAllGlobals();
+    }
     expect(await saveWriterFree({ request: async () => null }), "没有 query").toBe(false);
     const broken: LockLike = {
       request: async () => null,

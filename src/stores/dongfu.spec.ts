@@ -189,6 +189,11 @@ describe("洞府建筑 · 卡面自陈(不许有隐词条)", () => {
 });
 
 describe("洞府建筑 · 专用通道与卡面同源(不许跨文件双写)", () => {
+  /* 这个 describe 会建 store —— 别沿用文件里前一个 describe 留下的实例 */
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
   it("聚灵阵:灵气上限是专用通道,qiCapMult 与卡面都读 ARRAY_QI_CAP_PER_LEVEL", () => {
     const dongfu = useDongfuStore();
     dongfu.levels = { ...dongfu.levels, array: 5 };
