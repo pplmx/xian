@@ -351,6 +351,7 @@ const CATEGORIES = [
       "startupOrder",
       "guard",
       "swRegistration",
+      "mainWiring",
       "exportReach",
       "engineGateCoverage",
       "testReportBalance",
