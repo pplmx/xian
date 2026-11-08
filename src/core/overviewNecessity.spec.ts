@@ -136,6 +136,7 @@ describe("总览必要性 · 退路的前提是否成立", () => {
 
 describe("总览必要性 · 其余职责是否需要出发", () => {
   it("职责表", () => {
+    // 只打印,不断言 —— 这一段出的是给人复核的读数,判断在对应的阈值用例里
     console.log("\n职责            需要出发按钮");
     for (const r of OVERVIEW_ROLES) {
       console.log(`${r.name.padEnd(14)} ${r.needsDepart ? "是" : "否"}`);

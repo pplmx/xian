@@ -110,6 +110,7 @@ describe("复利链 · 资质地板", () => {
 
 describe("复利链 · 逐世曲线", () => {
   it("重修到金丹的耗时随世代如何压缩", () => {
+    // 只打印,不断言 —— 这一段出的是给人复核的读数,判断在对应的阈值用例里
     console.log(`\n金丹一世凝道果 ${FRUIT_PER_GOLD_LIFE} 枚`);
     console.log("世代  地板  灵根倍率  累计道果  灵根加成  道果加成  相对首世耗时");
     for (const r of lifeTable(30)) {

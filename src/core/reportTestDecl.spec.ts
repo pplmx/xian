@@ -30,7 +30,12 @@ function specFiles(dir: string, out: string[] = []): string[] {
     if (name === "node_modules" || name === "dist" || name.startsWith(".")) continue;
     const full = join(dir, name);
     if (statSync(full).isDirectory()) specFiles(full, out);
-    else if (name.endsWith(".spec.ts")) out.push(full);
+    /*
+     * **跳过本文件** —— 自证用例里写着一段假样本(含 `it("有断言"){…}` 等三行),
+     * 按行扫会被当成真用例而点名(实测)。探测器的样本不是被测代码,
+     * 把自己从输入里摘出去是最直接的做法(与 Round 26 同一个道理)。
+     */
+    else if (name.endsWith(".spec.ts") && name !== "reportTestDecl.spec.ts") out.push(full);
   }
   return out;
 }
@@ -81,7 +86,23 @@ function scan(file: string): Offender[] {
   const flush = (): void => {
     if (!cur) return;
     const body = cur.body.join("\n");
-    const hasAssert = body.includes("expect(") || body.includes(".toThrow");
+    /*
+     * **恒真断言不算断言。**
+     *
+     * `expect(true).toBe(true)` 与 `expect(1).toBe(1)` 常见于报告型用例末尾的
+     * "占位"——它让测试框架满意,却什么也没验证。若把它算作 `hasAssert`,
+     * 这类用例就逃过了本判据,而它与"忘了写断言"是同一件事。
+     *
+     * 修法是先**剥掉**这些形态,再看还剩不剩 expect。
+     * (只剥完全字面量的恒真:任何依赖被测值的断言都不受影响。)
+     */
+    const stripped = body
+      .replace(
+        /expect\(\s*(?:true|false|1|0)\s*\)\s*\.\s*(?:toBe|toEqual)\(\s*(?:true|false|1|0)\s*\)/g,
+        "",
+      )
+      .replace(/expect\(\s*(true|false|1|0)\s*\)\s*\.\s*(?:toBe|toEqual)\(\s*\1\s*\)/g, "");
+    const hasAssert = stripped.includes("expect(") || stripped.includes(".toThrow");
     const declared = REPORT_MARKERS.some((m) => body.includes(m));
     if (!hasAssert && !declared) {
       out.push({ file: file.slice(ROOT.length + 1), line: cur.line, title: cur.title });
@@ -93,9 +114,32 @@ function scan(file: string): Offender[] {
     const title = itTitle(line);
     if (title) {
       flush();
-      // 往上回看 24 行,把紧邻的说明注释也收进体内(声明通常写用例上方)
-      const from = Math.max(0, i - 24);
-      cur = { title, line: i + 1, body: lines.slice(from, i + 1), indent: indentOf(line) };
+      /*
+       * 往上回看**紧邻的说明注释**(声明通常写用例上方)。
+       *
+       * 原先是固定回看 24 行 —— 那会把**前一条用例的断言**一并吞进本体,
+       * 于是报告型用例只要前面有个带真断言的邻居,就再也不被点名
+       * (实测:`artifactGrowth` 的「报告各族增长」逃过了检查,因为它上方
+       * 24 行内有 `${type} 族相邻档增长率` 那条真断言在第 91 行)。
+       *
+       * 改成向上走**只收注释行**:遇到第一条非注释就停。块注释可能跨行,
+       * 故中间行(以 `*` 开头)也算注释。
+       */
+      const above: string[] = [];
+      for (let j = i - 1; j >= 0; j--) {
+        const t = lines[j]!.trim();
+        if (t === "" || t.startsWith("//") || t.startsWith("*") || t.startsWith("/*")) {
+          above.unshift(lines[j]!);
+          continue;
+        }
+        break;
+      }
+      cur = {
+        title,
+        line: i + 1,
+        body: [...above, line],
+        indent: indentOf(line),
+      };
       continue;
     }
     if (!cur) continue;

@@ -72,6 +72,7 @@ describe("动机 · 四份契到底改变了什么", () => {
   });
 
   it("影响不均度决定了是否需要玩家重新思考", () => {
+    // 只打印,不断言 —— 这一段出的是给人复核的读数,判断在对应的阈值用例里
     console.log("\n契        受影响最大与最小构筑的胜率差");
     for (const im of impacts) {
       console.log(`${im.trial.name.padEnd(8)} ${(im.spread * 100).toFixed(1)}pp`);
@@ -128,6 +129,7 @@ describe("动机 · 决策维度覆盖", () => {
 
 describe("动机 · 架构边界", () => {
   it("可动与不可动的空间", () => {
+    // 只打印,不断言 —— 这一段出的是给人复核的读数,判断在对应的阈值用例里
     console.log(`\n可动(Rule Space):${MUTABLE_SPACE.join(" · ")}`);
     console.log(`不可动:${IMMUTABLE_SPACE.join(" · ")}`);
   });

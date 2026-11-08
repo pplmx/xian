@@ -116,6 +116,7 @@ describe("膨胀治理 · 境界跨越", () => {
 
 describe("膨胀治理 · 内容覆盖", () => {
   it("各境界对可进入区域的压制程度", () => {
+    // 只打印,不断言 —— 这一段出的是给人复核的读数,判断在对应的阈值用例里
     for (const profile of GEAR_PROFILES) {
       const rows = contentCoverageAudit(profile);
       console.log(`\n[${profile.name}] 内容覆盖(压制判据:战力比 ≥${CRUSH_RATIO}):`);
@@ -208,6 +209,7 @@ describe("膨胀治理 · 内容覆盖", () => {
 
 describe("膨胀治理 · 乘区来源归因", () => {
   it("战力来源结构(逐项剥离取跌幅)", () => {
+    // 只打印,不断言 —— 这一段出的是给人复核的读数,判断在对应的阈值用例里
     for (const major of [2, 5, 9]) {
       const rows = powerSourceAudit(major, TYPICAL);
       console.log(`\n${REALMS[major]!.name} 战力来源:`);
@@ -293,6 +295,7 @@ describe("膨胀治理 · 乘区来源归因", () => {
 
 describe("膨胀治理 · 天界词条对称", () => {
   it("入天界的构筑深度对照(对称前 / 后)", () => {
+    // 只打印,不断言 —— 这一段出的是给人复核的读数,判断在对应的阈值用例里
     const rows = celestialCarryAudit(TYPICAL);
     console.log("\n天界携带审计(三维已由 worldFoeSnap 等比抵消,此处只比词条):");
     for (const r of rows) {

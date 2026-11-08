@@ -93,6 +93,7 @@ describe("法宝后期增长", () => {
   }
 
   it("报告各族增长(给人复核)", () => {
+    // 只打印,不断言 —— 判断由上面的「相邻档增长率」用例负责,这里给的是复核用的读数
     for (const type of ["damage", "heal", "shield", "weaken", "drain"] as const) {
       const rows = ARTIFACTS.filter((a) => a.active.effect.type === type)
         .map((a) => ({ a, amount: artifactValue(a, 0).active.amount }))

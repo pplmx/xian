@@ -173,6 +173,7 @@ describe("道果曲线 · 折算口径自洽", () => {
 
 describe("道果曲线 · 生命周期窗口(1~30 世)", () => {
   it("主要设计窗口内的逐世读数", () => {
+    // 只打印,不断言 —— 这一段出的是给人复核的读数,判断在对应的阈值用例里
     const cases = [fruitCurve("current"), partialCurve(3), partialCurve(5), partialCurve(10)];
     for (const c of cases) {
       console.log(`\n【${c.name}】`);

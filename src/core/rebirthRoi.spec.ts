@@ -72,6 +72,7 @@ describe("轮回 ROI · 各转世点的道果效率", () => {
 
 describe("轮回 ROI · 边际账:再修一境值不值", () => {
   it("每一段的边际效率", () => {
+    // 只打印,不断言 —— 这一段出的是给人复核的读数,判断在对应的阈值用例里
     console.log("\n从→到       道果  时间成本    边际效率  占「重刷一轮金丹」");
     for (const r of marginalTable()) {
       console.log(
