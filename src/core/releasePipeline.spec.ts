@@ -155,6 +155,52 @@ describe("发版正文 · 版本号一改,仓库里就得有一份同名正文",
     ).toBe(true);
   });
 
+  it("Windows 打包图标至少 256×256 —— 48 的 favicon 会让构建当场失败", () => {
+    /*
+     * **真发生过**(v0.0.2 打 tag 时):`build.win.icon` 指着 `public/favicon.ico`,
+     * 而那枚 .ico 只装了 16/32/48 三档 —— 那是刻意缩的,标签页只用得上这几档,
+     * 塞 256 会让每次冷启动多走 130KB。但 electron-builder 要求 Windows 应用图标
+     * **至少 256×256**,于是打包直接失败:
+     *
+     *   ⨯ Icon must be at least 256x256 pixels, provided: 48x48
+     *
+     * 两个用途(浏览器标签页 / 桌面应用图标)被一份配置同时承担了。
+     * 修法是让打包用 `public/icons/icon-512.png`(与 PWA 安装图标同一枚),
+     * favicon 保持精简。这条判据钉住「打包那枚够大」,不钉具体路径。
+     */
+    const pkg = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf8")) as {
+      build?: { win?: { icon?: string } };
+    };
+    const icon = pkg.build?.win?.icon;
+    expect(icon, "build.win.icon 没配 —— Windows 打包会用默认图标").toBeTruthy();
+    const file = resolve(ROOT, icon!);
+    expect(existsSync(file), `build.win.icon 指向的文件不存在:${icon}`).toBe(true);
+
+    // 只解析 PNG 的 IHDR:宽高各 4 字节,偏移 16 与 20。.ico 走另一条路(见下)。
+    const buf = readFileSync(file);
+    if (icon!.endsWith(".png")) {
+      expect(buf.subarray(1, 4).toString("latin1"), `${icon} 不是 PNG`).toBe("PNG");
+      const w = buf.readUInt32BE(16);
+      const h = buf.readUInt32BE(20);
+      expect(
+        Math.min(w, h),
+        `${icon} 是 ${w}×${h} —— Windows 应用图标至少要 256×256,否则 electron-builder 当场失败`,
+      ).toBeGreaterThanOrEqual(256);
+    } else {
+      // .ico:目录项里 width/height 是 1 字节,0 表示 256
+      expect(buf.readUInt16LE(2), `${icon} 不是 ico`).toBe(1);
+      const count = buf.readUInt16LE(4);
+      const sizes = Array.from({ length: count }, (_, i) => {
+        const w = buf.readUInt8(6 + i * 16);
+        return w === 0 ? 256 : w;
+      });
+      expect(
+        Math.max(...sizes),
+        `${icon} 里最大的条目只有 ${Math.max(...sizes)} —— 至少要有一档 ≥256,否则 electron-builder 当场失败`,
+      ).toBeGreaterThanOrEqual(256);
+    }
+  });
+
   it("流水线确实优先取仓库里那份正文", () => {
     expect(BUILD).toMatch(/NOTES="docs\/release-notes\/\$\{GITHUB_REF_NAME\}\.md"/);
     expect(BUILD, "落回自动生成时应当留一条日志,别让发版悄悄降级").toMatch(/不存在[^\n]*自动生成/);
