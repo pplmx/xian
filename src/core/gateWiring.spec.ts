@@ -434,12 +434,24 @@ describe("工具链契约 —— 同一版本只留在可校验的源头", () =>
 
 /** 一道门在失败时会不会真的把退出码弄成非零 */
 function failsLoudly(src: string): boolean {
+  /*
+   * **先用剥掉 import 行再判** —— 否则 `import assert from "node:assert/strict"`
+   * 那一句本身就让 `\bassert\b` 命中,于是把脚本里所有 assert 都注释掉
+   * (门变成只会打印的空门)这条判据**照样绿**。本轮注入时当场撞到。
+   *
+   * 这也解释了为什么"九道门"一直没抓到这件事:它从来没验过 assert 还在不在,
+   * 只验了"文件里出现过 assert 这个词"。
+   */
+  const body = src
+    .replace(/^\s*import[^;]*;?$/gm, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*\/\/.*$/gm, "");
   return (
-    /process\.exitCode\s*=\s*[1-9]/.test(src) ||
-    /process\.exit\(\s*[1-9]/.test(src) ||
+    /process\.exitCode\s*=\s*[1-9]/.test(body) ||
+    /process\.exit\(\s*[1-9]/.test(body) ||
     // 只认「显式置退出码」这一种:裸 throw 可能只是启动前置检查(产物没构建),
     // 与「收集了失败却照样 exit 0」不是一回事 —— 拿它兜底会把空门放过去
-    /\bassert\b/.test(src)
+    /\bassert\./.test(body)
   );
 }
 
@@ -448,6 +460,16 @@ describe("门禁自检 · 每道门失败时都得真的红", () => {
    * 一道「收集了失败、却照样 exit 0」的门是个静默的空门：它天天打印 ✗，
    * 却从不拦下任何东西。这类事故不会报错，只会让人以为有保护。
    * 故把六道浏览器门 + 三道静态门逐个读进来，要求至少有一条能失败的出口。
+   */
+  /*
+   * 十二道门,不是九道。
+   *
+   * 原先只列了六道浏览器门 + 三道静态门,而 `check:engine` 那三个
+   * (`engine-dist` / `engine-sync` / `engine-standalone`)**同样在 CI 里跑、
+   * 同样会失败**,却不在这个清单里。它们确实有 assert(实测),但那不是判据给的
+   * 保证 —— 哪天有人把 assert 换成 console.log,这一条扫不到,门就变成静默的空门。
+   *
+   * 这条判据守的正是「门会不会真的红」。既然引擎三兄弟也是门,就得在名单上。
    */
   const GATES = [
     "scripts/build-timed.mjs",
@@ -459,9 +481,12 @@ describe("门禁自检 · 每道门失败时都得真的红", () => {
     "scripts/docs-check.mjs",
     "scripts/env-check.mjs",
     "scripts/test-report.mjs",
+    "scripts/engine-dist.mjs",
+    "scripts/engine-sync.mjs",
+    "scripts/engine-standalone.mjs",
   ];
 
-  it("九道门都有一条「失败 → 非零退出」的路径", () => {
+  it("十二道门都有一条「失败 → 非零退出」的路径", () => {
     const silent = GATES.filter((rel) => !failsLoudly(readFileSync(join(ROOT, rel), "utf8")));
     expect(silent, "这些门收集了失败却不会让流水线红").toEqual([]);
   });
@@ -473,6 +498,16 @@ describe("门禁自检 · 每道门失败时都得真的红", () => {
     // 裸 throw 不算 —— 它常常只是启动前置检查(产物没构建),与「门是空的」不是一回事
     expect(failsLoudly(`if (bad) throw new Error("x");`)).toBe(false);
     expect(failsLoudly(`if (bad) assert.ok(false);`)).toBe(true);
+    /*
+     * **只有 import、没有调用**不算 —— 本轮注入时撞到的坑:把脚本里所有 `assert.`
+     * 注释掉之后,`import assert from "node:assert/strict"` 那一句仍让
+     * `\bassert\b` 命中,于是「门已经变成只会打印」这件事判据看不出来。
+     * 修法是先剥掉 import 行,只认 `assert.` 调用。
+     */
+    expect(
+      failsLoudly(`import assert from "node:assert/strict";\nconsole.log("done");`),
+      "只有 import assert 的脚本被当成了会失败的门 —— 那正是空门的典型形态",
+    ).toBe(false);
   });
 });
 
