@@ -153,6 +153,19 @@ const STONE_SETTLEMENT = createSettlement<GNum>({ resources: STONE_LEDGER }, gnu
  * `keepExactly` 给已经付过代价的装备(如坊市购入):只接受原样入包,
  * 不自动回收、不腾位、不折算。失败时调用方负责退款,获得账一笔都不写。
  */
+/**
+ * 拾得提示的起点品阶 —— **灵品**。
+ *
+ * 原先是裸字面量 `q.rank >= 3`:读不出「3 是哪个品质」,而品质表调整 rank 时
+ * 它会静默错位(弹提示的门槛悄悄挪档,没有判据会红)。同一函数里另一处早已写成
+ * `q.rank >= qualityDef("heaven").rank`,两种写法并存只会让人以为前者是随手写的。
+ *
+ * 注意它与 `ui/qualityTier` 的 `isRareQuality`(rank >= 6,天品)**不是同一个概念**:
+ * 那个管"视觉上算不算稀有"(角章、光、声),这个只管"拾得时要不要出声"。
+ * 灵品起就值得说一句,但它的视觉强度仍按 flashTier 逐档走。
+ */
+const PICKUP_NOTICE_MIN_RANK = qualityDef("spirit").rank;
+
 export function acquireEquipment(
   inst: EquipmentInstance,
   opts: { quiet?: boolean; forceKeep?: boolean; keepExactly?: boolean } = {},
@@ -185,7 +198,7 @@ export function acquireEquipment(
     }
     recordEquipmentGained(inst);
     // 去路:点一下直接打开这一件的器评帖(见 ui/toastTarget)
-    if (!quiet && q.rank >= 3)
+    if (!quiet && q.rank >= PICKUP_NOTICE_MIN_RANK)
       notify(pickup, "rare", inst.quality, { kind: "equipment", id: inst.uid });
     return { line: label, bagged: true, recycled: 0, dust: 0, stone: gnZero() };
   }
@@ -211,7 +224,7 @@ export function acquireEquipment(
         stone,
       };
     }
-    if (!quiet && q.rank >= 3) {
+    if (!quiet && q.rank >= PICKUP_NOTICE_MIN_RANK) {
       notify(pickup, "rare", inst.quality, { kind: "equipment", id: inst.uid });
     }
     return { line: label, bagged: true, recycled: 0, dust: 0, stone: gnZero() };

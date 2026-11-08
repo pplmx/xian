@@ -4,7 +4,7 @@
  * 一切装备在进入行囊前都要先过一遍回收裁决;
  * 命中回收规则(分解勾选档 / 智能收纳判无缘)的,不入包、直接化尘。
  */
-import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 import { rng } from "@/utils/random";
 import {
@@ -28,6 +28,7 @@ import { useInventoryStore } from "@/stores/inventory";
 import { useResourcesStore } from "@/stores/resources";
 import { useSettingsStore } from "@/stores/settings";
 import { qualityDef } from "@/data/qualities";
+import { useUiStore } from "@/stores/ui";
 import { upgradeCost } from "./formulas";
 import { ARTIFACT_DROP_CHANCE, BAG_CAPACITY, DECOMPOSE_DUST } from "@/data/constants";
 import { useLoreStore } from "@/stores/lore";
@@ -535,6 +536,19 @@ describe("派发前的材料期望 · 每场,只给件数不给概率", () => {
   it("自证:同参数两次调用结果一致(不偷吃随机数)", () => {
     expect(run(1.3)).toBe(run(1.3));
   });
+
+  it("一位小数是**四舍五入**,不是向下取整 —— 边界值钉死", () => {
+    /*
+     * 上面那条只断言「结果等于它自己取整后的样子」,那对 `Math.floor` 同样成立 ——
+     * 变异测试把 `Math.round` 全换成 `Math.floor`,整个 loot.spec **全绿**。
+     * 而差异是真的:route 外边两种取整在上述取值下会给出不同读数(1.7 vs 1.8)。
+     *
+     * 这条按**具体值**断言,取整方式一变就红。
+     */
+    expect(run(1), "默认档材料期望").toBe(1.7);
+    expect(run(1.5), "×1.5 档要进位到 1.8(向下取整会给 1.7)").toBe(1.8);
+    expect(run(2), "×2 档要进位到 1.9(向下取整会给 1.8)").toBe(1.9);
+  });
 });
 
 describe("派发前的装备期望 · 用场数说话,不是趟数", () => {
@@ -551,6 +565,18 @@ describe("派发前的装备期望 · 用场数说话,不是趟数", () => {
     })!;
     expect(fast).toBeLessThan(slow);
     expect(fast).toBeGreaterThanOrEqual(1);
+  });
+
+  it("一位小数是四舍五入 —— 边界值钉死", () => {
+    /*
+     * 同样的问题:上面只测单调性与 ≥1,`Math.floor` 替换后照样绿。
+     * 下面的值在两种取整下不同(实测 ×1.2 档:round 2.8 / floor 2.7)。
+     */
+    const at = (rewardMult: number) =>
+      expectedEquipmentBattlesPerPiece({ mods: {} as never, rewardMult, isBoss: false })!;
+    expect(at(1)).toBe(3.3);
+    expect(at(1.2), "×1.2 档要进位到 2.8(向下取整会给 2.7)").toBe(2.8);
+    expect(at(1.6), "×1.6 档要进位到 2.1(向下取整会给 2.0)").toBe(2.1);
   });
 
   it("自证:同参数两次一致", () => {
@@ -577,5 +603,75 @@ describe("派发前的丹药期望 · 与装备同口径", () => {
     const normal = expectedPillBattlesPerPiece({ rewardMult: 1, isBoss: false })!;
     const boss = expectedPillBattlesPerPiece({ rewardMult: 1, isBoss: true })!;
     expect(boss).toBeLessThan(normal);
+  });
+});
+
+/**
+ * 拾得提示的门槛 —— **灵品及以上才弹 rare**。
+ *
+ * ## 为什么补这一条
+ *
+ * 变异测试扫 `loot.ts` 时,把 `q.rank >= 3` 改成 `> 3` 之后**整套判据全绿**,
+ * 而这个改动会让「灵品」(rank 正好 3)的装备不再弹提示 —— 玩家打完一场、
+ * 捡到一件灵品,什么回应都没有。`loot.spec.ts` 此前**一条 notify 都没测过**。
+ *
+ * ## 同时钉住「那个 3 是什么」
+ *
+ * 同一函数里另一处写的是 `q.rank >= qualityDef("heaven").rank`(具名),而这里写裸 `3`。
+ * 两者并存既读不出语义,品质表一调 rank 还会静默错位。故判据按**品质名**断言,不按数字。
+ */
+describe("拾得提示 · 灵品及以上才弹 rare", () => {
+  /*
+   * 假定时器:**toast 自带 setTimeout(ttl) 自动清理**。用真定时器时,前面用例
+   * 排下的 timer 会在后面用例执行时触发、把 toast 删掉,数出来的差值忽大忽小
+   * (实测同一门槛下数到 3 / 0 / 1 三种)。这里只测"调用瞬间弹了什么",
+   * 不关心它多久消失 —— 那是 toastLifeMs 的事,另有判据。
+   */
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+  /** 走一次入包,返回本轮弹了几条 rare */
+  let seq = 0;
+  /*
+   * 用**前后差值**而不是清空再数:ui store 的 toasts 是 ref(上限 5 条),
+   * `toasts.length = 0` 改的是数组实例、不触发替换,数出来会是历史残留。
+   * 数差值也不依赖 store 的内部上限。
+   */
+  /*
+   * 只数**拾得那一条**,不数所有 rare —— 入包会连带触发名号与成就(「获得名号
+   * 『初入仙途』」「成就达成『初窥仙途』」,都是 rare),那些是别的系统的正常产出。
+   * 实测一次入包总共 3 条 rare,其中只有 1 条是拾得;按总数断言会数到 3 而误判。
+   */
+  const acquire = (quality: QualityId, quiet = false): number => {
+    seq += 1;
+    const before = useUiStore().toasts.filter((t) => t.text.includes("拾得")).length;
+    acquireEquipment(
+      { uid: `notice${seq}`, templateId: "b_qingyun", quality, tier: 3, level: 0, affixes: [] },
+      { quiet },
+    );
+    return useUiStore().toasts.filter((t) => t.text.includes("拾得")).length - before;
+  };
+
+  it("灵品(rank 3)要弹 —— 它正是那道门槛本身", () => {
+    expect(acquire("spirit"), "灵品掉落没有任何回应 —— 门槛是不是被改成了 > 3").toBe(1);
+  });
+
+  it("精品(rank 2)不弹 —— 门槛之下", () => {
+    expect(acquire("excellent")).toBe(0);
+  });
+
+  it("玄品 / 地品 / 天品都在门槛之上", () => {
+    /*
+     * 逐个**单独起 isolate** 断言,不连跑三次:ui store 的 toasts 上限 5 条,
+     * 一次入包会连带名额/成就共 3 条,连跑三次就挤掉了前一批(实测 earth 数到 0)。
+     * 这条判据要测的是"该品质弹不弹",与队列容量无关。
+     */
+    for (const quality of ["profound", "earth", "heaven"] as QualityId[]) {
+      setActivePinia(createPinia());
+      expect(acquire(quality), `${quality} 该弹提示`).toBe(1);
+    }
+  });
+
+  it("quiet 时不弹 —— 离线结算不该在玩家回来时刷一串提示", () => {
+    expect(acquire("heaven", true), "quiet 分支仍弹了提示").toBe(0);
   });
 });
