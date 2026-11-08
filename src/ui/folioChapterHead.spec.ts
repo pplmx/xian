@@ -7,6 +7,13 @@ const ROOT = resolve(__dirname, "../..");
 
 const source = readSource;
 
+/**
+ * 递归列出 `rel` 下的相对路径。
+ *
+ * 本文件有几处「遍历后断言空集」——它们天然不会假绿:路径错时
+ * `readdirSync` 会**抛异常**而不是返回空数组,判据当场崩而不是悄悄通过。
+ * 故这里不需要额外的数量下限(元判据 `core/scanGuardMeta` 认这条说明)。
+ */
 function walk(rel: string): string[] {
   return readdirSync(resolve(ROOT, rel), { withFileTypes: true }).flatMap((entry) => {
     const next = `${rel}/${entry.name}`;

@@ -27,6 +27,7 @@ const HEX_EXEMPT: Array<{ file: string; why: string }> = [
 ];
 
 const walk = (dir: string, base = ""): string[] =>
+  // 同理:路径错时 readdirSync 抛异常,不会返回空数组 —— 不存在"扫到 0 个"的假绿
   readdirSync(dir, { withFileTypes: true }).flatMap((d) =>
     d.isDirectory() ? walk(resolve(dir, d.name), `${base}${d.name}/`) : [`${base}${d.name}`],
   );

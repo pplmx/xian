@@ -355,6 +355,7 @@ const CATEGORIES = [
       "routeTransition",
       "tribulationWeatherParity",
       "testDeterminism",
+      "scanGuardMeta",
       "exportReach",
       "engineGateCoverage",
       "testReportBalance",
