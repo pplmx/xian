@@ -446,9 +446,21 @@ function failsLoudly(src: string): boolean {
     .replace(/^\s*import[^;]*;?$/gm, "")
     .replace(/\/\*[\s\S]*?\*\//g, "")
     .replace(/^\s*\/\/.*$/gm, "");
+  /*
+   * 退出码有**两种常见写法**,都要认:
+   *   ① `process.exit(1)` / `process.exitCode = 1`   —— 字面量
+   *   ② `process.exit(ok ? 0 : 1)`                    —— 按判定结果取码
+   *
+   * 上一版只认 ①。而 `scripts/release-check.mjs` 结尾正是
+   * `process.exit(verdict.ok ? 0 : 1);` —— 只认字面量的话,它会被判成
+   * 「收集了失败也不退出」的空门(实测三种三元写法全部返回 false)。
+   * 后果不是误报那么简单:任何用 ② 的门都进不了名单,也就没人守着它。
+   */
   return (
     /process\.exitCode\s*=\s*[1-9]/.test(body) ||
     /process\.exit\(\s*[1-9]/.test(body) ||
+    /* 三元取码:`process.exit(… ? … : …)` 或 `process.exitCode = … ? … : …` */
+    /process\.exit(?:Code\s*=\s*)?\(?[^;\n]*\?[^;\n]*\b1\b/.test(body) ||
     // 只认「显式置退出码」这一种:裸 throw 可能只是启动前置检查(产物没构建),
     // 与「收集了失败却照样 exit 0」不是一回事 —— 拿它兜底会把空门放过去
     /\bassert\./.test(body)
@@ -484,9 +496,12 @@ describe("门禁自检 · 每道门失败时都得真的红", () => {
     "scripts/engine-dist.mjs",
     "scripts/engine-sync.mjs",
     "scripts/engine-standalone.mjs",
+    // 打 tag 之前跑的那一条。它此前只有「命令挂着」「判断走纯函数」两条判据,
+    // 没有「失败必须非零退出」—— 而它恰恰是发版前最后一道人工门。
+    "scripts/release-check.mjs",
   ];
 
-  it("十二道门都有一条「失败 → 非零退出」的路径", () => {
+  it("十三道门都有一条「失败 → 非零退出」的路径", () => {
     const silent = GATES.filter((rel) => !failsLoudly(readFileSync(join(ROOT, rel), "utf8")));
     expect(silent, "这些门收集了失败却不会让流水线红").toEqual([]);
   });
@@ -508,6 +523,18 @@ describe("门禁自检 · 每道门失败时都得真的红", () => {
       failsLoudly(`import assert from "node:assert/strict";\nconsole.log("done");`),
       "只有 import assert 的脚本被当成了会失败的门 —— 那正是空门的典型形态",
     ).toBe(false);
+    /*
+     * 三元取码也算失败出口 —— `scripts/release-check.mjs` 结尾就是
+     * `process.exit(verdict.ok ? 0 : 1);`。上一版只认字面量 `process.exit(1)`,
+     * 于是这类门会被判成「不退出」,进不了名单也就没人守。
+     */
+    expect(
+      failsLoudly(`process.exit(verdict.ok ? 0 : 1);`),
+      "三元取码没被认成失败出口 —— 用这种写法的门永远进不了名单",
+    ).toBe(true);
+    expect(failsLoudly(`process.exitCode = verdict.ok ? 0 : 1;`)).toBe(true);
+    // 但恒退 0 的三元不算:它没有失败侧
+    expect(failsLoudly(`process.exit(ok ? 0 : 0);`)).toBe(false);
   });
 });
 
