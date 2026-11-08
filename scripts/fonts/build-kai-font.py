@@ -79,6 +79,10 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 # GitHub Pages 那种子路径部署下会 404)。协议文本放 public,原样进产物。
 OUT_DIR = ROOT / "src/assets/fonts"
 OUT_CSS = OUT_DIR / "kai-subset.css"
+# 首屏用不到的那几片另写一份,由 core/kaiLateFaces.ts 在正文可读之后注入。
+# 分开的理由:22 条 @font-face 的 unicode-range 合计 41.9KB,而首屏只认第一片 ——
+# 那 45KB 压在渲染阻塞的入口 CSS 上,实测 FCP 1332 → 1108ms(同一份 dist 摘掉其余 21 条)。
+OUT_CSS_REST = OUT_DIR / "kai-subset-rest.css"
 META = ROOT / "scripts/fonts/kai-subset.meta.json"
 CHARS = ROOT / "scripts/fonts/kai-subset.chars.txt"
 CACHE = pathlib.Path("/tmp/lxgw-wenkai-cache")
@@ -299,12 +303,13 @@ def main() -> None:
 
     # @font-face 声明也由脚本写:每一片的 unicode-range 必须与那一份**产物**的 cmap 一致,
     # 手抄一份到 style.css 里迟早会与字体对不上(而那种错只表现为「有字拉不下来」)。
-    rules = [
+    header = [
         "/* 生成物 —— 由 scripts/fonts/build-kai-font.py 写出,判据在 src/ui/kaiFontCoverage.spec.ts。",
         "   手改会被下一次生成覆盖。 */",
     ]
-    for chunk in chunks:
-        rules.append(
+
+    def face_of(chunk: dict[str, object]) -> str:
+        return (
             "@font-face {\n"
             "  font-family: 'LXGW WenKai GB Screen';\n"
             "  src:\n"
@@ -314,7 +319,17 @@ def main() -> None:
             f"  unicode-range: {chunk['unicode_range']};\n"
             "}"
         )
-    OUT_CSS.write_text("\n".join(rules) + "\n", encoding="utf-8")
+
+    # 阻塞那份只放第一片:首屏的楷体字全在第一片里(判据在 kaiFontCoverage.spec),
+    # 其余的片浏览器本来也要等到那些字上屏才取,声明晚一步到不影响它。
+    OUT_CSS.write_text("\n".join(header + [face_of(chunks[0])]) + "\n", encoding="utf-8")
+    rest = header + [
+        "/* 首屏用不到的那几片 —— 由 core/kaiLateFaces.ts 在正文可读之后注入。",
+        "   放进入口 CSS 会让 41.9KB 的 unicode-range 数字表压在渲染阻塞路径上。 */",
+    ]
+    OUT_CSS_REST.write_text(
+        "\n".join(rest + [face_of(chunk) for chunk in chunks[1:]]) + "\n", encoding="utf-8"
+    )
 
     META.write_text(
         json.dumps(
@@ -344,7 +359,8 @@ def main() -> None:
         + (f" · 交给系统字体:{''.join(missing)}" if missing else "")
         + f"\n→ {OUT_DIR.relative_to(ROOT)}/lxgw-wenkai-gb-screen-subset-*.woff2"
         + f"(合计 {total_bytes / 1024:.0f} KB,第一片 {hot_bytes / 1024:.0f} KB)"
-        + f"\n→ {OUT_CSS.relative_to(ROOT)}(每一片的 @font-face 与 unicode-range)"
+        + f"\n→ {OUT_CSS.relative_to(ROOT)}(第一片 —— 唯一进阻塞路径的那条)"
+        + f"\n→ {OUT_CSS_REST.relative_to(ROOT)}(其余 {max(0, len(chunks) - 1)} 片,运行时注入)"
     )
 
 

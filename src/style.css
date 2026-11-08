@@ -2064,6 +2064,10 @@
  * scripts/fonts/build-kai-font.py(24.4MB 的母体不入库,只入库切片);协议全文在
  * public/fonts/OFL.txt —— OFL 要求再分发时带着它,别删。
  *
+ * 22 条 @font-face 的 unicode-range 合计 41.9KB,而首屏只用得到第一片。故这里 @import
+ * 的 kai-subset.css **只有第一片**;其余 21 片在 kai-subset-rest.css,由
+ * core/kaiLateFaces 在正文可读之后注入 —— 压进这份阻塞样式表实测要多花 224ms FCP。
+ *
  * font-display: swap —— 先用回退字体把字显示出来,楷体到了再换,不白屏。
  * 没有加 preload:切片之后首屏要的那一份是几十 KB 量级,而 preload 会把**首屏用不到
  * 的那一片**也提前拽下来。取舍与实测见 scripts/first-paint.mjs —— 它把 FCP 与「楷体

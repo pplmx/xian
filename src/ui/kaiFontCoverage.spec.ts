@@ -27,6 +27,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { readSource } from "@/test/readSource";
 
 const ROOT = resolve(__dirname, "../..");
 const CHARS_FILE = resolve(ROOT, "scripts/fonts/kai-subset.chars.txt");
@@ -34,6 +35,7 @@ const META_FILE = resolve(ROOT, "scripts/fonts/kai-subset.meta.json");
 const BUILD_SCRIPT = resolve(ROOT, "scripts/fonts/build-kai-font.py");
 const FONT_DIR = resolve(ROOT, "src/assets/fonts");
 const CSS_FILE = join(FONT_DIR, "kai-subset.css");
+const REST_CSS_FILE = join(FONT_DIR, "kai-subset-rest.css");
 
 interface ChunkMeta {
   file: string;
@@ -120,7 +122,11 @@ describe("楷体子集 · 覆盖", () => {
 
   it("每一片的 @font-face 与它的 unicode-range 逐字对得上,而且没有孤儿片", () => {
     const meta = JSON.parse(readFileSync(META_FILE, "utf-8")) as { chunks: ChunkMeta[] };
-    const css = readFileSync(CSS_FILE, "utf-8");
+    /*
+     * 声明分成两份文件(首屏阻塞的第一片 + 运行时注入的其余片,见下面那条用例),
+     * 但**合起来**必须与切片一一对应 —— 所以这条判据读两份、拼成同一张表再比。
+     */
+    const css = readFileSync(CSS_FILE, "utf-8") + readFileSync(REST_CSS_FILE, "utf-8");
     // 一条 @font-face 读成 { 文件名, unicode-range }
     const declared = [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((m) => {
       const body = m[1]!;
@@ -128,7 +134,9 @@ describe("楷体子集 · 覆盖", () => {
       const range = /unicode-range:\s*([^;]+);/.exec(body)?.[1]?.replace(/\s+/g, " ").trim() ?? "";
       return { file, range };
     });
-    expect(declared.length, "CSS 里的 @font-face 条数与切片数对不上").toBe(meta.chunks.length);
+    expect(declared.length, "两份 CSS 合起来的 @font-face 条数与切片数对不上").toBe(
+      meta.chunks.length,
+    );
     for (const chunk of meta.chunks) {
       const row = declared.find((d) => d.file === chunk.file);
       expect(row, `${chunk.file} 没有对应的 @font-face 声明`).toBeTruthy();
@@ -211,5 +219,107 @@ describe("首屏字表要跟上开卷文案", () => {
         `首屏字体请求跟着涨(实测 1 片 41KB → 3 片 134KB)。` +
         `把它们补进 scripts/fonts/build-kai-font.py 的 BOOT_FONT_CHARS 并重跑生成脚本:${missing.join("")}`,
     ).toBe("");
+  });
+});
+
+/**
+ * 首屏阻塞的那份 CSS 只该带**首屏用得到的那一片** @font-face。
+ *
+ * ## 缺口(实测)
+ *
+ * 22 条 @font-face 原先全写进 `kai-subset.css`,而它由 `style.css` 的 `@import`
+ * 拉进**入口样式表** —— 于是 22 条的 `unicode-range`(合计 41.9KB 的码位数字表,
+ * 5580 段区间)全都落在渲染阻塞路径上。而首屏真正需要的只有第一片:
+ *
+ * ```text
+ *   同一份 dist,服务端把其余 21 条的 @font-face 摘掉再注入:
+ *     保留 22 条:FCP 1332ms · 入口 CSS 208KB
+ *     只留第一片:FCP 1108ms · 入口 CSS 163KB   (省 224ms / 45KB)
+ * ```
+ *
+ * 那 21 条不是"不要",只是**不急着要**:它们管的是页面日后才出现的生僻字,
+ * 浏览器本来也要等到那些字上屏才会去取对应的 woff2。把它们从阻塞 CSS 里挪到
+ * 运行时注入,首屏少传 44.5KB,字体该来的时候照样来。
+ *
+ * ## 判据守什么
+ *
+ * ① `kai-subset.css`(阻塞路径)里**只有一条** @font-face,且就是第一片;
+ * ② 其余每一片在 `kai-subset-rest.css` 里都有一条,逐字与记账一致;
+ * ③ 运行时那份由 `styles/kaiLateFaces.css` 之外的注入点在 `load` 之后挂上
+ *    —— 它要挂在**正文已可读**之后,否则就是把阻塞挪了个位置。
+ *
+ * ②③ 一起拦的是最容易发生的退化:有人图省事把两段合并回一个文件,
+ * 首屏那 45KB 就悄悄回来了。
+ */
+describe("首屏阻塞的 @font-face 只带第一片", () => {
+  const readFaces = (file: string) => {
+    const css = readFileSync(file, "utf-8");
+    return [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((m) => {
+      const body = m[1]!;
+      return {
+        file: /url\(["']\.\/([^"']+)["']\)/.exec(body)?.[1] ?? "",
+        range: /unicode-range:\s*([^;]+);/.exec(body)?.[1]?.replace(/\s+/g, " ").trim() ?? "",
+      };
+    });
+  };
+
+  it("阻塞那份只有首片,其余片各自在延后那份里且逐字对得上记账", () => {
+    const meta = JSON.parse(readFileSync(META_FILE, "utf-8")) as { chunks: ChunkMeta[] };
+    expect(meta.chunks.length, "只有一片 —— 切片被改坏了,这条判据的前提不成立").toBeGreaterThan(1);
+
+    const blocking = readFaces(CSS_FILE);
+    expect(blocking.length, `阻塞路径上还有 ${blocking.length} 条 @font-face,应只留第一片`).toBe(1);
+    expect(blocking[0]!.file, "阻塞路径上那条 @font-face 不是第一片").toBe(meta.chunks[0]!.file);
+
+    const late = readFaces(REST_CSS_FILE);
+    expect(late.length, "延后那份的 @font-face 条数与剩余切片数对不上").toBe(
+      meta.chunks.length - 1,
+    );
+    for (const chunk of meta.chunks.slice(1)) {
+      const row = late.find((d) => d.file === chunk.file);
+      expect(row, `${chunk.file} 没有对应的延后 @font-face`).toBeTruthy();
+      expect(row!.range, `${chunk.file} 的 unicode-range 与记账不一致(重跑生成脚本)`).toBe(
+        chunk.unicode_range.replace(/\s+/g, " ").trim(),
+      );
+    }
+  });
+
+  it("延后那份由运行时在正文可读之后注入,且不进入口样式表", () => {
+    /*
+     * 入口样式表若又 @import 回来,前面那条"只留一片"就白拦了 —— 两个方向都要看。
+     *
+     * 只认**真的 @import 语句**,不认注释里提到的文件名:这条判据自己的说明、
+     * style.css 里那段解释、以及任何一份注释都可能写着 `kai-subset-rest.css`,
+     * 拿整份正文 `.not.toContain` 会把这些说明也判成回归(实测踩过 ——
+     * 判据被它自己引用的文件名绊红)。
+     */
+    // 走共享入口:style.css 在运行时会按路由拆开,直读那份是残卷
+    const entry = readSource("src/style.css");
+    const imports = [...entry.matchAll(/@import\s+["']([^"']+)["']/g)].map((m) => m[1]!);
+    expect(imports.length, "读不到入口样式表的 @import —— 判据会空转").toBeGreaterThan(0);
+    expect(
+      imports.filter((spec) => spec.includes("kai-subset-rest")),
+      "入口样式表又把延后那份 @import 回来了 —— 41.9KB 的 unicode-range 回到阻塞路径",
+    ).toEqual([]);
+
+    const loader = readFileSync(resolve(ROOT, "src/core/kaiLateFaces.ts"), "utf-8");
+    expect(loader, "延后那份要按需注入(不是静态 import)").toContain("kai-subset-rest.css");
+    expect(loader, "注入点要等正文可读之后 —— 别把阻塞挪个位置").toMatch(
+      /requestIdleCallback|requestAnimationFrame|load/,
+    );
+    // 注入的是 <style>,不是又一条阻塞的 <link>
+    expect(loader, "运行时注入要写成 <style>,别再发一条阻塞样式表").toContain(
+      'createElement("style")',
+    );
+    /*
+     * 必须是**动态**导入:静态 `?inline` 会把这段 CSS 编进入口 JS,
+     * 等于把 44.5KB 从阻塞 CSS 挪进首屏必下的 JS,总字节一点没省(实测 +48KB)。
+     */
+    expect(loader, "这份 CSS 要用动态 import(静态 ?inline 会编进入口 JS)").toMatch(
+      /import\(\s*["']@\/assets\/fonts\/kai-subset-rest\.css\?inline["']\s*\)/,
+    );
+    expect(loader, "别写成静态 import —— 那样它又回到首屏关键路径").not.toMatch(
+      /^import\s+\w+\s+from\s+["']@\/assets\/fonts\/kai-subset-rest/m,
+    );
   });
 });

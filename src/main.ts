@@ -13,6 +13,7 @@ import { acquireSaveWriterRole } from "./core/singleWriter";
 import { recordRuntimeDiagnostic, summarizeError } from "./core/diagnostics";
 import { useUiStore } from "./stores/ui";
 import { useDiagStore } from "./stores/diag";
+import { scheduleLateKaiFaces } from "./core/kaiLateFaces";
 
 /**
  * 单写者判定放在**所有存档写入之前**:下面的扫描与结构升级都会改盘。
@@ -64,6 +65,15 @@ window.addEventListener("unhandledrejection", (event) => {
 });
 
 app.mount("#app");
+
+/*
+ * 楷体其余片的 @font-face 在正文可读之后才挂。
+ *
+ * 22 条 `@font-face` 的 `unicode-range` 合计 41.9KB,原先全在入口样式表里(渲染阻塞)。
+ * 首屏只用得到第一片,那 21 条管的是日后才出现的生僻字 —— 挪到浏览器空闲时注入,
+ * 实测 FCP 1332 → 1108ms、入口 CSS 208 → 163KB(量法与判据见 core/kaiLateFaces)。
+ */
+scheduleLateKaiFaces();
 
 if (corrupted.length > 0) {
   useUiStore().corruptedNotice = corrupted;

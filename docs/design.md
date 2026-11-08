@@ -1448,11 +1448,14 @@ GB 版按 G 源改了字形(原版源自日本的 Klee One,「这 边 过 运」
 uv run scripts/fonts/build-kai-font.py        # 每片约 180 常用字 + 700 储备字
 ```
 
-子集分成二十来片按需下载(每片一段 `unicode-range`,声明是生成物 `src/assets/fonts/kai-subset.css`):
+子集分成二十来片按需下载(每片一段 `unicode-range`,声明是生成物
+`src/assets/fonts/kai-subset.css` 与 `kai-subset-rest.css` 两份:前者只放首屏那片、
+进阻塞路径,后者装其余 21 片、由 `core/kaiLateFaces` 在正文可读之后注入):
 一份 1.8MB 的子集在冷启动时是整份下载的,而首屏真正用到的字不过一两百个 —— 切片之后浏览器
-只取页面上真出现的那几片。字体覆盖与「切片 ↔ unicode-range 对得上」由
-`kaiFontCoverage.spec.ts` 盯着,首屏到底取了几片、多少字节由 `scripts/first-paint.mjs` 量
-(口径与实测见 [development.md](./development.md) 的「首屏与构建时长」)。
+只取页面上真出现的那几片。字体覆盖、切片 ↔ `unicode-range` 对得上、以及「阻塞路径只该带
+首屏那一片」由 `kaiFontCoverage.spec.ts` 盯着,首屏到底取了几片、多少字节由
+`scripts/first-paint.mjs` 量(口径与实测见 [development.md](./development.md) 的
+「首屏与构建时长」)。
 
 ## 图标:全套水墨笔意(`src/ui/inkIcons.ts`)
 
