@@ -5,6 +5,7 @@ import { computed, ref } from "vue";
 import type { FinalStats, GNum, LinggenProfile, StatMods } from "@/types";
 import { gn, gnZero, add, gte, mulN, progress, subClamp } from "@/utils/gnum";
 import { persistConfig } from "@/utils/storage";
+import { codexMomentOfPlayer } from "@/ui/codexMoment";
 import { realmDef, realmLabel, worldOf, SUB_NAMES, MAX_MAJOR } from "@/data/realms";
 import { clampPeakMajor, notePeakMajor } from "@/core/peakRealm";
 import { SUB_LEVELS, START_AGE } from "@/data/constants";
@@ -490,12 +491,14 @@ export const usePlayerStore = defineStore(
     function setPet(id: string | null): void {
       petId.value = id;
       // 唤作伴便入册:灵兽册「相伴中/曾相伴」档从这里记(见 ui/codex 灵兽册)
-      // 道历读数由本 store 自己给(第几世 + 这一世活到几岁),quests 不必再读 player
-      if (id)
-        useQuestsStore().recordPetCompanion(id, {
-          life: reincarnation.value.count + 1,
-          age: Math.floor(age.value),
-        });
+      /*
+       * 道历读数由本 store 给(第几世 + 这一世活到几岁),quests 不必再读 player。
+       *
+       * **调 `codexMomentOfPlayer` 而不是手写一份**:那个函数是"第几世·几岁"的
+       * 唯一定义处,手抄一遍等于埋一个分叉点 —— 它哪天改了算法(比如给寿命加个
+       * 上限),这里不会跟着变,而两处的读数从此不一致。
+       */
+      if (id) useQuestsStore().recordPetCompanion(id, codexMomentOfPlayer(usePlayerStore()));
     }
 
     function addTalent(id: string): void {
