@@ -34,11 +34,14 @@ describe("keepNumberUnit · 数字不许与量词分家", () => {
 describe("不换行锁定 · 只有一个出处", () => {
   it("界面里不再自己写一份数字+量词锁", () => {
     const offenders: string[] = [];
+    /* 防空转:一个文件都没扫到时,"没有违规"是假绿 —— 见下面的数量断言 */
+    let scanned = 0;
     for (const file of walkFiles(
       resolve(ROOT, "src"),
       (n) => n.endsWith(".vue") || n.endsWith(".ts"),
     )) {
       if (file.endsWith("keepNumberUnit.ts") || file.endsWith(".spec.ts")) continue;
+      scanned += 1;
       const src = readFileSync(file, "utf8");
       /*
        * 特征是把空格换成不换行空格。源码里两种写法都算:
@@ -50,6 +53,9 @@ describe("不换行锁定 · 只有一个出处", () => {
         offenders.push(file);
       }
     }
+    expect(scanned, "一个源文件都没扫到 —— 过滤条件或路径写错了,上面的空集不算数").toBeGreaterThan(
+      100,
+    );
     expect(offenders, "这些文件又手写了一份不换行锁定 —— 改用 @/utils/keepNumberUnit").toEqual([]);
   });
 });

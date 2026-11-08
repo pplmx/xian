@@ -35,11 +35,14 @@ describe("调用点", () => {
   it("源码里不再有 `.color + 'xx'` 这种拼法", () => {
     const ROOT = resolve(__dirname, "../..");
     const offenders: string[] = [];
+    /** 扫过多少个文件 —— 见下面的防空转断言 */
+    let scanned = 0;
     const walk = (dir: string): void => {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {
         const path = resolve(dir, entry.name);
         if (entry.isDirectory()) walk(path);
         else if (/\.(ts|vue)$/.test(entry.name) && !entry.name.endsWith(".spec.ts")) {
+          scanned += 1;
           for (const m of readFileSync(path, "utf-8").matchAll(/\.color\s*\+\s*['"`]/g)) {
             offenders.push(`${path.slice(ROOT.length + 1)} → ${m[0]}`);
           }
@@ -47,6 +50,14 @@ describe("调用点", () => {
       }
     };
     walk(resolve(ROOT, "src"));
+    /*
+     * **防空转**:`offenders` 为空有两种原因 —— 真的一处都没有,或者根本没扫到文件
+     * (路径写错、扩展名过滤变严)。不把「扫过多少」写出来,这两件事分不开,
+     * 而后者会让这条判据在无人察觉的情况下永远通过。
+     */
+    expect(scanned, "一个源文件都没扫到 —— 过滤条件或路径写错了,上面的空集不算数").toBeGreaterThan(
+      100,
+    );
     expect(offenders).toEqual([]);
   });
 });

@@ -57,7 +57,10 @@ describe("桌面阅读字阶 · 手机与宽屏共用一套语义刻度", () => 
      * 与阅读字阶无关,换成 15/18 反而会触发缩放。
      */
     const offenders: string[] = [];
+    /* 防空转:一个文件都没扫到时,"没有违规"是假绿 —— 见下面的数量断言 */
+    let scanned = 0;
     for (const file of walkFiles(SRC, isSourceFile)) {
+      scanned += 1;
       const code = readFileSync(file, "utf8")
         .replace(/<!--[\s\S]*?-->/g, "")
         .replace(/\/\*[\s\S]*?\*\//g, "")
@@ -79,6 +82,13 @@ describe("桌面阅读字阶 · 手机与宽屏共用一套语义刻度", () => 
         break;
       }
     }
+    /*
+     * **防空转**:`offenders` 为空有两种原因 —— 真的一处都没有,或者根本没扫到文件
+     * (路径写错、`isSourceFile` 过滤变严)。后者会让这条判据静默地永远通过。
+     */
+    expect(scanned, "一个源文件都没扫到 —— 过滤条件或路径写错了,上面的空集不算数").toBeGreaterThan(
+      100,
+    );
     expect(offenders, "这些文件又把阅读字阶写成了裸像素").toEqual([]);
   });
 

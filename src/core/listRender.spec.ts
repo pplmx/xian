@@ -109,9 +109,12 @@ describe("续开一批报出的件数", () => {
   it("界面里没有第二份 min(批量, hidden) 的拼法", () => {
     // 防回归:这条若是红的,说明有人又在模板或 computed 里手拼了一遍,
     // 而那份随时会和按钮文案分叉。
-    const offenders = walkFiles(resolve(ROOT, "src"), isVueFile).filter((f) =>
+    const files = walkFiles(resolve(ROOT, "src"), isVueFile);
+    const offenders = files.filter((f) =>
       /Math\.min\(\s*\w*RENDER_BATCH\s*,/.test(readSource(relative(ROOT, f))),
     );
+    /* 防空转:一个 .vue 都没扫到时,"没有违规"是假绿 */
+    expect(files.length, "一个 .vue 都没扫到 —— 路径或过滤条件写错了").toBeGreaterThan(20);
     expect(offenders).toEqual([]);
   });
 });
