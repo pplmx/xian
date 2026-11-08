@@ -1080,6 +1080,43 @@ for (const name of plainApis) { assert.ok(name in engine, …); }               
 | `badSpecs` | **无下限**,但循环跑在 `readdirSync(src)` 的结果上,摘要行会打印文件数,基本不会空转 |
 | `plainApis` | **无下限,且正则依赖反引号写法** —— 这一处才值得修 |
 
+## 端口:core 怎么在不认识 store 的前提下说话
+
+`core` 有 168 个模块,其中 48 个必须读写 store(编排层)。另外 120 个是纯逻辑 ——
+它们**也要说话**:弹一条提示、给界面递一份视图模型、把运行期异常留档。
+
+直接 `useUiStore().toast(...)` 是最短的路,但那样 core 就依赖了 Pinia:测一个数值函数
+要先建一整套 store,想把逻辑搬到别处也搬不动。
+
+三个**端口**解决的正是这件事 —— core 定义接口,上层在 store 的 setup 里注入实现:
+
+| 端口 | 说什么 | 落点 |
+| --- | --- | --- |
+| `core/notify.ts` | 「该提示什么」 | `stores/ui.ts` 的 `setNotifier` |
+| `core/uiPort.ts` | 「该给界面看什么」 | `stores/ui.ts` 的 `setUiViewModelSink` |
+| `core/diagnostics.ts` | 「运行期出了什么异常」 | `stores/diag.ts` 的 `setRuntimeDiagnosticSink` |
+
+**效果**:30 个 core 模块经 `notify` 发提示、4 个经 `uiPort` 递视图,
+而 `grep useUiStore src/core/*.ts` 只剩注释里几处、零实际调用。
+
+### 两条必须守住的细节
+
+**一、落点要用 `(...args)` 转发,不要手写参数表。**
+
+`stores/ui.ts` 的注释记着栽过两次:先是漏了 `seal`(品阶印)、再是漏了 `target`(去路)——
+两次都**类型合法**(JS 丢实参不报错),单元测试直接调 store 的全参版本全绿,
+只有真浏览器里「怎么没效果」。写 `(...args)` 后,参数表由 `Notifier` 的签名约束,
+端口涨一个参数这里不用改也不会漏。
+
+**二、落点必须真被接上,否则是静默失效。**
+
+`notify` / `uiPort` 在没人接时**按设计静默丢弃**(批量结算、脚本、库的调用方都可能不挂 UI),
+但「忘了接线」和「本来就没接」长得一模一样。判据在 `core/layeringAudit.spec`:
+三个 setter 都必须真在 stores 里被调用(注释掉的调用不算)。
+
+> 同形的坑在 `core/diagnostics` 上真出过:`sink?.()` 在半初始化窗口里把异常丢了,
+> 见 `core/startupOrder.spec` 与 `core/mainWiring.spec`。
+
 ## 设计规范
 
 配色、版式、字体子集与动效见 [design.md](./design.md)。
