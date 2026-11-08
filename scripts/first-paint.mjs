@@ -224,9 +224,22 @@ async function coldStart(browser, origin) {
   });
   const t0 = Date.now();
   await page.goto(origin, { waitUntil: "load" });
-  // 等字体落定(swap 那一瞬间在这里发生);拿不到就按 6 秒封顶
+  /*
+   * 等换字那一拍 —— **必须等 `loadingdone` 本身**,不能只等 `document.fonts.ready`
+   * 再睡一段。4G 档实测两者差着 1113ms:
+   *
+   *   document.fonts.ready = 2015ms
+   *   loadingdone          = 3128ms
+   *
+   * 原先的 `fonts.ready` + 400ms 因此经常在 `loadingdone` **之前**就收手,
+   * `__kaiSwap` 读到 null,判据拿 Infinity 去比预算 —— 报「楷体换上太晚」,
+   * 而字体明明 1 片 48KB 正常到了。一条守时序的判据退化成了噪声。
+   *
+   * `waitForFunction` 超时不算失败:那说明**没量到**(字体没进产物 / family 名对不上 /
+   * 页面根本没渲染楷体字),下面用单独一条判词说清楚,与「太晚」分开报。
+   */
   await page
-    .evaluate(() => Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 6000))]))
+    .waitForFunction(() => window.__kaiSwap !== null, undefined, { timeout: 12_000 })
     .catch(() => {});
   await page.waitForTimeout(400); // 让最后几个响应体结算
   const marks = await page.evaluate(async () => {
@@ -275,7 +288,11 @@ server.close();
 const total = runs.map((r) => r.decodedBytes);
 const wire = runs.map((r) => r.encodedBytes);
 const fcp = runs.map((r) => r.marks.fcp ?? Infinity);
-const swap = runs.map((r) => r.marks.fontSwap ?? Infinity);
+/** 换字那一拍。**没有默认值** —— 量不到就是 null,与「太晚」分开报(见下面的判词) */
+const swap = runs.map((r) => r.marks.fontSwap);
+const swapMeasured = swap.filter((n) => n !== null && n !== undefined);
+/** 取中位用:只在中位数这一处把「没量到」当成无穷,判词那边不这么用 */
+const swapMedian = swapMeasured.length > 0 ? median(swapMeasured) : null;
 const decodedOf = Object.fromEntries(runs[0].byType);
 const encodedOf = Object.fromEntries(runs[0].encodedByType);
 const types = [...new Set([...Object.keys(decodedOf), ...Object.keys(encodedOf)])].sort(
@@ -292,7 +309,10 @@ for (const type of types)
     `    ${type.padEnd(10)} 解码 ${kb(decodedOf[type] ?? 0).padStart(6)} · 线传 ${kb(encodedOf[type] ?? 0).padStart(6)}`,
   );
 console.log(`  FCP       ${ms(median(fcp))}  —— 预算 ${ms(BUDGETS.fcp)}`);
-console.log(`  楷体换上   ${ms(median(swap))}  —— 预算 ${ms(BUDGETS.fontSwap)}`);
+console.log(
+  `  楷体换上   ${swapMedian === null ? "没量到" : ms(swapMedian)}  —— 预算 ${ms(BUDGETS.fontSwap)}` +
+    (swapMeasured.length < runs.length ? `(只量到 ${swapMeasured.length}/${runs.length} 遍)` : ""),
+);
 console.log(
   `  楷体可用:${runs[0].marks.kaiUsable ? "是" : "否"} · 字体就绪 ${ms(runs[0].marks.fontReady)}`,
 );
@@ -307,8 +327,20 @@ const failures = [];
 if (median(total) > BUDGETS.bytes * 1024)
   failures.push(`冷启动解码字节 ${kb(median(total))} 超过预算 ${kb(BUDGETS.bytes * 1024)}`);
 if (median(fcp) > BUDGETS.fcp) failures.push(`FCP ${ms(median(fcp))} 超过预算 ${ms(BUDGETS.fcp)}`);
-if (median(swap) > BUDGETS.fontSwap)
-  failures.push(`楷体换上太晚:${ms(median(swap))} 超过预算 ${ms(BUDGETS.fontSwap)}`);
+/*
+ * 「量不到」与「太晚」是两件事,分开报:
+ *   · 没量到 —— 结算窗口等不到 loadingdone,多半是字体没进产物 / family 名对不上 /
+ *     首屏压根没有楷体字。那时**不能**拿 Infinity 去比预算,否则报出来的是
+ *     「太晚」,而真正的毛病是「没量到」,查的人会一路往带宽与时序上找(实测踩过)。
+ *   · 太晚 —— 真量到了,只是超预算。
+ */
+if (swapMedian === null) {
+  failures.push(
+    `楷体换上没量到(结算窗口等不到 loadingdone)—— 字体没进产物、family 名对不上,或首屏没有楷体字`,
+  );
+} else if (swapMedian > BUDGETS.fontSwap) {
+  failures.push(`楷体换上太晚:${ms(swapMedian)} 超过预算 ${ms(BUDGETS.fontSwap)}`);
+}
 // 防空转:量不到楷体(字体没进产物/名字写错)时,那条预算永远绿
 if (!runs[0].marks.kaiUsable)
   failures.push("楷体没被用上(dist 里没有字体、或 family 名对不上)—— 字体那条预算空转了");

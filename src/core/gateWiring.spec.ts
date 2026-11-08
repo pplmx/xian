@@ -598,3 +598,55 @@ describe("发版体检自己也得有人看着", () => {
     expect(SCRIPT, "脚本里又出现了自己的阻塞文案(判断应留在 core)").not.toContain("blockers.push(");
   });
 });
+
+/**
+ * 首屏门的**结算窗口** —— 它比「门会不会红」更隐蔽的一类退化。
+ *
+ * ## 实测过的失效
+ *
+ * `first-paint.mjs` 原先这样等:
+ *
+ * ```js
+ * await page.evaluate(() => Promise.race([document.fonts.ready, 超时]));
+ * await page.waitForTimeout(400);   // 让最后几个响应体结算
+ * ```
+ *
+ * 它假设「`document.fonts.ready` resolve 之后 400ms 内 `loadingdone` 一定触发」。
+ * 4G 档实测这个前提不成立:
+ *
+ * ```text
+ *   document.fonts.ready = 2015ms
+ *   loadingdone          = 3128ms     ← 晚了 1113ms
+ * ```
+ *
+ * 于是 `window.__kaiSwap` 读到 null,判据拿 `Infinity` 去比预算 —— 报「楷体换上太晚」,
+ * 而字体明明 1 片 48KB 正常到了。**一条守字体时序的判据退化成了噪声**,查它的人
+ * 只能靠猜(本轮实测踩到,浪费了一轮排查)。
+ *
+ * ## 判据守什么
+ *
+ * ① 结算窗口要**等 `loadingdone` 本身**,不能只等 `fonts.ready` 再睡固定时长;
+ * ② 等不到时要有明确的「判据不成立」出口,而不是把 null 当 ∞ 去比预算 ——
+ *    「量不到」与「太晚」是两件事,混在一起就成了假红。
+ */
+describe("首屏门 · 结算窗口要等得到它要量的那一拍", () => {
+  const SRC = readFileSync(join(ROOT, "scripts/first-paint.mjs"), "utf8");
+
+  it("结算窗口等的是 loadingdone,不是 fonts.ready 之后睡一段", () => {
+    expect(SRC, "首屏门里找不到 __kaiSwap(那它就什么也没量)").toContain("__kaiSwap");
+    // 要有一个「等到 __kaiSwap 落定」的显式等待;只等 fonts.ready 不够
+    expect(
+      SRC,
+      "结算窗口没有等 loadingdone —— 只等 document.fonts.ready 会在 4G 档读到 null" +
+        "(实测差 1113ms),于是「量不到」被当成「太晚」报红",
+    ).toMatch(/__kaiSwap\s*!==\s*null|waitForFunction\([^)]*__kaiSwap/);
+  });
+
+  it("量不到与太晚要分开报 —— 不许把 null 当 Infinity 比预算", () => {
+    // 现写法 `marks.fontSwap ?? Infinity` 会把「没量到」算成「无穷晚」
+    expect(SRC, "`fontSwap ?? Infinity` 把「量不到」判成「太晚」—— 两条要分开报").not.toMatch(
+      /fontSwap\s*\?\?\s*Infinity/,
+    );
+    expect(SRC, "缺一条「楷体换上没量到」的独立判词").toContain("没量到");
+  });
+});
