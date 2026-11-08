@@ -267,3 +267,71 @@ describe("门面可以只装一半", () => {
     expect(() => defineGame(broken)).toThrow(/CONFIG_FIELD_SHAPE/);
   });
 });
+
+describe("配置校验 · id 重复要逐节都抓得到", () => {
+  /*
+   * `validateGame` 里同一套「查重 → 报错」写了七遍(槽位 / 品质 / 模板 / 词条 /
+   * 套装 / 敌人 / 区域),每遍都把 `duplicates(...)` 调两次(判空一次、拼消息一次)。
+   * 收敛成一个辅助函数之前,先把**七处都得报**钉住 —— 否则收敛时漏掉一节,
+   * 那节的重复 id 从此没人管,而配置作者拿到的是「装配后行为诡异」而不是一条报错。
+   */
+  const cases: {
+    name: string;
+    code: string;
+    mutate: (c: ReturnType<typeof baseConfig>) => void;
+  }[] = [
+    {
+      name: "槽位",
+      code: "EQUIP_SLOT_DUPLICATE",
+      mutate: (c) => c.equipment.slots.push({ ...c.equipment.slots[0]! }),
+    },
+    {
+      name: "品质",
+      code: "EQUIP_QUALITY_DUPLICATE",
+      mutate: (c) => c.equipment.qualities.push({ ...c.equipment.qualities[0]! }),
+    },
+    {
+      name: "装备模板",
+      code: "EQUIP_TEMPLATE_DUPLICATE",
+      mutate: (c) => c.equipment.templates.push({ ...c.equipment.templates[0]! }),
+    },
+    {
+      name: "词条",
+      code: "EQUIP_AFFIX_DUPLICATE",
+      mutate: (c) => c.equipment.affixes.push({ ...c.equipment.affixes[0]! }),
+    },
+    {
+      name: "套装",
+      code: "EQUIP_SET_DUPLICATE",
+      mutate: (c) => {
+        c.equipment.sets = [{ id: "s1", name: "套一", bonuses: [] } as never];
+        c.equipment.sets.push({ ...c.equipment.sets[0]! });
+      },
+    },
+    {
+      name: "敌人",
+      code: "DUNGEON_ENEMY_DUPLICATE",
+      mutate: (c) => c.dungeons.enemies.push({ ...c.dungeons.enemies[0]! }),
+    },
+    {
+      name: "区域",
+      code: "DUNGEON_REGION_DUPLICATE",
+      mutate: (c) => c.dungeons.regions.push({ ...c.dungeons.regions[0]! }),
+    },
+  ];
+
+  for (const c of cases) {
+    it(`${c.name} id 重复 → ${c.code}`, () => {
+      const cfg = baseConfig();
+      c.mutate(cfg);
+      const issues = validateGame(cfg);
+      expect(
+        issues.some((i) => i.code === c.code),
+        `没报出 ${c.code}`,
+      ).toBe(true);
+      // 报错里要带上重复的那个 id,否则配置作者不知道是哪个
+      const hit = issues.find((i) => i.code === c.code)!;
+      expect(hit.message).toContain("重复");
+    });
+  }
+});

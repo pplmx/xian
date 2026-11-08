@@ -72,6 +72,28 @@ function duplicates(ids: readonly string[]): string[] {
 }
 
 /**
+ * 「这一节的 id 不许重复」—— 同一个检查在 `validateGame` 里要跑七遍
+ * (槽位 / 品质 / 模板 / 词条 / 套装 / 敌人 / 区域)。
+ *
+ * 从前每处都写成两行:`if (duplicates(x).length > 0) err(CODE, `…${duplicates(x).join("、")}`)` ——
+ * **每处都算了两遍**,而且七份样板只差错误码与中文名。收成一行调用之后,
+ * 重复只算一次,漏写一处的机会也少了(七处都调同一个函数)。
+ *
+ * 返回是否报过错,调用方一般不需要 —— 它只是为了让"这里查过了"读得出来。
+ */
+function reportDuplicate(
+  ids: readonly string[],
+  code: string,
+  label: string,
+  err: (code: string, message: string) => void,
+): boolean {
+  const dup = duplicates(ids);
+  if (dup.length === 0) return false;
+  err(code, `${label} id 重复:${dup.join("、")}`);
+  return true;
+}
+
+/**
  * 逐条对账。错误(引用不存在、键重复、链条断掉)会挡住装配;
  * 警告(某层某部位没有内容、首领没标记 boss)只是提示。
  */
@@ -210,37 +232,37 @@ export function validateGame<T = number>(config: GameConfig<T>): ValidationIssue
   if (config.equipment !== null) {
     const equipment = config.equipment;
     const slotIds = new Set(equipment.slots.map((s) => s.id));
-    if (duplicates(equipment.slots.map((s) => s.id)).length > 0) {
-      err(
-        "EQUIP_SLOT_DUPLICATE",
-        `槽位 id 重复:${duplicates(equipment.slots.map((s) => s.id)).join("、")}`,
-      );
-    }
-    if (duplicates(equipment.qualities.map((q) => q.id)).length > 0) {
-      err(
-        "EQUIP_QUALITY_DUPLICATE",
-        `品质 id 重复:${duplicates(equipment.qualities.map((q) => q.id)).join("、")}`,
-      );
-    }
-    if (duplicates(equipment.templates.map((t) => t.id)).length > 0) {
-      err(
-        "EQUIP_TEMPLATE_DUPLICATE",
-        `装备模板 id 重复:${duplicates(equipment.templates.map((t) => t.id)).join("、")}`,
-      );
-    }
-    if (duplicates(equipment.affixes.map((a) => a.id)).length > 0) {
-      err(
-        "EQUIP_AFFIX_DUPLICATE",
-        `词条 id 重复:${duplicates(equipment.affixes.map((a) => a.id)).join("、")}`,
-      );
-    }
+    reportDuplicate(
+      equipment.slots.map((s) => s.id),
+      "EQUIP_SLOT_DUPLICATE",
+      "槽位",
+      err,
+    );
+    reportDuplicate(
+      equipment.qualities.map((q) => q.id),
+      "EQUIP_QUALITY_DUPLICATE",
+      "品质",
+      err,
+    );
+    reportDuplicate(
+      equipment.templates.map((t) => t.id),
+      "EQUIP_TEMPLATE_DUPLICATE",
+      "装备模板",
+      err,
+    );
+    reportDuplicate(
+      equipment.affixes.map((a) => a.id),
+      "EQUIP_AFFIX_DUPLICATE",
+      "词条",
+      err,
+    );
     const setIds = new Set((equipment.sets ?? []).map((s) => s.id));
-    if (duplicates((equipment.sets ?? []).map((s) => s.id)).length > 0) {
-      err(
-        "EQUIP_SET_DUPLICATE",
-        `套装 id 重复:${duplicates((equipment.sets ?? []).map((s) => s.id)).join("、")}`,
-      );
-    }
+    reportDuplicate(
+      (equipment.sets ?? []).map((s) => s.id),
+      "EQUIP_SET_DUPLICATE",
+      "套装",
+      err,
+    );
     for (const s of equipment.sets ?? []) {
       if (s.bonuses.length === 0)
         warn("EQUIP_SET_EMPTY", `套装 ${s.id}(${s.name})没有任何件数效果`);
@@ -299,18 +321,18 @@ export function validateGame<T = number>(config: GameConfig<T>): ValidationIssue
     const dungeons = config.dungeons;
     const enemyIds = new Set(dungeons.enemies.map((e) => e.id));
     const regionIds = new Set(dungeons.regions.map((r) => r.id));
-    if (duplicates(dungeons.enemies.map((e) => e.id)).length > 0) {
-      err(
-        "DUNGEON_ENEMY_DUPLICATE",
-        `敌人 id 重复:${duplicates(dungeons.enemies.map((e) => e.id)).join("、")}`,
-      );
-    }
-    if (duplicates(dungeons.regions.map((r) => r.id)).length > 0) {
-      err(
-        "DUNGEON_REGION_DUPLICATE",
-        `区域 id 重复:${duplicates(dungeons.regions.map((r) => r.id)).join("、")}`,
-      );
-    }
+    reportDuplicate(
+      dungeons.enemies.map((e) => e.id),
+      "DUNGEON_ENEMY_DUPLICATE",
+      "敌人",
+      err,
+    );
+    reportDuplicate(
+      dungeons.regions.map((r) => r.id),
+      "DUNGEON_REGION_DUPLICATE",
+      "区域",
+      err,
+    );
     for (const r of dungeons.regions) {
       if (r.enemies.length === 0)
         warn("DUNGEON_REGION_NO_ENEMY", `区域 ${r.id}(${r.name})没有普通敌人,只会出首领`);
