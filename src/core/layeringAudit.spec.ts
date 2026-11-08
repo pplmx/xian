@@ -214,4 +214,37 @@ describe("分层 · core 对 store 的依赖只许收拢", () => {
       "这些底层模块 import 了视图层 —— 依赖倒过来了:" + offenders.join("、"),
     ).toEqual([]);
   });
+
+  it("组件不认识页面 —— components 不许 import views", () => {
+    /*
+     * 上一条守的是「底层 → 视图」这一刀。这条守相邻的一刀:**组件 → 页面**。
+     *
+     * `components` 是**可复用件**,`views` 是**装配好的整页**。组件一旦 import 了
+     * 某个 view,它就只能在这个页面体系里用了 —— 想复用要先把那个 view 拖过来,
+     * 而 view 又会牵进路由、导航、整页状态。症状是「这个组件挺通用,但搬不走」。
+     *
+     * 实测(2026-11-09)零违规,但此前没有判据。
+     */
+    const files: { name: string; text: string }[] = [];
+    const collect = (dir: string): void => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) collect(full);
+        else if (entry.name.endsWith(".vue")) {
+          files.push({
+            name: full.slice(resolve(__dirname, "..").length + 1).replace(/\\/g, "/"),
+            text: readFileSync(full, "utf8"),
+          });
+        }
+      }
+    };
+    collect(resolve(__dirname, "../components"));
+    // 防空转:一个组件都没扫到时,下面的空集不算数
+    expect(files.length, "一个 .vue 都没扫到 —— 目录或扩展名写错了").toBeGreaterThan(80);
+    const bad = files.filter((f) => /from\s+"@\/views\//.test(f.text));
+    expect(
+      bad.map((f) => f.name),
+      "这些组件 import 了页面 —— 它从此搬不走",
+    ).toEqual([]);
+  });
 });
