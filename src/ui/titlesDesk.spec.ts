@@ -271,3 +271,28 @@ describe("名兽案 · 双契总览直接接卷首,当前、可追与全谱各�
     );
   });
 });
+
+describe("名号页 · 「尚未佩印」不许在首屏说两遍", () => {
+  /*
+   * 实测(17 路由 × 2 视口扫过,只有这一处):
+   *
+   *   /titles  «尚未佩印»  @386(章首 fact)与 @439(当前佩印卡片空态),相距 53px
+   *
+   * 章首那句 `title` 已经写着「此刻佩印」、卡片空态还带着操作指引
+   * (「从名号谱里择一枚佩上」)—— 状态说两遍没有额外信息。
+   *
+   * 章首 fact 该报的是卡片里没有的数:名号谱里已得几枚。
+   */
+  it("章首 fact 不再复述卡片空态那句话", () => {
+    const view = source("src/views/TitlesView.vue");
+    // 从章首那个标记开始,切到它自己的 /> 为止(这一页后面还有别的章首)
+    const start = view.indexOf("data-name-beast-chapter-head");
+    const head = view.slice(start, view.indexOf("/>", start));
+    const factLine = head.match(/:fact="[^"]*"/)?.[0] ?? "";
+    expect(factLine, "定位不到章首 fact —— 判据会空转").not.toBe("");
+    expect(
+      factLine,
+      "章首 fact 又写了「尚未佩印」—— 卡片空态已经说过,且那边还带操作指引",
+    ).not.toContain("尚未佩印");
+  });
+});

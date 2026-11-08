@@ -33,13 +33,19 @@
             真浏览器实测这一页首屏 `13/29` 出现了四遍(切换签 + 两枚章首 fact + 账行尾数)。
             现在章壹报当前状态、章贰报余量,两枚章首各答各的。
           -->
+          <!--
+            未佩印时报「已得几枚」，不报「尚未佩印」—— 后者与下方
+            「当前佩印」卡片的空态一字不差（那边还带操作指引），
+            首屏同一状态说两遍没有额外信息。实测 390 档 @386 与 @439 相距 53px。
+            已得数卡片里没有，正好补位。
+          -->
           <FolioChapterHead
             data-name-beast-chapter-head
             index="壹"
             eyebrow="名号 · 当前与可追"
             title="此刻佩印"
             hint="佩印一枚入行藏 · 下一印按成就进度"
-            :fact="wornTitle ? `${wornTitle.def.name} · 已佩` : '尚未佩印'"
+            :fact="wornTitle ? `${wornTitle.def.name} · 已佩` : `已得 ${titleMeter.owned} 顶`"
           />
 
           <div class="name-beast-focus__panels">
