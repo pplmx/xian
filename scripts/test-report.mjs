@@ -208,7 +208,22 @@ const CATEGORIES = [
     ],
   },
   {
-    name: "Regression  服务与归因",
+    /*
+     * 这一格是**跨系统的集成回归**,不是「其他」。
+     *
+     * 它与上面八格的分别:那八格按**游戏系统**分(战斗 / 经济 / 成长 / 终局…),
+     * 一个 spec 天然只属于一格;而这里的 spec 守的是**跨系统的契约**——
+     * 视图与 store 的接线、存档往返、静态审计、界面格局与文案一致性、运行时与平台。
+     * 它们不属于任何单一系统,按系统硬分会把一个 spec 的用例拆到两格去。
+     *
+     * 它大(277 项,占全量约一半)是因为这类契约本来就多,而不是没人整理:
+     * 按后缀/关键词硬切试过三种分法,每次都有 130+ 项落进「其他」—— 那就是说明
+     * 按系统维度分不动它们。故保留一格,但把名字改成它实际装的东西。
+     *
+     * 失衡有上限:`src/core/testReportBalance.spec.ts` 会核「单格不超过全量的一半」,
+     * 以及「名字与内容对得上」。再往里塞东西会红。
+     */
+    name: "Contract    跨系统契约",
     match: [
       "loadoutService",
       "loadouts",
@@ -330,6 +345,7 @@ const CATEGORIES = [
       "useGameNow",
       "engineTick",
       "perfBudget",
+      "testReportBalance",
       "modalStack",
       "singleWriter",
       "useReturnSettle",
