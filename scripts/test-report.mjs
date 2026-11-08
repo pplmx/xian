@@ -352,6 +352,7 @@ const CATEGORIES = [
       "guard",
       "swRegistration",
       "mainWiring",
+      "routeTransition",
       "exportReach",
       "engineGateCoverage",
       "testReportBalance",
