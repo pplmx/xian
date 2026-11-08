@@ -3912,6 +3912,112 @@ async function taskTabFocus() {
 }
 
 /** 浮出的提示条点得掉 */
+/**
+ * 清档仪式 —— 全应用最危险的一个按钮,此前从没被真浏览器按过。
+ *
+ * 「散尽修为,重入轮回(清空存档)」点下去会把整份存档推倒重来。它有三道关:
+ * 弹确认框 → 暂停引擎 → 玩家再点一次才算数。三道里任何一道错(框不弹、
+ * 引擎不暂停、取消后不恢复),玩家都可能在半暂停的游戏里越陷越深。
+ *
+ * 判据只验**前半程**:打开确认框、看引擎停没停、取消、看引擎回没回来。
+ * **绝不点「确认」** —— 那一步会让本页变成空号,后面的任务全废;而"真清掉"
+ * 已由 `core/saveRoundTrip.spec` 在单元层验过(`resetGame()` 返回 true/false)。
+ */
+async function taskResetFlow() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({ viewport: { width: 390, height: 844 } });
+  try {
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await page.goto(INDEX, { waitUntil: "load" });
+    await page
+      .getByRole("button", { name: /启封入山/ })
+      .first()
+      .click();
+    await page.locator("input[type=checkbox]").first().check();
+    await page
+      .getByRole("button", { name: /署印入山/ })
+      .first()
+      .click();
+    await page.waitForTimeout(3200);
+    await page.locator("input:not([type=file]):not([type=checkbox])").first().fill("清档自检");
+    await page
+      .getByRole("button", { name: /踏\s*入\s*仙\s*途/ })
+      .first()
+      .click();
+    await page.waitForTimeout(1200);
+    await page.goto(`${INDEX}#/settings`, { waitUntil: "load" });
+    await page.waitForTimeout(900);
+    /*
+     * 刚建号时会按概率弹出「顿悟」之类的机缘卷(它是全局浮层,压在设置页上面),
+     * 挡住要点的按钮。这属于引擎按概率触发的东西,与清档流程无关 ——
+     * 先把它关掉,否则点击会被浮层拦下(实测报「subtree intercepts pointer events」)。
+     */
+    for (let i = 0; i < 3; i += 1) {
+      const panel = page.locator(".modal-panel").first();
+      if (!(await panel.count())) break;
+      const dismiss = page.getByRole("button", { name: /收起|暂不|放弃|离开|关闭|知道了/ }).first();
+      if (await dismiss.count()) await dismiss.click({ timeout: 1500 }).catch(() => {});
+      else await page.keyboard.press("Escape").catch(() => {});
+      await page.waitForTimeout(400);
+    }
+
+    /*
+     * 引擎有没有在跑:读顶栏灵气看它自己涨不涨(与第十三件事同一套读数,
+     * `readFormatted` 会按 formatGN 的档位还原)。暂停时引擎不推进,这个数就冻住。
+     */
+    const readQi = () => readFormatted(page, "灵气");
+    const resetBtn = page.getByRole("button", { name: /散尽修为/ }).first();
+    checked += 1;
+    if (!(await resetBtn.count())) {
+      failures.push("[390] 设置页找不到「散尽修为,重入轮回」按钮");
+    } else {
+      await resetBtn.click();
+      await page.waitForTimeout(500);
+      const hasConfirm = await page.evaluate(
+        () => document.querySelectorAll(".modal-panel").length > 0,
+      );
+      checked += 1;
+      if (!hasConfirm) failures.push("[390] 点了「散尽修为」却没弹确认框 —— 会直接清档吗");
+
+      // 确认框里必须把后果写清,而不是只问「确定吗」
+      const panelText = await page.evaluate(
+        () => document.querySelector(".modal-panel")?.textContent ?? "",
+      );
+      checked += 1;
+      // 判的是「有没有把后果说清」,不是「用了哪个词」—— 现文案是
+      // 「彻底抹去本机的一切修行痕迹,包括转世收获,且无法恢复」,第一版正则只查
+      // 「清空/清档/无法撤销」而误报,是判据口径太窄,不是文案有问题。
+      for (const must of [/无法恢复|不可撤销|无法撤销|抹去|不可挽回/]) {
+        if (!must.test(panelText)) {
+          failures.push(`[390] 确认框没说清后果(缺「${must.source}」):${panelText.slice(0, 60)}`);
+          break;
+        }
+      }
+
+      // 取消:引擎要回到运行,而不是停在暂停里
+      const cancel = page.getByRole("button", { name: /取消|再想想|不了/ }).first();
+      if (await cancel.count()) {
+        await cancel.click();
+        await page.waitForTimeout(600);
+        const a = await readQi();
+        await page.waitForTimeout(2000);
+        const b = await readQi();
+        checked += 1;
+        if (Number.isFinite(a) && Number.isFinite(b) && b <= a) {
+          failures.push(`[390] 取消清档后引擎没恢复(灵气 ${a} → ${b},暂停时引擎不推进)`);
+        }
+      }
+    }
+    for (const e of pageErrors) failures.push(`[390] 运行时异常:${e}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked };
+}
+
 async function taskToastDismiss() {
   const failures = [];
   let checked = 0;
@@ -29938,6 +30044,7 @@ const TASKS = [
   ["桌面浮层的卷身深度", taskDesktopModalDepth],
   ["Tab 焦点看得见", taskTabFocus],
   ["浮出的提示条点得掉", taskToastDismiss],
+  ["清档仪式的确认框与引擎恢复", taskResetFlow],
   ["五个感官对得上", taskSensoryParity],
   ["引擎概率弹窗(顿悟 / 洞府巡游)", taskEngineModals],
   ["冷启动落在子页的返回", taskColdStartBack],
