@@ -21,7 +21,6 @@ import {
   produceOf,
 } from "@/core/engineFacilities";
 import { veinModsOf, veinStateOf, veinTotalOf } from "@/core/engineVeins";
-import { useResourcesStore } from "./resources";
 
 export const useDongfuStore = defineStore(
   "dongfu",
@@ -161,15 +160,19 @@ export const useDongfuStore = defineStore(
       };
     }
 
-    /** 建筑产出(灵田/藏经阁),按秒推进 */
-    function produce(dtSec: number): void {
-      const resources = useResourcesStore();
+    /**
+     * 建筑产出(灵田/藏经阁),按秒推进 —— **返回**这一拍该入账的整数,由调用方写进资源。
+     *
+     * 原先是自己去 `useResourcesStore().addSmall(...)`,于是 `dongfu` 依赖 `resources`,
+     * 而 `resources` 又依赖 `player`、`player` 又依赖 `dongfu` —— 三个 store 串成一个环
+     * (见 `importCycles`)。「算产出」与「记进资源账」本来就是两件事,拆开后
+     * 依赖变成单向:dongfu 只算数,谁记账谁负责。
+     */
+    function produce(dtSec: number): Partial<Record<SmallResourceId, number>> {
       // 每小时速率来自建筑等级,零头怎么留、什么时候进位由库的 accrue 管(见 core/engineFacilities)
       const step = produceOf(frac.value, levels.value, dtSec);
       frac.value = step.frac as typeof frac.value;
-      for (const [key, whole] of Object.entries(step.whole)) {
-        resources.addSmall(key as SmallResourceId, whole);
-      }
+      return step.whole as Partial<Record<SmallResourceId, number>>;
     }
 
     return {

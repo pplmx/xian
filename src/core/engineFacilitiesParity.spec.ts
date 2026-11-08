@@ -10,6 +10,7 @@
  *   ③ 产出:**零头**必须一样。1.5 悟道点/小时、2.4 玄铁/小时这类小数速率,一旦哪一处
  *      改成"每次取整再累加",整条产线就会被悄悄抹平(而且只在长时间挂机后才看得出来)。
  */
+import type { SmallResourceId } from "@/types";
 import { beforeEach, describe, expect, it } from "vite-plus/test";
 import { resetWorld } from "./parityShared";
 import type { BuildingId } from "@/types";
@@ -216,7 +217,13 @@ describe("设施对账 —— 每小时产出与零头", () => {
     resources.spendHerbs(1, resources.herbOf(1)); // 灵草见底(本测试玩家在人间界,产的是凡品)
     resources.ore = 0;
     resources.wudao = 0;
-    dongfu.produce(600);
+    /*
+     * `produce` 现在**只返回产出**、不再自己写资源(那样会让 dongfu 依赖 resources,
+     * 三个 store 串成环)。调用方的写法照抄 engine.ts / offline.ts 那两处。
+     */
+    for (const [key, whole] of Object.entries(dongfu.produce(600))) {
+      resources.addSmall(key as SmallResourceId, whole as number);
+    }
     const frozen = legacyProduce({ herb: 0, ore: 0, wudao: 0 }, dongfu.levels, 600);
     expect(dongfu.frac).toEqual(frozen.frac);
     expect(resources.herb).toBe(frozen.whole.herb ?? 0);

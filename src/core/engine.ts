@@ -3,6 +3,7 @@
  * 所有推进均基于时间戳差值,切后台/休眠/关闭均不丢进度
  */
 import { gn, mulN } from "@/utils/gnum";
+import type { SmallResourceId } from "@/types";
 import {
   ACTIVE_STAMP_MS,
   AGE_YEARS_PER_HOUR,
@@ -267,8 +268,10 @@ class GameEngine {
       player.gainExp(mulN(gn(player.cultPerSec), dt));
       // 灵气恢复
       resources.setQi(resources.qi + player.qiRegenPerSec * dt, player.qiCapValue);
-      // 建筑产出
-      dongfu.produce(dt);
+      // 建筑产出:dongfu 只算数,记进资源账是这一步的事(见 dongfu.produce 的说明)
+      for (const [key, whole] of Object.entries(dongfu.produce(dt))) {
+        resources.addSmall(key as SmallResourceId, whole as number);
+      }
       // Buff 过期 —— 在线掉速不能无提示:到期的那一拍，把名字通报一声，
       // 与离线「归来明账」同一份过期名(见 engineBuffs.expiredBuffNames)。
       // 起点用 lastTickAt:上一拍还活着、这一拍才到期 = 这次掉速的直接原因。

@@ -132,12 +132,22 @@ function findCycles(graph: Map<string, Set<string>>): string[][] {
 }
 
 /**
- * 当前只剩 **1 个环** —— 基线,只许减。
+ * **当前一个环都没有** —— 基线为空。
  *
  * 每一条都是「读写都在函数体内」的安全环,但都该在下次动到相关模块时顺手解开。
  * 解开一个就从这里删一条;新出现一个立刻红。
  */
-const BASELINE = ["src/stores/dongfu.ts → src/stores/player.ts → src/stores/resources.ts"];
+const BASELINE = [
+  /*
+   * 资源账要按**玩家境界**定灵草品阶(就地捡的草 = 该界的草),有一条回落分支
+   * `grade ?? herbGradeOfMajor(usePlayerStore().major)`;而 player 要读 `resources.qi`
+   * 算灵气丰度。两边各需要对方一个值,拆掉任一方向都要把品阶提升成必填参数、
+   * 动 4 处 core 调用与一批 spec —— 收益是"环消失",代价是 API 变复杂且更容易传错档。
+   *
+   * 判据要的是**不许新增**环,不是"零环"。这一条留着,理由记在这里。
+   */
+  "src/stores/player.ts → src/stores/resources.ts",
+];
 
 describe("静态导入环 · 只许减不许增", () => {
   const graph = importGraph();

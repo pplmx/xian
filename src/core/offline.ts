@@ -2,7 +2,7 @@
  * 离线结算 —— 「归来」系统
  * 与在线 Tick 共用同一套公式,按封顶时长折算收益
  */
-import type { EventDef, OfflineSummary } from "@/types";
+import type { EventDef, OfflineSummary, SmallResourceId } from "@/types";
 import { add, gn, gnZero, isZero, mulN, sub } from "@/utils/gnum";
 import {
   formatDuration,
@@ -257,7 +257,9 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   // 灵石基准与修为/材料/悟道同点起账:都锚在建筑产出与镇压收益**之前**,否则
   // 归来卷轴的「灵石 +X」会漏掉镇压诸域被动入账(修为/材料/悟道却都算进去了)。
   const stoneBefore = { ...resources.spiritStone };
-  dongfu.produce(effSec);
+  for (const [key, whole] of Object.entries(dongfu.produce(effSec))) {
+    resources.addSmall(key as SmallResourceId, whole as number);
+  }
 
   // ---- 藏经阁被动钻研(与在线同源,只是 dt 不同) ----
   studyTick(effSec);
