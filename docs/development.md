@@ -102,7 +102,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | 1 / 2 / 4 | 全绿 |
 | 3 | 1 处红 |
 
-已观测到的三类偶发,**都不是代码缺陷**:
+已观测到的三类偶发。**前两类是真偶发,第三类要当心** —— 见每条末尾:
 
 - **`pressure-mark` 的像素对比度**(`/adventure`,日间报 `1:1`、夜间报 `2.02:1`)。
   那是 11px 细笔画的**抗锯齿边缘**落在渐变底上的采样值,不是配色本身。
