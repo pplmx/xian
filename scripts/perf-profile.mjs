@@ -107,6 +107,11 @@ const BUDGET = {
    */
   interactiveMaxFrameMs: Number(process.env.PERF_INTERACTIVE_MAX_FRAME_MS ?? 300),
   /**
+   * 滚动段最差帧上限(ms) —— 见 core/perfBudget.ts 的 PerfBudget.scrollMaxFrameMs。
+   * 实测六个长页(可滚 231~1093px)来回滚 16 次全部 17ms / 零长帧,留 3 倍余量。
+   */
+  scrollMaxFrameMs: Number(process.env.PERF_SCROLL_MAX_FRAME_MS ?? 50),
+  /**
    * 背包一次只留 32 张卡,可前后逐批翻完 300 件;80 张一窗实测 1048,故不设两批。
    * 法宝全册 45 条长账按 6+6 滑窗,全流程峰值 667;丹方 54 张同窗,峰值 611。
    * 词条转移 299 件候选按 12+12 滑窗,逐批开完峰值 948。四条密清单单独守 1100,
@@ -203,6 +208,8 @@ const SAMPLER = `
     let raf;
     /** 交互段起点:__perfStop() 那一刻的帧数,之后记的都算交互 */
     let interactiveFrom = null;
+    /** 滚动段起点:__perfMarkScroll() 那一刻的帧数 */
+    let scrollFrom = null;
     function step(now) {
       frames.push(now - last);
       last = now;
@@ -231,6 +238,23 @@ const SAMPLER = `
       const out = { ...summarize(frames), nodes: document.querySelectorAll("body *").length };
       resolveFn(out);
       return window.__perf;
+    };
+    /*
+     * 滚动段:**从当前位置起记**,到 __perfStopScroll() 为止。
+     *
+     * 为什么不与交互段合并:交互那一段里有批量展开与开弹窗(实测背包页 100~267ms),
+     * 滚动的成本比它小一个量级,混在一起就永远被掩盖 —— 而"长页面滚起来卡不卡"
+     * 是另一件事:它测的是合成与滚动容器,不是列表重渲染。
+     */
+    window.__perfStartScroll = () => {
+      scrollFrom = frames.length;
+      return scrollFrom;
+    };
+    window.__perfStopScroll = () => {
+      if (scrollFrom === null) return null;
+      const seg = summarize(frames.slice(scrollFrom));
+      scrollFrom = null;
+      return seg;
     };
     /** 交互段统计(由交互流程跑完后调用) */
     window.__perfStopInteractive = () => {
@@ -1134,6 +1158,37 @@ for (const view of VIEWS) {
       );
     }
     /*
+     * 滚动段:在**交互段结出来之前**量,因为 `__perfStopInteractive()` 会取消采样器。
+     *
+     * 为什么单独一段:交互那一段里有批量展开与开弹窗(实测背包页 100~267ms),
+     * 而滚动的成本比它小一个量级 —— 混在一起永远被掩盖。「长页面滚起来卡不卡」
+     * 测的是合成与滚动容器,与「翻批重渲染卡不卡」是两件事,分开才看得出是哪件坏。
+     *
+     * 滚动的可滚距离各页不同(实测 231~1093px),故按页高分段滚,不看固定像素。
+     */
+    let scroll = null;
+    try {
+      const scrollable = await page.evaluate(() => {
+        const main = document.querySelector("main");
+        return main ? main.scrollHeight - main.clientHeight : 0;
+      });
+      if (scrollable > 80) {
+        await page.evaluate("window.__perfStartScroll?.()");
+        const step = Math.max(120, Math.round(scrollable / 8));
+        for (let i = 0; i < 8; i += 1) {
+          await page.mouse.wheel(0, step);
+          await page.waitForTimeout(70);
+        }
+        for (let i = 0; i < 8; i += 1) {
+          await page.mouse.wheel(0, -step);
+          await page.waitForTimeout(70);
+        }
+        scroll = await page.evaluate("window.__perfStopScroll?.() ?? null");
+      }
+    } catch {
+      scroll = null;
+    }
+    /*
      * 交互段统计 —— 静置采样结束后采样器仍在记,这里把它结出来。
      * 取不到就留 null(该视图没有交互流程,或页面已换文档),不硬编一个假读数。
      */
@@ -1148,6 +1203,7 @@ for (const view of VIEWS) {
       route: view.route,
       ...data,
       interactive,
+      scroll,
       nodes: data.nodes,
       peakNodes,
       batch,
@@ -1209,11 +1265,15 @@ for (const r of results) {
   const interText = inter
     ? ` · 交互 ${inter.frames}帧 max=${inter.max}ms p95=${inter.p95}ms >50ms=${inter.over50ms}`
     : "";
+  /** 滚动段读数(页面不够长时为 null) */
+  const scrollText = r.scroll
+    ? ` · 滚动 ${r.scroll.frames}帧 max=${r.scroll.max}ms >50ms=${r.scroll.over50ms}`
+    : "";
   const state = r.crashed
     ? `✗ ${r.name} CRASHED: ${r.crashed}`
     : `✓ ${r.name.padEnd(11)} frames=${r.frames} max=${r.max}ms p95=${r.p95}ms med=${r.median}ms >50ms=${r.over50ms} dom=${r.nodes}${deepDom}${
         batchText ? ` ${batchText}` : ""
-      }${interText}${r.errors.length ? ` errors=${r.errors.join("|").slice(0, 60)}` : ""}`;
+      }${interText}${scrollText}${r.errors.length ? ` errors=${r.errors.join("|").slice(0, 60)}` : ""}`;
   console.log(state);
   /*
    * 帧率判定(静置段 + 交互段)走 `core/perfBudget.judgePerf` 这个纯函数,不写在脚本里。
@@ -1297,7 +1357,7 @@ for (const r of results) {
 }
 
 console.log(
-  `\n判据:最差帧 ≤ ${BUDGET.maxFrameMs}ms · 长帧 ≤ ${BUDGET.longFramesMax} · 交互段最差帧 ≤ ${BUDGET.interactiveMaxFrameMs}ms · 修行功法 DOM ≤ ${BUDGET.maxInteractiveDomByView.cultivation} · 背包首帧 DOM ≤ ${BUDGET.maxDomByView.inventory} / 弹窗峰值 ≤ ${BUDGET.maxInteractiveDomByView.inventory} · 道痕满卷 DOM ≤ ${BUDGET.maxInteractiveDomByView.celestial} · 法宝全册峰值 DOM ≤ 1100 · 丹方全册峰值 DOM ≤ 1100 · 部位候选峰值 DOM ≤ 1100 · 词条转移峰值 DOM ≤ 1100 · 坊市峰值 DOM ≤ ${BUDGET.maxInteractiveDomByView.market} · 收藏峰值 DOM ≤ ${BUDGET.maxInteractiveDomByView.collection} · 无崩溃/异常`,
+  `\n判据:最差帧 ≤ ${BUDGET.maxFrameMs}ms · 长帧 ≤ ${BUDGET.longFramesMax} · 交互段最差帧 ≤ ${BUDGET.interactiveMaxFrameMs}ms · 滚动段最差帧 ≤ ${BUDGET.scrollMaxFrameMs}ms · 修行功法 DOM ≤ ${BUDGET.maxInteractiveDomByView.cultivation} · 背包首帧 DOM ≤ ${BUDGET.maxDomByView.inventory} / 弹窗峰值 ≤ ${BUDGET.maxInteractiveDomByView.inventory} · 道痕满卷 DOM ≤ ${BUDGET.maxInteractiveDomByView.celestial} · 法宝全册峰值 DOM ≤ 1100 · 丹方全册峰值 DOM ≤ 1100 · 部位候选峰值 DOM ≤ 1100 · 词条转移峰值 DOM ≤ 1100 · 坊市峰值 DOM ≤ ${BUDGET.maxInteractiveDomByView.market} · 收藏峰值 DOM ≤ ${BUDGET.maxInteractiveDomByView.collection} · 无崩溃/异常`,
 );
 if (failures.length > 0) {
   console.log(`✗ 有 ${failures.length} 处超限:`);

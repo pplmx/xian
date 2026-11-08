@@ -42,6 +42,15 @@ export interface PerfBudget {
   /** 静置段:>50ms 长帧数量上限 */
   longFramesMax: number;
   /**
+   * 滚动段:最差帧上限(ms)。
+   *
+   * 比静置宽、比交互窄。滚动本身只走合成(不含列表重渲染),正常应该贴着 17ms;
+   * 实测六个长页(可滚 231~1093px)来回滚 16 次,全部 17ms / 零长帧。
+   * 留 3 倍余量是因为无头机型的合成器差异 —— 这条拦的是「滚起来掉帧」这类回潮,
+   * 比如给滚动容器挂了个每帧重算的监听。
+   */
+  scrollMaxFrameMs: number;
+  /**
    * 交互段:最差帧上限(ms)。
    *
    * 比静置宽得多,因为交互必然更贵:它包含首次把一个册页的内容渲染出来(法宝 45 条长账、
@@ -61,6 +70,8 @@ export interface PerfReading {
   over50ms: number;
   /** 交互段;没有交互流程的视图为 null */
   interactive: FrameStats | null;
+  /** 滚动段;页面不够长(可滚 <80px)时为 null —— 那是「没量」不是「很快」 */
+  scroll?: FrameStats | null;
   /** 崩溃原因(有就短路其余判定) */
   crashed?: string;
   /** 页面异常 */
@@ -91,6 +102,15 @@ export function judgePerf(r: PerfReading, budget: PerfBudget, gate = true): stri
   if (inter && inter.frames > 0 && inter.max > budget.interactiveMaxFrameMs) {
     failures.push(
       `${r.name}: 交互段最差帧 ${inter.max}ms > ${budget.interactiveMaxFrameMs}ms —— 翻批/开弹窗是不是又变成一次渲染几百条了`,
+    );
+  }
+  /*
+   * 滚动段:同样把「没量」与「很快」分开 —— frames === 0 不参与判定。
+   */
+  const scroll = r.scroll;
+  if (scroll && scroll.frames > 0 && scroll.max > budget.scrollMaxFrameMs) {
+    failures.push(
+      `${r.name}: 滚动段最差帧 ${scroll.max}ms > ${budget.scrollMaxFrameMs}ms —— 滚动容器是不是挂了每帧重算的东西`,
     );
   }
   for (const deep of r.peakDom ?? []) {

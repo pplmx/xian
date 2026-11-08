@@ -8,7 +8,12 @@
 import { describe, expect, it } from "vite-plus/test";
 import { judgePerf, type PerfBudget, type FrameStats } from "./perfBudget";
 
-const BUDGET: PerfBudget = { maxFrameMs: 100, longFramesMax: 2, interactiveMaxFrameMs: 300 };
+const BUDGET: PerfBudget = {
+  maxFrameMs: 100,
+  longFramesMax: 2,
+  interactiveMaxFrameMs: 300,
+  scrollMaxFrameMs: 50,
+};
 
 const frame = (max: number, over50ms = 0, frames = 180): FrameStats => ({
   frames,
@@ -90,6 +95,42 @@ describe("运行时帧预算 · 交互段", () => {
      */
     expect(judgePerf(reading({ max: 267 }), BUDGET).length).toBe(1);
     expect(judgePerf(reading({ interactive: frame(267) }), BUDGET).length).toBe(0);
+  });
+});
+
+/**
+ * 滚动段 —— 与交互段分开的那一段。
+ *
+ * 为什么单独一段:交互段里有批量展开与开弹窗(实测背包页 100~267ms),滚动的成本
+ * 比它小一个量级,混在一起永远被掩盖。而「长页面滚起来卡不卡」测的是合成与滚动
+ * 容器,与「翻批重渲染卡不卡」是两件事 —— 分开才看得出是哪件坏。
+ *
+ * 实测基线:六个长页(可滚 231~1093px)来回滚 16 次全部 17ms / 零长帧;
+ * 扩到全部 17 个视图仍是 80 帧 / 17ms / 零长帧。
+ */
+describe("运行时帧预算 · 滚动段", () => {
+  it("滚动段超预算要报", () => {
+    const out = judgePerf(reading({ scroll: frame(120) }), BUDGET);
+    expect(out.length).toBe(1);
+    expect(out[0]).toContain("滚动段最差帧 120ms");
+  });
+
+  it("滚动段实测值(17ms)当然过", () => {
+    expect(judgePerf(reading({ scroll: frame(17) }), BUDGET)).toEqual([]);
+  });
+
+  it("页面不够长(没滚)不参与判定 —— 0 帧是「没量」不是「很快」", () => {
+    expect(judgePerf(reading({ scroll: null }), BUDGET)).toEqual([]);
+    expect(judgePerf(reading({ scroll: frame(0, 0, 0) }), BUDGET)).toEqual([]);
+  });
+
+  it("滚动段与交互段各有各的预算 —— 不许合并成一档", () => {
+    /*
+     * 同样 100ms:按滚动判是红的(>50),按交互判是绿的(≤300)。
+     * 若有人把滚动并回交互那条,滚动掉的帧会被 300ms 的门放过去。
+     */
+    expect(judgePerf(reading({ scroll: frame(100) }), BUDGET).length).toBe(1);
+    expect(judgePerf(reading({ interactive: frame(100) }), BUDGET).length).toBe(0);
   });
 });
 
