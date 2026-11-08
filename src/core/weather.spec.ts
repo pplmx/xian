@@ -42,8 +42,8 @@ describe("天时(weather)", () => {
   it("确定性:同一游戏日多次计算得出同一结果", () => {
     const game = useGameStore();
     game.$patch({ totalPlaySec: 86400 * 3 + 1000 });
-    const a = todayWeather();
-    const b = todayWeather();
+    const a = todayWeather(usePlayerStore().major);
+    const b = todayWeather(usePlayerStore().major);
     expect(a.id).toBe(b.id);
   });
 
@@ -52,7 +52,7 @@ describe("天时(weather)", () => {
     const seen = new Set<string>();
     for (let d = 1; d <= 100; d++) {
       game.$patch({ totalPlaySec: d * 86400 });
-      seen.add(todayWeather().id);
+      seen.add(todayWeather(usePlayerStore().major).id);
     }
     // 至少出现 3 种(5 种并非全均衡,但 100 天应见多种)
     expect(seen.size).toBeGreaterThanOrEqual(3);
@@ -81,7 +81,7 @@ describe("天时词条并入最终属性(mods 源)", () => {
     const game = useGameStore();
     const player = usePlayerStore();
     game.$patch({ totalPlaySec: 0 }); // day 0 = 灵雨:cultivationSpeed+0.1, qiRegen+0.2
-    const day0 = todayWeather();
+    const day0 = todayWeather(usePlayerStore().major);
     expect(day0.id).toBe("lingyu");
     // 总属性里还叠着命格等常驻底色,故这里钉的是「天时贡献了多少」,不是总数
     const fate = player.fateMods;
@@ -96,12 +96,12 @@ describe("天时词条并入最终属性(mods 源)", () => {
     const player = usePlayerStore();
     // day2=赤阳,day3=月蚀(确定性种子,见 weather.ts)
     game.$patch({ totalPlaySec: 2 * 86400 });
-    expect(todayWeather().id).toBe("chiyang");
+    expect(todayWeather(usePlayerStore().major).id).toBe("chiyang");
     const fate = player.fateMods;
     expect((player.finalStats.mods.attackPct ?? 0) - (fate.attackPct ?? 0)).toBeCloseTo(0.05);
     expect((player.finalStats.mods.damageBonus ?? 0) - (fate.damageBonus ?? 0)).toBeCloseTo(0.05);
     game.$patch({ totalPlaySec: 3 * 86400 });
-    expect(todayWeather().id).toBe("yueshi");
+    expect(todayWeather(usePlayerStore().major).id).toBe("yueshi");
     expect((player.finalStats.mods.luck ?? 0) - (fate.luck ?? 0)).toBeCloseTo(0.05);
     expect((player.finalStats.mods.dropRate ?? 0) - (fate.dropRate ?? 0)).toBeCloseTo(0.05);
   });
@@ -110,7 +110,7 @@ describe("天时词条并入最终属性(mods 源)", () => {
     const game = useGameStore();
     const player = usePlayerStore();
     game.$patch({ totalPlaySec: 1 * 86400 });
-    expect(todayWeather().id).toBe("leiming");
+    expect(todayWeather(usePlayerStore().major).id).toBe("leiming");
     const fate = player.fateMods;
     expect(
       (player.finalStats.mods.tribulationResist ?? 0) - (fate.tribulationResist ?? 0),
@@ -128,7 +128,7 @@ describe("天时词条并入最终属性(mods 源)", () => {
     let qingheDay = -1;
     for (let d = 0; d < 40 && qingheDay < 0; d += 1) {
       game.$patch({ totalPlaySec: d * 86400 });
-      const id = todayWeather().id;
+      const id = todayWeather(usePlayerStore().major).id;
       if (id === "lingyu" && lingyuDay < 0) lingyuDay = d;
       if (id === "qinghe") qingheDay = d;
     }
@@ -175,7 +175,7 @@ describe("渡劫难度随天时(雷鸣日 +8%)", () => {
     let stormDay = -1;
     for (let d = 0; d < 40; d += 1) {
       game.$patch({ totalPlaySec: d * 86400 });
-      if (todayWeather().id === "leiming") {
+      if (todayWeather(usePlayerStore().major).id === "leiming") {
         stormDay = d;
         break;
       }
@@ -218,7 +218,7 @@ describe("界域天象(weather · 仙界及以上)", () => {
     const game = useGameStore();
     for (let d = 0; d < 20; d += 1) {
       game.$patch({ totalPlaySec: d * 86400 });
-      expect(mortalIds.has(todayWeather().id)).toBe(true);
+      expect(mortalIds.has(todayWeather(player.major).id)).toBe(true);
     }
   });
 
@@ -234,8 +234,8 @@ describe("界域天象(weather · 仙界及以上)", () => {
       const poolIds = new Set(WORLD_WEATHERS[world].map((w) => w.id));
       for (let d = 1; d <= 12; d += 1) {
         game.$patch({ totalPlaySec: d * 86400 });
-        const a = todayWeather();
-        const b = todayWeather();
+        const a = todayWeather(usePlayerStore().major);
+        const b = todayWeather(usePlayerStore().major);
         expect(a.id).toBe(b.id); // 同日内确定
         expect(poolIds.has(a.id), `${world} 取到了他界天象 ${a.id}`).toBe(true);
       }

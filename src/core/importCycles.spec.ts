@@ -132,14 +132,13 @@ function findCycles(graph: Map<string, Set<string>>): string[][] {
 }
 
 /**
- * 当前存在的 **3 个环** —— 基线,只许减。
+ * 当前存在的 **2 个环** —— 基线,只许减。
  *
  * 每一条都是「读写都在函数体内」的安全环,但都该在下次动到相关模块时顺手解开。
  * 解开一个就从这里删一条;新出现一个立刻红。
  */
 const BASELINE = [
   "src/core/engineCraft.ts → src/core/pillService.ts",
-  "src/core/weather.ts → src/stores/player.ts",
   "src/stores/dongfu.ts → src/stores/player.ts → src/stores/resources.ts",
 ];
 

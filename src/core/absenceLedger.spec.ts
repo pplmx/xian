@@ -24,6 +24,7 @@ import { describe, expect, it, beforeEach } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { createPinia, setActivePinia } from "pinia";
+import { usePlayerStore } from "@/stores/player";
 import { useGameStore } from "@/stores/game";
 import { todayWeather, weatherRemainingSec } from "@/core/weather";
 
@@ -55,16 +56,16 @@ describe("缺席记账 · 挂起与关页面同一本账", () => {
     // 第 0 游戏日 20 点 —— 再补 8 小时正好跨到第 1 日,差异看得见
     game.totalPlaySec = 20 * 3600;
     const day0 = Math.floor(game.totalPlaySec / 86400);
-    const weather0 = todayWeather().id;
+    const weather0 = todayWeather(usePlayerStore().major).id;
     const left0 = weatherRemainingSec();
 
     game.totalPlaySec += 8 * 3600; // 旧行为:把缺席补成游玩时长
     expect(Math.floor(game.totalPlaySec / 86400), "补时长会跨日 —— 这就是要防的").toBe(day0 + 1);
-    expect(todayWeather().id, "跨日必然换天时").not.toBe(weather0);
+    expect(todayWeather(usePlayerStore().major).id, "跨日必然换天时").not.toBe(weather0);
 
     game.totalPlaySec -= 8 * 3600; // 新行为:缺席不进游玩时长
     expect(Math.floor(game.totalPlaySec / 86400), "不补则仍是同一游戏日").toBe(day0);
-    expect(todayWeather().id, "同一游戏日天时一位不变").toBe(weather0);
+    expect(todayWeather(usePlayerStore().major).id, "同一游戏日天时一位不变").toBe(weather0);
     expect(weatherRemainingSec(), "剩余时长也不该被缺席吃掉").toBe(left0);
   });
 });

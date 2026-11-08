@@ -80,7 +80,7 @@ export function verdictLabel(v: TribulationPlan["verdict"]): string {
 
 /** 派生本次劫型(境界 × 今日天时 → 确定性) */
 export function rollTribulation(targetMajor: number): TribulationKind {
-  const seed = targetMajor * 31 + (todayWeather().id.charCodeAt(0) - 96) * 7;
+  const seed = targetMajor * 31 + (todayWeather(targetMajor).id.charCodeAt(0) - 96) * 7;
   const rng = mulberry32(seed);
   const idx = Math.floor(rng() * TRIBULATIONS.length);
   return TRIBULATIONS[idx]!.id;
@@ -551,7 +551,7 @@ export function currentTribulationPlan(player: TribulationPlayer): TribulationPl
     player.finalStats.mods,
     kind,
     currentTribulationRelief(player, kind),
-    todayWeather().tribulationMult,
+    todayWeather(nextMajor).tribulationMult,
     currentStatGuard(player),
   );
 }

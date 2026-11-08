@@ -218,7 +218,8 @@ export const usePlayerStore = defineStore(
     /** 当天天时(Phase 31 A1)作为环境 mod 源并入最终属性:
      * 灵雨修炼/灵气、赤阳伤害、月蚀福缘/掉落、雷鸣攻伐/渡劫抗性 ——
      * 战斗/掉落/渡劫均读 finalStats.mods,故并入即可全链路生效,无需各自接线 */
-    const weatherMods = computed<StatMods>(() => todayWeather().mods);
+    // 天时按本 store 的境界取 —— 不必让 weather 反过来读 player
+    const weatherMods = computed<StatMods>(() => todayWeather(major.value).mods);
 
     /**
      * 在身之卦:与天时同法并入最终属性。

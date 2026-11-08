@@ -307,7 +307,7 @@ const breakthroughBuffRows = computed(() => {
       );
   // 天时也真吃小进阶成功率(breakthrough.ts 的 rate 并入 weatherMods),露进破境幕 —— 与渡劫幕同标准
   const wFace: import("@/types").StatMods = Object.fromEntries(
-    Object.entries((todayWeather().mods ?? {}) as import("@/types").StatMods).filter(
+    Object.entries((todayWeather(player.major).mods ?? {}) as import("@/types").StatMods).filter(
       ([k]) => k === "breakthroughRate" || k === "luck",
     ),
   );
@@ -315,7 +315,7 @@ const breakthroughBuffRows = computed(() => {
   if (wRate !== 0) {
     rows.push({
       buffId: "weather",
-      name: `天时·${todayWeather().name}`,
+      name: `天时·${todayWeather(player.major).name}`,
       rate: wRate,
       effect: modsText(wFace),
     });

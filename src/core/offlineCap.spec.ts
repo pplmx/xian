@@ -160,7 +160,7 @@ describe("离线结算同源吃天时(ISS-027 续)", () => {
     let qingheDay = -1;
     for (let d = 0; d < 60; d += 1) {
       game.$patch({ totalPlaySec: d * 86400 });
-      const id = todayWeather().id;
+      const id = todayWeather(usePlayerStore().major).id;
       if (id === "lingyu" && lingyuDay < 0) lingyuDay = d;
       if (id === "qinghe") qingheDay = d;
     }

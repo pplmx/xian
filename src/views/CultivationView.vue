@@ -506,7 +506,7 @@ const now = useNow();
  */
 const btInfo = computed(() => breakthroughInfo());
 /** 今日夜色 —— 与首页同一份(见 ui/weatherSky),挂在根上让那片星空继承 */
-const sky = computed(() => skyOfWeather(todayWeather().id));
+const sky = computed(() => skyOfWeather(todayWeather(player.major).id));
 const skyStyle = computed(() => ({
   "--sky-star-rgb": `var(${sky.value.tint})`,
   "--sky-brightness": String(sky.value.brightness),

@@ -191,7 +191,7 @@ function runTribulation(targetMajor: number): { survived: boolean; log: string[]
   const kind = rollTribulation(targetMajor);
   const tDef = tribulationDef(kind);
   const relief = currentTribulationRelief(player, kind);
-  const weatherMult = todayWeather().tribulationMult;
+  const weatherMult = todayWeather(player.major).tribulationMult;
   // 三维折算与预览同源(currentTribulationPlan 走同一个 helper):血厚防高者硬抗一部分
   const stat = currentStatGuard(player);
   const regen = sustainScore(mods, tDef, relief);

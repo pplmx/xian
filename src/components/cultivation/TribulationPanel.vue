@@ -154,7 +154,7 @@ const PREP_NAMES = { guard: "护持", sustain: "恢复", resist: "抗性", burst
 const PREP_STARS = ["·", "✧", "✧✧", "✧✧✧"] as const;
 
 /** 这天时是这场劫算进去的那一个(与结算/主页同源);倍率 >1 才挂字 */
-const tribWeather = computed(() => todayWeather());
+const tribWeather = computed(() => todayWeather(player.major));
 const tribWeatherMult = computed(() =>
   tribWeather.value.tribulationMult > 1 ? tribWeather.value.tribulationMult : null,
 );

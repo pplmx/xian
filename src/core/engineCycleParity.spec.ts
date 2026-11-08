@@ -51,10 +51,10 @@ describe("天时对账 —— 逐日与迁移前相同", () => {
   it("人间界:60 天的天时逐日相同(同一天内任意时刻也相同)", () => {
     for (let day = 0; day < 60; day += 1) {
       setProgress(day * 86400 + 12_345, 0);
-      const now = todayWeather();
+      const now = todayWeather(usePlayerStore().major);
       expect(now.id, `第 ${day} 天`).toBe(refTodayWeather(day * 86400 + 12_345, 0).id);
       setProgress(day * 86400 + 86_000, 0);
-      expect(todayWeather().id, `第 ${day} 天(另一时刻)`).toBe(now.id);
+      expect(todayWeather(usePlayerStore().major).id, `第 ${day} 天(另一时刻)`).toBe(now.id);
     }
   });
 
@@ -65,7 +65,7 @@ describe("天时对账 —— 逐日与迁移前相同", () => {
       if (world.id === "mortal") continue;
       for (let day = 0; day < 12; day += 1) {
         setProgress(day * 86400 + 5, major);
-        expect(todayWeather().id, `${world.name} 第 ${day} 天`).toBe(
+        expect(todayWeather(usePlayerStore().major).id, `${world.name} 第 ${day} 天`).toBe(
           refTodayWeather(day * 86400 + 5, major).id,
         );
       }
@@ -74,17 +74,17 @@ describe("天时对账 —— 逐日与迁移前相同", () => {
 
   it("换界域会换池子(不是沿用上一个界域的天时)", () => {
     setProgress(86400 * 3, 0);
-    const mortal = todayWeather().id;
+    const mortal = todayWeather(usePlayerStore().major).id;
     setProgress(86400 * 3, REALMS.length - 1); // 混沌海
-    expect(todayWeather().id).not.toBe(mortal);
+    expect(todayWeather(usePlayerStore().major).id).not.toBe(mortal);
   });
 
   it("库里多出来的两样:剩余时间与预告(旧实现没有)", () => {
     setProgress(86400 * 2 + 3600, 0);
     expect(weatherRemainingSec()).toBe(86400 - 3600);
-    const ahead = upcomingWeather(3);
+    const ahead = upcomingWeather(3, 0);
     expect(ahead.length).toBe(3);
-    expect(ahead[0]!.id).toBe(todayWeather().id); // 预告的第一天就是今天
+    expect(ahead[0]!.id).toBe(todayWeather(usePlayerStore().major).id); // 预告的第一天就是今天
     expect(ahead[1]!.id).toBe(refTodayWeather(86400 * 3 + 3600, 0).id);
   });
 });

@@ -18,7 +18,6 @@
  * 由游戏总秒数派生,无现实时间依赖。
  */
 import { useGameStore } from "@/stores/game";
-import { usePlayerStore } from "@/stores/player";
 import { createCycleSystem, type CycleContext } from "wanxiang-engine";
 import { worldOf } from "@/data/realms";
 import type { StatMods, WorldId } from "@/types";
@@ -240,9 +239,17 @@ const CYCLES = createCycleSystem({
   },
 });
 
-/** 当前的池与盐:人间界五日天时;界外取该界域专属天象池 */
-function contextOf(): CycleContext {
-  const world = worldOf(usePlayerStore().major);
+/**
+ * 当前的池与盐:人间界五日天时;界外取该界域专属天象池。
+ *
+ * `major` 由调用方给 —— 本模块**不读 player store**。原先它自己
+ * `usePlayerStore()`,于是 `weather 与 player` 互相依赖(importCycles 里的环之一);
+ * 而天时只需要「玩家在哪一界」这一个数,调用方本来就知道。
+ *
+ * **必填**:留个可选回落分支就等于留着那条依赖,环断不掉。
+ */
+function contextOf(major: number): CycleContext {
+  const world = worldOf(major);
   if (world.id === "mortal") return { pool: "mortal" };
   return { pool: world.id, salt: world.start };
 }
@@ -251,9 +258,9 @@ function contextOf(): CycleContext {
  * 当天天时(确定性:游戏日 + 界域 → 种子 → 天时,同一天内不换)。
  * 人间界沿用五日天时;仙界及以上取该界域的专属天象池。
  */
-export function todayWeather(): WeatherDef {
+export function todayWeather(major: number): WeatherDef {
   const game = useGameStore();
-  const entry = CYCLES.at(game.totalPlaySec, contextOf()).entry;
+  const entry = CYCLES.at(game.totalPlaySec, contextOf(major)).entry;
   return (entry ? weatherDef(entry.id as WeatherId) : undefined) ?? WEATHERS[4]!;
 }
 
@@ -263,8 +270,8 @@ export function weatherRemainingSec(): number {
 }
 
 /** 接下来几天的天时(界面预告用) */
-export function upcomingWeather(count: number): WeatherDef[] {
-  return CYCLES.schedule(useGameStore().totalPlaySec, count, contextOf())
+export function upcomingWeather(count: number, major: number): WeatherDef[] {
+  return CYCLES.schedule(useGameStore().totalPlaySec, count, contextOf(major))
     .map((s) => (s.entry ? weatherDef(s.entry.id as WeatherId) : undefined))
     .filter((w): w is WeatherDef => w !== undefined);
 }

@@ -467,7 +467,7 @@ const statusText = computed(() =>
 );
 
 // Phase 31 A1:今日天时(确定性,refreshed 每游戏日)
-const weather = computed(() => todayWeather());
+const weather = computed(() => todayWeather(player.major));
 /** 今日夜色 —— 只给那片装饰用的星空用,不碰任何数值 */
 const sky = computed(() => skyOfWeather(weather.value.id));
 /**
@@ -507,7 +507,7 @@ const weatherLeft = computed(() => {
   void now.value;
   return `尚需修行 ${formatCountdown(weatherRemainingSec())}`;
 });
-const tomorrowWeather = computed(() => upcomingWeather(2)[1]);
+const tomorrowWeather = computed(() => upcomingWeather(2, player.major)[1]);
 /**
  * 下一天时的影响也摊开(与今日同源 modsText;渡劫倍率 >1 才挂更险)——
  * 渡劫前该不该等它要看得见。措辞用「下一天时」而不是「明日」:

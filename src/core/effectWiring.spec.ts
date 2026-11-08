@@ -281,7 +281,7 @@ describe("灵兽 / 称号 / 天赋 / 洞府建筑 / 灵脉 → 面板", () => {
     const player = freshCharacter();
     const row = player.finalStats.breakdown.find((r) => r.name === "天时");
     expect(row, "面板里没有「天时」这一路").toBeDefined();
-    expect(row!.mods).toEqual(todayWeather().mods);
+    expect(row!.mods).toEqual(todayWeather(usePlayerStore().major).mods);
   });
 
   it("命格:面板「命格」那一路 = 本世命格算出来的 mods", () => {
