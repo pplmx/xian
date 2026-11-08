@@ -1,6 +1,23 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
   "compilerOptions": {
+    /*
+     * `composite` 让 `tsc -b` / `vue-tsc -b` 真正走**增量**。
+     *
+     * 在此之前这一行是缺的,而缺了它 `-b` 只是"每次都全量重建"——`tsbuildinfo` 里
+     * 只存了文件清单(没有检查结果),连跑两次仍各要 16.6s(实测:清缓存后连续两次
+     * `vue-tsc -b`,16.71s / 16.59s)。而 `bun run build` 是 `vue-tsc -b && vp build`,
+     * 也就是**每 25 秒的构建里有一多半耗在重复检查同一批文件**。
+     *
+     * 实测收益(同一台机、同一批文件):
+     *
+     *   无 composite  17.8s / 16.6s / 16.6s   (不缓存)
+     *   有 composite  17.8s /  1.68s / 1.67s  (首次全量,之后增量)
+     *   改一个被广泛依赖的文件  15.0s          (级联重算,该算的还是要算)
+     *
+     * 类型错误照旧检得出来(注入 `const x: number = "错"` 当场报 TS2322)。
+     */
+    "composite": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     /*
      * node 必须显式列出:本项目的 include 覆盖 src/**,其中的 *.spec.ts 会用
@@ -47,6 +64,12 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
-    "packages/engine/src/**/*.ts"
+    "packages/engine/src/**/*.ts",
+    /*
+     * spec 里会 import 这几个夹具(从真实装备表 / 全套收藏生成测试存档),
+     * 故它们也是编译单元的一部分。composite 要求显式列出 —— 不开 composite 时
+     * 它们靠 moduleResolution 顺进来,增量缓存却因此永远对不上(见下面的注释)。
+     */
+    "scripts/lib/**/*.ts"
   ]
 }

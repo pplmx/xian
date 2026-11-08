@@ -37,7 +37,7 @@
 import { computed, nextTick, useTemplateRef } from "vue";
 import LedgerTally from "@/components/common/LedgerTally.vue";
 
-interface MarketChapterTab<T extends string> {
+export interface MarketChapterTab<T extends string> {
   id: T;
   mark: string;
   label: string;

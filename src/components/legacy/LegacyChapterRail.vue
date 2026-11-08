@@ -41,7 +41,7 @@
 <script setup lang="ts" generic="T extends string">
 import { computed, useTemplateRef } from "vue";
 
-interface LegacyRailTab<T extends string> {
+export interface LegacyRailTab<T extends string> {
   id: T;
   label: string;
   mark: string;

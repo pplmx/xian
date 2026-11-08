@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 579 个 spec;本作自己那部分 499 个) |
+| `bun run test` | 全量用例(全量 580 个 spec;本作自己那部分 500 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -146,7 +146,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 579 个 spec(本作自己那部分 499 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 580 个 spec(本作自己那部分 500 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -298,7 +298,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | 楷体换上(swap 那一刻) | 2255ms | 2953ms | 3400ms |
 | 首屏楷体请求 | — | 48KB(1 片) | 160KB |
 | 最大 JS 单块 | — | 394KB(`player`) | 500KB |
-| 构建时长 | 32s | 25s | 90s |
+| 构建时长 | 32s | 12.6s | 90s |
 
 > 2026-11-08 再测(同一台机、同一天,`--repeat 3` 取中位):**FCP 1368 → 1120ms**,
 > 来自「`@font-face` 声明分两份」(见下文四处改动的第 1 条)。三条一起降 ——
@@ -404,6 +404,14 @@ FCP 没有实质变化(±16ms 是抖动),而**楷体换上一律变慢 130~200ms
 > 这一节的用法:下一个「性能优化」的念头如果落在这四行里,先看结论,别再量一遍。
 > 但**这不等于这些维度永远安全** —— 判据在(帧率门 / 挂机稳定 / 首屏三条),
 > 红了照常要查。
+>
+> 构建时长在 2026-11-08 从 25s 降到 12.6s:`bun run build` 是 `vue-tsc -b && vp build`,
+> 而拆开看是**类型检查 16.4s + 构建 9.9s** —— 类型检查反而是大头,且它每次都是全量
+> (清缓存后连跑两次 `vue-tsc -b`,16.71s / 16.59s 一分没省)。根因是 `tsconfig.app.json`
+> 缺 `composite: true`:`-b` 的增量依赖这个开关,缺了它 `tsbuildinfo` 只存文件清单、
+> 不含检查结果。补上之后 17.8s(首次)/ 1.68s / 1.67s。判据在
+> `src/core/tsconfigGuard.spec.ts` —— 这几条**不会**让 type-check 变红,只会让它悄悄
+> 变慢或悄悄漏检,故必须单独钉住。
 
 三条首屏读数接在两条流水线的浏览器自检段(`bun scripts/first-paint.mjs`);构建时长接在
 **构建那一步本身**(`bun scripts/build-timed.mjs`,把构建跑一遍并计时,超上限即红 ——

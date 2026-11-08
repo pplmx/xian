@@ -346,6 +346,7 @@ const CATEGORIES = [
       "engineTick",
       "perfBudget",
       "testReportBalance",
+      "tsconfigGuard",
       "modalStack",
       "singleWriter",
       "useReturnSettle",
