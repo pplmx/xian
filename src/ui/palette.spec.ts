@@ -250,6 +250,67 @@ describe("调色板 · 承载文字的色都过 AA", () => {
   });
 });
 
+describe("调色板 · 设计文档里的数字要与实际同源", () => {
+  /*
+   * `docs/design.md` 有一张对比度表,把每一档字色的实测值印在纸上(12.99 / 8.18 / …)。
+   * 那张表是**给读者看的事实**,但此前没有任何判据核对它 —— `palette.spec` 只检查
+   * 「每一档 ≥4.5:1」这个门槛。
+   *
+   * 于是存在一个静默腐化路径:配色微调(仍然 ≥4.5)之后,**门槛照过、文档里的数字变成
+   * 过时的谎言**。玩家/读者按文档判断"这个色对比度够",而实际已经不是那个数。
+   *
+   * 判据只核**表里列出的五行** —— 表格是人工维护的精选(不是全部 token),
+   * 不要求它覆盖所有档位,只要求它写下的每个数字都对得上。
+   */
+  const DESIGN = readFileSync(resolve(ROOT, "docs/design.md"), "utf-8");
+  /** 纸与纸深的十六进制(表格表头写着),用它算,而不是拿 token 名绕一圈 */
+  const hexToRgb = (hex: string): Rgb => [
+    parseInt(hex.slice(1, 3), 16),
+    parseInt(hex.slice(3, 5), 16),
+    parseInt(hex.slice(5, 7), 16),
+  ];
+
+  it("五档字色的实测对比度与文档表格一致", () => {
+    const rows = [
+      ["ink", "正文"],
+      ["ink-soft", "次级正文"],
+      ["ink-faint", "三级正文"],
+      ["cinnabar", "主色(朱砂)"],
+      ["qing", "次色(石青)"],
+    ] as const;
+    const PAPER = hexToRgb("#F3EFE4");
+    const PAPER_DEEP = hexToRgb("#EAE4D3");
+    const problems: string[] = [];
+    let matched = 0;
+    for (const [token, label] of rows) {
+      const color = LIGHT.get(token);
+      if (!color) {
+        problems.push(`${token} 在 :root 里找不到`);
+        continue;
+      }
+      const a = contrast(color, PAPER).toFixed(2);
+      const b = contrast(color, PAPER_DEEP).toFixed(2);
+      // 表格行形如:| 正文 | `ink` | 12.99 | 11.75 |
+      const line = DESIGN.split("\n").find((l) => l.startsWith(`| ${label} `));
+      if (!line) {
+        problems.push(`文档表格里找不到「${label}」那一行`);
+        continue;
+      }
+      matched += 1;
+      const nums = line.match(/\d+\.\d{2}/g) ?? [];
+      if (nums[0] !== a || nums[1] !== b) {
+        problems.push(
+          `${label}(${token}):文档写 ${nums[0]} / ${nums[1]},实际 ${a} / ${b}` +
+            ` —— 改了配色就同步改 docs/design.md 那张表`,
+        );
+      }
+    }
+    // 防空转:五行一行都没匹配上时,上面的空集不算数
+    expect(matched, "文档表格的行格式变了 —— 一行都没解析到").toBe(rows.length);
+    expect(problems, problems.join("; ")).toEqual([]);
+  });
+});
+
 describe("调色板 · 书口带", () => {
   it("固定深墨上的每一档字色都过 AA，且夜间不再另换一套书口", () => {
     const colors = new Map(
