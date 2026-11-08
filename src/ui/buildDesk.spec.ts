@@ -235,3 +235,37 @@ describe("铸道案 · 同一个契合度不许在首屏说两遍", () => {
     );
   });
 });
+
+describe("铸道案 · 章首 fact 不许复述列表首行", () => {
+  /*
+   * 实测(1280×800 展品档,layout-check 连跑三遍时红过一次):
+   *
+   *   ✗ [1280x800] /build 首屏把同一句说了两遍:«最弱 0%»
+   *
+   * 两处来源:
+   *   @600  章首 fact        `最弱 ${formatPercent(weakestMatchup?.winRate, 0)}`
+   *   @711  build-matchup__rate  `formatPercent(row.winRate, 0)`(列表首行)
+   *
+   * 而 `weakestMatchup = matchupSorted[0]`,列表也按 `matchupSorted` 渲染 ——
+   * 首行与章首 fact **必然**是同一个数。相距 111px,同屏。
+   *
+   * 章首那句 eyebrow 自己写着「只报方向」,故 fact 该报的是**方向性的汇总**
+   * (几类过半),而不是把列表第一行的百分比抄一遍。
+   */
+  it("章首 fact 报汇总(几类过半),不抄列表首行的百分比", () => {
+    const view = source("src/views/BuildView.vue");
+
+    // 章首那行 fact 不许再直接念 weakestMatchup.winRate
+    // 定位到「实战面」那个章首块里的 :fact(这一页有多个 :fact,别抓错)
+    const battleBlock = view.slice(view.indexOf("data-build-battle"));
+    const factLine = battleBlock.match(/:fact="`[^`]+`"/)?.[0] ?? "";
+    expect(factLine, "定位不到章首 fact —— 判据会空转").not.toBe("");
+    expect(
+      factLine,
+      "章首 fact 又在念 weakestMatchup.winRate —— 它与对局列表首行是同一个数,同屏说两遍",
+    ).not.toContain("weakestMatchup");
+
+    // 但要真报一个汇总读数,不能留空
+    expect(factLine, "章首 fact 要报「几类过半」这类汇总").toMatch(/过半|通过|胜/);
+  });
+});

@@ -173,13 +173,19 @@
           data-build-chapter="battle"
           data-build-battle
         >
+          <!--
+            章首 fact 报「几类过半」这个**汇总**,不报「最弱 N%」——
+            后者与下方对局列表首行是同一个数(列表按 matchupSorted 渲染,
+            而 weakestMatchup 就是 matchupSorted[0]),首屏会说两遍。
+            实测 1280×800 上章首 @600 与列表首行 @711 相距 111px、同值。
+          -->
           <FolioChapterHead
             data-build-chapter-head
             index="肆"
             eyebrow="实战面 · 只报方向"
             title="短板与第二套答案"
             hint="七类本世实敌各打一轮估算；再把主派核心封掉，看看还剩多少胜率。"
-            :fact="`最弱 ${formatPercent(weakestMatchup?.winRate ?? 0, 0)}`"
+            :fact="`${cnNumber(matchupPassCount)} / ${cnNumber(matchupTotal)} 类过半`"
           />
           <div class="build-register__split">
             <article class="build-register__column build-matchups">
@@ -544,7 +550,11 @@ const matchupRows = computed(() =>
 const matchupSorted = computed(() =>
   [...(matchupRows.value ?? [])].sort((a, b) => a.winRate - b.winRate),
 );
-const weakestMatchup = computed(() => matchupSorted.value[0]);
+/** 胜率过半数(≥0.5)的对局类数 —— 章首 fact 报这个汇总,列表逐行报明细 */
+const matchupPassCount = computed(
+  () => (matchupRows.value ?? []).filter((row) => row.winRate >= 0.5).length,
+);
+const matchupTotal = computed(() => (matchupRows.value ?? []).length);
 
 function winBarCls(rate: number): string {
   return rate >= 0.7 ? "bg-jade" : rate >= 0.45 ? "bg-amber-ink" : "bg-cinnabar";
