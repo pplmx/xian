@@ -27,6 +27,7 @@ const CATEGORIES = [
       "engineTriageParity",
       "engineCombatAblation",
       "engineCombatFingerprint",
+      "engineCombatBounds",
       "engineCycleParity",
       "engineChoiceParity",
       "engineCodexParity",
