@@ -411,3 +411,56 @@ describe("配置校验 · 装备那一段的 17 个错误码都要报得出来",
     });
   }
 });
+
+describe("配置校验 · 副本那一段的 13 个错误码都要报得出来", () => {
+  /*
+   * 这一段(332–411 行)即将整块抽成 `validateDungeons()`,抽取前后行为必须一致。
+   * 现有判据覆盖了其中 8 个,另外 5 个一条都没有:ENEMY_HP、ENEMY_TIER、
+   * REGION_MODE、REGION_NO_ENEMY、REGION_TIER —— 抽完漏掉哪一条,配置作者
+   * 拿到的都是「进副本后行为诡异」而不是一句报错。
+   */
+  const cases: {
+    code: string;
+    level: "error" | "warning";
+    mutate: (c: ReturnType<typeof baseConfig>) => void;
+  }[] = [
+    {
+      code: "DUNGEON_REGION_NO_ENEMY",
+      level: "warning",
+      mutate: (c) => (c.dungeons.regions[0]!.enemies = []),
+    },
+    {
+      code: "DUNGEON_REGION_MODE",
+      level: "warning",
+      mutate: (c) => {
+        c.dungeons.regions[0]!.requireMode = "any";
+        c.dungeons.regions[0]!.requireCleared = ["r1"];
+      },
+    },
+    {
+      code: "DUNGEON_REGION_TIER",
+      level: "error",
+      mutate: (c) => (c.dungeons.regions[0]!.tier = 0),
+    },
+    {
+      code: "DUNGEON_ENEMY_TIER",
+      level: "error",
+      mutate: (c) => (c.dungeons.enemies[0]!.tier = 0),
+    },
+    {
+      code: "DUNGEON_ENEMY_HP",
+      level: "warning",
+      mutate: (c) => (c.dungeons.enemies[0]!.hpMult = 0),
+    },
+  ];
+
+  for (const c of cases) {
+    it(`${c.code} 报得出来(${c.level})`, () => {
+      const cfg = baseConfig();
+      c.mutate(cfg);
+      const hit = validateGame(cfg).find((i) => i.code === c.code);
+      expect(hit, `没报出 ${c.code}`).toBeTruthy();
+      expect(hit!.level, `${c.code} 的级别不对`).toBe(c.level);
+    });
+  }
+});

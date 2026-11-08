@@ -197,6 +197,98 @@ function validateEquipment<T>(
   }
 }
 
+/**
+ * 副本那一层的交叉对账 —— 区域 / 敌人 / 首领之间的引用与层级。
+ *
+ * 与 `validateEquipment` 同理由抽出:这 80 行只读 config.dungeons 与
+ * 境界总数(`minRealm` 要对着境界表判越界),不碰装备与属性的任何状态。
+ * `null` = 这款游戏没有副本这一层:不校验,也不抱怨。
+ */
+function validateDungeons<T>(
+  config: GameConfig<T>,
+  majorCount: number,
+  err: (code: string, message: string) => void,
+  warn: (code: string, message: string) => void,
+): void {
+  if (config.dungeons === null) return;
+  const dungeons = config.dungeons;
+  const enemyIds = new Set(dungeons.enemies.map((e) => e.id));
+  const regionIds = new Set(dungeons.regions.map((r) => r.id));
+  reportDuplicate(
+    dungeons.enemies.map((e) => e.id),
+    "DUNGEON_ENEMY_DUPLICATE",
+    "敌人",
+    err,
+  );
+  reportDuplicate(
+    dungeons.regions.map((r) => r.id),
+    "DUNGEON_REGION_DUPLICATE",
+    "区域",
+    err,
+  );
+  for (const r of dungeons.regions) {
+    if (r.enemies.length === 0)
+      warn("DUNGEON_REGION_NO_ENEMY", `区域 ${r.id}(${r.name})没有普通敌人,只会出首领`);
+    for (const id of r.enemies) {
+      if (!enemyIds.has(id))
+        err("DUNGEON_REGION_ENEMY", `区域 ${r.id}(${r.name})引用了不存在的敌人:${id}`);
+    }
+    if (!enemyIds.has(r.boss))
+      err("DUNGEON_REGION_BOSS", `区域 ${r.id}(${r.name})的首领不存在:${r.boss}`);
+    const boss = dungeons.enemies.find((e) => e.id === r.boss);
+    if (boss && boss.boss !== true)
+      warn("DUNGEON_BOSS_FLAG", `区域 ${r.id} 的首领 ${r.boss}(${boss.name})没有标 boss:true`);
+    const prereqs =
+      r.requireCleared === undefined
+        ? []
+        : typeof r.requireCleared === "string"
+          ? [r.requireCleared]
+          : r.requireCleared;
+    for (const id of prereqs) {
+      if (!regionIds.has(id))
+        err("DUNGEON_REGION_CHAIN", `区域 ${r.id}(${r.name})的前置不存在:${id}`);
+    }
+    if (r.requireMode === "any" && prereqs.length < 2) {
+      warn(
+        "DUNGEON_REGION_MODE",
+        `区域 ${r.id}(${r.name})写了 requireMode: 'any' 但前置不足两条,等价于默认`,
+      );
+    }
+    if (r.minRealm > majorCount - 1) {
+      err(
+        "DUNGEON_REGION_REALM",
+        `区域 ${r.id}(${r.name})的推荐等级 ${r.minRealm} 超出境界范围 0..${majorCount - 1}`,
+      );
+    }
+    if (r.tier < 1) err("DUNGEON_REGION_TIER", `区域 ${r.id}(${r.name})的层级必须 ≥ 1`);
+  }
+  // 前置关系不能有环(多条前置时把每条边都走一遍)
+  const prereqList = (id: string): readonly string[] => {
+    const r = dungeons.regions.find((x) => x.id === id);
+    if (!r || r.requireCleared === undefined) return [];
+    return typeof r.requireCleared === "string" ? [r.requireCleared] : r.requireCleared;
+  };
+  for (const r of dungeons.regions) {
+    const stack: string[] = [...prereqList(r.id)];
+    const seen = new Set<string>();
+    while (stack.length > 0) {
+      const cur = stack.pop()!;
+      if (cur === r.id) {
+        err("DUNGEON_REGION_CYCLE", `区域 ${r.id}(${r.name})的前置关系成环`);
+        break;
+      }
+      if (seen.has(cur)) continue;
+      seen.add(cur);
+      stack.push(...prereqList(cur));
+    }
+  }
+  for (const e of dungeons.enemies) {
+    if (e.tier < 1) err("DUNGEON_ENEMY_TIER", `敌人 ${e.id}(${e.name})的层级必须 ≥ 1`);
+    if (e.hpMult <= 0)
+      warn("DUNGEON_ENEMY_HP", `敌人 ${e.id}(${e.name})的 hpMult=${e.hpMult},打不死也打不痛`);
+  }
+}
+
 export function validateGame<T = number>(config: GameConfig<T>): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const err = (code: string, message: string): void =>
@@ -329,86 +421,7 @@ export function validateGame<T = number>(config: GameConfig<T>): ValidationIssue
 
   // ---- 装备 ----
   validateEquipment(config, err, warn);
-  // ---- 副本 ----
-  // `null` = 这款游戏没有副本这一层:同上
-  if (config.dungeons !== null) {
-    const dungeons = config.dungeons;
-    const enemyIds = new Set(dungeons.enemies.map((e) => e.id));
-    const regionIds = new Set(dungeons.regions.map((r) => r.id));
-    reportDuplicate(
-      dungeons.enemies.map((e) => e.id),
-      "DUNGEON_ENEMY_DUPLICATE",
-      "敌人",
-      err,
-    );
-    reportDuplicate(
-      dungeons.regions.map((r) => r.id),
-      "DUNGEON_REGION_DUPLICATE",
-      "区域",
-      err,
-    );
-    for (const r of dungeons.regions) {
-      if (r.enemies.length === 0)
-        warn("DUNGEON_REGION_NO_ENEMY", `区域 ${r.id}(${r.name})没有普通敌人,只会出首领`);
-      for (const id of r.enemies) {
-        if (!enemyIds.has(id))
-          err("DUNGEON_REGION_ENEMY", `区域 ${r.id}(${r.name})引用了不存在的敌人:${id}`);
-      }
-      if (!enemyIds.has(r.boss))
-        err("DUNGEON_REGION_BOSS", `区域 ${r.id}(${r.name})的首领不存在:${r.boss}`);
-      const boss = dungeons.enemies.find((e) => e.id === r.boss);
-      if (boss && boss.boss !== true)
-        warn("DUNGEON_BOSS_FLAG", `区域 ${r.id} 的首领 ${r.boss}(${boss.name})没有标 boss:true`);
-      const prereqs =
-        r.requireCleared === undefined
-          ? []
-          : typeof r.requireCleared === "string"
-            ? [r.requireCleared]
-            : r.requireCleared;
-      for (const id of prereqs) {
-        if (!regionIds.has(id))
-          err("DUNGEON_REGION_CHAIN", `区域 ${r.id}(${r.name})的前置不存在:${id}`);
-      }
-      if (r.requireMode === "any" && prereqs.length < 2) {
-        warn(
-          "DUNGEON_REGION_MODE",
-          `区域 ${r.id}(${r.name})写了 requireMode: 'any' 但前置不足两条,等价于默认`,
-        );
-      }
-      if (r.minRealm > majorCount - 1) {
-        err(
-          "DUNGEON_REGION_REALM",
-          `区域 ${r.id}(${r.name})的推荐等级 ${r.minRealm} 超出境界范围 0..${majorCount - 1}`,
-        );
-      }
-      if (r.tier < 1) err("DUNGEON_REGION_TIER", `区域 ${r.id}(${r.name})的层级必须 ≥ 1`);
-    }
-    // 前置关系不能有环(多条前置时把每条边都走一遍)
-    const prereqList = (id: string): readonly string[] => {
-      const r = dungeons.regions.find((x) => x.id === id);
-      if (!r || r.requireCleared === undefined) return [];
-      return typeof r.requireCleared === "string" ? [r.requireCleared] : r.requireCleared;
-    };
-    for (const r of dungeons.regions) {
-      const stack: string[] = [...prereqList(r.id)];
-      const seen = new Set<string>();
-      while (stack.length > 0) {
-        const cur = stack.pop()!;
-        if (cur === r.id) {
-          err("DUNGEON_REGION_CYCLE", `区域 ${r.id}(${r.name})的前置关系成环`);
-          break;
-        }
-        if (seen.has(cur)) continue;
-        seen.add(cur);
-        stack.push(...prereqList(cur));
-      }
-    }
-    for (const e of dungeons.enemies) {
-      if (e.tier < 1) err("DUNGEON_ENEMY_TIER", `敌人 ${e.id}(${e.name})的层级必须 ≥ 1`);
-      if (e.hpMult <= 0)
-        warn("DUNGEON_ENEMY_HP", `敌人 ${e.id}(${e.name})的 hpMult=${e.hpMult},打不死也打不痛`);
-    }
-  }
+  validateDungeons(config, majorCount, err, warn);
 
   return issues;
 }
