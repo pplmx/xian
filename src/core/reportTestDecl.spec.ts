@@ -19,7 +19,7 @@
  * 「我的结论由哪条用例负责」,答不出来就说明该补断言。
  */
 import { describe, expect, it } from "vite-plus/test";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dirname, "../..");
@@ -220,5 +220,42 @@ describe("x", () => {
     expect(titles[2]!.hasAssert).toBe(false);
     expect(titles[2]!.declared).toBe(false);
     expect(tmp.length > 0).toBe(true);
+  });
+
+  it("切块边界:前一条有断言,不该被当成后一条的", () => {
+    /*
+     * Round 51 的真 bug:`scan` 原先往**上回看固定 24 行**去捞声明注释,
+     * 于是前一条用例的真断言被一并吞进后一条的本体 —— 一条只有 `console.log`
+     * 的空用例因此被判成"有断言"而放行(实测漏了 12 条)。
+     *
+     * 修法是向上**只收注释行**,遇到第一条非注释就停。这一条回归测试直接
+     * 用一个真的 spec 文件验那个边界:**相邻**两条用例,前者有断言、后者没有。
+     * 若有人改回固定窗口,后者会被吞进来而漏判,这条就红。
+     *
+     * 用真实文件而不是样本字符串 —— 自证用例原先复制了一份切分逻辑,
+     * 验的是副本而不是被测代码,那种自证挡不住任何回归。
+     */
+    const probe = join(ROOT, "src", "__neighbor_probe.spec.ts");
+    const source = [
+      'describe("x", () => {',
+      '  it("前一条有断言", () => {',
+      "    expect([1, 2].length).toBe(2);",
+      "  });",
+      '  it("后一条什么都没写", () => {',
+      '    console.log("读数");',
+      "  });",
+      "});",
+      "",
+    ].join("\n");
+    writeFileSync(probe, source, "utf-8");
+    try {
+      const found = scan(probe);
+      expect(
+        found.map((o) => o.title),
+        "后一条被前一条的断言遮住了 —— 切块边界又吞了邻居",
+      ).toEqual(["后一条什么都没写"]);
+    } finally {
+      rmSync(probe, { force: true });
+    }
   });
 });
