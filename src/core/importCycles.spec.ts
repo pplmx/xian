@@ -141,10 +141,18 @@ const BASELINE = [
   /*
    * 资源账要按**玩家境界**定灵草品阶(就地捡的草 = 该界的草),有一条回落分支
    * `grade ?? herbGradeOfMajor(usePlayerStore().major)`;而 player 要读 `resources.qi`
-   * 算灵气丰度。两边各需要对方一个值,拆掉任一方向都要把品阶提升成必填参数、
-   * 动 4 处 core 调用与一批 spec —— 收益是"环消失",代价是 API 变复杂且更容易传错档。
+   * 算灵气丰度。两边各需要对方一个值。
+   *
+   * 拆掉任一方向都要把品阶提升成必填参数。代价具体是:`addSmall("herb", …)` 全仓
+   * **14 处调用**(4 处非用例 + 10 处 spec)—— 而 spec 也是调用方,漏改一处就断一条
+   * 测试路径。收益只是"环消失",代价是 API 变复杂且更容易传错档(传成区域层级而非
+   * 境界,品阶会静默错一档)。
    *
    * 判据要的是**不许新增**环,不是"零环"。这一条留着,理由记在这里。
+   *
+   * (Round 37 曾误判过这条:当时只 grep 非用例调用、看到 0 处,以为 `spendSmall("herb")`
+   *  是死分支,删掉后 `bounty.spec` 红了 5 条 —— spec 里有一句 `spendSmall("herb", 100)`
+   *  用来清空灵草。判断"有没有人用"必须把 spec 算进调用方。)
    */
   "src/stores/player.ts → src/stores/resources.ts",
 ];
