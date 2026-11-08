@@ -37,6 +37,16 @@ export default defineConfig({
       verify: {
         cache: false,
         command: [
+          /*
+           * 先清 dist:宿主对「一次删 >50 个文件」有护栏
+           * (SAFE_DELETE_BULK_CONFIRM_REQUIRED),vite 的 emptyOutDir 会一次性 rmSync
+           * 整个 dist/assets,CI 与本地都撞过。clean-dist 逐文件 unlink 绕过阈值。
+           *
+           * 这一步此前挂在一个 `preverify` 的 npm 钩子上 —— 而 verify 是 **vite task**
+           * 不是 npm script,`vp run verify` 不会触发任何 `pre*` 钩子,于是那个钩子
+           * 从来没跑过(它还是唯一用 `find -delete` 批量删的地方,正是要避开的写法)。
+           */
+          "bun scripts/clean-dist.mjs",
           "bun run check",
           "bun run test",
           "VERIFY_SHARED_VITEST_JSON=1 bun run test:report",

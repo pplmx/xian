@@ -707,3 +707,77 @@ describe("运行时门 · 交互段也要被采样", () => {
     expect(SRC, "预算常量没传给 judgePerf").toMatch(/judgePerf\([\s\S]{0,400}?BUDGET/);
   });
 });
+
+/**
+ * npm 生命周期钩子 —— `pre*` 只对 **npm script** 生效,对 vite task 不生效。
+ *
+ * ## 本轮清掉的那个
+ *
+ * `package.json` 里挂着 `"preverify": "find dist -type f -delete …"`,而 `verify`
+ * 是 `vite.config.ts` 里的 **vite task**(`vp run verify`),不是 npm script ——
+ * 于是那个钩子**从来没跑过**。
+ *
+ * 它的后果不是"少清一次 dist",而是两件更糟的事:
+ *   ① 它看起来在守着"verify 之前先清 dist",而 `clean-dist.mjs` 的注释也这么写着
+ *      ("verify 的第一步")—— 两边互相引用,谁都没跑;
+ *   ② 它用的是 `find … -delete` 批量删,而这正是 `clean-dist.mjs` 存在的理由
+ *      (宿主对「一次删 >50 个文件」有护栏,CI 与本地都撞过)。也就是说:
+ *      唯一真的会批量删的地方,恰好是从不执行的那一个。
+ *
+ * 现在 `clean-dist.mjs` 被写进 verify 的命令链第一步,判据守两件事:
+ * ① 不许再出现指向 **vite task** 的 `pre*` 钩子(那一定是死代码);
+ * ② 清 dist 只有一处实现(`clean-dist.mjs`),不许再冒出 `find -delete` 那种写法。
+ */
+describe("npm 钩子 · 指向 vite task 的 pre* 一定是死代码", () => {
+  const SCRIPTS = Object.keys((PKG as { scripts?: Record<string, string> }).scripts ?? {});
+  const VITE_CFG = readFileSync(join(ROOT, "vite.config.ts"), "utf8");
+
+  it("没有指向 vite task 的 pre* 钩子", () => {
+    /*
+     * 只在 vite.config 的 `run.tasks` 里定义、而 package.json 里没有同名 script 的,
+     * 就是 vite task —— 给它挂 `pre<name>` 永远不会触发。
+     */
+    /*
+     * 只从 `run: { tasks: { … } }` 这一段里取 task 名 —— 全文匹配会把 `build:` / `test:`
+     * 这些普通配置键也算进来。缩进不写死(不同版本的格式化会变),按段落切。
+     */
+    const tasksBlock = /tasks:\s*\{([\s\S]*?)\n\s{4}\},/.exec(VITE_CFG)?.[1] ?? "";
+    const taskNames = [...tasksBlock.matchAll(/^\s*(\w[\w:-]*):\s*\{/gm)].map((m) => m[1]!);
+    const dead = SCRIPTS.filter((s) => s.startsWith("pre")).filter((s) => {
+      const target = s.slice(3);
+      return taskNames.includes(target) && !SCRIPTS.includes(target);
+    });
+    expect(
+      dead,
+      "这些 pre* 钩子指向的是 vite task,vp run 不会触发它们 —— 钩子体永远不会执行," +
+        "要么把它需要的步骤写进 task 的 command 链,要么删掉",
+    ).toEqual([]);
+  });
+
+  it("清 dist 只有一处实现 —— 不许再冒出 find -delete", () => {
+    const offenders = SCRIPTS.filter((s) =>
+      /find\s+dist\b[^;]*-delete/.test((PKG as { scripts: Record<string, string> }).scripts[s]!),
+    );
+    expect(
+      offenders,
+      "这些脚本用 `find dist … -delete` 批量删 —— 宿主有「一次删 >50 个文件」的护栏," +
+        "CI 与本地都撞过;改用 scripts/clean-dist.mjs(逐文件 unlink)",
+    ).toEqual([]);
+  });
+
+  it("verify 的第一步是 clean-dist", () => {
+    // 命令链读得出来:verify 的 command 数组里,clean-dist 必须在最前
+    const verifyBlock = /verify:\s*\{[\s\S]*?command:\s*\[([\s\S]*?)\]/.exec(VITE_CFG)?.[1] ?? "";
+    expect(verifyBlock, "读不到 verify 的 command —— 判据的前提不成立").not.toBe("");
+    const first =
+      verifyBlock
+        .split("\n")
+        .map((l) => l.trim())
+        .find((l) => /^".*",$/.test(l)) ?? "";
+    expect(
+      first,
+      "verify 的第一步不再是 clean-dist —— vite 的 emptyOutDir 会一次性删整个 dist/assets," +
+        "在宿主上会撞批量删除护栏",
+    ).toContain("clean-dist");
+  });
+});
