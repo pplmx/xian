@@ -335,3 +335,79 @@ describe("配置校验 · id 重复要逐节都抓得到", () => {
     });
   }
 });
+
+describe("配置校验 · 装备那一段的 17 个错误码都要报得出来", () => {
+  /*
+   * 这一段(231–316 行)即将整块抽成一个 `validateEquipment()`,抽取前后行为必须一致。
+   * 现有判据只覆盖了其中一半(SLOT_EMPTY / TEMPLATE_SLOT / AFFIX_KEY / 七处 DUPLICATE),
+   * 另外那些 `min > max` / 件数门槛 < 1 / 权重为 0 / 层级槽位留空 —— 一条都没有。
+   * 抽完如果漏掉其中一条,配置作者拿到的是「装配后行为诡异」而不是一句报错。
+   *
+   * 这里逐码来一遍:每条只做最小改动,确认报出**指定的那个码**。
+   */
+  const cases: {
+    code: string;
+    level: "error" | "warning";
+    mutate: (c: ReturnType<typeof baseConfig>) => void;
+  }[] = [
+    {
+      code: "EQUIP_SET_EMPTY",
+      level: "warning",
+      mutate: (c) => (c.equipment.sets = [{ id: "s1", name: "套一", bonuses: [] }]),
+    },
+    {
+      code: "EQUIP_SET_PIECES",
+      level: "error",
+      mutate: (c) =>
+        (c.equipment.sets = [{ id: "s1", name: "套一", bonuses: [{ pieces: 0, mods: {} }] }]),
+    },
+    {
+      code: "EQUIP_TEMPLATE_SET",
+      level: "error",
+      mutate: (c) => (c.equipment.templates[0]!.setId = "ghost"),
+    },
+    {
+      code: "EQUIP_AFFIX_SLOT",
+      level: "error",
+      mutate: (c) => (c.equipment.affixes[0]!.slots = ["ghost"]),
+    },
+    {
+      code: "EQUIP_AFFIX_RANGE",
+      level: "error",
+      mutate: (c) => {
+        c.equipment.affixes[0]!.min = 5;
+        c.equipment.affixes[0]!.max = 1;
+      },
+    },
+    {
+      code: "EQUIP_AFFIX_WEIGHT",
+      level: "warning",
+      mutate: (c) => (c.equipment.affixes[0]!.weight = 0),
+    },
+    {
+      code: "EQUIP_QUALITY_AFFIX_RANGE",
+      level: "error",
+      mutate: (c) => (c.equipment.qualities[0]!.affixes = [2, 0]),
+    },
+    {
+      code: "EQUIP_QUALITY_WEIGHT",
+      level: "warning",
+      mutate: (c) => (c.equipment.qualities[0]!.weight = 0),
+    },
+    {
+      code: "EQUIP_TIER_SLOT_GAP",
+      level: "warning",
+      mutate: (c) => c.equipment.slots.push({ id: "armor", name: "护甲" }),
+    },
+  ];
+
+  for (const c of cases) {
+    it(`${c.code} 报得出来(${c.level})`, () => {
+      const cfg = baseConfig();
+      c.mutate(cfg);
+      const hit = validateGame(cfg).find((i) => i.code === c.code);
+      expect(hit, `没报出 ${c.code}`).toBeTruthy();
+      expect(hit!.level, `${c.code} 的级别不对`).toBe(c.level);
+    });
+  }
+});

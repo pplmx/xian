@@ -97,6 +97,106 @@ function reportDuplicate(
  * 逐条对账。错误(引用不存在、键重复、链条断掉)会挡住装配;
  * 警告(某层某部位没有内容、首领没标记 boss)只是提示。
  */
+/**
+ * 装备那一层的交叉对账 —— 槽位 / 品质 / 模板 / 词条 / 套装之间互相指向。
+ *
+ * 从 `validateGame` 里整块抽出来的理由:这 87 行只读 `config.equipment`
+ * 与属性键表,不碰境界与副本的任何状态。抽出来之后 `validateGame` 剩下的
+ * 是"哪一层要校验"的顺序,而"装备该怎么校验"在这个函数里一处说完。
+ *
+ * `null` = 这款游戏没有装备这一层:不校验,也不抱怨(形状已由 shapeOf 判过)。
+ */
+function validateEquipment<T>(
+  config: GameConfig<T>,
+  err: (code: string, message: string) => void,
+  warn: (code: string, message: string) => void,
+): void {
+  if (config.equipment === null) return;
+  const equipment = config.equipment;
+  const attrKeys = new Set(config.attributes.defs.map((d) => d.key));
+  const slotIds = new Set(equipment.slots.map((s) => s.id));
+  reportDuplicate(
+    equipment.slots.map((s) => s.id),
+    "EQUIP_SLOT_DUPLICATE",
+    "槽位",
+    err,
+  );
+  reportDuplicate(
+    equipment.qualities.map((q) => q.id),
+    "EQUIP_QUALITY_DUPLICATE",
+    "品质",
+    err,
+  );
+  reportDuplicate(
+    equipment.templates.map((t) => t.id),
+    "EQUIP_TEMPLATE_DUPLICATE",
+    "装备模板",
+    err,
+  );
+  reportDuplicate(
+    equipment.affixes.map((a) => a.id),
+    "EQUIP_AFFIX_DUPLICATE",
+    "词条",
+    err,
+  );
+  const setIds = new Set((equipment.sets ?? []).map((s) => s.id));
+  reportDuplicate(
+    (equipment.sets ?? []).map((s) => s.id),
+    "EQUIP_SET_DUPLICATE",
+    "套装",
+    err,
+  );
+  for (const s of equipment.sets ?? []) {
+    if (s.bonuses.length === 0) warn("EQUIP_SET_EMPTY", `套装 ${s.id}(${s.name})没有任何件数效果`);
+    for (const b of s.bonuses) {
+      if (b.pieces < 1)
+        err("EQUIP_SET_PIECES", `套装 ${s.id}(${s.name})的件数门槛必须 ≥ 1,当前 ${b.pieces}`);
+    }
+  }
+  for (const t of equipment.templates) {
+    if (!slotIds.has(t.slot))
+      err("EQUIP_TEMPLATE_SLOT", `装备模板 ${t.id}(${t.name})的槽位未定义:${t.slot}`);
+    if (t.setId !== undefined && !setIds.has(t.setId)) {
+      err("EQUIP_TEMPLATE_SET", `装备模板 ${t.id}(${t.name})指向未定义的套装:${t.setId}`);
+    }
+  }
+  for (const a of equipment.affixes) {
+    if (!attrKeys.has(a.key))
+      err("EQUIP_AFFIX_KEY", `词条 ${a.id}(${a.name})挂在未登记的属性键上:${a.key}`);
+    for (const s of a.slots ?? []) {
+      if (!slotIds.has(s))
+        err("EQUIP_AFFIX_SLOT", `词条 ${a.id}(${a.name})限定了一个未定义的槽位:${s}`);
+    }
+    if (a.min > a.max)
+      err("EQUIP_AFFIX_RANGE", `词条 ${a.id}(${a.name})的 min > max:${a.min} > ${a.max}`);
+    if (a.weight <= 0)
+      warn("EQUIP_AFFIX_WEIGHT", `词条 ${a.id}(${a.name})的权重为 ${a.weight},永远不会被抽到`);
+  }
+  for (const q of equipment.qualities) {
+    if (q.affixes[0] > q.affixes[1])
+      err("EQUIP_QUALITY_AFFIX_RANGE", `品质 ${q.id}(${q.name})的词条区间反了`);
+    if (q.weight <= 0)
+      warn("EQUIP_QUALITY_WEIGHT", `品质 ${q.id}(${q.name})的权重为 ${q.weight},永远不会被抽到`);
+  }
+  for (const s of equipment.slots) {
+    const hasTemplate = equipment.templates.some((t) => t.slot === s.id);
+    if (!hasTemplate) warn("EQUIP_SLOT_EMPTY", `槽位 ${s.id}(${s.name})没有任何装备模板`);
+  }
+  // 每个用到的层级,每个可掉落槽位都该有内容(否则会走退档兜底)
+  const tiers = [...new Set(equipment.templates.map((t) => t.tier))].sort((a, b) => a - b);
+  for (const tier of tiers) {
+    for (const s of equipment.slots) {
+      if ((s.dropWeight ?? 1) <= 0) continue;
+      if (!equipment.templates.some((t) => t.tier === tier && t.slot === s.id)) {
+        warn(
+          "EQUIP_TIER_SLOT_GAP",
+          `层级 ${tier} 的槽位 ${s.id}(${s.name})没有本层模板,会退档掉落`,
+        );
+      }
+    }
+  }
+}
+
 export function validateGame<T = number>(config: GameConfig<T>): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const err = (code: string, message: string): void =>
@@ -228,93 +328,7 @@ export function validateGame<T = number>(config: GameConfig<T>): ValidationIssue
   }
 
   // ---- 装备 ----
-  // `null` = 这款游戏没有装备这一层:不校验,也不抱怨(已由上面 shapeOf 判过)
-  if (config.equipment !== null) {
-    const equipment = config.equipment;
-    const slotIds = new Set(equipment.slots.map((s) => s.id));
-    reportDuplicate(
-      equipment.slots.map((s) => s.id),
-      "EQUIP_SLOT_DUPLICATE",
-      "槽位",
-      err,
-    );
-    reportDuplicate(
-      equipment.qualities.map((q) => q.id),
-      "EQUIP_QUALITY_DUPLICATE",
-      "品质",
-      err,
-    );
-    reportDuplicate(
-      equipment.templates.map((t) => t.id),
-      "EQUIP_TEMPLATE_DUPLICATE",
-      "装备模板",
-      err,
-    );
-    reportDuplicate(
-      equipment.affixes.map((a) => a.id),
-      "EQUIP_AFFIX_DUPLICATE",
-      "词条",
-      err,
-    );
-    const setIds = new Set((equipment.sets ?? []).map((s) => s.id));
-    reportDuplicate(
-      (equipment.sets ?? []).map((s) => s.id),
-      "EQUIP_SET_DUPLICATE",
-      "套装",
-      err,
-    );
-    for (const s of equipment.sets ?? []) {
-      if (s.bonuses.length === 0)
-        warn("EQUIP_SET_EMPTY", `套装 ${s.id}(${s.name})没有任何件数效果`);
-      for (const b of s.bonuses) {
-        if (b.pieces < 1)
-          err("EQUIP_SET_PIECES", `套装 ${s.id}(${s.name})的件数门槛必须 ≥ 1,当前 ${b.pieces}`);
-      }
-    }
-    for (const t of equipment.templates) {
-      if (!slotIds.has(t.slot))
-        err("EQUIP_TEMPLATE_SLOT", `装备模板 ${t.id}(${t.name})的槽位未定义:${t.slot}`);
-      if (t.setId !== undefined && !setIds.has(t.setId)) {
-        err("EQUIP_TEMPLATE_SET", `装备模板 ${t.id}(${t.name})指向未定义的套装:${t.setId}`);
-      }
-    }
-    for (const a of equipment.affixes) {
-      if (!attrKeys.has(a.key))
-        err("EQUIP_AFFIX_KEY", `词条 ${a.id}(${a.name})挂在未登记的属性键上:${a.key}`);
-      for (const s of a.slots ?? []) {
-        if (!slotIds.has(s))
-          err("EQUIP_AFFIX_SLOT", `词条 ${a.id}(${a.name})限定了一个未定义的槽位:${s}`);
-      }
-      if (a.min > a.max)
-        err("EQUIP_AFFIX_RANGE", `词条 ${a.id}(${a.name})的 min > max:${a.min} > ${a.max}`);
-      if (a.weight <= 0)
-        warn("EQUIP_AFFIX_WEIGHT", `词条 ${a.id}(${a.name})的权重为 ${a.weight},永远不会被抽到`);
-    }
-    for (const q of equipment.qualities) {
-      if (q.affixes[0] > q.affixes[1])
-        err("EQUIP_QUALITY_AFFIX_RANGE", `品质 ${q.id}(${q.name})的词条区间反了`);
-      if (q.weight <= 0)
-        warn("EQUIP_QUALITY_WEIGHT", `品质 ${q.id}(${q.name})的权重为 ${q.weight},永远不会被抽到`);
-    }
-    for (const s of equipment.slots) {
-      const hasTemplate = equipment.templates.some((t) => t.slot === s.id);
-      if (!hasTemplate) warn("EQUIP_SLOT_EMPTY", `槽位 ${s.id}(${s.name})没有任何装备模板`);
-    }
-    // 每个用到的层级,每个可掉落槽位都该有内容(否则会走退档兜底)
-    const tiers = [...new Set(equipment.templates.map((t) => t.tier))].sort((a, b) => a - b);
-    for (const tier of tiers) {
-      for (const s of equipment.slots) {
-        if ((s.dropWeight ?? 1) <= 0) continue;
-        if (!equipment.templates.some((t) => t.tier === tier && t.slot === s.id)) {
-          warn(
-            "EQUIP_TIER_SLOT_GAP",
-            `层级 ${tier} 的槽位 ${s.id}(${s.name})没有本层模板,会退档掉落`,
-          );
-        }
-      }
-    }
-  }
-
+  validateEquipment(config, err, warn);
   // ---- 副本 ----
   // `null` = 这款游戏没有副本这一层:同上
   if (config.dungeons !== null) {

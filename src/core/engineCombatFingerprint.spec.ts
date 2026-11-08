@@ -109,7 +109,7 @@ const fingerprint = (): string =>
     const engine = createCombatEngine(c.cfg);
     const r = engine.resolve(c.p, c.e, createRng(c.seed));
     const kinds = r.events.map((ev) => ev.kind).join(",");
-    return `${c.name}|win=${r.win}|rounds=${r.rounds}|php=${r.playerHp}|ehp=${r.enemyHp}|n=${r.events.length}|${kinds}`;
+    return `${c.name}|win=${r.win}|rounds=${r.rounds}|php=${Number(r.playerHp)}|ehp=${Number(r.enemyHp)}|n=${r.events.length}|${kinds}`;
   }).join("\n");
 
 const GOLDEN = [
