@@ -57,7 +57,7 @@ import {
 import { toNum } from "@/utils/gnum";
 import { baseCultPerSec, baseQiRegen, expRequirement, qiCap, stoneByTier } from "./formulas";
 import { bearableRank, composeSuccessRate } from "./craftability";
-import { salvageRatio } from "./pillService";
+import { salvageRatio } from "./pillCraftNumbers";
 import { pillDropWeight } from "./loot";
 
 // ============ 审计基准 ============

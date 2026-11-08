@@ -11,14 +11,8 @@ import { pillDef } from "@/data/pills";
 import { HERB_GRADE_NAMES, type HerbGrade } from "@/data/herbGrades";
 import { DAO_NAMES, SKILLS, skillStageName, skillStageProgress } from "@/data/crafting";
 import { craftGuaranteeCrafts } from "@/core/heritageEffects";
-import {
-  PILL_BATCH,
-  availableRecipes,
-  craftPill,
-  craftPillBatch,
-  pillCraftCost,
-  salvageRatio,
-} from "@/core/pillService";
+import { PILL_BATCH, availableRecipes, craftPill, craftPillBatch } from "@/core/pillService";
+import { pillCraftCost, salvageRatio } from "@/core/pillCraftNumbers";
 import { craftability, type Craftability } from "@/core/craftability";
 import { modOf } from "@/core/statsCalc";
 import { alchemyBonusCapped } from "@/core/engineCraft";

@@ -14,7 +14,7 @@ import type { CraftCost, CraftOutcome } from "wanxiang-engine";
 import type { Rng } from "wanxiang-engine";
 import { createRecipeRunner } from "wanxiang-engine";
 import { craftability } from "./craftability";
-import { pillCraftCost, salvageRatio } from "./pillService";
+import { pillCraftCost, salvageRatio } from "./pillCraftNumbers";
 import { modOf } from "./statsCalc";
 import { craftGuaranteeCrafts } from "./heritageEffects";
 import { usePlayerStore } from "@/stores/player";

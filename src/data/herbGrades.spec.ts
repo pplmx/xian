@@ -7,6 +7,7 @@
  *   · **每味可炼方烧的品阶 == 该方准入境界的品阶** —— 若有方子错位,
  *     整条可炼线会被封死(该品的草)或被绕过(低品草进高品炉)。全表钉死。
  */
+import { pillCraftCost } from "@/core/pillCraftNumbers";
 import { describe, expect, it } from "vite-plus/test";
 import {
   HERB_GROUND_PRICE,
@@ -18,7 +19,6 @@ import {
   herbGradeOfMajor,
 } from "./herbGrades";
 import { PILLS } from "@/data/pills";
-import { pillCraftCost } from "@/core/pillService";
 
 describe("灵草五品(ISS-306)", () => {
   it("分档按界域:五品各归其界,跨境即换品", () => {

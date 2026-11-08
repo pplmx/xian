@@ -12,6 +12,7 @@
  *   · **双成在成功之后再掷一次**,概率由"炉子 + 词条"给、上限是 `ALCHEMY_BONUS_CAP`
  *     (夹上限那条路径由库侧 `recipes.spec` 钉着 —— 这里钉的是它与本作口径的接线)。
  */
+import { pillCraftCost, salvageRatio } from "./pillCraftNumbers";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { resetWorld } from "./parityShared";
 import { PILLS, pillDef } from "@/data/pills";
@@ -20,7 +21,7 @@ import { herbGradeOfMajor } from "@/data/herbGrades";
 import { ACHIEVEMENTS } from "@/data/achievements";
 import { MAIN_QUESTS } from "@/data/quests";
 import { craftability } from "./craftability";
-import { craftPill, pillCraftCost, salvageRatio } from "./pillService";
+import { craftPill } from "./pillService";
 import { ALCHEMY_BONUS_CAP } from "./engineCraft";
 import { noteMaterialUsed } from "./loreService";
 import { track } from "./progress";

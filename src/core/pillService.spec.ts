@@ -9,6 +9,7 @@
  * 随机源用固定返回钉住(0 → 概率判定都成;0.999 → 都不成),成败不掷运气 ——
  * 这样「报的数」与「真的扣的数」才能逐位对账。
  */
+import { pillCraftCost, salvageRatio } from "./pillCraftNumbers";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 
@@ -19,7 +20,7 @@ vi.mock("@/utils/random", async (importOriginal) => {
   return { ...mod, rng: new mod.RandomService(() => mockRand) };
 });
 
-import { craftPill, pillCraftCost, salvageRatio, usePill } from "./pillService";
+import { craftPill, usePill } from "./pillService";
 import { craftability } from "./craftability";
 import { pillDef } from "@/data/pills";
 import { PILLS } from "@/data/pills";

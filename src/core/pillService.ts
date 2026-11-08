@@ -11,13 +11,14 @@ import { buffDef } from "@/data/buffs";
 import { INSTANT_EXP_LAYER_CAP } from "@/data/constants";
 import { formatDuration, formatGN, formatNum } from "@/utils/format";
 import { recipeCraft, type SkillId } from "@/data/crafting";
-import { expFromSecs, stoneByTier } from "./formulas";
-import { maxTierForMajor } from "@/data/regions";
-import { herbGradeOfMajor, type HerbGrade } from "@/data/herbGrades";
+import { expFromSecs } from "./formulas";
 import { modsText } from "@/data/statNames";
 import { acquirePill, collect, track } from "./progress";
 import { craftability, knownRecipes } from "./craftability";
 import { runCraft, spentOf } from "./engineCraft";
+/* 成本与保料是纯数字,住在 pillCraftNumbers(见该文件头注)。本模块自己要用,故 import;
+ * 但**不重导出** —— 使用者直接向那个模块取,少一层门面。 */
+import { pillCraftCost } from "./pillCraftNumbers";
 import { buffOverflowOf } from "./engineBuffs";
 import { noteMaterialUsed } from "./loreService";
 import { noteTaboo } from "./samsaraService";
@@ -140,46 +141,8 @@ export function usePillBatch(id: string, count: number): number {
 }
 
 /** 炼丹消耗 —— 草按品阶认(ISS-306,品阶由方子准入境界推导,见 data/herbGrades) */
-export interface PillCraftCost {
-  herb: number;
-  /** 这张方子烧哪个品阶的灵草:凡品聚气散到道品道祖丹,各按自己的界 */
-  herbGrade: HerbGrade;
-  stone: GNum;
-}
-
-export function pillCraftCost(id: string): PillCraftCost | null {
-  const def = pillDef(id);
-  if (!def?.recipe) return null;
-  /**
-   * 灵石开销按这张方子**准入境界能拿到的最高层级**折算。
-   *
-   * 从前这里自写 `minRealm × 2 + 1`,界外就飞出区域表了:第 18 境的方子算出层级 37,
-   * 而玩家在混沌海能到的最高层级是 32 —— 一张方子的价格凭空高出 322 倍(1.9^5),
-   * 于是界外炼丹被自己的报价挡在门外(ISS-211)。层级只有一个事实源:区域表。
-   */
-  const tier = maxTierForMajor(def.minRealm);
-  return {
-    herb: def.recipe.herb,
-    herbGrade: herbGradeOfMajor(def.minRealm),
-    stone: stoneByTier(tier, def.recipe.stoneBase / 10),
-  };
-}
-
-/**
- * 当前看得见的丹方 —— 你知道的,不是你够级的。
- * 炸炉风险由 craftability 呈现给玩家自行判断,这里不代玩家做决定。
- */
 export function availableRecipes(): string[] {
   return knownRecipes().map((p) => p.id);
-}
-
-/**
- * 失手时按技艺随机保下的残料比例:手越稳,赔得越少。
- *
- * 导出供 core/pillValue.ts 折算炼制代价 —— 那边若另抄一份,两处口径迟早分叉。
- */
-export function salvageRatio(skill: number): number {
-  return 0.2 + 0.3 * Math.min(1, skill / 100);
 }
 
 /** 开炉长的本事:成功长得快,失败也长——只是慢些,且偏向补最欠缺的一环 */
