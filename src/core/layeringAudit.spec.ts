@@ -22,6 +22,22 @@
  *
  * 故障注入:在任一 core 模块加 `import { usePlayerStore } from "@/stores/player"` 且该模块
  * 不在名单里 —— 第一条红;在 src/utils 夹一句对 core/store 的 import —— 第四条红。
+ *
+ * ## 全部八条,一张表看清「谁能认识谁」
+ *
+ * | 依赖方向 | 形态 | 为什么 |
+ * | --- | --- | --- |
+ * | `core → store` | 名单 `STATEFUL_CORE` | 逻辑层不该背着状态,但存量要能复核 |
+ * | `core` 用例需要 Pinia 的文件数 | 上限,只许减 | 测纯函数不该先建一整套 Pinia |
+ * | import store 的处数 | 不超过基线 | 名单没变时,防单个模块内部越挂越多 |
+ * | `utils → core / stores` | 禁止 | 最底层只认自己与标准库 |
+ * | `utils` 内部 | 只认自己与标准库 | 同上 |
+ * | `data` / `core` / `ui` / `stores` / `composables` → `views` / `components` | 禁止 | 底下五层一旦认识"长什么样",改个组件名就让数值模块跟着崩 |
+ * | `components → views` | 禁止 | 组件是可复用件,`views` 是装配好的整页;一旦反向依赖就搬不走 |
+ * | `ui → store` | 名单 `WITH_STORES` | `ui` 是**编排层**,允许依赖 store;但要点名,否则半年后没人说得清那二十个里哪些该拆 |
+ *
+ * **能禁止的禁止,不能禁止的登记**(三、八两行是登记)。两种形态的目的相同:
+ * 让"某个模块开始认识它本来不该认识的东西"这件事**必须显式发生**,而不是悄悄长出来。
  */
 import { describe, expect, it } from "vite-plus/test";
 import { readFileSync, readdirSync } from "node:fs";
