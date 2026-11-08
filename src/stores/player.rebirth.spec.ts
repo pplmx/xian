@@ -145,6 +145,11 @@ describe("player.rebirth 转世状态重置", () => {
  * 战绩(regionStats)仍随神魂不灭,「世界记得你」的叙事不丢。
  */
 describe("转世不残留产出型镇压", () => {
+  /* 每个用例独立起一个 Pinia —— 别沿用文件里前一个 describe 留下的实例 */
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
   /** 高阶远境(minRealm>0),新世炼气根本打不进:选仙界以上一境 */
   function seedFarSuppress(p: PlayerStore): string {
     const far = REGIONS.filter((r) => r.minRealm >= 9)[0]!;
@@ -202,6 +207,11 @@ describe("转世不残留产出型镇压", () => {
 });
 
 describe("道果的加减法 · 坏值不许污染余额", () => {
+  /* 每个用例独立起一个 Pinia —— 别沿用文件里前一个 describe 留下的实例 */
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
   /*
    * 余额一旦变成 NaN,后面所有「够不够」「扣多少」都失效 —— 而它不会报错,
    * 只会静静地让每一次判断都走岔(sanitize 要等下次读档才修得回来)。
@@ -232,6 +242,11 @@ describe("道果的加减法 · 坏值不许污染余额", () => {
 });
 
 describe("年岁与寿元 · 坏值不许污染", () => {
+  /* 每个用例独立起一个 Pinia —— 别沿用文件里前一个 describe 留下的实例 */
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
   /*
    * age 一旦变成 NaN:「寿元将尽」永远不成立、也不会再老 —— 玩家卡在不生不死里,
    * 而界面只是显示 NaN 岁。lifespanBonusYears 同理,面板与寿元判定会一起失真。

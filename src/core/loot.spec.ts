@@ -331,6 +331,18 @@ describe("法宝品阶 · 稀缺标签", () => {
  * 拾得即记、只记更好的一件、以及**被化尘的那件也算见过**(图鉴记的是见闻,不是家当)。
  */
 describe("装备见闻 · 入账那一刻就记下成色", () => {
+  /*
+   * 每个用例都用**同一件模板** `w_xuantie` 造装备,而断言读的是 lore store 里
+   * 那一条记录 —— 它跨用例共享同一个 Pinia 实例。不打乱顺序时恰好按"先 15 阶、
+   * 后确认不拉低"的顺序跑,看着没事;**一 shuffle 就露馅**:后一条先跑会留下
+   * tier 20 的记录,前一条当场读成 `{ q: 8, t: 20 }`(实测)。
+   *
+   * 修法是让每个用例从干净 store 起跑,而不是靠"文件里的书写顺序"当隔离。
+   */
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
   function mkItem(
     uid: string,
     quality: QualityId,
@@ -627,7 +639,16 @@ describe("拾得提示 · 灵品及以上才弹 rare", () => {
    * (实测同一门槛下数到 3 / 0 / 1 三种)。这里只测"调用瞬间弹了什么",
    * 不关心它多久消失 —— 那是 toastLifeMs 的事,另有判据。
    */
-  beforeEach(() => vi.useFakeTimers());
+  /*
+   * 这里原先只起了假定时器,**没建 Pinia** —— 靠的是文件里前面那些 describe
+   * 留下的活动实例。不打乱顺序时没事,一 shuffle 就炸:
+   * `getActivePinia() was called but there was no active Pinia`。
+   * 每个 describe 自己建一个,别依赖书写顺序。
+   */
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.useFakeTimers();
+  });
   afterEach(() => vi.useRealTimers());
   /** 走一次入包,返回本轮弹了几条 rare */
   let seq = 0;
