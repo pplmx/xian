@@ -418,6 +418,7 @@ const CATEGORIES = [
       "playerName",
       "nameLimit",
       "breakthroughNext",
+      "breakRefund",
       "eventRecall",
       "nemesisChip",
       "firstSight",

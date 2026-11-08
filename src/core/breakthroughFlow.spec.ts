@@ -116,6 +116,27 @@ describe("突破 · 小关(无劫)", () => {
     // 掉的是「一成修为 ×(1 − 退返)」,没有退返词条时就是 BT_FAIL_EXP_LOSS
     expect(toNum(player.exp) / expBefore).toBeCloseTo(1 - BT_FAIL_EXP_LOSS, 3);
   });
+
+  it("有退返天赋时掉得少 —— 公式是 ×(1 − 退返),不是恒定的 18%", () => {
+    /*
+     * 变异测试扫 breakthrough.ts 时把 `Math.min(0.8, breakRefund)` 改成 `Math.max`,
+     * 整套判据**全绿** —— 因为 breakRefund 这条线此前没有任何用例。
+     *
+     * 这一条走完整流程,证明退返真的并进了结算。上限那一半不走流程(游戏里
+     * 拿不到那么高的 breakRefund),由 `breakRefund.spec` 直接测纯函数
+     * `breakRefundOf`。
+     */
+    ready(0, 3);
+    mockRand = 0.999;
+    const player = usePlayerStore();
+    player.$patch({ reincarnation: { count: 1, daoFruit: 0, talents: ["t_yuanman"] } });
+    const expBefore = toNum(player.exp);
+
+    const view = attemptBreakthrough();
+    expect(view?.success).toBe(false);
+    // 「圆融」给 breakRefund: 0.1 → 掉 18% × 0.9 = 16.2%
+    expect(toNum(player.exp) / expBefore).toBeCloseTo(1 - BT_FAIL_EXP_LOSS * (1 - 0.1), 3);
+  });
 });
 
 describe("突破 · 大关(渡劫)", () => {

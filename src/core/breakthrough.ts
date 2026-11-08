@@ -51,6 +51,18 @@ import {
  * 与各解锁谓词同源)、境界名由 major 现取(realmDef 不手写)。自带「跨过才触发」:
  * from < 门槛 && to >= 门槛 才算首开 —— 同境内逐层突破 from==to 返回 null,不重复轰炸。
  */
+/**
+ * 渡劫失败时的修为退返比例 —— 从词条/天赋取,并**封顶 80%**。
+ *
+ * 上限的意义:退返越高,失败代价越小;若叠到 100%,失败就变成零代价,整个渡劫的
+ * 取舍(揣着修为赌一把 vs 稳妥攒材料)随之失去意义。当前数据最高只到
+ * 天赋 0.1 + 单件词条 0.2,离 0.8 很远 —— 这是**防御性上限**,防的是以后有人
+ * 把 breakRefund 的数据往上调。故它必须可测:抽成纯函数,由 `breakRefund.spec` 直接钉。
+ */
+export function breakRefundOf(mods: Parameters<typeof modOf>[0]): number {
+  return Math.min(0.8, modOf(mods, "breakRefund"));
+}
+
 export function firstUnlockAnnouncement(fromMajor: number, toMajor: number): string | null {
   const toName = realmDef(toMajor).name;
   if (fromMajor < VEIN_UNLOCK_MAJOR && toMajor >= VEIN_UNLOCK_MAJOR)
@@ -271,7 +283,7 @@ export function attemptBreakthrough(): BreakthroughView | null {
     };
   } else {
     const mods = player.finalStats.mods;
-    const refund = Math.min(0.8, modOf(mods, "breakRefund"));
+    const refund = breakRefundOf(mods);
     /*
      * 渡劫跬步(宿命传承):本世首次渡劫失败,修为不散。
      * `consumeHeritageUse` 返回 true 表示「这一次被免掉了」—— 要记下来,
