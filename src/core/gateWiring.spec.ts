@@ -421,6 +421,32 @@ describe("门禁接线 —— CI 里跑的自检,本地得有对等入口", () =
     const workflows = workflowsText();
     expect(workflows, "CI 里没跑打乱顺序自检 —— 顺序依赖又变成零覆盖了").toContain("check:shuffle");
     expect(SCRIPTS["check:all"] ?? "", "check:all 里没接打乱顺序自检").toContain("check:shuffle");
+  });
+
+  it("check:all 是一整套,每一环都不能少", () => {
+    /*
+     * `check:all` 是本地一键跑全套的入口(见 package.json):
+     *
+     *     清理 dist → 格式检查 → 静态门 → 测试 → 构建 → 打乱顺序
+     *
+     * 这条链**只有 `check:shuffle` 那一环被守过**(上一条用例)。其余五环谁被删掉,
+     * 判据都不会红 —— 而那意味着本地"全量验证"其实少跑了一段,人却以为跑全了。
+     * CI 里各 workflow 会分别跑它们,所以**删了也不会在 CI 现形**:本地那条链
+     * 静默变短,是最难发现的那种。
+     */
+    const all = SCRIPTS["check:all"] ?? "";
+    for (const [link, why] of [
+      ["clean-dist", "不先清 dist,构建产物可能与上次的混在一起"],
+      ["vp fmt --check", "格式没检查 —— 它会污染提交"],
+      ["bun run check", "静态门(env / 类型 / lint / 文档)没跑"],
+      ["bun run test", "用例没跑"],
+      ["bun run build", "构建没跑 —— 类型过不等于产物出得来"],
+      ["bun run check:shuffle", "打乱顺序自检没跑"],
+    ] as const) {
+      expect(all, `check:all 少了「${link}」这一环 —— ${why}`).toContain(link);
+    }
+    // 防空转:一条都没匹配上的话,上面六条会各自报错而不是全绿,这里再兜一次底
+    expect(all.length, "check:all 脚本是空的?").toBeGreaterThan(20);
     expect(SCRIPTS["check:shuffle"] ?? "", "check:shuffle 命令消失了").toContain(
       "scripts/shuffle-check.mjs",
     );
