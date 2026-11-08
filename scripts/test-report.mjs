@@ -345,6 +345,7 @@ const CATEGORIES = [
       "useGameNow",
       "engineTick",
       "perfBudget",
+      "overlayTiming",
       "testReportBalance",
       "tsconfigGuard",
       "modalStack",

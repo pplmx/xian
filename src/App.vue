@@ -371,13 +371,48 @@ onMounted(() => {
   }
   window.addEventListener("pointerdown", onPointerDown);
   window.addEventListener("keydown", onGlobalKeydown);
+  /*
+   * 浮层分块等**楷体真正落定**之后再拉,不是等 `document.fonts.ready`。
+   *
+   * ## 上一版在这里等错了信号
+   *
+   * 原写法是 `document.fonts.ready.then(revealOverlays)`。而 `fonts.ready` 在
+   * **当前已请求的字体**加载完时就 resolve —— 页面刚起来时还没渲染楷体字,
+   * 那个 promise 于 **15ms** 就结了(实测),`overlaysReady` 随即置 true。
+   * 结果是十个浮层分块(合计 128KB)在 **110ms** 就被拉走,而首屏楷体要到
+   * 171ms 才 `loadingdone` —— 它们全挤在同一条 4G 带宽上,正是这段代码
+   * 想避免的事。设计意图(见 docs/development.md 第 3 条「浮层按需装载」)
+   * 一直没生效,而没有任何判据看得出差别:浮层延迟挂载后页面照样全绿。
+   *
+   * ## 为什么改等 loadingdone
+   *
+   * `loadingdone` 才是「字体真的换上、排版已经用它重排过」的那一刻(实测 171ms)。
+   * 它只在真有字体加载完时触发;没有字体可等(或浏览器不支持)时不该让浮层
+   * 永远不出现,故两条路都兜一个超时。
+   */
   const revealOverlays = (): void => {
     requestAnimationFrame(() => {
       overlaysReady.value = true;
     });
   };
-  if (document.fonts?.ready) void document.fonts.ready.then(revealOverlays, revealOverlays);
-  else revealOverlays();
+  const fonts = document.fonts;
+  if (!fonts) {
+    revealOverlays();
+  } else {
+    /*
+     * 收到第一次 loadingdone 就撤;1.2s 是兜底 —— 字体慢到那时还没好,
+     * 也不该把浮层一直压着(玩家点开装备详情会什么都不发生)。
+     * 超时值取 1.2s:实测楷体 171ms 落定,留约七倍余量。
+     */
+    let timer = 0;
+    const done = (): void => {
+      fonts.removeEventListener("loadingdone", done);
+      window.clearTimeout(timer);
+      revealOverlays();
+    };
+    timer = window.setTimeout(done, 1200);
+    fonts.addEventListener("loadingdone", done);
+  }
 });
 
 onUnmounted(() => {

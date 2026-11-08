@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 581 个 spec;本作自己那部分 501 个) |
+| `bun run test` | 全量用例(全量 582 个 spec;本作自己那部分 502 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -146,7 +146,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 581 个 spec(本作自己那部分 501 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 582 个 spec(本作自己那部分 502 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -295,7 +295,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | --- | --- | --- | --- |
 | 冷启动解码字节 | 2681KB(楷体 1783KB) | 1150KB(楷体 48KB) | 1500KB |
 | FCP | 692ms | 1120ms | 1400ms |
-| 楷体换上(swap 那一刻) | 2255ms | 2953ms | 3400ms |
+| 楷体换上(swap 那一刻) | 2255ms | 2620ms | 3400ms |
 | 首屏楷体请求 | — | 48KB(1 片) | 160KB |
 | 最大 JS 单块 | — | 394KB(`player`) | 500KB |
 | 构建时长 | 32s | 12.6s | 90s |
@@ -353,6 +353,13 @@ error: Failed to resolve vite command: GenericFailure, Expected
    各自的数据链;原先静态挂在 `App.vue`,所有玩家打开首页都要先下完。现在它们由
    `defineAsyncComponent` 拆成独立分块,并等正文所用楷体落定后再挂载,避免在慢网下与首条
    路由、字体切片抢带宽。浮层状态仍在 store 中,晚一拍挂载不会漏掉事件。
+
+   > 2026-11-08 修:「等楷体落定」原先是等 `document.fonts.ready`,而它的语义是
+   > 「**当前已请求的**字体都加载完」—— 页面刚起来还没渲染楷体字,那个 promise 于
+   > **15ms** 就结了,`overlaysReady` 随即置 true,十个浮层分块(**128KB**)在 **110ms**
+   > 就被拉走,而首屏楷体要到 **171ms** 才 `loadingdone`。设计意图一直没生效。
+   > 改等 `loadingdone`(带 1.2s 超时兜底)后,浮层推迟到 153ms,
+   > **楷体换上 2954 → 2595~2783ms**(三遍实测)。判据 `overlayTiming.spec` 守着。
 4. **样式先于模块预载排队**。Vite 默认把入口 CSS 放在几十条 `modulepreload` 之后;
    4G 冷启动时预载 JS 会先占满连接池,首帧只能等样式最后一个到。构建插件只调换
    `<link rel="stylesheet">` 与模块标签的顺序,不删预载、不改依赖;实测 FCP 提前约 80ms。

@@ -90,7 +90,29 @@ describe("册页装帧 · 全站导航与浮层共用一套书页语言", () => 
     expect(app, "浮层组等正文与字体落定后再挂").toMatch(
       /<template v-if="overlaysReady">[\s\S]{0,1200}<OfflineRewardDialog/,
     );
-    expect(app, "挂载时机读浏览器字体就绪").toContain("document.fonts?.ready");
+    /*
+     * 挂载时机：等**楷体真正落定**，不是等 `document.fonts.ready`。
+     *
+     * 这条原来写的是 `.toContain("document.fonts?.ready")` —— 它把当时的实现细节
+     * 当成了契约。而那个信号是**错的**：`fonts.ready` 的语义是「当前**已请求**的
+     * 字体都加载完」，页面刚起来还没渲染楷体字，它在 15ms 就 resolve 了（实测），
+     * 于是十个浮层分块（128KB）在 110ms 就被拉走，与首屏楷体（171ms 才
+     * `loadingdone`）抢同一条带宽 —— 正是这条判据想守的事没守住。
+     *
+     * 判据改成认「loadingdone」这个信号；改完实测楷体换上 2954 → 2595~2783ms。
+     * 反面用例见 `core/overlayTiming.spec`（那边还守超时兜底与监听清理）。
+     */
+    /*
+     * **先剥注释再断言** —— App.vue 里那段说明本身就引用了旧写法,不剥注释的话
+     * 这条判据会被它自己的文档绊红(本轮当场撞到,与 Round 8 那次同一类问题)。
+     */
+    const code = app.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    expect(code, "挂载时机要等楷体落定（loadingdone）").toContain("loadingdone");
+    expect(
+      code,
+      "又回到等「字体就绪」那个信号了 —— 它只等已请求的字体,页面还没渲染楷体字时" +
+        "15ms 就 resolve,浮层会提前拉走 128KB 与首屏楷体抢带宽",
+    ).not.toMatch(/fonts\??\.ready/);
     expect(app, "装备详情不再随 App 静态进首屏").not.toContain(
       'import EquipmentDetailDialog from "@/components/equipment/EquipmentDetailDialog.vue"',
     );
