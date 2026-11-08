@@ -191,7 +191,19 @@ function runTribulation(targetMajor: number): { survived: boolean; log: string[]
   const kind = rollTribulation(targetMajor);
   const tDef = tribulationDef(kind);
   const relief = currentTribulationRelief(player, kind);
-  const weatherMult = todayWeather(player.major).tribulationMult;
+  /*
+   * **用 targetMajor,不是 player.major。**
+   *
+   * 预览侧 `currentTribulationPlan` 用的是 `nextMajor`(见 tribulationDecision),
+   * 注释写着"与结算同源,预览与实算不可能分叉"。而这里原先读 `player.major`
+   * (Round 35 改传参时照搬了旧行为,当时两者恰好等价)——
+   * 大境界突破时 `player.major` 与 `player.major + 1` 会落在**不同的世界**
+   * (`worldOf` 按界域分池),于是预览按新界报"雷鸣日 +8%",结算却按旧界取天时,
+   * 两边的乘数可能不同。
+   *
+   * 跨界的三处:major 8 / 13 / 17 各是所在界域的最后一境。
+   */
+  const weatherMult = todayWeather(targetMajor).tribulationMult;
   // 三维折算与预览同源(currentTribulationPlan 走同一个 helper):血厚防高者硬抗一部分
   const stat = currentStatGuard(player);
   const regen = sustainScore(mods, tDef, relief);

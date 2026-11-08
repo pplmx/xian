@@ -353,6 +353,7 @@ const CATEGORIES = [
       "swRegistration",
       "mainWiring",
       "routeTransition",
+      "tribulationWeatherParity",
       "exportReach",
       "engineGateCoverage",
       "testReportBalance",
