@@ -215,6 +215,47 @@ describe("分层 · core 对 store 的依赖只许收拢", () => {
     ).toEqual([]);
   });
 
+  it("ui 依赖 store 的模块 = 点名名单 —— 这一层本来就是编排", () => {
+    /*
+     * `ui` 层**允许**依赖 store —— 它是编排层(见 `ui/qualityPeakStores` 的文件头:
+     * 「去哪个 store 取什么」属于这一层,折算法才留在 core)。
+     *
+     * 但没有名单的话,这个「允许」会变成「谁都能随手 import 一个」:今天是六个模块,
+     * 半年后可能二十个,而没人说得清那二十个里哪些本该拆出去。故用与
+     * `STATEFUL_CORE` 同一套办法 —— **点名清单**,增删都要显式改这里。
+     *
+     * 迁移方向:能只做"读 → 算 → 返回文本"的,把读 state 那段挪进 store 的 action,
+     * `ui` 只留纯函数(见 `itemText` / `eventText` 的写法)。
+     */
+    const UI = resolve(__dirname, "../ui");
+    const WITH_STORES = [
+      "codex.ts",
+      "enemyLore.ts",
+      "eventText.ts",
+      "itemText.ts",
+      "qualityPeakStores.ts",
+      "useNextStep.ts",
+    ];
+    const actual = sources(UI)
+      .filter((f) => /from\s+"@\/stores\//.test(f.text))
+      .map((f) => f.name)
+      .sort();
+    const expected = [...WITH_STORES].sort();
+    const added = actual.filter((n) => !expected.includes(n));
+    const removed = expected.filter((n) => !actual.includes(n));
+    expect(
+      added,
+      "这些 ui 模块新开始 import store —— 先想清楚它是编排还是该留在纯函数里," +
+        "确认要留就把名字加进 WITH_STORES:" +
+        added.join("、"),
+    ).toEqual([]);
+    expect(
+      removed,
+      "这些 ui 模块不再 import store 了 —— 从 WITH_STORES 里划掉:" + removed.join("、"),
+    ).toEqual([]);
+    expect(actual.length, "一个 ui 模块都没扫到?").toBeGreaterThan(0);
+  });
+
   it("组件不认识页面 —— components 不许 import views", () => {
     /*
      * 上一条守的是「底层 → 视图」这一刀。这条守相邻的一刀:**组件 → 页面**。
