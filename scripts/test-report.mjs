@@ -350,6 +350,7 @@ const CATEGORIES = [
       "useTabKeys",
       "startupOrder",
       "guard",
+      "swRegistration",
       "exportReach",
       "engineGateCoverage",
       "testReportBalance",
