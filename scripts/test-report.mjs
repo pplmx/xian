@@ -347,6 +347,7 @@ const CATEGORIES = [
       "perfBudget",
       "overlayTiming",
       "importCycles",
+      "exportReach",
       "engineGateCoverage",
       "testReportBalance",
       "tsconfigGuard",

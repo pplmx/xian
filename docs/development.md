@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 584 个 spec;本作自己那部分 504 个) |
+| `bun run test` | 全量用例(全量 585 个 spec;本作自己那部分 505 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -146,7 +146,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 584 个 spec(本作自己那部分 504 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 585 个 spec(本作自己那部分 505 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -198,6 +198,16 @@ error: Failed to resolve vite command: GenericFailure, Expected
 > 不退出」的门,**进不了名单也就没人守**。现在两种写法都认;`release:check` 也补进
 > 名单(它此前只有「命令挂着」「判断走纯函数」两条,唯独没有「失败会红」)。
 > 自证用例加了三条:三元取码算、`exitCode = … ? 0 : 1` 算、但恒退 0 的三元不算。
+>
+> **同日补:导出的可达性**。1885 个导出里有 69 个**只在自己文件里出现过** ——
+> 定义时顺手加了 `export`,之后从没被别处引用。判据同为「存量记账、增量当场拦」,
+> 基线 69 条写在 `src/core/exportReach.spec.ts` 里;新增一个自用导出立刻红,
+> 基线过期(某条已获得外部使用者)也红。
+>
+> 这条判据的**口径**本身踩了一次坑:三个版本分别数出 69 / 49 / 20。根因是
+> **自指污染** —— 那份 spec 的基线里逐个写着这些名字(`core/audio.ts:startBgm` …),
+> 扫源码时它自己出现在倒排表里,`startBgm` 的"出现文件"变成 2 个,
+> 「只在本文件用」就永远不成立。排除这份 spec 后,69 这个数字一次就稳了。
 
 ### 怎么找下一个问题
 
