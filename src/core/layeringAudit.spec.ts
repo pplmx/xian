@@ -246,6 +246,45 @@ describe("分层 · core 对 store 的依赖只许收拢", () => {
     ).toEqual([]);
   });
 
+  it("三个端口的落点都真被接上 —— 没人接的电话等于没这根线", () => {
+    /*
+     * `core` 里有三个**端口**:`notify`(说一句话)、`uiPort`(给界面看什么)、
+     * `diagnostics`(运行期异常留档)。它们的形状一样 —— core 定义接口、
+     * 上层在 store 的 setup 里把自己的实现塞进去(`setNotifier` / `setUiViewModelSink` /
+     * `setRuntimeDiagnosticSink`)。
+     *
+     * 端口的好处是 core 不再依赖 store。**但它把「有人接」这件事变成了隐式契约**:
+     * 谁忘了接线,core 那边调用照常返回、不报错,只是那句话永远到不了界面 ——
+     * 与 `diagnostics` 那次的形态相同(见 `startupOrder.spec`:sink 为 null 时异常被静默丢弃)。
+     *
+     * 故这条守:**三个 setter 都必须真的被调用**,且调用点在 stores 里。
+     */
+    const setterToStore: [string, string][] = [
+      ["setNotifier", "stores/ui.ts"],
+      ["setUiViewModelSink", "stores/ui.ts"],
+      ["setRuntimeDiagnosticSink", "stores/diag.ts"],
+    ];
+    const uiSrc = readFileSync(resolve(__dirname, "../stores/ui.ts"), "utf8");
+    const diagSrc = readFileSync(resolve(__dirname, "../stores/diag.ts"), "utf8");
+    const offenders: string[] = [];
+    for (const [setter, where] of setterToStore) {
+      const src = where === "stores/ui.ts" ? uiSrc : diagSrc;
+      /*
+       * 只看**实际调用**,不认 import 行、也不认被注释掉的调用。
+       * 第一版只查 `Setter(` 出现过就算数 —— 把调用注释掉之后,那串字还在文本里,
+       * 判据照样绿(注入验证当场撞到)。
+       */
+      const code = src
+        .replace(/^import[\s\S]*?;$/gm, "")
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/^\s*\/\/.*$/gm, "");
+      if (!new RegExp(`${setter}\\(`).test(code)) {
+        offenders.push(`${setter} 没在 ${where} 里被调用`);
+      }
+    }
+    expect(offenders, "端口没人接 —— core 说了话却到不了界面:" + offenders.join("、")).toEqual([]);
+  });
+
   it("ui 依赖 store 的模块 = 点名名单 —— 这一层本来就是编排", () => {
     /*
      * `ui` 层**允许**依赖 store —— 它是编排层(见 `ui/qualityPeakStores` 的文件头:
