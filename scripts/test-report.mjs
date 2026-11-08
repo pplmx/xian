@@ -329,6 +329,7 @@ const CATEGORIES = [
       "useGameClock",
       "useGameNow",
       "engineTick",
+      "perfBudget",
       "modalStack",
       "singleWriter",
       "useReturnSettle",

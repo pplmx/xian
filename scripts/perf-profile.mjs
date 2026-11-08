@@ -91,6 +91,22 @@ const BUDGET = {
   /** 单视图 >50ms 长帧数量上限 */
   longFramesMax: Number(process.env.PERF_LONG_FRAMES ?? 2),
   /**
+   * **交互段**最差帧上限(ms) —— 与静置段分开定。
+   *
+   * 静置 100ms 那条拦的是「页面自己不动时别卡」。交互段必然更贵:它包含首次把一个
+   * 册页的内容渲染出来(法宝 45 条长账、词条转移候选等),那一拍的浏览器侧布局与
+   * 合成不归应用代码管。实测(背包页最重的四种交互,跑三遍):
+   *
+   *   静置段          恒 17ms   0 长帧
+   *   交互段(背包)   100 / 117 / 267ms,2 / 2 / 8 帧 >50ms
+   *   交互段(其余 16 视图) ≤ 34ms,0 长帧
+   *
+   * 3 遍摆动这么大是因为它取决于那一次是否赶上一次完整重排。故这条只拦**量级回潮**
+   * (比如某个册页又变回整册直铺,或翻批一次渲染几百条),300ms 是实测最差值 267ms
+   * 的约 1.1 倍、常见值的十倍以上 —— 松,但它守的东西本来是「别成倍长回去」。
+   */
+  interactiveMaxFrameMs: Number(process.env.PERF_INTERACTIVE_MAX_FRAME_MS ?? 300),
+  /**
    * 背包一次只留 32 张卡,可前后逐批翻完 300 件;80 张一窗实测 1048,故不设两批。
    * 法宝全册 45 条长账按 6+6 滑窗,全流程峰值 667;丹方 54 张同窗,峰值 611。
    * 词条转移 299 件候选按 12+12 滑窗,逐批开完峰值 948。四条密清单单独守 1100,
@@ -160,8 +176,24 @@ const VIEWS = [
   { route: "/apprentice", name: "apprentice" },
 ];
 
-/** 页内采样器:记录相邻帧间隔,`__perfStop()` 时汇总。IIFE 用 void 包裹,
- *  让 `evaluate(SAMPLER)` 立即返回(不被未 resolve 的 Promise 卡住)。 */
+/**
+ * 页内采样器:记录相邻帧间隔,`__perfStop()` 时汇总。
+ *
+ * ## 为什么要在「静置采样结束」之后还能接着记
+ *
+ * 这套门原先的采样器在**交互开始前**就停了:第 2500ms 起采几秒 → `__perfStop()` →
+ * 然后才是批量展开、切页签、开弹窗。于是「点开 300 件装备的弹窗卡不卡」这件事
+ * **从来没被量过** —— 而那恰恰是玩家最容易感觉到 jank 的时刻(静置时页面本来就
+ * 不太动,帧率必然好看)。
+ *
+ * 现在 `__perfStop()` 只是把**静置段**结出来,采样器继续跑;交互跑完再调
+ * `__perfStopInteractive()`,单独返回**交互段**的统计。两段分开报、分开判:
+ *   · 静置段守「页面自己不动时别卡」;
+ *   · 交互段守「点了之后别卡」。
+ * 混成一段会让交互那几拍的尖峰淹没在几百帧静置里,看不出是哪一段坏的。
+ *
+ * IIFE 用 void 包裹,让 `evaluate(SAMPLER)` 立即返回(不被未 resolve 的 Promise 卡住)。
+ */
 const SAMPLER = `
   void (() => {
     let resolveFn;
@@ -169,27 +201,42 @@ const SAMPLER = `
     const frames = [];
     let last = performance.now();
     let raf;
+    /** 交互段起点:__perfStop() 那一刻的帧数,之后记的都算交互 */
+    let interactiveFrom = null;
     function step(now) {
       frames.push(now - last);
       last = now;
       raf = requestAnimationFrame(step);
     }
     raf = requestAnimationFrame(step);
-    window.__perfStop = () => {
-      cancelAnimationFrame(raf);
-      const n = frames.length;
-      const s = [...frames].sort((a, b) => a - b);
+    const summarize = (slice) => {
+      const n = slice.length;
+      if (n === 0) return { frames: 0, max: 0, p95: 0, median: 0, over50ms: 0 };
+      const s = [...slice].sort((a, b) => a - b);
       const p = (q) => s[Math.min(n - 1, Math.floor(q * n))];
-      const long = frames.filter((f) => f > 50).length;
-      resolveFn({
+      return {
         frames: n,
         max: Math.round(p(1)),
         p95: Math.round(p(0.95)),
         median: Math.round(p(0.5)),
-        over50ms: long,
-        nodes: document.querySelectorAll("body *").length,
-      });
+        over50ms: slice.filter((f) => f > 50).length,
+      };
+    };
+    window.__perfStop = () => {
+      /*
+       * 只结「静置段」:交互还没开始,故到此为止的帧全是静置帧。
+       * 采样器**不取消** —— 后面交互那几拍还要接着记。
+       */
+      interactiveFrom = frames.length;
+      const out = { ...summarize(frames), nodes: document.querySelectorAll("body *").length };
+      resolveFn(out);
       return window.__perf;
+    };
+    /** 交互段统计(由交互流程跑完后调用) */
+    window.__perfStopInteractive = () => {
+      cancelAnimationFrame(raf);
+      if (interactiveFrom === null) return summarize(frames);
+      return summarize(frames.slice(interactiveFrom));
     };
   })();
 `;
@@ -534,6 +581,28 @@ async function loadBenchModules(needsCollection, needsBigBag, needsArtifacts, ne
     await vite.close();
   }
 }
+
+/**
+ * 载入 `src/core/perfBudget.ts`(纯函数判定)。
+ *
+ * 为什么不直接 `import`:`perfBudget.ts` 是 TypeScript 且带 `@/` 别名,Node 侧
+ * 解析不了。仓里既有做法是借一个 vite 实例 `ssrLoadModule`,这里照做 —— 但必须是
+ * **独立的一次**并提前载入并保存结果:`loadBenchModules` 自己会 `vite.close()`,
+ * 而判定要等到所有视图跑完之后才发生。
+ */
+const viteForJudge = await createViteServer({
+  root: ROOT,
+  server: { middlewareMode: true },
+  appType: "custom",
+  logLevel: "silent",
+});
+let judgePerf;
+try {
+  ({ judgePerf } = await viteForJudge.ssrLoadModule("/src/core/perfBudget.ts"));
+} finally {
+  await viteForJudge.close();
+}
+if (typeof judgePerf !== "function") throw new Error("judgePerf 没载入 —— 判定会静默失效");
 
 const {
   fullCollectionSlices,
@@ -1064,10 +1133,21 @@ for (const view of VIEWS) {
         await page.evaluate(() => document.querySelectorAll("body *").length),
       );
     }
+    /*
+     * 交互段统计 —— 静置采样结束后采样器仍在记,这里把它结出来。
+     * 取不到就留 null(该视图没有交互流程,或页面已换文档),不硬编一个假读数。
+     */
+    let interactive = null;
+    try {
+      interactive = await page.evaluate("window.__perfStopInteractive?.() ?? null");
+    } catch {
+      interactive = null;
+    }
     record = {
       name: view.name,
       route: view.route,
       ...data,
+      interactive,
       nodes: data.nodes,
       peakNodes,
       batch,
@@ -1124,19 +1204,44 @@ for (const r of results) {
     )
     .join(" ");
   const deepDom = (r.peakNodes ?? r.nodes) !== r.nodes ? ` peak=${r.peakNodes}` : "";
+  /** 交互段读数(该视图没有交互流程时为 null) */
+  const inter = r.interactive;
+  const interText = inter
+    ? ` · 交互 ${inter.frames}帧 max=${inter.max}ms p95=${inter.p95}ms >50ms=${inter.over50ms}`
+    : "";
   const state = r.crashed
     ? `✗ ${r.name} CRASHED: ${r.crashed}`
     : `✓ ${r.name.padEnd(11)} frames=${r.frames} max=${r.max}ms p95=${r.p95}ms med=${r.median}ms >50ms=${r.over50ms} dom=${r.nodes}${deepDom}${
         batchText ? ` ${batchText}` : ""
-      }${r.errors.length ? ` errors=${r.errors.join("|").slice(0, 60)}` : ""}`;
+      }${interText}${r.errors.length ? ` errors=${r.errors.join("|").slice(0, 60)}` : ""}`;
   console.log(state);
-  if (r.crashed) failures.push(`${r.name}: 崩溃 (${r.crashed})`);
-  else if (r.errors.length) failures.push(`${r.name}: 页面异常 (${r.errors[0].slice(0, 80)})`);
-  else if (gate && r.max > BUDGET.maxFrameMs)
-    failures.push(`${r.name}: 最差帧 ${r.max}ms > ${BUDGET.maxFrameMs}ms`);
-  else if (gate && r.over50ms > BUDGET.longFramesMax)
-    failures.push(`${r.name}: ${r.over50ms} 帧 >50ms 长帧 > ${BUDGET.longFramesMax}`);
-  else if (gate && r.slotCandidates?.peakNodes > 1100)
+  /*
+   * 帧率判定(静置段 + 交互段)走 `core/perfBudget.judgePerf` 这个纯函数,不写在脚本里。
+   *
+   * 理由写在 perfBudget.ts 的文件头:判定埋在脚本里时,「它有没有生效」只能靠正则扫
+   * 文本,而文本扫描认的是「这串字符在不在」而不是「它有没有生效」—— 实测两次故障注入
+   * (条件前后加 `false && `、把 failures.push 换成注释)都照样绿。抽成纯函数后
+   * 由 `perfBudget.spec` 用用例回答,不必猜脚本长什么样。
+   *
+   * 崩溃与页面异常由这个函数自己短路(一个崩掉的页面不该再报十条帧率)。
+   */
+  failures.push(
+    ...judgePerf(
+      {
+        name: r.name,
+        max: r.max,
+        over50ms: r.over50ms,
+        interactive: r.interactive,
+        crashed: r.crashed,
+        errors: r.errors,
+      },
+      BUDGET,
+      gate,
+    ),
+  );
+  if (r.crashed || r.errors.length) {
+    /* 崩溃/异常已经由 judgePerf 记下并短路,后面的 DOM 与批次对账不必再看 */
+  } else if (gate && r.slotCandidates?.peakNodes > 1100)
     failures.push(
       `${r.name}: 部位候选 DOM ${r.slotCandidates.peakNodes} > 1100 —— 候选表是否又整批进弹窗了`,
     );
@@ -1192,7 +1297,7 @@ for (const r of results) {
 }
 
 console.log(
-  `\n判据:最差帧 ≤ ${BUDGET.maxFrameMs}ms · 长帧 ≤ ${BUDGET.longFramesMax} · 修行功法 DOM ≤ ${BUDGET.maxInteractiveDomByView.cultivation} · 背包首帧 DOM ≤ ${BUDGET.maxDomByView.inventory} / 弹窗峰值 ≤ ${BUDGET.maxInteractiveDomByView.inventory} · 道痕满卷 DOM ≤ ${BUDGET.maxInteractiveDomByView.celestial} · 法宝全册峰值 DOM ≤ 1100 · 丹方全册峰值 DOM ≤ 1100 · 部位候选峰值 DOM ≤ 1100 · 词条转移峰值 DOM ≤ 1100 · 坊市峰值 DOM ≤ ${BUDGET.maxInteractiveDomByView.market} · 收藏峰值 DOM ≤ ${BUDGET.maxInteractiveDomByView.collection} · 无崩溃/异常`,
+  `\n判据:最差帧 ≤ ${BUDGET.maxFrameMs}ms · 长帧 ≤ ${BUDGET.longFramesMax} · 交互段最差帧 ≤ ${BUDGET.interactiveMaxFrameMs}ms · 修行功法 DOM ≤ ${BUDGET.maxInteractiveDomByView.cultivation} · 背包首帧 DOM ≤ ${BUDGET.maxDomByView.inventory} / 弹窗峰值 ≤ ${BUDGET.maxInteractiveDomByView.inventory} · 道痕满卷 DOM ≤ ${BUDGET.maxInteractiveDomByView.celestial} · 法宝全册峰值 DOM ≤ 1100 · 丹方全册峰值 DOM ≤ 1100 · 部位候选峰值 DOM ≤ 1100 · 词条转移峰值 DOM ≤ 1100 · 坊市峰值 DOM ≤ ${BUDGET.maxInteractiveDomByView.market} · 收藏峰值 DOM ≤ ${BUDGET.maxInteractiveDomByView.collection} · 无崩溃/异常`,
 );
 if (failures.length > 0) {
   console.log(`✗ 有 ${failures.length} 处超限:`);

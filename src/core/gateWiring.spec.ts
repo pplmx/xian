@@ -650,3 +650,60 @@ describe("首屏门 · 结算窗口要等得到它要量的那一拍", () => {
     expect(SRC, "缺一条「楷体换上没量到」的独立判词").toContain("没量到");
   });
 });
+
+/**
+ * 运行时门 · 采样窗口要盖住**交互**那一段。
+ *
+ * ## 实测过的失效
+ *
+ * `perf-profile.mjs` 原先这样用:`goto` → 等 2.5s → 注入采样器 → 采几秒 →
+ * `__perfStop()` → **然后才**批量展开、切页签、开弹窗。也就是说:
+ *
+ * ```text
+ *   静置采样 ████████████         ← 有门,恒 17ms
+ *   交互              ████████████  ← 从来没有量过
+ * ```
+ *
+ * 而交互恰恰是玩家最容易感觉到 jank 的时刻 —— 静置时页面本来就不太动,帧率必然好看。
+ * 本轮补上之后当场量出:背包页交互段最差帧 100 / 117 / 267ms(2 / 2 / 8 帧 >50ms),
+ * 其余 16 个视图 ≤ 34ms。**这个差别在旧门里完全看不见。**
+ *
+ * ## 判据守什么
+ *
+ * ① `__perfStop()` 只结静置段,采样器**不取消** —— 取消就回到「只看静置」;
+ * ② 有一个单独的交互段出口(`__perfStopInteractive`);
+ * ③ 交互段有独立的预算与判词 —— 与静置共用一档的话,那几拍尖峰会被几百帧静置
+ *    稀释掉,永远不红。
+ */
+describe("运行时门 · 交互段也要被采样", () => {
+  const SRC = readFileSync(join(ROOT, "scripts/perf-profile.mjs"), "utf8");
+
+  it("静置结束时不许把采样器停掉 —— 交互还要接着记", () => {
+    const stopBody = /window\.__perfStop = \(\) => \{([\s\S]*?)\n    \};/.exec(SRC)?.[1] ?? "";
+    expect(stopBody, "找不到 __perfStop —— 判据的前提不成立").not.toBe("");
+    expect(
+      stopBody,
+      "`__perfStop()` 里又出现了 cancelAnimationFrame —— 采样在交互开始前就停了," +
+        "「翻批/开弹窗卡不卡」会重新变成没人量的东西",
+    ).not.toContain("cancelAnimationFrame");
+    expect(stopBody, "`__perfStop()` 要记下交互段起点").toContain("interactiveFrom");
+  });
+
+  it("交互段判定走纯函数,不写在脚本的 else-if 链里", () => {
+    /*
+     * 判定抽到 `core/perfBudget.judgePerf` 之后,「哪种读数该红」由 `perfBudget.spec`
+     * 的用例回答 —— 那才是能验的东西。
+     *
+     * 为什么不再扫脚本文本:本轮实测过两次故障注入,**旧判据两次都照样绿**:
+     *   ① 在条件前加 `false && ` —— 恒假
+     *   ② 把 `failures.push(...)` 换成一行注释 —— 不记了
+     * 正则匹配的是「这串字符在不在」,不是「它有没有生效」。
+     */
+    expect(SRC, "缺交互段出口 __perfStopInteractive").toContain("__perfStopInteractive");
+    expect(SRC, "脚本没有调用纯函数 judgePerf —— 判定又回到手写的 else-if 链了").toContain(
+      "judgePerf(",
+    );
+    // 判据真值在 core 里,且那份有直接用例
+    expect(SRC, "预算常量没传给 judgePerf").toMatch(/judgePerf\([\s\S]{0,400}?BUDGET/);
+  });
+});
