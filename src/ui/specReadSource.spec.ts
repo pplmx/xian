@@ -29,7 +29,25 @@ const SPECS = walkFiles(resolve(ROOT, "src"), isSpecFile).map((full) => ({
 
 describe("界面契约测试 · 读源只有一种写法", () => {
   it("没有 spec 自己再定义一份 source(rel)", () => {
-    const offenders = SPECS.filter((s) => /function source\(\s*rel/.test(s.src)).map((s) => s.path);
+    /*
+     * **两种写法都要拦**:函数声明(`function source(rel`)与箭头函数
+     * (`const source = (…) => …`)。第一版只认前者,而 `eventDesk.spec` 用的是后者
+     * —— 注入 `const source = (rel) => readFileSync(rel, "utf8")` 判据照样绿。
+     *
+     * 它当时没读 `style.css`,所以无害;但只要这种写法存在,下次有人用它读那份
+     * 「按路由拆过的残卷」,就会静默验错对象。
+     */
+    /*
+     * **排除本文件**:下面的注释里为了说清「第二版要拦什么」举了两种写法的例子,
+     * 其中就有 `const source = …` —— 判据不分注释与代码,会把自己抓进来。
+     * (本会话此前栽过同形的坑:`testDeterminism` / `mechanicsKeyBind` 都因自引用误报。)
+     */
+    const self = "src/ui/specReadSource.spec.ts";
+    const offenders = SPECS.filter(
+      (s) =>
+        s.path !== self &&
+        (/function source\(\s*rel/.test(s.src) || /const source\s*=\s*\(/.test(s.src)),
+    ).map((s) => s.path);
     expect(
       offenders,
       "这些 spec 又各自写了一份 source() —— 改用 @/test/readSource 的 readSource,否则抄成简版会静默读错 style.css",

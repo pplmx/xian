@@ -7,9 +7,8 @@
  *   一 去向概率与效果都从 EventChoice 的 weight / effects 现算，不另写一张表；
  *   二 组件确实消费同一份判据，并把不可选原因、默认项与断缘代价露到按钮上。
  */
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vite-plus/test";
+import { readSource } from "@/test/readSource";
 import { createPinia, setActivePinia } from "pinia";
 import { eventDef } from "@/data/events";
 import { stoneByTier } from "@/core/formulas";
@@ -19,8 +18,6 @@ import { useResourcesStore } from "@/stores/resources";
 import { formatGN } from "@/utils/format";
 import { gn } from "@/utils/gnum";
 import { choiceOutcomeForecasts } from "./eventText";
-
-const source = (path: string): string => readFileSync(resolve(__dirname, "..", path), "utf8");
 
 describe("际遇帖 · 去向账", () => {
   beforeEach(() => {
@@ -71,7 +68,7 @@ describe("际遇帖 · 去向账", () => {
 
 describe("际遇帖 · 接线", () => {
   it("抉择前把档位、概率、门限、默认项、断缘与去向都放进同一帖", () => {
-    const dialog = source("components/adventure/EventDialog.vue");
+    const dialog = readSource("src/components/adventure/EventDialog.vue");
     expect(dialog).toContain("data-event-slip");
     expect(dialog).toContain("data-event-choice");
     expect(dialog).toContain("choiceOutcomeForecasts");
@@ -82,7 +79,7 @@ describe("际遇帖 · 接线", () => {
   });
 
   it("结算后报出这一择，把焦点交给结果卷，并保留逐行实得", () => {
-    const dialog = source("components/adventure/EventDialog.vue");
+    const dialog = readSource("src/components/adventure/EventDialog.vue");
     expect(dialog).toContain("chosenChoiceLabel");
     expect(dialog).toContain('ref="resultSlip"');
     expect(dialog).toContain("resultSlip.value?.focus()");
@@ -91,7 +88,7 @@ describe("际遇帖 · 接线", () => {
   });
 
   it("手机单列、极窄档不靠横向留白撑版面", () => {
-    const css = source("styles/pages/adventure.css");
+    const css = readSource("src/styles/pages/adventure.css");
     expect(css).toMatch(/\.event-slip\s*\{/);
     expect(css).toMatch(/\.event-choice\s*\{/);
     expect(css).toMatch(/\.event-slip__forecast\s*\{/);
