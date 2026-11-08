@@ -67,8 +67,18 @@ const HAS_FLOOR = [/toBeGreaterThan(?:OrEqual)?\(\s*\d+/, /\.length\)\s*\.toBe\(
  */
 const EXPLICIT_EXEMPT = /readdirSync[^\n]*抛异常|抛异常[^\n]*readdirSync/;
 
-/** 空集断言的任意形态 */
-const EMPTY_ASSERT = /expect\([a-zA-Z_$][\w$]*[^)]*\)\s*\.toEqual\(\[\]\)/;
+/**
+ * 空集断言的**任意形态** —— 同一个意思在仓里有三种写法,只认一种就等于没守。
+ *
+ *   expect(x).toEqual([])       最常见
+ *   expect(x).toHaveLength(0)   27 处
+ *   expect(x.length).toBe(0)    16 处
+ *
+ * 第一版只认第一种,于是「遍历 + `toHaveLength(0)`」这种同样会假绿的判据
+ * 完全在检查范围之外(实测扩展口径后受检数 20 → 21)。
+ */
+const EMPTY_ASSERT =
+  /expect\([a-zA-Z_$][\w$]*[^)]*\)\s*\.toEqual\(\[\]\)|\.toHaveLength\(0\)|\.length\)\s*\.toBe\(0\)/;
 /** 遍历信号 */
 const WALKS = /(?:readdirSync\(|walkFiles\()/;
 
@@ -116,6 +126,16 @@ describe("元判据 · 扫描型的空集断言要能证明自己扫到了东西
     // 不该抓的②:写明 readdirSync 抛异常(这条路天然不空转)
     const exempt = risky + "\n// 路径错时 readdirSync 会抛异常,不会返回空数组";
     expect(EXPLICIT_EXEMPT.test(exempt), "显式豁免没生效").toBe(true);
+    // 三种空集写法都要认出来 —— 只认一种就等于给另外两种开了口子
+    for (const form of [
+      "expect(offenders).toEqual([])",
+      "expect(offenders).toHaveLength(0)",
+      "expect(offenders.length).toBe(0)",
+    ]) {
+      expect(EMPTY_ASSERT.test(`walkFiles(SRC);\n${form};`), `没认出这种空集写法:${form}`).toBe(
+        true,
+      );
+    }
     // 关键:**只说"防空转"不算数** —— 那是注释,拦不住回归
     const fake = risky + "\n// 这里已经防空转了";
     expect(
