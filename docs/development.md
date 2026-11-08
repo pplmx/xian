@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 583 个 spec;本作自己那部分 503 个) |
+| `bun run test` | 全量用例(全量 584 个 spec;本作自己那部分 504 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -146,7 +146,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 583 个 spec(本作自己那部分 503 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 584 个 spec(本作自己那部分 504 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -162,6 +162,24 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | 平衡审计 | 经济闭环、战力膨胀、修为收入、曲线节奏各有模拟器与阈值断言(`*Sim.spec` / `*Audit.spec`) |
 | 库的发布面 | 万象引擎另有三条:产物能被 Node import、发布包真装一遍并按包名 import、独立成库后仍能编译跑用例 |
 
+> **2026-11-09 新增:静态导入环判据**。
+>
+> 本仓此前**没有任何判据看循环依赖**。实测扫出 5 个静态导入环
+> (`weather ↔ player.ts`、`fortuneChain ↔ player.ts`、`dongfu → resources → player.ts`、
+> `player.ts ↔ quests`、`engineCraft ↔ pillService`)。
+>
+> 这 5 个都**不会炸**:环上每一处读写都在函数体内,没有顶层交叉求值。但它们是脆的 ——
+> 谁在顶层加一句 `const x = other()` 就会撞上 `Cannot access before initialization`,
+> 而报错点落在无关模块上,查起来极慢。
+>
+> 判据的做法与 `layeringAudit` 的 `STATEFUL_CORE` 一致:**存量记基线,增量当场拦**。
+> 当前 5 个进 `BASELINE`,新长出一个立刻红;解开一个却忘了删基线也红
+> (否则同一个环再出现时会被当成"已知")。只算静态 import —— 动态 `import()`
+> 是懒加载,不参与启动期求值顺序。
+>
+> 注入验证:给 `utils/format.ts` 反向 `import "@/core/loot"`(loot 本就 import format)
+> → 一次触发 20 个新环,判据红。
+>
 > **2026-11-08 修「门禁自检」两处**:
 >
 > ① 名单原只有**九道**,而 `check:engine` 那三个(`engine-dist` / `engine-sync` /

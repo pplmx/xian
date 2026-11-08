@@ -346,6 +346,7 @@ const CATEGORIES = [
       "engineTick",
       "perfBudget",
       "overlayTiming",
+      "importCycles",
       "engineGateCoverage",
       "testReportBalance",
       "tsconfigGuard",
