@@ -35,7 +35,16 @@ describe("契兽的道历 · 记下来", () => {
     expect(at, "recordPetCompanion 要还在").toBeGreaterThan(0);
     const block = src.slice(at, src.indexOf("\n    function ", at + 10));
     expect(block, "结缘时要记时刻").toContain("petMoments");
-    expect(block, "道历取自玩家自身,不另记一份钟").toContain("codexMomentOfPlayer(");
+    /*
+     * 守**行为**,不守写法:道历必须由调用方传进来(取自玩家自身),本函数只负责存,
+     * 不许自己造一份钟。
+     *
+     * 原先断言的是「函数体里出现 codexMomentOfPlayer(」—— 那是在钉实现细节。
+     * 这条依赖已经改成参数传入(为了让 quests 不再 import player,解开
+     * quests 与 player 那个环),同样的契约换了写法,断言就红了。
+     */
+    expect(block, "道历要从参数拿(由调用方从玩家自身取)").toMatch(/moment:\s*CodexMoment/);
+    expect(block, "不许自己造一份钟 —— 道历必须来自玩家").not.toContain("Date.now()");
   });
 
   it("旧档里已在谱上的灵兽不会被编一个时刻", () => {

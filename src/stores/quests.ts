@@ -4,7 +4,7 @@ import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import type { CollectionCategory, CounterKey } from "@/types";
 import { persistConfig } from "@/utils/storage";
-import { codexMomentOfPlayer } from "@/ui/codexMoment";
+import type { CodexMoment } from "@/ui/codexMoment";
 import { MAIN_QUESTS } from "@/data/quests";
 import { ACHIEVEMENTS } from "@/data/achievements";
 import { artifactDef } from "@/data/artifacts";
@@ -24,7 +24,6 @@ import {
 } from "@/utils/saveShape";
 import type { StoredDaily } from "@/core/engineDailies";
 import { dailyShapeOf, dailyStateOf, rolloverDailyBoard } from "@/core/engineDailies";
-import { usePlayerStore } from "@/stores/player";
 
 function uniqueKnown(ids: string[], exists: (id: string) => boolean): string[] {
   const out: string[] = [];
@@ -270,14 +269,23 @@ export const useQuestsStore = defineStore(
      * 玩家有一排功名,却分不出哪个是刚才得的、哪个是上一世就挂在那里的。
      * 这是同一类事实,故用同一份道历(见 ui/codexMoment),不另写一套历法。
      */
-    function ownTitle(id: string): boolean {
+    /*
+     * `moment` 由**调用方**给,本 store 不读 player —— 原先自己 `usePlayerStore()`,
+     * 于是 `quests 与 player` 互相依赖(实测 importCycles 里那 4 个环之一)。
+     * 道历要的只是「第几世 + 这一世几岁」两个数,调用方本来就握着自己,
+     * 传进来即可;那一步不必绕回 store 去问。
+     */
+    function ownTitle(id: string, moment: CodexMoment): boolean {
       if (titlesOwned.value.includes(id)) return false;
       titlesOwned.value = [...titlesOwned.value, id];
-      titleMoments.value = { ...titleMoments.value, [id]: codexMomentOfPlayer(usePlayerStore()) };
+      titleMoments.value = {
+        ...titleMoments.value,
+        [id]: moment,
+      };
       return true;
     }
 
-    function collect(category: CollectionCategory, id: string): boolean {
+    function collect(category: CollectionCategory, id: string, moment: CodexMoment): boolean {
       const list = collections.value[category];
       if (list.includes(id)) return false;
       const key = `${category}:${id}`;
@@ -286,7 +294,7 @@ export const useQuestsStore = defineStore(
       // 道历读数取自玩家自身:第几世与这一世活到几岁,都是已有事实,不另记一份钟
       collectedMoment.value = {
         ...collectedMoment.value,
-        [key]: codexMomentOfPlayer(usePlayerStore()),
+        [key]: moment,
       };
       return true;
     }
@@ -299,10 +307,13 @@ export const useQuestsStore = defineStore(
      * 转世会把灵兽清零(见 player.rebirth),故谱上每一只都是**这一世**结的缘 ——
      * 但玩家记不住这一点,二十只并排时没有时间读数就分不出哪只是刚遇见的。
      */
-    function recordPetCompanion(id: string): void {
+    function recordPetCompanion(id: string, moment: CodexMoment): void {
       if (!id || petCompanions.value.includes(id)) return;
       petCompanions.value = [...petCompanions.value, id];
-      petMoments.value = { ...petMoments.value, [id]: codexMomentOfPlayer(usePlayerStore()) };
+      petMoments.value = {
+        ...petMoments.value,
+        [id]: moment,
+      };
     }
 
     /**

@@ -32,7 +32,20 @@ describe("法宝的何时得来 · 记下来", () => {
     expect(at, "collect 要还在").toBeGreaterThan(0);
     const block = src.slice(at, src.indexOf("\n    function ", at + 10));
     expect(block, "收录时要记道历").toContain("collectedMoment");
-    expect(block, "道历取自玩家自身").toContain("codexMomentOfPlayer(");
+    /*
+     * 守**行为**不守写法:道历由调用方从玩家自身取、作为参数传进来,
+     * 本函数只负责存,不许自己造一份钟。(原先断言的是「函数体里出现
+     * codexMomentOfPlayer(」—— 那是在钉实现细节;解开 quests 与 player 的环时
+     * 这条依赖换成了参数,契约没变。)
+     */
+    expect(block, "道历要从参数拿(由调用方从玩家自身取)").toMatch(/moment:\s*CodexMoment/);
+    /*
+     * 道历那一路不许出现 `Date.now()`——但 `collectedAt`(真实收录时间戳)本来就该用
+     * 它,两者是不同的东西:道历记「第几世·几岁」,时间戳记「何时」。只查道历那一行。
+     */
+    const momentLine = block.split("\n").find((l) => l.includes("collectedMoment")) ?? "";
+    expect(momentLine, "找不到往 collectedMoment 里写的那一行").toBeTruthy();
+    expect(momentLine, "道历不许用 Date.now() —— 它必须来自玩家").not.toContain("Date.now()");
   });
 
   it("法宝确实走这个入口(不是另开一条不记时刻的路)", () => {

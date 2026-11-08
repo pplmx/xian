@@ -29,6 +29,7 @@ import {
   unlockAchievementById,
 } from "./engineUnlocks";
 import { usePlayerStore } from "@/stores/player";
+import { codexMomentOfPlayer } from "@/ui/codexMoment";
 import { useQuestsStore } from "@/stores/quests";
 import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
@@ -99,6 +100,12 @@ export function acquirePill(id: string, count = 1): boolean {
 export function grantReward(bundle: RewardBundle, quiet = false): string[] {
   const resources = useResourcesStore();
   const quests = useQuestsStore();
+  /*
+   * 道历读数在这里取一次,作为参数传给 quests —— 那三个记录函数原本自己
+   * `usePlayerStore()`,于是 `quests 与 player` 互相依赖。传快照之后
+   * quests 不再 import player,环就断了(见 stores/quests.ts 末尾的说明)。
+   */
+  const moment = codexMomentOfPlayer(usePlayerStore());
   const lines: string[] = [];
   if (bundle.stoneTier) {
     const v = stoneByTier(playerTier(), bundle.stoneTier);
@@ -129,7 +136,7 @@ export function grantReward(bundle: RewardBundle, quiet = false): string[] {
     lines.push(`丹药「${pillDef(bundle.pillId)!.name}」`);
   }
   if (bundle.titleId && titleDef(bundle.titleId)) {
-    if (quests.ownTitle(bundle.titleId)) {
+    if (quests.ownTitle(bundle.titleId, moment)) {
       lines.push(`名号「${titleDef(bundle.titleId)!.name}」`);
       /*
        * 名号要说清它给了什么。29 个称号**全部带 mods**,而原先这一行只报名字 ——
@@ -276,8 +283,9 @@ export function checkStateAchievements(): void {
   // 凡已达成且带称号的成就,缺则补佩(ownTitle 自带幂等,不会重复计)。
   {
     const quests = useQuestsStore();
+    const moment = codexMomentOfPlayer(usePlayerStore());
     for (const a of ACHIEVEMENTS) {
-      if (a.reward?.titleId && quests.hasAchieved(a.id)) quests.ownTitle(a.reward.titleId);
+      if (a.reward?.titleId && quests.hasAchieved(a.id)) quests.ownTitle(a.reward.titleId, moment);
     }
   }
   // 主线任务同根:也只在这些触发点被推进;补扫一并推进,免得老档卡在早该完成的一步
@@ -377,7 +385,7 @@ export function trackRealm(): void {
 }
 
 export function collect(category: CollectionCategory, id: string): void {
-  useQuestsStore().collect(category, id);
+  useQuestsStore().collect(category, id, codexMomentOfPlayer(usePlayerStore()));
 }
 
 /** 某条目是否已入图鉴 —— 给补账逻辑判断迁移是否已经完成 */

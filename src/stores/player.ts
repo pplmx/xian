@@ -489,7 +489,12 @@ export const usePlayerStore = defineStore(
     function setPet(id: string | null): void {
       petId.value = id;
       // 唤作伴便入册:灵兽册「相伴中/曾相伴」档从这里记(见 ui/codex 灵兽册)
-      if (id) useQuestsStore().recordPetCompanion(id);
+      // 道历读数由本 store 自己给(第几世 + 这一世活到几岁),quests 不必再读 player
+      if (id)
+        useQuestsStore().recordPetCompanion(id, {
+          life: reincarnation.value.count + 1,
+          age: Math.floor(age.value),
+        });
     }
 
     function addTalent(id: string): void {

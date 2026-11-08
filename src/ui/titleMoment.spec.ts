@@ -34,7 +34,13 @@ describe("称号的道历 · 记下来", () => {
     expect(ownAt, "ownTitle 要还在").toBeGreaterThan(0);
     const block = src.slice(ownAt, src.indexOf("\n    function ", ownAt + 10));
     expect(block, "授称号时要记时刻").toContain("titleMoments");
-    expect(block, "道历取自玩家自身,不另记一份钟").toContain("codexMomentOfPlayer(");
+    /*
+     * 守**行为**不守写法:道历由调用方从玩家自身取、作为参数传进来,本函数只负责存。
+     * (原先断言的是「函数体里出现 codexMomentOfPlayer(」—— 钉的是实现细节;
+     * 解开 quests 与 player 的环时这条依赖换成了参数,契约没变。)
+     */
+    expect(block, "道历要从参数拿(由调用方从玩家自身取)").toMatch(/moment:\s*CodexMoment/);
+    expect(block, "不许自己造一份钟 —— 道历必须来自玩家").not.toContain("Date.now()");
   });
 
   it("旧档里已到手的称号不会被编一个时刻", () => {

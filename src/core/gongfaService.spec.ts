@@ -52,7 +52,7 @@ describe("功法习得漏斗", () => {
     const quests = useQuestsStore();
     cultivation.learn("m_taixuan");
     cultivation.learn("m_lihuo");
-    quests.collect("gongfa", "m_taixuan");
+    quests.collect("gongfa", "m_taixuan", { life: 1, age: 0 });
     quests.inc("gongfaLearned");
 
     expect(syncLearnedGongfa()).toBe(1);

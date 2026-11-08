@@ -7,6 +7,9 @@ import { petCodex } from "@/ui/codex";
 import { DAILY_TASKS, MAIN_QUESTS } from "@/data/quests";
 import { MAX_MAJOR } from "@/data/realms";
 
+/** 道历读数:收录/称号/灵兽三处记录都要它 —— 用例里只关心「记了没有」,值固定即可 */
+const MOMENT = { life: 1, age: 0 };
+
 describe("图鉴收录", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
@@ -15,18 +18,18 @@ describe("图鉴收录", () => {
   it("首次收录记下时间戳,重复收录不覆盖", () => {
     const quests = useQuestsStore();
     const before = Date.now();
-    expect(quests.collect("gongfa", "gf-test")).toBe(true);
+    expect(quests.collect("gongfa", "gf-test", MOMENT)).toBe(true);
     const stamp = quests.collectedAt["gongfa:gf-test"];
     expect(stamp).toBeGreaterThanOrEqual(before);
 
-    expect(quests.collect("gongfa", "gf-test")).toBe(false);
+    expect(quests.collect("gongfa", "gf-test", MOMENT)).toBe(false);
     expect(quests.collectedAt["gongfa:gf-test"]).toBe(stamp);
   });
 
   it("不同类别互不串扰", () => {
     const quests = useQuestsStore();
-    quests.collect("equip", "same-id");
-    quests.collect("pill", "same-id");
+    quests.collect("equip", "same-id", MOMENT);
+    quests.collect("pill", "same-id", MOMENT);
     expect(quests.collections.equip).toContain("same-id");
     expect(quests.collections.pill).toContain("same-id");
     expect(quests.collectedAt["equip:same-id"]).toBeDefined();
@@ -204,7 +207,7 @@ describe("灵兽册相伴档", () => {
   it("灵兽册深浅跟随真实相伴:收→唤→暂别", () => {
     const quests = useQuestsStore();
     const player = usePlayerStore();
-    quests.collect("pet", "pet_qingyu");
+    quests.collect("pet", "pet_qingyu", MOMENT);
     expect(petCodex().entries.find((e) => e.id === "pet_qingyu")?.stage).toBe(1);
     player.setPet("pet_qingyu");
     const top = petCodex().entries.find((e) => e.id === "pet_qingyu")!;
