@@ -963,26 +963,117 @@ export function createCombatEngine<T = number>(
         return handled === true;
       };
 
-      const pSpeed = statNum(p, keys.speed) * (1 + mod(p.mods, "speed"));
-      const eSpeed = statNum(e, keys.speed) * (1 + mod(e.mods, "speed"));
-      const playerFirst = pSpeed >= eSpeed;
-
-      // 开战护盾:读双方各自的 `shieldOnStart`(配了 shield 才算)
-      if (config.shield) {
-        for (const c of [p, e]) {
-          const pct = Math.max(0, mod(c.mods, startKey));
-          if (pct > 0) {
-            const gained = gainShield(c, statNum(c, keys.maxHp) * pct);
-            if (gained > 0)
-              emit(0, c.name, "shield", `${c.name} 开局凝起一层护盾(吸收 ${Math.round(gained)})`);
-          }
+      /**
+       * 一次出手 —— 这一回合轮到 `attacker` 打 `defender` 时发生的**全部**事。
+       *
+       * 它把四层主权按固定顺序串起来,顺序本身就是契约(每层都返回"我接了"):
+       *
+       *   ① `actFn`      整回合归你 —— 回血、选技能、出手、结算标签一样都不做
+       *   ② `skillFn`    只接管"出哪一招";返回 undefined 才交回默认掷骰
+       *   ③ `skillEffectFn` 只接管"这一招怎么算";它说没处理才走默认出手
+       *   ④ 默认:出手 → 结算技能标签
+       *
+       * 三层"交回默认"的分支必须逐位一致 —— 不配钩子时一颗骰子都不能多掷,
+       * 这是与源工程对账的前提(判据:`combat.spec` 的「不配这个钩子时逐位一致」那几条)。
+       *
+       * 抽出来的理由:这一段原本在主循环里占 60 行,把「回合调度」与「一次出手的规则」
+       * 缠在一起 —— 读循环的人得先拨开四层主权才看得见"每回合打两次"这件简单的事。
+       */
+      const takeTurn = (attacker: Combatant<T>, defender: Combatant<T>, round: number): void => {
+        if (skipping.delete(attacker)) {
+          events.push({
+            round,
+            actor: attacker.name,
+            kind: "skip",
+            damage: 0,
+            text: `${attacker.name} 这一回合没有出手`,
+          });
+          return;
         }
-      }
+        /**
+         * 整回合的主权(可选):返回 true 即这一回合归你 —— 引擎不再做默认的任何动作
+         * (回血、选技能、出手、结算标签都不做),要哪几样自己用 ctx.strike / ctx.heal 拼。
+         */
+        if (config.actFn) {
+          hookDepth += 1;
+          let handled: boolean | void;
+          try {
+            handled = config.actFn(
+              {
+                round,
+                self: attacker,
+                foe: defender,
+                skills: attacker.skills ?? [],
+                ...primitives(round, attacker.name),
+                strike: (a, d, opts) => strike(a, d, round, opts),
+              },
+              rng,
+            );
+          } finally {
+            hookDepth -= 1;
+          }
+          if (handled === true) return;
+        }
+        const skill = pickSkill(attacker, defender, round);
+        // 有技能且调用方给了效果解释器:由他决定这一次出手怎么算;他说"没处理"才走默认
+        if (skill && runEffect(attacker, defender, round, skill)) return;
+        strike(attacker, defender, round, {
+          skill,
+          // 穿甲标签在出手时就生效:这一记无视护盾
+          bypassShield: skill?.effect !== undefined && pierceTags.has(skill.effect),
+        });
+        if (skill) applySkillEffects(attacker, defender, round, skill);
+      };
 
-      let round = 0;
-      while (round < maxRounds && alive(p) && alive(e)) {
-        round += 1;
-        const order: [Combatant<T>, Combatant<T>][] = playerFirst
+      /**
+       * 选这一回合出哪一招 —— 两层主权:先问 `skillFn`,它交回默认才自己掷。
+       *
+       * 默认那条(每个技能各掷一颗、再从命中的里抽一个)是**随机流的一部分**:
+       * 不配钩子时它必须与从前逐位一致,故这里的骰子顺序不能动。
+       */
+      const pickSkill = (
+        attacker: Combatant<T>,
+        defender: Combatant<T>,
+        round: number,
+      ): EnemySkillDef | undefined => {
+        const skills = attacker.skills ?? [];
+        const defaultPick = (): EnemySkillDef | undefined => {
+          const usable = skills.filter((s) => rng.chance(s.rate));
+          return usable.length > 0 ? rng.pick(usable) : undefined;
+        };
+        /*
+         * 选技能(可选主权):
+         *   返回技能 → 用它;返回 `null` → 这一回合不出技能(普通出手);
+         *   不返回 → 交回默认(每个技能各掷一颗,再从命中的里抽一个)。
+         * 不配这个钩子时**一颗骰子都不会多掷** —— 默认路径与从前逐位一致。
+         */
+        if (!config.skillFn) return defaultPick();
+        hookDepth += 1;
+        let chosen: EnemySkillDef | null | undefined;
+        try {
+          chosen = config.skillFn(
+            { round, attacker, defender, skills, keys, num: statNum, state },
+            rng,
+          );
+        } finally {
+          hookDepth -= 1;
+        }
+        // undefined = 交回默认;null = 明确"这回合不出技能"
+        return chosen === undefined ? defaultPick() : (chosen ?? undefined);
+      };
+
+      /**
+       * 这一场的出手顺序 —— 一次定完,逐回合复用。
+       *
+       * 先手按速度比,速度含 `speed` 词条乘算;**平手时玩家先**(`>=`,不是 `>`)。
+       * 平手那一下是能被玩家看见的确定性(同速的两方,先动的是你),
+       * 改成 `>` 就把这份确定性弄丢了 —— 而这不会让任何判据红,只会让对局的手感漂。
+       */
+      const turnOrder = (): [Combatant<T>, Combatant<T>][] => {
+        const pSpeed = statNum(p, keys.speed) * (1 + mod(p.mods, "speed"));
+        const eSpeed = statNum(e, keys.speed) * (1 + mod(e.mods, "speed"));
+        const playerFirst = pSpeed >= eSpeed;
+        return playerFirst
           ? [
               [p, e],
               [e, p],
@@ -991,80 +1082,35 @@ export function createCombatEngine<T = number>(
               [e, p],
               [p, e],
             ];
-        for (const [attacker, defender] of order) {
-          if (!alive(p) || !alive(e)) break;
-          if (skipping.delete(attacker)) {
-            events.push({
-              round,
-              actor: attacker.name,
-              kind: "skip",
-              damage: 0,
-              text: `${attacker.name} 这一回合没有出手`,
-            });
-            continue;
-          }
-          /**
-           * 整回合的主权(可选):返回 true 即这一回合归你 —— 引擎不再做默认的任何动作
-           * (回血、选技能、出手、结算标签都不做),要哪几样自己用 ctx.strike / ctx.heal 拼。
-           */
-          if (config.actFn) {
-            hookDepth += 1;
-            let handled: boolean | void;
-            try {
-              handled = config.actFn(
-                {
-                  round,
-                  self: attacker,
-                  foe: defender,
-                  skills: attacker.skills ?? [],
-                  ...primitives(round, attacker.name),
-                  strike: (a, d, opts) => strike(a, d, round, opts),
-                },
-                rng,
-              );
-            } finally {
-              hookDepth -= 1;
-            }
-            if (handled === true) continue;
-          }
-          const skills = attacker.skills ?? [];
-          /**
-           * 选技能(可选主权):
-           *   返回技能 → 用它;返回 `null` → 这一回合不出技能(普通出手);
-           *   不返回 → 交回默认(每个技能各掷一颗,再从命中的里抽一个)。
-           * 不配这个钩子时**一颗骰子都不会多掷** —— 默认路径与从前逐位一致。
-           */
-          let skill: EnemySkillDef | undefined;
-          if (config.skillFn) {
-            hookDepth += 1;
-            let chosen: EnemySkillDef | null | undefined;
-            try {
-              chosen = config.skillFn(
-                { round, attacker, defender, skills, keys, num: statNum, state },
-                rng,
-              );
-            } finally {
-              hookDepth -= 1;
-            }
-            if (chosen === undefined) {
-              const usable = skills.filter((s) => rng.chance(s.rate));
-              skill = usable.length > 0 ? rng.pick(usable) : undefined;
-            } else {
-              skill = chosen ?? undefined;
-            }
-          } else {
-            const usable = skills.filter((s) => rng.chance(s.rate));
-            skill = usable.length > 0 ? rng.pick(usable) : undefined;
-          }
-          // 有技能且调用方给了效果解释器:由他决定这一次出手怎么算;他说"没处理"才走默认
-          if (skill && runEffect(attacker, defender, round, skill)) continue;
-          strike(attacker, defender, round, {
-            skill,
-            // 穿甲标签在出手时就生效:这一记无视护盾
-            bypassShield: skill?.effect !== undefined && pierceTags.has(skill.effect),
-          });
-          if (skill) applySkillEffects(attacker, defender, round, skill);
+      };
+
+      /**
+       * 开战护盾 —— 读双方各自的 `shieldOnStart`(配了 shield 才算)。
+       *
+       * 单独成函数而不是并在主循环里:它是**第 0 回合**发生的事(事件记 round 0),
+       * 与逐回合的出手不是同一个时机。放在循环外读起来就是"开场先算这一笔"。
+       */
+      const openShieldRound = (): void => {
+        if (!config.shield) return;
+        for (const c of [p, e]) {
+          const pct = Math.max(0, mod(c.mods, startKey));
+          if (pct <= 0) continue;
+          const gained = gainShield(c, statNum(c, keys.maxHp) * pct);
+          if (gained > 0)
+            emit(0, c.name, "shield", `${c.name} 开局凝起一层护盾(吸收 ${Math.round(gained)})`);
         }
+      };
+
+      openShieldRound();
+
+      /**
+       * 回合末的两件事,按固定顺序:**先回复、再把回合交给内容**。
+       *
+       * 顺序不是随手排的 —— 回复(read)要在作品拿到原语(它可能改血量、加流血)之前,
+       * 否则「这回合结束时我还剩多少」就看不出回复有没有生效。抽成函数是为了让这个顺序
+       * 有个名字;它此前埋在 30 行里。
+       */
+      const settleRoundEnd = (round: number): void => {
         for (const c of [p, e]) {
           if (!alive(c)) continue;
           const regen = regenBase + mod(c.mods, "regenPerRound");
@@ -1098,6 +1144,16 @@ export function createCombatEngine<T = number>(
             hookDepth -= 1;
           }
         }
+      };
+
+      let round = 0;
+      while (round < maxRounds && alive(p) && alive(e)) {
+        round += 1;
+        for (const [attacker, defender] of turnOrder()) {
+          if (!alive(p) || !alive(e)) break;
+          takeTurn(attacker, defender, round);
+        }
+        settleRoundEnd(round);
       }
       const win = alive(p) && !alive(e);
       events.push({

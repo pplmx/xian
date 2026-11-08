@@ -768,6 +768,43 @@ describe("战斗解算 —— 副本遭遇要分得出胜负", () => {
     expect(Number(battle.enemyHp)).toBe(9999 - 50);
   });
 
+  it("回合末的顺序:先回复、再把回合交给 tickFn —— 钩子看到的是回复之后的血量", () => {
+    /*
+     * 顺序不是随手排的,但**没有任何判据守过它**:2026-11-08 重构 `resolve` 时,
+     * 把 `tickFn` 挪到回复之前,全套判据照样绿(手工验证,见重构记录)。
+     *
+     * 为什么这个顺序有语义:回复是**引擎做的事**(每回合固定回复),tickFn 是
+     * **作品做的事**(流血 / 层数 / 阶段)。works 若先拿到原语,"这回合结束我还剩多少"
+     * 就分不清回复有没有生效 —— 首领阶段按血量阈值翻面时,差的就是这一笔回复。
+     *
+     * 判据:钩子读到的血量,必须等于「这一回合的伤害 + 本回合该有的回复」。
+     */
+    const seen: number[] = [];
+    const engine = createCombatEngine({
+      variance: 0,
+      maxRounds: 3,
+      // 双方都硬到打不死,好让三回合都跑满
+      tickFn: (ctx) => {
+        seen.push(ctx.num(ctx.player, "hp"));
+      },
+    });
+    const battle = engine.resolve(
+      fighter({ attack: 1, hp: 100, maxHp: 100, mods: { regenPerRound: 0.1 } }),
+      fighter({ id: "e", name: "乙", attack: 1, hp: 99999, maxHp: 99999 }),
+      createRng(23),
+    );
+    expect(seen.length, "钩子没被叫满三回合 —— 判据会空转").toBe(3);
+    /*
+     * 第 1 回合末:先挨了敌方一击(扣血),然后回复 10(100 × 0.1),封顶 100。
+     * 血量从 100 掉一点又回满,故 seen[0] 必然是 100(满血封顶)。
+     * 若 tickFn 被挪到回复之前,读到的是**没回复**的那一份(< 100)。
+     */
+    expect(seen[0], "tickFn 读到的是回复之前的血量 —— 回复与钩子的顺序被对调了").toBe(100);
+    // 逐回合都应该在满血附近,且不低于"没回复"时会读到的值
+    for (const hp of seen) expect(hp).toBeGreaterThanOrEqual(99);
+    expect(battle.rounds).toBe(3);
+  });
+
   it('事件反应:能做出"会心即追加一记"的流派组合技,且钩子不会自己喂自己', () => {
     let triggered = 0;
     const engine = createCombatEngine({
