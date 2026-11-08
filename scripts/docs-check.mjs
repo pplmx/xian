@@ -74,6 +74,8 @@ const engineOnly = countSpecs(join(ENGINE, "src"));
 const totalSpecs = hostOnly + engineOnly;
 
 const failures = [];
+/** 文档里以裸文件名点名的 spec 数(防空转用) */
+let refs = 0;
 let commands = 0;
 let paths = 0;
 let sizeClaims = 0;
@@ -92,6 +94,23 @@ for (const rel of docFiles) {
   for (const [, path] of text.matchAll(/(?:bun|node) (scripts\/[\w./-]+)/g)) {
     commands += 1;
     if (!existsSync(join(ROOT, path))) failures.push(`${rel}: \`${path}\` 不存在`);
+  }
+
+  /*
+   * ②-1 spec 文件名
+   *
+   * 文档里常以**裸文件名**点名判据(「见 `palette.spec.ts`」「`gateWiring.spec.ts` 守着」),
+   * 而它不带 `src/` 前缀,上面那条路径检查正则抓不到。于是有一条静默腐化路径:
+   * **spec 被改名或删掉,文档里的引用仍指向一个不存在的文件**,读者按图索骥找不到。
+   *
+   * 实测当前 62 个引用全都存在 —— 但没有判据守着,下一次改名就会断。
+   */
+  for (const [, name] of text.matchAll(/`([a-zA-Z][a-zA-Z0-9]*\.spec\.ts)`/g)) {
+    refs += 1;
+    const found = readdirSync(join(ROOT, "src"), { recursive: true, encoding: "utf-8" }).some(
+      (f) => typeof f === "string" && (f === name || f.endsWith(`/${name}`)),
+    );
+    if (!found) failures.push(`${rel}: 点名的 \`${name}\` 在 src 下不存在`);
   }
 
   // ② 路径
@@ -151,6 +170,14 @@ if (paths < 20) failures.push(`只从文档里读出 ${paths} 条路径 —— �
 if (sizeClaims < 2)
   failures.push(`只从文档里读出 ${sizeClaims} 处规模数 —— 「全量 N 个 spec」这种写法被改掉了?`);
 
+/*
+ * 防空转:文档里点名的 spec 一个都没抓到,说明那条正则失效了(而不是"文档不引用 spec")。
+ * 实测当前是 62 个,取 30 作为下限 —— 少到这个数以下,更可能是口径坏了。
+ */
+if (refs < 30) {
+  failures.push(`文档里只抓到 ${refs} 个 spec 引用 —— 正则或文档结构变了,这条判据在空转`);
+}
+
 if (failures.length > 0) {
   console.error("文档自检:以下地方与仓库对不上");
   for (const f of failures) console.error(`  ✗ ${f}`);
@@ -178,7 +205,7 @@ if (failures.length > 0) {
 }
 
 console.log(
-  `文档自检通过(${docFiles.length} 份文档里的 ${commands} 条命令、${paths} 条路径都真实存在;` +
+  `文档自检通过(${docFiles.length} 份文档里的 ${commands} 条命令、${paths} 条路径、${refs} 个 spec 引用都真实存在;` +
     `规模数对得上:全量 ${totalSpecs} 个 spec / 本作自己那部分 ${hostOnly} 个)`,
 );
 console.log(
