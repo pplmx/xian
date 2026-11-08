@@ -391,17 +391,18 @@ function validateShape<T>(
   return true;
 }
 
-export function validateGame<T = number>(config: GameConfig<T>): ValidationIssue[] {
-  const issues: ValidationIssue[] = [];
-  const err = (code: string, message: string): void =>
-    void issues.push({ level: "error", code, message });
-  const warn = (code: string, message: string): void =>
-    void issues.push({ level: "warning", code, message });
-
-  // 形状不对就不再往下逐条对账(继续跑只会以 TypeError 再崩一次)
-  if (!validateShape(config, err)) return issues;
-
-  // ---- 等级 ----
+/**
+ * 等级(境界)那一层的对账 —— 世界不空、境界 id 不重、曲线分段点不越界。
+ *
+ * 返回**境界总数**(所有世界的境界条数之和):副本那一段要用它判 `minRealm` 有没有
+ * 超出境界表(`validateDungeons` 的第三个参数就是它)。故这里不能像别的段那样
+ * 只返回 void —— 那个数是对账的产物,不是再算一遍能保证一致的东西。
+ */
+function validateRealms<T>(
+  config: GameConfig<T>,
+  err: (code: string, message: string) => void,
+  warn: (code: string, message: string) => void,
+): number {
   const worldIds = new Set<string>();
   let majorCount = 0;
   for (const w of config.realms.worlds) {
@@ -433,8 +434,19 @@ export function validateGame<T = number>(config: GameConfig<T>): ValidationIssue
       `成长曲线分段点 lateFrom=${lateFrom} 超出境界范围 0..${majorCount}`,
     );
   }
+  return majorCount;
+}
 
-  // ---- 属性 ----
+/**
+ * 属性那一层的对账 —— 键不重、`appliesTo` / `core` 指向的键都登记过。
+ *
+ * 只读 `config.attributes`,不需要返回任何东西:属性键表在装备那一段里
+ * 自己重建了一份(`validateEquipment` 内部),故这里不必把它传出去。
+ */
+function validateAttributes<T>(
+  config: GameConfig<T>,
+  err: (code: string, message: string) => void,
+): void {
   const attrKeys = new Set(config.attributes.defs.map((d) => d.key));
   const dupAttrs = duplicates(config.attributes.defs.map((d) => d.key));
   if (dupAttrs.length > 0) err("ATTR_DUPLICATE", `属性键重复:${dupAttrs.join("、")}`);
@@ -446,6 +458,21 @@ export function validateGame<T = number>(config: GameConfig<T>): ValidationIssue
   for (const key of config.attributes.core ?? []) {
     if (!attrKeys.has(key)) err("ATTR_CORE_UNKNOWN", `core 里的键未登记:${key}`);
   }
+}
+
+export function validateGame<T = number>(config: GameConfig<T>): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  const err = (code: string, message: string): void =>
+    void issues.push({ level: "error", code, message });
+  const warn = (code: string, message: string): void =>
+    void issues.push({ level: "warning", code, message });
+
+  // 形状不对就不再往下逐条对账(继续跑只会以 TypeError 再崩一次)
+  if (!validateShape(config, err)) return issues;
+
+  // ---- 等级与属性 ----
+  const majorCount = validateRealms(config, err, warn);
+  validateAttributes(config, err);
 
   // ---- 装备 ----
   validateEquipment(config, err, warn);

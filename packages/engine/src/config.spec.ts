@@ -499,3 +499,81 @@ describe("配置校验 · 形状那一段的三个码 + 它的提前返回", () 
     expect(issues.some((i) => i.code === "CONFIG_SECTION_SHAPE")).toBe(false);
   });
 });
+
+describe("配置校验 · 等级与属性那两段的九个码", () => {
+  /*
+   * 这两段(404–446 行)即将抽成 `validateRealms()` / `validateAttributes()`。
+   * 查了一下:九个码**一条判据都没有** —— REALM_EMPTY、REALM_WORLD_DUPLICATE、
+   * REALM_WORLD_EMPTY、REALM_ID_DUPLICATE、REALM_LAYERS_FEW、REALM_LATE_FROM_RANGE,
+   * 以及 ATTR_DUPLICATE、ATTR_APPLIES_TO、ATTR_CORE_UNKNOWN。
+   *
+   * 抽取时漏掉哪一条,那类配置错误从此静默 —— 而它们全都是"装配能过、跑起来才发现"的
+   * 那一类。故先把九个码逐个钉住,再动手。
+   */
+  const cases: {
+    code: string;
+    level: "error" | "warning";
+    mutate: (c: ReturnType<typeof baseConfig>) => void;
+  }[] = [
+    {
+      code: "REALM_EMPTY",
+      level: "error",
+      mutate: (c) => (c.realms.worlds = [{ id: "w1", name: "一界", realms: [] }]),
+    },
+    {
+      code: "REALM_WORLD_DUPLICATE",
+      level: "error",
+      mutate: (c) => c.realms.worlds.push({ ...c.realms.worlds[0]! }),
+    },
+    {
+      code: "REALM_WORLD_EMPTY",
+      level: "error",
+      mutate: (c) => c.realms.worlds.push({ id: "w2", name: "二界", realms: [] }),
+    },
+    {
+      code: "REALM_ID_DUPLICATE",
+      level: "error",
+      mutate: (c) => {
+        const w = c.realms.worlds[0]!;
+        const first = w.realms[0]!;
+        w.realms.push(typeof first === "string" ? { id: "dup", name: first } : { ...first });
+        if (typeof first === "string") w.realms[1] = { id: "dup", name: "重复名" };
+      },
+    },
+    {
+      code: "REALM_LAYERS_FEW",
+      level: "warning",
+      mutate: (c) => (c.realms.layerNames = ["唯有一层"]),
+    },
+    {
+      code: "REALM_LATE_FROM_RANGE",
+      level: "error",
+      mutate: (c) => ((c.realms.exp as { lateFrom?: number }).lateFrom = 9999),
+    },
+    {
+      code: "ATTR_DUPLICATE",
+      level: "error",
+      mutate: (c) => c.attributes.defs.push({ ...c.attributes.defs[0]! }),
+    },
+    {
+      code: "ATTR_APPLIES_TO",
+      level: "error",
+      mutate: (c) => ((c.attributes.defs[0] as { appliesTo?: string }).appliesTo = "nope"),
+    },
+    {
+      code: "ATTR_CORE_UNKNOWN",
+      level: "error",
+      mutate: (c) => ((c.attributes as { core?: string[] }).core = ["nope"]),
+    },
+  ];
+
+  for (const c of cases) {
+    it(`${c.code} 报得出来(${c.level})`, () => {
+      const cfg = baseConfig();
+      c.mutate(cfg);
+      const hit = validateGame(cfg).find((i) => i.code === c.code);
+      expect(hit, `没报出 ${c.code}`).toBeTruthy();
+      expect(hit!.level, `${c.code} 的级别不对`).toBe(c.level);
+    });
+  }
+});
