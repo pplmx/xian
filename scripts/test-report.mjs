@@ -354,6 +354,7 @@ const CATEGORIES = [
       "mainWiring",
       "routeTransition",
       "tribulationWeatherParity",
+      "testDeterminism",
       "exportReach",
       "engineGateCoverage",
       "testReportBalance",
