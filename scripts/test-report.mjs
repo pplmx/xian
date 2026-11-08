@@ -349,6 +349,7 @@ const CATEGORIES = [
       "importCycles",
       "useTabKeys",
       "startupOrder",
+      "guard",
       "exportReach",
       "engineGateCoverage",
       "testReportBalance",

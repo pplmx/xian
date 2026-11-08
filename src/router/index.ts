@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 import { useGameStore } from "@/stores/game";
 import { useSettingsStore } from "@/stores/settings";
+import { routeAdmit } from "./guard";
 
 export const router = createRouter({
   history: createWebHashHistory(),
@@ -42,14 +43,9 @@ export const router = createRouter({
 
 router.beforeEach((to) => {
   const game = useGameStore();
-  // 已有存档:欢迎页与建号页都不再展示,直接进游戏
-  if (game.started) {
-    if (to.name === "welcome" || to.name === "create") return { name: "home" };
-    return true;
-  }
-  // 无存档:未同意隐私先到欢迎页,同意后可进建号页
   const settings = useSettingsStore();
-  if (to.name === "welcome") return true;
-  if (to.name === "create") return settings.privacyAccepted ? true : { name: "welcome" };
-  return { name: "welcome" };
+  return routeAdmit(to.name as string | undefined, {
+    started: game.started,
+    privacyAccepted: settings.privacyAccepted,
+  });
 });
