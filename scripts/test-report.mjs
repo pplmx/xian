@@ -348,6 +348,7 @@ const CATEGORIES = [
       "overlayTiming",
       "importCycles",
       "useTabKeys",
+      "startupOrder",
       "exportReach",
       "engineGateCoverage",
       "testReportBalance",
