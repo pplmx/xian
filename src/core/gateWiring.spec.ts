@@ -362,6 +362,45 @@ describe("门禁接线 —— CI 里跑的自检,本地得有对等入口", () =
     expect(direct, `pre-commit 里直接跑了浏览器门:${direct.join("、")}`).toEqual([]);
   });
 
+  it("浏览器六门只在内 composite action 里跑一遍 —— workflow 不许再内联", () => {
+    /*
+     * ## 收口之前的形态
+     *
+     * `build.yml` 的 ui-check job 与 `deploy.yml` 的 build job 各内联一份六门脚本,
+     * **连执行顺序都各写一套**(deploy 先排版后首屏,build 先首屏后排版)。判据说是
+     * 「同一套」,实际已经漂了 —— 改一处顺序,另一处不动,两份行为从此不同。
+     *
+     * 收口进 `.github/actions/ui-self-check` 之后,顺序只有一处定义。但**没有判据守着
+     * 这个收口**:谁把某一段复制回 workflow,本地全绿,而两份顺序又会慢慢分叉。
+     *
+     * 这条守的是:workflow 正文里不出现任何一个浏览器门脚本 —— 它们只能出现在
+     * composite action 里,经 `uses:` 被调用。
+     */
+    const wf = readdirSync(WORKFLOWS)
+      .filter((name) => String(name).endsWith(".yml"))
+      .map((name) => readFileSync(join(WORKFLOWS, String(name)), "utf8"))
+      .join("\n");
+    /*
+     * **`build-timed.mjs` 不算** —— 它只是"带时长上限的构建",`publish.yml` 要用它
+     * 产出 Docker 镜像的 dist,与"浏览器门"是两件事(第一版把它也算进来,当场误报)。
+     * 真正只能跑一次的是下面这五个**需要浏览器**的。
+     */
+    const BROWSER_ONLY = BROWSER_GATES.filter((s) => !s.includes("build-timed"));
+    const inlined = BROWSER_ONLY.filter((script) => wf.includes(script));
+    expect(
+      inlined,
+      `这些浏览器门被内联回 workflow 了 —— 它们只该经 .github/actions/ui-self-check 跑一次:` +
+        inlined.join("、"),
+    ).toEqual([]);
+
+    // 防空转:action 里必须真的点名它们,否则上面那条"workflow 不内联"会变成
+    // "谁都不跑"的假绿
+    const action = readFileSync(join(ROOT, ".github/actions/ui-self-check/action.yml"), "utf8");
+    const missing = BROWSER_GATES.filter((script) => !action.includes(script));
+    expect(missing, `ui-self-check 里少了这些门:${missing.join("、")}`).toEqual([]);
+    expect(BROWSER_GATES.length, "六门清单被删空了?").toBe(6);
+  });
+
   it("打乱顺序自检接在 CI 与 check:all 上,且不进 pre-commit", () => {
     /*
      * ## 为什么这条接线需要被守
