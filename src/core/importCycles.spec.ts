@@ -66,8 +66,20 @@ function importGraph(): Map<string, Set<string>> {
   for (const file of files) {
     const text = readFileSync(file, "utf8");
     const deps = new Set<string>();
-    // 只取行首的 import / export…from;`import(` 动态导入不匹配这个形态
-    for (const m of text.matchAll(/^\s*(?:import|export)\s[^;]*?from\s+["']([^"']+)["']/gm)) {
+    /*
+     * 只取行首的 import / export…from;`import(` 动态导入不匹配这个形态。
+     *
+     * **`import type` / `export type` 要排除** —— 类型导入在编译后被完全擦除,
+     * 不参与运行时求值顺序,构不成传统意义的环。原先没排除,于是把
+     * `stores/player.ts` 里那句 `import type { FortuneChoice } from "@/core/fortuneChain"`
+     * 也算成了依赖,凭空多出「fortuneChain ↔ player」这个环(实测排除后环数 5 → 4)。
+     *
+     * 这种误报的代价是实打实的:它让人以为有一处架构问题要解,而那里根本不存在 ——
+     * 一个只读类型的单向依赖,任何时候都不会出问题。
+     */
+    for (const m of text.matchAll(
+      /^\s*(?:import|export)\s+(?!type\b)[^;]*?from\s+["']([^"']+)["']/gm,
+    )) {
       const target = resolveSpecifier(file, m[1]!, fileSet);
       if (target && target !== file) deps.add(target);
     }
@@ -120,14 +132,13 @@ function findCycles(graph: Map<string, Set<string>>): string[][] {
 }
 
 /**
- * 当前存在的 5 个环 —— **基线,只许减**。
+ * 当前存在的 **4 个环** —— 基线,只许减。
  *
  * 每一条都是「读写都在函数体内」的安全环,但都该在下次动到相关模块时顺手解开。
  * 解开一个就从这里删一条;新出现一个立刻红。
  */
 const BASELINE = [
   "src/core/engineCraft.ts → src/core/pillService.ts",
-  "src/core/fortuneChain.ts → src/stores/player.ts",
   "src/core/weather.ts → src/stores/player.ts",
   "src/stores/dongfu.ts → src/stores/player.ts → src/stores/resources.ts",
   "src/stores/player.ts → src/stores/quests.ts",
