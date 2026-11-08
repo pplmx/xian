@@ -220,12 +220,44 @@ const deepUsers = [];
 const crawlUsers = [];
 let byName = 0;
 for (const file of appFiles) {
-  const text = readFileSync(file, "utf8");
-  if (/from '@engine/.test(text)) aliasUsers.push(relOf(file));
-  if (/from 'wanxiang-engine\//.test(text)) deepUsers.push(relOf(file));
+  /*
+   * `scripts/` 下的文件跳过:它们自己就是判据,正文里必然写着这些路径与正则
+   * (`engine-dist.mjs` 就是),把它们算进"宿主引用"是自指。
+   *
+   * **先剥注释再扫** —— 判据要看的是"代码怎么引用库",而注释里引用旧写法、
+   * 举例说明、写文档片段都很正常。不剥就会把注释算成违规:本轮新写的
+   * `engineGateCoverage.spec` 里引用了一句旧正则的示例 `from '@engine/`,
+   * 当场被这条判据当成真的别名导入,`check:engine` 红。
+   * (同一个文件里 byName 数到 3 处而全是注释,也是这个原因。)
+   */
+  /*
+   * 只扫**运行时源码**:`scripts/` 是判据自身(正文里必然写着这些路径与正则),
+   * `*.spec.ts` 是测试(会引用旧写法做断言、写文档片段)。两类都不是"宿主怎么引用库"。
+   *
+   * 这条不是凑数:不排除它们时,新写的 `engineGateCoverage.spec` 里那三条
+   * "只认单引号"的正则字面量(用于**反向**验证判据没退化)会被当成真的违规导入。
+   */
+  if (relOf(file).startsWith("scripts/") || /\.spec\.ts$/.test(file)) continue;
+  const text = readFileSync(file, "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*\/\/.*$/gm, "");
+  /*
+   * 引号必须**两种都认**。
+   *
+   * 原先这四条正则只写单引号 `from '…'`,而本仓库的源码一律用双引号 ——
+   * 于是:byName 数到的 3 处**全部来自注释里引用的示例文字**,67 处真实引用
+   * 一处没数到;更要紧的是**上面三条纪律判据(别名 / 深层导入 / 相对钻内部)
+   * 从来没在真实引用上生效过**。判据全绿,但它看的是一个空集。
+   *
+   * 修法:统一用一个 `FROM` 片段,把两种引号都覆盖;顺带把 byName 的数也改成
+   * 同一口径(含 `export … from`)。
+   */
+  const FROM = String.raw`from\s+(['"])`;
+  if (new RegExp(`${FROM}@engine`).test(text)) aliasUsers.push(relOf(file));
+  if (new RegExp(`${FROM}wanxiang-engine/`).test(text)) deepUsers.push(relOf(file));
   // 相对路径直接钻进库内部也算"没按使用者的方式引用"
-  if (/from '[^']*packages\/engine/.test(text)) crawlUsers.push(relOf(file));
-  byName += (text.match(/from 'wanxiang-engine'/g) ?? []).length;
+  if (new RegExp(`${FROM}[^'"]*packages/engine`).test(text)) crawlUsers.push(relOf(file));
+  byName += (text.match(/(?:from|export\s[^;]*?from)\s+(['"])wanxiang-engine\1/g) ?? []).length;
 }
 assert.deepEqual(aliasUsers, [], `这些文件还在用仓库内部别名 @engine:${aliasUsers.join("、")}`);
 assert.deepEqual(deepUsers, [], `这些文件绕过了公开入口(深层导入):${deepUsers.join("、")}`);
