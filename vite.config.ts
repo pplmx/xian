@@ -375,6 +375,25 @@ export default defineConfig({
     // 29.48s(-30%),3467 例全绿不变。isolate:false 还能再快 ~7s,但实测 5 例
     // 跨文件状态泄漏直接打红,隔离性不换这点速度,否决。
     pool: "threads",
+    /*
+     * worker 上限 12 —— 拦的是「按核数开满」。
+     *
+     * 机器是 128 核,vitest 默认按核数铺开,580 个 spec 会同时起上百个线程,而每个
+     * worker 的启动成本约 3.1s(spawn + 环境)。开的比真能同时算的多,就只剩上下文
+     * 切换与内存争用。
+     *
+     * 实测(同一台机,各 7 轮全量):
+     *
+     *   默认(按核数)   37~70s,中位 45s,**2 轮出现失败**(某轮 4 个、某轮 5 个)
+     *   maxWorkers:12  41~70s,中位 47s,**0 轮失败**
+     *
+     * 耗时相当,但失败率 2/7 → 0/7。那些失败每次是**不同**的 spec(rng.sim 的统计断言、
+     * savePlatform 的 20s 超时、offlineFuzz 的随机不变量),单独跑都绿 —— 典型的
+     * 资源争用,不是产品缺陷。故这里换的不是速度,是**「全绿」这两个字可不可信**。
+     *
+     * 12 是这台机的实测值;换机器按核数四分之一上下调,别按核数开满。
+     */
+    maxWorkers: 12,
     // 应用自身的用例在 src/,公共库的用例在 packages/engine —— 两边都要跑
     include: ["src/**/*.spec.ts", "packages/engine/**/*.spec.ts"],
     // 平衡审计类用例(buildSim / celestialSim / synergyScan / worldGen 等)

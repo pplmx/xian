@@ -781,3 +781,76 @@ describe("npm 钩子 · 指向 vite task 的 pre* 一定是死代码", () => {
     ).toContain("clean-dist");
   });
 });
+
+/**
+ * 测试并发上限 —— 「按核数开满」在多核机器上既慢又不稳。
+ *
+ * ## 本轮量到的事
+ *
+ * 本机 128 核,vitest 默认按核数铺开,580 个 spec 会同时起上百个 worker,而每个
+ * worker 的启动成本约 3.1s。实测各 7 轮全量:
+ *
+ * | 配置 | 耗时 | 出现失败的轮数 |
+ * | --- | --- | --- |
+ * | 默认(按核数) | 37~70s,中位 45s | **2/7**(某轮 4 个、某轮 5 个) |
+ * | `maxWorkers: 12` | 41~70s,中位 47s | **0/7** |
+ *
+ * 那些失败每次是**不同**的 spec(rng.sim 的统计断言、savePlatform 的 20s 超时、
+ * offlineFuzz 的随机不变量),单独跑都绿 —— 资源争用,不是产品缺陷。
+ *
+ * ## 判据守什么
+ *
+ * `threads` 池必须有 `maxWorkers`。没有它,「全绿」这个结论在核多的机器上就是
+ * 掷骰子 —— 而这恰恰是所有人看 CI 时最依赖的那两个字。
+ */
+describe("测试并发 · 不许按核数开满", () => {
+  const VITE = readFileSync(join(ROOT, "vite.config.ts"), "utf8");
+
+  it("threads 池配了 maxWorkers", () => {
+    /*
+     * **先剥注释再断言** —— 这条判据被它自己的文档绊过一次:上面那段实测表格里
+     * 写着 `maxWorkers:12`,于是把真正的配置行删掉后,`/maxWorkers:\s*\d+/`
+     * 照样命中注释、判据全绿(注入验证时当场发现)。
+     */
+    /*
+     * 注释必须**整段**剥,不能逐行剥:`/* … *\/` 在本文件里是多行的(实测表格就在
+     * 注释里),逐行剥只吃掉第一行与最后一行,中间那些 `maxWorkers:12` 会留下 ——
+     * 于是把真正的配置行删掉,判据仍能命中注释、照样全绿(注入时当场撞到)。
+     */
+    const live = VITE.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    expect(live, "pool 不再是 threads —— 这条判据的前提变了,请重看注释").toContain(
+      'pool: "threads"',
+    );
+    expect(
+      live,
+      "threads 池没配 maxWorkers —— 核多的机器上会按核数开满," +
+        "580 个 spec 同时起上百个 worker(每个约 3.1s 启动),实测 2/7 轮出现资源争用导致的假红",
+    ).toMatch(/maxWorkers:\s*\d+/);
+  });
+
+  it("上限是个具体数,不是按核数算的表达式", () => {
+    /*
+     * 写成 `cpus().length` 之类就回到原点了 —— 那正是「按核数开满」。
+     * 12 是这台机的实测值;换机器要人看一眼再改,不该自动跟随。
+     */
+    /*
+     * 两种「等于没限制」都要拦:
+     *   ① 按核数算的表达式(`cpus().length` 等)—— 机器一变就跟着涨;
+     *   ② **硬编码一个大数**(128、64 之类)—— 效果与 ① 相同。
+     * 第二种是注入时发现的:判据原先只拦 ①,把 12 改成 128 照样绿。
+     */
+    const line =
+      VITE.replace(/\/\*[\s\S]*?\*\//g, "")
+        .split("\n")
+        .find((l) => /maxWorkers:/.test(l)) ?? "";
+    expect(line, "maxWorkers 用了按核数计算的表达式 —— 等于没限制").not.toMatch(
+      /cpus\(\)|length|availableParallelism|nproc/,
+    );
+    const value = Number(/(\d+)/.exec(line)?.[1] ?? NaN);
+    expect(Number.isFinite(value), "maxWorkers 不是一个数值字面量").toBe(true);
+    expect(
+      value,
+      "maxWorkers 硬编码成了一个大数 —— 与「按核数开满」效果相同,拦的是同一个问题",
+    ).toBeLessThanOrEqual(32);
+  });
+});
