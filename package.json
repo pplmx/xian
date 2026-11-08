@@ -26,6 +26,7 @@
     "build:engine": "tsc -p packages/engine/tsconfig.build.json",
     "check:engine": "bun scripts/engine-dist.mjs && bun scripts/engine-sync.mjs",
     "check:engine:standalone": "bun scripts/engine-standalone.mjs",
+    "check:shuffle": "bun scripts/shuffle-check.mjs",
     "sync:engine": "git subtree push --prefix=packages/engine engine main",
     "type-check": "vue-tsc -b",
     "check": "bun scripts/env-check.mjs && bun run type-check && bun run lint && bun scripts/docs-check.mjs",
@@ -33,7 +34,7 @@
     "build:android": "bun run build && bunx cap sync android",
     "build:apk": "bun run build:android && cd android && ./gradlew assembleRelease",
     "prepare": "vp config --no-agent",
-    "check:all": "bun scripts/clean-dist.mjs && vp fmt --check && bun run check && bun run test && bun run build",
+    "check:all": "bun scripts/clean-dist.mjs && vp fmt --check && bun run check && bun run test && bun run build && bun run check:shuffle",
     "release:check": "bun scripts/release-check.mjs"
   },
   "dependencies": {

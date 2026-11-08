@@ -361,6 +361,39 @@ describe("门禁接线 —— CI 里跑的自检,本地得有对等入口", () =
     const direct = BROWSER_GATES.filter((script) => pre.includes(script));
     expect(direct, `pre-commit 里直接跑了浏览器门:${direct.join("、")}`).toEqual([]);
   });
+
+  it("打乱顺序自检接在 CI 与 check:all 上,且不进 pre-commit", () => {
+    /*
+     * ## 为什么这条接线需要被守
+     *
+     * `bun run test` 按**书写顺序**跑。本仓的用例共享几处模块级状态
+     * (`caveEvent` / `enlightenmentEvent` / `saveReader`),还有一批 describe 靠
+     * 「文件里前一个建好了 pinia」在工作 —— 这些在书写顺序下**永远绿**。
+     *
+     * 实测这道检查第一次跑就红了 41 条,分散在 7 个文件;连修两轮才让十种种子
+     * 全部稳定。它抓的东西没有任何别的门禁能看到,所以接线断了就是零覆盖。
+     *
+     * ## 三个方位
+     *
+     *   ① CI 的 gate job 里要有;
+     *   ② `check:all`(本地一键跑全套)里要有;
+     *   ③ **pre-commit 里不能有** —— 一轮约 40 秒,提交前那一下扛不住。
+     */
+    const workflows = workflowsText();
+    expect(workflows, "CI 里没跑打乱顺序自检 —— 顺序依赖又变成零覆盖了").toContain("check:shuffle");
+    expect(SCRIPTS["check:all"] ?? "", "check:all 里没接打乱顺序自检").toContain("check:shuffle");
+    expect(SCRIPTS["check:shuffle"] ?? "", "check:shuffle 命令消失了").toContain(
+      "scripts/shuffle-check.mjs",
+    );
+    // 脚本本体要在,且用的是**固定种子**(随机种子会让这道门自己变成偶发红)
+    const script = readFileSync(join(ROOT, "scripts/shuffle-check.mjs"), "utf8");
+    expect(script, "打乱自检没用固定种子 —— 它会自己偶发红").toMatch(/--sequence\.seed=\d+/);
+    // 不进提交前
+    const pre = codeOnly(readFileSync(PRE_COMMIT, "utf8"));
+    expect(pre, "pre-commit 里跑了打乱自检 —— 一轮约 40 秒,提交前扛不住").not.toContain(
+      "check:shuffle",
+    );
+  });
 });
 
 describe("工具链契约 —— 同一版本只留在可校验的源头", () => {

@@ -9,6 +9,7 @@
 import { describe, expect, it, beforeEach } from "vite-plus/test";
 import { setActivePinia, createPinia } from "pinia";
 import { useBountyStore } from "./bounty";
+import { resetSaveReader } from "@/core/singleWriter";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
@@ -26,7 +27,15 @@ function seedPlayerAndFunds(): void {
 }
 
 describe("悬赏板 store", () => {
-  beforeEach(() => setActivePinia(createPinia()));
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    /*
+     * `saveReader` 是 core/singleWriter 的模块级 ref,不随 pinia 重置。
+     * 本 store 读它判断「本页是不是只读」—— 它一旦为 true,整个 store 会走只读分支,
+     * 断言当场变成空值。跨文件打乱顺序后实测复现(seed=11)。
+     */
+    resetSaveReader();
+  });
 
   it("sync:首回生成一版四单;窗口内不重复换版", () => {
     seedPlayerAndFunds();

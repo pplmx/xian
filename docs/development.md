@@ -180,6 +180,19 @@ error: Failed to resolve vite command: GenericFailure, Expected
 > 注入验证:给 `utils/format.ts` 反向 `import "@/core/loot"`(loot 本就 import format)
 > → 一次触发 20 个新环,判据红。
 >
+> **2026-11-09 新增:打乱用例顺序自检(`bun run check:shuffle`)**。
+>
+> `bun run test` 按**文件书写顺序**跑,全绿是常态。但本仓的用例共享几处模块级状态
+> (`caveEvent` / `enlightenmentEvent` / `saveReader`),还有一批 `describe` 靠
+> 「文件里前一个建好了 pinia」在工作 —— 这些在书写顺序下**永远绿**。
+>
+> 第一次跑打乱顺序时红了 **41 条,分散在 7 个文件**;连修两轮(Round 27/28)才让
+> 十种种子全部稳定。那些失败一次都没在常规门禁里出现过。
+>
+> 接在 CI 的 gate job 与 `check:all` 上,固定种子 `1`(随机种子会让这道门自己变成
+> 偶发红),一轮约 40 秒。**不进 pre-commit** —— 提交前那一下已经有 verify。
+> 接线由 `gateWiring.spec` 守着(三个方位:CI 有、check:all 有、pre-commit 没有)。
+>
 > **2026-11-08 修「门禁自检」两处**:
 >
 > ① 名单原只有**九道**,而 `check:engine` 那三个(`engine-dist` / `engine-sync` /

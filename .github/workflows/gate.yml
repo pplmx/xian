@@ -80,3 +80,10 @@ jobs:
         run: |
           vp fmt --check
           vp run verify
+
+      # 打乱用例顺序再跑一遍 —— 常规 `vp run verify` 里的 test 按书写顺序跑,
+      # 靠顺序工作的用例(模块级状态没重置、describe 忘了建 pinia)在那里永远绿。
+      # 实测这道检查第一次跑就红了 41 条,分散在 7 个文件。固定种子=1,
+      # 同一份代码永远同一顺序 —— 红了就是真问题,不是运气。一轮约 40 秒。
+      - name: 打乱用例顺序 (抓顺序依赖)
+        run: bun run check:shuffle

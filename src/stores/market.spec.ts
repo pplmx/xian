@@ -12,6 +12,7 @@ import { setActivePinia, createPinia } from "pinia";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { useMarketStore } from "./market";
+import { resetSaveReader } from "@/core/singleWriter";
 import { usePlayerStore } from "@/stores/player";
 import { useInventoryStore } from "@/stores/inventory";
 import { useResourcesStore } from "@/stores/resources";
@@ -34,7 +35,15 @@ function seedPlayerAndFunds(): void {
 }
 
 describe("坊市 store", () => {
-  beforeEach(() => setActivePinia(createPinia()));
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    /*
+     * `saveReader` 是 core/singleWriter 的模块级 ref,不随 pinia 重置。
+     * 本 store 读它判断「本页是不是只读」—— 它一旦为 true,整个 store 会走只读分支,
+     * 断言当场变成空值。跨文件打乱顺序后实测复现(seed=11)。
+     */
+    resetSaveReader();
+  });
 
   it("sync:首回生成一满架;窗口未过不重复生成", () => {
     seedPlayerAndFunds();
