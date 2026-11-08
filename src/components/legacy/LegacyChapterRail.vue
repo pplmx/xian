@@ -39,6 +39,7 @@
 </template>
 
 <script setup lang="ts" generic="T extends string">
+import { tabKeyTarget } from "@/composables/useTabKeys";
 import { computed, useTemplateRef } from "vue";
 
 export interface LegacyRailTab<T extends string> {
@@ -72,15 +73,10 @@ function focusTab(index: number): void {
 
 /** 方向键循环、Home/End 到首尾；选中态与焦点一起走。 */
 function onKeydown(event: KeyboardEvent): void {
-  const count = props.tabs.length;
-  if (!count) return;
-  let target = -1;
-  if (event.key === "ArrowRight") target = (activeIndex.value + 1) % count;
-  else if (event.key === "ArrowLeft") target = (activeIndex.value - 1 + count) % count;
-  else if (event.key === "Home") target = 0;
-  else if (event.key === "End") target = count - 1;
-  if (target < 0) return;
+  // 索引怎么绕由 useTabKeys 算(两个页签栏共用同一份算术,见该文件头注)
+  const { index, handled } = tabKeyTarget(event.key, activeIndex.value, props.tabs.length);
+  if (!handled) return;
   event.preventDefault();
-  focusTab(target);
+  focusTab(index);
 }
 </script>

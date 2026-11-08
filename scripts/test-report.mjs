@@ -347,6 +347,7 @@ const CATEGORIES = [
       "perfBudget",
       "overlayTiming",
       "importCycles",
+      "useTabKeys",
       "exportReach",
       "engineGateCoverage",
       "testReportBalance",
