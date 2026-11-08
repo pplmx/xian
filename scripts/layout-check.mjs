@@ -3974,7 +3974,18 @@ async function taskResetFlow() {
     if (!(await resetBtn.count())) {
       failures.push("[390] 设置页找不到「散尽修为,重入轮回」按钮");
     } else {
-      await resetBtn.click();
+      /*
+       * 每一下点击都**不许抛** —— 上轮注入「不弹确认框」时,任务报的是
+       * 「任务自身抛异常:click Timeout」,而真因("确认框没弹")被那条 30 秒超时盖住了。
+       * 判据抓到问题却指不出问题,等于让人再查一遍。
+       * 故 click 一律 `.catch(() => {})`,后面用**状态**判,失败信息由 failures 说。
+       */
+      const clicked = await resetBtn
+        .click({ timeout: 3000 })
+        .then(() => true)
+        .catch(() => false);
+      checked += 1;
+      if (!clicked) failures.push("[390] 「散尽修为」按钮点不动(可能被浮层挡住)");
       await page.waitForTimeout(500);
       const hasConfirm = await page.evaluate(
         () => document.querySelectorAll(".modal-panel").length > 0,
@@ -3999,8 +4010,12 @@ async function taskResetFlow() {
 
       // 取消:引擎要回到运行,而不是停在暂停里
       const cancel = page.getByRole("button", { name: /取消|再想想|不了/ }).first();
-      if (await cancel.count()) {
-        await cancel.click();
+      const canCancel = (await cancel.count()) > 0;
+      checked += 1;
+      if (!canCancel) {
+        failures.push("[390] 确认框里没有取消入口 —— 玩家只能二选一,退不出去");
+      } else {
+        await cancel.click({ timeout: 3000 }).catch(() => {});
         await page.waitForTimeout(600);
         const a = await readQi();
         await page.waitForTimeout(2000);
