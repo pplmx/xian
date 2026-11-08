@@ -22,10 +22,16 @@ import { spawnSync } from "node:child_process";
  * 一轮 43 秒(本机实测)。提交前那一下已经有 `vp run verify`,再塞 43 秒不值得;
  * 它的位置是 CI 与 `check:all`。
  */
+/*
+ * 种子默认固定 1(见文件头)。`SHUFFLE_SEED=7 bun run check:shuffle` 可以换一种顺序
+ * 做更广的本地验证 —— 但**门禁永远用默认那一个**:换种子只该由人主动做,
+ * 不该让流水线自己随机。本仓实测 seed 1/2/3/5/7/11/13/17/19/23/29 十一种都稳定。
+ */
+const seed = process.env.SHUFFLE_SEED ?? "1";
 const started = Date.now();
 const res = spawnSync(
   "bunx",
-  ["vitest", "run", "--sequence.shuffle", "--sequence.seed=1", "--reporter=dot"],
+  ["vitest", "run", "--sequence.shuffle", `--sequence.seed=${seed}`, "--reporter=dot"],
   { stdio: "inherit", shell: false },
 );
 const seconds = Math.round((Date.now() - started) / 1000);
@@ -38,4 +44,4 @@ if (res.status !== 0) {
   );
   process.exit(1);
 }
-console.log(`✓ 打乱用例顺序(${seconds} 秒)全部通过 —— 没有靠书写顺序工作的用例`);
+console.log(`✓ 打乱用例顺序(seed=${seed},${seconds} 秒)全部通过 —— 没有靠书写顺序工作的用例`);

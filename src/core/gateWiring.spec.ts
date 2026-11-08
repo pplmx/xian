@@ -387,7 +387,14 @@ describe("门禁接线 —— CI 里跑的自检,本地得有对等入口", () =
     );
     // 脚本本体要在,且用的是**固定种子**(随机种子会让这道门自己变成偶发红)
     const script = readFileSync(join(ROOT, "scripts/shuffle-check.mjs"), "utf8");
-    expect(script, "打乱自检没用固定种子 —— 它会自己偶发红").toMatch(/--sequence\.seed=\d+/);
+    /*
+     * 种子必须**有个固定的默认值**(`SHUFFLE_SEED ?? "1"`)—— 随机种子会让这道门
+     * 自己变成偶发红,而人只会学会忽略它。允许用环境变量换种子做更广的本地验证,
+     * 但默认那一个不能是随机的。
+     */
+    expect(script, "打乱自检没有固定默认种子 —— 它会自己偶发红").toMatch(
+      /SHUFFLE_SEED\s*\?\?\s*"\d+"/,
+    );
     // 不进提交前
     const pre = codeOnly(readFileSync(PRE_COMMIT, "utf8"));
     expect(pre, "pre-commit 里跑了打乱自检 —— 一轮约 40 秒,提交前扛不住").not.toContain(

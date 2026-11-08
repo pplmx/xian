@@ -191,6 +191,8 @@ error: Failed to resolve vite command: GenericFailure, Expected
 >
 > 接在 CI 的 gate job 与 `check:all` 上,固定种子 `1`(随机种子会让这道门自己变成
 > 偶发红),一轮约 40 秒。**不进 pre-commit** —— 提交前那一下已经有 verify。
+> 想换一种顺序做更广的验证:`SHUFFLE_SEED=7 bun run check:shuffle` —— 但门禁本身
+> 永远用默认那一个,换种子只该由人主动做。
 > 接线由 `gateWiring.spec` 守着(三个方位:CI 有、check:all 有、pre-commit 没有)。
 >
 > **2026-11-08 修「门禁自检」两处**:
