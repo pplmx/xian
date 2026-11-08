@@ -1050,6 +1050,23 @@ git subtree pull --prefix=packages/engine engine main  # 库 → 本作
 改完库先推独立仓(`bun run sync:engine` 一行)。漏推时 `bun run check:engine` 会红(本仓与独立仓必须同树),而且报错信息里就把补救命令打印出来。
 两边都改会让 `subtree push` 拒绝执行,那时先 `pull` 合回来。细节与对账清单见 [engine.md](./engine.md)。
 
+### 库侧待修(需先有推送授权)
+
+`packages/engine/scripts/verify-dist.mjs` 的「组装指南自检」里有一处**不对称**,
+宿主这边改不了(会立刻违反同树约束),记在这里等下一次库侧改动时一并带上:
+
+```js
+assert.ok(factories.size >= 8, "组装指南里应当指向足够多的模块(至少 8 个 create*)");  // 有下限
+const plainApis = new Set([...doc.matchAll(/`(evalGoal|goalProgress|…|softChance)`/g)]…);
+for (const name of plainApis) { assert.ok(name in engine, …); }                      // 没有下限
+```
+
+`plainApis` 由**反引号正则**从 `docs/usage.md` 里捞。文档哪天把反引号换成别的写法
+(或改名),集合就静默变空 —— `for` 一次都不执行,判据照常打「组装指南自检通过」。
+实测:当前读到 **14 个**,去掉反引号后读到 **0 个**,而判据仍绿。
+
+修法:`assert.ok(plainApis.size >= 8, …)` 一句即可(`factories` 那条就是现成的样子)。
+
 ## 设计规范
 
 配色、版式、字体子集与动效见 [design.md](./design.md)。
