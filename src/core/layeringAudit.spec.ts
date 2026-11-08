@@ -179,4 +179,39 @@ describe("分层 · core 对 store 的依赖只许收拢", () => {
     const bad = sources(UTILS).filter((f) => /from\s+"@\/(core|stores)\//.test(f.text));
     expect(bad.map((f) => f.name)).toEqual([]);
   });
+
+  it("底层不认识视图层 —— data/core/ui/stores/composables 都不许 import views 或 components", () => {
+    /*
+     * 本仓的取向是「data 是数据、core 是逻辑、stores 是状态、views 只做薄接线」。
+     * 上面几条守的是 core↔store 那一对;**这一条守更底的一刀**:
+     *
+     *   底下的五层一旦有人 import 了 `@/views/**` 或 `@/components/**`,
+     *   那条依赖就倒过来了 —— 逻辑层开始认识"长什么样",而组件是会被改名的。
+     *   症状不是编译错,是改个组件名就让一个数值模块跟着崩。
+     *
+     * 实测(2026-11-09)五层**全部零违规**,但此前没有判据守着这个事实 ——
+     * 它靠的是大家自觉,而自觉不是判据。
+     */
+    const LAYERS = [
+      ["data", resolve(__dirname, "../data")],
+      ["core", CORE],
+      ["ui", resolve(__dirname, "../ui")],
+      ["stores", resolve(__dirname, "../stores")],
+      ["composables", resolve(__dirname, "../composables")],
+    ] as const;
+    const offenders: string[] = [];
+    let scanned = 0;
+    for (const [label, dir] of LAYERS) {
+      for (const f of sources(dir)) {
+        scanned += 1;
+        if (/from\s+"@\/(views|components)\//.test(f.text)) offenders.push(`${label}/${f.name}`);
+      }
+    }
+    // 防空转:一层都没扫到时,下面的空集不算数
+    expect(scanned, "一个源文件都没扫到 —— 目录名或扩展名过滤写错了").toBeGreaterThan(100);
+    expect(
+      offenders,
+      "这些底层模块 import 了视图层 —— 依赖倒过来了:" + offenders.join("、"),
+    ).toEqual([]);
+  });
 });
