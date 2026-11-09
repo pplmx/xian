@@ -27437,7 +27437,12 @@ async function taskLegacyHistoryOverflow() {
       materialLore: {},
       materialSeen: {},
       recipeLore: {},
-      blueprintLore: {},
+      /*
+       * 器谱掌握度 —— 下面那条「器谱进度」判据要量连续档与排序,故夹具里得真有
+       * 三个不同的掌握度:0.9(差 5 次)、0.5(差 25 次)、1.0(已读通)。
+       * id 取真实模板(`w_zidian` 雾隐长枪 / `h_miwu` 迷雾纱 / `b_zhaoze` 沼泽皮甲)。
+       */
+      blueprintLore: { w_zidian: 0.9, h_miwu: 0.5, b_zhaoze: 1 },
       skillExp: {},
       enemyLore: { e_icefairy: 2, e_yaolang: 3, e_sword_guard: 1 },
       enemySeen: { e_icefairy: 6, e_yaolang: 16, e_sword_guard: 3 },
@@ -27909,6 +27914,74 @@ async function taskLegacyHistoryOverflow() {
         failures.push("[320] 单世态:历世足迹印了走势 —— 只有一世时没有走向可言");
       }
       await onePage.close();
+    }
+
+    /*
+     * 器谱进度 —— 「读通器谱 N / 288 张」只报到顶那一档。而掌握度是 0~1 的连续值
+     * (每成功重铸 +0.02,五十锤才读通一张),玩家读不出:哪些快读通了、下一锤该砸
+     * 哪张、自己读到了几分(0.9 与 0.1 在「0/288」里长得一样)。
+     *
+     * 判据核:清单在、按「差几次」从少到多排(下一锤该砸哪张排第一)、
+     * 已读通的排最后(不能因为 untilMastered=0 跑到最前)、百分数与掌握度对得上。
+     */
+    checked += 1;
+    {
+      const bp = await page.evaluate(() => {
+        const box = document.querySelector("[data-legacy-blueprint-desk]");
+        if (!box) return null;
+        return {
+          summary: (
+            document.querySelector("[data-legacy-blueprint-summary]")?.textContent || ""
+          ).trim(),
+          rows: [...box.querySelectorAll("[data-legacy-blueprint]")].map((r) => ({
+            id: r.getAttribute("data-legacy-blueprint"),
+            pct: Number(r.getAttribute("data-blueprint-percent")),
+            text: (r.textContent || "").replace(/\s+/g, " ").trim(),
+          })),
+        };
+      });
+      if (!bp) {
+        failures.push("[320] 器谱进度没渲染 —— 夹具里明明记了掌握度");
+      } else if (/NaN|undefined|Infinity/.test(JSON.stringify(bp))) {
+        failures.push(`[320] 器谱进度漏出占位符 —— «${bp.summary}»`);
+      } else if (bp.rows.length === 0) {
+        failures.push("[320] 器谱进度一行都没有 —— 读过的那张该列出来");
+      } else if (!/读过\s*\d+\s*张/.test(bp.summary) || !/读通\s*\d+\s*张/.test(bp.summary)) {
+        failures.push(`[320] 器谱进度的汇总没报清「读过几张 · 读通几张」—— «${bp.summary}»`);
+      } else {
+        // 夹具把 0.9 与 0.5 各摆一张,读通一张(1.0)
+        const byPct = new Map(bp.rows.map((r) => [r.pct, r]));
+        if (!byPct.has(90) || !byPct.has(50) || !byPct.has(100)) {
+          failures.push(
+            `[320] 器谱进度的百分数与夹具对不上 —— 实见 ${JSON.stringify(bp.rows.map((r) => r.pct))}` +
+              `(夹具是 0.9 / 0.5 / 1.0)`,
+          );
+        }
+        const first = bp.rows[0];
+        if (first.pct !== 90) {
+          failures.push(
+            `[320] 器谱进度没把「差几次最少」的排前面 —— 首行是 ${first.pct}%` +
+              `(90% 差 5 次,该排第一:那正是下一锤该砸的)`,
+          );
+        }
+        const last = bp.rows[bp.rows.length - 1];
+        if (last.pct !== 100) {
+          failures.push(
+            `[320] 器谱进度没把「已读通」的排最后 —— 末行是 ${last.pct}%` +
+              `(读通的 untilMastered 是 0,按数排会跑到最前)`,
+          );
+        }
+        /*
+         * 「再 N 次」必须与增量同源:0.9 差 0.1,增量 0.02 → 5 次。
+         * 若界面自己写了别的算式(或忘了扣浮点余量),这个数就会偏。
+         */
+        if (!/再\s*5\s*次/.test(byPct.get(90)?.text ?? "")) {
+          failures.push(
+            `[320] 器谱进度的「还差几次」与增量对不上 —— «${byPct.get(90)?.text ?? "无"}»` +
+              `(0.9 差 0.1,增量 0.02 → 5 次)`,
+          );
+        }
+      }
     }
 
     /*

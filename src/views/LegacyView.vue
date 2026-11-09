@@ -205,6 +205,50 @@
                   还有 {{ enemyLedger.unknown }} 种尚未照面 —— 名字留白，路要自己走出来。
                 </p>
               </div>
+              <!--
+                器谱进度 —— 上面那行「读通器谱 N / 288 张」只报到顶那一档。而掌握度是
+                0~1 的连续值(每成功重铸一次增一档),玩家读不出:哪些快读通了、下一锤该
+                砸哪张、以及自己到底读到了几分(0.9 与 0.1 在「0/288」里长得一样)。
+                与敌手谱同一个形状:一个连续系统,界面只报了终点。
+              -->
+              <div
+                v-if="blueprintDesk.known > 0"
+                class="legacy-blueprint-desk"
+                data-legacy-blueprint-desk
+              >
+                <p class="legacy-blueprint-desk__head">
+                  <span>器谱进度</span>
+                  <span class="tabular" data-legacy-blueprint-summary>{{ blueprintSummary }}</span>
+                </p>
+                <ul class="legacy-blueprint-desk__rows">
+                  <li
+                    v-for="row in blueprintPage.visible"
+                    :key="row.id"
+                    class="legacy-blueprint-desk__row"
+                    :data-legacy-blueprint="row.id"
+                    :data-blueprint-percent="row.percent"
+                  >
+                    <span class="legacy-blueprint-desk__name">{{ row.name }}</span>
+                    <span class="legacy-blueprint-desk__percent tabular">{{ row.percent }}%</span>
+                    <span v-if="row.mastered" class="legacy-blueprint-desk__done">已读通</span>
+                    <span v-else-if="row.stalled" class="legacy-blueprint-desk__stalled"
+                      >此谱不再增长</span
+                    >
+                    <span v-else class="legacy-blueprint-desk__left tabular"
+                      >再 {{ row.untilMastered }} 次</span
+                    >
+                  </li>
+                </ul>
+                <button
+                  v-if="blueprintPage.hidden > 0"
+                  type="button"
+                  class="legacy-blueprint-desk__more tap-row"
+                  data-legacy-blueprint-more
+                  @click="blueprintLimit += BLUEPRINT_RENDER_BATCH"
+                >
+                  再看 {{ nextBlueprintBatch }} 张 · 余 {{ blueprintPage.hidden }}
+                </button>
+              </div>
             </article>
 
             <article class="legacy-panel" data-legacy-vow>
@@ -876,6 +920,7 @@ import { lifeLinggenSpread } from "@/ui/lifeLinggenSpread";
 import { lifeFootprint } from "@/ui/lifeFootprint";
 import { lifeDateText } from "@/ui/lifeDate";
 import { enemyLoreLedger } from "@/ui/enemyLoreLedger";
+import { blueprintProgress } from "@/ui/blueprintProgress";
 import { formatDate } from "@/utils/time";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LegacyWheel from "@/components/common/LegacyWheel.vue";
@@ -997,6 +1042,31 @@ const enemyPage = computed(() =>
 );
 /** 下一次续开会放出几种 —— 按钮文案与 data 共用,不许两处各算一遍 */
 const nextEnemyBatch = computed(() => nextRevealCount(enemyPage.value.hidden, ENEMY_RENDER_BATCH));
+
+/*
+ * 器谱进度 —— 掌握度是 0~1 的连续值(每成功重铸一次增一档),而上面那行
+ * 「读通器谱 N / 288 张」只报到顶那一档。玩家读不出:哪些快读通了、
+ * 下一锤该砸哪张、自己读到了几分(0.9 与 0.1 在「0/288」里长得一样)。
+ *
+ * 与敌手谱同一把尺:只列读过的、按「差几次」从少到多排(下一锤该砸哪张排第一)、
+ * 分批渲染不用 slice 截断。
+ */
+const BLUEPRINT_RENDER_BATCH = 8;
+const BLUEPRINT_RENDER_WINDOW = BLUEPRINT_RENDER_BATCH * 2;
+const blueprintLimit = ref(BLUEPRINT_RENDER_BATCH);
+const blueprintDesk = computed(() => blueprintProgress(lore.blueprintLore, EQUIPMENT_TEMPLATES));
+const blueprintPage = computed(() =>
+  listWindow(blueprintDesk.value.rows, blueprintLimit.value, BLUEPRINT_RENDER_WINDOW),
+);
+const nextBlueprintBatch = computed(() =>
+  nextRevealCount(blueprintPage.value.hidden, BLUEPRINT_RENDER_BATCH),
+);
+/** 一句汇总:「读过 12 张 · 读通 3 张 · 近读通 2 张」 */
+const blueprintSummary = computed(() => {
+  const d = blueprintDesk.value;
+  const near = d.nearlyDone > 0 ? ` · 近读通 ${d.nearlyDone} 张` : "";
+  return `读过 ${d.known} 张 · 读通 ${d.mastered} 张${near}`;
+});
 
 const RESULT_TEXTS: Record<"done" | "unfinished" | "broken", string> = {
   done: "践行到底",
