@@ -480,28 +480,36 @@ const stageSteps = computed(() => [
   { label: "大成", value: STYLE_MASTER_AFFINITY },
 ]);
 
-/** 距下一形态还差多少契合：读判定线常量，不在视图里另写门槛。 */
 /**
  * 章首那颗「事实」的位置报什么。
  *
  * 它此前写的是「契合 N%」,而卷首 meta 里已有同一枚、下面的阶段行也有一枚 ——
  * 同一块里同一个数出现三次(实测 top 168 / 269 两枚相距 100px,都在首屏)。
- * 章首该答的是「离下一级还多远」,不是把当前值再念一遍。
+ * 第一次修法改成「距下一形态还差 N%」—— 而正文那句 `stageGapText` 说的是
+ * 同一件事(「距成形还差 N% 契合」),于是 959×1024 上首屏又抓到一次重复。
+ *
+ * 两处相邻的读数席不许报同一件事(与卷首「账首报最近契合、台账报雏形线」
+ * 同一条纪律)。章首报**正文没有的汇总**:三条识别线过了几条;
+ * 明细(还差多少契合)留给正文那一句。
  */
 const stageFactText = computed(() => {
   if (build.value?.affinity === undefined) return "道途未成";
-  // 「到底了」与「还差多少」都读 stageMeter 那一份,不在这里另减一遍 ——
-  // 上面 stageGapText 就是这么写的,两处各算一次迟早会分叉
-  if (stageMeter.value.gap <= 0) return "识别线全过";
-  return `距下一形态还差 ${formatPercent(stageMeter.value.gap, 0)}`;
+  const aff = build.value.affinity;
+  const passed = stageSteps.value.filter((step) => aff >= step.value).length;
+  return `识别线 ${passed}/${stageSteps.value.length}`;
 });
 
 const stageGapText = computed(() => {
   const aff = build.value?.affinity;
   if (aff === undefined) return "";
-  if (aff >= STYLE_MASTER_AFFINITY) return "已至大成，此路不再有新的识别门槛。";
-  const target = aff >= STYLE_MATURE_AFFINITY ? STYLE_MASTER_AFFINITY : STYLE_MATURE_AFFINITY;
-  return `距${aff >= STYLE_MATURE_AFFINITY ? "大成" : "成形"}还差 ${formatPercent(target - aff, 0)} 契合。`;
+  /*
+   * 缺口读 `stageMeter.gap`,不在这里再减一遍 —— 那是第二本账。
+   * `stageMeter` 由 `buildStageMeter` 给出同一份缺口的比率与差值,
+   * 「还差多少」与「进度条走到哪」本来就是同一个数的两种写法。
+   */
+  if (stageMeter.value.gap <= 0) return "已至大成，此路不再有新的识别门槛。";
+  const next = aff >= STYLE_MATURE_AFFINITY ? "大成" : "成形";
+  return `距${next}还差 ${formatPercent(stageMeter.value.gap, 0)} 契合。`;
 });
 
 const powerRating = computed(() => ratePower(player.finalStats));

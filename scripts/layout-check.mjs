@@ -18290,6 +18290,32 @@ async function taskCharacterFold() {
         };
       });
 
+      /*
+       * 资质地板 —— 灵根牌面上那几枚资质是垫着它掷出来的
+       * (`rollLinggen` 的 `aptitude = min(100, 掷点 + 地板)`)。
+       * 展品档转过 2 世、宿慧 260 → 地板 36(宿慧口径在顶)。
+       * 判据只看渲染出来的字:数值在、口径在、离上限在;数值不许是占位符。
+       */
+      checked += 1;
+      {
+        const floorInfo = await page.evaluate(() => {
+          const el = document.querySelector("[data-character-floor]");
+          if (!el) return null;
+          return { text: (el.textContent || "").replace(/\s+/g, " ").trim() };
+        });
+        if (!floorInfo) {
+          failures.push("[390-character] 道躯页没有报资质地板 —— 灵根牌面上那几枚资质是垫着它掷的");
+        } else if (/NaN|undefined|Infinity/.test(floorInfo.text)) {
+          failures.push(`[390-character] 资质地板漏出占位符 —— «${floorInfo.text}»`);
+        } else if (!/资质地板\s*\+\d+/.test(floorInfo.text)) {
+          failures.push(`[390-character] 资质地板没印出数值 —— «${floorInfo.text}»`);
+        } else if (!/宿慧折算|转世保底/.test(floorInfo.text)) {
+          failures.push(
+            `[390-character] 资质地板没说是哪条口径在顶 —— 两条取较大者,不说就等于「不知道哪来」:«${floorInfo.text}»`,
+          );
+        }
+      }
+
       checked += 1;
       if (fold.chapters !== 3 || fold.heads !== 3) {
         failures.push(

@@ -516,6 +516,38 @@
     font-size: var(--type-note);
     line-height: 1;
   }
+  /*
+   * 资质地板 —— 灵根牌面下的一行注脚。
+   *
+   * 它不是主读数:牌面报的是「此刻是多少」,这一行答「那几枚数是怎么来的」。
+   * 故字号走 note、色走 ink-faint,只有 `+N` 抬到 ink-soft —— 眼睛先扫到牌面,
+   * 想追来路时再往下读一行。贴一条上缘细线,与「注」那一族同形。
+   */
+  .character-dossier__floor {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.14rem 0.42rem;
+    margin-top: 0.55rem;
+    padding-top: 0.42rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .character-dossier__floor-value {
+    color: var(--color-ink-soft);
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+  }
+  .character-dossier__floor-source,
+  .character-dossier__floor-gap {
+    white-space: nowrap;
+  }
+  .character-dossier__floor-gap {
+    margin-left: auto;
+  }
   .character-dossier__roots-copy {
     margin-top: 0.55rem;
   }

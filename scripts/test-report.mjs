@@ -316,6 +316,7 @@ const CATEGORIES = [
       "inscription",
       "inscriptionText",
       "characterDesk",
+      "characterFloor",
       "characterDossier",
       "elementNeutral",
       "dongfuDesk",

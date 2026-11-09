@@ -131,6 +131,23 @@
                 </span>
               </div>
               <!--
+                资质地板 —— 上面那几枚资质**是垫着它掷出来的**
+                (`rollLinggen` 的 `aptitude = min(100, 掷点 + 地板)`)。
+
+                地板是转世两条自动复利通道之一(另一条是道果)。它在转世弹窗里
+                已经有四行账,而人物页——地板**持续生效**的地方——此前一个字都没说:
+                同一个数,转世那一刻答得出「怎么来的」,平时这页答不出。
+                数值读同一份 `aptitudeFloorBrief`(纯函数),不在这里另算一遍。
+              -->
+              <p class="character-dossier__floor" data-character-floor>
+                <span class="character-dossier__floor-label">资质地板</span>
+                <span class="character-dossier__floor-value tabular">+{{ floorBrief.floor }}</span>
+                <span class="character-dossier__floor-source">{{ floorSourceText }}</span>
+                <span v-if="!floorBrief.capped" class="character-dossier__floor-gap tabular"
+                  >离上限 {{ floorBrief.toCap }}</span
+                >
+              </p>
+              <!--
                 灵根那一段解释收成一条「注」。
 
                 它答的是「倍率怎么算、五行管什么」—— 都是**为什么**,不是此刻的读数;
@@ -626,6 +643,8 @@ import {
   characterModifierSummary,
   modifierGroupHeadline,
 } from "@/ui/characterDesk";
+import { aptitudeFloorBrief } from "@/ui/reincarnationDesk";
+import { totalInsight } from "@/core/samsaraService";
 
 const player = usePlayerStore();
 const [foundationChapter, modifiersChapter, catalogChapter] = characterChapters();
@@ -704,6 +723,24 @@ const powerFormulaText = computed(() =>
 
 /** 灵根的天然牌面(倾向文案,不含任何数值) */
 const tendencies = computed(() => tendencyLines(rootElements(player.linggen?.roots)));
+
+/**
+ * 资质地板简报 —— 上面那几枚资质是垫着它掷出来的。
+ *
+ * 输入取存档里的两个真值(转世次数、宿慧总额),交给 `ui/reincarnationDesk` 的
+ * 纯函数现算;不在这里手写 `max(次数 × 5, 宿慧 / 12)` —— 与引擎那份算法各写一遍,
+ * 改常数时必有一处撒谎。转世弹窗用的是同一个函数。
+ */
+const floorBrief = computed(() =>
+  aptitudeFloorBrief({
+    lives: player.reincarnation.count,
+    insight: totalInsight(),
+  }),
+);
+/** 哪条口径在顶 —— 两条取较大者,不说是哪条,玩家会以为两种攒法等价 */
+const floorSourceText = computed(() =>
+  floorBrief.value.source === "insight" ? "宿慧折算" : "转世保底",
+);
 
 const modifierGroups = computed(() =>
   characterModifierDesk(stats.value.mods, stats.value.breakdown),

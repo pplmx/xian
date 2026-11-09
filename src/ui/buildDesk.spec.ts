@@ -180,9 +180,14 @@ describe("铸道章首 · 报缺口不复述当前值", () => {
   });
 
   it("缺口读 stageMeter 那一份,不另减一遍", () => {
+    /*
+     * 缺口明细现在只在**正文那一句**里(stageGapText)—— 章首改报识别线汇总,
+     * 见下面那组「章首 fact 与正文缺口不许是同一句话」。故判据跟着落到正文那一块:
+     * 意图没变(不许另减一本账),落点随设计挪。
+     */
     const src = view();
-    const block = src.slice(src.indexOf("const stageFactText"), src.indexOf("const stageGapText"));
-    expect(block, "要读 stageMeter.gap").toContain("stageMeter.value.gap");
+    const block = src.slice(src.indexOf("const stageGapText"), src.indexOf("const powerRating"));
+    expect(block, "缺口要读 stageMeter 那一份").toContain("stageMeter");
     expect(block, "不许自己再写 target - aff —— 那是第二本账").not.toContain("target - aff");
   });
 
@@ -233,6 +238,47 @@ describe("铸道案 · 同一个契合度不许在首屏说两遍", () => {
     expect(ledger, "台账那格要报雏形线(有词条/无词条都得有数)").toContain(
       "STYLE_EMERGENCE_AFFINITY",
     );
+  });
+});
+
+describe("铸道案 · 章首 fact 与正文缺口不许是同一句话", () => {
+  /*
+   * 实测(`layout-check`,959×1024):
+   *
+   *   ✗ [959x1024] /build 首屏把同一句说了两遍:«25%»
+   *
+   * 两个来源在同一章里:
+   *   @章首 fact   stageFactText → 「距下一形态还差 25%」
+   *   @正文 build-copy stageGapText → 「距成形还差 25% 契合」
+   *
+   * 章首那颗位置本来就该报**这一章独有的汇总**,正文再摊细则 —— 反过来做,
+   * 同一章开头一句、正文一句,读起来像两个不同的数(措辞还不一样:
+   * 「下一形态」与「成形」),而它们其实是同一个 25%。
+   *
+   * 这条与卷首那组「账首报最近契合、台账报雏形线」是同一条纪律:
+   * 两处相邻的读数席,不许报同一件事。
+   */
+  it("章首报识别线的汇总,正文报缺口明细 —— 两处不许都是「还差 N%」", () => {
+    const src = source("src/views/BuildView.vue");
+    const fact = src.slice(src.indexOf("const stageFactText"), src.indexOf("const stageGapText"));
+    const gap = src.slice(src.indexOf("const stageGapText"), src.indexOf("const powerRating"));
+
+    expect(fact.trim().length, "章首 fact 定位不到 —— 判据会空转").toBeGreaterThan(0);
+    expect(gap.trim().length, "正文缺口定位不到 —— 判据会空转").toBeGreaterThan(0);
+
+    // 正文那一句保留「还差 N% 契合」:它才是明细
+    expect(gap, "正文该保留缺口明细").toMatch(/还差/);
+    // 章首那一句不许再算同一个「还差 N%」
+    expect(
+      fact,
+      "章首与正文都说「还差 N%」—— 同一章开头与正文各念一遍,而它们是同一个数",
+    ).not.toMatch(/还差 \$\{formatPercent/);
+  });
+
+  it("章首改报「过了几条识别线」—— 那是正文没有的汇总", () => {
+    const src = source("src/views/BuildView.vue");
+    const fact = src.slice(src.indexOf("const stageFactText"), src.indexOf("const stageGapText"));
+    expect(fact, "章首要读识别线那一份(过线数 / 总条数)").toMatch(/stageSteps|识别线/);
   });
 });
 
