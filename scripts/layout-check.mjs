@@ -3951,17 +3951,24 @@ async function taskResetFlow() {
     await page.goto(`${INDEX}#/settings`, { waitUntil: "load" });
     await page.waitForTimeout(900);
     /*
-     * 刚建号时会按概率弹出「顿悟」之类的机缘卷(它是全局浮层,压在设置页上面),
-     * 挡住要点的按钮。这属于引擎按概率触发的东西,与清档流程无关 ——
-     * 先把它关掉,否则点击会被浮层拦下(实测报「subtree intercepts pointer events」)。
+     * 取景先收拾干净 —— **复用 clearOverlays**,别再自己写一版。
+     *
+     * 2026-11-09 的 CI 上,这条判据报了三件事:「散尽修为」点不动 / 确认框没说清后果 /
+     * 确认框没有取消入口。三条全是假象:真因是引擎按概率浮上来的「灵光乍现」机缘卷
+     * 压在上面,而这段原本靠**文案正则**猜关闭键 —— 那张卷的离开键文案是随机的
+     * (`leaveLabel`),猜不中就一路 Escape,而机缘卷**刻意不吃 Esc**。
+     * 于是弹窗留着,后面的判据把悟道的三签弹窗当成了清档确认框。
+     *
+     * `clearOverlays` 早就处理过同一件事(见它的注释:固定转六圈等窗浮上来、
+     * 钉死 Math.random、点 `[data-opportunity-leave]` 而非猜文案),本函数当初
+     * 没复用它,是 Round 62 加这条判据时的疏漏。
      */
-    for (let i = 0; i < 3; i += 1) {
-      const panel = page.locator(".modal-panel").first();
-      if (!(await panel.count())) break;
-      const dismiss = page.getByRole("button", { name: /收起|暂不|放弃|离开|关闭|知道了/ }).first();
-      if (await dismiss.count()) await dismiss.click({ timeout: 1500 }).catch(() => {});
-      else await page.keyboard.press("Escape").catch(() => {});
-      await page.waitForTimeout(400);
+    const stillOpen = await clearOverlays(page);
+    checked += 1;
+    if (stillOpen.length) {
+      failures.push(
+        `[390] 清档场景:动手前还开着浮层 —— ${stillOpen.join("、")}(取景没收拾干净,后面每条都会验错对象)`,
+      );
     }
 
     /*
@@ -3987,16 +3994,36 @@ async function taskResetFlow() {
       checked += 1;
       if (!clicked) failures.push("[390] 「散尽修为」按钮点不动(可能被浮层挡住)");
       await page.waitForTimeout(500);
-      const hasConfirm = await page.evaluate(
-        () => document.querySelectorAll(".modal-panel").length > 0,
-      );
+      /*
+       * **要认准是清档那一张** —— 第一版只数 `.modal-panel` 的个数,
+       * 页面上压着任何别的弹窗(机缘卷、悟道三签)都会被当成「确认框弹出来了」,
+       * 于是后面两条判据验的是别人的文案,报「没说清后果」「没有取消入口」。
+       * 2026-11-09 的 CI 上正是这么报的。
+       *
+       * 清档弹窗有一句独一无二的话:「彻底抹去」(见 `SettingsView.vue`),
+       * 用它认身份;同时不再用 `.modal-panel` 的个数,而是取**那张**的文案。
+       */
+      const panelInfo = await page.evaluate(() => {
+        const panels = [...document.querySelectorAll(".modal-panel")];
+        const hit = panels.find((p) => (p.textContent ?? "").includes("彻底抹去"));
+        return {
+          any: panels.length,
+          isReset: Boolean(hit),
+          text: (hit ?? panels[0])?.textContent ?? "",
+        };
+      });
       checked += 1;
-      if (!hasConfirm) failures.push("[390] 点了「散尽修为」却没弹确认框 —— 会直接清档吗");
+      if (!panelInfo.isReset) {
+        failures.push(
+          panelInfo.any === 0
+            ? "[390] 点了「散尽修为」却没弹确认框 —— 会直接清档吗"
+            : `[390] 点了「散尽修为」弹的不是清档确认框(页面上有 ${panelInfo.any} 个弹窗,` +
+                `都不是它):${panelInfo.text.slice(0, 50)}`,
+        );
+      }
 
       // 确认框里必须把后果写清,而不是只问「确定吗」
-      const panelText = await page.evaluate(
-        () => document.querySelector(".modal-panel")?.textContent ?? "",
-      );
+      const panelText = panelInfo.text;
       checked += 1;
       // 判的是「有没有把后果说清」,不是「用了哪个词」—— 现文案是
       // 「彻底抹去本机的一切修行痕迹,包括转世收获,且无法恢复」,第一版正则只查
