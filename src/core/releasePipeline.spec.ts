@@ -105,7 +105,7 @@ describe("Android 隐私 · 系统备份不许绕过导出/导入", () => {
     expect(RAW_MANIFEST, "存储权限若不封顶,Android 10+ 也会背上不必要的敏感权限").toMatch(
       /android:name="android\.permission\.WRITE_EXTERNAL_STORAGE"\s+android:maxSdkVersion="28"/,
     );
-    expect(PRIVACY, "隐私页只报了旧的两项,漏掉了真实存在的存储权限").toContain("以下三项权限");
+    expect(PRIVACY, "隐私页的权限数与实际不符").toContain("以下两项权限");
     expect(PRIVACY).toContain("<code>WRITE_EXTERNAL_STORAGE</code>");
     expect(PRIVACY, "已移除的权限不该继续写在隐私页上").not.toContain(
       "<code>ACCESS_NETWORK_STATE</code>",
@@ -113,6 +113,41 @@ describe("Android 隐私 · 系统备份不许绕过导出/导入", () => {
     expect(PRIVACY_DIALOG_TEXT, "游戏内短版隐私说明也要交代备份与换机路径").toContain(
       "系统自动备份已关闭,换设备请使用「导出/导入」",
     );
+
+    /*
+     * **声称的数目必须与列表对得上**。
+     *
+     * 这条是 2026-11-09 补的:隐私页写着「安装包中声明了以下**三**项权限」,
+     * 而下面的表格只列了 **两** 行(`INTERNET` / `WRITE_EXTERNAL_STORAGE`) ——
+     * manifest 里也确实只有这两条。玩家看到的是一份自相矛盾的隐私声明,
+     * 而原来的判据只查了「有没有『以下三项权限』这句话」,正好把错的数字钉住了。
+     *
+     * 故这里三方对账:文案里的数目、表格行数、manifest 里的权限条数。
+     */
+    /*
+     * 字符类里要带**「两」** —— 中文的 2 有「二」和「两」两种写法,原文用的是后者。
+     * 第一版只列了 一二三四五六七八九十,正则当场匹配不到(判据红在"没说清几项"上)。
+     */
+    const shown = /安装包中声明了以下([一二两三四五六七八九十\d]+)项权限/.exec(PRIVACY)?.[1];
+    expect(shown, "隐私页没说清申请了几项权限").toBeTruthy();
+    const CN: Record<string, number> = {
+      一: 1,
+      两: 2,
+      二: 2,
+      三: 3,
+      四: 4,
+      五: 5,
+      六: 6,
+      七: 7,
+      八: 8,
+      九: 9,
+      十: 10,
+    };
+    const claimed = CN[shown!] ?? Number(shown);
+    const rows = (PRIVACY.match(/<td><code>[A-Z_]+<\/code><\/td>/g) ?? []).length;
+    const declared = (RAW_MANIFEST.match(/<uses-permission/g) ?? []).length;
+    expect(claimed, `隐私页说 ${claimed} 项,表格只列了 ${rows} 项`).toBe(rows);
+    expect(rows, `表格列了 ${rows} 项,而 AndroidManifest 声明了 ${declared} 条`).toBe(declared);
   });
 
   it("明文 HTTP 只留给本地迁移 —— 其余域一律拒绝", () => {
