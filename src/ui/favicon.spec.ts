@@ -28,7 +28,7 @@ const ICO = readFileSync(resolve(ROOT, "public/favicon.ico"));
 const INDEX_HTML = readFileSync(resolve(ROOT, "index.html"), "utf-8");
 const MANIFEST = JSON.parse(
   readFileSync(resolve(ROOT, "public/manifest.webmanifest"), "utf-8"),
-) as { icons: { src: string }[] };
+) as { icons: { src: string; sizes: string; type: string; purpose: string }[] };
 
 /** 只许这几档 —— 标签页要的那两三档 */
 const ALLOWED = new Set([16, 32, 48]);
@@ -217,6 +217,21 @@ describe("favicon · 引用不悬空", () => {
       expect(png.subarray(1, 4).toString(), `${icon.src} 不是 PNG`).toBe("PNG");
       const side = Math.min(png.readUInt32BE(16), png.readUInt32BE(20));
       expect(side, `${icon.src} 只有 ${side}px`).toBeGreaterThanOrEqual(192);
+      /*
+       * **声明的尺寸必须等于实际尺寸** —— 上面那条只验「够大」,验不出这一种:
+       * manifest 写 `"sizes": "512x512"` 而文件实际是 192×192,192 ≥ 192 照样绿,
+       * 但浏览器按声明值挑图、发现不符就不认这枚图标,安装入口直接不出现。
+       *
+       * 这与 v0.0.2 发版栽的那次同类:都不是"文件不在",而是"声明的与实际的不是一回事"。
+       */
+      const declared = /^(\d+)x(\d+)$/.exec(icon.sizes);
+      expect(declared, `${icon.src} 的 sizes 写成了「${icon.sizes}」,不是 WxH`).toBeTruthy();
+      const [dw, dh] = [Number(declared![1]), Number(declared![2])];
+      expect(
+        [png.readUInt32BE(16), png.readUInt32BE(20)],
+        `${icon.src} 声明 ${icon.sizes},实际是 ${png.readUInt32BE(16)}x${png.readUInt32BE(20)} —— ` +
+          `浏览器按声明挑图,不符就不认这枚`,
+      ).toEqual([dw, dh]);
     }
   });
 });
