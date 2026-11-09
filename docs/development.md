@@ -600,6 +600,8 @@ FCP 没有实质变化(±16ms 是抖动),而**楷体换上一律变慢 130~200ms
 | 代码重复 | 用**不重叠** 8 行窗口扫全仓:只有 **4 组**重复,其中 3 组是零散 CSS,1 组是真逻辑(两个页签栏的 `onKeydown`,已提到 `useTabKeys`) | 重复率极低。**滑动窗口会自重叠**,第一版这么写报了 1309 组,全是误报 |
 | CSS 重复 | `style.css` 里 98 个选择器被多次定义;逐个查过(`.atlas-volume__count` 7 处等),全是**增量覆盖**——不同属性或不同媒体查询 | 是 CSS 的正常模式,不是重复 |
 | 死导出 / 无用 props | `deadExportAudit`(TS 语法树,不是正则)覆盖全 `src`,`ALLOWLIST` 空;94 个 `defineProps` 字段逐个查过,零未使用 | **零死导出、零无用 props** —— 这一层已有判据,别再写正则探一遍 |
+| 类型纪律 | `any` / `@ts-ignore` / `@ts-expect-error` / `as unknown as` / `oxlint-disable` 各有多少 | **`any` 0 处、`@ts-ignore` 0 处、`@ts-expect-error` 0 处**;`as unknown as` 5 处(全是 `globalThis` / `window` 扩展与第三方类型不匹配,各有注释);`oxlint-disable` 1 处(`inflationAudit` 的 `0 * 0.12`,刻意写成"同一式子的两端")。**类型系统没有被绕过** |
+| 非空断言 `!` | 46 处,抽查集中在 Vue 模板的 `v-for` 元素上 | 源头大多是 `.filter((m) => m !== undefined)` —— **运行时已收窄、TS 的 `filter` 不收窄**,故模板里要 `!`。属类型表达力不足,不是隐患;改成类型守卫只是纯类型层面的收益,不做 |
 
 > 最后一条值得单独记:我先后写了三个正则探测器查"哪些导出没人用",数出
 > 69 / 27 / 0 三个不同结果。而 `deadExportAudit` 早就在用 **TypeScript 语法树**
