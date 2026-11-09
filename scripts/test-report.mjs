@@ -555,6 +555,7 @@ const CATEGORIES = [
       "identity",
       "samsara",
       "reincarnationDesk",
+      "reincarnationFloor",
       "fortune",
       "worldEcho",
       "regionEvent",

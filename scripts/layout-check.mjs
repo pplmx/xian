@@ -5269,10 +5269,13 @@ async function taskReincarnation() {
         lifespanBonusYears: 0,
         dead: false,
         reincarnation: {
-          count: 1,
+          // 宿慧取到让**资质地板顶满**的量级(2400/12 = 200 > 上限 100):
+          // 地板到顶那一条分支(`raisesRoll === false`)在真实玩家身上真会走到,
+          // 夹具得能把它逼出来 —— 否则「到顶不许说能抬」那条判据永远走空。
+          count: 8,
           daoFruit: 9,
           talents: [],
-          insight: 120,
+          insight: 2400,
           lives: [],
           vow: null,
           trial: null,
@@ -5623,6 +5626,73 @@ async function taskReincarnation() {
         );
       }
     }
+    /*
+     * 来世根骨 · 资质地板 —— 上面那几枚资质**已经是垫过地板的数**
+     * (`rollLinggen` 里 `aptitude = min(100, 掷点 + 地板)`),而地板的来路
+     * 此前弹窗一个字都没说:两条跨世复利通道里,道果有账,地板没有。
+     *
+     * 这里量三件事:地板值与来源要在、裸掷→垫地板两个期望要在、
+     * 且「再攒宿慧抬一格」那一行**与 capped 自洽**(到顶时不出 —— 地板到顶后
+     * 掷点已被 min(100) 顶死,再写「抬一格」就是许诺一个不会兑现的结果)。
+     */
+    checked += 1;
+    {
+      const floorInfo = await page.evaluate(() => {
+        const box = document.querySelector("[data-reincarnation-floor]");
+        if (!box) return null;
+        const rows = [...box.querySelectorAll("dt")].map((dt) =>
+          (dt.textContent || "").replace(/\s+/g, " ").trim(),
+        );
+        return {
+          rows,
+          text: (box.textContent || "").replace(/\s+/g, " ").trim(),
+          roots: [...document.querySelectorAll(".reincarnation-root")].map((el) => ({
+            name: (el.querySelector("strong")?.textContent || "").trim(),
+            aptitude: Number((el.querySelector(".tabular")?.textContent || "").trim()),
+          })),
+        };
+      });
+      if (!floorInfo) {
+        failures.push("[390] 转世场景:择生屏没有报资质地板 —— 玩家看不出这枚资质是垫出来的");
+      } else {
+        /*
+         * 逐项核,不靠「先判断某一行的形状、不符就整段跳过」——
+         * 第一版写成 `else if (!/^\+\d+/.test(rows[0]))`,而 `rows` 收的是 dt
+         * 的文本(「资质地板」),那个正则**永远不匹配**,于是整段判据悄悄走了
+         * else 的另一条岔路,等于没量。判据自己也要经得起「走的是哪条路」。
+         */
+        const floorMatch = floorInfo.text.match(/资质地板\s*\+(\d+)/);
+        if (!floorMatch) {
+          failures.push(`[390] 转世场景:资质地板没印出数值 —— «${floorInfo.text}»`);
+        } else if (Number(floorMatch[1]) < 1) {
+          failures.push(`[390] 转世场景:资质地板印成了 +${floorMatch[1]} —— 这一格等于没报`);
+        }
+        const hasExpected = /期望\s*\d+(\.\d+)?\s*→\s*\d+(\.\d+)?/.test(floorInfo.text);
+        if (!hasExpected) {
+          failures.push(
+            `[390] 转世场景:资质地板没报「裸掷 → 垫地板」两个期望 —— «${floorInfo.text}»`,
+          );
+        }
+        /*
+         * 到顶自洽:地板越过 100 时掷点已被 min(100) 顶死,再写「再攒抬一格」
+         * 就是空头许诺。判据从**渲染出来的字**推:出现「已顶」时不许同时出现「抬一格」。
+         */
+        const capped = floorInfo.text.includes("已顶");
+        const raises = floorInfo.text.includes("抬一格");
+        if (capped && raises) {
+          failures.push(
+            "[390] 转世场景:地板已顶却仍写「再攒宿慧抬一格」—— 掷点已被 min(100) 顶死,那是空头许诺",
+          );
+        }
+        /*
+         * 不许漏出占位符 —— 地板这一格全是算出来的数,NaN 会直接印在弹窗上。
+         */
+        if (/NaN|undefined|Infinity/.test(floorInfo.text)) {
+          failures.push(`[390] 转世场景:资质地板漏出占位符 —— «${floorInfo.text}»`);
+        }
+      }
+    }
+
     if (SHOTS) await page.screenshot({ path: join(SHOTS_DIR, "reincarnation-choice-390.png") });
 
     // 有先天之姿就先择一个(不择则「踏入轮回」是灰的)。用稳定的数据契约,

@@ -394,6 +394,49 @@
                 <span class="tabular">{{ root.aptitude }}</span>
               </span>
             </div>
+            <!--
+              资质地板 —— 上面那几枚资质**已经是垫过地板的数**（rollLinggen 里
+              `aptitude = min(100, 掷点 + 地板)`）。弹窗此前只报结果不报来源：
+              道果那条跨世通道有账，这条一分账都没有。
+              数值全部读 aptitudeFloorBrief（与引擎同一份算法，读同一组常数）。
+            -->
+            <dl class="reincarnation-floor" data-reincarnation-floor>
+              <div>
+                <dt>资质地板</dt>
+                <dd class="tabular">
+                  +{{ floorBrief.floor }}
+                  <small>{{ floorSourceText }}</small>
+                </dd>
+              </div>
+              <!--
+                裸掷 vs 垫了地板 —— 玩家真正想回答的是「这枚 99 是我运气好,
+                还是攒出来的」。掷点是 40..100 的均匀分布（裸掷均值 70），
+                地板整体平推上去;两个期望的差就是宿慧换来的东西。
+              -->
+              <div>
+                <dt>一根资质的期望</dt>
+                <dd class="tabular">
+                  {{ floorBrief.expected.bare }} → {{ floorBrief.expected.withFloor }}
+                  <small>裸掷 → 垫地板</small>
+                </dd>
+              </div>
+              <div>
+                <dt>离封顶</dt>
+                <dd class="tabular">
+                  {{ floorBrief.capped ? "已顶" : `尚差 ${floorBrief.toCap}` }}
+                  <small>资质上限 {{ floorBrief.cap }}</small>
+                </dd>
+              </div>
+              <!--
+                地板到顶之后**不出这一行**：地板照样能涨，但掷点已经被
+                `Math.min(100, …)` 顶死，涨地板换不来更高的资质 ——
+                再写「抬一格」就是许诺一个不会兑现的结果（真浏览器截图撞出过）。
+              -->
+              <div v-if="floorBrief.raisesRoll">
+                <dt>再攒 {{ floorBrief.insightToNext }} 宿慧</dt>
+                <dd>资质地板抬一格</dd>
+              </div>
+            </dl>
           </section>
 
           <section class="reincarnation-read-panel" data-reincarnation-dao-fruit>
@@ -661,6 +704,7 @@ import { lifeThemeDef, TABOO_NAMES } from "@/data/lifeThemes";
 import { ELEMENTS } from "@/data/linggen";
 import { heritageGroups } from "@/core/samsaraAudit";
 import {
+  aptitudeFloorBrief,
   criticalSamsaraRows,
   reincarnationConfirmGate,
   samsaraBalance,
@@ -715,6 +759,21 @@ const confirmGate = computed(() =>
 );
 const nextFruitTotal = computed(
   () => player.reincarnation.daoFruit + (view.value?.daoFruitGained ?? 0),
+);
+/**
+ * 资质地板简报 —— 输入取 prepare 那一刻的快照（`view.linggenFloor`），不现算。
+ * 现算会读到已经加过 `review.insightGained` 的宿慧,多出一格 —— 与 `nextLinggen`
+ * 同一条 WYSIWYG 纪律。
+ */
+const floorBrief = computed(() =>
+  aptitudeFloorBrief(view.value?.linggenFloor ?? { lives: 0, insight: 0 }),
+);
+/**
+ * 地板是哪条口径在顶 —— 两条口径取较大者,故必须说清是「转世保底」还是「宿慧折算」,
+ * 只报一个「+20」玩家会以为两种攒法等价。
+ */
+const floorSourceText = computed(() =>
+  floorBrief.value.source === "insight" ? "宿慧折算" : "转世保底",
 );
 
 function gongfaName(id: string): string {
@@ -1126,6 +1185,44 @@ watch(view, (next) => {
 .reincarnation-insight-rows {
   margin-top: 0.55rem;
   border-top: 1px solid var(--reincarnation-line);
+}
+
+/*
+ * 资质地板那三格 —— 与「道果落账」那张账同形（同一枚 dl 节奏），
+ * 但更短:它是**一行注**而不是一整张账。dt 用墨淡、dd 跟上读数,
+ * 小字补口径（哪条在顶 / 上限多少）。
+ */
+.reincarnation-floor {
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--reincarnation-line);
+}
+
+.reincarnation-floor > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.28rem 0;
+  border-bottom: 1px solid var(--reincarnation-line);
+}
+
+.reincarnation-floor dt {
+  flex: 0 0 auto;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+}
+
+.reincarnation-floor dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-ink-soft);
+  font-size: var(--type-note);
+  text-align: right;
+}
+
+.reincarnation-floor dd small {
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
 }
 
 .reincarnation-insight-rows > div {

@@ -18,6 +18,8 @@ import { generateMortalWorld } from "./mortalWorldGen";
 import { stageAt } from "@/data/samsara";
 import { GONGFA } from "@/data/gongfa";
 import { rollLinggen } from "./linggenGen";
+import { aptitudeFloorNow, totalInsight } from "./samsaraService";
+import { aptitudeFloorBrief } from "@/ui/reincarnationDesk";
 import { RandomService, mulberry32 } from "@/utils/random";
 
 /*
@@ -380,5 +382,55 @@ describe("历世履历 · 快照本世灵根", () => {
     prepareReincarnation();
     expect(() => confirmReincarnation(null, null), "灵根缺失时转世抛错").not.toThrow();
     expect(player.reincarnation.lives[0]!.linggen, "没有灵根时不该编一副出来").toBeUndefined();
+  });
+});
+
+/**
+ * 资质地板的快照 —— 弹窗报的那个「垫了多少」必须是真掷进去的那一份
+ *
+ * `aptitudeFloorNow()` 读的是**当下**的宿慧。而确认转世时宿慧会先加一笔
+ * `review.insightGained`,之后才 `rebirth()` —— 若弹窗改成「现算地板」,
+ * 确认前后会差出一格(宿慧涨了,地板跟着涨),玩家看到的与真实掷点用的对不上。
+ *
+ * 这与 `nextLinggen` 那半条是同一条 WYSIWYG 纪律,故快照与灵根在同一刻取。
+ * 判据直接比「弹窗会显示的那份」与「prepare 那一刻算法给出的那份」。
+ */
+describe("资质地板 · 快照与掷点同源", () => {
+  beforeEach(() => setActivePinia(createPinia()));
+
+  it("prepare 记下的地板输入就是此刻的地板输入", () => {
+    seedLife();
+    const player = usePlayerStore();
+    player.linggen = rollLinggen(new RandomService(mulberry32(77)));
+    player.reincarnation.count = 2;
+    player.reincarnation.insight = 144;
+
+    const before = aptitudeFloorNow();
+    const view = prepareReincarnation();
+
+    expect(view.linggenFloor.lives).toBe(player.reincarnation.count);
+    expect(view.linggenFloor.insight).toBe(totalInsight());
+    // 简报值必须等于「掷点那一刻真正用的地板」
+    expect(aptitudeFloorBrief(view.linggenFloor).floor).toBe(before);
+  });
+
+  it("确认之后宿慧涨了,弹窗报的仍是掷点时那份 —— 不许跟着现算", () => {
+    seedLife();
+    const player = usePlayerStore();
+    player.linggen = rollLinggen(new RandomService(mulberry32(88)));
+    player.reincarnation.count = 1;
+    player.reincarnation.insight = 0;
+
+    const view = prepareReincarnation();
+    const shownFloor = aptitudeFloorBrief(view.linggenFloor).floor;
+    confirmReincarnation(null, null);
+
+    const afterFloor = aptitudeFloorNow();
+    // 确认确实抬了宿慧(否则这条判据在比 0 与 0)
+    expect(player.reincarnation.insight, "确认没有落宿慧,夹具没造出有效状态").toBeGreaterThan(0);
+    // 而弹窗那份快照保持不变 —— 它是存档里记下的那一刻
+    expect(aptitudeFloorBrief(view.linggenFloor).floor).toBe(shownFloor);
+    // 两者可能不同(宿慧涨了);判据要的是「弹窗不跟着变」,不是「两者必须相等」
+    expect(Number.isFinite(afterFloor)).toBe(true);
   });
 });

@@ -182,6 +182,15 @@ export function prepareReincarnation(): ReincarnationView {
     toNextStage: next ? next.insight - insightAfter : null,
     knownMaterials: carryLorePreview(stageAfter),
     nextLinggen: rollLinggen(rng, aptitudeFloorNow()),
+    /*
+     * 与上面那一枚灵根**同一刻**取的输入快照,供弹窗说「这副牌是垫着多少掷的」。
+     * 不在这里存、改成弹窗现算的话,确认那一刻宿慧已经加过 review.insightGained,
+     * 现算会多一格 —— 与 `nextLinggen` 同一条 WYSIWYG 纪律。
+     */
+    linggenFloor: {
+      lives: player.reincarnation.count,
+      insight: totalInsight(),
+    },
     themeChoices: (fresh.length > 0 ? fresh : pool).map((x) => x.id),
     themeFree: stageAfter.themeFreeChoice,
     /*

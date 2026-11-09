@@ -1379,6 +1379,14 @@ export interface ReincarnationView {
   };
   /** 来世灵根(所见即所得:确认即用它,绝不二次 roll —— 见 reincarnation-linggen-visibility 计划) */
   nextLinggen: LinggenProfile;
+  /**
+   * 掷这一枚灵根时垫着的资质地板(与 `nextLinggen` 同一刻取,不再现算)。
+   *
+   * 不现算是一条硬纪律:`aptitudeFloorNow()` 读的是**当下**的宿慧,而确认那一刻
+   * 宿慧已经加过 `review.insightGained` —— 现算会多一格,玩家看到的「垫了多少」
+   * 与真正掷进去的那一份对不上。与 `nextLinggen` 同一条 WYSIWYG 理由。
+   */
+  linggenFloor: { lives: number; insight: number };
   /** 可立的命题(id);空数组表示此阶无题可立 */
   themeChoices: string[];
   /** 是否可从全部已开命题中自选(百世老修) */
