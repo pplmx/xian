@@ -21945,6 +21945,91 @@ async function taskCollectionFold() {
         failures.push("[390-collection] 换柜后旧抽屉没有合上");
       }
     }
+    /*
+     * 九柜检索 —— 这一页条目在千条以上(际遇一册 191 则、装备 53 类、功法 70 门),
+     * 此前要找「某件东西在哪一册」只有逐册翻。
+     *
+     * 判据核四件事:
+     *   一 检索条在,且输入能出结果;
+     *   二 摘要报得出「命中 N 条 · 散在 M 册」;
+     *   三 点一枚结果**直接打开那一册**(这一页的版式是「选柜 → 开屉」,
+     *      不另做跨册混列表);
+     *   四 **未识条目搜不出来** —— 图鉴只该留一枚 `???`,搜得到名字等于
+     *      把「还没见过什么」提前告诉玩家。
+     * 第四条靠纯函数判据(codexSearch.spec)守着;这里补真实渲染下的前三条。
+     */
+    checked += 1;
+    {
+      const searchBox = page.locator("[data-collection-search-input]");
+      if ((await searchBox.count()) === 0) {
+        failures.push("[390-collection] 九柜没有检索条 —— 千条条目只能逐册翻");
+      } else {
+        /*
+         * 搜索词取自**这份夹具真正收了的**那一门功法 —— 上面只种了
+         * equip / gongfa / pet / event 四类,丹方录是空的(它把 pills 清空了)。
+         * 初版写死搜「丹」,于是「一条都没命中」—— 判据在量一个这份夹具里
+         * 根本不存在的册。搜索词要用夹具自己的真值。
+         */
+        const probeWord = GONGFA[0].name.slice(0, 2);
+        await searchBox.fill(probeWord);
+        await page.waitForTimeout(500);
+        const found = await page.evaluate(() => ({
+          summary: (document.querySelector("[data-collection-search-summary]")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+          hits: [...document.querySelectorAll("[data-collection-search-hit]")].map((b) => ({
+            key: b.getAttribute("data-collection-search-hit"),
+            text: (b.textContent || "").replace(/\s+/g, " ").trim(),
+          })),
+        }));
+        if (!found.hits.length) {
+          failures.push(
+            `[390-collection] 搜「${probeWord}」一条都没命中 —— «${found.summary}»` +
+              `(夹具收了 ${GONGFA[0].name},该搜得到)`,
+          );
+        } else if (!/命中\s*\d+\s*条/.test(found.summary) || !/\d+\s*册/.test(found.summary)) {
+          failures.push(
+            `[390-collection] 检索摘要没报清「命中几条 · 散在几册」—— «${found.summary}»`,
+          );
+        } else if (/NaN|undefined|Infinity/.test(found.summary)) {
+          failures.push(`[390-collection] 检索摘要漏出占位符 —— «${found.summary}»`);
+        } else {
+          // 点第一枚 → 那一柜应当被打开
+          const targetKey = found.hits[0].key;
+          await page.locator(`[data-collection-search-hit="${targetKey}"]`).first().click({
+            timeout: 3000,
+          });
+          await page.waitForTimeout(400);
+          const opened = await page.evaluate((key) => {
+            const body = document.querySelector(`[data-collection-category-body="${key}"]`);
+            if (!body) return { found: false };
+            const toggle = document.querySelector(`[data-collection-category-toggle="${key}"]`);
+            return {
+              found: true,
+              expanded: toggle?.getAttribute("aria-expanded") ?? null,
+              visible: body.getBoundingClientRect().height > 0,
+            };
+          }, targetKey);
+          if (!opened.found) {
+            failures.push(`[390-collection] 检索结果指向了不存在的柜 «${targetKey}»`);
+          } else if (opened.expanded !== "true" || !opened.visible) {
+            failures.push(
+              `[390-collection] 点检索结果没打开那一柜(«${targetKey}» / expanded=${opened.expanded})`,
+            );
+          }
+        }
+        // 清空后不该把九柜当成「全命中」列一遍
+        await searchBox.fill("");
+        await page.waitForTimeout(300);
+        const cleared = await page.evaluate(
+          () => document.querySelectorAll("[data-collection-search-hit]").length,
+        );
+        if (cleared > 0) {
+          failures.push(`[390-collection] 清空检索后还剩 ${cleared} 枚命中 —— 空查询不该列出全部`);
+        }
+      }
+    }
+
     if (pageErrors.length)
       failures.push(`[390-collection] 藏珍谱首屏页面异常:${[...new Set(pageErrors)].join(" | ")}`);
   } finally {

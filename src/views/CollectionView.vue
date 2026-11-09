@@ -301,6 +301,61 @@
             :fact="collectionTrayFact"
           />
 
+          <!--
+            九柜检索 —— 这一页的条目在千条以上（际遇一册就有 191 则），
+            玩家要找「某件东西在哪一册」时此前只有一条路：逐册翻。
+
+            检索**只搜已识条目**（见 ui/codexSearch）——未识的若能被搜出来，
+            等于把「还没见过什么」提前告诉玩家，泄漏的是整个收集目标。
+            命中后点一枚结果就直接打开那一册，不另做一张跨册混列表：
+            这一页的版式是「选柜 → 开屉」，混列表会让玩家失去册的上下文。
+          -->
+          <div class="collection-search" data-collection-search>
+            <label class="collection-search__label" for="collection-search-input">寻一名目</label>
+            <input
+              id="collection-search-input"
+              v-model="searchQuery"
+              type="search"
+              class="collection-search__input text-[16px]"
+              data-collection-search-input
+              placeholder="输入名字或描述，如「寒潭」"
+              autocomplete="off"
+            />
+            <p
+              v-if="searchActive"
+              class="collection-search__summary"
+              data-collection-search-summary
+            >
+              <template v-if="searchHits.length">
+                九柜里命中 {{ searchTotal }} 条，散在 {{ searchHits.length }} 册 —— 点一枚直开那册
+              </template>
+              <template v-else>九柜里没有已识的名目合得上「{{ searchQuery.trim() }}」。</template>
+            </p>
+            <ul
+              v-if="searchHits.length"
+              class="collection-search__hits"
+              data-collection-search-hits
+            >
+              <li v-for="hit in searchHits" :key="hit.key">
+                <button
+                  type="button"
+                  class="collection-search__hit tap-row"
+                  :data-collection-search-hit="hit.key"
+                  @click="jumpToSearchHit(hit)"
+                >
+                  <span class="collection-search__hit-cat">{{ hit.title }}</span>
+                  <span class="collection-search__hit-count tabular">{{ hit.count }} 条</span>
+                  <span class="collection-search__hit-names">{{
+                    hit.entries
+                      .slice(0, 3)
+                      .map((e) => e.name)
+                      .join(" · ")
+                  }}</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+
           <div class="collection-trays">
             <template v-for="cat in visibleCats" :key="cat.key">
               <section
@@ -468,6 +523,7 @@ import { ACHIEVEMENTS } from "@/data/achievements";
 import { peakQualityFromStores } from "@/ui/qualityPeakStores";
 import { qualityVerdict } from "@/data/qualityVerdicts";
 import { collectionCodex, type CodexCat, type CodexEntry } from "@/ui/codex";
+import { searchCodex } from "@/ui/codexSearch";
 import { achievementDirection } from "@/ui/achievementHint";
 import {
   achievementProgressRows,
@@ -868,6 +924,27 @@ const collectionLeadFact = computed(() =>
 );
 
 const selectedCollectionKey = ref<string | null>(null);
+
+/**
+ * 九柜检索 —— 装配好的九柜原样交给纯函数,视图只做接线。
+ *
+ * 输入用 `collectionCats`(已含 stage),故「只搜已识」这条口径只写在
+ * `ui/codexSearch` 一处。
+ */
+const searchQuery = ref("");
+const searchActive = computed(() => searchQuery.value.trim().length > 0);
+const searchHits = computed(() => searchCodex(collectionCats.value, searchQuery.value));
+const searchTotal = computed(() => searchHits.value.reduce((sum, hit) => sum + hit.count, 0));
+
+/**
+ * 点一枚结果 → 直接打开那一册。
+ *
+ * 不另做跨册混列表:这一页的版式是「选柜 → 开屉」,混列表会让玩家失去
+ * 「这是哪一册」这个上下文,也就没法回到那一册继续看。
+ */
+function jumpToSearchHit(hit: { key: string }): void {
+  selectedCollectionKey.value = hit.key;
+}
 const collectionStateReady = ref(false);
 watch(
   collectionOverview,

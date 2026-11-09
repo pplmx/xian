@@ -566,6 +566,92 @@
     line-height: 1.5;
   }
 
+  /*
+   * 九柜检索 —— 一条收在柜屉之上的窄行。
+   *
+   * 它不是这一页的主角（柜面与柜屉才是），故只有一行输入 + 命中时的
+   * 一行摘要 + 至多九枚「哪一册命中几条」。按下才展开,不点不占高度。
+   */
+  .collection-search {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.24rem 0.5rem;
+    padding: 0.42rem 0.86rem 0.5rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+  }
+  .collection-search__label {
+    flex: none;
+    color: var(--color-ink-faint);
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+  }
+  .collection-search__input {
+    min-width: 0;
+    flex: 1 1 8rem;
+    padding: 0.22rem 0.4rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.16);
+    border-radius: 2px;
+    background: transparent;
+    color: var(--color-ink);
+    font-family: inherit;
+    /* 16px 起步:低于它 iOS 会替页面放大(与全站输入框同一条纪律) */
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .collection-search__input::placeholder {
+    color: var(--color-ink-faint);
+  }
+  .collection-search__summary {
+    flex-basis: 100%;
+    margin-top: 0.1rem;
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .collection-search__hits {
+    display: flex;
+    min-width: 0;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    gap: 0.24rem 0.4rem;
+    margin-top: 0.14rem;
+  }
+  .collection-search__hit {
+    display: inline-flex;
+    min-width: 0;
+    align-items: baseline;
+    gap: 0.34rem;
+    padding: 0.2rem 0.44rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
+    border-radius: 2px;
+    background: transparent;
+    color: var(--color-ink-soft);
+    font-family: inherit;
+    font-size: var(--type-note);
+    line-height: 1.45;
+    text-align: left;
+  }
+  .collection-search__hit-cat {
+    flex: none;
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+  }
+  .collection-search__hit-count {
+    flex: none;
+    color: var(--color-ink-faint);
+  }
+  .collection-search__hit-names {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--color-ink-faint);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .collection-trays {
     min-width: 0;
   }

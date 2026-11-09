@@ -467,6 +467,7 @@ const CATEGORIES = [
       "battleWinFindings",
       "offlineYieldNote",
       "inventoryUpgradeEmpty",
+      "codexSearch",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",

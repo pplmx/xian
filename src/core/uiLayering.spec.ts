@@ -4518,6 +4518,10 @@ describe("主巡页 · 字阶同一套", () => {
       sizes: [16],
       why: "挑战书命名输入框(防 iOS 聚焦放大)",
     },
+    "views/CollectionView.vue": {
+      sizes: [16],
+      why: "九柜检索输入框(防 iOS 聚焦放大)",
+    },
   };
 
   for (const path of pages) {
