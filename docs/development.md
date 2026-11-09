@@ -1048,9 +1048,17 @@ FCP 没有实质变化(±16ms 是抖动),而**楷体换上一律变慢 130~200ms
 >
 > | 读数 | 实测 |
 > | --- | --- |
-> | 每次 `totalPlaySec` 变化后读 `finalStats.mods` + `cultPerSec` + `qiRegenPerSec` | ≈7.4µs |
+> | 每次 `totalPlaySec` 变化后读 `finalStats.mods` + `cultPerSec` + `qiRegenPerSec` | ≈7.4µs(**2026-11-09 复量 9.58µs**,5000 次均值) |
 > | `currentTribulationPlan`(逐波推演整段雷)同条件 | ≈18.5µs |
 > | 修行页 1s 心跳的真浏览器帧率(`perf-profile --view cultivation`) | 最差帧 17ms · p95 17ms · 零长帧 |
+>
+> **复量说明**。这行原先没有复量过,`docs/development.md` 别处还记着「`statsCalc.ts` 自那以后
+> 一行没改,故 7.4µs 仍有效」——**那个判断漏了一半**:`finalStats` 这个 computed 不定义在
+> `statsCalc.ts`,而在 `stores/player.ts`,而它在 10-23 之后有 **10 次提交**(其中 `fa63aeeb`
+> 天时改成传境界,改的正是 `finalStats` 的 12 个 mod 来源之一)。
+>
+> 复量 9.58µs,比 7.4 高 29%。**结论完全不受影响**(9.58µs × 1 次/秒 = 0.001% 的心跳预算),
+> 但两个数字都属于"该有出处"的那类 —— 记下来,免得下次又拿 7.4 去算收益。
 >
 > 每秒重算本身不贵。解耦的真理由是**语义**:`totalPlaySec` 是「已游玩时长」这一存档事实,
 > 它的盖章节流同时服务 `lastActiveAt` 落盘 —— 让落盘节奏决定秒针怎么走,是两个不相干的
