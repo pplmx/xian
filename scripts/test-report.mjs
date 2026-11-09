@@ -458,6 +458,7 @@ const CATEGORIES = [
       "lifeLinggen",
       "lifeLinggenSpread",
       "linggenCompare",
+      "elementGains",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",

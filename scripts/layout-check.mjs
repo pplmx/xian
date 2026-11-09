@@ -18400,6 +18400,74 @@ async function taskCharacterFold() {
         }
       }
 
+      /*
+       * 牌面折算 —— 五行只定亲近之路(elementNeutral 的承诺),但「亲近」在数据表里
+       * 是有倍率的(gongfaWeight / fortuneWeight / relief)。界面此前只念得出形容词
+       * (「草木功法亲近你」),而本仓的决策信息纪律写着「不能只给定性形容词」。
+       *
+       * 判据核:那一块在且逐系报出两个权重 + 渡劫通道 + 读数;数字与
+       * ELEMENT_AFFINITY 同源(从渲染的字里反解,不重算);一个 ×× 都不许有
+       * (multText 自带前缀,再手写一个就印成「××2.2」—— 这条实测吃过一次)。
+       */
+      checked += 1;
+      {
+        const gains = await page.evaluate(() => {
+          const box = document.querySelector("[data-character-element-gains]");
+          if (!box) return null;
+          return {
+            head: (box.querySelector(".character-dossier__gains-head")?.textContent || "")
+              .replace(/\s+/g, " ")
+              .trim(),
+            text: (box.textContent || "").replace(/\s+/g, " ").trim(),
+            rows: [...box.querySelectorAll("[data-gain-element]")].map((row) => ({
+              element: row.getAttribute("data-gain-element"),
+              text: (row.textContent || "").replace(/\s+/g, " ").trim(),
+            })),
+          };
+        });
+        if (!gains) {
+          failures.push("[390-character] 灵根注里没有「牌面折算」—— 五行亲近只有形容词、没有数");
+        } else if (/NaN|undefined|Infinity/.test(gains.text)) {
+          failures.push(`[390-character] 牌面折算漏出占位符 —— «${gains.text}»`);
+        } else if (/××/.test(gains.text)) {
+          failures.push(
+            `[390-character] 牌面折算印出了 «××» —— multText 已自带 × 前缀,又手写了一个:«${gains.text}»`,
+          );
+        } else if (gains.rows.length < 1) {
+          failures.push("[390-character] 牌面折算一行都没渲染");
+        } else {
+          if (!/更容易|权重|亲和/.test(gains.head)) {
+            failures.push(
+              `[390-character] 牌面折算没说清是「更容易遇到」而非「更强」—— «${gains.head}»`,
+            );
+          }
+          for (const banned of ["更强", "战力提升", "攻击加成"]) {
+            if (gains.text.includes(banned)) {
+              failures.push(
+                `[390-character] 牌面折算写成了数值高低(«${banned}»)—— 与 elementNeutral 的承诺相悖`,
+              );
+            }
+          }
+          for (const row of gains.rows) {
+            if (!/功法\s*×\d+(\.\d+)?/.test(row.text)) {
+              failures.push(
+                `[390-character] 牌面折算的 ${row.element} 没报功法权重 —— «${row.text}»`,
+              );
+            }
+            if (!/机缘\s*×\d+(\.\d+)?/.test(row.text)) {
+              failures.push(
+                `[390-character] 牌面折算的 ${row.element} 没报机缘权重 —— «${row.text}»`,
+              );
+            }
+            if (!/渡劫\s*·/.test(row.text)) {
+              failures.push(
+                `[390-character] 牌面折算的 ${row.element} 没报渡劫那一线 —— «${row.text}»`,
+              );
+            }
+          }
+        }
+      }
+
       checked += 1;
       if (fold.chapters !== 3 || fold.heads !== 3) {
         failures.push(

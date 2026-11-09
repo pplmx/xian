@@ -551,6 +551,46 @@
   .character-dossier__roots-copy {
     margin-top: 0.55rem;
   }
+  /*
+   * 牌面折算 —— 上面那两句倾向是定性的,这一块是表里的数。
+   *
+   * 版式一排一件事:徽记 | 两个权重 | 渡劫那一线。权重走 tabular 对齐,
+   * 渡劫那段退成 faint —— 它是「万一」时才用得上的一条,不该与常驻权重抢眼。
+   */
+  .character-dossier__gains {
+    margin-top: 0.5rem;
+    padding-top: 0.42rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+  }
+  .character-dossier__gains-head {
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .character-dossier__gain {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.1rem 0.44rem;
+    margin-top: 0.3rem;
+  }
+  .character-dossier__gain-mark {
+    flex: none;
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  .character-dossier__gain-weights {
+    color: var(--color-ink-soft);
+    font-size: var(--type-note);
+    white-space: nowrap;
+  }
+  .character-dossier__gain-relief {
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    white-space: nowrap;
+  }
   .character-dossier__tendencies {
     display: grid;
     gap: 0.32rem;

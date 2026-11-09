@@ -175,6 +175,44 @@
                     <span>{{ t.text }}</span>
                   </p>
                 </div>
+                <!--
+                  上面那两句是**定性**的(「草木功法亲近你」),而数据表里全是倍率。
+                  本仓的决策信息纪律写着「不能只给定性形容词」,故把这张表念出来:
+                  功法 / 机缘两个权重倍率 + 渡劫那一线的具体通道与读数。
+
+                  措辞守着 `core/elementNeutral.spec` 的那句承诺 —— 倍率是
+                  「更容易遇到」,不是「更强」;五行仍不分高低。
+                  数字一律从 `ELEMENT_AFFINITY` 现读,不在这里手抄。
+                -->
+                <div
+                  v-if="elementGainRows.length"
+                  class="character-dossier__gains"
+                  data-character-element-gains
+                >
+                  <p class="character-dossier__gains-head">
+                    牌面折算 —— 更容易遇到,不是只有你能遇到
+                  </p>
+                  <p
+                    v-for="row in elementGainRows"
+                    :key="row.element"
+                    class="character-dossier__gain t-body"
+                    :data-gain-element="row.element"
+                  >
+                    <span
+                      class="character-dossier__gain-mark"
+                      :style="{ color: ELEMENTS[row.element].color }"
+                      >{{ ELEMENTS[row.element].char }}</span
+                    >
+                    <!-- multText 自带 × 前缀,这里不许再手写一个(会印成 ××2.2) -->
+                    <span class="character-dossier__gain-weights tabular"
+                      >功法 {{ multText(row.gongfaWeight) }} · 机缘
+                      {{ multText(row.fortuneWeight) }}</span
+                    >
+                    <span v-if="row.relief" class="character-dossier__gain-relief"
+                      >渡劫 · {{ row.relief.text }}</span
+                    >
+                  </p>
+                </div>
               </FolioNote>
             </section>
           </div>
@@ -617,6 +655,7 @@ import { collectionProgressOverviewFromCodex } from "@/core/collectionProgress";
 import { mentorVerdict } from "@/core/mentorService";
 import { buildIdentity } from "@/core/identityService";
 import { rootElements, tendencyLines } from "@/core/linggenAffinity";
+import { elementGains } from "@/ui/elementGains";
 import { cnNumber, formatNum, formatPercent } from "@/utils/format";
 import { multText } from "@/ui/multText";
 import { add, gn, mulN, ratio } from "@/utils/gnum";
@@ -723,6 +762,13 @@ const powerFormulaText = computed(() =>
 
 /** 灵根的天然牌面(倾向文案,不含任何数值) */
 const tendencies = computed(() => tendencyLines(rootElements(player.linggen?.roots)));
+
+/**
+ * 逐系的收益简报 —— 上面那两句倾向是定性的,这才是表里的数。
+ *
+ * 过滤(去重 / 剔未知 id / 空输入)全收在 `ui/elementGains` 里,这里只做接线。
+ */
+const elementGainRows = computed(() => elementGains(rootElements(player.linggen?.roots)));
 
 /**
  * 资质地板简报 —— 上面那几枚资质是垫着它掷出来的。
