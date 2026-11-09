@@ -400,6 +400,52 @@
               道果那条跨世通道有账，这条一分账都没有。
               数值全部读 aptitudeFloorBrief（与引擎同一份算法，读同一组常数）。
             -->
+            <!--
+              前世今生并排 —— 灵根是**重掷**的,玩家真正要权衡的是「我手里这副会不会被换掉」。
+              上面只报了来世那一手;这里把本世摆到它旁边,同一个天平两边都看得见。
+              这个弹窗只在寿元耗尽时出现,离上一次看人物页可能过了几天 ——
+              恰好是记忆最不可靠、最需要摆在一起看的一刻。
+            -->
+            <dl v-if="linggenCmp" class="reincarnation-cmp" data-reincarnation-linggen-cmp>
+              <div class="reincarnation-cmp__head">
+                <dt>灵根对照</dt>
+                <dd>本世 → 来世</dd>
+              </div>
+              <!--
+                修行倍率排第一 —— 它才是「变好还是变差」的答案。
+                根数越多倍率越**低**(单根 1.6 对五根 0.9),故下面那行「多 1 根」
+                单独读起来会读成变好;把倍率摆在它上面,方向由数字自己说。
+                读的是引擎算好的 growthMult(含混沌的 1.5 加成),不在这里重算。
+              -->
+              <div>
+                <dt>修行倍率</dt>
+                <dd class="tabular">
+                  {{ multText(linggenCmp.from.mult) }} → {{ multText(linggenCmp.to.mult) }}
+                  <small :class="linggenCmp.multDelta >= 0 ? 'is-up' : 'is-down'">{{
+                    multDeltaText
+                  }}</small>
+                </dd>
+              </div>
+              <div>
+                <dt>均资质</dt>
+                <dd class="tabular">
+                  {{ linggenCmp.from.average.toFixed(0) }} →
+                  {{ linggenCmp.to.average.toFixed(0) }}
+                  <small :class="linggenCmp.averageDelta >= 0 ? 'is-up' : 'is-down'"
+                    >{{ linggenCmp.averageDelta >= 0 ? "+" : ""
+                    }}{{ linggenCmp.averageDelta.toFixed(0) }}</small
+                  >
+                </dd>
+              </div>
+              <div>
+                <dt>根数</dt>
+                <dd class="tabular">
+                  {{ linggenCmp.from.count }} → {{ linggenCmp.to.count }}
+                  <small class="reincarnation-cmp__count-note">{{ linggenCmp.countNote }}</small>
+                </dd>
+              </div>
+            </dl>
+
             <dl class="reincarnation-floor" data-reincarnation-floor>
               <div>
                 <dt>资质地板</dt>
@@ -688,6 +734,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { multText } from "@/ui/multText";
+import { linggenCompare } from "@/ui/linggenCompare";
 import { useRouter } from "vue-router";
 import { useUiStore } from "@/stores/ui";
 import { usePlayerStore } from "@/stores/player";
@@ -765,6 +812,45 @@ const nextFruitTotal = computed(
  * 现算会读到已经加过 `review.insightGained` 的宿慧,多出一格 —— 与 `nextLinggen`
  * 同一条 WYSIWYG 纪律。
  */
+/**
+ * 本世与来世的灵根对照 —— 来世那一手已经在上面了,这里补上「换掉了什么」。
+ *
+ * 本世读 `player.linggen`(本世皮囊上的那一副),来世读 `view.nextLinggen`
+ * (prepare 那一刻掷定的、所见即所得的那一副)。任一侧缺失时纯函数返回 null,
+ * 整块不出 —— 老存档或异常数据下不印半张对照。
+ */
+const linggenCmp = computed(() => {
+  const cmp = linggenCompare(player.linggen, view.value?.nextLinggen);
+  if (!cmp) return null;
+  /*
+   * 根数差的说法要跟方向走 —— 「少一根是好事」(倍率更高),写死一个数字会把好事说成坏事。
+   * 持平就不提,免得每个字都在说「没变化」。
+   */
+  const note =
+    cmp.countDelta === 0
+      ? "根数不变"
+      : cmp.countDelta < 0
+        ? `少 ${-cmp.countDelta} 根`
+        : `多 ${cmp.countDelta} 根`;
+  return { ...cmp, countNote: note };
+});
+
+/**
+ * 倍率差的写法 —— 与 `multText` 同一口径(两位精度、削尾零),但**不带 × 前缀**
+ * 且保留符号:`+0.66` / `-0.12`。差值不是倍数本身,故不套 `multText`;
+ * 它也不是百分比(`formatPercent` 内部还要 ×100),故不走那一族。
+ *
+ * 削零用字符串处理而不乘 100 再除:这一步是**显示**的定小数位,不是百分比换算
+ * —— 后者全库统走 `formatPercent`(见 `uiLayering.spec`)。
+ */
+const multDeltaText = computed(() => {
+  const d = linggenCmp.value!.multDelta;
+  if (!Number.isFinite(d)) return "—";
+  const body = d.toFixed(2).replace(/\.?0+$/, "");
+  // 「+0」不该写成「+」—— 削零后空串(-0.00 会削成 "-")要补回 0
+  return `${d >= 0 ? "+" : ""}${body === "" || body === "-" ? "0" : body}`;
+});
+
 const floorBrief = computed(() =>
   aptitudeFloorBrief(view.value?.linggenFloor ?? { lives: 0, insight: 0 }),
 );
@@ -1192,6 +1278,60 @@ watch(view, (next) => {
  * 但更短:它是**一行注**而不是一整张账。dt 用墨淡、dd 跟上读数,
  * 小字补口径（哪条在顶 / 上限多少）。
  */
+/*
+ * 前世今生并排 —— 与下面那条地板账同形(上缘细线 + 逐行分隔),
+ * 只是它答的是「换掉了什么」,地板答的是「这一手是怎么来的」。
+ * 故两块贴在一起、版式一致:读的时候是一条连续的账,不是两张卡。
+ */
+.reincarnation-cmp {
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--reincarnation-line);
+}
+
+.reincarnation-cmp > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.28rem 0;
+  border-bottom: 1px solid var(--reincarnation-line);
+}
+
+.reincarnation-cmp dt {
+  flex: none;
+  color: var(--color-ink-faint);
+  font-size: var(--type-note);
+}
+
+.reincarnation-cmp dd {
+  min-width: 0;
+  color: var(--color-ink-soft);
+  font-size: var(--type-note);
+  text-align: right;
+}
+
+.reincarnation-cmp__head dd {
+  color: var(--color-ink-faint);
+}
+
+.reincarnation-cmp dd small {
+  margin-left: 0.24rem;
+  font-size: var(--type-note);
+}
+
+/* 变好走石青、变差走琥珀 —— 与全站「涨跌」同一对色，不引入第三色 */
+.reincarnation-cmp dd .is-up {
+  color: var(--color-jade);
+}
+
+.reincarnation-cmp dd .is-down {
+  color: var(--color-amber-ink);
+}
+
+.reincarnation-cmp__count-note {
+  color: var(--color-ink-faint);
+}
+
 .reincarnation-floor {
   margin-top: 0.5rem;
   border-top: 1px solid var(--reincarnation-line);

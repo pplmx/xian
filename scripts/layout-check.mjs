@@ -5693,6 +5693,90 @@ async function taskReincarnation() {
       }
     }
 
+    /*
+     * 来世根骨 · 灵根对照 —— 灵根是**重掷**的,玩家真正要权衡的是「我手里这副会不会被换掉」。
+     * 这个弹窗只在寿元耗尽时出现,离上一次看人物页可能过了几天 —— 恰好是记忆最不可靠、
+     * 最需要把两副摆在一起看的一刻。
+     *
+     * 判据核的是「方向由数字自己说」:倍率那一行必须在(它才是变好/变差的答案 ——
+     * 根数越多倍率越低,只看「多 1 根」会读反),均资质与根数在,且三处差值都不许
+     * 与「本世 → 来世」两个读数**反向**(判据从渲染出来的字里反解,不重算引擎那份)。
+     */
+    checked += 1;
+    {
+      const cmpInfo = await page.evaluate(() => {
+        const box = document.querySelector("[data-reincarnation-linggen-cmp]");
+        if (!box) return null;
+        const rows = [...box.querySelectorAll(":scope > div")].map((row) => ({
+          label: (row.querySelector("dt")?.textContent || "").replace(/\s+/g, " ").trim(),
+          value: (row.querySelector("dd")?.textContent || "").replace(/\s+/g, " ").trim(),
+          deltaCls: row.querySelector("dd small")?.className ?? "",
+        }));
+        return { rows, text: (box.textContent || "").replace(/\s+/g, " ").trim() };
+      });
+      if (!cmpInfo) {
+        failures.push("[390] 转世场景:择生屏没有灵根对照 —— 玩家看不出这一手比手里那副好还是坏");
+      } else {
+        if (/NaN|undefined|Infinity/.test(cmpInfo.text)) {
+          failures.push(`[390] 转世场景:灵根对照漏出占位符 —— «${cmpInfo.text}»`);
+        }
+        const byLabel = (re) => cmpInfo.rows.find((row) => re.test(row.label));
+        const multRow = byLabel(/倍率/);
+        const avgRow = byLabel(/均资质/);
+        const countRow = byLabel(/根数/);
+        if (!multRow) {
+          failures.push(
+            "[390] 转世场景:灵根对照没报修行倍率 —— 那才是变好/变差的答案" +
+              `(根数越多倍率越低,只看根数会读反);实见 ${cmpInfo.rows.map((r) => r.label).join(" / ")}`,
+          );
+        } else if (!/×\d+(?:\.\d{1,2})?\s*→\s*×\d+(?:\.\d{1,2})?/.test(multRow.value)) {
+          failures.push(`[390] 转世场景:倍率那一行没印出两边的数 —— «${multRow.value}»`);
+        } else {
+          /*
+           * 自洽:差值符号必须与「本世 → 来世」的升降同向,而且上色跟着走。
+           * 只核不出来的话,「+3.00」配一个红色、或反着写,都拦不住。
+           */
+          const pair = multRow.value.match(/×([\d.]+)\s*→\s*×([\d.]+)/);
+          const from = Number(pair[1]);
+          const to = Number(pair[2]);
+          // 差值削尾零后可能只有一两位小数(「+0.66」/「+0.6」/「+1」),故 {1,2}
+          const delta = multRow.value.match(/([+-])(\d+(?:\.\d{1,2})?)/);
+          if (!delta) {
+            failures.push(`[390] 转世场景:倍率那一行没报差值 —— «${multRow.value}»`);
+          } else {
+            const shown = Number(delta[2]) * (delta[1] === "-" ? -1 : 1);
+            const real = Math.round((to - from) * 100) / 100;
+            /*
+             * 容差 0.06:两边读数都经过 multText 的两位四舍五入,
+             * 差值由**未舍入的原值**算 —— 两个端各差 0.005 就足以让
+             * 「显示的两端差」与「显示的差值」错开 0.01。判据要拦的是方向与量级,
+             * 不是这半个最小刻度。
+             */
+            if (Math.abs(shown - real) > 0.06) {
+              failures.push(
+                `[390] 转世场景:倍率差值与两边读数对不上 —— «${multRow.value}»(应为 ${real.toFixed(2)})`,
+              );
+            }
+            const up = to >= from;
+            if (up && !/is-up/.test(multRow.deltaCls)) {
+              failures.push(`[390] 转世场景:倍率涨了却没走「涨」的色 —— «${multRow.value}»`);
+            }
+            if (!up && !/is-down/.test(multRow.deltaCls)) {
+              failures.push(`[390] 转世场景:倍率跌了却没走「跌」的色 —— «${multRow.value}»`);
+            }
+          }
+        }
+        if (!avgRow || !/\d+\s*→\s*\d+/.test(avgRow.value)) {
+          failures.push("[390] 转世场景:灵根对照没报均资质两边");
+        }
+        if (!countRow || !/\d+\s*→\s*\d+/.test(countRow.value)) {
+          failures.push("[390] 转世场景:灵根对照没报根数两边");
+        } else if (!/根数不变|少 \d+ 根|多 \d+ 根/.test(countRow.value)) {
+          failures.push(`[390] 转世场景:根数那一行没说清变化方向 —— «${countRow.value}»`);
+        }
+      }
+    }
+
     if (SHOTS) await page.screenshot({ path: join(SHOTS_DIR, "reincarnation-choice-390.png") });
 
     // 有先天之姿就先择一个(不择则「踏入轮回」是灰的)。用稳定的数据契约,
