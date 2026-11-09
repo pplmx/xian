@@ -468,6 +468,38 @@ describe("门禁接线 —— CI 里跑的自检,本地得有对等入口", () =
   });
 });
 
+describe("scripts/ 下的每个自检都得有入口", () => {
+  /*
+   * 上面那条管的是「**CI 点名的**脚本得有本地入口」。但有一类脚本 CI 不会点名 ——
+   * 发版后手工跑的那种(`verify-release.mjs` 要等 tag 发布之后才有产物可查)。
+   * 它们同样需要一条能敲得到的入口,否则「脚本在那里」和「没人会跑它」是一回事。
+   *
+   * 2026-11-09 实测:19 个脚本里 18 个有入口,`gen-pwa-icons.mjs` 没有 ——
+   * 它的用法只写在文件头注释里(`bun scripts/gen-pwa-icons.mjs`),而同一族的
+   * `favicon.mjs` 是有 `build:favicon` 的。
+   */
+  it("每个 scripts/*.mjs 都在 package.json 里有对应命令", () => {
+    const pkg = JSON.parse(readFileSync(resolve(__dirname, "../../package.json"), "utf-8")) as {
+      scripts: Record<string, string>;
+    };
+    const referenced = new Set<string>();
+    for (const cmd of Object.values(pkg.scripts)) {
+      for (const m of String(cmd).matchAll(/scripts\/([\w-]+\.mjs)/g)) referenced.add(m[1]!);
+    }
+    // 防空转:一个都没解析出来的话,下面那条 missing 会永远为空
+    expect(
+      referenced.size,
+      "package.json 里一个 scripts/*.mjs 都没引用 —— 解析锚点失效了",
+    ).toBeGreaterThan(10);
+
+    const all = readdirSync(resolve(__dirname, "../../scripts")).filter((f) => f.endsWith(".mjs"));
+    const missing = all.filter((f) => !referenced.has(f));
+    expect(missing, `这些脚本没有 package.json 入口,等于没人会跑:${missing.join("、")}`).toEqual(
+      [],
+    );
+  });
+});
+
 describe("工具链契约 —— 同一版本只留在可校验的源头", () => {
   it("packageManager、Docker 镜像与 CI 使用的是同一套 Bun / Node", () => {
     const bun = /^bun@(\d+\.\d+\.\d+)$/.exec(PKG.packageManager ?? "")?.[1] ?? "";
