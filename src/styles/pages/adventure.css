@@ -1237,7 +1237,8 @@
     border-left: 2px solid rgb(var(--color-ink-rgb) / 0.14);
     background: rgb(var(--color-paper-deep-rgb) / 0.22);
     color: rgb(var(--color-ink-faint-rgb));
-    font-size: var(--type-body);
+    /* 一句话的空态是一条注,不是正文 —— 全站一句话空态都走 --type-note */
+    font-size: var(--type-note);
     line-height: 1.55;
   }
   /*
