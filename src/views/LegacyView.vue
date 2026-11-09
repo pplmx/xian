@@ -211,6 +211,55 @@
             "
           />
 
+          <!--
+            历世灵根横向对照 —— 逐行读十世要自己心算十次，而「我这一路抽到的根
+            在变好吗」有现成答案：资质地板随宿慧上浮，每一世的期望资质单调上升。
+            只算记过灵根的那几世（老档缺这一栏就不进对照），一世都没记时整块不出。
+          -->
+          <div
+            v-if="linggenSpread.state !== 'none'"
+            class="legacy-spread"
+            data-life-linggen-spread
+            :data-spread-state="linggenSpread.state"
+          >
+            <p class="legacy-spread__head">
+              <span class="legacy-spread__label">历世灵根</span>
+              <span v-if="linggenSpread.state === 'spread'" class="legacy-spread__delta tabular">
+                第一世 {{ linggenSpread.first?.average.toFixed(0) }} → 这一路
+                {{ linggenSpread.last?.average.toFixed(0) }}
+                <strong :class="linggenSpread.delta! >= 0 ? 'is-up' : 'is-down'">
+                  {{ linggenSpread.delta! >= 0 ? "+" : "" }}{{ linggenSpread.delta!.toFixed(0) }}
+                </strong>
+              </span>
+              <span v-else class="legacy-spread__single">只记了一世，还谈不上变化。</span>
+            </p>
+            <ol v-if="linggenSpread.state === 'spread'" class="legacy-spread__rows">
+              <li
+                v-for="point in linggenSpread.points"
+                :key="point.index"
+                class="legacy-spread__row"
+                :class="{ 'is-best': point.index === linggenSpread.best?.index }"
+                :data-spread-life="point.index"
+              >
+                <span class="legacy-spread__life tabular">第{{ point.index }}世</span>
+                <span class="legacy-spread__grade font-kai">{{ point.grade }}</span>
+                <span class="legacy-spread__roots" aria-hidden="true">
+                  <span
+                    v-for="root in point.roots"
+                    :key="root.element"
+                    class="legacy-spread__mark font-kai"
+                    :style="{ borderColor: root.color, color: root.color }"
+                    >{{ root.char }}</span
+                  >
+                </span>
+                <span class="legacy-spread__avg tabular">{{ point.average.toFixed(0) }}</span>
+                <span v-if="point.index === linggenSpread.best?.index" class="legacy-spread__best"
+                  >最佳</span
+                >
+              </li>
+            </ol>
+          </div>
+
           <div class="legacy-history__list">
             <template v-if="lifeRows.length">
               <article
@@ -700,6 +749,7 @@ import {
 import { legacyCoverage, legacyMeter, legacyStageMeter } from "@/ui/legacyDesk";
 import { lifeTrialArchive } from "@/ui/lifeTrialArchive";
 import { lifeLinggen, linggenSpoken } from "@/ui/lifeLinggen";
+import { lifeLinggenSpread } from "@/ui/lifeLinggenSpread";
 import { formatDate } from "@/utils/time";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LegacyWheel from "@/components/common/LegacyWheel.vue";
@@ -828,6 +878,14 @@ const lifeRows = computed(() =>
       };
     }),
 );
+/**
+ * 历世灵根横向对照 —— 只算记过灵根的那几世。
+ *
+ * 输入是整份归档(`player.reincarnation.lives`),过滤口径收在
+ * `ui/lifeLinggenSpread` 里 —— 两处各滤一遍,迟早会分叉。
+ */
+const linggenSpread = computed(() => lifeLinggenSpread(player.reincarnation.lives));
+
 const LIFE_RENDER_BATCH = 12;
 const LIFE_RENDER_WINDOW = LIFE_RENDER_BATCH * 2;
 const lifeLimit = ref(LIFE_RENDER_BATCH);

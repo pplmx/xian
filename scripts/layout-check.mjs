@@ -26749,6 +26749,64 @@ async function taskLegacyHistoryOverflow() {
         failures.push(`[320] 灵根徽记:履历上应只有两世带灵根,实见 ${withLinggen.length} 世`);
       }
     }
+    /*
+     * 历世灵根横向对照 —— 逐行读十世要自己心算十次,而「我这一路抽到的根在变好吗」
+     * 有现成答案。夹具里只有前两世记了灵根(第 1 世均 53.5 / 第 2 世 88),故:
+     *   · 整块出现且 state=spread(两世以上)
+     *   · 恰好两行,行序按世序升序
+     *   · 均值对得上夹具(53/54 与 88),差值为正
+     *   ·「最佳」只落在第 2 世
+     * 其余二十八世没记灵根,不许被算进对照。
+     */
+    checked += 1;
+    {
+      const spread = await page.evaluate(() => {
+        const el = document.querySelector("[data-life-linggen-spread]");
+        if (!el) return null;
+        const rows = [...el.querySelectorAll("[data-spread-life]")].map((row) => ({
+          life: Number(row.getAttribute("data-spread-life")),
+          text: (row.textContent || "").replace(/\s+/g, " ").trim(),
+          best: row.classList.contains("is-best"),
+        }));
+        return {
+          state: el.getAttribute("data-spread-state"),
+          head: (el.querySelector(".legacy-spread__head")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+          rows,
+        };
+      });
+      if (!spread) {
+        failures.push("[320] 历世灵根对照没渲染 —— 两世都记了灵根,该摆成一张横向表");
+      } else if (spread.state !== "spread") {
+        failures.push(`[320] 历世灵根对照的状态读成「${spread.state}」,两世以上该是 spread`);
+      } else if (spread.rows.length !== 2) {
+        failures.push(
+          `[320] 历世灵根对照该只收记过灵根的两世,实见 ${spread.rows.length} 行` +
+            `(其余二十八世没记,不许被算进来)`,
+        );
+      } else if (spread.rows[0].life !== 1 || spread.rows[1].life !== 2) {
+        failures.push(
+          `[320] 历世灵根对照没按世序升序排(实见 ${spread.rows.map((r) => r.life).join(" / ")})` +
+            ` —— 履历本身是倒排的,对照要正着读`,
+        );
+      } else if (!/历世灵根/.test(spread.head)) {
+        failures.push(`[320] 历世灵根对照没自报门类:«${spread.head}»`);
+      } else if (!/\+\d+/.test(spread.head) || /NaN|undefined|Infinity/.test(spread.head)) {
+        failures.push(`[320] 历世灵根对照没报出首末差值(或漏了占位符):«${spread.head}»`);
+      } else if (spread.rows[0].best || !spread.rows[1].best) {
+        failures.push(
+          `[320] 历世灵根对照的「最佳」落错了行(第 1 世 ${spread.rows[0].best} / ` +
+            `第 2 世 ${spread.rows[1].best})—— 均资质 88 该胜过 53.5`,
+        );
+      } else if (!/88/.test(spread.rows[1].text) || !/5[34]/.test(spread.rows[0].text)) {
+        failures.push(
+          `[320] 历世灵根对照的均值与夹具对不上:` +
+            `«${spread.rows[0].text}» / «${spread.rows[1].text}»`,
+        );
+      }
+    }
+
     const fateTab = page.getByRole("tab", { name: /缘\s*迹/ }).first();
     if ((await fateTab.count()) === 0) {
       failures.push("[195] 修仙录找不到「缘迹」页签");

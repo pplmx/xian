@@ -530,6 +530,106 @@
     font-size: var(--type-title);
     font-weight: 400;
   }
+  /*
+   * 历世灵根横向对照 —— 履历逐行给的是「那一世是什么」,
+   * 这一块答的是「一路走过来变了多少」。故它排在逐行清单**之前**:
+   * 先看总趋势,再往下读每一世的细账。
+   *
+   * 版式一张小表:世 | 品阶 | 原样徽记 | 均资质 | 最佳。
+   * 只给「最佳」那一行加分量(朱砂小印),其余一律墨字 —— 这一页的强色只留给行动。
+   */
+  .legacy-spread {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    padding: 0.5rem 0.86rem 0.62rem;
+  }
+  .legacy-spread__head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.24rem 0.6rem;
+  }
+  .legacy-spread__label {
+    color: var(--color-ink-soft);
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    letter-spacing: 0.06em;
+  }
+  .legacy-spread__delta,
+  .legacy-spread__single {
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .legacy-spread__delta strong {
+    font-weight: 400;
+  }
+  .legacy-spread__delta .is-up {
+    color: var(--color-jade);
+  }
+  .legacy-spread__delta .is-down {
+    color: var(--color-amber-ink);
+  }
+  .legacy-spread__rows {
+    margin-top: 0.36rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.07);
+  }
+  .legacy-spread__row {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 2.9rem minmax(0, auto) minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 0.1rem 0.44rem;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.06);
+  }
+  .legacy-spread__life {
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    white-space: nowrap;
+  }
+  .legacy-spread__grade {
+    color: var(--color-ink-soft);
+    font-size: var(--type-note);
+    white-space: nowrap;
+  }
+  .legacy-spread__roots {
+    display: inline-flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 0.14rem;
+  }
+  .legacy-spread__mark {
+    display: inline-grid;
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+    place-items: center;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  .legacy-spread__avg {
+    color: var(--color-ink);
+    font-size: var(--type-note);
+    text-align: right;
+    white-space: nowrap;
+  }
+  .legacy-spread__row:not(.is-best) .legacy-spread__avg {
+    color: var(--color-ink-soft);
+  }
+  .legacy-spread__best {
+    flex: none;
+    padding: 0 0.2rem;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.42);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-size: var(--type-note);
+    line-height: 1.35;
+    white-space: nowrap;
+  }
   .legacy-history__list,
   .legacy-loss__list,
   .legacy-fate__list,
