@@ -21,6 +21,69 @@ import { NAME_MAX } from "@/utils/nameLimit";
 const ROOT = resolve(__dirname, "../..");
 const DESIGN = readFileSync(resolve(ROOT, "docs/design.md"), "utf-8");
 
+describe("首屏预算表的「上限」列与脚本里的默认值同源", () => {
+  it("六个上限都对得上 —— 改一处不许漏另一处", () => {
+    /*
+     * `docs/development.md` 的「首屏预算」表有六行「上限」。每个上限在脚本里都有一份
+     * 默认值,而**没有任何东西保证两者一致** —— 改了脚本忘了改文档(或反过来),
+     * 读者按文档判断"还有多少余量"时拿到的就是过时的数。
+     *
+     * 两处脚本都写着「要改上限请连同那里的表一起改」(见 `build-timed.mjs` 的文件头),
+     * 但那是一句约定,不是判据。这条把六个数逐个对账。
+     */
+    const DESIGN_DEV = readFileSync(resolve(ROOT, "docs/development.md"), "utf-8");
+    const FIRST_PAINT = readFileSync(resolve(ROOT, "scripts/first-paint.mjs"), "utf-8");
+    const BUILD_TIMED = readFileSync(resolve(ROOT, "scripts/build-timed.mjs"), "utf-8");
+    const LAYOUT = readFileSync(resolve(ROOT, "scripts/layout-check.mjs"), "utf-8");
+
+    /** 从 `?? 1500)` 这种默认值里取数 */
+    const defaultOf = (src: string, envName: string): number => {
+      const m = new RegExp(`${envName} \\?\\? (\\d+)`).exec(src);
+      expect(m, `脚本里找不到 ${envName} 的默认值`).toBeTruthy();
+      return Number(m?.[1] ?? 0);
+    };
+
+    const budget: Record<string, number> = {
+      bytes: defaultOf(FIRST_PAINT, "FIRST_PAINT_BUDGET_KB"),
+      fcp: defaultOf(FIRST_PAINT, "FIRST_PAINT_BUDGET_FCP"),
+      fontSwap: defaultOf(FIRST_PAINT, "FIRST_PAINT_BUDGET_FONT"),
+      fontBytes: defaultOf(FIRST_PAINT, "FIRST_PAINT_BUDGET_FONT_KB"),
+      build: defaultOf(BUILD_TIMED, "BUILD_BUDGET_S"),
+    };
+    /*
+     * layout-check 的单块上限是内联的 `chunk.bytes > 500_000`(字节,十进制 500K)。
+     * 文档把这一行写成「500KB」—— 十进制下两者一致,故判据比的是十进制 KB。
+     */
+    const chunkLimit = /chunk\.bytes\s*>\s*([\d_]+)/.exec(LAYOUT);
+    expect(chunkLimit, "layout-check 里找不到单块上限（`chunk.bytes > N`）").toBeTruthy();
+    budget.chunk = Math.round(Number((chunkLimit?.[1] ?? "0").replace(/_/g, "")) / 1000);
+
+    /** 文档表里「上限」列的六个数,按行名取 */
+    const rowLimit = (label: string): number => {
+      const m = new RegExp(`\\| ${label}[^|]*\\|[^|]*\\|[^|]*\\| (\\d+)(KB|ms|s) \\|`).exec(
+        DESIGN_DEV,
+      );
+      expect(m, `文档预算表里找不到「${label}」这一行`).toBeTruthy();
+      return Number(m![1]);
+    };
+
+    const rows: [string, number, string][] = [
+      ["冷启动解码字节", rowLimit("冷启动解码字节"), "bytes"],
+      ["FCP", rowLimit("FCP"), "fcp"],
+      ["楷体换上", rowLimit("楷体换上"), "fontSwap"],
+      ["首屏楷体请求", rowLimit("首屏楷体请求"), "fontBytes"],
+      ["最大 JS 单块", rowLimit("最大 JS 单块"), "chunk"],
+      ["构建时长", rowLimit("构建时长"), "build"],
+    ];
+    for (const [label, shown, key] of rows) {
+      expect(
+        shown,
+        `文档说「${label}」上限 ${shown},而脚本里是 ${budget[key]} —— 改上限时把表一起改`,
+      ).toBe(budget[key]);
+    }
+  });
+});
+
 describe("文档正文里的常量赋值与代码同源", () => {
   it("design.md 写的常量值都对得上", () => {
     /*
