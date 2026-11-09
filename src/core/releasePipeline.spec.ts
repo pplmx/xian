@@ -201,6 +201,58 @@ describe("发版正文 · 版本号一改,仓库里就得有一份同名正文",
     }
   });
 
+  it("应用标识五处同源 —— 改一处忘一处，Capacitor 就找不到 MainActivity", () => {
+    /*
+     * 同一个 `appId` 写在 **五个** 地方,各有各的用途,谁都不能落下:
+     *
+     *   · `capacitor.config.ts` 的 `appId`      → Capacitor 按它拼 `MainActivity` 的类名
+     *   · `android/app/build.gradle` 的 `applicationId` → 真正的包名
+     *   · `android/app/build.gradle` 的 `namespace`     → Java 包与 R 类
+     *   · `strings.xml` 的 `package_name`      → Capacitor 运行时认平台用
+     *   · `strings.xml` 的 `custom_url_scheme` → 深链接 scheme
+     *
+     * 前两个对不上,Capacitor 会去找一个不存在的 `com.xxx.xxx.MainActivity`,
+     * 构建期看不出来、装上才崩。而这几处散在 TS / Gradle / XML 三种文件里,
+     * 改项目标识时极容易只改一半。
+     *
+     * 改名那次(2026-09,《云隐修仙录》→《玄枢录》)正是全量替换的一轮,
+     * 这类一致性只能靠判据钉住。
+     */
+    const cap = readFileSync(resolve(ROOT, "capacitor.config.ts"), "utf8");
+    const strings = readFileSync(
+      resolve(ROOT, "android/app/src/main/res/values/strings.xml"),
+      "utf8",
+    );
+    const capId = /appId:\s*"([^"]+)"/.exec(cap)?.[1];
+    expect(capId, "capacitor.config.ts 里没有 appId").toBeTruthy();
+
+    const gradle = RAW_GRADLE;
+    const appId = /applicationId\s+"([^"]+)"/.exec(gradle)?.[1];
+    const namespace = /namespace\s*=\s*"([^"]+)"/.exec(gradle)?.[1];
+    const pkgName = /<string name="package_name">([^<]+)<\/string>/.exec(strings)?.[1];
+    const urlScheme = /<string name="custom_url_scheme">([^<]+)<\/string>/.exec(strings)?.[1];
+
+    expect(appId, "build.gradle 里没有 applicationId").toBeTruthy();
+    expect(namespace, "build.gradle 里没有 namespace").toBeTruthy();
+    expect(pkgName, "strings.xml 里没有 package_name").toBeTruthy();
+    expect(urlScheme, "strings.xml 里没有 custom_url_scheme").toBeTruthy();
+
+    expect(appId, "capacitor.config.ts 的 appId 与 build.gradle 的 applicationId 不一致").toBe(
+      capId,
+    );
+    expect(namespace, "namespace 与 applicationId 不一致").toBe(appId);
+    expect(pkgName, "strings.xml 的 package_name 与 applicationId 不一致").toBe(appId);
+    expect(urlScheme, "custom_url_scheme 必须与包名一致，否则深链接进不来").toBe(appId);
+
+    // appName 同理:capacitor 的 appName 与 strings.xml 的两个显示名要一致
+    const capName = /appName:\s*"([^"]+)"/.exec(cap)?.[1];
+    const appName = /<string name="app_name">([^<]+)<\/string>/.exec(strings)?.[1];
+    const titleName = /<string name="title_activity_main">([^<]+)<\/string>/.exec(strings)?.[1];
+    expect(capName, "capacitor.config.ts 里没有 appName").toBeTruthy();
+    expect(appName, "strings.xml 的 app_name 与 capacitor 的 appName 不一致").toBe(capName);
+    expect(titleName, "title_activity_main 与 app_name 不一致").toBe(appName);
+  });
+
   it("Electron 打包开着 asar —— 关掉时构建每轮都在警告「strongly not recommended」", () => {
     /*
      * `build.asar` 曾经是 **false**,来源是照搬参考仓 yunyin-xiuxian 的配置
