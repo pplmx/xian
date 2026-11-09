@@ -463,6 +463,7 @@ const CATEGORIES = [
       "fortuneHint",
       "tribulationReliefText",
       "lifeFootprint",
+      "lifeDate",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",

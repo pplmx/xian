@@ -327,6 +327,14 @@
                   <p class="legacy-history__line">
                     <strong>{{ l.realmLabel }}</strong>
                     <span>寿 {{ l.age }} 载</span>
+                    <!--
+                      道历 —— 同一页的长恨录早就印着归档日期,履历行此前一个字都没有。
+                      十世回望时「上一次转世是几天前」是最自然的索引。
+                      读不出时整条不出(见 ui/lifeDate 的注释)。
+                    -->
+                    <span v-if="l.dateText" class="legacy-history__date tabular" data-life-date>{{
+                      l.dateText
+                    }}</span>
                   </p>
                   <!--
                     那一世睁眼抽到的灵根 —— 转世弹窗在当次看得见，旧账里此前一个字都没留。
@@ -804,6 +812,7 @@ import { lifeTrialArchive } from "@/ui/lifeTrialArchive";
 import { lifeLinggen, linggenSpoken } from "@/ui/lifeLinggen";
 import { lifeLinggenSpread } from "@/ui/lifeLinggenSpread";
 import { lifeFootprint } from "@/ui/lifeFootprint";
+import { lifeDateText } from "@/ui/lifeDate";
 import { formatDate } from "@/utils/time";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LegacyWheel from "@/components/common/LegacyWheel.vue";
@@ -929,6 +938,12 @@ const lifeRows = computed(() =>
          * recordLife 调用点)。老存档没有这一栏,lifeLinggen 返回 null,整行不出。
          */
         linggenRow: lifeLinggen(l.linggen),
+        /*
+         * 那一世的归档时刻。同一页的长恨录早就印着 `formatDate(l.at)`,而履历行
+         * 一个字都没有 —— 十世回望时缺了最自然的索引。读不出(老档 0 / 缺失)时
+         * 是空串,整条不出:0 会印成 1970 年,那是假日期。
+         */
+        dateText: lifeDateText(l.at),
       };
     }),
 );

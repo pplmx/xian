@@ -772,6 +772,17 @@
     margin-top: 0.04rem;
   }
   /*
+   * 道历 —— 与「寿 N 载」同一行的第二段读数。
+   *
+   * 两者都是那一世的坐标,故同一行、同一档字号;用一个细竖线隔开,免得
+   * 「寿 210 载 2026 年 3 月 5 日」连读成一串数字。
+   */
+  .legacy-history__date {
+    padding-left: 0.42rem;
+    border-left: 1px solid rgb(var(--color-ink-rgb) / 0.14);
+    white-space: nowrap;
+  }
+  /*
    * 那一世的灵根 —— 品阶名 + 逐根徽记。
    *
    * 与人物页的灵根牌面同一套语言:单字进圆章、色取该系语义色(data/linggen 的

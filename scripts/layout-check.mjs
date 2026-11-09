@@ -27434,6 +27434,57 @@ async function taskLegacyHistoryOverflow() {
       }
     }
 
+    /*
+     * 逐世道历 —— 同一页的长恨录早就印着归档日期,履历行此前一个字都没有。
+     * 十世回望时「上一次转世是几天前」是最自然的索引。
+     *
+     * 夹具三十世的 at 全是 `now - (30 - i) * 86400000`,即三十天前到一天前,
+     * 全都读得出。判据两侧都量:
+     *   · 每一行都要有日期,且格式是「YYYY 年 M 月 D 日」
+     *   · 日期必须**各不相同**(每世差一天)—— 全都一样说明读的不是那一世的 at
+     *   · 不许出现 1970(那是 at=0 被当成合法时间戳的痕迹)
+     */
+    checked += 1;
+    {
+      const dates = await page.evaluate(() =>
+        [...document.querySelectorAll("[data-life-row]")].map((row) => ({
+          idx: Number(row.getAttribute("data-life-row")),
+          date: (row.querySelector("[data-life-date]")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+        })),
+      );
+      const shown = dates.filter((d) => d.date);
+      if (shown.length === 0) {
+        failures.push("[320] 逐世道历:履历行一个日期都没印 —— 十世回望少了时间索引");
+      } else if (shown.length !== dates.length) {
+        failures.push(
+          `[320] 逐世道历:夹具每一世的 at 都读得出,却只有 ${shown.length}/${dates.length} 行印了日期`,
+        );
+      } else {
+        const bad = shown.find((d) => !/^\d{4} 年 \d{1,2} 月 \d{1,2} 日$/.test(d.date));
+        if (bad) {
+          failures.push(
+            `[320] 逐世道历:第 ${bad.idx} 世的日期格式不对 —— «${bad.date}»` +
+              `(要「YYYY 年 M 月 D 日」)`,
+          );
+        } else if (shown.some((d) => d.date.startsWith("1970"))) {
+          failures.push(
+            "[320] 逐世道历:印出了 1970 年 —— 那是 at=0 被当成合法时间戳," +
+              "老存档缺字段时会印一个真实存在但错误的日期",
+          );
+        } else {
+          const uniq = new Set(shown.map((d) => d.date));
+          if (uniq.size < 2) {
+            failures.push(
+              `[320] 逐世道历:所有行印的是同一个日期(«${shown[0].date}»)——` +
+                `夹具里每世差一天,读的不是那一世自己的 at`,
+            );
+          }
+        }
+      }
+    }
+
     const fateTab = page.getByRole("tab", { name: /缘\s*迹/ }).first();
     if ((await fateTab.count()) === 0) {
       failures.push("[195] 修仙录找不到「缘迹」页签");
