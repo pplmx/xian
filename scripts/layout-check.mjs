@@ -18139,6 +18139,12 @@ async function taskAdventureFold320() {
           odds: (box.querySelector(".adventure-chain-desk__odds")?.textContent || "")
             .replace(/\s+/g, " ")
             .trim(),
+          offline: (
+            box.querySelector(".adventure-chain-offline, [data-adventure-chain-offline]")
+              ?.textContent || ""
+          )
+            .replace(/\s+/g, " ")
+            .trim(),
         };
       });
       if (!desk) {
@@ -18168,6 +18174,25 @@ async function taskAdventureFold320() {
           failures.push(
             `[320-adventure] 奇缘榜没报「多久来一次」—— «${desk.odds}»` +
               `(只在行内写「待续第 N 段」会被读成下一趟必遇,而奇缘约每 20 程一次)`,
+          );
+        }
+        /*
+         * 奇缘只在线推进 —— core/offline 的注释写着「机缘/奇缘那类带代价选择的
+         * 不做离线替选」,理由充分但玩家侧此前一个字都没有。而榜上写着
+         * 「待续第 2 段」,挂机一天回来看到进度没动,最自然的解读是「坏了」。
+         *
+         * 判据核:这一句在、点名是奇缘、说了离线不推进、且**不说反话**
+         * (不能让人读成「离线什么都不给」—— 离线一直在推进修为/材料/场次)。
+         */
+        if (!desk.offline) {
+          failures.push("[320-adventure] 奇缘榜没说明离线口径 —— 挂机回来看到进度没动会以为坏了");
+        } else if (!/奇缘/.test(desk.offline)) {
+          failures.push(`[320-adventure] 离线口径没点名奇缘 —— «${desk.offline}»`);
+        } else if (!/离线[\s\S]{0,10}(不|不能)/.test(desk.offline)) {
+          failures.push(`[320-adventure] 离线口径没说清「离线不推进」—— «${desk.offline}»`);
+        } else if (/离线无收益|离线不结算|挂机无用/.test(desk.offline)) {
+          failures.push(
+            `[320-adventure] 离线口径说反了 —— «${desk.offline}»(离线一直在推进修为与材料)`,
           );
         }
         if (!/待续第\s*\d+\s*段/.test(byId.get("old_man_stone")?.text ?? "")) {

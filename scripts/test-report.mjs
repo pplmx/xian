@@ -435,6 +435,7 @@ const CATEGORIES = [
       "enemyLoreLedger",
       "blueprintProgress",
       "chainLedger",
+      "offlineChainNote",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",

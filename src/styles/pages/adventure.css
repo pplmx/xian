@@ -419,6 +419,14 @@
   .adventure-chain-desk__done {
     color: var(--color-jade);
   }
+  .adventure-chain-desk__offline {
+    margin-top: 0.28rem;
+    padding-top: 0.24rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.07);
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
   .adventure-chain-desk__foot {
     margin-top: 0.18rem;
     color: var(--color-ink-faint);

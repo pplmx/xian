@@ -629,6 +629,20 @@
             <p v-if="chainDesk.unstarted > 0" class="adventure-chain-desk__foot">
               另有 {{ chainDesk.unstarted }} 条缘未起 —— 缘分到了自会撞见。
             </p>
+            <!--
+              奇缘的离线口径 —— core/offline 的注释写着「机缘/奇缘那类带代价选择的
+              不做离线替选(在线可拒,离线不能替玩家拍板)」,理由充分(那些抉择
+              多半不可逆,替玩家选等于替他做一个不能反悔的决定);
+              但玩家侧一个字都没有。上面刚写着「待续第 2 段」,挂机一天回来看到
+              进度没动,最自然的解读是「坏了」。
+
+              这条说明必须贴着榜写,不能藏在文档里。措辞落在「替你把这一步留着」,
+              不落在「离线不给」—— 离线本来就在推进修为、灵气、材料、钻研、场次与
+              普通际遇,说成「离线不推进」反而说反了。
+            -->
+            <p class="adventure-chain-desk__offline" data-adventure-chain-offline>
+              {{ offlineChainNote() }}
+            </p>
           </div>
 
           <section
@@ -910,6 +924,7 @@ import { EVENT_TIERS, tierOddsText } from "@/core/eventTier";
 import { pendingChainStages } from "@/core/eventEngine";
 import { CHAINS } from "@/data/chains";
 import { chainLedger } from "@/ui/chainLedger";
+import { offlineChainNote } from "@/ui/offlineChainNote";
 import { foeOriginPartsText } from "@/core/battleAnalysis";
 import { SUPPRESS_THRESHOLDS, suppressRateLine, suppressionProgress } from "@/core/suppress";
 import {
