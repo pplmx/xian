@@ -1049,7 +1049,7 @@ FCP 没有实质变化(±16ms 是抖动),而**楷体换上一律变慢 130~200ms
 > | 读数 | 实测 |
 > | --- | --- |
 > | 每次 `totalPlaySec` 变化后读 `finalStats.mods` + `cultPerSec` + `qiRegenPerSec` | ≈7.4µs(**2026-11-09 复量 9.58µs**,5000 次均值) |
-> | `currentTribulationPlan`(逐波推演整段雷)同条件 | ≈18.5µs |
+> | `currentTribulationPlan`(逐波推演整段雷)同条件 | ≈18.5µs(**2026-11-09 复量 17.8µs**,差 3.6% 属误差)**但它不是每秒跑的** —— 只有打开突破卡时才算一次 |
 > | 修行页 1s 心跳的真浏览器帧率(`perf-profile --view cultivation`) | 最差帧 17ms · p95 17ms · 零长帧 |
 >
 > **复量说明**。这行原先没有复量过,`docs/development.md` 别处还记着「`statsCalc.ts` 自那以后

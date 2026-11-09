@@ -10,7 +10,9 @@
  * **这条理由经实测站不住**,已按真账改写(2026-10-23 本机实测,神仙期满装 +
  * 闭关状态,每次 totalPlaySec 变化后读 finalStats/cultPerSec/qiRegen):
  *
- *   finalStats 重算 ≈ 7.4us/次;currentTribulationPlan(逐波推演整段雷)≈ 18.5us/次;
+ *   finalStats 重算 ≈ 9.6us/次(2026-11-09 复量,原记 7.4);
+ *   currentTribulationPlan(逐波推演整段雷)≈ 17.8us/次 —— **但它不是每秒跑的**,
+ *   只有打开突破卡(`BreakthroughCard.vue` 的 computed)才算一次;
  *   修行页 1s 心跳下的真浏览器帧率:最差帧 17ms、p95 17ms、零长帧(perf-profile)。
  *
  * 也就是说「每秒重算」本身并不贵。真正要解耦的是**语义**,不是成本:
