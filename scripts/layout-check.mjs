@@ -27729,6 +27729,88 @@ async function taskLegacyHistoryOverflow() {
     }
 
     /*
+     * 「只有一世」那一档 —— 上面三十世的夹具只覆盖了 `ready`。
+     *
+     * 两块都有一条**只有一世**才走得到的分支:
+     *   · 历世灵根:state = single,不编「涨了 0」而是说「只记了一世,还谈不上变化」
+     *   · 历世足迹:state = single,不编走向而是说「只此一世,还看不出走势」
+     * 若只量三十世那一份,这两条分支永远不执行 —— 判据绿着,而那两句文案从没被渲染过。
+     *
+     * 夹具要摆出单世:count = 1、一世带灵根。`player.reincarnation.lives` 只留那条。
+     */
+    checked += 1;
+    {
+      const oneSlices = showcaseSlices("light");
+      const now = Date.now();
+      oneSlices.player = {
+        ...oneSlices.player,
+        reincarnation: {
+          ...oneSlices.player.reincarnation,
+          count: 1,
+          lives: [
+            {
+              index: 1,
+              major: 3,
+              realmLabel: "金丹境",
+              age: 200,
+              themeId: null,
+              themeResult: null,
+              insight: 15,
+              trialId: null,
+              bond: null,
+              at: now - 86400000,
+              linggen: { gradeName: "真灵根", roots: [{ element: "water", aptitude: 63 }] },
+            },
+          ],
+        },
+      };
+      await seedSave(ctx, oneSlices, "__legacySingleLife");
+      const onePage = await ctx.newPage();
+      watchPageErrors(onePage, pageErrors);
+      await onePage.goto(INDEX + "#/legacy", { waitUntil: "load" });
+      await onePage.waitForTimeout(1200);
+      const one = await onePage.evaluate(() => ({
+        spreadState: document
+          .querySelector("[data-life-linggen-spread]")
+          ?.getAttribute("data-spread-state"),
+        spreadSingle: (document.querySelector(".legacy-spread__single")?.textContent || "")
+          .replace(/\s+/g, " ")
+          .trim(),
+        footState: document
+          .querySelector("[data-life-footprint]")
+          ?.getAttribute("data-footprint-state"),
+        footSingle: (document.querySelector(".legacy-footprint__single")?.textContent || "")
+          .replace(/\s+/g, " ")
+          .trim(),
+        footTrend: document.querySelector("[data-footprint-trend]") !== null,
+        spreadDelta: document.querySelector(".legacy-spread__delta") !== null,
+        rows: document.querySelectorAll("[data-life-row]").length,
+      }));
+      if (one.rows !== 1) {
+        failures.push(`[320] 单世态:夹具只摆了一世,界面却铺了 ${one.rows} 行`);
+      }
+      if (one.spreadState !== "single") {
+        failures.push(
+          `[320] 单世态:历世灵根的状态读成「${one.spreadState ?? "无"}」,一世该是 single`,
+        );
+      } else if (!one.spreadSingle) {
+        failures.push("[320] 单世态:历世灵根没给出那一句「只记了一世」");
+      } else if (one.spreadDelta) {
+        failures.push("[320] 单世态:历世灵根印了差值 —— 只有一世时说「涨了 0」是废话");
+      }
+      if (one.footState !== "single") {
+        failures.push(
+          `[320] 单世态:历世足迹的状态读成「${one.footState ?? "无"}」,一世该是 single`,
+        );
+      } else if (!one.footSingle) {
+        failures.push("[320] 单世态:历世足迹没给出那一句「只此一世」");
+      } else if (one.footTrend) {
+        failures.push("[320] 单世态:历世足迹印了走势 —— 只有一世时没有走向可言");
+      }
+      await onePage.close();
+    }
+
+    /*
      * 逐世道历 —— 同一页的长恨录早就印着归档日期,履历行此前一个字都没有。
      * 十世回望时「上一次转世是几天前」是最自然的索引。
      *
