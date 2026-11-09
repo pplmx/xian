@@ -9,6 +9,7 @@ lerna-debug.log*
 CLAUDE.md
 
 node_modules
+.release-verify
 dist
 dist-ssr
 dist-electron

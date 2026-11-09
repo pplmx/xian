@@ -1435,6 +1435,28 @@ git push origin main v0.0.2
 打完后盯流水线三项 —— 这三条**本地永远看不到**:Android 签名、Electron 打包、Release 正文
 (正文取自仓库里的 `docs/release-notes/v0.0.2.md`)。
 
+**流水线绿了之后,再跑一条 `bun run verify:release <tag>`。** 它下载该 tag 的两个产物,
+从**真的装出去的包**里逐项确认那些只在产物里才看得出的东西:
+
+| 检查 | 对应哪次事故 |
+| --- | --- |
+| Windows 包里有没有 `resources/app.asar` | `build.asar` 曾被照搬成 `false` |
+| 打包后的 `main.js` 里,「开发」菜单是否在 `isPackaged` 守卫内 | 装好的客户端按 F12 就能改存档 |
+| 打包后的 `main.js` 里,设置是否先写 `.tmp` 再 `renameSync` | 覆盖写让设置在崩溃时悄悄复位 |
+| APK 的 dex 里,轮询是否带次数上限(`check(left) … )(150)`) | 曾经每 200ms 无限空转 |
+| APK 的 dex 里,迁移器是否摘 handler 队列 | 销毁后仍弹 Toast |
+| APK 的 dex 里,有没有 `launch_background` 命名资源 | 色号曾硬编码在七个地方 |
+
+**这条判据自己也是验过的**:拿 v0.0.2 的产物跑,它准确报出三项缺失
+(没有 asar / 轮询无上限 / 无命名资源),而 v0.0.3 六项全过 —— 不是一条"看着永远绿"的判据。
+
+> 为什么不并进 CI:它要下载 157MB + 7.5MB 的产物,而且**必须在 tag 发布之后**才有东西可查。
+> 放在发版收尾,一次几分钟,比并进每次 push 的门划算。
+>
+> asar 的解析没装依赖 —— 头部就是一段 JSON:`[uint32][uint32 headerSize][uint32 →JSON长度][JSON][数据区]`,
+> 解出 `files` 树之后按 `offset`/`size` 切片即可。**注意 offset 序列化成字符串**
+> (`"32107058"`),按 `typeof === "number"` 判断会把每个真实文件都当成不存在。
+
 **一处已修的契约不一致**(2026-11-09):`reincarnation.ts` 里曾有
 
 ```ts

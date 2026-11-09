@@ -91,9 +91,9 @@ describe("测试分类 · 结构", () => {
      * 抓住它的是这条:名字里的英文标签必须唯一。
      */
     const tags = CATEGORIES.map((c) => c.tag);
-    expect(new Set(tags).size, `英文标签重复:${tags.filter((t, i) => tags.indexOf(t) !== i)}`).toBe(
-      tags.length,
-    );
+    // 重复的那几个摊开印出来(数组直接插模板会印成 a,b 而非可读的结构,先 join)
+    const dupTags = tags.filter((t, i) => tags.indexOf(t) !== i);
+    expect(new Set(tags).size, `英文标签重复:${dupTags.join("、")}`).toBe(tags.length);
     const names = CATEGORIES.map((c) => c.name);
     expect(new Set(names).size, "分类名重复").toBe(names.length);
   });

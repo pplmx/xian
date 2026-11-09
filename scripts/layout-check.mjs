@@ -10503,7 +10503,9 @@ async function taskCombatChips() {
     await clearOverlays(page);
     const none = await read();
     if (none.blocks > 0) {
-      failures.push(`[390] 章块:一只寻常凶物却渲染了 ${none.blocks} 块章 «${none.chips}»`);
+      // chips 可能是 null(读不到),直接插进模板会印出字面量 "null"
+      const chips = none.chips?.join(",") ?? "(读不到)";
+      failures.push(`[390] 章块:一只寻常凶物却渲染了 ${none.blocks} 块章 «${chips}»`);
     }
 
     // 二 只有一枚「初见」:块要渲染
