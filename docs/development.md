@@ -1130,6 +1130,29 @@ for (const name of plainApis) { assert.ok(name in engine, …); }               
 
 修法:`assert.ok(plainApis.size >= 8, …)` 一句即可(`factories` 那条就是现成的样子)。
 
+### 库侧待修之二:`vite-plus` 声明停在 1.0.0,拖出 7 条安全告警
+
+`packages/engine/package.json` 的 `devDependencies` 写着 `"vite-plus": "1.0.0"`,
+而宿主钉的是 **1.4.0**。实测(2026-11-09):
+
+| 位置 | 版本 |
+| --- | --- |
+| 宿主 `package.json` | `1.4.0` |
+| 引擎 `package.json` **声明** | `1.0.0` |
+| `bun.lock` 的 `wanxiang-engine/vite-plus` 条目 | `1.0.0` |
+| 引擎 `node_modules/` 里**实际装的** | `1.4.0` |
+
+也就是说:装的是新的、声明的是旧的 —— 声明与实物不一致。
+
+**代价是 GitHub 上 7 条未修复告警全挂在这上面**(`gh api 'repos/…/dependabot/alerts?state=open'`
+查得到):受影响范围是 `<= 1.0.0` 或 `< 1.3.0`,而 Dependabot 读的是 `package.json`
+的**声明**,不是 `node_modules` 里实际装的。真实风险为零(装的是 1.4.0),但告警一直亮着
+就没人会认真看它 —— 等哪天来了条真的,也会被这七条淹掉。
+
+修法:把引擎包的声明改成 `1.4.0`,与宿主同版;`bun.lock` 里那条
+`wanxiang-engine/vite-plus` 随之更新。**需要推引擎仓**(改 `packages/engine` 会立刻
+违反同树约束,`engine-sync` 当场红)。
+
 **其余六处收集型判据都查过了,只有这一处缺**(2026-11-09):
 
 | 收集变量 | 防空转的来源 |
