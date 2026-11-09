@@ -1321,6 +1321,12 @@ player.rebirth(view.nextLinggen ?? rollLinggen(rng, aptitudeFloorNow()));
 `confirmReincarnation` 里 `if (!view) return;` 之后它必然存在 —— 故 `??` 那半是**死代码**,
 无测试覆盖。而它若真的执行,玩家会拿到一个**没预告过**的灵根,恰是计划要杜绝的情形。
 
+> **别把「文档里的未勾选项」当成未完成。** `docs/superpowers/specs/2026-09-24-herb-grades-and-market-design.md`
+> 有 6 个未勾选项,逐个核下来**全是已实现的验收标准**,只是没人回填勾选
+> (如「消耗品阶 == `herbGradeOfMajor(minRealm)`」那条,实际由
+> `src/data/herbGrades.spec.ts:67` 的「每味可炼方烧的品阶 == 准入境界的品阶」钉着)。
+> 判「是否实现」只能读代码,不能看勾选框。
+
 **同一份计划还有一半没做**(2026-11-09 逐条核过 35 个未勾选项):
 
 | 计划的交付物 | 状态 |
