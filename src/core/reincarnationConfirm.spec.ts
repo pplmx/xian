@@ -17,6 +17,8 @@ import { birthMajorFloor } from "./heritageEffects";
 import { generateMortalWorld } from "./mortalWorldGen";
 import { stageAt } from "@/data/samsara";
 import { GONGFA } from "@/data/gongfa";
+import { rollLinggen } from "./linggenGen";
+import { RandomService, mulberry32 } from "@/utils/random";
 
 /*
  * 只把「重掷本世之界」换成直通 —— 它每掷一次要跑门禁重试(最多 200 轮),
@@ -272,5 +274,111 @@ describe("转世预告 · 许诺的数必须兑现", () => {
     expect(fails.slice(0, 6)).toEqual([]);
     // 防空转:随机档里得真有一部分真的凝出道果,否则这条判据只在比 0 与 0
     expect(fruitMoves, "30 组里凝出道果的太少 —— 夹具没造出有效状态").toBeGreaterThan(8);
+  });
+});
+
+/**
+ * 历世履历的快照 —— 每一世记下的是那一世自己的灵根
+ *
+ * ## 缺口:转世看得见,翻旧账看不见
+ *
+ * 转世弹窗那一轮做完了「所见即所得」(`prepareReincarnation` 只 roll 一次,
+ * confirm 用同一份,见 `stores/game.spec` 的 WYSIWYG 那一组)。可那时定下的
+ * 交付 2 —— 历世履历带上灵根、能回望每世牌面 —— 停在计划上没落地:
+ * `LifeRecord` 里没有灵根字段。
+ *
+ * 于是玩家转过几世,翻修仙录的历世履历,每一行都只有「旧境 X · 寿 N 载」;
+ * 转世那一刻看到的天灵根,第二次转世之后就再也查不到了。
+ *
+ * ## 这一组盯三件事
+ *
+ *   ① 归档的是**本世**灵根(`rebirth` 之前那副),不是来世那副;
+ *   ② 快照是拷贝 —— 之后改灵根不会把旧世的记录一起改写;
+ *   ③ 灵根缺失时(老档 / 建号没走完)不抛错,也不编一副出来
+ *      (`LifeRecord.linggen` 是可选字段)。
+ *
+ * 第 ②条不是洁癖:`rebirth` 里就是 `linggen.value = newLinggen`,
+ * 若归档时塞的是 `player.linggen` 本体,每一世会共用同一个引用 ——
+ * 十世履历一起显示成最新那一世的牌面。
+ */
+describe("历世履历 · 快照本世灵根", () => {
+  beforeEach(() => setActivePinia(createPinia()));
+
+  /** 建号那一副灵根 —— 与开局流程同一条路(`initCharacter` 必设灵根) */
+  function seedLinggen(seed = 33) {
+    seedLife();
+    const player = usePlayerStore();
+    player.initCharacter("测试道友", rollLinggen(new RandomService(mulberry32(seed))));
+    return player;
+  }
+
+  it("归档的是本世那一副(转世前),不是来世那一副", () => {
+    const player = seedLinggen(33);
+    const thisLife = player.linggen!;
+    const before = { grade: thisLife.gradeName, elements: thisLife.roots.map((r) => r.element) };
+
+    const view = prepareReincarnation();
+    const nextLife = JSON.parse(JSON.stringify(view.nextLinggen));
+    confirmReincarnation(null, null);
+
+    const lives = player.reincarnation.lives;
+    expect(lives.length, "没有归档任何一世").toBe(1);
+    const rec = lives[0]!;
+    expect(rec.linggen, "履历里没有灵根字段").toBeDefined();
+    expect(rec.linggen!.gradeName, "记成了来世那一副").toBe(before.grade);
+    expect(
+      rec.linggen!.roots.map((r) => r.element),
+      "根也不同源",
+    ).toEqual(before.elements);
+    // 落账之后 player.linggen 已是来世那副(store 里过一层响应式代理,故比真值不比引用)
+    expect(JSON.parse(JSON.stringify(player.linggen)), "来世灵根没落账").toEqual(nextLife);
+  });
+
+  it("快照是拷贝:之后改灵根不追改旧世的记录", () => {
+    const player = seedLinggen(44);
+    const thisLife = player.linggen!;
+    const snapElements = thisLife.roots.map((r) => r.element);
+    const snapAptitudes = thisLife.roots.map((r) => r.aptitude);
+
+    prepareReincarnation();
+    confirmReincarnation(null, null);
+
+    const rec = player.reincarnation.lives[0]!;
+    expect(rec.linggen!.roots, "履历与本世快照源共享同一个数组").not.toBe(thisLife.roots);
+    // 篡改当年的灵根对象:旧世记录必须纹丝不动
+    thisLife.roots.forEach((root) => {
+      root.aptitude = 1;
+    });
+    thisLife.roots.length = 0;
+    expect(
+      rec.linggen!.roots.map((r) => r.element),
+      "旧世记录跟着本世对象一起变了",
+    ).toEqual(snapElements);
+    expect(rec.linggen!.roots.map((r) => r.aptitude)).toEqual(snapAptitudes);
+  });
+
+  it("每一世各记各的:转到第三世,前两世的灵根不会被改成最新那副", () => {
+    const player = seedLinggen(55);
+    const grades: string[] = [];
+    for (let i = 0; i < 3; i += 1) {
+      prepareReincarnation();
+      grades.push(player.linggen!.gradeName);
+      confirmReincarnation(null, null);
+    }
+    const recorded = player.reincarnation.lives.map((l) => l.linggen?.gradeName);
+    expect(recorded, "三世各该留一笔").toHaveLength(3);
+    for (const g of recorded) expect(g, "某一世没记下灵根").toBeTruthy();
+    // 前两世记的必须等于当时那副 —— 逐世比对,而不是只看「都非空」
+    expect(recorded.slice(0, 2)).toEqual(grades.slice(0, 2));
+  });
+
+  it("灵根缺失时不抛错,老存档那条路照走(可选字段)", () => {
+    seedLife();
+    const player = usePlayerStore();
+    // 模拟老档 / 极端状态:建号流程没走完就有转世记录
+    player.linggen = null;
+    prepareReincarnation();
+    expect(() => confirmReincarnation(null, null), "灵根缺失时转世抛错").not.toThrow();
+    expect(player.reincarnation.lives[0]!.linggen, "没有灵根时不该编一副出来").toBeUndefined();
   });
 });

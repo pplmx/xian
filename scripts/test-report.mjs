@@ -454,6 +454,7 @@ const CATEGORIES = [
       "companionTime",
       "petCompanionState",
       "lifeTrialArchive",
+      "lifeLinggen",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",

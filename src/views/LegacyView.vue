@@ -226,6 +226,30 @@
                     <strong>{{ l.realmLabel }}</strong>
                     <span>寿 {{ l.age }} 载</span>
                   </p>
+                  <!--
+                    那一世睁眼抽到的灵根 —— 转世弹窗在当次看得见，旧账里此前一个字都没留。
+                    品阶名照说存档里的原话，五行只印徽记（单字 + 该系语义色，与人物页、
+                    创角页、转世确认页同一份 data/linggen）。
+
+                    圆章是**纯视觉**的：单字「水雷」连读不成话，色值读屏更念不出来。
+                    故徽记整组 aria-hidden，另给一句读屏文本把「哪一系、资质多少」说全
+                    （与人物页灵根牌的 title 同一口径，见 ui/lifeLinggen 的 spoken）。
+                    老存档没有这一栏 → lifeLinggen 返回 null，整行不出。
+                  -->
+                  <p v-if="l.linggenRow" class="legacy-history__linggen" data-life-linggen>
+                    <span class="legacy-history__linggen-grade">{{ l.linggenRow.grade }}</span>
+                    <span class="legacy-history__linggen-marks" aria-hidden="true">
+                      <span
+                        v-for="root in l.linggenRow.roots"
+                        :key="root.element"
+                        class="legacy-history__linggen-mark font-kai"
+                        :style="{ borderColor: root.color, color: root.color }"
+                        :title="root.spoken"
+                        >{{ root.char }}</span
+                      >
+                    </span>
+                    <span class="sr-only">{{ linggenSpoken(l.linggenRow) }}</span>
+                  </p>
                   <p v-if="l.themeName" class="legacy-history__theme" :class="l.resultColor">
                     {{ l.themeName }} · {{ l.resultText }}
                   </p>
@@ -675,6 +699,7 @@ import {
 } from "@/core/listRender";
 import { legacyCoverage, legacyMeter, legacyStageMeter } from "@/ui/legacyDesk";
 import { lifeTrialArchive } from "@/ui/lifeTrialArchive";
+import { lifeLinggen, linggenSpoken } from "@/ui/lifeLinggen";
 import { formatDate } from "@/utils/time";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LegacyWheel from "@/components/common/LegacyWheel.vue";
@@ -795,6 +820,11 @@ const lifeRows = computed(() =>
          * 看到的与从没签过契的那一世一模一样。
          */
         trial: lifeTrialArchive(l.trialId),
+        /*
+         * 那一世的灵根 —— 转世归档时快照进 LifeRecord(见 core/reincarnation 的
+         * recordLife 调用点)。老存档没有这一栏,lifeLinggen 返回 null,整行不出。
+         */
+        linggenRow: lifeLinggen(l.linggen),
       };
     }),
 );

@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 595 个 spec;本作自己那部分 515 个) |
+| `bun run test` | 全量用例(全量 596 个 spec;本作自己那部分 516 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -82,7 +82,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 595 个 spec = 宿主 514 + 引擎 80,别把 594 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 596 个 spec = 宿主 516 + 引擎 80,别把 596 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -172,7 +172,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 595 个 spec(本作自己那部分 515 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 596 个 spec(本作自己那部分 516 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -1522,27 +1522,30 @@ player.rebirth(view.nextLinggen ?? rollLinggen(rng, aptitudeFloorNow()));
 > `src/data/herbGrades.spec.ts:67` 的「每味可炼方烧的品阶 == 准入境界的品阶」钉着)。
 > 判「是否实现」只能读代码,不能看勾选框。
 
-**同一份计划还有一半没做**(2026-11-09 逐条核过 35 个未勾选项):
+**同一份计划的后半已补齐**(2026-11-09 逐条核过 35 个未勾选项,2026-11-09 又补完剩下的):
 
 | 计划的交付物 | 状态 |
 | --- | --- |
-| Task 1:`LifeRecord` 加灵根字段 | **未实现** —— `src/data/samsara.ts:144` 的 `LifeRecord` 里没有 `linggen` |
-| Task 2:`ReincarnationView.nextLinggen` + prepare 里 roll 一次 | 已实现(`reincarnation.ts:184`、`types/index.ts:1381`) |
-| Task 3:`recordLife` 快照本世灵根 | **未实现** —— `reincarnation.ts:285` 的 `recordLife({...})` 没有灵根 |
-| Task 4:第二程加灵根卡 | 已实现(`ReincarnationDialog.vue:375-389` 读 `view.nextLinggen`) |
+| Task 1:`LifeRecord` 加灵根字段 | 已实现(`data/samsara.ts` 的 `LifeRecord.linggen`,可选字段) |
+| Task 2:`ReincarnationView.nextLinggen` + prepare 里 roll 一次 | 已实现(`reincarnation.ts` 的 prepare、`types/index.ts` 的 `nextLinggen`) |
+| Task 3:`recordLife` 快照本世灵根 | 已实现(`core/reincarnation.ts` 的 `recordLife({...})`,rebirth 之前取拷贝) |
+| Task 4:第二程加灵根卡 | 已实现(`ReincarnationDialog.vue` 读 `view.nextLinggen`) |
+| Task 5:人物页「历世」卡 | **未做,且已判明不该做** —— 见下 |
+| Task 6:修仙录历世履历补灵根徽记 | 已实现(`ui/lifeLinggen` + `LegacyView` 的 `data-life-linggen`) |
 
 计划的 Goal 写着两件事:「让转世=灵根重生可感知(弹窗第二程展示来世灵根 + toast)」,
-**以及**「在人物页/修仙录历世履历展示每世的灵根徽记」。前者做了,后者没做。
+**以及**「在人物页/修仙录历世履历展示每世的灵根徽记」。两件都到位了,
+落的落点与计划略有出入:徽记落在**修仙录的历世履历**里,人物页不再另起一张「最近 5 世」卡 ——
+那个位置的全是**这一世**的入口(道途 / 缘法 / 行迹),把历世履历切 5 条塞进去,
+既是同一份事实的第二处出口,也会让卷末目录多出一组。人物页已有 `修仙录 · 展卷` 一行。
 
-而 `docs/` 里**没有任何"否决后半"的记录** —— 计划里被否决的是另一件事
-(「不做转世灵根重掷界面,Phase 32.2 decision 否决」),那一条写明了理由。
+`LifeRecord.linggen` 是**可选**字段:老存档读出来是 `undefined`,`ui/lifeLinggen`
+返回 `null`,那一行整条不出 —— 与「老档缺逆旅契那一栏」同一套兜底。
 
-**没做的理由**:补它要动数据结构(`LifeRecord.linggen`,老存档兼容)+ 改履历 UI,
-那是**功能开发**,不属于"性能优化/重构/架构"。记在这里等排期。
-
-**没改的理由**:删掉兜底 = 违例时抛错而不是静默换灵根,那是**行为变更**;
-保留兜底 = 与契约矛盾。两条路都要先确认「违例时希望怎样」—— 这属于设计裁决,
-不该由判据维护者单方面定。
+判据两侧都量:`reincarnationConfirm.spec` 的四条(本世那副 / 拷贝不共享 / 三世各记各的 /
+灵根缺失不抛错)+ `ui/lifeLinggen.spec` 的十三条(翻译、坏档、死元素 id、读屏那句、只读纪律、真接线);
+真浏览器那条在 `layout-check` 的「修仙录的历世与行迹回看」里 —— 记过灵根的要有
+品阶名与逐根圆章、圆章退出读屏且另有一句说全,没记过的不许凭空印一行。
 
 **已补上的守卫**:「镇压灵石收益与境界无关」改为源码层判据 —— `suppress.ts` 不许出现
 `.major` / `.realm` / `finalStats`(境界只要根本不是输入,产出就不可能被它影响)。行为判据试过

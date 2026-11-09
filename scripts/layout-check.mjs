@@ -26351,6 +26351,24 @@ async function taskLegacyHistoryOverflow() {
          */
         trialId: index === 1 ? "tr_gu" : index === 2 ? "tr_ji" : null,
         bond: null,
+        /*
+         * 灵根:前两世各带一副,第 3 世起留空 —— 判据要两侧都量。
+         * 第 1 世用两枚根(水 63 / 木 44),第 2 世用一枚特殊根(雷 88),
+         * 正好覆盖「多根并排」与「特殊根的色与单字」两种牌面;
+         * 空的那二十八世则核「老档缺这一栏时那一行整条不出」。
+         */
+        linggen:
+          index === 1
+            ? {
+                gradeName: "真灵根",
+                roots: [
+                  { element: "water", aptitude: 63 },
+                  { element: "wood", aptitude: 44 },
+                ],
+              }
+            : index === 2
+              ? { gradeName: "异灵根", roots: [{ element: "thunder", aptitude: 88 }] }
+              : undefined,
         at: now - (30 - i) * 86400000,
       };
     });
@@ -26564,6 +26582,75 @@ async function taskLegacyHistoryOverflow() {
         failures.push(`[320] 逆旅契:没签过契的那一世也印了一行(${JSON.stringify(third.trial)})`);
       } else if (signed.length !== 2) {
         failures.push(`[320] 逆旅契:履历上应只有两世带契,实见 ${signed.length} 世`);
+      }
+    }
+
+    /*
+     * 历世履历的灵根徽记 —— 转世那一刻看得见来世灵根,旧账里也该回望得到每世牌面。
+     * `LifeRecord.linggen` 是后补的可选字段:这里两侧都量 ——
+     * 记过的两世要有品阶名与逐根圆章(且与夹具里那副对得上),
+     * 没记的二十八世不许凭空印一行。
+     *
+     * 徽记是纯装饰(色由 ELEMENTS 给),故这里核的是**文本**与**落点**,
+     * 不核色值 —— 色值归 palette.spec 与视觉基线管。
+     */
+    checked += 1;
+    {
+      const allLinggen = await page.evaluate(() =>
+        [...document.querySelectorAll("[data-life-row]")].map((el) => ({
+          idx: el.getAttribute("data-life-row"),
+          text: (el.querySelector("[data-life-linggen]")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+          marks: el.querySelectorAll("[data-life-linggen] .legacy-history__linggen-mark").length,
+          /*
+           * 圆章必须退出读屏（单字连读不成话），另有一句 sr-only 把牌面说全。
+           * 两侧一起量：隐藏了、而且补上了 —— 只量一边会让「藏起来却没补」
+           * 与「补了却没藏」都漏过去。
+           */
+          marksHidden: (() => {
+            const marks = el.querySelector("[data-life-linggen] .legacy-history__linggen-marks");
+            return marks ? marks.getAttribute("aria-hidden") === "true" : false;
+          })(),
+          spoken: (() => {
+            const silent = el.querySelector("[data-life-linggen] .sr-only");
+            return silent ? (silent.textContent || "").replace(/\s+/g, " ").trim() : "";
+          })(),
+        })),
+      );
+      const firstLing = allLinggen.find((row) => row.idx === "1");
+      const secondLing = allLinggen.find((row) => row.idx === "2");
+      const thirdLing = allLinggen.find((row) => row.idx === "3");
+      const withLinggen = allLinggen.filter((row) => row.text);
+      if (!firstLing || !secondLing || !thirdLing) {
+        failures.push(
+          `[320] 灵根徽记:履历里找不到那三世(实见 ${allLinggen.length} 行)` + ` —— 判据无从量起`,
+        );
+      } else if (!firstLing.text.includes("真灵根") || firstLing.marks !== 2) {
+        failures.push(
+          `[320] 灵根徽记:第一世的牌面读不出(«${firstLing.text}» / ${firstLing.marks} 枚圆章)` +
+            ` —— 应有「真灵根」与两枚根`,
+        );
+      } else if (!firstLing.marksHidden || !firstLing.spoken.includes("水系")) {
+        failures.push(
+          `[320] 灵根徽记:圆章要么没退出读屏、要么没补读屏文本` +
+            `(hidden=${firstLing.marksHidden} / «${firstLing.spoken}»)` +
+            ` —— 单字连读不成话,得有一句说全的`,
+        );
+      } else if (!firstLing.spoken.includes("资质 63")) {
+        failures.push(
+          `[320] 灵根徽记:读屏文本没报出资质(«${firstLing.spoken}»)—— 与人物页灵根牌同一口径`,
+        );
+      } else if (!secondLing.text.includes("异灵根") || secondLing.marks !== 1) {
+        failures.push(
+          `[320] 灵根徽记:第二世的特殊根没有单独成章(«${secondLing.text}» / ${secondLing.marks} 枚)`,
+        );
+      } else if (!secondLing.spoken.includes("雷系")) {
+        failures.push(`[320] 灵根徽记:特殊根的读屏说法读错了(«${secondLing.spoken}»)`);
+      } else if (thirdLing.text) {
+        failures.push(`[320] 灵根徽记:没记灵根的那一世也印了一行(«${thirdLing.text}»)`);
+      } else if (withLinggen.length !== 2) {
+        failures.push(`[320] 灵根徽记:履历上应只有两世带灵根,实见 ${withLinggen.length} 世`);
       }
     }
     const fateTab = page.getByRole("tab", { name: /缘\s*迹/ }).first();

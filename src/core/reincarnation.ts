@@ -292,6 +292,22 @@ export function confirmReincarnation(
     insight: r.insightGained,
     // 逆旅契入履历 —— 这是契约唯一的回报:被记住,且不进任何计算
     trialId: archiveLifeTrial(),
+    /*
+     * 本世灵根随履历入册 —— 这一步**必须**在 `player.rebirth()` 之前做:
+     * 那一刻 `player.linggen` 仍是这一世的那副,之后就被换成来世那一副。
+     *
+     * 且必须是**拷贝**:`roots` 原样塞进去时,后面任何一次灵根改动都会把
+     * 历世履历里的每一世一起改写 —— 十世旧账会一起显示成最新那世的牌面。
+     * 品阶名是字符串天然安全,根数组必须新开一份。
+     *
+     * 老存档没有这一栏;`player.linggen` 理论上非空(建号必有),仍防御性兜底。
+     */
+    linggen: player.linggen
+      ? {
+          gradeName: player.linggen.gradeName,
+          roots: player.linggen.roots.map((root) => ({ ...root })),
+        }
+      : undefined,
     at: Date.now(),
   });
   player.addInsight(r.insightGained);

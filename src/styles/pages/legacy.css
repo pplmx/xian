@@ -600,6 +600,47 @@
     margin-top: 0.04rem;
   }
   /*
+   * 那一世的灵根 —— 品阶名 + 逐根徽记。
+   *
+   * 与人物页的灵根牌面同一套语言:单字进圆章、色取该系语义色(data/linggen 的
+   * ELEMENTS)。这里**比人物页小一号**:履历一行里它是注脚不是主读数,
+   * 尺寸由行宽决定(1.15rem 的圆章塞得下「混」这种两字系)。
+   * 品阶名用墨字,不染朱砂 —— 朱砂在这一页留给「行动」与成环的命题结局。
+   */
+  .legacy-history__linggen {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.14rem 0.26rem;
+    margin-top: 0.08rem;
+    font-size: var(--type-note);
+    line-height: 1.4;
+  }
+  .legacy-history__linggen-grade {
+    color: var(--color-ink-soft);
+    font-family: var(--font-kai);
+    letter-spacing: 0.04em;
+  }
+  /* 圆章整组只是视觉摘要,读屏那句在 .sr-only 里(见 views/LegacyView 的注释) */
+  .legacy-history__linggen-marks {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.14rem 0.26rem;
+  }
+  .legacy-history__linggen-mark {
+    display: inline-grid;
+    width: 1.15rem;
+    height: 1.15rem;
+    flex: none;
+    place-items: center;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-size: var(--type-note);
+    line-height: 1;
+  }
+  /*
    * 逆旅契那一行 —— 与命题并排但分量不同:命题是你立的题(有成败),
    * 契是你自己挑的逆境(只有记下)。故用朱砂印 + 常规墨字,不做成败着色。
    */

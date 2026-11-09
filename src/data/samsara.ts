@@ -160,6 +160,14 @@ export interface LifeRecord {
   trialId?: string | null;
   /** 本世的关系结局(Phase 33.8);未遇见任何人为 null */
   bond?: { name: string; stage: string; ending: string } | null;
+  /**
+   * 本世持用的灵根(转世归档时快照,修仙录的历世履历据此回望每世牌面)。
+   *
+   * 只在归档这一刻取一份浅拷贝 —— 转世后 `player.linggen` 已经换成来世那一副,
+   * 与它同源的引用会把每一世的灵根都改写成最新那世(见 core/reincarnation 的
+   * recordLife 调用点)。老存档没有这一栏,读出来是 undefined,界面按空处理。
+   */
+  linggen?: { gradeName: string; roots: import("@/types").SpiritRoot[] };
   /** 归档时刻 */
   at: number;
 }
