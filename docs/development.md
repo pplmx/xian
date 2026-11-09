@@ -1149,9 +1149,17 @@ for (const name of plainApis) { assert.ok(name in engine, …); }               
 的**声明**,不是 `node_modules` 里实际装的。真实风险为零(装的是 1.4.0),但告警一直亮着
 就没人会认真看它 —— 等哪天来了条真的,也会被这七条淹掉。
 
-修法:把引擎包的声明改成 `1.4.0`,与宿主同版;`bun.lock` 里那条
+修法:把引擎包的声明改成 `1.4.0`,与宿主的 `catalog` 同版;`bun.lock` 里那条
 `wanxiang-engine/vite-plus` 随之更新。**需要推引擎仓**(改 `packages/engine` 会立刻
 违反同树约束,`engine-sync` 当场红)。
+
+> **为什么写死 `1.4.0` 而不是改成 `catalog:`**:引擎包是**独立发布**的库
+> (`publishConfig.access: "public"`),`catalog:` 是 workspace 协议,虽然
+> `devDependencies` 不进消费者的依赖树,但把它留给发布产物是个没必要的悬念。
+> 宿主自己也是靠 `catalog` 把 `vite-plus` 与 `vite` 钉成一版(见 `env-check` 的第二道),
+> 所以两边的**值**必须一致 —— 写死 1.4.0 与 catalog 里的值相同,效果等价。
+>
+> 更根本的办法是让两边都从 `catalog` 取,但那是跨仓改造,留给下次引擎仓作业时一并议。
 
 **其余六处收集型判据都查过了,只有这一处缺**(2026-11-09):
 
