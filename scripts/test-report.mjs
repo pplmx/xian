@@ -391,6 +391,7 @@ const CATEGORIES = [
       "rewardReachability",
       "dataIntegrity",
       "dataTextAudit",
+      "docConstants",
       "unlockChainSelfHeal",
       "questProgress",
       "firstStep",
