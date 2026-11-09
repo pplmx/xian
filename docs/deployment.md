@@ -116,6 +116,26 @@ Compose v1 的旧 CLI 把命令换成 `docker-compose` 即可(`docker-compose.ym
 
 ## 生产部署建议
 
+### 部署后怎么确认线上真的换了版
+
+CI 绿了、tag 打上了，都不等于**线上拿到的是新产物**。两处站点各自的更新是异步的
+（GitHub Pages 是一次 deploy job，Cloudflare 那边是另一次），而且都可能命中 CDN 缓存。
+最直接的核对不是看版本号（版本号在打包后的 JS 里），而是**比入口产物的文件名哈希**:
+
+```bash
+# 本地 0.0.3 构建出来的入口
+grep -oE 'assets/index-[a-zA-Z0-9_-]+\.js' dist/index.html | head -1
+# GitHub Pages 上的
+curl -s https://blog.yoooo.fun/xian/ | grep -oE 'index-[a-zA-Z0-9_-]+\.js' | head -1
+# Cloudflare 上的
+curl -s https://xiuxian.yoooo.fun/ | grep -oE 'index-[a-zA-Z0-9_-]+\.js' | head -1
+```
+
+三处哈希相同才是真的同步了。Rolldown 的产物名带内容哈希，**改一个字节就换名** ——
+比任何"版本号写在 HTML 里"的方案都可靠，也不必额外维护。
+
+> 2026-11-09 发 v0.0.3 时这么核过:三处都是 `index-CXw-F0Y6.js`。
+
 ### 构建配置
 
 镜像构建本身无需改任何配置:`vite.config.ts` 把 `base` 固定为 `'./'`,资源按相对路径解析,
