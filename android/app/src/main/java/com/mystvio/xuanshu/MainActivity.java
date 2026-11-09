@@ -118,15 +118,26 @@ public class MainActivity extends BridgeActivity {
             handler.postDelayed(() -> {
                 WebView wv = getBridge().getWebView();
                 if (wv != null) {
+                    /*
+                     * 轮询等 Vue 渲染完成 —— **带次数上限**。
+                     *
+                     * 原本是无限递归 `setTimeout(check, 200)`:Vue 若因脚本错误始终
+                     * 渲染不出来,这个定时器会一直每 200ms 跑一次,直到进程结束。
+                     * 而遮罩本来就不是死路 —— 5 秒后「进入游戏」按钮已经浮出来了,
+                     * 玩家点它照样能进(dismissLoading 在前)。故轮询只是"早点自动消失"
+                     * 的优化,不值得为它无限空转。
+                     *
+                     * 150 次 × 200ms = 30 秒,远超正常首屏(实测 1~2 秒)。
+                     */
                     wv.evaluateJavascript(
-                        "(function check() {" +
+                        "(function check(left) {" +
                         "  var app = document.getElementById('app');" +
                         "  if (app && app.children.length > 0) {" +
                         "    NativeApp.hideLoading();" +
-                        "  } else {" +
-                        "    setTimeout(check, 200);" +
+                        "  } else if (left > 0) {" +
+                        "    setTimeout(function () { check(left - 1); }, 200);" +
                         "  }" +
-                        "})();",
+                        "})(150);",
                         null
                     );
                 }

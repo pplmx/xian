@@ -30,6 +30,38 @@ const ACTIVITY = readFileSync(
   "utf8",
 );
 
+describe("Android 壳层 · 遮挡层的轮询不许无限跑", () => {
+  it("等 Vue 渲染的轮询带次数上限", () => {
+    /*
+     * `MainActivity` 在 WebView 里注入过一段 `check()`:每 200ms 看一次
+     * `#app` 有没有 children,有就关遮罩。原本是**无限递归**:
+     *
+     *     } else { setTimeout(check, 200); }
+     *
+     * Vue 若因脚本错误始终渲染不出来,这个定时器就一直每 200ms 跑一次,直到进程结束;
+     * 而 `evaluateJavascript` 注进去的脚本,**`onDestroy` 里取消不了** ——
+     * `handler.removeCallbacksAndMessages(null)` 管不到它。
+     *
+     * 遮罩本来也不是死路:5 秒后「进入游戏」按钮已经浮出来,点它照样能进。
+     * 故轮询只是「早点自动消失」的优化,不值得为它无限空转。现在传了上限 150
+     * (150 × 200ms = 30 秒,远超正常首屏的 1~2 秒)。
+     */
+    expect(ACTIVITY, "轮询必须带剩余次数").toMatch(/\(function check\(left\)/);
+    expect(ACTIVITY, "到 0 就该停").toMatch(/\}\s*else if \(left > 0\)/);
+    expect(ACTIVITY, "递归时要递减").toContain("check(left - 1)");
+    expect(ACTIVITY, "注入时就给上限").toMatch(/\}\)\(\d+\);/);
+    /*
+     * 防空转:确认没有残留一版无上限的写法。
+     * **先剥注释** —— 上面那段说明里就写着原样 `setTimeout(check, 200)`,
+     * 不剥会把自己说明文字当成残留代码(本会话栽过好几次同形的坑)。
+     */
+    const CODE = ACTIVITY.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    expect(CODE, "还有一版无上限的 setTimeout(check, 200) 没改掉").not.toContain(
+      "setTimeout(check, 200)",
+    );
+  });
+});
+
 describe("Android 首启迁移 · 旧键落进当前存档域", () => {
   it("Java 的旧前缀与当前/更名后前缀都跟 TS 同一份账", () => {
     expect(MIGRATOR).toContain('LEGACY_ANDROID_SAVE_PREFIX = "yunyinxiang_save_"');
