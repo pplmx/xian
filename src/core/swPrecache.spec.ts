@@ -40,6 +40,39 @@ describe("Service Worker · 首访即断网也要能重开", () => {
     ).toBe(true);
   });
 
+  it("清旧缓存只清自己的 —— caches 是 origin 级，会误删同域其他应用", () => {
+    /*
+     * `caches` **不按 Service Worker 的 scope 隔离**,它是 origin 级的:
+     * 同一个 `pplmx.github.io` 下另一个项目的 PWA 缓存,也在 `caches.keys()` 里。
+     *
+     * 原先的 `activate` 是:
+     *
+     *     keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k))
+     *
+     * 即「只要不是我这个版本,就删掉」—— 对本作这种**站在子路径** `/xian/` 的
+     * 站点来说,那是越界:别人的缓存被清掉,下次访问要重新下载。
+     *
+     * 修法:按本作缓存的前缀(`xuanshu-`)过滤。这条判据同时钉住两头 ——
+     * 既要有前缀,又不能因为加了前缀就一个都不删(自己的旧版本仍须清掉)。
+     */
+    const activate = SW.slice(
+      SW.indexOf('addEventListener("activate"'),
+      SW.indexOf('addEventListener("fetch"'),
+    );
+    expect(activate, "activate 里没有清缓存").toContain("caches.delete");
+    expect(activate, "删缓存必须带本作前缀过滤").toMatch(
+      /k\.startsWith\(\s*(?:PREFIX|"xuanshu-")\s*\)/,
+    );
+    expect(activate, "自己的旧版本仍要删掉 —— 别只加前缀就收工").toContain("k !== CACHE_VERSION");
+    // 前缀要与 CACHE_VERSION 的开头对得上,否则新旧缓存永远对不上号
+    const version = /const CACHE_VERSION = "([^"]+)"/.exec(SW)?.[1] ?? "";
+    expect(version, "CACHE_VERSION 丢了").toBeTruthy();
+    expect(
+      version.startsWith("xuanshu-"),
+      `CACHE_VERSION 必须以 xuanshu- 开头,实际:${version}`,
+    ).toBe(true);
+  });
+
   it("预缓存清单由构建期注入 —— 手写哈希清单必然过期", () => {
     // 产物名带内容哈希,任何硬编码的 assets/xxx-<hash>.js 下一次构建就是 404。
     expect(SW, "sw.js 要保留清单占位符").toContain("__PRECACHE_MANIFEST__");

@@ -180,8 +180,24 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
+      /*
+       * 只清**本作自己的**旧版本缓存,不碰同 origin 下别人的。
+       *
+       * `caches` 是 **origin 级**的,不是按 Service Worker 的 scope 隔离:同一个
+       * `pplmx.github.io` 下的另一个项目页面,它的 PWA 缓存也在 `caches.keys()` 里。
+       * 原先 `keys.filter((k) => k !== CACHE_VERSION)` 会把它们一并删掉 ——
+       * 对站在子路径(`/xian/`)的本作来说,那是越界。
+       *
+       * 前綴 `xuanshu-` 是本作所有缓存版本的共同开头(见 CACHE_VERSION),
+       * 按它过滤即可:自己家的旧版本照删,别人家的原封不动。
+       */
+      const PREFIX = "xuanshu-";
       const keys = await caches.keys();
-      await Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k)));
+      await Promise.all(
+        keys
+          .filter((k) => k.startsWith(PREFIX) && k !== CACHE_VERSION)
+          .map((k) => caches.delete(k)),
+      );
       await self.clients.claim();
     })(),
   );
