@@ -86,7 +86,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
-| `vp run verify` | 一键整链:`clean-dist` → `check` → `test` → `test:report` → `vp build` → `check:engine` → `check:engine:standalone`(`cache:false` 每次都真跑;提交/推送前跑它,最不会漏的就是后两项)。**耗时构成**(2026-11-09 实测):引擎那两条合计 **35s**(`engine-dist` 28s + `engine-sync` 2s + `standalone` 6s),余下是 `check` 与全量测试 |
+| `vp run verify` | 一键整链:`clean-dist` → `check` → `test` → `test:report` → `vp build` → `check:engine` → `check:engine:standalone`(`cache:false` 每次都真跑;提交/推送前跑它,最不会漏的就是后两项)。**耗时构成**(2026-11-09 实测):引擎那两条合计 **35s**(`engine-dist` 28s + `engine-sync` 2s + `standalone` 6s),余下是 `check` 与全量测试。**那 28s 拆开看**:`verify-dist.mjs` **33.9s** 是绝对主体,而它自己内含「真打包 3.4s + 解包 + 真装 + 两个 node 探针」;`engine-dist` 自己的其余步骤是 tsc 1.5s / `npm pack --dry-run` 3.1s / `attw --pack` 4.0s / `publint` 0.2s。这些不重复:dry-run 查**清单**(发布包里该有 12 个文件、不许混进 `src/`),`verify-dist.mjs` 查**真装**(消费者按包名与子路径 import 得到类型);`standalone` 又是另一件事 —— 整份复制到临时目录重编译、重跑库自己的用例。**没有可省的**。 |
 | `vp check` | Vite+ 内置:全仓格式 + lint + 类型一次过(不是 `bun run check` 脚本) |
 
 > **别用 `bun test`。** 那是 Bun 自带的测试器,不读本仓库的路径别名(`@/…`),
