@@ -167,7 +167,19 @@ const createAppMenu = () => {
         },
       ],
     },
-    {
+  ];
+
+  /*
+   * 「开发」菜单**只在未打包时挂**。它带着 F12 打开开发者工具与 Ctrl+R 重新加载 ——
+   * 装好的客户端里留着这两项,任何人按一下 F12 就能翻源码、改 localStorage 里的存档,
+   * 而窗口关掉什么都不留。沙箱那几项(`nodeIntegration: false` / `contextIsolation` /
+   * `sandbox`)费劲收紧的边界,一个 F12 就绕过去了。
+   *
+   * 用 `app.isPackaged` 而不是 NODE_ENV:前者由 Electron 按「是否在 asar / 安装目录里」
+   * 判定,打包器改不了;后者要靠构建脚本记得设,忘了就等于没设。
+   */
+  if (!app.isPackaged) {
+    template.push({
       label: "开发",
       submenu: [
         {
@@ -181,8 +193,8 @@ const createAppMenu = () => {
           click: () => win?.webContents.reload(),
         },
       ],
-    },
-  ];
+    });
+  }
 
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);

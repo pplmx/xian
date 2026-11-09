@@ -117,6 +117,28 @@ describe("Electron 主进程接线", () => {
     );
   });
 
+  it("开发者工具只在未打包时挂 —— 装好的客户端里按 F12 就能改存档", () => {
+    /*
+     * `createAppMenu` 原先把「开发」子菜单**无条件**挂上,里面是:
+     *   · 开发者工具(F12) —— 翻源码、改 localStorage 里的存档,窗口关掉什么都不留
+     *   · 重新加载(Ctrl+R) —— 中途 reload 会丢掉尚未落盘的心跳数据
+     *
+     * 而沙箱那几项(`nodeIntegration: false` / `contextIsolation` / `sandbox`)是
+     * 为了把边界收紧的 —— 一个 F12 就绕过去了,等于白设。
+     *
+     * 判据:那两项必须被 `if (!app.isPackaged)` 包住。用 isPackaged 而不是 NODE_ENV,
+     * 因为前者由 Electron 按「是否在 asar / 安装目录里」判定,打包器改不了。
+     */
+    expect(MAIN, "开发者工具必须在 if (!app.isPackaged) 里").toMatch(
+      /if\s*\(\s*!app\.isPackaged\s*\)\s*\{[\s\S]*?toggleDevTools\(\)[\s\S]*?\}/,
+    );
+    expect(MAIN, "重新加载同样只在未打包时可用").toMatch(
+      /if\s*\(\s*!app\.isPackaged\s*\)\s*\{[\s\S]*?webContents\.reload\(\)/,
+    );
+    // 防空转:确认这两项子菜单真的还在(别哪天整段删了,判据还以为自己守住了东西)
+    expect(MAIN, "「开发」菜单不见了 —— 这条判据在守个不存在的东西").toContain('label: "开发"');
+  });
+
   it("配置落盘是原子的 —— 先写 .tmp 再 rename，不直接覆盖", () => {
     /*
      * `saveSettings` 原本直接 `writeFileSync(settingsPath, …)` 覆盖。
