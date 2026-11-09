@@ -1075,6 +1075,28 @@ bun run build:apk        # 直接出 Release APK
 > (`KEYSTORE_STORE_PASSWORD` / `KEYSTORE_KEY_PASSWORD`)注入,本地出包请临时 `export` 这两个环境变量
 > (或建一个不入库的 `android/keystore.local.properties`)。
 
+**Electron 打包开着 `asar`**(`package.json` 的 `build.asar: true`)。它曾经是 `false`,
+来源是照搬参考仓 yunyin-xiuxian 的配置 —— `package.json` 首版提交 `cdce24d6` 时
+`name` 还是 `yunyin-xiuxian`、版本 `1.33.0`,本仓从没为这个值写过理由。
+而 electron-builder 每轮构建都在警告:
+
+```text
+• asar usage is disabled — this is strongly not recommended
+```
+
+2026-11-09 实测开启后的差别:
+
+| | 产物字节 | 完整性校验 |
+| --- | --- | --- |
+| `asar: false` | 166,936,968 | 无 |
+| `asar: true` | **164,074,083** | **有**(`updating asar integrity executable resource`) |
+
+少 2.7 MiB,并且开启后 electron-builder 会自动给 exe 烧进 asar 完整性资源 ——
+那是关着时完全没有的一层加固。开启是安全的:`electron/main.js` 只读
+`app.getAppPath()` 下的 `dist/` 与 `public/`(asar 里由 Electron 自动虚拟化),
+写盘只写 `app.getPath("userData")`(在 asar 之外)。判据见
+`core/releasePipeline.spec` 的「Electron 打包开着 asar」。
+
 安装与部署(Web / PWA、Android、Windows 桌面、Docker、反向代理)见 [deployment.md](./deployment.md)。
 
 ## 与公共库的协作
