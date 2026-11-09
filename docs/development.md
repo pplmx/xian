@@ -1153,6 +1153,21 @@ bun run build:apk        # 直接出 Release APK
 > (`KEYSTORE_STORE_PASSWORD` / `KEYSTORE_KEY_PASSWORD`)注入,本地出包请临时 `export` 这两个环境变量
 > (或建一个不入库的 `android/keystore.local.properties`)。
 
+**只发 Windows**(2026-11-09 实测确认)。`package.json` 的 `build` 里**只有 `win` 一段**,
+没有 `mac` / `linux`;CI 的 `build-electron` job 矩阵也只有 `platform: win`。
+
+本地跑一次 `bun run build:electron`(Linux 上默认出 snap + AppImage)会成功,但 electron-builder
+会当场报三条警告 —— 说明**Linux 产物是不完整的**,真要发 Linux 版得先补:
+
+| 警告 | 缺什么 |
+| --- | --- |
+| `default Electron icon is used` | 只有 `build.win.icon`,没有 `build.linux.icon` |
+| `desktopName is not set` | 窗口与 `.desktop` 条目的关联失效(要 `build.linux.desktopName` 或 `linux.syncDesktopName: true`) |
+| `Linux category is set to default "Utility"` | 没有 `build.linux.category` |
+
+这三条**不影响任何已发布产物**(Windows 与 Android 各用各的配置),所以没修的紧迫性;
+记下来是为了让下一个想发 Linux 版的人不必重新踩一遍。
+
 **Electron 打包开着 `asar`**(`package.json` 的 `build.asar: true`)。它曾经是 `false`,
 来源是照搬参考仓 yunyin-xiuxian 的配置 —— `package.json` 首版提交 `cdce24d6` 时
 `name` 还是 `yunyin-xiuxian`、版本 `1.33.0`,本仓从没为这个值写过理由。
