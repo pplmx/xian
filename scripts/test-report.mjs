@@ -465,6 +465,7 @@ const CATEGORIES = [
       "lifeFootprint",
       "lifeDate",
       "battleWinFindings",
+      "offlineYieldNote",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",

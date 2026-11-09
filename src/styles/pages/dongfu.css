@@ -141,6 +141,17 @@
     font-size: var(--type-note);
     line-height: 1.55;
   }
+  /*
+   * 每时藏收的离线口径 —— 它是上面那个速率的一句限定,不是另一条账。
+   * 故独立成行、退到 faint:读速率时不必读它,真要算「离线能攒多少」时才看。
+   */
+  .dongfu-ledger__account-note {
+    display: block;
+    margin-top: 0.14rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
   .dongfu-ledger__offline {
     position: relative;
     z-index: 1;

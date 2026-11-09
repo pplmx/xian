@@ -18494,6 +18494,54 @@ async function taskDongfuFold() {
         failures.push(`[195-dongfu] 离线刻度没有退成单列纵轨:${JSON.stringify(compactOffline)}`);
       }
     }
+    /*
+     * 「每时藏收」的离线口径 —— 那个速率是**全额**(与实时 accrual 同源),
+     * 而离线挂机对材料与历练恒有折扣。这一页正是帮玩家决定「离线攒多久」的地方,
+     * 拿全额乘 72 小时会算出一个到不了手的数。
+     *
+     * 判据核四件事,且**不许与下面「离线存续」那一格重复**:
+     *   一 口径那一句在;
+     *   二 折数与 `OFFLINE_EFFICIENCY` 同源(不写死);
+     *   三 它指向「离线存续」那一格 —— 只补半句,不把同一事实说两遍;
+     *   四 它**不复述**「修为/灵气」那半句(那归下面那一格讲)。
+     */
+    checked += 1;
+    {
+      const hourly = await page.evaluate(() => {
+        const note = document.querySelector("[data-hourly-yield-note]");
+        const account = note?.closest(".dongfu-ledger__account");
+        const offlineNote = document.querySelector(".dongfu-ledger__offline-note");
+        return {
+          note: note ? (note.textContent || "").replace(/\s+/g, " ").trim() : null,
+          accountText: account ? (account.textContent || "").replace(/\s+/g, " ").trim() : "",
+          offlineText: offlineNote
+            ? (offlineNote.textContent || "").replace(/\s+/g, " ").trim()
+            : "",
+        };
+      });
+      if (!hourly.note) {
+        failures.push(
+          "[390-dongfu] 每时藏收没有离线口径 —— 那个速率是全额,拿它乘离线上限会算出一个到不了手的数",
+        );
+      } else if (/NaN|undefined|Infinity/.test(hourly.note)) {
+        failures.push(`[390-dongfu] 每时藏收的离线口径漏出占位符 —— «${hourly.note}»`);
+      } else if (!/\d+(\.\d+)?\s*折/.test(hourly.note)) {
+        failures.push(`[390-dongfu] 离线口径没报出折数 —— «${hourly.note}»`);
+      } else if (!/离线存续|下方|下面/.test(hourly.note)) {
+        failures.push(
+          `[390-dongfu] 离线口径没指向「离线存续」那一格 —— «${hourly.note}»` +
+            `(它只该补半句,不该把上限那一格的话再说一遍)`,
+        );
+      } else if (/修为|灵气/.test(hourly.note)) {
+        failures.push(
+          `[390-dongfu] 离线口径复述了「修为/灵气」那半句 —— «${hourly.note}»` +
+            `(同一句话下面「离线存续」已经在说;本仓不做两本账)`,
+        );
+      } else if (!hourly.offlineText) {
+        failures.push("[390-dongfu] 找不到「离线存续」那一格 —— 口径指向了一个不存在的地方");
+      }
+    }
+
     if (pageErrors.length)
       failures.push(`[390-dongfu] 洞府首屏页面异常:${[...new Set(pageErrors)].join(" | ")}`);
   } finally {

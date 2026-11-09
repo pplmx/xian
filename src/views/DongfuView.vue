@@ -72,6 +72,22 @@
                     </span>
                   </template>
                   <template v-else>尚未形成常产</template>
+                  <!--
+                    上面那个速率是**全额**(与实时 accrual 同源),而离线挂机对材料与
+                    历练恒有折扣(见 core/offline 与 OFFLINE_EFFICIENCY)。这一页正是帮
+                    玩家决定「离线攒多久」的地方 —— 拿全额乘 72 小时会算出一个到不了手的数。
+                    `core/offline` 的注释自己写着「绝大多数短离拿到 9 折产出却以为少了点什么,
+                    就把机制藏起来了」;这一句就是把它摆出来。
+
+                    折数读常数、不写死;修为与灵气那两样**不打折**,故这一句不能简化成
+                    「离线一律 N 折」——那会把对玩家有利的那半条规则说反。
+                  -->
+                  <small
+                    v-if="hourlyLines.length"
+                    class="dongfu-ledger__account-note"
+                    data-hourly-yield-note
+                    >{{ offlineYieldNote() }}</small
+                  >
                 </span>
               </div>
               <div class="dongfu-ledger__account">
@@ -313,6 +329,7 @@ import { buildingUpgradeInfo, upgradeBuilding } from "@/core/buildingService";
 import { hourlyYieldText } from "@/core/engineFacilities";
 import { cnNumber, formatGN } from "@/utils/format";
 import { dongfuBuildingChapters, offlineCapTiers, type OfflineCapTierState } from "@/ui/dongfuDesk";
+import { offlineYieldNote } from "@/ui/offlineYieldNote";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LedgerPulse from "@/components/common/LedgerPulse.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
