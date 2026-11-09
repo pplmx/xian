@@ -1097,6 +1097,31 @@ bun run build:apk        # 直接出 Release APK
 写盘只写 `app.getPath("userData")`(在 asar 之外)。判据见
 `core/releasePipeline.spec` 的「Electron 打包开着 asar」。
 
+### Android `versionCode` 的位段划分与碰撞边界
+
+`android/app/build.gradle` 从 `package.json` 的 `version` 现算 `versionCode`:
+
+```groovy
+def appVersionCode = versionPart(0) * 10000 + versionPart(1) * 100 + versionPart(2)
+```
+
+即「主 × 10000 + 次 × 100 + 补」。当前 `0.0.2` → `2`,`v0.0.1` → `1`,单调递增,没问题。
+
+但位段宽度是有边界的 —— **次版本号到 100、或补丁号到 100 都会碰撞**:
+
+| 版本 | versionCode | 与谁撞 |
+| --- | --- | --- |
+| `0.1.0` | 100 | `0.0.100` |
+| `1.0.0` | 10000 | `0.100.0` |
+
+补丁号攒到 100 是**可能发生的**(每版几次小修),而 Android 用同一个 `versionCode`
+的包安装会被拒(覆盖安装时"应用未安装")。真到那一步,把权重改宽即可
+(如主 × 1000000 + 次 × 1000 + 补),但那会让已发布版本的 `versionCode` 跳变 ——
+**Android 只要求递增,跳变无害**,故这是一次性改动而非兼容问题。
+
+现在没加判据:本作版本号还在 `0.0.x`,离边界很远;等版本号真要跨过 100 再加不迟。
+写在这里是为了让人**改版本号时知道这条边界存在**。
+
 安装与部署(Web / PWA、Android、Windows 桌面、Docker、反向代理)见 [deployment.md](./deployment.md)。
 
 ## 与公共库的协作
