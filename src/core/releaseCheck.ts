@@ -61,7 +61,8 @@ export function checkRelease(f: ReleaseFacts): ReleaseVerdict {
   if (f.tagOnlyCommits > 0) {
     warnings.push(
       `自上次发版以来有 ${f.tagOnlyCommits} 个提交动过只在 tag 流线上跑的路径` +
-        "(android / electron / .github/workflows/build.yml)—— 本地门全绿不代表发得出去,打完 tag 要看真跑结果",
+        "(android / electron / .github/workflows/build.yml / package.json)—— " +
+        "本地门全绿不代表发得出去,打完 tag 要看真跑结果",
     );
   }
 

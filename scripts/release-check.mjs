@@ -12,7 +12,18 @@ import { fileURLToPath } from "node:url";
 import { checkRelease } from "../src/core/releaseCheck.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const TAG_ONLY = ["android", "electron", ".github/workflows/build.yml"];
+/*
+ * 只在 tag 流线上跑、本地门看不到的路径。
+ *
+ * `package.json` 必须在内 —— 打包配置(`build.asar` / `build.win.icon` /
+ * `build.appId` / `build.files`)全写在它的 `build` 字段里,而那些**只有打包时生效**。
+ * v0.0.2 栽的就是其中一处:`build.win.icon` 指着一枚 48×48 的 favicon,
+ * electron-builder 要 ≥256,本地全绿、`--win` 当场失败。
+ *
+ * 它也会带来噪音(依赖升级同样改这个文件),但这条只是 `!` 提醒不是拦截,
+ * 而漏掉它的代价是「本地绿、发不出去」。宁可多看一行。
+ */
+const TAG_ONLY = ["android", "electron", ".github/workflows/build.yml", "package.json"];
 
 const git = (args) =>
   execFileSync("git", args, {
