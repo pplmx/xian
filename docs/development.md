@@ -601,6 +601,7 @@ FCP 没有实质变化(±16ms 是抖动),而**楷体换上一律变慢 130~200ms
 | CSS 重复 | `style.css` 里 98 个选择器被多次定义;逐个查过(`.atlas-volume__count` 7 处等),全是**增量覆盖**——不同属性或不同媒体查询 | 是 CSS 的正常模式,不是重复 |
 | 死导出 / 无用 props | `deadExportAudit`(TS 语法树,不是正则)覆盖全 `src`,`ALLOWLIST` 空;94 个 `defineProps` 字段逐个查过,零未使用 | **零死导出、零无用 props** —— 这一层已有判据,别再写正则探一遍 |
 | 类型纪律 | `any` / `@ts-ignore` / `@ts-expect-error` / `as unknown as` / `oxlint-disable` 各有多少 | **`any` 0 处、`@ts-ignore` 0 处、`@ts-expect-error` 0 处**;`as unknown as` 5 处(全是 `globalThis` / `window` 扩展与第三方类型不匹配,各有注释);`oxlint-disable` 1 处(`inflationAudit` 的 `0 * 0.12`,刻意写成"同一式子的两端")。**类型系统没有被绕过** |
+| 空 `catch` 块 | 全仓 19 处(分布 8 个文件),逐处读过上下文 | **不是静默失败**:它们把异常转成了可观察的状态 —— `save.ts` 的导入失败返回**用户可见的错误文案**、`storage.ts` 的枚举失败返回 `complete: false`、写入异常按"没落盘"处理(`return false`)、`main.ts` 的 SW 注册失败**功能可降级**。7 处还带注释写明为什么(其中两条记着 Android WebView 91 的 `defineProperty` 怪行为)。**故不作"禁止空 catch"的判据** —— 那会把这些有意的降级逼成假的 `throw` |
 | 运行时日志 | `console.log` **0 处**、`console.error` 6 处、`console.warn` 2 处 | 零调试输出残留。8 处全部带 `[模块]` 前缀(`[引擎]`/`[音频]`/`[进度]`/`[全局异常]`/`[未处理的 Promise]`),而浏览器自检的判据(`lib/pageErrors.mjs`)**只认这个形状** —— 前缀不只是一句约定,它是"这条日志进不进判据"的分界线 |
 | 非空断言 `!` | 46 处,抽查集中在 Vue 模板的 `v-for` 元素上 | 源头大多是 `.filter((m) => m !== undefined)` —— **运行时已收窄、TS 的 `filter` 不收窄**,故模板里要 `!`。属类型表达力不足,不是隐患;改成类型守卫只是纯类型层面的收益,不做 |
 
