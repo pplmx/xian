@@ -1305,6 +1305,26 @@ git push origin main v0.0.2
 打完后盯流水线三项 —— 这三条**本地永远看不到**:Android 签名、Electron 打包、Release 正文
 (正文取自仓库里的 `docs/release-notes/v0.0.2.md`)。
 
+**一处待裁决的契约不一致**(2026-11-09 发现,未改):
+
+`src/core/reincarnation.ts:353` 是
+
+```ts
+player.rebirth(view.nextLinggen ?? rollLinggen(rng, aptitudeFloorNow()));
+```
+
+而 `src/types/index.ts` 在 `nextLinggen` 字段上写着「所见即所得:确认即用它,**绝不二次 roll**」,
+`docs/superpowers/plans/2026-09-14-reincarnation-linggen-visibility.md` 也把
+「若 `nextLinggen` 缺失,视为不变量违例,**不做二次 roll 兜底**」列为 Global Constraints。
+
+现状:类型上 `nextLinggen` 是必填的(`ReincarnationView.nextLinggen: LinggenProfile`),
+`confirmReincarnation` 里 `if (!view) return;` 之后它必然存在 —— 故 `??` 那半是**死代码**,
+无测试覆盖。而它若真的执行,玩家会拿到一个**没预告过**的灵根,恰是计划要杜绝的情形。
+
+**没改的理由**:删掉兜底 = 违例时抛错而不是静默换灵根,那是**行为变更**;
+保留兜底 = 与契约矛盾。两条路都要先确认「违例时希望怎样」—— 这属于设计裁决,
+不该由判据维护者单方面定。
+
 **已补上的守卫**:「镇压灵石收益与境界无关」改为源码层判据 —— `suppress.ts` 不许出现
 `.major` / `.realm` / `finalStats`(境界只要根本不是输入,产出就不可能被它影响)。行为判据试过
 两次都不可靠:同文件里先跑一次结算会污染基准(180 vs 204),两次结算塞进同一 it 又串单例。
