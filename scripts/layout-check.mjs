@@ -24583,6 +24583,195 @@ async function taskBuildArtifacts() {
  * 判据只取基础档,且是 measurePage 的**子集**:底部导航项数、顶栏折行、页签栏
  * 这些判据以「游戏内页面」为前提,开局前两页没有导航与顶栏,硬套只会量出假红。
  */
+/**
+ * 开局三步 —— 从空存档走到能玩,这条路必须自己走得通。
+ *
+ * `taskPreGameTour` 量的是 `/welcome` 与 `/create` 的**版面**,可它从不点下去;
+ * 而巡页的 ROUTES 明确不含这两页(路由守卫见存档已开就把它们重定向回首页),
+ * 于是开局三步的**串联**从来没有被判据走过一遍。只要有一处按钮点了没反应、
+ * 或某个 `setTimeout` 断了,全绿的门看不出来 —— 而这是每个新玩家必经的唯一入口。
+ *
+ * 这条路有三道坎,每道都是**带条件的异步**:
+ *   欢迎页「启封入山」→ 入山契弹窗(须勾选,否则署印键点不动)
+ *   → 署印入山(warp 动画 2.5 秒后才 push #/create)
+ *   → 建号页「踏入仙途」→ 首页
+ *
+ * 故判据按玩家的真实节奏**等路由真的变**,不 sleep 一个魔法数猜。
+ * 夹具刻意**不 seedSave**:有存档就会被重定向回首页,这条路走不到,
+ * 判据会一路绿着而没有信息。
+ */
+async function taskOnboardingFlow() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    // 空存档:直接开,不种任何一片
+    await page.goto(INDEX, { waitUntil: "load" });
+    await page.waitForTimeout(1400);
+
+    // 一 · 欢迎页:启封入山
+    checked += 1;
+    const welcomeAt = await page.evaluate(() => location.hash);
+    if (welcomeAt && !/#\/welcome/.test(welcomeAt)) {
+      failures.push(
+        `[开局] 空存档首次打开没落在欢迎页(hash=${welcomeAt}) —— ` +
+          `夹具里可能残留了存档,这条路走不到`,
+      );
+    } else {
+      const enter = page.locator("[data-opening-enter]").first();
+      if ((await enter.count()) === 0) {
+        failures.push("[开局] 欢迎页找不到「启封入山」—— 这条路第一步就断了");
+      } else {
+        await enter.click({ timeout: 4000 }).catch(() => {});
+        await page.waitForTimeout(700);
+
+        // 二 · 入山契:勾选 + 署印
+        checked += 1;
+        const agree = page.locator('input[type="checkbox"]').first();
+        const hasAgree = (await agree.count()) > 0;
+        if (!hasAgree) {
+          failures.push(
+            "[开局] 首次点「启封入山」没有入山契弹窗(或弹窗里没有同意勾选)—— 署印键会一直点不动",
+          );
+        } else {
+          /*
+           * 未勾选时署印键必须是 disabled —— 这是「读毕署印」这条契约的可见面。
+           * 若它一开始就可点,那句「勾选并同意后,署印键可用」就是假的。
+           */
+          const beforeSeal = await page.evaluate(() => {
+            const b = [...document.querySelectorAll("button")].find((x) =>
+              /署印入山/.test(x.textContent || ""),
+            );
+            return b ? { disabled: b.disabled } : null;
+          });
+          if (beforeSeal && !beforeSeal.disabled) {
+            failures.push(
+              "[开局] 未勾选同意时「署印入山」就能点 —— 与「勾选并同意后,署印键可用」相违",
+            );
+          }
+          await agree.check({ force: true }).catch(() => {});
+          await page.waitForTimeout(300);
+          const seal = page.locator("button", { hasText: /署印入山/ }).first();
+          await seal.click({ timeout: 4000 }).catch(() => {});
+          /*
+           * warp 动画 2.5 秒后才 push。等路由**真的**变,不猜时长 ——
+           * 写 `waitForTimeout(3000)` 在慢机器上会假红,写 5000 又让门变慢。
+           */
+          await page
+            .waitForFunction(() => /#\/create/.test(location.hash), { timeout: 12000 })
+            .catch(() => {});
+
+          checked += 1;
+          const atCreate = await page.evaluate(() => location.hash);
+          if (!/#\/create/.test(atCreate)) {
+            failures.push(
+              `[开局] 勾选同意并署印后没有进建号页(hash=${atCreate}) —— ` +
+                `warp 动画之后的 router.push 断了`,
+            );
+          } else {
+            /*
+             * 路由变了不等于**画完了** —— `/create` 是一整页的入场动画(stagger),
+             * 且前面还有 warp 的收尾覆盖层。实测:hash 已是 #/create 时立刻读,
+             * 主内容与「踏入仙途」都还没进 DOM,判据会报「没掷出灵根」的假红。
+             * 故等那一页**自己说它到了**(主内容有字 + 踏入键在),再量。
+             */
+            await page
+              .waitForFunction(
+                () => {
+                  const main = document.querySelector("main");
+                  const text = main ? main.innerText : "";
+                  const btn = [...document.querySelectorAll("button")].find((b) =>
+                    /踏\s*入\s*仙\s*途/.test(b.textContent || ""),
+                  );
+                  return /灵根|资质/.test(text) && !!btn && btn.getBoundingClientRect().height > 0;
+                },
+                { timeout: 12000 },
+              )
+              .catch(() => {});
+            // 建号页:要真掷出了灵根、且「踏入仙途」可点
+            const createInfo = await page.evaluate(() => {
+              const main = document.querySelector("main");
+              const text = main ? main.innerText : "";
+              const enterBtn = [...document.querySelectorAll("button")].find((b) =>
+                /踏\s*入\s*仙\s*途/.test(b.textContent || ""),
+              );
+              return {
+                hasRoot: /灵根|资质/.test(text),
+                hasMult: /修行倍率/.test(text),
+                enterVisible: !!enterBtn && enterBtn.getBoundingClientRect().height > 0,
+                enterDisabled: enterBtn ? enterBtn.disabled : null,
+              };
+            });
+            if (!createInfo.hasRoot || !createInfo.hasMult) {
+              failures.push(
+                `[开局] 建号页没掷出灵根或倍率(${JSON.stringify(createInfo)})—— 玩家看不到自己带着什么入世`,
+              );
+            }
+            if (!createInfo.enterVisible) {
+              failures.push("[开局] 建号页的「踏入仙途」不在可视区 —— 第三步断在这一页");
+            }
+            if (createInfo.enterDisabled) {
+              failures.push("[开局] 建号页「踏入仙途」是禁用的 —— 玩家可能卡死在建号页");
+            }
+
+            // 三 · 踏入仙途 → 首页
+            checked += 1;
+            await page
+              .locator("button", { hasText: /踏\s*入\s*仙\s*途/ })
+              .first()
+              .click({ timeout: 4000 })
+              .catch(() => {});
+            await page
+              .waitForFunction(() => !/#\/create/.test(location.hash), { timeout: 12000 })
+              .catch(() => {});
+            const landed = await page.evaluate(() => {
+              const main = document.querySelector("main");
+              return {
+                hash: location.hash,
+                text: main ? main.innerText.slice(0, 600) : "",
+              };
+            });
+            if (/#\/create/.test(landed.hash)) {
+              failures.push(
+                `[开局] 点了「踏入仙途」还停在建号页(hash=${landed.hash})—— 最后一步断了`,
+              );
+            } else if (!landed.text || landed.text.replace(/\s+/g, "").length < 40) {
+              failures.push(`[开局] 入世后落在 ${landed.hash} 却没有内容 —— 新玩家看着一片空白`);
+            }
+          }
+        }
+      }
+    }
+    if (pageErrors.length)
+      failures.push(`[开局] 开局三步有页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    /*
+     * 留一行实证 —— 这条任务量的是「路走得通」,而路走通的样子没有别的痕迹。
+     * 日志里能看见它,才知道这一段真的被点过一遍(而不是被跳过)。
+     */
+    const landedAt = await page.evaluate(() => location.hash || "#/");
+    console.log(
+      `\n开局三步:空存档 → 欢迎页 → 入山契(未勾选时署印键 disabled)→ 建号页 → 入世「${landedAt}」`,
+    );
+  } finally {
+    await ctx.close();
+  }
+  return {
+    failures,
+    checked,
+    contrastFails: [],
+    pixelContrastFails: [],
+    zoomFails: [],
+  };
+}
+
 async function taskPreGameTour() {
   const failures = [];
   let checked = 0;
@@ -31869,6 +32058,7 @@ const TASKS = [
   ["词条转移候选的分批回看", taskAffixTransferOverflow],
   ["只读页(第二个标签页)的常驻说明", taskReadOnlyTab],
   ["开局前两页(欢迎 / 建号)", taskPreGameTour],
+  ["开局三步(空存档走到能玩)", taskOnboardingFlow],
   ["玄枢图与全站册目", taskAtlasNavigation],
   ["浮层在 200% 缩放档(点得开的那几扇)", taskDialogZoom],
   ["构建产物 · dvh / 字体栈", taskBuildArtifacts],

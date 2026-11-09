@@ -436,6 +436,7 @@ const CATEGORIES = [
       "blueprintProgress",
       "chainLedger",
       "offlineChainNote",
+      "onboardingFlowGate",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",
