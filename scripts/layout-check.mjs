@@ -1993,6 +1993,22 @@ async function measurePixelContrast(page, sampler, dpr) {
           const data = ctx.getImageData(px, py, pw, ph).data;
           for (let k = 0; k < data.length; k += 4) {
             const bg = [data[k], data[k + 1], data[k + 2]];
+            /*
+             * **笔画像素要跳过** —— 这张截图是「已经画上了字」的页面,不是干净的底。
+             * 采到笔画内部时 `bg` 就等于文字色,于是 `fg` 算出来也是它,
+             * 对比度恒为 1:1。11px 的汉字笔画能占到矩形的两三成,而本判据的
+             * 失败线正是「≥20% 的采样点读不出来」—— 于是这一处**必然**报红,
+             * 报的值取决于字体渲染(CI 的软件光栅与本地不同),本地恒绿、CI 连红。
+             *
+             * 判的是「字压在什么底上」,那些像素的底就该是**没被字盖住的部分**。
+             * 故剔除与文字色距离过近的采样点(欧氏距离 < 30,约 12% 通道量程):
+             * 它们要么是笔画本身,要么是抗锯齿边缘 —— 都不是「底色」。
+             * 剔完若一个不剩,说明这一块整个被字盖满(极短文本),那种情况交给
+             * 声明色那条判据(measureTextContrast)去管,这里不出结论。
+             */
+            const nearInk =
+              Math.abs(bg[0] - fgR) + Math.abs(bg[1] - fgG) + Math.abs(bg[2] - fgB) < 30;
+            if (nearInk) continue;
             const fg = [fgR, fgG, fgB].map((v, i) => v * alpha + bg[i] * (1 - alpha));
             const [hi, lo] = [lum(fg), lum(bg)].sort((a, b) => b - a);
             ratios.push((hi + 0.05) / (lo + 0.05));
