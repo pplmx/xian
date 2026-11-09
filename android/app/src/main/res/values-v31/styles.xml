@@ -7,7 +7,7 @@
        观感上等同于没有启动画面。
        postSplashScreenTheme 指定 splash 结束后切回的正常主题 -->
   <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-    <item name="android:windowSplashScreenBackground">#0d1117</item>
+    <item name="android:windowSplashScreenBackground">@color/launch_background</item>
     <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_transparent</item>
     <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
   </style>

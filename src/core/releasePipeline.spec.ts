@@ -201,6 +201,57 @@ describe("发版正文 · 版本号一改,仓库里就得有一份同名正文",
     }
   });
 
+  it("启动底色只有一个出处 —— 七个引用点不许再写死色号", () => {
+    /*
+     * 启动过程要经过三段底色,它们必须**完全相同**,否则会看到"闪一下":
+     *
+     *   Android 12+ 的系统启动画面(`values-v31` 的 windowSplashScreenBackground)
+     *   → 启动主题的 windowBackground(`values` / `values-night`)
+     *   → Capacitor 加载层的 activity_main 背景
+     *   → 最后才被 WebView 的页面盖住
+     *
+     * 此前 `#0d1117` **硬编码在这七个地方**:三个 styles.xml 的
+     * `windowBackground` / `colorBackground` 共五处、activity_main.xml 一处、
+     * 以及 colors 文件里的定义。改一处漏一处,启动瞬间就会闪一下别的颜色 ——
+     * 而这种闪变只在真机上、只持续几百毫秒,本地开发永远看不到。
+     *
+     * 现在色号只在 `values/ic_launcher_background.xml` 的 `launch_background` 定义一次,
+     * 其余全部引用它。这条判据把「不该再写死」钉住。
+     */
+    const res = resolve(ROOT, "android/app/src/main/res");
+    const files = [
+      "values/styles.xml",
+      "values-night/styles.xml",
+      "values-v31/styles.xml",
+      "layout/activity_main.xml",
+    ];
+    const hardCoded: string[] = [];
+    for (const rel of files) {
+      const text = readFileSync(resolve(res, rel), "utf8");
+      // 只查**属性值位置**写死的色号:注释里提原值是说明来由,该留
+      const code = text.replace(/<!--[\s\S]*?-->/g, "");
+      if (/#0d1117/i.test(code)) hardCoded.push(rel);
+    }
+    expect(
+      hardCoded,
+      "这些文件又写死了启动底色 —— 改用 @color/launch_background:" + hardCoded.join("、"),
+    ).toEqual([]);
+
+    // 定义处必须真的在(否则上面全绿只是因为引用了一个不存在的资源)
+    const colors = readFileSync(resolve(res, "values/ic_launcher_background.xml"), "utf8");
+    expect(colors, "launch_background 的唯一定义不见了").toMatch(
+      /<color name="launch_background">#[0-9a-fA-F]{6}<\/color>/,
+    );
+
+    // 四个文件都必须真的引用它,不能只是"没写死"却也没引用
+    for (const rel of files) {
+      expect(
+        readFileSync(resolve(res, rel), "utf8"),
+        `${rel} 没有引用 @color/launch_background`,
+      ).toContain("@color/launch_background");
+    }
+  });
+
   it("应用标识五处同源 —— 改一处忘一处，Capacitor 就找不到 MainActivity", () => {
     /*
      * 同一个 `appId` 写在 **五个** 地方,各有各的用途,谁都不能落下:
