@@ -77,7 +77,7 @@ release. Add a tool name to select part of the graph. For example, run
 
 - 发版是显式动作：**提 `package.json` 的版本 → 打同名 tag → `git push origin main vX.Y.Z`**。构建 Electron / APK 并发布 Release 的流水线只在 tag 上触发，细节与判据见 `docs/development.md` 的「发版」。
 - **Release 正文写在仓库里，不写在页面上**：`docs/release-notes/` 下与 tag 同名的文件就是那一版的正文（release job 优先取它，没有则退回自动生成的提交清单）。手改页面上的正文会被下一次流水线重跑冲掉。
-- **只在 tag 流水线上跑的路径**（`android/`、`electron/`、`.github/workflows/build.yml`）改过之后，本地门全绿不等于发得出去 —— 用一次 tag 真跑通它。本仓两次发版都栽在「本地永远绿、只有 CI 才执行到」的代码上（Android 签名口令的 Groovy 遮蔽、Electron 的隐式发 Release）。
+- **只在 tag 流水线上跑的路径**（`android/`、`electron/`、`.github/workflows/build.yml`）改过之后，本地门全绿不等于发得出去 —— 用一次 tag 真跑通它。本仓**三次**发版都栽在「本地永远绿、只有 CI 才执行到」的代码上（Android 签名口令的 Groovy 遮蔽、Electron 的隐式发 Release、Windows 打包图标 48×48 不足 256）。第三次（v0.0.2）的教训最具体：`build.win.icon` 指着为省流量刻意缩成 16/32/48 的 favicon，而 electron-builder 要 ≥256 —— **一份配置同时承担两个用途**时，两边的约束会打架。修完补了判据（`releasePipeline.spec` 解析图标尺寸），并在本地真跑了一遍 `electron-builder --win` 才提交。
 - 引擎与宿主是两条版本线：万象引擎的 tag 与 Release 属于 engine 仓，别在宿主仓给它打 tag。
 
 ## 跨仓吸收纪律（读参考仓时）
