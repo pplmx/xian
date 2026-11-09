@@ -1305,22 +1305,26 @@ git push origin main v0.0.2
 打完后盯流水线三项 —— 这三条**本地永远看不到**:Android 签名、Electron 打包、Release 正文
 (正文取自仓库里的 `docs/release-notes/v0.0.2.md`)。
 
-**一处待裁决的契约不一致**(2026-11-09 发现,未改):
-
-`src/core/reincarnation.ts:353` 是
+**一处已修的契约不一致**(2026-11-09):`reincarnation.ts` 里曾有
 
 ```ts
 player.rebirth(view.nextLinggen ?? rollLinggen(rng, aptitudeFloorNow()));
 ```
 
-而 `src/types/index.ts` 在 `nextLinggen` 字段上写着「所见即所得:确认即用它,**绝不二次 roll**」,
-`docs/superpowers/plans/2026-09-14-reincarnation-linggen-visibility.md` 也把
-「若 `nextLinggen` 缺失,视为不变量违例,**不做二次 roll 兜底**」列为 Global Constraints。
+而 `types/index.ts` 的 `nextLinggen` 注释写着「绝不二次 roll」,计划的 Global Constraints
+也写「若 `nextLinggen` 缺失,视为不变量违例,不做二次 roll 兜底」。
 
-现状:类型上 `nextLinggen` 是必填的(`ReincarnationView.nextLinggen: LinggenProfile`),
-`confirmReincarnation` 里 `if (!view) return;` 之后它必然存在 —— 故 `??` 那半是**死代码**,
-无测试覆盖。而它若真的执行,玩家会拿到一个**没预告过**的灵根,恰是计划要杜绝的情形。
+判定它是死代码的三条证据:① 类型上 `nextLinggen: LinggenProfile` 必填;
+② `confirmReincarnation` 里 `if (!view) return;` 之后它必然存在;③ 无测试覆盖那半个分支。
+而它一旦执行,玩家会拿到一枚**没在第二程预告过**的灵根。
 
+**已删**(`5f5a5a4c`),并在 `game.spec` 补了**源码层**判据:`rollLinggen(` 只许在
+`prepareReincarnation` 里出现一次。原有那条「确认即用预览的灵根」查的是**行为**,
+挡不住加回兜底 —— 正常路径下 `??` 不执行,行为一模一样,死代码可以长期潜伏。
+
+> 这条记下来还有个用处:它说明「等裁决」有时是**过度谨慎**。证据(类型必填 +
+> 契约明文 + 无测试)齐了就该按契约办,不必把一个技术判断包装成设计裁决。
+>
 > **别把「文档里的未勾选项」当成未完成。** `docs/superpowers/specs/2026-09-24-herb-grades-and-market-design.md`
 > 有 6 个未勾选项,逐个核下来**全是已实现的验收标准**,只是没人回填勾选
 > (如「消耗品阶 == `herbGradeOfMajor(minRealm)`」那条,实际由
