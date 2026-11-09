@@ -1241,6 +1241,13 @@ for (const name of plainApis) { assert.ok(name in engine, …); }               
 >
 > 修法一致:三处各加一句 `assert.ok(x.size >= N, …)`,`N` 取当前的读数往下取整。
 >
+> **2026-11-09 把全文件 28 个集合遍历过了一遍**,危险的只有上面三处,其余各有保护:
+> `docCommands >= 10` / `docPaths >= 20` 两个计数器守着链接类循环;
+> `simSpecs.length >= 4` + `assert.deepEqual(missing, [])` 守着调参表;
+> `srcFiles` / `sourceModules` / `presetModules` 来自 `readdirSync`(真实文件,
+> 不是正则捞的);`exportNamesOf` 返回空会把模块判成「没被示例用到」而**误报**,
+> 误报是安全方向。
+>
 > 顺便记一处容易看走眼的地方:同一个文件里有
 > `plainApis.size` 这个表达式(`verify-dist.mjs:91` 的**打印**语句
 > 「组装指南自检通过(N 个工厂 + M 个工具 …)」)。grep 到它很容易以为「已经有 size 了」——
