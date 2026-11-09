@@ -81,7 +81,7 @@
   "build": {
     "appId": "com.mystvio.xuanshu",
     "productName": "玄枢录",
-    "asar": false,
+    "asar": true,
     "files": [
       "dist-electron/**/*",
       "dist/**/*",

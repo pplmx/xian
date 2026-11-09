@@ -201,6 +201,34 @@ describe("发版正文 · 版本号一改,仓库里就得有一份同名正文",
     }
   });
 
+  it("Electron 打包开着 asar —— 关掉时构建每轮都在警告「strongly not recommended」", () => {
+    /*
+     * `build.asar` 曾经是 **false**,来源是照搬参考仓 yunyin-xiuxian 的配置
+     * (见 `package.json` 首版提交 cdce24d6,当时 name 还是 yunyin-xiuxian)。
+     * 本仓从没为它写过理由,而 electron-builder 每轮构建都警告:
+     *
+     *   • asar usage is disabled — this is strongly not recommended
+     *
+     * 关掉的代价实测:
+     *   · 产物 166,936,968 字节 → 开启后 164,074,083(少 2.7 MiB)
+     *   · **拿不到 asar 完整性校验** —— 开启后 electron-builder 会自动执行
+     *     `updating asar integrity executable resource`,关着就没有这一步
+     *   · 源码与资源以散文件躺在安装目录里,谁都能直接翻
+     *
+     * 开启是安全的:`main.js` 只读 `app.getAppPath()` 下的 `dist/` 与 `public/`,
+     * 这两个在 asar 里由 Electron 自动虚拟化;写盘只写 `app.getPath("userData")`,
+     * 那在 asar 之外。实测 `electron-builder --win` 通过,`asar list` 确认
+     * `/dist/index.html` 与 `/public/icons/icon-512.png` 都在归档里。
+     */
+    const pkg = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf8")) as {
+      build?: { asar?: boolean };
+    };
+    expect(
+      pkg.build?.asar,
+      "build.asar 必须显式 true —— 关掉会丢 asar 完整性校验,且构建每轮警告",
+    ).toBe(true);
+  });
+
   it("流水线确实优先取仓库里那份正文", () => {
     expect(BUILD).toMatch(/NOTES="docs\/release-notes\/\$\{GITHUB_REF_NAME\}\.md"/);
     expect(BUILD, "落回自动生成时应当留一条日志,别让发版悄悄降级").toMatch(/不存在[^\n]*自动生成/);
