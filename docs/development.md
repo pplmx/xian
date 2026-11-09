@@ -1321,6 +1321,24 @@ player.rebirth(view.nextLinggen ?? rollLinggen(rng, aptitudeFloorNow()));
 `confirmReincarnation` 里 `if (!view) return;` 之后它必然存在 —— 故 `??` 那半是**死代码**,
 无测试覆盖。而它若真的执行,玩家会拿到一个**没预告过**的灵根,恰是计划要杜绝的情形。
 
+**同一份计划还有一半没做**(2026-11-09 逐条核过 35 个未勾选项):
+
+| 计划的交付物 | 状态 |
+| --- | --- |
+| Task 1:`LifeRecord` 加灵根字段 | **未实现** —— `src/data/samsara.ts:144` 的 `LifeRecord` 里没有 `linggen` |
+| Task 2:`ReincarnationView.nextLinggen` + prepare 里 roll 一次 | 已实现(`reincarnation.ts:184`、`types/index.ts:1381`) |
+| Task 3:`recordLife` 快照本世灵根 | **未实现** —— `reincarnation.ts:285` 的 `recordLife({...})` 没有灵根 |
+| Task 4:第二程加灵根卡 | 已实现(`ReincarnationDialog.vue:375-389` 读 `view.nextLinggen`) |
+
+计划的 Goal 写着两件事:「让转世=灵根重生可感知(弹窗第二程展示来世灵根 + toast)」,
+**以及**「在人物页/修仙录历世履历展示每世的灵根徽记」。前者做了,后者没做。
+
+而 `docs/` 里**没有任何"否决后半"的记录** —— 计划里被否决的是另一件事
+(「不做转世灵根重掷界面,Phase 32.2 decision 否决」),那一条写明了理由。
+
+**没做的理由**:补它要动数据结构(`LifeRecord.linggen`,老存档兼容)+ 改履历 UI,
+那是**功能开发**,不属于"性能优化/重构/架构"。记在这里等排期。
+
 **没改的理由**:删掉兜底 = 违例时抛错而不是静默换灵根,那是**行为变更**;
 保留兜底 = 与契约矛盾。两条路都要先确认「违例时希望怎样」—— 这属于设计裁决,
 不该由判据维护者单方面定。
