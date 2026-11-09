@@ -35,6 +35,7 @@
  * 抢的是首屏 JS 的带宽。故 index.html 里**不加** preload,只留 font-display: swap。
  */
 import { createServer } from "node:http";
+import { gzipSync } from "node:zlib";
 import { readFileSync, mkdirSync, readdirSync } from "node:fs";
 import { dirname, extname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -151,6 +152,30 @@ function startServer() {
             `  <link rel="preload" href="./assets/${font}" as="font" type="font/woff2" crossorigin>\n  </head>`,
           );
         body = Buffer.from(html, "utf-8");
+      }
+      /*
+       * **上 gzip** —— 否则「线传字节」这一栏恒等于「解码字节」,失去参考价值。
+       *
+       * 这个本地服务原本直接写原文、`content-length` 取 `body.length`,于是
+       * `first-paint` 印出的「线传 1256KB」其实是**没压缩**的大小;而生产环境
+       * (GitHub Pages / nginx)是压过的 —— 实测首屏 JS+CSS 合计 gzip 后只有 359KB,
+       * 差 3.5 倍。两个读数一样,那一栏就等于没量。
+       *
+       * 压缩只加在可压的类型上(HTML/JS/CSS/SVG/JSON);字体 woff2 已自带压缩,
+       * 再 gzip 只会更大,直接原文发。
+       */
+      const COMPRESSIBLE = /^(text\/|application\/(javascript|json)|image\/svg)/;
+      const acceptsGzip = /\bgzip\b/.test(String(req.headers["accept-encoding"] ?? ""));
+      if (acceptsGzip && COMPRESSIBLE.test(type) && body.length > 1024) {
+        const zipped = gzipSync(body);
+        res.writeHead(200, {
+          "content-type": type,
+          "cache-control": "no-store",
+          "content-encoding": "gzip",
+          "content-length": zipped.length,
+        });
+        res.end(zipped);
+        return;
       }
       res.writeHead(200, {
         "content-type": type,
@@ -324,6 +349,23 @@ console.log(`  楷体切片:取了 ${fontReqs.length} 份 · ${kb(fontBytes)}`);
 for (const r of fontReqs) console.log(`    ${kb(r.bytes).padStart(6)}  ${r.url.split("/").pop()}`);
 
 const failures = [];
+/*
+ * **压缩得真生效** —— 否则「线传」那一栏恒等于「解码」,等于没量。
+ *
+ * 这个本地服务原本直接写原文、`content-length` 取 `body.length`,于是印出的
+ * 「线传 1256KB」其实是没压缩的大小;而生产环境(GitHub Pages / nginx)都压过
+ * —— 实测首屏 JS+CSS 合计 gzip 后只有 359KB,差 3.5 倍。
+ *
+ * 判据:线传必须**明显**小于解码(留 20% 余量,免得压缩率波动时误红)。
+ * 数量级上,文本资源 gzip 后通常只剩两三成。
+ */
+const wireMedian = median(wire);
+if (wireMedian >= median(total) * 0.8) {
+  failures.push(
+    `线传 ${kb(wireMedian)} 与解码 ${kb(median(total))} 几乎一样 —— 本地服务没上 gzip,` +
+      `「线传」那一栏失去意义(生产环境是压过的)`,
+  );
+}
 if (median(total) > BUDGETS.bytes * 1024)
   failures.push(`冷启动解码字节 ${kb(median(total))} 超过预算 ${kb(BUDGETS.bytes * 1024)}`);
 if (median(fcp) > BUDGETS.fcp) failures.push(`FCP ${ms(median(fcp))} 超过预算 ${ms(BUDGETS.fcp)}`);
