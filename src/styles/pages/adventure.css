@@ -794,6 +794,30 @@
     line-height: 1.5;
   }
   /*
+   * 「为什么偏偏撞见这一件」—— 同源加权那一句。
+   *
+   * 它是账不是景:走石青一点点的墨(与上面那行「你自己那侧的重复记忆」同一档),
+   * 字号 note。徽记用该元素的语义色,与人物页灵根牌同一份色表。
+   * 不与正文抢眼 —— 玩家真去想「为什么是它」时才会读到这一行。
+   */
+  .event-slip__fortune-hint {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    gap: 0.34rem;
+    margin-top: 0.42rem;
+    padding-top: 0.34rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    color: var(--color-ink-soft);
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .event-slip__fortune-mark {
+    flex: none;
+    font-family: var(--font-kai);
+    line-height: 1;
+  }
+  /*
    * 你自己那侧的重复记忆(见 ui/eventRecall)。
    * 与正文拉开层次靠**字号与颜色**,不靠透明度(本作文字不叠透明度)。
    * 用石青:它是"信息"那一色 —— 这一句是账,不是景。

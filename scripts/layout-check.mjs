@@ -9067,6 +9067,105 @@ async function taskEventSlip() {
     if (SHOTS) {
       await page.screenshot({ path: join(SHOTS_DIR, "event-result-390.png") });
     }
+
+    /*
+     * 机缘的同源提示 —— `core/eventEngine` 抽机缘牌时按 `fortuneAffinity` 加权,
+     * 与灵根同源的机缘权重更高(普根 2.5 / 特殊根 2.8 / 混沌 3.2)。那段代码在真实
+     * 抽取里生效,而弹窗此前一个字都没有:玩家不知道这次撞见与自己那副根有关。
+     *
+     * 两侧都要量:
+     *   一 刚结完的那一桩是 `ev_merchant`(不带 element)—— 提示**不许**出现,
+     *      否则每个际遇都会硬挂一句假话;
+     *   二 换一桩带 element 的机缘(`ft_sword_remnant`,metal),且把灵根改成同源 ——
+     *      提示必须出、倍率必须是普根那一档 2.5、措辞必须是「更容易撞见」。
+     */
+    checked += 1;
+    {
+      const merchantHint = await page.evaluate(
+        () => document.querySelector("[data-event-fortune-affinity]")?.textContent ?? null,
+      );
+      if (merchantHint) {
+        failures.push(
+          `[390] 机缘同源提示:不带五行的际遇也挂了一句(«${String(merchantHint)
+            .replace(/\s+/g, " ")
+            .trim()}»)—— 那是硬造的因果`,
+        );
+      }
+    }
+
+    checked += 1;
+    {
+      // 换存档:同源机缘 + 对应灵根
+      const rooted = showcaseSlices("light");
+      rooted.player = {
+        ...rooted.player,
+        linggen: {
+          gradeName: "双灵根",
+          growthMult: 1.35,
+          roots: [
+            { element: "metal", aptitude: 88 },
+            { element: "water", aptitude: 70 },
+          ],
+        },
+      };
+      rooted.adventure = { pendingEventId: "ft_sword_remnant", pendingEventSince: Date.now() };
+      await seedSave(ctx, rooted, "__fortuneAffinity");
+      const rootedPage = await ctx.newPage();
+      watchPageErrors(rootedPage, pageErrors);
+      await openRoute(rootedPage, "/adventure", 650);
+      await rootedPage
+        .locator("[data-event-fortune-affinity]")
+        .first()
+        .waitFor({ state: "visible", timeout: 6000 })
+        .catch(() => {});
+      const hint = await rootedPage.evaluate(() => {
+        const el = document.querySelector("[data-event-fortune-affinity]");
+        if (!el) return null;
+        const panel = document.querySelector(".modal-panel");
+        return {
+          text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+          mult: el.getAttribute("data-fortune-mult") ?? "",
+          overflowX: panel ? panel.scrollWidth - panel.clientWidth : 0,
+        };
+      });
+      if (!hint) {
+        failures.push(
+          "[390] 机缘同源提示:与灵根同源的机缘(上古剑痕 · metal)没有说出「为什么是它」",
+        );
+      } else {
+        if (/NaN|undefined|Infinity/.test(hint.text)) {
+          failures.push(`[390] 机缘同源提示:漏出占位符 —— «${hint.text}»`);
+        }
+        if (/××/.test(hint.text)) {
+          failures.push(`[390] 机缘同源提示:印出了 «××» —— multText 已自带 ×:«${hint.text}»`);
+        }
+        // 普根那一档必须是 2.5 —— 与 ELEMENT_AFFINITY.metal.fortuneWeight 同源
+        if (hint.mult !== "×2.5") {
+          failures.push(
+            `[390] 机缘同源提示:倍率读成 «${hint.mult || "无"}»,普根 metal 应为 ×2.5` +
+              `(与 ELEMENT_AFFINITY 同源,不许另算)`,
+          );
+        }
+        if (!/更容易撞见/.test(hint.text)) {
+          failures.push(`[390] 机缘同源提示:没说清是「更容易撞见」—— «${hint.text}»`);
+        }
+        // 措辞不许滑成门槛/独占 —— 无此灵根者权重仍是 1
+        for (const banned of ["只有你", "独有", "才配", "专属", "必定"]) {
+          if (hint.text.includes(banned)) {
+            failures.push(`[390] 机缘同源提示:写成了门槛/独占(«${banned}»)—— 无此灵根者也遇得到`);
+          }
+        }
+        // 「与你金·属灵根」那种断错:元素名后必须接「系」
+        if (/与你[^，,]{1,3}属灵根/.test(hint.text)) {
+          failures.push(`[390] 机缘同源提示:元素名后没接「系」,读起来会断错 —— «${hint.text}»`);
+        }
+        if (hint.overflowX > 0) {
+          failures.push(`[390] 机缘同源提示:那一行把弹窗横向撑破 ${hint.overflowX}px`);
+        }
+      }
+      await rootedPage.close();
+    }
+
     if (pageErrors.length)
       failures.push(`[390] 际遇帖场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
   } finally {

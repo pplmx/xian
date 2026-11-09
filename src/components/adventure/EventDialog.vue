@@ -24,6 +24,36 @@
               <span>{{ tierOdds }}</span>
               <span data-event-auto>{{ autoResolveText }}</span>
             </p>
+            <!--
+              为什么偏偏撞见这一件 —— `core/eventEngine` 抽机缘牌时是**加权**的:
+              `weightMultiplier: (entry) => fortuneAffinity(entry.def.element, elements)`,
+              与灵根同源的机缘权重更高(普根 2.5 / 特殊根 2.8 / 混沌 3.2)。
+              那段代码有注释有判据、真在抽取里生效,而玩家这一头一个字都没有 ——
+              于是「灵根 → 机缘 → 师承 → 流派」这条因果链的起点是隐形的。
+
+              措辞守 `affinityMult` 那句注释:是**更容易撞见**,不是独占 ——
+              无此灵根者权重仍是 1,路没有被关掉。
+            -->
+            <p
+              v-if="fortuneHint"
+              class="event-slip__fortune-hint"
+              data-event-fortune-affinity
+              :data-fortune-mult="multText(fortuneHint.mult)"
+            >
+              <span
+                class="event-slip__fortune-mark"
+                :style="{ color: ELEMENTS[fortuneHint.element].color }"
+                >{{ ELEMENTS[fortuneHint.element].char }}</span
+              >
+              <!--
+                措辞避开「与你金·属灵根」那种断错的读法:元素名后面直接接「系」,
+                再说「与你灵根同源」。玩家读到的是「与你金系灵根同源」。
+              -->
+              <span
+                >与你{{ ELEMENTS[fortuneHint.element].name }}系灵根同源，权重
+                {{ multText(fortuneHint.mult) }} —— 更容易撞见，但无此灵根者也遇得到</span
+              >
+            </p>
           </div>
         </div>
         <p class="event-slip__source">{{ tierDef.source }}</p>
@@ -208,6 +238,9 @@ import { EVENT_AUTO_RESOLVE_SECONDS, EXPLORE_MODES } from "@/data/constants";
 import { useNow } from "@/composables/useNow";
 import { cnNumber, formatCountdown } from "@/utils/format";
 import { recallText } from "@/ui/eventRecall";
+import { fortuneAffinity, rootElements } from "@/core/linggenAffinity";
+import { ELEMENTS } from "@/data/linggen";
+import { multText } from "@/ui/multText";
 
 const adventure = useAdventureStore();
 const now = useNow();
@@ -238,6 +271,20 @@ const def = computed(() =>
  * 结算阶段 pendingEventId 已被清掉(Tick 里 setPendingEvent(null)),
  * 故结果阶段沿用上一次算出的档位,不让横幅在结算的一瞬间闪成「际遇」。
  */
+/**
+ * 这一桩机缘与灵根同源吗 —— 同源才说,非同源整句不出。
+ *
+ * 判据读**同一个** `fortuneAffinity`(抽取那条路用的就是它),不按元素去表里
+ * 自己比一遍 —— 比出来的那一份会在改权重时先分叉。
+ */
+const fortuneHint = computed(() => {
+  const element = def.value?.element;
+  if (!element) return null;
+  const mult = fortuneAffinity(element, rootElements(usePlayerStore().linggen?.roots));
+  // 权重等于 1 就是「没有加成」,不必印一行 —— 那时说什么都是噪音
+  return mult > 1 ? { element, mult } : null;
+});
+
 const tierId = ref<EventTier>("jingyu");
 /** 结算阶段事件定义已查不到(pendingEventId 被清),故把它的名字一并记下 */
 const lastTitle = ref("际遇");
