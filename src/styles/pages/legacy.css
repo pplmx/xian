@@ -702,6 +702,77 @@
     color: var(--color-ink-faint);
     font-size: var(--type-note);
   }
+  /*
+   * 敌手谱 —— 「洞悉敌手 N / 140」那一行只报到顶的那一阶,这一块把四阶摊开。
+   *
+   * 版式:抬头一行(逐阶计数) + 至多八行(阶 · 照面次数 · 距下一阶还差几次)。
+   * 快洞悉的排前面 —— 那才是「下一步该去打谁」。未识的不点名,只报还有多少种。
+   */
+  .legacy-enemy-ledger {
+    margin-top: 0.5rem;
+    padding-top: 0.42rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+  }
+  .legacy-enemy-ledger__head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.2rem 0.5rem;
+    color: var(--color-ink-soft);
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+  }
+  .legacy-enemy-ledger__head .tabular {
+    color: var(--color-ink-faint);
+    font-family: var(--font-sans);
+  }
+  .legacy-enemy-ledger__rows {
+    margin-top: 0.22rem;
+  }
+  .legacy-enemy-ledger__row {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.1rem 0.44rem;
+    padding: 0.22rem 0;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.06);
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .legacy-enemy-ledger__stage {
+    flex: none;
+    color: var(--color-ink-soft);
+  }
+  .legacy-enemy-ledger__seen {
+    flex: none;
+    color: var(--color-ink-faint);
+  }
+  .legacy-enemy-ledger__next {
+    color: var(--color-ink-faint);
+  }
+  .legacy-enemy-ledger__maxed {
+    color: var(--color-jade);
+  }
+  .legacy-enemy-ledger__more {
+    margin-top: 0.3rem;
+    padding: 0.2rem 0.44rem;
+    border: 1px solid rgb(var(--color-ink-rgb) / 0.14);
+    border-radius: 2px;
+    background: transparent;
+    color: var(--color-ink-soft);
+    font-family: inherit;
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .legacy-enemy-ledger__unknown {
+    margin-top: 0.3rem;
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
   .legacy-history__list,
   .legacy-loss__list,
   .legacy-fate__list,

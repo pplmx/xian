@@ -143,6 +143,68 @@
                 睁眼即识 {{ stage.knownMaterialRank }} 阶以下 · 已辨识
                 {{ lore.knownMaterialCount }} 味，通晓用法 {{ lore.masteredMaterialCount }} 味。
               </p>
+              <!--
+                敌手谱 —— 上面那一行只报「洞悉了 N / 140 种」,那只是**到顶那一阶**。
+                而认知是四阶段的系统(未识 → 眼熟 → 知其路数 → 洞悉,门槛 1 / 5 / 14 次),
+                玩家看到 0 / 140 既不知道自己差在哪几阶,也不知道下一步该去打谁。
+                这一页别处(灵材、器谱、丹方)都有逐项清单 —— 唯独敌手只有一行数。
+
+                只列**见过**的:未识的不点名(图鉴通用的 ??? 纪律),只报还有多少种没照过面。
+                阶名与门槛读引擎那份(见 ui/enemyLoreLedger),首领走它自己那张表。
+              -->
+              <div
+                v-if="enemyLedger.known > 0"
+                class="legacy-enemy-ledger"
+                data-legacy-enemy-ledger
+              >
+                <p class="legacy-enemy-ledger__head">
+                  <span>敌手谱</span>
+                  <span class="tabular" data-legacy-enemy-stages>{{ enemyStageText }}</span>
+                </p>
+                <ul class="legacy-enemy-ledger__rows">
+                  <li
+                    v-for="row in enemyPage.visible"
+                    :key="row.id"
+                    class="legacy-enemy-ledger__row"
+                    :data-legacy-enemy="row.id"
+                    :data-enemy-stage="row.stageIndex"
+                  >
+                    <span class="legacy-enemy-ledger__stage">{{ row.stageName }}</span>
+                    <span class="legacy-enemy-ledger__seen tabular">{{ row.seen }} 次</span>
+                    <!--
+                      「再 0 次」不是人话 —— 0 次意味着门槛已够,只是还没被下一次战斗
+                      推到(存档里的阶与门前次数可能暂时不同步)。那种情形说「已够门槛」,
+                      不说一个让人以为还要再打的数。
+                    -->
+                    <span
+                      v-if="row.toNext !== null && row.toNext > 0"
+                      class="legacy-enemy-ledger__next tabular"
+                      >再 {{ row.toNext }} 次 · {{ row.nextStageName }}</span
+                    >
+                    <span v-else-if="row.toNext === 0" class="legacy-enemy-ledger__next"
+                      >门槛已够 · {{ row.nextStageName }}</span
+                    >
+                    <span v-else class="legacy-enemy-ledger__maxed">已洞悉</span>
+                  </li>
+                </ul>
+                <!--
+                  一百四十种敌手不能让 DOM 一次铺完,也不能用 slice 永久截断 ——
+                  被切掉的那些等于没有(`uiLayering.spec` 专门守这一条)。
+                  与履历、行迹同一把尺:走 `listWindow`,余量显式报出并可续开。
+                -->
+                <button
+                  v-if="enemyPage.hidden > 0"
+                  type="button"
+                  class="legacy-enemy-ledger__more tap-row"
+                  data-legacy-enemy-more
+                  @click="enemyLimit += ENEMY_RENDER_BATCH"
+                >
+                  再看 {{ nextEnemyBatch }} 种 · 余 {{ enemyPage.hidden }}
+                </button>
+                <p v-if="enemyLedger.unknown !== null" class="legacy-enemy-ledger__unknown">
+                  还有 {{ enemyLedger.unknown }} 种尚未照面 —— 名字留白，路要自己走出来。
+                </p>
+              </div>
             </article>
 
             <article class="legacy-panel" data-legacy-vow>
@@ -813,6 +875,7 @@ import { lifeLinggen, linggenSpoken } from "@/ui/lifeLinggen";
 import { lifeLinggenSpread } from "@/ui/lifeLinggenSpread";
 import { lifeFootprint } from "@/ui/lifeFootprint";
 import { lifeDateText } from "@/ui/lifeDate";
+import { enemyLoreLedger } from "@/ui/enemyLoreLedger";
 import { formatDate } from "@/utils/time";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LegacyWheel from "@/components/common/LegacyWheel.vue";
@@ -903,6 +966,37 @@ const loreRows = computed(() =>
   ].map((row) => ({ ...row, meter: legacyMeter(row.value, row.total) })),
 );
 const loreCoverage = computed(() => legacyCoverage(loreRows.value));
+
+/**
+ * 敌手谱 —— 认知是四阶段系统,而上面那一行只报到顶的「洞悉 N / 140」。
+ *
+ * 输入是两份存档字段:`enemySeen`(照面次数)与 `enemyLore`(已记的阶)——
+ * 这一作的库走「计数归 store、判定归库」,阶段不是从次数现算的。
+ */
+const enemyLedger = computed(() =>
+  enemyLoreLedger(lore.enemySeen, lore.enemyLore, { total: ENEMIES.length }),
+);
+/** 逐阶计数的一句话:「眼熟 3 · 知其路数 2 · 洞悉 1」 */
+const enemyStageText = computed(() =>
+  enemyLedger.value.stageCounts.map((row) => `${row.stage} ${row.count}`).join(" · "),
+);
+
+/*
+ * 敌手谱的分批渲染 —— 与履历、行迹同一把尺(`listWindow`)。
+ *
+ * 一百四十种不能让 DOM 一次铺完;但也不能用 `slice` 永久截断:
+ * 被切掉的那些等于没有(`uiLayering.spec` 专门守这一条)。故余量显式报出、
+ * 可续开。
+ */
+const ENEMY_RENDER_BATCH = 8;
+/** 只保留最近一批的窗口宽度 —— 与 lifePage 同法,续开时旧批滑走 */
+const ENEMY_RENDER_WINDOW = ENEMY_RENDER_BATCH * 2;
+const enemyLimit = ref(ENEMY_RENDER_BATCH);
+const enemyPage = computed(() =>
+  listWindow(enemyLedger.value.rows, enemyLimit.value, ENEMY_RENDER_WINDOW),
+);
+/** 下一次续开会放出几种 —— 按钮文案与 data 共用,不许两处各算一遍 */
+const nextEnemyBatch = computed(() => nextRevealCount(enemyPage.value.hidden, ENEMY_RENDER_BATCH));
 
 const RESULT_TEXTS: Record<"done" | "unfinished" | "broken", string> = {
   done: "践行到底",

@@ -27428,6 +27428,22 @@ async function taskLegacyHistoryOverflow() {
       },
     };
     slices.adventure = { ...slices.adventure, eventMemories };
+    /*
+     * 敌手认知 —— 下面那条敌手谱判据要量四阶段,故夹具里得真有照面记录。
+     * `e_icefairy`(堕落冰魄仙子)是**首领**,门槛 [0,1,2,3];记 2 阶即「知其路数」。
+     * 另外两只走普通门槛 [0,1,5,14],用来核「按次数升阶」那一侧。
+     */
+    slices.lore = {
+      materialLore: {},
+      materialSeen: {},
+      recipeLore: {},
+      blueprintLore: {},
+      skillExp: {},
+      enemyLore: { e_icefairy: 2, e_yaolang: 3, e_sword_guard: 1 },
+      enemySeen: { e_icefairy: 6, e_yaolang: 16, e_sword_guard: 3 },
+      studyFrac: 0,
+      seeded: true,
+    };
     await seedSave(ctx, slices, "__legacyHistoryFixture");
 
     const page = await ctx.newPage();
@@ -27893,6 +27909,85 @@ async function taskLegacyHistoryOverflow() {
         failures.push("[320] 单世态:历世足迹印了走势 —— 只有一世时没有走向可言");
       }
       await onePage.close();
+    }
+
+    /*
+     * 敌手谱 —— 「洞悉敌手 N / 140」那一行只报到顶的那一阶。而认知是四阶段系统
+     * (未识 → 眼熟 → 知其路数 → 洞悉),玩家看到 1 / 140 既不知道自己差在哪几阶,
+     * 也不知道下一步该去打谁。这一页别处(灵材、器谱、丹方)都有逐项清单 ——
+     * 唯独敌手只有一行数。
+     *
+     * 判据核:清单在、逐阶计数与明细行对得上、**首领走它自己那张门槛表**
+     * (夹具那只 2 次即「知其路数」,按普通表该还是「眼熟」)、未识只报数不点名。
+     */
+    checked += 1;
+    {
+      const enemy = await page.evaluate(() => {
+        const box = document.querySelector("[data-legacy-enemy-ledger]");
+        if (!box) return null;
+        return {
+          stages: (document.querySelector("[data-legacy-enemy-stages]")?.textContent || "").trim(),
+          rows: [...box.querySelectorAll("[data-legacy-enemy]")].map((r) => ({
+            id: r.getAttribute("data-legacy-enemy"),
+            stage: Number(r.getAttribute("data-enemy-stage")),
+            text: (r.textContent || "").replace(/\s+/g, " ").trim(),
+          })),
+          unknown: (box.querySelector(".legacy-enemy-ledger__unknown")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+        };
+      });
+      if (!enemy) {
+        failures.push("[320] 敌手谱没渲染 —— 夹具里明明记了照面次数");
+      } else if (/NaN|undefined|Infinity/.test(JSON.stringify(enemy))) {
+        failures.push(`[320] 敌手谱漏出占位符 —— «${enemy.stages}»`);
+      } else if (enemy.rows.length === 0) {
+        failures.push("[320] 敌手谱一行都没有 —— 见过的那只该列出来");
+      } else if (!/\d+/.test(enemy.stages)) {
+        failures.push(`[320] 敌手谱没报逐阶计数 —— «${enemy.stages}»`);
+      } else {
+        /*
+         * 阶名不许与阶数对不上:预览层给出的 stageIndex 与 ENEMY_LORE_STAGE_NAMES 同源,
+         * 这里按那四个名字核一遍,免得出现「stage 3 却印着眼熟」这种错位。
+         */
+        const STAGE_NAMES = ["未识", "眼熟", "知其路数", "洞悉"];
+        for (const row of enemy.rows) {
+          const expectStage = STAGE_NAMES[row.stage];
+          if (!expectStage) {
+            failures.push(`[320] 敌手谱的阶数越界 —— «${row.id}» stage=${row.stage}`);
+          } else if (!row.text.includes(expectStage)) {
+            failures.push(
+              `[320] 敌手谱的阶名与阶数对不上 —— «${row.id}» stage ${row.stage} 应印「${expectStage}」,实见 «${row.text}»`,
+            );
+          }
+        }
+        /*
+         * **首领门槛**:夹具那只 `e_icefairy`(堕落冰魄仙子)`isBoss: true`,
+         * 走的是 `ENEMY_LORE_BOSS_THRESHOLDS = [0, 1, 2, 3]`,不是普通的
+         * `[0, 1, 5, 14]`。夹具记 `enemyLore: 2` → 恰是第 2 阶「知其路数」。
+         *
+         * 这条正是本轮最该守的一处:若实现按普通表算,首领会显示
+         * 「还差 11 次 · 洞悉」—— 一个一条命只打一次的首领永远到不了的数,
+         * 而专为首领写的那两层情报也就永远看不着。
+         * 判据从**渲染出来的字**推:阶必须是「知其路数」,而不是「眼熟」。
+         */
+        const ice = enemy.rows.find((r) => r.id === "e_icefairy");
+        if (!ice) {
+          failures.push("[320] 敌手谱里找不到夹具那只 e_icefairy");
+        } else if (ice.stage !== 2) {
+          failures.push(
+            `[320] 敌手谱的首领阶算错了 —— e_icefairy 是首领,门檻 [0,1,2,3],` +
+              `夹具记敌 2 阶该是「知其路数」,实见 stage ${ice.stage}`,
+          );
+        } else if (/还\s*差\s*1[0-9]\s*次/.test(ice.text) || /再\s*1[0-9]\s*次/.test(ice.text)) {
+          failures.push(`[320] 敌手谱把首领按普通门檻算了 —— «${ice.text}»(那是永远到不了的数)`);
+        }
+        if (!enemy.unknown) {
+          failures.push("[320] 敌手谱没报「还有多少种未照面」—— 那一句是玩家知道还有多少的入口");
+        } else if (!/\d+/.test(enemy.unknown)) {
+          failures.push(`[320] 敌手谱的未识计数没有数字 —— «${enemy.unknown}»`);
+        }
+      }
     }
 
     /*

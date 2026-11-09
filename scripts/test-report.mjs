@@ -468,6 +468,7 @@ const CATEGORIES = [
       "offlineYieldNote",
       "inventoryUpgradeEmpty",
       "codexSearch",
+      "enemyLoreLedger",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",
