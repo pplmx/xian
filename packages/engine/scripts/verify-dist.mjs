@@ -74,13 +74,31 @@ const { MINIMAL } = await import(pathToFileURL(resolve(DIST, "presets/minimal.js
       ),
     ].map((m) => m[1]),
   );
+  /*
+   * **防空转** —— 这个集合由反引号正则从 `docs/assembly.md` 里捞。文档哪天把反引号
+   * 换成别的写法(或改名),集合就静默变空,下面那个 `for` 一次都不执行,判据照常打
+   * 「组装指南自检通过」。同文件里 `factories.size >= 8` 就是现成的样子。
+   * 当前读到 14 个,下限取 8 留余量 —— 它拦的是"变空/大幅缩水",不是"少一个"。
+   */
+  assert.ok(plainApis.size >= 8, `组装指南里只认出 ${plainApis.size} 个工具函数 —— 写法变了?`);
   for (const name of plainApis) {
     assert.ok(name in engine, `组装指南提到 ${name},但公开入口没有这个导出`);
   }
-  for (const [, example] of doc.matchAll(/(examples\/[\w.-]+\.ts)/g)) {
+  /*
+   * 同样防空转:这两个循环体也是"集合为空就静默通过"。当前 38 / 45 条,
+   * 下限各取 20。
+   */
+  const exampleRefs = [...doc.matchAll(/(examples\/[\w.-]+\.ts)/g)];
+  assert.ok(
+    exampleRefs.length >= 20,
+    `组装指南里只认出 ${exampleRefs.length} 处示例引用 —— 写法变了?`,
+  );
+  for (const [, example] of exampleRefs) {
     assert.ok(existsSync(resolve(ENGINE, example)), `组装指南提到的示例不存在:${example}`);
   }
-  for (const [, spec] of doc.matchAll(/`(\w+\.spec\.ts)`/g)) {
+  const specRefs = [...doc.matchAll(/`(\w+\.spec\.ts)`/g)];
+  assert.ok(specRefs.length >= 20, `组装指南里只认出 ${specRefs.length} 处用例引用 —— 写法变了?`);
+  for (const [, spec] of specRefs) {
     // 用例可能在子目录里(如 presets/presets.spec.ts):按文件名整棵树找
     const found = readdirSync(resolve(ENGINE, "src"), { recursive: true, encoding: "utf-8" }).some(
       (entry) => typeof entry === "string" && entry.endsWith(spec),
