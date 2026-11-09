@@ -91,12 +91,50 @@ git subtree pull --prefix=packages/engine engine main  # 库 → 本作
 
 ### 第 ⑧ 步红了,先分清是哪种
 
-它报的都是「本仓 packages/engine 与独立仓不是同一棵树」,但成因有两种,**处置完全不同**:
+它报的都是「本仓 packages/engine 与独立仓不是同一棵树」,但成因有**三种**,**处置完全不同**:
 
 | 成因 | 怎么认 | 怎么办 |
 | --- | --- | --- |
 | 改了库、忘了推 | `git status --short packages/engine` 干净 | `bun run sync:engine`(报错里打印的就是它) |
 | 库里有**未提交**改动 | 那条命令会列出改动文件 | 先提交,再 `bun run sync:engine` |
+| **两边历史分叉**(内容可能完全一致) | `sync:engine` 报 `non-fast-forward` 或 `refusing to merge unrelated histories` | 见下节,别硬推 |
+
+### 第三种:历史分叉
+
+2026-11-09 实际撞到的一次。三条事实摆在一起才看得出是这种:
+
+```text
+本仓 packages/engine 的树   7707641a9c97   ← 与独立仓 main 的内容完全一致
+独立仓 main 的最新提交       690b7f47 refactor(combat): resolve 拆成五段
+本仓历史里有没有这个提交      没有
+```
+
+**内容是同步的,但提交链不是。** `git diff 7707641a 690b7f47^{tree}` 为空 ——
+说明那次 `refactor(combat)` 是**直接在引擎仓提交的**,宿主这边的 `packages/engine`
+从没经过对应提交,于是 `git subtree push` 想推的分裂链与远程没有共同祖先,被拒。
+
+两种"补救"都没用,而且报错各不相同:
+
+| 命令 | 报什么 | 为什么不行 |
+| --- | --- | --- |
+| `git subtree push --prefix=packages/engine engine main` | `! [rejected] ... (non-fast-forward)` | 分裂链与远程无共同祖先 |
+| `git subtree pull ... --squash` | `fatal: can't squash-merge: 'packages/engine' was never added` | 这个子树不是 `subtree add` 建的,是直接提交进来的 |
+| `git subtree pull ...`(不带 squash) | `fatal: refusing to merge unrelated histories` | 同上,本来就没有共同历史 |
+
+**有效的处置:直接在引擎仓那边提交。** 步骤是
+
+```bash
+git clone git@github.com:pplmx/wanxiang-engine.git /tmp/eng-push
+cp packages/engine/{package.json,bun.lock,scripts/verify-dist.mjs} /tmp/eng-push/  # 按实际改动文件
+cd /tmp/eng-push && bun install && bun test    # 先验证:它是个独立包,这一步必须过
+git add -A && git commit -F <message>
+git push origin main
+```
+
+回到宿主再跑 `bun scripts/engine-sync.mjs`,树哈希会对上。
+
+> **为什么不能靠 `git push --force` 抹平**:独立仓是**发布出去的库**,它的历史是给别人看的。
+> 用宿主的分裂链覆盖它,等于抹掉别人引用过的提交。宁可多一次 clone。
 
 第二种值得单独说,因为**照着报错敲 `sync:engine` 是无效的**:
 `git subtree push` 打的是**提交树**,工作区里没提交的那部分根本不在里面 ——
