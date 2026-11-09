@@ -1153,6 +1153,22 @@ bun run build:apk        # 直接出 Release APK
 > (`KEYSTORE_STORE_PASSWORD` / `KEYSTORE_KEY_PASSWORD`)注入,本地出包请临时 `export` 这两个环境变量
 > (或建一个不入库的 `android/keystore.local.properties`)。
 
+### 哪些 tag-only 路径本地能验、哪些不能
+
+`release:check` 会提醒「N 个提交动过只在 tag 流线上跑的路径」。但**这些路径并非都验不了**:
+
+| 路径 | 本地能验吗 | 怎么验 / 为什么不能 |
+| --- | --- | --- |
+| `electron/` + `package.json` 的 `build` | **能** | `bun run build:electron` —— 2026-11-09 真跑过,退出码 0(见下节的三条 Linux 警告) |
+| `android/` | **不能** | 这个环境没有 Android SDK(`ANDROID_HOME` 空,`sdkmanager` / `adb` 都不在)。只能静态核:资源引用完整(8 处 `@color/launch_background` 对 1 处定义)、注入的 JS 字符串拼接平衡 |
+| `.github/workflows/build.yml` | **不能** | 只有推 tag 才触发,本地没有任何东西会读它 |
+| 签名口令注入 | **不能** | 走 GitHub Secrets,本地没有那两个变量 |
+
+所以「本地门全绿」这句话对 `android/` 那三个修复**只覆盖到静态层面**:
+`4daf7ac0`(启动底色收成命名资源)、`1c7a2f3b`(迁移器摘 handler 队列)、
+`efdc397a`(遮挡层轮询加上限) —— 它们的判据都在 `releasePipeline.spec` /
+`saveMigratorContract.spec` 里(源码层),真机行为要等 tag 流水线跑完才知道。
+
 **只发 Windows**(2026-11-09 实测确认)。`package.json` 的 `build` 里**只有 `win` 一段**,
 没有 `mac` / `linux`;CI 的 `build-electron` job 矩阵也只有 `platform: win`。
 
