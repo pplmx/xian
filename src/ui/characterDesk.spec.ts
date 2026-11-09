@@ -55,14 +55,35 @@ describe("道躯案 · 三章连续卷与行藏周天", () => {
      * 这条把两者绑起来:文案里那个中文数字必须等于 `GROUP_SEEDS` 的实际组数。
      */
     const view = readSource("src/views/CharacterView.vue");
+    /*
+     * **先剥注释再查** —— 这个文件里「四类行藏」「四行账目」在注释中还出现五六次
+     * (说明版式来由时用的),那些是记录,不该被这条判据管。玩家看得见的是模板。
+     */
+    const template = view.replace(/<!--[\s\S]*?-->/g, "");
     const CN = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
     const groups = characterModifierDesk({}, []);
-    const claimed = /([一二两三四五六七八九十])类行藏共/.exec(view)?.[1];
-    expect(claimed, "页面上找不到「N 类行藏共」这句文案").toBeTruthy();
-    const said = claimed === "两" ? 2 : CN.indexOf(claimed!);
-    expect(said, `页面说「${claimed}类行藏」,而 GROUP_SEEDS 实际是 ${groups.length} 组`).toBe(
-      groups.length,
-    );
+    const toNum = (s: string) => (s === "两" ? 2 : CN.indexOf(s));
+
+    /*
+     * 同一个事实在模板里有两种写法,都要绑:
+     *   · 「四类行藏会在这里逐项现身」—— 空态那句
+     *   · 「四类行藏共 N 项 … 合上这册仍回到四行账目」—— 有值那句
+     * 第一版只查了后者(`类行藏共`),漏了空态那句。
+     */
+    const claims = [...template.matchAll(/([一二两三四五六七八九十])类行藏/g)].map((m) => m[1]);
+    expect(claims.length, "模板里找不到「N 类行藏」这句文案").toBeGreaterThan(0);
+    for (const c of claims) {
+      expect(toNum(c!), `模板说「${c}类行藏」,而 GROUP_SEEDS 实际是 ${groups.length} 组`).toBe(
+        groups.length,
+      );
+    }
+    const rows = [...template.matchAll(/([一二两三四五六七八九十])行账目/g)].map((m) => m[1]);
+    expect(rows.length, "模板里找不到「N 行账目」这句文案").toBeGreaterThan(0);
+    for (const c of rows) {
+      expect(toNum(c!), `模板说「${c}行账目」,而 GROUP_SEEDS 实际是 ${groups.length} 组`).toBe(
+        groups.length,
+      );
+    }
   });
 
   it("行藏只报真值,逐项带来源数、软上限与另乘标记", () => {
