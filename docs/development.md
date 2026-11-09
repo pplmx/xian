@@ -1287,6 +1287,26 @@ for (const name of plainApis) { assert.ok(name in engine, …); }               
 >
 > 更根本的办法是让两边都从 `catalog` 取,但那是跨仓改造,留给下次引擎仓作业时一并议。
 
+**动手时要改三处,不是一处**(2026-11-09 核过):
+
+| 位置 | 现状 | 改完应变成 |
+| --- | --- | --- |
+| `packages/engine/package.json` 的 `devDependencies` | `"vite-plus": "1.0.0"` | `"1.4.0"` |
+| `packages/engine/bun.lock` 第 12 行 | `"vite-plus": "1.0.0"` | 由 `bun install` 重写 |
+| 宿主 `bun.lock` 第 1516 行 `wanxiang-engine/vite-plus` | `["vite-plus@1.0.0", …]` | 由 `bun install` 重写 |
+
+**引擎有自己的一份 `bun.lock`**(它是独立可搬走的包,`vitest.config.ts` 的注释写着
+「把 packages/engine 整个搬到别处,`bun install && bun test` 就该能跑起来」)。
+只改宿主那份会漏掉它。
+
+升级的**风险面很小**,核过:引擎对 `vite-plus` 的全部用法只有两处 API ——
+`vitest.config.ts` 的 `defineConfig`、以及 spec 里的 `describe / expect / it`
+(`from "vite-plus/test"`)。都是最基础的那层,1.0.0 → 1.4.0 不涉及写法变更。
+
+验证顺序:引擎目录 `bun install` → `bun test`(库自己的用例)→ 回宿主跑
+`bun run check:engine` 与 `bun run check:engine:standalone`(后者会把整份复制到临时目录
+重编译重跑,是"独立成库"那条硬约束)。
+
 **其余六处收集型判据都查过了,只有这一处缺**(2026-11-09):
 
 | 收集变量 | 防空转的来源 |
