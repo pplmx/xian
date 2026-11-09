@@ -152,6 +152,16 @@ const BASELINE = [
    *
    * 判据要的是**不许新增**环,不是"零环"。这一条留着,理由记在这里。
    *
+   * **2026-11-09 补:真要拆的话,拆的是另一个方向。** 上面那段只算了
+   * `resources → player` 的账(回落分支 + 4 处非用例调用 + 10 处 spec),所以它**厚**。
+   * 反方向的 `player → resources` 只有**一条边**:`player.ts` 的
+   * `const qiRich = computed(() => resources.qi >= qiCapValue.value * QI_RICH_THRESHOLD_RATIO)`
+   * —— 整份 `player.ts` 里读 `resources` 的就这一行。
+   *
+   * 拆法也就一条:把 `qiRich` 从 `player` 的 `finalStats` 里挪出去,改成调用方算好再传。
+   * 但 `finalStats` 是 computed、读它的地方很多,而这个环从来没炸过 —— 所以现在仍然不动,
+   * 只是把"哪条边薄"记下来,免得下次有人从厚的那边动手。
+   *
    * (Round 37 曾误判过这条:当时只 grep 非用例调用、看到 0 处,以为 `spendSmall("herb")`
    *  是死分支,删掉后 `bounty.spec` 红了 5 条 —— spec 里有一句 `spendSmall("herb", 100)`
    *  用来清空灵草。判断"有没有人用"必须把 spec 算进调用方。)
