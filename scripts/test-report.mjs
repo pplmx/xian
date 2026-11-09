@@ -673,6 +673,24 @@ console.log(
   `\n  共 ${totalPassed} 过 / ${totalFailed} 败${uncategorized > 0 ? ` · 另有 ${uncategorized} 个未分类` : ""}`,
 );
 
+// —— 最慢的几个 spec 文件 ——
+//
+// vitest 的 JSON 报告里本来就有每个文件的 startTime / endTime,但此前只拿去分类,
+// 耗时被丢掉了。而「哪个 spec 慢」是最常要的一个数:2026-11-09 曾手工跑
+// `vitest --reporter=json` 才算出来,其实这份报告里现成就有。
+//
+// **不能拿这份数排序就下结论**:并行跑时 worker 互相争抢,同一文件在争用下会比
+// 单跑高出一截(mortalRouteAccess 并行 19.1s / 单跑 9.2s)。故只列最慢的几个当路标,
+// 真要优化请单跑确认 —— 这条也写在 docs/development.md 的「测试耗时量过一遍」里。
+const slowest = (report?.testResults ?? [])
+  .map((r) => ({ rel: r.name.replace(ROOT + "/", ""), ms: r.endTime - r.startTime }))
+  .sort((a, b) => b.ms - a.ms)
+  .slice(0, 5);
+if (slowest.length > 0 && slowest[0].ms > 1000) {
+  console.log("\n  最慢的 5 个 spec 文件(并行读数,真要优化请单跑):");
+  for (const s of slowest) console.log(`      ${(s.ms / 1000).toFixed(1).padStart(6)}s  ${s.rel}`);
+}
+
 // —— 文档里**不许**写用例条数 ——
 //
 // 由来:README 与 development.md 曾把「346 个 spec / 3436 例,本作 266 / 2841」这种
