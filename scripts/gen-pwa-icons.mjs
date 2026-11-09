@@ -48,7 +48,24 @@ try {
   const page = await browser.newPage();
   for (const job of jobs) {
     const svg = await readFile(resolve(pub, job.src), "utf8");
-    // SVG 走 data URL 进浏览器:纯矢量几何(无字体依赖),Chromium 的栅格化稳定可复现
+    /*
+     * SVG 走 data URL 进浏览器:纯矢量几何(无字体依赖)。
+     *
+     * **但"Chromium 的栅格化稳定可复现"这句话不成立** —— 2026-11-09 实测:
+     * Playwright 升到 1.64 后重跑,四张图的尺寸不变、字节数几乎翻倍
+     * (icon-192 7,521 → 14,909)。解压后逐像素比:
+     *
+     *   不同像素 47.4%,但其中 97% 的通道差 ≤ 8 —— 那是**抗锯齿的边缘抖动**,
+     *   不是内容变化;差 > 200 的只有 14 个像素。PNG 的行过滤策略也从
+     *   "全 None" 变成 "混用 None/Up",于是整行字节都不同,压缩率也变了。
+     *
+     * 结论:**产物不可跨 Chromium 版本按字节复现,只按视觉复现。**
+     * 故重跑这个脚本产生的二进制 diff 属于噪声,别顺手提交 —— 只在真的改过
+     * `public/icon.svg` / `icon-maskable.svg` 时才落盘(那时 diff 里有真实改动)。
+     *
+     * 判据能核的是同一性而非字节相等:`favicon.spec` 比 icon-512 与 32px favicon
+     * 的平均色差(≤6),`releasePipeline.spec` 比 manifest 声明的尺寸与 PNG 的实际尺寸。
+     */
     const b64 = Buffer.from(svg, "utf8").toString("base64");
     const png = await page.evaluate(
       async ({ dataUrl, size, background }) => {
