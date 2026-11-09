@@ -434,6 +434,7 @@ const CATEGORIES = [
       "codexSearch",
       "enemyLoreLedger",
       "blueprintProgress",
+      "chainLedger",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",

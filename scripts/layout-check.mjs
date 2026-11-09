@@ -18042,7 +18042,17 @@ async function taskAdventureFold320() {
     hasTouch: true,
   });
   try {
-    await seedSave(ctx, showcaseSlices("light"), "__adventureFold320");
+    /*
+     * 奇缘进度 —— 下面的判据要量「在续 / 已了 / 未起」三态,故夹具里得真有进度。
+     * `old_man_stone`(青石问路,3 段)记 1 → 在续;`sword_in_lake`(湖中剑影,2 段)
+     * 记 2 → 已了;`wounded_fox`(灵狐衔恩,3 段)记 3 → 已了。
+     */
+    const chainSlices = showcaseSlices("light");
+    chainSlices.player = {
+      ...chainSlices.player,
+      eventChains: { old_man_stone: 1, sword_in_lake: 2, wounded_fox: 3 },
+    };
+    await seedSave(ctx, chainSlices, "__adventureFold320");
     const page = await ctx.newPage();
     const pageErrors = [];
     watchPageErrors(page, pageErrors);
@@ -18104,6 +18114,62 @@ async function taskAdventureFold320() {
     if (!/人间界|仙界|神界|混沌海/.test(fold.worldChapterText)) {
       failures.push(`[320-adventure] 界域章头读不出界名:«${fold.worldChapterText}»`);
     }
+    /*
+     * 奇缘进度 —— `player.eventChains` 是存档里的一等状态,而界面上此前一个字都不说。
+     * 玩家走一条缘到第 2 段时,看不出这是哪条、走到第几段、下回还差几段 ——
+     * 奇缘是这一作最难得的叙事内容(无缘在续时它根本不出现),走了一半看不见进度,
+     * 等于把它当成一次性随机事件。
+     *
+     * 判据核:清单在、三态分得清、在续的排最前、未起的缘**不点名**只报个数。
+     */
+    checked += 1;
+    {
+      const desk = await page.evaluate(() => {
+        const box = document.querySelector("[data-adventure-chain-desk]");
+        if (!box) return null;
+        return {
+          rows: [...box.querySelectorAll("[data-adventure-chain]")].map((r) => ({
+            id: r.getAttribute("data-adventure-chain"),
+            state: r.getAttribute("data-chain-state"),
+            text: (r.textContent || "").replace(/\s+/g, " ").trim(),
+          })),
+          foot: (box.querySelector(".adventure-chain-desk__foot")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+        };
+      });
+      if (!desk) {
+        failures.push("[320-adventure] 奇缘进度没渲染 —— 夹具里明明记了三条缘的进度");
+      } else if (/NaN|undefined|Infinity/.test(JSON.stringify(desk))) {
+        failures.push(`[320-adventure] 奇缘进度漏出占位符 —— «${desk.foot}»`);
+      } else if (desk.rows.length !== 3) {
+        failures.push(`[320-adventure] 奇缘进度该列三条动过的缘,实见 ${desk.rows.length} 条`);
+      } else {
+        const byId = new Map(desk.rows.map((r) => [r.id, r]));
+        if (byId.get("old_man_stone")?.state !== "active") {
+          failures.push(
+            `[320-adventure] 在续的缘标错了 —— 青石问路 1/3 段该是 active,实见 «${byId.get("old_man_stone")?.state}»`,
+          );
+        }
+        if (byId.get("sword_in_lake")?.state !== "finished") {
+          failures.push(
+            `[320-adventure] 已了的缘标错了 —— 湖中剑影 2/2 段该是 finished,实见 «${byId.get("sword_in_lake")?.state}»`,
+          );
+        }
+        if (desk.rows[0].id !== "old_man_stone") {
+          failures.push(`[320-adventure] 在续的缘没排在最前 —— 首行是 «${desk.rows[0].id}»`);
+        }
+        if (!/另有\s*5\s*条缘未起/.test(desk.foot)) {
+          failures.push(`[320-adventure] 未起的缘没报清条数 —— «${desk.foot}»(八条减三条动过 = 5)`);
+        }
+        for (const name of ["古树藏卷", "夜灯照路", "云海故碑", "代天一行", "本源一滴"]) {
+          if (desk.foot.includes(name) || desk.rows.some((r) => r.text.includes(name))) {
+            failures.push(`[320-adventure] 未起的缘被点名了 —— «${name}»(图鉴 ??? 纪律)`);
+          }
+        }
+      }
+    }
+
     if (pageErrors.length)
       failures.push(`[320-adventure] 页面异常:${[...new Set(pageErrors)].join(" | ")}`);
     console.log(

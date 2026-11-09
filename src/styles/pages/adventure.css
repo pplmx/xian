@@ -357,6 +357,68 @@
     display: block;
     margin-top: 0.18rem;
   }
+  /*
+   * 奇缘榜 —— 上面那行「缘在续,奇缘会来」只报有没有;这一块报是哪几条、
+   * 走到第几段。奇缘是这一作最难得的叙事内容,只有动过的缘才点名。
+   */
+  .adventure-chain-desk {
+    margin-top: 0.44rem;
+    padding-top: 0.4rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+  }
+  .adventure-chain-desk__head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.2rem 0.5rem;
+    font-size: var(--type-note);
+  }
+  .adventure-chain-desk__eyebrow {
+    color: var(--color-ink-soft);
+    font-family: var(--font-kai);
+    letter-spacing: 0.08em;
+  }
+  .adventure-chain-desk__fact {
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  .adventure-chain-desk__rows {
+    margin-top: 0.3rem;
+  }
+  .adventure-chain-desk__row {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.1rem 0.44rem;
+    padding: 0.18rem 0;
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .adventure-chain-desk__name {
+    flex: none;
+    color: var(--color-ink-soft);
+  }
+  .adventure-chain-desk__seg {
+    flex: none;
+    color: var(--color-ink-faint);
+  }
+  .adventure-chain-desk__next {
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  .adventure-chain-desk__wait {
+    color: var(--color-ink-faint);
+  }
+  .adventure-chain-desk__done {
+    color: var(--color-jade);
+  }
+  .adventure-chain-desk__foot {
+    margin-top: 0.18rem;
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
   .adventure-briefing__tiers {
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
   }

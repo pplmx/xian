@@ -576,6 +576,55 @@
           </section>
 
           <!-- 秘境是支线:主线地点与首个行动入口先落地,旁路内容退到后面。 -->
+          <!--
+                奇缘进度 —— 上面那句只报「有没有缘在续」这一个布尔值，而进度本身
+                是存档里的一等状态（player.eventChains）。玩家走在一条缘中间时，
+                看不出这是哪条、走到第几段、下回还差几段。奇缘是这一作最难得的
+                叙事内容（无缘在续时它根本不出现），走了一半看不见进度，
+                等于把它当成一次性随机事件。
+
+                并入「眼下可往」这一章而不另起一章：历练页是**四章**装帧
+                （briefing / regions / secret / rules），`folioChrome.spec`、
+                `adventureDesk.spec` 与巡页标记都按四章钉着 —— 加第五枚章首
+                会同时破三处（实测踩过）。
+
+                挂在本章末尾，故「出发」键仍在首屏（320×568 实测 first bottom
+                493.6 / dock top 514.8）。
+
+                只列**动过**的缘：八条缘的 hint 是线索，把没碰过的摆出来
+                等于提前告诉玩家「还有这八条路」，与图鉴的 ??? 纪律冲突。
+              -->
+          <div v-if="chainDesk.started > 0" class="adventure-chain-desk" data-adventure-chain-desk>
+            <p class="adventure-chain-desk__head">
+              <span class="adventure-chain-desk__eyebrow">缘在路上</span>
+              <span class="adventure-chain-desk__fact tabular">{{ chainFact }}</span>
+            </p>
+            <ul class="adventure-chain-desk__rows">
+              <li
+                v-for="row in chainDesk.rows"
+                :key="row.id"
+                class="adventure-chain-desk__row"
+                :data-adventure-chain="row.id"
+                :data-chain-state="row.finished ? 'finished' : row.reachable ? 'active' : 'waiting'"
+              >
+                <span class="adventure-chain-desk__name font-kai">{{ row.name }}</span>
+                <span class="adventure-chain-desk__seg tabular"
+                  >{{ row.done }} / {{ row.total }} 段</span
+                >
+                <span v-if="row.finished" class="adventure-chain-desk__done">缘已了</span>
+                <span v-else-if="row.reachable" class="adventure-chain-desk__next"
+                  >下一程 · 第 {{ row.nextStage }} 段</span
+                >
+                <span v-else class="adventure-chain-desk__wait"
+                  >境界未到 · 第 {{ row.nextStage }} 段</span
+                >
+              </li>
+            </ul>
+            <p v-if="chainDesk.unstarted > 0" class="adventure-chain-desk__foot">
+              另有 {{ chainDesk.unstarted }} 条缘未起 —— 缘分到了自会撞见。
+            </p>
+          </div>
+
           <section
             class="adventure-register__chapter adventure-register__chapter--secret adventure-secret"
             data-adventure-chapter="secret"
@@ -853,6 +902,8 @@ import {
 } from "@/core/exploration";
 import { EVENT_TIERS, tierOddsText } from "@/core/eventTier";
 import { pendingChainStages } from "@/core/eventEngine";
+import { CHAINS } from "@/data/chains";
+import { chainLedger } from "@/ui/chainLedger";
 import { foeOriginPartsText } from "@/core/battleAnalysis";
 import { SUPPRESS_THRESHOLDS, suppressRateLine, suppressionProgress } from "@/core/suppress";
 import {
@@ -935,6 +986,26 @@ const lastTripWhen = computed(() => {
  * 那三成去了奇缘)。档位胶囊按当前状态显示,而不是报一组永远同时成立的数。
  */
 const chainPending = computed(() => pendingChainStages(player.major).length > 0);
+
+/**
+ * 奇缘榜 —— 上面那句 `chainPending` 只用了「有没有缘在续」一比特。
+ *
+ * 引擎的 `pendingChainStages` 已经给出「此刻该走的那几程」(链未结 + 境界够),
+ * 这一层把它与完整进度表摆在一起:`reachable` 由那份 pending 集合决定,
+ * 故「在续」的口径与引擎同一处,不另判境界。
+ */
+/** 「缘在路上」那一章的事实位:起了几条、其中几条还在续 */
+const chainFact = computed(() => {
+  const d = chainDesk.value;
+  if (d.active > 0) return `${d.active} 条在续`;
+  if (d.started > 0) return `${d.started} 条皆了`;
+  return "";
+});
+
+const chainDesk = computed(() => {
+  const reachable = new Set(pendingChainStages(player.major).map((row) => row.chainId));
+  return chainLedger(CHAINS, player.eventChains, { reachable });
+});
 
 /** 本世所钟:只在一个渠道上 +15%,与世界页/战报/归来卷轴同一个标签源 */
 const biasLabel = computed(() => biasEffectOf(adventure.mortalWorld?.bias)?.label ?? "");
