@@ -459,6 +459,7 @@ const CATEGORIES = [
       "lifeLinggenSpread",
       "linggenCompare",
       "elementGains",
+      "gongfaSourceMult",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",

@@ -15392,6 +15392,117 @@ async function taskDaoNote() {
     if (pageErrors.length) {
       failures.push(`[390] 道记场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
     }
+    /*
+     * 同源章要印出倍率 —— 人物页的「牌面折算」已经报得出 ×2.2,而玩家**真正决定
+     * 参悟哪一门**是在这个弹窗里;此前这里只有一个「同源」小章,`title` 写着
+     * 「更易撞见」却没有数。倍率读同一个 `gongfaAffinity`(与 sameRoot 同一个函数),
+     * 非同源时不印 ×1(那是「没有加成」,印出来像不存在的档位)。
+     *
+     * 夹具:`target` 是太玄引气诀(无 element),故先看它那一档 —— 无 element 时
+     * 倍率恰为 1、章不出,正是「非同源不印」的那一侧。同源那一侧靠单元判据守,
+     * 这里补的是**真实渲染下不印假章**。
+     */
+    await closeDialog();
+    checked += 1;
+    await openTarget();
+    {
+      const sameRoot = await page.evaluate(() => {
+        const chip = document.querySelector("[data-gongfa-same-root]");
+        if (!chip) return { count: 0 };
+        return {
+          count: 1,
+          text: (chip.textContent || "").replace(/\s+/g, " ").trim(),
+          title: chip.getAttribute("title") ?? "",
+        };
+      });
+      /*
+       * 太玄引气诀没有五行,故它**不该**挂同源章。若挂了,说明 `sameRootMult`
+       * 把 undefined 元素算成了同源(affinityMult 里 `if (!element) return 1` 那一支),
+       * 那会让每一门无属性功法都印一个假的 ×1。
+       */
+      if (sameRoot.count > 0) {
+        failures.push(
+          `[390] 道记场景:无属性的功法也挂了同源章 —— «${sameRoot.text}» / «${sameRoot.title}»`,
+        );
+      }
+    }
+    await closeDialog();
+
+    /*
+     * 同源那一侧:学一门与灵根同源的功法,章必须出、倍率必须是它自己那一档
+     * (普根 2.2 / 特殊根 2.6),且写法与人物页同源(`×2.2` 而不是 `×2.20`)。
+     *
+     * 夹具的灵根取自 showcase(双灵根:fire 88 / water 70),故挑一门 water 属功法。
+     */
+    await closeDialog();
+    checked += 1;
+    {
+      const rooted = GONGFA.find((g) => g.element === "water");
+      const liveRoots = await page.evaluate(() => {
+        const pinia = document.querySelector("#app")?.__vue_app__?.config?.globalProperties?.$pinia;
+        const player = pinia?._s?.get("player");
+        return (player?.linggen?.roots ?? []).map((root) => root.element);
+      });
+      if (!rooted) {
+        failures.push("[390] 同源倍率:找不到一门带五行的功法,判据无从量起");
+      } else if (!liveRoots.includes(rooted.element)) {
+        failures.push(
+          `[390] 同源倍率:夹具灵根(${liveRoots.join("/")})与那门功法(${rooted.element})不同源` +
+            ` —— 判据会空转`,
+        );
+      } else {
+        await page.evaluate((id) => {
+          const pinia =
+            document.querySelector("#app")?.__vue_app__?.config?.globalProperties?.$pinia;
+          const cult = pinia?._s?.get("cultivation");
+          const ui = pinia?._s?.get("ui");
+          cult.learn(id);
+          ui.gongfaDetailId = id;
+        }, rooted.id);
+        await page.waitForTimeout(700);
+        const got = await page.evaluate(() => {
+          const chip = document.querySelector("[data-gongfa-same-root]");
+          return chip
+            ? {
+                text: (chip.textContent || "").replace(/\s+/g, " ").trim(),
+                title: chip.getAttribute("title") ?? "",
+                overflowX: (() => {
+                  const panel = document.querySelector(".modal-panel");
+                  return panel ? panel.scrollWidth - panel.clientWidth : 0;
+                })(),
+              }
+            : null;
+        });
+        if (!got) {
+          failures.push(
+            `[390] 同源倍率:与灵根同源的功法(「${rooted.name}」${rooted.element})没挂同源章`,
+          );
+        } else {
+          if (/NaN|undefined|Infinity/.test(got.text + got.title)) {
+            failures.push(`[390] 同源倍率:章上漏出占位符 —— «${got.text}»`);
+          }
+          if (/××/.test(got.text)) {
+            failures.push(`[390] 同源倍率:印出了 «××» —— multText 已自带 ×:«${got.text}»`);
+          }
+          // 倍率必须与这一门的元素档对上(普根 2.2 / 特殊根 2.6),不许印个空话
+          const m = got.text.match(/×(\d+(?:\.\d+)?)/);
+          if (!m) {
+            failures.push(`[390] 同源倍率:章上没有数 —— «${got.text}»`);
+          } else if (Number(m[1]) <= 1) {
+            failures.push(
+              `[390] 同源倍率:同源章的倍率是 ${m[1]} —— 同源不该是这个数:«${got.text}»`,
+            );
+          } else if (!/参悟权重/.test(got.title)) {
+            failures.push(`[390] 同源倍率:title 没说清这是参悟权重 —— «${got.title}»`);
+          }
+          if (got.overflowX > 0) {
+            failures.push(`[390] 同源倍率:章变长后弹窗横向撑破 ${got.overflowX}px`);
+          }
+        }
+      }
+    }
+    await closeDialog();
+
     if (failures.length === 0) {
       console.log(`\n道记:择道后落一句、重开与重载都不改口(「${target.name}」${first})`);
     }

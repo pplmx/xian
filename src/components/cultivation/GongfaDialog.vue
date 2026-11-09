@@ -8,12 +8,21 @@
         <span v-if="def.element" class="chip-ink" :style="{ color: ELEMENTS[def.element].color }">
           {{ ELEMENTS[def.element].name }}属性
         </span>
-        <!-- Phase 32.2:同源功法参悟时更易撞见(倾向,非独占;无此灵根照样学得到) -->
+        <!--
+          Phase 32.2:同源功法参悟时更易撞见(倾向,非独占;无此灵根照样学得到)。
+
+          带倍率:玩家**正是在这个弹窗里**决定参悟哪一门,而「更易撞见」此前
+          只是一个词 —— 人物页的牌面折算已经报得出 ×2.2,决策现场反而读不到。
+          倍率读同一个 `gongfaAffinity`(与 `sameRoot` 同一个函数,不可能分叉),
+          写法走 `multText` 与人物页同源。非同源时不印 ×1:那是「没有加成」,
+          印出来会像一个不存在的档位。
+        -->
         <span
           v-if="sameRoot"
           class="chip-ink border-gold-ink/40 text-gold-ink"
-          title="与你的灵根同源,藏经阁参悟时更易撞见"
-          >同源</span
+          :title="`与你的灵根同源,藏经阁参悟时更易撞见(参悟权重 ${multText(sameRootMult)}）`"
+          data-gongfa-same-root
+          >同源 {{ multText(sameRootMult) }}</span
         >
         <span
           v-if="learned && branchPicked"
@@ -279,6 +288,7 @@ import BatchSpendLedger from "@/components/common/BatchSpendLedger.vue";
 import QualityTag from "@/components/common/QualityTag.vue";
 import { qualityVerdict } from "@/data/qualityVerdicts";
 import { qualityTextColor } from "@/ui/qualityTier";
+import { multText } from "@/ui/multText";
 
 const ui = useUiStore();
 const cultivation = useCultivationStore();
@@ -329,10 +339,18 @@ const batchActionLabel = computed(() => {
   return `${stop} · ${batchPlan.value.count} 层 · 耗 悟道点 ${batchPlan.value.wudao} · 残页 ${batchPlan.value.page}`;
 });
 
-/** 与灵根同源?判据直接取自参悟权重函数,标签与实际权重不可能分叉 */
-const sameRoot = computed(
-  () => gongfaAffinity(def.value?.element, rootElements(player.linggen?.roots)) > 1,
+/**
+ * 这一门与灵根的参悟权重倍率。
+ *
+ * 与 `sameRoot` 读**同一个函数**:两者的判据都来自 `gongfaAffinity`,
+ * 故「同源」这个标签与它后面那个倍数不可能分叉(不会是「同源 ×1」)。
+ */
+const sameRootMult = computed(() =>
+  gongfaAffinity(def.value?.element, rootElements(player.linggen?.roots)),
 );
+
+/** 与灵根同源?判据直接取自参悟权重函数,标签与实际权重不可能分叉 */
+const sameRoot = computed(() => sameRootMult.value > 1);
 
 const modRows = computed(() => {
   if (!def.value || !learned.value) return [];
