@@ -6,6 +6,7 @@
  * 额度保留数字形态,是为了将来收紧成有限次数时不必再动存档结构。
  */
 import { beforeEach, describe, expect, it } from "vite-plus/test";
+import { readSource } from "@/test/readSource";
 import { createPinia, setActivePinia } from "pinia";
 import { useGameStore } from "@/stores/game";
 import { usePlayerStore } from "@/stores/player";
@@ -151,5 +152,26 @@ describe("建号「逆天改命」不限次", () => {
     expect(landed.roots).toEqual(previewed.roots);
     expect(landed.gradeName).toBe(previewed.gradeName);
     expect(landed.growthMult).toBe(previewed.growthMult);
+  });
+
+  it("源码里不许再长出二次 roll 的兜底 —— 行为判据挡不住死代码", () => {
+    /*
+     * 上面那条查出的是**行为**:确认后的灵根 == 预览那一枚。它挡不住"加回兜底":
+     * 正常路径下 `view.nextLinggen` 一定存在,`?? rollLinggen(...)` 不执行,
+     * 行为一模一样 —— 于是那段死代码可以长期潜伏,直到某个不变量违例时才生效,
+     * 而那时的表现是**玩家拿到一枚没预告过的灵根**。
+     *
+     * 契约在两处:`types/index.ts` 的 `nextLinggen` 注释写着「绝不二次 roll」,
+     * 计划(`docs/superpowers/plans/2026-09-14-reincarnation-linggen-visibility.md`)
+     * 的 Global Constraints 写「若 nextLinggen 缺失,视为不变量违例,不做二次 roll 兜底」。
+     *
+     * 故这条查**源码**:`rollLinggen` 只许在 `prepareReincarnation` 里出现一次。
+     */
+    const src = readSource("src/core/reincarnation.ts");
+    const calls = [...src.matchAll(/rollLinggen\(/g)].length;
+    expect(calls, "`rollLinggen` 只该在 prepare 里调一次；多出来的那处多半是二次 roll 兜底").toBe(
+      1,
+    );
+    expect(src, "不许写成 `?? rollLinggen(...)` 的兜底").not.toMatch(/\?\?\s*rollLinggen\(/);
   });
 });

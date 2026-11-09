@@ -350,7 +350,18 @@ export function confirmReincarnation(
   // 认知不因转世清零,只按阶补齐:该认得的药,睁眼就该认得
   const recognized = carryLore(stage, carriesAllLore(player.reincarnation.heritage));
   const releasedSuppressed = player.suppressedRegions.length;
-  player.rebirth(view.nextLinggen ?? rollLinggen(rng, aptitudeFloorNow()));
+  /*
+   * **直接用 view 里那一枚,不再 roll** —— 见 `types/index.ts` 的 `nextLinggen` 注释
+   * 与 `docs/superpowers/plans/2026-09-14-reincarnation-linggen-visibility.md` 的
+   * Global Constraints:「所见即所得」「若 `nextLinggen` 缺失,视为不变量违例,
+   * 不做二次 roll 兜底」。
+   *
+   * 这里原先带着一个 `??` 兜底 —— 那半个分支是**死代码**
+   * (类型上是必填字段,`if (!view) return;` 之后必然存在),而且它一旦真被执行,
+   * 玩家会拿到一枚**没在第二程预告过**的灵根,恰是这条契约要杜绝的情形。
+   * 删掉它:违例就让它响亮地崩,而不是静默换一枚。
+   */
+  player.rebirth(view.nextLinggen);
   // 辅修位是洞府建筑(外物),洞府随转世重置 —— 新世只带得下 dongfu.subGongfaSlots 席
   // (藏经阁 0 级 = 1 席)。此前 subGongfa 未动,旧世 >1 门的辅修词条会带着越界词条开新世,
   // 与「辅修席满」判据(cultivation.gongfaMods 不看 slot 上限)对不上。按新世席数裁剪。
