@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { NAVIGATION_ENTRIES, NAVIGATION_SECTIONS, navigationPositionOf } from "./navigation";
+import {
+  CELESTIAL_CHAPTERS,
+  NAVIGATION_ENTRIES,
+  NAVIGATION_SECTIONS,
+  navigationPositionOf,
+} from "./navigation";
+import { ENEMY_ARCHETYPES } from "@/core/buildSim";
 
 const ROOT = resolve(__dirname, "../..");
 
@@ -116,6 +122,44 @@ describe("玄枢图 · 全站册目", () => {
     expect(atlas, "玄枢图要复用全站弹窗的焦点与返回键纪律").toContain("<BaseModal");
     expect(atlas, "运行时判据要能定位册目").toContain("data-nav-atlas");
     expect(atlas, "玄枢图要给出五卷总图而不只列单册").toContain("data-atlas-compass");
+  });
+
+  it("页面文案里的「N 卷 / N 册 / N 类」与实际数据同源", () => {
+    /*
+     * 与 `CharacterView` 的「四类行藏」同族:**中文数字写死在模板里,而实际份数
+     * 由数据决定**。数据一变,文案就成了谎 —— 而它出现在玩家一眼看到的位置
+     * (玄枢图的标题、天界页的副标题、构筑页的提示)。
+     *
+     * 三处逐个对账(2026-11-09 核过,当时都准确):
+     *   · `NavigationAtlas` 「五卷」← `NAVIGATION_SECTIONS.length`
+     *   · `CelestialView` 「四册」← `CELESTIAL_CHAPTERS.length`
+     *   · `BuildView` 「七类」← `ENEMY_ARCHETYPES.length`
+     *
+     * **先剥注释**:三个文件里这些词在注释中还出现过多次(说明版式来由),
+     * 那些是记录,不该被管。
+     */
+    // 注意：「两」不能塞进数组 —— 它会把后面每个字的下标都挪一位(`五` 变成 6)。分开判。
+    const CN = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
+    const toNum = (s: string) => (s === "两" ? 2 : CN.indexOf(s));
+    const read = (rel: string) =>
+      readFileSync(resolve(ROOT, rel), "utf8").replace(/<!--[\s\S]*?-->/g, "");
+
+    const cases: [string, string, number, string][] = [
+      ["src/components/common/NavigationAtlas.vue", "卷", NAVIGATION_SECTIONS.length, "玄枢图标题"],
+      ["src/views/CelestialView.vue", "册", CELESTIAL_CHAPTERS.length, "天界副标题"],
+      ["src/views/BuildView.vue", "类", ENEMY_ARCHETYPES.length, "构筑对局提示"],
+    ];
+    for (const [rel, unit, actual, where] of cases) {
+      const text = read(rel);
+      const claims = [...text.matchAll(new RegExp(`([一二两三四五六七八九十])${unit}`, "g"))]
+        .map((m) => m[1]!)
+        // 「一卷」「一册」「一类」是量词(「一卷一册口」这类),不是计数声称
+        .filter((c) => c !== "一");
+      expect(claims.length, `${where}: 找不到「N${unit}」这类计数文案`).toBeGreaterThan(0);
+      for (const c of claims) {
+        expect(toNum(c), `${where} 说「${c}${unit}」,而实际是 ${actual}`).toBe(actual);
+      }
+    }
   });
 
   it("七册的长页分册共用 useRouteTab,页面内换签也把落点写回地址", () => {
