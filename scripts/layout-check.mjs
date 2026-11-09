@@ -6868,6 +6868,98 @@ async function taskInventoryAttention() {
 
     if (pageErrors.length)
       failures.push(`[390] 背包新得场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    /*
+     * 「可动槽」的空态 —— 不复述「没有」,而是解释判定依据。
+     *
+     * 这一块在 `upgradeRows` 为空时相邻渲染两段:空态说明 + 禁用按钮。初版两段都只
+     * 在说「没有可换的」,而上方读数已经写着「可换 0 无事」—— 同一块里三次同义。
+     * 空态该答的是玩家真正的下一个问题(「是不是我漏了什么」),故说出判定依据。
+     *
+     * 夹具要**摆出空态**:上面那一份夹具刻意有可换的槽(判据要量一键换装),
+     * 故这里另起一份九席皆已佩最强的 —— 不靠「夹具恰好为空」。
+     * 顺带验席数与章首对得上:第一版读了 `EQUIP_SLOT_NAMES`(含不在九佩里的法宝),
+     * 渲染成「比过 十 席」,与章首「9 / 9 已佩」当场打架。
+     */
+    checked += 1;
+    {
+      const emptySlices = showcaseSlices("light");
+      const seat = (uid, templateId, quality) => ({
+        uid,
+        templateId,
+        quality,
+        tier: 14,
+        level: 0,
+        affixes: [],
+      });
+      emptySlices.inventory = {
+        ...emptySlices.inventory,
+        items: [],
+        equipped: {
+          weapon: seat("w1", "w_zhuqing", "fine"),
+          head: seat("w2", "w_muwu", "fine"),
+          body: seat("w3", "w_zhuqing", "fine"),
+          wrist: seat("w4", "w_muwu", "fine"),
+          belt: seat("w5", "w_zhuqing", "fine"),
+          boots: seat("w6", "w_muwu", "fine"),
+          necklace: seat("w7", "w_zhuqing", "fine"),
+          ring: seat("w8", "w_muwu", "fine"),
+          talisman: seat("w9", "w_zhuqing", "fine"),
+        },
+      };
+      await page.close();
+      const emptyPage = await ctx.newPage();
+      await emptyPage.addInitScript(() => {
+        Math.random = () => 0.5;
+      });
+      watchPageErrors(emptyPage, pageErrors);
+      await openRoute(emptyPage, "/inventory", 900);
+      await clearOverlays(emptyPage);
+      const emptyInfo = await emptyPage.evaluate(() => {
+        const p = document.querySelector(".inventory-briefing__empty");
+        const btn = document.querySelector(".inventory-briefing__wear");
+        const fact = [...document.querySelectorAll("[data-inventory-chapter-head]")]
+          .map((h) => (h.textContent || "").replace(/\s+/g, " ").trim())
+          .find((t) => /已佩/.test(t));
+        return {
+          empty: p ? (p.textContent || "").replace(/\s+/g, " ").trim() : null,
+          btn: btn ? (btn.textContent || "").replace(/\s+/g, " ").trim() : null,
+          fact: fact ?? "",
+        };
+      });
+      if (!emptyInfo.empty) {
+        failures.push("[390] 可动槽空态:摆出「九席皆已佩最强」后仍没有空态说明");
+      } else if (/NaN|undefined|Infinity/.test(emptyInfo.empty)) {
+        failures.push(`[390] 可动槽空态:漏出占位符 —— «${emptyInfo.empty}»`);
+      } else if (/没有空槽|没有更强藏品/.test(emptyInfo.empty)) {
+        failures.push(
+          `[390] 可动槽空态:仍在复述「没有」—— «${emptyInfo.empty}»` +
+            `(紧邻的禁用按钮已经写着「${emptyInfo.btn ?? "?"}」,上方读数也写着「可换 0 无事」)`,
+        );
+      } else if (!/真实战力/.test(emptyInfo.empty)) {
+        failures.push(
+          `[390] 可动槽空态:没说清判定依据 —— «${emptyInfo.empty}»(玩家要知道「是不是我漏了什么」)`,
+        );
+      } else {
+        /* 空态印的是中文数字(「九席」),章首印的是阿拉伯数字(「9 / 9 已佩」)——
+           两处写法本就不同,直接比字符串会把对的判成错的(实测踩过)。故先归一。 */
+        const CN_NUM = { 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10 };
+        const toNum = (v) => (v == null ? null : /\d/.test(v) ? Number(v) : (CN_NUM[v] ?? null));
+        const shown = toNum(
+          (emptyInfo.empty.match(/比过\s*([一二三四五六七八九十\d]+)\s*席/) || [])[1],
+        );
+        const cap = toNum((emptyInfo.fact.match(/\/\s*(\d+)\s*已佩/) || [])[1]);
+        if (shown === null) {
+          failures.push(`[390] 可动槽空态:没报出比过几席 —— «${emptyInfo.empty}»`);
+        } else if (cap !== null && shown !== cap) {
+          failures.push(
+            `[390] 可动槽空态:席数与章首对不上 —— 空态«${shown} 席» vs 章首«${cap} 已佩»` +
+              `(读错表了:EQUIP_SLOT_NAMES 含不在九佩里的法宝)`,
+          );
+        }
+      }
+      await emptyPage.close();
+    }
+
     console.log(
       `\n背包新得:${newUids.length} 件先列 · 只看新得 ${filtered.cards.length} 件 · ` +
         `可动 ${beforeApply.upgradeCount} 槽 → 一键换装后 ${applied.upgradeCount} 槽`,

@@ -466,6 +466,7 @@ const CATEGORIES = [
       "lifeDate",
       "battleWinFindings",
       "offlineYieldNote",
+      "inventoryUpgradeEmpty",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",

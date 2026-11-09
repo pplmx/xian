@@ -131,7 +131,16 @@
                   <span aria-hidden="true">›</span>
                 </button>
               </div>
-              <p v-else class="inventory-briefing__empty">没有空槽,也没有更强藏品。</p>
+              <!--
+                空态**不复述「没有」** —— 紧邻的禁用按钮已经写着「已无可换之器」,
+                上方读数也写着「可换 0 无事」。同一块里三次同义,读完才知道没东西可换。
+                空态该答的是玩家真正的下一个问题:「是不是我漏了什么?」——
+                故说出判定依据:只比真实战力,品阶更高但战力更低的不算。
+                那句「只计真实战力更高」就在同一块里,这里正好接住它。
+              -->
+              <p v-else class="inventory-briefing__empty">
+                按真实战力比过 {{ cnNumber(equipSlotCount) }} 席,没有更高的了。
+              </p>
             </div>
             <button
               class="inventory-briefing__wear"
@@ -664,6 +673,7 @@ import {
   herbGradeOfMajor,
 } from "@/data/herbGrades";
 import { EQUIP_SLOT_NAMES, equipmentTemplate } from "@/data/equipment";
+import { cnNumber } from "@/utils/format";
 import { BAG_CAPACITY } from "@/data/constants";
 import { RESOURCE_LABELS } from "@/data/resourceNames";
 import { PILL_BATCH, usePill, usePillBatch } from "@/core/pillService";
@@ -795,6 +805,16 @@ function wearSetOf(setId: string): void {
 
 /** 一键换装实际会动的槽 —— 卷首报价、槽位提示与按钮共用这一份 */
 const upgradeRows = computed(() => equipUpgrades(inventory));
+
+/**
+ * 九佩的席数 —— 读 `SLOTS`(这一页真正陈列的那九席),不写死「九」。
+ *
+ * **不能用 `Object.keys(EQUIP_SLOT_NAMES).length`**:那张表有十项,
+ * 第十项 `artifact`(法宝)单独成册、不在九佩里。第一版就是这么写的,
+ * 实测渲染成「比过 十 席」,而同一页的章首写着「9 / 9 已佩」——
+ * 两个数当场打架。空态那句是玩家判断「要不要去刷装备」的唯一依据,不能不对。
+ */
+const equipSlotCount = SLOTS.length;
 
 function upgradeText(row: EquipUpgrade): string {
   return row.empty ? "补齐" : `战 +${formatGN(Math.round(row.delta))}`;
