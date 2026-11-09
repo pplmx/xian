@@ -2354,6 +2354,45 @@ weightMultiplier: (entry) => fortuneAffinity(entry.def.element, elements)
 捕获。真因是**dist 没重建** —— 加完样式只跑了 `bun run check`(它不产出 dist),
 探针跑的还是旧包。`check` 绿不等于 `dist` 新,浏览器门与探针之前必须先 `bun run build`。
 
+### 渡劫面板:「留了一线」是几线
+
+`core/linggenAffinity.tribulationRelief` 返回五个通道的**具体读数**:
+
+```text
+  shieldRestore      护盾回填 0.5（金/暗 0.45）
+  healRestore        生机回填 0.5（木/冰 0.4）
+  frontLoadEase      正面对冲减弱 0.35（水）/ 0.4（风）
+  burstTierBonus     劫威削去 1 档（火/光）
+  reductionToResist  雷罚分担 0.35（土）/ 0.45（雷）
+```
+
+这些数**已经进了结算** —— `TribulationPanel` 的 `tribLedger` 把 `relief` 传给了
+`settlementResist` / `sustainScore` / `guardScore`。而界面上关于它的全部文字是:
+
+```text
+  灵根相应:金、水——此劫为你留了一线,能走到哪一步仍看自身准备
+```
+
+「留了一线」是**形容词**。玩家按这句话决定要不要补词条、要不要换灵根,却不知道那一线
+是 50% 还是 5%。故在它下面补一行 `data-tribulation-relief`:
+
+```text
+  解法通道:生机回填 50%
+```
+
+三条口径:
+
+- **经同一个入口取读数**。用 `currentTribulationRelief`(就是 `tribLedger` 传给结算的
+  那一个,见 `core/tribulationDecision` 的「都必须经这一个入口取 relief,否则又会出现
+  看的一套、算的一套」),不直接调 `tribulationRelief` 绕过那层约定。
+- **通道名与人物页共用一份表**。`ui/elementGains` 的 `RELIEF_LABEL` 与 `reliefOf`
+  这次导出,两处同一套:各写一份,迟早一处叫「护盾回填」另一处叫「护盾恢复」。
+- **两侧自洽**。说了「灵根相应」就必须报出读数,报了读数就必须说「灵根相应」;
+  没通道时整块不出 —— 印一行全零等于说「有通道但是 0%」。
+
+浏览器门为此开了**两份夹具**:原渡劫夹具(灵根未必对上那一劫,走「没通道不印」那侧),
+以及一份五行全覆盖的存档(五系总有一系对上,必定执行到「读数」那侧)。只量一侧都不算数。
+
 ### 出行模式窗:把「每场」当成了「整趟」—— 差了两三个数量级
 
 出行前要选一个时长档。那一窗此前每个档位写着四行:

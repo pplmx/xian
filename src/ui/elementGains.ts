@@ -58,7 +58,8 @@ export interface ElementGainRow {
 /**
  * 解法通道的中文名 —— 与 `core/linggenAffinity` 的 `TribulationRelief` 字段一一对应。
  *
- * 放在这里而不是散在视图里:同一个字段在渡劫面板、人物页、图鉴三处要同一个叫法。
+ * 不导出:人物页与渡劫面板都经 `reliefOf` 取标签,共用的是那个函数而不是这张表 ——
+ * 若哪天真有第三处要直接查表,它会被那个模块 import,`exportReach.spec` 自然放行。
  */
 const RELIEF_LABEL: Record<string, string> = {
   shieldRestore: "护盾回填",
@@ -68,8 +69,14 @@ const RELIEF_LABEL: Record<string, string> = {
   reductionToResist: "雷罚分担",
 };
 
-/** 内部数值 → 百分比读数。`burstTierBonus` 本来就是整数档(1 = 一档),两种口径分开。 */
-function reliefOf(relief: Partial<Record<string, number>> | undefined): ElementReliefGain | null {
+/**
+ * 内部数值 → 百分比读数。`burstTierBonus` 本来就是整数档(1 = 一档),两种口径分开。
+ *
+ * **导出**:渡劫面板要把这一劫的通道逐项念出来,与人物页用的是同一份写法。
+ */
+export function reliefOf(
+  relief: Partial<Record<string, number>> | object | undefined,
+): ElementReliefGain | null {
   if (!relief) return null;
   /*
    * 只报**第一个**非零通道 —— 每个元素眼下只配一条(混沌是唯一配了四条的),
@@ -77,8 +84,9 @@ function reliefOf(relief: Partial<Record<string, number>> | undefined): ElementR
    * 一条都没有时返回 null:表里没写就不许硬造一句。
    */
   const parts: ElementReliefGain[] = [];
-  for (const [key, value] of Object.entries(relief)) {
+  for (const [key, value] of Object.entries(relief as Record<string, unknown>)) {
     if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) continue;
+
     const label = RELIEF_LABEL[key] ?? key;
     /*
      * `burstTierBonus` 是**档数**(1 档),不是比率 —— 写成百分比会是「劫威削去 100%」,

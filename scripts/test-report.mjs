@@ -461,6 +461,7 @@ const CATEGORIES = [
       "elementGains",
       "gongfaSourceMult",
       "fortuneHint",
+      "tribulationReliefText",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",

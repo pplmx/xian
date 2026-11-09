@@ -18,6 +18,22 @@
         reliefRoots.map((e) => ELEMENTS[e].name).join("、")
       }}——此劫为你留了一线,能走到哪一步仍看自身准备
     </p>
+    <!--
+      「留了一线」是几线 —— 上面那句到此为止只有形容词,而 `tribulationRelief` 返回的
+      五个通道全是具体读数,且**已经进了结算**(tribLedger 把 relief 传给了
+      settlementResist / sustainScore / guardScore)。玩家按这句话决定补不补词条、
+      换不换灵根,却不知道那一线是 50% 还是 5%。
+
+      读数读同一个 `tribulationRelief` 返回值,通道名与人物页牌面折算用同一份
+      `ui/elementGains` 的标签表 —— 两处各写一份,迟早一处叫「护盾回填」、
+      另一处叫「护盾恢复」。措辞守着「减免」:它是一线生机,不是免死。
+    -->
+    <p v-if="reliefLines.length" class="mt-1 text-note text-ink-soft" data-tribulation-relief>
+      <span>解法通道:</span>
+      <span v-for="(line, i) in reliefLines" :key="line.label" class="tabular">
+        <span v-if="i > 0"> · </span>{{ line.text }}</span
+      >
+    </p>
     <div class="ink-divider my-2" aria-hidden="true" />
     <!--
       天劫是**按最大生命百分比**扣血的(见 core/formulas.tribulationWaveDamage),
@@ -138,6 +154,7 @@ import {
   type TribulationPlan,
 } from "@/core/tribulationDecision";
 import { reliefElements, rootElements } from "@/core/linggenAffinity";
+import { reliefOf } from "@/ui/elementGains";
 import { ELEMENTS } from "@/data/linggen";
 import { STAT_NAMES } from "@/data/statNames";
 import { TRIB_LOW_HP_TRIGGER } from "@/data/constants";
@@ -213,4 +230,18 @@ const tribWave = computed(() =>
 const reliefRoots = computed(() =>
   reliefElements(rootElements(player.linggen?.roots), props.plan.kind),
 );
+
+/**
+ * 这一劫的解法通道读成「护盾回填 50%」这样一句句的人话。
+ *
+ * 读的是 `currentTribulationRelief` 的返回值 —— 与 `tribLedger` 里传给结算的那一份
+ * 是同一个入口(见 core/tribulationDecision 的注释:「都必须经这一个入口取 relief,
+ * 否则又会出现看的一套、算的一套」)。
+ */
+const reliefLines = computed(() => {
+  const gain = reliefOf(currentTribulationRelief(player, props.plan.kind));
+  if (!gain) return [];
+  // `reliefOf` 把多条拼成一句 `text`;渡劫面板要逐条列,故按 ` · ` 拆回
+  return gain.text.split(" · ").map((text) => ({ label: text, text }));
+});
 </script>

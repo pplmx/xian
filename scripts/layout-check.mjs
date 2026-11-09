@@ -5212,12 +5212,151 @@ async function taskTribulation() {
             failures.push("[390] 渡劫场景:点了收尾按钮弹窗没关掉");
         }
       }
+      /*
+       * 解法通道的读数 —— 「留了一线」是几线。
+       *
+       * `tribulationRelief` 返回五个通道的具体数值,且已经进了结算(`tribLedger` 把
+       * relief 传给 settlementResist / sustainScore / guardScore)。而界面上关于它的
+       * 全部文字此前是一句形容词「此劫为你留了一线」—— 玩家按这句话决定补不补词条,
+       * 却不知道那一线是 50% 还是 5%。
+       *
+       * 判据两侧都量:有通道时必须念出具体读数且与函数同源;没通道时整块不出
+       * (不许印一行全零,那等于说「有通道但是 0%」)。
+       */
+      checked += 1;
+      {
+        const reliefInfo = await page.evaluate(() => {
+          const el = document.querySelector("[data-tribulation-relief]");
+          const rootsLine = document.querySelector("[data-cultivation-tribulation] .text-jade");
+          return {
+            relief: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null,
+            roots: rootsLine ? (rootsLine.textContent || "").replace(/\s+/g, " ").trim() : null,
+          };
+        });
+        /*
+         * 夹具灵根与这一劫的劫型未必对得上(counterflow 只认 wood / ice),
+         * 故判据不预设「必须有」,只要求**两侧自洽**:
+         *   · 说了「灵根相应」就必须报出解法读数;反之亦然
+         *   · 读数必须是「通道名 + 数字」,不许只有通道名
+         *   · 不许漏占位符
+         */
+        const saysRoots = !!reliefInfo.roots && /灵根相应/.test(reliefInfo.roots);
+        const hasRelief = !!reliefInfo.relief;
+        if (saysRoots !== hasRelief) {
+          failures.push(
+            `[390] 渡劫场景:灵根相应与解法读数两侧不一致 —— ` +
+              `相应=${saysRoots}「${reliefInfo.roots ?? "无"}」/ 读数=${hasRelief}「${reliefInfo.relief ?? "无"}」` +
+              `(留了一线就必须说是几线,反之不许凭空印一行)`,
+          );
+        }
+        if (hasRelief) {
+          if (/NaN|undefined|Infinity/.test(reliefInfo.relief)) {
+            failures.push(`[390] 渡劫场景:解法通道漏出占位符 —— «${reliefInfo.relief}»`);
+          }
+          // 必须带数字:光有「护盾回填」四个字等于没说
+          if (!/\d/.test(reliefInfo.relief)) {
+            failures.push(
+              `[390] 渡劫场景:解法通道只有名字没有读数 —— «${reliefInfo.relief}»` +
+                `(「留了一线」是几线,玩家要一个数)`,
+            );
+          }
+          if (!/[%档]/.test(reliefInfo.relief)) {
+            failures.push(
+              `[390] 渡劫场景:解法通道的读数没有单位(既不是 % 也不是档)—— «${reliefInfo.relief}»`,
+            );
+          }
+          // 措辞不许滑成必胜 / 免死 —— 它只是一线减免
+          for (const banned of ["必定", "必胜", "免死", "不会死", "战力提升"]) {
+            if (reliefInfo.relief.includes(banned)) {
+              failures.push(`[390] 渡劫场景:解法通道写成了必胜/战力(«${banned}»)—— 它只是一线减免`);
+            }
+          }
+        }
+      }
+
       console.log(
         `\n渡劫突破:${view.outcome ?? "(没写成败)"} · 雷数${view.hasWave ? "有" : "缺"} · 页面境界 ${view.realm}`,
       );
     }
     if (pageErrors.length)
       failures.push(`[390] 渡劫场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    await ctx.close();
+  }
+
+  /*
+   * 解法通道的**正例**:上面那一份夹具的灵根未必与那一劫的劫型对上,故另开一份
+   * 灵根覆盖全部五行的存档 —— 无论抽到哪种劫型,五系里总有一条对上,
+   * 「留了一线 → 解法通道 N%」这条路必定被执行到。
+   *
+   * 只量正例不行(会漏掉「没通道时不许印全零」),只量反例也不行(那条路等于没走过);
+   * 两份夹具合起来才两侧都覆盖。
+   */
+  {
+    const ctx = await auditContext({
+      viewport: { width: 390, height: 844 },
+      deviceScaleFactor: 3,
+      isMobile: true,
+      hasTouch: true,
+    });
+    const slices = showcaseSlices("light");
+    slices.player = {
+      ...slices.player,
+      major: 9,
+      sub: 9,
+      exp: { m: 9 ** 15, e: 0 },
+      linggen: {
+        gradeName: "五行灵根",
+        growthMult: 1.2,
+        roots: [
+          { element: "metal", aptitude: 80 },
+          { element: "wood", aptitude: 80 },
+          { element: "water", aptitude: 80 },
+          { element: "fire", aptitude: 80 },
+          { element: "earth", aptitude: 80 },
+        ],
+      },
+    };
+    await seedSave(ctx, slices, "__tribReliefAll");
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/cultivation", 1200);
+    checked += 1;
+    const reliefInfo = await page.evaluate(() => {
+      const panel = document.querySelector("[data-cultivation-tribulation]");
+      const el = document.querySelector("[data-tribulation-relief]");
+      const rootsLine = panel?.querySelector(".text-jade");
+      return {
+        hasPanel: !!panel,
+        relief: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null,
+        roots: rootsLine ? (rootsLine.textContent || "").replace(/\s+/g, " ").trim() : null,
+        panelText: panel ? (panel.textContent || "").replace(/\s+/g, " ").trim() : "",
+      };
+    });
+    if (!reliefInfo.hasPanel) {
+      failures.push("[390] 解法通道:五行灵根夹具没能打开渡劫面板 —— 正例无从量起");
+    } else if (!reliefInfo.relief) {
+      failures.push(
+        "[390] 解法通道:覆盖五行的灵根下仍没有解法读数 —— " +
+          `«${reliefInfo.panelText.slice(0, 160)}»(五系总有一系对上,这条路必须走得到)`,
+      );
+    } else {
+      if (!/\d/.test(reliefInfo.relief)) {
+        failures.push(`[390] 解法通道:只有名字没有读数 —— «${reliefInfo.relief}»`);
+      }
+      if (!/[%档]/.test(reliefInfo.relief)) {
+        failures.push(`[390] 解法通道:读数没有单位 —— «${reliefInfo.relief}»`);
+      }
+      if (/NaN|undefined|Infinity|××/.test(reliefInfo.relief)) {
+        failures.push(`[390] 解法通道:漏出占位符或双乘号 —— «${reliefInfo.relief}»`);
+      }
+      if (!reliefInfo.roots || !/灵根相应/.test(reliefInfo.roots)) {
+        failures.push(`[390] 解法通道:有读数却没报「灵根相应」—— «${reliefInfo.roots ?? "无"}»`);
+      }
+      console.log(`\n解法通道:«${reliefInfo.relief}» · «${reliefInfo.roots ?? "无"}»`);
+    }
+    if (pageErrors.length)
+      failures.push(`[390] 解法通道场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
     await ctx.close();
   }
 
