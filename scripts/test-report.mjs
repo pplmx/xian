@@ -462,6 +462,7 @@ const CATEGORIES = [
       "gongfaSourceMult",
       "fortuneHint",
       "tribulationReliefText",
+      "lifeFootprint",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",

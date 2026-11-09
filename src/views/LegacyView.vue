@@ -260,6 +260,59 @@
             </ol>
           </div>
 
+          <!--
+            历世足迹 —— 逐行履历是「每一世的账」,这一块答的是「这一路走到哪」:
+            终点境界的走向、最高那一世、平均终寿、宿慧累计。
+
+            只报事实,不给评价 —— 转世是主动选择,短命的一世可能是为了早点换一手
+            灵根;本作没有「这一世打得不好」这种评分。读不出的世不进那一条统计
+            (0 境 = 凡人、0 岁 = 没活过,两个都是会被误读的数)。
+          -->
+          <div
+            v-if="footprint.state !== 'none'"
+            class="legacy-footprint"
+            data-life-footprint
+            :data-footprint-state="footprint.state"
+          >
+            <p class="legacy-footprint__head">
+              <span class="legacy-footprint__label">历世足迹</span>
+              <span class="legacy-footprint__lives tabular">共 {{ footprint.lives }} 世</span>
+              <span
+                v-if="footprint.trend"
+                class="legacy-footprint__trend tabular"
+                :class="`is-${footprint.trend}`"
+                data-footprint-trend
+                >{{ footprint.trendText }}</span
+              >
+              <span v-else class="legacy-footprint__single">只此一世，还看不出走势。</span>
+            </p>
+            <dl class="legacy-footprint__facts">
+              <div>
+                <dt>走到最深</dt>
+                <dd class="tabular">
+                  <template v-if="footprint.best"
+                    >第{{ footprint.best.index }}世 · {{ footprint.best.realmLabel }}</template
+                  >
+                  <template v-else>未记</template>
+                </dd>
+              </div>
+              <div>
+                <dt>平均终寿</dt>
+                <dd class="tabular">
+                  <template v-if="footprint.averageAge !== null">
+                    {{ footprint.averageAge }} 载
+                    <small>按 {{ footprint.ageSamples }} 世</small>
+                  </template>
+                  <template v-else>未记</template>
+                </dd>
+              </div>
+              <div>
+                <dt>宿慧累计</dt>
+                <dd class="tabular">{{ footprint.insightTotal }}</dd>
+              </div>
+            </dl>
+          </div>
+
           <div class="legacy-history__list">
             <template v-if="lifeRows.length">
               <article
@@ -750,6 +803,7 @@ import { legacyCoverage, legacyMeter, legacyStageMeter } from "@/ui/legacyDesk";
 import { lifeTrialArchive } from "@/ui/lifeTrialArchive";
 import { lifeLinggen, linggenSpoken } from "@/ui/lifeLinggen";
 import { lifeLinggenSpread } from "@/ui/lifeLinggenSpread";
+import { lifeFootprint } from "@/ui/lifeFootprint";
 import { formatDate } from "@/utils/time";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LegacyWheel from "@/components/common/LegacyWheel.vue";
@@ -885,6 +939,14 @@ const lifeRows = computed(() =>
  * `ui/lifeLinggenSpread` 里 —— 两处各滤一遍,迟早会分叉。
  */
 const linggenSpread = computed(() => lifeLinggenSpread(player.reincarnation.lives));
+
+/**
+ * 历世足迹 —— 终点境界的走向、最高那一世、平均终寿、宿慧累计。
+ *
+ * 与上面那块灵根对照同源同层:都是「把已经记下的十世摆成一眼能读的形状」,
+ * 过滤与取值口径收在 `ui/lifeFootprint` 里,视图只做接线。
+ */
+const footprint = computed(() => lifeFootprint(player.reincarnation.lives));
 
 const LIFE_RENDER_BATCH = 12;
 const LIFE_RENDER_WINDOW = LIFE_RENDER_BATCH * 2;

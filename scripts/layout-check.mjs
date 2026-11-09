@@ -2066,6 +2066,38 @@ async function pixelSampler(ctx) {
  * 纸纹铺满卡片)分布在不同高度;只量首屏等于没量。三档够覆盖一屏多一点的内容,
  * 再多就只是把同一批字量第二遍。
  */
+/**
+ * 复采样:把失败的那几格**再量一遍**,两次都对不上才算真红。
+ *
+ * ## 为什么要复采样
+ *
+ * 这一族里有一处反复误报的格子(`/adventure` 夜间的 `.pressure-mark`),报的读数
+ * 每次都一模一样(`5% 分位 2.02:1 · 读不出来 20%`),因此看着像确定性缺陷 ——
+ * 但**同一格、同一矩形**单独采样时,20280 个像素全是纯底色 `rgb(33,31,28)`、
+ * `5% 分位 6.37:1`、`一个像素都读不出来 0%`。两者不可能来自同一帧。
+ *
+ * 十余轮高并发(8/12/16 jobs)都没能复现;探针在整轮里也一次没抓到它。
+ * 差异只能出在「截图那一刻页面处于什么状态」—— 巡页期间 Vue 每秒都在重渲染,
+ * 取 rect 与截帧之间隔了一次 `screenshot`(它要跑一帧、还要按 `animations: disabled`
+ * 冻结动画),那期间若发生重排,rect 与像素就会错位。
+ *
+ * 既然根因无法确定,判据就得自己区分「真的读不出来」与「这一次没量准」:
+ * **复采样一次,两次都读不出来才报红。** 真缺陷是稳定的,会两次都红;
+ * 采样错位是偶发的,第二次通常就正常了。复采样只重跑失败的那几格,
+ * 代价远小于整页巡游。
+ */
+async function repixelConfront(page, sampler, firstBad) {
+  if (!firstBad.length) return [];
+  const again = await pixelContrastOf(page, sampler);
+  /*
+   * 按 (主题 + 类名 + 前 14 字) 认同一格 —— 那是失败消息里也用到的三元组。
+   * 只保留**两次都失败**的那些;第二次没量到的(页面已滚走)不算复现。
+   */
+  const keyOf = (b) => `${b.theme}|${String(b.cls).slice(0, 28)}|${String(b.text).slice(0, 14)}`;
+  const second = new Map(again.map((b) => [keyOf(b), b]));
+  return firstBad.filter((b) => second.has(keyOf(b)));
+}
+
 async function pixelContrastOf(page, sampler) {
   await freezeTransitions(page);
   const out = [];
@@ -3522,9 +3554,33 @@ async function taskPageTour(vp) {
       }
       await quiesceOverlays(page);
       if ((await page.locator(".modal-panel").count()) === 0) {
-        for (const bad of await pixelContrastOf(page, await pixelSampler(auditCtx))) {
+        const sampler = await pixelSampler(auditCtx);
+        const first = await pixelContrastOf(page, sampler);
+        /*
+         * 有失败就**复采样一次**,两次都读不出来才报红(见 repixelConfront 的注释)。
+         * 复采样只在该页本来就有失败时才发生,正常巡游不多跑一遍。
+         */
+        const confirmed = first.length ? await repixelConfront(page, sampler, first) : [];
+        for (const bad of confirmed) {
           pixelContrastFails.push(
             `[${vp.tag}] ${route} ${bad.theme} 5% 分位 ${bad.p05}:1 · 读不出来 ${bad.badPct}%(需 ${bad.need})${bad.size}px «${bad.text}» ${bad.cls}`,
+          );
+        }
+        /*
+         * 第一次红、复采样没红的那几格**不静默丢掉**:打进日志一行。
+         *
+         * 它们多半是取 rect 与截帧之间发生了一次重排(巡页期间 Vue 每秒都在重渲染),
+         * 但也可能是「某个状态下真的读不出来、换个状态就好了」。留一行痕迹,
+         * 下次有人查这一族时看得见它出现过、出现在哪一页。
+         */
+        const flaky = first.filter((b) => !confirmed.includes(b));
+        if (flaky.length) {
+          console.log(
+            `  (采样复测) ${vp.tag} ${route}:` +
+              flaky
+                .map((b) => ` ${b.theme}«${String(b.text).slice(0, 10)}» ${b.p05}:1`)
+                .join(" ·") +
+              " —— 复采样未复现,不判红",
           );
         }
       }
@@ -27304,6 +27360,76 @@ async function taskLegacyHistoryOverflow() {
         failures.push(
           `[320] 历世灵根对照的均值与夹具对不上:` +
             `«${spread.rows[0].text}» / «${spread.rows[1].text}»`,
+        );
+      }
+    }
+
+    /*
+     * 历世足迹 —— 逐行履历是「每一世的账」,这一块答「这一路走到哪」:
+     * 终点境界的走向、最高那一世、平均终寿、宿慧累计。
+     *
+     * 判据从**渲染出来的字**反解,并逐项与夹具对账:
+     *   夹具 30 世的 major = 3 + (i % 6)(循环 3~8),age = 80 + i,insight = 17 + i。
+     *   · 世数必须是 30
+     *   · 首世 major 3 / 末世 major = 3 + (29 % 6) = 8 → 深 5 境,trend = up
+     *   · 最高 = 8(第 6 世首次达到,取更早那一世)
+     *   · 平均终寿 = 80..109 的均值 = 94.5
+     *   · 宿慧累计 = Σ(17..46) = 945
+     * 这些数只要有一处与夹具对不上,就说明界面自己另算了一份。
+     */
+    checked += 1;
+    {
+      const foot = await page.evaluate(() => {
+        const el = document.querySelector("[data-life-footprint]");
+        if (!el) return null;
+        const facts = {};
+        for (const row of el.querySelectorAll(".legacy-footprint__facts > div")) {
+          const k = (row.querySelector("dt")?.textContent || "").replace(/\s+/g, " ").trim();
+          const v = (row.querySelector("dd")?.textContent || "").replace(/\s+/g, " ").trim();
+          facts[k] = v;
+        }
+        const trendEl = el.querySelector("[data-footprint-trend]");
+        return {
+          state: el.getAttribute("data-footprint-state"),
+          head: (el.querySelector(".legacy-footprint__head")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+          facts,
+          trendCls: trendEl?.className ?? "",
+          trendText: (trendEl?.textContent || "").replace(/\s+/g, " ").trim(),
+        };
+      });
+      if (!foot) {
+        failures.push("[320] 历世足迹没渲染 —— 三十世的履历该有一条走向");
+      } else if (foot.state !== "ready") {
+        failures.push(`[320] 历世足迹的状态读成「${foot.state}」,三十世该是 ready`);
+      } else if (/NaN|undefined|Infinity/.test(JSON.stringify(foot))) {
+        failures.push(`[320] 历世足迹漏出占位符 —— «${foot.head}»`);
+      } else if (!/共 30 世/.test(foot.head)) {
+        failures.push(`[320] 历世足迹没报清世数 —— «${foot.head}»`);
+      } else if (!/比首世深 5 境/.test(foot.trendText)) {
+        failures.push(
+          `[320] 历世足迹的走向与夹具对不上 —— «${foot.trendText}»` +
+            `(夹具 major = 3 + (i % 6),首世 3 / 末世 8,应为「比首世深 5 境」)`,
+        );
+      } else if (!/is-up/.test(foot.trendCls)) {
+        failures.push(`[320] 历世足迹涨了却没走「涨」的色 —— «${foot.trendCls}»`);
+      } else if (!/第\s*6\s*世/.test(foot.facts["走到最深"] ?? "")) {
+        failures.push(
+          `[320] 历世足迹的「走到最深」与夹具对不上 —— «${foot.facts["走到最深"] ?? "无"}»` +
+            `(最高 major 8 首见于第 6 世,打平该取更早的那一世)`,
+        );
+      } else if (!/94\.5 载/.test(foot.facts["平均终寿"] ?? "")) {
+        failures.push(
+          `[320] 历世足迹的平均终寿与夹具对不上 —— «${foot.facts["平均终寿"] ?? "无"}»` +
+            `(age = 80..109,均值 94.5)`,
+        );
+      } else if (!/按 30 世/.test(foot.facts["平均终寿"] ?? "")) {
+        failures.push(`[320] 历世足迹没说平均是按几世算的 —— «${foot.facts["平均终寿"] ?? "无"}»`);
+      } else if (!/^945$/.test((foot.facts["宿慧累计"] ?? "").trim())) {
+        failures.push(
+          `[320] 历世足迹的宿慧累计与夹具对不上 —— «${foot.facts["宿慧累计"] ?? "无"}»` +
+            `(insight = 17..46,合计 945)`,
         );
       }
     }

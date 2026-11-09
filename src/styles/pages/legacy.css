@@ -630,6 +630,78 @@
     line-height: 1.35;
     white-space: nowrap;
   }
+  /*
+   * 历世足迹 —— 与上面那块「历世灵根」同一层、同一形(上缘细线 + 抬头一行 + 账目),
+   * 两块连读才完整:灵根答「牌面在不在变好」,足迹答「路有没有在变长」。
+   *
+   * 走向的涨跌走石青 / 琥珀 —— 与全站「涨跌」同一对色,不引入第三色。
+   */
+  .legacy-footprint {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+    padding: 0.5rem 0.86rem 0.62rem;
+  }
+  .legacy-footprint__head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.24rem 0.6rem;
+  }
+  .legacy-footprint__label {
+    color: var(--color-ink-soft);
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    letter-spacing: 0.06em;
+  }
+  .legacy-footprint__lives,
+  .legacy-footprint__single {
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .legacy-footprint__trend {
+    color: var(--color-ink-soft);
+    font-size: var(--type-note);
+    line-height: 1.45;
+    white-space: nowrap;
+  }
+  .legacy-footprint__trend.is-up {
+    color: var(--color-jade);
+  }
+  .legacy-footprint__trend.is-down {
+    color: var(--color-amber-ink);
+  }
+  .legacy-footprint__facts {
+    margin-top: 0.36rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.07);
+  }
+  .legacy-footprint__facts > div {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.28rem 0;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.06);
+  }
+  .legacy-footprint__facts dt {
+    flex: none;
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+  }
+  .legacy-footprint__facts dd {
+    min-width: 0;
+    color: var(--color-ink-soft);
+    font-size: var(--type-note);
+    text-align: right;
+  }
+  .legacy-footprint__facts dd small {
+    margin-left: 0.24rem;
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+  }
   .legacy-history__list,
   .legacy-loss__list,
   .legacy-fate__list,
