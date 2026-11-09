@@ -1224,7 +1224,24 @@ for (const name of plainApis) { assert.ok(name in engine, …); }               
 
 修法:`assert.ok(plainApis.size >= 8, …)` 一句即可(`factories` 那条就是现成的样子)。
 
-> **2026-11-09 复核,仍成立**。顺便记一处容易看走眼的地方:同一个文件里有
+> **2026-11-09 复核,仍成立**。而且**不止一处**——同一段里还有两个同样形状的循环,
+> 它们的集合也是从 `docs/usage.md` 用正则捞的:
+>
+> | 行 | 集合 | 下限断言 |
+> | --- | --- | --- |
+> | 70–77 | `plainApis`(反引号里的工具名) | **没有** |
+> | 80–82 | `doc.matchAll(/(examples\/[\w.-]+\.ts)/g)` | **没有** |
+> | 83–90 | `doc.matchAll(/`(\w+\.spec\.ts)`/g)` | **没有** |
+>
+> 三处的失效方式是同一个:文档把写法一改(反引号换掉、示例挪进子目录、用例改名),
+> 正则就捞不到,`for` 一次都不执行,门照常打「组装指南自检通过」。
+> 同文件里另外五处(`factories.size >= 8`、`promised.length >= 40`、
+> `versionRefs.length >= 4`、`simSpecs.length >= 4`、`examples.length >= 3`(在
+> `engine-standalone.mjs`))**都写了下限**,所以这不是风格问题,是这三处漏了。
+>
+> 修法一致:三处各加一句 `assert.ok(x.size >= N, …)`,`N` 取当前的读数往下取整。
+>
+> 顺便记一处容易看走眼的地方:同一个文件里有
 > `plainApis.size` 这个表达式(`verify-dist.mjs:91` 的**打印**语句
 > 「组装指南自检通过(N 个工厂 + M 个工具 …)」)。grep 到它很容易以为「已经有 size 了」——
 > 但打印不是断言,集合为空时它只会印出「0 个工具」然后继续绿。
