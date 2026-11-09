@@ -62,6 +62,36 @@ describe("Android 壳层 · 遮挡层的轮询不许无限跑", () => {
   });
 });
 
+describe("Android 壳层 · Activity 销毁后不许再碰 UI", () => {
+  it("onDestroy 走 destroy()，它摘掉 handler 队列并挡住后续 Toast", () => {
+    /*
+     * `migrate()` 排了两个延时回调:10 秒超时、以及 `showToast` 里的 Toast。
+     * `finish()` 只把 `finished` 置真,队列里的东西照样会到点执行。
+     *
+     * 玩家进游戏后 10 秒内退出 App:`onDestroy` → 原来只调 `cleanup()`,
+     * 它停 server、销毁 WebView,**不动队列**。于是超时回调触发 → `finish()` →
+     * `listener.onMigrationSkipped()` → `showToast()` —
+     * 而那时 `MainActivity` 已销毁,`Toast.makeText(已销毁的 Activity, …)`
+     * 在 Android 11+ 抛 BadTokenException,进程直接崩。
+     *
+     * 修法是分开两件事:`cleanup()` 是「迁移做完了,收资源」(App 还活着),
+     * `destroy()` 是「宿主没了」(之后一律不碰 UI)。
+     */
+    expect(MIGRATOR, "要有一个销毁入口").toMatch(/public void destroy\(\)/);
+    expect(MIGRATOR, "销毁时置位").toMatch(/destroyed = true/);
+    expect(MIGRATOR, "销毁时摘掉 handler 队列").toContain(
+      "handler.removeCallbacksAndMessages(null)",
+    );
+    expect(MIGRATOR, "Toast 前要检查宿主还在不在").toMatch(
+      /if \(destroyed\) return;[\s\S]{0,80}Toast\.makeText/,
+    );
+    expect(ACTIVITY, "onDestroy 必须走 destroy()（cleanup 不管队列）").toContain(
+      "migrator.destroy()",
+    );
+    expect(ACTIVITY, "onDestroy 里不该再留下 cleanup()").not.toContain("migrator.cleanup()");
+  });
+});
+
 describe("Android 首启迁移 · 旧键落进当前存档域", () => {
   it("Java 的旧前缀与当前/更名后前缀都跟 TS 同一份账", () => {
     expect(MIGRATOR).toContain('LEGACY_ANDROID_SAVE_PREFIX = "yunyinxiang_save_"');

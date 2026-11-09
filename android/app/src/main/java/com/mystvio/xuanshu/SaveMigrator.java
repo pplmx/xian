@@ -70,6 +70,8 @@ public class SaveMigrator {
     private final ConcurrentHashMap<String, String> collectedSaves = new ConcurrentHashMap<>();
     private OnMigrationListener listener;
     private boolean finished = false;
+    /** Activity 销毁后置位 —— 之后一律不再碰 UI（Toast / WebView） */
+    private volatile boolean destroyed = false;
 
     public interface OnMigrationListener {
         void onMigrationComplete(Map<String, String> saves);
@@ -174,9 +176,12 @@ public class SaveMigrator {
         }
     }
 
-    /** 显示 Toast 提示 */
+    /** 显示 Toast 提示（Activity 已销毁时直接不弹） */
     private void showToast(String message) {
-        handler.post(() -> Toast.makeText(context, message, Toast.LENGTH_LONG).show());
+        handler.post(() -> {
+            if (destroyed) return;
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+        });
     }
 
     /** 清理资源 */
@@ -191,6 +196,25 @@ public class SaveMigrator {
                 hiddenWebView = null;
             }
         });
+    }
+
+    /**
+     * Activity 销毁时调用 —— 与 {@link #cleanup()} 分开，因为两者管的不是一回事:
+     * `cleanup()` 是「迁移这件事做完了，资源可以收了」，之后 App 还活着；
+     * 而这里是「宿主没了」，之后**任何碰 UI 的动作都不许再做**。
+     *
+     * 原本 `onDestroy` 只调 `cleanup()`，于是 10 秒超时那个
+     * `handler.postDelayed(() -> { if (!finished) finish("迁移超时") }, 10000)`
+     * 还留在队列里：玩家进游戏后 10 秒内就退出 App 的话，它照样触发 →
+     * `finish()` → `listener.onMigrationSkipped()` → `showToast()`，
+     * 而那时 `MainActivity` 已销毁 —— `Toast.makeText(已销毁的 Activity, …)`
+     * 在 Android 11+ 抛 BadTokenException，直接把进程崩掉。
+     */
+    public void destroy() {
+        destroyed = true;
+        // 先摘队列:超时回调、待执行的 Toast、待建的 WebView 一并取消
+        handler.removeCallbacksAndMessages(null);
+        cleanup();
     }
 
     /** NanoHTTPD 迁移服务器，只返回一个迁移 HTML 页面 */

@@ -170,9 +170,11 @@ public class MainActivity extends BridgeActivity {
     public void onDestroy() {
         super.onDestroy();
         handler.removeCallbacksAndMessages(null);
-        // 清理迁移器资源
+        // 清理迁移器资源 —— 走 destroy() 而不是 cleanup():后者只收资源,
+        // 前者还会摘掉 handler 队列(10 秒超时回调、待弹的 Toast),
+        // 否则它们会在 Activity 销毁后触发,拿已销毁的 context 弹 Toast 直接崩
         if (migrator != null) {
-            migrator.cleanup();
+            migrator.destroy();
             migrator = null;
         }
     }
