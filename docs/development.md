@@ -1260,17 +1260,20 @@ for (const name of plainApis) { assert.ok(name in engine, …); }               
 
 | 位置 | 版本 |
 | --- | --- |
-| 宿主 `package.json` | `1.4.0` |
-| 引擎 `package.json` **声明** | `1.0.0` |
-| `bun.lock` 的 `wanxiang-engine/vite-plus` 条目 | `1.0.0` |
-| 引擎 `node_modules/` 里**实际装的** | `1.4.0` |
+| 宿主 `package.json` | `1.4.0`(经 `catalog:` 解析) |
+| 引擎 `package.json` 声明 | `1.0.0` |
+| `bun.lock` 的 `wanxiang-engine/vite-plus` 条目 | **`vite-plus@1.0.0` 独立解析**(连 `vite` 也走 `@voidzero-dev/vite-plus-core@1.0.0`) |
+| 从 `packages/engine` 跑 `require.resolve("vite-plus/package.json")` | **`1.0.0`** |
 
-也就是说:装的是新的、声明的是旧的 —— 声明与实物不一致。
+也就是说:**声明与实物一致,都是旧的**。告警指向的就是真正在用的那份。
 
-**代价是 GitHub 上 7 条未修复告警全挂在这上面**(`gh api 'repos/…/dependabot/alerts?state=open'`
-查得到):受影响范围是 `<= 1.0.0` 或 `< 1.3.0`,而 Dependabot 读的是 `package.json`
-的**声明**,不是 `node_modules` 里实际装的。真实风险为零(装的是 1.4.0),但告警一直亮着
-就没人会认真看它 —— 等哪天来了条真的,也会被这七条淹掉。
+> **2026-11-09 纠正一处错记。** 这一节原先写着「引擎 `node_modules/` 里**实际装的** `1.4.0`」,
+> 结论是「装的是新的、声明的是旧的 —— 真实风险为零」。**那是错的**:
+> 那次 `require.resolve` 是在**宿主目录**下跑的,解析到宿主的 1.4.0;
+> 换到 `packages/engine` 下跑,拿到的是 1.0.0。`bun.lock:1516` 的独立解析条目也印证了这点。
+>
+> 这个区别有实际后果:不是"七条告警虚报",而是**七条告警指向真实在用的旧版本**,
+> 其中一条是 `high`(`<= 1.0.0`)。
 
 修法:把引擎包的声明改成 `1.4.0`,与宿主的 `catalog` 同版;`bun.lock` 里那条
 `wanxiang-engine/vite-plus` 随之更新。**需要推引擎仓**(改 `packages/engine` 会立刻
