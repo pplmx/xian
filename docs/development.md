@@ -596,7 +596,7 @@ FCP 没有实质变化(±16ms 是抖动),而**楷体换上一律变慢 130~200ms
 
 | 维度 | 实测 | 结论 |
 | --- | --- | --- |
-| 文件规模 | 最大 `ReincarnationDialog.vue` 1779 行,但前 644 行是模板与样式,单 `<script>` 块 | 大是"内容多"不是"职责杂",不构成问题 |
+| 文件规模 | 最大的四个逐个量了 `<script>` 块占比:**`ReincarnationDialog.vue` 1779 行 / script 109**(6%)、`RebirthDialog.vue` 1274 / 98(8%)、`BondDialog.vue` 1334 / 232(17%)、`AdventureView.vue` 1277 / 478(37%) | 大头都是模板与样式。`AdventureView` 那 37% 也逐个看过:是 `regionRows` / `preview` / `groupedRows` 这类**视图层派生数据**与 `chooseMode` / `begin` / `suppress` 这类交互入口,属应有内容。`atlasStateOf` 看着像纯函数,但它读 `nextActionableId.value`,**依赖视图上下文**,下沉反而是错位 —— 它的注释也写明「只把现有状态翻译成沿线记号,不另判准入或镇压」 |
 | 代码重复 | 用**不重叠** 8 行窗口扫全仓:只有 **4 组**重复,其中 3 组是零散 CSS,1 组是真逻辑(两个页签栏的 `onKeydown`,已提到 `useTabKeys`) | 重复率极低。**滑动窗口会自重叠**,第一版这么写报了 1309 组,全是误报 |
 | CSS 重复 | `style.css` 里 98 个选择器被多次定义;逐个查过(`.atlas-volume__count` 7 处等),全是**增量覆盖**——不同属性或不同媒体查询 | 是 CSS 的正常模式,不是重复 |
 | 死导出 / 无用 props | `deadExportAudit`(TS 语法树,不是正则)覆盖全 `src`,`ALLOWLIST` 空;94 个 `defineProps` 字段逐个查过,零未使用 | **零死导出、零无用 props** —— 这一层已有判据,别再写正则探一遍 |
