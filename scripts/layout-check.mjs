@@ -11047,6 +11047,50 @@ async function taskFirstSight() {
         playerHpPct: 60,
       },
     });
+    /*
+     * 带遥测的胜利战报 —— 上一条 `mkBattle` 没有 `stats`,`analyzeBattle` 会直接
+     * 返回 null(它本来就这么判旧档),于是胜利归因那条路永远走不到。
+     * 这份夹具的读数刻意选在阈值之内:战后气血 100%、3 回合、闪过 4 次、暴击 6 次,
+     * 于是「没怎么伤到你」「压制期里没给它翻身的机会」「闪避换成了气血」「暴击压在
+     * 输出上」四条都该出 —— 判据不猜具体文案,只要求「胜利必须至少有一条归因」。
+     */
+    const gn = (n) => ({ m: n, e: 0 });
+    const mkSide = (over) => ({
+      dealt: gn(500),
+      taken: gn(200),
+      pierceTaken: gn(0),
+      biggestHitTaken: gn(80),
+      healed: gn(0),
+      shieldAbsorbed: gn(0),
+      dodges: 0,
+      missedHits: 0,
+      hitsLanded: 12,
+      counters: 0,
+      combos: 0,
+      crits: 0,
+      skillCasts: 3,
+      artifactProcs: 0,
+      stunnedTurns: 0,
+      ...over,
+    });
+    const mkWinBattle = () => ({
+      enemyId: "e_sword_guard",
+      enemyName: "守剑石人",
+      enemyIcon: "sword",
+      isBoss: false,
+      at: Date.now() - 60_000,
+      firstSight: false,
+      result: {
+        win: true,
+        log: [{ t: "info", text: "守剑石人横剑而立。" }],
+        rounds: 3,
+        playerHpPct: 1,
+        stats: {
+          player: mkSide({ dodges: 4, crits: 6 }),
+          enemy: mkSide({ dealt: gn(200), taken: gn(900) }),
+        },
+      },
+    });
 
     let page = await ctx.newPage();
     await page.addInitScript(() => {
@@ -11095,6 +11139,66 @@ async function taskFirstSight() {
     const no = await read();
     if (no !== null) {
       failures.push(`[390] 初见:常打的那只也盖了一枚章 «${no}»`);
+    }
+
+    /*
+     * 三 胜利归因 —— 赢了也要说清「靠什么赢的」。
+     *
+     * 战败时分析面板自动展开,玩家自己会去翻原因;胜利时它不展开,玩家也没这个动机
+     * —— 而那恰恰是最该学到东西的一刻。界面早就铺好了 `findings` 那段渲染,
+     * 而 `analyzeBattle` 在胜利时返回空数组,于是那一段永远是空的。
+     * 这里用一份**带遥测的胜利战报**把那条路钉死(没有 stats 的旧战报仍是 null,不动)。
+     */
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.adventure = { ...slices.adventure, ...mkSession(mkWinBattle()) };
+      await seedSave(ctx, slices, "__battleWinFindings");
+    }
+    await page.close();
+    page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/adventure", 900);
+    await clearOverlays(page);
+    // 胜局分析不自动展开,自己点开
+    const winBtn = page.locator("button", { hasText: /战斗分析/ }).first();
+    if ((await winBtn.count()) === 0) {
+      failures.push("[390] 胜利归因:找不到「战斗分析」入口");
+    } else {
+      await winBtn.click({ timeout: 3000 }).catch(() => {});
+      await page.waitForTimeout(500);
+      const winInfo = await page.evaluate(() => {
+        const el = document.querySelector("[data-battle-analysis]");
+        if (!el) return null;
+        return {
+          headline: (el.querySelector(":scope > p")?.textContent || "").replace(/\s+/g, " ").trim(),
+          findings: [...el.querySelectorAll(":scope > p")]
+            .slice(1)
+            .map((p) => (p.textContent || "").replace(/\s+/g, " ").trim())
+            .filter((t) => t && !/^·?\s*可借力/.test(t)),
+          hasDirections: Boolean(el.querySelector(".combat-intel__directions")),
+        };
+      });
+      if (!winInfo) {
+        failures.push("[390] 胜利归因:分析面板没渲染出来");
+      } else if (/NaN|undefined|Infinity/.test(winInfo.findings.join(" "))) {
+        failures.push(`[390] 胜利归因:漏出占位符 —— «${winInfo.findings.join(" | ")}»`);
+      } else if (winInfo.findings.length === 0) {
+        failures.push(
+          `[390] 胜利归因:赢了却一条归因都没有 —— «${winInfo.headline}»` +
+            `(界面早铺好了 findings 那段,胜利时永远是空的)`,
+        );
+      } else if (winInfo.hasDirections) {
+        failures.push("[390] 胜利归因:胜局给了「可借力的方向」—— 那等于劝玩家换掉刚赢下来的打法");
+      } else {
+        console.log(
+          `\n胜利归因:«${winInfo.headline}» · ${winInfo.findings.length} 条` +
+            `(«${winInfo.findings[0].slice(0, 28)}…»)`,
+        );
+      }
     }
 
     if (pageErrors.length) {
@@ -16279,7 +16383,57 @@ async function taskCombatReplay() {
         );
         if (!/总输出|总承伤/.test(analysisText))
           failures.push("[390] 战斗场景:点开战斗分析也没看到数据面板(总输出/总承伤)");
-        else console.log(`\n战斗回放:${summary} · 战报 ${logLines} 行 · 分析面板可开`);
+        else {
+          /*
+           * 胜利归因 —— 赢了也要说清「靠什么赢的」。
+           *
+           * 战败时分析面板自动展开,玩家自己会去翻原因;胜利时它不展开,玩家也没
+           * 这个动机 —— 而那恰恰是最该学到东西的一刻。故这里的断言按**胜负分岔**:
+           *   · 胜:面板里除了数据行,还要有至少一条归因(界面早就铺好了
+           *     `v-if="analysis.findings.length"` 那段,此前胜利时它永远是空的);
+           *   · 负:方向建议照旧要有(那是战败专属,胜局硬推等于劝人换掉刚赢的打法)。
+           * 这一场是胜是负由引擎决定,故两侧都写得出来,不假设结果。
+           */
+          const verdict = /胜/.test(summary) ? "win" : "loss";
+          const findingsText = await page.evaluate(() => {
+            const el = document.querySelector("[data-battle-analysis]");
+            if (!el) return null;
+            const headline = el.querySelector(":scope > p")?.textContent ?? "";
+            const rest = [...el.querySelectorAll(":scope > p")]
+              .slice(1)
+              .map((p) => (p.textContent || "").replace(/\s+/g, " ").trim())
+              .filter((t) => t && !/^·?\s*可借力/.test(t));
+            return {
+              headline: (headline || "").replace(/\s+/g, " ").trim(),
+              findings: rest,
+              hasDirections: Boolean(el.querySelector(".combat-intel__directions")),
+            };
+          });
+          if (!findingsText) {
+            failures.push("[390] 战斗场景:分析面板没渲染出 [data-battle-analysis]");
+          } else if (/NaN|undefined|Infinity/.test(findingsText.findings.join(" "))) {
+            failures.push(
+              `[390] 战斗场景:战斗归因漏出占位符 —— «${findingsText.findings.join(" | ")}»`,
+            );
+          } else if (verdict === "win" && findingsText.findings.length === 0) {
+            failures.push(
+              `[390] 战斗场景:赢了却一条归因都没有 —— «${findingsText.headline}»` +
+                `(界面早铺好了 findings 那段,胜利时永远是空的;赢了正是最该学到东西的一刻)`,
+            );
+          } else if (verdict === "win" && findingsText.hasDirections) {
+            failures.push(
+              "[390] 战斗场景:胜局给了「可借力的方向」—— 那等于劝玩家换掉刚赢下来的打法",
+            );
+          } else {
+            console.log(
+              `\n战斗回放:${summary} · 战报 ${logLines} 行 · 分析面板可开` +
+                ` · 归因 ${findingsText.findings.length} 条` +
+                (findingsText.findings.length
+                  ? `(«${findingsText.findings[0].slice(0, 24)}…»)`
+                  : ""),
+            );
+          }
+        }
       }
     }
     if (

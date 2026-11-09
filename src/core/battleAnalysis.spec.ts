@@ -33,11 +33,26 @@ describe("战斗分析", () => {
     expect(analyzeBattle({ win: false, rounds: 10, playerHpPct: 0, log: [] }, null)).toBeNull();
   });
 
-  it("胜利只给数据,不找茬", () => {
+  it("胜利不找茬 —— 不指责、也不劝你换打法", () => {
+    /*
+     * 这条原本断言 `findings.length === 0`,写的是当时「胜利不做归因」的实现。
+     * 那个实现留下了缺口:界面早就铺好了 findings / directions 两段渲染,
+     * 胜利时却永远是空的 —— 玩家赢了只看到一句「此战 N 回合而胜」,
+     * 而赢了正是最该学到东西的一刻(战败时玩家自己会去翻原因,胜利时没这个动机)。
+     *
+     * 故胜利现在**会**给归因,但约束没变、而且更清楚了:
+     *   · 不指责:不出现「落空」「乏力」「不是办法」这类败局措辞;
+     *   · 不劝换:方向建议只属于败局 —— 硬推一条等于劝玩家换掉刚赢下来的打法;
+     *   · 数据行照旧要够(那是归因的依据)。
+     * 这条夹具的读数很平(气血 0.6 / 20 回合 / 无闪避无暴击),归因不会凭空多出来。
+     */
     const a = analyzeBattle(result(true, stats({})), "gangdun")!;
-    expect(a.findings.length).toBe(0);
-    expect(a.directions.length).toBe(0);
+    expect(a.directions.length, "胜局不给方向建议").toBe(0);
     expect(a.dataRows.length).toBeGreaterThan(5);
+    const joined = a.findings.map((f) => f.text).join(" | ");
+    for (const blame of ["落空", "乏力", "不是办法", "无以为继", "难以衔接"]) {
+      expect(joined, `胜局归因里出现了败局措辞(«${blame}»)—— 赢了不找茬`).not.toContain(blame);
+    }
   });
 
   it("真伤致败被点名,并指向不依赖护盾的方向", () => {

@@ -22,6 +22,24 @@ export interface BattleAnalysis {
   dataRows: { label: string; value: string }[];
 }
 
+/*
+ * 胜利归因的阈值。
+ *
+ * 与战败那边分两套:败局的阈值问「哪里出了问题」,胜局的阈值问「赢在哪」——
+ * 同一个数在两侧含义不同(承伤 30% 在败局里是隐患,在胜局里是「扛得住」)。
+ * 唯 `LONG_FIGHT_ROUNDS` 两侧共用:它是「鏖战」这个词的定义,不该有两个。
+ */
+/** 战后气血在这之上算赢得从容 */
+const COMFORTABLE_HP = 0.6;
+/** 战后气血在这之下算惨胜 */
+const NARROW_HP = 0.25;
+/** 这几回合内结束算速杀 */
+const QUICK_WIN_ROUNDS = 4;
+/** 闪避到这个次数值得单说 */
+const DODGE_WIN_WARN = 3;
+/** 暴击到这个次数值得单说 */
+const CRIT_WIN_WARN = 5;
+
 const PIERCE_SHARE_WARN = 0.35;
 const MISS_RATE_WARN = 0.28;
 const BIG_HIT_WARN = 0.38;
@@ -197,6 +215,110 @@ function foeOriginFinding(result: CombatResult): AnalysisFinding[] {
   return [{ text: `敌之加成(${o.label}):${lines.join(";")}`, styleHints: [] }];
 }
 
+/**
+ * 胜利归因 —— 赢了也要说清「靠什么赢的」。
+ *
+ * ## 为什么胜利也要归因
+ *
+ * 战败时玩家自己会去翻分析(他要找原因);胜利时他没这个动机,而这恰恰是
+ * **最该学到东西的一刻**:这一场靠什么赢下来的,下一场换个地界还能不能这么打。
+ * 同一个面板,败了有归因、赢了只有一句「此战 N 回合而胜」,读起来像「赢了没什么好说的」。
+ *
+ * ## 每一条都由读数支撑
+ *
+ * 不许写「你很稳」这种形容词 —— 那谁都会说。每条都落到 `result` 里现成的事实上:
+ * 回合数、战后气血、承伤占比、有没有被抢先、闪避与暴击次数。读不出支撑就干脆不写,
+ * 宁可少一条也不编。
+ *
+ * ## 与战败归因同一套形状
+ *
+ * 只填 `text` 与 `styleHints`(界面已按 `findings` 渲染),不新增字段、不改界面。
+ */
+function victoryFindings(
+  p: CombatSideStats,
+  e: CombatSideStats,
+  rounds: number,
+  hpPct: number,
+  firstMoveLoss: boolean,
+): AnalysisFinding[] {
+  const findings: AnalysisFinding[] = [];
+
+  /*
+   * 战后气血是最硬的一条:它把「完胜」与「惨胜」分开。
+   * 两档之间不留空档 —— 要么说赢得从容,要么说赢得惊险;中间那档不置评。
+   */
+  if (hpPct >= COMFORTABLE_HP) {
+    findings.push({
+      text: `战后气血 ${formatPercent(hpPct, 0)} —— 这一场没怎么伤到你`,
+      styleHints: ["gangdun", "lianji"],
+    });
+  } else if (hpPct <= NARROW_HP) {
+    findings.push({
+      text: `战后只剩 ${formatPercent(hpPct, 0)} 气血 —— 险胜,下一场未必还有这份运气`,
+      styleHints: ["beishui", "muze"],
+    });
+  }
+
+  /*
+   * 短战是「出手就被压住」的证据;长战则是另一种结论(靠耐打拖赢)。
+   * 两个阈值与战败那边同一套常量,免得同一场战斗胜败两侧口径不一。
+   */
+  if (rounds <= QUICK_WIN_ROUNDS) {
+    findings.push({
+      text: `${rounds} 回合结束 —— 压制期里没给它翻身的机会`,
+      styleHints: ["lianji", "cangfeng"],
+    });
+  } else if (rounds >= LONG_FIGHT_ROUNDS) {
+    findings.push({
+      text: `鏖战 ${rounds} 回合才拿下 —— 这一场是靠撑住赢的,不是靠速杀`,
+      styleHints: ["gangdun", "beishui"],
+    });
+  }
+
+  /*
+   * 被抢先却还赢 —— 那是整场真正的翻盘点,比任何伤害占比都值得说。
+   * (与战败那边 `firstMoveFinding` 同一个事实,只是结论相反。)
+   */
+  if (firstMoveLoss) {
+    findings.push({
+      text: `被抢先却还是赢了下来 —— 这一场的翻盘点在这里`,
+      styleHints: ["lianji", "cangfeng"],
+    });
+  }
+
+  // 闪避够多时把次数摆出来:它是「为什么战后气血还这么高」的一个具体解释
+  if (p.dodges >= DODGE_WIN_WARN) {
+    findings.push({
+      text: `闪过 ${p.dodges} 次 —— 少挨的这几下换成了战后气血`,
+      styleHints: ["cangfeng"],
+    });
+  }
+
+  // 暴击够多同理:它是「为什么打得这么快」的解释
+  if (p.crits >= CRIT_WIN_WARN) {
+    findings.push({
+      text: `暴击 ${p.crits} 次 —— 输出压在暴击上是这几回合解决的原因`,
+      styleHints: ["lianji"],
+    });
+  }
+
+  /*
+   * 承伤里真伤占比高、却还是赢了:这是「护体挡不住,但你扛住了」——
+   * 与战败那边同一读数,结论不同。只在占比高时才说,低占比不值一提。
+   */
+  const pierceShare = share(p.pierceTaken, p.taken);
+  if (pierceShare >= PIERCE_SHARE_WARN) {
+    findings.push({
+      text: `真伤占了承伤的 ${formatPercent(pierceShare, 0)},护体没挡住的部分你硬吃了下来`,
+      styleHints: ["gangdun", "beishui"],
+    });
+  }
+
+  // 一次归因都没攒出来时不硬凑:空数组让界面整段不出
+  void e;
+  return findings;
+}
+
 function defeatFindings(p: CombatSideStats, maxHpProxy: GNum, rounds: number): AnalysisFinding[] {
   const findings: AnalysisFinding[] = [];
   const pierceShare = share(p.pierceTaken, p.taken);
@@ -248,9 +370,21 @@ export function analyzeBattle(
   if (!s) return null;
   const dataRows = battleDataRows(result);
   if (result.win) {
+    /*
+     * 胜利也要归因 —— 赢了正是最该学到东西的一刻(战败时玩家自己会去翻原因,
+     * 胜利时他没这个动机)。见 `victoryFindings` 的注释。
+     *
+     * 归因有据才写:`p` / `e` 都来自战报遥测,读不出就是空数组,界面整段不出。
+     */
+    const pw = s.player;
+    const firstMoveLoss = result.firstMove ? !result.firstMove.playerFirst : false;
     return {
       headline: `此战 ${result.rounds} 回合而胜,战后气血 ${Math.round(result.playerHpPct * 100)}%`,
-      findings: [],
+      findings: victoryFindings(pw, s.enemy, result.rounds, result.playerHpPct, firstMoveLoss),
+      /*
+       * 方向建议只在战败时给 —— 胜局没有「该改什么」的问题,
+       * 硬推一条构筑建议等于劝玩家换掉一套刚赢下来的打法。
+       */
       directions: [],
       dataRows,
     };

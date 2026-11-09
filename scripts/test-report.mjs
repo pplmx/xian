@@ -464,6 +464,7 @@ const CATEGORIES = [
       "tribulationReliefText",
       "lifeFootprint",
       "lifeDate",
+      "battleWinFindings",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",
