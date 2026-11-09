@@ -1200,7 +1200,11 @@ bun run build:apk        # 直接出 Release APK
 | `asar: false` | 166,936,968 | 无 |
 | `asar: true` | **164,074,083** | **有**(`updating asar integrity executable resource`) |
 
-少 2.7 MiB,并且开启后 electron-builder 会自动给 exe 烧进 asar 完整性资源 ——
+少 2.7 MiB。**真实发布产物印证了同一个量级**(2026-11-09 从 Release 下载的
+`xuanshu-*-win.zip` 对比):v0.0.2 是 166,833,662、v0.0.3 是 **164,000,597**,
+少 **2,833,065 字节** —— 与本地实测的 2,862,885 只差 1%,CI 与本地同量级。
+
+并且开启后 electron-builder 会自动给 exe 烧进 asar 完整性资源 ——
 那是关着时完全没有的一层加固。开启是安全的:`electron/main.js` 只读
 `app.getAppPath()` 下的 `dist/` 与 `public/`(asar 里由 Electron 自动虚拟化),
 写盘只写 `app.getPath("userData")`(在 asar 之外)。判据见
