@@ -18136,6 +18136,9 @@ async function taskAdventureFold320() {
           foot: (box.querySelector(".adventure-chain-desk__foot")?.textContent || "")
             .replace(/\s+/g, " ")
             .trim(),
+          odds: (box.querySelector(".adventure-chain-desk__odds")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
         };
       });
       if (!desk) {
@@ -18154,6 +18157,22 @@ async function taskAdventureFold320() {
         if (byId.get("sword_in_lake")?.state !== "finished") {
           failures.push(
             `[320-adventure] 已了的缘标错了 —— 湖中剑影 2/2 段该是 finished,实见 «${byId.get("sword_in_lake")?.state}»`,
+          );
+        }
+        /*
+         * 「待续第 N 段」不许被读成「下一趟就遇」—— 奇缘是约每 20 程一次
+         * (data/constants 的乘法链:先掷出不出事,出了事才有三成走奇缘)。
+         * 故这一块必须带一句频率,且频率要与 eventTier 同一份读数。
+         */
+        if (!/约每\s*\d+\s*程一次/.test(desk.odds)) {
+          failures.push(
+            `[320-adventure] 奇缘榜没报「多久来一次」—— «${desk.odds}»` +
+              `(只在行内写「待续第 N 段」会被读成下一趟必遇,而奇缘约每 20 程一次)`,
+          );
+        }
+        if (!/待续第\s*\d+\s*段/.test(byId.get("old_man_stone")?.text ?? "")) {
+          failures.push(
+            `[320-adventure] 在续的缘没报出「待续第几段」—— «${byId.get("old_man_stone")?.text ?? "无"}»`,
           );
         }
         if (desk.rows[0].id !== "old_man_stone") {

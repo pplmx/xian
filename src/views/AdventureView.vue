@@ -599,6 +599,12 @@
               <span class="adventure-chain-desk__eyebrow">缘在路上</span>
               <span class="adventure-chain-desk__fact tabular">{{ chainFact }}</span>
             </p>
+            <!--
+              「下一程」会让人以为下一趟必遇 —— 而奇缘是约每 20.8 程一次
+              (见 data/constants 的乘法链:先掷出不出事,出了事才有三成走奇缘)。
+              频率读 eventTier 那一份读数,与上面「途中三档」同一处,不在这里另写一个数。
+            -->
+            <p class="adventure-chain-desk__odds">{{ chainOddsLine }}</p>
             <ul class="adventure-chain-desk__rows">
               <li
                 v-for="row in chainDesk.rows"
@@ -613,7 +619,7 @@
                 >
                 <span v-if="row.finished" class="adventure-chain-desk__done">缘已了</span>
                 <span v-else-if="row.reachable" class="adventure-chain-desk__next"
-                  >下一程 · 第 {{ row.nextStage }} 段</span
+                  >待续第 {{ row.nextStage }} 段</span
                 >
                 <span v-else class="adventure-chain-desk__wait"
                   >境界未到 · 第 {{ row.nextStage }} 段</span
@@ -994,6 +1000,13 @@ const chainPending = computed(() => pendingChainStages(player.major).length > 0)
  * 这一层把它与完整进度表摆在一起:`reachable` 由那份 pending 集合决定,
  * 故「在续」的口径与引擎同一处,不另判境界。
  */
+/**
+ * 奇缘多久来一次 —— 读 `eventTier` 与「途中三档」同一份读数。
+ *
+ * 这一句是为了防「待续第 N 段」被读成「下一趟就遇」:奇缘是约每 20.8 程一次。
+ */
+const chainOddsLine = computed(() => `缘分不是每趟都有:奇缘 ${tierOddsText("qiyuan", true)}。`);
+
 /** 「缘在路上」那一章的事实位:起了几条、其中几条还在续 */
 const chainFact = computed(() => {
   const d = chainDesk.value;

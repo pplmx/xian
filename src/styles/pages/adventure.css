@@ -383,6 +383,12 @@
   .adventure-chain-desk__fact {
     color: rgb(var(--color-cinnabar-rgb));
   }
+  .adventure-chain-desk__odds {
+    margin-top: 0.16rem;
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
   .adventure-chain-desk__rows {
     margin-top: 0.3rem;
   }
