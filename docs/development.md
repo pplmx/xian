@@ -1224,6 +1224,11 @@ for (const name of plainApis) { assert.ok(name in engine, …); }               
 
 修法:`assert.ok(plainApis.size >= 8, …)` 一句即可(`factories` 那条就是现成的样子)。
 
+> **2026-11-09 复核,仍成立**。顺便记一处容易看走眼的地方:同一个文件里有
+> `plainApis.size` 这个表达式(`verify-dist.mjs:91` 的**打印**语句
+> 「组装指南自检通过(N 个工厂 + M 个工具 …)」)。grep 到它很容易以为「已经有 size 了」——
+> 但打印不是断言,集合为空时它只会印出「0 个工具」然后继续绿。
+
 ### 库侧待修之二:`vite-plus` 声明停在 1.0.0,拖出 7 条安全告警
 
 `packages/engine/package.json` 的 `devDependencies` 写着 `"vite-plus": "1.0.0"`,
