@@ -44,12 +44,29 @@ const loadSettings = () => {
   return { ...defaultSettings };
 };
 
-// 保存设置
+/*
+ * 保存设置 —— **先写临时文件再 rename**,不直接覆盖。
+ *
+ * `writeFileSync` 覆盖写不是原子的:写到一半进程被杀(断电、强杀、崩溃),
+ * settings.json 就留下半截 JSON。而 `loadSettings` 的 catch 会把它当成
+ * "读不出来"、静默退回默认值 —— 玩家的两个开关悄悄复位,却没有任何提示。
+ *
+ * rename 在同一文件系统上是原子的:要么还是旧文件,要么已经是完整的新文件,
+ * 不存在"半个文件"的中间态。临时文件与目标同目录,保证同一文件系统。
+ */
 const saveSettings = (s) => {
+  const tmp = `${settingsPath}.tmp`;
   try {
-    fs.writeFileSync(settingsPath, JSON.stringify(s, null, 2));
+    fs.writeFileSync(tmp, JSON.stringify(s, null, 2));
+    fs.renameSync(tmp, settingsPath);
   } catch (e) {
     console.error("Failed to save settings:", e);
+    // 清掉半截临时文件,免得下次启动时与真文件混淆
+    try {
+      if (fs.existsSync(tmp)) fs.unlinkSync(tmp);
+    } catch {
+      /* 清理失败不影响主流程 */
+    }
   }
 };
 

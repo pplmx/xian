@@ -116,4 +116,26 @@ describe("Electron 主进程接线", () => {
       /win\.on\("closed",\s*\(\)\s*=>\s*\{\s*win\s*=\s*null;/,
     );
   });
+
+  it("配置落盘是原子的 —— 先写 .tmp 再 rename，不直接覆盖", () => {
+    /*
+     * `saveSettings` 原本直接 `writeFileSync(settingsPath, …)` 覆盖。
+     * 覆盖写**不是原子**的:写到一半进程被杀(断电 / 强杀 / 崩),settings.json
+     * 就留下半截 JSON;而 `loadSettings` 的 catch 会把它当成读不出来、
+     * 静默退回默认值 —— 玩家的两个开关悄悄复位,没有任何提示。
+     *
+     * rename 在同一文件系统上是原子的:要么旧文件,要么完整的新文件,
+     * 没有"半个文件"的中间态。临时文件必须与目标**同目录**才保证同一文件系统。
+     */
+    expect(MAIN, "配置写入先落到 .tmp").toMatch(/writeFileSync\(tmp,/);
+    expect(MAIN, "再把 .tmp rename 到正式文件（同一文件系统上原子）").toMatch(
+      /renameSync\(tmp,\s*settingsPath\)/,
+    );
+    expect(MAIN, "临时文件与目标同目录，否则 rename 可能跨文件系统").toMatch(
+      /const tmp = `\$\{settingsPath\}\.tmp`/,
+    );
+    expect(MAIN, "写入失败要清掉半截临时文件").toMatch(/unlinkSync\(tmp\)/);
+    // 防空转:这两个变量名真的在代码里(而不是被注释掉后剩下的字符串)
+    expect(MAIN).toContain("const tmp =");
+  });
 });
