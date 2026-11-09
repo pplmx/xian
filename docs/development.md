@@ -1297,7 +1297,7 @@ for (const name of plainApis) { assert.ok(name in engine, …); }               
 > 「组装指南自检通过(N 个工厂 + M 个工具 …)」)。grep 到它很容易以为「已经有 size 了」——
 > 但打印不是断言,集合为空时它只会印出「0 个工具」然后继续绿。
 
-### 库侧待修之二:`vite-plus` 声明停在 1.0.0,拖出 7 条安全告警
+### 库侧待修之二(已修):`vite-plus` 从 1.0.0 升到 1.4.0,7 条告警清零
 
 `packages/engine/package.json` 的 `devDependencies` 写着 `"vite-plus": "1.0.0"`,
 而宿主钉的是 **1.4.0**。实测(2026-11-09):
@@ -1350,6 +1350,26 @@ for (const name of plainApis) { assert.ok(name in engine, …); }               
 验证顺序:引擎目录 `bun install` → `bun test`(库自己的用例)→ 回宿主跑
 `bun run check:engine` 与 `bun run check:engine:standalone`(后者会把整份复制到临时目录
 重编译重跑,是"独立成库"那条硬约束)。
+
+#### 2026-11-09 已执行,结果
+
+| 步骤 | 结果 |
+| --- | --- |
+| 引擎 `package.json` 改 `1.4.0` | 已改 |
+| 引擎 `bun.lock` 重写 | 已改(`vite-plus@1.4.0`,连带 `vitest 5.0.1 → 5.0.5`、`vite-plus-core 1.0.0 → 1.4.0`) |
+| 宿主 `bun.lock` 重写 | 已改,`wanxiang-engine/vite-plus` 的独立解析条目**消失**(两边同版,共用一份) |
+| 隔离环境验证 | `/tmp` 下复制整份 `packages/engine` → `bun install && bun test` → **630 pass / 0 fail** |
+| 引擎仓推送 | `9946882`(fast-forward) |
+| 宿主 `engine-sync` | 同树 `03a3c730e0c3` |
+| **Dependabot** | **open=0 · fixed=11** —— 7 条告警全部转为 fixed,没有手动 dismiss |
+
+最后一行是关键:**告警是 GitHub 自己关闭的**,不是人工操作。这反过来印证了
+「告警指向的是真实在用的旧版本」这个判断 —— 如果当初按「虚报」处理,就不会有这次修复。
+
+> **推引擎仓时撞上了第三种子树状态**:`git subtree push` 报 `non-fast-forward`,
+> 因为远程 `main` 有个本地没有的提交(`690b7f47 refactor(combat)`),而**两边内容完全一致**
+> (`git diff 7707641a 690b7f47^{tree}` 为空)。处置写在 `docs/engine.md` 的
+> 「第 ⑧ 步红了,先分清是哪种」里 —— 直接在引擎仓 clone 一份、复制改动文件、正常提交推送。
 
 **其余六处收集型判据都查过了,只有这一处缺**(2026-11-09):
 
