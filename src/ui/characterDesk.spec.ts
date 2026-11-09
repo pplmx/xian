@@ -43,6 +43,28 @@ describe("道躯案 · 三章连续卷与行藏周天", () => {
     ]);
   });
 
+  it("页面文案写的「四类」与 GROUP_SEEDS 的组数绑在一起", () => {
+    /*
+     * `CharacterView.vue` 第 300 行写着「四类行藏共 N 项」——「四类」是**写死的中文数字**,
+     * 而 `characterModifierDesk` 的组数由 `GROUP_SEEDS` 决定。
+     *
+     * 这两个事实原本各管各的:上面那条判据虽然断言了四组的**标题**,但页面文案里的
+     * 「四类」是另一个字符串,加一组时它不会跟着变 —— 玩家会看到「四类行藏共 12 项」
+     * 而下面铺开的是五组。
+     *
+     * 这条把两者绑起来:文案里那个中文数字必须等于 `GROUP_SEEDS` 的实际组数。
+     */
+    const view = readSource("src/views/CharacterView.vue");
+    const CN = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
+    const groups = characterModifierDesk({}, []);
+    const claimed = /([一二两三四五六七八九十])类行藏共/.exec(view)?.[1];
+    expect(claimed, "页面上找不到「N 类行藏共」这句文案").toBeTruthy();
+    const said = claimed === "两" ? 2 : CN.indexOf(claimed!);
+    expect(said, `页面说「${claimed}类行藏」,而 GROUP_SEEDS 实际是 ${groups.length} 组`).toBe(
+      groups.length,
+    );
+  });
+
   it("行藏只报真值,逐项带来源数、软上限与另乘标记", () => {
     const mods: StatMods = {
       cultivationSpeed: 0.42,
