@@ -110,6 +110,7 @@ const CATEGORIES = [
       "rewardTierMonotonic",
       "pillProse",
       "equipProse",
+      "narrativeTables",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
