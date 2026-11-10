@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 643 个 spec;本作自己那部分 563 个) |
+| `bun run test` | 全量用例(全量 644 个 spec;本作自己那部分 564 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 643 个 spec = 宿主 551 + 引擎 80,别把 643 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 644 个 spec = 宿主 551 + 引擎 80,别把 644 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 643 个 spec(本作自己那部分 563 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 644 个 spec(本作自己那部分 564 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -4373,14 +4373,14 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 563 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 564 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
 
 ```text
 第一版:326 个 spec · 4117 条标题
-修正后:563 个 spec · 6319 条标题   (+54%)
+修正后:564 个 spec · 6319 条标题   (+54%)
 ```
 
 > 这是一类**最难自查的错误**:工具跑得通、输出格式对、报出来的缺口具体到表与维度名 ——
@@ -4472,7 +4472,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**643 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**644 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -5695,3 +5695,57 @@ engineChain    「链真的比守卫长,否则判据量不出上限」
 它会绿,但什么也没守。故先断言 `MAIN_QUESTS.length > MAIN_CHAIN_MAX_STEPS`。
 
 四处注入都命中(解锁不去重 / 计数自洽 / 守卫改 50 / 越界返回首条)。
+
+### 我的探针有 87% 的误报率
+
+第 87~88 轮一直在找「没有判据的模块」,用的探针是:
+
+```text
+列 src/core/*.ts,看有没有同名 .spec.ts
+→ 46 个模块「没有同名 spec」
+```
+
+于是我以为有 46 个缺口,花了整整两轮补 `buildDetect` / `engineUnlocks` / `engineChain`。
+
+第 89 轮换了个问法 —— **「有没有任何 spec 导入过它」**:
+
+```text
+无同名 spec:     46
+其中实际有覆盖:  40   ← 87% 是误报
+真正零覆盖:       6
+```
+
+`core/offline` 是最好的例子:893 行、14 处强约束,却「没有同名 spec」——
+因为它的覆盖在 `offlineScope` / `offlineParity` / `offlineLedger` / `offlineCap`
+四个文件里。
+
+**「按文件名配对」是一种偷懒的覆盖判断。** 它假设一个模块的判据一定叫同一个名字,
+而真实的判据习惯是按**性质**命名的(offlineCap 管上限、offlineLedger 管账)。
+
+### 剩下这 6 个为什么可以被接受
+
+```text
+diagnostics       运行诊断端口 —— core 只上报,不依赖 Pinia / 设置页
+uiPort            视图模型端口 —— core 里「该给界面看什么」不再直接够到 ui store
+kaiLateFaces      楷体 @font-face 表 —— 在正文可读之后才挂上
+inventoryRender   背包每批件数 —— listRender 的薄封装,那边已有四条判据
+engineCodex       图鉴层对库的定制 —— 逻辑在 packages/engine/codex
+engineMemory      世界记忆档位对库的定制 —— 逻辑在 packages/engine/memory
+```
+
+六个都是**端口层或薄封装**:不含本作的判定逻辑,只是把库的形状接过来。
+端口层没有判据不是缺陷 —— **它没有可判定的行为**。
+
+### 判据:钉住集合本身
+
+```text
+① 除清单外,每个 core 模块都被某个 spec 导入过
+② 清单里的模块真的还不含可判定逻辑(行数 > 120 就红)
+③ 反空转:清单规模在 (0, 10],且每条都指向真实文件
+```
+
+第二条是这条判据的关键:端口层应该很短。若某个「端口层」长到几百行,
+说明它已经有真逻辑了 —— 那时它就不再是端口,该有自己的判据。
+
+> 两轮的时间花在一个 87% 误报的探针上。**探针的第一个结论永远该被质疑一次**
+> —— 换个问法重测,是最便宜的自查。

@@ -103,6 +103,7 @@ const CATEGORIES = [
       "buildDetect",
       "engineUnlocks",
       "engineChain",
+      "moduleCoverage",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
