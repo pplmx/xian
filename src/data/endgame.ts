@@ -580,7 +580,7 @@ export const CELESTIAL_WORLDS: CelestialWorldDef[] = [
         ),
       ],
     ],
-    rewardDaoSource: 60,
+    rewardDaoSource: 66,
   },
   {
     id: "wusheng",
@@ -692,7 +692,7 @@ export const CELESTIAL_WORLDS: CelestialWorldDef[] = [
         ),
       ],
     ],
-    rewardDaoSource: 60,
+    rewardDaoSource: 74,
   },
   {
     id: "wuxiang",
@@ -830,7 +830,7 @@ export const CELESTIAL_WORLDS: CelestialWorldDef[] = [
         ),
       ],
     ],
-    rewardDaoSource: 60,
+    rewardDaoSource: 82,
   },
 ];
 

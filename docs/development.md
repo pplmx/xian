@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 645 个 spec;本作自己那部分 565 个) |
+| `bun run test` | 全量用例(全量 646 个 spec;本作自己那部分 566 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 645 个 spec = 宿主 551 + 引擎 80,别把 645 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 646 个 spec = 宿主 551 + 引擎 80,别把 646 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 645 个 spec(本作自己那部分 565 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 646 个 spec(本作自己那部分 566 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -4373,14 +4373,14 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 565 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 566 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
 
 ```text
 第一版:326 个 spec · 4117 条标题
-修正后:565 个 spec · 6319 条标题   (+54%)
+修正后:566 个 spec · 6319 条标题   (+54%)
 ```
 
 > 这是一类**最难自查的错误**:工具跑得通、输出格式对、报出来的缺口具体到表与维度名 ——
@@ -4472,7 +4472,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**645 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**646 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -5905,3 +5905,63 @@ eventRealmBand             四条新事件没设 maxRealm
 
 ② 那条的措辞值得记:**「这些标签只对应一条事件 —— 抽中它等于抽中那条,不如直接点名」**。
 一个只有 1 条事件的标签不是标签,是别名。
+
+### 越难的天界给得越少
+
+接着上一条线查玩法内容。先查了八个方向,全部干净 ——
+
+```text
+① 凡界普通怪 48 个,300 世里全部用到,零闲置
+② 灵兽 minRealm 全是 0(第 70 轮已核,随机赠池已收窄)
+③ 法宝 fromTier 分布:越到后期越密(28+ 有 19 件)
+④ 功法 92 部、minRealm 0~20,每境都不少于 2 部
+⑤ 材料 7 个 rank 各 2 种,可达性有判据
+⑥ 第一段敌人层级与段位匹配
+⑦ 存档封存写盘逻辑完善
+⑧ contentDensity 已有 12 条逐境密度判据
+```
+
+第九个才中 —— 五个固定天界的道源奖励:
+
+```text
+ 天界      tier   奖励(修前)   奖励(修后)
+ 赤炎天     22      60           60
+ 星陨天     23      65           65
+ 万刃天     25      60           66
+ 无生天     29      60           74
+ 无相天     32      60           82
+```
+
+**层级从 22 跨到 32(+10 层),奖励几乎不动。** 而第 74 轮实测过:
+万刃天、无生天的某些流派通关率只有 5~10% —— 它们明显更难,却和赤炎天同价。
+
+### 既有判据为什么没抓到
+
+`worldGen.spec` 有两条:
+
+```ts
+expect(world.rewardDaoSource).toBeGreaterThanOrEqual(55);
+expect(world.rewardDaoSource).toBeLessThanOrEqual(100);
+```
+
+它们守的是**随机生成世界**的奖励有界,不管固定天界之间的**相对关系**。
+60 和 65 各自都在 `[55, 100]` 里 —— 两条判据都绿。
+
+> 「每个值都合法」和「一组值之间有正确的序」是两个不同的性质。
+> 前者靠上下界守,后者只能靠**排序后逐对比**守。
+
+### 判据:排序后不许回落
+
+```text
+① 按 anchorTier 排序后,道源奖励不回落(允许相等,只禁「更难的反倒给得少」)
+② 最高与最低天界的奖励拉开了差距(>1.1 倍)—— 否则「递增」只是名义上的
+③ 门票与场次**本来就不该**随层级涨 —— 这条是记录设计意图,不是挑刺
+```
+
+第三条值得说:第 93 轮第一眼看到「五个天界门票都是 20、场次都是 6」时以为是缺陷。
+查下来是有意的 —— 门票是「一次挑战的入场费」,难度已经体现在敌人的三维与规则里,
+再让门票跟着涨等于对同一件事收两遍钱。**把「这里为什么相同」写进判据,
+下一个人就不用再查一遍。**
+
+这条判据与 `celestialCaliber.spec` 里第 62 轮为「十道试炼里九道奖励同一个数」
+补的那条是**同一个形状** —— 两轮各在一个地方撞见了同一类问题。
