@@ -25357,6 +25357,23 @@ const JOBS = (() => {
 })();
 
 /**
+ * 只跑**名字里含这一段**的任务 —— 改某一条判据时不必等整轮七分钟。
+ *
+ * 这一步此前是空白,而仓里记着一次代价很大的教训:有人凭印象写了任务名去过滤,
+ * 名字与注册表差一个字,**任务根本没跑**,于是三种变异全部"通过",
+ * 看起来像判据空转(见 docs/design.md 的「一个方法论错误」)。故这里的规则是:
+ *
+ *   一 名字必须从 `TASKS` 注册表里核对 —— 过滤后一个都没命中时**直接报错退出**,
+ *      而不是安静地跑零个任务然后打印一串绿;
+ *   二 命中的任务名会打印出来,让跑的人一眼看到自己到底跑了什么;
+ *   三 没给 `--only` 时行为完全不变(整轮)。
+ */
+const ONLY = (() => {
+  const i = process.argv.indexOf("--only");
+  return i > 0 && process.argv[i + 1] ? process.argv[i + 1] : "";
+})();
+
+/**
  * 修行页只铺四味速服丹;余量要报数,并提供能真正落到丹匣的直达入口。
  *
  * 展品档恰好有五味可速服丹药:前四味进快捷栏,第五味只该在「另有 1 味」里出现。
@@ -32301,6 +32318,7 @@ const TASKS = [
   ["法宝炼化的两笔账", taskArtifactRefine],
   ["洞府营造的账目", taskDongfuBuild],
   ["洞府首屏的营造优先", taskDongfuFold],
+  ["道途的两处读数(剑意两侧 / 速战档位)", taskDaoReadouts],
   ["修行续卷的四章与行动层", taskCultivationFold],
   ["洞府与修行的晨昏纸面", taskThemeStageSurfaces],
   ["道躯三章与行藏拆卷", taskCharacterFold],
@@ -32384,55 +32402,86 @@ async function runPool(tasks, limit) {
   return out;
 }
 
-const results = await runPool(TASKS, JOBS);
+/*
+ * 过滤在 runPool 之前做,并把命中项打出来 —— 「跑了什么」必须是可见的,
+ * 否则过滤本身就是下一个假绿来源。
+ */
+const SELECTED = ONLY ? TASKS.filter(([name]) => name.includes(ONLY)) : TASKS;
+if (ONLY) {
+  if (SELECTED.length === 0) {
+    console.error(
+      `\n--only «${ONLY}» 没有命中任何任务 —— 任务名要从 TASKS 注册表里核对,别凭印象写。\n` +
+        `现有任务名:\n${TASKS.map(([name]) => `  · ${name}`).join("\n")}\n`,
+    );
+    await browser.close();
+    process.exit(2);
+  }
+  console.log(`\n[--only «${ONLY}»] 命中 ${SELECTED.length}/${TASKS.length} 个任务:`);
+  for (const [name] of SELECTED) console.log(`  · ${name}`);
+  console.log("");
+}
+
+const results = await runPool(SELECTED, JOBS);
 await browser.close();
 for (const r of results) {
   checked += r.checked;
   for (const f of r.failures) failures.push(f);
 }
 
-// 主值行那条判据是"显式契约"式的:契约被删光(没人再写 data-value-row)时它会静默空转
-if (valueRowsSeen === 0) {
-  failures.push("data-value-row 一个都没量到 —— 主值行折行那条判据空转了(模板里的契约被删了?)");
-}
-if (controlHostsSeen === 0) {
-  failures.push("一枚按钮语义宿主都没扫到 —— 控件套控件那条判据空转了(全库不再有待查形状?)");
-}
-// 这两条同理:量不到东西时不许静默变绿
-if (zoomSeen === 0) {
-  failures.push("200% 缩放档一页都没量到 —— 那条判据空转了");
-}
-if (unopenedFolioSeen < 6) {
-  failures.push(
-    `封卷门径账只量了 ${unopenedFolioSeen}/6 次 —— 390 / 320 / 195 的天界与器魂没覆盖全`,
-  );
-}
-if (pixelTextsSeen === 0) {
-  failures.push("渐变/图片底上的字一处都没采到 —— 那条判据空转了(采样半径或底色判定写错了?)");
-}
-if (desktopFolioSeen < ROUTES.length) {
-  failures.push(
-    `桌面书桌只量了 ${desktopFolioSeen}/${ROUTES.length} 页 —— 1280 巡页没把新版式全部覆盖`,
-  );
-}
-if (desktopSpineSeen < ROUTES.length) {
-  failures.push(
-    `桌面书脊只量了 ${desktopSpineSeen}/${ROUTES.length} 页 —— 1280 巡页没把新导航全部覆盖`,
-  );
-}
-if (landscapeMastheadSeen < ROUTES.length) {
-  failures.push(
-    `矮横屏卷首只量了 ${landscapeMastheadSeen}/${ROUTES.length} 页 —— 844×390 巡页没覆盖全量路由`,
-  );
-}
-if (tabletLeafSeen < ROUTES.length * TABLET_LEAF_TAGS.size) {
-  failures.push(
-    `平板宽叶只量了 ${tabletLeafSeen}/${ROUTES.length * TABLET_LEAF_TAGS.size} 页 —— 四档边界巡页没覆盖全量路由`,
-  );
-}
-if (tabletDockSeen < ROUTES.length * TABLET_LEAF_TAGS.size) {
-  failures.push(
-    `平板底栏书脚索引只量了 ${tabletDockSeen}/${ROUTES.length * TABLET_LEAF_TAGS.size} 页 —— 四档边界巡页没覆盖全量路由`,
+/*
+ * 下面这一整块是**整轮**的防空转闸:它们数的是「全量巡页动过多少次」。
+ * 用 `--only` 只跑一两个任务时,这些计数必然是 0,那不是缺陷而是过滤的定义 ——
+ * 故过滤模式下整块跳过,并把这件事打印出来(不许静默)。
+ * 整轮(不带 --only)时行为一字不变。
+ */
+if (!ONLY) {
+  // 主值行那条判据是"显式契约"式的:契约被删光(没人再写 data-value-row)时它会静默空转
+  if (valueRowsSeen === 0) {
+    failures.push("data-value-row 一个都没量到 —— 主值行折行那条判据空转了(模板里的契约被删了?)");
+  }
+  if (controlHostsSeen === 0) {
+    failures.push("一枚按钮语义宿主都没扫到 —— 控件套控件那条判据空转了(全库不再有待查形状?)");
+  }
+  // 这两条同理:量不到东西时不许静默变绿
+  if (zoomSeen === 0) {
+    failures.push("200% 缩放档一页都没量到 —— 那条判据空转了");
+  }
+  if (unopenedFolioSeen < 6) {
+    failures.push(
+      `封卷门径账只量了 ${unopenedFolioSeen}/6 次 —— 390 / 320 / 195 的天界与器魂没覆盖全`,
+    );
+  }
+  if (pixelTextsSeen === 0) {
+    failures.push("渐变/图片底上的字一处都没采到 —— 那条判据空转了(采样半径或底色判定写错了?)");
+  }
+  if (desktopFolioSeen < ROUTES.length) {
+    failures.push(
+      `桌面书桌只量了 ${desktopFolioSeen}/${ROUTES.length} 页 —— 1280 巡页没把新版式全部覆盖`,
+    );
+  }
+  if (desktopSpineSeen < ROUTES.length) {
+    failures.push(
+      `桌面书脊只量了 ${desktopSpineSeen}/${ROUTES.length} 页 —— 1280 巡页没把新导航全部覆盖`,
+    );
+  }
+  if (landscapeMastheadSeen < ROUTES.length) {
+    failures.push(
+      `矮横屏卷首只量了 ${landscapeMastheadSeen}/${ROUTES.length} 页 —— 844×390 巡页没覆盖全量路由`,
+    );
+  }
+  if (tabletLeafSeen < ROUTES.length * TABLET_LEAF_TAGS.size) {
+    failures.push(
+      `平板宽叶只量了 ${tabletLeafSeen}/${ROUTES.length * TABLET_LEAF_TAGS.size} 页 —— 四档边界巡页没覆盖全量路由`,
+    );
+  }
+  if (tabletDockSeen < ROUTES.length * TABLET_LEAF_TAGS.size) {
+    failures.push(
+      `平板底栏书脚索引只量了 ${tabletDockSeen}/${ROUTES.length * TABLET_LEAF_TAGS.size} 页 —— 四档边界巡页没覆盖全量路由`,
+    );
+  }
+} else {
+  console.log(
+    `\n(过滤模式:跳过 ${SELECTED.length} 个任务之外的整轮防空转闸 —— 那些计数只在全量巡页时才有意义)`,
   );
 }
 
@@ -32461,7 +32510,18 @@ if (blockedTotal() !== 0) {
     `这 ${checked} 次页面加载里发起了 ${blockedTotal()} 个外域请求 —— 本站的决定是「零外部请求」(见 index.html 与隐私声明第六节)`,
   );
 }
-if (failures.length === 0) {
+if (failures.length === 0 && ONLY) {
+  /*
+   * 过滤模式的成功行**不许**打印整轮那些读数 —— 它们此时必然是 0,
+   * 打出来会看着像「这些判据都过了」,而实际上它们根本没跑。
+   * 只报这次真跑了的任务,外加一句说明。
+   */
+  console.log(
+    `✓ 这次只跑了 ${SELECTED.length}/${TASKS.length} 个任务:${SELECTED.map(([n]) => n).join("、")}`,
+  );
+  console.log("  (其余任务与整轮防空转闸未跑 —— 提交前请跑一次不带 --only 的完整轮)");
+  console.log(`  本次量到 ${checked} 个页面 × 视口组合`);
+} else if (failures.length === 0) {
   console.log(
     "✓ 无横向溢出、无越界元素、底部导航五项齐全、控件有名且不小于 28px、选择项有选中态、没有「念出来是按钮却按不动」的假控件、没有套在按钮里的控件",
   );
@@ -32486,4 +32546,241 @@ if (failures.length === 0) {
 } else {
   for (const f of failures) console.log(`✗ ${f}`);
   process.exitCode = 1;
+}
+
+/**
+ * 道途的两处读数 —— 机制都在跑,而玩家侧此前一个字都读不到。
+ *
+ * 两份夹具来回各跑一遍天界页:
+ *
+ *   一 **剑道**:剑意面板此前只印 `checks.filter(c => c.ok)` 通过的那些,
+ *      不通过时退回一句「尚无一纯」。玩家看到「1/4 层」,不知道差哪三项 ——
+ *      而这一屏正是他决定「要不要先卸一件法宝」的地方。
+ *      现在两侧并列(已达 / 欠何),要量的是**两侧真的分别渲染**,
+ *      且空侧整行不出(全达标时不许印一条空的「欠」)。
+ *
+ *   二 **杀伐道**:速战之赏一直在结算,而在途面板只报「已历 / 道源 / 携血 / 杀意」——
+ *      不报总回合、不报档位,玩家只从 toast 尾巴知道拿没拿到。
+ *      现在多一行「速战 N%(每场均 M 回合)· 压到 X 回合内可至 Y%」。
+ *      要量的是**这一行真的出现、且报的是每场均回合而不是总回合**。
+ *
+ * 只量文字会在措辞变化后失效,故同时核**结构**:两侧各有自己的落点
+ * (`data-dao-purity-toward` / `-against`),速战那行有 `data-expedition-speed-tier`。
+ */
+async function taskDaoReadouts() {
+  const failures = [];
+  let checked = 0;
+
+  /** 造一份「道途已定 + 在途远征」的存档,只改必要的几片 */
+  const slicesFor = (daoPath, run) => {
+    const slices = showcaseSlices("light");
+    return {
+      ...slices,
+      endgame: { ...slices.endgame, daoPath, worldRun: run },
+    };
+  };
+
+  try {
+    // ── 一 · 剑道:两侧并列 ───────────────────────────────────────────
+    {
+      const ctx = await auditContext({
+        viewport: { width: 390, height: 844 },
+        deviceScaleFactor: 2,
+        isMobile: true,
+        hasTouch: true,
+      });
+      try {
+        /*
+         * 夹具刻意让纯度只过一部分:两件法宝 → 「法宝不过一件」必不通过,
+         * 于是「已达」与「欠何」两侧都非空。全部通过的夹具量不到「欠何」那侧,
+         * 而那一侧正是这条缺口的主体。
+         */
+        const slices = slicesFor("sword", null);
+        slices.inventory = {
+          ...slices.inventory,
+          artifacts: [
+            { defId: "af_qinglian", level: 1 },
+            { defId: "af_wuxiangzhu", level: 1 },
+          ],
+          equippedArtifacts: ["af_qinglian", "af_wuxiangzhu"],
+        };
+        await seedSave(ctx, slices, "__daoReadoutSword");
+        const page = await ctx.newPage();
+        const pageErrors = [];
+        watchPageErrors(page, pageErrors);
+        const rendered = await openRoute(page, "/celestial", 700);
+        checked += 1;
+        if (rendered === 0) {
+          failures.push("[390-dao] 天界页没渲染出来,剑意读数没量到");
+        } else {
+          const info = await page.evaluate(() => {
+            const axes = document.querySelector("[data-dao-purity-axes]");
+            const toward = document.querySelector("[data-dao-purity-toward]");
+            const against = document.querySelector("[data-dao-purity-against]");
+            const note = (el) => (el?.textContent || "").replace(/\s+/g, " ").trim();
+            return {
+              hasAxes: Boolean(axes),
+              towardText: note(toward),
+              againstText: note(against),
+              // 层数读数仍在(两侧并列没有把主读数挤掉)
+              layerLine: note(document.querySelector(".celestial-dao__purity > p")),
+            };
+          });
+          checked += 1;
+          if (!info.hasAxes) {
+            failures.push("[390-dao] 剑意面板没有两侧读数 —— 未达那半又回到只有「尚无一纯」");
+          } else {
+            /*
+             * 「欠何」必须真有内容:夹具里两件法宝让「法宝不过一件」必不过。
+             * 这一侧若空,玩家还是不知道差什么。
+             */
+            if (!info.againstText) {
+              failures.push(
+                "[390-dao] 剑意「欠何」那侧是空的 —— 夹具已让「法宝不过一件」不通过,它该出现在这一侧",
+              );
+            }
+            // 「已达」与「欠何」不许是同一串字
+            if (info.towardText && info.towardText === info.againstText) {
+              failures.push(
+                `[390-dao] 剑意两侧印了同一串字 «${info.towardText.slice(0, 40)}» —— 分到一侧再印一遍等于没分`,
+              );
+            }
+            // 主读数不许被两侧挤掉
+            if (!/层/.test(info.layerLine)) {
+              failures.push(`[390-dao] 剑意层数那行不见了 «${info.layerLine.slice(0, 40)}»`);
+            }
+          }
+          if (pageErrors.length) {
+            failures.push(`[390-dao] 剑意读数页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+          }
+        }
+      } finally {
+        await ctx.close();
+      }
+    }
+
+    // ── 二 · 杀伐道:速战档位 ────────────────────────────────────────
+    {
+      const ctx = await auditContext({
+        viewport: { width: 390, height: 844 },
+        deviceScaleFactor: 2,
+        isMobile: true,
+        hasTouch: true,
+      });
+      try {
+        /*
+         * 总回合 100 / 5 场 = 每场均 20 回合 → 落 24 档(+8%),
+         * 离 18 档(+15%)还差。夹具刻意停在这一档:它同时能量到
+         * 「已进档」与「下一档门槛」两件事。
+         */
+        const slices = slicesFor("slaughter", {
+          worldId: "chiyan",
+          pactId: null,
+          gateId: null,
+          layer: 1,
+          bonus: 12,
+          rows: [{ foeName: "焰魄", win: true, rounds: 20, hpLeftPct: 0.62 }],
+          carriedHpPct: 0.62,
+          totalRounds: 100,
+          winStacks: 1,
+        });
+        await seedSave(ctx, slices, "__daoReadoutSlaughter");
+        const page = await ctx.newPage();
+        const pageErrors = [];
+        watchPageErrors(page, pageErrors);
+        const rendered = await openRoute(page, "/celestial", 700);
+        checked += 1;
+        if (rendered === 0) {
+          failures.push("[390-dao] 天界页没渲染出来,速战读数没量到");
+        } else {
+          const info = await page.evaluate(() => {
+            const el = document.querySelector("[data-expedition-speed-tier]");
+            const text = (el?.textContent || "").replace(/\s+/g, " ").trim();
+            const run = document.querySelector("[data-celestial-run]");
+            const runText = (run?.textContent || "").replace(/\s+/g, " ");
+            return { hasLine: Boolean(el), text, inRun: runText.includes("速战") };
+          });
+          checked += 1;
+          if (!info.hasLine) {
+            failures.push("[390-dao] 杀伐道在途远征没有速战档位读数 —— 玩家仍只能从 toast 猜");
+          } else {
+            // 报的必须是**每场均**回合,不是总回合(总回合 100 对玩家不可直接操作)
+            if (!/每场均\s*20/.test(info.text)) {
+              failures.push(
+                `[390-dao] 速战读数没报出每场均 20 回合 «${info.text.slice(0, 60)}» —— 报总回合玩家算不出还差多少`,
+              );
+            }
+            // 已进档就要报当前赏格,并给出下一档门槛
+            if (!/8%/.test(info.text)) {
+              failures.push(`[390-dao] 速战读数没报当前档赏格 8% «${info.text.slice(0, 60)}»`);
+            }
+            if (!/18/.test(info.text)) {
+              failures.push(`[390-dao] 速战读数没报下一档门槛 18 回合 «${info.text.slice(0, 60)}»`);
+            }
+            // 它长在在途远征那一章里,不是长在页面别处
+            if (!info.inRun) {
+              failures.push("[390-dao] 速战读数不在在途远征章内 —— 读者找不到它");
+            }
+          }
+          if (pageErrors.length) {
+            failures.push(`[390-dao] 速战读数页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+          }
+        }
+      } finally {
+        await ctx.close();
+      }
+    }
+
+    // ── 三 · 非杀伐道不许看到这一行 ──────────────────────────────────
+    {
+      const ctx = await auditContext({
+        viewport: { width: 390, height: 844 },
+        deviceScaleFactor: 2,
+        isMobile: true,
+        hasTouch: true,
+      });
+      try {
+        const slices = slicesFor("sword", {
+          worldId: "chiyan",
+          pactId: null,
+          gateId: null,
+          layer: 1,
+          bonus: 12,
+          rows: [{ foeName: "焰魄", win: true, rounds: 12, hpLeftPct: 0.62 }],
+          carriedHpPct: 0.62,
+          totalRounds: 60,
+          winStacks: 1,
+        });
+        await seedSave(ctx, slices, "__daoReadoutNoSlaughter");
+        const page = await ctx.newPage();
+        const pageErrors = [];
+        watchPageErrors(page, pageErrors);
+        const rendered = await openRoute(page, "/celestial", 700);
+        checked += 1;
+        if (rendered > 0) {
+          const leaked = await page.evaluate(
+            () => document.querySelectorAll("[data-expedition-speed-tier]").length,
+          );
+          if (leaked !== 0) {
+            failures.push(`[390-dao] 剑道也看到了速战读数 ${leaked} 处 —— 那是杀伐道独有的赏格`);
+          }
+          if (pageErrors.length) {
+            failures.push(`[390-dao] 非杀伐道页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+          }
+        }
+      } finally {
+        await ctx.close();
+      }
+    }
+  } catch (err) {
+    failures.push(`[390-dao] 任务自身抛错:${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  return {
+    failures,
+    checked,
+    contrastFails: [],
+    pixelContrastFails: [],
+    zoomFails: [],
+  };
 }

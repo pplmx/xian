@@ -235,6 +235,38 @@
     line-height: 1.5;
     overflow-wrap: anywhere;
   }
+  /*
+   * 剑意纯度的两侧读数:已达 / 欠何。
+   *
+   * 「欠」那一侧用 ink-soft 而不是朱砂:朱砂在本作里是**行动与代价**,
+   * 而这里只是「还没做到什么」——它不是警告,是待办。抬一档墨色让它读得清,
+   * 不抢同一块里「当前剑意 N/4 层」那枚朱砂读数的位置(同一条纪律:
+   * 一块里只许一枚强色)。
+   */
+  .celestial-dao__purity-axes {
+    margin-top: 0.22rem;
+    display: grid;
+    gap: 0.12rem;
+  }
+  .celestial-dao__purity-axes .celestial-dao__purity-note {
+    display: grid;
+    grid-template-columns: 1.1rem minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0.32rem;
+    margin-top: 0;
+  }
+  .celestial-dao__purity-mark {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.04em;
+  }
+  .celestial-dao__purity-note.is-toward .celestial-dao__purity-mark {
+    color: rgb(var(--color-qing-rgb));
+  }
+  .celestial-dao__purity-note.is-against {
+    color: rgb(var(--color-ink-soft-rgb));
+  }
   .celestial-dao__story {
     margin-top: 0.5rem;
     color: rgb(var(--color-ink-soft-rgb));

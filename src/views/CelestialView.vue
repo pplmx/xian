@@ -160,14 +160,34 @@
                       }"
                     />
                   </span>
-                  <p class="celestial-dao__purity-note">
-                    {{
-                      swordInfo.checks
-                        .filter((c) => c.ok)
-                        .map((c) => c.name)
-                        .join("、") || "尚无一纯"
-                    }}
-                  </p>
+                  <!--
+                    两侧并列:已达 / 未达。此前只印通过的那些,不通过时退回一句
+                    「尚无一纯」—— 玩家看到 1/4 却不知道差哪三项(本仓点名的「只说不行」)。
+                    形状照 ui/mentorBehaviorAxes 那套「相亲 / 相左」:报行为、不报权重。
+                  -->
+                  <div
+                    v-if="purity"
+                    class="celestial-dao__purity-axes"
+                    :aria-label="puritySummary"
+                    data-dao-purity-axes
+                  >
+                    <p
+                      v-if="purity.toward.length"
+                      class="celestial-dao__purity-note is-toward"
+                      data-dao-purity-toward
+                    >
+                      <span class="celestial-dao__purity-mark" aria-hidden="true">达</span>
+                      <span>{{ purity.toward.join("、") }}</span>
+                    </p>
+                    <p
+                      v-if="purity.against.length"
+                      class="celestial-dao__purity-note is-against"
+                      data-dao-purity-against
+                    >
+                      <span class="celestial-dao__purity-mark" aria-hidden="true">欠</span>
+                      <span>{{ purity.against.join("、") }}</span>
+                    </p>
+                  </div>
                 </div>
                 <p v-if="daoStory" class="celestial-dao__story">「{{ daoStory }}」</p>
               </article>
@@ -346,6 +366,7 @@ import { detectBuild } from "@/core/buildDetect";
 import { BUILD_PROFILES } from "@/core/buildSim";
 import { foeOriginLines } from "@/core/battleAnalysis";
 import { swordPurity, SWORD_PURITY_MAX_LAYERS } from "@/core/daoDepth";
+import { purityAxes, purityAxesSummary } from "@/ui/swordPurityAxes";
 import { formatNum, formatPercent } from "@/utils/format";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LedgerPulse from "@/components/common/LedgerPulse.vue";
@@ -587,6 +608,12 @@ const swordInfo = computed(() => {
     detectBuild(player.celestialStats.mods),
   );
 });
+/**
+ * 纯度两侧读数 —— 判定在 core,展示在 `ui/swordPurityAxes`,这里只接线。
+ * 视图不再自己 `filter(c => c.ok)` 一遍:那样「未达」那半永远到不了界面。
+ */
+const purity = computed(() => purityAxes(swordInfo.value));
+const puritySummary = computed(() => purityAxesSummary(purity.value));
 
 /** 道途选择二段式:先弹确认,再落一子。道途一世只定一次,误触即被锁死到转世 */
 const pendingDaoId = ref<(typeof DAO_PATHS)[number]["id"] | null>(null);
