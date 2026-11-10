@@ -248,6 +248,16 @@
                 >
                   再看 {{ nextBlueprintBatch }} 张 · 余 {{ blueprintPage.hidden }}
                 </button>
+                <!--
+                  宿慧折算的口径 —— 上面逐张报「读到几分」，而宿慧只认「读通」那一档
+                  （samsaraService.loreInsight 对器谱用 isBlueprintMastered、对敌人用
+                  >= ENEMY_LORE_MAX、对丹方用 >= 1，三者同一条纪律）。
+                  90% 与 100% 在宿慧上是 0 与 1 的差别，不是「多一点少一点」；
+                  不说清的话，玩家看着 90% 会以为攒了不少。
+                -->
+                <p class="legacy-blueprint-desk__rule" data-legacy-insight-rule>
+                  {{ insightRulesNote() }}
+                </p>
               </div>
             </article>
 
@@ -921,6 +931,7 @@ import { lifeFootprint } from "@/ui/lifeFootprint";
 import { lifeDateText } from "@/ui/lifeDate";
 import { enemyLoreLedger } from "@/ui/enemyLoreLedger";
 import { blueprintProgress } from "@/ui/blueprintProgress";
+import { insightRulesNote } from "@/ui/insightRulesNote";
 import { formatDate } from "@/utils/time";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LegacyWheel from "@/components/common/LegacyWheel.vue";

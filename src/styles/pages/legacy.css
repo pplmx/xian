@@ -764,6 +764,18 @@
   .legacy-blueprint-desk__stalled {
     color: var(--color-amber-ink);
   }
+  /*
+   * 宿慧折算的口径 —— 它是上面逐张进度的限定,不是另一条账。
+   * 退到 faint 并与进度行拉开一点距离:读进度时不必读它,真要算宿慧时才看。
+   */
+  .legacy-blueprint-desk__rule {
+    margin-top: 0.28rem;
+    padding-top: 0.24rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.07);
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
   .legacy-blueprint-desk__more {
     margin-top: 0.3rem;
     padding: 0.2rem 0.44rem;

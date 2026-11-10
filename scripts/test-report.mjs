@@ -441,6 +441,7 @@ const CATEGORIES = [
       "expProgressNote",
       "mentorBehaviorAxes",
       "docShotsFresh",
+      "insightRulesNote",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",
