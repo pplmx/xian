@@ -106,6 +106,7 @@ const CATEGORIES = [
       "moduleCoverage",
       "eventTagSupply",
       "celestialReward",
+      "secretRealmValue",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",

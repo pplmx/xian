@@ -77,7 +77,7 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     cost: { stone: 40 },
     rules: { healMult: 2 },
     healBetweenPct: -0.1,
-    rewardMult: 1.2,
+    rewardMult: 1.912,
   },
   {
     id: "sr_jianzhong",
@@ -88,7 +88,7 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     cost: { stone: 60 },
     rules: { playerAtkMult: 1.3, playerExtraMods: { defensePct: -0.2 } },
     healBetweenPct: 0.5,
-    rewardMult: 1.3,
+    rewardMult: 2.3,
   },
   {
     id: "sr_kuye",
@@ -99,7 +99,7 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     cost: { stone: 80 },
     rules: { healMult: 0.5 },
     healBetweenPct: 0.3,
-    rewardMult: 1.5,
+    rewardMult: 2.4,
   },
   {
     id: "sr_fengyin",
@@ -110,7 +110,7 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     cost: { stone: 90 },
     rules: { playerExtraMods: { dodgeRate: 0.15 }, enemyExtraMods: { dodgeRate: 0.2 } },
     healBetweenPct: 0.3,
-    rewardMult: 1.4,
+    rewardMult: 2.5,
   },
   {
     id: "sr_tiebi",
@@ -125,7 +125,7 @@ export const SECRET_REALMS: SecretRealmDef[] = [
       playerExtraMods: { damageReduction: 0.12 },
     },
     healBetweenPct: 0.5,
-    rewardMult: 1.35,
+    rewardMult: 2.75,
   },
   {
     id: "sr_chiyan",
@@ -136,7 +136,7 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     cost: { stone: 150 },
     rules: { enemyAtkMult: 1.2, shieldCapRatio: 0.7 },
     healBetweenPct: 0.4,
-    rewardMult: 1.45,
+    rewardMult: 3.0,
   },
   {
     id: "sr_yunxing",
@@ -147,7 +147,7 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     cost: { stone: 200 },
     rules: { healMult: 0.25, enemyExtraMods: { lowHpDamage: 0.4 }, maxRounds: 26 },
     healBetweenPct: 0.2,
-    rewardMult: 1.5,
+    rewardMult: 3.4,
   },
   {
     id: "sr_qingming",
@@ -158,7 +158,7 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     cost: { stone: 90 },
     rules: { playerExtraMods: { lifesteal: 0.1 }, healMult: 0.8 },
     healBetweenPct: 0.2,
-    rewardMult: 1.4,
+    rewardMult: 2.5,
   },
   {
     id: "sr_wanyao",
@@ -169,7 +169,7 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     cost: { daoSource: 46 },
     rules: { enemyExtraMods: { comboRate: 0.2, attackPct: 0.1 } },
     healBetweenPct: 0.35,
-    rewardMult: 1.55,
+    rewardMult: 2.1,
   },
   // ---- 天界秘境:真仙起,道源代价,与远征/试炼并列 ----
   {
@@ -192,7 +192,7 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     cost: { daoSource: 50 },
     rules: { playerAtkMult: 1.25, enemyHpMult: 1.2, maxRounds: 25 },
     healBetweenPct: 0.25,
-    rewardMult: 1.8,
+    rewardMult: 2.2,
   },
   {
     id: "sr_leize",
@@ -208,7 +208,7 @@ export const SECRET_REALMS: SecretRealmDef[] = [
       maxRounds: 18,
     },
     healBetweenPct: 0.35,
-    rewardMult: 1.5,
+    rewardMult: 1.772,
   },
   {
     id: "sr_minghe",
@@ -222,7 +222,7 @@ export const SECRET_REALMS: SecretRealmDef[] = [
       enemyExtraMods: { lifesteal: 0.2 },
     },
     healBetweenPct: 0.2,
-    rewardMult: 1.6,
+    rewardMult: 2.05,
   },
   {
     id: "sr_xuanyuan",
@@ -233,7 +233,7 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     cost: { daoSource: 55 },
     rules: { playerAtkMult: 1.3, playerStartHpPct: 0.5 },
     healBetweenPct: 0.15,
-    rewardMult: 1.7,
+    rewardMult: 2.25,
   },
   {
     id: "sr_zhuxian",
@@ -244,7 +244,7 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     cost: { daoSource: 48 },
     rules: { enemyHpMult: 1.25, enemyAtkMult: 1.1, shieldCapRatio: 0.8 },
     healBetweenPct: 0.3,
-    rewardMult: 1.6,
+    rewardMult: 2.15,
   },
 ];
 
