@@ -87,6 +87,80 @@ describe("天道契约裁判", () => {
     }
   });
 
+  /**
+   * 契约的**痛感要配得上报价** —— 这一层此前没人守。
+   *
+   * 已有的两条只守两头:有解(≥15%)与万金油免疫(<95%)。中间那一段是空的,
+   * 而疾战契正好躺在那里:它写 `maxRounds: 25`,卖 2.0 倍道源,而实测
+   * 逐场战报只有 1/30 组与「不签」不同、净胜 -6 —— 玩家几乎感觉不到代价。
+   *
+   * 它为什么能活这么久:25 这个数看起来「挺紧的」(半场只有 50 回合),
+   * 而星陨天自带 26、其余世界从 50 降下来 —— 表面看压了不少。
+   * 只有把「逐场战报到底变没变」量出来,才知道它其实没咬到人。
+   *
+   * ## 判据口径
+   *
+   * 每条契约在「世界 × 构筑」的 30 格里,至少要有 **1/5(20%)** 的格子里
+   * 逐场战报与不签不同。取战报而不是通率:通率是聚合量,一条只改回合数、
+   * 不改胜负的规则在通率上可能完全看不出来,而它对玩家是真实差别
+   * (杀伐道速战之赏就按总回合折算)。
+   *
+   * **阈值 1/5 是按实测分布定的,不是拍的**。当前十条契约的差异率:
+   * 断源契 27% · 血契 33% · 追风契 43% · 晦天契 63% · 天残契 70% ·
+   * 殛雷契 73% · 疾战契 87% · 噬魂契 90% · 连叠契 97% · 蔽影契 100%。
+   * 取 1/5 比最弱的那条(27%)低一档,只筛「彻底无感」的,不误伤弱而不空的。
+   *
+   * **它守不住什么,也要写清楚**:改前的疾战契(`maxRounds: 25`)是 23%,
+   * 越过了这条线 —— 注入验证时没能抓住。也就是说「弱到没人感觉得到」里,
+   * 系统性能判的是「接近 0」那一档(断源契修前正是 0%);
+   * 「弱但仍有一点感觉」只能靠人看分布 + `decisionAudit` 第 ⑤ 组的结构判据
+   * (`rules` 合并后不许与不动相等)兜。判据的边界写在这里,免得下一个人
+   * 以为它在守一件它守不住的事。
+   */
+  it("每条契约的痛感不许接近于零(至少 1/5 的格子逐场战报与不签不同)", () => {
+    const tooWeak: string[] = [];
+    let cells = 0;
+    let totalCells = 0;
+    for (const pact of RULE_PACTS) {
+      let differs = 0;
+      let pactCells = 0;
+      for (let w = 0; w < CELESTIAL_WORLDS.length; w += 1) {
+        for (const profile of BUILD_PROFILES) {
+          const sig = (extra: CombatRules | undefined): string => {
+            const world = CELESTIAL_WORLDS[w]!;
+            const rng = new RandomService(mulberry32(33000 + w * 131));
+            const foes: CombatantSnap[] = [];
+            for (let i = 0; i < world.fights - 1; i += 1) {
+              foes.push(worldFoeSnap(world.foes[i % world.foes.length]!, SIM_REFERENCE));
+            }
+            foes.push(worldFoeSnap(world.guardian, SIM_REFERENCE));
+            const report = runGauntlet(
+              buildSnap(profile),
+              foes,
+              chain(world.rules, extra),
+              world.healBetweenPct,
+              rng,
+            );
+            return JSON.stringify(report.rows.map((r) => [r.win, r.rounds]));
+          };
+          cells += 1;
+          pactCells += 1;
+          if (sig(undefined) !== sig(pact.rules)) differs += 1;
+        }
+      }
+      totalCells += pactCells;
+      // 1/5 的下限:30 格里至少 6 格
+      if (differs * 5 < pactCells) tooWeak.push(`${pact.name}(差异 ${differs}/${pactCells})`);
+    }
+    expect(
+      tooWeak,
+      "这些契约几乎不改变任何一场战斗,却在按倍率报价 —— 玩家拿道源换了一个感觉不到的东西:" +
+        tooWeak.join("、"),
+    ).toEqual([]);
+    // 防空转:真的比过那些格子
+    expect(totalCells, "一格都没比较 —— 判据会空转").toBeGreaterThan(100);
+  });
+
   it("不存在契约免疫的万金油(没有流派在全部契约×全部世界均 ≥95%)", () => {
     for (const profile of BUILD_PROFILES) {
       let minRate = 1;
