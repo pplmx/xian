@@ -39,6 +39,7 @@ import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
 import { useSettingsStore } from "@/stores/settings";
 import { PILLS } from "@/data/pills";
+import { qualityDef } from "@/data/qualities";
 import {
   ARTIFACT_DROP_CHANCE,
   EQUIP_DROP_CHANCE,
@@ -321,5 +322,70 @@ describe("流水账本身可信", () => {
   it("本作的随机服务与库的 Rng 同形 —— 掉落表接得进来就靠这条", () => {
     const asEngineRng: Rng = rng;
     expect(typeof asEngineRng.weighted).toBe("function");
+  });
+});
+
+/**
+ * 掉落丹药也得跟得上境界 —— 与际遇给丹同一个毛病,只是这条路漏了。
+ *
+ * ## 缺口是什么(第 68 轮实测)
+ *
+ * `randomDropPill` 用 `pillDropWeight` 加权,而那个函数**只按品阶降权、
+ * 不看玩家在哪一境**。境界 20 时的掉落分布:
+ *
+ * ```text
+ * spirit(灵品) 33.0%   fine(良品) 19.3%   profound 12.9%
+ * 低品阶合计 52.3%
+ * ```
+ *
+ * 一半以上的掉落是过时的丹。
+ *
+ * **第 67 轮修的是 `core/eventEngine` 的 `randomEventPill`(际遇给丹)** ——
+ * 当时只在际遇那条路上加了境界差衰减,掉落这条漏了。同一个公式在两处各写一份,
+ * 改一处就以为改完了。
+ *
+ * ## 判据必须**真去抽**
+ *
+ * 第 67 轮的教训:在 spec 里把权重公式抄一遍、拿它算占比,实现改了判据不会红。
+ * 这里调真函数抽 400 次,数实际抽到的高/低品阶各几枚。
+ *
+ * ## 这条线画在哪,以及为什么不画更高
+ *
+ * 高境界时「高品阶占比 > 低品阶占比」即可,不要求压倒性 ——
+ * 掉落池只有 15 味(排除了所有可炼制的丹),池子构成本身限制了可调空间。
+ * 判据守的是「别让过时的丹占掉一半以上」,不是「保证掉神品」。
+ */
+describe("掉落丹药 · 给的丹要跟得上境界", () => {
+  const HIGH_FLOOR = qualityDef("earth").rank;
+  const LOW_CEIL = qualityDef("spirit").rank;
+
+  function sample(major: number, count = 400): { high: number; low: number } {
+    let high = 0;
+    let low = 0;
+    for (let i = 0; i < count; i += 1) {
+      const id = randomDropPill(major);
+      if (!id) continue;
+      const def = PILLS.find((p) => p.id === id);
+      if (!def) continue;
+      const rank = qualityDef(def.quality).rank;
+      if (rank >= HIGH_FLOOR) high += 1;
+      else if (rank <= LOW_CEIL) low += 1;
+    }
+    return { high, low };
+  }
+
+  it("境界 20 时,掉落的高品阶丹药不少于低品阶", () => {
+    const { high, low } = sample(20);
+    expect(high + low, "抽到的样本太少 —— 掉落池或函数有问题").toBeGreaterThan(200);
+    expect(
+      high,
+      `境界 20 掉了 400 次:高品阶 ${high} 枚、低品阶 ${low} 枚 —— 过时的丹占掉了一半`,
+    ).toBeGreaterThanOrEqual(low);
+  });
+
+  it("低境界不被这条线误伤:境 5 时低品阶仍占多数", () => {
+    const { high, low } = sample(5);
+    expect(high + low, "抽到的样本太少").toBeGreaterThan(200);
+    expect(low, `境界 5 掉了 400 次:低品阶 ${low} 枚、高品阶 ${high} 枚`).toBeGreaterThan(high);
   });
 });

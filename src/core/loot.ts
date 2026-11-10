@@ -277,11 +277,34 @@ export function pillDropWeight(def: { quality: QualityId }): number {
   return 100 / (1 + qualityDef(def.quality).rank * 2);
 }
 
-/** 随机一件当前境界可用的掉落丹药 */
+/**
+ * 随机一件当前境界可用的掉落丹药。
+ *
+ * ## 权重为什么要带境界差
+ *
+ * `pillDropWeight` 只按品阶降权,**不看玩家在哪一境** —— 于是境界 20 的掉落里:
+ *
+ * ```text
+ * spirit(灵品) 33.0%   fine(良品) 19.3%   profound 12.9%
+ * 低品阶合计 52.3%
+ * ```
+ *
+ * 一半以上的掉落是过时的丹。而 `core/eventEngine` 的际遇给丹有同一个毛病,
+ * 已在第 67 轮修过 —— **那一次只修了际遇这一条路,掉落这一条漏了**。
+ *
+ * 现在这里也乘同一个境界差因子 `1 / (1 + max(0, major - minRealm) × 0.5)`,
+ * 两处口径一致(见 `eventEngine` 的 `randomEventPill`)。
+ *
+ * `pillDropWeight` 本身**不动**:它是「同境界比品阶」的相对权重,
+ * `core/pillValue` 的审计拿它当尺子 —— 掺进境界差会让那把尺子跟着漂。
+ */
 export function randomDropPill(major: number): string | null {
   const pool = PILLS.filter((p) => p.minRealm <= major && !p.recipe);
   if (pool.length === 0) return null;
-  const picked = rng.weighted(pool, pillDropWeight);
+  const picked = rng.weighted(
+    pool,
+    (p) => pillDropWeight(p) / (1 + Math.max(0, major - p.minRealm) * 0.5),
+  );
   return picked.id;
 }
 
