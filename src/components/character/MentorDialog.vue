@@ -63,6 +63,23 @@
           <span>相合</span>
         </div>
         <p class="mentor-affinity__note">此数只评言行，不施惩罚；与师门相合时，师尊自有嘉许。</p>
+        <!--
+          行为轴 —— 上面那个数是怎么来的。
+          此前只印「行为契合 0.35」与一句师尊评价，玩家读到「剑意未纯」时
+          看不出是自己丹药炼多了：权重表里那条 -0.6 只活在代码里。
+          加分项玩家迟早会撞对，**减分项却是无声的** —— 他可能一直在做让师承
+          更远的事，还以为是别的原因。故两侧都摊开。
+        -->
+        <dl v-if="axes" class="mentor-axes" data-mentor-axes>
+          <div class="mentor-axes__row" data-mentor-axes-toward>
+            <dt>相亲</dt>
+            <dd>{{ axes.toward.join(" · ") }}</dd>
+          </div>
+          <div class="mentor-axes__row is-against" data-mentor-axes-against>
+            <dt>相左</dt>
+            <dd>{{ axes.against.join(" · ") }}</dd>
+          </div>
+        </dl>
       </section>
 
       <section class="mentor-mods">
@@ -216,6 +233,7 @@ import { modsPills, modsText } from "@/data/statNames";
 import type { MentorDef, MentorId } from "@/data/mentors";
 import { cnNumber, formatPercent } from "@/utils/format";
 import BaseModal from "@/components/common/BaseModal.vue";
+import { mentorBehaviorAxes } from "@/ui/mentorBehaviorAxes";
 
 /**
  * 四脉共用一张择师谱。
@@ -249,6 +267,14 @@ const affinityPercent = computed(() => {
   const affinity = mentorVer.value?.affinity ?? 0;
   return formatPercent((affinity + 1) / 2, 0);
 });
+
+/**
+ * 行为轴 —— 那个契合度由什么行为构成。
+ *
+ * 权重表只有 `core/mentorService` 一份，这一层只把键名翻成人话
+ * （见 `ui/mentorBehaviorAxes`）。
+ */
+const axes = computed(() => mentorBehaviorAxes(player.mentor));
 
 function mentorChoiceLabel(m: MentorDef): string {
   const hint = hintMentor.value === m.id ? "机缘引荐。" : "";
@@ -806,6 +832,41 @@ watch(
   color: rgb(var(--color-ink-faint-rgb));
   font-size: var(--type-note);
   line-height: 1.6;
+}
+
+/*
+ * 行为轴 —— 上面那个契合度由什么行为构成。
+ * 两行并列,「相亲」与「相左」各一句;相左那行用朱砂点一下,
+ * 因为它是此前完全无声的那一半(加分项玩家迟早会撞对)。
+ */
+.mentor-axes {
+  margin-top: 0.34rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid var(--mentor-line);
+}
+.mentor-axes__row {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.44rem;
+  padding: 0.14rem 0;
+  font-size: var(--type-note);
+  line-height: 1.5;
+}
+.mentor-axes__row dt {
+  flex: none;
+  color: var(--color-jade);
+  font-family: var(--font-kai);
+  letter-spacing: 0.06em;
+}
+.mentor-axes__row dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: rgb(var(--color-ink-soft-rgb));
+}
+.mentor-axes__row.is-against dt {
+  color: rgb(var(--color-cinnabar-rgb));
 }
 
 .mentor-mods {

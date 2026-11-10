@@ -439,6 +439,7 @@ const CATEGORIES = [
       "onboardingFlowGate",
       "emptyStateTypeScale",
       "expProgressNote",
+      "mentorBehaviorAxes",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",

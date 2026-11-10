@@ -9703,6 +9703,41 @@ async function taskMentorLedger() {
     }
 
     if (pageErrors.length)
+      /*
+       * 行为轴 —— 上面那个「行为契合 0.35」由什么行为构成。
+       *
+       * `core/mentorService` 的权重表里有负项(剑修 `pillsCrafted: -0.6`、
+       * 丹修 `kills: -0.8`),而界面上此前只印分数与一句师尊评价:
+       * 玩家读到「剑意未纯」时看不出是自己丹药炼多了。
+       * **加分项玩家迟早会撞对,减分项却是无声的** —— 故两侧都要摊开。
+       */
+      checked += 1;
+    {
+      const axes = await page.evaluate(() => {
+        const dl = document.querySelector("[data-mentor-axes]");
+        if (!dl) return null;
+        return {
+          toward: (dl.querySelector("[data-mentor-axes-toward] dd")?.textContent || "").trim(),
+          against: (dl.querySelector("[data-mentor-axes-against] dd")?.textContent || "").trim(),
+        };
+      });
+      if (!axes) {
+        failures.push("[390] 师承帖没有行为轴 —— 玩家看得到契合度,看不到是什么把它推高/压低");
+      } else if (!axes.toward || !axes.against) {
+        failures.push(
+          `[390] 师承帖的行为轴缺一侧 —— 相亲 «${axes.toward}» / 相左 «${axes.against}»` +
+            `(相左那一半此前完全无声,不能省)`,
+        );
+      } else if (/NaN|undefined|Infinity/.test(axes.toward + axes.against)) {
+        failures.push(`[390] 师承帖的行为轴漏出占位符 —— «${axes.toward} / ${axes.against}»`);
+      } else if (/kills|pillsCrafted|bossKills|explores/.test(axes.toward + axes.against)) {
+        failures.push(
+          `[390] 师承帖把计数器键名直接印给玩家了 —— «${axes.toward} / ${axes.against}»`,
+        );
+      }
+    }
+
+    if (pageErrors.length)
       failures.push(`[390] 择师谱场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
   } finally {
     await ctx.close();

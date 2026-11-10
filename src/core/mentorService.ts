@@ -17,8 +17,14 @@ export interface MentorVerdict {
   line: string;
 }
 
-/** 各师承的行为权重:计数器 → 该师承的契合方向(负数 = 相左) */
-const MENTOR_WEIGHTS: Record<MentorId, Partial<Record<string, number>>> = {
+/**
+ * 各师承的行为权重:计数器 → 该师承的契合方向(负数 = 相左)。
+ *
+ * 导出是给 `ui/mentorBehaviorAxes` 读的 —— 它把这张表翻成「看重什么 / 忌讳什么」
+ * 摊在师承弹窗上。**权重表只有这一份**:若界面那边另写一份「什么加分」,
+ * 改平衡时必然对不上(本仓「不做两本账」)。
+ */
+export const MENTOR_WEIGHTS: Record<MentorId, Partial<Record<string, number>>> = {
   swordsman: { kills: 1, bossKills: 2, breakthroughs: 0.5, pillsCrafted: -0.6 },
   alchemist: { pillsCrafted: 1, pillsUsed: 1, kills: -0.8 },
   arraymaster: { buildingUpgrades: 0.4, offlineClaims: 0.5, explores: -0.8 },

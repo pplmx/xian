@@ -527,11 +527,20 @@ const activePath = computed(() =>
 );
 const coreGaps = computed(() => (activePath.value ? buildCoreGaps(activePath.value) : []));
 const nextCoreGaps = computed(() => coreGaps.value.slice(0, 3));
+/**
+ * 下一步那一句说**做什么**,不再报一次「还差 N%」。
+ *
+ * 此前它写「再补 25% 契合,推向雏形」,而同一屏上方的 `stageGapText` 写着
+ * 「距成形还差 25% 契合」—— 同一个数、同一件事说了两遍
+ * (`/build` 在 844×390 横屏首屏实测抓到 «25%» 重复,正是这里)。
+ *
+ * 分工:**正文报数**(还差多少契合),**这一行报法**(补哪些词条、往哪个方向)。
+ * 与卷首「账首报最近契合、台账报雏形线」同一条纪律。
+ */
 const nextActionTitle = computed(() => {
   if (!build.value) return "";
   if (stageMeter.value.gap > 0) {
-    const next = stageMeter.value.stage === "未成" ? "雏形" : "下一形态";
-    return `再补 ${formatPercent(stageMeter.value.gap, 0)} 契合，推向${next}`;
+    return nextCoreGaps.value.length ? "补齐核心词条，推向下一形态" : "补契合，推向下一形态";
   }
   return "此路已大成";
 });
