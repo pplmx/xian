@@ -989,3 +989,13 @@ export const DAO_SOURCE_PER_FRUIT = 100;
  */
 export const EXPEDITION_ROUTE_LAYERS = 3;
 export const EXPEDITION_GUARDIAN_LAYER = EXPEDITION_ROUTE_LAYERS;
+
+/**
+ * 一趟远征的**总场数** = 入界 1 场 + 各重择路 + 界主 1 场。
+ *
+ * 此前 `core/expedition` 里写的是裸常数 `const RUN_FIGHTS = 5`,而同一件事
+ * 在视图里写成 `EXPEDITION_ROUTE_LAYERS + 2` —— 两本账。层数从 3 改成 4 那天,
+ * 界面会显示「四重」,而速战之赏仍按 5 场折算(通道被悄悄放宽 20%),
+ * 两个数还都能自洽,没有任何门会红。
+ */
+export const EXPEDITION_RUN_FIGHTS = EXPEDITION_ROUTE_LAYERS + 2;

@@ -18,7 +18,12 @@ import { celestialWorldDef } from "@/data/endgame";
 import { NO_PACT_MULT, pactDef } from "@/data/pacts";
 import { MUTATORS } from "@/data/mutators";
 import { PACT_END_HP_FLOOR } from "@/data/constants";
-import { EXPEDITION_GUARDIAN_LAYER, EXPEDITION_ROUTE_LAYERS, MUTATION_FOES } from "@/data/endgame";
+import {
+  EXPEDITION_GUARDIAN_LAYER,
+  EXPEDITION_ROUTE_LAYERS,
+  EXPEDITION_RUN_FIGHTS,
+  MUTATION_FOES,
+} from "@/data/endgame";
 import { buildPlayerSnap } from "./playerSnap";
 import { detectBuild } from "./buildDetect";
 import {
@@ -168,8 +173,8 @@ export function withCarriedHp(rules: CombatRules | undefined, run: WorldRunState
   return { ...rules, playerStartHpPct: Math.min(startCap, run.carriedHpPct) };
 }
 
-/** 远征总场数(入界 + 三层 + 界主) */
-const RUN_FIGHTS = 5;
+/** 远征总场数 —— 读 `data/endgame` 的那一份(入界 + 各重 + 界主),不在这里另写一个数 */
+const RUN_FIGHTS = EXPEDITION_RUN_FIGHTS;
 
 function settle(
   run: WorldRunState,

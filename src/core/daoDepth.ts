@@ -74,11 +74,56 @@ export function stackedMods(base: StatMods, layer: StatMods, n: number): StatMod
   return out;
 }
 
+/**
+ * 杀伐道「速战之赏」的三档 —— **阈值与赏格只写这一处**。
+ *
+ * 界面要报「当前哪一档、离下一档还差多少」,若在视图里再写一遍 12/18/24,
+ * 改一处就分叉。故把阶梯摊成一张表,判定与读数同读它。
+ *
+ * `perFight` 是**每场均回合数**;`bonus` 是道源加成。
+ * 表按「越严越先」排:命中第一条即返回。
+ */
+export const SLAUGHTER_SPEED_TIERS = [
+  { maxPerFight: 12, bonus: 0.25 },
+  { maxPerFight: 18, bonus: 0.15 },
+  { maxPerFight: 24, bonus: 0.08 },
+] as const;
+
 /** 杀伐道速战之赏:远征总回合越短,道源加成越高(至多 +25%) */
 export function slaughterSpeedBonus(totalRounds: number, fights: number): number {
-  const perFight = totalRounds / Math.max(1, fights);
-  if (perFight < 12) return 0.25;
-  if (perFight < 18) return 0.15;
-  if (perFight < 24) return 0.08;
-  return 0;
+  return slaughterSpeedTierOf(totalRounds, fights)?.bonus ?? 0;
+}
+
+/**
+ * 当前落在速战阶梯的哪一档,以及**离下一档还差多少**。
+ *
+ * 界面此前只报一个「(含杀伐速战之赏)」的 toast 尾巴 —— 玩家永远不知道
+ * 自己差几回合能跳档。这一层把「已经拿到哪档、再快多少能进下一档」算出来。
+ *
+ * 返回值:
+ * - `bonus` 当前档的赏格(0 表示一档都没进);
+ * - `next` 下一档(已是最高档或进不去时为 null);
+ * - `perFight` 每场均回合(界面要报它,玩家才知道"差多少");
+ * - `nextGapPerFight` 离下一档还需把每场均回合压到多少以内(无下一档时 null)。
+ */
+export function slaughterSpeedTierOf(
+  totalRounds: number,
+  fights: number,
+): {
+  bonus: number;
+  perFight: number;
+  next: { maxPerFight: number; bonus: number } | null;
+} | null {
+  const safeFights = Math.max(1, fights);
+  const perFight = Math.max(0, totalRounds) / safeFights;
+  const hit = SLAUGHTER_SPEED_TIERS.find((t) => perFight < t.maxPerFight);
+  if (hit) {
+    // 已是最高档(命中第一条)则没有下一档
+    const idx = SLAUGHTER_SPEED_TIERS.indexOf(hit);
+    const next = idx > 0 ? SLAUGHTER_SPEED_TIERS[idx - 1]! : null;
+    return { bonus: hit.bonus, perFight, next: next ? { ...next } : null };
+  }
+  // 一档都没进:下一档是最后一条(最容易的那档)
+  const lowest = SLAUGHTER_SPEED_TIERS[SLAUGHTER_SPEED_TIERS.length - 1]!;
+  return { bonus: 0, perFight, next: { ...lowest } };
 }

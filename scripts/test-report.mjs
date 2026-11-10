@@ -507,6 +507,8 @@ const CATEGORIES = [
       "powerRatingNoRank",
       "qualityDropCurve",
       "themeLegacyHint",
+      // 速战之赏的档位读数:机制一直在跑而玩家零读数,这一层把「差几回合跳档」摊开
+      "slaughterSpeed",
     ],
   },
   {
@@ -538,6 +540,9 @@ const CATEGORIES = [
       "gongfaEffectAudit",
       "saveSanitizeCoverage",
       "daoPathCoverage",
+      // 剑意纯度的「已达 / 欠何」两侧读数:此前视图只 filter(c => c.ok),
+      // 未达那半永远到不了界面 —— 源码层判据守它不许退回去
+      "swordPurityAxes",
       "specReadSource.spec",
     ],
   },

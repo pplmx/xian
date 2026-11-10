@@ -53,6 +53,14 @@
             · {{ endgame.daoPath === "sword" ? "蓄势" : "杀意" }} {{ run.winStacks }} 层
           </template>
         </p>
+        <!--
+          杀伐道速战之赏的读数:机制一直在跑,而玩家此前只从 toast 尾巴知道
+          拿没拿到,永远不知道差几回合跳档。这一行把它摊开(见 ui/slaughterSpeed)。
+          非杀伐道整行不出 —— 不给别的道途看一条无关的空读数。
+        -->
+        <p v-if="speedTier" class="text-note text-ink-faint tabular" data-expedition-speed-tier>
+          {{ speedTier.text }}
+        </p>
         <div class="mt-1.5 space-y-1">
           <p v-for="(row, i) in run.rows" :key="i" class="flex justify-between text-body">
             <span :class="row.win ? 'text-ink-soft' : 'text-cinnabar'">
@@ -478,6 +486,7 @@ import {
   CELESTIAL_WORLDS,
   EXPEDITION_GUARDIAN_LAYER,
   EXPEDITION_ROUTE_LAYERS,
+  EXPEDITION_RUN_FIGHTS,
 } from "@/data/endgame";
 import { REALMS } from "@/data/realms";
 import { NO_PACT_MULT, PACTS, pactDef, pactRuleLine } from "@/data/pacts";
@@ -498,6 +507,7 @@ import {
 import { detectBuild } from "@/core/buildDetect";
 import { BUILD_PROFILES } from "@/core/buildSim";
 import { cnNumber, formatPercent } from "@/utils/format";
+import { speedTierReadout } from "@/ui/slaughterSpeed";
 import { useDaoEntry } from "@/composables/useDaoEntry";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
@@ -571,6 +581,15 @@ function openPrep(id: string): void {
 
 // ---- 进行中远征 ----
 const run = computed(() => endgame.worldRun);
+/**
+ * 速战之赏读数 —— 纯函数在 `ui/slaughterSpeed`,这里只接线。
+ *
+ * 场数读 `EXPEDITION_RUN_FIGHTS`(与结算同一个数),档位阈值读
+ * `core/daoDepth` 的 `SLAUGHTER_SPEED_TIERS` —— 界面不重写 12/18/24。
+ */
+const speedTier = computed(() =>
+  speedTierReadout(run.value, EXPEDITION_RUN_FIGHTS, endgame.daoPath),
+);
 const runWorld = computed(() => (run.value ? (resolveWorld(run.value.worldId) ?? null) : null));
 const runPact = computed(() => (run.value?.pactId ? pactDef(run.value.pactId) : undefined));
 const currentNodes = computed(() => {
