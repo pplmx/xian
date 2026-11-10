@@ -644,9 +644,22 @@ export function forecastExpedition(
   // 预估须与真打同源:择了门就把门也算进去,否则玩家看到的胜算与实战不符
   const rules = chainRules(currentDaoRules(), world.rules, pactRules(pact), gateRulesOf(gateId));
   const opts = pact?.special === "endHp80" ? { minHpAfterFight: PACT_END_HP_FLOOR } : {};
-  const seededRng = new RandomService(
-    mulberry32(worldId.length * 1009 + (pactId?.length ?? 0) * 97 + world.name.length * 7),
-  );
+  /**
+   * 推演用的种子。
+   *
+   * **每一组推演各起一条独立随机流**,不共享一条。此前这里只有一个 `seededRng`,
+   * 玩家那 8 次先把流消耗掉一段,六个流派再依次接着用 —— 于是第 1 个流派用的是
+   * 第 9~13 次随机数、第 6 个用第 33~37 次,**不同流派拿到的随机数不一样**。
+   * 「几路可行」这个读数因此带一层系统性偏差,而它正是玩家判断「这个构筑打不打得动」
+   * 的依据之一。
+   *
+   * 与实战无关(实战用 `rng` 单例),纯是**预估的可比性**:同一世界同一契约下,
+   * 六个流派必须站在同一条起跑线上,否则读出来的差异有一部分来自随机流,不是构筑。
+   * 派生方式保留原来的基数,故既有世界/契约的推演结果不变,只是各组改用独立子流。
+   */
+  const seedBase = worldId.length * 1009 + (pactId?.length ?? 0) * 97 + world.name.length * 7;
+  const rngFor = (salt: number): RandomService =>
+    new RandomService(mulberry32(seedBase + salt * 7919));
 
   // 玩家构筑:含孤剑/逆命的快照修饰,敌人按玩家等比生成
   const player = usePlayerStore();
@@ -673,8 +686,9 @@ export function forecastExpedition(
     worldFoeSnap(shape, pRef, 1, pJudgement),
   );
   let clears = 0;
+  const playerRng = rngFor(0);
   for (let i = 0; i < 8; i += 1) {
-    if (runGauntlet(snap, playerFoes, rules, world.healBetweenPct, seededRng, opts).cleared)
+    if (runGauntlet(snap, playerFoes, rules, world.healBetweenPct, playerRng, opts).cleared)
       clears += 1;
   }
   const pRate = clears / 8;
@@ -687,15 +701,16 @@ export function forecastExpedition(
    * 少了它,厚流派在这一栏会被高估。
    */
   let viableStyles = 0;
-  for (const profile of BUILD_PROFILES) {
+  for (const [pi, profile] of BUILD_PROFILES.entries()) {
     const styleSnap = buildSnap(profile);
     const styleJudgement = celestialJudgement(styleSnap.mods, MAX_MAJOR, world.anchorTier);
     const simFoes: CombatantSnap[] = expeditionForecastFoes(world).map((shape) =>
       worldFoeSnap(shape, SIM_REFERENCE, 1, styleJudgement),
     );
     let wins = 0;
+    const styleRng = rngFor(pi + 1);
     for (let i = 0; i < 5; i += 1) {
-      if (runGauntlet(styleSnap, simFoes, rules, world.healBetweenPct, seededRng, opts).cleared)
+      if (runGauntlet(styleSnap, simFoes, rules, world.healBetweenPct, styleRng, opts).cleared)
         wins += 1;
     }
     if (wins / 5 >= 0.4) viableStyles += 1;
