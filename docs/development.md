@@ -139,6 +139,44 @@ error: Failed to resolve vite command: GenericFailure, Expected
   位置,视口与字体落定时机不同会进出首屏 —— 但**「进出的只是能否看见,重复本身是必然的」**:
   一处真重复平时不显,只是因为它有时落在首屏之外。
 
+### 第四次重造轮子：给「首屏体积」加了一条本来就有的判据
+
+上一轮我量到「首屏 1040KB / 88 个文件 / 2.6 秒」，判断这个仓只量版面不量字节，
+写了 `checkFirstLoadBudget` 挂进浏览器门，还做了故障注入自证有效。**全部作废。**
+
+真相是这两样早就有:
+
+```text
+  package.json:16   "check:first-paint": "bun scripts/first-paint.mjs"   ← 19KB
+  package.json:17   "check:perf":        "bun scripts/perf-profile.mjs"  ← 53KB
+```
+
+`first-paint.mjs` 量得比我的版本专业得多:
+
+```text
+  冷启动解码 1261KB（预算 1500KB）· 线传 506KB  ← 走 CDP 的 encodedDataLength
+    Script 1040KB /  Stylesheet 165KB /  Font 48KB /  Document 9KB   ← 按类型分项
+  FCP 408ms（预算 1400ms）
+  楷体换上 1977ms（预算 3400ms）                ← font-display: swap 的实测
+  ✓ 首屏三条读数都在预算内
+```
+
+它自带静态服务器（**file:// 没有传输这回事**，量出来的字节是假的）、
+用 CDP 的 `encodedDataLength` 而不是 `du` 的磁盘占用（两者差着 gzip）、
+把 FCP 与「楷体换上」分开量（swap 那段是玩家读回退字体的时间）。
+
+**我用 file:// 量出的 1040KB，正是它报告里 Script 那一栏的数字** —— 同一件事，
+它有预算、有分项、有 gzip 比重，我没有。
+
+**为什么又没查到**：我只搜了 `scripts/` 下的文件名和 `layout-check.mjs` 的引用，
+没有搜 `package.json` 的 scripts 全表。这个仓的工具入口在 **package.json**，
+`check:first-paint` / `check:perf` / `check:ui` 都在那儿一字排开。
+
+**教训（第四次了，该成为硬规则）**：进入一个新维度之前，先读 `package.json` 的
+scripts 全表，再读 `scripts/` 的目录清单。两个命令的事，能省掉一整轮返工。
+上一轮已经吃过「只搜一个文件就下结论」的亏（`classicsForRealm`），这次栽在
+同一类错误上：**搜的范围比"真实入口"窄**。
+
 ### 第三次「看图找缺口」失败：这次连已经做好的功能都重新实现了一遍
 
 想问「境界名凭什么」时，界域志里应该看得到原典。我查到 `classics.ts` 有 11 部原典、
