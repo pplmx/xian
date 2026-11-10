@@ -18,6 +18,8 @@ import { describe, expect, it } from "vite-plus/test";
 import { PETS } from "@/data/pets";
 import { QUALITIES, qualityDef } from "@/data/qualities";
 import type { AnyStatKey, PetDef } from "@/types";
+import { statRangesFor, budgetRangeFor, petBudget as budgetOf, isWritable } from "./petBudget";
+import type { QualityId, StatMods } from "@/types";
 
 /** 粗略会计:Σ|词条数值|。不引 ruleBudget —— 那把尺子的 KEY_REFS 只覆盖战斗词条 */
 const petBudget = (p: PetDef): number =>
@@ -96,6 +98,109 @@ describe("灵兽品质 ↔ 效果匹配(预算)", () => {
             hi.mods[key]!,
             `${hi.name}(${hi.quality}) 的 ${k} ${hi.mods[key]} < ${lo.name}(${lo.quality}) 的 ${lo.mods[key]}`,
           ).toBeGreaterThanOrEqual(lo.mods[key]! - 1e-9);
+        }
+      }
+    }
+  });
+});
+
+/**
+ * 可行域计算器本身得有判据守着 —— 它是「补灵兽时先算再写」那一步的依据。
+ *
+ * ## 为什么单给一个工具写用例
+ *
+ * 第 58 轮补两只玄品灵兽,因为没先算可行域,连改七八轮都被上面那四条判据挡回来
+ * (改 A 触发 B、改 B 又触发 C)。最后把区间算出来,一次就过。
+ *
+ * 于是把「求解」提炼成 `core/petBudget`。**工具算错了比没有工具更糟** ——
+ * 照着错的区间取值,要么仍然撞墙、要么绕过判据写进一个不该存在的值。
+ *
+ * ## 判据守什么
+ *
+ * ① 每个品阶的区间都非空(空区间意味着那一档再也补不进那个词条);
+ * ② 区间真的收得住:落在区间内的取值,不会违反「同词条跨品阶不回落」;
+ * ③ 预算区间同理。
+ *
+ * 第二条是关键的 —— 它把工具与判据绑在一起,而不是各算各的。
+ */
+describe("灵兽可行域 · 计算器算出来的区间真能收住", () => {
+  it("每个品阶都有非空的可用词条,且区间边界自洽", () => {
+    const tiers: QualityId[] = [
+      "excellent",
+      "spirit",
+      "profound",
+      "earth",
+      "heaven",
+      "immortal",
+      "divine",
+    ];
+    for (const tier of tiers) {
+      const ranges = statRangesFor(tier);
+      expect(ranges.length, `${tier} 档一个可写词条都没有`).toBeGreaterThan(0);
+      for (const r of ranges) {
+        expect(isWritable(r), `${tier} 档的 ${r.key} 区间为空 [${r.lo}, ${r.hi}]`).toBe(true);
+        /*
+         * 不写 `lo >= 0` —— 那是恒真的(`statRangesFor` 用 `Math.max(0, …)` 起算)。
+         * 改查更实的事:区间上下界都得是有限数或 Infinity,**且不能两头都是 Infinity**
+         * (那样等于"这个键没有约束",而它明明被列进了可写词条)。
+         */
+        expect(
+          Number.isFinite(r.lo) || r.lo === 0,
+          `${tier} 档的 ${r.key} 下界既不是有限数也不是 0`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("照着区间取值写出来的灵兽,不会违反同词条跨品阶不回落", () => {
+    // 对每一档、每一个可写词条,取区间下界(最容易违反的那一端)构造一只假灵兽,
+    // 然后逐条比对:它相对低品阶不许更低。
+    for (const tier of ["spirit", "profound", "earth", "heaven"] as QualityId[]) {
+      const rank = qualityDef(tier).rank;
+      for (const range of statRangesFor(tier)) {
+        const probe = { [range.key]: range.lo } as StatMods;
+        for (const lower of PETS) {
+          if (qualityDef(lower.quality).rank >= rank) continue;
+          const lowValue = lower.mods[range.key];
+          if (lowValue === undefined) continue;
+          expect(
+            probe[range.key]!,
+            `${tier} 档 ${range.key} 取区间下界 ${range.lo} 仍低于 ${lower.name}(${lower.quality}) 的 ${lowValue}`,
+          ).toBeGreaterThanOrEqual(lowValue - 1e-9);
+        }
+      }
+    }
+  });
+
+  it("预算区间也收得住:区间内的值不小于任意低品阶、不大于任意高品阶", () => {
+    for (const tier of ["spirit", "profound", "earth", "heaven"] as QualityId[]) {
+      const rank = qualityDef(tier).rank;
+      const { lo, hi } = budgetRangeFor(tier);
+      // 不写 `lo >= 0`(恒真)。改查「下界真的来自某只低品阶灵兽」—— 它要么是 0
+      // (该档就是最低档),要么等于某只低品阶灵兽的预算。
+      const lowerBudgets = PETS.filter((p) => qualityDef(p.quality).rank < rank).map(petBudget);
+      if (lowerBudgets.length > 0) {
+        expect(
+          lowerBudgets.some((b) => Math.abs(b - lo) < 1e-9),
+          `${tier} 的预算下界 ${lo} 不是任何一只低品阶灵兽的预算`,
+        ).toBe(true);
+      }
+      if (!Number.isFinite(hi)) continue; // 最高档没有上界
+      expect(lo, `${tier} 的预算区间为空 [${lo}, ${hi}]`).toBeLessThanOrEqual(hi + 1e-9);
+      for (const other of PETS) {
+        const otherRank = qualityDef(other.quality).rank;
+        if (otherRank === rank) continue;
+        const budget = budgetOf(other);
+        if (otherRank < rank) {
+          expect(
+            lo,
+            `${tier} 预算下界 ${lo} 低于低品阶 ${other.name} 的 ${budget}`,
+          ).toBeGreaterThanOrEqual(budget - 1e-9);
+        } else {
+          expect(
+            hi,
+            `${tier} 预算上界 ${hi} 高于高品阶 ${other.name} 的 ${budget}`,
+          ).toBeLessThanOrEqual(budget + 1e-9);
         }
       }
     }
