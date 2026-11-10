@@ -20536,6 +20536,19 @@ async function taskCelestialBattleScroll() {
       ...slices.endgame,
       endgameTutorialSeen: true,
       resourceDialogSeen: true,
+      /*
+       * 道途选**长生道** —— 它是唯一带 `perRounds` 规则的一道
+       * (每五回合回血给盾、敌人攻势渐涨)。
+       *
+       * 选它有两个用处:① 战报浮层那一行「敌势渐涨」(`data-fight-atk-ramp`)
+       * 才有机会出现 —— 那行数据要 `CombatResult.atkRamp`,而 `atkRamp` 只在
+       * 规则带 `perRounds` 时才产生;② 「此战之判」里的战前判定会带上
+       * 长生道自己那条规则,判词区的两类行都更实。
+       *
+       * 此前这里是默认道途(sword),所以本任务虽然叫「证道战卷」,
+       * 却从没验过任何一个**道途专属**的读数。
+       */
+      daoPath: "longevity",
     };
     slices.settings = {
       ...slices.settings,
@@ -20683,6 +20696,16 @@ async function taskCelestialBattleScroll() {
               };
             }),
             judgementEmpty: !!ledger?.querySelector("[data-celestial-report-judgement-empty]"),
+            /*
+             * 「敌势渐涨」那一行 —— 只有规则带 `perRounds`(长生道 / 奇门休门)
+             * 时才会产生 `atkRamp`,故本任务把道途设成长生道才量得到。
+             *
+             * 这条读数曾因 `ReportView.rows` 手写第三份战果行形状而缺 `atkRamp`,
+             * 整行从未显示过(第 18 轮修)。现在链路三跳都通,这里量它真的渲染出来。
+             */
+            atkRampText: (ledger?.querySelector("[data-fight-atk-ramp]")?.textContent || "")
+              .replace(/\s+/g, " ")
+              .trim(),
             stationRole: station?.getAttribute("role") ?? null,
             stationFoe: (
               station?.querySelector(".celestial-gauntlet__foe")?.textContent || ""
@@ -20826,6 +20849,30 @@ async function taskCelestialBattleScroll() {
             `\n此战之判:战前 ${preLines.length} 行 · 战后归因 ${findingLines.length} 行` +
               `(«${findingLines[0].text.slice(0, 36)}…»)`,
           );
+        }
+        /*
+         * 「敌势渐涨」那一行必须出现 —— 本任务的道途是长生道,规则带 `perRounds`,
+         * 故 `atkRamp` 必然被算出来(实测一场会触发若干次)。
+         *
+         * 这条读数曾**一次都没显示过**:链路三跳
+         * (`CombatResult.atkRamp` → `GauntletFightRow` → `ReportView.rows`)
+         * 前两跳都通,最后一跳被手写的第三份战果行形状挡住(它没写 `atkRamp`)。
+         * 第 18 轮统一形状后才接通 —— 这条判据就是那次修复的固定证据。
+         */
+        if (!mobile.atkRampText) {
+          failures.push(
+            "[390-report] 长生道打的一场里没有「敌势渐涨」读数 —— " +
+              "规则带 perRounds 就该有 atkRamp;读不到说明链路又断了(ReportView.rows 缺字段?)",
+          );
+        } else if (!/伤害|累计/.test(mobile.atkRampText)) {
+          failures.push(
+            `[390-report] 「敌势渐涨」那行写得不完整:«${mobile.atkRampText}» —— ` +
+              "该报抬了多少伤害、触发几次、累计几倍",
+          );
+        } else if (/NaN|undefined|Infinity/.test(mobile.atkRampText)) {
+          failures.push(`[390-report] 「敌势渐涨」漏出占位符:«${mobile.atkRampText}»`);
+        } else {
+          console.log(`敌势渐涨:«${mobile.atkRampText}»`);
         }
         const badTabs = mobile.tabs.filter(
           (tab) =>
