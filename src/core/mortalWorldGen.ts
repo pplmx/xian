@@ -114,11 +114,36 @@ function resampleRhythm(curve: readonly number[], n: number): number[] {
 }
 
 /** 骨架扰动:每点 ±1,保持首尾与相邻关系的大势 */
+/**
+ * 给路线骨架的层级加 ±1 扰动 —— 免得多世完全同一个形状。
+ *
+ * ## 为什么要「不低于前一段」
+ *
+ * 第一版只做了 `clamp(1..20)`,于是间隔 1 的相邻段扰动后会**撞到同一层级**
+ * (实测 900 世里 80 次)。同一世连着两处同难度区域,推进感就断了 ——
+ * 而这份骨架存在的理由正是「让六世的推进节奏不一样」。
+ *
+ * 现在按顺序推进 `floor`:每一段都不低于前一段。
+ * - 单调型路线(骨架本身递增)因此保持严格递增
+ * - 交错型路线(`weave` / `short_weave`)本来就会回落,这条 `floor` 只在
+ *   「骨架是递增的那几段」上生效 —— 判断依据是**这一段的骨架值是否高于前一段**
+ */
 function jitterTiers(tiers: readonly number[], rng: RandomService): number[] {
-  return tiers.map((t, i) => {
-    if (i === 0) return t;
-    return Math.max(1, Math.min(20, t + rng.int(-1, 1)));
-  });
+  const out: number[] = [];
+  for (let i = 0; i < tiers.length; i += 1) {
+    const base = tiers[i]!;
+    if (i === 0) {
+      out.push(base);
+      continue;
+    }
+    const prevBase = tiers[i - 1]!;
+    const prevOut = out[i - 1]!;
+    let value = Math.max(1, Math.min(20, base + rng.int(-1, 1)));
+    // 骨架这一段是递增的 → 扰动后也不许掉回前一段或与之持平
+    if (base > prevBase) value = Math.max(value, prevOut + 1);
+    out.push(value);
+  }
+  return out;
 }
 
 /** 玩家在某层级上的基准属性(与 buildSim 的 BASE 同量级,再按 powerScale 缩放) */

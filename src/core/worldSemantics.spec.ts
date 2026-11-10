@@ -324,12 +324,35 @@ describe("世界页概览 · 段数与层级跨度", () => {
   });
 
   it("同层相邻段也各有落点 —— 否则行旅图把两段路叠成一枚点", () => {
-    // seed 37 的路线是 2,2,6,8,14,19;前两段同层。若横距直接取层级差,
-    // 两枚节点会落在同一 x 上,玩家看到的「六段路」实际只剩五枚点。
-    const w = generateMortalWorld(37);
+    /*
+     * 若横距直接取层级差,同层的两枚节点会落在同一 x 上,
+     * 玩家看到的「六段路」实际只剩五枚点。
+     *
+     * ## seed 换了的原因(第 80 轮)
+     *
+     * 原来用 seed 37(路线 `2,2,6,8,14,19`)。第 80 轮修了 `jitterTiers`
+     * —— 单调型路线扰动后不许与前一段持平,所以那种「前两段同层」的场面
+     * 在单调型路线上不再出现。
+     *
+     * 但**同层相邻段本身还是会有**:交错型路线(`weave`)允许回落,
+     * 相邻两段撞在同一层是它正常的样子。seed 38 是 `3,7,7,14,10,18`。
+     *
+     * 这条判据守的是**行旅图的布局**,与路线骨架无关 —— 换 seed 只是
+     * 换一个能触发同层的样本,判据本身一字未动。
+     */
+    const w = generateMortalWorld(38);
+    const tiers = w.chain.map((c) => c.tier);
     const places = worldView(w, (id) => id).places;
-    expect(places[0]!.y).toBe(places[1]!.y);
-    expect(places[1]!.x).toBeGreaterThan(places[0]!.x);
+
+    // 先确认这个样本**真的有**同层相邻段(否则这条判据在空转)
+    const sameTierAt = tiers.findIndex((t, i) => i > 0 && t === tiers[i - 1]);
+    expect(sameTierAt, `seed38 的路线 ${tiers.join(",")} 里没有同层相邻段`).toBeGreaterThan(0);
+
+    // 同层的相邻两段:纵坐标相同(同一层级),横坐标必须拉开
+    expect(places[sameTierAt]!.y).toBe(places[sameTierAt - 1]!.y);
+    expect(places[sameTierAt]!.x).toBeGreaterThan(places[sameTierAt - 1]!.x);
+
+    // 全体节点的横坐标互不相同 —— 否则地图上会叠点
     expect(new Set(places.map((p) => p.x)).size).toBe(places.length);
   });
 

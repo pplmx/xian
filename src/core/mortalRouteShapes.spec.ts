@@ -25,6 +25,7 @@
  */
 import { describe, expect, it } from "vite-plus/test";
 import { REGION_NAME_TIER_BAND, RHYTHM_ARCHETYPES, ROUTE_SHAPES } from "./mortalRouteShapes";
+import { generateMortalWorld } from "./mortalWorldGen";
 
 /** 凡界的层级范围 —— 1 阶(青云山麓)到 20 阶(鸿蒙裂隙) */
 const MORTAL_TIER_MIN = 1;
@@ -132,5 +133,94 @@ describe("凡界路线骨架 · 不变式", () => {
     // 区域名偏差容差必须是个正的小整数(0 会让区域名完全钉死,太大则失去约束)
     expect(REGION_NAME_TIER_BAND, "区域名偏差容差不在合理区间").toBeGreaterThan(0);
     expect(REGION_NAME_TIER_BAND, "区域名偏差容差太大 —— 等于没有约束").toBeLessThanOrEqual(5);
+  });
+});
+
+/**
+ * 模板层的判据只查了「表本身」，`jitterTiers` 是生成时的扰动 —— 那是另一层。
+ *
+ * ## 缺口(第 80 轮实测)
+ *
+ * `mortalWorldGen.jitterTiers` 给非首段做 ±1 扰动。实测 900 世:
+ *
+ * ```text
+ *   单调型路线出现重复层级 80 次(9%)
+ *   seed1  earlyclimb: 2,7,13,16,16,18   ← 第 4、5 段都是 16 阶
+ *   seed37 lateclimb:  2,2,6,8,14,19     ← 第 1、2 段都是 2 阶
+ * ```
+ *
+ * 同一世里连着两处同难度区域,推进感就断了 —— 而这份骨架存在的理由正是
+ * 「让六世的推进节奏不一样」。
+ *
+ * 根因有两处:① 模板里 `lateclimb`/`earlyclimb` 相邻段只差 1 阶;
+ * ② `jitterTiers` 只做 clamp,没保证扰动后不低于前一段。两处都修了。
+ *
+ * ## 判据
+ *
+ * 直接跑真生成器 300 世,查三条:
+ *
+ * - 单调型路线**严格递增**(不重复、不回落)
+ * - 交错型路线**允许回落**(否则它就不是交错型了)
+ * - 层级始终落在凡界 1~20
+ *
+ * 用真生成器而不是复算扰动:扰动用的是 seed 派生的 rng,
+ * 复算等于把 `jitterTiers` 抄一遍(第 67/70/71 轮踩过三次的坑)。
+ */
+describe("凡界生成 · 扰动后仍守路线形状", () => {
+  const WEAVE_IDS = new Set(["weave", "short_weave"]);
+  const worlds = Array.from({ length: 300 }, (_, i) => generateMortalWorld(i + 1));
+
+  it("单调型路线生成后仍然严格递增", () => {
+    const bad: string[] = [];
+    for (const w of worlds) {
+      if (WEAVE_IDS.has(w.shapeId)) continue;
+      const tiers = w.chain.map((c) => c.tier);
+      for (let i = 1; i < tiers.length; i += 1) {
+        if (tiers[i]! <= tiers[i - 1]!) {
+          bad.push(`seed${w.seed} ${w.shapeId}: ${tiers.join(",")}`);
+          break;
+        }
+      }
+    }
+    expect(
+      bad,
+      "单调型路线扰动后出现持平或回落 —— 玩家会连着走两处同难度区域:" + bad.slice(0, 5).join(" / "),
+    ).toEqual([]);
+  });
+
+  it("交错型路线仍然会回落 —— 别被扰动抹平成单调", () => {
+    /*
+     * 反方向:交错型的存在理由是「深浅交错」,若扰动把它抹平成递增,
+     * 它就和别的路线没有区别了(而 `WEAVE_ROUTE_IDS` 还把它当交错型放着)。
+     */
+    const weaves = worlds.filter((w) => WEAVE_IDS.has(w.shapeId));
+    expect(weaves.length, "300 世里一条交错型路线都没抽到").toBeGreaterThan(5);
+    const flattened = weaves.filter((w) => {
+      const tiers = w.chain.map((c) => c.tier);
+      return tiers.every((t, i) => i === 0 || t > tiers[i - 1]!);
+    });
+    expect(
+      flattened.map((w) => `seed${w.seed} ${w.shapeId}`),
+      "交错型路线被扰动抹平成了严格递增 —— 它与单调型没有区别了",
+    ).toEqual([]);
+  });
+
+  it("层级始终落在凡界范围,且首末段守住", () => {
+    const bad: string[] = [];
+    for (const w of worlds) {
+      const tiers = w.chain.map((c) => c.tier);
+      if (tiers.some((t) => t < 1 || t > 20)) bad.push(`seed${w.seed} 越界 ${tiers.join(",")}`);
+      if (tiers[0]! > 4) bad.push(`seed${w.seed} 首段 ${tiers[0]}`);
+      const peak = WEAVE_IDS.has(w.shapeId) ? Math.max(...tiers) : tiers[tiers.length - 1]!;
+      if (peak < 12) bad.push(`seed${w.seed} 最高只到 ${peak}`);
+    }
+    expect(bad, "生成结果越出凡界或首末段失守:" + bad.slice(0, 5).join(" / ")).toEqual([]);
+  });
+
+  it("反空转:路线与节奏都真的被抽到了", () => {
+    const shapes = new Set(worlds.map((w) => w.shapeId));
+    const rhythms = new Set(worlds.map((w) => w.rhythmId));
+    expect(shapes.size, "300 世里只抽到几种路线 —— 选择逻辑坏了").toBe(ROUTE_SHAPES.length);
+    expect(rhythms.size, "300 世里只抽到几种节奏").toBe(RHYTHM_ARCHETYPES.length);
   });
 });

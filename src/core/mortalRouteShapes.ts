@@ -34,8 +34,24 @@ export const ROUTE_SHAPES: readonly RouteShape[] = [
   { id: "brisk", name: "短促", tiers: [2, 7, 12, 18] },
   { id: "even", name: "匀进", tiers: [2, 5, 8, 11, 14, 17] },
   { id: "longtail", name: "长尾", tiers: [2, 4, 6, 9, 13, 19] },
-  { id: "lateclimb", name: "前缓后陡", tiers: [2, 3, 5, 9, 14, 20] },
-  { id: "earlyclimb", name: "前陡后缓", tiers: [2, 7, 12, 15, 17, 18] },
+  /*
+   * 这两条原来相邻段只差 1 阶(`lateclimb` 的 2→3、`earlyclimb` 的 17→18)。
+   *
+   * 而 `mortalWorldGen.jitterTiers` 会给非首段做 ±1 扰动 —— 间隔 1 的两段
+   * 扰动后**会撞到同一层级**。实测 900 世里,单调型路线出现重复层级 80 次:
+   *
+   * ```text
+   *   seed1  earlyclimb: 2,7,13,16,16,18   ← 第 4、5 段都是 16 阶
+   *   seed37 lateclimb:  2,2,6,8,14,19     ← 第 1、2 段都是 2 阶
+   * ```
+   *
+   * 同一世里相邻两段落在同一层级,玩家会连着走两处难度相同的区域 ——
+   * 而这份模板存在的理由正是「让六世的推进节奏不一样」。
+   *
+   * 把间隔提到 2 以上(扰动 ±1 之后最坏也是持平,不倒退)。
+   */
+  { id: "lateclimb", name: "前缓后陡", tiers: [2, 4, 6, 9, 14, 20] },
+  { id: "earlyclimb", name: "前陡后缓", tiers: [2, 7, 12, 15, 18, 20] },
   { id: "weave", name: "深浅交错", tiers: [3, 8, 6, 13, 10, 18] },
   { id: "short_weave", name: "短程交错", tiers: [3, 9, 6, 15, 12] },
   { id: "steady", name: "稳起", tiers: [4, 6, 10, 13, 17, 20] },
