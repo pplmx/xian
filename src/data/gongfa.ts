@@ -1,9 +1,9 @@
 /**
- * 功法库 —— 87 部:主修 34 / 辅修 35 / 秘术 18,每境都有新东西可参
+ * 功法库 —— 92 部:主修 34 / 辅修 35 / 秘术 23,每境都有新东西可参
  *
  * ## 品阶分布(与实物同源,由 core/gongfaQualityLadder.spec 钉住)
  *
- *   凡品 8 · 良品 13 · 精品 7 · 灵品 9 · 玄品 9 · 地品 2 · 天品 7 · 仙品 15 · 神品 17
+ *   凡品 8 · 良品 13 · 精品 7 · 灵品 9 · 玄品 9 · 地品 2 · 天品 7 · 仙品 16 · 神品 21
  *
  * 地品那一格此前是**空的**:玄品(rank 4)与天品(rank 6)之间没有任何一部功法,
  * 玩家从玄品一路参悟上来,会在中间撞上一段没有东西可参的路。
@@ -726,6 +726,61 @@ export const GONGFA: GongfaDef[] = [
     "以仙灵之气淬炼肉身,脱胎换骨",
     { maxHpPct: 0.18, defensePct: 0.14, regenPerRound: 0.012 },
     { maxHpPct: 0.022, defensePct: 0.015 },
+  ),
+  /*
+   * 秘术席最后五处断档:13 / 15 / 16 / 18 / 19。品质照该境界的主修走
+   * (13 是仙品,15 及以上是神品),量级照同品质的邻居取。
+   * 补完秘术席只剩 0 / 1 两境 —— 那两个境界秘术本来就还没开(从境 2 起)。
+   */
+  g(
+    "x_yujing",
+    "玉京朝真",
+    "secret",
+    "immortal",
+    13,
+    "玉京之上,众真列班 —— 站过一次,眼界就不一样了",
+    { luck: 0.14, breakthroughRate: 0.04, cultivationSpeed: 0.18 },
+    { luck: 0.04, cultivationSpeed: 0.04 },
+  ),
+  g(
+    "x_shenzhao",
+    "神诏加身",
+    "secret",
+    "divine",
+    15,
+    "一纸神诏落下来,该给的都得给",
+    { dropRate: 0.2, eventLuck: 0.18, luck: 0.12 },
+    { dropRate: 0.045, eventLuck: 0.04, luck: 0.03 },
+  ),
+  g(
+    "x_faze",
+    "法则铭心",
+    "secret",
+    "divine",
+    16,
+    "法则刻进心里,出手便合规矩",
+    { damageBonus: 0.16, critRate: 0.05, cultivationSpeed: 0.2 },
+    { damageBonus: 0.035, critRate: 0.012 },
+  ),
+  g(
+    "x_lingzhao",
+    "灵照无方",
+    "secret",
+    "divine",
+    18,
+    "照见的地方没有死角,躲的人也没处躲",
+    { critRate: 0.06, accuracy: 0.18, damageBonus: 0.14 },
+    { critRate: 0.014, accuracy: 0.04 },
+  ),
+  g(
+    "x_wangdao",
+    "望道息心",
+    "secret",
+    "divine",
+    19,
+    "望见那条路的人,先学会把心放平",
+    { breakthroughRate: 0.05, cultivationSpeed: 0.26, lifespanPct: 0.1 },
+    { cultivationSpeed: 0.05, breakthroughRate: 0.012 },
   ),
   g(
     "x_xianji",

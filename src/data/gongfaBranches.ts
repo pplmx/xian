@@ -600,6 +600,56 @@ export const GONGFA_BRANCHES: GongfaBranchDef[] = [
     damageReduction: 0.12,
     maxHpPct: 0.12,
   }),
+  // 秘术:玉京朝真(仙品·境13)
+  b("x_yujing", "b_yujing_chao", "朝真", "见过真的,假的就不入眼", {
+    breakthroughRate: 0.06,
+    cultivationSpeed: 0.28,
+  }),
+  b("x_yujing", "b_yujing_yu", "玉阶", "一步一步走上去,急不得", {
+    luck: 0.15,
+    dropRate: 0.22,
+  }),
+
+  // 秘术:神诏加身(神品·境15)
+  b("x_shenzhao", "b_shenzhao_zhao", "诏令", "话说出口,就是规矩", {
+    dropRate: 0.25,
+    eventLuck: 0.2,
+  }),
+  b("x_shenzhao", "b_shenzhao_jia", "加身", "落在自己身上的,才是真的", {
+    luck: 0.15,
+    maxHpPct: 0.3,
+  }),
+
+  // 秘术:法则铭心(神品·境16)
+  b("x_faze", "b_faze_ming", "铭心", "忘了也要想起来", {
+    damageBonus: 0.2,
+    critRate: 0.1,
+  }),
+  b("x_faze", "b_faze_ze", "合则", "合了规矩,出手就顺", {
+    cultivationSpeed: 0.3,
+    damageBonus: 0.14,
+  }),
+
+  // 秘术:灵照无方(神品·境18)
+  b("x_lingzhao", "b_lingzhao_zhao", "灵照", "照见的地方,躲不开", {
+    accuracy: 0.14,
+    critRate: 0.1,
+  }),
+  b("x_lingzhao", "b_lingzhao_fang", "无方", "没有方向的地方,也就没有退路", {
+    damageBonus: 0.2,
+    critDamage: 0.4,
+  }),
+
+  // 秘术:望道息心(神品·境19)
+  b("x_wangdao", "b_wangdao_wang", "望道", "望见了,便不算白修", {
+    cultivationSpeed: 0.32,
+    breakthroughRate: 0.06,
+  }),
+  b("x_wangdao", "b_wangdao_xi", "息心", "心一停,寿数就长了", {
+    lifespanPct: 0.18,
+    maxHpPct: 0.3,
+  }),
+
   // 秘术:仙机通玄
   b("x_xianji", "b_xianji_ji", "窥机", "仙机在握,机缘自来", {
     luck: 0.15,
