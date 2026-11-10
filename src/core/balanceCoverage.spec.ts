@@ -92,3 +92,75 @@ describe("横向对账 · 覆盖审计", () => {
     }
   });
 });
+
+/**
+ * 扫描器**自身**的自检 —— 它得真的看得见那 41% 不在 core 下的判据。
+ *
+ * ## 为什么加这一段
+ *
+ * 第 63 轮发现:第一版只扫 `src/core/`,而全仓 551 个 spec 里 225 个在别处,
+ * 于是 `src/data/petVows.spec.ts` 里那条「每只灵兽都有契语」被报成「没有判据在管」。
+ *
+ * **工具跑得通、输出格式对、报出来的缺口具体到表与维度名 —— 一切看起来都成立,
+ * 只是它的视野少了一半。** 这类错误不会自己暴露:假的缺口看起来和真的缺口一模一样。
+ *
+ * ## 怎么守
+ *
+ * 用**基准点**:挑几条确认存在于 core 之外的判据标题(它们本身有自己的 spec 在跑),
+ * 断言扫描结果里一定含它们。任何一个基准点消失,就说明扫描范围又缩回去了。
+ *
+ * 基准点的选法:那条标题必须**足够独特**(在别处不会出现),否则「命中」可能来自巧合。
+ */
+describe("覆盖审计 · 扫描器自检(基准点)", () => {
+  /** 已知存在于 `src/core/` 之外的判据标题片段 → 它所在的 spec */
+  const BENCHMARKS: readonly { fragment: string; file: string }[] = [
+    // src/data/petVows.spec.ts —— 第 63 轮正是漏了这条
+    { fragment: "每只灵兽都有契语", file: "src/data/petVows.spec.ts" },
+  ];
+
+  it("基准点都在扫描结果里 —— 扫描范围没有缩回 src/core", () => {
+    const titles = specTitles();
+    const all = [...titles.values()].flat();
+    expect(all.length, "一条标题都没扫到").toBeGreaterThan(1000);
+
+    for (const { fragment, file } of BENCHMARKS) {
+      expect(
+        all.some((t) => t.includes(fragment)),
+        `扫描结果里找不到「${fragment}」—— 它本来在 ${file} 里,` +
+          `说明扫描范围缩回了 src/core 之下`,
+      ).toBe(true);
+    }
+  });
+
+  it("扫描真的覆盖了 core 之外的目录", () => {
+    const titles = specTitles();
+    const paths = [...titles.keys()];
+    const outsideCore = paths.filter((p) => !p.startsWith("src/core/"));
+    expect(outsideCore.length, "一个 core 之外的 spec 都没扫到 —— 只扫了单目录").toBeGreaterThan(
+      100,
+    );
+    // 防空转:core 自己也得扫到
+    expect(paths.filter((p) => p.startsWith("src/core/")).length).toBeGreaterThan(200);
+  });
+
+  /**
+   * 排除规则本身要有判据守着 —— 但**不能写成「结果里没有 src/tp」**:
+   * `src/tp` 平时并不存在,那条断言恒真(空转)。
+   *
+   * 改成查真正会出现的形状:每一条被扫到的路径都必须是 `src/` 下的真实文件,
+   * 且不落在 `node_modules` / `tp` 这类该排除的目录里。这条可以被违反 ——
+   * 一旦扫描器哪天漏了排除规则、把 `src/tp` 或依赖目录扫进来,它就会红。
+   */
+  it("扫到的每条路径都干净:在 src/ 下、指得着、不含被排除的目录", () => {
+    const paths = [...specTitles().keys()];
+    expect(paths.length, "一条路径都没扫到").toBeGreaterThan(500);
+    const dirty = paths.filter(
+      (p) =>
+        !p.startsWith("src/") ||
+        !p.endsWith(".spec.ts") ||
+        p.includes("node_modules") ||
+        p.split("/").includes("tp"),
+    );
+    expect(dirty, "扫到了不该扫的路径:" + dirty.join("、")).toEqual([]);
+  });
+});

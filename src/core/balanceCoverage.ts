@@ -72,6 +72,8 @@ function allSpecFiles(): string[] {
   const walk = (dir: string): void => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       if (entry.name === "node_modules") continue;
+      // `src/tp/` 是临时的探针目录(用完全删),它的 spec 是随手写的,不该进覆盖审计
+      if (entry.name === "tp") continue;
       const full = join(dir, entry.name);
       if (entry.isDirectory()) walk(full);
       else if (entry.name.endsWith(".spec.ts")) out.push(full);
