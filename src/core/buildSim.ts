@@ -112,7 +112,8 @@ export function buildSnap(profile: BuildProfile): CombatantSnap {
     attack: gn(BASE.attack * profile.atkMult),
     defense: gn(BASE.defense * profile.defMult),
     maxHp: gn(BASE.maxHp * profile.hpMult),
-    speed: 1 + (mods.speed ?? 0),
+    // 只放基础速度,词条由先手判定乘(与 playerSnap 同一约定)
+    speed: 1,
     mods,
     skills: [{ name: "流派杀招", mult: 1.7, rate: 0.25 }],
     artifacts: art ? [{ def: art, level: ARTIFACT_LEVEL }] : [],

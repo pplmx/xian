@@ -6,7 +6,6 @@ import { usePlayerStore } from "@/stores/player";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useInventoryStore } from "@/stores/inventory";
 import { useEndgameStore } from "@/stores/endgame";
-import { modOf } from "./statsCalc";
 import { detectBuild } from "./buildDetect";
 import { stackedMods, swordPurity, SWORD_LAYER_MODS } from "./daoDepth";
 import { hasActiveSet, setHookMods } from "./equipSet";
@@ -65,7 +64,15 @@ export function buildPlayerSnap(celestial = false): CombatantSnap {
     attack: stats.attack,
     defense: stats.defense,
     maxHp: stats.maxHp,
-    speed: 1 + modOf(stats.mods, "speed"),
+    /*
+     * 只放**基础速度**,词条由 `core/combat` 的先手判定乘 —— 与 `makeSnap` 的敌人
+     * 快照同一个约定(`speed: def.speed` 也是基础值)。
+     *
+     * 此前这里写的是 `1 + modOf(stats.mods, "speed")`,即「玩家侧折进快照、
+     * 敌人侧不折」—— 两套约定并存,于是先手判定的两侧口径天然对不上,
+     * 而敌人身上的 `speed` 词条(追风契「敌方速度 +20%」)从来没生效过。
+     */
+    speed: 1,
     mods,
     skills: cultivation.mainSkill ? [cultivation.mainSkill] : [],
     artifacts,

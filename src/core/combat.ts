@@ -613,8 +613,25 @@ export function resolveCombat(
 
   let rounds = 0;
   // 先手判定:一条阈值,不是连续收益 —— 两个数都要留着给战后分析(见 CombatResult.firstMove)
-  const pSpeed = 1 + modOf(pEff.mods, "speed");
-  const eSpeed = eEff.speed;
+  /*
+   * 两侧同一个口径:**基础速度 × (1 + speed 词条)**。
+   *
+   * 此前写的是 `pSpeed = 1 + modOf(pEff.mods, "speed")`、`eSpeed = eEff.speed` ——
+   * 两边意头完全不同:玩家侧是「词条倍率(基准 1)」,敌人侧是「速度的绝对值」,
+   * `1.08 >= 1.2` 这种比较没有意义。而敌人身上的 `speed` **词条**从来没进过先手判定
+   * —— 追风契写「敌方速度 +20%」(`enemyExtraMods: { speed: 0.2 }`),那个 0.2 被并进
+   * `eEff.mods.speed` 之后就没人读了,契约卖 1.9 倍道源却一个字都不改战局。
+   *
+   * 修这条的前提是**先把快照约定统一**:`core/playerSnap` / `buildSim` / `buildSearch`
+   * 三处原本写 `speed: 1 + mods.speed`,把词条折进了快照,而 `makeSnap` 的敌人快照
+   * 是纯基础值 —— 两套约定并存,先手判定再怎么改都会有一侧算两遍或一次都不算。
+   * 现在三处都改成基础值 `speed: 1`,词条统一由这里乘一次,与库那份
+   * `statNum(c, speed) * (1 + mod(c.mods, "speed"))` 同形。
+   *
+   * 平手时仍是玩家先(`>=`,不是 `>`),这条确定性不动。
+   */
+  const pSpeed = pEff.speed * (1 + modOf(pEff.mods, "speed"));
+  const eSpeed = eEff.speed * (1 + modOf(eEff.mods, "speed"));
   const pFirst = pSpeed >= eSpeed;
   const perRounds = rules?.perRounds;
   // Phase 30.7: Boss 阶段系统 + 机制家族

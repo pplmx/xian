@@ -79,7 +79,7 @@ export function randomBuild(rng: RandomService, idx: number): RandomBuild {
       attack: atk,
       defense: def,
       maxHp: hp,
-      speed: 1 + (mods.speed ?? 0),
+      speed: 1, // 只放基础速度,词条由先手判定乘
       mods,
       skills: [{ name: "杂学杀招", mult: 1.7, rate: 0.25 }],
       artifacts: art ? [{ def: art, level: 2 }] : [],
