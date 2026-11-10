@@ -316,3 +316,66 @@ describe("寿元奖励 · 界外按当前境界折算", () => {
     expect(player.lifespanMax, "金仙吃了一颗仙桃,寿元却没动").toBeGreaterThan(before * 1.01);
   });
 });
+
+/**
+ * 界面侧 · 每个际遇都至少有一个**此刻选得动**的选项。
+ *
+ * ## 缺陷长什么样
+ *
+ * 选项能带前置条件(`choiceAvailable` 那套:境界、灵根、灵石……),不满足就置灰。
+ * 若一条际遇的**所有**选项都带条件、而且此刻都不满足,玩家就卡在一张贴子上 ——
+ * 只能点「离开」,而「离开」本身也是带条件的选项时,那就是彻底死局。
+ *
+ * 本文件上面那些判据管的是「这件事在哪一境还说得通」(境界带),
+ * 这条管的是它**在那一境里选不选得动**:带态势,不等于能操作。
+ *
+ * ## 判据
+ *
+ * 每条际遇/机缘必须满足其一:
+ *   ① 有一个**不带条件**的选项(玩家总能选它);
+ *   ② 有一个 `isDefault` 的选项(引擎在无解时用它兜底)。
+ * 两者都没有,则至少要么全部无条件,要么说明这是一条必须条件才能进的贴子 ——
+ * 而后者在数据里并不存在(条件写的是**选某个分支**的门槛,不是「能不能遇到」)。
+ */
+describe("事件数据自洽 · 每个际遇都有选得动的选项", () => {
+  it("不存在「所有选项都带条件且无默认项」的死局", () => {
+    const stuck: string[] = [];
+    for (const ev of [...EVENTS, ...FORTUNE_EVENTS]) {
+      const free = ev.choices.filter((c) => !c.cond);
+      const hasDefault = ev.choices.some((c) => c.isDefault);
+      if (free.length === 0 && !hasDefault) {
+        stuck.push(`${ev.id}(${ev.title}) ${ev.choices.length} 个选项全带条件且无默认项`);
+      }
+    }
+    expect(
+      stuck,
+      "这些际遇的所有选项都有前置条件、且没有默认兜底 —— 条件不满足时玩家无路可走:" +
+        stuck.join("、"),
+    ).toEqual([]);
+  });
+
+  it("每条际遇都至少有一个无条件的选项", () => {
+    /*
+     * 这条换成「**是否存在**无条件选项」,而不是「默认项是否无条件」——
+     * 第一版写的是后者,当场红了三条(ev_guyuexi_bu / ev_zhulong_zhengji /
+     * ev_wangchuan_wang),但那三条**都不是缺陷**:
+     *
+     * `isDefault` 在本仓不是「无解时的兜底」,它有两个别的用途 ——
+     * 悟道收益预估拿它算「随手一选值多少」,奇缘记录拿它区分「放弃」与「取走」。
+     * 策略性的默认项完全可以带条件
+     * (「需修为足够才托得住那半截碑」),那三条各自另有 `leave()` 作真正出口。
+     *
+     * 真正的死局判据只有一条:**有没有一个不带条件的选项**。
+     */
+    const stuck: string[] = [];
+    for (const ev of [...EVENTS, ...FORTUNE_EVENTS]) {
+      if (!ev.choices.some((c) => !c.cond)) {
+        stuck.push(`${ev.id}(${ev.title}) ${ev.choices.length} 个选项全带条件`);
+      }
+    }
+    expect(
+      stuck,
+      "这些际遇没有任何无条件选项 —— 条件不满足时玩家无路可走:" + stuck.join("、"),
+    ).toEqual([]);
+  });
+});
