@@ -2794,3 +2794,46 @@ const row = { foeName, win, rounds, hpLeftPct };   // 只有这四个
 > 以「possibly null」挡下(类型收窄依赖 `v-if` 本身)。最后改成在
 > `gauntlet` 建行处去掉 `stats` 才注入成功 —— 这也说明**注入点要选在数据源头,
 > 而不是渲染层**:渲染层的改动会被类型系统提前拦掉,而数据源头的丢失才是真实缺陷形态。
+
+### 战果行被手写了四遍,第四份让「敌势渐涨」一次都没显示过
+
+上一轮把三处手写的战果行统一成 `types.FightOutcomeRow`。这轮扫了一遍全仓的
+「重复内联对象形状」,又找到**第四份**:
+
+```ts
+// components/celestial/reportView.ts —— 天界战报弹窗的统一载荷
+rows: {
+  foeName: string; win: boolean; rounds: number; hpLeftPct: number;
+  foe?: CombatantSnap;
+  stats?: { player: CombatSideStats; enemy: CombatSideStats };
+}[];      // ← 没有 atkRamp
+```
+
+它比前两份「看起来更全」(带了 `foe` 与 `stats`),所以更难发现缺了什么。
+缺的是 `atkRamp` —— 而 `GauntletPanel` 正是从 `report.rows` 读它来渲染
+「敌势渐涨」那一行(`data-fight-atk-ramp`)。
+
+也就是说:**第 6 轮做的那个读数,一次都没在界面上出现过。** 数据链路三跳
+(`CombatResult.atkRamp` → `GauntletFightRow` → `ReportView.rows`)前两跳都通了,
+**最后一跳被手写类型挡掉**,而没有任何东西会报错。
+
+改成 `rows: FightOutcomeRow[]` 之后链路才真正接通。
+
+四份手写形状的账:
+
+| 位置 | 缺了什么 | 后果 |
+| --- | --- | --- |
+| `GauntletFightRow` | —(最全) | 无 |
+| `StepOutcome.row` | `foe` `stats` | 远征战后归因空了八轮 |
+| `WorldRunState.rows` | `foe` `stats` | 同上 |
+| `ReportView.rows` | `atkRamp` | 「敌势渐涨」一次未显示 |
+
+判据两条:① 全仓扫描,除 `types.FightOutcomeRow` 外不许再有**内联的四字段类型注解**
+(只认类型注解 `foeName: string`,不认赋值 `foeName: foe.name` —— 后者是数据流不是分账);
+② `ReportView.rows` 必须引用共享形状,且共享形状里必须有 `atkRamp`。
+注入验证:重新手写一份 → ① 红;从共享形状删掉 `atkRamp` → ② 红。
+
+> 扫描判据的第一版写宽了:它匹配「四个字段名顺序出现」,于是把
+> `foeName: foe.name, win: result.win, …` 这样的**赋值处**也抓了进来。
+> 赋值处本来就该出现这些字段名 —— 收紧成只认**类型注解**才对准目标。
+> **「重复出现」与「重复定义」是两件事**,判据要盯的是后者。

@@ -1,4 +1,4 @@
-import type { CombatantSnap, CombatSideStats } from "@/types";
+import type { FightOutcomeRow } from "@/types";
 
 /**
  * 天界战报弹窗的统一载荷:远征/试炼/天道变数/今日挑战/忆战/重写/立约
@@ -10,19 +10,16 @@ export interface ReportView {
   cleared: boolean;
   markText: string;
   /**
-   * 逐场摘要;`foe` 带着那一场敌人的加成来源(旧记录可能没有)。
+   * 逐场摘要 —— **直接引用 `FightOutcomeRow`,不在这里再手写一份**。
    *
-   * `stats` 是那一场的战斗遥测,给「此战之判」的战后归因用。与 `logs` 同一条纪律:
-   * 战报是即时浮层、不写进道痕,故可以带 —— 但**别把它存进任何持久化结构**。
+   * 这个形状此前被手写了四遍(加上 `GauntletFightRow` / `StepOutcome.row` /
+   * `WorldRunState.rows`),而且每一份都**只写自己以为需要的字段**:
+   * 这一份当初就没写 `atkRamp`,上一轮修远征那处时也差点又漏一份。
+   *
+   * 手写多份的代价始终是同一个:**谁也不会报错,只是某些字段悄悄不存在**。
+   * 故这里改成引用类型层那一处定义;将来战报要加读数,只改 `FightOutcomeRow`。
    */
-  rows: {
-    foeName: string;
-    win: boolean;
-    rounds: number;
-    hpLeftPct: number;
-    foe?: CombatantSnap;
-    stats?: { player: CombatSideStats; enemy: CombatSideStats };
-  }[];
+  rows: FightOutcomeRow[];
   reward: number;
   judgementLines?: string[];
 }

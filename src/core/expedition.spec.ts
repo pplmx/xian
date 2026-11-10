@@ -15,7 +15,7 @@ import { usePlayerStore } from "@/stores/player";
 import { useInventoryStore } from "@/stores/inventory";
 import { useEndgameStore } from "@/stores/endgame";
 import { CELESTIAL_WORLDS } from "@/data/endgame";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { analyzeBattle } from "./battleAnalysis";
 import { resolve } from "node:path";
 import {
@@ -473,5 +473,120 @@ describe("远征 · 战果行要够战后归因用", () => {
     // 防空转:共享形状必须真的在 types 里
     const typesSrc = readFileSync(resolve(__dirname, "../types/index.ts"), "utf8");
     expect(typesSrc, "共享形状没提到类型层").toContain("export interface FightOutcomeRow");
+  });
+});
+
+/**
+ * 「战果行」这个形状**只许有一处定义**。
+ *
+ * ## 这是第几份了
+ *
+ * 它先后被手写了四遍,每一份都只写自己以为需要的字段:
+ *
+ * | 位置 | 缺了什么 | 后果 |
+ * | --- | --- | --- |
+ * | `core/gauntlet.GauntletFightRow` | —(最全的一份) | 无 |
+ * | `core/expedition.StepOutcome.row` | `foe` `stats` | 远征归因永远空 |
+ * | `types.WorldRunState.rows` | `foe` `stats` | 同上 |
+ * | `components/celestial/reportView.rows` | `atkRamp` | 天界战报读不到敌势渐涨 |
+ *
+ * **手写多份的代价始终是同一个:谁也不会报错,只是某些字段悄悄不存在。**
+ * 前两份拼在一起,让「此战之判」的战后归因空了整整八轮才被发现;
+ * 第三份让第 6 轮加的 `atkRamp` 读数在天界浮层上一直读不到。
+ *
+ * ## 判据
+ *
+ * 扫全仓源码(排除 spec),凡是在**内联对象类型**里同时写出
+ * `foeName` / `win` / `rounds` / `hpLeftPct` 四个字段的,都算又分了一份账。
+ * 唯一允许的落点是 `types.FightOutcomeRow` 本身,故扫描时把它排除。
+ */
+describe("战果行 · 形状只许有一处定义", () => {
+  it("除类型层那处定义外,不许再有内联的四字段形状", () => {
+    const root = resolve(__dirname, "../..");
+    const offenders: string[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = resolve(dir, entry.name);
+        if (entry.isDirectory()) {
+          if (entry.name === "node_modules" || entry.name === "dist") continue;
+          walk(full);
+          continue;
+        }
+        if (!/\.(ts|vue)$/.test(entry.name) || entry.name.endsWith(".spec.ts")) continue;
+        const raw = readFileSync(full, "utf8");
+        const src = raw
+          .replace(/<!--[\s\S]*?-->/g, "")
+          .replace(/\/\*[\s\S]*?\*\//g, "")
+          .replace(/^\s*\/\/.*$/gm, "");
+        /*
+         * 判据只认**类型注解**(`foeName: string;`),不认赋值(`foeName: foe.name,`)——
+         * 赋值处本来就该出现这些字段名,那是数据流,不是又分了一份类型。
+         * 这也正是手写窄形状的定义:有人把「这几个字段各是什么类型」又抄了一遍。
+         */
+        const m =
+          /foeName\s*:\s*string[\s\S]{0,240}?win\s*:\s*boolean[\s\S]{0,240}?rounds\s*:\s*number[\s\S]{0,240}?hpLeftPct\s*:\s*number/.exec(
+            src,
+          );
+        if (!m) continue;
+        // 类型层的正规定义处放行
+        if (full.endsWith("/types/index.ts") && m.index >= src.indexOf("FightOutcomeRow")) continue;
+        offenders.push(full.replace(root + "/", ""));
+      }
+    };
+    walk(resolve(root, "src"));
+    expect(
+      offenders,
+      "这些文件又手写了一份战果行形状 —— 手写多份的代价是静默的(某些字段悄悄不存在):" +
+        offenders.join("、"),
+    ).toEqual([]);
+  });
+});
+
+/**
+ * 战报浮层要读得到 `atkRamp` —— 统一形状顺带修好的第二处遗漏。
+ *
+ * ## 断在哪
+ *
+ * 第 6 轮给 `CombatResult.atkRamp` 做了读数,`GauntletPanel` 也写好了渲染
+ * (`data-fight-atk-ramp`)。但那个面板的 `rows` 来自 `ReportView.rows`,
+ * 而 `ReportView.rows` 是**手写的第三份战果行形状** —— 它没有 `atkRamp` 字段。
+ *
+ * 于是:数据在 `CombatResult` 里算出来了,`gauntlet` 与 `expedition` 也都带上了,
+ * **到了浮层那一层被类型挡掉**。`GauntletPanel` 的 `row.atkRamp` 永远 undefined,
+ * 「敌势渐涨」那一行 forever 不出现 —— 而没有任何东西会报错。
+ *
+ * 手写多份形状的代价又演示了一遍:第一份缺 `stats` 让归因空了八轮,
+ * 第三份缺 `atkRamp` 让读数一次都没显示过。
+ *
+ * ## 判据
+ *
+ * 一 `ReportView.rows` 必须引用共享形状(不许再手写);
+ * 二 链路三处都要带 `atkRamp`:`CombatResult` → `GauntletFightRow` → `ReportView.rows`
+ *    (前两处已有判据,这里补最后一跳)。
+ */
+describe("战报浮层 · atkRamp 要读得到", () => {
+  it("ReportView.rows 引用共享形状,不手写", () => {
+    const src = readFileSync(
+      resolve(__dirname, "../components/celestial/reportView.ts"),
+      "utf8",
+    ).replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(src, "ReportView.rows 该引用 FightOutcomeRow").toMatch(/rows:\s*FightOutcomeRow\[\]/);
+    expect(
+      src,
+      "ReportView.rows 又手写了内联形状 —— 手写的那几份各自缺字段,缺过 stats 也缺过 atkRamp",
+    ).not.toMatch(/rows:\s*\{\s*foeName/);
+  });
+
+  it("共享形状里有 atkRamp,且面板读的就是它", () => {
+    const types = readFileSync(resolve(__dirname, "../types/index.ts"), "utf8");
+    expect(types, "共享形状缺 atkRamp —— 浮层那一行又会永远不出现").toMatch(
+      /atkRamp\?:\s*\{\s*procs:\s*number;\s*factor:\s*number\s*\}/,
+    );
+    const panel = readFileSync(
+      resolve(__dirname, "../components/celestial/GauntletPanel.vue"),
+      "utf8",
+    ).replace(/<!--[\s\S]*?-->/g, "");
+    expect(panel, "面板该读 atkRamp").toContain("atkRamp");
+    expect(panel, "面板该有落点").toContain("data-fight-atk-ramp");
   });
 });
