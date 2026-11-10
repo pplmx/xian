@@ -111,6 +111,7 @@ const CATEGORIES = [
       "pillProse",
       "equipProse",
       "narrativeTables",
+      "eventProse",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
