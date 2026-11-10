@@ -1,4 +1,4 @@
-/** 灵兽 —— 事件与灵兽园获得,佩戴一只;全表 42 只,按品阶自低而高排列
+/** 灵兽 —— 事件与灵兽园获得,佩戴一只;全表 44 只,按品阶自低而高排列
  * Phase 31.0 S4:增加性格(personality)—— 历练时的行为倾向,
  * 让玩家选伙伴而非只看数值
  *
@@ -147,6 +147,39 @@ export const PETS: PetDef[] = [
     quality: "profound",
     mods: { tribulationResist: 0.1, attackPct: 0.1 },
     personality: "fierce",
+  },
+  /*
+   * 玄品档此前只有三种性格(steady / fierce / cautious),缺 rapid 与 wary。
+   *
+   * 数值不是随手取的 —— 灵兽有两条硬约束同时生效(`core/petQuality`):
+   *   ① 同一词条键,高品阶不许低于**任意**低品阶;
+   *   ② 总预算随品阶不回落。
+   * 所以玄品每键的可写区间被夹在 [低四阶最高, 高三阶最低] 之间,拿到的区间是:
+   *
+   *   spiritStoneGain [0.15, 0.18] · eventLuck [0.05, 0.11] · attackPct [0.08, 0.10]
+   *   lifespanPct [0.06, 0.08]     · luck [0.05, 0.07]       · speed [0.05, 0.07]
+   *
+   * 下面两只就取在这些区间里,一次到位。
+   */
+  {
+    id: "pet_jifeng",
+    name: "疾风貂",
+    desc: "来去只有一阵风,风过了才听见动静",
+    icon: "fox",
+    family: "fox",
+    quality: "profound",
+    mods: { speed: 0.07, luck: 0.07, attackPct: 0.08 },
+    personality: "rapid",
+  },
+  {
+    id: "pet_shoumo",
+    name: "守岩貘",
+    desc: "趴着不动的时候,看上去就是一块石头 —— 记路却比谁都清楚",
+    icon: "qilin",
+    family: "qilin",
+    quality: "profound",
+    mods: { spiritStoneGain: 0.15, eventLuck: 0.05 },
+    personality: "wary",
   },
   {
     id: "pet_qinghe",

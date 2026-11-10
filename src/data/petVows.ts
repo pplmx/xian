@@ -48,6 +48,8 @@ export const PET_VOWS: Record<string, string> = {
   pet_yaoguang: "角上那点星光落在你手背上,凉,而且不散。",
   pet_leihou: "听见雷声就往上蹿,拦不住,也不必拦。",
   pet_qinghe: "它替你先看一步路,看明白了才肯抬脚。",
+  pet_jifeng: "风还没到,它已经到了;等你回头,它早在前面等着。",
+  pet_shoumo: "它不动的时候像块石头,动起来才知道这山是活的。",
   // ---- 地品:有了来历 ----
   pet_zhenyanshou: "一坐下去,脚下的土都实了三分。",
   pet_zhuifeng: "一圈一圈地飞,飞得你看不见,回来时爪上带着东西。",
