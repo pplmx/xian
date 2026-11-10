@@ -1,5 +1,5 @@
 /**
- * 随机词条池 —— 113 条,通过权重与品质门槛控制稀有度。
+ * 随机词条池 —— 117 条,通过权重与品质门槛控制稀有度。
  *
  * ## 说明不从这条线上手写
  *
@@ -257,6 +257,23 @@ export const AFFIXES: AffixDef[] = [
   a("alc2", "丹圣", "alchemyYield", 10, 20, 15, { slots: J, minRank: 4 }),
   a("fg1", "巧手", "forgeDiscount", 5, 10, 40, { slots: J }),
   a("fg2", "器道", "forgeDiscount", 10, 20, 15, { slots: J, minRank: 4 }),
+  /*
+   * `craftSalvage`(定心护料)与 `beastPct`(灵兽属性效果)此前**一条内容都不提供**。
+   *
+   * 两者的**逻辑侧一直都在用**:`useBrewing` / `engineCraft` 读 `craftSalvage`
+   * 决定保料比例,`stores/player` 读 `beastPct` 折算灵兽加成;
+   * `ui/characterDesk` 也把它们列进了「百艺」组的展示键里。
+   * 但法宝、装备、词条、灵兽四类内容**没有一条给它们** —— 于是这两个属性永远为 0,
+   * 角色面板那两行被 `.filter(row => row.value !== 0)` 静默滤掉。
+   *
+   * 量级照同类属性取:`alchemyYield`(丹心 5~10 / 丹圣 10~20)、
+   * `forgeDiscount`(巧手 5~10 / 器道 10~20)—— 所以这两条也用同一档。
+   */
+  a("sal1", "定心", "craftSalvage", 5, 10, 40, { slots: J }),
+  a("sal2", "护料", "craftSalvage", 10, 20, 15, { slots: J, minRank: 4 }),
+  // 灵兽属性效果归饰品位:它放大的是"随行之力",不是自身筋骨
+  a("bst1", "通灵", "beastPct", 4, 8, 40, { slots: J }),
+  a("bst2", "兽语", "beastPct", 8, 16, 15, { slots: J, minRank: 4 }),
   // ---- 流派:背水 ----
   a("bs1", "背水一击", "lowHpDamage", 15, 25, 55, {
     slots: W,

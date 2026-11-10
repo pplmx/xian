@@ -23,12 +23,15 @@
 import { describe, expect, it } from "vite-plus/test";
 import { MUTATORS } from "@/data/mutators";
 import { SECRET_RULES } from "@/data/secretRealms";
+import { AFFIXES } from "@/data/affixes";
+import { ARTIFACTS } from "@/data/artifacts";
+import { EQUIPMENT_TEMPLATES } from "@/data/equipment";
+import { PETS } from "@/data/pets";
+import { STAT_NAMES } from "@/data/statNames";
 import { BUFFS, buffDef } from "@/data/buffs";
 import { PILLS } from "@/data/pills";
-import { AFFIXES } from "@/data/affixes";
 import { ACHIEVEMENTS } from "@/data/achievements";
 import { DAILY_TASKS, MAIN_QUESTS } from "@/data/quests";
-import { STAT_NAMES } from "@/data/statNames";
 import {
   CAVE_EVENT_POOL,
   ENLIGHTENMENT_OPTIONS,
@@ -1709,5 +1712,62 @@ describe("文案数值对账 · 拒绝提示报差额不报总价", () => {
     expect(/不足\s*\$\{([A-Z][A-Z0-9_]*)\}/.test("notify(`${rate.name}不足 ${rate.per}`)")).toBe(
       false,
     );
+  });
+});
+
+/**
+ * 每一个 stat 都得有内容提供它 —— 否则它是个**永远为 0 的属性**。
+ *
+ * ## 缺口长什么样(第 46 轮实测)
+ *
+ * `STAT_NAMES` 有 45 个键,而法宝 / 装备 / 词条 / 灵兽四类内容覆盖了 43 个,
+ * 漏的两个是:
+ *
+ * ```text
+ * craftSalvage(定心护料)     —— useBrewing / engineCraft 读它决定保料比例
+ * beastPct   (灵兽属性效果)   —— stores/player 读它折算灵兽加成
+ * ```
+ *
+ * 两者的**逻辑侧一直都在用**,`ui/characterDesk` 也把它们列进了「百艺」组的展示键里 ——
+ * 但没有任何一条内容给它们,于是永远为 0,角色面板那两行被
+ * `.filter(row => row.value !== 0)` 静默滤掉。
+ *
+ * 这不是崩溃,也不是错话,是**一个机制写了却没人能拿到**。已补四条词条
+ * (`sal1` 定心 / `sal2` 护料 / `bst1` 通灵 / `bst2` 兽语)。
+ *
+ * ## 判据
+ *
+ * 「有内容提供」的范围是**四类可获取来源**:词条、法宝被动、装备固定词条、灵兽 mods。
+ * 不含丹药增益与灵脉 —— 那些是临时或单局的,不能算「这个属性拿得到」。
+ */
+describe("数据文本对账 · 每个 stat 都有内容提供", () => {
+  it("STAT_NAMES 里的每个键,都至少被一条内容提供", () => {
+    const provided = new Set<string>();
+    for (const affix of AFFIXES) {
+      const key = (affix as { key?: string }).key;
+      if (key) provided.add(key);
+    }
+    for (const artifact of ARTIFACTS) {
+      for (const key of Object.keys(artifact.passive ?? {})) provided.add(key);
+    }
+    for (const template of EQUIPMENT_TEMPLATES) {
+      for (const key of Object.keys(
+        (template as { fixedMods?: Record<string, number> }).fixedMods ?? {},
+      )) {
+        provided.add(key);
+      }
+    }
+    for (const pet of PETS) {
+      for (const key of Object.keys(pet.mods ?? {})) provided.add(key);
+    }
+    // 防空转:真的扫到了足够多的键
+    expect(provided.size, "一个 stat 都没扫到 —— 判据在空转").toBeGreaterThan(20);
+
+    const orphan = Object.keys(STAT_NAMES).filter((key) => !provided.has(key));
+    expect(
+      orphan,
+      "这些 stat 有名字、有逻辑,却没有任何内容能提供它 —— 玩家永远拿不到:" +
+        orphan.map((k) => `${k}(${(STAT_NAMES as Record<string, string>)[k]})`).join("、"),
+    ).toEqual([]);
   });
 });
