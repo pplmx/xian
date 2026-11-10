@@ -94,3 +94,57 @@ describe("法宝主动神通 · 名头不撞", () => {
     expect(named, "有法宝没有主动名 —— 判据会空转").toBe(ARTIFACTS.length);
   });
 });
+
+/**
+ * 主动**说明**也不许只差数字 —— 同名的查过了,同形的没查过。
+ *
+ * ## 缺口是什么(第 66 轮实测)
+ *
+ * 上面几条守的是「主动神通**名**不重复」。但说明文字是另一回事:
+ *
+ * ```text
+ * shield 族:  玄天镜「每 4 回合获得 18% 生命护盾」
+ *             定海珠「每 4 回合获得 22% 生命护盾」
+ *             千机伞「每 4 回合获得 26% 生命护盾」
+ *             太虚镜「每 4 回合获得 32% 生命护盾」
+ * ```
+ *
+ * 四件法宝跨 t3 / t8 / t10 / t17 四个层级,**说明只差一个数字**。而同族的
+ * 本源莲台写的是「每 4 回合**本源护持**,获得 19.5% 生命护盾」—— 有专属的意象。
+ *
+ * 名字不同、效果不同,但玩家在战斗日志里看到的是同一句话的四份拷贝。
+ *
+ * ## 判据
+ *
+ * 把说明里的数字抹成 `N` 之后,**同一效果族内不许出现两份相同的形状**。
+ * 只查族内(heal 与 shield 之间允许同形 —— 它们本来就在说不同的事)。
+ *
+ * 上限设 1:一族里出现两份同形就红。这条比「名字不重复」严,因为说明是给玩家读的。
+ */
+describe("法宝主动说明 · 同族内不许只差数字", () => {
+  it("每个效果族里,把数字抹平后的说明形状两两不同", () => {
+    const byFamily = new Map<string, Map<string, string[]>>();
+    for (const def of ARTIFACTS) {
+      const family = def.active.effect.type;
+      const shape = def.active.desc.replace(/[\d.]+/g, "N");
+      const shapes = byFamily.get(family) ?? new Map<string, string[]>();
+      shapes.set(shape, [...(shapes.get(shape) ?? []), def.name]);
+      byFamily.set(family, shapes);
+    }
+    // 防空转:真的量到了几个族
+    expect(byFamily.size, "一个效果族都没量到 —— 判据在空转").toBeGreaterThanOrEqual(4);
+
+    const dupes: string[] = [];
+    for (const [family, shapes] of byFamily) {
+      for (const [shape, who] of shapes) {
+        if (who.length > 1) {
+          dupes.push(`${family}: ${who.join(" / ")} 的说明只差数字 —— «${shape}»`);
+        }
+      }
+    }
+    expect(
+      dupes,
+      "这些法宝的主动说明同形 —— 战斗日志里看到的是同一句话的几份拷贝:" + dupes.join("、"),
+    ).toEqual([]);
+  });
+});
