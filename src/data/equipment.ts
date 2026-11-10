@@ -152,9 +152,17 @@ export const EQUIPMENT_TEMPLATES: EquipmentTemplate[] = [
   t("wr_shuangwen", "霜纹护腕", "wrist", 4, { attack: 3, defense: 3 }, "腕上凝着霜纹,触之生寒", {
     fixedMods: { attackPct: 0.03 },
   }),
-  t("bl_youtan", "幽潭带", "belt", 4, { defense: 3, maxHp: 25 }, "带扣是一枚潭底石,凉意不散", {
-    fixedMods: { maxHpPct: 0.03 },
-  }),
+  t(
+    "bl_youtan",
+    "幽潭带",
+    "belt",
+    4,
+    { defense: 3, maxHp: 25 },
+    "扣在腰间的是一枚潭底石,凉意总也不散",
+    {
+      fixedMods: { maxHpPct: 0.03 },
+    },
+  ),
   t(
     "bo_kuaixue",
     "踏霜靴",
@@ -240,9 +248,17 @@ export const EQUIPMENT_TEMPLATES: EquipmentTemplate[] = [
       fixedMods: { counterRate: 0.05 },
     },
   ),
-  t("bl_bingge", "兵戈带", "belt", 6, { defense: 4, maxHp: 32 }, "带扣是一枚旧箭镞", {
-    fixedMods: { attackPct: 0.04 },
-  }),
+  t(
+    "bl_bingge",
+    "兵戈带",
+    "belt",
+    6,
+    { defense: 4, maxHp: 32 },
+    "腰扣取自一枚旧箭镞,棱角早磨圆了",
+    {
+      fixedMods: { attackPct: 0.04 },
+    },
+  ),
   t("bo_tazhen", "踏阵靴", "boots", 6, { defense: 4, maxHp: 15 }, "踏过千军阵的硬底靴", {
     fixedMods: { firstStrike: 0.1 },
   }),
@@ -394,9 +410,17 @@ export const EQUIPMENT_TEMPLATES: EquipmentTemplate[] = [
     "用剑冢里的旧剑骨束成,硬得硌手",
     { fixedMods: { counterRate: 0.05 } },
   ),
-  t("bl_mangwen", "残锋带", "belt", 10, { defense: 5, maxHp: 40 }, "带扣是半截断剑的剑格", {
-    fixedMods: { maxHpPct: 0.05 },
-  }),
+  t(
+    "bl_mangwen",
+    "残锋带",
+    "belt",
+    10,
+    { defense: 5, maxHp: 40 },
+    "扣上嵌着半截断剑的剑格,刃没了,护手还在",
+    {
+      fixedMods: { maxHpPct: 0.05 },
+    },
+  ),
   t("bo_qingfeng", "踏冢靴", "boots", 10, { defense: 5, maxHp: 20 }, "靴底沾着剑冢的铁锈色尘土", {
     fixedMods: { speed: 0.05 },
   }),
@@ -658,7 +682,7 @@ export const EQUIPMENT_TEMPLATES: EquipmentTemplate[] = [
   t("wr_yuntie", "陨铁护腕", "wrist", 17, { attack: 6, defense: 6 }, "陨铁护腕上留着烧灼的纹", {
     fixedMods: { attackPct: 0.06 },
   }),
-  t("bl_xingyun", "星陨带", "belt", 17, { defense: 6, maxHp: 46 }, "带扣是整块陨石磨的", {
+  t("bl_xingyun", "星陨带", "belt", 17, { defense: 6, maxHp: 46 }, "整块陨石磨成的扣,沉得往下坠", {
     fixedMods: { maxHpPct: 0.07 },
   }),
   t("bo_yunxing", "陨行靴", "boots", 17, { defense: 7, maxHp: 26 }, "踏在荒原上,落地有声", {
@@ -958,9 +982,17 @@ export const EQUIPMENT_TEMPLATES: EquipmentTemplate[] = [
   t("wr_luotian", "罗天腕甲", "wrist", 25, { attack: 6, defense: 6 }, "腕甲上錾着周天星度", {
     fixedMods: { attackPct: 0.06 },
   }),
-  t("bl_xinghai", "星海玉绦", "belt", 25, { defense: 6, maxHp: 46 }, "绦上串着九枚星砂", {
-    fixedMods: { maxHpPct: 0.08 },
-  }),
+  t(
+    "bl_xinghai",
+    "星海玉绦",
+    "belt",
+    25,
+    { defense: 6, maxHp: 46 },
+    "九枚星砂压着绦头,走快了会响",
+    {
+      fixedMods: { maxHpPct: 0.08 },
+    },
+  ),
   t("bo_luotian", "罗天履", "boots", 25, { defense: 7, maxHp: 26 }, "踏星而行,不留痕迹", {
     fixedMods: { speed: 0.08 },
   }),

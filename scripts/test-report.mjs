@@ -109,6 +109,7 @@ const CATEGORIES = [
       "secretRealmValue",
       "rewardTierMonotonic",
       "pillProse",
+      "equipProse",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
