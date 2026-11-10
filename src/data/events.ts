@@ -1,4 +1,4 @@
-/** 随机事件库 —— 116 个随机事件(含 21 个奇缘阶段) + 17 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 119 个随机事件(含 21 个奇缘阶段) + 17 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -532,6 +532,67 @@ export const EVENTS: EventDef[] = [
       ]),
     ],
     { maxRealm: 5 },
+  ),
+  /*
+   * 蜃楼幻海(tier15 · 境界6)只带 `water` 一个附加标签,而水里那些事大多写在
+   * 人间界的低境(月下湖泊 maxRealm 5、寒潭系列更早)—— 境界 6 只够得着 2 条。
+   * 补两条,让这一处的「真真幻幻」有点内容。
+   */
+  ev(
+    "ev_shenlou_yanyu",
+    "蜃楼烟屿",
+    "海面上浮起一座岛,岛上有城;你朝它走了半个时辰,城还在原处,一步也没近。",
+    ["general", "water"],
+    [
+      c("转身离开", [
+        o(55, "你一转身,那座城忽然就到了身后 —— 原来它一直在追着你走。", {
+          type: "material",
+          id: "wudao",
+          amount: 18,
+        }),
+        o(30, "走出很远回头看,海面空空荡荡,像什么都没发生过。", { type: "nothing" }),
+        o(15, "脚下忽然一软 —— 你踩的原来是水。", { type: "buff", id: "injury" }),
+      ]),
+      c(
+        "继续朝它走",
+        [
+          o(1, "你走了整整一日。天黑时那座城散成雾,而你发现自己站在来时的岸边。", {
+            type: "exp",
+            secs: 90,
+          }),
+        ],
+        { isDefault: true },
+      ),
+    ],
+    { minRealm: 5, maxRealm: 8 },
+  ),
+  ev(
+    "ev_shenlou_jingzhong",
+    "幻海镜中",
+    "幻海的水面像一面没有边框的镜子。你低头看,水里的那个人也低头看 —— 但它比你慢了半拍。",
+    ["general", "water"],
+    [
+      c("等它抬起头", [
+        o(50, "水里的你先抬了头,然后才是你。那一瞬间,你看见了自己往后十年的样子。", {
+          type: "exp",
+          secs: 110,
+        }),
+        o(30, "它始终没有抬头。你盯着水面看到眼睛发酸,只好站直身子。", { type: "nothing" }),
+        o(20, "水里的那个忽然对你笑了一下 —— 而你没有。", { type: "buff", id: "curse_xinmo" }),
+      ]),
+      c(
+        "打碎水面",
+        [
+          o(1, "你一脚踏碎镜像,水花溅了满身。倒影散成千万片,每一片都在往岸上爬。", {
+            type: "material",
+            id: "dust",
+            amount: 16,
+          }),
+        ],
+        { isDefault: true },
+      ),
+    ],
+    { minRealm: 6, maxRealm: 8 },
   ),
   ev(
     "ev_beggar",
@@ -1671,6 +1732,41 @@ export const EVENTS: EventDef[] = [
       ),
     ],
     { minRealm: 12, maxRealm: 13 },
+  ),
+  /*
+   * 谪仙古渡(tier21 · 境界9)只带 `immortal` 一个附加标签,而纯粹够得上境界 9 的
+   * immortal 事件只有 2 条(仙门遗泽、古渡残牌;瑶池仙桃要境界 11、云海青鸾要 10)。
+   * 补一条,让这一处「渡」的意象多一点。
+   */
+  ev(
+    "ev_duchuan_zhouzi",
+    "无舟渡头",
+    "渡头拴着一条船。你解绳上船,船却不曾靠岸 —— 它一直停在原处,而岸在往后退。",
+    ["general", "immortal"],
+    [
+      c("弃船上岸", [
+        o(55, "你跳回岸上,那船立刻漂远了 —— 它本来就不打算渡人,只是在等你上钩。", {
+          type: "material",
+          id: "wudao",
+          amount: 32,
+        }),
+        o(45, "岸已经退得看不见了。你站在空船上,直到它自己停下来。", {
+          type: "buff",
+          id: "injury",
+        }),
+      ]),
+      c(
+        "坐在船头等",
+        [
+          o(1, "你不急也不问,只坐在船头。不知过了多久,岸又慢慢回来了。", {
+            type: "exp",
+            secs: 100,
+          }),
+        ],
+        { isDefault: true },
+      ),
+    ],
+    { minRealm: 9, maxRealm: 11 },
   ),
   ev(
     "ev_shenyu_zhen",

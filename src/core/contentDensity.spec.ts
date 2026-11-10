@@ -298,3 +298,46 @@ describe("内容密度 · 地域标签必须够得着", () => {
     ).toEqual([]);
   });
 });
+
+/**
+ * 每个地域都得有几件事可做 —— 按**境界带过滤后**再数,不是按标签数。
+ *
+ * ## 两个口径的差
+ *
+ * 第 35 轮那条「地域标签必须够得着」用的是**标签池**:只要某标签有事件就算过。
+ * 但标签池不等于**此刻能用**的池 —— `water` 有 7 条,而境界 6 的蜃楼幻海只够得着 2 条
+ * (`月下湖泊` 到 maxRealm 5 就断了,寒潭那一批更早)。
+ *
+ * 于是出现过这样的地域:标签一个不缺、事件表里也有七条,而玩家在那一境只能撞到 2 件。
+ * 这条判据把口径改成「**境界带内**」再数一遍。
+ *
+ * ## 底线取 3
+ *
+ * 实测 44 个地域的带内可用数:最小 3、中位 8、最大 15。取 3 作底线 ——
+ * 再少就是「同一件事反复撞见」,而 3 条已经能支撑一遍不重样的体感。
+ */
+/** 带内可用事件的底线 —— 实测 44 个地域最小 3、中位 8、最大 15 */
+const MIN_USABLE_EVENTS = 3;
+
+describe("内容密度 · 每个地域的带内可用事件不少于 3 条", () => {
+  it("逐地域按境界带过滤后,可用事件数不低于底线", () => {
+    const thin: string[] = [];
+    for (const region of REGIONS) {
+      const local = region.eventTags.filter((t) => t !== "general");
+      const usable = EVENTS.filter(
+        (e) =>
+          e.tags.some((t) => local.includes(t)) &&
+          (e.minRealm ?? 0) <= region.minRealm &&
+          (e.maxRealm ?? Infinity) >= region.minRealm,
+      );
+      if (usable.length < MIN_USABLE_EVENTS) {
+        thin.push(`${region.name}(境界 ${region.minRealm})只够得着 ${usable.length} 条`);
+      }
+    }
+    expect(
+      thin,
+      `这些地域的带内可用事件不足 ${MIN_USABLE_EVENTS} 条 —— 玩家在那一境会把同一件事反复撞见:` +
+        thin.join("、"),
+    ).toEqual([]);
+  });
+});
