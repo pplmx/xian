@@ -2,6 +2,9 @@ import { describe, expect, it } from "vite-plus/test";
 import type { CombatResult, CombatSideStats } from "@/types";
 import { gn, gnZero } from "@/utils/gnum";
 import { analyzeBattle, battleDataRows } from "./battleAnalysis";
+import { runGauntlet } from "./gauntlet";
+import { BUILD_PROFILES, buildSnap } from "./buildSim";
+import { RandomService, mulberry32 } from "@/utils/random";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -280,5 +283,98 @@ describe("天界战报 · 敌势渐涨那一行", () => {
       src,
       "手写 Math.round(x*100) 与 formatPercent 各写一份迟早分叉(uiLayering.spec 也会红)",
     ).not.toMatch(/Math\.round\([\s\S]{0,60}\* *100\)/);
+  });
+});
+
+/**
+ * 天界「此战之判」：只有战前判定不算判,还要有这一场打出来的归因。
+ *
+ * ## 缺口
+ *
+ * 天界战报浮层的第四章「此战之判」,注释写着「为什么难、下一次怎么办」,
+ * 而它实际只渲染 `report.judgementLines` —— 那是**战前**就定下的数
+ * (道之理解 / 境界压制),回答的是「这一界为什么难」。
+ * 而「这一场为什么输、下一次改什么」一个字都没有。
+ *
+ * 历练页有(`BattleIntelPanel` 的 `analyzeBattle`),天界没有,
+ * 而天界正是玩家最难、最需要下一步方向的地方。
+ *
+ * 卡在哪:`analyzeBattle` 要 `CombatResult.stats`(遥测),而 `GauntletFightRow`
+ * 只带了 `logs` 与胜负回合 —— 没有 `stats` 它直接返回 null。故补这条的前提是
+ * 把遥测顺着战报递上来。
+ *
+ * ## 判据守什么
+ *
+ * 一 战报行必须带遥测,且带出的值与 `resolveCombat` 同源(不是重算一份);
+ * 二 面板必须真的把 `analyzeBattle` 接进来 —— 不然数据在、没人读;
+ * 三 战前判定与战后归因**两类分开**,不许混成一串:
+ *    前者回答「这一界为什么难」,后者回答「这一场为什么输」,难与输不是一件事;
+ * 四 遥测与 `logs` 同一条纪律:不许写进持久化结构(道痕)。
+ */
+describe("天界战报 · 此战之判要有战后归因", () => {
+  it("战报行带出遥测,且与 resolveCombat 同一份", () => {
+    /*
+     * 行为侧:真跑一次 gauntlet,核对行的 stats 与那一场 resolveCombat 的 stats 同源。
+     * 只核「字段存在」会漏掉「另算一份」这种走偏。
+     */
+    const report = runGauntlet(
+      buildSnap(BUILD_PROFILES[0]!),
+      [
+        {
+          ...buildSnap(BUILD_PROFILES[0]!),
+          isPlayer: false,
+          name: "靶",
+          attack: gn(1),
+          maxHp: gn(1),
+        },
+      ],
+      undefined,
+      0,
+      new RandomService(mulberry32(11)),
+    );
+    const row = report.rows[0]!;
+    expect(row.stats, "战报行没带遥测 —— analyzeBattle 会直接返回 null").toBeDefined();
+    expect(row.stats!.player, "玩家侧统计缺了").toBeDefined();
+    expect(row.stats!.enemy, "敌人侧统计缺了").toBeDefined();
+    // 真打过就该有数(至少出手次数不为 0)
+    expect(row.stats!.player.hitsLanded + row.stats!.player.missedHits).toBeGreaterThan(0);
+  });
+
+  it("面板真的把 analyzeBattle 接进来了", () => {
+    const src = readFileSync(
+      resolve(__dirname, "../components/celestial/CelestialReportLedger.vue"),
+      "utf8",
+    );
+    const code = src.replace(/<!--[\s\S]*?-->/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(code, "面板没接 analyzeBattle —— 数据在、没人读").toContain("analyzeBattle(");
+    expect(code, "要读当前场的遥测").toContain("row.stats");
+    expect(code, "归因要有落点").toContain("data-celestial-report-finding");
+    expect(code, "方向要有落点").toContain("data-celestial-report-direction");
+  });
+
+  it("战前判定与战后归因两类分开 —— 难与输不是一件事", () => {
+    const src = readFileSync(
+      resolve(__dirname, "../components/celestial/CelestialReportLedger.vue"),
+      "utf8",
+    );
+    // 两类行必须各带自己的 class,不许共用一种
+    expect(src, "归因行要有自己的样式钩子").toContain("is-finding");
+    expect(src, "方向行要有自己的样式钩子").toContain("is-direction");
+    // 战前那些行不许被标成归因
+    expect(src, "战前判定被标成了归因 —— 两类混了").not.toMatch(
+      /judgementLines[\s\S]{0,200}data-celestial-report-finding/,
+    );
+  });
+
+  it("遥测与 logs 同一条纪律:不许进持久化结构", () => {
+    /*
+     * `GauntletFightRow.logs` 的注释已经写明「不可写入道痕等持久化结构」——
+     * 遥测必须遵守同一条。这条核类型注释里写明了,免得下一个人顺手存进道痕。
+     */
+    const gauntlet = readFileSync(resolve(__dirname, "./gauntlet.ts"), "utf8");
+    const at = gauntlet.indexOf("stats?: { player: CombatSideStats");
+    expect(at, "战报行上找不到遥测字段").toBeGreaterThan(-1);
+    const doc = gauntlet.slice(Math.max(0, at - 900), at);
+    expect(doc, "遥测的持久化约束没写进注释").toMatch(/不可写入道痕|别把它存进任何持久化/);
   });
 });

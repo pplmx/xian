@@ -20536,6 +20536,32 @@ async function taskCelestialBattleScroll() {
             station: style(station),
             stationBox: box(station),
             stationCurrent: Number(station?.getAttribute("data-celestial-fight-current") ?? -1),
+            /*
+             * 判词区的两类行:战前判定(◇)与战后归因(◆)/方向(→)。
+             *
+             * 两类必须共用同一套折行与边界纪律 —— 战后归因是后加的一段,
+             * 它跟前一组挤在同一个 section 里,最容易出的问题是长文案不折行
+             * 或溢出册页。故把它单独数出来,后面按同样的尺子量。
+             */
+            judgementLines: [
+              ...(ledger?.querySelectorAll(".celestial-report-judgement__line") ?? []),
+            ].map((line) => {
+              const lineBox = box(line);
+              return {
+                kind: line.classList.contains("is-finding")
+                  ? "finding"
+                  : line.classList.contains("is-direction")
+                    ? "direction"
+                    : "pre",
+                text: (line.textContent || "").replace(/\s+/g, " ").trim(),
+                clip: line.scrollWidth > line.clientWidth + 1,
+                outside:
+                  !!ledgerBox &&
+                  !!lineBox &&
+                  (lineBox.left < ledgerBox.left - 1 || lineBox.right > ledgerBox.right + 1),
+              };
+            }),
+            judgementEmpty: !!ledger?.querySelector("[data-celestial-report-judgement-empty]"),
             stationRole: station?.getAttribute("role") ?? null,
             stationFoe: (
               station?.querySelector(".celestial-gauntlet__foe")?.textContent || ""
@@ -20628,6 +20654,27 @@ async function taskCelestialBattleScroll() {
         }
         if (mobile.tabColumns < 2) {
           failures.push(`[390-report] 手机场签只铺成 ${mobile.tabColumns} 列,没成组可扫`);
+        }
+        /*
+         * 判词区:战前判定与战后归因两类行共用同一套折行与边界纪律。
+         *
+         * 战后归因是后加的一段,与战前判定挤在同一个 section 里 —— 最容易出的
+         * 问题是长文案不折行、或溢出册页左右边界。空态(两类都没有)是合法的:
+         * 那一场既没有判定来源、也没有可归因的读数。但**有行的时候**,
+         * 每一行都必须折得住、留得住。
+         */
+        const badJudgement = mobile.judgementLines.filter((line) => line.clip || line.outside);
+        if (badJudgement.length) {
+          failures.push(
+            `[390-report] 判词有 ${badJudgement.length} 行折不住或溢出册页:${JSON.stringify(
+              badJudgement.slice(0, 3).map((l) => ({ kind: l.kind, text: l.text.slice(0, 40) })),
+            )}`,
+          );
+        }
+        if (mobile.judgementLines.length === 0 && !mobile.judgementEmpty) {
+          failures.push(
+            "[390-report] 判词区一行没有,也没有空态说明 —— 玩家不知道是没判定还是没渲染",
+          );
         }
         const badTabs = mobile.tabs.filter(
           (tab) =>

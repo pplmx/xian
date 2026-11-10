@@ -1436,6 +1436,29 @@
     font-size: var(--type-note);
     line-height: 1.6;
   }
+  /*
+   * 战后归因与战前判定分开读。
+   *
+   * 两组行在同一章里,但回答的是不同问题:上面几行是**战前就定下的数**
+   * (道之理解 / 境界压制,石青 ◇ 起头),下面这几行是**这一场打出来的结论**
+   * (遥测归因,朱砂 ◆ 起头)。只靠起首符号区分太弱,故给战后这一组加一条
+   * 上边距与一道细分隔线 —— 眼睛扫过时先看到「明显换了一段」。
+   */
+  .celestial-report-judgement__line.is-finding {
+    color: rgb(var(--color-ink-rgb));
+    margin-top: 0.1rem;
+  }
+  .celestial-report-judgement__line.is-finding:first-of-type {
+    margin-top: 0.42rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    padding-top: 0.46rem;
+  }
+  .celestial-report-judgement__line.is-finding > span:first-child {
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+  .celestial-report-judgement__line.is-direction > span:first-child {
+    color: rgb(var(--color-qing-rgb));
+  }
   @media (hover: hover) and (pointer: fine) {
     .celestial-trial-action:hover:not(:disabled),
     .celestial-challenge-option:hover:not(:disabled) {

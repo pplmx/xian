@@ -5,6 +5,7 @@ import type {
   CombatantSnap,
   CombatLogEntry,
   CombatRules,
+  CombatSideStats,
   FoeOrigin,
   FoeOriginPart,
   GNum,
@@ -305,6 +306,19 @@ export interface GauntletFightRow {
    * 而它此前只在 `CombatResult` 里、且那个值根本没被算出来。
    */
   atkRamp?: { procs: number; factor: number };
+  /**
+   * 该场的战斗遥测,交给战后归因(`analyzeBattle`)用。
+   *
+   * 与 `logs` 同一条纪律:**仅供即时读取,不可写入道痕等持久化结构**
+   * —— 道痕存的是构筑快照(`replay`),每场一份统计乘上 60 条道痕会把存档撑大;
+   * 而这份统计只在战报浮层开着时要。
+   *
+   * 天界战报此前只带 `logs`(逐回合文字)与胜负回合,`analyzeBattle` 拿不到
+   * `stats` 就直接返回 null —— 于是「此战之判」那一章只有**战前**就定下的
+   * 道之理解 / 境界压制,没有任何一战后的归因。历练页有、天界没有,
+   * 而天界正是玩家最难、最需要「下一次怎么改」的地方。
+   */
+  stats?: { player: CombatSideStats; enemy: CombatSideStats };
 }
 
 export interface GauntletReport {
@@ -366,6 +380,7 @@ export function runGauntlet(
       logs: result.log,
       foe,
       ...(result.atkRamp ? { atkRamp: result.atkRamp } : {}),
+      ...(result.stats ? { stats: result.stats } : {}),
     });
     if (!result.win) {
       return { cleared: false, fightsWon, totalRounds, rows };

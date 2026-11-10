@@ -128,6 +128,32 @@
         >
           敌我之势皆已在账上,此战没有额外的判定来源。
         </p>
+        <!--
+          战后归因:上面那几行是**战前就定下的数**(道之理解 / 境界压制),
+          回答「这一界为什么难」。这一段回答的是另一个问题 ——「这一场为什么输、
+          下一次改什么」,读数来自逐场遥测,与历练页同一个 `analyzeBattle`。
+          两者并列,因为「难」与「输」不是同一件事:难而赢,与易而输,都发生过。
+        -->
+        <template v-if="fightAnalysis">
+          <p
+            v-for="(finding, index) in fightAnalysis.findings"
+            :key="`f${index}`"
+            class="celestial-report-judgement__line is-finding"
+            data-celestial-report-finding
+          >
+            <span aria-hidden="true">◆</span>
+            <span>{{ finding.text }}</span>
+          </p>
+          <p
+            v-for="(dir, index) in fightAnalysis.directions"
+            :key="`d${index}`"
+            class="celestial-report-judgement__line is-direction"
+            data-celestial-report-direction
+          >
+            <span aria-hidden="true">→</span>
+            <span>{{ dir.styleName }}:{{ dir.reason }}</span>
+          </p>
+        </template>
       </div>
     </section>
   </div>
@@ -140,6 +166,9 @@ import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import GauntletPanel from "@/components/celestial/GauntletPanel.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import type { ReportView } from "@/components/celestial/reportView";
+import { analyzeBattle } from "@/core/battleAnalysis";
+import { detectBuild } from "@/core/buildDetect";
+import { usePlayerStore } from "@/stores/player";
 
 const props = defineProps<{
   report: ReportView;
@@ -157,9 +186,36 @@ const currentFightFact = computed(() =>
 );
 const judgementFact = computed(() =>
   props.report.judgementLines?.length
-    ? `${props.report.judgementLines.length} 则归因`
+    ? `${props.report.judgementLines.length} 则判定`
     : "无额外判定",
 );
+
+/**
+ * 当前这一场的战后归因 —— 与历练页同一个 `analyzeBattle`。
+ *
+ * 「此战之判」此前只有 `judgementLines`,那是**战前**就定下的数
+ * (道之理解 / 境界压制),回答「这一界为什么难」;而「这一场为什么输、
+ * 下一次改什么」一个字都没有。天界是最难的一档,却比历练页少一段归因。
+ *
+ * `analyzeBattle` 要 `CombatResult.stats`(遥测)。战报行现在带着它了 ——
+ * 没有遥测的旧记录会返回 null,整段不出(与历练页对旧档的判定同源)。
+ */
+const fightAnalysis = computed(() => {
+  const row = props.report.rows[currentFight.value];
+  if (!row?.stats) return null;
+  const styleId = detectBuild(usePlayerStore().celestialStats.mods)?.style.id ?? null;
+  return analyzeBattle(
+    {
+      win: row.win,
+      rounds: row.rounds,
+      playerHpPct: row.hpLeftPct,
+      log: [],
+      foeOrigin: row.foe?.origin,
+      stats: row.stats,
+    },
+    styleId,
+  );
+});
 
 function selectFight(index: number): void {
   currentFight.value = Math.max(0, Math.min(index, props.report.rows.length - 1));
