@@ -1,9 +1,9 @@
 /**
- * 功法库 —— 75 部:主修 34 / 辅修 25 / 秘术 16,每境都有新东西可参
+ * 功法库 —— 80 部:主修 34 / 辅修 30 / 秘术 16,每境都有新东西可参
  *
  * ## 品阶分布(与实物同源,由 core/gongfaQualityLadder.spec 钉住)
  *
- *   凡品 3 · 良品 13 · 精品 7 · 灵品 9 · 玄品 9 · 地品 2 · 天品 7 · 仙品 11 · 神品 14
+ *   凡品 8 · 良品 13 · 精品 7 · 灵品 9 · 玄品 9 · 地品 2 · 天品 7 · 仙品 11 · 神品 14
  *
  * 地品那一格此前是**空的**:玄品(rank 4)与天品(rank 6)之间没有任何一部功法,
  * 玩家从玄品一路参悟上来,会在中间撞上一段没有东西可参的路。
@@ -344,6 +344,72 @@ export const GONGFA: GongfaDef[] = [
     "肉身为炉,千锤百炼",
     { maxHpPct: 0.08, defensePct: 0.04 },
     { maxHpPct: 0.012, defensePct: 0.008 },
+  ),
+  /*
+   * 辅修与秘术此前**一部带元素的都没有**(25 + 16 全空),而主修 34 部里 28 部有元素。
+   *
+   * `core/gongfaService` 抽功法时按 `gongfaAffinity(g.element, elements)` 加权 ——
+   * `element` 缺省时 `affinityMult` 返回 1(无倾向)。所以这不是错误,是缺内容:
+   * 灵根偏冰的玩家在辅修席上永远遇不到「冰系辅修」,倾向只作用在主修那一条线上。
+   *
+   * 补五部带元素的辅修,量级照同品质的邻居走(辅修凡品 / 良品都在
+   * `cultivationSpeed 0.06` 上下)。秘术席不动 —— 它是"占辅修席但效果更怪"的一类,
+   * 不挂元素反而更贴它的定位。
+   */
+  g(
+    "s_hanxi",
+    "寒息诀",
+    "sub",
+    "mortal",
+    0,
+    "吸一口寒气入肺,呼出来的已是白霜",
+    { cultivationSpeed: 0.06, defensePct: 0.02 },
+    { cultivationSpeed: 0.012 },
+    { element: "ice" },
+  ),
+  g(
+    "s_muyin",
+    "沐阴引",
+    "sub",
+    "mortal",
+    0,
+    "阴处生苔,苔上有气 —— 引之入脉,无声无息",
+    { cultivationSpeed: 0.06, lifesteal: 0.008 },
+    { cultivationSpeed: 0.012 },
+    { element: "dark" },
+  ),
+  g(
+    "s_qingya",
+    "青芽吐纳",
+    "sub",
+    "mortal",
+    0,
+    "一芽破土,先要顶开自己上面那层土",
+    { cultivationSpeed: 0.06, maxHpPct: 0.03 },
+    { cultivationSpeed: 0.012 },
+    { element: "wood" },
+  ),
+  g(
+    "s_yanxi",
+    "炎息法",
+    "sub",
+    "mortal",
+    0,
+    "息自肺出,过处皆焦 —— 练的是把火养在里头",
+    { cultivationSpeed: 0.06, attackPct: 0.03 },
+    { cultivationSpeed: 0.012 },
+    { element: "fire" },
+  ),
+  g(
+    "s_chaoxi",
+    "潮汐坐忘",
+    "sub",
+    "mortal",
+    0,
+    "潮来则息,潮去则止 —— 坐忘的人,身上有涨落",
+    { cultivationSpeed: 0.06, qiRegen: 0.04 },
+    { cultivationSpeed: 0.012 },
+    { element: "water" },
   ),
   g(
     "s_qiti",

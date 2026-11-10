@@ -73,6 +73,51 @@ export const GONGFA_BRANCHES: GongfaBranchDef[] = [
   b("m_lihuo", "b_lihuo_fen", "焚天", "离火更炽,出招更狠", { damageBonus: 0.08, critRate: 0.03 }),
   b("m_lihuo", "b_lihuo_xu", "续焰", "火尽不熄,攻守兼备", { attackPct: 0.05, defensePct: 0.05 }),
 
+  // ---- 辅修:寒息诀(凡品·冰) ----
+  b("s_hanxi", "b_hanxi_ning", "凝息", "一息不散,寒自内生", {
+    defensePct: 0.05,
+    damageReduction: 0.02,
+  }),
+  b("s_hanxi", "b_hanxi_dong", "冻髓", "冷到骨头里,才记得住", {
+    critDamage: 0.06,
+    attackPct: 0.02,
+  }),
+
+  // ---- 辅修:沐阴引(凡品·暗) ----
+  b("s_muyin", "b_muyin_yin", "潜影", "影里行走的人,箭射不到", { dodgeRate: 0.04 }),
+  b("s_muyin", "b_muyin_shi", "噙血", "咽下去的那口,自己留住", { lifesteal: 0.02, maxHpPct: 0.04 }),
+
+  // ---- 辅修:青芽吐纳(凡品·木) ----
+  // 份量得相当(判据要求比值 ≤2):第一版催生只给 cultivationSpeed 0.03,折算 1.00,
+  // 而韧皮 maxHpPct 0.06 + regenPerRound 0.01 折算 3.00 —— 差三倍就是「一条是陷阱」。
+  b("s_qingya", "b_qingya_sheng", "催生", "长得快的人,也更早老 —— 但先长", {
+    cultivationSpeed: 0.06,
+    attackPct: 0.02,
+  }),
+  b("s_qingya", "b_qingya_ren", "韧皮", "树皮割开还会愈合", {
+    maxHpPct: 0.06,
+    regenPerRound: 0.01,
+  }),
+
+  // ---- 辅修:炎息法(凡品·火) ----
+  b("s_yanxi", "b_yanxi_liao", "燎原", "一点就够,风会替它做完", { damageBonus: 0.05 }),
+  // 先手加成的粒度红线:敌人速度按 5% 一档给,低于 0.05 的 speed 跨不过任何一档
+  // (判据 speedGranularity 会红)—— 0.03 是「等于没给」。
+  b("s_yanxi", "b_yanxi_zhuo", "灼脉", "经脉被烫过一遍,再走气就快了", {
+    speed: 0.05,
+    attackPct: 0.02,
+  }),
+
+  // ---- 辅修:潮汐坐忘(凡品·水) ----
+  b("s_chaoxi", "b_chaoxi_zhang", "涨潮", "气随潮上来,满了自然溢出去", {
+    qiRegen: 0.05,
+    maxHpPct: 0.03,
+  }),
+  b("s_chaoxi", "b_chaoxi_tui", "退潮", "退干净了,才看得见滩上的东西", {
+    cultivationSpeed: 0.02,
+    defensePct: 0.04,
+  }),
+
   // ---- 主修:沧海纳流诀(良品·水) ----
   // `qiCapPct` 不在装备词条池里,判据要求分支只用能校准的词条 —— 改用 maxHpPct
   b("m_canghai", "b_canghai_na", "纳川", "海纳百川,气机自广", {
