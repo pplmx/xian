@@ -1248,6 +1248,16 @@
     gap: 0.5rem;
     margin-top: 0.46rem;
   }
+  /*
+   * 「敌势渐涨」的读数 —— 它是战局**中**变的那个数,故用 ink-faint 而非朱砂:
+   * 朱砂在这块里已经属于「血条」与危局,再多一枚会失重。
+   * `overflow-wrap: anywhere` 让它在 195 宽下从词边界折,不会撑破。
+   */
+  .celestial-gauntlet__ramp {
+    margin-top: 0.3rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    overflow-wrap: anywhere;
+  }
   .celestial-gauntlet__report {
     min-width: 0;
     grid-area: report;

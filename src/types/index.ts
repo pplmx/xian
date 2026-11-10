@@ -961,6 +961,22 @@ export interface CombatResult {
    * 「你差多少」,而不是让玩家对着「出手速度 +6%」猜自己为什么还是后手。
    */
   firstMove?: { playerFirst: boolean; playerSpeed: number; enemySpeed: number };
+  /**
+   * "每隔 N 回合"规则(`perRounds`,长生道 / 奇门休门)在这一场里把敌人攻势抬到了多少。
+   *
+   * 与 `firstMove` 同一条纪律:这是一个**累积到几倍**的数,而玩家此前只能从战报里
+   * 一句「敌人杀意亦涨」去猜。`atkRamp` 在 `core/combat` 里真的乘进了伤害
+   * (`dmg = attack × factor × atkRamp`),但那个值从来不带出战斗 ——
+   * 机制在跑、数值丢弃,与修好之前的先手判定是同一个形态。
+   *
+   * 只在真有这条规则时出现;没有它时字段缺席(旧存档同样)。
+   */
+  atkRamp?: {
+    /** 这一场触发了几次 */
+    procs: number;
+    /** 结束时敌人的攻势倍率(1 = 没涨) */
+    factor: number;
+  };
   /** 战斗遥测(旧存档可能缺失) */
   stats?: { player: CombatSideStats; enemy: CombatSideStats };
 }

@@ -46,6 +46,15 @@
           <ProgressBar :value="php" class="flex-1" :height="6" color="var(--color-jade)" />
           <ProgressBar :value="ehp" class="flex-1" :height="6" color="var(--color-cinnabar)" />
         </div>
+        <!--
+          「每隔 N 回合」把敌人攻势抬到了几倍(长生道 / 奇门休门)。
+          此前战报只有一句「敌人杀意亦涨」,涨到多少没有数字 ——
+          而那个倍率真的乘进了伤害(dmg × atkRamp),后半程的每一击都更重。
+          与「先手」「敌之加成」同一条纪律:把式子摊开。
+        -->
+        <p v-if="atkRampText" class="celestial-gauntlet__ramp t-note tabular" data-fight-atk-ramp>
+          {{ atkRampText }}
+        </p>
       </div>
 
       <div class="celestial-gauntlet__report">
@@ -100,6 +109,7 @@ import { COMBAT_PLAYBACK_BASE_MS, COMBAT_PLAYBACK_MIN_MS } from "@/data/constant
 import { useSettingsStore } from "@/stores/settings";
 import { gameClock } from "@/composables/useGameClock";
 import ProgressBar from "@/components/common/ProgressBar.vue";
+import { formatPercent } from "@/utils/format";
 
 const props = defineProps<{
   rows: GauntletFightRow[];
@@ -118,6 +128,21 @@ const logBox = useTemplateRef<HTMLElement>("logBox");
 let timer: (() => void) | undefined;
 
 const row = computed(() => props.rows[props.current] ?? props.rows[0]);
+/**
+ * 这一场「敌势渐涨」的读数 —— 没有这条规则(或一次没触发)时整行不出。
+ *
+ * 倍率留两位,与算式同一个数(与 `battleAnalysis` 的 `atkRampRow` 同一口径)。
+ */
+const atkRampText = computed(() => {
+  const r = row.value?.atkRamp;
+  if (!r || r.procs <= 0) return "";
+  /*
+   * 倍率与增幅都从**同一个** `r.factor` 现算:增幅用 `formatPercent`(与全库同一口径),
+   * 倍率用 `toFixed(2)` —— 后者是「×1.45」这种倍率写法,不是百分比,
+   * 故不走 formatPercent(它会给「145%」,读起来是另一件事)。
+   */
+  return `敌势渐涨 ${formatPercent(r.factor - 1, 0)} 伤害(触发 ${r.procs} 次,累计 ×${r.factor.toFixed(2)})`;
+});
 const logs = computed(() => row.value?.logs ?? []);
 const finished = computed(() => displayed.value.length >= logs.value.length);
 

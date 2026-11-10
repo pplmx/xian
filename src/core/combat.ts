@@ -634,6 +634,8 @@ export function resolveCombat(
   const eSpeed = eEff.speed * (1 + modOf(eEff.mods, "speed"));
   const pFirst = pSpeed >= eSpeed;
   const perRounds = rules?.perRounds;
+  /** 这条规则在这一场触发了几次 —— 与 `e.atkRamp` 同步累加,战后如实带出 */
+  let perRoundsProcs = 0;
   // Phase 30.7: Boss 阶段系统 + 机制家族
   let phaseIdx = -1;
   const bossPhases = eSnap.phases ?? [];
@@ -671,7 +673,20 @@ export function resolveCombat(
       healSelf(p, mulN(p.snap.maxHp, perRounds.playerHealPct));
       gainShield(p, mulN(p.snap.maxHp, perRounds.playerShieldPct));
       e.atkRamp += perRounds.enemyAtkGrowth;
-      push("heal", "p", `岁月为你加冕——长生印生效,气血与护盾俱增;敌人杀意亦涨。`);
+      perRoundsProcs += 1;
+      /*
+       * 战报这一句只在**第一次**触发时给全,之后压成短句 —— 这条规则在长战里
+       * 会触发七八次,每次都印一整句会把战报淹掉(实测 6 回合的对局触发 3 次,
+       * 12 回合的触发 5 次以上)。次数与最终倍率由 `CombatResult.atkRamp` 带出,
+       * 战后分析那一行才是玩家该读的汇总。
+       */
+      push(
+        "heal",
+        "p",
+        perRoundsProcs === 1
+          ? `岁月为你加冕——长生印生效,气血与护盾俱增;敌人杀意亦涨。`
+          : `长生印再凝一层(第 ${perRoundsProcs} 次),看来这一战要拖久了。`,
+      );
     }
     const order: [Fighter, Fighter][] = pFirst
       ? [
@@ -710,6 +725,13 @@ export function resolveCombat(
     foeOrigin: eSnap.origin,
     // 先手判定如实带出:这是条阈值(见 CombatResult.firstMove 的注释),战后分析据此讲清「差多少」
     firstMove: { playerFirst: pFirst, playerSpeed: pSpeed, enemySpeed: eSpeed },
+    /*
+     * 「每隔 N 回合」把敌人攻势抬到了几倍 —— 此前 `atkRamp` 乘进了伤害却从不带出,
+     * 玩家只能从战报里一句「敌人杀意亦涨」去猜。只有在真有这条规则时才给字段。
+     */
+    ...(perRounds && perRoundsProcs > 0
+      ? { atkRamp: { procs: perRoundsProcs, factor: e.atkRamp } }
+      : {}),
     stats: { player: p.stats, enemy: e.stats },
   };
 }

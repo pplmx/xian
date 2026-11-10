@@ -298,6 +298,13 @@ export interface GauntletFightRow {
   logs?: CombatLogEntry[];
   /** 该场敌人快照(播放时显示血条与名号) */
   foe?: CombatantSnap;
+  /**
+   * 该场「每隔 N 回合」把敌人攻势抬到了几倍(没有这条规则时缺席)。
+   *
+   * 与 `CombatResult.atkRamp` 同一份数据 —— 战报面板要报「打着打着变难了多少」,
+   * 而它此前只在 `CombatResult` 里、且那个值根本没被算出来。
+   */
+  atkRamp?: { procs: number; factor: number };
 }
 
 export interface GauntletReport {
@@ -358,6 +365,7 @@ export function runGauntlet(
       hpLeftPct: result.playerHpPct,
       logs: result.log,
       foe,
+      ...(result.atkRamp ? { atkRamp: result.atkRamp } : {}),
     });
     if (!result.win) {
       return { cleared: false, fightsWon, totalRounds, rows };

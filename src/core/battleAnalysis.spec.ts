@@ -2,6 +2,8 @@ import { describe, expect, it } from "vite-plus/test";
 import type { CombatResult, CombatSideStats } from "@/types";
 import { gn, gnZero } from "@/utils/gnum";
 import { analyzeBattle, battleDataRows } from "./battleAnalysis";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 function stats(partial: Partial<CombatSideStats>): CombatSideStats {
   return {
@@ -132,5 +134,151 @@ describe("战斗分析", () => {
       expect(rows.some((r) => r.label === "先手")).toBe(false);
       expect(analyzeBattle(result(false, stats({})), null)).not.toBeNull();
     });
+  });
+});
+
+/**
+ * 「每隔 N 回合」把敌人攻势抬到了几倍 —— 机制在跑,数值此前不带出。
+ *
+ * `core/combat` 里 `dmg = attack × factor × atkRamp` 真的把 `atkRamp` 乘进了伤害,
+ * 而它从来不写进 `CombatResult`。玩家能读到的只有战报里一句
+ * 「岁月为你加冕——长生印生效,气血与护盾俱增;敌人杀意亦涨。」——
+ * 涨到几倍没有数字。与修好之前的先手判定是同一个形态
+ * (那条也是「机制在跑、判定值丢弃」)。
+ *
+ * 实测那个倍率不小:6 回合的对局触发 3 次 × 每印 +15% = **1.45 倍**,
+ * 也就是后半程敌人的每一击都重了一半 —— 而界面上一个字都没提。
+ *
+ * 判据四条,两侧都量:
+ * 一 有这条规则时数据行必须出现,且报的是**倍率与次数**两个数;
+ * 二 没有这条规则(或一次都没触发)时**不许**凭空印一行 —— 那等于说了件没发生的事;
+ * 三 倍率与 `atkRamp` 同源(改 `enemyAtkGrowth` 文案跟着变);
+ * 四 战报里那句重复触发的话要收短,长战不许被同一句淹掉。
+ */
+describe("每隔 N 回合 · 敌势渐涨的读数", () => {
+  const withRamp = (procs: number, factor: number): CombatResult => ({
+    ...result(true, stats({})),
+    atkRamp: { procs, factor },
+  });
+
+  it("有这条规则时给出倍率与次数 —— 不只是「敌人杀意亦涨」", () => {
+    const rows = battleDataRows(withRamp(3, 1.45));
+    const row = rows.find((r) => r.label === "敌势渐涨");
+    expect(row, "战报里应当有一行「敌势渐涨」").toBeDefined();
+    expect(row!.value, "要报抬了多少(45%)").toContain("45%");
+    expect(row!.value, "要报触发次数").toContain("3");
+    expect(row!.value, "要报累计倍率").toContain("1.45");
+  });
+
+  it("倍率与 atkRamp 同源 —— 改涨幅,文案跟着变", () => {
+    const rows = battleDataRows(withRamp(2, 1.3));
+    const row = rows.find((r) => r.label === "敌势渐涨")!;
+    expect(row.value).toContain("30%");
+    expect(row.value).toContain("1.30");
+    // 另一个值也该跟着走,不许写死
+    const other = battleDataRows(withRamp(4, 1.6)).find((r) => r.label === "敌势渐涨")!;
+    expect(other.value).toContain("60%");
+    expect(other.value).toContain("4");
+  });
+
+  it("没有这条规则 / 一次没触发时不许凭空印一行", () => {
+    // 字段缺席(旧存档、或这一场没有该规则)
+    const withoutField = battleDataRows(result(true, stats({})));
+    expect(withoutField.some((r) => r.label === "敌势渐涨")).toBe(false);
+    // 字段在但一次都没触发:同样不该印
+    const zeroProcs = battleDataRows(withRamp(0, 1));
+    expect(zeroProcs.some((r) => r.label === "敌势渐涨")).toBe(false);
+  });
+
+  it("它排在「战前就定下的数」之后 —— 那是打着打着才变的", () => {
+    /*
+     * 先手与敌之加成解释「这一场一开始有多难」,敌势渐涨解释「后半程为什么更难」。
+     * 两类数混在一起读,玩家会把后者也当成开局条件。
+     */
+    const rows = battleDataRows({
+      ...withRamp(3, 1.45),
+      firstMove: { playerFirst: true, playerSpeed: 1, enemySpeed: 1 },
+    });
+    const firstAt = rows.findIndex((r) => r.label === "先手");
+    const rampAt = rows.findIndex((r) => r.label === "敌势渐涨");
+    expect(firstAt, "先手行不见了").toBeGreaterThan(-1);
+    expect(rampAt, "敌势渐涨行不见了").toBeGreaterThan(-1);
+    expect(rampAt, "「渐涨」排在战前判定之前 —— 两类数混了").toBeGreaterThan(firstAt);
+  });
+
+  it("core 里战报那句要收短,长战不许被同一句淹掉", () => {
+    /*
+     * 这条规则在长战里触发七八次。每次都印一整句会把战报淹掉,
+     * 而汇总已经由数据行给出 —— 故源码层钉住「第一次给全,之后压短」。
+     */
+    const raw = readFileSync(resolve(__dirname, "./combat.ts"), "utf8");
+    const src = raw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    expect(src, "要记触发次数").toContain("perRoundsProcs += 1");
+    expect(src, "第一次与之后那句要分开").toMatch(
+      /perRoundsProcs === 1[\s\S]{0,400}第 \$\{perRoundsProcs\} 次/,
+    );
+    expect(src, "倍率要带出战斗").toContain(
+      "atkRamp: { procs: perRoundsProcs, factor: e.atkRamp }",
+    );
+  });
+});
+
+/**
+ * 天界战报面板那一行 —— 与 `battleDataRows` 是两个渲染点,口径必须一致。
+ *
+ * `battleDataRows` 服务**历练页**的战后分析卡;天界远征的战报走
+ * `GauntletPanel` 的逐场回放,那里根本没有分析卡(`analyzeBattle` 只在
+ * `BattleIntelPanel` 里被调用,而后者只挂在历练页)。
+ *
+ * 也就是说:同一条「敌势渐涨」的读数,在天界只能长在战报面板上。
+ * 这一组守它真的长上去了,且与 `battleDataRows` 报的是同一件事 ——
+ * 两处各写一份格式,迟早有一处先改(本仓「不做两本账」)。
+ */
+describe("天界战报 · 敌势渐涨那一行", () => {
+  const panelSrc = (): string => {
+    const raw = readFileSync(
+      resolve(__dirname, "../components/celestial/GauntletPanel.vue"),
+      "utf8",
+    );
+    // 去掉注释:注释里引用这段字样是正常的,不该被当成实现
+    return raw.replace(/<!--[\s\S]*?-->/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  };
+
+  it("战报面板要有这一行的落点与读数", () => {
+    const src = panelSrc();
+    expect(src, "天界战报要有一行「敌势渐涨」的落点").toContain("data-fight-atk-ramp");
+    expect(src, "要读该场战果里的 atkRamp").toContain("atkRamp");
+    expect(src, "要报触发次数").toContain("procs");
+  });
+
+  it("没有这条规则时整行不出 —— 不许凭空印", () => {
+    const src = panelSrc();
+    // 守卫条件必须在模板上(v-if),否则空读数会占一行
+    expect(src, "该行要有 v-if 守卫").toMatch(/v-if="atkRampText"/);
+    expect(src, "守卫要判 procs > 0").toMatch(/procs\s*<=\s*0\)\s*return/);
+  });
+
+  it("两处渲染点报同一件事:增幅走 formatPercent、倍率给两位", () => {
+    /*
+     * 历练页那行在 `battleAnalysis` 里、天界这行在组件里,格式若各写一套,
+     * 同一个数会在两页长得不一样。这条钉住两边都用同一套写法。
+     */
+    const analysis = readFileSync(resolve(__dirname, "./battleAnalysis.ts"), "utf8");
+    for (const [label, src] of [
+      ["battleAnalysis", analysis],
+      ["GauntletPanel", panelSrc()],
+    ] as [string, string][]) {
+      expect(src, `${label} 的增幅该走 formatPercent`).toMatch(/formatPercent\(/);
+      expect(src, `${label} 该报累计倍率(两位小数)`).toMatch(/toFixed\(2\)/);
+      expect(src, `${label} 该报触发次数`).toContain("procs");
+    }
+  });
+
+  it("源码层:战报行不许手写百分比(与全库同一口径)", () => {
+    const src = panelSrc();
+    expect(
+      src,
+      "手写 Math.round(x*100) 与 formatPercent 各写一份迟早分叉(uiLayering.spec 也会红)",
+    ).not.toMatch(/Math\.round\([\s\S]{0,60}\* *100\)/);
   });
 });

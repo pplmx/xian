@@ -136,6 +136,8 @@ export function battleDataRows(result: CombatResult): { label: string; value: st
     ...(result.firstMove ? [firstMoveRow(result)] : []),
     // 敌之加成紧随其后:它解释的是「这一场为什么比上一场难」,与先手同属"战前就定下的数"
     ...(result.foeOrigin ? [foeOriginRow(result.foeOrigin)] : []),
+    // 战局中渐涨的那一个:与上面两行不同,它是"打着打着变难"——单独一行,别混进战前的账
+    ...(atkRampRow(result) ? [atkRampRow(result)!] : []),
     { label: "总输出", value: formatGN(p.dealt) },
     { label: "总承伤", value: formatGN(p.taken) },
     { label: "真伤承伤占比", value: formatPercent(share(p.pierceTaken, p.taken)) },
@@ -179,6 +181,28 @@ function firstMoveReadout(result: CombatResult): {
 /** 先手判定的读数行:「你 1.06 ≥ 敌 1.05」比「出手速度 +6%」诚实得多 */
 function firstMoveRow(result: CombatResult): { label: string; value: string } {
   return { label: "先手", value: firstMoveReadout(result).text };
+}
+
+/**
+ * 「每隔 N 回合」把敌人攻势抬到了几倍。
+ *
+ * 与先手判定同一条纪律(见 `foeOriginLines` 的注释:把式子摊开,而不是给一句
+ * 「敌人很强」)。这条规则在 `core/combat` 里真的乘进了伤害
+ * (`dmg = attack × factor × atkRamp`),但那个值此前从不带出战斗 ——
+ * 玩家只能从战报里一句「敌人杀意亦涨」去猜涨了多少。
+ *
+ * 长战里它可能到 1.5 倍以上(实测 6 回合的对局触发 3 次 × 每印 +15% = 1.45 倍),
+ * 而玩家读到的是同一句「医气与护盾俱增;敌人杀意亦涨」—— 涨到几倍没有数字。
+ */
+function atkRampRow(result: CombatResult): { label: string; value: string } | null {
+  const r = result.atkRamp;
+  if (!r || r.procs <= 0) return null;
+  // 倍率留两位:显示与算式同一个数(与 firstMoveReadout 同一条口径)
+  const factor = Math.round(r.factor * 100) / 100;
+  return {
+    label: "敌势渐涨",
+    value: `${formatPercent(factor - 1, 0)} 伤害(触发 ${r.procs} 次,累计 ×${factor.toFixed(2)})`,
+  };
 }
 
 /**

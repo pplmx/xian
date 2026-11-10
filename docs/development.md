@@ -2304,3 +2304,49 @@ if (perRounds && round % perRounds.interval === 0) {
 > 差点去查了一处并不存在的 bug。真相是 `runGauntlet` 在两组里消耗随机数的路径不同,
 > 同种子反而掩盖了差异。改成「每档各跑 30 局取比率」才看到 +10~+28。
 > **对拍两个变体时,别指望同一颗种子给你公平比较 —— 要跑多局取分布。**
+
+### 「敌人杀意亦涨」涨到几倍,从来没人算过
+
+`CombatRules.perRounds` 在 `core/combat` 里做的事是:
+
+```ts
+e.atkRamp += perRounds.enemyAtkGrowth;   // 敌人攻势渐涨
+…
+const dmg = mulN(attacker.snap.attack, Math.max(0.02, factor) * attacker.atkRamp);
+```
+
+`atkRamp` 真的乘进了伤害,而它**从来不带出战斗** —— `CombatResult` 里没有这个字段,
+玩家能读到的只有战报里一句「岁月为你加冕——长生印生效,气血与护盾俱增;敌人杀意亦涨。」
+
+实测这个倍率不小:6 回合的对局触发 3 次 × 每印 +15% = **1.45 倍**,
+也就是后半程敌人的每一击都重了将近一半,而界面上一个字都没提。
+
+这与修好之前的先手判定是**同一个形态**:机制在跑、判定值丢弃。
+`firstMove` 当年也是这么补的(「这是一条阈值,差一点就是完全没有,
+故把两个数如实记下来,交给战后分析讲清楚」)。`atkRamp` 按同一条纪律办:
+
+- `CombatResult.atkRamp?: { procs, factor }` —— 只在真有这条规则且触发过时出现;
+- `GauntletFightRow.atkRamp` —— 战报面板按场取值(它跟着 `result` 走,不额外算);
+- 两处渲染:历练页的战后分析卡(`battleDataRows`)与天界的战报面板(`GauntletPanel`)。
+
+**顺带修掉战报被同一句话淹掉的问题**:这条规则在长战里触发七八次,
+每次都印一整句会把回放刷屏。改成第一次给全、之后压成
+「长生印再凝一层(第 N 次),看来这一战要拖久了」—— 汇总已经由数据行给出。
+
+### 一处架构事实:天界没有战后分析卡
+
+补这条读数时才发现:`analyzeBattle` 只被 `BattleIntelPanel` 调用,
+而后者只挂在**历练页**。天界远征的战报走 `GauntletPanel` 的逐场回放,
+那里**根本没有分析卡**。`docs/design.md` 里也没有「天界不做分析」的裁决。
+
+故「敌势渐涨」在天界只能长在战报面板上,与历练页那一行走的是两个渲染点。
+判据因此两侧都钉:数据行本身在 `battleAnalysis.spec`,
+面板那一行的落点 / 守卫 / 格式在同一个文件里按源码层核 ——
+**两处各写一份格式,迟早有一处先改**(本仓「不做两本账」)。
+
+> 这一轮还被已有的架构判据当场拦了一次:`uiLayering.spec` 的
+> 「百分比显示统走 formatPercent」发现我在组件里手写了
+> `Math.round((factor-1)*100)%`。改成 `formatPercent` 后通过 ——
+> 那条判据设的例外只留给 `RetreatCard` 一处数值型 computed。
+> 顺手把「倍率」与「增幅」分开:增幅是百分比(`formatPercent`),
+> 倍率是「×1.45」,两者不是一件事,不该套同一个函数。
