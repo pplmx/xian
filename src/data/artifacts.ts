@@ -601,7 +601,16 @@ export const ARTIFACTS: ArtifactDef[] = [
     "profound",
     29,
     "符上只有一个字,却是帝阙之下九千级天阶的凭据",
-    { breakthroughRate: 0.123, luck: 0.145 },
+    /*
+     * 原值是 `{ breakthroughRate: 0.123, luck: 0.145 }` —— 而装备池里
+     * `breakthroughRate` 的上限是 0.06,这一条被动等于「+12.3% 突破成功率」,
+     * 比任何一件装备都强一倍。`breakthroughRate` 是直接加在突破成功率上的
+     * (见 core/breakthrough),不是衰减型词条,所以这个越界能在实际判定里兑现。
+     *
+     * 收到 0.055(略低于装备上限),把省下的预算挪给 `luck` —— 符还是那枚符,
+     * 「帝阙之下九千级天阶的凭据」这层意思靠幸运与护盾,不靠硬提突破率。
+     */
+    { breakthroughRate: 0.055, luck: 0.14 },
     "帝威",
     "每 4 回合帝威加身,获得 27% 生命护盾",
     4,

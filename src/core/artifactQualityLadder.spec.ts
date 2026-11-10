@@ -33,6 +33,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { readSource } from "@/test/readSource";
 import { ARTIFACTS } from "@/data/artifacts";
 import { QUALITIES, qualityDef } from "@/data/qualities";
+import { AFFIXES } from "@/data/affixes";
 
 /** 各档法宝件数,按品质 rank 索引 */
 function countByQuality(): number[] {
@@ -84,5 +85,58 @@ describe("法宝九档 · 天品不许空缺", () => {
       expect(def.active.name.length, `${def.name} 的主动要有名`).toBeGreaterThan(0);
       expect(def.active.interval, `${def.name} 的主动要有节拍`).toBeGreaterThan(0);
     }
+  });
+});
+
+/**
+ * 法宝被动不许超过装备词条的上限 —— 同一个词条,不能法宝给得比装备多。
+ *
+ * ## 实测(第 56 轮)
+ *
+ * 按装备词条池的上限逐条核对,`帝阙神符`(玄品·t29)的 `breakthroughRate` 是 **0.123**,
+ * 而装备池里同一词条的上限是 **0.06** —— 整整两倍。
+ *
+ * `breakthroughRate` 直接加在突破成功率上(`core/breakthrough`),所以这一条被动
+ * 等于「+12.3% 突破成功率」,比任何一件装备都强一倍。
+ *
+ * 这是既有内容,不是某一轮补进来的;此前没有判据看着这条线
+ * (`artifactLadder` 守的是**主动神通**的族内不回落,`artifactQualityLadder` 守的是分布)。
+ *
+ * ## 判据
+ *
+ * 法宝被动的每个词条,|值| 都不许超过装备池里同词条的最高档。
+ * 只核装备池里**有的**词条 —— 法宝可以用装备没有的词条(如 `lifesteal`),
+ * 那些没有可比的尺,不在此列。
+ *
+ * 容差 1e-6:被动数值经过品质倍率与等级倍率的两次乘法,末位会有浮点残差。
+ */
+describe("法宝被动 · 不许超过装备同名词条的上限", () => {
+  it("每件法宝的每条被动,都不越过装备池的最高档", () => {
+    const caps = new Map<string, number>();
+    for (const affix of AFFIXES) {
+      const key = (affix as { key?: string }).key;
+      if (!key) continue;
+      caps.set(key, Math.max(caps.get(key) ?? 0, affix.max / 100));
+    }
+    expect(caps.size, "一件装备词条都没取到 —— 判据在空转").toBeGreaterThan(20);
+
+    const over: string[] = [];
+    for (const def of ARTIFACTS) {
+      for (const [key, raw] of Object.entries(def.passive ?? {})) {
+        const cap = caps.get(key);
+        if (cap === undefined) continue;
+        const value = Math.abs(raw as number);
+        if (value > cap + 1e-6) {
+          over.push(
+            `${def.name}(${def.quality}) 的 ${key}=${value.toFixed(3)} 超过装备上限 ${cap}`,
+          );
+        }
+      }
+    }
+    expect(
+      over,
+      "这些法宝被动超过了装备池里同词条的最高档 —— 同一个词条法宝不该给得比装备多:" +
+        over.join("、"),
+    ).toEqual([]);
   });
 });
