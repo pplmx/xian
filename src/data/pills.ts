@@ -82,7 +82,7 @@ export const PILLS: PillDef[] = [
     recipe: { herb: 4, stoneBase: 8 },
     alchemyLevel: 1,
   }),
-  p("p_jvqidan", "聚气丹", "fine", 0, "服之灵气涌动,修为小进", {
+  p("p_jvqidan", "聚气丹", "fine", 0, "一口下去,像有人在丹田里推开一扇窗", {
     instant: { expFixed: 80 },
     recipe: { herb: 8, stoneBase: 15 },
     alchemyLevel: 1,
@@ -163,7 +163,7 @@ export const PILLS: PillDef[] = [
     recipe: { herb: 24, stoneBase: 45 },
     alchemyLevel: 4,
   }),
-  p("p_jingang", "金刚液", "spirit", 2, "服之肉身坚若金刚", {
+  p("p_jingang", "金刚液", "spirit", 2, "药力沉进骨里,再抬臂时自己都听见了响动", {
     kind: "buff",
     buffId: "buff_jingang",
     recipe: { herb: 26, stoneBase: 48 },
@@ -214,7 +214,7 @@ export const PILLS: PillDef[] = [
     recipe: { herb: 47, stoneBase: 100 },
     alchemyLevel: 6,
   }),
-  p("p_wudaodan", "悟道丹", "profound", 3, "服之如聆道音", {
+  p("p_wudaodan", "悟道丹", "profound", 3, "服下后耳边有极轻的一声,说不清是钟还是水", {
     instant: { wudao: 20 },
     recipe: { herb: 45, stoneBase: 90 },
     alchemyLevel: 5,
@@ -252,13 +252,20 @@ export const PILLS: PillDef[] = [
     alchemyLevel: 10,
   }),
   // ---- 气运爆点(P2):天运丹(3)之后的高量级短窗运气丹 —— 渡劫期赌一把大的 ----
-  p("p_yunbaodan", "鸿运丹", "immortal", 8, "服之鸿运当头,气运喷薄如沸 —— 押上所有运气赌一场", {
-    kind: "buff",
-    buffId: "buff_yunji",
-    recipe: { herb: 120, stoneBase: 300 },
-    alchemyLevel: 9,
-  }),
-  p("p_gangqisan", "罡气散", "excellent", 1, "服之罡气环身,盾出伤随", {
+  p(
+    "p_yunbaodan",
+    "鸿运丹",
+    "immortal",
+    8,
+    "押上那一注之前,先把这口运气吞下去 —— 押上所有运气赌一场",
+    {
+      kind: "buff",
+      buffId: "buff_yunji",
+      recipe: { herb: 120, stoneBase: 300 },
+      alchemyLevel: 9,
+    },
+  ),
+  p("p_gangqisan", "罡气散", "excellent", 1, "罡气自内而外撑开,像多长了一层皮", {
     kind: "buff",
     buffId: "buff_gangdun",
     recipe: { herb: 18, stoneBase: 35 },
@@ -274,13 +281,13 @@ export const PILLS: PillDef[] = [
   // 药力按 buff 时长 × 修速提升计:精品聚灵 15 分 < 玄品星驰 18 分 < 地品御风 22.5 分 < 神品本源 24 分(法则 B)。
   // 价格就怕一件事:单位材料性价比不如开局聚灵(14 草 / 15 分 = 全场最高性价比之一),那新丹就是没人炼的
   // 填充物。所以这两味靠**高强度 + 低草耗**跑赢聚灵 —— 玩家到 4/6 境有十足理由换一味更强的(见 buffs 同注)。
-  p("p_xingchi", "星驰丹", "profound", 4, "服之如御星驰,一息千里", {
+  p("p_xingchi", "星驰丹", "profound", 4, "脚下生风的那一瞬,山川只是身后的墨点", {
     kind: "buff",
     buffId: "buff_xingchi",
     recipe: { herb: 24, stoneBase: 48 },
     alchemyLevel: 4,
   }),
-  p("p_yufeng", "御风丹", "earth", 6, "服之乘风御虚,长空无碍", {
+  p("p_yufeng", "御风丹", "earth", 6, "风从袖里过,人比风先到", {
     kind: "buff",
     buffId: "buff_yufeng",
     recipe: { herb: 30, stoneBase: 70 },
@@ -288,14 +295,14 @@ export const PILLS: PillDef[] = [
   }),
   // ---- 炼丹自增益三味(概念契约):通用状态丹,炼丹面只是其中一格 ----
   // 澄心丹:心念澄澈 → 会心一击(通用) + 炼丹心得泉涌(炼丹面);"淬炼"一名已废。
-  p("p_chengxin", "澄心丹", "profound", 4, "服之心念澄澈,出手如神;炼丹时心有所得", {
+  p("p_chengxin", "澄心丹", "profound", 4, "万念沉底,只剩手里这一件事;连炉火都听话些", {
     kind: "buff",
     buffId: "buff_chengxin",
     recipe: { herb: 40, stoneBase: 90 },
     alchemyLevel: 4,
   }),
   // 定心丹:心定则神闲 → 破境稳(通用) + 炼丹手稳护料(炼丹面);"稳炉"一名已废 —— 丹管不了炉子。
-  p("p_dingxin", "定心丹", "profound", 4, "服之凝神定心;纵是炸炉,手法也不乱", {
+  p("p_dingxin", "定心丹", "profound", 4, "心定住了,炉子炸了手也不抖", {
     kind: "buff",
     buffId: "buff_dingxin",
     recipe: { herb: 40, stoneBase: 90 },
@@ -386,7 +393,7 @@ export const PILLS: PillDef[] = [
     "造化丹",
     "heaven",
     5,
-    "服之道韵加身",
+    "道韵落在肩上,轻得像一层灰,却推不散",
     { kind: "buff", buffId: "bless_daoyun" },
     "star",
   ),
@@ -479,7 +486,7 @@ export const PILLS: PillDef[] = [
     alchemyLevel: 10,
   }),
   /** 寿元线自万寿金丹(地品 1000)向上;掉落线顶端(蟠桃 500)始终在可炼线之下(法则 H) */
-  p("p_yongchang", "永昌丹", "immortal", 13, "服之添寿,岁月于我何有", {
+  p("p_yongchang", "永昌丹", "immortal", 13, "又偷来一截光阴 —— 岁月在我这里不作数", {
     instant: { lifespanYears: 3000 },
     recipe: { herb: 320, stoneBase: 820 },
     alchemyLevel: 10,
@@ -506,7 +513,7 @@ export const PILLS: PillDef[] = [
     "droplets",
   ),
   /** 增益线:每 buff 仅此一味丹产出(法则 C),增益定义见 data/buffs.ts */
-  p("p_xianlidan", "仙力丹", "immortal", 10, "服之仙力贯体,出手重若崩山", {
+  p("p_xianlidan", "仙力丹", "immortal", 10, "仙力灌入四肢,出手的声音比风先响", {
     kind: "buff",
     buffId: "buff_xianli",
     recipe: { herb: 240, stoneBase: 620 },
@@ -526,7 +533,7 @@ export const PILLS: PillDef[] = [
   }),
   // ---- 炼丹增益(概念契约):安神丹 —— 神魂安泰(通用:回灵)+ 凝神观炉(炼丹面:双成)。
   // "火候"是炼丹者的本事,不是丹能管的火 —— 此名已废,改走安神一路(id 沿旧)。 ----
-  p("p_huohou", "安神丹", "immortal", 12, "服之神魂安泰,气息绵长;凝神观炉,开炉多成", {
+  p("p_huohou", "安神丹", "immortal", 12, "神魂落回原处,呼吸慢下来;盯着炉子看,能多看一会儿成", {
     kind: "buff",
     buffId: "buff_huohou",
     recipe: { herb: 60, stoneBase: 150 },

@@ -108,6 +108,7 @@ const CATEGORIES = [
       "celestialReward",
       "secretRealmValue",
       "rewardTierMonotonic",
+      "pillProse",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
