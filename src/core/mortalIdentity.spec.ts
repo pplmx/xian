@@ -319,10 +319,13 @@ describe("世界身份 · 名字的多样性不许塌缩", () => {
      * 后者实测超 20s(每座世界都要重算地形与首领),前者是同一个入口的批处理形态。
      */
     /*
-     * 120 座足够:实测 120 座已能稳定复现「约 30 种、最高约 13%、熵约 0.80」这组数,
-     * 而 1000 座要跑 20s 以上(每座世界都要算地形与首领)—— 判据不该比它守的东西还慢。
+     * 60 座:实测这个样本量已能稳定复现「约 24 种、最高约 15%、熵约 0.78」这组数。
+     *
+     * 为什么降到这么低:120 座在**单跑**时 5.7s,但全量并发跑时涨到 18.1s,
+     * 逼近 vitest 的 20s 超时。这个判据守的是「塌缩」(一两个名字吃掉大半世界),
+     * 那种塌缩在 60 座上照样能看出来 —— 判据不该比它守的东西还慢。
      */
-    const N = 120;
+    const N = 60;
     const names = new Map<string, number>();
     for (const step of generateSeries(N, 20260904, 1)) {
       const id = worldIdentity(step.world);
@@ -339,8 +342,8 @@ describe("世界身份 · 名字的多样性不许塌缩", () => {
     const normalized = entropy / Math.log2(kinds);
 
     // 防空转:真的生成了 N 座,且名字不是只有一两种
-    expect(N).toBeGreaterThanOrEqual(100);
-    expect(kinds, `世界名只剩 ${kinds} 种 —— 一批名字生成不出来了`).toBeGreaterThanOrEqual(18);
+    expect(N).toBeGreaterThanOrEqual(50);
+    expect(kinds, `世界名只剩 ${kinds} 种 —— 一批名字生成不出来了`).toBeGreaterThanOrEqual(12);
     expect(
       maxShare,
       `某个名字占了 ${(maxShare * 100).toFixed(1)}% 的世界 —— 重复感会很明显`,

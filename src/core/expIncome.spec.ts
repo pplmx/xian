@@ -166,3 +166,75 @@ describe("即时修为 · 同源接线", () => {
     expect(sim, "经济审计又自己写了一份遭遇/胜场速率").not.toMatch(/const battlesPerHour = \(3600/);
   });
 });
+
+/**
+ * 新加的内容不许比同境界段的既有内容高出一大截。
+ *
+ * ## 踩了什么
+ *
+ * 第 29~38 轮补了二十余条际遇与机缘。补的时候只看「单条是否落在 30~120 秒区间内」
+ * (上面那条判据),**没有对照同境界段的既有水平** —— 于是越补越高。实测:
+ *
+ * ```text
+ * 我新增的   n=22  均 71.8(修前 97.9)
+ * 既有内容   n=67  均 62.1
+ * ```
+ *
+ * 修前均值高出 66%,而且前九高的修为奖励**全是新加的那批**(最高 120 秒,
+ * 而既有内容在境界 ≤8 里最高只有 90 秒)。玩家会发现「新内容比老内容肥」——
+ * 这不是设计,是写的时候没横向看。
+ *
+ * ## 判据
+ *
+ * 不按「谁写的」分,按**境界段**分:每一段里,单条奖励不许超过该段既有中位数的 **2 倍**。
+ * 取中位数而非均值 —— 均值会被长尾拉高,而中位数代表「这一段通常给多少」。
+ *
+ * 阈值 2 倍是很宽的:允许个别高光事件(比如带条件的进取选项)明显更高,
+ * 但拦得住「整批偏高」。真正要守的是**横向可比**,不是逐条相等。
+ */
+describe("修为收入 · 新内容不许整批比同段既有内容肥", () => {
+  it("每一境界段里,最高单条奖励不超过该段中位数的 2 倍", () => {
+    /** 记下每条样本的出处,报错时能指名而不是只说「某段有个大数」 */
+    const bins = new Map<string, { secs: number; id: string }[]>();
+    for (const e of [...EVENTS, ...FORTUNE_EVENTS]) {
+      const realm = e.minRealm ?? 0;
+      const key =
+        realm <= 4
+          ? "0-4"
+          : realm <= 8
+            ? "5-8"
+            : realm <= 13
+              ? "9-13"
+              : realm <= 17
+                ? "14-17"
+                : "18-20";
+      const bucket = bins.get(key) ?? [];
+      for (const choice of e.choices) {
+        for (const outcome of choice.outcomes) {
+          for (const effect of outcome.effects) {
+            if (effect.type === "exp") bucket.push({ secs: effect.secs, id: e.id });
+          }
+        }
+      }
+      bins.set(key, bucket);
+    }
+    expect(bins.size, "一个境界段都没分到 —— 判据在空转").toBeGreaterThanOrEqual(3);
+
+    const offenders: string[] = [];
+    for (const [key, samples] of bins) {
+      if (samples.length < 5) continue; // 样本太少的中位数不可信
+      const sorted = [...samples].sort((a, b) => a.secs - b.secs);
+      const median = sorted[Math.floor(sorted.length / 2)]!.secs;
+      const top = sorted[sorted.length - 1]!;
+      if (top.secs > median * 2) {
+        offenders.push(
+          `${key} 段:中位 ${median}s,而 ${top.id} 给了 ${top.secs}s(${(top.secs / median).toFixed(1)} 倍)`,
+        );
+      }
+    }
+    expect(
+      offenders,
+      "这些境界段的最高单条奖励超出该段中位数一倍以上 —— 疑似整批写肥了:" + offenders.join("、"),
+    ).toEqual([]);
+  });
+});

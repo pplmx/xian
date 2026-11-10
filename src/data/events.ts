@@ -348,7 +348,7 @@ export const EVENTS: EventDef[] = [
         [
           o(65, "你盘膝于雷云之下,听那万钧轰鸣里的一声「静」,若有所悟。", {
             type: "exp",
-            secs: 120,
+            secs: 75,
           }),
           o(35, "雷声太盛,你只坐得心神不宁,草草起身。"),
         ],
@@ -371,7 +371,7 @@ export const EVENTS: EventDef[] = [
       c("登台受雷", [
         o(50, "九道雷接连落在身上,你的筋骨发出金石相击之声 —— 熬过来了。", {
           type: "exp",
-          secs: 120,
+          secs: 70,
         }),
         o(30, "第七道雷把你掀下石台,半边身子焦黑。", { type: "buff", id: "injury" }),
         o(20, "雷浆在你脚下凝住了,一道也没落下来。你在台上站了很久,什么也没发生。", {
@@ -436,7 +436,7 @@ export const EVENTS: EventDef[] = [
         [
           o(60, "你不去拔它,只以自身剑意与之相和。一炷香后,那鸣声止了,你的剑意却更利。", {
             type: "exp",
-            secs: 110,
+            secs: 75,
           }),
           o(40, "你的剑意太浅,断剑振了一声便沉寂下去,像是在嘲笑。"),
         ],
@@ -472,7 +472,7 @@ export const EVENTS: EventDef[] = [
         [
           o(70, "你看那握剑的姿势看得入了神,回过神来,雪已落满肩头。剑理明了几分。", {
             type: "exp",
-            secs: 110,
+            secs: 75,
           }),
           o(30, "冰壁太过澄澈,反而什么都看不真切。你摇了摇头,继续赶路。"),
         ],
@@ -558,7 +558,7 @@ export const EVENTS: EventDef[] = [
         [
           o(1, "你走了整整一日。天黑时那座城散成雾,而你发现自己站在来时的岸边。", {
             type: "exp",
-            secs: 90,
+            secs: 65,
           }),
         ],
         { isDefault: true },
@@ -575,7 +575,7 @@ export const EVENTS: EventDef[] = [
       c("等它抬起头", [
         o(50, "水里的你先抬了头,然后才是你。那一瞬间,你看见了自己往后十年的样子。", {
           type: "exp",
-          secs: 110,
+          secs: 75,
         }),
         o(30, "它始终没有抬头。你盯着水面看到眼睛发酸,只好站直身子。", { type: "nothing" }),
         o(20, "水里的那个忽然对你笑了一下 —— 而你没有。", { type: "buff", id: "curse_xinmo" }),
@@ -1617,7 +1617,7 @@ export const EVENTS: EventDef[] = [
         [
           o(1, "你只是坐着,看渡口的水一遍遍涨落。忽然明白自己为何还要走这一趟。", {
             type: "exp",
-            secs: 110,
+            secs: 70,
           }),
         ],
         { isDefault: true },
@@ -1672,7 +1672,7 @@ export const EVENTS: EventDef[] = [
       c("拨动星盘", [
         o(45, "你把剩下那根针拨了半圈,盘面掠过一道光 —— 某个答案落进心里。", {
           type: "exp",
-          secs: 120,
+          secs: 75,
         }),
         o(30, "针尖划破你的指尖,血珠落在盘上,星盘停了。", { type: "buff", id: "injury" }),
         o(25, "星盘转得太慢,你等了许久,什么也没发生。", { type: "nothing" }),
@@ -1707,7 +1707,7 @@ export const EVENTS: EventDef[] = [
       c("引那道雷入体", [
         o(50, "雷丝顺着经脉走完一圈,沿途烧掉了些说不清的东西。", {
           type: "exp",
-          secs: 120,
+          secs: 75,
         }),
         o(
           30,
@@ -1760,7 +1760,7 @@ export const EVENTS: EventDef[] = [
         [
           o(1, "你不急也不问,只坐在船头。不知过了多久,岸又慢慢回来了。", {
             type: "exp",
-            secs: 100,
+            secs: 70,
           }),
         ],
         { isDefault: true },
@@ -2193,7 +2193,7 @@ export const EVENTS: EventDef[] = [
       c("按掌印对坐", [
         o(60, "你把手按进那道掌印里,一时竟分不清是自己的手还是它的。", {
           type: "exp",
-          secs: 110,
+          secs: 70,
         }),
         o(
           25,
@@ -2226,7 +2226,7 @@ export const EVENTS: EventDef[] = [
       c("接上那段诵念", [
         o(55, "你顺着断处往下念。念到第三句时,声音自己接了上来,把你带到了尽头。", {
           type: "exp",
-          secs: 120,
+          secs: 75,
         }),
         o(30, "你的法则与它对不上,声音在你口中碎成一串无意义的音节。", { type: "nothing" }),
         o(15, "断处之后是无尽的空 —— 你念着念着,忽然听不见自己的声音了。", {
@@ -2257,7 +2257,7 @@ export const EVENTS: EventDef[] = [
       c("找那尊属于自己的", [
         o(50, "你走到第九千余尊时停住 —— 那尊的断口是新的,还有石粉在往下掉。", {
           type: "exp",
-          secs: 120,
+          secs: 75,
         }),
         o(35, "一万尊走完,你谁也没认出来。倒是把自己这些年的路重新走了一遍。", {
           type: "material",
@@ -2559,7 +2559,7 @@ export const FORTUNE_EVENTS: EventDef[] = [
       c("取冰晶入怀", [
         o(55, "冰晶贴胸即化,一缕清寒顺着经脉走了一周天 —— 你忽觉心念从未如此澄明。", {
           type: "exp",
-          secs: 110,
+          secs: 70,
         }),
         o(
           25,
@@ -2589,7 +2589,7 @@ export const FORTUNE_EVENTS: EventDef[] = [
     ["general", "fire"],
     [
       c("以神魂引火", [
-        o(60, "火苗顺从地缠上你的指尖,烧尽了经脉里的杂质。", { type: "exp", secs: 100 }),
+        o(60, "火苗顺从地缠上你的指尖,烧尽了经脉里的杂质。", { type: "exp", secs: 65 }),
         o(25, "火苗忽然暴涨,你急退三步,衣袖已烧去半幅。", { type: "buff", id: "injury" }),
         o(15, "火苗只是幻影,你伸手过去,什么都没摸到。", { type: "nothing" }),
       ]),
@@ -2608,7 +2608,7 @@ export const FORTUNE_EVENTS: EventDef[] = [
     ["general", "thunder"],
     [
       c("折竹淬神", [
-        o(55, "雷竹炸开一团电弧涌入眉心,你的神魂在剧痛中清了三分。", { type: "exp", secs: 110 }),
+        o(55, "雷竹炸开一团电弧涌入眉心,你的神魂在剧痛中清了三分。", { type: "exp", secs: 70 }),
         o(
           30,
           "电弧太盛,你被震得倒退,却也收下了几节竹身。",
@@ -2691,7 +2691,7 @@ export const FORTUNE_EVENTS: EventDef[] = [
         }),
         o(25, "樵夫不肯,却愿意让你抄一夜。抄到天亮,你记住了其中的算法。", {
           type: "exp",
-          secs: 80,
+          secs: 60,
         }),
         o(15, "书页一见风就烂成了泥,只剩下几笔残墨。", { type: "nothing" }),
       ]),
@@ -2796,7 +2796,7 @@ export const FORTUNE_EVENTS: EventDef[] = [
       c("剖开结晶", [
         o(55, "结晶碎开时,那片夜空涌进你的识海 —— 你看见了自己的命星。", {
           type: "exp",
-          secs: 110,
+          secs: 80,
         }),
         o(
           25,
