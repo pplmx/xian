@@ -586,7 +586,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
   it("灵草坊收成一册卷身长账 —— 逐品行不再套纸卡,极窄档品名与动作各守一行", () => {
     // 五品各包一张 bg-paper-deep 纸卡时,195 CSS px 下印章、正文与两枚动作仍横向
     // 硬排:品名被挤成逐字竖排,买十还越出面板右界。长账去掉行内卡壳;极窄档让
-    // 品阶印与品名独占一层,读数续排,两枚动作落到独立动作区等宽并排。
+    // 品质印与品名独占一层,读数续排,两枚动作落到独立动作区等宽并排。
     const shop = fileAt("components/inventory/HerbShopDialog.vue");
     expect(shop?.src, "灵草坊要收成一册连续长账").toContain("data-herb-shop-ledger");
     expect(shop?.src, "灵草账只留上下账线与行间线").toMatch(

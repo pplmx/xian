@@ -76,7 +76,7 @@ import { isRareQuality, qualityTierStyle } from "@/ui/qualityTier";
  * 收成一件之后,格子只有一套度量,改一处全局生效。
  *
  * 两种底色:
- *   · 品质底色(默认) —— 装备与丹药按品质染边与底,色即品阶;
+ *   · 品质底色(默认) —— 装备与丹药按品质染边与底,色即品质;
  *   · plain —— 材料没有品质档,走墨色中性底。
  */
 const props = withDefaults(

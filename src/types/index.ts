@@ -1270,7 +1270,7 @@ export interface Toast {
   id: number;
   text: string;
   kind: "info" | "success" | "warn" | "rare";
-  /** 品阶印:色与单字都取自品质表(见 data/qualities),不在调用方手写 hex */
+  /** 品质印:色与单字都取自品质表(见 data/qualities),不在调用方手写 hex */
   seal?: QualityId;
   /**
    * 可选的**去路** —— 点一下能打开哪一件的详情(见 ui/toastTarget)。

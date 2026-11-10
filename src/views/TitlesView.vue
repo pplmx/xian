@@ -432,7 +432,7 @@
                         :style="{ color: qualityDef(row.def.quality).color }"
                         >{{ row.def.name }}</span
                       >
-                      <!-- 品阶文字:数值按品阶重配过,名字旁的「神品/仙品…」让品质与效果一眼可对(见 petQuality.spec 两条不变量) -->
+                      <!-- 品质文字:数值按品质重配过,名字旁的「神品/仙品…」让品质与效果一眼可对(见 petQuality.spec 两条不变量) -->
                       <span
                         class="text-note tracking-[0.2em]"
                         :style="{ color: qualityDef(row.def.quality).color }"

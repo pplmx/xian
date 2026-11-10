@@ -17,7 +17,9 @@
 export type NoticeKind = "info" | "success" | "warn" | "rare";
 
 /**
- * 品阶印的**载荷** —— 只带品质 id,不带色值。
+ * 品质印的**载荷** —— 只带品质 id,不带色值。
+ *
+ * (本仓 `quality` 一律称「品质」;「品阶」专指器魂的六阶。见 `data/pets.ts` 的注。)
  *
  * core 不该知道 `--color-tenghuang` 这种东西(那是调色板的事),故这里只说
  * 「这一条该盖哪一档的印」;色与单字由上层去 `data/qualities` 取。与

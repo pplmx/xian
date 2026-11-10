@@ -43,7 +43,7 @@ const ach = (cond: AchievementDef["cond"]): AchievementDef => ({
   cond,
 });
 
-describe("成就报喜的品阶印 · 品质型成就", () => {
+describe("成就报喜的品质印 · 品质型成就", () => {
   it("品质条件读得出对应那一档 —— 神品成就盖「神」印", () => {
     expect(achievementSealOf(ach({ type: "quality", rank: 8 }))).toBe("divine");
   });

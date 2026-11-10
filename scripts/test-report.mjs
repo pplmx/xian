@@ -461,6 +461,7 @@ const CATEGORIES = [
       "mortalRouteShapes",
       "daoStackBound",
       "marketArbitrage",
+      "terminologyConsistency",
       "regionDanger",
       "artifactGrowth",
       "stackCap",

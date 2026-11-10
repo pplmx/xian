@@ -29,7 +29,7 @@
  * ## 为什么凡品占着头十二阶
  *
  * 凡品是**基线档**:表里写的数就是它的零重值 —— 那十二件的力量由基准值自己逐级
- * 抬升(回血 12% → 削弱 30%),不需要品质再抬一层。从第十三阶起才用品阶表达稀缺。
+ * 抬升(回血 12% → 削弱 30%),不需要品质再抬一层。从第十三阶起才用品质表达稀缺。
  * 另有两条压力把这条曲线钉在这里(loot.spec 的「品阶阶梯」盯着它们):
  *
  *   一 神品要稀缺:它在每个界域的掉落池里都只占个位数百分比,否则「神品」二字
@@ -840,7 +840,7 @@ export const ARTIFACT_DRAIN_HEAL_CAP = 1;
  */
 export const ARTIFACT_QUALITY_EXP = 0.5;
 
-/** 品阶倍率(凡品 1.0 → 神品 ≈3.08;品质倍率的开方,见 ARTIFACT_QUALITY_EXP) */
+/** 品质倍率(凡品 1.0 → 神品 ≈3.08;`quality` 倍率的开方,见 ARTIFACT_QUALITY_EXP) */
 export function artifactQualityMult(quality: QualityId): number {
   return Math.pow(qualityDef(quality).mult, ARTIFACT_QUALITY_EXP);
 }
