@@ -1,4 +1,4 @@
-/** 随机事件库 —— 119 个随机事件(含 21 个奇缘阶段) + 17 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 119 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -2599,7 +2599,7 @@ export const FORTUNE_EVENTS: EventDef[] = [
         { isDefault: true },
       ),
     ],
-    { element: "fire", minRealm: 3, maxRealm: MORTAL_END },
+    { element: "fire", minRealm: 2, maxRealm: MORTAL_END },
   ),
   ev(
     "ft_leize_leizhu",
@@ -2669,6 +2669,71 @@ export const FORTUNE_EVENTS: EventDef[] = [
         o(20, "老翁摇摇头:「你缘未至。」你悻悻而返。", { type: "nothing" }),
       ]),
       c("不去打扰", [o(1, "高人清修,你静立片刻,悄然离去。")], { isDefault: true }),
+    ],
+    { maxRealm: MORTAL_END },
+  ),
+  /*
+   * 早期地域(境界 1~3)每个细分标签只分摊到 1 条机缘 —— 黑风林/寒潭幽窟/万妖林
+   * 各 1 条,古战场遗迹 1 条。机缘是 2% 概率的稀有内容,1 条也算够用,
+   * 但早期恰恰是玩家最需要一个惊喜的地方。补两条给覆盖地域最多的两个标签。
+   */
+  ev(
+    "ft_woodcutter",
+    "山中樵语",
+    "林间一个樵夫正歇脚,担子里除了柴,还压着几卷被雨打湿的书 —— 纸上的字是一种你从没见过的算经。",
+    ["general", "forest"],
+    [
+      c("讨那几卷书", [
+        o(60, "樵夫摆摆手:「拿去吧,我识不得字,留着也是压柴。」", {
+          type: "material",
+          id: "page",
+          amount: 10,
+        }),
+        o(25, "樵夫不肯,却愿意让你抄一夜。抄到天亮,你记住了其中的算法。", {
+          type: "exp",
+          secs: 80,
+        }),
+        o(15, "书页一见风就烂成了泥,只剩下几笔残墨。", { type: "nothing" }),
+      ]),
+      c(
+        "替他担一程",
+        [
+          o(1, "你把柴担挑到山下。樵夫塞给你一小袋灵草,说了句「好人自有好报」。", {
+            type: "material",
+            id: "herb",
+            amount: 12,
+          }),
+        ],
+        { isDefault: true },
+      ),
+    ],
+    { maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ft_war_bones",
+    "战骨拾遗",
+    "古战场的土被风翻开,露出一具完整的骸骨。它的手还握着半截枪杆,指节扣得很紧。",
+    ["general", "ruin"],
+    [
+      c("取走那半截枪", [
+        o(50, "你一根一根掰开指节。枪入手极沉,枪尖上仍有一点未散的战意。", {
+          type: "equipment",
+          minQualityRank: 2,
+        }),
+        o(30, "你掰不动他的手。那具骸骨忽然整个塌成灰,枪也没了。", { type: "nothing" }),
+        o(20, "指尖刚触到枪杆,一股杀意冲上来,你踉跄后退。", { type: "buff", id: "injury" }),
+      ]),
+      c(
+        "覆土重新埋好",
+        [
+          o(1, "你花了半日把土盖回去。做完之后,这片战场似乎更静了些。", {
+            type: "material",
+            id: "wudao",
+            amount: 10,
+          }),
+        ],
+        { isDefault: true },
+      ),
     ],
     { maxRealm: MORTAL_END },
   ),

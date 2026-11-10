@@ -30,7 +30,7 @@ import { EQUIPMENT_TEMPLATES } from "@/data/equipment";
 import { ARTIFACTS, ARTIFACT_MAX_SLOTS } from "@/data/artifacts";
 import { SECRET_REALMS } from "@/data/secretRealms";
 import { CHAINS } from "@/data/chains";
-import { EVENTS, eventDef } from "@/data/events";
+import { EVENTS, FORTUNE_EVENTS, eventDef } from "@/data/events";
 import { PETS } from "@/data/pets";
 import { WORLD_WEATHERS, WEATHERS } from "@/core/weather";
 
@@ -338,6 +338,44 @@ describe("内容密度 · 每个地域的带内可用事件不少于 3 条", () 
       thin,
       `这些地域的带内可用事件不足 ${MIN_USABLE_EVENTS} 条 —— 玩家在那一境会把同一件事反复撞见:` +
         thin.join("、"),
+    ).toEqual([]);
+  });
+});
+
+/**
+ * 每个地域都得**抽得到**一条机缘 —— 按境界带过滤后不许为空。
+ *
+ * ## 这条为什么单独列出来
+ *
+ * 上面那条管的是「际遇」(`EVENTS`),机缘(`FORTUNE_EVENTS`)是另一张表、另一条抽取路径
+ * (`pickEventFor` 里那 2% 的分支),两条不能混。实测踩过一次:
+ *
+ * - `ft_chiyan_huoling`(火域遗火)第 30 轮补的时候写 `minRealm: 3`,
+ *   **而赤炎火域本身是境界 2 起** —— 于是这一处一条专属机缘都抽不到,
+ *   而当时所有判据都是绿的(标签池里它明明有 1 条)。
+ *
+ * 与际遇那条的区别是**底线不同**:际遇要求 ≥3,机缘只要求 ≥1 ——
+ * 机缘是 2% 概率的稀有内容,一个地域摊到 1 条是合理的;
+ * 但「摊到 0 条」意味着那个标签在本地域**完全无效**。
+ */
+describe("内容密度 · 每个地域的带内可用机缘不少于 1 条", () => {
+  it("逐地域按境界带过滤后,可用机缘数不低于 1", () => {
+    const dead: string[] = [];
+    for (const region of REGIONS) {
+      const local = region.eventTags.filter((t) => t !== "general");
+      const usable = FORTUNE_EVENTS.filter(
+        (e) =>
+          e.tags.some((t) => local.includes(t)) &&
+          (e.minRealm ?? 0) <= region.minRealm &&
+          (e.maxRealm ?? Infinity) >= region.minRealm,
+      );
+      if (usable.length === 0) {
+        dead.push(`${region.name}(境界 ${region.minRealm})`);
+      }
+    }
+    expect(
+      dead,
+      "这些地域一条机缘都抽不到 —— 那一处的标签对所有机缘都不生效:" + dead.join("、"),
     ).toEqual([]);
   });
 });

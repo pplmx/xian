@@ -103,6 +103,14 @@ const FORTUNE_ECHO_TEXTS: Record<string, { form: EchoForm; line: string }> = {
     form: "recognize",
     line: "那段声音又飘来了,比上一世更近些 —— 它记得你曾屏息听过,也记得你没有循它而去。",
   },
+  ft_woodcutter: {
+    form: "traces",
+    line: "那樵夫还在原处歇脚,担子里的书换了一批。你曾替他把柴挑到山下。",
+  },
+  ft_war_bones: {
+    form: "traces",
+    line: "风又把那片土吹开了。你曾见过这具骸骨,也曾在它旁边站了很久。",
+  },
 };
 
 /**
