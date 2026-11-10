@@ -11219,6 +11219,38 @@ async function taskFirstSight() {
       },
     });
 
+    /*
+     * 败局夹具 —— 与上面那份胜局夹具**成对**存在。
+     *
+     * 胜局那一侧钉的是「赢了也要说为什么赢、且不许给方向」;败局这一侧钉的是
+     * 三条只有败局才走得到的契约:
+     *   ① 分析面板自动展开(玩家会去翻原因,不必再点一次);
+     *   ② 方向建议**必须引用触发它的那条归因** ——「背水流 —— 冲着「真伤…」去的」,
+     *      而不是只报流派名与自述(那是流派广告,不是处方);
+     *   ③ 方向不许是「你正在用的那个流派」(排除当前主流派)。
+     *
+     * 读数刻意压到真伤阈之上(`PIERCE_SHARE_WARN = 0.35`):taken 2000 里 1500 是真伤,
+     * 于是「真伤占了承伤的 N%」那条必然触发,方向才有依据可引。
+     */
+    const mkLossBattle = () => ({
+      enemyId: "e_sword_guard",
+      enemyName: "守剑石人",
+      enemyIcon: "sword",
+      isBoss: false,
+      at: Date.now() - 60_000,
+      firstSight: false,
+      result: {
+        win: false,
+        log: [{ t: "info", text: "守剑石人一剑破空。" }],
+        rounds: 9,
+        playerHpPct: 0,
+        stats: {
+          player: mkSide({ taken: gn(2000), pierceTaken: gn(1500), biggestHitTaken: gn(600) }),
+          enemy: mkSide({ dealt: gn(2000), taken: gn(700) }),
+        },
+      },
+    });
+
     let page = await ctx.newPage();
     await page.addInitScript(() => {
       Math.random = () => 0.5;
@@ -11326,6 +11358,95 @@ async function taskFirstSight() {
             `(«${winInfo.findings[0].slice(0, 28)}…»)`,
         );
       }
+    }
+
+    /*
+     * 四 败局归因与方向 —— 与上面胜局那一侧成对。
+     *
+     * 胜局钉「不给方向」,败局钉「方向必须引用依据」。这条契约只有败局走得到,
+     * 而它此前只在单测里被覆盖 —— 真实渲染路径(面板自动展开、方向那一段
+     * `.combat-intel__directions`)没有被端到端验过。
+     */
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.adventure = { ...slices.adventure, ...mkSession(mkLossBattle()) };
+      await seedSave(ctx, slices, "__battleLossFindings");
+    }
+    await page.close();
+    page = await ctx.newPage();
+    await page.addInitScript(() => {
+      Math.random = () => 0.5;
+    });
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/adventure", 900);
+    await clearOverlays(page);
+    /*
+     * 败局分析的自动展开靠 `watch(battle.value?.at)`:那是**这一拍**打出来的战果。
+     * 本夹具是预置存档(进页面时战果已经在 store 里),`at` 不会变,watch 不会触发 ——
+     * 故这里手动点开。真实游玩里玩家刚打完,watch 会替他展开;
+     * 本任务量的是**面板里的内容对不对**,不是那个 watch(它有单测覆盖)。
+     */
+    await page.waitForTimeout(400);
+    const analysisBtn = page.locator("button", { hasText: /战斗分析/ }).first();
+    if ((await analysisBtn.count()) > 0) {
+      await analysisBtn.click({ timeout: 3000 }).catch(() => {});
+      await page.waitForTimeout(300);
+    }
+    const lossInfo = await page.evaluate(() => {
+      const el = document.querySelector("[data-battle-analysis]");
+      if (!el) return null;
+      const directionEls = [...el.querySelectorAll(".combat-intel__directions button")];
+      return {
+        findings: [...el.querySelectorAll(":scope > p")]
+          .slice(1)
+          .map((p) => (p.textContent || "").replace(/\s+/g, " ").trim())
+          .filter((t) => t && !/^·?\s*可借力/.test(t)),
+        directions: directionEls.map((b) => (b.textContent || "").replace(/\s+/g, " ").trim()),
+        hasDirectionsBlock: Boolean(el.querySelector(".combat-intel__directions")),
+      };
+    });
+    if (!lossInfo) {
+      failures.push("[390] 败局归因:分析面板没自动展开 —— 输了还要玩家自己点开才看得到输因");
+    } else if (/NaN|undefined|Infinity/.test(lossInfo.findings.join(" "))) {
+      failures.push(`[390] 败局归因:漏出占位符 —— «${lossInfo.findings.join(" | ")}»`);
+    } else if (lossInfo.findings.length === 0) {
+      failures.push("[390] 败局归因:输了却一条归因都没有");
+    } else if (!lossInfo.hasDirectionsBlock || lossInfo.directions.length === 0) {
+      failures.push(
+        `[390] 败局归因:真伤占 75% 的败局没有给出「可借力的方向」—— 只说病因、不给药。` +
+          `findings=«${lossInfo.findings.join(" | ")}»`,
+      );
+    } else {
+      /*
+       * 方向要「冲着某条病因」去 —— 展开每一条,读它的理由。
+       * 理由里必须出现「冲着「…」去的」这个引用形状,且引用到的依据要能在
+       * findings 里找到出处(不许编一条不存在的病因)。
+       */
+      for (let i = 0; i < lossInfo.directions.length; i += 1) {
+        const btn = page.locator(".combat-intel__directions button").nth(i);
+        await btn.click({ timeout: 2000 }).catch(() => {});
+        await page.waitForTimeout(120);
+      }
+      const reasons = await page.evaluate(() => {
+        const el = document.querySelector(".combat-intel__directions");
+        if (!el) return [];
+        return [...el.querySelectorAll("span.text-note, .text-violet-ink")]
+          .map((n) => (n.textContent || "").replace(/\s+/g, " ").trim())
+          .filter((t) => t.length > 4);
+      });
+      const joined = reasons.join(" | ");
+      const quoted = [...joined.matchAll(/冲着「([^」]+)」去的/g)].map((m) => m[1]);
+      if (quoted.length === 0) {
+        failures.push(
+          `[390] 败局方向:理由里没有引用依据 —— 只有流派自述等于广告,不是处方。«${joined}»`,
+        );
+      }
+      console.log(
+        `\n败局归因:${lossInfo.findings.length} 条 · 方向 ${lossInfo.directions.length} 条` +
+          `(«${lossInfo.directions.join(" / ")}»)` +
+          (quoted.length ? ` · 引用依据 ${quoted.length} 处` : ""),
+      );
     }
 
     if (pageErrors.length) {
