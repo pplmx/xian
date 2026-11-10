@@ -39,6 +39,8 @@
  * 它不规定道途该叫什么、该多强 —— 那是设计的事;它只钉住"这条路在终局有人接"。
  */
 import { describe, expect, it } from "vite-plus/test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { DAO_PATHS } from "@/data/endgame";
 import { MAX_COMBAT_ROUNDS } from "@/data/constants";
 import { SWORD_PURITY_MAX_LAYERS } from "@/core/daoDepth";
@@ -375,5 +377,60 @@ describe("终局道途 · 没有一条是净亏的陷阱", () => {
       "这些道途选下去**净亏** —— 而道途是一世只能选一次的不可逆选择,不该是陷阱:" +
         losers.join("、"),
     ).toEqual([]);
+  });
+});
+
+/**
+ * 道途确认弹窗要摊开「章法」—— 同一个决定,后一步的信息不许比前一步少。
+ *
+ * ## 缺口
+ *
+ * 道途是**一世只选一次**的不可逆选择。它的信息散在三处:
+ *
+ * - 选择列表(`celestial-dao__choice`):`desc` + `ruleText` + **`deepText`(章法)**;
+ * - 确认弹窗(`pendingDao`):此前只有 `desc` + `ruleText` —— **没有章法**;
+ * - 已定之后的展示(`currentDao`):`deepText` 又回来了。
+ *
+ * 于是玩家在列表里读到「长生印:每五回合得一印,恢复 4% 气血、凝 4% 护盾」,
+ * 点进确认弹窗反而看不到它 —— 而弹窗才是**此世最后一次能读到它的地方**,
+ * 点下去就锁到转世。
+ *
+ * 这是全仓反复出现的一个形状:**同一个决定,前一步的信息比后一步更全**。
+ * 前几步给足、最后一步收窄,恰好收在玩家最需要确认的那一刻。
+ *
+ * ## 判据
+ *
+ * 确认弹窗必须渲染 `deepText`,且带一个可量到的落点
+ * (`data-dao-confirm-deep`)—— 有了落点,浏览器门才能核它在真实 DOM 里出现。
+ */
+describe("道途 · 确认弹窗要摊开章法", () => {
+  it("不可逆决定的最后一道确认里必须有章法", () => {
+    const view = readFileSync(resolve(__dirname, "../views/CelestialView.vue"), "utf8");
+    /*
+     * 定位确认弹窗那一段(从 `pendingDao !== undefined` 到该 BaseModal 结束),
+     * 只在这一段里查 —— 别处出现 deepText(选择列表、已定展示)不算数。
+     */
+    const start = view.indexOf('title="定下道途"');
+    expect(start, "找不到道途确认弹窗").toBeGreaterThan(-1);
+    const end = view.indexOf("</BaseModal>", start);
+    expect(end, "确认弹窗没有正常闭合").toBeGreaterThan(start);
+    const dialog = view.slice(start, end);
+    expect(dialog, "确认弹窗里没有章法(deepText)—— 玩家在最后一步看到的信息反而更少").toContain(
+      "pendingDao.deepText",
+    );
+    expect(dialog, "章法要有可量到的落点,否则浏览器门核不到它").toContain("data-dao-confirm-deep");
+    // 防空转:这一段里确实有内容(标题与确认按钮都在)
+    expect(dialog, "弹窗结构变了 —— 判据可能没切对区间").toContain("道心已定");
+  });
+
+  it("选择列表与确认弹窗读的是同一份章法,不许一处有、一处无", () => {
+    /*
+     * 「一处有、一处无」正是这次的缺陷形态。这条把两边一起核:
+     * 列表读 `dao.deepText`,弹窗读 `pendingDao.deepText` ——
+     * 两边都是同一个 `DaoPathDef.deepText`,谁也不许单独省略。
+     */
+    const view = readFileSync(resolve(__dirname, "../views/CelestialView.vue"), "utf8");
+    expect(view, "选择列表该印章法").toMatch(/v-for="\(r, i\) in dao\.deepText"/);
+    expect(view, "确认弹窗该印章法").toMatch(/v-for="\(r, i\) in pendingDao\.deepText"/);
   });
 });

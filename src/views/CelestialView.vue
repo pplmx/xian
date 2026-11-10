@@ -303,6 +303,22 @@
         <p v-for="(r, i) in pendingDao.ruleText" :key="i" class="mt-0.5 text-body text-qing">
           · {{ r }}
         </p>
+        <!--
+          章法(deepText)在确认弹窗里必须也摊开。
+          此前的弹窗只印 `desc` + `ruleText`,而**选择列表那一栏是印了 `deepText` 的**
+          (`celestial-dao__choice-deep`)—— 于是玩家在列表里读过「长生印每五回合得一印」,
+          点进确认弹窗反而看不到它,而弹窗才是**此世最后一次能读到它的地方**
+          (点下去就锁到转世)。
+          这是全仓反复出现的形状:同一个决定,前一步的信息比后一步更全。
+        -->
+        <p
+          v-for="(r, i) in pendingDao.deepText"
+          :key="`d${i}`"
+          class="mt-0.5 text-body text-ink-soft"
+          data-dao-confirm-deep
+        >
+          ◇ {{ r }}
+        </p>
         <p class="mt-3 border-l-2 border-cinnabar/60 pl-2 text-body text-cinnabar">
           道途既定，此世不再更改;误选须待兵解转世方能重择
         </p>
