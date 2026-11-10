@@ -18804,7 +18804,14 @@ async function taskCultivationFold() {
     hasTouch: true,
   });
   try {
-    await seedSave(ctx, showcaseSlices("light"), "__cultivationFold");
+    /*
+     * 宿慧拉过 600 —— 本支要验「天数可窥」是否接线，而 showcase 档的宿慧是 260，
+     * 不到「熟知天界」（600）那一阶，预览**本来就不该出现**。
+     * 第一版没注意这点，把「正确的不显示」报成了「断线」（实测踩过）。
+     */
+    const foldSlices = showcaseSlices("light");
+    foldSlices.player.reincarnation = { ...foldSlices.player.reincarnation, insight: 900 };
+    await seedSave(ctx, foldSlices, "__cultivationFold");
     const page = await ctx.newPage();
     await page.addInitScript(() => {
       Math.random = () => 1;
@@ -18813,6 +18820,36 @@ async function taskCultivationFold() {
     watchPageErrors(page, pageErrors);
     const rendered = await openRoute(page, "/cultivation", 700);
     checked += 1;
+    /*
+     * 天数可窥 —— `SamsaraStageDef.heavenInsight`（「熟知天界」，600 宿慧）
+     * 此前全仓没有任何产品代码读它，只有数据定义与一条单调性判据。
+     *
+     * 第 36 轮接上：不藏现有信息，而是**提前**给一件本来要等到那一境才知道的事
+     * —— 下一境将遇何劫。解锁的是时间，不是内容（与 `enemyInsight` 下调认知门槛
+     * 是同一个形状）。
+     *
+     * 这一支用 showcase 满档（宿慧远高于 600），故**应当**看得到预览。
+     * 未达阶那一侧由 `heavenInsightPreview.spec` 钉住（这里跑不到低宿慧档）。
+     */
+    checked += 1;
+    {
+      const preview = await page.evaluate(() => {
+        const el = document.querySelector("[data-heaven-insight]");
+        return el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null;
+      });
+      if (!preview) {
+        failures.push(
+          "[390-cultivation] 满档下没有「下一个大关是某劫」的预览 —— heavenInsight（熟知天界）又断线了",
+        );
+      } else if (/NaN|undefined|Infinity/.test(preview)) {
+        failures.push(`[390-cultivation] 天数可窥的预览漏出占位符 —— «${preview}»`);
+      } else if (!/下一个大关是「[^」]+」/.test(preview)) {
+        failures.push(`[390-cultivation] 天数可窥没报出劫名 —— «${preview}»`);
+      } else if (preview.length < 16) {
+        failures.push(`[390-cultivation] 天数可窥只报了劫名，没说它会怎么伤到你 —— «${preview}»`);
+      }
+    }
+
     if (rendered === 0) {
       failures.push("[390-cultivation] 修行页没渲染出来,续卷判据没量到东西");
     } else {

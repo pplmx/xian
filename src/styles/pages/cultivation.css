@@ -911,6 +911,20 @@
     line-height: 1.55;
   }
 
+  /*
+   * 天数可窥 —— 下一个大关将遇何劫。它不是这一劫的读数，是一条**预告**，
+   * 故与上方 measure 之间留一道细线，且用 faint 档：读它时不必打断
+   * 「此刻这一劫怎么样」那几句。
+   */
+  .cultivation-breakthrough__heaven {
+    margin-top: 0.5rem;
+    padding-top: 0.4rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.07);
+    color: var(--color-ink-faint);
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+
   .cultivation-breakthrough__buff {
     margin-top: 0.58rem;
     padding-top: 0.5rem;

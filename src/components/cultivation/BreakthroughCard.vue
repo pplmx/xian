@@ -62,6 +62,20 @@
           <p v-else class="cultivation-breakthrough__value font-kai text-ink-faint">非大关</p>
         </div>
       </div>
+      <!--
+        天数可窥 —— 「熟知天界」（600 宿慧）以后**提前**看见下一个大关将遇何劫。
+
+        放在 measure 块**外面**是有意的：那片区域只在 `tribPlan` 存在时渲染，
+        而 `tribPlan` 要求 `isMajorStep`（sub 满）—— 那时人已经站在大关前，
+        不再是「提前」。真正的提前是**还在小境时就看得见**。
+
+        这一阶此前全仓没有任何落点（`SamsaraStageDef.heavenInsight` 无人读）。
+        做法照同一批字段里的 `enemyInsight`：不藏现有信息，只提前给一件
+        本来要等到那一境才知道的事 —— 解锁的是时间，不是内容。
+      -->
+      <p v-if="nextTribPreview" class="cultivation-breakthrough__heaven" data-heaven-insight>
+        下一个大关是「{{ nextTribPreview.name }}」：{{ nextTribPreview.desc }}
+      </p>
 
       <!--
       破境增益 · 此刻在身:小进阶的成功率是谁在顶,突破前一眼见 —— buff→modsText,
@@ -184,6 +198,10 @@ import { useCultivationStore } from "@/stores/cultivation";
 import { useUiStore } from "@/stores/ui";
 import { attemptBreakthrough, breakthroughInfo, expectedTries } from "@/core/breakthrough";
 import { todayWeather } from "@/core/weather";
+import { stageAt } from "@/data/samsara";
+import { totalInsight } from "@/core/samsaraService";
+import { rollTribulation } from "@/core/tribulationDecision";
+import { nextTribulationPreview } from "@/ui/heavenInsightPreview";
 import { prepareBreakthrough, pillPrepShortfall } from "@/core/earlyGameService";
 import { toNum } from "@/utils/gnum";
 import {
@@ -276,6 +294,25 @@ const PLAN_COLOR: Record<TribulationPlan["verdict"], string> = {
  * (见 breakthrough.ts 的 needTribulation = isMajorStep),值守恒不靠副产物。
  */
 const tribPlan = computed(() => (player.isMajorStep ? currentTribulationPlan(player) : null));
+
+/**
+ * 下一个大关将遇何劫 —— 只在「熟知天界」以后给（`heavenInsight`）。
+ *
+ * 「下一个大关」是**还没到达的那一关**，不是「此刻正要渡的那一关」。
+ * 前者才是「提前」：还在小境（sub < 9）的玩家也想知道自己再过几境要撞什么，
+ * 而那一屏本来只有「非大关」三个字。
+ *
+ * 不能复用 `currentTribulationPlan` 的目标境 —— 它的口径是
+ * `isMajorStep ? major + 1 : major`，那是「此刻这一劫打的是哪一境」。
+ * 在小境上直接用它，会指向**已经走过的这一境**。
+ *
+ * 小境与大关两种情况，下一个大关都是 `major + 1`，语义却不同，故直接写清楚。
+ * 到顶时由 `rollTribulation` 之外的守卫给 null（见 `heavenInsightPreview`）。
+ */
+const nextTribPreview = computed(() => {
+  if (!stageAt(totalInsight()).heavenInsight) return null;
+  return nextTribulationPreview(true, rollTribulation(player.major + 1), player.major + 1);
+});
 
 /**
  * 破境增益 · 此刻在身 —— 小进阶的成功率读 breakthroughRate,读数只是结果;

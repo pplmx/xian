@@ -445,6 +445,7 @@ const CATEGORIES = [
       "skillInsightDesk",
       "loreInsightByKind",
       "stageBenefits",
+      "heavenInsightPreview",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",
