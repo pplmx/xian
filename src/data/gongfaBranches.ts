@@ -703,6 +703,23 @@ export const GONGFA_BRANCHES: GongfaBranchDef[] = [
   b("m_dujie", "b_dujie_lei", "雷罚", "雷气入杀,劫雷加身", { attackPct: 0.2, damageBonus: 0.05 }),
   b("m_dujie", "b_dujie_cui", "淬体", "以雷淬骨,劫火不伤", { maxHpPct: 0.2, damageReduction: 0.1 }),
 
+  // ---- 云气化形(仙界境 9) ----
+  b("x_yunqi", "b_yunqi_xing", "拟形", "借来的形,也能护住自己", {
+    dodgeRate: 0.12,
+    damageReduction: 0.1,
+  }),
+  b("x_yunqi", "b_yunqi_san", "散气", "散了才难捉,难捉才难打", {
+    maxHpPct: 0.14,
+    regenPerRound: 0.01,
+  }),
+
+  // ---- 星罗棋布(仙界境 10) ----
+  b("x_xingluo", "b_xingluo_bu", "布子", "落子在先,变化在后", { critRate: 0.08 }),
+  b("x_xingluo", "b_xingluo_pan", "观盘", "盘上看得见的,地上也躲不掉", {
+    eventLuck: 0.2,
+    dropRate: 0.18,
+  }),
+
   // ---- 太乙:太乙金华(仙界,补该境空白) ----
   b("x_taiyi", "b_taiyi_shou", "守中", "守中致虚,道心更明", {
     cultivationSpeed: 0.3,
