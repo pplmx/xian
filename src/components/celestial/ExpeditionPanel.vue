@@ -50,7 +50,7 @@
           <template
             v-if="run.winStacks && (endgame.daoPath === 'sword' || endgame.daoPath === 'slaughter')"
           >
-            · {{ endgame.daoPath === "sword" ? "剑意" : "杀意" }} {{ run.winStacks }} 层
+            · {{ endgame.daoPath === "sword" ? "蓄势" : "杀意" }} {{ run.winStacks }} 层
           </template>
         </p>
         <div class="mt-1.5 space-y-1">

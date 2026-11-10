@@ -41,6 +41,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { DAO_PATHS } from "@/data/endgame";
 import { MAX_COMBAT_ROUNDS } from "@/data/constants";
+import { SWORD_PURITY_MAX_LAYERS } from "@/core/daoDepth";
 
 describe("终局道途 · 护盾流有人接", () => {
   /**
@@ -217,6 +218,49 @@ describe("终局道途 · 章法里的数必须能在实现里找到", () => {
     ).toEqual([]);
     // 防空转:正则写错(比如全角百分号)会让上面永远通过
     expect(checkedNumbers, "一个百分数都没扫到 —— 判据会空转").toBeGreaterThan(4);
+  });
+
+  /**
+   * 「至多四层」这类**中文数词**承诺也要核。
+   *
+   * 上一条只扫 `\d+%`,而镇岳道那句真正的错在「至多四层」——
+   * 它当时只有 3 条纯度判据,「四层」是照抄剑道的残留。
+   * 百分比那半能抓住 6%/2%,但抓不住这个数。
+   *
+   * 口径:章法里出现「至多 N 层 / N 层」时,N 必须等于**该道途真实存在的层数上限**;
+   * 没有任何层数机制的道途,章法里根本不该出现「N 层」。
+   * 现在只有剑道有层数机制(`SWORD_PURITY_MAX_LAYERS`),故其余道途一律不许写。
+   */
+  it("章法里的「N 层」必须与真实的层数上限一致", () => {
+    const NUM = { 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8 } as Record<
+      string,
+      number
+    >;
+    /** 该道途真实的层数上限;没有层数机制的道途是 0 */
+    const layerCap = (id: string): number => (id === "sword" ? SWORD_PURITY_MAX_LAYERS : 0);
+    const offenders: string[] = [];
+    let seen = 0;
+    for (const path of DAO_PATHS) {
+      const cap = layerCap(path.id);
+      for (const line of path.deepText) {
+        for (const m of line.matchAll(/([一二三四五六七八\d]+)\s*层/g)) {
+          seen += 1;
+          const n = NUM[m[1]!] ?? Number(m[1]);
+          if (!Number.isFinite(n)) continue;
+          if (cap === 0) {
+            offenders.push(`${path.name}:章法写「${m[1]} 层」,但这一道没有层数机制`);
+          } else if (n > cap) {
+            offenders.push(`${path.name}:章法写「${m[1]} 层」,而上限只有 ${cap} 层`);
+          }
+        }
+      }
+    }
+    expect(
+      offenders,
+      "章法承诺的层数与实现里的层数上限对不上 —— 数字错位比措辞错更危险:" + offenders.join("; "),
+    ).toEqual([]);
+    // 防空转:剑道那条「至多四层」必须被扫到,否则说明正则或数据都不对
+    expect(seen, "一个「N 层」都没扫到 —— 判据会空转(剑道章法里本来就写着层数)").toBeGreaterThan(0);
   });
 
   it("章法里不许出现「必」这类绝对断言,除非该道途真有 100% 触发项", () => {
