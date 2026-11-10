@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 644 个 spec;本作自己那部分 564 个) |
+| `bun run test` | 全量用例(全量 645 个 spec;本作自己那部分 565 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 644 个 spec = 宿主 551 + 引擎 80,别把 644 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 645 个 spec = 宿主 551 + 引擎 80,别把 645 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 644 个 spec(本作自己那部分 564 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 645 个 spec(本作自己那部分 565 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -4373,14 +4373,14 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 564 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 565 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
 
 ```text
 第一版:326 个 spec · 4117 条标题
-修正后:564 个 spec · 6319 条标题   (+54%)
+修正后:565 个 spec · 6319 条标题   (+54%)
 ```
 
 > 这是一类**最难自查的错误**:工具跑得通、输出格式对、报出来的缺口具体到表与维度名 ——
@@ -4472,7 +4472,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**644 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**645 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -5848,3 +5848,60 @@ n=5     [1,2,4,2,1]  [1,2,4,4,2]
 ```
 
 ③ 是这条判据的边界声明:**选择逻辑再巧,池子不够也变不出层级正确的首领**。
+
+### 抽得最勤的两个标签,池子最浅
+
+接着上一条线查事件标签。凡界路线按区域标签抽事件,而标签的事件池大小差了一个量级:
+
+```text
+标签       池子    300 世里被抽中
+sword      2 条    401 次   ← 最勤、最浅
+ice        2 条    345 次
+thunder    5 条    366 次
+fire       5 条    404 次
+general   81 条    221 次
+```
+
+`sword` 与 `ice` 是**抽得最勤、池子最浅**的两个:一世 6 段里会撞见同一标签三到五次,
+而只有 2 条事件可落 —— 玩家在同一世就会反复看到同样的两条。
+
+各补两条(到 4 条),与 `thunder` / `fire` 的 5 条同量级。事件总数 119 → 123。
+
+### 补内容撞出四处计数
+
+四条新事件一加,四条判据同时红 —— 而且每条都指出了具体该改哪里:
+
+```text
+contentReachabilityAudit   ev_hanquan_jie 指向不存在的丹药 p_huiling
+dataHeaderAudit            events.ts 头注释写 119,实际 123
+usageDocCounts             usage.md 写 119,实际 123
+codexScale                 九册全收 916 → 920
+eventRealmBand             四条新事件没设 maxRealm
+```
+
+`contentReachabilityAudit` 那条最有价值:**我写了一个不存在的丹药 id**
+(`p_huiling` 应为 `p_huichun`)。没有这条判据,它会静默变成一个「什么也不给」的分支。
+
+`eventRealmBand` 那条让我发现 `maxRealm: 12` 是错的 —— 人间界上限是
+`MORTAL_END`(= `WORLD_BREAK_MAJOR - 1` = 8 渡劫),不是 12。两条通用事件
+从人间界一路漏到仙界。改用 `MORTAL_END` 之后才对。
+
+> 补内容时,**判据是唯一会告诉你「你写错了什么」的东西**。
+> 这一轮四处报警里,三处是我写错的数字/ id,不是我忘了同步的地方。
+
+### 判据:标签供给要跟得上抽取
+
+```text
+① 凡界专有标签每条至少 4 条事件
+② 没有任何标签薄于 2 条
+③ 反空转:标签 ≥ 10 种、事件 ≥ 50 条、MORTAL_TAGS 里的标签都真实存在
+```
+
+不要求「所有标签一样多」—— `general` 81 条是通用池,本来就该厚。
+守的是**专有标签不能薄到失去变化**。
+
+线画在 4 的理由:一条路线 6 段、每段 1~4 个标签,玩家一世里会撞见同一标签三到五次;
+池子 3 条时第三次就必然重复,4 条还能撑。
+
+② 那条的措辞值得记:**「这些标签只对应一条事件 —— 抽中它等于抽中那条,不如直接点名」**。
+一个只有 1 条事件的标签不是标签,是别名。

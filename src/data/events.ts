@@ -1,4 +1,4 @@
-/** 随机事件库 —— 119 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 123 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -419,6 +419,140 @@ export const EVENTS: EventDef[] = [
       ),
     ],
     { minRealm: 4, maxRealm: 8 },
+  ),
+  /*
+   * `sword` / `ice` 两个标签各只有 2 条事件,而它们在凡界路线上被抽中
+   * **400 次 / 300 世** —— 玩家会反复撞见同一条。
+   * 实测(300 世):sword 401 次 / 池 2 条,ice 345 次 / 池 2 条;
+   * 对比 general 221 次 / 池 81 条。供给严重不均。
+   *
+   * 这里各补两条,让它们到 4 条(thunder / fire 是 5 条,同量级)。
+   */
+  ev(
+    "ev_jianxiu_duanren",
+    "剑修断刃",
+    "山道旁坐着个断了右臂的剑修,膝上横着半截剑。他抬眼:「替我看看,这剑还能不能出鞘。」",
+    ["general", "sword", "mountain", "ruin"],
+    [
+      c("接过断刃细看", [
+        o(45, "刃口虽有崩缺,剑脊仍直。你说「能」,他笑了,把剑推给你:「那就送你。」", {
+          type: "equipment",
+          minQualityRank: 5,
+        }),
+        o(35, "你看了许久,只看出「可惜」两个字。他也不恼,收剑起身走了。", {
+          type: "exp",
+          secs: 50,
+        }),
+        o(20, "断刃入手极沉,剑意反冲,你虎口崩裂。", { type: "buff", id: "injury" }),
+      ]),
+      c(
+        "问他为何断臂",
+        [
+          o(60, "「换了一剑」。他说得轻描淡写。你觉得这四个字里有些东西,比剑谱值钱。", {
+            type: "exp",
+            secs: 90,
+          }),
+          o(40, "他摇头不答,只把剑插回背上,慢慢走远了。", { type: "nothing" }),
+        ],
+        { isDefault: true },
+      ),
+      leave("你没有停步。萍水相逢,不必都问到底。"),
+    ],
+    { minRealm: 5, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ev_shijian_zhi",
+    "试剑之石",
+    "谷中立着一块青石,石上密布深浅不一的刻痕 —— 那是历代剑修试锋留下的。",
+    ["general", "sword", "mountain"],
+    [
+      c("全力一斩", [
+        o(40, "石屑纷飞,你的刻痕比大多数人深。你忽然明白自己的剑到了哪一步。", {
+          type: "exp",
+          secs: 85,
+        }),
+        o(40, "剑锋滑开,只留下一道浅白。你盯着它看了很久。", { type: "nothing" }),
+        o(20, "剑身反震,你手腕一麻,剑脱了手。", { type: "buff", id: "injury" }),
+      ]),
+      c(
+        "看别人的刻痕",
+        [
+          o(55, "最深的那一道旁刻着一行小字:「三十七岁,方知此石不必破」。你读了三遍。", {
+            type: "exp",
+            secs: 70,
+          }),
+          o(45, "刻痕太多,看久了只觉得眼花。", { type: "nothing" }),
+        ],
+        { isDefault: true },
+      ),
+      leave("你绕石而过。"),
+    ],
+    { minRealm: 4, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ev_bingbi_cangfeng",
+    "冰壁藏锋",
+    "寒潭尽头的冰壁里冻着一柄剑。剑身澄澈,连剑穗都停在半空中。",
+    ["general", "ice", "water"],
+    [
+      c("凿冰取剑", [
+        o(40, "冰壁应声而裂,剑落入手中 —— 冷的不是剑,是你的掌心。", {
+          type: "equipment",
+          minQualityRank: 5,
+        }),
+        o(35, "凿到一半,冰壁里映出你自己的脸。你停了手,把冰屑拂回去。", {
+          type: "exp",
+          secs: 60,
+        }),
+        o(25, "整块冰壁坍下来,你被压在下面,好容易才挣出来。", {
+          type: "buff",
+          id: "injury",
+        }),
+      ]),
+      c(
+        "隔冰观剑",
+        [
+          o(60, "你看了一整个下午。剑没动,但你回去之后,出手比从前慢了一线 —— 也准了一线。", {
+            type: "exp",
+            secs: 95,
+          }),
+          o(40, "什么也没看出来。冰壁冷得刺骨,你走了。", { type: "nothing" }),
+        ],
+        { isDefault: true },
+      ),
+      leave("你没有碰那块冰。"),
+    ],
+    { minRealm: 6, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ev_hanquan_jie",
+    "寒泉解冻",
+    "泉眼在雪下,凿开一个洞,水汽腾起来,暖得不像这个季节。",
+    ["general", "ice", "water", "forest"],
+    [
+      c("掬一捧喝", [
+        o(50, "入口先是刺骨,随即全身发暖 —— 你多年的旧伤竟轻了些。", {
+          type: "pill",
+          id: "p_huichun",
+          count: 1,
+        }),
+        o(50, "寒热交攻,你打了个寒噤,只好作罢。", { type: "nothing" }),
+      ]),
+      c(
+        "取水炼丹",
+        [
+          o(45, "你把水收进玉瓶。这东西在丹炉里比在嘴里值钱。", {
+            type: "material",
+            id: "herb",
+            amount: 18,
+          }),
+          o(55, "泉眼在你伸手时缩了回去,只剩一地湿痕。", { type: "nothing" }),
+        ],
+        { isDefault: true },
+      ),
+      leave("你把手缩回袖里。"),
+    ],
+    { minRealm: 6, maxRealm: MORTAL_END },
   ),
   ev(
     "ev_jianzhong_ming",

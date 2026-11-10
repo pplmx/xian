@@ -104,6 +104,7 @@ const CATEGORIES = [
       "engineUnlocks",
       "engineChain",
       "moduleCoverage",
+      "eventTagSupply",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
