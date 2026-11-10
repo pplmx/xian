@@ -708,7 +708,8 @@ describe("流派 id · 指向的必须是真存在的流派", () => {
     const seen = new Set<string>();
     const collect = (r: Parameters<typeof analyzeBattle>[0]): void => {
       const a = analyzeBattle(r, null);
-      for (const f of a?.findings ?? []) for (const h of f.styleHints) seen.add(h);
+      // styleHints 现在是可选的(胜局归因没有这一项)—— 这正是拆分类型后的形状
+      for (const f of a?.findings ?? []) for (const h of f.styleHints ?? []) seen.add(h);
     };
     const st = (o: Partial<CombatSideStats> = {}): CombatSideStats => ({
       dealt: gn(1000),
@@ -813,5 +814,65 @@ describe("流派 id · 指向的必须是真存在的流派", () => {
       nonNullFind,
       "又用上非空断言了 —— 那个 `!` 曾经是谎(找不到流派就跳过,别在 .name 上抛)",
     ).toBe(false);
+  });
+});
+
+/**
+ * 胜局归因没有「方向」这个字段可填 —— 靠类型而不是靠自觉。
+ *
+ * ## 为什么要拆
+ *
+ * 上一个缺陷是「胜局那 7 处 `styleHints` 永远不会被读,其中三处还指向一个
+ * 不存在的流派」。修掉那 7 处只是治标:**形状没变,下一个人照样能再填一遍**。
+ *
+ * 拆成 `DefeatFinding`(必须有 `styleHints`)与 `VictoryFinding`(根本没有这个字段)
+ * 之后,「胜局想给方向」在编译期就不可能 —— 除非有人先把类型改回去,
+ * 而那会撞上下面这条判据。
+ *
+ * 判据守两件:
+ * 一 三个败局归因函数的返回类型是 `DefeatFinding[]`(填不出没方向的条目);
+ * 二 胜局归因函数是 `VictoryFinding[]`,且函数体里不许出现 `styleHints`。
+ */
+describe("归因类型 · 胜局没有方向可填", () => {
+  const src = (): string => {
+    const raw = readFileSync(resolve(__dirname, "./battleAnalysis.ts"), "utf8");
+    return raw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  };
+
+  it("败局归因的返回类型是 DefeatFinding[] —— 填不出没方向的条目", () => {
+    const code = src();
+    for (const fn of ["firstMoveFinding", "foeOriginFinding", "defeatFindings"]) {
+      const re = new RegExp(`function ${fn}\\([\\s\\S]{0,400}?\\): (\\w+)\\[\\]`);
+      const m = re.exec(code);
+      expect(m, `找不到 ${fn} 的返回类型`).not.toBeNull();
+      expect(m![1], `${fn} 该返回 DefeatFinding —— 败局归因必须给出路`).toBe("DefeatFinding");
+    }
+  });
+
+  it("胜局归因是 VictoryFinding[],且函数体里不许出现 styleHints", () => {
+    const raw = readFileSync(resolve(__dirname, "./battleAnalysis.ts"), "utf8");
+    const start = raw.indexOf("function victoryFindings(");
+    const end = raw.indexOf("\n}\n", start);
+    expect(start, "找不到 victoryFindings").toBeGreaterThan(-1);
+    const head = raw.slice(start, start + 400);
+    expect(head, "victoryFindings 该返回 VictoryFinding[]").toMatch(/\): VictoryFinding\[\]/);
+    const body = raw
+      .slice(start, end)
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "");
+    expect(
+      body.includes("styleHints"),
+      "胜局归因里又出现 styleHints 了 —— VictoryFinding 根本没这个字段,填了也不读",
+    ).toBe(false);
+  });
+
+  it("VictoryFinding 确实没有 styleHints 字段", () => {
+    const code = src();
+    const m = /interface VictoryFinding \{([\s\S]*?)\n\}/.exec(code);
+    expect(m, "找不到 VictoryFinding 的定义").not.toBeNull();
+    expect(m![1], "VictoryFinding 又长回 styleHints 了 —— 胜局不给方向").not.toContain(
+      "styleHints",
+    );
+    expect(m![1], "VictoryFinding 该有 text").toContain("text");
   });
 });

@@ -2561,3 +2561,50 @@ major 14 打 tier 22 的世界是 330 倍碾压、打 tier 32 是 7.9e-5 完全�
 ② `styleHints` 不许退回宽 `string[]`(源码层);③ 胜局路径不许填 `styleHints`;
 ④ 不许再用 `find(...)!`(正则允许跨行 —— 第一版只匹配同一行,格式化器拆行后就漏了)。
 注入验证:胜局重新填 hint → ③ 红;改回 `!` → ④ 红;放宽类型 → `tsc` 与 ② 同时红。
+
+### 把「填了也不读」变成类型上不可能
+
+上一轮修掉了胜局归因里 7 处死 `styleHints`(其中三处指向不存在的 `cangfeng`)。
+但那只是治标 —— **形状没变,下一个人照样能再填一遍**,而且填了不会有任何报错,
+因为胜局 `directions` 恒为 `[]`,那个字段根本没人读。
+
+这一轮拆类型,让「胜局想给方向」在编译期就不可能:
+
+```ts
+interface AnalysisFinding { text: string; styleHints?: BuildStyleId[] }
+interface DefeatFinding extends AnalysisFinding { styleHints: BuildStyleId[] }  // 必须给
+interface VictoryFinding { text: string }                                        // 没有这个字段
+```
+
+三个败局归因函数(`firstMoveFinding` / `foeOriginFinding` / `defeatFindings`)
+返回 `DefeatFinding[]` —— 声明成这个类型就填不出「只报病因、不给方向」的条目;
+`victoryFindings` 返回 `VictoryFinding[]` —— **没有 `styleHints` 可填**。
+
+对外仍是 `findings: AnalysisFinding[]`(`styleHints` 可选):界面只读 `text`,
+胜败共用一个数组,对外接口收窄到最小形状是对的。
+
+**收窄当场就起作用了**:改完类型后 `tsc` 逐条点名胜局里残留的 8 处 `styleHints: []`,
+一条都跑不掉。这正是类型该做的事 —— 上一轮靠我人工搜出来的东西,
+这一轮编译器自己列了出来。
+
+判据三条:三个败局函数的返回类型必须是 `DefeatFinding[]`;
+`victoryFindings` 必须是 `VictoryFinding[]` 且函数体里不许出现 `styleHints`;
+`VictoryFinding` 的字段里不许长回 `styleHints`。
+
+注入验证:胜局重新填 `styleHints: []` → **`tsc` 直接报 TS2353**(`Object literal may only
+specify known properties`),同时判据也红;把 `styleHints` 加回 `VictoryFinding` → 判据红。
+
+### 一个反复出现的模式,记在这里
+
+最近几轮修的缺陷共享同一个形状:**某个字段/类型宽到能装下错误,而消费端又恰好不读它**。
+
+| 轮次 | 宽在哪里 | 后果 |
+| --- | --- | --- |
+| 3 | `shieldCapRatio: 0.5` 恰好等于默认值 | 契约一个字不改战局 |
+| 3 | 敌人 `speed` 词条并进 mods 后没人读 | 追风契卖 1.9 倍却无效 |
+| 11 | `styleHints: string[]` / `id: string` | 三个不存在的流派 id 活到线上 |
+| 12 | 胜局 `AnalysisFinding` 也能填 `styleHints` | 7 处死数据,其中 3 处是错的 |
+
+共同点:**没有一处会导致测试红**。它们不会崩、不会报错、数值稳定 ——
+只是安静地不生效。所以守这类缺陷不能靠跑测试,要靠
+① 把类型收窄到「错的东西写不出来」;② 用行为判据验「这个数真的改变了结果」。

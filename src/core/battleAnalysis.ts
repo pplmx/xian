@@ -7,16 +7,48 @@ import { ratio } from "@/utils/gnum";
 import { formatGN, formatPercent } from "@/utils/format";
 import { BUILD_STYLES, type BuildStyleId } from "./buildDetect";
 
+/**
+ * 一条归因 —— 界面按它渲染,所以**只有 `text` 是必需的**。
+ *
+ * ## 为什么 `styleHints` 是可选的
+ *
+ * 归因分两种用途:
+ *
+ * - **败局归因**要指向可借力的方向,故给出 `styleHints`(见 `DefeatFinding`);
+ * - **胜局归因**只说「靠什么赢的」,**不指向任何方向** —— 方向属于败局,
+ *   硬推一条等于劝玩家换掉一套刚赢下来的打法(见 `victoryFindings` 的注释)。
+ *
+ * 曾经两者共用一个「`styleHints` 必填」的形状,于是胜局那 7 处顺手填了流派 id,
+ * 而它们**永远不会被读**(胜局 `directions` 恒为 `[]`)。其中三处填的还是
+ * `"cangfeng"` —— 一个从不存在的流派,靠「没人读它」这个巧合活到了线上。
+ *
+ * 拆成两个类型之后,「胜局填了方向也不生效」这件事在类型层就写明了:
+ * `VictoryFinding` 根本没有 `styleHints` 这个字段可填。
+ */
 export interface AnalysisFinding {
   text: string;
-  /**
-   * 该问题指向的流派方向(按相关度排序)。
-   *
-   * 类型是 `BuildStyleId` 而不是 `string` —— 曾经写成 `string[]`,于是
-   * `["cangfeng"]`(一个从来不存在的流派)一路编译通过、活到线上;
-   * 它没炸只因为胜局路径的 `directions` 恒为 `[]`。见 `BuildStyleId` 的注释。
-   */
+  /** 指向的流派方向(按相关度排序);胜局归因没有这一项 */
+  styleHints?: BuildStyleId[];
+}
+
+/**
+ * 败局归因 —— **必须**指向方向。
+ *
+ * 单独成型是为了让「败局归因要给出路」成为类型约束:
+ * 一个函数若声明返回 `DefeatFinding[]`,就填不出「只报病因、不给方向」的条目。
+ */
+export interface DefeatFinding extends AnalysisFinding {
   styleHints: BuildStyleId[];
+}
+
+/**
+ * 胜局归因 —— 只有正文。
+ *
+ * 没有 `styleHints` 字段:胜局不给方向(见 `AnalysisFinding` 的注释)。
+ * 想给胜局添方向之前,先回去读那条裁决。
+ */
+export interface VictoryFinding {
+  text: string;
 }
 
 export interface BattleAnalysis {
@@ -267,7 +299,7 @@ function atkRampRow(result: CombatResult): { label: string; value: string } | nu
  * 「出手速度 +6%」这种写法会让人以为多打一点就多赚一点;真相是差一点就完全没有。
  * 故这里把差额直接换算成词条还差几个百分点 —— 解释原因、给方向,不替玩家做决定。
  */
-function firstMoveFinding(result: CombatResult): AnalysisFinding[] {
+function firstMoveFinding(result: CombatResult): DefeatFinding[] {
   const f = result.firstMove;
   if (!f || f.playerFirst) return [];
   const { playerSpeed, enemySpeed, gapPct: gap } = firstMoveReadout(result);
@@ -286,7 +318,7 @@ function firstMoveFinding(result: CombatResult): AnalysisFinding[] {
  * 这解释的是**战前就定下的数**,不是临场失手:故与先手判定同列在最前,
  * 且**只在真有加成时出现**(中性判定不占字数,更不该替玩家的败因背锅)。
  */
-function foeOriginFinding(result: CombatResult): AnalysisFinding[] {
+function foeOriginFinding(result: CombatResult): DefeatFinding[] {
   const o = result.foeOrigin;
   // 只报「敌人占了便宜」的那一半:比该有的还薄是好事,不必占败因的字数
   if (!o || !hasEdge(o)) return [];
@@ -352,8 +384,8 @@ function victoryFindings(
   rounds: number,
   hpPct: number,
   firstMoveLoss: boolean,
-): AnalysisFinding[] {
-  const findings: AnalysisFinding[] = [];
+): VictoryFinding[] {
+  const findings: VictoryFinding[] = [];
 
   /*
    * 战后气血是最硬的一条:它把「完胜」与「惨胜」分开。
@@ -362,12 +394,10 @@ function victoryFindings(
   if (hpPct >= COMFORTABLE_HP) {
     findings.push({
       text: `战后气血 ${formatPercent(hpPct, 0)} —— 这一场没怎么伤到你`,
-      styleHints: [],
     });
   } else if (hpPct <= NARROW_HP) {
     findings.push({
       text: `战后只剩 ${formatPercent(hpPct, 0)} 气血 —— 险胜,下一场未必还有这份运气`,
-      styleHints: [],
     });
   }
 
@@ -379,12 +409,10 @@ function victoryFindings(
     findings.push({
       text: `${rounds} 回合结束 —— 压制期里没给它翻身的机会`,
       // 锋芒:先发制人、收割脆敌 —— 与「压制期不给翻身机会」是同一件事
-      styleHints: [],
     });
   } else if (rounds >= LONG_FIGHT_ROUNDS) {
     findings.push({
       text: `鏖战 ${rounds} 回合才拿下 —— 这一场是靠撑住赢的,不是靠速杀`,
-      styleHints: [],
     });
   }
 
@@ -396,7 +424,6 @@ function victoryFindings(
     findings.push({
       text: `被抢先却还是赢了下来 —— 这一场的翻盘点在这里`,
       // 反震:先手在对方手里也能把伤害还回去 —— 与「被抢先仍翻盘」同一条路
-      styleHints: [],
     });
   }
 
@@ -405,7 +432,6 @@ function victoryFindings(
     findings.push({
       text: `闪过 ${p.dodges} 次 —— 少挨的这几下换成了战后气血`,
       // 沐泽:靠回复把「没挨到的那几下」攒成气血 —— 闪避的价值正是这么兑现的
-      styleHints: [],
     });
   }
 
@@ -413,7 +439,6 @@ function victoryFindings(
   if (p.crits >= CRIT_WIN_WARN) {
     findings.push({
       text: `暴击 ${p.crits} 次 —— 输出压在暴击上是这几回合解决的原因`,
-      styleHints: [],
     });
   }
 
@@ -425,7 +450,6 @@ function victoryFindings(
   if (pierceShare >= PIERCE_SHARE_WARN) {
     findings.push({
       text: `真伤占了承伤的 ${formatPercent(pierceShare, 0)},护体没挡住的部分你硬吃了下来`,
-      styleHints: [],
     });
   }
 
@@ -434,8 +458,8 @@ function victoryFindings(
   return findings;
 }
 
-function defeatFindings(p: CombatSideStats, maxHpProxy: GNum, rounds: number): AnalysisFinding[] {
-  const findings: AnalysisFinding[] = [];
+function defeatFindings(p: CombatSideStats, maxHpProxy: GNum, rounds: number): DefeatFinding[] {
+  const findings: DefeatFinding[] = [];
   const pierceShare = share(p.pierceTaken, p.taken);
   if (pierceShare >= PIERCE_SHARE_WARN) {
     findings.push({
