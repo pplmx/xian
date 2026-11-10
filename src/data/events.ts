@@ -1,4 +1,4 @@
-/** 随机事件库 —— 107 个随机事件(含 21 个奇缘阶段) + 17 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 110 个随机事件(含 21 个奇缘阶段) + 17 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -1463,6 +1463,108 @@ export const EVENTS: EventDef[] = [
         { isDefault: true },
       ),
       c("不扰仙苑", [o(1, "机缘在前而能不取,你心境反而更明。", { type: "exp", secs: 30 })]),
+    ],
+    { minRealm: 11 },
+  ),
+  /*
+   * 仙界四处(谪仙古渡 / 瑶池仙苑 / 不朽金渊 / 玄机道场)只带 `immortal` 一个附加标签,
+   * 而纯 immortal 的事件此前只有 3 条 —— 这四处境界 9~12,把它们能撞到的地方特色
+   * 压到了个位数。带 `sky` 的另六处还有 10 条 sky 事件兜底,这四处没有。
+   *
+   * 补三条,让纯 immortal 的池从 3 条变 6 条。
+   * 境界带按四处的最低门槛给(minRealm 9),上限不设 —— 仙界各层都还说得通。
+   */
+  ev(
+    "ev_duchuan_canpai",
+    "古渡残牌",
+    "古渡的渡口立着半截石碑,碑上刻满名字,大多已经磨平,只剩最上面一行还看得清。",
+    ["general", "immortal"],
+    [
+      c("拓下那行名字", [
+        o(55, "你以神识拓下那行字,恍惚间看见一个背影正踏水而去。", {
+          type: "material",
+          id: "wudao",
+          amount: 30,
+        }),
+        o(25, "石碑在你触碰的刹那碎成沙,那行名字也散了。", { type: "nothing" }),
+        o(20, "碑上残留的念力反冲识海,你后退两步,额角渗汗。", { type: "buff", id: "injury" }),
+      ]),
+      c(
+        "在碑前坐一会儿",
+        [
+          o(1, "你只是坐着,看渡口的水一遍遍涨落。忽然明白自己为何还要走这一趟。", {
+            type: "exp",
+            secs: 110,
+          }),
+        ],
+        { isDefault: true },
+      ),
+    ],
+    { minRealm: 9 },
+  ),
+  ev(
+    "ev_jinyuan_tie",
+    "金渊铁胎",
+    "不朽金渊的渊壁上,一块金属胎衣嵌在岩里,表皮被岁月磨得发乌,敲上去却仍是实心。",
+    ["general", "immortal"],
+    [
+      c("凿取铁胎", [
+        o(50, "铁胎入手沉得离奇,你几乎要动用真元才拿得稳。", {
+          type: "material",
+          id: "ore",
+          amount: 60,
+        }),
+        o(
+          30,
+          "凿口崩裂,一块碎屑弹起划破你的手臂。",
+          { type: "buff", id: "injury" },
+          {
+            type: "material",
+            id: "ore",
+            amount: 24,
+          },
+        ),
+        o(20, "铁胎里竟是空心的 —— 不知多少年前就被掏空了。", { type: "nothing" }),
+      ]),
+      c(
+        "观其纹路",
+        [
+          o(1, "铁胎表面的纹路像是一套锻法,你看得入神,记下了几分。", {
+            type: "material",
+            id: "wudao",
+            amount: 24,
+          }),
+        ],
+        { isDefault: true },
+      ),
+    ],
+    { minRealm: 10 },
+  ),
+  ev(
+    "ev_xuanji_pan",
+    "玄机残盘",
+    "道场中央摆着一副残破的星盘,少了两根针,盘面却仍在缓慢地转。",
+    ["general", "immortal"],
+    [
+      c("拨动星盘", [
+        o(45, "你把剩下那根针拨了半圈,盘面掠过一道光 —— 某个答案落进心里。", {
+          type: "exp",
+          secs: 120,
+        }),
+        o(30, "针尖划破你的指尖,血珠落在盘上,星盘停了。", { type: "buff", id: "injury" }),
+        o(25, "星盘转得太慢,你等了许久,什么也没发生。", { type: "nothing" }),
+      ]),
+      c(
+        "不碰它",
+        [
+          o(1, "你看着它转了很久。有些答案,不知道比知道好。", {
+            type: "material",
+            id: "dust",
+            amount: 40,
+          }),
+        ],
+        { isDefault: true },
+      ),
     ],
     { minRealm: 11 },
   ),
