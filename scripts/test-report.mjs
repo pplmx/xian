@@ -463,6 +463,7 @@ const CATEGORIES = [
       "marketArbitrage",
       "terminologyConsistency",
       "shortfallDisclosure",
+      "singleSourceNumbers",
       "regionDanger",
       "artifactGrowth",
       "stackCap",

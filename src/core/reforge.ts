@@ -24,6 +24,7 @@ import {
   INSCRIBE_ROLL_FLOOR_MAX,
   REFORGE_DUST_BASE,
   REFORGE_ROLL_FLOOR_CAP,
+  REFORGE_ROLL_MAX,
   REFORGE_SEAL_LOAD,
   REFORGE_STONE_BASE,
   SEAL_STONE_BASE,
@@ -74,6 +75,7 @@ export function blueprintRollBonus(mastery: number): number {
 export function effectiveReforgeRollFloor(inscribeLevel: number, blueprintMastery: number): number {
   return Math.min(
     REFORGE_ROLL_FLOOR_CAP,
+    REFORGE_ROLL_MAX,
     inscribeRollFloor(inscribeLevel) + blueprintRollBonus(blueprintMastery),
   );
 }
@@ -357,7 +359,7 @@ export function autoReforge(
       };
     const freshIds = new Set(reforgeAffixPool(initial).map((a) => a.id));
     const canHit = targets.some(
-      (target) => freshIds.has(target.affixId) && (target.minRoll ?? 0) < 1,
+      (target) => freshIds.has(target.affixId) && (target.minRoll ?? 0) < REFORGE_ROLL_MAX,
     );
     if (!canHit) {
       return {

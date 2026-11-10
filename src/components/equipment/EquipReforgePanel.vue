@@ -20,7 +20,11 @@ import { useResourcesStore } from "@/stores/resources";
 import { affixDef } from "@/data/affixes";
 import { qualityDef } from "@/data/qualities";
 import { skillStageName } from "@/data/crafting";
-import { BLUEPRINT_MASTERY_PER_REFORGE, BLUEPRINT_ROLL_BONUS_MAX } from "@/data/constants";
+import {
+  BLUEPRINT_MASTERY_PER_REFORGE,
+  BLUEPRINT_ROLL_BONUS_MAX,
+  REFORGE_ROLL_MAX,
+} from "@/data/constants";
 import {
   blueprintRollBonus,
   effectiveReforgeRollFloor,
@@ -200,7 +204,10 @@ function runAutoReforge(): void {
       ui.toast(`灵石/器灵尘见底,洗了 ${out.rolls} 次即止;今一身为 ${now},${cost}`, "warn");
     }
   } else if (out.stop === "unreachable") {
-    ui.toast("这些目标当前不会命中:封存词条不会重掷,或阈值已到 100%;分文未动", "warn");
+    ui.toast(
+      `这些目标当前不会命中:封存词条不会重掷,或阈值已到 ${formatPercent(REFORGE_ROLL_MAX, 0)};分文未动`,
+      "warn",
+    );
   } else {
     // frozen 一档兼两种收法:无位可洗(全封存/无词条),或装备已不在行囊
     const gone = inst.value !== undefined && !inventory.findItem(inst.value.uid);
@@ -272,7 +279,7 @@ function triesOf(id: string, minRoll = 0): number | null {
             v-model.number="t.minRoll"
             type="range"
             min="0"
-            max="1"
+            :max="REFORGE_ROLL_MAX"
             step="0.05"
             :aria-label="`自动重铸:${affixDef(t.affixId)?.name ?? t.affixId} 保留阈值`"
             class="min-w-0 grow accent-cinnabar"
@@ -346,7 +353,7 @@ function triesOf(id: string, minRoll = 0): number | null {
       {{ formatGN(Math.max(0, toNum(reforgeCostVal.stone) - toNum(resources.spiritStone))) }}
     </p>
     <p v-if="autoTargets.length && !autoReachable" class="mt-1 text-note text-cinnabar">
-      这些目标不会命中:封存词条不重掷,或阈值已到 100%。
+      这些目标不会命中:封存词条不重掷,或阈值已到 {{ formatPercent(REFORGE_ROLL_MAX, 0) }}。
     </p>
   </div>
   <!-- 重铸与封存 (Phase 30.1) -->

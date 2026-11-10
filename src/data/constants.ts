@@ -373,6 +373,25 @@ export const BLUEPRINT_MASTERY_PER_REFORGE = 0.02;
 export const BLUEPRINT_ROLL_BONUS_MAX = 0.15;
 /** 铭纹 + 器谱合计的新词条掷点保底上限 */
 export const REFORGE_ROLL_FLOOR_CAP = INSCRIBE_ROLL_FLOOR_MAX + BLUEPRINT_ROLL_BONUS_MAX;
+
+/**
+ * 自动重铸「保留阈值」的上限 —— 掷点满值(100%)。
+ *
+ * ## 这个值此前散在三处,而且各写各的
+ *
+ * ```text
+ *   EquipReforgePanel.vue  <input type="range" max="1">   滑块上限
+ *   core/reforge.ts        (target.minRoll ?? 0) < 1      能不能命中
+ *   EquipReforgePanel.vue  「阈值已到 100%」               提示文案
+ * ```
+ *
+ * 三处指的是同一件事:**门槛拉到 100% 就永远掷不满,所以这一条目标不可能命中**。
+ * 但三处都写死了各自的字面量 —— 改一处不改另两处,界面就会开始说错话
+ * (`AGENTS.md`:「界面上出现的每个数字都与结算同源」)。
+ *
+ * 提成常量后三处同源。
+ */
+export const REFORGE_ROLL_MAX = 1;
 /** 封存一个词条的灵石倍率(第 n 次封存 ×n) */
 export const SEAL_STONE_BASE = 200;
 /**

@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 639 个 spec;本作自己那部分 559 个) |
+| `bun run test` | 全量用例(全量 640 个 spec;本作自己那部分 560 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 639 个 spec = 宿主 551 + 引擎 80,别把 639 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 640 个 spec = 宿主 551 + 引擎 80,别把 640 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 639 个 spec(本作自己那部分 559 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 640 个 spec(本作自己那部分 560 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -4373,14 +4373,14 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 559 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 560 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
 
 ```text
 第一版:326 个 spec · 4117 条标题
-修正后:559 个 spec · 6319 条标题   (+54%)
+修正后:560 个 spec · 6319 条标题   (+54%)
 ```
 
 > 这是一类**最难自查的错误**:工具跑得通、输出格式对、报出来的缺口具体到表与维度名 ——
@@ -4472,7 +4472,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**639 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**640 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -5496,3 +5496,59 @@ SecretRealmCard    payText(r) 写在按钮**内部**的插值里
 
 > 「判据扫得够不够远」是个真问题。第一版红得吓人(四处),但四处都是假的;
 > 而如果当时我直接把四处都「补」上说明,就会造出四个重复的读数。
+
+### 同一个阈值在三处各写了一遍
+
+接着上一条线,这轮查 `AGENTS.md` 的第一条纪律:
+
+> **界面上出现的每个数字都与结算同源**……文案里不许手写会被常数改动的数字
+> ——「改常数就撒谎」。
+
+先扫了两个方向,都没问题:模板里写死的百分比 **0 处**,丹药 `desc` 不写数字。
+第三处才中 —— 自动重铸的「保留阈值上限」:
+
+```text
+EquipReforgePanel.vue  <input type="range" max="1">   滑块能拉到多高
+core/reforge.ts        (target.minRoll ?? 0) < 1      能不能命中
+EquipReforgePanel.vue  「阈值已到 100%」               提示文案
+```
+
+**三处指同一件事** —— 门槛拉到 100% 就永远掷不满,这条目标不可能命中。
+但三处各写各的字面量。
+
+### 这三处的分叉会怎么伤人
+
+若哪天有人把滑块上限改成 `0.95`(觉得 100% 门槛没意义),会同时发生三件事:
+
+```text
+① 滑块再也拉不到 1.0      → 「阈值已到 100%」这句提示永远不出现
+② 核心仍判 < 1            → 判定逻辑没变
+③ 界面与判定各说各的
+```
+
+而**不会有一条判据变红**。这正是「改常数就撒谎」的具体形状。
+
+已提出 `REFORGE_ROLL_MAX = 1`,三处同读它。
+
+### 判据:钉住已经分叉过的具体位置
+
+泛泛地说「界面数字要与结算同源」是**不可判定**的 —— 无法靠扫描知道哪个数字该引哪个常量。
+
+所以这条判据换了个做法:**只钉住已经发现分叉的那几处**。
+
+```text
+PINNED = [
+  { EquipReforgePanel.vue, /max="1"/,               REFORGE_ROLL_MAX },
+  { EquipReforgePanel.vue, /阈值已到 100%/,          REFORGE_ROLL_MAX },
+  { reforge.ts,            /\(target\.minRoll \?\? 0\) < 1\b/, REFORGE_ROLL_MAX },
+]
+```
+
+每加一条进 `PINNED`,都是在说「**这里曾经分叉过**」。它不预防所有分叉,只保证
+「犯过的错不会犯第二次」。
+
+每条还检查两件事:字面量不再出现、**且常量真的被引用了** ——
+只删字面量而不接上同源,等于猜了个新数。
+
+> 加一条「防未来」的判据,通常无从下手。加一条「防复现」的判据,永远有据可依。
+> 这也是为什么每次发现缺陷后,先把它的**形状**记下来比先修它更重要。
