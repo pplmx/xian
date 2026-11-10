@@ -1,4 +1,4 @@
-/** 随机事件库 —— 107 个随机事件(含 21 个奇缘阶段) + 12 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 107 个随机事件(含 21 个奇缘阶段) + 15 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -2127,6 +2127,93 @@ export const FORTUNE_EVENTS: EventDef[] = [
       c("绕道而行", [o(1, "剑气凛冽,你压下好奇,转身离去。")], { isDefault: true }),
     ],
     { element: "metal", maxRealm: MORTAL_END },
+  ),
+  /*
+   * 寒潭 / 赤炎 / 雷泽:三条机缘补上水域、火域与雷域的专属遭遇。
+   *
+   * 机缘池按标签 `some` 匹配(见 `packages/engine/src/deck.ts` 的 `entryAllowed`),
+   * 而 `general` 是每个地域都有的标签 —— 于是带 `general` 的 6 条机缘处处可得,
+   * 真正「只此一地」的要看非 general 标签。实测 44 个地域里,
+   * 寒潭幽窟 / 赤炎火域 / 蜃楼幻海 / 雷泽 / 星陨荒原 / 天外天 / 鸿蒙裂隙
+   * 这 7 处一条专属都没有 —— 而它们分属 water / fire / thunder / sky 四个标签,
+   * 那四个标签在机缘池里根本没有条目。
+   *
+   * 机缘是 2% 概率的稀有内容,故不必每个地域都配;这里只补玩家停留最久的中前期三处。
+   */
+  ev(
+    "ft_hantan_bingxin",
+    "寒潭冰心",
+    "潭水深处有一枚拳头大的冰晶,通体澄澈,细看能见到里面封着一缕极淡的白气在缓缓流转。",
+    ["general", "water"],
+    [
+      c("取冰晶入怀", [
+        o(55, "冰晶贴胸即化,一缕清寒顺着经脉走了一周天 —— 你忽觉心念从未如此澄明。", {
+          type: "exp",
+          secs: 110,
+        }),
+        o(
+          25,
+          "寒气太重,你半边身子僵了许久才缓过来。",
+          { type: "buff", id: "injury" },
+          { type: "material", id: "dust", amount: 18 },
+        ),
+        o(20, "冰晶在你掌心里碎成一捧凉水,什么都没留下。", { type: "nothing" }),
+      ]),
+      c(
+        "静坐潭边",
+        [
+          o(1, "你听着潭水滴落的声音坐到日暮,神识反倒清了几分。", {
+            type: "exp",
+            secs: 60,
+          }),
+        ],
+        { isDefault: true },
+      ),
+    ],
+    { element: "water", minRealm: 1, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ft_chiyan_huoling",
+    "火域遗火",
+    "赤炎火域的裂谷里,一簇火苗悬在半空烧了不知多少年 —— 没有柴,也没有风。",
+    ["general", "fire"],
+    [
+      c("以神魂引火", [
+        o(60, "火苗顺从地缠上你的指尖,烧尽了经脉里的杂质。", { type: "exp", secs: 100 }),
+        o(25, "火苗忽然暴涨,你急退三步,衣袖已烧去半幅。", { type: "buff", id: "injury" }),
+        o(15, "火苗只是幻影,你伸手过去,什么都没摸到。", { type: "nothing" }),
+      ]),
+      c(
+        "绕开此火",
+        [o(1, "你远远绕行,总觉得那火在看着你。", { type: "material", id: "ore", amount: 12 })],
+        { isDefault: true },
+      ),
+    ],
+    { element: "fire", minRealm: 3, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ft_leize_leizhu",
+    "雷泽雷竹",
+    "雷泽深处一株雷竹通体银白,竹节间有细小的电光游走。传闻以雷竹为引,可淬炼神魂。",
+    ["general", "thunder"],
+    [
+      c("折竹淬神", [
+        o(55, "雷竹炸开一团电弧涌入眉心,你的神魂在剧痛中清了三分。", { type: "exp", secs: 110 }),
+        o(
+          30,
+          "电弧太盛,你被震得倒退,却也收下了几节竹身。",
+          { type: "material", id: "ore", amount: 26 },
+          { type: "buff", id: "injury" },
+        ),
+        o(15, "雷竹宁折不弯 —— 在你出手的刹那自毁成灰。", { type: "nothing" }),
+      ]),
+      c(
+        "远观雷意",
+        [o(1, "你看那电光在竹节间游走,若有所悟。", { type: "material", id: "wudao", amount: 10 })],
+        { isDefault: true },
+      ),
+    ],
+    { element: "wood", minRealm: 4, maxRealm: MORTAL_END },
   ),
   ev(
     "ft_ancient_elixir",

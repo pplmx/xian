@@ -83,6 +83,18 @@ const FORTUNE_ECHO_TEXTS: Record<string, { form: EchoForm; line: string }> = {
     form: "fate-over",
     line: "先台无字,那与你有关的一笔,还空着。你曾选择不去看它。",
   },
+  ft_hantan_bingxin: {
+    form: "traces",
+    line: "潭底的冰晶还在,那缕白气依旧流转。你曾俯身看它很久,终究没有伸手。",
+  },
+  ft_chiyan_huoling: {
+    form: "recognize",
+    line: "那簇火苗还在半空烧着,见你走近,焰尖轻轻一偏 —— 它记得你绕开它的那个傍晚。",
+  },
+  ft_leize_leizhu: {
+    form: "traces",
+    line: "雷竹仍是那株雷竹,只是你曾站过的那块焦土上,草已经长出来了。",
+  },
 };
 
 /**
