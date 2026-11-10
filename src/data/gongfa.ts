@@ -1,9 +1,9 @@
 /**
- * 功法库 —— 70 部:主修 29 / 辅修 25 / 秘术 16,每境都有新东西可参
+ * 功法库 —— 75 部:主修 34 / 辅修 25 / 秘术 16,每境都有新东西可参
  *
  * ## 品阶分布(与实物同源,由 core/gongfaQualityLadder.spec 钉住)
  *
- *   凡品 3 · 良品 8 · 精品 7 · 灵品 9 · 玄品 9 · 地品 2 · 天品 7 · 仙品 11 · 神品 14
+ *   凡品 3 · 良品 13 · 精品 7 · 灵品 9 · 玄品 9 · 地品 2 · 天品 7 · 仙品 11 · 神品 14
  *
  * 地品那一格此前是**空的**:玄品(rank 4)与天品(rank 6)之间没有任何一部功法,
  * 玩家从玄品一路参悟上来,会在中间撞上一段没有东西可参的路。
@@ -105,6 +105,78 @@ export const GONGFA: GongfaDef[] = [
     { cultivationSpeed: 0.1, defensePct: 0.08, qiRegen: 0.08 },
     { cultivationSpeed: 0.02, defensePct: 0.012 },
     { element: "water", skill: { name: "寒潮", mult: 1.5, rate: 0.2 } },
+  ),
+  /*
+   * 五系在低品质段各只有一部,而 `ice` / `dark` **低品质段一部都没有**
+   * (它们各自唯一那部在灵品 / 玄品)。
+   *
+   * 元素不是装饰:`core/gongfaService` 用它算同源灵根的参悟权重
+   * (`gongfaAffinity`),所以一个玩家开局若灵根偏冰或偏暗,前期**没有一部同源功法**可期。
+   * 补四部,把凡品 / 良品段的五系铺齐。
+   *
+   * 量级照同品质同类型的邻居取:良品主修 `cultivationSpeed 0.1` 起,
+   * 招式倍率 1.4~1.7(见青木 / 离火 / 坤黄 / 玄水那几部)。
+   */
+  g(
+    "m_hanbing",
+    "寒冰引气诀",
+    "main",
+    "fine",
+    0,
+    "寒气自涌泉起,一线直上泥丸",
+    { cultivationSpeed: 0.1, defensePct: 0.06, critRate: 0.01 },
+    { cultivationSpeed: 0.02, defensePct: 0.012 },
+    { element: "ice", skill: { name: "寒霜指", mult: 1.45, rate: 0.2 } },
+  ),
+  g(
+    "m_youquan",
+    "幽泉噬灵功",
+    "main",
+    "fine",
+    0,
+    "泉下有物,饮血而生;修之者,亦近于物",
+    { cultivationSpeed: 0.1, attackPct: 0.07, lifesteal: 0.015 },
+    { cultivationSpeed: 0.02, attackPct: 0.012 },
+    { element: "dark", skill: { name: "幽泉噬", mult: 1.55, rate: 0.21 } },
+  ),
+  g(
+    "m_cuiwei",
+    "翠微养荣经",
+    "main",
+    "fine",
+    0,
+    "草木有本心,一岁一枯荣 —— 养的是那口气",
+    { cultivationSpeed: 0.1, maxHpPct: 0.06, regenPerRound: 0.01 },
+    { cultivationSpeed: 0.02, maxHpPct: 0.012 },
+    { element: "wood", skill: { name: "回春引", mult: 1.4, rate: 0.19 } },
+  ),
+  g(
+    "m_lieyan",
+    "烈炎搬运法",
+    "main",
+    "fine",
+    0,
+    "以身为炉,以息为风 —— 搬的是自己这团火。不求势大,求一击到底",
+    /*
+     * 与同境界同品阶的「离火焚天诀」必须**各有立足点**:
+     * 离火是 `attackPct 0.08` 的纯攻势,这条就压攻击、抬暴击伤害 ——
+     * 若两边攻击相同而这条多一条 `critDamage`,它就全面压过离火,
+     * 而主修席只有一格,那一格就没理由留给离火了(判据 `gongfaEffectAudit` 会红)。
+     */
+    { cultivationSpeed: 0.1, attackPct: 0.05, critDamage: 0.12 },
+    { cultivationSpeed: 0.02, attackPct: 0.008, critDamage: 0.012 },
+    { element: "fire", skill: { name: "烈焰掌", mult: 1.5, rate: 0.2 } },
+  ),
+  g(
+    "m_canghai",
+    "沧海纳流诀",
+    "main",
+    "fine",
+    0,
+    "百川归海,不择细流 —— 气机愈蓄愈深",
+    { cultivationSpeed: 0.1, maxHpPct: 0.05, qiRegen: 0.1 },
+    { cultivationSpeed: 0.02, maxHpPct: 0.01 },
+    { element: "water", skill: { name: "沧浪叠", mult: 1.45, rate: 0.2 } },
   ),
   g(
     "m_gengjin",

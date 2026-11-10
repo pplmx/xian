@@ -73,6 +73,62 @@ export const GONGFA_BRANCHES: GongfaBranchDef[] = [
   b("m_lihuo", "b_lihuo_fen", "焚天", "离火更炽,出招更狠", { damageBonus: 0.08, critRate: 0.03 }),
   b("m_lihuo", "b_lihuo_xu", "续焰", "火尽不熄,攻守兼备", { attackPct: 0.05, defensePct: 0.05 }),
 
+  // ---- 主修:沧海纳流诀(良品·水) ----
+  // `qiCapPct` 不在装备词条池里,判据要求分支只用能校准的词条 —— 改用 maxHpPct
+  b("m_canghai", "b_canghai_na", "纳川", "海纳百川,气机自广", {
+    maxHpPct: 0.09,
+    regenPerRound: 0.015,
+  }),
+  b("m_canghai", "b_canghai_lang", "叠浪", "一浪未平,一浪又起", {
+    comboRate: 0.06,
+    damageBonus: 0.05,
+  }),
+
+  // ---- 主修:寒冰引气诀(良品·冰) ----
+  b("m_hanbing", "b_hanbing_ning", "凝霜", "寒气凝而不散,护体生凉", {
+    defensePct: 0.1,
+    damageReduction: 0.03,
+  }),
+  b("m_hanbing", "b_hanbing_shuang", "霜华", "霜花附刃,一触即裂", {
+    critRate: 0.04,
+    critDamage: 0.08,
+  }),
+
+  // ---- 主修:幽泉噬灵功(良品·暗) ----
+  b("m_youquan", "b_youquan_shi", "噬息", "饮其气者,自身不竭", {
+    lifesteal: 0.03,
+    regenPerRound: 0.01,
+  }),
+  b("m_youquan", "b_youquan_yin", "隐遁", "泉下无光,敌难寻我", {
+    dodgeRate: 0.05,
+    damageReduction: 0.03,
+  }),
+
+  // ---- 主修:翠微养荣经(良品·木) ----
+  /*
+   * 两条分支份量得相当(判据 `gongfaBranch` 要求比值 ≤2)。
+   * 第一版「荣枯」给 maxHpPct 0.1 + regenPerRound 0.02、「蔓生」只给
+   * speed 0.05 + comboRate 0.04 —— 按引擎的权重折算出来是 5.33 vs 1.80(2.96 倍),
+   * 那就不是「择一」而是「一条明显是陷阱」。
+   */
+  b("m_cuiwei", "b_cuiwei_rong", "荣枯", "一枯一荣,气血自回", {
+    maxHpPct: 0.1,
+    regenPerRound: 0.02,
+    cultivationSpeed: 0.02,
+  }),
+  b("m_cuiwei", "b_cuiwei_sheng", "蔓生", "藤延不绝,缠敌愈紧", {
+    speed: 0.06,
+    comboRate: 0.08,
+    attackPct: 0.05,
+  }),
+
+  // ---- 主修:烈炎搬运法(良品·火) ----
+  b("m_lieyan", "b_lieyan_bao", "爆炎", "一息之内,焚尽前尘", { critDamage: 0.14, attackPct: 0.02 }),
+  b("m_lieyan", "b_lieyan_yun", "运火", "搬火入脉,久战不熄", {
+    cultivationSpeed: 0.04,
+    damageBonus: 0.05,
+  }),
+
   // ---- 主修:坤黄厚土诀(良品·土) ----
   b("m_kunhuang", "b_kunhuang_dun", "坤德", "厚德孕物,难被撼动", {
     defensePct: 0.14,
