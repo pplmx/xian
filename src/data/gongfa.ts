@@ -1,9 +1,9 @@
 /**
- * 功法库 —— 82 部:主修 34 / 辅修 30 / 秘术 18,每境都有新东西可参
+ * 功法库 —— 87 部:主修 34 / 辅修 35 / 秘术 18,每境都有新东西可参
  *
  * ## 品阶分布(与实物同源,由 core/gongfaQualityLadder.spec 钉住)
  *
- *   凡品 8 · 良品 13 · 精品 7 · 灵品 9 · 玄品 9 · 地品 2 · 天品 7 · 仙品 13 · 神品 14
+ *   凡品 8 · 良品 13 · 精品 7 · 灵品 9 · 玄品 9 · 地品 2 · 天品 7 · 仙品 15 · 神品 17
  *
  * 地品那一格此前是**空的**:玄品(rank 4)与天品(rank 6)之间没有任何一部功法,
  * 玩家从玄品一路参悟上来,会在中间撞上一段没有东西可参的路。
@@ -752,7 +752,8 @@ export const GONGFA: GongfaDef[] = [
     "immortal",
     9,
     "云本无形,借一气便能成形 —— 形是什么,看借气的人",
-    { dodgeRate: 0.06, damageReduction: 0.06, maxHpPct: 0.06 },
+    // 减伤改成闪避:`core/stackCap` 把秘术也算进辅修席的 top 3 减伤,这里再添一份就顶到硬底
+    { dodgeRate: 0.1, maxHpPct: 0.08 },
     { dodgeRate: 0.018, damageReduction: 0.018 },
   ),
   g(
@@ -820,6 +821,69 @@ export const GONGFA: GongfaDef[] = [
     "执神兵以行天罚,进退皆合军律",
     { attackPct: 0.26, defensePct: 0.22, critRate: 0.04 },
     { attackPct: 0.028, defensePct: 0.022 },
+  ),
+  /*
+   * 辅修席在境界 11 / 12 / 14 / 17 / 20 五处断档 —— 表头写着「每境都有新东西可参」。
+   *
+   * 累计数不缺(境 11 已能装 25 部辅修),所以这不是"没得选",是那句话不成立。
+   * 补五部把五处填上,品质照该境界的主修走:11~12 是仙品,14 及以上是神品。
+   * 量级照同品质的邻居取(仙品辅修 `maxHpPct 0.18` 一档,神品 `0.2` 一档)。
+   */
+  g(
+    "s_xianyin",
+    "仙音洗髓",
+    "sub",
+    "immortal",
+    11,
+    "仙乐入耳,髓中浊气自己散出去",
+    { cultivationSpeed: 0.24, maxHpPct: 0.14, qiRegen: 0.16 },
+    { cultivationSpeed: 0.05, maxHpPct: 0.018 },
+  ),
+  g(
+    "s_jinyu",
+    "金玉满堂",
+    "sub",
+    "immortal",
+    12,
+    "库里装满的人,底气自然足",
+    { dropRate: 0.2, eventLuck: 0.18, cultivationSpeed: 0.16 },
+    { dropRate: 0.05, eventLuck: 0.045 },
+  ),
+  g(
+    "s_leiyin",
+    "神雷锻骨",
+    "sub",
+    "divine",
+    14,
+    "以雷声为锤,一声一锻",
+    { attackPct: 0.16, critRate: 0.03, maxHpPct: 0.18 },
+    { attackPct: 0.024, maxHpPct: 0.02 },
+  ),
+  g(
+    "s_wuxing",
+    "无相神形",
+    "sub",
+    "divine",
+    17,
+    "看不着的人,最难防;也最难过得舒坦",
+    /*
+     * `damageReduction` 收在 0.06:`core/stackCap` 会把「辅修 top 3」的减伤加总
+     * 去比引擎硬底(90%)。原本主修 0.08 + 既有辅修 0.12/0.1 = 155.8% 原始值已经
+     * 贴着线,再添一条 0.12 就把它推过去了 —— 超出的投入完全是浪费。
+     * 这条辅修以闪避为主,减伤只作辅料。
+     */
+    { dodgeRate: 0.14, maxHpPct: 0.24 },
+    { dodgeRate: 0.024, damageReduction: 0.02 },
+  ),
+  g(
+    "s_daoyuan",
+    "道源灌注",
+    "sub",
+    "divine",
+    20,
+    "道之源流灌进身子,人就成了那口泉",
+    { cultivationSpeed: 0.34, qiRegen: 0.26, maxHpPct: 0.2 },
+    { cultivationSpeed: 0.07, qiRegen: 0.045 },
   ),
   g(
     "s_shenlianti",

@@ -629,6 +629,59 @@ export const GONGFA_BRANCHES: GongfaBranchDef[] = [
     defensePct: 0.3,
     damageReduction: 0.12,
   }),
+  // 辅修:仙音洗髓(仙品·境11)
+  // 修速上限:装备同名词条的上限是 0.32,超过它这条分支就比一件装备还猛
+  b("s_xianyin", "b_xianyin_xi", "洗髓", "髓换了,人就轻了", {
+    cultivationSpeed: 0.22,
+    maxHpPct: 0.1,
+  }),
+  // 气机回复上限:装备同名词条上限 0.28
+  b("s_xianyin", "b_xianyin_yin", "余音", "曲终之后,余音还在脉里走", {
+    qiRegen: 0.26,
+    regenPerRound: 0.012,
+  }),
+
+  // 辅修:金玉满堂(仙品·境12)
+  b("s_jinyu", "b_jinyu_man", "满库", "库越满,越有人送上门", {
+    dropRate: 0.24,
+    eventLuck: 0.2,
+  }),
+  b("s_jinyu", "b_jinyu_tang", "堂皇", "堂皇之家,气运自聚", {
+    luck: 0.15,
+    cultivationSpeed: 0.24,
+  }),
+
+  // 辅修:神雷锻骨(神品·境14)
+  b("s_leiyin", "b_leiyin_duan", "断骨", "断过再长,硬得不像话", {
+    attackPct: 0.26,
+    maxHpPct: 0.24,
+  }),
+  b("s_leiyin", "b_leiyin_zhen", "雷震", "一雷过顶,敌我俱静", {
+    critRate: 0.08,
+    damageBonus: 0.14,
+  }),
+
+  // 辅修:无相神形(神品·境17)
+  // 减伤已堆到引擎硬底附近,这条改以闪避为主、减伤收小,避免「投进去的部分全是浪费」
+  b("s_wuxing", "b_wuxing_wu", "无相", "没有形状,就没有要害", {
+    dodgeRate: 0.14,
+    damageReduction: 0.1,
+  }),
+  b("s_wuxing", "b_wuxing_yin", "隐迹", "走过不留痕的人,也留不下证", {
+    speed: 0.16,
+    maxHpPct: 0.24,
+  }),
+
+  // 辅修:道源灌注(神品·境20)
+  b("s_daoyuan", "b_daoyuan_guan", "灌顶", "一道灌下去,省十年苦功", {
+    cultivationSpeed: 0.3,
+    breakthroughRate: 0.06,
+  }),
+  b("s_daoyuan", "b_daoyuan_yuan", "归源", "回到源头,再走一遍", {
+    qiRegen: 0.26,
+    maxHpPct: 0.26,
+  }),
+
   // 辅修:神炼不灭身
   b("s_shenlianti", "b_shenlianti_bu", "不灭", "神躯不灭,历劫不磨", {
     maxHpPct: 0.3,
