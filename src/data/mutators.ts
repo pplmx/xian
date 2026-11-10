@@ -38,6 +38,9 @@ export const MUTATOR_THEMES: Record<string, MutatorTheme> = {
   foe_penetrate: "lethality",
   foe_iron: "endurance",
   foe_rear: "survival",
+  foe_evade_plus: "evasion",
+  mirror_image: "evasion",
+  heal_scarce: "survival",
 };
 
 /** 主题 → 界名意象 */
@@ -131,6 +134,29 @@ export const MUTATORS: MutatorDef[] = [
     name: "破甲难防",
     text: "敌人破防 +30%",
     rules: { enemyExtraMods: { armorPen: 0.3 } },
+  },
+  /*
+   * 主题分布此前很不均:lethality 7 条、tempo 4、survival 3、endurance 2,
+   * 而 **evasion 只有 1 条**(`foe_dodge`)。补三条把最薄的两个轴填厚一点 ——
+   * 主题轴决定凡界世界名的意象,一个轴只有一条时,抽到那一条的世界翻来覆去都叫同一个名字。
+   */
+  {
+    id: "foe_evade_plus",
+    name: "虚影重重",
+    text: "敌人闪避 +12%,我方闪避 -6%",
+    rules: { enemyExtraMods: { dodgeRate: 0.12 }, playerExtraMods: { dodgeRate: -0.06 } },
+  },
+  {
+    id: "mirror_image",
+    name: "镜花水月",
+    text: "敌我闪避皆 +12%",
+    rules: { playerExtraMods: { dodgeRate: 0.12 }, enemyExtraMods: { dodgeRate: 0.12 } },
+  },
+  {
+    id: "heal_scarce",
+    name: "药石无灵",
+    text: "治疗效率 -40%,我方气血上限 -12%",
+    rules: { healMult: 0.6, playerExtraMods: { maxHpPct: -0.12 } },
   },
 ];
 
