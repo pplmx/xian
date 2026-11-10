@@ -82,6 +82,43 @@ export const APPRENTICE_MAX_LEVEL = 20;
 /** 天赋门类产出加成 */
 export const APPRENTICE_TALENT_BONUS = 1.25;
 
+/**
+ * 品质产出加成 —— 按品质档位递增,与天赋那 1.25 相乘。
+ *
+ * ## 为什么要有这一项
+ *
+ * `ApprenticeArchetype.quality` 一直只用来**染色**(界面按品质给名字上色),
+ * 产出公式只看 `talent === spec` 那 1.25 倍。于是玩家收到「凡品采药童子」
+ * 与「灵品寻宝灵童」时,除名字颜色外没有任何差别 —— 品质这个字段
+ * 在玩法上等于不存在,而它在全仓别处(`QualityDef.mult`)都是个真数值。
+ *
+ * ## 为什么不用 `QualityDef.mult`
+ *
+ * 那套倍率是给**装备**用的(凡品 1.0 → 神品 9.5),拿来乘弟子产出会把
+ * 挂机收益放大到与境界脱钩。弟子是「后台慢慢长」的一层,倍率要温和:
+ * 凡 1.0 / 下 1.1 / 中 1.2 / 上 1.3 / 极 1.4,最高一档也只比凡品多四成,
+ * 与天赋那 1.25 叠起来是 1.75 —— 明显但不至于让低品质弟子变成废牌。
+ *
+ * 弟子原型的品质实际只用到 mortal / fine / excellent / spirit 四档
+ * (见 `APPRENTICES`),其余档位留给将来扩充。
+ */
+export const APPRENTICE_QUALITY_BONUS: Partial<Record<QualityId, number>> = {
+  mortal: 1.0,
+  fine: 1.1,
+  excellent: 1.2,
+  spirit: 1.3,
+  heaven: 1.4,
+};
+
+/** 一名弟子的产出倍率 = 天赋匹配加成 × 品质加成。两处都读同一份常量,不另立数值源 */
+export function apprenticeYieldMult(archId: string, spec: ApprenticeSpec): number {
+  const def = apprenticeDef(archId);
+  if (!def) return 1;
+  const talent = def.talent === spec ? APPRENTICE_TALENT_BONUS : 1;
+  const quality = APPRENTICE_QUALITY_BONUS[def.quality] ?? 1;
+  return talent * quality;
+}
+
 /** 弟子槽位随境界增长:1 起,每 4 境 +1,顶到 5 */
 export function apprenticeSlots(major: number): number {
   return Math.min(5, 1 + Math.floor(Math.max(0, major) / 4));

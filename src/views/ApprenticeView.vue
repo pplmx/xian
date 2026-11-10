@@ -13,6 +13,7 @@ import { useResourcesStore } from "@/stores/resources";
 import {
   APPRENTICE_TASKS,
   APPRENTICE_MAX_LEVEL,
+  APPRENTICE_QUALITY_BONUS,
   APPRENTICE_TALENT_BONUS,
   BOND_TITLES,
   BOND_TRUECODE_MIN,
@@ -154,11 +155,25 @@ const recruitShort = computed(() =>
   Math.max(0, toNum(recruitCost.value) - toNum(resources.spiritStone)),
 );
 
-/** 派活期望产出 —— 由 apprenticeSpoils 现算(天赋门类读常量),不与结算双写 */
+/** 派活期望产出 —— 由 apprenticeSpoils 现算(倍率读数据层那一份),不与结算双写 */
 function taskYield(a: OwnedApprentice, spec: ApprenticeSpec, major = player.major): string {
   const s = apprenticeSpoils(a.archId, spec, major, a.level);
-  const talent = apprenticeDef(a.archId)?.talent === spec;
-  const tag = talent ? `·天赋×${APPRENTICE_TALENT_BONUS}` : "";
+  /*
+   * 倍率标签要**两半都写**:天赋匹配与品质加成。
+   *
+   * 从前只写天赋那一半的倍率 —— 而品质(凡/下/中/上)一直只给名字染色、不进产出,
+   * 故那一行看不出品质有任何用。现在品质真进产出了(见 `apprenticeYieldMult`),
+   * 标签就得把它也摊开,否则玩家仍是「看到颜色不同、看不出数值不同」。
+   *
+   * 只在真有加成时写:凡品 + 天赋不匹配时倍率就是 1,写一行「×1.00」只是噪音。
+   */
+  const def = apprenticeDef(a.archId);
+  const talentHit = def?.talent === spec;
+  const qualityMult = def ? (APPRENTICE_QUALITY_BONUS[def.quality] ?? 1) : 1;
+  const tagParts: string[] = [];
+  if (talentHit) tagParts.push(`天赋×${APPRENTICE_TALENT_BONUS}`);
+  if (qualityMult !== 1) tagParts.push(`品质×${qualityMult.toFixed(2)}`);
+  const tag = tagParts.length ? `·${tagParts.join("·")}` : "";
   const parts: string[] = [];
   // 产出一律确定(寻宝取丹是 (level*7)%len 的哈希,无随机)—— 预览与归来通报(apprenticeReapText)
   // 逐位相等,标「~」会让人以为有波动,反倒撒谎;去掉,给确定值

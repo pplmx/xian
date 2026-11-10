@@ -12,10 +12,9 @@ import { stoneByTier } from "./formulas";
 import { PILLS, pillDef } from "@/data/pills";
 import {
   APPRENTICE_RECRUIT_TIER_AMOUNT,
-  APPRENTICE_TALENT_BONUS,
+  apprenticeYieldMult,
   DISPATCH_ADVENTURE_FIXED_SCORE,
   DISPATCH_NEED_TARGET,
-  apprenticeDef,
   taskDef,
   type ApprenticeSpec,
 } from "@/data/apprentices";
@@ -92,9 +91,15 @@ export function apprenticeSpoils(
   major: number,
   level: number,
 ): TaskSpoils {
-  const def = apprenticeDef(archId);
   const base = baseSpoils(major, level)[spec]!;
-  const mult = def && def.talent === spec ? APPRENTICE_TALENT_BONUS : 1;
+  /*
+   * 倍率只有一个来源(`data/apprentices.apprenticeYieldMult`):天赋门类 × 品质。
+   *
+   * 从前这里就地写 `def.talent === spec ? APPRENTICE_TALENT_BONUS : 1`,品质完全不参与 ——
+   * 于是「凡品采药童子」与「灵品寻宝灵童」的产出只差天赋那 1.25,品质只用来染色。
+   * 现在倍率的算式收在数据层一处,界面预览与结算都调它(见 ApprenticeView 的派活期望产出)。
+   */
+  const mult = apprenticeYieldMult(archId, spec);
   const out: TaskSpoils = {};
   for (const k of ["herb", "ore", "dust", "wudao"] as const) {
     const v = base[k];

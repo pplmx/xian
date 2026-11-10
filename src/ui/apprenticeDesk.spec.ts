@@ -270,7 +270,17 @@ describe("门庭案 · 先落一令,再核四门存底与值日簿", () => {
     expect(view, "等级封顶读常量").toContain("APPRENTICE_MAX_LEVEL");
     expect(view, "真传门槛读常量").toContain("BOND_TRUECODE_MIN");
     expect(view, "真传跨世收益在达成前也要露").toContain("抵达「真传」");
-    expect(view, "不许手抄天赋倍率").not.toContain("×1.25");
+    /*
+     * 这条查的是「**代码**里有没有手抄 1.25」,不查注释 ——
+     * `readSource` 读的是整份文件(含注释),直接 `toContain` 会让注释里提一嘴
+     * 「从前写的是 ×1.25」就变红,而那句注释恰恰是在解释为什么改成读常量。
+     * 故先剥注释再查代码本体。
+     */
+    const viewCode = view
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "");
+    expect(viewCode, "不许手抄天赋倍率").not.toContain("×1.25");
   });
 
   it("手机两格并读、最近归来跨行,960 把值日簿与门规摊成两页,220 以下退单列", () => {
