@@ -28,7 +28,7 @@
             :fact="`${cnNumber(WORLDS.length)} 界 · ${cnNumber(REALMS.length)} 境`"
           />
           <p class="opening-gate__lead">
-            此世没有开局即定的天命。你从引气一层起，择功法、铸道途、渡天劫；
+            此世没有开局即定的天命。你从炼气一层起，择功法、铸道途、渡天劫；
             每一次转世都带走一点前世的答案。
           </p>
 

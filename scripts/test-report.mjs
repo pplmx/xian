@@ -446,6 +446,7 @@ const CATEGORIES = [
       "loreInsightByKind",
       "stageBenefits",
       "heavenInsightPreview",
+      "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",
