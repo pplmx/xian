@@ -227,6 +227,8 @@ const CATEGORIES = [
     match: [
       "loadoutService",
       "loadouts",
+      // 前期节奏遥测:互动密度算法与「防扰民红线」(连弹簇 / 分位数 / 队列上限)
+      "pacingTelemetry",
       "battleAnalysis",
       "foeOrigin",
       "loreService",

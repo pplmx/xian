@@ -76,23 +76,38 @@ export const usePacingTelemetry = defineStore(
 
       const pct = (p: number): number =>
         intervals[Math.min(intervals.length - 1, Math.floor(intervals.length * p))]!;
-      const burstCount = recent.reduce((count, e, i) => {
-        if (i === 0) return count;
-        const gap = e.at - recent[i - 1]!.at;
-        return gap < 60 * 1000 ? count + 1 : count;
-      }, 0);
-
+      /*
+       * 连弹簇 —— **只看「需要处理」的事件**(modal / notify),`ambient` 不计。
+       *
+       * 注释一直写的是「60 秒内连续出现 ≥2 个**需要处理**事件的**簇数**」,
+       * 而实现此前统计的是**相邻间距 < 60s 的对数**,且把 ambient 也算进去 ——
+       * 两处都与它自己的定义不符,实测 5 个连发报 4、4 个纯后台事件报 3。
+       *
+       * 这个数用来判「连弹风暴」(> 6 次/30 分钟即告警),而 ambient 是
+       * **无感知的后台事件**(素材自动收集、生产)—— 它压根不抢注意力,
+       * 计进去只会让红线提前触发,把真正的风暴淹掉。
+       */
+      const attention = recent.filter((e) => e.kind !== "ambient");
+      let burstCount = 0;
       let maxConsecutive = 0;
-      let consecutive = 0;
-      for (let i = 1; i < recent.length; i += 1) {
-        const gap = recent[i]!.at - recent[i - 1]!.at;
+      let run = 1;
+      for (let i = 1; i < attention.length; i += 1) {
+        const gap = attention[i]!.at - attention[i - 1]!.at;
         if (gap < 60 * 1000) {
-          consecutive += 1;
-          maxConsecutive = Math.max(maxConsecutive, consecutive);
+          run += 1;
         } else {
-          consecutive = 0;
+          if (run >= 2) burstCount += 1;
+          run = 1;
         }
+        maxConsecutive = Math.max(maxConsecutive, run);
       }
+      // 收尾:最后一段如果 ≥2 也是一簇
+      if (run >= 2) burstCount += 1;
+      /*
+       * `maxConsecutive` 的语义是「最大连续弹窗次数」,注释如此 ——
+       * 故它数的是**同一簇里最长的连续段**,从 1 起算(单发算 1,两个连发算 2),
+       * 与 burstCount(簇数)是两个不同的量,别混。
+       */
 
       return {
         total: recent.length,
