@@ -247,3 +247,54 @@ describe("内容密度 · 每一境都得有新东西", () => {
     }
   });
 });
+
+/**
+ * 地域标签必须「够得着」—— 写了标签,却抽不到那个标签的内容。
+ *
+ * ## 缺口长什么样(第 34 轮实测)
+ *
+ * 太乙雷池(tier24 · 境界 12)带 `thunder` + `immortal` 两个附加标签,
+ * 但当时所有 `thunder` 事件都在境界 4~8(服务雷泽)—— **一条也够不到境界 12**。
+ * 它实际能抽到的 7 条全是 `immortal` 那一路,`thunder` 标签等于白写。
+ *
+ * 这类问题与 `contentDensity` 上面那些「每一境都得有新东西」是**互补的**:
+ * 那些量的是「**数量够不够**」,这条量的是「**够不够得着**」。
+ * 事件总数一路涨到 115,而某处可能一条都分不到 —— 总量健康不等于分布健康。
+ *
+ * ## 判据
+ *
+ * 对每个地域的每个**附加标签**(`general` 之外的):若该标签在事件表里存在条目,
+ * 则其中至少要有 **1 条**落在本地域的境界带内(`minRealm ≤ 地域 minRealm ≤ maxRealm`)。
+ *
+ * 只要求「至少一条」而不是「至少 N 条」:地域的厚薄由内容运营定,
+ * 但「标签写了却零条目可达」一定是错的 —— 那种情况下标签应当删掉或补内容。
+ */
+describe("内容密度 · 地域标签必须够得着", () => {
+  it("每个地域的每个附加标签,在境界带内至少有一条事件", () => {
+    const barren: string[] = [];
+    let checked = 0;
+    for (const region of REGIONS) {
+      for (const tag of region.eventTags) {
+        if (tag === "general") continue;
+        const tagged = EVENTS.filter((e) => e.tags.includes(tag));
+        if (tagged.length === 0) continue; // 标签在事件表里压根没有 —— 那是另一回事
+        const usable = tagged.filter(
+          (e) =>
+            (e.minRealm ?? 0) <= region.minRealm && (e.maxRealm ?? Infinity) >= region.minRealm,
+        );
+        checked += 1;
+        if (usable.length === 0) {
+          barren.push(
+            `${region.name}[${tag}] 标签池 ${tagged.length} 条,境界带内 0 条(该地境界 ${region.minRealm})`,
+          );
+        }
+      }
+    }
+    // 防空转:真的扫到了足够多的组合
+    expect(checked, "扫到的「地域×标签」组合太少 —— 判据在空转").toBeGreaterThan(50);
+    expect(
+      barren,
+      "这些地域的标签写了,却没有任何事件够得着(标签形同虚设):" + barren.join("、"),
+    ).toEqual([]);
+  });
+});
