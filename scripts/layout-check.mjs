@@ -20797,6 +20797,36 @@ async function taskCelestialBattleScroll() {
             "[390-report] 判词区一行没有,也没有空态说明 —— 玩家不知道是没判定还是没渲染",
           );
         }
+        /*
+         * 战后归因必须真的渲染出来。
+         *
+         * 这一章(`此战之判`)有两类行:战前判定(道之理解 / 境界压制,◇)与
+         * **战后归因**(遥测算出来的「这一场为什么输」,◆)。
+         * 后者要 `CombatResult.stats`,而天界远征自己建战果行时曾只装四个基础字段,
+         * 于是那一半**永远是空的** —— 而且不会有任何东西报错:
+         * 类型上三处各手写了一份同样窄的形状,整齐地一起错。
+         *
+         * 本任务点的是试炼入口、真打了一场,试炼走 `runGauntlet`(行天然带 stats),
+         * 故这一场必然能算出归因。若这里读不到 ◆ 行,说明归因那一段又断了。
+         */
+        const findingLines = mobile.judgementLines.filter((line) => line.kind === "finding");
+        const preLines = mobile.judgementLines.filter((line) => line.kind === "pre");
+        if (findingLines.length === 0) {
+          failures.push(
+            "[390-report] 此战之判没有战后归因(◆) —— 真打了一场却只有战前判定," +
+              `等于只说「这一界为什么难」、不说「这一场为什么输」。` +
+              `判词区实有 ${mobile.judgementLines.length} 行(${preLines.length} 战前)`,
+          );
+        } else if (/NaN|undefined|Infinity/.test(findingLines.map((l) => l.text).join(" "))) {
+          failures.push(
+            `[390-report] 战后归因漏出占位符:«${findingLines.map((l) => l.text).join(" | ")}»`,
+          );
+        } else {
+          console.log(
+            `\n此战之判:战前 ${preLines.length} 行 · 战后归因 ${findingLines.length} 行` +
+              `(«${findingLines[0].text.slice(0, 36)}…»)`,
+          );
+        }
         const badTabs = mobile.tabs.filter(
           (tab) =>
             tab.role !== "tab" ||
