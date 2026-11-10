@@ -220,3 +220,62 @@ describe("天界口径 · 造敌只有一条路", () => {
     expect(player, "天界三维必须带上凡界装备的平铺").toMatch(/equipFlats: inventory\.equipFlats/);
   });
 });
+
+/**
+ * 试炼的**回报要和难度挂钩** —— 难的给得多,否则玩家没有理由选它。
+ *
+ * ## 缺口是什么(第 62 轮实测)
+ *
+ * 试炼此前只有一条判据在看:`anchorTier > 0` 且随层级单调。**没有任何判据比较
+ * 「难度」与「奖励」** —— 于是十道试炼里九道的奖励都是 45:
+ *
+ * ```text
+ *   一线试炼  难度 1.0x  奖励 45   ← 四场、每场间回满
+ *   无回试炼  难度 3.7x  奖励 45   ← 五场、场间一次都不回
+ * ```
+ *
+ * 难度按「场次 / (0.5 + 场间恢复率) × 强化系数」折算 —— 场次越多越难、
+ * 场间回得越少越难。无回试炼的难度是一线的 3.7 倍,**奖励却一模一样**,
+ * 玩家当然只选一线。
+ *
+ * ## 判据
+ *
+ * 按难度排序后,奖励**不许随难度回落** —— 也就是难的那道不能给得更少。
+ * 允许相等(两道难度接近时同价是合理的),只禁「难的反倒少」。
+ *
+ * 不复刻引擎的具体结算:这里量的是**设计的意图是否自洽**,用同一个粗略口径即可。
+ */
+describe("天界试炼 · 回报与难度同向", () => {
+  /** 粗略难度:场次越多越难、场间回得越少越难、强化越快越难 */
+  const difficultyOf = (t: (typeof TRIALS)[number]): number =>
+    (t.fights / (0.5 + t.healBetweenPct)) * t.escalation;
+
+  it("按难度升序排好后,奖励不回落", () => {
+    const rows = TRIALS.map((t) => ({ t, diff: difficultyOf(t), reward: t.rewardDaoSource })).sort(
+      (a, b) => a.diff - b.diff,
+    );
+    // 防空转:真的量到了十道试炼
+    expect(rows.length, "一道试炼都没量到 —— 判据在空转").toBeGreaterThanOrEqual(5);
+
+    const drops: string[] = [];
+    for (let i = 1; i < rows.length; i += 1) {
+      const prev = rows[i - 1]!;
+      const cur = rows[i]!;
+      if (cur.reward < prev.reward) {
+        drops.push(
+          `${prev.t.name}(难度 ${prev.diff.toFixed(2)},奖励 ${prev.reward}) → ` +
+            `${cur.t.name}(难度 ${cur.diff.toFixed(2)},奖励 ${cur.reward})`,
+        );
+      }
+    }
+    expect(drops, "这些试炼里更难的反而给得更少 —— 玩家没有理由选它:" + drops.join("、")).toEqual(
+      [],
+    );
+  });
+
+  it("难度确实拉开了差距 —— 否则上面那条会空转", () => {
+    const diffs = TRIALS.map(difficultyOf);
+    const spread = Math.max(...diffs) / Math.min(...diffs);
+    expect(spread, "十道试炼的难度几乎一样 —— 「回报与难度同向」就无从谈起").toBeGreaterThan(2);
+  });
+});

@@ -853,7 +853,7 @@ export const TRIALS: TrialDef[] = [
     fights: 7,
     healBetweenPct: 0.3,
     escalation: 1.07,
-    rewardDaoSource: 45,
+    rewardDaoSource: 52,
   },
   {
     id: "yixian",
@@ -867,7 +867,7 @@ export const TRIALS: TrialDef[] = [
     fights: 4,
     healBetweenPct: 1,
     escalation: 1.05,
-    rewardDaoSource: 45,
+    rewardDaoSource: 38,
   },
   {
     id: "wuhui",
@@ -881,7 +881,7 @@ export const TRIALS: TrialDef[] = [
     fights: 5,
     healBetweenPct: 0,
     escalation: 1.04,
-    rewardDaoSource: 45,
+    rewardDaoSource: 54,
   },
   {
     id: "zhaoying",
@@ -904,7 +904,7 @@ export const TRIALS: TrialDef[] = [
     fights: 5,
     healBetweenPct: 0.8,
     escalation: 1.06,
-    rewardDaoSource: 45,
+    rewardDaoSource: 42,
   },
   {
     id: "jinglei",
@@ -918,7 +918,7 @@ export const TRIALS: TrialDef[] = [
     fights: 5,
     healBetweenPct: 0.6,
     escalation: 1.06,
-    rewardDaoSource: 45,
+    rewardDaoSource: 46,
   },
   {
     id: "zhuifeng",
@@ -932,7 +932,7 @@ export const TRIALS: TrialDef[] = [
     fights: 4,
     healBetweenPct: 0.7,
     escalation: 1.06,
-    rewardDaoSource: 45,
+    rewardDaoSource: 40,
   },
   {
     id: "juejing",
@@ -946,7 +946,7 @@ export const TRIALS: TrialDef[] = [
     fights: 5,
     healBetweenPct: 0.55,
     escalation: 1.06,
-    rewardDaoSource: 45,
+    rewardDaoSource: 47,
   },
   {
     id: "xiaomo",
@@ -960,7 +960,7 @@ export const TRIALS: TrialDef[] = [
     fights: 5,
     healBetweenPct: 0.5,
     escalation: 1.05,
-    rewardDaoSource: 45,
+    rewardDaoSource: 48,
   },
   /*
    * 试炼的层级此前只铺了 23~30 八档,而 tier>=20 的地域覆盖 20~32 ——

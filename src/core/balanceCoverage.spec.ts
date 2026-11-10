@@ -54,6 +54,9 @@ const WANTED = [
   // ---- 丹药 ----
   { table: "丹药", dimension: "每-成本不倒挂", keywords: ["每-成本"] },
   { table: "丹药", dimension: "固定点数只用于入门", keywords: ["固定点数"] },
+  // ---- 天界试炼 ----
+  { table: "试炼", dimension: "回报与难度同向", keywords: ["难度"] },
+  { table: "试炼", dimension: "锚点层级单调", keywords: ["锚点"] },
   // ---- 事件 ----
   { table: "际遇", dimension: "修为奖励与同段可比", keywords: ["中位数"] },
   { table: "际遇", dimension: "材料单格不被抬量级", keywords: ["材料"] },
