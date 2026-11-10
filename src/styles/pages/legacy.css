@@ -459,6 +459,38 @@
     font-size: var(--type-note);
     line-height: 1.5;
   }
+  /*
+   * 宿慧阶的收益清单 —— 当前阶「此阶已有」+ 下一阶「入某阶后」。
+   * 用小字与他处 faint 同档:它是解释性内容，不抢「尚差 N 宿慧」那句的注意力。
+   */
+  .legacy-stage-gains {
+    margin-top: 0.44rem;
+    padding-top: 0.36rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .legacy-stage-gains dt {
+    color: var(--color-ink-faint);
+    letter-spacing: 0.04em;
+  }
+  .legacy-stage-gains dt:not(:first-child) {
+    margin-top: 0.36rem;
+  }
+  .legacy-stage-gains dd {
+    min-width: 0;
+    padding-left: 0.7rem;
+    overflow-wrap: anywhere;
+    color: var(--color-ink-soft);
+  }
+  /* 已生效的那组退一档：它是确认，不是新信息 */
+  .legacy-stage-gains dd[data-stage-gain-now] {
+    color: var(--color-ink-faint);
+  }
+  .legacy-stage-gains dd::before {
+    content: "· ";
+    color: var(--color-ink-faint);
+  }
   .legacy-lore {
     display: grid;
     min-width: 0;

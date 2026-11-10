@@ -444,6 +444,7 @@ const CATEGORIES = [
       "insightRulesNote",
       "skillInsightDesk",
       "loreInsightByKind",
+      "stageBenefits",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",

@@ -28370,6 +28370,52 @@ async function taskLegacyHistoryOverflow() {
     }
 
     /*
+     * 宿慧阶的收益 —— `SamsaraStageDef` 有五个收益字段（灵材阶位 / 敌手路数 /
+     * 天劫细节 / 命题自选 / 功法留层），界面上此前一个都没显示：
+     * 「尚差 N 宿慧入某阶」这句话只说了一半 —— 差多少查得到，换来什么查不到。
+     *
+     * 其中 `heavenInsight` 更彻底：全仓没有任何产品代码读它，写了但没接线。
+     * 判据核：两侧都在、条数与字段数对得上、没有字段名漏给玩家。
+     */
+    checked += 1;
+    {
+      const gains = await page.evaluate(() => ({
+        now: [...document.querySelectorAll("[data-stage-gain-now]")].map((e) =>
+          (e.textContent || "").trim(),
+        ),
+        next: [...document.querySelectorAll("[data-stage-gain-next]")].map((e) =>
+          (e.textContent || "").trim(),
+        ),
+      }));
+      if (!gains.now.length && !gains.next.length) {
+        failures.push(
+          "[320] 宿慧阶没报「换来什么」—— 门槛查得到、收益查不到，「尚差 N 宿慧」只说了一半",
+        );
+      } else if (!gains.next.length) {
+        failures.push("[320] 宿慧阶只报了当前阶，没报下一阶的收益 —— 而那正是玩家在攒的");
+      } else if (/undefined|NaN|Infinity/.test(JSON.stringify(gains))) {
+        failures.push(`[320] 宿慧阶的收益漏出占位符 —— «${gains.next[0]}»`);
+      } else {
+        /*
+         * `heavenInsight` 那句必须说清窥的是什么 —— 「天数可窥」四个字
+         * 玩家看不懂。这一条钉的是「写了但没接线」不会再发生:
+         * 只要那一阶开了 heavenInsight，界面上就得有一句讲天劫的。
+         */
+        const all = [...gains.now, ...gains.next];
+        if (!all.some((line) => /天劫/.test(line))) {
+          failures.push(
+            "[320] 宿慧阶的收益里没有一句讲天劫 —— heavenInsight 这一档写了但没接进界面",
+          );
+        }
+        /*
+         * 不许把 camelCase 字段名印给玩家。
+         */
+        const leak = all.find((line) => /[a-z]+[A-Z][a-zA-Z]*/.test(line));
+        if (leak) failures.push(`[320] 宿慧阶的收益把字段名印给玩家了 —— «${leak}»`);
+      }
+    }
+
+    /*
      * 随身所知五行的**分项宿慧** —— 五行权重差 4 倍（灵材每味 3 点且通晓再 +5、
      * 丹方每张 4 点、器谱每张 1 点、敌手每种 2 点、技艺之和 ÷ 20），
      * 而抬头全是「达成数 / 总数」，长得一模一样。

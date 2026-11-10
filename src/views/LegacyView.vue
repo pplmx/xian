@@ -115,6 +115,35 @@
                 尚差 {{ stageMeter.remaining }} 宿慧入「{{ nextStage.name }}」
               </p>
               <p v-else class="legacy-panel__complete">此道已至尽头，宿慧仍可继续累积。</p>
+              <!--
+                这一阶换来什么 —— 上面只有阶名、描述、门槛,而 `SamsaraStageDef`
+                有五个收益字段,界面上此前一个都没显示。「尚差 N 宿慧入某阶」
+                这句话只说了一半:差多少查得到,换来什么查不到。
+
+                两侧都报:当前阶（此刻有哪些）+ 下一阶（正在攒的东西）。
+                文案由字段现生,不手写对照表 —— 改 SAMSARA_STAGES 时界面跟着变。
+              -->
+              <dl
+                v-if="stageBenefits.length || nextStageBenefits.length"
+                class="legacy-stage-gains"
+              >
+                <template v-if="stageBenefits.length">
+                  <dt>此阶已有</dt>
+                  <dd v-for="(line, i) in stageBenefits" :key="`now-${i}`" data-stage-gain-now>
+                    {{ line }}
+                  </dd>
+                </template>
+                <template v-if="nextStageBenefits.length">
+                  <dt>入「{{ nextStage?.name }}」后</dt>
+                  <dd
+                    v-for="(line, i) in nextStageBenefits"
+                    :key="`next-${i}`"
+                    data-stage-gain-next
+                  >
+                    {{ line }}
+                  </dd>
+                </template>
+              </dl>
             </article>
 
             <article class="legacy-panel" data-legacy-lore>
@@ -981,6 +1010,7 @@ import { blueprintProgress } from "@/ui/blueprintProgress";
 import { insightRulesNote } from "@/ui/insightRulesNote";
 import { skillInsightDesk } from "@/ui/skillInsightDesk";
 import { loreInsightByKind } from "@/ui/loreInsightByKind";
+import { stageBenefitLines } from "@/ui/stageBenefits";
 import { formatDate } from "@/utils/time";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LegacyWheel from "@/components/common/LegacyWheel.vue";
@@ -1148,6 +1178,13 @@ const nextBlueprintBatch = computed(() =>
  *
  * 输入是 `lore.skillExp`（与 samsaraService 折算宿慧时读的同一份）。
  */
+/** 当前宿慧阶开着的收益 —— 文案由 SamsaraStageDef 的字段现生（见 ui/stageBenefits） */
+const stageBenefits = computed(() => stageBenefitLines(stage.value));
+/** 下一阶的收益 —— 玩家正在攒的就是它 */
+const nextStageBenefits = computed(() =>
+  nextStage.value ? stageBenefitLines(nextStage.value) : [],
+);
+
 const skillDesk = computed(() => skillInsightDesk(lore.skillExp));
 /** 一句汇总:「九项中动了 3 项 · 折宿慧 12」 */
 const skillSummary = computed(
