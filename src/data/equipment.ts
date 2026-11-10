@@ -185,8 +185,19 @@ export const EQUIPMENT_TEMPLATES: EquipmentTemplate[] = [
   t("b_yaopi", "妖皮软甲", "body", 5, { defense: 8, maxHp: 36 }, "妖皮鞣的软甲,轻而有韧", {
     fixedMods: { dodgeRate: 0.02 },
   }),
-  t("wr_tiebi", "妖筋护腕", "wrist", 5, { attack: 4, defense: 4 }, "妖兽之筋缠成,越用力绷得越紧"),
-  t("bl_shoupi", "兽皮腰带", "belt", 5, { defense: 4, maxHp: 32 }, "妖兽之皮鞣制,坚韧异常"),
+  /*
+   * 这四件原先**没有 fixedMods** —— 而同槽同阶的邻居都有(见兽踪靴/兽牙戒/妖庭战靴)。
+   * 它们的描述里明明写着「越用力绷得越紧」「压得住心神」「腰背自生一股力」,
+   * 却没有一件给出对应的词条 —— 文案在许诺,数据没兑现。
+   *
+   * 数值照同阶邻居取(0.02~0.06 这一档)。
+   */
+  t("wr_tiebi", "妖筋护腕", "wrist", 5, { attack: 4, defense: 4 }, "妖兽之筋缠成,越用力绷得越紧", {
+    fixedMods: { counterRate: 0.04 },
+  }),
+  t("bl_shoupi", "兽皮腰带", "belt", 5, { defense: 4, maxHp: 32 }, "妖兽之皮鞣制,坚韧异常", {
+    fixedMods: { maxHpPct: 0.04 },
+  }),
   t("bo_shouzong", "兽踪靴", "boots", 5, { defense: 4, maxHp: 15 }, "靴底纹路照着妖兽脚印刻的", {
     fixedMods: { explorationSpeed: 0.06 },
   }),
@@ -212,6 +223,7 @@ export const EQUIPMENT_TEMPLATES: EquipmentTemplate[] = [
     6,
     { defense: 6, maxHp: 22 },
     "铁脊锻成的冠,沉是沉了些,却压得住心神",
+    { fixedMods: { damageReduction: 0.03 } },
   ),
   t("b_xuanwu", "玄武甲", "body", 6, { defense: 10, maxHp: 42 }, "仿玄武之甲铸成,厚重难破", {
     fixedMods: { damageReduction: 0.04 },
@@ -504,6 +516,7 @@ export const EQUIPMENT_TEMPLATES: EquipmentTemplate[] = [
     13,
     { defense: 5, maxHp: 42 },
     "虎妖之筋绞成,束上时腰背自生一股力",
+    { fixedMods: { attackPct: 0.05 } },
   ),
   t("bo_yaoting", "妖庭战靴", "boots", 13, { defense: 6, maxHp: 22 }, "踏过妖庭石阶的战靴", {
     fixedMods: { attackPct: 0.05 },

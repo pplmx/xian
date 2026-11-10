@@ -183,3 +183,51 @@ describe("装备生成", () => {
     expect(resolveEquipStats(inst).affixLines.map((l) => l.id)).toEqual(["def2", "atk2"]);
   });
 });
+
+/**
+ * 高阶装备不许只有基础属性 —— 它得有一句「自己的东西」。
+ *
+ * ## 缺口是什么(第 65 轮实测)
+ *
+ * 288 个模板里 18 个没有 `fixedMods`,其中 14 个是 tier 1~4 的入门装(合理:
+ * 青竹剑、麻布道袍本就不该有特殊属性),另外 **4 个是 tier 5 / 6 / 13**:
+ *
+ * ```text
+ * tier5  wrist  妖筋护腕  「越用力绷得越紧」
+ * tier5  belt   兽皮腰带  「坚韧异常」
+ * tier6  head   铁脊冠    「压得住心神」
+ * tier13 belt   虎筋腰带  「腰背自生一股力」
+ * ```
+ *
+ * 而同槽同阶的邻居全都有词条(兽踪靴 `explorationSpeed`、兽牙戒 `critDamage`、
+ * 妖庭战靴 `attackPct`)。**描述里许诺了特色,数据里没有** —— 玩家读到的是
+ * 「坚韧异常」,面板上却只有防御和气血两个数字。
+ *
+ * 已按同阶邻居的量级补上(counterRate / maxHpPct / damageReduction / attackPct)。
+ *
+ * ## 判据
+ *
+ * tier ≥ 5 的模板必须有至少一条 `fixedMods`。低阶不要求 ——
+ * 入门装只给基础属性是**设计**,不是遗漏,这条线画在 5 阶。
+ */
+describe("装备模板 · 高阶不许只有基础属性", () => {
+  it("tier >= 5 的模板都有至少一条固有词条", () => {
+    const HIGH_TIER = 5;
+    const bare = EQUIPMENT_TEMPLATES.filter((t) => {
+      const tier = (t as { tier?: number }).tier ?? 0;
+      if (tier < HIGH_TIER) return false;
+      return Object.keys(t.fixedMods ?? {}).length === 0;
+    }).map((t) => `${t.name}(${t.slot} t${(t as { tier?: number }).tier})`);
+
+    // 防空转:真的量到了足够多的高阶模板
+    const highTierCount = EQUIPMENT_TEMPLATES.filter(
+      (t) => ((t as { tier?: number }).tier ?? 0) >= HIGH_TIER,
+    ).length;
+    expect(highTierCount, "高阶模板太少 —— 判据在空转").toBeGreaterThan(100);
+
+    expect(
+      bare,
+      `${HIGH_TIER} 阶以上的装备只有基础属性,没有自己的词条 —— 描述与面板对不上:` + bare.join("、"),
+    ).toEqual([]);
+  });
+});
