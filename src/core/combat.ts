@@ -274,20 +274,26 @@ export function resolveCombat(
   }
   push("info", "sys", `你与【${eSnap.name}】狭路相逢!`);
 
+  /**
+   * 结算一次伤害,返回**护盾实际吸收的量**。
+   *
+   * 原来只返回 `boolean`(护盾是否恰好被打光),而玄罡反震只认那一个点 ——
+   * 于是它在罡盾流手上几乎从不触发(见下方 `xuangang` 的注释)。
+   * 返回吸收量之后,反震可以按「盾替你挡了多少」来定,不必赌「盾破的那一刹那」。
+   */
   const applyDamage = (
     attacker: Fighter | null,
     target: Fighter,
     dmg: GNum,
     bypassShield = false,
-  ): boolean => {
+  ): GNum => {
     let remain = { ...dmg };
-    let shieldBroken = false;
+    let absorbed: GNum = { m: 0, e: 0 };
     if (!bypassShield && !isZero(target.shield)) {
-      const absorbed = gnMin(target.shield, remain);
+      absorbed = gnMin(target.shield, remain);
       target.shield = subClamp(target.shield, absorbed);
       remain = subClamp(remain, absorbed);
       target.stats.shieldAbsorbed = add(target.stats.shieldAbsorbed, absorbed);
-      shieldBroken = isZero(target.shield);
     }
     target.hp = subClamp(target.hp, remain);
     // Phase 31 S5:铁壁共鸣 —— 近致命伤首次保命(保留 1 点气血,一次性)
@@ -304,7 +310,7 @@ export function resolveCombat(
       attacker.stats.dealt = add(attacker.stats.dealt, dmg);
       attacker.stats.hitsLanded += 1;
     }
-    return shieldBroken;
+    return absorbed;
   };
 
   /** 治疗:受治疗效率规则影响;溢出部分按「溢疗成盾」转化为护盾 */
@@ -404,7 +410,7 @@ export function resolveCombat(
     factor *= Math.max(0.1, taken);
 
     const dmg = mulN(attacker.snap.attack, Math.max(0.02, factor) * attacker.atkRamp);
-    const shieldBroken = applyDamage(attacker, target, dmg, opts.pierce);
+    const shieldAbsorbed = applyDamage(attacker, target, dmg, opts.pierce);
 
     const verb = opts.isSkill ? `施展【${label}】` : `祭出${label}`;
     if (isCrit) {
@@ -413,19 +419,35 @@ export function resolveCombat(
       push(opts.isSkill ? "skill" : "atk", side, `${aName}${verb},击中${tName}。`, dmg);
     }
 
-    // 组合技·玄罡反震:护盾被击破的刹那,立即一次强化反击(每场限两次)
+    /*
+     * 组合技·玄罡反震:**护盾每承受一次打击,就震出一道罡气**(每场限两次)。
+     *
+     * 原来的触发条件是「护盾被击破的刹那」(`isZero(target.shield)`),而罡盾流
+     * 只有 `shieldOnStart 0.4` 一层盾、被打光后不再生。能打光它的多是单段高伤 ——
+     * 那种场合罡盾流本来就撑不住,**「盾破」那一刻往往就是败局已定**。
+     * 实测五个天界里这条组合技的增益是 `0/0/0/-3/-13`,一个正增益都没有
+     * (见 `core/comboArtValue.spec`)。
+     *
+     * 改成「护盾挡住伤害就反震」:
+     * - 不必赌「盾破的那一刹那」,盾还在的时候就能换到伤害
+     * - 与「罡盾」这个主题一致 —— 护盾本身就该有反击的意味
+     * - 每场限两次没变,所以不会变成无上限的输出引擎
+     *
+     * 反震量按**这次被盾挡掉的伤害**折算(0.9 倍),而不是凭空一个固定值 ——
+     * 挡得多就震得狠,挡不住(真伤穿透)就一点都震不出来。
+     */
     if (
-      shieldBroken &&
       target.snap.comboArt === "xuangang" &&
       target.comboUses < 2 &&
+      !isZero(shieldAbsorbed) &&
       !isZero(target.hp)
     ) {
       target.comboUses += 1;
-      push("proc", target.snap.isPlayer ? "p" : "e", `${tName}罡盾崩碎,碎光尽数化作反震之力!`);
+      push("proc", target.snap.isPlayer ? "p" : "e", `${tName}罡盾硬撼,碎光化作反震之力!`);
       strike(
         target,
         attacker,
-        0.9 * (1 + modOf(target.snap.mods, "counterDamage")),
+        1.8 * (1 + modOf(target.snap.mods, "counterDamage")),
         "玄罡反震",
         round,
         {

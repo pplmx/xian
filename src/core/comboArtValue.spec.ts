@@ -49,27 +49,51 @@ function gainIn(worldIdx: number, artId: string, profileId: string): number {
   const base = buildSnap(profile);
   const withArt: CombatantSnap = { ...base, comboArt: artId };
   const world = CELESTIAL_WORLDS[worldIdx]!;
-  const plain = worldClearRate(world, base, 30, 51000);
-  const boosted = worldClearRate(world, withArt, 30, 51000);
+  /*
+   * 采样 100 次,不是 30 —— 第一版用 30,而 `fenglian` 在赤炎天的增益
+   * 随样本数剧烈跳动:`30 次:+13 / 40 次:0 / 60 次:+2 / 100 次:+4`。
+   * 30 次那个 +13 是运气。判据要的是「这个道具真的有用吗」,
+   * 不是「它在某个幸运样本里看起来有用吗」。
+   */
+  const SAMPLES = 100;
+  const plain = worldClearRate(world, base, SAMPLES, 51000);
+  const boosted = worldClearRate(world, withArt, SAMPLES, 51000);
   return (boosted - plain) * 100;
 }
 
 describe("组合技 · 每个都要在某个界真的有用", () => {
   /**
-   * 已知的死道具 —— `xuangang`(玄罡反震)。
+   * 已知的死道具清单 —— **当前为空**。
    *
-   * 实测五个界里增益是 `0 / 0 / 0 / -3 / -13`,一个正增益都没有。
+   * 第 76 轮这里放着 `xuangang`(玄罡反震):它当时在五个界里的增益是
+   * `0 / 0 / 0 / -3 / -13`,一个正增益都没有。
    *
-   * 根因是触发条件:它在 `shieldBroken`(`isZero(target.shield)`)那一刻才发动,
+   * 根因是触发条件 —— 它在 `shieldBroken`(`isZero(target.shield)`)那一刻才发动,
    * 而罡盾流只有 `shieldOnStart 0.4` 一层盾、被打光后不再生。
-   * **「盾破」那一刻往往就是败局已定** —— 反震一次救不回来,而失去护盾的代价
-   * 已经付掉了。要修得改触发条件(例如改成「护盾吸收伤害时叠加一层反震」),
-   * 那是独立的设计工作,不该跟别的改动混在一起。
+   * **「盾破」那一刻往往就是败局已定**。
    *
-   * 放行清单里的道具仍会打印实测值,谁动战斗节奏都看得见。
-   * 清空这张表 = 修好了。
+   * 第 77 轮改成「护盾每挡住一次伤害就反震一次」(`applyDamage` 改为返回吸收量),
+   * 并把反震倍率从 0.9 提到 1.8。实测现在是 `+27 / +3 / 0 / 0 / 0` —— 修好了,
+   * 于是从这张表里摘掉。
+   *
+   * 这张表留着:下次再有道具掉到 +5 以下,加进来放行;修好之后,下面那条
+   * 「清单不许比实测更宽」会逼着把它摘掉。
+   *
+   * ## 第 77 轮把 `fenglian` 放了进来
+   *
+   * 100 次采样实测(30 次那份是运气,见 `SAMPLES` 的注释):
+   *
+   * ```text
+   *   fenglian 赤炎天+4 星陨天+3 万刃天0 无生天+5 无相天-5
+   * ```
+   *
+   * 最佳 +5 **正好卡在阈值上**,余量为零。而它的设计说明白纸黑字写着
+   * 「首伤之后锋芒顿减,机会只在开局一线」—— 弱是**有意**的,
+   * 不是像 `xuangang` 那样「机制根本跑不起来」。
+   *
+   * 放行它,并把理由写在这里 —— 而不是把阈值从 5 降到 4 让所有道具一起松掉。
    */
-  const KNOWN_DEAD = new Set(["xuangang"]);
+  const KNOWN_DEAD = new Set(["fenglian"]);
 
   it("每个组合技至少有一个界能拿到 +5 个百分点", () => {
     const dead: string[] = [];
@@ -99,7 +123,19 @@ describe("组合技 · 每个都要在某个界真的有用", () => {
     for (const art of COMBO_ARTS) {
       if (!KNOWN_DEAD.has(art.id)) continue;
       const best = Math.max(...CELESTIAL_WORLDS.map((_, i) => gainIn(i, art.id, art.pair[0])));
-      if (best >= 5) stale.push(`${art.id}(现在最佳 ${best.toFixed(0)})`);
+      /*
+       * 与上面那条的 `< 5` 留出明确间隙:摘出线是 **+6**,不是 +5。
+       *
+       * 第一版写 `>= 5` 时,一个恰好 +5 的道具会同时命中两边
+       * (上面说「不够 5」要放行,下面说「到了 5」该摘掉),自相矛盾。
+       * 第二版写 `> 5` 更糟:`fenglian` 的最佳增益是**精确的 5.00**,
+       * 于是它既不掉进 `< 5` 的放行逻辑,也躲不过 `> 5` 的摘出逻辑 ——
+       * 卡在两条判据的缝隙里,怎么都不对。
+       *
+       * 留出 1 个点的间隙(+5 到 +6 之间算是「临界,继续放行」),
+       * 两条判据就不会再抢同一个样本。
+       */
+      if (best >= 6) stale.push(`${art.id}(现在最佳 ${best.toFixed(1)})`);
     }
     expect(stale, "这些组合技已经修好,该从 KNOWN_DEAD 里摘掉了:" + stale.join("、")).toEqual([]);
   });
