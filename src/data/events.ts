@@ -1,4 +1,4 @@
-/** 随机事件库 —— 115 个随机事件(含 21 个奇缘阶段) + 17 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 116 个随机事件(含 21 个奇缘阶段) + 17 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -1629,6 +1629,48 @@ export const EVENTS: EventDef[] = [
       ),
     ],
     { minRealm: 11 },
+  ),
+  /*
+   * 太乙雷池(tier24 · 境界12)只带 `thunder` + `immortal` 两个附加标签。
+   * 但现存的 `thunder` 事件全是人间界的(境界 4~8,服务雷泽),一条也够不到境界 12 ——
+   * **名为「雷池」,实际一条雷系际遇都抽不到**,能抽到的 7 条全是 immortal 那一路。
+   *
+   * 补一条仙界雷系,境界带对准雷池(minRealm 12)。
+   */
+  ev(
+    "ev_leichi_xianlei",
+    "雷池仙雷",
+    "雷池的水面浮着一层极薄的白光,每隔一阵,池底会升起一道极细的雷电 —— 不炸响,只静静地立在那里。",
+    ["general", "thunder", "immortal"],
+    [
+      c("引那道雷入体", [
+        o(50, "雷丝顺着经脉走完一圈,沿途烧掉了些说不清的东西。", {
+          type: "exp",
+          secs: 120,
+        }),
+        o(
+          30,
+          "雷太细,反而更难承受。你退开时指间仍在发麻。",
+          { type: "buff", id: "injury" },
+          { type: "material", id: "wudao", amount: 40 },
+        ),
+        o(20, "那道雷在池面立了很久,最后自己散进水里,像没打算给谁。", {
+          type: "nothing",
+        }),
+      ]),
+      c(
+        "在池边等",
+        [
+          o(1, "你坐在池边看了一整日的雷起雷落。它不催,你也不急。", {
+            type: "material",
+            id: "wudao",
+            amount: 45,
+          }),
+        ],
+        { isDefault: true },
+      ),
+    ],
+    { minRealm: 12, maxRealm: 13 },
   ),
   ev(
     "ev_shenyu_zhen",
