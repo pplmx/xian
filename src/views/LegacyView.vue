@@ -134,6 +134,18 @@
                   <span class="legacy-lore__value tabular">
                     {{ row.value }} / {{ row.total }} {{ row.unit }}
                   </span>
+                  <!--
+                    这一行各折多少宿慧 —— 五行权重差 4 倍（丹方一张 4 点、器谱一张
+                    1 点），而抬头长得一模一样。不报折算，玩家读「通晓丹方 8 / 54」
+                    不会知道它折了 32 点。0 点写「—」不写「+0」：后者像一个不存在的档位。
+                  -->
+                  <span
+                    class="legacy-lore__insight tabular"
+                    :data-legacy-lore-insight="row.key"
+                    :class="{ 'is-zero': row.insight <= 0 }"
+                  >
+                    {{ row.insight > 0 ? `宿慧 +${row.insight}` : "—" }}
+                  </span>
                   <span class="legacy-lore__track">
                     <span :style="{ width: `${row.meter.ratio * 100}%` }" />
                   </span>
@@ -968,6 +980,7 @@ import { enemyLoreLedger } from "@/ui/enemyLoreLedger";
 import { blueprintProgress } from "@/ui/blueprintProgress";
 import { insightRulesNote } from "@/ui/insightRulesNote";
 import { skillInsightDesk } from "@/ui/skillInsightDesk";
+import { loreInsightByKind } from "@/ui/loreInsightByKind";
 import { formatDate } from "@/utils/time";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LegacyWheel from "@/components/common/LegacyWheel.vue";
@@ -1027,6 +1040,7 @@ const loreRows = computed(() =>
       key: "material",
       mark: "材",
       name: "认得灵材",
+      insightKey: "material" as const,
       value: lore.knownMaterialCount,
       total: MATERIALS.length,
       unit: "味",
@@ -1035,6 +1049,7 @@ const loreRows = computed(() =>
       key: "recipe",
       mark: "方",
       name: "通晓丹方",
+      insightKey: "recipe" as const,
       value: lore.masteredRecipeCount,
       total: RECIPE_TOTAL,
       unit: "张",
@@ -1043,6 +1058,7 @@ const loreRows = computed(() =>
       key: "blueprint",
       mark: "谱",
       name: "读通器谱",
+      insightKey: "blueprint" as const,
       value: lore.masteredBlueprintCount,
       total: EQUIPMENT_TEMPLATES.length,
       unit: "张",
@@ -1051,11 +1067,30 @@ const loreRows = computed(() =>
       key: "enemy",
       mark: "敌",
       name: "洞悉敌手",
+      insightKey: "enemy" as const,
       value: lore.masteredEnemyCount,
       total: ENEMIES.length,
       unit: "种",
     },
-  ].map((row) => ({ ...row, meter: legacyMeter(row.value, row.total) })),
+  ].map((row) => ({
+    ...row,
+    meter: legacyMeter(row.value, row.total),
+    /*
+     * 五行各折多少宿慧 —— 键与 `loreInsightByKind` 的返回字段一一对应。
+     * 技艺那一行不在这里（它在下面单列一块），故 `skill` 不参与本表。
+     */
+    insight: loreByKind.value[row.insightKey],
+  })),
+);
+/** 分项宿慧 —— 与 `loreInsight` 同一份实现（见 ui/loreInsightByKind） */
+const loreByKind = computed(() =>
+  loreInsightByKind({
+    materialLore: lore.materialLore,
+    recipeLore: lore.recipeLore,
+    blueprintLore: lore.blueprintLore,
+    skillExp: lore.skillExp,
+    enemyLore: lore.enemyLore,
+  }),
 );
 const loreCoverage = computed(() => legacyCoverage(loreRows.value));
 

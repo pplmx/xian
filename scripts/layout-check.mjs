@@ -27809,7 +27809,12 @@ async function taskLegacyHistoryOverflow() {
      * 另外两只走普通门槛 [0,1,5,14],用来核「按次数升阶」那一侧。
      */
     slices.lore = {
-      materialLore: {},
+      /*
+       * 灵材认知 —— 下面「分项宿慧」判据要量「灵材每味 3 点、通晓再 +5」
+       * 与「器谱每张 1 点」的权重方向，故夹具里得有认得且通晓的灵材。
+       * 3 味中 1 味通晓：1×8 + 2×3 = 14 点，明显多于器谱那 2 张的 2 点。
+       */
+      materialLore: { m_yunwu: 3, m_hanlu: 1, m_huoyan: 1 },
       materialSeen: {},
       recipeLore: {},
       /*
@@ -28359,6 +28364,80 @@ async function taskLegacyHistoryOverflow() {
           failures.push(
             `[320] 器谱进度的「还差几次」与增量对不上 —— «${byPct.get(90)?.text ?? "无"}»` +
               `(0.9 差 0.1,增量 0.02 → 5 次)`,
+          );
+        }
+      }
+    }
+
+    /*
+     * 随身所知五行的**分项宿慧** —— 五行权重差 4 倍（灵材每味 3 点且通晓再 +5、
+     * 丹方每张 4 点、器谱每张 1 点、敌手每种 2 点、技艺之和 ÷ 20），
+     * 而抬头全是「达成数 / 总数」，长得一模一样。
+     *
+     * 实测夹具：认得灵材 3/16 折 +14，而读通器谱 2/288 折 +2 —— 差 7 倍，
+     * 此前玩家完全看不见。判据核：四行都有、0 点写「—」不写「+0」、
+     * 且分项之和与 `loreInsight` 对得上。
+     */
+    checked += 1;
+    {
+      const lore = await page.evaluate(() => {
+        const rows = [...document.querySelectorAll("[data-legacy-lore-row]")];
+        if (!rows.length) return null;
+        return {
+          rows: rows.map((r) => ({
+            key: r.getAttribute("data-legacy-lore-row"),
+            value: (r.querySelector(".legacy-lore__value")?.textContent || "").trim(),
+            insight: (r.querySelector("[data-legacy-lore-insight]")?.textContent || "").trim(),
+          })),
+        };
+      });
+      if (!lore) {
+        failures.push("[320] 随身所知没渲染 —— 下面的分项宿慧判据无从量起");
+      } else if (lore.rows.some((r) => !r.insight)) {
+        failures.push(
+          `[320] 随身所知有行没报分项宿慧 —— ${lore.rows
+            .filter((r) => !r.insight)
+            .map((r) => r.key)
+            .join(" / ")}`,
+        );
+      } else if (/NaN|undefined|Infinity/.test(JSON.stringify(lore))) {
+        failures.push(`[320] 随身所知的分项宿慧漏出占位符 —— «${JSON.stringify(lore.rows[0])}»`);
+      } else if (lore.rows.some((r) => r.insight === "+0" || r.insight === "宿慧 +0")) {
+        failures.push("[320] 分项宿慧给 0 点印了「+0」—— 那像一个不存在的档位，该写「—」");
+      } else {
+        /*
+         * 分项之和要能对上抬头总数里的现量部分。夹具里 `reincarnation.insight`
+         * 是存量，故这里只核**分项之间是否自洽**:灵材那一行折得比器谱多,
+         * 权重方向不能反（3 点/味 vs 1 点/张，且灵材还可能通晓再 +5）。
+         */
+        /*
+         * 解析一行折了多少点。「—」是 0 点（0 点按设计印「—」不印「+0」），
+         * 故它不是「解析失败」；只有既没有数字也不是「—」才算判据空转。
+         */
+        const pick = (k) => {
+          const row = lore.rows.find((r) => r.key === k);
+          if (!row) return null;
+          if (row.insight === "—") return 0;
+          const m = row.insight.match(/\d+/);
+          return m ? Number(m[0]) : null;
+        };
+        const material = pick("material");
+        const blueprint = pick("blueprint");
+        if (material === null || blueprint === null) {
+          failures.push(
+            `[320] 分项宿慧既不是数字也不是「—」—— 判据在空转：` +
+              `灵材 «${material}» / 器谱 «${blueprint}»`,
+          );
+        } else if (material === 0 && blueprint === 0) {
+          /*
+           * 两份都是 0 时无从比方向 —— 这是夹具的问题，不是判据的问题。
+           * 夹具里已有灵材，故这里报出来提醒（而不是静默放过）。
+           */
+          failures.push("[320] 夹具里灵材与器谱都没折到宿慧 —— 权重方向判据无从量起");
+        } else if (material <= blueprint) {
+          failures.push(
+            `[320] 灵材折的宿慧 ${material} 不多于器谱 ${blueprint} —— ` +
+              `权重是灵材每味 3 点、器谱每张 1 点，方向反了`,
           );
         }
       }

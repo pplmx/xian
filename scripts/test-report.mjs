@@ -443,6 +443,7 @@ const CATEGORIES = [
       "docShotsFresh",
       "insightRulesNote",
       "skillInsightDesk",
+      "loreInsightByKind",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",

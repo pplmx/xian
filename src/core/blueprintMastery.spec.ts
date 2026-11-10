@@ -42,15 +42,38 @@ describe("器谱掌握度 · 唯一口径", () => {
 
 describe("器谱掌握度 · 消费者同源", () => {
   it("宿慧、轮回录、图鉴、铁砧与重铸全认同一枚读通判据", () => {
+    /*
+     * 名单里每多一条，就说明又一处要读「读通」。`ui/loreInsightByKind` 是
+     * 折算的唯一实现（宿慧分项与总数都走它），故它必须在这一列里 ——
+     * 若哪天有人把折算抄回 `samsaraService` 里，这一条会同时抓出**两处**
+     * 不一致（分项与总数各算各的）。
+     */
+    /*
+     * 两种认得同一枚判据的方式，都算数：
+     *   · **直接用** `isBlueprintMastered`（图鉴、重铸、装备详情、lore store）
+     *   · **间接到唯一实现**（`core/samsaraService` 的折算已搬进
+     *     `ui/loreInsightByKind`，它自己不再出现这个词）
+     *
+     * 第二类是这一轮引入的：分项宿慧与总数必须同源，故折算收进一处。
+     * 判据因此认「直接调用」或「走那一处」两者之一 —— 只认字符串会把
+     * 正确的收敛判成违规（实测踩过）。
+     */
+    const MASTERED = "isBlueprintMastered";
+    const VIA_INSIGHT = "loreInsightByKind";
     for (const file of [
-      "core/samsaraService.ts",
+      "ui/loreInsightByKind.ts",
       "stores/lore.ts",
       "ui/codex.ts",
       "components/equipment/EquipmentDetailDialog.vue",
       "core/reforge.ts",
     ]) {
       const src = readFileSync(resolve(__dirname, "../", file), "utf8");
-      expect(src, `${file} 该走 core/blueprintMastery 的读通判据`).toContain("isBlueprintMastered");
+      expect(src, `${file} 该走 core/blueprintMastery 的读通判据`).toContain(MASTERED);
     }
+    // 折算那一处：自己用判据；调用它的人走它，都算同源
+    expect(
+      readFileSync(resolve(__dirname, "../", "core/samsaraService.ts"), "utf8"),
+      "samsaraService 的读通判据该走 ui/loreInsightByKind（唯一实现）或直接用 core/blueprintMastery",
+    ).toContain(VIA_INSIGHT);
   });
 });

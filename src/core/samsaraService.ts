@@ -25,18 +25,11 @@
  *
  * 两者相加才是 totalInsight(),分阶、折资质地板都用它。
  */
-import { LORE_MAX, MATERIALS } from "@/data/materials";
-import { SKILL_IDS, skillLevelFromExp } from "@/data/crafting";
+import { MATERIALS } from "@/data/materials";
 import { REINCARNATE_APTITUDE_FLOOR } from "@/data/constants";
 import {
   INSIGHT_PER_APTITUDE,
-  INSIGHT_PER_BLUEPRINT,
-  INSIGHT_PER_ENEMY,
   INSIGHT_PER_LIFE_REALM,
-  INSIGHT_PER_MATERIAL,
-  INSIGHT_PER_MATERIAL_MASTERED,
-  INSIGHT_PER_RECIPE,
-  INSIGHT_SKILL_DIV,
   stageAt,
   type LifeVow,
   type SamsaraStageDef,
@@ -48,14 +41,14 @@ import {
   type LifeThemeDef,
   type LifeThemeMetric,
 } from "@/data/lifeThemes";
-import { ENEMY_LORE_MAX, useLoreStore } from "@/stores/lore";
+import { useLoreStore } from "@/stores/lore";
+import { loreInsightByKind } from "@/ui/loreInsightByKind";
 import { usePlayerStore } from "@/stores/player";
 import { useQuestsStore } from "@/stores/quests";
 import { useCultivationStore } from "@/stores/cultivation";
 import type { CounterKey } from "@/types";
 import { deltaOf, deltaSince, snapshotOf } from "wanxiang-engine";
 import { notify } from "./notify";
-import { isBlueprintMastered } from "./blueprintMastery";
 
 // ============ 宿慧折算(纯函数,可独立测试) ============
 
@@ -81,25 +74,13 @@ export interface LoreSnapshot {
  * 通晓用法的药在"认得"之上再计一份 —— 认得它叫什么和会用它,是两回事。
  */
 export function loreInsight(snap: LoreSnapshot): number {
-  let sum = 0;
-  for (const v of Object.values(snap.materialLore)) {
-    if (v >= 1) sum += INSIGHT_PER_MATERIAL;
-    if (v >= LORE_MAX) sum += INSIGHT_PER_MATERIAL_MASTERED;
-  }
-  for (const v of Object.values(snap.recipeLore)) {
-    if (v >= 1) sum += INSIGHT_PER_RECIPE;
-  }
-  for (const v of Object.values(snap.blueprintLore)) {
-    if (isBlueprintMastered(v)) sum += INSIGHT_PER_BLUEPRINT;
-  }
-  let skillSum = 0;
-  for (const id of SKILL_IDS) {
-    skillSum += skillLevelFromExp(snap.skillExp[id] ?? 0);
-  }
-  sum += skillSum / INSIGHT_SKILL_DIV;
-  for (const v of Object.values(snap.enemyLore)) {
-    if (v >= ENEMY_LORE_MAX) sum += INSIGHT_PER_ENEMY;
-  }
+  /*
+   * 折算只有一份实现（`ui/loreInsightByKind`）—— 修仙录「随身所知」要把
+   * 五行各自折多少宿慧报出来，若这里另留一套算法，玩家把五行加起来会与
+   * 抬头那个总数对不上。改权重时两处一起动。
+   */
+  const byKind = loreInsightByKind(snap);
+  const sum = byKind.material + byKind.recipe + byKind.blueprint + byKind.skill + byKind.enemy;
   return Math.floor(sum);
 }
 

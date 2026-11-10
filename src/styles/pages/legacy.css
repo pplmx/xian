@@ -465,12 +465,28 @@
     gap: 0.42rem;
     margin-top: 0.34rem;
   }
+  /*
+   * 三列：印 / 名 / 达成数 —— 宿慧不占第四列。
+   *
+   * 试过四列（印 / 名 / 达成数 / 宿慧），在 1280 视口下这一块只有 **169px** 宽，
+   * 名字被挤成 19px 宽 / 70px 高（竖排），浏览器门直接报「文字被挤成竖排」。
+   * 改成三列 + 宿慧跟在数字后面，靠内容撑 —— 窄栏里它会换到下一行，
+   * 那是可接受的（换行不等于读不懂），而不许把名字压没。
+   */
   .legacy-lore__row {
     display: grid;
     min-width: 0;
     grid-template-columns: 1.45rem minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.12rem 0.4rem;
+  }
+  .legacy-lore__insight {
+    color: rgb(var(--color-cinnabar-rgb));
+    font-size: var(--type-note);
+    white-space: nowrap;
+  }
+  .legacy-lore__insight.is-zero {
+    color: var(--color-ink-faint);
   }
   .legacy-lore__mark {
     display: grid;
