@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 628 个 spec;本作自己那部分 548 个) |
+| `bun run test` | 全量用例(全量 629 个 spec;本作自己那部分 549 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 628 个 spec = 宿主 548 + 引擎 80,别把 628 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 629 个 spec = 宿主 549 + 引擎 80,别把 629 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 628 个 spec(本作自己那部分 548 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 629 个 spec(本作自己那部分 549 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -2979,3 +2979,37 @@ rows: {
 第三个数字才是值得看的:条件性标记是「某些状态下才出现」的读数,
 最容易出现「写了但没人验」。这 128 个里随手挑了一个就是上面那条洞府门径 ——
 说明这类缺口还不少,后续可以按需要逐个补,不必一次做完。
+
+### 终局 store 没有 store 层判据 —— 而最近几轮改的正是它承载的数据
+
+`stores/endgame` 是本作状态最重的一处(道途 / 远征在途 / 道痕 / 器魂 / 里程碑 /
+试炼记录 / 日课),309 行、二十余个状态变更函数 —— 而它**此前没有任何 store 层判据**。
+别的 store(`dongfu` / `quests` / `settings` / `apprentice` / `bounty` …)都有各自一份,
+唯独这一处没有。
+
+缺口不是抽象的:最近几轮改过它承载的两条数据结构 ——
+
+- `worldRun.rows` 的战果行(第 16 轮补 `stats` / `foe`,第 18 轮统一形状);
+- `atkRamp`(第 6 轮起)与战后归因要读的遥测。
+
+**新字段进得去、旧存档也得读得进来** —— 而旧存档里的行没有 `stats`。
+
+补 `stores/endgame.spec` 五条,分两类:
+
+**一 · 读档容错**
+各字段灌 `undefined` 后 `sanitize()` 不许抛错,收完不许留 `NaN`;
+认不得的世界直接作废(带着坏状态打下去更危险);
+越界的层与携血被夹回合法区。
+
+**二 · 旧存档不许被编出新字段**
+旧档的战果行只有四个基础字段,**缺 `stats` 就要保持缺失**。
+若 sanitize 好心补一个全零统计,界面会显示「总输出 0 / 总承伤 0」——
+玩家会以为那一场真的什么都没发生,那比「没有归因」更糟。
+反向也守一条:新档存进去的 `stats` / `atkRamp` 读回来不许被削掉
+(只核 `foeName` 会漏掉「sanitize 把整行替换成最小形状」这种走偏)。
+
+注入验证:去掉世界校验 → 容错那条红;让 sanitize 补全零 `stats` → 编字段那条红。
+
+> 写这条时自己踩了一次:`layer` 的合法上限是 `EXPEDITION_GUARDIAN_LAYER`(= 3,
+> 表示「待战界主」),不是「路线层数 - 1」。第一版写死 `toBeLessThanOrEqual(2)` 就红了。
+> 改成读常量 —— 判据里写死边界值,层数一改它就撒谎。
