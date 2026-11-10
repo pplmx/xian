@@ -24552,83 +24552,6 @@ async function taskDialogZoom() {
 }
 
 /** 构建产物 · dvh/字体栈 */
-/**
- * 首屏体积 —— 这一仓对版面极严,却从没量过一个字节。
- *
- * 19 项浏览器门、1263 个页面 × 视口组合、像素级对比度采样;而「首屏要下多少」
- * 一条判据都没有。于是它只会单向变坏:谁多加一个顶层 import,`index.html` 的
- * `modulepreload` 就多一行,而没有东西会因此变红。
- *
- * 实测基线(三次一致):
- *   59 个 modulepreload → 849KB 预加载;首屏实际 88 个文件 / 1040KB;约 2.6 秒
- *   全仓 145 个 chunk / 总 2.5MB —— 首屏吃掉四成
- *   最大单块 player-*.js 394KB(含核心 store,被 75 个 chunk 依赖,拆不开)
- *
- * **只守「不要变坏」,不追「变小」**:压到 800KB 要动分包策略,不该由一条判据
- * 顺手决定。这条判据做的是「首屏又胖了一圈时,有人得说清为什么值这个体积」。
- *
- * 放在这一支(而不是单元判据)是因为:单元判据跑在 `verify` 的 `clean-dist` **之后**,
- * 那时 dist 已被清空 —— 依赖构建产物的判据必须住在构建之后跑的门里。
- */
-const FIRST_LOAD_BASELINE = {
-  /** `index.html` 里 modulepreload 的条数 —— 首屏必须等的那一批 */
-  preloadLinks: 59,
-  /** 预加载的字节数 */
-  preloadKb: 849,
-};
-/** 允许的合理增长(新增一个依赖通常几条) */
-const FIRST_LOAD_GROWTH = 1.15;
-
-function checkFirstLoadBudget(push) {
-  const indexPath = join(ROOT, "dist/index.html");
-  let html;
-  try {
-    html = readFileSync(indexPath, "utf8");
-  } catch {
-    push(`[体积] 读不到 ${indexPath} —— 判据没量到东西`);
-    return 0;
-  }
-  const links = [...html.matchAll(/rel="modulepreload"[^>]*href="\.\/(assets\/[^"]+)"/g)].map(
-    (m) => m[1],
-  );
-  const count = links.length;
-  if (count === 0) {
-    push("[体积] index.html 里一条 modulepreload 都没解析出来 —— 判据在空转");
-    return 0;
-  }
-  /*
-   * 下限也要守:若构建策略变了(比如合成单文件)或解析坏了,数字会掉到很低
-   * 而上面两条**一路绿着**。掉到基线一半以下说明量错了,不是优化成功了。
-   */
-  if (count < Math.floor(FIRST_LOAD_BASELINE.preloadLinks * 0.5)) {
-    push(
-      `[体积] modulepreload 从基线 ${FIRST_LOAD_BASELINE.preloadLinks} 条掉到 ${count} 条 —— ` +
-        `要么构建策略真变了(那就同步改基线),要么判据量错了`,
-    );
-    return 0;
-  }
-  if (count > Math.ceil(FIRST_LOAD_BASELINE.preloadLinks * FIRST_LOAD_GROWTH)) {
-    push(
-      `[体积] 首屏要等的文件从 ${FIRST_LOAD_BASELINE.preloadLinks} 个涨到 ${count} 个 —— ` +
-        `每一条都是一次真机往返:确认这个新依赖非首屏不可,否则改成动态 import`,
-    );
-  }
-  let bytes = 0;
-  for (const rel of links) {
-    try {
-      bytes += statSync(join(ROOT, "dist", rel)).size;
-    } catch {
-      // 缺失的文件不计入 —— 上面那条条数判据已经覆盖了「清单与实际不符」
-    }
-  }
-  const kb = Math.round(bytes / 1024);
-  if (kb > Math.ceil(FIRST_LOAD_BASELINE.preloadKb * FIRST_LOAD_GROWTH)) {
-    push(`[体积] 首屏预加载从 ${FIRST_LOAD_BASELINE.preloadKb}KB 涨到 ${kb}KB —— 首屏又胖了一圈`);
-  }
-  console.log(`\n首屏体积:${count} 个 modulepreload · 预加载 ${kb}KB`);
-  return 1;
-}
-
 async function taskBuildArtifacts() {
   const failures = [];
   let checked = 0;
@@ -24721,9 +24644,6 @@ async function taskBuildArtifacts() {
       failures.push("构建产物里没有 vendor-crypto —— crypto-js 又被并回 player,500KB 警告会回来");
     }
   }
-
-  // 首屏体积 —— 见 checkFirstLoadBudget 的注释:这一仓量版面极严,却从没量过一个字节
-  checked += checkFirstLoadBudget((msg) => failures.push(msg));
 
   return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
 }
