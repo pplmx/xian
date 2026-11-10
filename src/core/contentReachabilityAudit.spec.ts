@@ -26,6 +26,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";
 import { PILLS, pillDef } from "@/data/pills";
+import { randomDropPill } from "./loot";
 import { MATERIALS } from "@/data/materials";
 import { HERB_GRADES } from "@/data/herbGrades";
 import { ENEMIES } from "@/data/enemies";
@@ -77,6 +78,41 @@ describe("内容可达性 · 丹方", () => {
     const dead = CRAFTABLE.filter((p) => !reachable.has(p.id)).map((p) => `${p.name}(${p.id})`);
     expect(dead).toEqual([]);
     expect(reachable.size).toBe(CRAFTABLE.length);
+  });
+
+  /**
+   * 掉落专属的那批丹药,也要每一味都真能掉出来。
+   *
+   * ## 缺口
+   *
+   * 上面那条只管「可炼方能不能翻到」,**掉落线没人查** —— 而这两条线是分叉的:
+   * 有配方的不进掉落池(`randomDropPill` 用 `!p.recipe` 筛),掉落池里的不该有配方。
+   *
+   * 第 72 轮补了三味神品掉落专属丹,当时没有任何判据确认它们真能被抽到 ——
+   * 若 `minRealm` 写得比 `MAX_MAJOR` 还高,或权重小到抽不出来,没人会发现。
+   *
+   * ## 判据
+   *
+   * 在最高境界真抽一批,掉落池里的**每一味**都得至少出现一次。
+   * 池子只有 18 味,2000 次已经足够覆盖(实测 2000 次能抽满 18 味)。
+   *
+   * 用真抽而不是复算权重:复算只能证明「权重 > 0」,证明不了「抽得到」。
+   */
+  it("每一味掉落专属丹药都真能掉出来", () => {
+    const dropOnly = PILLS.filter((p) => !p.recipe);
+    expect(dropOnly.length, "掉落池是空的 —— 判据在空转").toBeGreaterThan(5);
+
+    const seen = new Set<string>();
+    for (let i = 0; i < 2000; i += 1) {
+      const id = randomDropPill(MAX_MAJOR);
+      if (id) seen.add(id);
+    }
+    const never = dropOnly.filter((p) => !seen.has(p.id)).map((p) => `${p.name}(${p.id})`);
+    expect(
+      never,
+      "这些掉落专属丹药在最高境界抽了 2000 次都没出现 —— 它们的 minRealm 或权重有问题:" +
+        never.join("、"),
+    ).toEqual([]);
   });
 });
 
