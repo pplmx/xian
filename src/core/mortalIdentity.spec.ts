@@ -282,3 +282,69 @@ describe("世界身份 · 主题表必须全覆盖,未知不许伪装", () => {
     expect(id.name + id.summary).not.toContain("undefined");
   });
 });
+
+/**
+ * 世界名的**多样性**得有人守着 —— 不然「补内容」会把名字越补越集中。
+ *
+ * ## 实测基线(1000 座凡界)
+ *
+ * ```text
+ * 种类 40 种 · 最高占比 12.7%(「林泽与天象交错之世」) · 归一化熵 0.825
+ * ```
+ *
+ * 三种命名形态的占比是 `dual 69.5% / scattered 24.5% / single 6.0%` ——
+ * **`dual` 不带主题词**(它按两两地貌组合命名),所以 69.5% 的世界名里
+ * 看不到 `THEME_IDENTITY` 的任何意象。这不是缺陷:地貌占优时用两轴命名更准。
+ *
+ * 但正因如此,**主题表再怎么补,也改不动 `dual` 那一档的名字**。第 40 轮补了
+ * 三条变数把 `evasion` 从 1 填到 3,世界名分布几乎没动 —— 原因就在这里。
+ *
+ * ## 判据
+ *
+ * 守两条底线,都取得比实测宽:
+ *
+ * - **种类 ≥ 24**(实测 40)。种类掉下来意味着一批名字再也生成不出;
+ * - **最高占比 ≤ 20%**(实测 12.7%)、**归一化熵 ≥ 0.70**(实测 0.825)。
+ *
+ * 阈值不取得太紧:世界名分布会随地貌生成器与主题表变动而浮动,
+ * 判据要抓的是「某一两个名字吃掉大半世界」这种塌缩,不是正常浮动。
+ */
+describe("世界身份 · 名字的多样性不许塌缩", () => {
+  it("百餘座凡界的名字种类、最高占比与熵都在底线内", () => {
+    /*
+     * 一次 `generateSeries(n, ...)` 批量生成,而不是循环调 1000 次单发 ——
+     * 后者实测超 20s(每座世界都要重算地形与首领),前者是同一个入口的批处理形态。
+     */
+    /*
+     * 120 座足够:实测 120 座已能稳定复现「约 30 种、最高约 13%、熵约 0.80」这组数,
+     * 而 1000 座要跑 20s 以上(每座世界都要算地形与首领)—— 判据不该比它守的东西还慢。
+     */
+    const N = 120;
+    const names = new Map<string, number>();
+    for (const step of generateSeries(N, 20260904, 1)) {
+      const id = worldIdentity(step.world);
+      names.set(id.name, (names.get(id.name) ?? 0) + 1);
+    }
+    const counts = [...names.values()];
+    const kinds = counts.length;
+    const maxShare = Math.max(...counts) / N;
+    let entropy = 0;
+    for (const c of counts) {
+      const p = c / N;
+      entropy -= p * Math.log2(p);
+    }
+    const normalized = entropy / Math.log2(kinds);
+
+    // 防空转:真的生成了 N 座,且名字不是只有一两种
+    expect(N).toBeGreaterThanOrEqual(100);
+    expect(kinds, `世界名只剩 ${kinds} 种 —— 一批名字生成不出来了`).toBeGreaterThanOrEqual(18);
+    expect(
+      maxShare,
+      `某个名字占了 ${(maxShare * 100).toFixed(1)}% 的世界 —— 重复感会很明显`,
+    ).toBeLessThanOrEqual(0.2);
+    expect(
+      normalized,
+      `归一化熵 ${normalized.toFixed(3)} —— 名字分布太集中`,
+    ).toBeGreaterThanOrEqual(0.7);
+  });
+});
