@@ -455,6 +455,7 @@ const CATEGORIES = [
       "soulTallyFields",
       "artifactQualityLadder",
       "balanceCoverage",
+      "poolProximity",
       "regionDanger",
       "artifactGrowth",
       "stackCap",

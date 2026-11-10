@@ -522,12 +522,26 @@ export function randomGiftPets(owned: ReadonlySet<string>, major: number) {
   );
 }
 
+/**
+ * 际遇给丹的境界差衰减系数。比掉落那条(0.5)大,因为际遇的池子是**全池 72 味**
+ * (含神品与可炼制的),衰减能真正改变分布:
+ *
+ * ```text
+ *   K=0.5  境 20 高品阶 54.9%  同境/入门 = 0.65   ← 入门丹反而更重
+ *   K=2    境 20 高品阶 66.8%  同境/入门 = 2.41   ← 取这个
+ * ```
+ */
+export const EVENT_PILL_NEAR_DECAY = 2;
+
 export function randomEventPill(major: number): string | null {
   const pool = PILLS.filter((p) => p.minRealm <= major);
   if (pool.length === 0) return null;
   return rng.weighted(
     pool,
-    (p) => 100 / (1 + qualityDef(p.quality).rank * 2) / (1 + Math.max(0, major - p.minRealm) * 0.5),
+    (p) =>
+      100 /
+      (1 + qualityDef(p.quality).rank * 2) /
+      (1 + Math.max(0, major - p.minRealm) * EVENT_PILL_NEAR_DECAY),
   ).id;
 }
 

@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 631 个 spec;本作自己那部分 551 个) |
+| `bun run test` | 全量用例(全量 632 个 spec;本作自己那部分 552 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 631 个 spec = 宿主 551 + 引擎 80,别把 631 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 632 个 spec = 宿主 551 + 引擎 80,别把 632 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 631 个 spec(本作自己那部分 551 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 632 个 spec(本作自己那部分 552 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -4373,7 +4373,7 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 551 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 552 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
@@ -4472,7 +4472,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**631 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**632 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -4715,3 +4715,55 @@ W12 K1.5  33.5%       25.1%
 **181 枚 vs 181 枚**。400 次抽样里期望值本来就接近(48.2% vs 43.1%,只差 5 个点),
 严格多于会随种子偶发地红。改成 `toBeGreaterThanOrEqual` —— 判据要抓的是
 「过时的丹占掉多数」,不是「多一枚也算赢」。
+
+### 把「四条路」的口径写下来之后,才发现其中一条不成立
+
+第 67~70 轮在四条路上分别补了境界衰减。这轮把口径写进 `docs/design.md`,并给它配判据
+(`core/poolProximity.spec`)。
+
+写的过程中动手核了一遍**「新内容要有可见的优先」**这条口径 —— 结果它不成立:
+
+```text
+丹药:同境的神品丹 / 入门的凡品丹 = 0.65   ← 入门丹反而更重!
+功法:同境功法 / 入门功法         = 1.46
+```
+
+丹药那个 0.65 是根因:品阶降权 `100/(1+rank×2)` 对凡品给 33.3、对神品只给 5.88,
+初始差距 5.7 倍 —— 而 K=0.5 的境界差衰减根本压不过它。
+
+### 但同一条系数不能给两条路
+
+把 K 提到 2,际遇那条的比值升到 2.41(达标);可掉落那条红了:
+
+```text
+境界 5 掉了 400 次:低品阶 106 枚、高品阶 217 枚
+```
+
+早期内容被压没了。查下去发现**两条路的池子根本不一样**:
+
+```text
+际遇给丹:全池 72 味(含神品、含可炼制的)
+掉落给丹:只 15 味掉落专属(没有神品,良品只有 1 味)
+```
+
+掉落池在 K 从 0.5 变到 2 时,境 20 的高/低占比都是 45%/43%,**几乎不动**;
+而同一个 K 会把境 5 压掉。所以:
+
+```ts
+EVENT_PILL_NEAR_DECAY = 2;    // 际遇:全池,衰减能真正改变分布
+PILL_NEAR_DECAY = 0.5;        // 掉落:窄池,够了就行,再加就压没早期内容
+```
+
+> 「两条路用同一口径」不等于「两条路用同一个参数」。
+> 口径是**意图**(旧内容不关死、新内容有优先),参数要跟着**池子形状**走。
+
+### 判据第一版又是「自己算给自己看」
+
+`poolProximity.spec` 里我写了 `pillWeight(rank, minRealm, major)`,把公式连同 `0.5` 一起抄进去。
+改实现到 `2` 之后,判据还在按 `0.5` 算 —— 当场红给我看,而红的原因不是实现错了。
+
+改成从实现读常量(`EVENT_PILL_NEAR_DECAY`)。
+
+**这是第 67、70 轮之后第三次犯同一个错。** 三处判据(际遇丹药、灵兽池、这个新文件)
+全都是「先在 spec 里抄一遍公式」—— 说明这不是疏忽,是**默认直觉错了**:
+写判据时人会不自觉地把「我知道正确公式」当成「我该把它写一遍」。

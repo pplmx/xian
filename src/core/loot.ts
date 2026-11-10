@@ -273,6 +273,27 @@ export function acquireArtifact(defId: string, quiet = false): ArtifactAcquireRe
  * 随机掉落(下方 randomDropPill)与丹药价值审计(core/pillValue)共用同一把
  * 钥匙:改品质权重只动这一处,审计不会对着过期的掉落模型衡量。
  */
+/**
+ * 丹药**掉落**这条路的境界差衰减系数(际遇那条另有一个,见 `eventEngine`)。
+ *
+ * ## 为什么两条路系数不同
+ *
+ * 两条路的**池子不一样**:
+ *
+ * ```text
+ *   际遇给丹:全池 72 味(含神品、含可炼制的)
+ *   掉落给丹:只 15 味掉落专属(没有神品,良品只有 1 味)
+ * ```
+ *
+ * 池子越窄,衰减系数能起的作用越有限 —— 实测掉落池在 K 从 0.5 变到 2 时,
+ * 境 20 的高/低品阶占比都是 45% / 43%,几乎不动;而同一个 K 会把境 5 的早期内容压掉
+ * (K=2 时境 5 高品阶 51%、低品阶只剩 26%)。
+ *
+ * 所以掉落这条路取 0.5:**够把「同境优先」表达出来,又不至于把早期内容压没**。
+ * 想把掉落池的品阶分布再推高,该补的是掉落专属的高品阶丹药,不是继续加系数。
+ */
+export const PILL_NEAR_DECAY = 0.5;
+
 export function pillDropWeight(def: { quality: QualityId }): number {
   return 100 / (1 + qualityDef(def.quality).rank * 2);
 }
@@ -303,7 +324,7 @@ export function randomDropPill(major: number): string | null {
   if (pool.length === 0) return null;
   const picked = rng.weighted(
     pool,
-    (p) => pillDropWeight(p) / (1 + Math.max(0, major - p.minRealm) * 0.5),
+    (p) => pillDropWeight(p) / (1 + Math.max(0, major - p.minRealm) * PILL_NEAR_DECAY),
   );
   return picked.id;
 }
