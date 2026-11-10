@@ -460,6 +460,7 @@ const CATEGORIES = [
       "comboArtValue",
       "mortalRouteShapes",
       "daoStackBound",
+      "marketArbitrage",
       "regionDanger",
       "artifactGrowth",
       "stackCap",
