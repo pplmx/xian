@@ -169,7 +169,8 @@ function taskYield(a: OwnedApprentice, spec: ApprenticeSpec, major = player.majo
    */
   const def = apprenticeDef(a.archId);
   const talentHit = def?.talent === spec;
-  const qualityMult = def ? (APPRENTICE_QUALITY_BONUS[def.quality] ?? 1) : 1;
+  // 类型是完整 Record<QualityId, number>,不必 `?? 1` —— 少配一档编译期就红
+  const qualityMult = def ? APPRENTICE_QUALITY_BONUS[def.quality] : 1;
   const tagParts: string[] = [];
   if (talentHit) tagParts.push(`天赋×${APPRENTICE_TALENT_BONUS}`);
   if (qualityMult !== 1) tagParts.push(`品质×${qualityMult.toFixed(2)}`);

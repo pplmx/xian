@@ -59,13 +59,44 @@ function a(
   return { id, name, quality, talent, desc };
 }
 
+/**
+ * 弟子原型 —— **每个门类至少两名,且品质错开**。
+ *
+ * ## 为什么要铺到每个门类两名
+ *
+ * 招募是**随机抽**(`rng.pick`),而池子会排除已收的原型。初版只有六个原型:
+ * 采药/开矿/历练/寻宝各一名、参悟两名 —— 于是玩家接到第二个采药弟子是**不可能的**,
+ * 五个门类里四个永远只有一种选择。品质也几乎不分化:凡品两个、下品两个、
+ * 中品与上品各一个,抽到什么都由「还差哪个门类」决定,与运气无关。
+ *
+ * 现在每个门类两名、品质拉开(凡/下/中/上/极都有),抽取才有两件独立的事:
+ * 抽到**哪个门类**,以及抽到**什么品质**。前者决定你把弟子往哪派,后者决定划不划算。
+ *
+ * ## 品质分布的用意
+ *
+ * 采药与开矿是早期主力(洞府生产),故各留一名凡品保底 —— 开局不至于无人可用;
+ * 历练/寻宝/参悟的门槛高一些,低品质不给。极品的两个(药仙遗徒 / 铸剑师)
+ * 都是「越老越值钱」的门类,抽到是惊喜而不是常规。
+ */
 export const APPRENTICES: ApprenticeArchetype[] = [
+  // 采药 —— 早期主力,凡品保底 + 上品一个赌运
   a("ap_luanniao", "采药童子", "mortal", "herb", "山野出身,识得满山灵草"),
+  a("ap_yaotong", "药圃小童", "excellent", "herb", "自小在药圃里长大,闻味便知年份"),
+  // 开矿 —— 同上
   a("ap_kuangtou", "开矿壮汉", "mortal", "ore", "身强力壮,一镐一个准"),
+  a("ap_tiejiang", "老炼器匠", "spirit", "ore", "打了一辈子铁,听声便知矿脉深浅"),
+  // 历练 —— 要能打,凡品不收
   a("ap_youxia", "游侠少年", "fine", "adventure", "仗剑下山,专爱历练"),
+  a("ap_jianxiu", "散修剑客", "excellent", "adventure", "无门无派,一身本事全在刀口上磨出来"),
+  // 寻宝 —— 靠眼力,品质不宜太低
   a("ap_lingtong", "寻宝灵童", "fine", "seek", "天生一副寻宝的鼻子"),
+  a("ap_kanxing", "堪舆老丈", "spirit", "seek", "看得懂地气,荒山里也能摸出宝光"),
+  // 参悟 —— 门槛最高的一门
   a("ap_daotong", "悟道道童", "excellent", "study", "心静如水,善参玄理"),
-  a("ap_xiantong", "仙门慧童", "spirit", "study", "根骨清奇,一学百通"),
+  a("ap_guyin", "古音居士", "spirit", "study", "听琴辨道,一句偈能参上三年"),
+  // 两个极品:抽到是惊喜,不设保底
+  a("ap_yaoxian", "药仙遗徒", "heaven", "herb", "药王谷旧人之后,识得三百年以上的药性"),
+  a("ap_zhujian", "铸魂锻师", "profound", "ore", "铸过一柄有魂的剑,此后寻常金铁皆不入眼"),
 ];
 
 const BY_ID = new Map(APPRENTICES.map((x) => [x.id, x]));
@@ -95,19 +126,32 @@ export const APPRENTICE_TALENT_BONUS = 1.25;
  * ## 为什么不用 `QualityDef.mult`
  *
  * 那套倍率是给**装备**用的(凡品 1.0 → 神品 9.5),拿来乘弟子产出会把
- * 挂机收益放大到与境界脱钩。弟子是「后台慢慢长」的一层,倍率要温和:
- * 凡 1.0 / 下 1.1 / 中 1.2 / 上 1.3 / 极 1.4,最高一档也只比凡品多四成,
- * 与天赋那 1.25 叠起来是 1.75 —— 明显但不至于让低品质弟子变成废牌。
+ * 挂机收益放大到与境界脱钩。弟子是「后台慢慢长」的一层,倍率要温和。
+ * 现有原型落在凡~灵四档(1.0 / 1.1 / 1.2 / 1.3),
+ * 与天赋那 1.25 叠起来最高 1.63 —— 明显但不至于让低品质弟子变成废牌。
  *
- * 弟子原型的品质实际只用到 mortal / fine / excellent / spirit 四档
- * (见 `APPRENTICES`),其余档位留给将来扩充。
+ * ## 九档必须**配满**,不许留 Partial
+ *
+ * 初版只配了原型用到的四档(mortal / fine / excellent / spirit)加一个 heaven,
+ * 类型写的是 `Partial<Record<QualityId, number>>` —— 于是 profound / earth /
+ * immortal / divine 四档查不到值,回落到 `?? 1`,**与凡品相同而比灵品还低**。
+ * 现在弟子原型只用到四档,这个错不显形;但只要将来加一个地品或仙品原型,
+ * 它就会「品质更高、产出更低」。类型改成完整 `Record<QualityId, number>`,
+ * 少配一档编译期就红。
+ *
+ * 顶档定在 2.2 而不是 `QualityDef.mult` 的 9.5:弟子是挂机层,
+ * 天品以上的原型真要加进来时,靠这个上限也能把收益按住在合理范围。
  */
-export const APPRENTICE_QUALITY_BONUS: Partial<Record<QualityId, number>> = {
+export const APPRENTICE_QUALITY_BONUS: Record<QualityId, number> = {
   mortal: 1.0,
   fine: 1.1,
   excellent: 1.2,
   spirit: 1.3,
-  heaven: 1.4,
+  profound: 1.45,
+  earth: 1.6,
+  heaven: 1.75,
+  immortal: 1.95,
+  divine: 2.2,
 };
 
 /** 一名弟子的产出倍率 = 天赋匹配加成 × 品质加成。两处都读同一份常量,不另立数值源 */
@@ -115,7 +159,8 @@ export function apprenticeYieldMult(archId: string, spec: ApprenticeSpec): numbe
   const def = apprenticeDef(archId);
   if (!def) return 1;
   const talent = def.talent === spec ? APPRENTICE_TALENT_BONUS : 1;
-  const quality = APPRENTICE_QUALITY_BONUS[def.quality] ?? 1;
+  // 完整 Record,无需兜底 —— 兜底会让「漏配一档」重新变成静默错误
+  const quality = APPRENTICE_QUALITY_BONUS[def.quality];
   return talent * quality;
 }
 

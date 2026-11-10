@@ -8,8 +8,15 @@
  *   · 任务完工只看墙钟 finishAt。
  */
 import { readFileSync } from "node:fs";
+import type { QualityId } from "@/types";
 import { resolve } from "node:path";
-import { APPRENTICES, APPRENTICE_TALENT_BONUS, apprenticeYieldMult } from "@/data/apprentices";
+import {
+  APPRENTICES,
+  APPRENTICE_QUALITY_BONUS,
+  APPRENTICE_TALENT_BONUS,
+  STARTER_APPRENTICE,
+  apprenticeYieldMult,
+} from "@/data/apprentices";
 import { describe, expect, it } from "vite-plus/test";
 import {
   apprenticeOverview,
@@ -245,5 +252,105 @@ describe("弟子界面 · 倍率标签要两半都写", () => {
     expect(src, "品质倍率要读数据层那一份,不许就地写数").toContain("APPRENTICE_QUALITY_BONUS");
     // 只写一档噪声:凡品 + 天赋不匹配时倍率是 1,不该印「×1.00」
     expect(src, "倍率为 1 时不该印标签").toMatch(/qualityMult !== 1/);
+  });
+});
+
+/**
+ * 招募的多样性 —— 每个门类都得有得挑,而不是"还差哪个门类就收哪个"。
+ *
+ * ## 缺口
+ *
+ * 招募是随机抽(`rng.pick`),池子排除已收的原型。初版只有六个原型:
+ * 采药/开矿/历练/寻宝各一名、参悟两名 —— 于是
+ *
+ * - **五个门类里四个永远只有一种选择**:接到第二个采药弟子是不可能的,
+ *   你想要采药就只能是「采药童子」,想要开矿就只能是「开矿壮汉」;
+ * - 品质也几乎不分化(凡品两个、下品两个、中品与上品各一个),
+ *   抽到什么都不由运气决定,只由「还差哪个门类」决定。
+ *
+ * 现在每个门类两名、品质错开,抽取才有两件独立的事:抽到**哪个门类**,
+ * 以及抽到**什么品质**。前者决定往哪派,后者决定划不划算。
+ *
+ * ## 判据守什么
+ *
+ * 一 每个门类至少两名(否则「这个门类只有一种人」);
+ * 二 每个门类内部的品质不许全同(否则抽到哪个都一样);
+ * 三 品质加成对**九个档位全部**配了值,且随档位单调递增 ——
+ *    初版是 `Partial`,漏配四档会回落到 1,比低档还低。
+ */
+describe("招募 · 每个门类都得有得挑", () => {
+  it("每个门类至少两名原型", () => {
+    const byGate = new Map<string, number>();
+    for (const arch of APPRENTICES) byGate.set(arch.talent, (byGate.get(arch.talent) ?? 0) + 1);
+    const thin = [...byGate.entries()].filter(([, n]) => n < 2).map(([g, n]) => `${g}(${n})`);
+    expect(
+      thin,
+      "这些门类只有一种原型 —— 玩家想要这个门类就没有第二个选择:" + thin.join("、"),
+    ).toEqual([]);
+    // 防空转:五个门类都得在
+    expect(byGate.size, "门类数不对 —— 判据可能没扫到原型表").toBe(5);
+  });
+
+  it("同一门类里的品质不许全同 —— 否则抽到哪个都一样", () => {
+    const byGate = new Map<string, Set<string>>();
+    for (const arch of APPRENTICES) {
+      if (!byGate.has(arch.talent)) byGate.set(arch.talent, new Set());
+      byGate.get(arch.talent)!.add(arch.quality);
+    }
+    const flat = [...byGate.entries()].filter(([, q]) => q.size < 2).map(([g]) => g);
+    expect(
+      flat,
+      "这些门类下的原型品质全都相同 —— 抽到哪个都是同一个产出,等于没有选择:" + flat.join("、"),
+    ).toEqual([]);
+  });
+
+  it("品质加成九档配满且单调递增", () => {
+    /*
+     * 初版是 `Partial<Record<QualityId, number>>`,只配了五档 ——
+     * profound / earth / immortal / divine 回落到 1,比灵品(1.3)与天品(1.4)还低。
+     * 现在类型是完整 `Record`,但「值本身有没有乱序」类型管不了,故这里也核一遍。
+     */
+    const order: QualityId[] = [
+      "mortal",
+      "fine",
+      "excellent",
+      "spirit",
+      "profound",
+      "earth",
+      "heaven",
+      "immortal",
+      "divine",
+    ];
+    for (const q of order) {
+      expect(
+        APPRENTICE_QUALITY_BONUS[q],
+        `品质 ${q} 没配加成 —— 会回落到兜底值,可能比低档还低`,
+      ).toBeGreaterThan(0);
+    }
+    for (let i = 1; i < order.length; i += 1) {
+      expect(
+        APPRENTICE_QUALITY_BONUS[order[i]!],
+        `品质 ${order[i]} 的加成没有高于 ${order[i - 1]} —— 品质阶梯断了`,
+      ).toBeGreaterThan(APPRENTICE_QUALITY_BONUS[order[i - 1]!]);
+    }
+  });
+
+  it("招募池的可用原型会随已收变化 —— 收到的人不会重复", () => {
+    /*
+     * 本文件是**纯计算判据**(不引 store),故这里核的是池子的构造规则:
+     * `recruit` 从 `APPRENTICES` 里排除「起始弟子」与「已收原型」后随机取一名。
+     * 池子构造写在 store 里,这里只核两件静态事实:
+     *   ① 可招募原型数 > 一个满槽阵容(否则收两人就必然撞池空);
+     *   ② 排除起始弟子之后,每个门类仍有得挑。
+     * 「抽到的确实不同」由 store 层的行为判据守(`stores/apprentice.spec` 里的收徒用例)。
+     */
+    const starter = STARTER_APPRENTICE;
+    const pool = APPRENTICES.filter((x) => x.id !== starter);
+    expect(
+      pool.length,
+      `可招募原型只有 ${pool.length} 个 —— 满槽 ${5} 人时池子会先枯,收到的人必然重复`,
+    ).toBeGreaterThan(5);
+    const gates = new Set(pool.map((x) => x.talent));
+    expect(gates.size, "排除起始弟子后有门类没人可招").toBeGreaterThanOrEqual(4);
   });
 });
