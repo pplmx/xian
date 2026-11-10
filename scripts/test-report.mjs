@@ -462,6 +462,7 @@ const CATEGORIES = [
       "daoStackBound",
       "marketArbitrage",
       "terminologyConsistency",
+      "shortfallDisclosure",
       "regionDanger",
       "artifactGrowth",
       "stackCap",

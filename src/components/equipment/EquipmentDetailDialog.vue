@@ -294,6 +294,7 @@
             v-if="upCost"
             class="btn-ghost flex-1"
             :disabled="!upAffordable"
+            :title="upAffordable ? undefined : upShortText"
             @click="doUpgrade"
           >
             强 化
@@ -326,6 +327,7 @@ import { qualityDef } from "@/data/qualities";
 import { qualityVerdict } from "@/data/qualityVerdicts";
 import { usePlayerStore } from "@/stores/player";
 import { formatGN, formatPercent, formatSignedPercent } from "@/utils/format";
+import { toNum } from "@/utils/gnum";
 import { isZero, sub } from "@/utils/gnum";
 import type { AnyStatKey, GNum } from "@/types";
 import { AFFIX_RARITY_META, STAT_NAMES } from "@/data/statNames";
@@ -452,6 +454,25 @@ const upAffordable = computed(() => {
   const c = upCost.value;
   if (!c) return false;
   return resources.hasSmall("dust", c.dust) && resources.hasStone(c.stone);
+});
+
+/**
+ * 付不起时报出**还差多少**。
+ *
+ * 这个页脚按钮与 `EquipUpgradePanel`(主文价签)读的是同一个
+ * `equipUpgradeCost`,但玩家在这里按下时就看不见那边 —— 灰着不说差什么,
+ * 等于「决策信息不完整」(见 AGENTS.md「按钮付不起要列出尚差」)。
+ * 与 `EquipSealPanel` 的封存钮同一写法:能付就不显示 title,付不起才报。
+ */
+const upShortText = computed(() => {
+  const c = upCost.value;
+  if (!c) return undefined;
+  const parts: string[] = [];
+  const shortDust = c.dust - resources.dust;
+  const shortStone = toNum(c.stone) - toNum(resources.spiritStone);
+  if (shortDust > 0) parts.push(`器灵尘×${formatGN(shortDust)}`);
+  if (shortStone > 0) parts.push(`灵石×${formatGN(shortStone)}`);
+  return parts.length ? `尚差 ${parts.join(" · ")}` : undefined;
 });
 /** 分解返还:底材 + 强化投入的配比(文案走 refundRateText,与 DECOMPOSE_REFUND_RATE 同源,不手写「八成」) */
 const salvage = computed(() => (inst.value ? salvageOf(inst.value) : null));

@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 638 个 spec;本作自己那部分 558 个) |
+| `bun run test` | 全量用例(全量 639 个 spec;本作自己那部分 559 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 638 个 spec = 宿主 551 + 引擎 80,别把 638 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 639 个 spec = 宿主 551 + 引擎 80,别把 639 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 638 个 spec(本作自己那部分 558 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 639 个 spec(本作自己那部分 559 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -4373,14 +4373,14 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 558 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 559 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
 
 ```text
 第一版:326 个 spec · 4117 条标题
-修正后:558 个 spec · 6319 条标题   (+54%)
+修正后:559 个 spec · 6319 条标题   (+54%)
 ```
 
 > 这是一类**最难自查的错误**:工具跑得通、输出格式对、报出来的缺口具体到表与维度名 ——
@@ -4472,7 +4472,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**638 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**639 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -5439,3 +5439,60 @@ docs/usage.md · design.md · style.css
 
 > 术语统一不是「把所有词换成一个」。是先分清**哪几个是不同概念**,
 > 再让每个概念只对应一个词。混用之所以有害,是因为它让人以为世界比实际复杂。
+
+### 七个方向都没缺陷,第八个才中:一个灰按钮不说差多少
+
+这轮先查了七个方向,全部干净:
+
+```text
+① UI 里硬编码的「每 N 回合」     0 处(全走数据)
+② 法宝 desc 的回合数 vs interval 48 件全对
+③ 丹药 desc 里的数字             0 味(数值只进 instant,desc 不写数)
+④ 注释里的数字 vs 常量值         21 处报警,逐条看全是误报
+⑤ usage.md 的数量声明            已被 usageDocCounts.spec 覆盖,还带自证
+⑥ UI 模板里写死的数量            21 处,全是「再入一层」「凝一枚」这类叙述用语
+⑦ 带 :disabled 的 70 个按钮      抽查都有差额说明
+```
+
+第八个探针换了问法:**按「资源不足」这个语义筛**,而不是按按钮筛。于是看见:
+
+```text
+EquipmentDetailDialog 页脚的「强 化」钮
+  :disabled="!upAffordable"
+  —— upCost 只在 v-if 里用过一次,从来没进过玩家视野
+```
+
+注释解释说「主文的价签在 `EquipUpgradePanel`」——**但那是另一个页面**。
+玩家在详情弹窗里按下这个灰按钮时,只看得到「不许」。
+
+`AGENTS.md` 早就写着:
+
+> 按钮「付不起 / 不可行」要置灰,灰的同时把差多少列出来(尚差 灵石 X · 尘 Y)
+
+**这条规矩此前没有任何判据在守。** 已补 `title`(与 `EquipSealPanel` 的封存钮同一写法:
+能付就不显示,付不起才报)。
+
+### 判据:结构性检查,不是数值检查
+
+扫所有 `.vue`,找 `:disabled` 里带 `affordable` / `canPay` / `enough` 的按钮,
+要求同一标签内或邻近上下文出现 `title` / `aria-label` / `尚差` / `还差`。
+
+它不判断「差多少算合理」,只判断「**有没有说出差多少**」——
+所以不会因为调数值而红,只在有人新加灰按钮而不写理由时红。
+
+### 探针的窗口宽度差点让它变成摆设
+
+第一版扫「按钮标签附近 ±900 字」,报了四处,全是误报:
+
+```text
+ArtifactPanel      差额在 `artifact-row__shortfall` 那一行,离按钮 1000+ 字
+HerbShopDialog     差额在「尚差 N 石」,同上
+SoulsView          差额在「尚差 N 道源可开一炉」,与「入炉」钮隔了整块
+SecretRealmCard    payText(r) 写在按钮**内部**的插值里
+```
+
+加宽到 ±2000 字才收敛。**再宽就没意义了** —— 任何 `.vue` 文件里都含有「尚差」,
+窗口一过大,判据就退化成恒真。
+
+> 「判据扫得够不够远」是个真问题。第一版红得吓人(四处),但四处都是假的;
+> 而如果当时我直接把四处都「补」上说明,就会造出四个重复的读数。
