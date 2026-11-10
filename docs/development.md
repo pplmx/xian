@@ -139,6 +139,39 @@ error: Failed to resolve vite command: GenericFailure, Expected
   位置,视口与字体落定时机不同会进出首屏 —— 但**「进出的只是能否看见,重复本身是必然的」**:
   一处真重复平时不显,只是因为它有时落在首屏之外。
 
+### 三十一轮的覆盖率实测：369 个交互元素，208 次点击，0 异常
+
+跑 `ui-smoke` 时注意到它打印一行「中途离页 11 页」——11 个页面（/codex、/souls、
+/titles、/settings、/build、/collection、/legacy、/dongfu、/celestial、/apprentice …）
+点了导航钮之后就离开，余下按钮不再点。追了一下覆盖率:
+
+```text
+  首屏可见交互元素（button / role=button / a[href]，排除底栏）
+    /inventory 41 · /collection 34 · /settings 33 · /character 28 · /codex 27
+    /cultivation 26 · /celestial 25 · /market 21 · /build 19 · /souls 17
+    /apprentice 17 · /legacy 16 · /dongfu 16 · /adventure 15 · /titles 15
+    /world 11 · / 8
+    合计 369
+
+  ui-smoke --depth 12  → 点 181 次
+  ui-smoke --depth 25  → 点 208 次
+```
+
+**这是设计选择，不是缺陷**：`SKIP` 表跳过破坏性按钮（再单独一轮点它们）、
+点开弹窗后在弹窗内逐枚点、点了导航就换页。加到 depth 25 只多 27 次点击，
+说明多数页面的可点元素本来就不集中在首屏（更多在弹窗与展开区里）。
+
+**结论：交互覆盖这一层也够用。** depth 12 与 25 都是 0 异常 / 0 外域请求。
+
+顺带核了文档数字与数据源的一致性（这几处最容易在改平衡时悄悄对不上）:
+
+| 文档写的 | 数据源 | 实际 |
+|---|---|---|
+| 七作（洞府建筑） | `BUILDINGS.length` | 7 ✓ |
+| 三席（器魂） | `SOUL_SLOTS` | 3 ✓ |
+| 二十一境 | `REALMS.length` | 21 ✓ |
+| 140 种（敌手） | `ENEMIES.length` | 140 ✓ |
+
 ### 三十轮之后，才第一次跑那四道浏览器门
 
 第 28 轮定的硬规则（「进入新维度前先读 `package.json` 的 scripts 全表」）之后，
