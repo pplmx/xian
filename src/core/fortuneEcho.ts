@@ -95,6 +95,14 @@ const FORTUNE_ECHO_TEXTS: Record<string, { form: EchoForm; line: string }> = {
     form: "traces",
     line: "雷竹仍是那株雷竹,只是你曾站过的那块焦土上,草已经长出来了。",
   },
+  ft_xingyi_zhujing: {
+    form: "traces",
+    line: "坑底的星髓结晶还在,映着同一片夜空。你曾在坑边站了很久,最终没有去剖它。",
+  },
+  ft_tianwai_yin: {
+    form: "recognize",
+    line: "那段声音又飘来了,比上一世更近些 —— 它记得你曾屏息听过,也记得你没有循它而去。",
+  },
 };
 
 /**

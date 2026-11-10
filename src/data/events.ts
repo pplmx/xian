@@ -1,4 +1,4 @@
-/** 随机事件库 —— 107 个随机事件(含 21 个奇缘阶段) + 15 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 107 个随机事件(含 21 个奇缘阶段) + 17 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -2301,6 +2301,79 @@ export const FORTUNE_EVENTS: EventDef[] = [
   ),
 
   // ============ 仙界及以上机缘(仅以界域标签出现,不会落到人间界)============
+  /*
+   * 星陨荒原 / 天外天 / 鸿蒙裂隙:三处都是 `sky` 标签的界外地界,共用同一批机缘。
+   *
+   * 上一轮补了 water / fire / thunder 三处之后,仍无专属机缘的地域只剩这三处 ——
+   * 而它们的标签是 `sky`,机缘池里一条都没有。三处共用标签,故补两条即可全部覆盖。
+   *
+   * 境界带:`sky` 那几个地域(星陨荒原 tier17 / 天外天 18 / 仙人遗府 19 / 鸿蒙裂隙 20)
+   * 虽然层级很高,但都归在 `MORTAL_REGIONS` 里、境界带是 7~8 —— 所以 `sky` 是**人间界标签**,
+   * 必须声明 `maxRealm: MORTAL_END`,否则会一路漏到仙界/神界/混沌海
+   * (界外区域同样带 `general`,标签挡不住)。见 `core/fortuneWorldGate.spec`。
+   */
+  ev(
+    "ft_xingyi_zhujing",
+    "星髓结晶",
+    "荒原深处,一颗星辰坠落后留下的坑底凝着一枚半透明的结晶,里面像封着一小片夜空。",
+    ["general", "sky"],
+    [
+      c("剖开结晶", [
+        o(55, "结晶碎开时,那片夜空涌进你的识海 —— 你看见了自己的命星。", {
+          type: "exp",
+          secs: 110,
+        }),
+        o(
+          25,
+          "星髓太烈,你半边身子被灼得发烫,却也收下了一块。",
+          { type: "material", id: "ore", amount: 40 },
+          { type: "buff", id: "injury" },
+        ),
+        o(20, "结晶在你掌中化作一捧星尘,什么都没有留下。", { type: "nothing" }),
+      ]),
+      c(
+        "仰观星河",
+        [
+          o(1, "你躺在坑边看了一夜星河,忽然觉得这一世的得失都轻了。", {
+            type: "material",
+            id: "wudao",
+            amount: 14,
+          }),
+        ],
+        { isDefault: true },
+      ),
+    ],
+    { minRealm: 7, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ft_tianwai_yin",
+    "天外余音",
+    "天外天的虚空中飘来一段极淡的声音,不像人语,也不像风 —— 它在你的识海里绕了很久。",
+    ["general", "sky"],
+    [
+      c("循声而去", [
+        o(60, "声音的源头是一枚漂泊的残破玉简,其上刻着某位大能未竟的道。", { type: "gongfa" }),
+        o(25, "你循着声音走了很久,最后发现那只是虚空自己的回响。", { type: "nothing" }),
+        o(
+          15,
+          "声音骤然尖锐,你七窍渗血,却也记住了其中一段。",
+          { type: "buff", id: "injury" },
+          { type: "material", id: "page", amount: 18 },
+        ),
+      ]),
+      c(
+        "守住心神",
+        [
+          o(1, "你闭目凝神,那声音渐渐远去 —— 能不被它带走,也是一种修为。", {
+            type: "exp",
+            secs: 60,
+          }),
+        ],
+        { isDefault: true },
+      ),
+    ],
+    { minRealm: 8, maxRealm: MORTAL_END },
+  ),
   ev(
     "ft_xianmen_guqin",
     "仙门古琴",
