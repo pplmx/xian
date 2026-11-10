@@ -459,6 +459,7 @@ const CATEGORIES = [
       "idUniqueness",
       "comboArtValue",
       "mortalRouteShapes",
+      "daoStackBound",
       "regionDanger",
       "artifactGrowth",
       "stackCap",

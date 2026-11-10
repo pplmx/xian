@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 635 个 spec;本作自己那部分 555 个) |
+| `bun run test` | 全量用例(全量 636 个 spec;本作自己那部分 556 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 635 个 spec = 宿主 551 + 引擎 80,别把 635 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 636 个 spec = 宿主 551 + 引擎 80,别把 636 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 635 个 spec(本作自己那部分 555 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 636 个 spec(本作自己那部分 556 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -4373,14 +4373,14 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 555 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 556 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
 
 ```text
 第一版:326 个 spec · 4117 条标题
-修正后:555 个 spec · 6319 条标题   (+54%)
+修正后:556 个 spec · 6319 条标题   (+54%)
 ```
 
 > 这是一类**最难自查的错误**:工具跑得通、输出格式对、报出来的缺口具体到表与维度名 ——
@@ -4472,7 +4472,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**635 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**636 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -5251,3 +5251,67 @@ seed37 lateclimb:  2,2,6,8,14,19     ← 第 1、2 段都是 2 阶
 
 > 修一个缺陷会让另一条判据的前提消失。这时候要问的是「判据守的性质还在不在」,
 > 而不是「换个 seed 让它绿」—— 后者会把判据变成摆设。
+
+### 四轮连查四次,四次都没缺陷 —— 以及这本身说明了什么
+
+这轮按上一轮的候选往下查,连查四处:
+
+```text
+① REGION_NAME_TIER_BAND 实际生效    5108 段无一超标,偏差分布 0/1/2/3 正落在容差内
+② 区域复用                          900 世零复用(20 个区域对最多 6 段)
+③ 世界页行旅图布局                  同层有最小横距、半径按相对密度、坐标互不相同
+④ 凡界路线选择分布                  九条路线 90~108 次、六种节奏 135~168 次
+```
+
+**四处都干净。** 这条线(凡界路线)从第 79 轮查到现在,已经查透了。
+
+### 但第四处让我差点误判
+
+查道途叠层时,我先算出 `stackedMods` 与 `mergeMods` 的差异:
+
+```text
+n 层    stackedMods.critRate   mergeMods.critRate
+ 2          0.040                  0.035
+ 4          0.080                  0.050     ← 线性是递减的 1.6 倍
+30          0.600                  —
+```
+
+而 `SWORD_PER_WIN` 的 `damageBonus` **不在任何防线里**,直接乘进伤害
+(`factor = mult * (1 + damageBonus) * ...`)。n=30 时伤害 ×2.2。
+
+**看起来是个失控的口子。** 直到我去查「实际能叠几层」:
+
+```text
+EXPEDITION_ROUTE_LAYERS = 3   →  最多叠 2 层  →  damageBonus +0.08(伤害 ×1.08)
+```
+
+**那个 n=30 是我自己算出来的假想场景。**
+
+### 直加是对的,但要守住边界
+
+第 81 轮核过 `docs/design.md` 的分层说明:
+
+```text
+第一道 DIMINISH_KEYS  同一词条来自多个来源时递减
+第二道 SOFT_CAPS      合计越过 cap 后折算
+其余词条              线性叠加,不收敛
+```
+
+`stackedMods` 处理的是「**同一来源的多层**」,不是「多个来源」——**直加符合设计**。
+而它不经过两道防线这件事,在 3 层的规模下无害。
+
+但「现在无害」不等于「可以不管」:远征层数从 3 改成 20 是一行的事,
+而改了之后没有任何判据会说话。故补 `daoStackBound.spec`,把**现实叠层数下的量级**钉住:
+
+```text
+剑道/杀伐道叠满 → 伤害乘数 ≤ 1.2
+剑意/剑道逐胜叠满 → critRate ≤ 0.3
+stackedMods 不改原对象(每层调用,改了就成指数)
+反空转:叠层的键真的与 DIMINISH_KEYS 有交集
+```
+
+注入验证:把 `EXPEDITION_ROUTE_LAYERS` 从 3 改成 20,三条判据同时红。
+
+> 判「有没有失控」之前,先问「**这个场景现实中能不能发生**」。
+> 第 73 轮是「读错字段」,第 75 轮是「分不清谁的锅」,这次是「自己造了个不存在的规模」——
+> 三次都是**判断的对象错了**,不是判断本身错了。
