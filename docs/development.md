@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 634 个 spec;本作自己那部分 554 个) |
+| `bun run test` | 全量用例(全量 635 个 spec;本作自己那部分 555 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 634 个 spec = 宿主 551 + 引擎 80,别把 634 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 635 个 spec = 宿主 551 + 引擎 80,别把 635 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 634 个 spec(本作自己那部分 554 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 635 个 spec(本作自己那部分 555 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -4373,14 +4373,14 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 554 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 555 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
 
 ```text
 第一版:326 个 spec · 4117 条标题
-修正后:554 个 spec · 6319 条标题   (+54%)
+修正后:555 个 spec · 6319 条标题   (+54%)
 ```
 
 > 这是一类**最难自查的错误**:工具跑得通、输出格式对、报出来的缺口具体到表与维度名 ——
@@ -4472,7 +4472,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**634 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**635 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -5135,3 +5135,64 @@ attacker.comboUses < 1
 留着不改就是「文案撒谎」,而这类谎言最擅长骗过将来的人(比如第 77 轮的我)。
 
 > 一条判据红/绿只说明数值;要判断「这是不是有意设计」,得去读代码,不能读文案。
+
+### 八张没有判据的纯数据表
+
+这轮换了方向:不再按「内容表」找缺口,而是按**模块**找 —— 全仓扫一遍
+「既没有同名 spec、也没有任何 spec 引用」的 core 模块。
+
+```text
+core 模块 170 个 · 无同名 spec 49 个 · 连引用都没有 8 个
+artifactDesk  diagnostics  engineCodex  engineMemory
+inventoryRender  kaiLateFaces  mortalRouteShapes  uiPort
+```
+
+前 49 个里多数是被别的 spec 间接覆盖的,真正零覆盖是这 8 个。
+逐个看下来,`inventoryRender` 只是 `listRender` 的薄封装(那边已有四条判据),
+`diagnostics` / `uiPort` 是端口层,`kaiLateFaces` 是字体表 —— 都不算缺口。
+
+**`mortalRouteShapes` 是唯一的真缺口。**
+
+### 它承载什么
+
+```text
+ROUTE_SHAPES        9 条凡界路线骨架 —— 决定每一世的空间推进节奏
+RHYTHM_ARCHETYPES   6 种事件密度曲线 —— 决定这一世哪里平静、哪里突然密集
+REGION_NAME_TIER_BAND = 3 —— 决定区域名能落到多远的位置上
+```
+
+文件头自己写着这三张表的来历:
+
+> 上一轮的审计钉出:层级递进曾硬编码为 `2 + i * 3`,六世的推进节奏一模一样 ——
+> 玩家的重复感主要来自这里,而不是敌人换没换。
+>
+> 但**不能改成纯随机**:`2 → 19 → 3 → 17` 虽然「新」,玩家却无法形成合理的空间认知。
+> 故取「有限模板 + 参数扰动 + 历史去重」。
+
+以及:
+
+> `222222` 不是「事件少」,是**没有节奏设计**。
+
+**这些表定了玩法的手感,却没有一条判据。**
+
+### 纯数据模块为什么最容易没判据
+
+它没有函数可以调用 —— 「跑一遍看看对不对」这个最常用的验证方式不成立。
+你能做的只有「把数字读一遍」,而读一遍看不出「9 条路线里哪条的首段太陡」。
+
+补了 7 条判据,守的是**设计意图**而不是具体数值(数值还会调,意图不该漂):
+
+```text
+① 层级都落在凡界 1~20 之内            ← 越界会取到不存在的地界
+② 首段 ≤4、末段 ≥12                   ← 开局不能甩进高段,总得走到后期
+③ 单调型严格递增;交错型必须真的交错   ← 否则交错型与单调型没有区别
+④ 路线与节奏 id 都不重复
+⑤ 节奏曲线长度一致且都是正数          ← 长度不齐会让重采样口径分叉
+⑥ 节奏原型真的各不相同                ← 「222222 不是事件少,是没有节奏设计」
+⑦ 反空转:表够大、偏差容差在合理区间
+```
+
+`WEAVE_ROUTE_IDS` 是个**白名单而不是检测**:若哪天有人把某条单调路线改成交错,
+白名单里没有它,③就会红。
+
+三处注入都准确命中(层级改 25 / 两条曲线改成一样 / 把 `weave` 改成递增)。

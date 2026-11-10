@@ -458,6 +458,7 @@ const CATEGORIES = [
       "poolProximity",
       "idUniqueness",
       "comboArtValue",
+      "mortalRouteShapes",
       "regionDanger",
       "artifactGrowth",
       "stackCap",
