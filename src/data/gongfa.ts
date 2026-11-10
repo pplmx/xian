@@ -769,7 +769,12 @@ export const GONGFA: GongfaDef[] = [
     "divine",
     18,
     "照见的地方没有死角,躲的人也没处躲",
-    { critRate: 0.06, accuracy: 0.18, damageBonus: 0.14 },
+    /*
+     * `accuracy` 从 0.18 收到 0.12:装备池里这个键的上限是 **0.14**(不是 0.05 ——
+     * 洞彻那条是 2~5,但另有更高档的词条把上限抬到 0.14),0.18 仍越界。
+     * 收到 0.12 既在上限内,又比既有的同键功法(0.06)/分支(0.10~0.14)站得住。
+     */
+    { critRate: 0.08, accuracy: 0.12, damageBonus: 0.14 },
     { critRate: 0.014, accuracy: 0.04 },
   ),
   g(
@@ -941,7 +946,7 @@ export const GONGFA: GongfaDef[] = [
     "divine",
     20,
     "道之源流灌进身子,人就成了那口泉",
-    { cultivationSpeed: 0.34, qiRegen: 0.26, maxHpPct: 0.2 },
+    { cultivationSpeed: 0.3, qiRegen: 0.26, maxHpPct: 0.2 },
     { cultivationSpeed: 0.07, qiRegen: 0.045 },
   ),
   g(

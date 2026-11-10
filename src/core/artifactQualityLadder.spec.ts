@@ -34,6 +34,9 @@ import { readSource } from "@/test/readSource";
 import { ARTIFACTS } from "@/data/artifacts";
 import { QUALITIES, qualityDef } from "@/data/qualities";
 import { AFFIXES } from "@/data/affixes";
+import { GONGFA } from "@/data/gongfa";
+import { GONGFA_BRANCHES } from "@/data/gongfaBranches";
+import { PETS } from "@/data/pets";
 
 /** 各档法宝件数,按品质 rank 索引 */
 function countByQuality(): number[] {
@@ -137,6 +140,66 @@ describe("法宝被动 · 不许超过装备同名词条的上限", () => {
       over,
       "这些法宝被动超过了装备池里同词条的最高档 —— 同一个词条法宝不该给得比装备多:" +
         over.join("、"),
+    ).toEqual([]);
+  });
+});
+
+/**
+ * 「硬属性」越过内容表 —— `accuracy` 是唯一一个直接改判定的词条。
+ *
+ * ## 为什么单挑这一条
+ *
+ * `core/combat` 里它是一句减法:
+ *
+ * ```ts
+ * const dodge = Math.min(0.95, Math.max(0, modOf(tMods, "dodgeRate") - modOf(aMods, "accuracy")));
+ * ```
+ *
+ * 也就是说 `accuracy` **不衰减、不封顶**,给多少就削掉对面多少闪避。别的词条
+ * (暴击率、减伤)都有软阈值或硬底,越界了会被引擎收住;这一条不会。
+ *
+ * 实测(第 57 轮):我给「灵照无方」写的 `accuracy: 0.18`,而装备池上限是 **0.14** ——
+ * 越界 29%,且它会**真的**在判定里兑现(对面 18% 以内的闪避全废)。
+ *
+ * ## 判据
+ *
+ * 四张内容表(功法基座 / 悟道分支 / 法宝被动 / 灵兽 mods)的 `accuracy`,
+ * 都不许超过装备池里同词条的最高档。
+ *
+ * 注:功法**基座**的 `cultivationSpeed` 等词条**不在此列** —— 实测主修的修速
+ * 最高给到 0.5,而词条上限 0.32,那是设计(高境界主修本就该更快),不是越界。
+ * 只有 `accuracy` 这种直接改判定的硬属性才用这条线。
+ */
+describe("硬属性 · accuracy 不许在任一张内容表里越过装备上限", () => {
+  it("功法基座 / 分支 / 法宝被动 / 灵兽 里的 accuracy 都在装备上限内", () => {
+    const cap = Math.max(
+      ...AFFIXES.filter((a) => (a as { key?: string }).key === "accuracy").map((a) => a.max / 100),
+    );
+    expect(cap, "装备池里没有 accuracy 词条 —— 判据失去了对照").toBeGreaterThan(0);
+
+    const over: string[] = [];
+    const check = (
+      label: string,
+      name: string,
+      mods: Record<string, number | undefined> | undefined,
+    ) => {
+      const value = mods?.accuracy;
+      if (value === undefined) return;
+      if (Math.abs(value) > cap + 1e-9) {
+        over.push(`${label}「${name}」accuracy=${value.toFixed(3)} 超过装备上限 ${cap}`);
+      }
+    };
+    for (const def of GONGFA)
+      check("功法", def.name, def.baseMods as Record<string, number | undefined>);
+    for (const br of GONGFA_BRANCHES)
+      check("分支", br.name, br.mods as Record<string, number | undefined>);
+    for (const def of ARTIFACTS)
+      check("法宝", def.name, def.passive as Record<string, number | undefined>);
+    for (const pet of PETS) check("灵兽", pet.name, pet.mods as Record<string, number | undefined>);
+
+    expect(
+      over,
+      `这些 accuracy 越过了装备上限 —— 它会不衰减地削掉对面闪避,越界直接兑现:` + over.join("、"),
     ).toEqual([]);
   });
 });
