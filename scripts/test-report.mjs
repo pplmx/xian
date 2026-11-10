@@ -457,6 +457,7 @@ const CATEGORIES = [
       "balanceCoverage",
       "poolProximity",
       "idUniqueness",
+      "comboArtValue",
       "regionDanger",
       "artifactGrowth",
       "stackCap",

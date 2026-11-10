@@ -130,14 +130,51 @@ describe("③ 逆命契第二答案检测", () => {
     const pure: CombatantSnap = { ...base, mods: sealStyleMods(pureMods, gangdunStyle) };
     const mixed: CombatantSnap = { ...base, mods: sealStyleMods(mixedMods, gangdunStyle) };
 
-    // 对手取万刃天界主(等比 1.15):厚血消耗墙。封盾后纯罡盾输出乏力打不穿(超时判负),
-    // 混合构筑的反击伤害恰好跨过 DPS 阈值——「第二套答案」在此从必败变稳赢
-    const foe = worldFoeSnap(CELESTIAL_WORLDS[1]!.guardian, SIM_REFERENCE, 1.15);
+    /*
+     * 对手用**独立夹具**,不再借某个天界的守卫与 rules。
+     *
+     * ## 为什么换
+     *
+     * 原来这里写的是 `CELESTIAL_WORLDS[1].guardian` + `CELESTIAL_WORLDS[1].rules`
+     * (注释还错写成「万刃天界主」—— 第 1 个其实是星陨天)。
+     *
+     * 第 75 轮试着调天界难度时撞到这里:我把星陨天的 `maxRounds` 从 26 挪到 24,
+     * 而这条判据恰好依赖 `maxRounds` 卡在「纯罡盾打不穿、混合构筑的反击刚好跨过
+     * DPS 阈值」那个点上 —— 一挪位,混合构筑就再也跨不过去,判据红了。
+     *
+     * **天界的 rules 同时是「给玩家打的难度」和「这条判据的前提」两件事。**
+     * 换夹具之后,调天界数值不会再碰这条判据。
+     *
+     * ## 夹具的形状
+     *
+     * 一条**厚血消耗墙**:血厚、攻击中等、无反制。它要能撑过 `maxRounds: 26`
+     * 让纯罡盾打不穿,又不至于把混合构筑打死。
+     *
+     * 三维与技能**照搬原星陨天主** —— 换夹具只求「前提不变」,
+     * 数值照搬才能让这条判据的结论与换之前一致(而不是顺手改了它的判定标准)。
+     */
+    const fixtureFoe = worldFoeSnap(
+      {
+        name: "夹具·厚血消耗墙",
+        icon: "star",
+        atkR: 0.85,
+        defR: 0.55,
+        hpR: 2.2,
+        speed: 1.25,
+        skills: [
+          { name: "星坠乾坤", mult: 1.9, rate: 0.35 },
+          { name: "星屑乱舞", mult: 1.0, rate: 0.6, effect: "multi" },
+        ],
+      },
+      SIM_REFERENCE,
+      1.15,
+    );
+    const fixtureRules: CombatRules = { maxRounds: 26 };
     const winRate = (snap: CombatantSnap, seed: number): number => {
       const rng = new RandomService(mulberry32(seed));
       let wins = 0;
       for (let i = 0; i < 80; i += 1)
-        if (resolveCombat(snap, foe, rng, CELESTIAL_WORLDS[1]!.rules).win) wins += 1;
+        if (resolveCombat(snap, fixtureFoe, rng, fixtureRules).win) wins += 1;
       return wins / 80;
     };
     const pureSealed = winRate(pure, 95001);

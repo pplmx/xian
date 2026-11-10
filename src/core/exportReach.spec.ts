@@ -108,7 +108,6 @@ const BASELINE = new Set([
   "core/trialMotivation.ts:coveredAxes",
   "core/tribulationDecision.ts:PREP_THRESHOLDS",
   "core/tribulationDecision.ts:burstScore",
-  "data/comboArts.ts:COMBO_ARTS",
   "data/lifeTrials.ts:DEFAULT_MAX_ROUNDS",
   "data/samsara.ts:INSIGHT_LEGACY_PER_LIFE",
   "data/timeUnits.ts:TEA_SEC",

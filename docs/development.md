@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 633 个 spec;本作自己那部分 553 个) |
+| `bun run test` | 全量用例(全量 634 个 spec;本作自己那部分 554 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 633 个 spec = 宿主 551 + 引擎 80,别把 633 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 634 个 spec = 宿主 551 + 引擎 80,别把 634 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 633 个 spec(本作自己那部分 553 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 634 个 spec(本作自己那部分 554 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -4373,14 +4373,14 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 553 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 554 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
 
 ```text
 第一版:326 个 spec · 4117 条标题
-修正后:553 个 spec · 6319 条标题   (+54%)
+修正后:554 个 spec · 6319 条标题   (+54%)
 ```
 
 > 这是一类**最难自查的错误**:工具跑得通、输出格式对、报出来的缺口具体到表与维度名 ——
@@ -4472,7 +4472,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**633 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**634 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -4979,3 +4979,58 @@ decisionAudit ③ 混合构筑 星陨天守卫前 纯 0 vs 混 0.075(<0.1)
 ```
 
 **问题可见、有据、且明确记着「为什么暂不修」。** 这比一次半吊子的数值改动更接近完成。
+
+### 换夹具:让天界数值与判据脱钩
+
+第 75 轮试修终局平衡失败,结论是「先让判据改用独立夹具,再调天界数值」。
+这轮做了前半件。
+
+### 第一处:`decisionAudit ③` 的混合构筑基准
+
+它原来拿 `CELESTIAL_WORLDS[1].guardian` 与 `.rules` 当一对一基准,
+依赖 `maxRounds` 恰好卡在「纯罡盾打不穿、混合构筑的反击刚好跨过 DPS 阈值」那个点上。
+
+**注释还错写成「万刃天界主」—— 而 `[1]` 是星陨天。** 借用夹具的副作用之一:
+写注释的人已经不知道自己在借谁了。
+
+换成内联夹具(三维与技能照搬原星陨天主,只求「前提不变」),验证:
+把星陨天的 `maxRounds` 从 26 改成 22,这条判据**仍然通过** —— 脱钩成功。
+
+### 第二处:`phase21` 的组合技判据 —— 那里不该换
+
+`phase21` 的组合技判据用「优势界 / 劣势界」的对比来验证道具设计,
+**它测的对象本来就是天界**,换成夹具反而会失去意义。
+
+但顺着它查下去,查出一个真缺陷。
+
+### 玄罡反震是一件死道具
+
+`COMBO_ARTS` 有三个,此前**没有任何判据在管**(只有 `exportReach` 提了一句名字)。
+实测(流派带/不带该法宝,30 次采样):
+
+```text
+  xuangang 最佳 星陨天  0 | 赤炎天-13 星陨天0 万刃天0 无生天0 无相天-3
+  kuze     最佳 赤炎天 +13
+  fenglian 最佳 赤炎天 +13
+```
+
+**`xuangang` 在五个界里没有一个是正增益**,而另两个都有 +13。
+
+根因在 `combat.ts` 的触发条件:`shieldBroken` 是 `isZero(target.shield)` ——
+护盾**恰好被打光到 0** 才为真。而罡盾流只有 `shieldOnStart 0.4` 一层盾、被打光不再生;
+能打光它的多是单段高伤,那种场合罡盾流本来就撑不住。**「盾破」那一刻往往就是败局已定**,
+反震一次救不回来,而失去护盾的代价已经付掉了。
+
+第 75 轮我看到 `phase21` 这条判据红,以为是改参数引入的回归,回退了。
+**其实它一直红着** —— 只是因为当时把天界数值一起改了,分不清是谁的锅。
+
+### 补了 `comboArtValue.spec`,带双向放行清单
+
+- 正方向:每个组合技至少在一个界拿到 +5 个百分点
+- 反方向:**已知死道具清单不许比实测更宽** —— 修好的要摘出来
+
+第二条是防「放行之后再也不回来看」。实测值每次都会打印,谁动战斗节奏都看得见。
+
+> 第 74 轮把「三个天界无挑战」做成报告,这轮把「一个死道具」做成带清单的放行。
+> 两者的共同点是:**问题必须可见,但不必立刻阻塞主线。**
+> 区别是后者多了一条反方向判据 —— 让「放行」不会变成「遗忘」。
