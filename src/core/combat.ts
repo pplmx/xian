@@ -477,7 +477,6 @@ export function resolveCombat(
     if (
       isCrit &&
       attacker.snap.comboArt === "fenglian" &&
-      selfPct > FULL_HP_THRESHOLD &&
       attacker.comboUses < 1 &&
       !isZero(target.hp)
     ) {
