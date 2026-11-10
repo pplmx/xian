@@ -8584,6 +8584,99 @@ async function taskDongfuBuild() {
     await ctx.close();
   }
 
+  // ---- 洞府等级不足时的「出口」读数 ----
+  /*
+   * 建筑升到「当前洞府能撑的上限」时,那一行要把**出路**写出来:
+   * 「洞府升至 N 级后,本级即可营建」。它是玩家此刻唯一能动手的方向,
+   * 没有它就只剩一个灰按钮。
+   *
+   * 这段此前只有源码层判据(`BuildingLedgerRow` 的注释里写着
+   * 「改一个字这条出口就静默消失,而没有任何门会红」)—— 现在补上门。
+   *
+   * 夹具:洞府 0 级(`cap = (0+1) × BUILDING_LEVELS_PER_MANSION = 5`),
+   * 炼丹房 5 级 —— 正好卡在线上,`mansionShortfallOf` 返回 needMansionLevel = 1。
+   */
+  {
+    const ctx = await auditContext({
+      viewport: { width: 390, height: 844 },
+      deviceScaleFactor: 3,
+      isMobile: true,
+      hasTouch: true,
+    });
+    try {
+      const gn = (m, e) => ({ m, e });
+      const slices = {
+        game: {
+          started: true,
+          saveVersion: 2,
+          createdAt: Date.now(),
+          lastActiveAt: Date.now(),
+          totalPlaySec: 0,
+          createRerolls: 0,
+          createProfile: null,
+        },
+        player: {
+          name: "洞府门径自检",
+          major: 5,
+          sub: 3,
+          exp: gn(1, 2),
+          age: 40,
+          lifespanBonusYears: 0,
+          dead: false,
+          reincarnation: { count: 0, daoFruit: 0 },
+          linggen: { element: "wood", aptitude: 80 },
+          resources: { spiritStone: gn(9, 6), herbs: gn(9, 4), ore: gn(9, 4), dust: gn(9, 4) },
+        },
+        dongfu: {
+          // 洞府 0 级 → 建筑上限 5;炼丹房正好 5 级 → 卡在线上
+          levels: { mansion: 0, alchemy: 5 },
+          offlineCapHours: 8,
+        },
+        settings: { privacyAccepted: true, sfxOn: false, musicOn: false, musicVol: 0, sfxVol: 0 },
+      };
+      await seedSave(ctx, slices, "__dongfuMansionGate");
+      const page = await ctx.newPage();
+      const pageErrors = [];
+      watchPageErrors(page, pageErrors);
+      const rendered = await openRoute(page, "/dongfu", 900);
+      checked += 1;
+      if (rendered === 0) {
+        failures.push("[390] 洞府页没渲染出来,洞府门径读数没量到");
+      } else {
+        await clearOverlays(page);
+        const info = await page.evaluate(() => {
+          const gate = document.querySelector("[data-building-gate]");
+          return {
+            hasGate: Boolean(gate),
+            text: (gate?.textContent || "").replace(/\s+/g, " ").trim(),
+            // 同一行里被挡住的建筑,它的操作钮该是灰的
+            disabledActions: document.querySelectorAll("[data-building-action][disabled]").length,
+          };
+        });
+        if (!info.hasGate) {
+          failures.push(
+            "[390] 洞府建筑卡在洞府等级上限时,没有写出「洞府升到几级可建」的出口 —— " +
+              "玩家只看得到一个灰按钮,不知道下一步该做什么",
+          );
+        } else if (!/洞府升至 \d+ 级/.test(info.text)) {
+          failures.push(`[390] 洞府门径那行没报出目标等级:«${info.text}» —— 该写明升至几级`);
+        } else if (!info.disabledActions) {
+          failures.push(
+            "[390] 洞府门径写着「升至 N 级即可营建」,但那一行的按钮不是灰的 —— 说明它其实没被挡",
+          );
+        } else {
+          console.log(`\n洞府门径:«${info.text}»`);
+        }
+        if (pageErrors.length) {
+          failures.push(`[390] 洞府门径页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+        }
+      }
+      await page.close();
+    } finally {
+      await ctx.close();
+    }
+  }
+
   return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
 }
 
