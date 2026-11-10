@@ -40,7 +40,8 @@ import { describe, expect, it } from "vite-plus/test";
 import { ARTIFACTS } from "@/data/artifacts";
 
 describe("法宝主动神通 · 名头不撞", () => {
-  it("46 件法宝的主动神通名两两不同", () => {
+  it("法宝的主动神通名两两不同", () => {
+    // 标题里不写件数:那个数会随内容变化而过期(第 52 轮补到 49 件时它就已经是错的了)
     const byName = new Map<string, string[]>();
     for (const def of ARTIFACTS) {
       const name = def.active.name;

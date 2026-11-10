@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 630 个 spec;本作自己那部分 550 个) |
+| `bun run test` | 全量用例(全量 631 个 spec;本作自己那部分 551 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 630 个 spec = 宿主 550 + 引擎 80,别把 630 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 631 个 spec = 宿主 551 + 引擎 80,别把 631 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 630 个 spec(本作自己那部分 550 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 631 个 spec(本作自己那部分 551 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -4271,3 +4271,49 @@ t4=0.20  t9=0.25  t12=0.30  t25=0.30  t31=0.385  t31=0.493
 
 **每次都是「某个维度上，两个东西该比却没人比」。** 而判据的覆盖总是分块的 ——
 这一族查了增长,那一族查了封顶,**中间那条「不倒退」谁都没管**。
+
+### 「哪些维度还没人看着」本身要被测量
+
+第 43~60 轮里同一个形状出现了五次:
+
+```text
+43  修为奖励没和同境界的邻居比      → 肥 66%
+44  材料奖励没和同格子的邻居比      → dust 高 5 倍
+55  功法基座没和同席位同品阶的比    → 肥两倍
+58  灵兽没先算可行域                → 连撞七八轮
+60  weaken 族没查「同族不倒退」     → t12 与 t25 一样
+```
+
+根因都不是「某条判据写错了」,而是**某个维度上根本没有判据**。判据的覆盖天然分块:
+这一族查了增长,那一族查了封顶,中间那条谁都没管。
+
+于是这轮把「哪些维度还没人看着」做成了一把量尺:`core/balanceCoverage`。
+
+### 它怎么工作
+
+```ts
+specTitles()          // 扫 src/core/*.spec.ts,取每条 it/describe 的标题
+unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它的关键字
+```
+
+`WANTED` 是一张**手工维护**的清单:17 项「内容表 × 可比较维度 × 判定关键字」。
+每次发现一个新的可比较维度就往里加一行 —— 加了却没写判据,这条就红。
+
+它不判断判据写得好不好(那归各自的 spec),只回答「这一维有没有人管」。
+
+### 第一次跑就抓到一个误报,而误报比漏报更值得记
+
+清单里「法宝 / 族内相邻档增长率」被报成**没有判据**,可它一直都在
+(`artifactGrowth` 里那条 `it(\`${type} 族相邻档增长率不低于 …\`)`)。
+
+原因:**那条标题是模板字符串,而我的正则只匹配双引号**。参数化用例里反引号很常见,
+第一版等于把一整类用例看成了不存在。
+
+> 量尺本身读错了,报出来的「缺口」就是假的。而假缺口会让人去**补一条本来就有**的判据。
+
+### 顺带修掉两处过期
+
+- `artifactActiveUnique.spec` 的标题写着「46 件法宝的主动神通名两两不同」——
+  第 52 轮补到 49 件之后它就已经是错的了。标题里不写件数。
+- `deadExportAudit` 抓到我多导出了一个 `CoverageCell` 接口(没人接)。删掉 ——
+  这条判据守的正是「写下的每个导出都得有人接」。

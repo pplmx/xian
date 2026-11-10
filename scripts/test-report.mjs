@@ -454,6 +454,7 @@ const CATEGORIES = [
       "dustFormat",
       "soulTallyFields",
       "artifactQualityLadder",
+      "balanceCoverage",
       "regionDanger",
       "artifactGrowth",
       "stackCap",
