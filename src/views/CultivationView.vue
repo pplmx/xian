@@ -145,9 +145,17 @@
               <ProgressBar :value="player.expProgress" color="var(--color-qing)" :height="10" />
             </div>
             <div class="cultivation-ledger__remainder">
-              <span class="text-ink-soft tabular">
-                还剩 {{ formatPercent(1 - player.expProgress, 0) }} · {{ expEtaText }}
-              </span>
+              <!--
+                报**已走**多少，不报「还剩」。
+                原式 `formatPercent(1 - expProgress, 0)` 在刚起步时必然报满：
+                `1 - 0.0017 = 0.9983` → 取整 100%。于是一条几乎为空的进度条旁
+                写着「还剩 100%」，读起来像卡住了。方向本来就反了 ——
+                玩家想知道的是「我走了这么多」。
+                另见 ui/expProgressNote：两头都要收口（刚起步 / 将要圆满）。
+              -->
+              <span class="text-ink-soft tabular">{{
+                expProgressNote(player.expProgress, expEtaText)
+              }}</span>
               <button
                 class="tap-row -mx-1.5 -my-1 min-w-[28px] justify-center px-1.5 py-1.5 text-center text-note text-ink-faint active:opacity-60"
                 :aria-expanded="showCultBreakdown"
@@ -450,6 +458,7 @@ import { buffDef } from "@/data/buffs";
 import { pillDef } from "@/data/pills";
 import type { PillDef } from "@/types";
 import { QI_BANK_MULT, QI_RICH_BONUS, QI_RICH_THRESHOLD_RATIO } from "@/data/constants";
+import { expProgressNote } from "@/ui/expProgressNote";
 import {
   formatCountdown,
   formatDuration,

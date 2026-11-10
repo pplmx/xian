@@ -18894,6 +18894,47 @@ async function taskCultivationFold() {
           .screenshot({ path: join(SHOTS_DIR, "390-cultivation-register.png") });
       }
     }
+    /*
+     * 本境账那一句 —— 报**已走**多少,不报「还剩」。
+     *
+     * 原式是 `formatPercent(1 - expProgress, 0)`,在刚起步时必然报满:
+     * `1 - 0.0017 = 0.9983` → 取整 100%。于是一条几乎为空的进度条旁
+     * 写着「还剩 100%」,读起来像卡住了 —— 而玩家明明已经攒了 5.1 亿。
+     *
+     * 判据核三件:不许出现「还剩 N%」;进度条与那句话不许自相矛盾
+     * (条几乎为空却说 100%);刚起步要以「刚起步」说出来。
+     */
+    checked += 1;
+    {
+      const remainder = await page.evaluate(() => {
+        const span = document.querySelector(".cultivation-ledger__remainder > span");
+        const bar = document.querySelector(
+          ".cultivation-ledger .progress-bar, .cultivation-ledger [class*=progress]",
+        );
+        return {
+          text: span ? (span.textContent || "").replace(/\s+/g, " ").trim() : null,
+          barRatio: bar ? (bar.getAttribute("data-ratio") ?? bar.style.width ?? null) : null,
+        };
+      });
+      if (!remainder.text) {
+        failures.push("[390-cultivation] 本境账没报进度 —— 判据没量到东西");
+      } else if (/还剩\s*\d+\s*%/.test(remainder.text)) {
+        failures.push(
+          `[390-cultivation] 本境账仍在报「还剩 N%」—— «${remainder.text}»` +
+            `(四舍五入下刚起步必然报满,与几乎为空的进度条自相矛盾)`,
+        );
+      } else if (/NaN|undefined|Infinity/.test(remainder.text)) {
+        failures.push(`[390-cultivation] 本境账漏出占位符 —— «${remainder.text}»`);
+      } else if (/已成\s*100\s*%/.test(remainder.text) && !/已圆满/.test(remainder.text)) {
+        failures.push(
+          `[390-cultivation] 本境账报「已成 100%」却没说圆满 —— «${remainder.text}»` +
+            `(还差一截时说 100% 是另一种荒唐)`,
+        );
+      } else if (!/刚起步|已成\s*\d+%|将要圆满|已圆满/.test(remainder.text)) {
+        failures.push(`[390-cultivation] 本境账那句话读不出进度状态 —— «${remainder.text}»`);
+      }
+    }
+
     if (pageErrors.length)
       failures.push(`[390-cultivation] 修行续卷页面异常:${[...new Set(pageErrors)].join(" | ")}`);
   } finally {

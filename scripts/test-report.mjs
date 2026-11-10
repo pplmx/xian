@@ -438,6 +438,7 @@ const CATEGORIES = [
       "offlineChainNote",
       "onboardingFlowGate",
       "emptyStateTypeScale",
+      "expProgressNote",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",
