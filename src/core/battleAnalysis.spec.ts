@@ -506,3 +506,173 @@ describe("方向 · 要说清冲着哪条病因", () => {
     ).toBeGreaterThan(0);
   });
 });
+
+/**
+ * 闪避与被震慑是**事实读数**,不该只活在某条归因的触发条件后面。
+ *
+ * ## 缺口
+ *
+ * `CombatSideStats.dodges` 与 `stunnedTurns` 此前在界面上只有两条路能读到:
+ * 胜局归因里 `dodges >= 3` 才会说「闪过 N 次」,败局告警里 `stunnedTurns >= 3`
+ * 才会说「N 个回合被震慑打断」。于是 **1~2 次这两个数在任何地方都读不到**。
+ *
+ * 实测震慑并不罕见:六种构筑 × 三个带震慑的敌人 × 四档强度共 360 局,
+ * **33% 的对局有震慑**;而 101 场**胜局**里有 61 场被打断过 ——
+ * 六成胜局里玩家挨了震慑却一个字都看不到(败局告警只在败局出)。
+ *
+ * 判据守两件:
+ * 一 不管次数多少,这一行都要在(它和「总输出 / 总承伤」同一层级);
+ * 二 值要与遥测同源 —— 改一个数,文案跟着变。
+ */
+describe("数据行 · 闪避与被震慑不许只活在阈值后面", () => {
+  const mkStats = (o: Partial<CombatSideStats> = {}): CombatSideStats => ({
+    dealt: gn(1000),
+    taken: gn(2000),
+    pierceTaken: gnZero(),
+    biggestHitTaken: gn(100),
+    healed: gnZero(),
+    shieldAbsorbed: gnZero(),
+    dodges: 0,
+    missedHits: 0,
+    hitsLanded: 20,
+    counters: 0,
+    combos: 0,
+    crits: 2,
+    skillCasts: 3,
+    artifactProcs: 0,
+    stunnedTurns: 0,
+    ...o,
+  });
+
+  it("1 次闪避、1 次被打断也要出现在数据行里", () => {
+    /*
+     * 这一条正是缺陷本体:改前 1~2 次两个阈值都够不着,
+     * 于是这个读数在胜局与败局里都不出现。
+     */
+    const rows = battleDataRows({
+      win: true,
+      rounds: 8,
+      playerHpPct: 0.6,
+      log: [],
+      stats: { player: mkStats({ dodges: 1, stunnedTurns: 1 }), enemy: mkStats() },
+    });
+    const row = rows.find((r) => r.label === "闪过 / 被打断");
+    expect(row, "数据行里没有闪避与被震慑的读数 —— 1~2 次时哪都看不见").toBeDefined();
+    expect(row!.value).toContain("1");
+  });
+
+  it("两个数与遥测同源 —— 改一个数,文案跟着变", () => {
+    const rows = battleDataRows({
+      win: false,
+      rounds: 8,
+      playerHpPct: 0,
+      log: [],
+      stats: { player: mkStats({ dodges: 4, stunnedTurns: 7 }), enemy: mkStats() },
+    });
+    const row = rows.find((r) => r.label === "闪过 / 被打断")!;
+    expect(row.value, "闪避数没跟遥测").toContain("4");
+    expect(row.value, "被震慑数没跟遥测").toContain("7");
+  });
+
+  it("胜局也要有这一行 —— 败局告警不覆盖胜局", () => {
+    /*
+     * 震慑的旧归因只在 `defeatFindings` 里,胜局走的是 `victoryFindings` ——
+     * 那条路完全不看 `stunnedTurns`。实测六成胜局被打断过,却一个字都没有。
+     */
+    const win = battleDataRows({
+      win: true,
+      rounds: 9,
+      playerHpPct: 0.8,
+      log: [],
+      stats: { player: mkStats({ stunnedTurns: 5 }), enemy: mkStats() },
+    });
+    expect(
+      win.some((r) => r.label === "闪过 / 被打断"),
+      "胜局没有闪避/被打断这一行 —— 六成胜局里玩家看不到自己被打断了几次",
+    ).toBe(true);
+  });
+});
+
+/**
+ * 「一次手都没出过」那个分支不许按行号硬切。
+ *
+ * ## 缺口
+ *
+ * `battleDataRows` 末尾原本写着 `if (attempts === 0) return rows.slice(0, 6)`。
+ * 意图是好的:被活活打死的那一场,「命中 / 落空」「暴击 / 连击 / 反击」
+ * 「神通 / 法宝触发」必然是 0/0/0,报这些计数只是噪音。
+ *
+ * 但它按**行号**切,依赖「前 6 行恰好是那些该留的行」这个隐式事实。
+ * 后来在列表末尾加了「闪过 / 被打断」—— 纯挨打时这一行被一起切掉了,
+ * **而那正是最该看见它的场合**:你闪了几下、被打断几回合,
+ * 直接决定下一场要不要堆命中或抗性。
+ *
+ * 判据两件:纯挨打时闪避/被打断必须在;而该被省掉的那三行仍不出现
+ * (别为了修这个把噪音也放回来)。
+ */
+describe("数据行 · 没出过手时不许按行号硬切", () => {
+  const noAttempts = (o: Partial<CombatSideStats> = {}): CombatSideStats => ({
+    dealt: gn(1000),
+    taken: gn(2000),
+    pierceTaken: gnZero(),
+    biggestHitTaken: gn(100),
+    healed: gnZero(),
+    shieldAbsorbed: gnZero(),
+    dodges: 3,
+    missedHits: 0,
+    hitsLanded: 0,
+    counters: 0,
+    combos: 0,
+    crits: 0,
+    skillCasts: 0,
+    artifactProcs: 0,
+    stunnedTurns: 4,
+    ...o,
+  });
+
+  it("被活活打死那场也要报闪避与被震慑", () => {
+    const rows = battleDataRows({
+      win: false,
+      rounds: 5,
+      playerHpPct: 0,
+      log: [],
+      stats: { player: noAttempts(), enemy: noAttempts() },
+    });
+    const row = rows.find((r) => r.label === "闪过 / 被打断");
+    expect(row, "纯挨打时闪避/被打断被切掉了 —— 那正是最该看见它的场合").toBeDefined();
+    expect(row!.value).toContain("3");
+    expect(row!.value).toContain("4");
+  });
+
+  it("该省掉的 0/0/0 计数仍要省掉 —— 修上面那条不是把噪音放回来", () => {
+    const rows = battleDataRows({
+      win: false,
+      rounds: 5,
+      playerHpPct: 0,
+      log: [],
+      stats: { player: noAttempts(), enemy: noAttempts() },
+    });
+    for (const noisy of ["命中 / 落空", "暴击 / 连击 / 反击", "神通 / 法宝触发"]) {
+      expect(
+        rows.some((r) => r.label === noisy),
+        `纯挨打时仍报了「${noisy}」—— 那一场这些计数必然是 0,只是噪音`,
+      ).toBe(false);
+    }
+  });
+
+  it("有出手时三行计数照常都在", () => {
+    const rows = battleDataRows({
+      win: true,
+      rounds: 8,
+      playerHpPct: 0.5,
+      log: [],
+      stats: { player: noAttempts({ hitsLanded: 12 }), enemy: noAttempts() },
+    });
+    for (const label of ["命中 / 落空", "暴击 / 连击 / 反击", "神通 / 法宝触发"]) {
+      expect(
+        rows.some((r) => r.label === label),
+        `有出手时缺了「${label}」`,
+      ).toBe(true);
+    }
+  });
+});
