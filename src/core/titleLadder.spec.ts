@@ -97,3 +97,76 @@ describe("境界称号 · 每一境都有一顶", () => {
     expect(top, "全境之极的称号不该比中段还轻").toBeGreaterThanOrEqual(0.7);
   });
 });
+
+/**
+ * 称号的说明句不许是境界说明句的复印件。
+ *
+ * ## 缺口
+ *
+ * 29 顶称号里有 **14 顶(48%)** 的 `desc` 与对应境界的 `desc` **逐字相同**:
+ * 玩家在名号页读到「神王御宇 —— 神域之主,言出法随」,翻到界域志同一句又出现。
+ * 称号本该答「**我凭什么荣誉**」,却答成了「**我处在什么境界**」——
+ * 而后者名号谱上方已经用境界名说过了。
+ *
+ * 这属于跨页重复,`layout-check` 的首屏判据结构上管不到(它只量单屏 `main` 内可见叶子)。
+ * 故在数据层用集合交集拦:两表 desc 不许有交集。开销极小,且可证伪
+ * —— 修之前它会红 14 处。
+ *
+ * ## 另一半:名分的归属
+ *
+ * 数据里还有一处**比重复更严重**的错位:称号「神域之主」挂在神人境(境 14)的成就下,
+ * 而 `realms.ts` 的神王 lore 明写「神域之主为神王」,任务 `q_shenwang` 也叫这个名。
+ * 于是玩家在名号谱上先以神人境自称神域之主,翻两格又读到神王自称同一句。
+ * 这条判据守的是「同名同句不许属于两个档位」:同一句 desc 只能有一处主人。
+ */
+describe("称号 · 说明句不许复述境界", () => {
+  it("称号 desc 与境界 desc 无交集(跨表复读)", () => {
+    const realmDescs = new Map(REALMS.map((r) => [r.desc, r.name]));
+    const copied = TITLES.filter((t) => realmDescs.has(t.desc)).map(
+      (t) => `${t.name}「${t.desc}」= 境界「${realmDescs.get(t.desc)}」`,
+    );
+    expect(
+      copied,
+      "这些称号的说明句与境界说明句逐字相同 —— 称号该答「凭什么」,不复述「我是什么」:" +
+        copied.join("、"),
+    ).toEqual([]);
+
+    // 防空转:两表都真的读到了东西
+    expect(TITLES.length, "一顶称号都没读到 —— 判据会空转").toBeGreaterThan(20);
+    expect(REALMS.length, "一个境界都没读到 —— 判据会空转").toBeGreaterThan(10);
+  });
+
+  it("称号 desc 两两不同 —— 29 顶不许共用一句", () => {
+    const seen = new Map<string, string>();
+    const dup: string[] = [];
+    for (const t of TITLES) {
+      const prev = seen.get(t.desc);
+      if (prev) dup.push(`${prev} 与 ${t.name} 共用「${t.desc}」`);
+      else seen.set(t.desc, t.name);
+    }
+    expect(dup, "这些称号共用同一句说明:" + dup.join("、")).toEqual([]);
+  });
+
+  it("「神域之主」这名分归神王,不归神人境的称号", () => {
+    /*
+     * 两侧都量:
+     *   ① 神王境(境 16)的称号说明句里要有「神域」—— 名分在它手上;
+     *   ② 神人境(境 14)那顶称号的名字里不许出现「神域之主」—— 不许先自称。
+     * 只核一边会漏掉「两边都叫」这种更坏的情形。
+     */
+    const byMajor = new Map(
+      ACHIEVEMENTS.filter((a) => a.cond.type === "realm").map((a) => [
+        (a.cond as { major: number }).major,
+        a,
+      ]),
+    );
+    const shenwang = titleDef(byMajor.get(16)!.reward!.titleId!);
+    const shenren = titleDef(byMajor.get(14)!.reward!.titleId!);
+    expect(shenwang, "神王境的称号查不到 —— 判据会空转").toBeDefined();
+    expect(shenren, "神人境的称号查不到 —— 判据会空转").toBeDefined();
+    expect(shenwang!.desc, "神王的称号该守着「神域」这个名分").toContain("神域");
+    expect(shenren!.name, "神人境的称号又叫「神域之主」—— 那是神王的名分").not.toBe("神域之主");
+    // 而且给出的名字必须真是它的名字(不是留空糊过去)
+    expect(shenren!.name.length, "称号名不许留空").toBeGreaterThan(2);
+  });
+});

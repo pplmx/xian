@@ -13,6 +13,7 @@
  */
 import { describe, expect, it } from "vite-plus/test";
 import { generateSeries } from "./mortalWorldGen";
+import { MUTATORS, MUTATOR_THEMES, THEME_IDENTITY, mutatorsWithoutTheme } from "@/data/mutators";
 import {
   avgVisibleByDim,
   isFocused,
@@ -187,5 +188,97 @@ describe("可见新颖 · 本轮的边界", () => {
         "\n抓不出「文案读起来是不是同一个味道」——" +
         "\n地界名、事件文案全部沿用原素材,这一层仍需实际游玩验证",
     );
+  });
+});
+
+/**
+ * 世界身份的两件事:**主题表必须全覆盖**,且**不许静默兜底**。
+ *
+ * ## 缺口
+ *
+ * `MUTATOR_THEMES` 只有 10 条,而 `MUTATORS` 有 17 条。`worldIdentity` 当时写的是
+ * `MUTATOR_THEMES[w.ruleId] ?? "survival"` —— 于是七条没登记的变数全被当成
+ * 「求生」轴,凡界凡抽到它们,世界名就叫「生机断绝」。
+ *
+ * 实测本仓 240 座凡界:**94 座(39.2%)**落进这一档。玩家在同一屏读到
+ * 「……为生机断绝所笼罩」与「命数:敌人防御 +25%」—— 两句话互相打脸。
+ *
+ * ## 为什么旧判据全绿
+ *
+ * 原有一条断言是 `expect(id.themeName).toBeTruthy()`。兜底出来的「生机断绝」
+ * 同样非空,所以**判据在错误的样本上做出了正确的判断**。
+ * 这与 `docs/development.md` 记的那条教训同形:不是没判据,是判据选错了落点。
+ *
+ * ## 这两条守什么
+ *
+ * ① 集合相等:每一条 `MUTATORS` 都必须在 `MUTATOR_THEMES` 里有登记,
+ *    反向也不许多出没人用的键。差集由 `mutatorsWithoutTheme()` 现算。
+ * ② 不兜底:拿一条**真的没登记**的变数造一个世界,世界名里不许出现任何主题词,
+ *    `theme`/`themeName` 必须是 null —— 未知就老实说未知,不伪装成 survival。
+ *    这条是注入验证过的:把 `?? "survival"` 加回去,它会红。
+ */
+describe("世界身份 · 主题表必须全覆盖,未知不许伪装", () => {
+  it("每一条天道变数都登记了主题(集合相等,双向)", () => {
+    const missing = mutatorsWithoutTheme().map((m) => `${m.id}(${m.name})`);
+    expect(
+      missing,
+      "这些变数没登记 MUTATOR_THEMES —— 抽中它们的世界会被命名成错误的意象:" + missing.join("、"),
+    ).toEqual([]);
+
+    // 防空转:表要是空的,上面那条会「通过」
+    expect(MUTATORS.length, "一条变数都没读到 —— 判据会空转").toBeGreaterThan(10);
+
+    // 反向:表里不许有 MUTATORS 中不存在的键(改名后的剩键会让覆盖数看着够)
+    const ids = new Set(MUTATORS.map((m) => m.id));
+    const orphans = Object.keys(MUTATOR_THEMES).filter((id) => !ids.has(id));
+    expect(orphans, "主题表里有 MUTATORS 中不存在的键:" + orphans.join("、")).toEqual([]);
+  });
+
+  it("世界名里的主题词与那一条变数对得上(逐条抽一个世界核)", () => {
+    /*
+     * 上面那条守「有没有登记」,这条守「登记对不对」——
+     * 把主题表清空再全填 survival 也能过①,却仍在撒谎。
+     * 逐条变数造一个 ruleId 就是它的世界,核世界名/摘要里的主题词
+     * 正是 `THEME_IDENTITY[该变数的主题]`。
+     */
+    const base = generateSeries(1, 20260904, 1)[0]!.world;
+    let checked = 0;
+    for (const mut of MUTATORS) {
+      const theme = MUTATOR_THEMES[mut.id];
+      if (!theme) continue;
+      const want = THEME_IDENTITY[theme];
+      const id = worldIdentity({ ...base, ruleId: mut.id, ruleName: mut.name });
+      // 主题词只出现在 single / scattered 两种命名里(dual 用地貌命名)
+      if (id.form !== "dual") {
+        expect(id.name, `${mut.name} 的世界名该带「${want}」`).toContain(want);
+        expect(id.summary, `${mut.name} 的摘要该带「${want}」`).toContain(want);
+      }
+      expect(id.themeName, `${mut.name} 的 themeName`).toBe(want);
+      checked += 1;
+    }
+    expect(checked, "一条变数都没核到 —— 判据会空转").toBe(MUTATORS.length);
+  });
+
+  it("没登记的变数不许被伪装成「生机断绝」—— 未知就老实说未知", () => {
+    /*
+     * 用一条确实不在表里的假 id 造世界。旧代码会给它 `?? "survival"`,
+     * 于是世界名叫「生机断绝的 X 之世」—— 明明什么都不知道,却报了一个具体意象。
+     * 现在 theme / themeName 是 null,名字里不许出现任何 THEME_IDENTITY 的值。
+     */
+    const base = generateSeries(1, 20260904, 1)[0]!.world;
+    const id = worldIdentity({ ...base, ruleId: "__probe_unregistered__", ruleName: "未知" });
+    expect(id.theme, "未登记的变数不该有一个具体主题").toBeNull();
+    expect(id.themeName, "未登记的变数不该有一个具体意象").toBeNull();
+    const anyThemeName = Object.values(THEME_IDENTITY);
+    for (const word of anyThemeName) {
+      expect(
+        id.name + id.summary,
+        `未登记的变数被命名成了「${word}」—— 未知被伪装成了已知`,
+      ).not.toContain(word);
+    }
+    // 但仍要是一句完整的话,不许留空串或「null」
+    expect(id.name.length, "名字不该留空").toBeGreaterThan(3);
+    expect(id.name + id.summary).not.toContain("null");
+    expect(id.name + id.summary).not.toContain("undefined");
   });
 });

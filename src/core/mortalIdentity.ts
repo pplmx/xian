@@ -104,10 +104,16 @@ export interface WorldIdentity {
   dominance: number;
   /** 命名形态 */
   form: NamingForm;
-  /** 规则主题(取自世界规则的语义轴) */
-  theme: MutatorTheme;
-  /** 主题意象 */
-  themeName: string;
+  /**
+   * 规则主题(取自世界规则的语义轴)。
+   *
+   * `null` = 这条变数还没登记主题,是一个**待补的数据状态**,不是一种主题。
+   * 它曾经被 `?? "survival"` 折叠掉,于是「没登记」与「主题就是求生」在代码里
+   * 长得一模一样 —— 见下面 `worldIdentity` 里的说明。
+   */
+  theme: MutatorTheme | null;
+  /** 主题意象;`null` 同 `theme` */
+  themeName: string | null;
   /** 世界名 */
   name: string;
   /** 一句摘要 */
@@ -139,28 +145,49 @@ export function worldIdentity(w: MortalWorld): WorldIdentity {
   const dominance = sorted[0]![1] / total;
   const second = sorted[1] ?? null;
   const dualShare = (sorted[0]![1] + (second?.[1] ?? 0)) / total;
-  const theme = MUTATOR_THEMES[w.ruleId] ?? "survival";
-  const themeName = THEME_IDENTITY[theme];
+  /*
+   * 主题必须有登记 —— 此前这里是 `MUTATOR_THEMES[w.ruleId] ?? "survival"`,
+   * 于是「没登记」与「主题就是 survival」在代码里长得一模一样:17 条变数里
+   * 有 7 条没登记,凡界 240 座里 94 座(39.2%)被命名为「生机断绝」,而正文
+   * 「命数」写着「敌人防御 +25%」—— 同一屏两句话互相打脸,而单测全绿
+   * (兜底值同样非空,`themeName` 那条断言照样通过)。
+   *
+   * 现在不兜底:没登记就退到**中性的 `evasion` 轴**?不 —— 那只是换一个假答案。
+   * 真正的处置是让漏登记在数据层就消失(`mutatorsWithoutTheme` 有集合相等判据),
+   * 这里退到一个**明确标为未知**的形态:世界名不带主题词,摘要也不编一个意象。
+   * 玩家读到的是「这一世的意象还没有人写过」,而不是一句错话。
+   */
+  const theme: MutatorTheme | undefined = MUTATOR_THEMES[w.ruleId];
+  const themeName = theme ? THEME_IDENTITY[theme] : null;
 
   // 命名强度随占优程度递减:够强才敢用单一地貌称呼这一世
   let form: NamingForm;
   let name: string;
   let summary: string;
   let secondary: TerrainAxis | null = null;
+  /*
+   * 主题词缺席时(`themeName === null`)的写法:**不借任何一个具体意象**。
+   * 宁可少写一个词,也不编一句对不上的话 —— 这正是上一版 `?? "survival"`
+   * 的错误所在。四种形态各自给出不含主题的句子;它们读起来仍是完整的汉语,
+   * 只是少了一层意象。数据补登记之后,这条分支在正常数据上不会走到。
+   */
+  const themeOdd = themeName ? `${themeName}的` : "";
+  const themeCloak = themeName ? `为${themeName}所笼罩` : "凶吉难卜";
+  const themeWhole = themeName ? `唯${themeName}贯穿始终` : "诸相皆无定数";
   if (dominance >= DOMINANCE_SINGLE) {
     form = "single";
-    name = `${themeName}的${terrain}之世`;
-    summary = `${w.bias}的${terrain},为${themeName}所笼罩`;
+    name = `${themeOdd}${terrain}之世`;
+    summary = `${w.bias}的${terrain},${themeCloak}`;
   } else if (second && dualShare >= DOMINANCE_DUAL) {
     form = "dual";
     secondary = second[0];
     name = `${terrain}与${secondary}交错之世`;
-    summary = `${w.bias}之地,${terrain}与${secondary}相间,为${themeName}所笼罩`;
+    summary = `${w.bias}之地,${terrain}与${secondary}相间,${themeCloak}`;
   } else {
     // 地貌高度分散:不许拿任何一轴代表整个世界,退回主题与生态
     form = "scattered";
-    name = `${themeName}的杂涌之世`;
-    summary = `${w.bias}之地,山川无序、诸相杂陈,唯${themeName}贯穿始终`;
+    name = `${themeOdd}杂涌之世`;
+    summary = `${w.bias}之地,山川无序、诸相杂陈,${themeWhole}`;
   }
 
   return {
@@ -168,7 +195,11 @@ export function worldIdentity(w: MortalWorld): WorldIdentity {
     secondary,
     dominance,
     form,
-    theme,
+    /*
+     * `theme` 允许为 undefined:那代表「这一条变数还没登记主题」,是一个**待补**的
+     * 数据状态,不是一种主题。字段留 null 让上游能分辨,不再把未知伪造成 survival。
+     */
+    theme: theme ?? null,
     themeName,
     name,
     summary,
@@ -357,7 +388,7 @@ export function skeletonDimensions(
 ): { dim: string; values: number; sample: string }[] {
   const dims: { dim: string; get: (w: MortalWorld) => string }[] = [
     { dim: "主地貌", get: (w) => worldIdentity(w).terrain },
-    { dim: "规则主题", get: (w) => worldIdentity(w).theme },
+    { dim: "规则主题", get: (w) => worldIdentity(w).theme ?? "（未登记）" },
     { dim: "首地界类型", get: (w) => visibleFeatures(w).head },
     { dim: "尾地界类型", get: (w) => visibleFeatures(w).tail },
     { dim: "事件密度结构", get: (w) => visibleFeatures(w).eventDensity.join("") },

@@ -26,7 +26,7 @@ import { mulberry32, RandomService } from "@/utils/random";
 import { MORTAL_REGIONS, MORTAL_TIER_MAX } from "@/data/regions";
 import { ENEMIES, enemyDef } from "@/data/enemies";
 import { EVENTS } from "@/data/events";
-import { MUTATORS } from "@/data/mutators";
+import { MUTATORS, mutatorsWithoutTheme } from "@/data/mutators";
 import { makeEnemySnap, resolveCombat } from "./combat";
 import { BUILD_PROFILES, buildSnap } from "./buildSim";
 import { powerScale } from "./formulas";
@@ -296,7 +296,21 @@ export function generateMortalWorld(seed: number): MortalWorld {
     };
   });
 
-  const mut = MUTATORS[rng.int(0, MUTATORS.length - 1)]!;
+  /*
+   * 规则只从**登记过主题**的变数里抽。
+   *
+   * 从前这里是 `MUTATORS[rng.int(0, MUTATORS.length - 1)]` —— 抽到哪条算哪条,
+   * 而没登记主题的那几条会被 `worldIdentity` 的兜底折成「生机断绝」,
+   * 于是世界名与正文规则对不上(实测 39.2%)。
+   *
+   * 现在数据层有集合相等的判据保证"全部登记",这一行是**第二道**:即便哪天有人
+   * 又漏登记一条,也只会让它暂时抽不到,而不会立刻把一个撒谎的世界名推给玩家。
+   * 判"哪些没登记"直接用数据层那一份(`mutatorsWithoutTheme`),不在这里另写
+   * 一遍 `MUTATOR_THEMES[m.id] === undefined` —— 两处各写一遍迟早分叉。
+   */
+  const untagged = new Set(mutatorsWithoutTheme().map((m) => m.id));
+  const themed = MUTATORS.filter((m) => !untagged.has(m.id));
+  const mut = themed[rng.int(0, themed.length - 1)] ?? MUTATORS[0]!;
   return {
     seed,
     chain,

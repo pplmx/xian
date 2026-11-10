@@ -11,7 +11,7 @@
  *
  * 故按**境界 +0.02 预算一档**重排(修补取保守方向:只抬低于阶梯的,
  * 已经发到玩家手上的称号一律不削弱),每顶保留自己的属性构成 ——
- * 渡劫行者照旧给天劫抗性、神域之主照旧给攻血,身份感不动,只是分量跟着境界走。
+ * 渡劫行者照旧给天劫抗性、破界入神照旧给攻血,身份感不动,只是分量跟着境界走。
  */
 import type { TitleDef } from "@/types";
 
@@ -64,31 +64,31 @@ export const TITLES: TitleDef[] = [
   {
     id: "ti_huashen",
     name: "化神真人",
-    desc: "神念化形,言出法随",
+    desc: "神念离体而不散,可同时照看三件事",
     mods: { cultivationSpeed: 0.055, qiRegen: 0.055 },
   },
   {
     id: "ti_lianxu",
     name: "炼虚道君",
-    desc: "炼神返虚,窥见大道",
+    desc: "把杂念一层层炼干净,剩下的那点才叫神",
     mods: { cultivationSpeed: 0.055, damageReduction: 0.035 },
   },
   {
     id: "ti_heti",
     name: "合体真君",
-    desc: "身道相合,举念移山",
+    desc: "身与道不再分家,抬手便是道的形状",
     mods: { cultivationSpeed: 0.07, maxHpPct: 0.06 },
   },
   {
     id: "ti_dacheng",
     name: "大乘尊者",
-    desc: "大道将成,静候天命",
+    desc: "路已经走完,只等天上那一声",
     mods: { cultivationSpeed: 0.075, attackPct: 0.065 },
   },
   {
     id: "ti_dujie",
     name: "渡劫行者",
-    desc: "九重雷海,向死而生",
+    desc: "九道雷都劈过了,还站在这里",
     mods: { cultivationSpeed: 0.08, tribulationResist: 0.065 },
   },
   // ---- 界域里程碑称号(扩界)----
@@ -101,68 +101,75 @@ export const TITLES: TitleDef[] = [
   {
     id: "ti_xuanxian",
     name: "玄仙真人",
-    desc: "仙体玄妙,一念山河",
+    desc: "仙骨换过一副,凡俗的伤再也留不住",
     mods: { cultivationSpeed: 0.085, luck: 0.055 },
   },
   {
     id: "ti_jinxian",
     name: "金仙道尊",
-    desc: "金性不朽,历劫不磨",
+    desc: "火烧水淹都试过,这具身没留下痕迹",
     mods: { cultivationSpeed: 0.07, damageBonus: 0.06 },
   },
   {
     id: "ti_taiyi",
     name: "太乙上人",
-    desc: "太乙近道,万法归流",
+    desc: "百家法门看下来,原是同一处源头",
     mods: { cultivationSpeed: 0.14, breakthroughRate: 0.02 },
   },
   {
     id: "ti_daluo",
     name: "大罗真人",
-    desc: "大罗金仙,逍遥三界",
+    desc: "三界之内,已无一处去不得",
     mods: { cultivationSpeed: 0.085, maxHpPct: 0.06 },
   },
   {
+    /*
+     * 这一顶挂在神人境(境 14)的成就「神光照世」下,而**「神域之主」是神王的身份**
+     * (realms.ts 的神王 lore 明写「神域之主为神王」,任务 q_shenwang 也叫这个名)。
+     * 此前它叫「神域之主」,于是玩家在名号谱上先以神人境自称神域之主,
+     * 翻两格又读到神王自称同一句 —— 同一页上先自称、再被别人自称。
+     * 名分归还神王,这一顶按它自己的成就改名。
+     */
     id: "ti_shenren",
-    name: "神域之主",
-    desc: "破界入神,位列神人",
+    name: "破界入神",
+    desc: "踏过天门那一日,仙籍上便抹去了名字",
     mods: { attackPct: 0.095, maxHpPct: 0.08 },
   },
   {
     id: "ti_shenjiang",
     name: "天罚神将",
-    desc: "执掌神兵,代天行罚",
+    desc: "执的兵器自己会选主,选定了便不换",
     mods: { cultivationSpeed: 0.09, critRate: 0.025 },
   },
   {
     id: "ti_shenwang",
     name: "神王御宇",
-    desc: "神域之主,言出法随",
+    desc: "一方神域既立,诏令不必落地便已成真",
     mods: { cultivationSpeed: 0.09, defensePct: 0.07 },
   },
   {
     id: "ti_shendi",
     name: "神帝独尊",
-    desc: "神帝临尘,众神俯首",
+    desc: "诸神各据一方,此刻皆抬头看向同处",
     mods: { cultivationSpeed: 0.095, damageReduction: 0.045 },
   },
   {
     id: "ti_hundunling",
     name: "混沌真灵",
-    desc: "混沌初开,一点真灵不昧",
+    desc: "身有终而灵无始,混沌里那点从没灭过",
     mods: { cultivationSpeed: 0.095, qiRegen: 0.095 },
   },
   {
     id: "ti_hundunshenmo",
     name: "开天神魔",
-    desc: "神魔一体,开天辟地",
+    desc: "神与魔在身内对峙,谁也吞不下谁",
     mods: { cultivationSpeed: 0.11, attackPct: 0.085 },
   },
   // 全境之极的那一顶就是最重的:玩家走完 21 境,佩戴的该是分量最深的一顶
   {
     id: "ti_daozu",
     name: "万道之祖",
-    desc: "证道混沌道祖,与混沌同寿",
+    desc: "道在名前,而名字已不必再说",
     mods: { cultivationSpeed: 0.18, breakthroughRate: 0.04 },
   },
 ];
