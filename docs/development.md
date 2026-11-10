@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 647 个 spec;本作自己那部分 567 个) |
+| `bun run test` | 全量用例(全量 648 个 spec;本作自己那部分 568 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 647 个 spec = 宿主 551 + 引擎 80,别把 647 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 648 个 spec = 宿主 551 + 引擎 80,别把 648 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 647 个 spec(本作自己那部分 567 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 648 个 spec(本作自己那部分 568 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -4373,14 +4373,14 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 567 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 568 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
 
 ```text
 第一版:326 个 spec · 4117 条标题
-修正后:567 个 spec · 6319 条标题   (+54%)
+修正后:568 个 spec · 6319 条标题   (+54%)
 ```
 
 > 这是一类**最难自查的错误**:工具跑得通、输出格式对、报出来的缺口具体到表与维度名 ——
@@ -4472,7 +4472,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**647 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**648 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -6029,3 +6029,71 @@ rewardMult = 1.4 × sqrt(cost / 30)
 
 > 判据本身也有盲点:它按代价排序后相邻比较,同代价的两个秘境谁在前取决于稳定排序,
 > 换一个排序就漏掉了 `枯荣古境→冥河渡` 那一处。**是另写一个探针按 `(代价, 收益)` 双键排序才看见的。**
+
+### 第 95 轮:连查七个方向全是干净,而第八个是我自己的错
+
+接上一条线查远征与悬赏。前四个方向干净:
+
+```text
+① 悬赏装备报酬随 rank 线性增长(35→147),且走 stoneByTier 与材料同源
+② 悬赏材料/灵草报酬同源(第 82 轮修过的套利事故有注释记录)
+③ 远征的 world.rewardDaoSource 正是第 93 轮刚修的那个,run.bonus 按节点累加
+④ 试炼 —— 见下
+```
+
+**第四个方向差点让我误报。** 我把十道试炼按 `anchorTier` 排序,看到奖励是
+
+```text
+tier21 澄心 45 → tier24 消磨 48 → tier25 追云 40 → tier26 一线 38 → tier27 绝境 47
+```
+
+「越难给得越少」—— 看起来是又一个第 93/94 轮那种缺陷。但 `celestialCaliber.spec`
+里早有判据,而它用的难度**不是 `anchorTier`**,是复合量:
+
+```text
+difficulty = (fights / (0.5 + healBetweenPct)) × escalation
+```
+
+按这个量重排,奖励是**严格单调**的(38→60)。`anchorTier` 只是「这道试炼挂在哪个层级」,
+不是「它有多难」—— 场次、场间回血、逐场强化才是真难度。
+
+> 这是我第 8 次探针读错了东西。前七次是字段名、参数含义、扫描范围、复刻公式、
+> 读属性没读内容、兜底吸收、按文件名配对;**这一次是选错了衡量尺度**。
+> 而这次的代价只是虚惊一场 —— 因为**那里本来就有判据**。
+
+### 剩下三个方向
+
+```text
+⑤ 天界/试炼/秘境的「道源」「门票」等称谓在 .vue 里无变体
+⑥ 470 条事件结果文本,只有 1 组重复 —— 而那是 chains.ts 里 leave() 的默认参数,有意为之
+⑦ 第 62/93/94 三轮补的判据都还在跑
+```
+
+### 于是这轮补的是「一张总表」
+
+第 62、93、94 三轮各在**不同地方**撞见同一类问题:
+
+```text
+ 第 62 轮  十道试炼里九道奖励同一个数     → celestialCaliber.spec
+ 第 93 轮  五个天界的奖励都是 60          → celestialReward.spec
+ 第 94 轮  秘境越贵每块钱换得越少         → secretRealmValue.spec
+```
+
+共同形状是:**两列数字各自都合理,但从没被摆在一起比过**。每一列单独看都在合理区间里,
+所以任何「上界/下界」判据都绿;只有**排序后逐对比**才看得见。
+
+`rewardTierMonotonic.spec` 不重复那三份判据的细节,它只列一张表:
+
+```text
+系统        数据源              守它的 spec                      难度怎么量
+天界试炼    TRIALS              celestialCaliber.spec            (fights/(0.5+heal))×escalation
+固定天界    CELESTIAL_WORLDS    celestialReward.spec             anchorTier
+秘境        SECRET_REALMS       secretRealmValue.spec            入口代价 cost
+```
+
+确认每个系统都**真的**在某个 spec 里被判过。判据只检查 spec 里有「不回落 / 升序 / 单调 /
+递增」这类字眼 —— 不检查具体写法,否则这条会变脆。
+
+> 表里的「难度怎么量」一栏是这轮真正学到的东西。
+> **同一个词(「难度」)在三个系统里是三个不同的量**;写下来的价值,
+> 就是下一个人不会像我这样先按 `anchorTier` 排一遍再虚惊一场。

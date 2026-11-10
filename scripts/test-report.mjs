@@ -107,6 +107,7 @@ const CATEGORIES = [
       "eventTagSupply",
       "celestialReward",
       "secretRealmValue",
+      "rewardTierMonotonic",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
