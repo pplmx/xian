@@ -33218,6 +33218,123 @@ async function taskDaoReadouts() {
         await ctx2.close();
       }
     }
+
+    // ── 五 · 规则条数最多与最少的道途:文案长度差一大截,布局都得撑住 ────
+    /*
+     * 天界页「行此道的代价与所得」那一段是**八条道途共用**的 UI,
+     * 而各道的 `ruleText` 条数并不一样:血河道 4 条、借势道 2 条、其余 3 条。
+     *
+     * 本任务前四节只验过剑道(3 条规则)与杀伐道 —— 也就是说
+     * **条数最多那一条从来没在真实浏览器里渲染过**,而它正是最容易把
+     * 「章法」那一段挤下去、或在 195 窄档撑破的情形。
+     *
+     * 这一节量两头:最多的 4 条(xuehe)与最少的 2 条(jieshi),
+     * 都要做到「规则一条不少、章法一段不丢」。
+     */
+    /*
+     * 八条道途的 `ruleText` 条数并不一样(血河道 4、镇岳道 2、其余 3),
+     * 而「行此道的代价与所得」那一段是**共用 UI**。本任务前四节只验过
+     * 剑道(3 条)与杀伐道 —— **条数最多的那一条从来没在真实浏览器里渲染过**,
+     * 而它正是最容易把「章法」挤掉或在窄档撑破的情形。
+     *
+     * 这里量两个极端:**条数最多**与**条数最少**。
+     * 判据不硬编码条数 —— 只要求「页面上有几条就是几条,且章法一段不丢」,
+     * 因为「数据里应该有几条」这件事由 `daoPathCoverage.spec` 那类静态判据管,
+     * 门这一侧只管「真的渲染出来了、且没撑破」。
+     */
+    const daoRuleCounts = {};
+    for (const [daoId, daoName] of [
+      ["xuehe", "血河道"],
+      ["zhenyue", "镇岳道"],
+    ]) {
+      const ctx = await auditContext({
+        viewport: { width: 390, height: 844 },
+        deviceScaleFactor: 3,
+        isMobile: true,
+        hasTouch: true,
+      });
+      try {
+        await seedSave(ctx, slicesFor(daoId, null), `__daoRules_${daoId}`);
+        const page = await ctx.newPage();
+        const pageErrors = [];
+        watchPageErrors(page, pageErrors);
+        const rendered = await openRoute(page, "/celestial", 700);
+        checked += 1;
+        if (rendered === 0) {
+          failures.push(`[390-dao] ${daoName}的天界页没渲染出来,规则条数没量到`);
+        } else {
+          const info = await page.evaluate(() => {
+            const rules = [
+              ...document.querySelectorAll(".celestial-dao__rules .celestial-dao__line"),
+            ];
+            const deep = [
+              ...document.querySelectorAll(".celestial-dao__deep .celestial-dao__line"),
+            ];
+            const box = (el) => {
+              const r = el.getBoundingClientRect();
+              return { w: r.width, h: r.height, right: r.right };
+            };
+            const panes = [...document.querySelectorAll(".celestial-dao__columns > section")];
+            return {
+              ruleCount: rules.length,
+              deepCount: deep.length,
+              // 每一条都得有实际高度(被压成 1px 或藏在裁剪里不算)
+              ruleHeights: rules.map((el) => box(el).h),
+              // 不许横向溢出
+              overflowing: rules.filter((el) => el.scrollWidth > el.clientWidth + 1).length,
+              paneOverflow: panes.filter((el) => el.scrollWidth > el.clientWidth + 1).length,
+              docOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
+            };
+          });
+          daoRuleCounts[daoId] = { name: daoName, count: info.ruleCount };
+          if (info.ruleCount < 2) {
+            failures.push(
+              `[390-dao] ${daoName}只渲染出 ${info.ruleCount} 条规则 —— 八条道途每条至少两条,这是漏印`,
+            );
+          }
+          if (info.deepCount === 0) {
+            failures.push(`[390-dao] ${daoName}的章法一整段不见了 —— 规则条数一多就把它挤掉了?`);
+          }
+          if (info.ruleHeights.some((h) => h < 8)) {
+            failures.push(
+              `[390-dao] ${daoName}有规则行被压成 ${JSON.stringify(info.ruleHeights)} —— 看着在,其实读不到`,
+            );
+          }
+          if (info.overflowing > 0 || info.paneOverflow > 0 || info.docOverflow) {
+            failures.push(
+              `[390-dao] ${daoName}的规则段溢出(行 ${info.overflowing} · 栏 ${info.paneOverflow} ` +
+                `· 整页 ${info.docOverflow}) —— 长文案没折行`,
+            );
+          }
+          if (pageErrors.length) {
+            failures.push(`[390-dao] ${daoName}页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+          } else if (failures.length === 0) {
+            console.log(
+              `\n道途规则段:${daoName} ${info.ruleCount} 条规则 + ${info.deepCount} 条章法,无溢出`,
+            );
+          }
+        }
+        await page.close();
+      } finally {
+        await ctx.close();
+      }
+    }
+    /*
+     * 跨道途对比:血河道的规则比镇岳道多(数据里 4 条 vs 2 条)。
+     *
+     * 这一条是给上面那两段兜底的:只核「至少两条」抓不住截断 ——
+     * 实测把模板改成 `ruleText.slice(0, 2)` 时,血河道被截成 2 条,
+     * 「至少两条」照样通过。而「多的那条应当比少的多」这个**相对关系**
+     * 不依赖任何写死的数字,截断就一定会破坏它。
+     */
+    const xueheN = daoRuleCounts.xuehe?.count ?? -1;
+    const zhenyueN = daoRuleCounts.zhenyue?.count ?? -1;
+    if (xueheN > 0 && zhenyueN > 0 && xueheN <= zhenyueN) {
+      failures.push(
+        `[390-dao] 血河道渲染 ${xueheN} 条、镇岳道 ${zhenyueN} 条 —— 血河道的规则条数本来就更多,` +
+          `渲染出来反而不多于镇岳道,说明有规则被截掉了`,
+      );
+    }
   } catch (err) {
     failures.push(`[390-dao] 任务自身抛错:${err instanceof Error ? err.message : String(err)}`);
   }
