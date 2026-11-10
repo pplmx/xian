@@ -891,7 +891,11 @@ export const GONGFA: GongfaDef[] = [
     "immortal",
     11,
     "仙乐入耳,髓中浊气自己散出去",
-    { cultivationSpeed: 0.24, maxHpPct: 0.14, qiRegen: 0.16 },
+    /*
+     * 折算 3.90,而同品同席的既有三部是 1.10~1.89 —— 高出两倍多。
+     * 按「词条单位」折算(修速 0.1 一单位、气血 0.2、气机 0.2)收到 1.8 上下。
+     */
+    { cultivationSpeed: 0.12, maxHpPct: 0.08, qiRegen: 0.08 },
     { cultivationSpeed: 0.05, maxHpPct: 0.018 },
   ),
   g(
@@ -901,7 +905,7 @@ export const GONGFA: GongfaDef[] = [
     "immortal",
     12,
     "库里装满的人,底气自然足",
-    { dropRate: 0.2, eventLuck: 0.18, cultivationSpeed: 0.16 },
+    { dropRate: 0.1, eventLuck: 0.09, cultivationSpeed: 0.09 },
     { dropRate: 0.05, eventLuck: 0.045 },
   ),
   g(

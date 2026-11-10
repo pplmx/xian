@@ -217,3 +217,87 @@ describe("悟道分支平衡审计", () => {
     }
   });
 });
+
+/**
+ * 同一「席位 × 品阶」的功法,基座份量不许整批跑偏。
+ *
+ * ## 缺口是什么(第 55 轮实测)
+ *
+ * 上面那张 `SCALE` 表从装备词条池推出「一个词条单位」,但它**只用来量分支**,
+ * 从没量过功法本身。于是第 47~51 轮补的二十余部功法,**同品阶之间的基座份量**没人比过。
+ *
+ * 按同一把尺折算后:
+ *
+ * ```text
+ * 辅修 / 仙品:  我补的两部 3.90、4.13,而既有的三部是 1.10、1.35、1.89
+ * ```
+ *
+ * 高出两倍多 —— 仙品辅修本该和同席同品的邻居一个量级。已收到 2.00 / 2.17。
+ *
+ * ## 判据
+ *
+ * 每个「席位 × 品阶」里,若有至少 3 部既有功法可作参照,则新补那一批的均值
+ * 不许超出参照均值 **1.8 倍**、也不许低于 **0.5 倍**。
+ *
+ * 阈值取得宽:不同词条的真实价值随进度浮动(见上一节对发育向词条的说明),
+ * 这里要抓的是「整批高出一个量级」,不是小数点上的差异。
+ *
+ * 上下限实测校准:既有内容里本来就有两处**刻意**的极值 ——
+ * `向死而生诀`(秘术·灵品,0.42 倍:低血爆发流,基座刻意压薄靠濒死收益补)
+ * 与 `道祖本源经`(主修·神品,1.86 倍:终局功法)。
+ * 所以取 0.35 ~ 2.5,只拦真正「差一个量级」的那种。
+ */
+describe("功法基座平衡审计 · 同席位同品阶的份量不许整批跑偏", () => {
+  /** 与上一节同一把尺:装备词条池的最低档 */
+  const UNIT = (() => {
+    const out = new Map<string, number>();
+    for (const a of AFFIXES) {
+      const unit = a.min / 100;
+      const cur = out.get(a.key);
+      out.set(a.key, cur === undefined ? unit : Math.min(cur, unit));
+    }
+    return out;
+  })();
+
+  function baseWeight(mods: Record<string, number | undefined>): number {
+    let sum = 0;
+    for (const [k, v] of Object.entries(mods)) {
+      const unit = UNIT.get(k);
+      if (unit) sum += (v ?? 0) / unit;
+    }
+    return sum;
+  }
+
+  it("每个「席位 × 品阶」里,该格功法的基座份量不呈两极", () => {
+    const cells = new Map<string, { id: string; name: string; w: number }[]>();
+    for (const def of GONGFA) {
+      const key = `${def.type} / ${def.quality}`;
+      const bucket = cells.get(key) ?? [];
+      bucket.push({ id: def.id, name: def.name, w: baseWeight(def.baseMods ?? {}) });
+      cells.set(key, bucket);
+    }
+    // 防空转:席位 × 品阶真的分出了不少格子
+    expect(cells.size, "一格都没分到 —— 判据在空转").toBeGreaterThanOrEqual(10);
+
+    const outliers: string[] = [];
+    for (const [key, list] of cells) {
+      if (list.length < 3) continue; // 少于三部时中位数不可信
+      const sorted = [...list].sort((a, b) => a.w - b.w);
+      const median = sorted[Math.floor(sorted.length / 2)]!.w;
+      if (median <= 0) continue;
+      for (const item of sorted) {
+        const ratio = item.w / median;
+        if (ratio > 2.5 || ratio < 0.35) {
+          outliers.push(
+            `${key}:${item.name} 折算 ${item.w.toFixed(2)},该格中位 ${median.toFixed(2)}(${ratio.toFixed(2)} 倍)`,
+          );
+        }
+      }
+    }
+    expect(
+      outliers,
+      "这些功法的基座份量与同席位同品阶的邻居差了一个量级 —— 疑似整批写肥或写瘦:" +
+        outliers.join("、"),
+    ).toEqual([]);
+  });
+});
