@@ -46,6 +46,22 @@ const ICON_TERRAIN: Record<string, TerrainAxis> = {
   crown: "废墟",
   sword: "废墟",
   skull: "幽冥",
+  /*
+   * 下面三个是**补漏**:`leaf`(瑶池仙苑) / `gem`(不朽金渊 · 万神殿堂) /
+   * `scroll`(玄机道场)此前不在表里,于是 `terrainOf` 的 `?? "山岳"` 兜底
+   * 把它们全算成了山岳 —— 五处地界的地貌被判错,而它们会参与世界名的
+   * 两两地貌组合(见 `core/exploration` 的遭遇过滤也读这条)。
+   *
+   * 归属按**地貌本身**定,不按图标名字:
+   *   · 瑶池仙苑是草木之地 → 林泽(与 droplets / waves 同归一轴的口径一致)
+   *   · 不朽金渊 / 万神殿堂都是有主的巨构而非荒野 → 废墟
+   *   · 玄机道场是道场遗址 → 废墟
+   */
+  leaf: "林泽",
+  gem: "废墟",
+  scroll: "废墟",
+  // 神域边陲:斥候与凶兽游弋的荒野边地 → 山岳(与 mountain 同归一轴)
+  shield: "山岳",
 };
 
 function iconOf(regionId: string): string {

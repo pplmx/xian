@@ -12,8 +12,11 @@
  * 不改生成器、不改玩法。
  */
 import { describe, expect, it } from "vite-plus/test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { generateSeries } from "./mortalWorldGen";
 import { MUTATORS, MUTATOR_THEMES, THEME_IDENTITY, mutatorsWithoutTheme } from "@/data/mutators";
+import { REGIONS } from "@/data/regions";
 import {
   avgVisibleByDim,
   isFocused,
@@ -346,5 +349,55 @@ describe("世界身份 · 名字的多样性不许塌缩", () => {
       normalized,
       `归一化熵 ${normalized.toFixed(3)} —— 名字分布太集中`,
     ).toBeGreaterThanOrEqual(0.7);
+  });
+});
+
+/**
+ * 每一个地域图标都得有地貌归属 —— 漏一个,`terrainOf` 的 `?? "山岳"` 就把它当成山岳。
+ *
+ * ## 缺陷长什么样(第 42 轮实测)
+ *
+ * `ICON_TERRAIN` 是「地域图标 → 地貌轴」的映射表,44 个地域用到 **18 种图标**,
+ * 而表里只有 14 种。漏掉的四种是:
+ *
+ * ```text
+ * leaf  (瑶池仙苑)        gem   (不朽金渊 / 万神殿堂)
+ * scroll(玄机道场)        shield(神域边陲)
+ * ```
+ *
+ * 后果不是报错 —— `terrainOf` 有 `?? "山岳"` 兜底,于是**五处地界被静默算成山岳**。
+ * 而地貌轴会参与两件事:世界名的两两地貌组合(`worldIdentity`)与凡界遭遇的地貌过滤
+ * (`core/exploration`)。判错了,玩家读到的世界名与遭遇偏好就都不对。
+ *
+ * ## 判据
+ *
+ * 地域用到的每一种图标,都必须在映射表里**显式**出现。
+ * 不能用「`terrainOf(id) !== "山岳"`」反过来判 —— 那会把**真的山岳**误报,
+ * 也会放过「显式写成山岳」与「兜底成山岳」的差别(后者才是缺陷)。
+ * 所以这里直接读映射表本身,而不是问 `terrainOf` 的结果。
+ */
+describe("世界身份 · 地域图标必须全部有地貌归属", () => {
+  it("地域用到的每种图标都在 ICON_TERRAIN 里显式出现", () => {
+    const src = readFileSync(resolve(__dirname, "mortalIdentity.ts"), "utf8");
+    const body = /const ICON_TERRAIN[^{]*\{([\s\S]*?)\n\};/.exec(src);
+    expect(body, "找不到 ICON_TERRAIN 定义 —— 判据失去了测量对象").not.toBeNull();
+    const mapped = new Set([...body![1]!.matchAll(/^\s+([a-z][a-z0-9]*)\s*:/gm)].map((m) => m[1]!));
+    // 防空转:表里得真有内容
+    expect(mapped.size, "映射表是空的 —— 正则没切对").toBeGreaterThan(10);
+
+    const used = new Set(REGIONS.map((r) => r.icon));
+    const missing = [...used].filter((icon) => !mapped.has(icon)).sort();
+    expect(
+      missing,
+      `这些地域图标没有地貌归属,会被 terrainOf 的「?? 山岳」兜底成山岳:` +
+        missing
+          .map(
+            (icon) =>
+              `${icon}(${REGIONS.filter((r) => r.icon === icon)
+                .map((r) => r.name)
+                .join("/")})`,
+          )
+          .join("、"),
+    ).toEqual([]);
   });
 });
