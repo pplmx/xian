@@ -139,6 +139,39 @@ error: Failed to resolve vite command: GenericFailure, Expected
   位置,视口与字体落定时机不同会进出首屏 —— 但**「进出的只是能否看见,重复本身是必然的」**:
   一处真重复平时不显,只是因为它有时落在首屏之外。
 
+### 第三次「看图找缺口」失败：这次连已经做好的功能都重新实现了一遍
+
+想问「境界名凭什么」时，界域志里应该看得到原典。我查到 `classics.ts` 有 11 部原典、
+每条带 `realms`，而境界详情里只有 `basis` 与 `desc` —— 于是判断这是缺口，
+写了 `ui/realmClassics`（`classicsOfRealm` / `realmIdsWithoutClassic`）和一条新判据。
+
+**写完才发现这两样早就有了:**
+
+```text
+  src/data/classics.ts:133   export function classicsForRealm(realmId)   ← 与我的实现一字不差
+  src/views/RealmCodexView.vue:932  function classicsOf(realmId)         ← 调用的就是它
+  src/views/RealmCodexView.vue:268  @click="gotoClassic(c.id)"          ← 反向入口一直在
+```
+
+境界谱的 `realm-entry__classics` 那一块写着「所据 《周易参同契》《悟真篇》…」，
+点一下跳到典籍那一条。**反向入口从第一天就有**，我只是一开始只搜了「境界详情」
+那一屏，没搜到我想要的东西就下了「没有」的结论。
+
+接着又想到第二个假设:`抱朴子` 的 gist 是「凡人可以修仙」、`realms: []`,而炼气
+是玩家的第一个境界、也没典籍 —— 看起来天作之合。改成 `realms: ["lianqi"]` 之后:
+
+```text
+  ✗ 反向:典籍点名的境界,其 lore 或 basis 与之相符
+    《抱朴子》关联了 炼气,但两者既不同源也无引用
+```
+
+炼气的 `basis` 是「内丹」（对应丹道），抱朴子属「道教」—— 派别不同，硬挂就是错。
+**判据是对的，我的数据改动是错的**，已全部还原。
+
+**教训**：查「有没有这个功能」时，只搜一个文件、一个屏就下结论，等于在猜。
+正确做法是先搜全仓的**函数名与 data 字段**（`classicsForRealm` 一搜就出来），
+再判断缺不缺。这一轮我搜的是「界面模板里有没有」，而实现早在 **data 层**。
+
 ### 又查过一轮「两本账」与「无声机制」—— 都没找到
 
 **同值常数不是两本账。** 扫了全部 `export const [A-Z_]+ = <数字>`，有 57 个数值
