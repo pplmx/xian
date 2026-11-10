@@ -33319,6 +33319,91 @@ async function taskDaoReadouts() {
         await ctx.close();
       }
     }
+    // ── 六 · 道途确认弹窗必须摊开章法(不可逆决定的最后一步) ────────────
+    /*
+     * 道途是**一世只选一次**的不可逆选择。玩家在列表里读到「长生印:每五回合得一印」,
+     * 点进确认弹窗此前反而看不到它 —— 那个弹窗只印 `desc` + `ruleText`,
+     * 而列表还印了 `deepText`(章法)。**最后一步的信息比前一步更少**,
+     * 恰好收在玩家最需要确认的那一刻(第 21 轮修)。
+     *
+     * 修的时候只有源码层判据(切 `title="定下道途"` 到 `</BaseModal>` 那一段查
+     * `pendingDao.deepText`),没有浏览器验证 —— 这一段补上。
+     */
+    {
+      const ctx = await auditContext({
+        viewport: { width: 390, height: 844 },
+        deviceScaleFactor: 3,
+        isMobile: true,
+        hasTouch: true,
+      });
+      try {
+        // 道途未选才会渲染选择列表
+        await seedSave(ctx, slicesFor(null, null), "__daoConfirmDialog");
+        const page = await ctx.newPage();
+        const pageErrors = [];
+        watchPageErrors(page, pageErrors);
+        const rendered = await openRoute(page, "/celestial", 800);
+        checked += 1;
+        if (rendered === 0) {
+          failures.push("[390-dao] 天界页没渲染出来,道途确认弹窗没量到");
+        } else {
+          /*
+           * 点第一条道途 → 弹窗出现。取「规则越多越说明它把章法也印了」的那一条
+           * 不现实(列表顺序固定),故点第一条即可 —— 八条道途的确认弹窗是**同一段模板**,
+           * 验一条等于验全部;真正的差别只在数据里,而那由静态判据管。
+           */
+          const choice = page.locator(".celestial-dao__choice").first();
+          const seen = await choice.count();
+          if (seen === 0) {
+            failures.push("[390-dao] 道途未选时没有选择列表 —— 玩家没法定道途");
+          } else {
+            /*
+             * 用 `dispatchEvent("click")` 而不是 `click()`:后者会等元素「可交互」
+             * (可见 + 没被遮挡 + 稳定),而天界页的道途卡在 390 视口下有一段在首屏之外,
+             * 实测 `click()` 会挂在 30s 超时。这里要验的是**点下去之后弹窗里有什么**,
+             * 不是滚动手势本身。
+             */
+            await choice.dispatchEvent("click");
+            await page.waitForTimeout(400);
+            const info = await page.evaluate(() => {
+              const dialog = [...document.querySelectorAll("[role='dialog'], .base-modal")].find(
+                (el) => /定下道途/.test(el.textContent || ""),
+              );
+              const text = (dialog?.textContent || "").replace(/\s+/g, " ").trim();
+              return {
+                open: Boolean(dialog),
+                hasDeep: !!document.querySelector("[data-dao-confirm-deep]"),
+                text,
+                // 章法那几行以 ◇ 起头;列表里也是 ◇ —— 弹窗里得同样有
+                diamonds: (dialog?.querySelectorAll("[data-dao-confirm-deep]") ?? []).length,
+              };
+            });
+            if (!info.open) {
+              failures.push("[390-dao] 点了道途却没弹出「定下道途」确认框");
+            } else if (!info.hasDeep || info.diamonds === 0) {
+              failures.push(
+                "[390-dao] 道途确认弹窗没有章法(deepText)—— 玩家在最后一刻看到的信息反而比列表里少",
+              );
+            } else if (!/不再更改|转世/.test(info.text)) {
+              failures.push(
+                `[390-dao] 确认弹窗没说明不可逆 «${info.text.slice(0, 80)}» —— 一世只选一次得说清`,
+              );
+            } else {
+              console.log(`\n道途确认弹窗:章法 ${info.diamonds} 条 · 已写明不可逆`);
+            }
+            if (pageErrors.length) {
+              failures.push(
+                `[390-dao] 道途确认弹窗页面异常:${[...new Set(pageErrors)].join(" | ")}`,
+              );
+            }
+          }
+        }
+        await page.close();
+      } finally {
+        await ctx.close();
+      }
+    }
+
     /*
      * 跨道途对比:血河道的规则比镇岳道多(数据里 4 条 vs 2 条)。
      *
