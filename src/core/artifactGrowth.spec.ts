@@ -109,3 +109,63 @@ describe("法宝后期增长", () => {
     expect(true).toBe(true);
   });
 });
+
+/**
+ * 封顶的那三族也得**不回落** —— 它们不需要「增长率」,但需要「不倒退」。
+ *
+ * ## 上面为什么只查三族
+ *
+ * `weaken` / `sunder` / `purge` 的 amount 都过 `Math.min(CAP, pct × mult)`,
+ * 所以拿「相邻档增长率 ≥5%」去要求它们是错的(接近封顶时必然涨不动)。
+ *
+ * ## 但这不等于「什么都不查」
+ *
+ * 实测(第 60 轮):
+ *
+ * ```text
+ * weaken  t4=0.20  t9=0.25  t12=0.30  t25=0.30  t31=0.385  t31=0.493
+ *                                        ↑ t12 与 t25 完全相同,相差 13 层
+ * ```
+ *
+ * 摄魂铃(t12 凡品,`pct 0.3 × 1.0`)与玉京道印(t25 灵品,`pct 0.21 × 1.449`)
+ * 的实际 amount 都是 0.30 —— **玩家换到高 13 层的那件,效果没变**。
+ *
+ * 这不是「封顶导致涨不动」(两件都远低于 0.5 的封顶),是**基底没跟上品阶倍率**。
+ * 修好后又发现 t31 的虚界梭(0.385)反而低于 t25 —— 一并调了。
+ *
+ * ## 判据
+ *
+ * 这三族按 fromTier 排序后,amount **不许回落**(允许持平,因为封顶后确实可能持平)。
+ * 与上面三族的「增长率」判据互补:那三族要求「涨得动」,这三族要求「不退步」。
+ */
+describe("封顶三族 · 同族内不许倒退", () => {
+  /*
+   * `purge` 不在此列:全表只有一件(t31 鸿蒙尺),一件谈不上「族内不回落」。
+   * 它出现在上面那条打印用例的读数里,人复核时能看到。
+   */
+  for (const type of ["weaken", "sunder"] as const) {
+    it(`${type} 族按层级排序后 amount 不回落`, () => {
+      const rows = ARTIFACTS.filter((a) => a.active.effect.type === type)
+        .map((a) => ({ a, amount: artifactValue(a, 0).active.amount }))
+        .sort((x, y) => x.a.fromTier - y.a.fromTier);
+      // 防空转:族里得真有几件
+      expect(rows.length, `${type} 族一件都没有 —— 判据在空转`).toBeGreaterThanOrEqual(2);
+
+      const drops: string[] = [];
+      for (let i = 1; i < rows.length; i += 1) {
+        const prev = rows[i - 1]!;
+        const cur = rows[i]!;
+        if (cur.amount < prev.amount - 1e-9) {
+          drops.push(
+            `t${prev.a.fromTier}「${prev.a.name}」${prev.amount.toFixed(3)} → ` +
+              `t${cur.a.fromTier}「${cur.a.name}」${cur.amount.toFixed(3)}`,
+          );
+        }
+      }
+      expect(
+        drops,
+        `${type} 族里高层级的法宝比低层级的还弱 —— 换上去等于白换:` + drops.join("、"),
+      ).toEqual([]);
+    });
+  }
+});
