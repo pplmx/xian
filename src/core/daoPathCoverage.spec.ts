@@ -42,6 +42,12 @@ import { describe, expect, it } from "vite-plus/test";
 import { DAO_PATHS } from "@/data/endgame";
 import { MAX_COMBAT_ROUNDS } from "@/data/constants";
 import { SWORD_PURITY_MAX_LAYERS } from "@/core/daoDepth";
+import { mergeRules, runGauntlet, worldFoeSnap } from "@/core/gauntlet";
+import { BUILD_PROFILES, buildSnap } from "@/core/buildSim";
+import { CELESTIAL_WORLDS } from "@/data/endgame";
+import { mulberry32, RandomService } from "@/utils/random";
+import { SIM_REFERENCE } from "@/core/celestialSim";
+import type { CombatantSnap } from "@/types";
 
 describe("终局道途 · 护盾流有人接", () => {
   /**
@@ -280,6 +286,94 @@ describe("终局道途 · 章法里的数必须能在实现里找到", () => {
     expect(
       offenders,
       "章法用了「必」这种绝对断言,而该道途没有 100% 触发项 —— 与实现不符:" + offenders.join("; "),
+    ).toEqual([]);
+  });
+});
+
+/**
+ * 道途的代价不许把收益吃干净 —— 「一世只能选一次」的路不该是陷阱。
+ *
+ * ## 缺口
+ *
+ * 八条道途里,五条把代价写在**敌人身上**(`enemyHpMult` / `enemyAtkMult`),
+ * 三条无代价。此前没有任何判据量过「一条道途选下去到底是净赚还是净亏」——
+ * `daoPathCoverage` 核的是**文案与实现一致**,`decisionAudit` 核的是
+ * **契约/流派的最优解是否会塌缩**,两者都不覆盖道途的净收益。
+ *
+ * 实测(6 构筑 × 5 世界 × 4 局 = 120 组,与无道途基线比):
+ *
+ * ```text
+ * 镇岳道 +29   借势道 +16   剑道 +14   杀伐道 +7   连珠道 +4   天机道 -2
+ * 长生道 -23   血河道 -30          ← 净亏,而道途是**一世只能选一次**的
+ * ```
+ *
+ * 两条净亏的道途各有原因,而且都是**代价打在自己的强项上**:
+ * - 长生道靠「越拖越强」,敌血 +20% 恰好把慢热最需要的回合数吃掉;
+ * - 血河道靠「把对手压到残血」,敌血 +22% 直接把那个临界点推远。
+ *
+ * 收到 +10% 后:长生道 +5、血河道 +8 —— 略赚,但远不如镇岳道那种直接加厚的路,
+ * 仍是有取舍的选择。
+ *
+ * ## 判据
+ *
+ * 每条道途相对「无道途基线」的净胜场不许为负。这不要求八条等强
+ * (强弱差是设计上的选择,`decisionAudit` 另有判据管塌缩),
+ * 只要求**没有一条是纯亏** —— 不可逆的一次性选择不该让人选完就后悔。
+ */
+describe("终局道途 · 没有一条是净亏的陷阱", () => {
+  /** 6 构筑 × 5 世界 × 4 局,与无道途基线比 */
+  const winsOf = (rules: (typeof DAO_PATHS)[number]["rules"] | undefined): number => {
+    let wins = 0;
+    for (const profile of BUILD_PROFILES) {
+      for (const world of CELESTIAL_WORLDS) {
+        const snap = buildSnap(profile);
+        const foes: CombatantSnap[] = [];
+        for (let i = 0; i < world.fights - 1; i += 1) {
+          foes.push(worldFoeSnap(world.foes[i % world.foes.length]!, SIM_REFERENCE));
+        }
+        foes.push(worldFoeSnap(world.guardian, SIM_REFERENCE));
+        for (let s = 0; s < 4; s += 1) {
+          const rng = new RandomService(mulberry32(8000 + s * 13));
+          if (
+            runGauntlet(snap, foes, mergeRules(world.rules, rules), world.healBetweenPct, rng)
+              .cleared
+          ) {
+            wins += 1;
+          }
+        }
+      }
+    }
+    return wins;
+  };
+
+  /**
+   * 以信息换胜率的道途 —— 它们的报偿不在这条判据量得到的那一栏里。
+   *
+   * 天机道是唯一一条:`previewFight` 只对它开放(战前窥见敌人招式明细与胜算),
+   * 而那正是「一世只能选一次」里最有分量的一种收益 —— 它改变的是**决策质量**,
+   * 不是这一场的通过率。故它的净胜场略低于基线是**有意的交换**,不该判红。
+   *
+   * 这个豁免必须写出来,而不是把阈值放宽到 -10 之类 ——
+   * 阈值会顺便放过别的真亏,例外名单只放过这一个说得出理由的。
+   */
+  const INFO_TRADE_DAOS = new Set<string>(["fate"]);
+
+  it("每条道途的通过数都不低于无道途基线(以信息换胜率的一条除外)", () => {
+    const baseline = winsOf(undefined);
+    // 防空转:基线与样本规模都得是对的
+    expect(baseline, "基线不通任何一场 —— 判据失去意义").toBeGreaterThan(20);
+    expect(DAO_PATHS.length, "道途数不对").toBe(8);
+
+    const losers: string[] = [];
+    for (const dao of DAO_PATHS) {
+      if (INFO_TRADE_DAOS.has(dao.id)) continue;
+      const wins = winsOf(dao.rules);
+      if (wins < baseline) losers.push(`${dao.name}(${wins} vs 基线 ${baseline})`);
+    }
+    expect(
+      losers,
+      "这些道途选下去**净亏** —— 而道途是一世只能选一次的不可逆选择,不该是陷阱:" +
+        losers.join("、"),
     ).toEqual([]);
   });
 });
