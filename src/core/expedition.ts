@@ -39,6 +39,7 @@ import { VOID_ANCHOR_TIER } from "./worldGen";
 import { MAX_MAJOR } from "@/data/realms";
 import { resolveCombat, sampleWinRate, winTextForRate, clearRateText } from "./combat";
 import { modOf } from "./statsCalc";
+import { perRoundsLine } from "@/ui/perRoundsText";
 import { SLAUGHTER_PER_WIN, SWORD_PER_WIN, slaughterSpeedBonus, stackedMods } from "./daoDepth";
 import { currentDaoRules, endgameUnlocked, recordMark } from "./endgameService";
 import { recordMilestone, trackClearRecords } from "./identity";
@@ -471,8 +472,7 @@ export function previewFight(
   // 危险时点:限时 / 杀意渐涨 / 重击预警 / 生机稀薄
   const riskLines: string[] = [];
   if (rules?.maxRounds !== undefined) riskLines.push(`天时仅 ${rules.maxRounds} 回合,拖延即败`);
-  if (rules?.perRounds)
-    riskLines.push(`每 ${rules.perRounds.interval} 回合敌人杀意渐涨,战局越晚越凶`);
+  if (rules?.perRounds) riskLines.push(perRoundsLine(rules.perRounds));
   const heavy = foeShape.skills.find((sk) => sk.mult >= 2);
   if (heavy) riskLines.push(`【${heavy.name}】足以重创,留足气血以备不测`);
   if ((rules?.healMult ?? 1) < 0.7) riskLines.push("此地生机稀薄,回血难以为继");

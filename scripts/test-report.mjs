@@ -509,6 +509,8 @@ const CATEGORIES = [
       "themeLegacyHint",
       // 速战之赏的档位读数:机制一直在跑而玩家零读数,这一层把「差几回合跳档」摊开
       "slaughterSpeed",
+      // 「每隔 N 回合」那条规则的两侧读数:只说代价不说收益,等于把净赚说成净亏
+      "perRoundsText",
     ],
   },
   {
