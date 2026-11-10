@@ -33,6 +33,7 @@ import {
   mergeRules,
   runGauntlet,
   worldFoeSnap,
+  type GauntletFightRow,
   type GauntletReport,
 } from "./gauntlet";
 import { VOID_ANCHOR_TIER } from "./worldGen";
@@ -56,10 +57,11 @@ import { notify } from "./notify";
 /** 单场战果 */
 export interface StepOutcome {
   type: "advance" | "cleared" | "lost" | "pactBroken";
-  row: { foeName: string; win: boolean; rounds: number; hpLeftPct: number };
+  /** 与 gauntlet 的战果行同形 —— 形状只有一处定义(`types.FightOutcomeRow`) */
+  row: GauntletFightRow;
   rewardDaoSource: number;
   /** 远征终局时附全程战报(此刻 store 中的 run 已清空) */
-  finalRows?: { foeName: string; win: boolean; rounds: number; hpLeftPct: number }[];
+  finalRows?: GauntletFightRow[];
   /** 敌人一侧的判定(道之理解 / 境界压制):终局时附上,输也要输得明白 */
   judgementLines?: string[];
 }
@@ -250,11 +252,28 @@ function fightStep(
   const fightRules = withCarriedHp(baseRules, run);
   const result = resolveCombat(runSnap(run), foe, rng, fightRules);
 
-  const row = {
+  /*
+   * 战果行要带足**战后归因**需要的东西,不只是四个基础数。
+   *
+   * 此前这里只装 `foeName / win / rounds / hpLeftPct` —— 于是天界远征的
+   * 「此战之判」在真实路径上**永远只有战前判定**(道之理解 / 境界压制),
+   * 没有一战后的归因:`analyzeBattle` 拿不到 `stats` 就返回 null。
+   *
+   * 试炼与天道变数那两条路走的是 `runGauntlet`(它的行天然带 `stats`),
+   * 所以第 8 轮接归因时那两条路验得过 —— **远征这条自己建行的路漏了**。
+   *
+   * `logs` 不往这里放:行要进 `endgame.worldRun`(会被存档序列化),
+   * 而 `GauntletFightRow.logs` 的注释写明「每场几十条日志乘上 60 条道痕会把存档撑爆」。
+   * `stats` 是十来个计数,体积可忽略;它让战报浮层能讲清「这一场为什么输」。
+   */
+  const row: GauntletFightRow = {
     foeName: foe.name,
     win: result.win,
     rounds: result.rounds,
     hpLeftPct: result.playerHpPct,
+    foe,
+    ...(result.stats ? { stats: result.stats } : {}),
+    ...(result.atkRamp ? { atkRamp: result.atkRamp } : {}),
   };
   const next: WorldRunState = {
     ...run,

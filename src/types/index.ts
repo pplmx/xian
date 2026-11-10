@@ -1477,6 +1477,42 @@ export type CollectionCategory =
   | "talent";
 
 /** 进行中的天界远征(路线层数、逐层战报与封印词条)—— 由 endgame store 装载 */
+/**
+ * 一场战斗的战果行 —— **一处定义,三处引用**。
+ *
+ * 这个形状此前被手写了三遍(`GauntletFightRow` / `StepOutcome.row` /
+ * `WorldRunState.rows`),而且三份**都只有前面四个字段** ——
+ * 于是远征自己建行时只装了 `foeName / win / rounds / hpLeftPct`,
+ * `stats` 与 `foe` 全丢。结果:天界远征的「此战之判」在真实路径上永远只有
+ * 战前判定,没有一战后的归因(`analyzeBattle` 拿不到 `stats` 就返回 null)。
+ *
+ * 手写多份窄形状的代价是**静默的**:谁也不会报错,只是某些字段悄悄不存在。
+ * 故把它提到类型层一处,`core/gauntlet` 反过来引用它。
+ */
+export interface FightOutcomeRow {
+  foeName: string;
+  win: boolean;
+  rounds: number;
+  hpLeftPct: number;
+  /**
+   * 该场的逐回合战报。
+   * 仅供即时播放,**不可写入道痕等持久化结构**——道痕存的是构筑快照,
+   * 每场几十条日志乘上 60 条道痕会把存档撑爆
+   */
+  logs?: CombatLogEntry[];
+  /** 该场敌人快照(播放时显示血条与名号,战后归因读它的 origin) */
+  foe?: CombatantSnap;
+  /** 该场「每隔 N 回合」把敌人攻势抬到了几倍(没有这条规则时缺席) */
+  atkRamp?: { procs: number; factor: number };
+  /**
+   * 该场的战斗遥测,交给战后归因(`analyzeBattle`)用。
+   *
+   * 与 `logs` 同一条纪律:**仅供即时读取,不可写入道痕等持久化结构**
+   * —— 道痕存的是构筑快照,而这份统计只在战报浮层开着时要。
+   */
+  stats?: { player: CombatSideStats; enemy: CombatSideStats };
+}
+
 export interface WorldRunState {
   worldId: string;
   pactId: string | null;
@@ -1486,7 +1522,8 @@ export interface WorldRunState {
   layer: number;
   /** 沿途节点累计的额外道源 */
   bonus: number;
-  rows: { foeName: string; win: boolean; rounds: number; hpLeftPct: number }[];
+  /** 沿途逐场战果(与 gauntlet 的战果行同形,见 FightOutcomeRow) */
+  rows: FightOutcomeRow[];
   carriedHpPct: number;
   totalRounds: number;
   /** 剑意/杀意逐胜层数 */

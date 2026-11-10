@@ -373,11 +373,23 @@ describe("天界战报 · 此战之判要有战后归因", () => {
      * `GauntletFightRow.logs` 的注释已经写明「不可写入道痕等持久化结构」——
      * 遥测必须遵守同一条。这条核类型注释里写明了,免得下一个人顺手存进道痕。
      */
-    const gauntlet = readFileSync(resolve(__dirname, "./gauntlet.ts"), "utf8");
-    const at = gauntlet.indexOf("stats?: { player: CombatSideStats");
-    expect(at, "战报行上找不到遥测字段").toBeGreaterThan(-1);
-    const doc = gauntlet.slice(Math.max(0, at - 900), at);
+    /*
+     * 形状后来提到了 `types/FightOutcomeRow`(此前手写三遍、三份都丢字段)。
+     * 这条判据跟着搬 —— 它核的是「遥测字段的注释里写明了持久化约束」,
+     * 而那句话现在在类型层。
+     */
+    const types = readFileSync(resolve(__dirname, "../types/index.ts"), "utf8");
+    /*
+     * 这个字段串在 `types/index` 里出现**两次**:`CombatResult.stats` 与
+     * `FightOutcomeRow.stats`。要的是后者(战报行),故取最后一处 ——
+     * 用 `indexOf` 会命中前者,而它的注释里没有那句持久化约束。
+     */
+    const at = types.lastIndexOf("stats?: { player: CombatSideStats");
+    expect(at, "战报行的共享形状上找不到遥测字段").toBeGreaterThan(-1);
+    const doc = types.slice(Math.max(0, at - 900), at);
     expect(doc, "遥测的持久化约束没写进注释").toMatch(/不可写入道痕|别把它存进任何持久化/);
+    // 顺带核 logs 那条同源纪律也还在
+    expect(doc, "logs 的持久化约束丢了").toMatch(/不可写入道痕/);
   });
 });
 

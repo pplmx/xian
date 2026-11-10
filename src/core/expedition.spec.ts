@@ -16,6 +16,7 @@ import { useInventoryStore } from "@/stores/inventory";
 import { useEndgameStore } from "@/stores/endgame";
 import { CELESTIAL_WORLDS } from "@/data/endgame";
 import { readFileSync } from "node:fs";
+import { analyzeBattle } from "./battleAnalysis";
 import { resolve } from "node:path";
 import {
   forecastExpedition,
@@ -370,5 +371,107 @@ describe("预估 · 六个流派的推演不许共用一条随机流", () => {
       `赤炎天:签血契与不签的预估完全一样(difficulty=${none.difficulty} stars=${none.stars} viable=${none.viableStyles})` +
         " —— 契约没进预估,玩家没法据它做选择",
     ).toBe(false);
+  });
+});
+
+/**
+ * 远征自己建的战果行,必须带足**战后归因**要的东西。
+ *
+ * ## 缺口
+ *
+ * 天界战报浮层的「此战之判」有两类行:战前判定(道之理解 / 境界压制)与
+ * **战后归因**(`analyzeBattle`)。后者要 `CombatResult.stats`(遥测),
+ * 没有就返回 null,那一章永远只有战前行。
+ *
+ * 试炼与天道变数走 `runGauntlet`,它的行天然带 `stats` —— 所以第 8 轮接归因时
+ * 那两条路一验就过。**而远征这条自己建行**:
+ *
+ * ```ts
+ * const row = { foeName, win, rounds, hpLeftPct };   // 只有这四个
+ * ```
+ *
+ * 于是远征(天界最主要的玩法)的「此战之判」永远没有战后归因,
+ * 而这件事**没有任何东西会报错**:类型上 `StepOutcome.row` 也手写了一份
+ * 同样窄的形状,两边对齐得很整齐 —— 整齐地一起错。
+ *
+ * ## 判据守什么
+ *
+ * 一 远征首战的战果行必须带 `stats` 与 `foe`(行为侧,真开一趟);
+ * 二 拿这一行真能算出归因(读不出就红);
+ * 三 **源码层**:行形状只有一处定义(`FightOutcomeRow`),不许再手写窄形状 ——
+ *    手写多份的代价是静默的,谁也不会报错,只是某些字段悄悄不存在。
+ */
+describe("远征 · 战果行要够战后归因用", () => {
+  it("首战的行带遥测与敌人快照", () => {
+    seated(9, MORTAL_TOP, "heaven", 20);
+    const world = CELESTIAL_WORLDS[0]!;
+    startWorldExpedition(world.id, null, null);
+    const rows = useEndgameStore().worldRun?.rows ?? [];
+    expect(rows.length, "开了一趟却没留下战果行").toBeGreaterThan(0);
+    const row = rows[0]!;
+    expect(row.stats, "行里没有遥测 —— 战后归因(analyzeBattle)会直接返回 null").toBeDefined();
+    expect(row.stats!.player, "玩家侧统计缺了").toBeDefined();
+    // 真打过就该有数
+    expect(
+      row.stats!.player.hitsLanded + row.stats!.player.missedHits,
+      "遥测是空的 —— 有字段但没内容",
+    ).toBeGreaterThan(0);
+    expect(row.foe, "行里没有敌人快照 —— 归因读不到 origin(道之理解 / 境界压制)").toBeDefined();
+  });
+
+  it("拿这一行真能算出归因", () => {
+    /*
+     * 只核「字段存在」会漏掉「字段在但内容对不上」。
+     * 这里走一遍真实调用:归因必须至少给出一条。
+     */
+    seated(9, MORTAL_TOP, "heaven", 20);
+    startWorldExpedition(CELESTIAL_WORLDS[0]!.id, null, null);
+    const row = useEndgameStore().worldRun?.rows[0];
+    expect(row).toBeDefined();
+    const analysis = analyzeBattle(
+      {
+        win: row!.win,
+        rounds: row!.rounds,
+        playerHpPct: row!.hpLeftPct,
+        log: [],
+        foeOrigin: row!.foe?.origin,
+        stats: row!.stats!,
+      },
+      null,
+    );
+    expect(analysis, "这一行算不出归因 —— 天界「此战之判」又会只剩战前行").not.toBeNull();
+    expect(analysis!.findings.length, "归因一条都没给").toBeGreaterThan(0);
+  });
+
+  it("战果行形状只有一处定义,不许再手写窄形状", () => {
+    /*
+     * 源码层:这个形状此前被手写了三遍(`GauntletFightRow` / `StepOutcome.row` /
+     * `WorldRunState.rows`),三份都只有前四个字段。现在统一成 `types` 里的
+     * `FightOutcomeRow`,`core/gauntlet` 反过来引用它。
+     *
+     * 判据盯住那条「手写四个字段」的字面 —— 它一旦在别处重现,就是又分了一份账。
+     */
+    /*
+     * 只查「消费方」—— `types/index` 是形状的正规定义处,它当然要写出这四个字段。
+     */
+    const files = [resolve(__dirname, "./expedition.ts"), resolve(__dirname, "./gauntlet.ts")];
+    const offenders: string[] = [];
+    for (const file of files) {
+      const raw = readFileSync(file, "utf8");
+      const src = raw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+      // 单行内联写出这四个字段 = 又手写了一份窄形状
+      if (
+        /foeName:\s*string;\s*win:\s*boolean;\s*rounds:\s*number;\s*hpLeftPct:\s*number/.test(src)
+      ) {
+        offenders.push(file.replace(/^.*\/src\//, "src/"));
+      }
+    }
+    expect(
+      offenders,
+      "这些文件又手写了一份战果行窄形状 —— 手写多份的代价是静默的:" + offenders.join("、"),
+    ).toEqual([]);
+    // 防空转:共享形状必须真的在 types 里
+    const typesSrc = readFileSync(resolve(__dirname, "../types/index.ts"), "utf8");
+    expect(typesSrc, "共享形状没提到类型层").toContain("export interface FightOutcomeRow");
   });
 });

@@ -2725,3 +2725,47 @@ export const APPRENTICE_QUALITY_BONUS: Partial<Record<QualityId, number>> = {
 判据四条:每个门类至少两名、同门类品质不许全同、品质加成九档配满且单调递增、
 可招募原型数 > 一个满槽阵容(否则收两人就撞池空)。
 注入验证:参悟删到只剩一名 → 前两条红;把 `profound` 的加成改到 1.05 → 第三条红。
+
+### 同一份「战果行」被手写了三遍,三份都丢了字段
+
+天界战报浮层的「此战之判」有两类行:战前判定(道之理解 / 境界压制)与
+**战后归因**(`analyzeBattle`)。后者要 `CombatResult.stats`(遥测),
+拿不到就返回 null,那一章永远只有战前行。
+
+第 8 轮接归因时,试炼与天道变数那两条路一验就过 —— 它们走 `runGauntlet`,
+行天然带 `stats`。**而远征这条自己建行**:
+
+```ts
+const row = { foeName, win, rounds, hpLeftPct };   // 只有这四个
+```
+
+于是**天界远征(最主要的玩法)的「此战之判」永远没有战后归因**。
+
+**这件事没有任何东西会报错。** 因为同一个形状被手写了三遍 ——
+`core/gauntlet.GauntletFightRow`、`core/expedition.StepOutcome.row`、
+`types.WorldRunState.rows` —— 而后两份都只写四个字段,和远征建的行
+**对齐得很整齐:整齐地一起错**。
+
+改法两步:
+
+- 把形状提到类型层 `types.FightOutcomeRow`(一处定义),`GauntletFightRow` 改成
+  它的别名,`StepOutcome.row` / `WorldRunState.rows` 都引用它;
+- 远征建行时补上 `foe` 与 `stats`(`logs` 仍不放:行要进 `worldRun` 被序列化,
+  而 `logs` 的注释写明「每场几十条日志乘上 60 条道痕会把存档撑爆」;
+  `stats` 是十来个计数,体积可忽略)。
+
+修复后实测:远征首战的行从 4 个字段变成
+`foeName / win / rounds / hpLeftPct / foe / stats`,同一行算出的归因 **0 条 → 3 条**。
+
+判据三条:远征首战的行必须带 `stats` 与 `foe`(行为侧真开一趟)、拿这一行真能算出归因、
+**源码层不许再手写那份窄形状**(`foeName: string; win: boolean; …` 四连)。
+注入验证:去掉 `foe`/`stats` → 前两条红;`StepOutcome.row` 退回手写 → 第三条红。
+
+### 顺带两处判据维护
+
+- 第 8 轮那条「遥测不许进持久化结构」的判据原先读 `core/gauntlet.ts`,
+  形状搬走后它 `indexOf` 返回 -1。改指 `types/index.ts`。
+- 改指之后仍红一次:`stats?: { player: CombatSideStats` 在 `types/index` 里出现
+  **两次**(`CombatResult.stats` 与 `FightOutcomeRow.stats`),`indexOf` 命中的是前者,
+  而前者的注释里没有那句持久化约束。改 `lastIndexOf` 才取到战报行那一处。
+  **同一段文本在一个文件里出现多次时,`indexOf` 是个陷阱** —— 判据自己也该写清取的是哪一处。

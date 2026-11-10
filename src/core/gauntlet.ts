@@ -3,9 +3,8 @@
  */
 import type {
   CombatantSnap,
-  CombatLogEntry,
   CombatRules,
-  CombatSideStats,
+  FightOutcomeRow,
   FoeOrigin,
   FoeOriginPart,
   GNum,
@@ -286,40 +285,14 @@ export function mergeRules(a?: CombatRules, b?: CombatRules): CombatRules | unde
   };
 }
 
-export interface GauntletFightRow {
-  foeName: string;
-  win: boolean;
-  rounds: number;
-  hpLeftPct: number;
-  /**
-   * 该场的逐回合战报。
-   * 仅供即时播放,**不可写入道痕等持久化结构**——道痕存的是构筑快照(replay),
-   * 每场几十条日志乘上 60 条道痕会把存档撑爆
-   */
-  logs?: CombatLogEntry[];
-  /** 该场敌人快照(播放时显示血条与名号) */
-  foe?: CombatantSnap;
-  /**
-   * 该场「每隔 N 回合」把敌人攻势抬到了几倍(没有这条规则时缺席)。
-   *
-   * 与 `CombatResult.atkRamp` 同一份数据 —— 战报面板要报「打着打着变难了多少」,
-   * 而它此前只在 `CombatResult` 里、且那个值根本没被算出来。
-   */
-  atkRamp?: { procs: number; factor: number };
-  /**
-   * 该场的战斗遥测,交给战后归因(`analyzeBattle`)用。
-   *
-   * 与 `logs` 同一条纪律:**仅供即时读取,不可写入道痕等持久化结构**
-   * —— 道痕存的是构筑快照(`replay`),每场一份统计乘上 60 条道痕会把存档撑大;
-   * 而这份统计只在战报浮层开着时要。
-   *
-   * 天界战报此前只带 `logs`(逐回合文字)与胜负回合,`analyzeBattle` 拿不到
-   * `stats` 就直接返回 null —— 于是「此战之判」那一章只有**战前**就定下的
-   * 道之理解 / 境界压制,没有任何一战后的归因。历练页有、天界没有,
-   * 而天界正是玩家最难、最需要「下一次怎么改」的地方。
-   */
-  stats?: { player: CombatSideStats; enemy: CombatSideStats };
-}
+/**
+ * 战果行 —— 形状定义在 `types` 的 `FightOutcomeRow`(一处定义,三处引用)。
+ *
+ * 这里保留一个别名而不重写字段:重写就会再长出一份窄形状,
+ * 而手写多份窄形状的代价是静默的 —— 谁也不会报错,只是某些字段悄悄不存在
+ * (远征那条路就这么丢了 `stats`,天界战后归因因此永远是空的)。
+ */
+export type GauntletFightRow = FightOutcomeRow;
 
 export interface GauntletReport {
   cleared: boolean;
