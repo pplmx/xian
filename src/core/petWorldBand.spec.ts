@@ -33,6 +33,8 @@ import { describe, expect, it } from "vite-plus/test";
 import { EVENTS } from "@/data/events";
 import { PETS } from "@/data/pets";
 import { worldOf } from "@/data/realms";
+import { qualityDef } from "@/data/qualities";
+import { randomGiftPets } from "./eventEngine";
 
 /** 一只灵兽由哪些世界的发放事件点名 */
 function grantWorldsOf(petId: string): Set<string> {
@@ -91,5 +93,67 @@ describe("神品灵兽 · 境界带纪律", () => {
       (p) => p.quality === "divine" && grantWorldsOf(p.id).has("chaos"),
     );
     expect(chaosDivine.length, "混沌海连一只神品都没有 —— 判据的前提没了").toBeGreaterThan(0);
+  });
+});
+
+/**
+ * 随机赠灵兽也要按境界收窄 —— 上面两条只守了 r7 / r8 两档。
+ *
+ * ## 缺口是什么(第 70 轮实测)
+ *
+ * `core/eventEngine` 的 `pet` 效果只排除了 `immortal` / `divine`,然后**均匀抽**:
+ *
+ * ```text
+ * 池 25 只:excellent 24% · heaven 24% · profound 20% · spirit 16% · earth 16%
+ * ```
+ *
+ * 于是**境界 0 的玩家与境界 20 的玩家同一个池子、同一份概率** ——
+ * 刚入门的玩家有四分之一的概率白捡一只**天品**灵兽(与神品只差一档)。
+ *
+ * 这与上面那条纪律是同一件事(「神品不许在神界提前开出」),只是那条只守了 r7/r8。
+ *
+ * ## 判据
+ *
+ * 事件随机赠池里,**品阶 rank 不超过「玩家境界能支撑的那一档」** ——
+ * 口径与实现同一式:`qualityDef("spirit").rank + floor(major / 3)`。
+ *
+ * 只查「随机赠」这条路径:仙/神品的指名发放是另一回事(由区域事件指定 id,
+ * 那条路由 `petWorldBand` 上文两条守着)。
+ */
+describe("灵兽随机赠池 · 品阶随境界收窄", () => {
+  /*
+   * 直接调**真实实现** —— 不在 spec 里重算一遍。
+   * (第一版我在这里把池子公式抄了一遍,注入验证时才发现:把实现里的
+   *  `qualityDef(p.quality).rank <= cap` 删掉,判据照样绿,因为算的是自己那份拷贝。)
+   */
+  const randomGiftPool = (major: number) => randomGiftPets(new Set<string>(), major);
+
+  it("境界 0 抽不到地品及以上", () => {
+    const pool = randomGiftPool(0);
+    expect(pool.length, "境界 0 一只灵兽都抽不到 —— 池子被收得太窄").toBeGreaterThan(5);
+    const tooRich = pool.filter((p) => qualityDef(p.quality).rank >= qualityDef("earth").rank);
+    expect(
+      tooRich.map((p) => `${p.name}(${p.quality})`),
+      "境界 0 能随机抽到地品及以上的灵兽 —— 与「神兽须行至相应境界」相左",
+    ).toEqual([]);
+  });
+
+  it("境界 9 起才可能抽到天品", () => {
+    const at9 = randomGiftPool(9).filter((p) => p.quality === "heaven");
+    expect(at9.length, "境界 9 仍抽不到天品 —— 收得太狠").toBeGreaterThan(0);
+    const at6 = randomGiftPool(6).filter((p) => p.quality === "heaven");
+    expect(at6.length, "境界 6 就能抽到天品 —— 收得不够").toBe(0);
+  });
+
+  it("反空转:池子随境界单调变宽,且高境界能抽到更多品阶", () => {
+    const sizes = [0, 3, 6, 9].map((m) => randomGiftPool(m).length);
+    for (let i = 1; i < sizes.length; i += 1) {
+      expect(sizes[i]!, `境界 ${[0, 3, 6, 9][i]} 的池子比上一档还小`).toBeGreaterThanOrEqual(
+        sizes[i - 1]!,
+      );
+    }
+    expect(sizes[sizes.length - 1]!, "高境界的池子没有变宽 —— 收窄逻辑没生效").toBeGreaterThan(
+      sizes[0]!,
+    );
   });
 });

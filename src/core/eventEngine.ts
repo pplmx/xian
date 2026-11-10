@@ -421,9 +421,23 @@ function applyEffect(effect: EventEffect, ctx: EventApplyContext): AppliedEventE
       // 随机入账只给无门墙的入门灵兽:仙/神品神兽由高界区域事件**指名**发放
       // (见 data/pets.ts「仙界及以上神兽,仅由高界区域事件发放」),人间界事件不许从全池
       // 白送 —— 否则炼气层就能开出应龙/麒麟,与 contentGate「神兽须行至神界,无绕过路径」相左。
-      const pool = PETS.filter(
-        (p) => !owned.has(p.id) && p.quality !== "immortal" && p.quality !== "divine",
-      );
+      /*
+       * 除「仙/神不入池」之外,还要按**境界**收窄品阶 —— 否则境界 0 的玩家
+       * 与境界 20 的玩家同一个池子、同一份均匀概率:
+       *
+       * ```text
+       * 池 25 只:excellent 24% · heaven 24% · profound 20% · spirit 16% · earth 16%
+       * ```
+       *
+       * 也就是刚入门的玩家有四分之一的概率白捡一只**天品**灵兽(与神品只差一档)。
+       * 这与 `core/petWorldBand` 已立的那条纪律是同一件事(神品不许在神界提前开出),
+       * 只是那条只守 r7/r8 两档,没管 r6 及以下。
+       *
+       * 收窄口径:品阶 rank 不许超过「玩家境界能支撑的档」——`major` 每 3 境放一档,
+       * 起步 opens `spirit`(rank 3)。这是**上限**不是门槛:低品阶仍可抽到,
+       * 只是不再与高品阶同概率。
+       */
+      const pool = randomGiftPets(owned, player.major);
       const id = effect.id ?? (pool.length ? rng.pick(pool).id : null);
       if (!id || owned.has(id)) {
         resources.addSmall("herb", 10);
@@ -471,6 +485,43 @@ function applyEffect(effect: EventEffect, ctx: EventApplyContext): AppliedEventE
  * 一枚入门丹药在它自己那一境权重最高,往后每高一境衰减约 26%。
  * 于是高境界抽到的基本是同境或近境的丹,低境界也不会被完全排除(只是权重低)。
  */
+/**
+ * 事件「随机赠灵兽」的候选池 —— 按境界收窄品阶。
+ *
+ * ## 为什么需要它
+ *
+ * 原来只排除 `immortal` / `divine`,然后**均匀抽**。池 25 只:
+ *
+ * ```text
+ * excellent 24% · heaven 24% · profound 20% · spirit 16% · earth 16%
+ * ```
+ *
+ * 境界 0 的玩家与境界 20 的玩家同一个池子、同一份概率 —— 刚入门就有四分之一
+ * 的概率白捡一只**天品**灵兽(与神品只差一档)。
+ *
+ * 这与 `core/petWorldBand` 已立的那条纪律(「神品不许在神界提前开出」)是同一件事,
+ * 只是那条只守了 r7 / r8 两档。
+ *
+ * ## 口径
+ *
+ * 品阶 rank 不许超过 `spirit.rank + floor(major / 3)` —— 每 3 境放一档。
+ * 起步只给 `excellent` / `spirit`,境 3 放 `profound`,境 6 放 `earth`,境 9 放 `heaven`。
+ * 这是**上限**不是门槛:低品阶仍可抽到,只是不再与高品阶同概率。
+ *
+ * 抽成纯函数是为了判据能直接调它(`core/petWorldBand.spec`),而不是在 spec 里
+ * 重算一遍 —— 第 67 轮的教训:复刻实现公式的判据,实现改了它不会红。
+ */
+export function randomGiftPets(owned: ReadonlySet<string>, major: number) {
+  const cap = qualityDef("spirit").rank + Math.floor(major / 3);
+  return PETS.filter(
+    (p) =>
+      !owned.has(p.id) &&
+      p.quality !== "immortal" &&
+      p.quality !== "divine" &&
+      qualityDef(p.quality).rank <= cap,
+  );
+}
+
 export function randomEventPill(major: number): string | null {
   const pool = PILLS.filter((p) => p.minRealm <= major);
   if (pool.length === 0) return null;
