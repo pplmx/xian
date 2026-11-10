@@ -456,6 +456,7 @@ const CATEGORIES = [
       "artifactQualityLadder",
       "balanceCoverage",
       "poolProximity",
+      "idUniqueness",
       "regionDanger",
       "artifactGrowth",
       "stackCap",

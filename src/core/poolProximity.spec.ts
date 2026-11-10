@@ -30,7 +30,7 @@ import { gongfaDrawWeight } from "./gongfaService";
 import { PILLS } from "@/data/pills";
 import { qualityDef } from "@/data/qualities";
 import { randomEventPill, randomGiftPets, EVENT_PILL_NEAR_DECAY } from "./eventEngine";
-import { randomDropPill } from "./loot";
+import { randomDropPill, PILL_NEAR_DECAY } from "./loot";
 import type { ArtifactDef } from "@/types";
 
 /** 径路 1:法宝掉落 —— 加法窗口 W=5 / B=4 */
@@ -116,6 +116,58 @@ describe("按境界开放的池子 · 共同口径", () => {
         return w < worst ? w : worst;
       }, Infinity);
       expect(near / far, "同品阶内,近境界的功法没有比远境界的更容易抽到").toBeGreaterThan(1.2);
+    });
+  });
+
+  describe("④ 掉落池得够深 —— 高境界不能在掉落里拿不到高阶丹", () => {
+    it("掉落专属丹药里有神品,且覆盖后三境", () => {
+      /*
+       * `randomDropPill` 的池子是 `!p.recipe` 那一批。它曾经只有 15 味、
+       * **完全没有神品** —— 而 16 味神品丹全部可炼。于是境界 18~20 的玩家
+       * 若炼丹技艺不够,一辈子拿不到神品丹。
+       *
+       * 这条判据守两件事:① 池子里有神品;② 后三境各有一味本境可掉的。
+       */
+      const dropOnly = PILLS.filter((p) => !p.recipe);
+      const divine = dropOnly.filter((p) => p.quality === "divine");
+      expect(
+        divine.length,
+        `掉落专属丹药 ${dropOnly.length} 味里一味神品都没有 —— ` +
+          `高境界的玩家若炼不出丹,就永远拿不到神品`,
+      ).toBeGreaterThan(0);
+      for (const major of [18, 19, 20]) {
+        const local = divine.filter((p) => p.minRealm === major);
+        expect(
+          local.length,
+          `境界 ${major} 没有可掉落的神品丹 —— 那一境的白捡线断了`,
+        ).toBeGreaterThan(0);
+      }
+    });
+
+    it("高境界的掉落里,高品阶占比不低", () => {
+      /*
+       * 第 68 轮给掉落加了境界差衰减,但池子太窄时衰减没用 ——
+       * 那时的实测是境 20 高/低 = 45% / 43%,几乎持平。
+       * 补了三味神品掉落丹之后是 66% / 26%。阈值取 55%,留余量。
+       */
+      const dropOnly = PILLS.filter((p) => !p.recipe);
+      const major = 20;
+      let high = 0;
+      let low = 0;
+      let total = 0;
+      for (const p of dropOnly) {
+        if (p.minRealm > major) continue;
+        const w =
+          100 /
+          (1 + qualityDef(p.quality).rank * 1.5) /
+          (1 + Math.max(0, major - p.minRealm) * PILL_NEAR_DECAY);
+        total += w;
+        const rank = qualityDef(p.quality).rank;
+        if (rank >= qualityDef("earth").rank) high += w;
+        else if (rank <= qualityDef("spirit").rank) low += w;
+      }
+      expect(high / total, "境 20 的掉落里高品阶不足半数 —— 池子太窄").toBeGreaterThan(0.55);
+      expect(low / total, "境 20 的掉落里低品阶仍占近半").toBeLessThan(0.4);
     });
   });
 
