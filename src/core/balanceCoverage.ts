@@ -38,11 +38,9 @@ import { ROOT } from "@/test/readSource";
  * 「有没有人写了这一维的用例」。
  */
 export function specTitles(): Map<string, string[]> {
-  const dir = join(ROOT, "src/core");
   const out = new Map<string, string[]>();
-  for (const file of readdirSync(dir)) {
-    if (!file.endsWith(".spec.ts")) continue;
-    const text = readFileSync(join(dir, file), "utf8");
+  for (const full of allSpecFiles()) {
+    const text = readFileSync(full, "utf8");
     const titles: string[] = [];
     /*
      * 标题有两种写法:双引号字面量与**模板字符串**。后者在参数化用例里很常见
@@ -55,9 +53,32 @@ export function specTitles(): Map<string, string[]> {
     for (const m of text.matchAll(/\b(?:it|describe)\(\s*(?:"([^"]{2,120})"|`([^`]{2,120})`)/g)) {
       titles.push(m[1] ?? m[2]!);
     }
-    out.set(file, titles);
+    out.set(full.slice(ROOT.length + 1), titles);
   }
   return out;
+}
+
+/**
+ * 仓库里**全部** spec 文件的绝对路径。
+ *
+ * 第一版只扫 `src/core/` —— 而全仓 551 个 spec 里有 **225 个不在 core 下**
+ * (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)。
+ * 于是 `src/data/petVows.spec.ts` 里那条「每只灵兽都有契语」明明在,
+ * 审计却报「灵兽 / 契语一一对应 没有判据在管」——
+ * **量尺只伸到了 60% 的地方**,而它报出来的缺口看起来跟真的一样。
+ */
+function allSpecFiles(): string[] {
+  const out: string[] = [];
+  const walk = (dir: string): void => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === "node_modules") continue;
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name.endsWith(".spec.ts")) out.push(full);
+    }
+  };
+  walk(join(ROOT, "src"));
+  return out.sort();
 }
 
 /**

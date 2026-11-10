@@ -57,18 +57,25 @@ const WANTED = [
   // ---- 天界试炼 ----
   { table: "试炼", dimension: "回报与难度同向", keywords: ["难度"] },
   { table: "试炼", dimension: "锚点层级单调", keywords: ["锚点"] },
-  // ---- 事件 ----
+  // ---- 际遇 ----
   { table: "际遇", dimension: "修为奖励与同段可比", keywords: ["中位数"] },
   { table: "际遇", dimension: "材料单格不被抬量级", keywords: ["材料"] },
+  { table: "际遇", dimension: "境界带合法且不越界", keywords: ["境界带"] },
+  { table: "际遇", dimension: "每条至少一个无条件选项", keywords: ["无条件"] },
+  { table: "际遇", dimension: "地域标签够得着", keywords: ["够得着"] },
+  { table: "际遇", dimension: "每个地域带内可用际遇不少于三条", keywords: ["带内"] },
+  // ---- 灵兽补充 ----
+  { table: "灵兽", dimension: "契语与灵兽一一对应", keywords: ["契语"] },
+  { table: "灵兽", dimension: "性格表全覆盖", keywords: ["性格"] },
 ] as const;
 
 describe("横向对账 · 覆盖审计", () => {
   it("每一个待查维度都有判据在管", () => {
     const titles = specTitles();
     // 防空转:真的扫到了 spec
-    expect(titles.size, "一个 spec 都没扫到 —— 路径或后缀变了").toBeGreaterThan(200);
+    expect(titles.size, "扫到的 spec 太少 —— 只扫了 core 目录?").toBeGreaterThan(500);
     const totalTitles = [...titles.values()].flat().length;
-    expect(totalTitles, "扫到的标题太少 —— 正则没切对").toBeGreaterThan(1000);
+    expect(totalTitles, "扫到的标题太少 —— 正则没切对").toBeGreaterThan(5000);
 
     const missing = unguarded(WANTED, titles);
     expect(
