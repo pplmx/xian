@@ -23,6 +23,7 @@ import { GONGFA } from "@/data/gongfa";
 import { FORTUNE_EVENTS } from "@/data/events";
 import { ELEMENTS } from "@/data/linggen";
 import { qualityDef } from "@/data/qualities";
+import { gongfaDrawWeight } from "./gongfaService";
 import { BUILD_PROFILES, buildSnap } from "./buildSim";
 import {
   gongfaAffinity,
@@ -440,5 +441,66 @@ describe("灵根职能重构 ④ 红线自检(结构性防回归)", () => {
         ).toBe(true);
       }
     }
+  });
+});
+
+/**
+ * 参悟权重里的**就近因子** —— 高境界不该总撞见入门功法。
+ *
+ * ## 缺口是什么(第 69 轮实测)
+ *
+ * `gongfaDrawWeight` 原式只有「品阶降权 × 灵根倾向」。池子按 `minRealm <= major + 1`
+ * 过滤,境界 20 时 92 部里 91 部可抽 —— 而权重不看「跟玩家差多远」,于是:
+ *
+ * ```text
+ *   低品阶合计 76.0%
+ *   其中境界 0 的十九部独占 56.8%
+ * ```
+ *
+ * 玩家参悟十次,五六次撞见入门货。
+ *
+ * 法宝掉落(`core/loot` 的 `artifactDropWeight`)早就有「就近加成」这套机制,
+ * 丹药那条(第 67/68 轮)是后来补的 —— **功法这条一直没补**。
+ *
+ * ## 判据
+ *
+ * 直接调**真实**的 `gongfaDrawWeight`(不在 spec 里重算公式 —— 第 67 轮的教训),
+ * 按境界聚合占比:
+ *
+ * - 境 20:**低品阶占比 < 50%**(修前 76.0%)
+ * - 境 5:低品阶仍占多数(早期内容不许被压没)
+ */
+describe("参悟权重 · 就近因子", () => {
+  /** 按 major 聚合各品阶的权重占比 */
+  function shares(major: number): { low: number; entry: number } {
+    const pool = GONGFA.filter((g) => g.minRealm <= major + 1);
+    let total = 0;
+    let low = 0;
+    let entry = 0;
+    for (const g of pool) {
+      const w = gongfaDrawWeight(g, [], major);
+      total += w;
+      const rank = qualityDef(g.quality).rank;
+      if (rank <= qualityDef("spirit").rank) low += w;
+      if (g.minRealm === 0) entry += w;
+    }
+    return { low: low / total, entry: entry / total };
+  }
+
+  it("境界 20 时低品阶功法不再是多数", () => {
+    const { low, entry } = shares(20);
+    expect(
+      low,
+      `境界 20 时低品阶功法占 ${(low * 100).toFixed(1)}% —— 高境界参悟到的多半是入门货`,
+    ).toBeLessThan(0.5);
+    expect(entry, `境界 20 时境界 0 的入门功法占 ${(entry * 100).toFixed(1)}%`).toBeLessThan(0.4);
+  });
+
+  it("境界 5 时低品阶仍占多数 —— 早期内容不许被压没", () => {
+    const { low } = shares(5);
+    expect(
+      low,
+      `境界 5 时低品阶只占 ${(low * 100).toFixed(1)}% —— 就近因子把早期内容压没了`,
+    ).toBeGreaterThan(0.6);
   });
 });

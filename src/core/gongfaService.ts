@@ -11,7 +11,7 @@ import { collect, isCollected, track } from "./progress";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useCultivationStore } from "@/stores/cultivation";
-import type { GongfaDef } from "@/types";
+import type { ElementId, GongfaDef } from "@/types";
 import { useDongfuStore } from "@/stores/dongfu";
 import { notify } from "./notify";
 
@@ -63,11 +63,55 @@ export function learnRandomGongfa(specificId?: string): GongfaDef | null {
   // Phase 32.2:同源功法更容易参悟到(倾向,非独占)——
   // 无对应灵根者权重仍为原值,任何功法都拿得到,只是撞见的概率不同。
   const elements = rootElements(player.linggen?.roots);
-  const picked = rng.weighted(
-    pool,
-    (g) => (100 / (1 + qualityDef(g.quality).rank * 1.5)) * gongfaAffinity(g.element, elements),
-  );
+  /*
+   * 权重再乘一个**就近因子** —— 只按品阶与灵根倾向加权是不够的。
+   *
+   * `pool` 只按 `minRealm <= major + 1` 过滤,境界 20 时几乎全开(92 部里 91 部可抽);
+   * 而品阶权重让入门功法占优:实测境 20 时**低品阶合计 76.0%**,
+   * 其中境界 0 的十九部入门功法独占 **56.8%** —— 玩家参悟十次,五六次撞见入门货。
+   *
+   * 法宝掉落 (`core/loot` 的 `artifactDropWeight`) 早就有同类机制:
+   * 「越贴近当前层级越容易被抽中」,并且刻意用**加法**而不是指数衰减,
+   * 免得把旧内容彻底关掉。这里照同一口径来。
+   */
+  const picked = rng.weighted(pool, (g) => gongfaDrawWeight(g, elements, player.major));
   return learnGongfa(picked.id) ? picked : null;
+}
+
+/**
+ * 参悟功法时的抽取权重 —— 品阶降权 × 灵根倾向 × **就近因子**。
+ *
+ * ## 为什么需要「就近因子」
+ *
+ * 池子只按 `minRealm <= major + 1` 过滤,境界 20 时 92 部里 91 部可抽;
+ * 而只按品阶与灵根加权的话,入门功法会占掉大半:实测境 20 时
+ * **低品阶合计 76.0%,其中境界 0 的十九部独占 56.8%** ——
+ * 玩家参悟十次,五六次撞见入门货。
+ *
+ * 法宝掉落(`core/loot` 的 `artifactDropWeight`)早就有同类机制:
+ * 「越贴近当前层级越容易被抽中」,用加法而非指数衰减,免得把旧内容彻底关掉。
+ * 这里照同一口径。
+ *
+ * 参数 `窗口 12 / 强度 1.5` 是实测调出来的:
+ *
+ * ```text
+ *          低品阶占比  境0功法占比
+ *   原式     76.0%       56.8%
+ *   W3 K1    71.5%       53.5%
+ *   W12 K1.5 33.5%       25.1%
+ * ```
+ *
+ * 低境界不受影响(境 5 仍是 86.7% 低品阶),因为那时大家的 minRealm 本来就接近。
+ */
+export function gongfaDrawWeight(
+  def: GongfaDef,
+  elements: readonly ElementId[],
+  major: number,
+): number {
+  const qualityWeight = 100 / (1 + qualityDef(def.quality).rank * 1.5);
+  const distance = Math.max(0, major - def.minRealm);
+  const proximity = 1 + Math.max(0, 12 - distance) * 1.5;
+  return qualityWeight * gongfaAffinity(def.element, elements) * proximity;
 }
 
 /** 藏经阁参悟:消耗残页随机习得 */
