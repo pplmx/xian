@@ -6,6 +6,7 @@ import { runGauntlet } from "./gauntlet";
 import { BUILD_PROFILES, buildSnap } from "./buildSim";
 import { RandomService, mulberry32 } from "@/utils/random";
 import { celestialFoeOrigin, celestialJudgement } from "./gauntlet";
+import { BUILD_STYLES } from "./buildDetect";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -674,5 +675,143 @@ describe("数据行 · 没出过手时不许按行号硬切", () => {
         `有出手时缺了「${label}」`,
       ).toBe(true);
     }
+  });
+});
+
+/**
+ * 流派 id 必须是**真实存在**的那六个 —— 曾经有三个 `"cangfeng"` 一路活到线上。
+ *
+ * ## 缺陷
+ *
+ * `AnalysisFinding.styleHints` 声明成 `string[]`,`BuildStyleDef.id` 也是 `string`。
+ * 于是 `battleAnalysis` 里三处 `styleHints: ["cangfeng"]` 编译通过 ——
+ * 而 `cangfeng`(藏锋)从来不是流派之一:`BUILD_STYLES` 只有六个
+ * (beishui / gangdun / fanzhen / lianji / muze / fengmang)。
+ *
+ * 它没炸,靠的是一个巧合:那三处都在 `victoryFindings` 里,而胜局的 `directions`
+ * 恒为 `[]`(见调用处注释:方向属于败局)。一旦有人让胜局也给方向,
+ * `BUILD_STYLES.find(...)!.name` 就会在 `undefined` 上抛错 —— 那个 `!` 是谎。
+ *
+ * ## 判据守什么
+ *
+ * 一 **编译期**:`styleHints` 的类型是 `BuildStyleId`(联合类型),
+ *    写一个不存在的 id 过不了 `tsc`。这条由类型系统守,判据断言它的存在;
+ * 二 **运行期**:所有 `styleHints` 里的 id 都能在 `BUILD_STYLES` 里找到;
+ * 三 **死数据**:胜局路径不许填 `styleHints` —— 填了也不读,只会误导下一个人。
+ */
+describe("流派 id · 指向的必须是真存在的流派", () => {
+  it("每个 styleHints 里的 id 都能在 BUILD_STYLES 找到", () => {
+    /*
+     * 行为侧:把能触发各类归因的遥测都造一遍,收集实际出现的 hint。
+     * 这比读源码稳 —— 它验的是「跑起来之后指向的东西存在」。
+     */
+    const seen = new Set<string>();
+    const collect = (r: Parameters<typeof analyzeBattle>[0]): void => {
+      const a = analyzeBattle(r, null);
+      for (const f of a?.findings ?? []) for (const h of f.styleHints) seen.add(h);
+    };
+    const st = (o: Partial<CombatSideStats> = {}): CombatSideStats => ({
+      dealt: gn(1000),
+      taken: gn(2000),
+      pierceTaken: gnZero(),
+      biggestHitTaken: gn(100),
+      healed: gnZero(),
+      shieldAbsorbed: gnZero(),
+      dodges: 0,
+      missedHits: 0,
+      hitsLanded: 20,
+      counters: 0,
+      combos: 0,
+      crits: 0,
+      skillCasts: 3,
+      artifactProcs: 0,
+      stunnedTurns: 0,
+      ...o,
+    });
+    // 败局:真伤 / 落空 / 重击 / 长战 / 震慑
+    collect({
+      win: false,
+      rounds: 40,
+      playerHpPct: 0,
+      log: [],
+      stats: {
+        player: st({
+          pierceTaken: gn(1500),
+          missedHits: 9,
+          biggestHitTaken: gn(900),
+          stunnedTurns: 4,
+        }),
+        enemy: st(),
+      },
+    });
+    // 胜局:完胜 / 速杀 / 闪避 / 暴击
+    collect({
+      win: true,
+      rounds: 3,
+      playerHpPct: 0.9,
+      log: [],
+      stats: { player: st({ dodges: 6, crits: 9 }), enemy: st() },
+    });
+
+    expect(seen.size, "一条 hint 都没收到 —— 判据会空转").toBeGreaterThan(0);
+    const valid = new Set<string>(BUILD_STYLES.map((s) => s.id));
+    const unknown = [...seen].filter((id) => !valid.has(id));
+    expect(
+      unknown,
+      `这些流派 id 在 BUILD_STYLES 里不存在 —— 一旦有代码去 find(...)!.name 就会崩:${unknown.join(", ")}`,
+    ).toEqual([]);
+  });
+
+  it("类型层:styleHints 不许是宽 string[]", () => {
+    /*
+     * 源码层钉住类型的收窄。这条看着像「测类型」,但它守的是一个真实事故:
+     * 宽类型让三个不存在的 id 活了很久。放宽回 `string[]` 会让同类错误再来一次。
+     */
+    const raw = readFileSync(resolve(__dirname, "./battleAnalysis.ts"), "utf8");
+    const src = raw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    expect(src, "styleHints 必须声明成 BuildStyleId[],不许退回 string[]").toMatch(
+      /styleHints:\s*BuildStyleId\[\]/,
+    );
+    expect(src, "styleHints 退回宽类型了").not.toMatch(/styleHints:\s*string\[\]/);
+  });
+
+  it("胜局路径不许填 styleHints —— 填了也不读", () => {
+    /*
+     * 胜局 `directions` 恒为 `[]`,故 `victoryFindings` 里的 hint 是死数据。
+     * 曾经那里有 7 处赋值(其中 3 处指向不存在的 `cangfeng`)。
+     */
+    const raw = readFileSync(resolve(__dirname, "./battleAnalysis.ts"), "utf8");
+    const start = raw.indexOf("function victoryFindings(");
+    const end = raw.indexOf("\n}\n", start);
+    expect(start, "找不到 victoryFindings").toBeGreaterThan(-1);
+    const body = raw
+      .slice(start, end)
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "");
+    const filled = [...body.matchAll(/styleHints:\s*\[([^\]]*)\]/g)].filter(
+      (m) => m[1]!.trim() !== "",
+    );
+    expect(
+      filled.map((m) => m[0]),
+      "胜局归因里填了 styleHints —— 胜局 directions 恒为 [],这些是死数据,只会误导下一个人",
+    ).toEqual([]);
+  });
+
+  it("运行期兜底:找不到流派时跳过,不许在 `.name` 上抛", () => {
+    /*
+     * 类型收紧之后正常路径已经安全,但这条守的是「万一」:
+     * 旧存档、将来新增的 hint 来源、或者类型被人放宽。找不到就跳过,不崩。
+     */
+    const raw = readFileSync(resolve(__dirname, "./battleAnalysis.ts"), "utf8");
+    const src = raw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+    /*
+     * 断言写成「find(...) 之后紧跟 `!`」,允许中间换行 —— 格式化器会把长行拆开,
+     * 只匹配同一行的写法会漏掉被拆开的那个。
+     */
+    const nonNullFind = /BUILD_STYLES\.find\([\s\S]{0,80}?\)\s*!/.test(src);
+    expect(
+      nonNullFind,
+      "又用上非空断言了 —— 那个 `!` 曾经是谎(找不到流派就跳过,别在 .name 上抛)",
+    ).toBe(false);
   });
 });

@@ -5,12 +5,18 @@
 import type { CombatResult, CombatSideStats, FoeOrigin, GNum } from "@/types";
 import { ratio } from "@/utils/gnum";
 import { formatGN, formatPercent } from "@/utils/format";
-import { BUILD_STYLES } from "./buildDetect";
+import { BUILD_STYLES, type BuildStyleId } from "./buildDetect";
 
 export interface AnalysisFinding {
   text: string;
-  /** 该问题指向的流派方向(styleId 列表,按相关度排序) */
-  styleHints: string[];
+  /**
+   * 该问题指向的流派方向(按相关度排序)。
+   *
+   * 类型是 `BuildStyleId` 而不是 `string` —— 曾经写成 `string[]`,于是
+   * `["cangfeng"]`(一个从来不存在的流派)一路编译通过、活到线上;
+   * 它没炸只因为胜局路径的 `directions` 恒为 `[]`。见 `BuildStyleId` 的注释。
+   */
+  styleHints: BuildStyleId[];
 }
 
 export interface BattleAnalysis {
@@ -327,9 +333,18 @@ function foeOriginFinding(result: CombatResult): AnalysisFinding[] {
  * 回合数、战后气血、承伤占比、有没有被抢先、闪避与暴击次数。读不出支撑就干脆不写,
  * 宁可少一条也不编。
  *
- * ## 与战败归因同一套形状
+ * ## 与战败归因同一套形状,但**不指向任何流派方向**
  *
- * 只填 `text` 与 `styleHints`(界面已按 `findings` 渲染),不新增字段、不改界面。
+ * 只填 `text`(界面已按 `findings` 渲染),不新增字段、不改界面。
+ *
+ * `styleHints` 这里一律留空,而且**必须**留空:胜局的 `directions` 恒为 `[]`
+ * (见调用处那条注释:方向属于败局,硬推一条等于劝玩家换掉刚赢下来的打法)。
+ * 于是这里填什么都不会被读到 —— 曾经这里有 7 处 `styleHints: ["lianji", "cangfeng"]`
+ * 这样的赋值,其中 `cangfeng` 甚至指向一个**从不存在的流派**,
+ * 而它一路编译通过、活到线上,只因为没人消费它。
+ *
+ * 把死数据留在原地比删掉更危险:读代码的人会以为「胜局也能给方向」,
+ * 于是照抄一份,然后在第一次真的读到它时崩在 `find(...)!.name` 上。
  */
 function victoryFindings(
   p: CombatSideStats,
@@ -347,12 +362,12 @@ function victoryFindings(
   if (hpPct >= COMFORTABLE_HP) {
     findings.push({
       text: `战后气血 ${formatPercent(hpPct, 0)} —— 这一场没怎么伤到你`,
-      styleHints: ["gangdun", "lianji"],
+      styleHints: [],
     });
   } else if (hpPct <= NARROW_HP) {
     findings.push({
       text: `战后只剩 ${formatPercent(hpPct, 0)} 气血 —— 险胜,下一场未必还有这份运气`,
-      styleHints: ["beishui", "muze"],
+      styleHints: [],
     });
   }
 
@@ -363,12 +378,13 @@ function victoryFindings(
   if (rounds <= QUICK_WIN_ROUNDS) {
     findings.push({
       text: `${rounds} 回合结束 —— 压制期里没给它翻身的机会`,
-      styleHints: ["lianji", "cangfeng"],
+      // 锋芒:先发制人、收割脆敌 —— 与「压制期不给翻身机会」是同一件事
+      styleHints: [],
     });
   } else if (rounds >= LONG_FIGHT_ROUNDS) {
     findings.push({
       text: `鏖战 ${rounds} 回合才拿下 —— 这一场是靠撑住赢的,不是靠速杀`,
-      styleHints: ["gangdun", "beishui"],
+      styleHints: [],
     });
   }
 
@@ -379,7 +395,8 @@ function victoryFindings(
   if (firstMoveLoss) {
     findings.push({
       text: `被抢先却还是赢了下来 —— 这一场的翻盘点在这里`,
-      styleHints: ["lianji", "cangfeng"],
+      // 反震:先手在对方手里也能把伤害还回去 —— 与「被抢先仍翻盘」同一条路
+      styleHints: [],
     });
   }
 
@@ -387,7 +404,8 @@ function victoryFindings(
   if (p.dodges >= DODGE_WIN_WARN) {
     findings.push({
       text: `闪过 ${p.dodges} 次 —— 少挨的这几下换成了战后气血`,
-      styleHints: ["cangfeng"],
+      // 沐泽:靠回复把「没挨到的那几下」攒成气血 —— 闪避的价值正是这么兑现的
+      styleHints: [],
     });
   }
 
@@ -395,7 +413,7 @@ function victoryFindings(
   if (p.crits >= CRIT_WIN_WARN) {
     findings.push({
       text: `暴击 ${p.crits} 次 —— 输出压在暴击上是这几回合解决的原因`,
-      styleHints: ["lianji"],
+      styleHints: [],
     });
   }
 
@@ -407,7 +425,7 @@ function victoryFindings(
   if (pierceShare >= PIERCE_SHARE_WARN) {
     findings.push({
       text: `真伤占了承伤的 ${formatPercent(pierceShare, 0)},护体没挡住的部分你硬吃了下来`,
-      styleHints: ["gangdun", "beishui"],
+      styleHints: [],
     });
   }
 
@@ -523,12 +541,21 @@ export function analyzeBattle(
     .sort((a, b) => b[1].score - a[1].score)
     .slice(0, 2)
     .map(([id, info]) => {
-      const style = BUILD_STYLES.find((x) => x.id === id)!;
+      /*
+       * 不用 `!`:那个非空断言曾经是谎。`styleHints` 当时声明成 `string[]`,
+       * 三处 `"cangfeng"` 指向一个不存在的流派,一路编译通过;
+       * 它没炸只因为胜局路径的 `directions` 恒为 `[]`。
+       * 现在 `styleHints` 已收紧成 `BuildStyleId[](见该类型的注释),这里再多一层
+       * 运行时兜底:找不到就跳过,而不是在读取 `.name` 时抛错。
+       */
+      const style = BUILD_STYLES.find((x) => x.id === id);
+      if (!style) return null;
       return {
         styleName: style.name,
         reason: `${style.desc} —— 冲着「${clipEvidence(info.evidence)}」去的`,
       };
-    });
+    })
+    .filter((x): x is { styleName: string; reason: string } => x !== null);
   return {
     headline: `败于第 ${result.rounds} 回合`,
     findings:

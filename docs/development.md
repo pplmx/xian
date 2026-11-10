@@ -2520,3 +2520,44 @@ major 14 打 tier 22 的世界是 330 倍碾压、打 tier 32 是 7.9e-5 完全�
 ① 事实读数不许只活在某条归因的触发条件后面(含「不许按行号硬切」);
 ② 方向是处方不是流派广告,每条要引用触发它的归因原文;
 ③ 「难」与「输」不是同一件事,战前判定与战后归因两类行分开。
+
+### 三个指向「不存在流派」的 id,靠一个巧合活到了线上
+
+`AnalysisFinding.styleHints` 声明成 `string[]`,`BuildStyleDef.id` 也是 `string`。
+于是 `battleAnalysis` 里三处 `styleHints: ["cangfeng"]` 编译通过 ——
+而 **`cangfeng`(藏锋)从来不是流派之一**:`BUILD_STYLES` 只有六个
+(beishui / gangdun / fanzhen / lianji / muze / fengmang)。
+
+**它没炸,靠的是一个巧合**:那三处都在 `victoryFindings` 里,而胜局的 `directions`
+恒为 `[]`(方向属于败局)。一旦有人让胜局也给方向,
+`BUILD_STYLES.find(...)!.name` 就会在 `undefined` 上抛错 —— **那个 `!` 是谎**。
+实测:`BUILD_STYLES.find((x) => x.id === "cangfeng")` 返回 `undefined`,
+读 `.name` 必抛。
+
+修法三层,一层比一层宽:
+
+- **类型层(根因)**:新增 `BuildStyleId` 联合类型(`"beishui" | … | "fengmang"`),
+  `BuildStyleDef.id` 与 `styleHints` 都用它。收窄后 `tsc` 当场点名那三处 ——
+  这是本轮最有用的一步:**宽类型让三个不存在的 id 活了很久,而没有任何测试红**。
+- **替换成真流派**:三处按语义重新指向 ——
+  「压制期没给翻身机会」→ `fengmang`(先发制人、收割脆敌);
+  「被抢先却还是赢」→ `fanzhen`(先手在对方手里也能还回去);
+  「闪过 N 次」→ `muze`(靠回复把没挨到的那几下攒成气血)。
+- **运行期兜底**:去掉 `find(...)!`,找不到就 `filter` 掉,不在 `.name` 上抛。
+
+### 顺带发现:胜局归因里的 `styleHints` 全是死数据
+
+`victoryFindings` 里有 7 处 `styleHints` 赋值(其中 3 处是那个不存在的 `cangfeng`)。
+而胜局 `directions` 恒为 `[]`,所以**这 7 处写了永远不会被读**。
+
+查了引入它的提交:当时就同时写着 `directions: []` —— 也就是说这些 hint
+**从一开始就是死数据**,是在 `AnalysisFinding` 统一形状下顺手填的。
+
+留着比删掉更危险:读代码的人会以为「胜局也能给方向」,于是照抄一份,
+然后在第一次真的读到它时崩在 `find(...)!.name` 上。故全部清空为 `[]`,
+并在函数头写明**必须**留空以及为什么。
+
+判据四条:① 实际出现的每个 hint 都能在 `BUILD_STYLES` 找到(行为侧);
+② `styleHints` 不许退回宽 `string[]`(源码层);③ 胜局路径不许填 `styleHints`;
+④ 不许再用 `find(...)!`(正则允许跨行 —— 第一版只匹配同一行,格式化器拆行后就漏了)。
+注入验证:胜局重新填 hint → ③ 红;改回 `!` → ④ 红;放宽类型 → `tsc` 与 ② 同时红。

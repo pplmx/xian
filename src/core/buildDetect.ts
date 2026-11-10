@@ -10,8 +10,21 @@ import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";
 import { modOf } from "./statsCalc";
 
+/**
+ * 六大标准流派的 id。
+ *
+ * 曾经这里是 `id: string`,于是**写错一个不存在的流派 id 编译器不会吭声** ——
+ * `battleAnalysis` 里三处 `styleHints: ["cangfeng"]` 就是这么活下来的:
+ * `cangfeng`(藏锋)从来不是流派之一,而 `styleHints` 只声明成 `string[]`。
+ * 它当时没炸,只因为胜局路径的 `directions` 恒为 `[]`:
+ * 一旦有人让胜局也给方向,`BUILD_STYLES.find(...)!` 就会在读取 `.name` 时抛错。
+ *
+ * 收紧成联合类型后,这类 id 在编译期就红了。
+ */
+export type BuildStyleId = "beishui" | "gangdun" | "fanzhen" | "lianji" | "muze" | "fengmang";
+
 export interface BuildStyleDef {
-  id: string;
+  id: BuildStyleId;
   name: string;
   /** 印章单字 */
   seal: string;
