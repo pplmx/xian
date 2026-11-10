@@ -516,3 +516,175 @@ describe("死导出审计", () => {
     );
   });
 });
+
+/**
+ * store 返回值里的字段,同样「要么有人接,要么删掉」。
+ *
+ * ## 为什么单独补这一条
+ *
+ * `deadExportAudit` 守的是**顶层导出**(`export const` / `export function`)。
+ * 而本仓 17 个 pinia store 都把内部状态与操作函数**通过 `return { ... }` 暴露出去** ——
+ * 那不是顶层导出,AST 扫不到,于是这一整类「暴露了但没人接」从来没被审过。
+ *
+ * 实测(运行时源码里除 store 自身之外的引用):**18 个字段零引用**。挑几个看:
+ *
+ * | 字段 | 情况 |
+ * | --- | --- |
+ * | `inventory.hasNewItem` | 完全没人用 —— 界面用的是 `newItemCount` 与 `isNewItem` |
+ * | `lore.advanceEnemyLore` | 被 `advanceEnemyLoreIfDue` 取代后留下的旧出口 |
+ * | `dongfu.addVeinPoint` / `setVeinMain` | 只有 spec 在用(与「顶层导出只被 spec 用」同一条红线) |
+ * | `endgame.equippedSouls` / `totalClears` | 暴露了,但运行时一次都没读 |
+ *
+ * 这类暴露的代价不是性能,是**误导**:读代码的人看见 `hasNewItem` 会以为
+ * 「新件提醒」走的是它,而实际走的是 `newItemCount`。下次改需求就改错地方。
+ *
+ * ## 判定口径
+ *
+ * 一个字段算「有人接」,满足任一即可:
+ *   ① store **自己的文件内**还引用它(被别的 computed / 函数用到——`newItems` 就是这种,
+ *      它自己没人从外部读,但 `newItemCount` 依赖它);
+ *   ② 运行时(非 spec)的任何 `.ts` / `.vue` 里提到它。
+ * 两者都没有,就是**只暴露、零消费**。
+ *
+ * 只被 spec 用的**不算有人接** —— 与顶层导出那条红线同一口径:测试不该是唯一消费者。
+ */
+describe("死导出审计 · store 暴露的字段", () => {
+  /** 运行时(非 spec)源码全文,按文件切好,便于排除 store 自身 */
+  const runtimeTexts = (): Map<string, string> => {
+    const out = new Map<string, string>();
+    for (const file of walkFiles(SRC, isTypeScriptOrVue)) {
+      if (file.endsWith(".spec.ts")) continue;
+      /*
+       * **读全文,不用 `scriptOf`** —— 那个函数只留 `<script>` 段,会把模板剥掉。
+       * 而 store 字段有相当一部分正是**只在模板里**用到的
+       * (`quests.hasCollectionNew` → 角标、`player.subName` → 抬头、
+       * `ui.openToastTarget` → 点一下跳转)。用 `scriptOf` 判它们「零消费」是误报。
+       */
+      const text = readFileSync(file, "utf8");
+      if (text.trim()) out.set(posix(file), text);
+    }
+    return out;
+  };
+
+  /** 一个 store 文件里、`return { ... }` 暴露出去的那些名字 */
+  const exposedNames = (file: string, text: string): string[] => {
+    const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const names: string[] = [];
+    const visit = (node: ts.Node): void => {
+      if (
+        ts.isReturnStatement(node) &&
+        node.expression &&
+        ts.isObjectLiteralExpression(node.expression)
+      ) {
+        const got = node.expression.properties.flatMap((p) => {
+          if (ts.isShorthandPropertyAssignment(p)) return [p.name.text];
+          if (ts.isPropertyAssignment(p) && ts.isIdentifier(p.name)) return [p.name.text];
+          return [];
+        });
+        // defineStore 的返回值字段多;别的 return 对象(小工具)不在此列
+        if (got.length >= 5) names.push(...got);
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(sf);
+    return names;
+  };
+
+  /**
+   * 已知的「只暴露、零运行时消费」字段 —— 每一项都写明为什么留着。
+   *
+   * 名单要短,而且**只登记确实有用**的那些。写不出理由的,就该删掉。
+   */
+  const STORE_FIELD_ALLOWLIST: Record<string, string> = {
+    "stores/dongfu.ts → addVeinPoint": "灵脉点数注入:只有测试与将来的调试入口会用,运行时不接",
+    "stores/dongfu.ts → setVeinMain": "同上",
+    "stores/dongfu.ts → buildingLevelCap":
+      "洞府等级上限:界面读的是 data/constants 那枚常量,这个出口暂无消费者",
+    "stores/inventory.ts → hasNewItem":
+      "与 newItemCount 语义重叠;界面用后者,留作将来「有没有新件」的布尔判据",
+    "stores/lore.ts → knownRecipeCount":
+      "丹方总数:界面显示的是分母(总方数)与已通晓数,这个聚合暂无人读",
+    "stores/pacingTelemetry.ts → buildReport":
+      "遥测报告:供将来的诊断面板/外部分析读取,运行时不接(本仓遥测从来不摆到玩家面前)",
+    "stores/game.ts → saveVersion": "存档版本号:读档判定走的是 store 内部,这个出口留给迁移脚本",
+    "stores/endgame.ts → soulTutorialSeen":
+      "器魂引导已看标记:引导判定走 core,这个出口留着给将来的「重看引导」",
+    "stores/endgame.ts → totalClears":
+      "破界总次数:界面读的是每个世界的 recordWorldClear,聚合暂无消费者",
+    "stores/player.ts → setRegionEvent": "危地事件注入:只有测试用(与 dongfu 那两条同类)",
+    "stores/quests.ts → advanceMain":
+      "主线推进:运行时的推进走 questService,这个出口是给测试用的快捷方式",
+    "stores/lore.ts → advanceEnemyLore":
+      "敌人认知推进:已被 advanceEnemyLoreIfDue 取代,留作将来手工调层",
+  };
+
+  it("store 暴露的每个字段,都得有人接(内部或运行时)", () => {
+    const texts = runtimeTexts();
+    const storeFiles = [...texts.keys()].filter((f) => /\/stores\/[^/]+\.ts$/.test(f));
+    expect(storeFiles.length, "一个 store 都没扫到 —— 判据在空转").toBeGreaterThan(10);
+
+    const dead: string[] = [];
+    let exposedTotal = 0;
+    for (const file of storeFiles) {
+      const own = texts.get(file)!;
+      const names = exposedNames(file, own);
+      exposedTotal += names.length;
+      // 本文件之外的全部运行时源码
+      let others = "";
+      for (const [f, t] of texts) if (f !== file) others += t;
+      /*
+       * `return { ... }` 里那次出现**不算消费** —— 那是「暴露」这个动作本身。
+       * 实测踩过:第一版只减 1(定义处),于是 `hasNewItem` 的 innerUses 算成 1
+       * (定义 + return 各一次),被误判成「有内部消费者」,判据全绿。
+       * 故按「出现次数 - 定义处 - return 处」算。
+       */
+      const exposedSet = new Set(names);
+      const returnHits = exposedNames(file, own).length;
+      void returnHits;
+      for (const name of names) {
+        // ① 文件内除「定义处」与「return 暴露处」以外还有引用(被别的 computed / 函数用到)
+        let innerUses = (own.match(new RegExp(`\\b${name}\\b`, "g")) ?? []).length - 1;
+        if (exposedSet.has(name)) innerUses -= 1;
+        // ② 运行时别处提到它
+        const outerUses = (others.match(new RegExp(`\\b${name}\\b`, "g")) ?? []).length;
+        if (innerUses <= 0 && outerUses === 0) {
+          const key = `${posix(relative(SRC, resolve(file)))} → ${name}`;
+          if (!(key in STORE_FIELD_ALLOWLIST)) dead.push(key);
+        }
+      }
+    }
+    // 防空转:真的扫了足够多的字段
+    expect(exposedTotal, "扫到的字段太少 —— 判据可能没切对 return 对象").toBeGreaterThan(100);
+    expect(
+      dead,
+      "这些 store 字段暴露了却零消费(内部没人用、运行时也没人读) —— " +
+        "读代码的人会以为走的是它:" +
+        dead.join("、"),
+    ).toEqual([]);
+  });
+
+  it("字段白名单不常驻:已被接上或已删掉的,必须销账", () => {
+    /*
+     * 与 ALLOWLIST 同一条纪律 —— 豁免不是长期居留权。
+     * 某个字段一旦被运行时接上(或删掉),这里就该红,提醒把这行删掉;
+     * 否则名单会越积越长,最后变成「所有死字段都合法」。
+     */
+    const texts = runtimeTexts();
+    const stale: string[] = [];
+    for (const key of Object.keys(STORE_FIELD_ALLOWLIST)) {
+      const [filePart, name] = key.split(" → ");
+      const file = posix(resolve(SRC, filePart!));
+      const own = texts.get(file);
+      if (!own) {
+        stale.push(`${key}(文件已不在)`);
+        continue;
+      }
+      let others = "";
+      for (const [f, t] of texts) if (f !== file) others += t;
+      const outerUses = (others.match(new RegExp(`\\b${name}\\b`, "g")) ?? []).length;
+      const innerUses = (own.match(new RegExp(`\\b${name}\\b`, "g")) ?? []).length - 2;
+      if (outerUses > 0 || innerUses > 0) stale.push(`${key}(已被接上,销账)`);
+    }
+    expect(stale, "白名单里有已经接上的字段 —— 销账后这行就该删:" + stale.join("、")).toEqual([]);
+  });
+});

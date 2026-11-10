@@ -3047,3 +3047,36 @@ spec 引用它、外加一份专门的 `player.rebirth.spec`)。
 分位数与告警线、30 分钟窗口、开关、队列上限 120、以及坏档三态
 (坏项剔除 / 整份非数组 / 坏档之后 `record` 仍能用)。
 注入验证:退回「对数」写法 → 三条红;让 ambient 计入 → 一条红。
+
+### store 把内部状态全暴露出去,十二个字段零消费 —— 而 AST 审计一直没管这一层
+
+`deadExportAudit` 守的是**顶层导出**(`export const` / `export function`)。
+而本仓 17 个 pinia store 都把内部状态与操作函数**通过 `return { ... }` 暴露出去** ——
+那不是顶层导出,AST 扫不到,于是这一整类「暴露了但没人接」从来没被审过。
+
+补判据后当场抓出 **12 个零运行时消费的字段**:
+
+| 字段 | 情况 |
+| --- | --- |
+| `inventory.hasNewItem` | 完全没人用 —— 界面读的是 `newItemCount` 与 `isNewItem` |
+| `lore.advanceEnemyLore` | 被 `advanceEnemyLoreIfDue` 取代后留下的旧出口 |
+| `pacingTelemetry.buildReport` | 遥测报告从不摆到玩家面前,运行时不接 |
+| `dongfu.addVeinPoint` / `setVeinMain` / `player.setRegionEvent` / `quests.advanceMain` | 只有 spec 在用(与「顶层导出只被 spec 用」同一条红线) |
+| `game.saveVersion` / `endgame.soulTutorialSeen` / `endgame.totalClears` / `lore.knownRecipeCount` / `dongfu.buildingLevelCap` | 暴露了,运行时一次都没读 |
+
+**这类暴露的代价不是性能,是误导**:读代码的人看见 `hasNewItem` 会以为「新件提醒」
+走的是它,而实际走的是 `newItemCount`。下次改需求就改错地方。
+
+处理方式是登记**白名单并写明理由**(与既有 `ALLOWLIST` 同一套纪律),
+外加一条「名单不常驻」判据:字段一旦被运行时接上,那行就红,提醒销账。
+写不出理由的字段该删;这里留下的都是「将来有明确去处」的。
+
+### 判据自己踩的两个坑,都记在代码里
+
+- **`return { ... }` 里那次出现不算消费**。第一版只减 1(定义处),于是
+  `hasNewItem` 算成「文件内有 1 处引用」(其实那处就是 return),判据全绿。
+  改成「出现次数 − 定义处 − return 处」才对。
+- **不能用 `scriptOf` 统计引用**。那个函数只留 `<script>` 段、剥掉模板,
+  而 store 字段有一批正是**只在模板里**用的(`quests.hasCollectionNew` → 角标、
+  `player.subName` → 抬头、`ui.openToastTarget` → 点一下跳转)。
+  第一版用 `scriptOf` 时误报了 4 个,读全文后降到 12 个真死字段。
