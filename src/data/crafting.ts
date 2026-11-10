@@ -168,6 +168,23 @@ export function skillStageProgress(level: number): number {
   return 0;
 }
 
+/**
+ * 下一境地的名字 —— 与 `skillStageName` / `skillStageProgress` 读同一份
+ * `SKILL_STAGES`，故三者不会分叉。
+ *
+ * 已到最高一档（大成）返回 `null`：它没有「下一个」。
+ * 修仙录的「技艺进度」要报「离下一境地还差多少」，缺的就是这一句。
+ */
+export function skillNextStageName(level: number): string | null {
+  for (let i = 0; i < SKILL_STAGES.length; i += 1) {
+    if (level >= SKILL_STAGES[i]!.min) {
+      // 阶梯是降序的：i 越小境地越高，i === 0 即大成
+      return i === 0 ? null : SKILL_STAGES[i - 1]!.name;
+    }
+  }
+  return SKILL_STAGES[SKILL_STAGES.length - 2]?.name ?? null;
+}
+
 // ============ 丹方工艺表 ============
 
 export interface RecipeCraft {

@@ -787,6 +787,59 @@
     font-size: var(--type-note);
     line-height: 1.45;
   }
+  /*
+   * 技艺进度 —— 九项技艺各报境地与「离下一境地还差多少」。
+   * 与敌手谱、器谱进度同构：抬头一行汇总 + 逐行明细。
+   */
+  .legacy-skill-desk {
+    margin-top: 0.5rem;
+    padding-top: 0.42rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.09);
+  }
+  .legacy-skill-desk__head {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.2rem 0.5rem;
+    color: var(--color-ink-soft);
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+  }
+  .legacy-skill-desk__head .tabular {
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-sans);
+  }
+  .legacy-skill-desk__rows {
+    margin-top: 0.22rem;
+  }
+  .legacy-skill-desk__row {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.1rem 0.44rem;
+    padding: 0.2rem 0;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.06);
+    font-size: var(--type-note);
+    line-height: 1.45;
+  }
+  .legacy-skill-desk__name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: var(--color-ink-soft);
+  }
+  .legacy-skill-desk__stage {
+    flex: none;
+    color: var(--color-ink-faint);
+  }
+  .legacy-skill-desk__next {
+    color: var(--color-ink-faint);
+  }
+  .legacy-skill-desk__top {
+    color: var(--color-jade);
+  }
   .legacy-enemy-ledger {
     margin-top: 0.5rem;
     padding-top: 0.42rem;

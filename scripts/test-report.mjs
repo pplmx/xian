@@ -442,6 +442,7 @@ const CATEGORIES = [
       "mentorBehaviorAxes",
       "docShotsFresh",
       "insightRulesNote",
+      "skillInsightDesk",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",

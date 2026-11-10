@@ -27818,7 +27818,12 @@ async function taskLegacyHistoryOverflow() {
        * id 取真实模板(`w_zidian` 雾隐长枪 / `h_miwu` 迷雾纱 / `b_zhaoze` 沼泽皮甲)。
        */
       blueprintLore: { w_zidian: 0.9, h_miwu: 0.5, b_zhaoze: 1 },
-      skillExp: {},
+      /*
+       * 技艺经验 —— 下面那条「技艺进度」判据要量境地名与「离下一境地」，
+       * 故夹具里得真有练过的技艺。取四项不同境地：识材(2400 → 精通)、
+       * 凝丹(900 → 娴熟)、锻打(300 → 入门)、铭纹(120 → 初识)。
+       */
+      skillExp: { discern: 2400, condense: 900, smithing: 300, inscribe: 120 },
       enemyLore: { e_icefairy: 2, e_yaolang: 3, e_sword_guard: 1 },
       enemySeen: { e_icefairy: 6, e_yaolang: 16, e_sword_guard: 3 },
       studyFrac: 0,
@@ -28355,6 +28360,59 @@ async function taskLegacyHistoryOverflow() {
             `[320] 器谱进度的「还差几次」与增量对不上 —— «${byPct.get(90)?.text ?? "无"}»` +
               `(0.9 差 0.1,增量 0.02 → 5 次)`,
           );
+        }
+      }
+    }
+
+    /*
+     * 技艺进度 —— 九项技艺折的宿慧是五项里**权重最大**的一项（熟练度之和 ÷ 20，
+     * 最高 45 点；对比读通一张器谱只 1 点）。而此前它在界面上只有两处局部显示：
+     * 重铸面板报「铭纹」一项、装备详情顺带列几条 —— 玩家看不到「我这世练出了
+     * 什么手艺」，也不知道它是宿慧的主要来源。
+     *
+     * 判据核：清单在、报的是境地名不是裸数字、每行报得出「离下一境地还差多少」。
+     */
+    checked += 1;
+    {
+      const skill = await page.evaluate(() => {
+        const box = document.querySelector("[data-legacy-skill-desk]");
+        if (!box) return null;
+        return {
+          summary: (
+            document.querySelector("[data-legacy-skill-summary]")?.textContent || ""
+          ).trim(),
+          rows: [...box.querySelectorAll("[data-legacy-skill]")].map((r) =>
+            (r.textContent || "").replace(/\s+/g, " ").trim(),
+          ),
+        };
+      });
+      if (!skill) {
+        failures.push("[320] 技艺进度没渲染 —— 夹具里明明记了四项技艺");
+      } else if (/NaN|undefined|Infinity/.test(JSON.stringify(skill))) {
+        failures.push(`[320] 技艺进度漏出占位符 —— «${skill.summary}»`);
+      } else if (skill.rows.length === 0) {
+        failures.push("[320] 技艺进度一行都没有 —— 练过的那几项该列出来");
+      } else if (!/动了\s*\d+\s*项/.test(skill.summary) || !/折宿慧\s*\d+/.test(skill.summary)) {
+        failures.push(`[320] 技艺进度的汇总没报清「动了几项 · 折多少宿慧」—— «${skill.summary}»`);
+      } else {
+        /*
+         * 报**境地名**不报裸数字 —— data/crafting 的注释:「用叙事分档代替裸数字,
+         * 避免玩家把技艺读成『等级』」。故每行必须出现一个境地名。
+         */
+        const STAGES = ["生疏", "初识", "入门", "小成", "娴熟", "精通", "通玄", "大成"];
+        const bad = skill.rows.filter((t) => !STAGES.some((st) => t.includes(st)));
+        if (bad.length) {
+          failures.push(
+            `[320] 技艺进度报的是裸数字而不是境地名 —— «${bad[0]}»` +
+              `(crafting 的分档:生疏 → 大成)`,
+          );
+        }
+        /*
+         * 每行要报得出「离下一境地还差多少」—— 只报当前境地等于没说下一步。
+         */
+        const noNext = skill.rows.filter((t) => !/离[^\s]+\s*\d+%|已至/.test(t));
+        if (noNext.length) {
+          failures.push(`[320] 技艺进度没报「离下一境地还差多少」—— «${noNext[0] ?? "无"}»`);
         }
       }
     }

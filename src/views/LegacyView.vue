@@ -259,6 +259,41 @@
                   {{ insightRulesNote() }}
                 </p>
               </div>
+              <!--
+                技艺进度 —— 九项技艺折的宿慧是五项里**权重最大**的一项(熟练度之和
+                ÷ 20，最高 45 点；对比读通一张器谱只 1 点)。而此前它在界面上只有两处
+                局部显示：重铸面板报「铭纹」一项、装备详情顺带列几条 —— 玩家看不到
+                「我这世练出了什么手艺」，也不知道它是宿慧的主要来源。
+
+                报境地名不报裸数字（crafting.ts 的注释：用叙事分档代替裸数字，
+                避免玩家把技艺读成「等级」）；报「折多少宿慧」不报「熟练度之和」；
+                按 SKILLS 原序排 —— 技艺无强弱之分。
+              -->
+              <div
+                v-if="skillDesk.activeCount > 0"
+                class="legacy-skill-desk"
+                data-legacy-skill-desk
+              >
+                <p class="legacy-skill-desk__head">
+                  <span>技艺进度</span>
+                  <span class="tabular" data-legacy-skill-summary>{{ skillSummary }}</span>
+                </p>
+                <ul class="legacy-skill-desk__rows">
+                  <li
+                    v-for="row in skillDesk.rows"
+                    :key="row.id"
+                    class="legacy-skill-desk__row"
+                    :data-legacy-skill="row.id"
+                  >
+                    <span class="legacy-skill-desk__name">{{ row.name }}</span>
+                    <span class="legacy-skill-desk__stage">{{ row.stage }}</span>
+                    <span v-if="row.nextStage" class="legacy-skill-desk__next"
+                      >离{{ row.nextStage }} {{ formatPercent(row.progress, 0) }}</span
+                    >
+                    <span v-else class="legacy-skill-desk__top">已至{{ row.stage }}</span>
+                  </li>
+                </ul>
+              </div>
             </article>
 
             <article class="legacy-panel" data-legacy-vow>
@@ -932,6 +967,7 @@ import { lifeDateText } from "@/ui/lifeDate";
 import { enemyLoreLedger } from "@/ui/enemyLoreLedger";
 import { blueprintProgress } from "@/ui/blueprintProgress";
 import { insightRulesNote } from "@/ui/insightRulesNote";
+import { skillInsightDesk } from "@/ui/skillInsightDesk";
 import { formatDate } from "@/utils/time";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LegacyWheel from "@/components/common/LegacyWheel.vue";
@@ -1072,6 +1108,17 @@ const blueprintPage = computed(() =>
 const nextBlueprintBatch = computed(() =>
   nextRevealCount(blueprintPage.value.hidden, BLUEPRINT_RENDER_BATCH),
 );
+/**
+ * 技艺进度 —— 九项技艺折的宿慧是五项里权重最大的一项。
+ *
+ * 输入是 `lore.skillExp`（与 samsaraService 折算宿慧时读的同一份）。
+ */
+const skillDesk = computed(() => skillInsightDesk(lore.skillExp));
+/** 一句汇总:「九项中动了 3 项 · 折宿慧 12」 */
+const skillSummary = computed(
+  () => `动了 ${skillDesk.value.activeCount} 项 · 折宿慧 ${skillDesk.value.insight}`,
+);
+
 /** 一句汇总:「读过 12 张 · 读通 3 张 · 近读通 2 张」 */
 const blueprintSummary = computed(() => {
   const d = blueprintDesk.value;
