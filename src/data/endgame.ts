@@ -962,6 +962,45 @@ export const TRIALS: TrialDef[] = [
     escalation: 1.05,
     rewardDaoSource: 45,
   },
+  /*
+   * 试炼的层级此前只铺了 23~30 八档,而 tier>=20 的地域覆盖 20~32 ——
+   * 也就是说**刚入天界那三档(20/21/22)与混沌海终局那两档(31/32)没有试炼**。
+   * 补两个端点,让每一个玩到天界的层数都有对应的证道入口。
+   */
+  {
+    id: "chengxin",
+    name: "澄心试炼",
+    seal: "澄",
+    anchorTier: 21,
+    desc: "敌不还手,只是站着。你要在回合数耗完之前破开它的护持 —— 破不开,便是你自己还不够利",
+    /*
+     * 文案写的是**回合数耗完之前**,不是「限时破防」这类含糊说法:
+     * 这条试炼没有设 `maxRounds`,真正卡住玩家的是「攻击力不足以在回合上限内削完血」,
+     * 而回合上限来自 `core/combat` 的兜底 `MAX_COMBAT_ROUNDS`。写成「限时」会让人
+     * 以为有额外计时,写「几次出手内」也不对 —— 连击与额外出手都会多加回合。
+     */
+    ruleText: ["敌方不攻击,护甲 +45%", "连战 5 场", "回合数耗尽即判负"],
+    rules: { enemyExtraMods: { defensePct: 0.45 }, enemyAtkMult: 0 },
+    entryCost: 15,
+    fights: 5,
+    healBetweenPct: 0.6,
+    escalation: 1.05,
+    rewardDaoSource: 45,
+  },
+  {
+    id: "zhongmo",
+    name: "终末试炼",
+    seal: "末",
+    anchorTier: 31,
+    desc: "场场都是界主,不得歇一口气。走到这一步的人,已无须再证明什么 —— 只须走完",
+    ruleText: ["连战 8 场,场场界主强度", "场间不恢复", "最后一程的证道"],
+    rules: {},
+    entryCost: 15,
+    fights: 8,
+    healBetweenPct: 0,
+    escalation: 1.08,
+    rewardDaoSource: 60,
+  },
 ];
 
 export function trialDef(id: string): TrialDef | undefined {

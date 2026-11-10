@@ -20314,9 +20314,18 @@ async function taskCelestialTrialFold() {
             mobile.chapterTitles.join(" / "),
         );
       }
-      if (mobile.seals !== 8 || new Set(mobile.sealIds).size !== 8) {
+      /*
+       * 门印数 = 试炼数,且 id 互异。原先把 8 写死(当时正好 8 个试炼)——
+       * 补到 10 个之后这条就红了,而门印本身一枚不少也一枚不重。
+       * 判据该守「数与 id 都对得上」,不该守一个会过期的数字。
+       */
+      if (
+        mobile.seals < 4 ||
+        mobile.seals !== mobile.sealTops.length ||
+        new Set(mobile.sealIds).size !== mobile.seals
+      ) {
         failures.push(
-          `[390-trial] 应恰有八枚互异试炼门印,实见 ${mobile.seals} 枚 / ${new Set(mobile.sealIds).size} 个 id`,
+          `[390-trial] 试炼门印数与实际不符(实见 ${mobile.seals} 枚 / ${new Set(mobile.sealIds).size} 个互异 id / ${mobile.sealTops.length} 个栅格项)`,
         );
       }
       if (
@@ -20336,15 +20345,29 @@ async function taskCelestialTrialFold() {
           })}`,
         );
       }
+      /*
+       * 四列栅格:行数随试炼数走,不写死「两行」。
+       *
+       * 原先这里钉的是 `sealTops.length !== 8` —— 试炼 8 个时恰好四列两行。
+       * 第 39 轮把试炼补到 10 个(留给 tier 21 与 31 两个端点),布局随之变成三行,
+       * 这条就红了 —— **但那不是布局坏了,是判据把数据量写死进了版式断言**。
+       *
+       * 现在改成:前 4 个必须同排第一行、从第 5 个起必须落到下一行,
+       * 且首行顶端与次行顶端不相等。这样 4/8/12 个试炼都对,只有真的没铺成栅格才红。
+       */
+      const firstRowTop = mobile.sealTops[0];
+      const secondRowStart = mobile.sealTops.findIndex((top) => top > firstRowTop);
       if (
         mobile.columns !== 4 ||
-        mobile.sealTops.length !== 8 ||
-        mobile.sealTops[1] !== mobile.sealTops[0] ||
-        mobile.sealTops[4] <= mobile.sealTops[0]
+        mobile.sealTops.length < 4 ||
+        mobile.sealTops.slice(0, 4).some((top) => top !== firstRowTop) ||
+        secondRowStart !== 4 ||
+        mobile.sealTops.slice(4, 8).some((top) => top !== mobile.sealTops[4])
       ) {
         failures.push(
-          `[390-trial] 手机八门没有铺成四列两行:${JSON.stringify({
+          `[390-trial] 手机试炼没有铺成四列栅格:${JSON.stringify({
             columns: mobile.columns,
+            count: mobile.sealTops.length,
             tops: mobile.sealTops,
           })}`,
         );
@@ -20512,11 +20535,25 @@ async function taskCelestialTrialFold() {
       await settleVisuals(page);
       const desktop = await readFold();
       checked += 1;
-      if (desktop.columns !== 8) {
-        failures.push(`[1280-trial] 桌面档八门应并成一排,实见 ${desktop.columns} 列`);
+      /*
+       * 桌面档要求「每行尽量多排」,但**排不下就换行**,不要求全在一排。
+       *
+       * 原先 `columns !== 8` 把两件事钉在了一起:1280px 能排 8 列、以及试炼正好 8 个。
+       * 试炼补到 10 个后,每行仍排 8 列、第 9 个换行 —— 那是**宽度决定的**,
+       * 不是布局坏了。故改成:列数 ≥4、同排者顶端一致、换行后才升高。
+       */
+      if (desktop.columns < 4) {
+        failures.push(
+          `[1280-trial] 桌面档每行排不下 4 列(实见 ${desktop.columns} 列 / ${desktop.sealTops.length} 项)`,
+        );
       }
-      if (desktop.sealTops.length !== 8 || new Set(desktop.sealTops).size !== 1) {
-        failures.push(`[1280-trial] 八门没有同排并读:${desktop.sealTops.join(" / ")}`);
+      const deskFirstRow = desktop.sealTops.slice(0, desktop.columns);
+      if (
+        deskFirstRow.some((top) => top !== deskFirstRow[0]) ||
+        (desktop.sealTops.length > desktop.columns &&
+          desktop.sealTops[desktop.columns] <= deskFirstRow[0])
+      ) {
+        failures.push(`[1280-trial] 试炼没有同排并读:${desktop.sealTops.join(" / ")}`);
       }
       if (
         desktop.challengeWorkbenchColumns !== 2 ||
@@ -20536,9 +20573,13 @@ async function taskCelestialTrialFold() {
       await settleVisuals(page);
       const compact = await readFold();
       checked += 1;
+      /*
+       * 200% 档退两列续排:列数 2、第 3 项必须落到下一行。
+       * 项数同样不写死(见上面 390 那处注释)。
+       */
       if (
         compact.columns !== 2 ||
-        compact.sealTops.length !== 8 ||
+        compact.sealTops.length < 4 ||
         compact.sealTops[2] <= compact.sealTops[0]
       ) {
         failures.push(
