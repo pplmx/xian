@@ -1,0 +1,145 @@
+/**
+ * 文档截图不能比它展示的界面更旧
+ *
+ * ## 缺口（实测）
+ *
+ * `images/app/*.webp` 是 README 与 `docs/usage.md` 的公开展示图，由
+ * `scripts/shots.mjs` 从构建里重拍。但**没有任何东西提醒该重拍**。
+ *
+ * 实测一次：修行页那张图拍于 `00:06`，而 `CultivationView.vue` 在 `08:16`
+ * 改过一次（修掉「还剩 100%」这个四舍五入报满的文案）。于是 README 上挂着的
+ * 那张图，**展示的是一个已经修掉的 bug** —— 而且挂了八个小时没人发现。
+ *
+ * ## 判据怎么判「旧」
+ *
+ * 逐像素比对图文是否一致不现实（字体渲染、抗锯齿都会抖），而「这张图对应的
+ * 界面改过没有」是 git 能回答的。故判据走 git:
+ *
+ * ```text
+ *   图文件的最后一次提交时间  <  它展示的那几个源文件的最后一次提交时间
+ *   → 红
+ * ```
+ *
+ * 映射写在 `SHOT_SOURCES` 里 —— 每张图文对应哪几处源码。这一份是判据的**输入**,
+ * 不是第二本账:它只说「这张图拍的是哪些页」,而页面怎么渲染仍归源码。
+ *
+ * ## 为什么不是在 pre-commit 拦
+ *
+ * 这条判据**不进 `verify`**:重拍截图要先 `bun run build` + 起浏览器,几分钟起步,
+ * 提交前扛不住(与浏览器门同一档成本)。它作为普通 spec 存在,由人在改完 UI 后
+ * 手动跑 —— 红了就跑 `bun scripts/shots.mjs`。
+ *
+ * ## 判据得能证明自己没空转
+ *
+ * 若 `SHOT_SOURCES` 里写的路径都不存在,或 git 查不到时间,判据会一路绿着。
+ * 故第一件事是核**每一条映射的两侧都真能取到时间**。
+ */
+import { describe, expect, it } from "vite-plus/test";
+import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+
+/**
+ * 每张文档图 → 它展示的界面源码。
+ *
+ * 只写**直接渲染那一页**的文件（视图 + 该页专用的组件与样式）。
+ * 往这里加一条不算放宽:加了就代表那张图也要跟着那些文件重拍。
+ */
+const SHOT_SOURCES: Record<string, string[]> = {
+  "images/app/welcome.webp": ["src/views/WelcomeView.vue", "src/views/CreateView.vue"],
+  "images/app/create.webp": ["src/views/CreateView.vue"],
+  "images/app/home.webp": ["src/views/HomeView.vue"],
+  "images/app/cultivation.webp": ["src/views/CultivationView.vue"],
+  "images/app/adventure.webp": ["src/views/AdventureView.vue"],
+  "images/app/inventory.webp": ["src/views/InventoryView.vue"],
+  "images/app/character.webp": ["src/views/CharacterView.vue"],
+  // 图鉴与藏珍是同一页的两扇门,两张图都跟着它
+  "images/app/codex.webp": ["src/views/CollectionView.vue", "src/views/RealmCodexView.vue"],
+  "images/app/dongfu.webp": ["src/views/DongfuView.vue"],
+  "images/app/world.webp": ["src/views/CelestialView.vue"],
+};
+
+/**
+ * 这个路径有没有**未提交**的改动（工作区或暂存区）。
+ *
+ * 判据必须在 pre-commit 里也能跑:那时新图已经 staged、但还没有提交时间,
+ * 纯按 `git log` 比会把「刚重拍完的图」判成旧图 —— 门因此永远过不去。
+ * 故只要任一侧有未提交改动,这一对就不判。
+ */
+function hasUncommitted(path: string, root: string): boolean {
+  try {
+    const out = execFileSync("git", ["status", "--porcelain", "--", path], {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+    return out.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/** 某个路径最后一次提交的时间（秒）。查不到返回 null。 */
+function lastCommitSec(path: string, root: string): number | null {
+  try {
+    const out = execFileSync("git", ["log", "-1", "--format=%ct", "--", path], {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+    return out ? Number(out) : null;
+  } catch {
+    return null;
+  }
+}
+
+const ROOT = resolve(process.cwd());
+
+describe("文档截图 · 不得比界面更旧", () => {
+  it("判据的前提:每条映射两侧都取得到时间", () => {
+    /*
+     * 这一条防空转:若路径写错、或仓库不在 git 里,下面的比对会永远相等。
+     */
+    expect(Object.keys(SHOT_SOURCES).length, "一张图都没登记").toBeGreaterThan(5);
+    for (const [shot, sources] of Object.entries(SHOT_SOURCES)) {
+      expect(existsSync(resolve(ROOT, shot)), `登记了不存在的图:${shot}`).toBe(true);
+      expect(lastCommitSec(shot, ROOT), `查不到 ${shot} 的提交时间`).not.toBeNull();
+      for (const src of sources) {
+        expect(existsSync(resolve(ROOT, src)), `${shot} 登记的源码不存在:${src}`).toBe(true);
+        expect(lastCommitSec(src, ROOT), `查不到 ${src} 的提交时间`).not.toBeNull();
+      }
+    }
+  });
+
+  it("图不比它展示的界面旧 —— 红了就跑 `bun scripts/shots.mjs`", () => {
+    /*
+     * 现实里总会有「改了一行注释也要重拍」的误报。判据不为此放宽容差:
+     * 重拍一次是 `bun run build && bun scripts/shots.mjs`,几十秒的事;
+     * 而挂着一张展示旧 bug 的图,是玩家第一眼看到的东西。
+     */
+    const stale = Object.entries(SHOT_SOURCES)
+      .filter(([shot, sources]) => {
+        /*
+         * 任一侧还没提交就不判:pre-commit 时新图已 staged 但尚无提交时间,
+         * 纯按 git log 比会把它判成旧图,门永远过不去。
+         */
+        if (hasUncommitted(shot, ROOT)) return false;
+        return !sources.some((src) => hasUncommitted(src, ROOT));
+      })
+      .map(([shot, sources]) => {
+        const shotAt = lastCommitSec(shot, ROOT)!;
+        const newest = sources
+          .map((src) => ({ src, at: lastCommitSec(src, ROOT)! }))
+          .sort((a, b) => b.at - a.at)[0]!;
+        return newest.at > shotAt ? { shot, src: newest.src } : null;
+      })
+      .filter((x): x is { shot: string; src: string } => x !== null)
+      .map(({ shot, src }) => `${shot} 旧于 ${src}`);
+
+    expect(
+      stale,
+      "这些文档图比它展示的界面旧了 —— 跑 `bun run build && bun scripts/shots.mjs` 重拍:" +
+        `\n  ${stale.join("\n  ")}`,
+    ).toEqual([]);
+  });
+});

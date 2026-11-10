@@ -440,6 +440,7 @@ const CATEGORIES = [
       "emptyStateTypeScale",
       "expProgressNote",
       "mentorBehaviorAxes",
+      "docShotsFresh",
       "lootDustLedger",
       "sessionHaul",
       "dustFormat",
