@@ -10,6 +10,15 @@ export const OFFLINE_MIN_SECONDS = 120;
 export const OFFLINE_MODAL_MIN_SECONDS = 300;
 /** 洞府各级离线收益上限(小时),下标为洞府等级换挡 */
 export const OFFLINE_CAP_HOURS = [8, 12, 24, 48, 72] as const;
+/**
+ * 洞府每升一级,其余建筑的等级上限抬高多少 —— **上限规则与卡面同读这一枚**。
+ *
+ * 此前它只写在 `core/engineFacilities`(`(洞府等级 + 1) × 5`),而洞府卡面的
+ * 「其余建筑等级上限 +5/级」是手写字面量,两边谁也管不着谁:改常数卡面就撒谎。
+ * `exportReach.spec` 的基线里躺着 `core/engineFacilities.ts:BUILDING_LEVELS_PER_MANSION`
+ * 那一行,正是「这个导出除了定义处无人引用」的机械证据。
+ */
+export const BUILDING_LEVELS_PER_MANSION = 5;
 /** 离线收益效率 */
 export const OFFLINE_EFFICIENCY = 0.9;
 /** lastActiveAt 写入节流(毫秒) */

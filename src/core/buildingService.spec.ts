@@ -20,6 +20,7 @@ import {
   buildingUpgradeBatchCost,
 } from "./buildingService";
 import { buildingDef, BUILDINGS } from "@/data/buildings";
+import { mansionShortfallOf } from "./engineFacilities";
 
 /** 把聚灵阵撑到 3 级(高于首级,有玄铁成本;且远未到顶层/辖限) */
 function buildArrayToLevel(lv: number): void {
@@ -81,6 +82,101 @@ describe("buildingUpgradeInfo · 资源检查与列差", () => {
     expect(info.reason).toContain("石");
     expect(info.reason).toContain("铁");
     expect(info.reason).toContain("·");
+  });
+});
+
+/**
+ * `blockedBy` —— reason 是哪一档门槛给的。
+ *
+ * 「被洞府档住时要补一条出口」只有那一档才成立,而档位若按中文文案去认
+ * (`reason.includes("洞府")`),改一个字出口就静默消失。故档位由 core 给出。
+ *
+ * 判据把**四档各走一遍**,且两侧都量:该是哪档就是哪档、不该串档。
+ * 只核「能升时是 none」会漏掉「全都被标成同一档」这种更坏的情形。
+ */
+describe("buildingUpgradeInfo · blockedBy 是档位,不是文案", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  const rich = (): void => {
+    const resources = useResourcesStore();
+    resources.spiritStone = gn(1e15);
+    resources.ore = 999999;
+  };
+
+  it("能升 → none", () => {
+    buildArrayToLevel(1);
+    rich();
+    expect(buildingUpgradeInfo("array").blockedBy).toBe("none");
+  });
+
+  it("境界不够 → realm", () => {
+    useDongfuStore().levels = { ...useDongfuStore().levels, library: 0 };
+    usePlayerStore().major = 0; // 藏经阁需筑基
+    rich();
+    const info = buildingUpgradeInfo("library");
+    expect(info.canUpgrade).toBe(false);
+    expect(info.blockedBy).toBe("realm");
+  });
+
+  it("已至顶层 → top", () => {
+    usePlayerStore().major = 9;
+    useDongfuStore().levels = { ...useDongfuStore().levels, mansion: 4, beast: 8 };
+    rich();
+    const info = buildingUpgradeInfo("beast");
+    expect(info.canUpgrade).toBe(false);
+    expect(info.blockedBy).toBe("top");
+  });
+
+  it("受洞府所限 → mansion(且只有这一档才给得出「还差几级」)", () => {
+    usePlayerStore().major = 9;
+    useDongfuStore().levels = { ...useDongfuStore().levels, mansion: 1, array: 10 };
+    rich();
+    const info = buildingUpgradeInfo("array");
+    expect(info.canUpgrade).toBe(false);
+    expect(info.blockedBy).toBe("mansion");
+    expect(mansionShortfallOf("array", useDongfuStore().levels)?.needMansionLevel).toBe(2);
+  });
+
+  it("资源不够 → resources(它盖过能升那一档,不等于「能升」)", () => {
+    buildArrayToLevel(1);
+    const resources = useResourcesStore();
+    resources.spiritStone = gn(0);
+    resources.ore = 0;
+    const info = buildingUpgradeInfo("array");
+    expect(info.canUpgrade).toBe(false);
+    expect(info.blockedBy).toBe("resources");
+  });
+
+  it("改文案不改档位 —— 这是它存在的理由", () => {
+    /*
+     * 把库给的那句 capReason 真的换掉(**在源码层**改不了),故换一条路验证形状:
+     * `blockedBy` 必须由「洞府辖限这个事实」推出,而不是由 reason 里的某个字推出。
+     *
+     * 两条互补的实测:
+     *   ① 同一档门槛,把洞府升一级让它不再成立 → 档位跟着变(不是恒为 mansion);
+     *   ② 文案里没有「洞府」二字的那两档(realm / top)不会被误归进来。
+     * 若实现退回 `reason.includes("洞府")`,①仍会过、②也会过 —— 但它挡不住
+     * 「文案一改就断」;真正的保障是这条判据**读的是 blockedBy 而不是 reason**,
+     * 而 blockedBy 的类型是五档枚举,没有「按文案猜」的余地。
+     */
+    usePlayerStore().major = 9;
+    useDongfuStore().levels = { ...useDongfuStore().levels, mansion: 1, array: 10 };
+    rich();
+    expect(buildingUpgradeInfo("array").blockedBy).toBe("mansion");
+
+    // ① 洞府升到 2 级:不再被档住,档位当场离开 mansion
+    useDongfuStore().levels = { ...useDongfuStore().levels, mansion: 2 };
+    expect(buildingUpgradeInfo("array").blockedBy).toBe("none");
+
+    // ② 另外两档的文案里没有「洞府」二字,各归各档
+    usePlayerStore().major = 0;
+    useDongfuStore().levels = { ...useDongfuStore().levels, library: 0 };
+    expect(buildingUpgradeInfo("library").blockedBy).toBe("realm");
+    usePlayerStore().major = 9;
+    useDongfuStore().levels = { ...useDongfuStore().levels, beast: 8 };
+    expect(buildingUpgradeInfo("beast").blockedBy).toBe("top");
   });
 });
 

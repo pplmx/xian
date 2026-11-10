@@ -73,6 +73,16 @@
         </template>
         <template v-else>{{ keepNumberUnit(info.reason) }}</template>
       </button>
+      <!--
+        「受洞府等级所限」说清了原因,却答不了下一步。这条脚注补上——
+        洞府要升到几级才放开这一次升级,由 core 的 mansionShortfallOf 现算。
+        不并进按钮里:按钮上那句是「为什么按不得」,再加一句会把动作词挤折行;
+        它是**出口**(去升洞府),故自成一行的注脚,与藏经阁的翻检线同位置。
+      -->
+      <p v-if="mansionGap" class="dongfu-building__gate" data-building-gate>
+        <GameIcon name="home" :size="11" />
+        <span>洞府升至 {{ mansionGap.needMansionLevel }} 级后,本级即可营建</span>
+      </p>
     </div>
 
     <div v-show="detailsOpen" :id="detailId" class="dongfu-building__details">
@@ -155,6 +165,7 @@ import {
   upgradeBuilding,
 } from "@/core/buildingService";
 import { studyEta } from "@/core/loreService";
+import { mansionShortfallOf } from "@/core/engineFacilities";
 import { formatDuration, formatGN } from "@/utils/format";
 import GameIcon from "@/components/common/GameIcon.vue";
 import { keepNumberUnit } from "@/utils/keepNumberUnit";
@@ -171,6 +182,19 @@ const level = computed(() => dongfu.levels[props.def.id] ?? 0);
 /** 实际可达上限:洞府全局闸门与自身品类上限取小,账行展现的是"提升到什么档"的依据 */
 const cap = computed(() => dongfu.buildingCap(props.def.id));
 const info = computed(() => buildingUpgradeInfo(props.def.id));
+/**
+ * 被洞府档住时,「洞府还差几级」的那一笔账。
+ *
+ * 账行平时只由 info.reason 说一句「受洞府等级所限」—— 那是原因,不是出路。
+ * 这里读 core 的同一份判定(`mansionShortfallOf` 与 capOfBuilding 同源),
+ * 不在视图里再算一遍洞府辖限的公式。
+ *
+ * 按 `info.blockedBy` 这枚**档位**分支,不按文案认:早先写成
+ * `reason.includes("洞府")`,改一个字这条出口就静默消失,而没有任何门会红。
+ */
+const mansionGap = computed(() =>
+  info.value.blockedBy === "mansion" ? mansionShortfallOf(props.def.id, dongfu.levels) : null,
+);
 const levelProgress = computed(() =>
   cap.value > 0 ? `${Math.min(1, level.value / cap.value) * 100}%` : "0%",
 );

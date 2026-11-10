@@ -5,7 +5,7 @@
  *   · **能不能升**:门槛不止一条(境界 / 已至顶层 / 受洞府等级所限),而判定的先后
  *     就是界面上先出现哪句话 —— 顺序与文案仍写在下面(内容),库只保证"能升"与
  *     "要花什么"出自同一次判定;
- *   · **等级上限取小**:自身上限与 `(洞府等级 + 1) × 5` 取小,且只封升级、不改已有等级;
+ *   · **等级上限取小**:自身上限与 `(洞府等级 + 1) × 每级抬升` 取小,且只封升级、不改已有等级;
  *   · **每小时产出**:速率写在这里的 `perHour`(灵田、藏经阁),零头怎么留、什么时候进位
  *     由库的 `accrue` 管 —— 一秒一次取整会把 1.5 悟道点/小时、2.4 玄铁/小时全部抹平。
  */
@@ -13,7 +13,11 @@ import type { BuildingId, GNum, StatMods } from "@/types";
 import type { UpgradeInfo } from "wanxiang-engine";
 import { accrue, createFacilitySystem } from "wanxiang-engine";
 import { BUILDINGS, buildingDef, libraryWudaoPerHour } from "@/data/buildings";
-import { FIELD_HERB_PER_HOUR, FIELD_ORE_PER_HOUR } from "@/data/constants";
+import {
+  BUILDING_LEVELS_PER_MANSION,
+  FIELD_HERB_PER_HOUR,
+  FIELD_ORE_PER_HOUR,
+} from "@/data/constants";
 import { RESOURCE_LABELS } from "@/data/resourceNames";
 import { realmDef } from "@/data/realms";
 import { buildingCost } from "./formulas";
@@ -32,8 +36,14 @@ export interface FacilityCtx {
  */
 const CTX_NO_REALM: FacilityCtx = { major: 0 };
 
-/** 其余建筑的等级上限 = (洞府等级 + 1) × 5 —— 只写一处 */
-export const BUILDING_LEVELS_PER_MANSION = 5;
+/**
+ * 其余建筑的等级上限 = (洞府等级 + 1) × 每级抬升 —— 只写一处。
+ *
+ * 每级抬升的数值住在 `data/constants`(`BUILDING_LEVELS_PER_MANSION`)而不是这里:
+ * 洞府卡面要印「其余建筑等级上限 +N/级」,而 data 层不许反过来 import core
+ * (见 `layeringAudit.spec` 的分层纪律)。数值在 data、换算在 core,
+ * 卡面与判定读的是同一枚常数 —— 改常数,两边一起变。
+ */
 export function buildingLevelCapOf(mansionLevel: number): number {
   return (mansionLevel + 1) * BUILDING_LEVELS_PER_MANSION;
 }
@@ -44,6 +54,41 @@ export function capOfBuilding(id: BuildingId, levels: Record<string, number>): n
   if (!def) return 0;
   if (def.id === "mansion") return def.maxLevel;
   return Math.min(def.maxLevel, buildingLevelCapOf(levels.mansion ?? 0));
+}
+
+/**
+ * 被洞府档住时,「还差多少」的那一笔账 —— 洞府要升到几级才放开这一次升级。
+ *
+ * 界面上原本只有一句「受洞府等级所限」:它说清了原因,却**答不了下一步**。
+ * 玩家卡在这里手上有灵石也升不动,而这一句里没有「升哪一座、还差几级」。
+ * 按 AGENTS 的「决策信息完整」,置灰的同时要把差多少列出来 —— 资源不足那一档
+ * 早就这么做了(「尚差 X 石」),洞府辖限这一档漏着。
+ *
+ * 只回答**升到几级洞府**这一件事,不回答洞府自己升不升得动(那是另一行的判定);
+ * 也不含「够不够钱」—— 调用方各自叠加,免得两个口径混成一句。
+ *
+ * 洞府已至顶层仍被档住时返回 null:这一档在本作的口径里不该出现
+ * (洞府 4 级 → 其余上限 25 级,高于任何一座自身上限),真出现了也不编一个
+ * 不可能达到的级数 —— 宁可不说话,不给假路标。
+ */
+export function mansionShortfallOf(
+  id: BuildingId,
+  levels: Record<string, number>,
+): { mansionLevel: number; needMansionLevel: number } | null {
+  const def = buildingDef(id);
+  if (!def || def.id === "mansion") return null;
+  const level = Math.max(0, Math.floor(levels[id] ?? 0));
+  if (level >= def.maxLevel) return null; // 自身已至顶,不关洞府的事
+  const mansion = Math.max(0, Math.floor(levels.mansion ?? 0));
+  if (buildingLevelCapOf(mansion) > level) return null; // 没被档住
+  /*
+   * 要升的这一次是 level → level+1:洞府上限必须**严格大于** level,
+   * 即 (m+1) × N > level。解出最小的 m。用 `Math.floor(level / N)` 而不是
+   * 逐个试:两者等价(都让整除边界落到下一级),但一次除法少一处循环。
+   */
+  const needMansionLevel = Math.floor(level / BUILDING_LEVELS_PER_MANSION);
+  if (needMansionLevel > (buildingDef("mansion")?.maxLevel ?? Infinity)) return null;
+  return { mansionLevel: mansion, needMansionLevel };
 }
 
 /**

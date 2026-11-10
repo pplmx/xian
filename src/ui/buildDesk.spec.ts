@@ -5,6 +5,26 @@ import { buildCoreGaps, buildStageMeter } from "./buildDesk";
 
 const source = readSource;
 
+/**
+ * 去掉注释,只留代码。
+ *
+ * 下面几条判据按「从 `const stageGapText` 切到下一个 `const`」的方式取一段源码
+ * 再断言。切出来的那段**包含说明注释**,而注释里为了讲清来龙去脉会引用旧文案
+ * (「距成形还差 25% 契合」)。于是「正文该保留缺口明细」这条 `/还差/` 断言
+ * 可以靠注释里的引文满足 —— 真把正文字面量删掉,判据照样绿。
+ *
+ * 实测过:把 `stageGapText` 的返回值改成「下一条识别线…未过」(不含「还差」),
+ * `expect(gap).toMatch(/还差/)` 仍通过,因为上面那段注释里写着「还差多少」
+ * 与「距成形还差 25% 契合」。这正是本仓反复记的那类假绿。
+ *
+ * 故凡「按切片断言源码」的判据都先过这一层。保留换行,方便报错时对行。
+ */
+function stripComments(text: string): string {
+  return text
+    .replace(/\/\*[\s\S]*?\*\//g, (block) => block.replace(/[^\n]/g, " "))
+    .replace(/(^|[^:])\/\/.*$/gm, "$1");
+}
+
 describe("铸道案 · 六路、形状与下一步同读此刻", () => {
   it("契合按雏形 / 成形 / 大成三段推进，坏数归零、顶阶走满", () => {
     expect(buildStageMeter(0.1)).toMatchObject({
@@ -260,25 +280,39 @@ describe("铸道案 · 章首 fact 与正文缺口不许是同一句话", () => 
    */
   it("章首报识别线的汇总,正文报缺口明细 —— 两处不许都是「还差 N%」", () => {
     const src = source("src/views/BuildView.vue");
-    const fact = src.slice(src.indexOf("const stageFactText"), src.indexOf("const stageGapText"));
-    const gap = src.slice(src.indexOf("const stageGapText"), src.indexOf("const powerRating"));
+    const fact = stripComments(
+      src.slice(src.indexOf("const stageFactText"), src.indexOf("const stageGapText")),
+    );
+    const gap = stripComments(
+      src.slice(src.indexOf("const stageGapText"), src.indexOf("const powerRating")),
+    );
 
     expect(fact.trim().length, "章首 fact 定位不到 —— 判据会空转").toBeGreaterThan(0);
     expect(gap.trim().length, "正文缺口定位不到 —— 判据会空转").toBeGreaterThan(0);
 
-    // 正文那一句保留「还差 N% 契合」:它才是明细
-    expect(gap, "正文该保留缺口明细").toMatch(/还差/);
+    /*
+     * 正文那一句保留「还差 N% 契合」:它才是明细。
+     *
+     * 断言落在**返回值**上(`return \`…还差…\``),不是「这一段里出现过还差」——
+     * 后者被注释满足过一次(见 `stripComments` 的说明),而那正是这条判据
+     * 本轮差点整片假绿的由来。
+     */
+    expect(gap, "正文的返回值该保留缺口明细(还差 N 契合)").toMatch(/return\s*`[^`]*还差/);
     // 章首那一句不许再算同一个「还差 N%」
     expect(
       fact,
       "章首与正文都说「还差 N%」—— 同一章开头与正文各念一遍,而它们是同一个数",
-    ).not.toMatch(/还差 \$\{formatPercent/);
+    ).not.toMatch(/还差/);
   });
 
   it("章首改报「过了几条识别线」—— 那是正文没有的汇总", () => {
     const src = source("src/views/BuildView.vue");
-    const fact = src.slice(src.indexOf("const stageFactText"), src.indexOf("const stageGapText"));
-    expect(fact, "章首要读识别线那一份(过线数 / 总条数)").toMatch(/stageSteps|识别线/);
+    const fact = stripComments(
+      src.slice(src.indexOf("const stageFactText"), src.indexOf("const stageGapText")),
+    );
+    // 注释里提到「识别线」不算数 —— 它必须真出现在返回值里
+    expect(fact, "章首要读识别线那一份(过线数 / 总条数)").toMatch(/return\s*`[^`]*识别线/);
+    expect(fact, "过线数要真数一遍 stageSteps,不许写死分母").toContain("stageSteps");
   });
 });
 

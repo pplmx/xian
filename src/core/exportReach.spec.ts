@@ -64,7 +64,6 @@ const BASELINE = new Set([
   "core/daoluService.ts:availableBondEvents",
   "core/economySim.ts:avgDustPerDrop",
   "core/economySim.ts:auditEra",
-  "core/engineFacilities.ts:BUILDING_LEVELS_PER_MANSION",
   "core/engineResources.ts:SMALL_LEDGER",
   "core/equipSet.ts:SUNDER_SET_ARMOR_PEN",
   "core/equipSet.ts:THORNS_SET_COUNTER_RATE",

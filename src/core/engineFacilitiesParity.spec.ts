@@ -23,6 +23,7 @@ import {
   buildingRates,
   hourlyYieldText,
   libraryWudaoPerHour,
+  mansionShortfallOf,
   produceOf,
 } from "./engineFacilities";
 import { formatExact } from "@/utils/format";
@@ -158,6 +159,72 @@ describe("设施对账 —— 能不能升 / 为什么 / 要花什么", () => {
     expect(buildingUpgradeInfo("array").canUpgrade).toBe(false);
     expect(buildingUpgradeInfo("array").reason).toBe("受洞府等级所限");
     expect(buildingUpgradeInfo("mansion").canUpgrade).toBe(true); // 洞府自己不受此限
+  });
+});
+
+/**
+ * 「受洞府等级所限」只说原因,不说出路 —— 补的是那半句。
+ *
+ * 玩家卡在这里时手上有灵石也升不动,而按钮上那句里没有「升哪一座、还差几级」。
+ * AGENTS 的「决策信息完整」要求置灰时把差多少列出来,资源不足那一档早就这么做了
+ * (「尚差 X 石 · Y 铁」),洞府辖限这一档漏着。
+ *
+ * 判据两侧都量:该档必须给出**真实的洞府级数**(不是 0、不是当前级),不该给的档
+ * 一律不许凭空印一行 —— 与历世履历「没记过的世不许凭空印一行」同一条纪律。
+ */
+describe("设施对账 · 被洞府档住时说出「洞府还差几级」", () => {
+  it("被档住:needMansionLevel 是放行那一级,且比当前洞府级高", () => {
+    // 洞府 1 级 → 上限 10 级;聚灵阵已 10 级,要再升一级就需要洞府 2 级
+    usePlayerStore().major = 3;
+    useDongfuStore().levels = { ...zeroLevels(), mansion: 1, array: 10 };
+    const gap = mansionShortfallOf("array", useDongfuStore().levels);
+    expect(gap, "被洞府档住却没给出差距 —— 按钮上那句仍然只有一个「所限」").not.toBeNull();
+    expect(gap!.mansionLevel).toBe(1);
+    expect(gap!.needMansionLevel).toBe(2);
+    // 真到了那一级,这一档就该消失(不是恒真的说法)
+    expect(mansionShortfallOf("array", { ...zeroLevels(), mansion: 2, array: 10 })).toBeNull();
+    // 也不是「当前级 + 0」那种空话
+    expect(gap!.needMansionLevel).toBeGreaterThan(gap!.mansionLevel);
+  });
+
+  it("洞府 0 级:其余建筑止步 5 级,升第 6 级要洞府 1 级", () => {
+    const gap = mansionShortfallOf("field", { ...zeroLevels(), field: 5 });
+    expect(gap).toEqual({ mansionLevel: 0, needMansionLevel: 1 });
+  });
+
+  it("不该印的四档一律返回 null —— 不许凭空给一条假路标", () => {
+    // ① 没被档住
+    expect(mansionShortfallOf("field", { ...zeroLevels(), mansion: 4, field: 3 })).toBeNull();
+    // ② 自身已至顶(那是「已至顶层」的事,不关洞府)
+    expect(mansionShortfallOf("beast", { ...zeroLevels(), beast: 8 })).toBeNull();
+    // ③ 洞府自己不受自己这一条限制
+    expect(mansionShortfallOf("mansion", { ...zeroLevels(), mansion: 4 })).toBeNull();
+    // ④ 不存在的建筑 id(坏档)不抛错,也不编数
+    expect(mansionShortfallOf("nope" as BuildingId, { ...zeroLevels() })).toBeNull();
+  });
+
+  it("与真实闸门自洽:说「升到 N 级可营建」之后,真到 N 级就真的能升", () => {
+    usePlayerStore().major = 3;
+    const resources = useResourcesStore();
+    resources.spiritStone = gn(1e15);
+    resources.ore = 999999;
+    for (const lv of [5, 10, 15, 20]) {
+      const levels = { ...zeroLevels(), mansion: 0, array: lv };
+      const gap = mansionShortfallOf("array", levels);
+      if (!gap) continue; // 自身已至顶那一档不归它管
+      const before = { ...levels, mansion: gap.needMansionLevel };
+      useDongfuStore().levels = { ...levels };
+      expect(buildingUpgradeInfo("array").canUpgrade, `洞府 0 级 / 聚灵阵 ${lv} 级`).toBe(false);
+      useDongfuStore().levels = before;
+      /*
+       * 到了那一级,「受洞府等级所限」这一句必须**不再出现** —— 但可能被别的门槛
+       * 拦住(比如聚灵阵 20 级已至顶层),故只核这一句不在,不核 canUpgrade。
+       */
+      expect(
+        buildingUpgradeInfo("array").reason,
+        `升到洞府 ${gap.needMansionLevel} 级后仍报「受洞府等级所限」—— 那句路标是假的`,
+      ).not.toBe("受洞府等级所限");
+    }
   });
 });
 

@@ -655,6 +655,26 @@
     font-size: var(--type-note);
     line-height: 1.58;
   }
+  /*
+   * 「洞府升至 N 级后,本级即可营建」—— 被洞府档住那一档的出口。
+   *
+   * 与上面两条注脚同一套排版(图标 + 一句),色走 ink-faint 而不是 qing:
+   * 它是在告诉你「下一步去哪儿」,不是这一座此刻的读数。放在按钮**之后**,
+   * 因为读者先要知道为什么按不得,再要出路。
+   */
+  .dongfu-building__gate {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.28rem;
+    margin-top: 0.3rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .dongfu-building__gate svg {
+    flex: none;
+    margin-top: 0.16rem;
+  }
   .dongfu-building__bond,
   .dongfu-building__study {
     display: flex;

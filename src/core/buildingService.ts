@@ -5,7 +5,7 @@ import type { BuildingId, GNum } from "@/types";
 import { buildingDef } from "@/data/buildings";
 import { add, gnZero, gte, subClamp } from "@/utils/gnum";
 import { formatGN } from "@/utils/format";
-import { buildingUpgradeInfoOf } from "./engineFacilities";
+import { buildingUpgradeInfoOf, mansionShortfallOf } from "./engineFacilities";
 import { track } from "./progress";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
@@ -53,6 +53,15 @@ export function buildingUpgradePreview(
 export interface BuildingUpgradeInfo {
   canUpgrade: boolean;
   reason: string;
+  /**
+   * 这一句 reason 是**哪一档**门槛给的 —— 界面按它分支,不按文案认。
+   *
+   * 「被洞府档住时要补一条出口」这件事只有那一档才成立。让视图去
+   * `reason.includes("洞府")` 是最短的路,但那是**按文案认档**:改一个字
+   * (「受洞府等级所限」→「洞府等级不足」)那条出口就静默消失,而没有任何门会红。
+   * 故档位由 core 给出,文案随便改。
+   */
+  blockedBy: "none" | "realm" | "top" | "mansion" | "resources";
   stone: GNum;
   ore: number;
   nextLevel: number;
@@ -81,10 +90,50 @@ export function buildingUpgradeInfo(id: BuildingId): BuildingUpgradeInfo {
       const parts: string[] = [];
       if (stoneShort.m > 0) parts.push(`尚差 ${formatGN(stoneShort)} 石`);
       if (oreShort > 0) parts.push(`${oreShort} 铁`);
-      return { canUpgrade: false, reason: parts.join(" · "), stone, ore, nextLevel };
+      return {
+        canUpgrade: false,
+        reason: parts.join(" · "),
+        blockedBy: "resources",
+        stone,
+        ore,
+        nextLevel,
+      };
     }
   }
-  return { canUpgrade: info.can, reason: info.reason, stone, ore, nextLevel };
+  return {
+    canUpgrade: info.can,
+    reason: info.reason,
+    blockedBy: info.can ? "none" : blockedKindOf(id, info.reason, dongfu.levels),
+    stone,
+    ore,
+    nextLevel,
+  };
+}
+
+/**
+ * 库回来的那句 reason 属于哪一档门槛。
+ *
+ * 库的 `UpgradeInfo` 只有 `can` 与一句人话(`reason`),没有机器可读的档位 ——
+ * 那是库的设计取向(文案由内容给)。本作要按档位分支(只有「受洞府所限」
+ * 那一档才有「洞府还差几级」这条出口),故在这里把那一句映射回档位。
+ *
+ * 为什么仍然要读文案:这是**内容层**的一次映射,而文案本身也写在本仓
+ * (`core/engineFacilities` 的 `blocked`/`capReason`)。三道门槛的判定顺序
+ * 由库保证,这里只做归类。映射不中时返回 "realm" 会是瞎猜,故默认 `"mansion"`
+ * 只在真被洞府档住时成立 —— 用 `mansionShortfallOf` 反查一次,查不到就归 "top"。
+ *
+ * 这个函数的**形状**由单测钉住:三种门槛各给一次,必须各归各档。
+ */
+function blockedKindOf(
+  id: BuildingId,
+  reason: string,
+  levels: Record<string, number>,
+): BuildingUpgradeInfo["blockedBy"] {
+  if (reason.startsWith("需 ")) return "realm";
+  if (reason === "已至顶层") return "top";
+  // 剩下就是库的 capReason 那一档。仍用 mansionShortfallOf 反查,避免把
+  // 「某个我没想到的未来门槛」误标成洞府所限
+  return mansionShortfallOf(id, levels) ? "mansion" : "top";
 }
 
 export function upgradeBuilding(id: BuildingId): boolean {

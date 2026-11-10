@@ -4,6 +4,7 @@ import { formatSignedPercent } from "@/utils/format";
 import {
   ARRAY_QI_CAP_PER_LEVEL,
   BEAST_MULT_PER_LEVEL,
+  BUILDING_LEVELS_PER_MANSION,
   FIELD_HERB_PER_HOUR,
   FIELD_ORE_PER_HOUR,
   FORGE_LEVEL_PER_CAP,
@@ -38,7 +39,7 @@ export const BUILDINGS: BuildingDef[] = [
     costOre: 20,
     effectText: (lv) => [
       `离线收益上限 ${OFFLINE_CAP_HOURS[Math.min(lv, OFFLINE_CAP_HOURS.length - 1)]} 小时`,
-      "其余建筑等级上限 +5/级",
+      `其余建筑等级上限 +${BUILDING_LEVELS_PER_MANSION}/级`,
       `修炼速度 ${formatSignedPercent(lv * MANSION_CULT_SPEED_PER_LEVEL)}`,
     ],
     mods: (lv): StatMods => ({ cultivationSpeed: lv * MANSION_CULT_SPEED_PER_LEVEL }),
