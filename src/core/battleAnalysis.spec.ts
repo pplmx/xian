@@ -5,6 +5,7 @@ import { analyzeBattle, battleDataRows } from "./battleAnalysis";
 import { runGauntlet } from "./gauntlet";
 import { BUILD_PROFILES, buildSnap } from "./buildSim";
 import { RandomService, mulberry32 } from "@/utils/random";
+import { celestialFoeOrigin, celestialJudgement } from "./gauntlet";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -376,5 +377,132 @@ describe("天界战报 · 此战之判要有战后归因", () => {
     expect(at, "战报行上找不到遥测字段").toBeGreaterThan(-1);
     const doc = gauntlet.slice(Math.max(0, at - 900), at);
     expect(doc, "遥测的持久化约束没写进注释").toMatch(/不可写入道痕|别把它存进任何持久化/);
+  });
+});
+
+/**
+ * 方向要「冲着某条病因」去,不是流派广告。
+ *
+ * ## 缺口
+ *
+ * `directions[].reason` 此前直接取流派的固定 `desc` ——「生生不息,久战不衰;惧雷霆一击」。
+ * 那是这条流派的**自我介绍**,不是「它为什么能解**你这一场**的困」。
+ *
+ * 两个后果:
+ *
+ * 一 **同一句话在不同败局里出现两次**。被真伤打穿与被人多打两下,界面都会推荐
+ *    沐泽流,配同一句 desc —— 玩家读完仍不知道这条建议是冲着什么来的;
+ * 二 **天界的方向栏几乎永远是空的**。`foeOriginFinding`(天界败局最常见的归因)的
+ *    `styleHints` 是空数组,而界面把方向单独成一段(标题「可借力的方向(非唯一解)」);
+ *    天界那句劝告(「换个方向而非继续堆,或再破一境」)只是被拼进了**病因**正文,
+ *    于是玩家读到一句劝告,却没有「这是劝告」的标签。
+ *
+ * ## 判据守什么
+ *
+ * 一 每条方向都要引用**触发它的那条归因**原文,不只给流派 desc;
+ * 二 两类不同败局给出的方向要**带着不同的证据** —— 同一句 desc 不算区分;
+ * 三 天界的判定类归因要真的能产出方向(它就是上面第二条那个空的来源)。
+ */
+describe("方向 · 要说清冲着哪条病因", () => {
+  const mkStats = (o: Partial<CombatSideStats> = {}): CombatSideStats => ({
+    dealt: gn(1000),
+    taken: gn(2000),
+    pierceTaken: gnZero(),
+    biggestHitTaken: gn(100),
+    healed: gnZero(),
+    shieldAbsorbed: gnZero(),
+    dodges: 0,
+    missedHits: 0,
+    hitsLanded: 20,
+    counters: 0,
+    combos: 0,
+    crits: 2,
+    skillCasts: 3,
+    artifactProcs: 0,
+    stunnedTurns: 0,
+    ...o,
+  });
+
+  it("每条方向都引用触发它的归因,不只报流派名与自述", () => {
+    const a = analyzeBattle(
+      {
+        win: false,
+        rounds: 12,
+        playerHpPct: 0,
+        log: [],
+        stats: { player: mkStats({ pierceTaken: gn(1500) }), enemy: mkStats() },
+      },
+      "gangdun",
+    )!;
+    expect(a.directions.length, "这条败局该给方向").toBeGreaterThan(0);
+    for (const d of a.directions) {
+      expect(d.reason, `${d.styleName} 的方向没引用任何依据 —— 那是流派广告,不是处方`).toMatch(
+        /冲着「.+」去的/,
+      );
+    }
+  });
+
+  it("不同病因给出的方向要带不同证据 —— 同一句 desc 不算区分", () => {
+    /*
+     * 这条是缺陷本体:改前两类败局的方向 reason 完全相同(都只是流派 desc),
+     * 玩家分不出建议是不是冲着同一个原因。改后证据必须不同。
+     */
+    const pierce = analyzeBattle(
+      {
+        win: false,
+        rounds: 12,
+        playerHpPct: 0,
+        log: [],
+        stats: { player: mkStats({ pierceTaken: gn(1500) }), enemy: mkStats() },
+      },
+      "gangdun",
+    )!;
+    /*
+     * 当前流派用 `beishui`:震慑那条告警只推罡盾流,而罡盾正是被「排除当前主流派」
+     * 规则滤掉的那一个 —— 用 gangdun 会得到空方向,那是正确行为,不是缺陷。
+     */
+    const stun = analyzeBattle(
+      {
+        win: false,
+        rounds: 12,
+        playerHpPct: 0,
+        log: [],
+        stats: { player: mkStats({ stunnedTurns: 5 }), enemy: mkStats() },
+      },
+      "beishui",
+    )!;
+    const ev = (x: typeof pierce): string[] =>
+      x.directions.map((d) => /冲着「(.+)」去的/.exec(d.reason)?.[1] ?? "");
+    const pierceEv = ev(pierce).filter(Boolean);
+    const stunEv = ev(stun).filter(Boolean);
+    expect(pierceEv.length, "真伤败局没给出引用依据").toBeGreaterThan(0);
+    expect(stunEv.length, "震慑败局没给出引用依据").toBeGreaterThan(0);
+    expect(
+      pierceEv.some((e) => stunEv.includes(e)),
+      `两种不同病因引用了同一句依据(${pierceEv.join(" / ")}) —— 方向没跟着病因走`,
+    ).toBe(false);
+  });
+
+  it("天界的判定类归因要能产出方向(方向栏此前在天界几乎永远空)", () => {
+    /*
+     * `foeOriginFinding` 是天界败局最常见的归因,而它的 `styleHints` 曾是空数组 ——
+     * 于是「可借力的方向」那一栏在天界场景下永远是空的。
+     */
+    const heavy = { attackPct: 3, maxHpPct: 3, defensePct: 3 };
+    const a = analyzeBattle(
+      {
+        win: false,
+        rounds: 12,
+        playerHpPct: 0,
+        log: [],
+        foeOrigin: celestialFoeOrigin(celestialJudgement(heavy as never, 9, 25)),
+        stats: { player: mkStats(), enemy: mkStats() },
+      },
+      "gangdun",
+    )!;
+    expect(
+      a.directions.length,
+      "天界判定类败局没有给出任何方向 —— 「下一次怎么办」那一栏又是空的",
+    ).toBeGreaterThan(0);
   });
 });

@@ -57,6 +57,18 @@ function hasEdge(o: FoeOrigin): boolean {
   return o.ratio > 1 || o.damageBonus > 0 || o.damageReduction > 0;
 }
 
+/**
+ * 归因原文截一句,给方向引用。
+ *
+ * 归因有时很长(「敌之加成(道之理解):道之理解 ×1.42;境界压制 增伤 +25%;判定随你的
+ * 厚度与境界而来……」),整句搬到方向里会把那一栏撑爆。取第一个分句即可 ——
+ * 它通常就是那条病因的骨架,后半段是解释与劝告。
+ */
+function clipEvidence(text: string): string {
+  const head = text.split(/[;:。]/)[0] ?? text;
+  return head.length > 28 ? `${head.slice(0, 28)}…` : head;
+}
+
 /** 倍数用两位小数:1.113^20 这种数写成 1.9 与写成 1.87 对玩家是两回事 */
 const ratioText = (n: number): string => `×${(Math.round(n * 100) / 100).toFixed(2)}`;
 
@@ -236,7 +248,30 @@ function foeOriginFinding(result: CombatResult): AnalysisFinding[] {
   if (!o || !hasEdge(o)) return [];
   const lines = foeOriginLines(o);
   if (lines.length === 0) return [];
-  return [{ text: `敌之加成(${o.label}):${lines.join(";")}`, styleHints: [] }];
+  /*
+   * 天界的判定要带**方向**,不能只带病因。
+   *
+   * 「道之理解」是按玩家的**厚度**加厚敌人(`celestialDepthScale` 越厚倍率越大),
+   * 「境界压制」是按境界差增伤 —— 两者都有明确的出路:前者对薄、后者破境。
+   * 那句话本来就在 `origin.note` 里(`JUDGEMENT_DIRECTION`),于是它被
+   * `foeOriginLines` 拼进了这一条的**正文**,混在「病因」的语气里。
+   *
+   * 而界面把 `findings` 当病因段渲染(`BattleIntelPanel` 用 · 起头一行行排),
+   * 方向另有专门一段(标题写着「可借力的方向(非唯一解)」)。结果是:
+   * 玩家在天界败局里读到的最后一句其实是劝告,却没有「这是劝告」的标签 ——
+   * 而 `directions` 那一栏在天界场景下几乎永远是空的。
+   *
+   * 故这里把方向**同时**挂到 `styleHints`(走专门的 directions 段)——
+   * 薄构筑那一侧:背水(以伤换力)、沐泽(久战不衰)都不靠堆厚度取胜。
+   * 文案本身仍留在 findings 里:删掉它会让「只读病因段」的人失去那句解释。
+   */
+  const judged = o.label.includes("判定") || o.note?.includes("判定随你的厚度");
+  return [
+    {
+      text: `敌之加成(${o.label}):${lines.join(";")}`,
+      styleHints: judged ? ["beishui", "muze"] : [],
+    },
+  ];
 }
 
 /**
@@ -421,18 +456,40 @@ export function analyzeBattle(
     ...firstMoveFinding(result),
     ...defeatFindings(p, p.taken, result.rounds),
   ];
-  const hintCount = new Map<string, number>();
+  /*
+   * 方向不是「换个流派试试」——**每条方向都要说清它是冲着哪条病因去的**。
+   *
+   * 此前 `reason` 直接取流派的固定 `desc`(「生生不息,久战不衰;惧雷霆一击」)。
+   * 那是这条流派的自我介绍,不是「它为什么能解**你这一场**的困」:
+   * 同一句 desc 在「被真伤打穿」和「被先手压制」两种败局里会出现两次,
+   * 而它对这两个问题的相关性完全不同。玩家读到的是流派广告,不是处方。
+   *
+   * 现在把触发它的那条归因原文带上(截断到一句),方向就成了
+   * 「背水流 —— 因为「真伤占总承伤 75%」」。`styleHints` 的第一位权重最高
+   * (见下面的 `2 - idx`),那一份证据正是最该被引用的。
+   */
+  const hintCount = new Map<string, { score: number; evidence: string }>();
   for (const f of findings) {
     f.styleHints.forEach((id, idx) => {
-      if (id !== currentStyleId) hintCount.set(id, (hintCount.get(id) ?? 0) + (2 - idx));
+      if (id === currentStyleId) return;
+      const weight = 2 - idx;
+      const prev = hintCount.get(id);
+      if (!prev || weight > prev.score) {
+        hintCount.set(id, { score: (prev?.score ?? 0) + weight, evidence: f.text });
+      } else {
+        prev.score += weight;
+      }
     });
   }
   const directions = [...hintCount.entries()]
-    .sort((a, b) => b[1] - a[1])
+    .sort((a, b) => b[1].score - a[1].score)
     .slice(0, 2)
-    .map(([id]) => {
+    .map(([id, info]) => {
       const style = BUILD_STYLES.find((x) => x.id === id)!;
-      return { styleName: style.name, reason: style.desc };
+      return {
+        styleName: style.name,
+        reason: `${style.desc} —— 冲着「${clipEvidence(info.evidence)}」去的`,
+      };
     });
   return {
     headline: `败于第 ${result.rounds} 回合`,

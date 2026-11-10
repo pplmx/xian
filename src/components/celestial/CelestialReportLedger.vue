@@ -144,6 +144,18 @@
             <span aria-hidden="true">◆</span>
             <span>{{ finding.text }}</span>
           </p>
+          <!--
+            方向单独起一行小标题 —— 与历练页同一句(「可借力的方向(非唯一解)」)。
+            归因是「你为什么输」,方向是「下一步试什么」;两者挤成连续几行、
+            只靠 ◆ / → 区分,读起来仍是一串并列的结论,而它们其实层级不同。
+          -->
+          <p
+            v-if="fightAnalysis.directions.length"
+            class="celestial-report-judgement__label text-note"
+            data-celestial-report-direction-label
+          >
+            可借力的方向(非唯一解):
+          </p>
           <p
             v-for="(dir, index) in fightAnalysis.directions"
             :key="`d${index}`"
