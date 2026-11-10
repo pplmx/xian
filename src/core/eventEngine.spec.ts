@@ -24,9 +24,10 @@ import { eventDef } from "@/data/events";
 import { GONGFA } from "@/data/gongfa";
 import { PILLS } from "@/data/pills";
 import { BAG_CAPACITY } from "@/data/constants";
-import { resolveEventChoice } from "./eventEngine";
+import { randomEventPill, resolveEventChoice } from "./eventEngine";
 import { stoneByTier } from "./formulas";
 import { track } from "./progress";
+import { qualityDef } from "@/data/qualities";
 
 describe("事件结算 · 灵石代价守恒", () => {
   beforeEach(() => {
@@ -536,5 +537,72 @@ describe("奇缘授方 · 文案承诺必须落成知识", () => {
     expect(resources.page - page).toBe(10);
     expect(res.notableLines).toEqual(["此道功法已尽,残页已并入总账"]);
     expect(adventure.session!.itemGain).toBe(1);
+  });
+});
+
+/**
+ * 际遇给的丹药得跟得上玩家此刻的境界。
+ *
+ * ## 缺口是什么(第 67 轮实测)
+ *
+ * `randomEventPill` 的权重原公式是 `100 / (1 + 品阶rank × 2)` ——
+ * **只按品阶降权,不看玩家在哪一境**。实测境界 20 时的抽取分布:
+ *
+ * ```text
+ * spirit(灵品) 18.9%   fine(良品) 18.4%   mortal 11.0%
+ * divine(神品) 10.4%   immortal 11.8%
+ * ```
+ *
+ * 高境界玩家有 **37% 的概率抽到灵品及以下的丹药** —— 那些丹在仙界几乎不值钱。
+ * 而更荒唐的是 **mortal(凡品)占了 11%**:境界 20 的人拿到一枚聚气散。
+ *
+ * 已给权重再乘一个境界差因子:`1 / (1 + max(0, major - minRealm) × 0.5)`。
+ *
+ * ## 判据必须**真去抽**,不许在测试里重算公式
+ *
+ * 第一版我在 spec 里把权重公式抄了一遍、拿它算占比 —— 那样改实现它也不会红。
+ * 注入验证时正是这个毛病暴露的:把衰减因子从 0.5 改回 1(等于取消衰减),
+ * 判据**照样绿**,因为它算的是自己那份拷贝。
+ *
+ * 现在改成**调真函数抽 400 次**,数实际抽到的高/低品阶各几枚。
+ */
+describe("际遇丹药 · 给的丹要跟得上境界", () => {
+  const HIGH_FLOOR = qualityDef("earth").rank;
+  const LOW_CEIL = qualityDef("spirit").rank;
+
+  /** 真抽 count 次,返回高品阶与低品阶各占多少 */
+  function sample(major: number, count = 400): { high: number; low: number } {
+    let high = 0;
+    let low = 0;
+    for (let i = 0; i < count; i += 1) {
+      const id = randomEventPill(major);
+      if (!id) continue;
+      const def = PILLS.find((p) => p.id === id);
+      if (!def) continue;
+      const rank = qualityDef(def.quality).rank;
+      if (rank >= HIGH_FLOOR) high += 1;
+      else if (rank <= LOW_CEIL) low += 1;
+    }
+    return { high, low };
+  }
+
+  for (const major of [15, 20] as const) {
+    it(`境界 ${major} 时,抽到的高品阶丹药多于低品阶`, () => {
+      // 防空转:池子够大
+      expect(PILLS.filter((p) => p.minRealm <= major).length).toBeGreaterThan(40);
+      const { high, low } = sample(major);
+      expect(high + low, "抽到的样本太少 —— 函数或池子有问题").toBeGreaterThan(200);
+      expect(
+        high,
+        `境界 ${major} 抽了 400 次:高品阶 ${high} 枚、低品阶 ${low} 枚 —— ` +
+          `高境界抽到的多半是过时的丹`,
+      ).toBeGreaterThan(low);
+    });
+  }
+
+  it("低境界不被这条线误伤:境 5 时低品阶仍占多数", () => {
+    const { high, low } = sample(5);
+    expect(high + low, "抽到的样本太少").toBeGreaterThan(200);
+    expect(low, `境界 5 抽了 400 次:低品阶 ${low} 枚、高品阶 ${high} 枚`).toBeGreaterThan(high);
   });
 });
