@@ -237,14 +237,42 @@ export function pickBoss(
   used: Set<string>,
   pool: readonly EnemyDef[] = BOSSES,
 ): { boss: EnemyDef; fellBack: boolean } {
-  // 候选窗口开大一些,给去重留余地
-  const cands = nearTier([...pool], tier, rng, Math.min(pool.length, 6));
+  /*
+   * 候选池先滤掉**明显比本段弱**的首领,再就近取。
+   *
+   * ## 缺口(第 91 轮实测)
+   *
+   * 凡界首领一阶一个(20 个),而一条路线有 6 段。原来纯按「离目标层级最近」取,
+   * 于是一个 t13 段可以拿走 `e_citylord`(敌 t14)、一个 t16 段可以拿走
+   * `e_voidgod`(敌 t18)—— **前面的段把后面段的首领提前用掉了**。
+   * 等走到 t20 段,近邻全被占,只能退到 t13 的 `e_yaosheng`。
+   *
+   * 实测 300 世:末段首领的层级差中位数是 **-7**,82% 的世末段首领偏弱,
+   * 57% 严重偏弱(<-5)。玩家在最后一关遇到的是比第三段还弱的首领。
+   *
+   * ## 为什么只加下限,不加上限
+   *
+   * 试过同时加「不高于本段 +2」,结果变成另一种失衡:t16 段只能用 t14~t18 的
+   * 四个首领,而那四个已被前段占完,于是退到 `e_general`(敌 t6),差 -10 ——
+   * **总量降了,但最坏的那一处更糟**。已回退。
+   *
+   * 下限不一样:它只禁止「拿一个明显过时的凑数」,不禁止「提前用掉后面段该用的」。
+   * 前段提前用强首领本身无害(它只是让节奏更紧凑),而末段拿到远古首领才是硬伤。
+   */
+  const notAncient = pool.filter((b) => b.tier >= tier - 5);
+  const cands = nearTier([...notAncient], tier, rng, Math.min(pool.length, 6));
   const fresh = cands.filter((b) => !used.has(b.id));
   if (fresh.length > 0) return { boss: fresh[0]!, fellBack: false };
-  // 窗口内全被占用:在全池里再找一个没用过的
-  const anyFresh = pool.filter((b) => !used.has(b.id));
+  // 窗口内全被占用:在**同样不远古**的池里再找一个没用过的
+  const anyFresh = notAncient.filter((b) => !used.has(b.id));
   if (anyFresh.length > 0) {
     const sorted = [...anyFresh].sort((a, b) => Math.abs(a.tier - tier) - Math.abs(b.tier - tier));
+    return { boss: sorted[0]!, fellBack: false };
+  }
+  // 不远古的都占完了 → 退回全池(宁可拿个旧的,也不让生成失败)
+  const anyLeft = pool.filter((b) => !used.has(b.id));
+  if (anyLeft.length > 0) {
+    const sorted = [...anyLeft].sort((a, b) => Math.abs(a.tier - tier) - Math.abs(b.tier - tier));
     return { boss: sorted[0]!, fellBack: false };
   }
   // 全池用尽(段数多于首领总数)才复用

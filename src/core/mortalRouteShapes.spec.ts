@@ -26,6 +26,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { REGION_NAME_TIER_BAND, RHYTHM_ARCHETYPES, ROUTE_SHAPES } from "./mortalRouteShapes";
 import { generateMortalWorld } from "./mortalWorldGen";
+import { ENEMIES } from "@/data/enemies";
 
 /** 凡界的层级范围 —— 1 阶(青云山麓)到 20 阶(鸿蒙裂隙) */
 const MORTAL_TIER_MIN = 1;
@@ -319,5 +320,87 @@ describe("凡界生成 · 扰动后仍守路线形状", () => {
     const rhythms = new Set(worlds.map((w) => w.rhythmId));
     expect(shapes.size, "300 世里只抽到几种路线 —— 选择逻辑坏了").toBe(ROUTE_SHAPES.length);
     expect(rhythms.size, "300 世里只抽到几种节奏").toBe(RHYTHM_ARCHETYPES.length);
+  });
+});
+
+/**
+ * 每段的首领得跟得上那一层的难度 —— 尤其**末段不许拿远古首领凑数**。
+ *
+ * ## 缺口(第 91 轮实测)
+ *
+ * 凡界首领一阶一个(20 个),而一条路线有 6 段。`pickBoss` 原来纯按
+ * 「离目标层级最近」取,于是一个 t13 段可以拿走 `e_citylord`(敌 t14)、
+ * 一个 t16 段可以拿走 `e_voidgod`(敌 t18)——
+ * **前面的段把后面段的首领提前用掉了**。等走到 t20 段,近邻全被占,
+ * 只能退到 t13 的 `e_yaosheng`。
+ *
+ * 实测 300 世:
+ *
+ * ```text
+ *                    修前     修后
+ *   末段层级差 最小   -17      -5
+ *   末段层级差 中位    -7      -2
+ *   严重负差(<-5)    172 世    0 世
+ * ```
+ *
+ * 玩家在最后一关遇到的是**比第三段还弱**的首领 —— 而末段本该是最硬的一关。
+ *
+ * ## 修法
+ *
+ * 候选池先滤掉「比本段弱五级以上」的,再就近取。只加下限,不加上限 ——
+ * 试过同时加「不高于本段 +2」,结果 t16 段只能用 t14~t18 的四个(已被占完),
+ * 退到 `e_general`(敌 t6),差 -10:总量降了但最坏的一处更糟,已回退。
+ */
+describe("凡界生成 · 首领跟得上层级", () => {
+  const worlds = Array.from({ length: 300 }, (_, i) => generateMortalWorld(i + 1));
+
+  it("末段首领不比本段弱五级以上", () => {
+    const tooWeak: string[] = [];
+    for (const w of worlds) {
+      const last = w.chain[w.chain.length - 1]!;
+      const boss = ENEMIES.find((e) => e.id === last.boss);
+      if (!boss) continue;
+      const gap = boss.tier - last.tier;
+      if (gap < -5) {
+        tooWeak.push(`seed${w.seed} t${last.tier}→${boss.id}(敌t${boss.tier}, 差 ${gap})`);
+      }
+    }
+    expect(
+      tooWeak,
+      "末段首领比本段弱五级以上 —— 最后一关遇到的是远古首领:" + tooWeak.slice(0, 4).join(" / "),
+    ).toEqual([]);
+  });
+
+  it("首领的层级差整体不偏负", () => {
+    /*
+     * 反空转 + 全局口径:上面那条只看末段。若修法只是把末段抬起来、
+     * 而中段全变成远古首领,这条会红。
+     */
+    const gaps: number[] = [];
+    for (const w of worlds) {
+      for (const p of w.chain) {
+        const boss = ENEMIES.find((e) => e.id === p.boss);
+        if (boss) gaps.push(boss.tier - p.tier);
+      }
+    }
+    expect(gaps.length, "一个首领都没量到 —— 判据在空转").toBeGreaterThan(300);
+    gaps.sort((a, b) => a - b);
+    const median = gaps[Math.floor(gaps.length / 2)]!;
+    expect(
+      median,
+      `首领层级差的中位数是 ${median} —— 一半以上的首领比所在段弱`,
+    ).toBeGreaterThanOrEqual(-3);
+  });
+
+  it("反空转:首领池覆盖凡界的每一层", () => {
+    /*
+     * 若哪天凡界首领池变得比路线段数还少,「就近取」就必然跨级 ——
+     * 那时该补内容,而不是继续调选择逻辑。
+     */
+    const mortalBosses = ENEMIES.filter((e) => e.archetype !== undefined && e.tier <= 20);
+    expect(
+      mortalBosses.length,
+      `凡界首领只有 ${mortalBosses.length} 个 —— 覆盖不了 20 层,选择逻辑再巧也没用`,
+    ).toBeGreaterThanOrEqual(20);
   });
 });
