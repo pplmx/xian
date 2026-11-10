@@ -7,8 +7,22 @@ import type {
   WorldRouteNode,
 } from "@/types";
 import { RESOURCE_LABELS } from "@/data/resourceNames";
+import { STAT_NAMES } from "@/data/statNames";
+import { formatSignedPercent } from "@/utils/format";
 
 // ============ 道途:此道在世,一切战斗皆循此规则 ============
+
+/**
+ * 镇岳道的三个数 —— 卡面 `ruleText` 与 `rules` 同读这一处。
+ *
+ * 起因:卡面曾写「自身造成伤害 -12%」,而 `rules.damageBonus` 是 **-0.1**。
+ * 差两个百分点,没人会红 —— 直到「章法里的数必须能在实现里找到」那条判据
+ * 把两个数分别扫出来比对(见 core/daoPathCoverage.spec)。
+ * 与洞府卡面那条同一条纪律:卡面与闸门读同一枚数。
+ */
+const ZHENYUE_OPEN_SHIELD = 0.18;
+const ZHENYUE_SHIELD_POWER = 0.14;
+const ZHENYUE_DAMAGE_COST = -0.1;
 
 export const DAO_PATHS: DaoPathDef[] = [
   {
@@ -38,18 +52,42 @@ export const DAO_PATHS: DaoPathDef[] = [
     name: "镇岳道",
     seal: "岳",
     desc: "以身为岳,先立于不败。护持越厚,反击的余地越大",
-    ruleText: ["起手获得护盾 18%,护盾强度 +14%", "自身造成伤害 -12%"],
+    /*
+     * 词条名走 `STAT_NAMES`,不另起「护盾强度」这种自造名 —— 那个键在本仓叫
+     * **罡盾增伤**,而它的机制是「身上有盾时伤害 ×1.14」,**盾的厚度一点没变**
+     * (`core/combat.ts:380`)。玩家读到「护盾强度 +14%」会以为盾更厚,
+     * 按错的模型去选一条一世只能选一次的路。
+     */
+    ruleText: [
+      `起手获得护盾 ${formatSignedPercent(ZHENYUE_OPEN_SHIELD).replace("+", "")},有盾时${STAT_NAMES.shieldPower} ${formatSignedPercent(ZHENYUE_SHIELD_POWER)}`,
+      `自身造成伤害 ${formatSignedPercent(ZHENYUE_DAMAGE_COST)}`,
+    ],
     rules: {
       playerExtraMods: {
-        shieldOnStart: 0.18,
-        shieldPower: 0.14,
+        shieldOnStart: ZHENYUE_OPEN_SHIELD,
+        shieldPower: ZHENYUE_SHIELD_POWER,
         // 代价:护持换走锋芒 —— 与剑道「锋锐换厚重」正相反的一条路
-        damageBonus: -0.1,
+        damageBonus: ZHENYUE_DAMAGE_COST,
       },
     },
+    /*
+     * 这一段此前承诺了两套**代码里不存在**的机制:「岳意四层(每层护盾强度 +6%、
+     * 减伤 +2%)」与「远征每胜一场岳势再添一层」。
+     *
+     * 查证:`core/daoDepth.ts` 只有剑道的 `SWORD_LAYER_MODS` 与 sword/slaughter 两套
+     * 逐胜叠层;`core/expedition.ts` 的 `perWinMods()` 对 zhenyue 返回 undefined;
+     * `core/playerSnap.ts` 的纯度并入只认 `daoPath === "sword"`。即两套都没建。
+     * 而道途**一世只能选一次**(`chooseDao` 见非空即拒),卡上这两行是决策依据。
+     *
+     * 更要命的是它连数都没对上:镇岳道只有 3 条纯度判据(主流派成形 / 无副体系 /
+     * 法宝不过一件),却写「至多四层」—— 那是照抄剑道四条后的残留。
+     *
+     * 现在改成只写 `rules` 里**已兑现**的那两件(起手盾 + 有盾增伤 + 代价),
+     * 与卡面 `ruleText` 同源。要恢复层数机制的话,先建机制再加文案。
+     */
     deepText: [
-      "岳意:道途越纯,岳势越沉——主流派成形、不涉副体系、法宝不过一件,至多四层,每层护盾强度 +6%、减伤 +2%",
-      "远征蓄势:每胜一场,岳势再添一层",
+      `岳意:开战即有护盾,持盾时${STAT_NAMES.shieldPower} +14% —— 护持越稳,打出去的越重`,
+      `以厚重换锋芒:自身造成伤害 ${formatSignedPercent(ZHENYUE_DAMAGE_COST)}。这一道不求速胜,求的是站到最后`,
     ],
   },
   {
@@ -116,13 +154,30 @@ export const DAO_PATHS: DaoPathDef[] = [
     name: "借势道",
     seal: "借",
     desc: "他强由他强,我借其势,反手一击。以守为攻,不先出手",
-    ruleText: ["受击反伤 +20%,反伤强度 +50%", "自身受到伤害 -13%", "敌人生命 +18%"],
+    /*
+     * 「受击反伤 +20%」读不成概率:那个 20% 是**触发概率**(`rng.chance(counterRate)`),
+     * 而「反伤强度 +50%」是反击威力。两处都改用 `STAT_NAMES` 的叫法
+     * (反击概率 / 反击威力),不让玩家把它读成「反伤 +20% 伤害」。
+     */
+    ruleText: [
+      `受击时 ${STAT_NAMES.counterRate} 20%,${STAT_NAMES.counterDamage} +50%`,
+      "自身受到伤害 -13%",
+      "敌人生命 +18%",
+    ],
     rules: {
       playerExtraMods: { counterRate: 0.2, counterDamage: 0.5, damageReduction: 0.13 },
       enemyHpMult: 1.18,
     },
+    /*
+     * 原文写「凡敌攻我,**必**被我收势反掷 —— 敌人攻得越急,反得越狠」——
+     * 两个绝对断言都与实现相反:
+     *   · 反击是 `rng.chance(counterRate)` 的 20%,不是「必」;
+     *   · 反击伤害是固定 `0.5 × (1 + counterDamage) × 反击方自己的攻击`
+     *     (`core/combat.ts:448/406`),**与敌人打了多疼无关**。
+     * 玩家照「越凶的敌人我越吃香」去挑高危险度地界会吃亏 —— 故按实现改写。
+     */
     deepText: [
-      "借势:凡敌攻我,必被我收势反掷 —— 敌人攻得越急,反得越狠",
+      "借势:凡敌攻我,有机可乘时收势反掷 —— 反的是你自己的力,不看敌人打得多急",
       "不先出手,最怕一击制敌的爆发;借的是势,还的是刀",
     ],
   },
@@ -799,7 +854,16 @@ export const TRIALS: TrialDef[] = [
     seal: "照",
     anchorTier: 28,
     desc: "一念照影,对手借你的力回敬。出手越密,吃回越多",
-    ruleText: ["敌人反震极高(反击率 +40% · 反伤 +120%)", "敌兵会心亦频", "连战 5 场"],
+    /*
+     * 「反伤 +120%」把威力写成了伤害 —— 那个键是 `counterDamage`(反击威力),
+     * 而 40% 是 `counterRate`(触发概率)。两个数一个概率一个乘法,
+     * 都写成「+N%」会让玩家读成「每次挨打都回 120% 伤害」。
+     */
+    ruleText: [
+      `敌人反震极高(${STAT_NAMES.counterRate} 40% · ${STAT_NAMES.counterDamage} +120%)`,
+      "敌兵会心亦频",
+      "连战 5 场",
+    ],
     rules: { enemyExtraMods: { counterRate: 0.4, counterDamage: 1.2, critRate: 0.1 } },
     entryCost: 15,
     fights: 5,

@@ -791,6 +791,45 @@ describe("术语一致性 · 用户可见文本", () => {
     ).toEqual([]);
   });
 
+  /**
+   * 名与机制同形:`shieldPower` 在本仓叫**罡盾增伤**,它做的是「身上有盾时伤害 ×1.14」,
+   * **盾的厚度一点没变**(`core/combat.ts:380`)。而镇岳道的卡面自造了一个
+   * 「护盾强度 +14%」—— 玩家读到的必然是「我的盾更厚了」。
+   *
+   * 这一处比一般的术语不一致更贵:道途**一世只能选一次**(`chooseDao` 见非空即拒),
+   * 选路时按错的模型算,事后再也改不了。
+   *
+   * 与上面「出手速度 → 先手判定」那条同形:名字与实际收益形状不符,就是撒谎。
+   */
+  it("「护盾强度」这个名字退休:它实际是有盾增伤,一律叫「罡盾增伤」", () => {
+    const hits: string[] = [];
+    for (const { file, text } of userText()) {
+      for (const m of text.matchAll(/.{0,16}护盾强度.{0,16}/g)) hits.push(`${file} 「${m[0]}」`);
+    }
+    expect(
+      hits,
+      `「护盾强度」应改叫「罡盾增伤」(它是有盾时增伤,不是盾更厚):\n${hits.join("\n")}`,
+    ).toEqual([]);
+  });
+
+  it("雾与反击不许写成「反伤 +N%」—— 那个 N 是触发概率,不是伤害", () => {
+    /*
+     * 借势道卡面原写「受击反伤 +20%」,而 20% 是 `rng.chance(counterRate)` 的
+     * **触发概率**;「反伤强度 +50%」才是威力(`counterDamage`)。
+     * 一句里两个数,一个是概率一个是乘法,却都写成「+N%」—— 读反了就是另一个模型。
+     */
+    const hits: string[] = [];
+    for (const { file, text } of userText()) {
+      for (const m of text.matchAll(/.{0,16}反伤\s*[+＋]\s*\d+\s*%[^\n]{0,16}/g)) {
+        hits.push(`${file} 「${m[0]}」`);
+      }
+    }
+    expect(
+      hits,
+      `「反伤 +N%」把触发概率写成了伤害 —— 用「反击概率 N%」与「反击威力 +M%」:\n${hits.join("\n")}`,
+    ).toEqual([]);
+  });
+
   it("先手判定与首回合伤害各留一名,不许互相借名", () => {
     const all = userText()
       .map((u) => u.text)

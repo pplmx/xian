@@ -40,6 +40,7 @@
  */
 import { describe, expect, it } from "vite-plus/test";
 import { DAO_PATHS } from "@/data/endgame";
+import { MAX_COMBAT_ROUNDS } from "@/data/constants";
 
 describe("终局道途 · 护盾流有人接", () => {
   /**
@@ -94,5 +95,147 @@ describe("终局道途 · 护盾流有人接", () => {
         0,
       );
     }
+  });
+});
+
+/**
+ * 道途的「章法」(deepText)是**承诺**,不是风味 —— 许诺的机制必须真的存在于代码里。
+ *
+ * ## 缺口
+ *
+ * 镇岳道的章法写着「岳意……至多四层,每层护盾强度 +6%、减伤 +2%」与
+ * 「远征蓄势:每胜一场,岳势再添一层」。而查证下来:
+ *
+ *   · `core/daoDepth.ts` 只有剑道的 `SWORD_LAYER_MODS` 与 sword/slaughter 两套逐胜叠层;
+ *   · `core/expedition.ts` 的 `perWinMods()` 对 zhenyue 返回 `undefined`;
+ *   · `core/playerSnap.ts` 的纯度并入只认 `daoPath === "sword"`;
+ *   · 补镇岳道那个提交(`1022f2b8`)的 `--stat` 只动了 `data/endgame.ts` 与 `types/index.ts`。
+ *
+ * 两套都没建。而道途**一世只能选一次**(`chooseDao` 见非空即拒),卡上那两行正是
+ * 玩家据以做这次不可逆选择的依据。
+ *
+ * 更糟的是它连数都没对上:镇岳道自己只有 3 条纯度判据,却写「至多四层」——
+ * 那是照抄剑道四条之后的残留。
+ *
+ * ## 为什么此前没有任何门红
+ *
+ * `rg -n "deepText" src --glob '*.spec.ts'` → **0 命中**:没有任何判据核过
+ * 章法里的数字与实现是否对得上。浏览器门也只有 `daoPath: "sword"` 一个夹具。
+ *
+ * ## 判据守什么
+ *
+ * 章法里出现的每个百分数,必须能在**该道途自己的数值**里找到同源:
+ * `rules` 里的数字 ×100,或该道途的专用常量。找不到就是「承诺了一个不存在的数」。
+ *
+ * 这条不判设计好坏,只判「说的数在不在」。它对未来任何新道途同样有效 ——
+ * 想写「每层 +X%」,就得先真的有一个 +X% 的层数机制。
+ */
+describe("终局道途 · 章法里的数必须能在实现里找到", () => {
+  /**
+   * 一条道途自己的数字,折成「卡面可能怎么写它」的候选百分数。
+   *
+   * 三种口径,每种都把**换算规则写在这里**而不是在比对处临时凑:
+   *   ① 加成型:0.15 → 「+15%」;
+   *   ② 倍率型:1.2 → 「+20%」(乘数写成增幅是中文文案的常态,不折就会误报);
+   *   ③ 回合上限:35 相对基础 50 → 「-30%」(它是从 MAX_COMBAT_ROUNDS 算出来的差)。
+   *
+   * 只认这三种 —— 放宽成「任何近似都算对」就守不住任何东西了。
+   */
+  function playerNumbers(path: (typeof DAO_PATHS)[number]): number[] {
+    const out: number[] = [];
+    const raw: number[] = [];
+    const rules = path.rules as Record<string, unknown>;
+    for (const [k, v] of Object.entries(rules)) {
+      if (k === "playerExtraMods") {
+        for (const v2 of Object.values((v ?? {}) as Record<string, number>)) {
+          if (typeof v2 === "number") raw.push(v2);
+        }
+      } else if (typeof v === "number") raw.push(v);
+      else if (v && typeof v === "object") {
+        // perRounds 这类嵌套对象:里面每个数都算该道途自己的数
+        for (const v2 of Object.values(v as Record<string, unknown>)) {
+          if (typeof v2 === "number") raw.push(v2);
+        }
+      }
+    }
+    for (const v of raw) {
+      out.push(Math.abs(v)); // ① 加成型
+      if (v > 1) out.push(Math.abs(v - 1)); // ② 倍率型
+    }
+    // ③ 回合上限:相对基础回合数
+    const mr = (path.rules as { maxRounds?: number }).maxRounds;
+    if (typeof mr === "number") out.push(Math.abs(mr - MAX_COMBAT_ROUNDS) / MAX_COMBAT_ROUNDS);
+    return out;
+  }
+
+  /**
+   * 代码里**真实存在**的该道途专用常量。
+   *
+   * 只登记有实际消费点的那些 —— 剑道四层与逐胜叠层、杀伐逐胜与速战三档。
+   * 新增这类常量时在这里登记一行,并在注释里写明消费点;
+   * 反过来说,**没有消费点的常量不许登记**(登记了就等于给虚构的数开后门)。
+   */
+  const PATH_CONSTANTS: Record<string, number[]> = {
+    sword: [
+      0.04, // SWORD_LAYER_MODS.damageBonus / SWORD_PER_WIN.damageBonus
+      0.02, // SWORD_LAYER_MODS.critRate / SWORD_PER_WIN.critRate
+    ],
+    slaughter: [
+      0.05, // SLAUGHTER_PER_WIN.damageBonus
+      0.08, // slaughterSpeedBonus 24 回合档
+      0.15, // slaughterSpeedBonus 18 回合档
+      0.25, // slaughterSpeedBonus 12 回合档
+    ],
+  };
+
+  it("章法里每个百分数都能在该道途的数值或专用常量里找到", () => {
+    const offenders: string[] = [];
+    let checkedNumbers = 0;
+    for (const path of DAO_PATHS) {
+      const own = [
+        ...playerNumbers(path),
+        ...(PATH_CONSTANTS[path.id as keyof typeof PATH_CONSTANTS] ?? []),
+      ];
+      /*
+       * 卡面 `ruleText` 与章法 `deepText` 都要核 —— 两处都是玩家据以选路的字。
+       * 实测:\`ruleText\` 曾写「自身造成伤害 -12%」而 \`rules\` 是 -0.1,
+       * 章法那半修好之后,这一半仍然撒谎。
+       */
+      for (const line of [...path.ruleText, ...path.deepText]) {
+        // 百分数:6% / +12% / −12%(全角负号与半角都认)
+        for (const m of line.matchAll(/(\d+(?:\.\d+)?)\s*%/g)) {
+          const pct = Number(m[1]) / 100;
+          checkedNumbers += 1;
+          const hit = own.some((v) => Math.abs(v - pct) < 1e-9);
+          if (!hit) offenders.push(`${path.name}:「${m[1]}%」出现在章法里,但实现中没有这个数`);
+        }
+      }
+    }
+    expect(
+      offenders,
+      "章法承诺了实现里不存在的数 —— 道途是一世只能选一次的不可逆选择:" + offenders.join("; "),
+    ).toEqual([]);
+    // 防空转:正则写错(比如全角百分号)会让上面永远通过
+    expect(checkedNumbers, "一个百分数都没扫到 —— 判据会空转").toBeGreaterThan(4);
+  });
+
+  it("章法里不许出现「必」这类绝对断言,除非该道途真有 100% 触发项", () => {
+    /*
+     * 借势道原文「凡敌攻我,**必**被我收势反掷」—— 而反击是 `rng.chance(counterRate)`
+     * 的 20%。「必」与「有机会」在玩家的决策里是两个世界。
+     */
+    const offenders: string[] = [];
+    for (const path of DAO_PATHS) {
+      for (const line of path.deepText) {
+        if (!/必/.test(line)) continue;
+        const own = path.rules as { playerExtraMods?: Record<string, number> };
+        const guaranteed = Object.values(own.playerExtraMods ?? {}).some((v) => Math.abs(v) >= 1);
+        if (!guaranteed) offenders.push(`${path.name}:「${line.slice(0, 24)}…」`);
+      }
+    }
+    expect(
+      offenders,
+      "章法用了「必」这种绝对断言,而该道途没有 100% 触发项 —— 与实现不符:" + offenders.join("; "),
+    ).toEqual([]);
   });
 });
