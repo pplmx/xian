@@ -464,6 +464,7 @@ const CATEGORIES = [
       "terminologyConsistency",
       "shortfallDisclosure",
       "singleSourceNumbers",
+      "mechanismVisibility",
       "regionDanger",
       "artifactGrowth",
       "stackCap",
