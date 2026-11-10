@@ -33,6 +33,7 @@ import {
 import { BATTLE_EXP_SECS, INSTANT_EXP_LAYER_CAP } from "@/data/constants";
 import { MAX_MAJOR, REALMS } from "@/data/realms";
 import { EVENTS, FORTUNE_EVENTS } from "@/data/events";
+import { REGIONS } from "@/data/regions";
 import { CHAIN_EVENTS } from "@/data/chains";
 import { expFromSecs, expRequirement } from "./formulas";
 import { layerSeconds } from "./pillValue";
@@ -235,6 +236,102 @@ describe("修为收入 · 新内容不许整批比同段既有内容肥", () => 
     expect(
       offenders,
       "这些境界段的最高单条奖励超出该段中位数一倍以上 —— 疑似整批写肥了:" + offenders.join("、"),
+    ).toEqual([]);
+  });
+});
+
+/**
+ * 材料奖励也要「横向可比」—— 不只是修为。
+ *
+ * ## 上一轮只查了 `exp`,这一轮查材料,又抓到三处
+ *
+ * 第 43 轮把修为奖励收回后,这轮用同一个方法查 `material`(wudao / ore / dust /
+ * herb / page),发现我新加的那批仍然偏肥:
+ *
+ * ```text
+ * dust|0-4    我的均 18 · 既有均 5   → 3.6 倍
+ * dust|9-13   我的均 40 · 既有均 8   → 5.0 倍
+ * herb|0-4    我的均 21 · 既有均 7   → 3.0 倍
+ * ```
+ *
+ * 逐处收回后都落到 0.9~1.8 倍。**同一类偏差在两种奖励上各出现一次** ——
+ * 说明问题不在某一条数值,而在「补内容时只看单条合不合法、不看与邻居可不可比」。
+ *
+ * ## 判据
+ *
+ * 每个「材料类型 × 境界段」里,最大值不许超过该格中位数的 **4 倍**。
+ *
+ * 阈值比修为那条(2 倍)宽一倍,因为材料掉落本来就波动大 —— 同一种材料
+ * 既有内容里的范围是 1~90(见 wudao),中位数 13。这里要抓的是
+ * 「一格均值被整体抬了一个量级」,不是个别高光。
+ */
+describe("奖励横向可比 · 材料单格不许被整体抬一个量级", () => {
+  it("每个「材料类型 × 境界段」里,最大值不超过该格中位数的 4 倍", () => {
+    /*
+     * 分箱按**实际可得境界**,不是 `minRealm ?? 0`。
+     *
+     * 第一版按后者分,当场误报两条:`ft_hongmeng_xiantai`(鸿蒙先台)与
+     * `ft_shenyu_wangzuo`(神域王座)都不写 `minRealm`,靠 `chaos` / `god` 标签
+     * 被锁在境界 18 / 14 以上 —— 按「缺省 0」算就把它们整进低境界箱里,
+     * 于是「中位 5 而它给 90」成了 18 倍。
+     *
+     * 这条坑第 38 轮踩过一次(当时是探针),这次又踩在判据里 ——
+     * **`minRealm` 缺省不等于 0,它可能是「由标签决定」**。
+     */
+    const reachableRealm = (e: (typeof EVENTS)[number]): number => {
+      const local = e.tags.filter((t) => t !== "general");
+      const regions = local.length
+        ? REGIONS.filter((r) => local.some((t) => r.eventTags.includes(t)))
+        : [];
+      const inBand = regions.filter(
+        (r) => (e.minRealm ?? 0) <= r.minRealm && (e.maxRealm ?? Infinity) >= r.minRealm,
+      );
+      return inBand.length ? Math.min(...inBand.map((r) => r.minRealm)) : (e.minRealm ?? 0);
+    };
+
+    const bins = new Map<string, { amount: number; id: string }[]>();
+    for (const e of [...EVENTS, ...FORTUNE_EVENTS]) {
+      const realm = reachableRealm(e);
+      const band =
+        realm <= 4
+          ? "0-4"
+          : realm <= 8
+            ? "5-8"
+            : realm <= 13
+              ? "9-13"
+              : realm <= 17
+                ? "14-17"
+                : "18-20";
+      for (const choice of e.choices) {
+        for (const outcome of choice.outcomes) {
+          for (const effect of outcome.effects) {
+            if (effect.type !== "material") continue;
+            const key = `${effect.id}|${band}`;
+            const bucket = bins.get(key) ?? [];
+            bucket.push({ amount: effect.amount, id: e.id });
+            bins.set(key, bucket);
+          }
+        }
+      }
+    }
+    // 防空转:材料类型 × 境界段真的分出了不少格子
+    expect(bins.size, "一格都没分到 —— 判据在空转").toBeGreaterThanOrEqual(8);
+
+    const offenders: string[] = [];
+    for (const [key, samples] of bins) {
+      if (samples.length < 3) continue; // 样本太少的中位数不可信
+      const sorted = [...samples].sort((a, b) => a.amount - b.amount);
+      const median = sorted[Math.floor(sorted.length / 2)]!.amount;
+      const top = sorted[sorted.length - 1]!;
+      if (top.amount > median * 4) {
+        offenders.push(
+          `${key}:中位 ${median},而 ${top.id} 给了 ${top.amount}(${(top.amount / median).toFixed(1)} 倍)`,
+        );
+      }
+    }
+    expect(
+      offenders,
+      "这些格子的最大材料奖励超出中位数四倍以上 —— 疑似整批写肥:" + offenders.join("、"),
     ).toEqual([]);
   });
 });

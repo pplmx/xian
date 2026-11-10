@@ -401,7 +401,7 @@ export const EVENTS: EventDef[] = [
         o(60, "新芽离枝时淌出一滴青汁,你收在玉瓶里。", {
           type: "material",
           id: "herb",
-          amount: 30,
+          amount: 12,
         }),
         o(25, "新芽一触即枯,原来那点绿是雷泽最后的春意。", { type: "nothing" }),
         o(15, "树桩底下窜出一道余雷,你急忙缩手,仍被灼了下。", { type: "buff", id: "injury" }),
@@ -460,7 +460,7 @@ export const EVENTS: EventDef[] = [
         o(35, "你凿开一半便停了 —— 冰里的人没有脸,只有一身道袍。你取走了道袍上的护符。", {
           type: "material",
           id: "dust",
-          amount: 20,
+          amount: 9,
         }),
         o(20, "冰壁内封着的是活物。你凿开的刹那,它睁开了眼,又在你退开时重新阖上。", {
           type: "buff",
@@ -586,7 +586,7 @@ export const EVENTS: EventDef[] = [
           o(1, "你一脚踏碎镜像,水花溅了满身。倒影散成千万片,每一片都在往岸上爬。", {
             type: "material",
             id: "dust",
-            amount: 16,
+            amount: 8,
           }),
         ],
         { isDefault: true },
@@ -1683,7 +1683,7 @@ export const EVENTS: EventDef[] = [
           o(1, "你看着它转了很久。有些答案,不知道比知道好。", {
             type: "material",
             id: "dust",
-            amount: 40,
+            amount: 14,
           }),
         ],
         { isDefault: true },
@@ -2565,7 +2565,7 @@ export const FORTUNE_EVENTS: EventDef[] = [
           25,
           "寒气太重,你半边身子僵了许久才缓过来。",
           { type: "buff", id: "injury" },
-          { type: "material", id: "dust", amount: 18 },
+          { type: "material", id: "dust", amount: 9 },
         ),
         o(20, "冰晶在你掌心里碎成一捧凉水,什么都没留下。", { type: "nothing" }),
       ]),
