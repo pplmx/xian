@@ -134,6 +134,47 @@ describe("凡界路线骨架 · 不变式", () => {
     expect(REGION_NAME_TIER_BAND, "区域名偏差容差不在合理区间").toBeGreaterThan(0);
     expect(REGION_NAME_TIER_BAND, "区域名偏差容差太大 —— 等于没有约束").toBeLessThanOrEqual(5);
   });
+
+  /**
+   * 没有哪一条节奏是**平的** —— 包括那条叫「平稳」的。
+   *
+   * ## 缺口(第 90 轮实测)
+   *
+   * `RHYTHM_ARCHETYPES` 的注释写着:
+   *
+   * > `222222` 不是「事件少」,是**没有节奏设计**。这些原型让玩家能感觉到
+   * > 「这一世前面平静,后面突然密集」,而不是「又一段每处两个」。
+   *
+   * 而表里第一条 `flat`(「平稳」)的曲线**正是 `[2,2,2,2,2,2]`** ——
+   * 把旧毛病原样收进了新体系。生成出来的事件数逐段相同,
+   * 玩家感受到的就是「又一段每处两个」。
+   *
+   * 已改成「从容」`[1,1,2,2,2,3]`:整体偏静,但不是平的。
+   */
+  it("没有一条节奏曲线是平的 —— 包括那条叫「平稳」的", () => {
+    const flatOnes = RHYTHM_ARCHETYPES.filter((a) => new Set(a.curve).size === 1).map(
+      (a) => `${a.name}(${a.curve.join(",")})`,
+    );
+    expect(
+      flatOnes,
+      "这些节奏的曲线每一档都一样 —— 注释自己说「222222 不是事件少,是没有节奏设计」:" +
+        flatOnes.join("、"),
+    ).toEqual([]);
+  });
+
+  it("每条节奏都真的有过起伏,且起伏方向各不相同", () => {
+    /*
+     * 反方向:光「不平」不够 —— 六条都写成 `[1,2,3,4,5,6]` 也都不平,但那是同一个设计六份拷贝。
+     * 这里要求:任意两条节奏的曲线不能相同(上一组判据「节奏原型真的各不相同」已守),
+     * 且每条至少有一处升降。
+     */
+    const noRise: string[] = [];
+    for (const a of RHYTHM_ARCHETYPES) {
+      const rises = a.curve.some((v, i) => i > 0 && v !== a.curve[i - 1]);
+      if (!rises) noRise.push(`${a.name}(${a.curve.join(",")})`);
+    }
+    expect(noRise, "这些节奏从头到尾没变过一次 —— 等于平的那条:" + noRise.join("、")).toEqual([]);
+  });
 });
 
 /**
@@ -215,6 +256,62 @@ describe("凡界生成 · 扰动后仍守路线形状", () => {
       if (peak < 12) bad.push(`seed${w.seed} 最高只到 ${peak}`);
     }
     expect(bad, "生成结果越出凡界或首末段失守:" + bad.slice(0, 5).join(" / ")).toEqual([]);
+  });
+
+  it("重采样不丢形状:段数少于原型时,两边仍是低、中间仍是高", () => {
+    /*
+     * ## 缺口(第 90 轮实测)
+     *
+     * `mortalWorldGen.resampleRhythm` 第一版是最近邻:
+     * `curve[Math.round(i * (len-1) / (n-1))]` —— **必然丢中间值**。
+     *
+     * `mid`(「中段高压」)是 `[1,2,4,4,2,1]`,落到 4 段时映射到索引 `0,2,3,5`,
+     * 输出 `[1,4,4,1]`:两个 `2` 都被跳过。原型的「前后低、中间高」
+     * 塌成了「中间两段极高、两头极低」—— 而那正是它想避免的形状。
+     *
+     * 已改成分箱平均(均分成 n 段、每段取平均),`n=4` 时得到 `[1,3,4,2]`。
+     *
+     * ## 判据
+     *
+     * 不测 `resampleRhythm` 本身(它是私有函数),而是**测生成器的输出**:
+     * 只要是「中段高压」这个原型,不论这一次生成到几段,
+     * 中间那一段都该 ≥ 首段。
+     */
+    const MID_HIGH = "中段高压";
+    const samples = worlds
+      .filter((w) => w.rhythmName === MID_HIGH)
+      .map((w) => w.chain.map((p) => p.eventTags.length))
+      // 只挑段数为偶、形状可判的样本
+      .filter((d) => d.length >= 4);
+
+    expect(samples.length, "300 世里没抽到「中段高压」—— 判据在空转").toBeGreaterThan(3);
+
+    /*
+     * 比的不是「中段是不是峰值」—— 最近邻输出的 `[1,4,4,1]` 里中段**也是**峰值,
+     * 那一版判据注入时照样绿(第一版就不够敏感)。
+     *
+     * 真正丢的是**渐变**:原型 `[1,2,4,4,2,1]` 从 1 到 4 中间隔着两级,
+     * 而最近邻直接跳过去,首段到中段一步跨 3 级。分箱平均输出 `[1,3,4,2]`,
+     * 最大相邻差是 2(1→3 与 3→4)。
+     *
+     * 判据:生成出来的相邻差,不得超过原型自身的最大相邻差。
+     */
+    const proto = RHYTHM_ARCHETYPES.find((a) => a.name === MID_HIGH)!.curve;
+    const protoMaxJump = Math.max(...proto.slice(1).map((v, i) => Math.abs(v - proto[i]!)));
+
+    const bad: string[] = [];
+    for (const d of samples) {
+      const jump = Math.max(...d.slice(1).map((v, i) => Math.abs(v - d[i]!)));
+      if (jump > protoMaxJump) {
+        bad.push(`[${d.join(",")}] 最大相邻差 ${jump} > 原型 ${protoMaxJump}`);
+      }
+    }
+    expect(
+      bad,
+      `「中段高压」重采样后出现比原型更陡的跳变(原型最大相邻差 ${protoMaxJump})` +
+        ` —— 最近邻把中间那两级跳过去了:` +
+        bad.slice(0, 3).join(" / "),
+    ).toEqual([]);
   });
 
   it("反空转:路线与节奏都真的被抽到了", () => {

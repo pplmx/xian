@@ -104,11 +104,38 @@ export function unseenMortalBiases(seen: Iterable<string>): ReadonlySet<string> 
 }
 
 /** 把节奏曲线重采样到指定段数 */
+/**
+ * 把节奏原型按段数重采样。
+ *
+ * ## 为什么不能用最近邻
+ *
+ * 第一版是 `curve[Math.round(i * (len-1) / (n-1))]` —— **必然丢中间值**。
+ * `mid`(「中段高压」)是 `[1,2,4,4,2,1]`,落到 4 段时映射到索引 `0,2,3,5`,
+ * 输出 `[1,4,4,1]`:**两个 `2` 都被跳过了**。原型的「前后低、中间高」塌成了
+ * 「中间两段极高、两头极低」,而那正是它想避免的形状。
+ *
+ * ```text
+ *   curve=[1,2,4,4,2,1]
+ *   n=4  最近邻[1,4,4,1]   分箱[1,3,4,2]   ← 后者保住了渐变
+ *   n=5  最近邻[1,2,4,2,1] 分箱[1,2,4,4,2]
+ * ```
+ *
+ * ## 现在的做法:分箱平均
+ *
+ * 把原型均分成 n 段,每段取平均再取整。段数少于原型时,相邻的档会被
+ * **合并**而不是**跳过** —— 形状平均下来还在。
+ *
+ * `Math.max(1, ...)` 保留:0 事件的段落等于「这一段什么都没有」,
+ * 而 `mortalRouteShapes` 那边明确说过「`222222` 不是事件少,是没有节奏设计」。
+ */
 function resampleRhythm(curve: readonly number[], n: number): number[] {
   const out: number[] = [];
   for (let i = 0; i < n; i += 1) {
-    const src = Math.round((i * (curve.length - 1)) / Math.max(1, n - 1));
-    out.push(Math.max(1, curve[src]!));
+    const lo = Math.floor((i * curve.length) / n);
+    const hi = Math.floor(((i + 1) * curve.length) / n);
+    const seg = curve.slice(lo, Math.max(lo + 1, hi));
+    const avg = seg.reduce((a, b) => a + b, 0) / seg.length;
+    out.push(Math.max(1, Math.round(avg)));
   }
   return out;
 }
