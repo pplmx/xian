@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 641 个 spec;本作自己那部分 561 个) |
+| `bun run test` | 全量用例(全量 643 个 spec;本作自己那部分 563 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 641 个 spec = 宿主 551 + 引擎 80,别把 641 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 643 个 spec = 宿主 551 + 引擎 80,别把 643 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 641 个 spec(本作自己那部分 561 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 643 个 spec(本作自己那部分 563 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -4373,14 +4373,14 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 561 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 563 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
 
 ```text
 第一版:326 个 spec · 4117 条标题
-修正后:561 个 spec · 6319 条标题   (+54%)
+修正后:563 个 spec · 6319 条标题   (+54%)
 ```
 
 > 这是一类**最难自查的错误**:工具跑得通、输出格式对、报出来的缺口具体到表与维度名 ——
@@ -4472,7 +4472,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**641 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**643 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -5645,3 +5645,53 @@ docs-check         「README 写的 spec 总数比实际多算了 1」
 那个流派在这次调用里根本没被选中。
 
 三处注入都命中(印章改成重复 / 核心值改成 1.5 / 成形门槛改成 0.1)。
+
+### 文件头列了四条口径,一条判据都没有
+
+接上一条线(导出函数无判据)。这次先 `ls` 确认文件不存在 —— 第 87 轮覆盖已有 spec
+的教训记住了。
+
+41 个模块**连 spec 文件都没有**。挑了两个:文件头把契约列得最清楚的。
+
+### `engineUnlocks`:四条口径原文照抄
+
+```text
+· 只登记一次
+· 一次扫描可解多条且顺序即声明顺序
+· 未达成不登记
+· 显式解锁同样去重 —— 状态型成就由周期检查反复触发,少了去重就会每拍发一次奖
+```
+
+**第四条是记下来的事故**,不是理论风险。补的判据里专门写了「连问五次,只有第一次算新解」:
+
+```ts
+for (let tick = 0; tick < 5; tick += 1) { ... if (out.unlocked) unlocks += 1; }
+expect(unlocks, "连问五次解出了 N 次 —— 状态型成就会每拍发一次奖").toBe(1);
+```
+
+### `engineChain`:三条契约,最要紧的是「最多推 5 节」
+
+```text
+· 一次结算最多推 5 节 —— 条件恒真时没有守卫的循环会一帧跳完整条链,撞到上限也要能说出来
+    (`capped`)
+· 判据由调用方给(这一层不 import progress,免得绕成环)
+· 结果换算回本作的内容定义
+```
+
+32 节主线。若守卫没了,条件恒真的那一帧会**一口气领完 32 节赏**,
+界面从「第一节」直接翻到「全通」,每一节的播报都来不及出。
+
+实测(未改动):`全通过 → 推进 5 节 index=5 capped=true atEnd=false`。
+判据把这条线连同 `capped` 语义一起钉住。
+
+### 两个模块的判据都做了「判据自身的空转检查」
+
+```text
+engineUnlocks  「成就表非空,id 唯一」
+engineChain    「链真的比守卫长,否则判据量不出上限」
+```
+
+第二条特别要紧:若哪天主线缩到 5 节以内,「最多推 5 节」这条判据就再也测不出东西 ——
+它会绿,但什么也没守。故先断言 `MAIN_QUESTS.length > MAIN_CHAIN_MAX_STEPS`。
+
+四处注入都命中(解锁不去重 / 计数自洽 / 守卫改 50 / 越界返回首条)。

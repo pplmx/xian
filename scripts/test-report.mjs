@@ -101,6 +101,8 @@ const CATEGORIES = [
       "buildSim",
       "buildSearch",
       "buildDetect",
+      "engineUnlocks",
+      "engineChain",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
