@@ -1,5 +1,5 @@
 /**
- * 丹药库 —— 69 味。
+ * 丹药库 —— 70 味。
  *
  * ## 定价法则(Phase 32.6 丹药价值审计)
  *
@@ -153,6 +153,11 @@ export const PILLS: PillDef[] = [
    * 例:玄元丹 24 味灵草 ≈ 24 场遭遇 ≈ 五分钟,定 15 分;混元丹 490 味 ≈ 98 分,定 6 时。
    * 不这么对,丹会变成远胜历练的通路(重定价前:顶级丹抵 71 小时历练,而它的灵草只值 1.6 小时)。
    */
+  p("p_xuantai", "玄胎丹", "immortal", 12, "玄胎暗结,未生先养 —— 养的是下一世的自己", {
+    instant: { expSecs: 12600 },
+    recipe: { herb: 290, stoneBase: 700 },
+    alchemyLevel: 9,
+  }),
   p("p_xuanyuan", "玄元丹", "spirit", 2, "玄元之气化入丹中,服之如闭关", {
     instant: { expSecs: 900 },
     recipe: { herb: 24, stoneBase: 45 },
