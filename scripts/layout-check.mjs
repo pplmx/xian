@@ -32772,6 +32772,114 @@ async function taskDaoReadouts() {
         await ctx.close();
       }
     }
+
+    // ── 四 · 两百档字号(195 CSS px):两处读数都不许撑破 ─────────────────
+    {
+      /*
+       * 390 只证明「一行放得下」,证明不了「200% 缩放后还放得下」——
+       * 而本仓的第一条界面纪律就是移动端优先、按 200% 缩放防折行。
+       * 新加的两处读数此前只在 390 量过,故这里按视口宽度 195 再量一遍,
+       * 走与巡页同一个 `measurePage`(同一把尺子:横向溢出 / 外壳被滚偏 /
+       * 越界元素 / 字被挤成竖排)。
+       *
+       * 两处都量:剑意的「欠何」那列在窄档最容易折成四行;速战那行三个数
+       * 连在一起,「每场均 20 回合 · 压到 18 回合内可至 15%」本来就长。
+       */
+      const ctx = await auditContext({
+        viewport: { width: 195, height: 422 },
+        deviceScaleFactor: 3,
+        isMobile: true,
+        hasTouch: true,
+      });
+      try {
+        const slices = slicesFor("sword", null);
+        slices.inventory = {
+          ...slices.inventory,
+          artifacts: [
+            { defId: "af_qinglian", level: 1 },
+            { defId: "af_wuxiangzhu", level: 1 },
+          ],
+          equippedArtifacts: ["af_qinglian", "af_wuxiangzhu"],
+        };
+        await seedSave(ctx, slices, "__daoReadoutZoomSword");
+        const page = await ctx.newPage();
+        const pageErrors = [];
+        watchPageErrors(page, pageErrors);
+        const rendered = await openRoute(page, "/celestial", 900);
+        checked += 1;
+        if (rendered === 0) {
+          failures.push("[195-dao] 天界页没渲染出来,缩放档读数没量到");
+        } else {
+          const m = await measurePage(page);
+          const probs = problemsOf(m);
+          if (probs.length) {
+            failures.push(`[195-dao] 剑意两侧读数在 200% 缩放下:${probs.join(" / ")}`);
+          }
+          // 两侧都还在(窄档不许把「欠何」那侧藏起来当作「不折行」的解法)
+          const sides = await page.evaluate(() => ({
+            toward: document.querySelectorAll("[data-dao-purity-toward]").length,
+            against: document.querySelectorAll("[data-dao-purity-against]").length,
+          }));
+          if (sides.against === 0) {
+            failures.push("[195-dao] 窄档下「欠何」那侧整行消失 —— 折行不是靠藏内容解决的");
+          }
+          if (pageErrors.length) {
+            failures.push(`[195-dao] 缩放档页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+          }
+        }
+      } finally {
+        await ctx.close();
+      }
+
+      const ctx2 = await auditContext({
+        viewport: { width: 195, height: 422 },
+        deviceScaleFactor: 3,
+        isMobile: true,
+        hasTouch: true,
+      });
+      try {
+        await seedSave(
+          ctx2,
+          slicesFor("slaughter", {
+            worldId: "chiyan",
+            pactId: null,
+            gateId: null,
+            layer: 1,
+            bonus: 12,
+            rows: [{ foeName: "焰魄", win: true, rounds: 20, hpLeftPct: 0.62 }],
+            carriedHpPct: 0.62,
+            totalRounds: 100,
+            winStacks: 1,
+          }),
+          "__daoReadoutZoomSlaughter",
+        );
+        const page = await ctx2.newPage();
+        const pageErrors = [];
+        watchPageErrors(page, pageErrors);
+        const rendered = await openRoute(page, "/celestial", 900);
+        checked += 1;
+        if (rendered === 0) {
+          failures.push("[195-dao] 天界页没渲染出来,缩放档速战读数没量到");
+        } else {
+          const m = await measurePage(page);
+          const probs = problemsOf(m);
+          if (probs.length) {
+            failures.push(`[195-dao] 速战读数在 200% 缩放下:${probs.join(" / ")}`);
+          }
+          const still = await page.evaluate(
+            () => document.querySelectorAll("[data-expedition-speed-tier]").length,
+          );
+          if (still === 0) {
+            failures.push("[195-dao] 窄档下速战读数整行消失 —— 折行不是靠藏内容解决的");
+          }
+          if (pageErrors.length) {
+            failures.push(`[195-dao] 缩放档页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+          }
+        }
+      } finally {
+        await ctx2.close();
+      }
+    }
   } catch (err) {
     failures.push(`[390-dao] 任务自身抛错:${err instanceof Error ? err.message : String(err)}`);
   }
