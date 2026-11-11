@@ -550,6 +550,7 @@ const CATEGORIES = [
       "trialScene",
       "secretRealmScene",
       "collectionScene",
+      "sceneFit",
       "resetShowsLoss",
       "openingStepCount",
       "openingGift",
