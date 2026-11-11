@@ -19,7 +19,12 @@
         compact 档下它不是主视觉,只是卷首背后的一层淡墨。
       -->
       <template #backdrop>
-        <InkScene class="collection-masthead__scene" terrain="palace" :world-id="player.world.id" />
+        <InkScene
+          class="collection-masthead__scene"
+          terrain="palace"
+          :world-id="player.world.id"
+          :marks="false"
+        />
       </template>
     </FolioPageHeader>
 

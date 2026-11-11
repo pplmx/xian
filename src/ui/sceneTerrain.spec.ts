@@ -228,6 +228,49 @@ describe("山水景 · 点景分两层", () => {
     }
   });
 
+  it("点景按真渲染尺寸放大过 —— 54px 的条里 12 单位的松只有 4px,读出来是一根短线", () => {
+    /*
+     * 表里的笔路按「一整张画」的原稿尺寸写,而真渲染时这一幅常只有 54~74px 高
+     * (卷首底、战局底、际遇帖)。若不放大,点景在那些地方等于不存在 ——
+     * 而这一层存在的全部意义就是「看得见」。故钉住一个下限。
+     */
+    for (const terrain of SCENE_TERRAINS) {
+      const scaled = sceneOf(terrain).accents.map((a) => a.scale);
+      expect(
+        Math.max(...scaled),
+        `${terrain} 的点景没放大 —— 窄条里会缩成一根短线`,
+      ).toBeGreaterThan(1.5);
+    }
+  });
+
+  it("松是树不是箭头 —— 针叶树得是一整个三角剪影,不是叠起来的人字", () => {
+    /*
+     * 原先的松写成「一干三针」(三条人字叠起来),真渲染出来是一支朝上的箭头。
+     * 箭镞与针叶树是两套形状语言;这条钉住「闭合的三角形树冠」。
+     */
+    const pine = sceneOf("forest").accents.find((a) => a.kind === "pine");
+    expect(pine, "林麓连一棵松都没有 —— 那它凭什么叫林麓").toBeTruthy();
+    expect(pine!.d, "松要闭合成一整个树冠").toMatch(/Z/);
+    expect(pine!.d.split("M").length - 1, "松至少要干 + 冠两笔").toBeGreaterThan(1);
+  });
+
+  it("遗迹与宫阙一眼分得开 —— 断塔不是完整的塔", () => {
+    /*
+     * 两处原先都用 `pagoda`:遗迹是一片坡上立着三座**完整**的塔,宫阙也是。
+     * 真渲染画廊里两者几乎一模一样 —— 那就等于地形表里只有八种。
+     */
+    const kindsOf = (terrain: (typeof SCENE_TERRAINS)[number]) =>
+      sceneOf(terrain).accents.map((a) => a.kind);
+    expect(kindsOf("ruin"), "遗迹要有断塔").toContain("ruinTower");
+    expect(kindsOf("ruin"), "遗迹要有断柱").toContain("ruinColumn");
+    expect(kindsOf("palace"), "宫阙仍是完整的塔").toContain("pagoda");
+    /*
+     * 反向:遗迹不许再靠完整的 pagoda 撑场面 —— 否则「断」与「完整」同时出现,
+     * 玩家读到的还是「这里也有塔」。
+     */
+    expect(kindsOf("ruin"), "遗迹不该再摆完整的塔").not.toContain("pagoda");
+  });
+
   it("四界各自最认得出来的那一笔都在(山有月、林有松、海有舟、宫有塔)", () => {
     const kindsOf = (terrain: (typeof SCENE_TERRAINS)[number]) =>
       sceneOf(terrain).accents.map((a) => a.kind);

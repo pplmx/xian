@@ -32,6 +32,7 @@
               class="adventure-masthead__scene"
               :world-id="player.world.id"
               :icon="sceneIcon"
+              :marks="false"
             />
           </template>
           <!--

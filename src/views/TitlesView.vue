@@ -13,7 +13,12 @@
         灵兽在林间,名号刻在石上。读世界色,换界时连山一起换(见 ui/sceneTerrain)。
       -->
       <template #backdrop>
-        <InkScene class="titles-masthead__scene" terrain="forest" :world-id="player.world.id" />
+        <InkScene
+          class="titles-masthead__scene"
+          terrain="forest"
+          :world-id="player.world.id"
+          :marks="false"
+        />
       </template>
     </FolioPageHeader>
 

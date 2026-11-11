@@ -71,7 +71,9 @@ export interface SceneAccent {
     | "cloud"
     | "flake"
     | "shard"
-    | "ember";
+    | "ember"
+    | "ruinTower"
+    | "ruinColumn";
   /** 落点(viewBox 420×160) */
   x: number;
   y: number;
@@ -99,8 +101,14 @@ export interface SceneShape {
 const STROKE = {
   /** 两只雀:一笔一顿,中点即身 */
   bird: "M-9 0 C-6 -3.4 -3 -3.4 0 0 C3 -3.4 6 -3.4 9 0",
-  /** 松:一干三针,远看是针叶树的剪影 */
-  pine: "M0 0 V-9 M-3.6 -3 L0 -10 L3.6 -3 M-2.6 -7 L0 -12 L2.6 -7",
+  /**
+   * 松:一干 + 三角树冠。
+   *
+   * 原先写的是「一干三针」—— 三条人字叠起来。真渲染出来那是一支**朝上的箭头**,
+   * 不是树:人字叠是「羽毛/箭镞」的形状语言,针叶树要的是一整个三角的剪影。
+   * 改成闭合三角形加一横(树冠下缘),远看就是一棵杉。
+   */
+  pine: "M0 1.6 V-3.4 M-6.6 -3.4 L0 -14 L6.6 -3.4 Z M-3.6 -8.6 H3.6",
   /** 塔:三层檐加一条地平 —— 宫阙与天门共用 */
   pagoda: "M-11 0 H11 M-8.5 -4 C-5.5 -7.6 5.5 -7.6 8.5 -4 M-6 -7.6 H6 M-4 -11.4 H4",
   /** 水纹:一道轻卷 */
@@ -117,6 +125,13 @@ const STROKE = {
   flake: "M0 -1.1 A1.1 1.1 0 1 1 -0.1 -1.1 Z",
   /** 碎晶:一块斜立的虚空残片 */
   shard: "M0 4 L3.2 -6 L7.2 1 Z",
+  /**
+   * 断塔:塔身只到一半,顶上缺一角 —— 「曾是一座塔」比「一座塔」说得更多。
+   * 宫阙用完整的 pagoda,遗迹用这一个;两者同在画面上时必须一眼分得开。
+   */
+  ruinTower: "M-9 0 H9 M-6.5 -4 V-9 M-3.5 -4 V-11 M3 -4 V-9 M6.5 -4 V-6.5 M-6.5 -9 L-3.5 -11",
+  /** 断柱:一根立着、一根歪倒 */
+  ruinColumn: "M0 0 V-13 M-2.6 -13 H2.6 M-2.6 -9 H2.6 M7 0 H15 M7 0 L9.4 -6 H14 L15 0",
   /** 火星:一粒上扬的灰 */
   ember: "M0 1.4 C-1.6 -0.6 -0.8 -3.4 1 -4.6 C1.8 -2 1.6 0 0 1.4 Z",
 } as const;
@@ -128,13 +143,23 @@ type AccentSeed = {
   scale?: number;
 };
 
+/**
+ * 点景的**整体倍率** —— 表里的笔路按「一整张画」的原稿尺寸写,而真渲染时这一幅常只
+ * 有 54~74px 高(卷首底、战局底、际遇帖)。按原尺寸 1:1 画,一颗 12 单位的松落在
+ * 54px 的条里只有 4px,读出来是一根短线 —— 玩家看到的还是「没有画」。
+ *
+ * 故倍率只调一次:表里仍按原稿写(改山骨与改点景是两种活,混在一个数里就没法读),
+ * 出图时统一放大。实测值见 docs/design.md。
+ */
+const ACCENT_UNIT = 1.9;
+
 /** 把「名目 + 落点」摊成可画的笔:geometry 只在 STROKE 一处 */
 function accents(seeds: readonly AccentSeed[]): SceneAccent[] {
   return seeds.map((seed) => ({
     kind: seed.kind,
     x: seed.x,
     y: seed.y,
-    scale: seed.scale ?? 1,
+    scale: (seed.scale ?? 1) * ACCENT_UNIT,
     d: STROKE[seed.kind],
   }));
 }
@@ -210,8 +235,9 @@ const SHAPES: Record<SceneTerrain, SceneShape> = {
     far: "M0 160 L44 128 C68 112 92 106 118 110 C146 114 164 128 192 130 C222 132 240 112 268 110 C296 108 314 128 342 130 C372 132 394 122 420 116 L420 160 Z",
     near: "M0 160 L420 160 L420 148 C360 143 302 152 244 147 C186 142 126 151 68 147 C46 145 22 148 0 149 Z",
     accents: accents([
-      { kind: "pagoda", x: 96, y: 126, scale: 1.2 },
-      { kind: "pagoda", x: 272, y: 120, scale: 0.9 },
+      { kind: "ruinTower", x: 96, y: 130, scale: 1.3 },
+      { kind: "ruinColumn", x: 168, y: 132, scale: 1 },
+      { kind: "ruinColumn", x: 268, y: 128, scale: 1.15 },
       { kind: "bird", x: 190, y: 44, scale: 0.72 },
       { kind: "moon", x: 352, y: 26, scale: 1.1 },
     ]),
@@ -285,6 +311,9 @@ const IN_FRONT: ReadonlySet<SceneAccent["kind"]> = new Set([
   "wave",
   "boat",
   "ember",
+  // 遗迹的断塔与断柱立在地上,与塔同层
+  "ruinTower",
+  "ruinColumn",
 ]);
 
 /** 该笔点景是否压在山骨之上 */
