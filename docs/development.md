@@ -8441,3 +8441,47 @@ design.md 一共 18 种天时     → WEATHERS(9) + WORLD_WEATHERS(9)     ✓ 11
 
 > 这类「同一个名词,两个粒度」的并存,不能靠统一成一个数解决 ——
 > **只能靠判据把各自量对**。而判据的第一步是先想清楚:**它量的到底是主号还是编号。**
+
+### 第 143 轮:四份 CI 工作流全核一遍 —— 接线是全的
+
+105~142 那一堆轮里,CI 只被 `gateWiring.spec` **间接**核过(「CI 里点名的脚本有没有本地入口」
+这个方向)。这轮直接读那四份 yml。
+
+```text
+gate.yml      89 行   可复用静态门禁(workflow_call)
+deploy.yml    68 行   GitHub Pages:push main → gate → build → deploy
+publish.yml  138 行   Docker 镜像:push main / tag / 手动 → gate → build-and-push
+build.yml    302 行   Electron & Android:只在 tag 上 → 版本闸门 → 浏览器自检 → 两条构建 → Release
+```
+
+核的六件事:
+
+```text
+① 三份都在用 gate       build / deploy / publish 各 `uses: ./.github/workflows/gate.yml`  ✓
+② 触发条件            deploy 与 publish 在 push main;build 只在 `v*.*.*` tag ✓
+③ 版本闸门            build.yml:41 校验 `tag == v${package.json.version}`,不等就 exit 1,
+                     且报错写着「先把 package.json 的版本提上去再打 tag」—— 第 132 轮那处
+                     待办指向旧 tag 的问题,在这道门上本来就会被拦住 ✓
+④ 两个 composite      setup-vp-install / ui-self-check 都在 ✓
+⑤ 六个浏览器门禁      build-timed / first-paint / perf-profile / layout-check / ui-smoke
+                     / offline-check —— 逐个 test -f,全在 ✓
+⑥ 本地入口对应        `verify` 是 vite.config.ts 的 task(不是 npm script),
+                     `check:shuffle` 是 npm script —— 两种形态都被 gateWiring.spec 的正反向
+                     两条判据罩着 ✓
+```
+
+**六件事全对。**
+
+### 这一轮里唯一值得记的设计
+
+`build.yml` 有一段注释解释它为什么用 `cancel-in-progress: false`:
+
+> 同一个 tag 只留一条流水线。两个 run 同时进 release job,会在同一个 tag 下
+> 「先删旧资产、再传新资产」,互相删掉对方刚传的文件,Release 里就会缺东西。
+> 用 `cancel-in-progress: false` 而不是 `true` —— 取消进行中的 run,有可能正好
+> 砍在「已删完、还没传完」的窗口里,留下一个资产不全的 Release。
+
+**这是「失败要有人看着」那条纪律的一个反向应用**:通常希望新 run 取消旧 run,
+而这里恰恰不能取消 —— 因为取消会砍在一个非原子的中间态上。
+这类判断写不进判据(它是关于「取消发生在哪一刻」的),**但写进注释就够了**:
+下一个想改成 `true` 的人会先读到它。
