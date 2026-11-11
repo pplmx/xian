@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 661 个 spec;本作自己那部分 581 个) |
+| `bun run test` | 全量用例(全量 662 个 spec;本作自己那部分 582 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 661 个 spec = 宿主 551 + 引擎 80,别把 661 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 662 个 spec = 宿主 551 + 引擎 80,别把 662 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 661 个 spec(本作自己那部分 581 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 662 个 spec(本作自己那部分 582 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -4373,14 +4373,14 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 581 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 582 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
 
 ```text
 第一版:326 个 spec · 4117 条标题
-修正后:581 个 spec · 6319 条标题   (+54%)
+修正后:582 个 spec · 6319 条标题   (+54%)
 ```
 
 > 这是一类**最难自查的错误**:工具跑得通、输出格式对、报出来的缺口具体到表与维度名 ——
@@ -4472,7 +4472,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**661 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**662 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -7115,3 +7115,53 @@ usage.md:100   两册各三十顶 / 四十二只
 
 > 前几轮的判据都在扫**阿拉伯数字**。而中文文档里数字有**两种写法**,
 > 只扫一种等于只看见一半 —— 而没被看见的那一半,正好是错的那一半。
+
+### 第 116 轮:上一轮那个盲区,在别的文档里更大
+
+第 115 轮发现判据只扫阿拉伯数字,汉字数字那种写法从来没被看见。修好 `usage.md` 之后
+问了一句:**其他文档呢?**
+
+这轮一数:
+
+```text
+文档            阿拉伯数字声明    汉字数字声明
+design.md          125              967      ← 汉字是阿拉伯的 7.7 倍
+usage.md            54              145
+alchemy.md           4               30
+engine.md            9               23
+```
+
+**既有的文档数字判据,覆盖的是不到 13% 的声明。**
+
+### 但汉字数字里绝大多数不能算「声明」
+
+`design.md` 里「一个」出现 **257 次**、「一条」188 次、「一枚」107 次 ——
+那些是**不定指用法**(a / an),不是「系统里有 1 个」。全算进来判据会疯。
+
+只认**两位数以上**的汉字数字(`十一` ~ `九十九`):「四十四只」是声明,「一只」是量词。
+按这个口径重扫,`design.md` 有 27 处,其中 5 处是过时的:
+
+```text
+三十顶名号                     → 29
+「四十只灵兽」那一组(4 处)     → 44
+```
+
+**与上一轮 `usage.md` 里修的一模一样。** 同一个错误在两份文档里同时存在。
+
+### 判据:`docNumeralForms.spec`
+
+不做通用对账(要先知道每个数字指什么,不可判定),只钉住**已经发现过错误的那两个说法**:
+
+```text
+① 文档里「N 顶」的 N 必须等于称号数
+② 谈灵兽的行里「N 只」必须等于灵兽数
+③ 汉字数字解析器本身要对(第 115 轮踩过:`CN.indexOf("四十四")` 返回 NaN,
+   于是判据报「文档写 NaN」—— 那个 NaN 是判据的 bug)
+```
+
+② 里「谈灵兽的行」是个窄近似(该行含「灵兽」二字)。我以为会漏掉
+`usage.md:526` 那行标题(`## 灵兽契语:四十只各有一句…`)—— 但它含「灵兽契语」,
+照样命中了。注入验证:两处都当场红。
+
+> 上一轮我以为「查完了」。这一轮的数是:**已覆盖的 13% 里找到 3 处错,
+> 没覆盖的 87% 里又找到 5 处**。同一个盲区,换个文档就又是一批。
