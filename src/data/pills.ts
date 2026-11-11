@@ -525,12 +525,19 @@ export const PILLS: PillDef[] = [
     recipe: { herb: 360, stoneBase: 1000 },
     alchemyLevel: 10,
   }),
-  p("p_benyuandan", "本源丹", "divine", 18, "混沌本源入体,法理自明", {
-    kind: "buff",
-    buffId: "buff_hundun",
-    recipe: { herb: 480, stoneBase: 1500 },
-    alchemyLevel: 10,
-  }),
+  p(
+    "p_benyuandan",
+    "本源丹",
+    "divine",
+    18,
+    "以混沌本源凝作一枚,入腹之后,先前不通的法理自己接上了",
+    {
+      kind: "buff",
+      buffId: "buff_hundun",
+      recipe: { herb: 480, stoneBase: 1500 },
+      alchemyLevel: 10,
+    },
+  ),
   // ---- 炼丹增益(概念契约):安神丹 —— 神魂安泰(通用:回灵)+ 凝神观炉(炼丹面:双成)。
   // "火候"是炼丹者的本事,不是丹能管的火 —— 此名已废,改走安神一路(id 沿旧)。 ----
   p("p_huohou", "安神丹", "immortal", 12, "神魂落回原处,呼吸慢下来;盯着炉子看,能多看一会儿成", {
@@ -551,12 +558,19 @@ export const PILLS: PillDef[] = [
     recipe: { herb: 350, stoneBase: 900 },
     alchemyLevel: 10,
   }),
-  p("p_shenjiang", "神将丹", "divine", 15, "神将临阵,攻伐无双,身亦不损", {
-    kind: "buff",
-    buffId: "buff_shenjiang",
-    recipe: { herb: 320, stoneBase: 820 },
-    alchemyLevel: 10,
-  }),
+  p(
+    "p_shenjiang",
+    "神将丹",
+    "divine",
+    15,
+    "取神将临阵时那一口气炼成;服之如阵前替身,攻守俱是它在前头",
+    {
+      kind: "buff",
+      buffId: "buff_shenjiang",
+      recipe: { herb: 320, stoneBase: 820 },
+      alchemyLevel: 10,
+    },
+  ),
   p("p_shenwang", "神王丹", "divine", 16, "神域气运并入己身,服之如闭关", {
     instant: { expSecs: 16200 },
     recipe: { herb: 380, stoneBase: 1160 },

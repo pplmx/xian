@@ -36,6 +36,7 @@
  */
 import { describe, expect, it } from "vite-plus/test";
 import { PILLS } from "@/data/pills";
+import { BUFFS } from "@/data/buffs";
 
 describe("丹药文案 · 别写成药品说明书", () => {
   it("① 「服之」开头的描述不超过 1 条", () => {
@@ -79,6 +80,46 @@ describe("丹药文案 · 别写成药品说明书", () => {
     expect(bad, bad.join("、")).toEqual([]);
     const names = PILLS.map((p) => p.name);
     expect(new Set(names).size, "丹药重名").toBe(names.length);
+  });
+
+  it("④ 状态丹的 desc 不许与它赐的 buff 的 desc 一字不差", () => {
+    /*
+     * 2026-11 实测:23 味状态丹里有 **2 味**的 desc 与它所赐 buff 的 desc 完全相同 ——
+     *
+     * ```text
+     *   本源丹   混沌本源入体,法理自明         = buff_hundun 的 desc
+     *   神将丹   神将临阵,攻伐无双,身亦不损    = buff_shenjiang 的 desc
+     * ```
+     *
+     * 两处会在不同的屏上出现:丹药列表读 `PILLS[].desc`,人物页的「丹药与增益」行读
+     * `BUFFS[].desc`。同一句话在两处各说一遍,玩家会以为是同一件东西名字不同。
+     *
+     * 其余 21 味本就分得开 —— 丹药说「怎么来的 / 服的这一下」,
+     * buff 说「药力在身上是什么样」。这两味是漏掉的。
+     *
+     * 与 `petVows.spec` 的「契语不与 desc 同句」同一个道理:同屏并排的两句要说两件事。
+     */
+    const dup = PILLS.filter((p) => {
+      if (p.kind !== "buff" || !p.buffId) return false;
+      const b = BUFFS.find((x) => x.id === p.buffId);
+      return b !== undefined && b.desc === p.desc;
+    }).map((p) => `${p.name}(${p.buffId})`);
+    expect(
+      dup,
+      "这些状态丹的 desc 与它赐的 buff 的 desc 一字不差 —— " +
+        "丹药该说「怎么来的」,buff 该说「药力在身上是什么样」:" +
+        dup.join("、"),
+    ).toEqual([]);
+
+    // 也不许把 buff 的 desc 整句抄进丹药里再补半句
+    const embedded = PILLS.filter((p) => {
+      if (p.kind !== "buff" || !p.buffId) return false;
+      const b = BUFFS.find((x) => x.id === p.buffId);
+      return b !== undefined && b.desc.length > 6 && p.desc.includes(b.desc);
+    }).map((p) => p.name);
+    expect(embedded, "这些丹药的 desc 把 buff 的 desc 整句抄了进去:" + embedded.join("、")).toEqual(
+      [],
+    );
   });
 
   it("记录:重写完的十三条(看得出改了什么)", () => {
