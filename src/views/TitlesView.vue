@@ -7,7 +7,15 @@
       back-to="character"
       back-label="人物"
       featured
-    />
+    >
+      <!--
+        卷首的底 —— 名号与灵兽是「身外之名」,画的是一片林麓:
+        灵兽在林间,名号刻在石上。读世界色,换界时连山一起换(见 ui/sceneTerrain)。
+      -->
+      <template #backdrop>
+        <InkScene class="titles-masthead__scene" terrain="forest" :world-id="player.world.id" />
+      </template>
+    </FolioPageHeader>
 
     <NameBeastSwitch v-model="tab" :choices="nameBeastChoices" class="folio-span-all" />
 
@@ -555,6 +563,7 @@ import {
   type TitleProgressRow,
 } from "@/core/titleProgress";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
+import InkScene from "@/components/common/InkScene.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import QualitySeal from "@/components/common/QualitySeal.vue";

@@ -1,6 +1,19 @@
 @layer reset, shared, page, app-utilities;
 @layer page {
   /*
+   * 名号与灵兽的卷首底 —— 一片林麓(见 ui/sceneTerrain)。
+   * 只做氛围:绝对定位、贴卷首下缘,不占布局高度,也不托字。
+   */
+  .titles-masthead__scene {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    --ink-scene-h: 4.2rem;
+    --ink-scene-ink: 0.5;
+    pointer-events: none;
+  }
+
+  /*
    * 名兽案 —— 双契先落成一条纸面索引,每册两章共用一张开口续卷。
    *
    * 旧版把双契总览、当前与全谱各装进一张带内外框的卡:一屏里三层同权容器,

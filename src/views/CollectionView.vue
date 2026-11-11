@@ -12,7 +12,16 @@
       back-label="人物"
       featured
       compact
-    />
+    >
+      <!--
+        藏珍的底 —— 九柜纳珍是「收起来的东西」,画的是宫阙:
+        塔成群、云气绕,与「已收进阁里的那些」同一个意思(见 ui/sceneTerrain)。
+        compact 档下它不是主视觉,只是卷首背后的一层淡墨。
+      -->
+      <template #backdrop>
+        <InkScene class="collection-masthead__scene" terrain="palace" :world-id="player.world.id" />
+      </template>
+    </FolioPageHeader>
 
     <!--
       双阁门取代原来的横页签：功名榜先报最近三策，藏珍阁直接打开九柜。
@@ -549,6 +558,7 @@ import {
   collectionCategoryMark,
 } from "@/ui/collectionDesk";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
+import InkScene from "@/components/common/InkScene.vue";
 import CollectionCabinet from "@/components/common/CollectionCabinet.vue";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import FolioNote from "@/components/common/FolioNote.vue";

@@ -1,6 +1,19 @@
 @layer reset, shared, page, app-utilities;
 @layer page {
   /*
+   * 藏珍的卷首底 —— 宫阙与云气(见 ui/sceneTerrain)。
+   * compact 档下卷首本身很薄,故这一层只贴下缘、更淡:它是纸上的远影,不是主视觉。
+   */
+  .collection-masthead__scene {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    --ink-scene-h: 3.6rem;
+    --ink-scene-ink: 0.42;
+    pointer-events: none;
+  }
+
+  /*
    * 藏珍双阁 —— 功名榜与藏珍阁各是一册两章。
    * 960 宽起把行动章与榜/柜章摊成左右两页；此前是一张连续单叶。
    */

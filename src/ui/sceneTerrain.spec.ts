@@ -277,6 +277,24 @@ describe("山水景 · 真接线", () => {
     expect(style, "山骨要读世界色一处").toContain("var(--world-mountain");
   });
 
+  it("两页有景的也必须接上,且不许停在同一片地上", () => {
+    /*
+     * 名号与藏珍本来既没有主视觉也没有卷首底 —— 全靠文字立住。补上之后,
+     * 它们**不该都用同一个地形**:两页说的是两件事(身外之名 / 收起来的东西),
+     * 若都落回山岳,玩家看到的还是同一张底图,只是挪了位置。
+     */
+    const titles = readSource("src/views/TitlesView.vue");
+    const collection = readSource("src/views/CollectionView.vue");
+    expect(titles, "名号页的卷首要接山水").toContain("<InkScene");
+    expect(collection, "藏珍页的卷首要接山水").toContain("<InkScene");
+    expect(titles, "名号页得自己挑地形,不许靠兜底").toMatch(/terrain="[a-z]+"/);
+    expect(collection, "藏珍页得自己挑地形,不许靠兜底").toMatch(/terrain="[a-z]+"/);
+    const terrainOf = (src: string) => src.match(/terrain="([a-z]+)"/)?.[1] ?? "";
+    expect(terrainOf(titles), "两页用了同一片地 —— 等于只有一张底图").not.toBe(
+      terrainOf(collection),
+    );
+  });
+
   it("首页、修行卷首、地界志、行旅图都接上了同一幅山水", () => {
     for (const [file, why] of [
       ["src/views/HomeView.vue", "首页那张星空底下"],
