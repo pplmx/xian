@@ -122,6 +122,7 @@ const CATEGORIES = [
       "engineBuffs",
       "engineFacilities",
       "docNumeralForms",
+      "testNameCounts",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",

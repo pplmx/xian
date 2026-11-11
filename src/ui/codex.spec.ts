@@ -172,7 +172,7 @@ describe("悟道录:未见 / 已见 / 已择", () => {
     expect(describeBranch(branch, 1).foot.value).toBe(gongfaDef(branch.gongfaId)!.name);
   });
 
-  it("七十七条分支都挂得上一部实有的功法", () => {
+  it("一百九十九条分支都挂得上一部实有的功法", () => {
     for (const b of GONGFA_BRANCHES) {
       expect(gongfaDef(b.gongfaId), `${b.name} 指向不存在的功法 ${b.gongfaId}`).toBeDefined();
       expect(describeBranch(b, 1).meta, `${b.name} 在悟道录里没有出处`).not.toBe("");

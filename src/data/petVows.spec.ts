@@ -43,7 +43,7 @@ describe("灵兽契语 · 不撒谎、不重复", () => {
     }
   });
 
-  it("契语不重复:四十只是四十句话", () => {
+  it("契语不重复:四十四只是四十四句话", () => {
     const seen = new Set<string>();
     for (const [id, vow] of Object.entries(PET_VOWS)) {
       expect(seen.has(vow), `${id} 的契语与别只重复了:${vow}`).toBe(false);
