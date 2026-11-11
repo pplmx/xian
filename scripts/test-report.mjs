@@ -130,6 +130,7 @@ const CATEGORIES = [
       "terminology",
       "releaseTodo",
       "eventSupplyCurve",
+      "misjudgmentLedger",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
