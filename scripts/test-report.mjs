@@ -546,6 +546,7 @@ const CATEGORIES = [
       "slotScene",
       "brewingScene",
       "marksScene",
+      "gongfaMainScene",
       "resetShowsLoss",
       "openingStepCount",
       "openingGift",

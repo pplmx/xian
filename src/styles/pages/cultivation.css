@@ -1152,6 +1152,34 @@
     padding: 0 0.1rem 0.78rem;
   }
 
+  /*
+   * 主修席上那片天 —— 这一部书立在哪儿(见 components/cultivation/GongfaSection)。
+   *
+   * 脱离流、钉在这一格内:主修席是 48px 高的按钮行,画占布局会把「看功法」挤走。
+   * 这一格本身要 `position: relative` 才承得住它(下面那条一起给)。
+   *
+   * 高度走 `--ink-scene-h`:这一层同时就是 `.ink-scene` 本身,直接写 height 会被
+   * 组件内那条 `height: var(--ink-scene-h, 100%)` 盖过(器评帖那一轮踩过)。
+   *
+   * 点景关掉(组件上 `:marks="false"`):底下压着书名与「第 N 层 · 品阶」。
+   */
+  .cultivation-gongfa__main {
+    position: relative;
+    isolation: isolate;
+  }
+  .cultivation-gongfa__main-scene {
+    --ink-scene-h: 100%;
+    --ink-scene-ink: 0.42;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .cultivation-gongfa__main > :not(.cultivation-gongfa__main-scene) {
+    position: relative;
+    z-index: 1;
+  }
+
   .cultivation-gongfa__main {
     display: grid;
     width: 100%;

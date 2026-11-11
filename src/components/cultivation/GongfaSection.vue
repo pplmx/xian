@@ -15,6 +15,21 @@
         class="cultivation-gongfa__main"
         @click="ui.gongfaDetailId = mainDef.id"
       >
+        <!--
+          这一部书立在哪儿 —— 按五行取景,复用工法详情那条 `sceneTerrainOfGongfa`。
+
+          主修席是这一章**最显眼的一格**("我这一世以哪一部立身"),而功法详情弹窗
+          已经按五行取景了 —— 同一个身份,点开之后看得见、点开之前看不见。
+
+          落法是这一格内的背景(绝对定位、不接指针):这一格是 48px 高的按钮行,
+          画占布局会把「看功法」挤走。点景关掉 —— 底下压着书名与层数。
+        -->
+        <InkScene
+          class="cultivation-gongfa__main-scene"
+          :terrain="sceneTerrainOfGongfa(mainDef.element, mainDef.type)"
+          :marks="false"
+          aria-hidden="true"
+        />
         <span class="cultivation-gongfa__main-seal">主</span>
         <span class="cultivation-gongfa__main-copy">
           <span class="cultivation-gongfa__main-name">{{ mainDef.name }}</span>
@@ -256,6 +271,8 @@ import {
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import QualitySeal from "@/components/common/QualitySeal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfGongfa } from "@/ui/sceneTerrain";
 import { cultivationChapter } from "@/ui/cultivationDesk";
 
 const player = usePlayerStore();
