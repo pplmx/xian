@@ -965,3 +965,33 @@ const COLLECTION_TERRAIN: Record<string, SceneTerrain> = {
 export function sceneTerrainOfCollection(cabinetKey: string | null | undefined): SceneTerrain {
   return (cabinetKey && COLLECTION_TERRAIN[cabinetKey]) || "peaks";
 }
+
+/**
+ * 玄枢图的五卷 → 地形。
+ *
+ * `ui/navigation` 的 `NAVIGATION_SECTIONS` 是玄枢图的五卷,每一卷自己带着一句
+ * `hint`,而那句 hint 就是这一卷的去处 —— 按它取景,不按 id 顺序硬塞:
+ *
+ *   修行「此刻的道躯与修为」      → 星野(吐纳时头顶那片)
+ *   道场「家业、人事与周转」      → 林麓(经营与人事都在有人烟的地方长起来)
+ *   行旅「山河、地界与所往」      → 山岳(这一卷就是山河)
+ *   身外「器、药、魂与藏珍」      → 宫阙(库与阁)
+ *   天机「跨世的道途与选择」      → 虚空(跨世——不在此界)
+ *
+ * 五卷落五种 —— **不**对九种硬凑:五卷就是五卷,给不存在的第六卷编一种地形
+ * 只是为了让数字好看(那正是「两本账」)。
+ *
+ * 认不出落回山岳 —— 玄枢图总有卷在,没有「无处」这一档。
+ */
+const VOLUME_TERRAIN: Record<string, SceneTerrain> = {
+  practice: "sky",
+  estate: "forest",
+  journey: "peaks",
+  belongings: "palace",
+  fate: "void",
+};
+
+/** 玄枢图一部长什么样;认不出的落回山岳 */
+export function sceneTerrainOfVolume(volumeId: string | null | undefined): SceneTerrain {
+  return (volumeId && VOLUME_TERRAIN[volumeId]) || "peaks";
+}

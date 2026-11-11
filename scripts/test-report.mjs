@@ -551,6 +551,7 @@ const CATEGORIES = [
       "secretRealmScene",
       "collectionScene",
       "sceneFit",
+      "atlasScene",
       "resetShowsLoss",
       "openingStepCount",
       "openingGift",

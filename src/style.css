@@ -1384,6 +1384,31 @@
       rgb(var(--color-paper-deep-rgb) / 0.2)
     );
   }
+  /*
+   * 玄枢图卷签上那片天 —— 这一卷去哪(见 components/common/NavigationAtlas)。
+   *
+   * 卷签已是 `position: relative`(下面那条),画直接承在上面:
+   * 绝对定位、不接指针,故不占布局 —— 卷签是按钮,画占布局会把「N 册」挤走。
+   *
+   * 高度走 `--ink-scene-h`:这一层同时就是 `.ink-scene` 本身,直接写 height 会被
+   * 组件内那条 `height: var(--ink-scene-h, 100%)` 盖过(器评帖那一轮踩过)。
+   *
+   * 点景关掉(组件上 `:marks="false"`):底下压着编号、卷名与册数。
+   * 墨取 0.3 —— 那一排是玩家找入口的眼睛落点,画只做底。
+   */
+  .atlas-volume__scene {
+    --ink-scene-h: 100%;
+    --ink-scene-ink: 0.3;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .atlas-volume > :not(.atlas-volume__scene) {
+    position: relative;
+    z-index: 1;
+  }
+
   .atlas-volume {
     position: relative;
     min-width: 0;

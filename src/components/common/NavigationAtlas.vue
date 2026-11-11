@@ -108,6 +108,22 @@
               @click="activateVolume(group.id)"
               @keydown="onVolumeKeydown($event, groupIndex)"
             >
+              <!--
+                这一卷去哪 —— 按 `group.id` 取景。
+
+                `ui/navigation` 的五卷各自带着一句 hint(de「此刻的道躯与修为」「山河、
+                地界与所往」「器、药、魂与藏珍」…),那就是这一卷的去处;而 489 行模板里
+                一个 `<svg>` 都没有 —— 五枚卷签的区别只有编号与那几个字。
+
+                落法是卷签内的背景(绝对定位、不接指针):卷签是按钮,
+                画占布局会把「N 册」挤走。点景关掉 —— 底下压着卷名与册数。
+              -->
+              <InkScene
+                class="atlas-volume__scene"
+                :terrain="sceneTerrainOfVolume(group.id)"
+                :marks="false"
+                aria-hidden="true"
+              />
               <span class="atlas-volume__number" aria-hidden="true">{{
                 sectionNumber(groupIndex)
               }}</span>
@@ -319,6 +335,8 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, useTemplateRef, watch } from "vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfVolume } from "@/ui/sceneTerrain";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { usePlayerStore } from "@/stores/player";
 import { useMediaQuery } from "@/composables/useMediaQuery";
