@@ -1531,7 +1531,11 @@ uv run scripts/fonts/build-kai-font.py        # 每片约 180 常用字 + 700 �
 用了四遍」。
 
 故把「这个地方长什么样」收成一份**纯数据**(与 `ui/weatherSky` 同一条纪律:不 import
-store、不 import core,只认传进来的字符串),九个地形各给两条山骨与几笔点景:
+store、不 import core,只认传进来的字符串),九个地形各给两条山骨与几笔点景。
+
+开局那两页(欢迎 / 建号)不在这套里:它们有自己的 `opening/OpeningBackdrop`,画的是
+「还没入世」,不属于任何一处地界 —— 一份数据管两种语境,最后两边都会将就。
+除此之外,凡按身份取景的都走 `sceneTerrain` + `InkScene`:
 
 | 地形 | 认得出的那一笔 | 被谁选中 |
 | --- | --- | --- |
