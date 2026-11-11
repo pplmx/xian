@@ -21,7 +21,7 @@
 | 副本规则(首领门槛与节奏 / 读档补票不变量) | `core/exploration` + `stores/adventure` 走库的副本系统 | 门槛逐胜场对冻结旧口径;补票不变量含"保留历史 id、幂等"两组断言 |
 | 离线时长账(上限 / 效率 / 步数 / 余量) | `core/offline` 走库的闲置模块 `planIdle` | 五档洞府上限 × 0~200 小时逐点与冻结旧式子相同(含"是否被截"的 1 秒容差) |
 | 存档形状修复与版本迁移链 | `utils/saveShape` 转出库的实现;`core/save` 的迁移链走库的 `runMigrations` | 老档迁移值搬过去 / 旧字段清掉 / 幂等由 `saveMigration.spec` 端到端钉着;库侧另有形状原语与链式迁移的独立用例 |
-| 功法(等级曲线 / 升级消耗 / 满级分支) | `core/engineWorld` 的 `GONGFA_SYSTEM`;`stores/cultivation` 与 `core/gongfaService` 转发 | 63 部功法 × 每级 × 三档折扣逐键 / 逐项与冻结旧口径相等(含"悟道点打折、残页不打折") |
+| 功法(等级曲线 / 升级消耗 / 满级分支) | `core/engineWorld` 的 `GONGFA_SYSTEM`;`stores/cultivation` 与 `core/gongfaService` 转发 | 当时 63 部功法(今 92 部)× 每级 × 三档折扣逐键 / 逐项与冻结旧口径相等(含"悟道点打折、残页不打折") |
 | 炼制(成功率四乘区 / 越级惩罚 / 熟练度曲线) | `core/craftability` 与 `data/crafting` 的纯式走库的 crafting | 四维网格(掌握 × 认知 × 技艺 × 越级)逐点精确相等;真实丹方的材料表与技艺权重逐条相等 |
 | 任务 / 成就的达成判据与进度 | `core/progress.evalCond` 与 `core/questProgress` 走库的 goals | 全部真实条件(主线 / 每日 / 成就)× 若干状态与冻结旧判据逐个相同;品质型条件的"不与等级同路"也被钉住 |
 | 灵兽性格与词条 | `core/engineWorld` 的 `COMPANION_SYSTEM`;`core/petPersonality` 与 `stores/player` 的灵兽加成转发 | 14 只灵兽的性格系数逐项、自身词条逐只与冻结旧表相同;无灵兽 / 未知 id 一律中性 |
@@ -69,8 +69,9 @@ import { emptyProgress } from 'wanxiang-engine'
 | `vite.config.ts` / `tsconfig.app.json` | 把包名指到 `packages/engine/src` 的**开发加速通路**:改库立刻热更新,不必先 build;去掉它也能用(那时解析 `dist`) |
 | `scripts/engine-dist.mjs` | 三条判据守着:**只经公开入口引用**(内部别名 / 深层导入 / 相对路径钻内部各一条断言)、**依赖声明存在且指回仓库内的库**、以及**由 node 解析裸包名与子路径**(vite/tsc 自己的别名绿了不算数) |
 
-当前状态:**70 处引用**全部走公开入口(含 `export … from`);node 侧解析出 80 个导出 +
-子路径 `presets/minimal`。
+当前状态:宿主对库的引用**全部走公开入口**(含 `export … from`),条数由
+`scripts/engine-dist.mjs` 现算(写这份时是 70 处,今 48 处 —— 以脚本输出为准);
+node 侧解析出 80 个导出 + 子路径 `presets/minimal`。
 
 > 2026-11-08 修:这里原写「65 处」,而判据当时实际只数到 **3** 处 —— 那 3 处还全来自
 > 注释里的示例文字。原因是 `engine-dist.mjs` 的四条 from 正则**只认单引号**,

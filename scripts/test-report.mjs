@@ -113,6 +113,7 @@ const CATEGORIES = [
       "narrativeTables",
       "eventProse",
       "designDocCounts",
+      "docCrossCheck",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
