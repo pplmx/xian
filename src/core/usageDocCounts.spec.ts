@@ -23,7 +23,7 @@ import { ARTIFACTS } from "@/data/artifacts";
 import { PETS } from "@/data/pets";
 import { MENTORS } from "@/data/mentors";
 import { ACHIEVEMENTS } from "@/data/achievements";
-import { MAIN_QUESTS } from "@/data/quests";
+import { DAILY_TASKS, MAIN_QUESTS } from "@/data/quests";
 import { TITLES } from "@/data/titles";
 import { LIFE_THEMES } from "@/data/lifeThemes";
 import { TRIBULATIONS } from "@/data/tribulations";
@@ -93,6 +93,20 @@ const CLAIMS: Claim[] = [
   { label: "契约", actual: PACTS.length, patterns: [/(\d+) 种契约/g, /(\d+) 契约 \+/g] },
   { label: "变数", actual: MUTATORS.length, patterns: [/(\d+) 类变数/g, /(\d+) 变数 \+/g] },
   { label: "成就", actual: ACHIEVEMENTS.length, patterns: [/(\d+) 个成就/g, /(\d+) 成就 \+/g] },
+  /*
+   * 每日任务 —— 第 105 轮补。
+   *
+   * 这条此前**不在名单里**,于是 `usage.md` 那句「三条每日任务」一路漂到
+   * 日课扩成 8 条都没人发现。判据是白名单驱动的:没登记的数字等于没人在看。
+   *
+   * 用汉字数字而非阿拉伯数字:文档里写的是「三条」「八条」。
+   */
+  {
+    label: "每日任务",
+    actual: DAILY_TASKS.length,
+    // 文档里写的是「八条每日任务」——汉字与「条」之间没有空格,故这里也不带
+    patterns: [/([一二三四五六七八九十]|\d+)条每日任务/g],
+  },
   {
     label: "主线任务",
     actual: MAIN_QUESTS.length,
@@ -151,12 +165,19 @@ describe("玩法文档 · 触感这一节", () => {
   });
 });
 
+/** 汉字数字(一到十)→ 阿拉伯数字;已经是数字的原样返回 */
+function cnToNumber(raw: string): number {
+  const CN = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
+  const i = CN.indexOf(raw);
+  return i >= 0 ? i : Number(raw);
+}
+
 /** 逐条核账:返回所有「找不到」与「对不上」;空数组才算过 */
 function auditUsageDoc(text: string): string[] {
   const bad: string[] = [];
   for (const claim of CLAIMS) {
     for (const pattern of claim.patterns) {
-      const found = [...text.matchAll(pattern)].map((m) => Number(m[1]));
+      const found = [...text.matchAll(pattern)].map((m) => cnToNumber(m[1]!));
       if (found.length === 0) {
         bad.push(`${claim.label}:文档里找不到 ${pattern.source}`);
         continue;
