@@ -25,7 +25,8 @@
           文案里的时制要与真实时长对得上:闭关只有 5 分钟,一炷香却是 30 分钟 ——
           拿"一炷香"说 5 分钟,玩家按古语理解会以为半小时,那就成了撒谎。
         -->
-        静坐片刻({{ retreatMinutes }} 分钟),修炼速度 +{{ retreatPct }}%;闭关期间无法外出历练。
+        静坐片刻({{ retreatMinutes }} 分钟),修炼速度
+        {{ formatSignedPercent(retreatPct, 0) }};闭关期间无法外出历练。
       </p>
       <button
         v-if="!retreating"
@@ -34,7 +35,7 @@
         data-cultivation-primary-action="retreat"
         @click="beginRetreat"
       >
-        闭关 · {{ retreatMinutes }}分钟 修炼 +{{ retreatPct }}%(期间无法历练)
+        闭关 · {{ retreatMinutes }}分钟 修炼 {{ formatSignedPercent(retreatPct, 0) }}(期间无法历练)
       </button>
       <!-- 闭关该收多少就摊多少:照现倍率折算 base,不只在定性「+150%」上打转。
            只在未闭关头展示为**前瞻**;闭关中现速率已含 +150%,再折算一遍会重复叠加,故撤 -->
@@ -54,6 +55,7 @@ import { useUiStore } from "@/stores/ui";
 import { isRetreating, startRetreat, getRetreatRemainingSec } from "@/core/earlyGameService";
 import { modOf } from "@/core/statsCalc";
 import { buffDef } from "@/data/buffs";
+import { formatSignedPercent } from "@/utils/format";
 import { formatCountdown, formatRate } from "@/utils/format";
 import { useGameNow } from "@/composables/useGameNow";
 
@@ -76,7 +78,14 @@ const retreatRemaining = computed(() => {
  */
 const retreatDef = buffDef("retreat");
 const retreatMinutes = Math.round((retreatDef?.durationSec ?? 0) / 60);
-const retreatPct = Math.round((retreatDef?.mods.cultivationSpeed ?? 0) * 100);
+/*
+ * 存**比例**而不是百分数,格式化交给 `formatPercent`。
+ *
+ * 原先这里是 `Math.round(x * 100)` 再在模板里手写 `%` —— 那等于在视图里重做了一遍
+ * `formatPercent` 的全部工作,却没有它的边界处理(上溢、`-0%` 印成「-0%」、去尾零)。
+ * 同一张屏上其他百分比都走 `formatPercent`,只有这一处不同,精度也会分叉。
+ */
+const retreatPct = retreatDef?.mods.cultivationSpeed ?? 0;
 /**
  * 闭关该收多少:不能只按「现在每秒 ×2.5」—— 那会在已有聚气丹等速度增益时虚高。
  * 闭关给修为速度 ×(1+现倍率+retreat 的 1.5),故按现倍率折算 base 再乘,才是真值。

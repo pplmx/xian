@@ -713,17 +713,20 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 全库曾散着 ~24 处手写 `Math.round(x*100)%` 的百分比显示(契合/胜率/携血/词条/
     // 熟练/道躯加成…),与 formatPercent 各写一份迟早分叉。统一后可见输出逐位等价
     // (parity 探针含负数/半值/极小值 0 差异),还白得 NaN/Infinity→'--' 与极小值归 0。
-    // 允许存在的唯一一处 `Math.round(..*100)`:retreatPct 是数值型 compute(模板两处
-    // 引用同一个数,不是显示点) —— 除此之外再有手写百分比显示,下面红。
-    // 拆分后闭关卡归 RetreatCard,retreatPct 随本体走,判据路径同步改指。
+    // 曾经允许一处例外:retreatPct 是数值型 compute(模板两处引用同一个数)。
+    // 第 113 轮把它也收口了 —— 那两处引用一个在文案句里、一个在按钮上,
+    // 都直接拼「{{ retreatPct }}%」,等于在视图里重做 formatPercent 且没有它的
+    // 边界处理。现在 retreatPct 存**比例**,两处都走 formatSignedPercent。
+    //
+    // 于是这条判据从「只剩一个例外」收紧成「**一个都不许**」。
     const offenders = FILES.filter(({ src }) => /Math\.round\([\s\S]{0,60}\* *100\)/.test(src)).map(
       (f) => f.path,
     );
-    expect(offenders, `手写百分比残留:${offenders.join(",")}`).toEqual([
-      "components/cultivation/RetreatCard.vue",
-    ]);
+    expect(offenders, `手写百分比残留:${offenders.join(",")}`).toEqual([]);
     const retreatCard = fileAt("components/cultivation/RetreatCard.vue");
-    expect(retreatCard?.src).toMatch(/const retreatPct = Math\.round\(/);
+    // 反过来钉住新形状:retreatPct 存比例,模板走格式化函数
+    expect(retreatCard?.src).toMatch(/const retreatPct = retreatDef\?\.mods\.cultivationSpeed/);
+    expect(retreatCard?.src).toMatch(/formatSignedPercent\(retreatPct/);
   });
 
   it("战斗双方都动 —— 攻击方横踏、受击方震颤,不许退回「只挨打那半边有反应」", () => {
