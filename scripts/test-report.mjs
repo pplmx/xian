@@ -119,6 +119,8 @@ const CATEGORIES = [
       "gongfaPoolReach",
       "affixTransferUnique",
       "engineCraft",
+      "engineBuffs",
+      "engineFacilities",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",

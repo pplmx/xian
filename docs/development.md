@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 659 个 spec;本作自己那部分 579 个) |
+| `bun run test` | 全量用例(全量 661 个 spec;本作自己那部分 581 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 659 个 spec = 宿主 551 + 引擎 80,别把 659 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 661 个 spec = 宿主 551 + 引擎 80,别把 661 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 659 个 spec(本作自己那部分 579 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 661 个 spec(本作自己那部分 581 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -4373,14 +4373,14 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 579 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 581 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
 
 ```text
 第一版:326 个 spec · 4117 条标题
-修正后:579 个 spec · 6319 条标题   (+54%)
+修正后:581 个 spec · 6319 条标题   (+54%)
 ```
 
 > 这是一类**最难自查的错误**:工具跑得通、输出格式对、报出来的缺口具体到表与维度名 ——
@@ -4472,7 +4472,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**659 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**661 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -6915,3 +6915,50 @@ apprenticeService  1 枚基座              — 举例
 >
 > 而「注释里写着、测试里没有」恰恰是最危险的组合 —— 注释让人以为有人管,
 > 测试的缺失又让破掉时没人知道。
+
+### 第 112 轮:增益与设施,九条契约补上了判据
+
+接着上一条线,把剩下 4 个「有契约无 spec」的模块核完:
+
+```text
+notify      56 行 · 通知端口 —— 与 uiPort 同族,端口层无判据是对的(第 89 轮的结论)
+uiPort      61 行 · 视图模型端口 —— 同上
+engineBuffs 228 行 · 补 4 条判据
+engineFacilities 189 行 · 补 5 条判据
+```
+
+### `engineBuffs` 三条契约里,最要紧的是时钟
+
+```text
+· 内容表写**秒**,运行时与存档写**毫秒** → 建库时声明 clock: 'ms',不再各处 ×1000
+· 存档键 `defId` ↔ 库键 `id`,进出口各转一次
+· 读取口径问「此刻还算不算数」(库的 active),不是「列表里有没有」
+```
+
+秒与毫秒混用是这类系统最经典的 bug。判据除了查 `clock: "ms"` 在,还查
+**代码里没有散落的 `× 1000` 或 `/ 1000`** —— 注释里写「×1000」是在说明历史,
+代码里写就是又转了一次,结果差 1000 倍。
+
+另有一条 ISS-232 的时长上限(单颗时长的 2 倍),判据查 `CONSUMABLE_BUFF_CAP_MULT`
+被用了至少两次(建库与 `buffCapSec` 各一次),且**没有字面量 `× 2` 冒充乘数** ——
+否则改常量时界面与结算就分叉。
+
+### `engineFacilities` 的判据第一版报了个假错
+
+第四条契约是「判定的先后就是界面上先出现哪句话」。第一版判据直接
+`SRC.indexOf("buildingLevelCapOf(levels.mansion")`,结果**先匹配到了第 56 行
+`capOfBuilding` 里的同名调用**,于是报「判定顺序反了」。
+
+查下来顺序是对的(`level >= def.maxLevel` 在第 81 行,`buildingLevelCapOf` 在第 83 行)——
+**判据跑到函数外面去了**。改成只在 `mansionShortfallOf` 的函数体内找才正确。
+
+> 这已经是第 9 次「判据读错了东西」。前八次分别读错了字段名、参数含义、扫描范围、
+> 复刻的公式、属性而非内容、兜底、按文件名配对、衡量尺度;**这一次是搜索范围**。
+>
+> 而每一次的代价都很像:先看见一个「缺陷」,再花时间把它证伪。
+
+### 注入验证时也踩了一次
+
+想验证第四条判据,第一次注入是把两行对调 —— 但它们之间隔着一行
+`const mansion = ...`,字符串替换没匹配上,于是「判据照样绿」。
+差点误判成判据太弱。换成删掉那一行再试,判据当场红。
