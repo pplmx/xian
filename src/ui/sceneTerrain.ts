@@ -734,3 +734,72 @@ const SLOT_TERRAIN: Record<string, SceneTerrain> = {
 export function sceneTerrainOfSlot(slot: string | null | undefined): SceneTerrain {
   return (slot && SLOT_TERRAIN[slot]) || "peaks";
 }
+
+/**
+ * 功法五行 → 地形。
+ *
+ * `data/linggen` 的 `ELEMENTS` 有十一行,而地形只有九种 —— 这一层不可能一对一。
+ * 故按**五行自己的性质**归并,而不是按 id 顺序硬塞:
+ *
+ *   金 —— 锋、锐                        → 雪原(峰更锐)
+ *   木 —— 生发                          → 林麓
+ *   水 —— 流                            → 江海
+ *   火 —— 焚                            → 火域
+ *   土 —— 厚、载                        → 山岳
+ *   风 —— 行于空处                      → 星野
+ *   雷 —— 天威                          → 星野(与风同属「天上」那一类)
+ *   冰 —— 冻住的、崩裂的                → 遗迹(冰裂的地表与断壁同一种形)
+ *   光 —— 明                            → 宫阙(最"人工"的那一种明亮)
+ *   暗 —— 隐                            → 虚空
+ *   混沌 —— 无                         → 虚空(与暗同一片:两者都是"空")
+ *
+ * 十一行落九种,重复二对(风·雷、暗·混沌),其余七行各占一种 —— 九种正好用满。
+ * 两对都不是随手配的:风与雷都是**天上的**,暗与混沌都是**空**。
+ *
+ * 写这张表时踩过一次:第一版把「冰」也归江海(与水的同一片),结果九种地形
+ * 只用到八种 —— 判据「九种用满」当场红。冰单独给了遗迹(冰裂与断壁同一种形),
+ * 既补上那一格,也比"冰就是水"更贴。
+ */
+const ELEMENT_TERRAIN: Record<string, SceneTerrain> = {
+  metal: "frost",
+  wood: "forest",
+  water: "water",
+  fire: "flame",
+  earth: "peaks",
+  wind: "sky",
+  thunder: "sky",
+  ice: "ruin",
+  light: "palace",
+  dark: "void",
+  chaos: "void",
+};
+
+/**
+ * 没有五行的那一部(纯体术 / 心法)→ 按**门径**取景。
+ *
+ * 92 部功法里有 59 部没有 `element`。它们的身份是「主修 / 辅修 / 秘术」——
+ * 而这三类是三种不同的**装配规则**:主修占唯一主修席,辅修与秘术都占辅修席。
+ * 三者画成同一片,那 59 部就等于共用一张底。
+ *
+ *   主修 —— 一部立身,占唯一的主修席   → 宫阙(正殿)
+ *   辅修 —— 旁列的支撑                  → 林麓
+ *   秘术 —— 收着的、不到用它的时候不摆 → 虚空(藏起来的)
+ */
+const TYPE_TERRAIN: Record<string, SceneTerrain> = {
+  main: "palace",
+  sub: "forest",
+  secret: "void",
+};
+
+/**
+ * 一部功法长什么样。
+ *
+ * 先看五行(那是这一作里构筑的一半:同源灵根、参悟权重、相生相克都跟着它变),
+ * 没有五行才看门径 —— 与 `PillDef` 那条一样,分类的优先级就是身份的主次。
+ */
+export function sceneTerrainOfGongfa(
+  element: string | null | undefined,
+  type: string | null | undefined,
+): SceneTerrain {
+  return (element && ELEMENT_TERRAIN[element]) || (type && TYPE_TERRAIN[type]) || "peaks";
+}

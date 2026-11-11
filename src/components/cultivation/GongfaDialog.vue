@@ -52,6 +52,28 @@
       >
         {{ verdictLine }}
       </p>
+      <!--
+        这一门属什么 —— 按五行取景,没五行的按门径。
+
+        这一作里**五行是构筑的一半**:同一部功法五行不同,与之同源的灵根、
+        藏经阁的参悟权重、与其它功法的相生相克全都跟着变。而 474 行模板里
+        一个 `<svg>` 都没有,五行的身份只在眉题挂着一枚 chip。
+
+        没有 element 的那 59 部(纯体术 / 心法)按**门径**取景(主修 / 辅修 / 秘术)——
+        那是三种不同的装配规则,不是三种画法。给它们一律落同一片兜底,
+        那 59 部就等于共用一张底。
+
+        落法是背景层:这一窗正文是效果、悟道分支与按钮,画占布局会把它们推下去。
+        高度只能走 `--ink-scene-h`(这一层同时就是 `.ink-scene` 本身,
+        直接写 height 会被组件内那条 `height: var(--ink-scene-h, 100%)` 盖过)。
+      -->
+      <div class="gongfa-detail__scene">
+        <InkScene
+          :terrain="sceneTerrainOfGongfa(def.element, def.type)"
+          :marks="false"
+          aria-hidden="true"
+        />
+      </div>
       <p class="mt-2 t-body text-ink-faint">{{ def.desc }}</p>
       <p v-if="!learned && def.minRealm > player.major" class="mt-1 text-body text-cinnabar">
         需 {{ realmDef(def.minRealm)?.name ?? `第${def.minRealm}境` }} 境方可参悟其精义
@@ -266,6 +288,8 @@ import { useDongfuStore } from "@/stores/dongfu";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { gongfaDef, GONGFA_TYPE_NAMES } from "@/data/gongfa";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfGongfa } from "@/ui/sceneTerrain";
 import { realmDef, realmLabel } from "@/data/realms";
 import { ELEMENTS } from "@/data/linggen";
 import { branchesFor, gongfaBranchDef } from "@/data/gongfaBranches";
@@ -472,3 +496,38 @@ function toggleSub(): void {
   if (!ok) ui.toast(`辅修栏已满(${dongfu.subGongfaSlots} 个,升级藏经阁可扩容)`, "warn");
 }
 </script>
+
+<style scoped>
+/*
+ * 功法详情卷首那片天 —— 按**这一门属什么**取景。
+ *
+ * 背景层,不占布局:这一窗正文是效果、悟道分支与按钮,画排进流里会把它们推下去。
+ * 高度走 `--ink-scene-h`(InkScene 读它),位置由这一层自己给。
+ *
+ * 写在组件内而不是 cultivation.css:`InkScene` 的高度规则是带 data-v 的 scoped 规则,
+ * 同特指度下顺序决定谁赢;写在组件内、同一个 data-v 上反而更稳(上一轮在器评帖上
+ * 踩过一次 height 被盖过、画撑满整帖)。
+ *
+ * 点景关掉(模板上 `:marks="false"`):这一层底下压着眉题与品评那几行,
+ * 月与舟落在字上两边都读不清。
+ */
+/*
+ * 卷首那片天 —— 钉在面板顶,不参与这一窗的流。
+ *
+ * 这一窗的面板是 `flex flex-col`,正文照流排下来。若把画当流里的一块,
+ * 它就落在品评与风味之间(实测截图里正是这样:一条山夹在「炼得成形,已有章法」
+ * 与「取青木生生不息之意」中间,像一条被压扁的横幅)。
+ *
+ * 故 `absolute` 钉在面板顶,正文照旧从上面过 —— 它只是一层底,不改任何一行的位置。
+ * 面板本身是 `relative`(BaseModal 的 `.modal-panel` 自带),故这里不用再造一层锚。
+ */
+.gongfa-detail__scene {
+  --ink-scene-h: 6.4rem;
+  --ink-scene-ink: 0.5;
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+</style>
