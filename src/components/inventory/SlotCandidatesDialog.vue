@@ -5,6 +5,24 @@
     :title="slotName ? EQUIP_SLOT_NAMES[slotName] : ''"
     @close="emit('close')"
   >
+    <!--
+      这片天 —— 按**这一窗的部位**取景。
+
+      这一窗整扇就是关于一个部位的:标题、清单、每一件都在说同一件事。
+      而玩家在这里做的事(从一堆候选里挑一件)与器评帖(看一件的详情)是同一件事的两半,
+      故直接复用器评帖那条 `sceneTerrainOfSlot` —— 若各画各的,同一个部位在两个窗里
+      会长得不一样。
+
+      落法:**脱离流、钉在面板顶**。这一窗正文是几十行的候选清单,画占布局就等于
+      少看几件;放进流里还会夹在读数之间(功法详情那一轮就是这么踩的)。
+    -->
+    <InkScene
+      v-if="slotName"
+      class="slot-candidate__scene"
+      :terrain="sceneTerrainOfSlot(slotName)"
+      :marks="false"
+      aria-hidden="true"
+    />
     <div
       v-if="pickerRows.length"
       :data-slot-candidate-total="pickerRows.length"
@@ -134,6 +152,8 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
 import BaseModal from "@/components/common/BaseModal.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfSlot } from "@/ui/sceneTerrain";
 import GameIcon from "@/components/common/GameIcon.vue";
 import QualitySeal from "@/components/common/QualitySeal.vue";
 import { useInventoryStore } from "@/stores/inventory";
@@ -292,3 +312,25 @@ function openDetail(uid: string): void {
   ui.equipDetailUid = uid;
 }
 </script>
+
+<style scoped>
+/*
+ * 这片天 —— 按这一窗的部位取景(见模板上的长注释)。
+ *
+ * **脱离流、钉在面板顶**:这一窗正文是几十行的候选清单,画占布局就等于少看几件;
+ * 放进流里还会夹在第一批读数之间(功法详情那一轮就是这么踩的:一条山夹在
+ * 「炼得成形,已有章法」与「取青木生生不息之意」中间,像一条被压扁的横幅)。
+ *
+ * 高度走 `--ink-scene-h` —— 这一层就是 `.ink-scene` 本身,它自带
+ * `height: var(--ink-scene-h, 100%)`;直接写 height 会被那条盖过
+ * (器评帖那一轮踩过,画撑满整帖)。
+ */
+.slot-candidate__scene {
+  --ink-scene-h: 5.6rem;
+  --ink-scene-ink: 0.45;
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  pointer-events: none;
+}
+</style>
