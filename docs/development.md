@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 667 个 spec;本作自己那部分 587 个) |
+| `bun run test` | 全量用例(全量 668 个 spec;本作自己那部分 588 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 667 个 spec = 宿主 551 + 引擎 80,别把 667 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 668 个 spec = 宿主 551 + 引擎 80,别把 668 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 667 个 spec(本作自己那部分 587 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 668 个 spec(本作自己那部分 588 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -4373,14 +4373,14 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 587 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 588 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
 
 ```text
 第一版:326 个 spec · 4117 条标题
-修正后:587 个 spec · 6319 条标题   (+54%)
+修正后:588 个 spec · 6319 条标题   (+54%)
 ```
 
 > 这是一类**最难自查的错误**:工具跑得通、输出格式对、报出来的缺口具体到表与维度名 ——
@@ -4472,7 +4472,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**667 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**668 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -7696,3 +7696,42 @@ buff   茶烟未散,所悟自多                 ← 药力在身上是什么样
 资源消耗的呈现            灵石 18 处 / 道源 11 处 / 器灵尘 11 处 / 道果 1 处 —— 原先数窄了
 失败反馈有没有误报 success  36 warn / 14 info / 11 success,零处把失败写成 success
 ```
+
+### 第 128 轮:同一个东西,两个叫法
+
+「找不对称」走到第三轮。前两轮比的是**同一屏上的两处**(技艺的道、丹药与 buff 的 desc),
+这轮比的是**同一概念的两种叫法**:
+
+```text
+草药    只有 1 处 —— MarketView.vue 的注释,而界面一律叫「灵草」
+灵宠    有 15 处 —— 全在注释与文档里,而界面一律叫「灵兽」(270 处)
+```
+
+两处都是**注释与界面用词不一致**。注释不给玩家看,但它给下一个改代码的人看:
+**照着注释搜「草药」会一无所获,照着它写新文案会写出「灵宠」。**
+
+已统一:源码 5 个文件 11 处 + `design.md` 4 处。
+
+### 判据:`terminology.spec`
+
+```text
+① 全仓不许出现「草药」
+② 全仓不许出现「灵宠」
+③ 白名单里的每一项都必须真的有「灵宠」—— 空挂的白名单是假的记录
+```
+
+③ 是这轮的额外收获。判据里留了 `ALLOW` 白名单(目前为空),但**空着的白名单也要被查**:
+若哪天有人为了过判据把某个文件塞进 `ALLOW`,而那个文件其实已经不需要豁免 ——
+多数判据会放行,③ 会红。
+
+> **「加白名单要留下痕迹」这句话,自己也得是一条判据。**
+
+### 顺带核的几组:都不是异名
+
+```text
+器魂 104 / 神魂 50   —— 两个不同系统:器魂是装备上的(6 类 × 6 阶),神魂是转世带的
+玄铁 / 矿石、修为 / 经验、洞府 / 宗门、道侣 / 双修
+                     —— 这些「异名」全不在界面模板里,界面用词本就统一
+```
+
+所以本轮实际改的只有两组,而不是扫描初筛的九组 —— **初筛认字,判定要读上下文**。

@@ -380,7 +380,7 @@ function claimBounty(idx: number): void {
 const equipPick = ref<number | null>(null);
 
 /**
- * 能一键自动交的单(草药 / 玄铁 / 丹药)。**贡器单不放进来** —— 那得挑一件
+ * 能一键自动交的单(灵草 / 玄铁 / 丹药)。**贡器单不放进来** —— 那得挑一件
  * 够格的兵刃,不能悄悄拿走行囊里顺着序排在第一件的心头好(见 claimBounty 的注释)。
  */
 const autoClaimable = computed(() =>

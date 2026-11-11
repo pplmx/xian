@@ -4,7 +4,7 @@
  * 每一条写的是**族类**(`family`),图标由 `data/beastFamilies.ts` 的族类表给出 ——
  * 从此不手写 icon:狼写 wolf、蛇蛟写 serpent、傀儡写 puppet。原先这里是直接写 icon,
  * 于是「大类够用就行」把 46 只敌人塞进一枚骷髅(独角妖狼、霞光巨蟒、黑风妖王、玄冰蛟…),
- * 灵宠那边应龙与螭龙幼子是星芒、麒麟是兽爪。族类与形的关系现在只有一处,见
+ * 灵兽那边应龙与螭龙幼子是星芒、麒麟是兽爪。族类与形的关系现在只有一处,见
  * `BEAST_FAMILIES`;判据在 `src/ui/inkIcons.spec.ts`。
  */
 import type {

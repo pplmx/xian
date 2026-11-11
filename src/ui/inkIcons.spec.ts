@@ -10,7 +10,7 @@
  *    打开真界面才发现)。故这里直接问注册表:这八个名字拿到的是不是水墨版。
  * 三 **写死的名字都登记过**。`iconOf` 对不认识的名字回退成星芒 —— 不报错、不留痕,
  *    于是「镇压中的地界」那一处标着 shield-check 却一直显示星芒。这条把它量出来。
- * 四 **一族一形**。敌人与灵宠的形按「族类」发:同类可共用,异族不许共用同一枚。原先
+ * 四 **一族一形**。敌人与灵兽的形按「族类」发:同类可共用,异族不许共用同一枚。原先
  *    按「大类够用」发,46 只敌人挤在一枚骷髅里(独角妖狼、霞光巨蟒、玄冰蛟都是骷髅),
  *    兽爪那一枚同时是野狼、野猪、石猿、灵狐 与「麒麟」。这条把「一枚图标被一个以上
  *    族类共用」量出来。
@@ -140,7 +140,7 @@ describe("图标 · 名字都登记过", () => {
 });
 
 /**
- * 敌人与灵宠的形按「族类」发 —— 一族一形。
+ * 敌人与灵兽的形按「族类」发 —— 一族一形。
  *
  * 账本只有一处(`BEAST_FAMILIES`):数据里写族类,形从表里取。判据量三件事:
  *   一 一枚形不许被两个族类共用(这一条就是「按名物配形」的红线);
@@ -182,13 +182,13 @@ describe("图标 · 族类", () => {
     expect(wrong).toEqual([]);
   });
 
-  it("族类表里不留闲族 —— 每一族都得有敌人或灵宠用", () => {
+  it("族类表里不留闲族 —— 每一族都得有敌人或灵兽用", () => {
     const used = new Set<BeastFamily>(ROSTER.map((r) => r.family));
     const idle = (Object.keys(BEAST_FAMILIES) as BeastFamily[]).filter((f) => !used.has(f));
     expect(idle, "这些族请了形却没人归进去").toEqual([]);
   });
 
-  it("账要看得见:敌人与灵宠现在一共用了几枚形、最多的一族多少人", () => {
+  it("账要看得见:敌人与灵兽现在一共用了几枚形、最多的一族多少人", () => {
     const icons = familiesByIcon();
     const byFamily = new Map<string, number>();
     for (const r of ROSTER) byFamily.set(r.family, (byFamily.get(r.family) ?? 0) + 1);
@@ -197,7 +197,7 @@ describe("图标 · 族类", () => {
     // 包打天下」时没人发现 —— 换形之前,这里是 19 枚形/133 条,最大一族 46 人(全是骷髅)。
     expect(
       icons.size,
-      "敌人与灵宠真正用到的形太少,又回到「大类够用」那一套了",
+      "敌人与灵兽真正用到的形太少,又回到「大类够用」那一套了",
     ).toBeGreaterThanOrEqual(20);
     expect(biggestCount, `${biggestFamily} 族 ${biggestCount} 人挤在一枚形里`).toBeLessThanOrEqual(
       20,

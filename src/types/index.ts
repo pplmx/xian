@@ -500,7 +500,7 @@ export interface BossPhase {
 }
 
 /**
- * 敌人与灵宠的「族类」—— 一族共用一枚形,异族不共用同一枚。
+ * 敌人与灵兽的「族类」—— 一族共用一枚形,异族不共用同一枚。
  *
  * 数据里写的是族类(`family`),形由 `data/beastFamilies.ts` 的族类表给出;
  * `inkIcons.spec.ts` 里那条「一枚图标被一个以上族类共用即红」盯着这张表。

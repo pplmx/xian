@@ -127,6 +127,7 @@ const CATEGORIES = [
       "ruleset",
       "names",
       "loreThresholds",
+      "terminology",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
