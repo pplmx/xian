@@ -162,6 +162,26 @@
             class="celestial-trial-dossier"
             :data-celestial-trial-detail="selectedTrial.id"
           >
+            <!--
+              这一门是什么**场面** —— 按 selectedTrial 取景。
+
+              `data/endgame` 的十条 `TRIALS` 每一门都写着它是什么场面(「七场连战,
+              不得换装」「开局气血仅余三成半」「敌不还手,只是站着」),而 777 行
+              模板里一个 `<svg>` 都没有 —— 十门并排只有十枚印字不同。
+
+              取景读**这一门**,不是玩家脚下那片地,也不是「天界」那一层:
+              七杀与一线是两种完全不同的考法,落到同一片天就等于只有一种考法。
+
+              落法是档案那一格的背景(绝对定位、不接指针):正文是 desc 与规则行,
+              画占布局会把它们推下去。点景关掉 —— 底下压着门名与最佳回合。
+            -->
+            <InkScene
+              class="celestial-trial-dossier__scene"
+              :terrain="sceneTerrainOfTrial(selectedTrial.id)"
+              :marks="false"
+              aria-hidden="true"
+            />
+
             <header class="celestial-trial-dossier__head">
               <span class="celestial-trial-dossier__seal" aria-hidden="true">{{
                 selectedTrial.seal
@@ -495,6 +515,8 @@ import { BUILD_PROFILES } from "@/core/buildSim";
 import { cnNumber } from "@/utils/format";
 import { useDaoEntry } from "@/composables/useDaoEntry";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfTrial } from "@/ui/sceneTerrain";
 import SecretRealmCard from "@/components/adventure/SecretRealmCard.vue";
 import type { ReportView } from "@/components/celestial/reportView";
 import { NAME_MAX } from "@/utils/nameLimit";

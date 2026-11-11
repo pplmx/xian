@@ -833,3 +833,43 @@ const HERB_GRADE_TERRAIN: Record<number, SceneTerrain> = {
 export function sceneTerrainOfHerbGrade(grade: number | null | undefined): SceneTerrain {
   return (grade && HERB_GRADE_TERRAIN[grade]) || "peaks";
 }
+
+/**
+ * 天道试炼 → 地形。
+ *
+ * `data/endgame` 的十条 `TRIALS` 每一门都写着它是什么**场面**,而不是它有多难:
+ *
+ *   七杀「七场连战,不得换装,场场增强」        → 遗迹(越走越破,一路断下去)
+ *   一线「开局气血仅余三成半」                  → 雪原(站在崖边,白得没有退路)
+ *   无回「此地一切治疗无效」                    → 虚空(来路断掉)
+ *   照影「对手借你的力回敬,出手越密吃回越多」  → 江海(照得见自己)
+ *   惊雷「天雷封界,敌如惊雷而至」              → 星野(天威)
+ *   追云「云巅罡风如刀,敌影若即若离」          → 星野(云上;与惊雷都属「天上」那一类)
+ *   绝境「敌如饿虎相逼,尖牙利爪撕开甲胄」      → 林麓(荒野里扑出来的)
+ *   消磨「敌身披重甲、饮血而战」                → 山岳(磨不动的厚)
+ *   澄心「敌不还手,只是站着」                  → 宫阙(端坐不动的格局)
+ *   终末「场场都是界主」                        → 火域(走到尽头的那一场)
+ *
+ * 九种地形装十门,必有一对共用 —— 那一对是**惊雷与追云**:两门都是「天上的事」
+ * (天雷封界 / 云巅罡风),共用星野是这一张表里唯一说得通的一对。
+ *
+ * 认不出的 id 落**虚空**:试炼是天界的考法,没有一门是「寻常山野」——
+ * 与 `sceneTerrainOfTribulation` 同一条纪律(认不出的落到最不像风景的那一种)。
+ */
+const TRIAL_TERRAIN: Record<string, SceneTerrain> = {
+  qisha: "ruin",
+  yixian: "frost",
+  wuhui: "void",
+  zhaoying: "water",
+  jinglei: "sky",
+  zhuifeng: "sky",
+  juejing: "forest",
+  xiaomo: "peaks",
+  chengxin: "palace",
+  zhongmo: "flame",
+};
+
+/** 一门天道试炼长什么样;认不出的落到虚空 */
+export function sceneTerrainOfTrial(trialId: string | null | undefined): SceneTerrain {
+  return (trialId && TRIAL_TERRAIN[trialId]) || "void";
+}

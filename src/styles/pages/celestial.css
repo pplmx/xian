@@ -487,6 +487,32 @@
     z-index: 1;
   }
 
+  /*
+   * 试炼档案上那片天 —— 这一门是什么场面(见 components/celestial/TrialPanel)。
+   *
+   * 脱离流、钉在档案那一格内:正文是 desc 与规则行,画占布局会把它们推下去。
+   * 高度走 `--ink-scene-h`:这一层同时就是 `.ink-scene` 本身,直接写 height 会被
+   * 组件内那条 `height: var(--ink-scene-h, 100%)` 盖过(器评帖那一轮踩过)。
+   *
+   * 点景关掉(组件上 `:marks="false"`):底下压着门名与最佳回合那两行。
+   */
+  .celestial-trial-dossier {
+    position: relative;
+    isolation: isolate;
+  }
+  .celestial-trial-dossier__scene {
+    --ink-scene-h: 100%;
+    --ink-scene-ink: 0.32;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .celestial-trial-dossier > :not(.celestial-trial-dossier__scene) {
+    position: relative;
+    z-index: 1;
+  }
+
   .celestial-marks-compare {
     margin-top: 0.52rem;
     border-block: 1px solid rgb(var(--color-ink-rgb) / 0.09);
