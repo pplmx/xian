@@ -460,3 +460,41 @@ const TRIBULATION_TERRAIN: Record<string, SceneTerrain> = {
 export function sceneTerrainOfTribulation(kind: string | null | undefined): SceneTerrain {
   return (kind && TRIBULATION_TERRAIN[kind]) || "void";
 }
+
+/**
+ * 天界六界 → 地形。
+ *
+ * 这六界既不是地界(`RegionDef`,没有 icon),也不在 `WORLDS` 那四界里 ——
+ * 它们是**天界自己的一层世界**,id 只在 `data/endgame` 的 `CELESTIAL_WORLDS` 里。
+ * 故与天劫那一支同一条做法:单开一份表,不塞进 `sceneTerrainOfPlace` 的三级分派。
+ *
+ * 每一界按它**自己的那句话**取景,这是判据一直逼着的那件事 ——
+ * 六界共用一片天,那一栏就还是六个色块加六行字:
+ *
+ *   赤炎天「天穹燃烧,雷火贯体」        → 火域
+ *   星陨天「星斗倾颓,陨石如雨」        → 星野
+ *   万刃天「亿万飞刃永不停歇」          → 遗迹(断刃与断柱是同一件东西的两面)
+ *   无生天「此界拒绝生机」              → 雪原(冻住的,不长东西的那种白)
+ *   无相天「万物无相,出手落空」        → 虚空
+ *
+ * 六界只有五副现成长相,故「无生天」与「无相天」不能都落虚空 —— 前者是**冻死的**,
+ * 后者是**空的**,雪原与虚空正好分得开。
+ */
+const CELESTIAL_TERRAIN: Record<string, SceneTerrain> = {
+  chiyan: "flame",
+  xingyun: "sky",
+  wanren: "ruin",
+  wusheng: "frost",
+  wuxiang: "void",
+};
+
+/**
+ * 一个天界世界长什么样。
+ *
+ * 认不出的 id 落到**虚空**而不是山岳:这一层世界里没有「寻常山水」这一档,
+ * 虚界之门(程序生成、id 不在常量表里)正该是虚空。落回山岳会让「虚界」看起来
+ * 像青云山麓 —— 而兜底值与正常值读出同一个结果,正是判据最反对的那件事。
+ */
+export function sceneTerrainOfCelestial(worldId: string | null | undefined): SceneTerrain {
+  return (worldId && CELESTIAL_TERRAIN[worldId]) || "void";
+}

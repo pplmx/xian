@@ -193,6 +193,23 @@
             >
           </p>
           <p class="mt-1.5 t-body text-ink-faint">{{ world.desc }}</p>
+          <!--
+            这一界长什么样 —— 六界各有各的画。
+
+            desc 早就把长相写足了(「天穹燃烧」「星斗倾颓」「亿万飞刃」),
+            而这一屏是玩家**择界启程**的地方:要选去哪儿,却只能读字。
+            取景读这一行那个世界的 id(`sceneTerrainOfCelestial`),不是玩家所在的界 ——
+            玩家此刻在神界,赤炎天照样该画成火域。
+
+            落法是定高的一条,排在说明之后:celestial-world-row 是账行,景不能压在字上。
+          -->
+          <div class="celestial-world__scene">
+            <InkScene
+              variant="strip"
+              :terrain="sceneTerrainOfCelestial(world.id)"
+              :world-id="player.world.id"
+            />
+          </div>
           <p class="mt-1 flex flex-wrap gap-x-3 text-note text-violet-ink">
             <span v-for="(r, i) in world.ruleText" :key="i">{{ r }}</span>
           </p>
@@ -241,6 +258,14 @@
             <p class="mt-1.5 t-body text-ink-faint">
               {{ endgame.voidWorld.desc }}
             </p>
+            <!-- 虚界之门:程序生成的那种,id 不在常量表里 —— 认不出即虚空(见 sceneTerrainOfCelestial) -->
+            <div class="celestial-world__scene">
+              <InkScene
+                variant="strip"
+                :terrain="sceneTerrainOfCelestial('void')"
+                :world-id="player.world.id"
+              />
+            </div>
             <p class="mt-1 flex flex-wrap gap-x-3 text-note text-violet-ink">
               <span v-for="(r, i) in endgame.voidWorld.ruleText" :key="i">{{ r }}</span>
             </p>
@@ -510,6 +535,8 @@ import { cnNumber, formatPercent } from "@/utils/format";
 import { speedTierReadout } from "@/ui/slaughterSpeed";
 import { useDaoEntry } from "@/composables/useDaoEntry";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfCelestial } from "@/ui/sceneTerrain";
 import BaseModal from "@/components/common/BaseModal.vue";
 
 /**
