@@ -536,6 +536,7 @@ const CATEGORIES = [
       "reincarnationScene",
       "rebirthScene",
       "expeditionScene",
+      "bondScene",
       "resetShowsLoss",
       "openingStepCount",
       "openingGift",

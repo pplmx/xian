@@ -12,6 +12,29 @@
     @close="emit('close')"
   >
     <article v-if="bondDef && bond" class="bond-folio stagger-in" data-bond-view="active">
+      <!--
+        她那片地 —— 这一帖讲了 1334 行「这个人是谁」,而全帖的辨识物原先只有
+        一枚楷体的**姓名首字**:十位道侣里有两位都姓「沈」,那枚字就是一样的。
+
+        画什么不用另立一套:`DaoluDef.terrains` 早就写着「她会在哪一种地貌遇见」
+        (沈青璃=林泽山岳 / 厉孤=火域废墟 / 苍冥=幽冥天象)。这份表一直被
+        `exploration` 用来决定「这片地上能不能遇见她」,界面上一个字都没露过 ——
+        而它正好是「这一帖该配哪片天」的答案。
+
+        她「随处可遇」时 `terrains` 是空的,那时整块不出:空表不是缺数据,是答案,
+        给它兜底一片山就等于替玩家编一个她的故乡。
+
+        落法是背景层:这一帖正文全是读数(此刻要答的事、四道刻度、同行履历),
+        把画排进流里会把它们往下推 —— 故只垫在纸底下。
+      -->
+      <InkScene
+        v-if="herTerrain"
+        class="bond-scene"
+        :terrain="herTerrain"
+        :marks="false"
+        aria-hidden="true"
+      />
+
       <header class="bond-head">
         <span class="bond-head__seal font-kai" aria-hidden="true">{{
           bondDef.name.slice(0, 1)
@@ -368,12 +391,23 @@ import {
 } from "@/core/listRender";
 import { useBondOverview } from "@/composables/useBondOverview";
 import BaseModal from "@/components/common/BaseModal.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfAxis } from "@/ui/sceneTerrain";
 import { clampPercent } from "@/utils/unitRatio";
 
 const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 
 const { bond, bondDef, pastBonds, pendingEvent, herIntent } = useBondOverview();
+
+/**
+ * 她那片地 —— 取 `terrains` 的第一轴(相遇偏好的主地貌)。
+ *
+ * 只取第一轴而不是把两轴都画:这一帖是**一**个人的帖,两片天摞在一起会读成
+ * 「她属于哪儿都行」;而 `terrains[0]` 正是她最常出现的那一片(见 data/daolu 的顺序)。
+ * 空表(随处可遇)回 null,整块不出。
+ */
+const herTerrain = computed(() => sceneTerrainOfAxis(bondDef.value?.terrains[0]));
 
 const modalTitle = computed(() => {
   if (bondDef.value) return `同行帖 · ${bondDef.value.name}`;
@@ -571,12 +605,50 @@ function answerIntent(response: IntentResponse): void {
 </script>
 
 <style scoped>
+/*
+ * 她那片地 —— 只在**卷首**那一条,不是整帖铺满。
+ *
+ * 先试过铺满(inset:0 + 0.5 的墨):真渲染出来山脊正横在「三衡」那三道刻度条上 ——
+ * 缘分 / 信任 / 契合的长度是这一帖最要紧的读数,被一道坡切过去就没法读。
+ *
+ * 故收成卷首一条(7rem,盖住帖名与她那行身份),正文滚过去时从它上面经过:
+ * 打开就看见她属于哪片地,读账时底下是干净的纸。
+ *
+ * 点景关掉(组件上 `:marks="false"`):这一条仍压着帖名与身份那两行,
+ * 月与舟落在字上两边都读不清 —— 与地界志卷首、行旅图那两处同一条理由。
+ */
+.bond-scene {
+  --ink-scene-h: 7rem;
+  /*
+   * 墨取 0.72:这一条底下只有帖名与身份两行(不是整篇文章),可以比铺满那版浓一档;
+   * 再浓一档,「同行帖 · 厉孤」与「惜物 · 器道道」就和山脊抢。
+   */
+  --ink-scene-ink: 0.72;
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  pointer-events: none;
+}
+
 .bond-folio,
 .bond-empty,
 .bond-history {
   --bond-line: rgb(var(--color-ink-rgb) / 0.14);
   --bond-paper: rgb(var(--color-paper-deep-rgb) / 0.34);
   min-width: 0;
+}
+
+/*
+ * 卷首那一条画的锚 —— 只给有画的那一篇(在世同行)。
+ * `isolation` 让画与正文各自的层级在本帖内结算,不去和浮层外面的东西比。
+ */
+.bond-folio {
+  position: relative;
+  isolation: isolate;
+}
+.bond-folio > :not(.bond-scene) {
+  position: relative;
+  z-index: 1;
 }
 
 .bond-head {

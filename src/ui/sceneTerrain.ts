@@ -498,3 +498,35 @@ const CELESTIAL_TERRAIN: Record<string, SceneTerrain> = {
 export function sceneTerrainOfCelestial(worldId: string | null | undefined): SceneTerrain {
   return (worldId && CELESTIAL_TERRAIN[worldId]) || "void";
 }
+
+/**
+ * 地貌轴(`core/mortalIdentity` 的 `TerrainAxis`)→ 地形。
+ *
+ * 这六轴是**世界生成**用的词汇(山岳 / 林泽 / 火域 / 天象 / 废墟 / 幽冥),
+ * 与 `SceneTerrain` 那九种按说不是一回事:前者是"这一带的地貌构成",
+ * 后者是"这一屏该画哪片天"。两套词汇各说各的,直接混用会让下一个人
+ * 以为它们等价 —— 故这里明确是一张**翻译表**。
+ *
+ * 它的用处是把 `DaoluDef.terrains` 读出来:十位道侣各自写着"她会在哪一种
+ * 地貌遇见",而这份表至今只被 `exploration` 用来决定"这片地上能不能遇见她",
+ * 界面上一个字都没露过。
+ */
+const AXIS_TERRAIN: Record<string, SceneTerrain> = {
+  山岳: "peaks",
+  林泽: "forest",
+  火域: "flame",
+  天象: "sky",
+  废墟: "ruin",
+  幽冥: "void",
+};
+
+/**
+ * 一处地貌轴长什么样;**认不出给 null**,不给兜底地形。
+ *
+ * 与 `sceneTerrainOfPlace` / `sceneTerrainOfCelestial` 的兜底纪律不同,这一处
+ * 必须回 null:调用方要回答的是"这个人属于哪片地",而 `terrains` 为空是
+ * 「随处可遇」——那不是缺数据,是**答案**。兜底成山岳等于替玩家编一个她的故乡。
+ */
+export function sceneTerrainOfAxis(axis: string | null | undefined): SceneTerrain | null {
+  return (axis && AXIS_TERRAIN[axis]) || null;
+}
