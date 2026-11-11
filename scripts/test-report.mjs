@@ -534,6 +534,7 @@ const CATEGORIES = [
       "apprenticeAwayOnce",
       "reincarnationBacktrack",
       "reincarnationScene",
+      "rebirthScene",
       "resetShowsLoss",
       "openingStepCount",
       "openingGift",

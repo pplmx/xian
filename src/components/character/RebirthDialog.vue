@@ -2,6 +2,22 @@
   <!-- 兵解往生:先把此世门槛、能带走什么与会失去什么摊开,再进入三步往生。 -->
   <BaseModal :open="open" size="wide" title="兵解往生" @close="emit('close')">
     <article v-if="open" class="rebirth-folio stagger-in" data-rebirth-folio>
+      <!--
+        一世止步的那片天地 —— 与往生三程同一副长相、同一个身份。
+
+        它们是同一件事的两段:这一帖说「此世收官」,三程说「辞世 / 回照 / 择生」;
+        画的都是「这一世停在哪一界」(`worldOf(player.major)`)。若入口有画而正文没有,
+        或两处画成两片天,读起来就是两份底稿。
+
+        落法也照三程:定高的一条,排在卷首之前 —— 底下没有字,点景照画。
+      -->
+      <InkScene
+        class="rebirth-scene"
+        variant="strip"
+        :world-id="player.world.id"
+        aria-hidden="true"
+      />
+
       <header class="rebirth-head">
         <span class="rebirth-head__seal font-kai" aria-hidden="true">轮</span>
         <div class="rebirth-head__identity">
@@ -352,6 +368,7 @@ import { formatNum, formatPercent, yearsShown } from "@/utils/format";
 import { modsText } from "@/data/statNames";
 import { criticalSamsaraRows, samsaraBalance, samsaraLedger } from "@/ui/reincarnationDesk";
 import BaseModal from "@/components/common/BaseModal.vue";
+import InkScene from "@/components/common/InkScene.vue";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 
 /**
@@ -436,6 +453,19 @@ function rebirth(): void {
 </script>
 
 <style scoped>
+/*
+ * 路签下面那条天地 —— 与往生三程同一条落法(理由见那一处的长注释):
+ * 定高的一条,排在卷首之前。底下没有字,故点景照画 —— 四界之间的分别
+ * (山岳 / 星野 / 宫阙 / 虚空)全靠它们读出来。
+ *
+ * 墨取 0.62,与三程同一档:两处是同一件事的两段,浓淡也该一致。
+ */
+.rebirth-scene {
+  --ink-scene-h: 5.4rem;
+  --ink-scene-ink: 0.62;
+  margin-block: 0 0.6rem;
+}
+
 .rebirth-folio,
 .rebirth-trial-folio {
   --rebirth-line: rgb(var(--color-ink-rgb) / 0.14);
