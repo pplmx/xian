@@ -448,6 +448,45 @@
   .celestial-world-row--void {
     border-top-color: rgb(var(--color-violet-ink-rgb) / 0.24);
   }
+  /*
+   * 今昔之比里那条画 —— 这一比的是哪一界。
+   *
+   * 这一段夹在纪元读数与六十则履历之间,而那一屏本来就长 —— 画只做底、
+   * 不占布局,绝不许把任何一行推下去。故绝对定位在每一条比对自己的格子右上,
+   * 不接指针。
+   *
+   * 高度走 `--ink-scene-h`:这一层同时就是 `.ink-scene` 本身,它自带
+   * `height: var(--ink-scene-h, 100%)`,直接写 height 会被组件内那条盖过
+   * (器评帖那一轮踩过,画撑满整帖)。
+   *
+   * 点景关掉(组件上 `:marks="false"`):底下压着「第3世(背水流)… → 第7世」
+   * 那两行读数,月与舟落在字上两边都读不清。
+   */
+  .marks-compare__row {
+    position: relative;
+    isolation: isolate;
+    /*
+     * 给这一条比对**自己的一点高度** —— 那一行读数只有 17px,
+     * 画贴着它画出来就是一窄条灰带(实测量到 sceneH=17),读不出是哪片天。
+     * 补 2.6rem 的底,画落在那一段里,读数仍在上沿。
+     */
+    padding-bottom: 2.6rem;
+  }
+  .marks-compare__scene {
+    --ink-scene-h: 100%;
+    --ink-scene-ink: 0.75;
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    bottom: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .marks-compare__row > :not(.marks-compare__scene) {
+    position: relative;
+    z-index: 1;
+  }
+
   .celestial-marks-compare {
     margin-top: 0.52rem;
     border-block: 1px solid rgb(var(--color-ink-rgb) / 0.09);

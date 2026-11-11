@@ -148,6 +148,14 @@ export function compareSnaps(a: CombatantSnap, b: CombatantSnap, runs = 8): Comp
 
 export interface LegacyComparison {
   targetName: string;
+  /**
+   * 这一比的是哪一界(天界世界的 id)。
+   *
+   * 与 `targetName` 一起交出来,而不是让界面拿名字去反查:`targetName` 是给人看的,
+   * 改一次文案就断;id 才是身份。道痕那一屏要按它取景(见 ui/sceneTerrain 的
+   * `sceneTerrainOfCelestial`)—— 与 `BreakthroughView.kind` 同一条纪律。
+   */
+  targetId: string;
   earlyLife: number;
   lateLife: number;
   earlyBuild: string;
@@ -194,6 +202,7 @@ export function legacyComparisons(marks: DaoMark[], limit = 2): LegacyComparison
       diffLines.push(`场均反击 ${dCounters > 0 ? "+" : ""}${dCounters.toFixed(1)} 次`);
     out.push({
       targetName: early.targetName,
+      targetId,
       earlyLife: early.life,
       lateLife: late.life,
       earlyBuild: early.buildName,

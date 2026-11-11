@@ -34,7 +34,24 @@
     <!-- 今昔之比:与过去的自己对话 -->
     <div v-if="legacy.length" class="celestial-marks-compare">
       <p class="mb-1.5 font-kai text-body tracking-[0.3em] text-ink-faint">今昔之比</p>
-      <div v-for="lc in legacy" :key="lc.targetName" class="mb-2 last:mb-0">
+      <div v-for="lc in legacy" :key="lc.targetName" class="marks-compare__row mb-2 last:mb-0">
+        <!--
+          这一比的是哪一界 —— 按 `lc.targetId` 取景。
+
+          「今昔之比」是全作少见的**回头看一眼**:同一界,第 3 世打出什么、第 7 世又打出什么。
+          而它整块只有字 —— 连「是哪一界」都要从 `targetName` 那三个字里认。
+          取景直接复用天界远征那条 `sceneTerrainOfCelestial`(赤炎=火域 / 星陨=星野 /
+          万刃=遗迹 / 无生=雪原 / 无相=虚空),同一个界在两处长得一样。
+
+          落法是背景层:这一段夹在纪元读数与六十则履历之间,画不许把任何一行推下去。
+          点景关掉(底下压着「第3世(背水流)…→ 第7世」那两行读数)。
+        -->
+        <InkScene
+          class="marks-compare__scene"
+          :terrain="sceneTerrainOfCelestial(lc.targetId)"
+          :marks="false"
+          aria-hidden="true"
+        />
         <p class="text-body text-ink-soft tabular">
           {{ lc.targetName }}:第{{ lc.earlyLife }}世({{ lc.earlyBuild }}){{ lc.earlyText }}
           <span class="mx-1 text-ink-faint">→</span>
@@ -207,6 +224,8 @@ import {
 } from "@/core/listRender";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfCelestial } from "@/ui/sceneTerrain";
 import type { ReportView } from "@/components/celestial/reportView";
 
 // 道痕面板:主文件只在 unlocked 时渲染本组件,历世对照不再重复判 unlocked
