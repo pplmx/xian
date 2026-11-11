@@ -125,6 +125,7 @@ const CATEGORIES = [
       "testNameCounts",
       "scriptCounts",
       "ruleset",
+      "names",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",

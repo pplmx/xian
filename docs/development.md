@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 665 个 spec;本作自己那部分 585 个) |
+| `bun run test` | 全量用例(全量 666 个 spec;本作自己那部分 586 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 665 个 spec = 宿主 551 + 引擎 80,别把 665 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 666 个 spec = 宿主 551 + 引擎 80,别把 666 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 665 个 spec(本作自己那部分 585 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 666 个 spec(本作自己那部分 586 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -4373,14 +4373,14 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 585 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 586 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
 
 ```text
 第一版:326 个 spec · 4117 条标题
-修正后:585 个 spec · 6319 条标题   (+54%)
+修正后:586 个 spec · 6319 条标题   (+54%)
 ```
 
 > 这是一类**最难自查的错误**:工具跑得通、输出格式对、报出来的缺口具体到表与维度名 ——
@@ -4472,7 +4472,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**665 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**666 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -7411,3 +7411,57 @@ expect(fromOld.some((c) => c.version === RULESET_VERSION),
 ```
 
 **九类载体,全部扫过。** 前四类找到 21 处过时数字,后五类零处。
+
+### 第 122 轮:62 张数据表里唯一没有判据的那一张
+
+前十七轮都在核「数字对不对」。这轮换了个问法:**每张数据表都有人管吗?**
+
+```text
+src/data/ 下 62 张表(不含 spec)
+被至少一份判据读过的:61 张
+没被读过的:1 张 —— names.ts
+```
+
+`names.ts` 只有 43 行、一个导出函数,短到看起来不需要判据:
+
+```ts
+export function randomDaoName(rng: RandomService): string {
+  return rng.pick(SURNAMES) + rng.pick(GIVEN);
+}
+```
+
+### 但它的组成有一处值得管
+
+```text
+SURNAMES  16 个,都是单字(云 / 风 / 叶 / 苏 …)
+GIVEN     16 个,4 单(尘 / 青 / 霜 / 砚)+ 12 双(临渊 / 疏影 / 照夜 …)
+```
+
+于是玩家掷到的是:
+
+```text
+单字名 → 两字道号「云尘」     25%
+双字名 → 三字道号「云临渊」   75%
+```
+
+**七成半的玩家拿到三字名。** 中文人名本就两字三字并存,长短混排不算错;
+但 25 : 75 的悬殊不是设计,是「双字名顺手多写了几个」的结果 —— 实测抽样 500 次,
+三字 379 / 二字 121。
+
+补了 4 个单字(川 / 澈 / 岑 / 枢),现在是 8 : 12,实测三字 304 / 二字 196(60% : 40%)。
+
+### 判据:五条,其中一条比看起来重要
+
+```text
+① 单字名占比落在 35%~65% —— 不要求五五,只要求不悬殊
+② 姓与名各自无重复
+③ 生成的道号不与 NPC 全名相撞(道侣 10 + 师尊 4)
+④ 生成的名字总是两字或三字,姓来自字池
+⑤ 反空转
+```
+
+② 的「无重复」比看起来重要:`rng.pick` 从数组里挑,**同一个字写两遍会让它被掷中的
+概率翻倍** —— 那是无声的加权,而表里看不出任何痕迹。
+
+> 这一轮与前几轮的区别:前十七轮找的是**「写了但写错了」**,这轮找的是
+> **「写了但没人管」**。而没人管的地方恰恰不是最显眼的 —— 是那张 43 行的短表。
