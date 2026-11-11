@@ -123,6 +123,7 @@ const CATEGORIES = [
       "engineFacilities",
       "docNumeralForms",
       "testNameCounts",
+      "scriptCounts",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
