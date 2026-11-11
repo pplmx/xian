@@ -131,6 +131,7 @@ const CATEGORIES = [
       "releaseTodo",
       "eventSupplyCurve",
       "misjudgmentLedger",
+      "readmeStack",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",

@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 671 个 spec;本作自己那部分 591 个) |
+| `bun run test` | 全量用例(全量 672 个 spec;本作自己那部分 592 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 671 个 spec = 宿主 551 + 引擎 80,别把 671 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 672 个 spec = 宿主 551 + 引擎 80,别把 672 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 671 个 spec(本作自己那部分 591 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 672 个 spec(本作自己那部分 592 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -902,7 +902,7 @@ FCP 没有实质变化(±16ms 是抖动),而**楷体换上一律变慢 130~200ms
 | `core/mortalRouteAccess.spec.ts` | 19.1s | 9.2~9.5s | 一半是争用 |
 | `core/worldGen.spec.ts` | 8.2s | 8.6~9.5s | 相当,争用占比小 |
 | `core/worldReroll.spec.ts` | 6.6s | 2.2~4.5s | 大部分是争用 |
-| 其余 ~591 个文件 | — | 合计 ~60s | |
+| 其余 ~592 个文件 | — | 合计 ~60s | |
 
 **只有 `phase21` 的耗时是真实的判据成本**,其余偏高都是并行争用。而它的 21504 场战斗
 是判据的设计规模 —— 减采样就等于降强度。
@@ -4377,14 +4377,14 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 591 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 592 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
 
 ```text
 第一版:326 个 spec · 4117 条标题
-修正后:591 个 spec · 6319 条标题   (+54%)
+修正后:592 个 spec · 6319 条标题   (+54%)
 ```
 
 > 这是一类**最难自查的错误**:工具跑得通、输出格式对、报出来的缺口具体到表与维度名 ——
@@ -4476,7 +4476,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**671 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**672 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -8178,3 +8178,72 @@ minRealm = 0 的事件      62 个
 
 前几轮是「找问题」,这轮是**把找问题的方法本身变成资产**。
 `docs/development.md` 那张表此前是 9 条,现在 13 条 —— 而它记的不是代码,是**怎么少走弯路**。
+
+### 第 138 轮:README 逐条核完 —— 十项技术栈全对,但有一项读不出来源
+
+README 是门面,而 105~137 这三十三轮里它只在「671 个 spec」那一处被 `docs-check` 扫到过。
+这轮把它每一节都核了一遍:
+
+```text
+四界二十一境        REALMS.length = 21 · WORLDS = mortal/immortal/god/chaos  ✓
+每境九层至圆满      SUB_NAMES = 一层…九层 + 圆满(10 个)· SUB_LEVELS = 10     ✓
+界面一览 11 张图    全部存在;scenery.webp 是 shots.mjs 生成 banner 的源素材  ✓
+Bun 1.4.3          packageManager: bun@1.4.3                                ✓
+Node ≥ 24          engines.node: ">=24"                                      ✓
+671 / 591 个 spec  docs-check 守着,且与真实文件数一致                        ✓
+引擎 v0.1.22       packages/engine/package.json 的 version                   ✓
+18 store / 17 持久 第 117 轮核过                                             ✓
+engine 80 个 spec  find packages/engine -name "*.spec.ts" | wc -l = 80        ✓
+技术栈十项          Vue 3.5 / TS 6.0 / Pinia 3 / Tailwind 3.4 / Router 5 /
+                   Tone 15 / CryptoJS 4 / Electron 44 / Capacitor 8 / Vite 8  ✓
+```
+
+### 只有一项「对但读不出来源」
+
+```text
+package.json:  "vite": "catalog:" → npm:@voidzero-dev/vite-plus-core@1.4.0
+vp toolchain:  vite-plus@1.4.0 → bundles vite@8.3.5
+```
+
+表里写「Vite | 8」——**数字是对的**(`vite-plus-core` 里捆的确实是 `vite@8.3.5`),
+但读者会以为仓库直接依赖 `vite@8`,`bun add vite` 就能对上一份。已在该行补上:
+
+> 构建与开发服务器 —— 经 Vite+ 提供(`vite-plus-core` 捆绑 `vite@8.x`),不是直接依赖
+
+### 判据:`readmeStack.spec`
+
+```text
+① 表里每一行的主版本与 package.json / catalog 一致
+② catalog / 间接依赖的那几项,说明栏里要写出它是怎么来的
+③ README 里的 spec 规模与真实文件数一致(docs-check 的交叉确认)
+④ 「运行时策略」那三个角色(Bun / Node / 浏览器)仍与 package.json 对得上
+```
+
+### 写这条判据连踩三次格式坑
+
+```text
+坑一  版本格有的写 `3.5`(Vue)、有的只写 `3`(Pinia)
+      而 majorOf 用 /(\d+)\.\d+/ 只认带小数点的 —— Pinia 那行读不出主版本
+坑二  README 的 Bun 版本写法是 `[Bun](https://bun.sh) 1.4.3`
+      链接标签与版本号隔着 markdown,查 `Bun 1` 的连写必然落空
+坑三  Electron 与 Capacitor **共用一行**:`| Electron / Capacitor | 44 / 8 |`
+      按行找「Capacitor」永远找不到,得把版本格按 `/` 拆开
+```
+
+> 三次坑都是同一件事:**同一个表里,十个格子的写法各不相同**。
+> 而判据一开始是按「一个标准写法」去写的。
+
+### 六轮里第 5 次误判的样子(本轮没有误判)
+
+```text
+132  待办指向早已发过的 tag            —— 真问题,已修
+133  部署注释绑死版本号                —— 真问题,已修
+134  部署文档八条声明                  —— 全对
+135  「第 9 境断层」                    —— 误判(把换池读成断层)
+136  同上,判据连改两版                —— 误判的修正
+137  误判清单 9 → 13 条                —— 把方法变成资产
+138  README 十项技术栈                  —— 全对,一项补了来源说明
+```
+
+这一轮**没有误判** —— 因为前一轮刚把「先读设计说明」写进清单,而 README 每一节的开头
+恰好都有说明(`SUB_NAMES` 那段写着「九层之后是圆满」、`catalog` 那段写着 `vite-plus-core`)。

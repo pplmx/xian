@@ -58,7 +58,7 @@ vp install      # 安装依赖(底层走 bun)
 vp dev          # 开发服务器
 vp build        # 类型检查 + 生产构建
 vp preview      # 预览构建结果
-vp test         # 全量 671 个 spec(本作自己那部分 591 个)
+vp test         # 全量 672 个 spec(本作自己那部分 592 个)
 vp check        # 环境/类型/文档自检 + Oxlint
 ```
 
@@ -117,13 +117,13 @@ vp check        # 环境/类型/文档自检 + Oxlint
 | --- | --- | --- |
 | Vue 3 | 3.5 | 组合式 API + `<script setup>` |
 | TypeScript | 6.0 | strict 严格类型检查 |
-| Vite | 8 | 构建与开发服务器 |
+| Vite | 8 | 构建与开发服务器 —— 经 Vite+ 提供(`vite-plus-core` 捆绑 `vite@8.x`),不是直接依赖 |
 | Pinia | 3 | 状态管理(18 个 store,除瞬态 `ui` 外 17 个自动持久化) |
 | Tailwind CSS | 3.4 | 水墨色系语义色与暗色主题 |
 | Vue Router | 5 | 客户端路由(hash 模式) |
 | Tone.js | 15 | FluidR3 乐器采样播放(BGM + SFX) |
 | CryptoJS | 4 | 存档 AES 加密 |
-| Vitest | 5 | 单元测试与平衡审计(全量 671 个 spec,含公共库 `packages/engine` 的 80 个) |
+| Vitest | 5 | 单元测试与平衡审计(全量 672 个 spec,含公共库 `packages/engine` 的 80 个) |
 | Electron / Capacitor | 44 / 8 | Windows 桌面与 Android 打包 |
 
 ## 许可证
