@@ -1,6 +1,33 @@
 @layer reset, shared, page, app-utilities;
 @layer page {
   /*
+   * 丹药详情卷首那条 —— 这一味丹做什么用(见 views/InventoryView 的丹药详情弹窗)。
+   *
+   * 这一窗正文是品评、风味、效果、熟练度与服前提示(那一句还带警示色),
+   * 画占布局就会把它们推下去;故绝对定位、不接指针,只落在卷首那一条。
+   *
+   * 点景关掉(`:marks="false"`):这一条底下压着品阶行与那枚图标,
+   * 月与舟落在字上两边都读不清 —— 与地界志卷首那两处同一条理由。
+   *
+   * 这里而不是组件内 scoped:`InventoryView` 本身没有 style 块,
+   * 全页的版面都收在这一个文件里;半条留在组件、半条留在这里,下一个人要读两处。
+   */
+  .pill-detail__scene {
+    --ink-scene-h: 100%;
+    --ink-scene-ink: 0.55;
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 5.6rem;
+    pointer-events: none;
+  }
+  /* 读数压在画之上 —— 背景层若盖住字,这一窗就废了 */
+  .pill-detail__scene ~ * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /*
    * 行囊续卷 —— 先盘九佩，再问本批新得与可换。
    *
    * 卷首只留容量弧,四签八章同住一类开口纸面:装备沿检点、九佩与藏品续排,

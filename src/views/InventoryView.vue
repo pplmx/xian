@@ -513,6 +513,24 @@
       @close="pillDetail = null"
     >
       <template v-if="currentPill?.def">
+        <!--
+          这一味丹**做什么用** —— 整屏原先的画面是一枚 24px 图标,而图标只有八种:
+          75 味丹挤在八种图形上,一眼分不出这是修为丹还是寿元丹。
+
+          取景读 `pillEffectOf` 判出来的那五类(修为 / 灵气 / 寿元 / 悟道 / 增益),
+          它直接读 `PillDef.instant` 里结构化的药力,不另立一份对照表;
+          也不读玩家脚下那片地 —— 这一窗讲的是"这一枚是干什么的"。
+
+          落法是卷首一条背景层:这一窗正文是品评、风味、效果、熟练度与服前提示,
+          画排进流里就会把它们推下去。
+        -->
+        <div class="pill-detail__scene">
+          <InkScene
+            :terrain="sceneTerrainOfPill(pillEffectOf(currentPill.def))"
+            :marks="false"
+            aria-hidden="true"
+          />
+        </div>
         <div class="flex items-center gap-3">
           <span
             class="grid h-12 w-12 shrink-0 place-items-center rounded-[2px]"
@@ -695,6 +713,9 @@ import type { EquipSlot } from "@/types";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfPill } from "@/ui/sceneTerrain";
+import { pillEffectOf } from "@/ui/itemText";
 import ArtifactPanel from "@/components/inventory/ArtifactPanel.vue";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import InventoryCollectionRow from "@/components/inventory/InventoryCollectionRow.vue";

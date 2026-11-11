@@ -657,3 +657,37 @@ export function sceneTerrainOfOpportunity(
   }
   return OPPORTUNITY_KIND_TERRAIN[kind ?? ""] ?? OPPORTUNITY_KIND_TERRAIN.enlightenment!;
 }
+
+/**
+ * 一味丹做什么 → 地形。
+ *
+ * 丹匣里点开一味丹,整屏的"画面"原先是**一枚 24px 图标**,而图标只有八种
+ * (`flask` / `leaf` / `droplets` / …)—— 75 味丹挤在八种图形上,
+ * 一眼分不出这是修为丹还是寿元丹。
+ *
+ * 而 `PillDef.instant` 早就把药力写成了结构化的数(见 `ui/itemText` 的
+ * `pillEffectOf`),五类药性正是玩家扫读丹匣时的分类轴:
+ *
+ *   修为(exp)     —— 往上走的东西          → 山岳
+ *   灵气(qi)      —— 灌进来的                → 江海
+ *   寿元(lifespan)—— 续命,与"活得更久"有关 → 林麓(活着、慢慢长的那种)
+ *   悟道(wudao)   —— 忽然明白                → 星野
+ *   增益(buff)    —— 一段时间里你变成什么样  → 宫阙(构筑出来的状态,不是野地)
+ *
+ * 五类占五种,不重叠。九种地形里没有用虚空:丹药都是**有作用**的东西,
+ * 「什么都没有」不属于这五类里的任何一类。
+ */
+const PILL_EFFECT_TERRAIN: Record<string, SceneTerrain> = {
+  exp: "peaks",
+  qi: "water",
+  lifespan: "forest",
+  wudao: "sky",
+  buff: "palace",
+};
+
+/**
+ * 一味丹长什么样;认不出的药性落回山岳(丹是"往上走"的那一类东西)。
+ */
+export function sceneTerrainOfPill(effect: string | null | undefined): SceneTerrain {
+  return (effect && PILL_EFFECT_TERRAIN[effect]) || "peaks";
+}

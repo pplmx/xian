@@ -540,6 +540,7 @@ const CATEGORIES = [
       "mentorScene",
       "identityScene",
       "opportunityScene",
+      "pillScene",
       "resetShowsLoss",
       "openingStepCount",
       "openingGift",

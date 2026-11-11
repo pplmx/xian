@@ -119,6 +119,39 @@ export function gongfaMetaText(g: GongfaDef): string {
  * 丹药卡片此前只有风味与数量 —— 而「这一味值不值一趟险、值得不值得炼」正是玩家要问的。
  * 数值取自 instant / buff 本体,不另写一份:改数据,文案自己跟上。
  */
+/**
+ * 一味丹**做什么** —— 五类之一。
+ *
+ * `PillDef.instant` 把药力写成了结构化的数(不是散文),故这五类可以直接判出来,
+ * 不需要另一份表去对 id:
+ *
+ *   exp      修为(expSecs / expFixed)
+ *   qi       灵气(qiPct)
+ *   lifespan 寿元(lifespanYears)
+ *   wudao    悟道点(wudao)
+ *   buff     增益(buffId;持续一段时间的状态)
+ *
+ * 顺序是刻意的:一味丹可能同时带几样(修为 + 灵气),取**排在前面的那一类** ——
+ * 修为丹偶尔附带回气,它的身份仍是修为丹。`buff` 排最后因为它不是"一次给多少",
+ * 是"一段时间里你变成什么样",性质不同。
+ *
+ * 什么都不带的极少数(将来若有人写一味纯风味的丹)给 null,由取景兜底。
+ */
+export type PillEffect = "exp" | "qi" | "lifespan" | "wudao" | "buff";
+
+export function pillEffectOf(def: PillDef | null | undefined): PillEffect | null {
+  if (!def) return null;
+  const i = def.instant;
+  if (i) {
+    if (i.expSecs || i.expFixed) return "exp";
+    if (i.lifespanYears) return "lifespan";
+    if (i.qiPct) return "qi";
+    if (i.wudao) return "wudao";
+  }
+  if (def.buffId) return "buff";
+  return null;
+}
+
 export function pillFuncText(def: PillDef): string {
   const lines: string[] = [];
   const i = def.instant;
