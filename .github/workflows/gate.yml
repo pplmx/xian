@@ -31,8 +31,25 @@ jobs:
     # 「实测 × 余量」:取 15 分钟,仍给 5 倍余地兜住引擎两段冷缓存的首跑。
     timeout-minutes: 15
     steps:
+      # fetch-depth: 0 —— 不是「顺手多拉点历史」,是**有判据依赖它**。
+      #
+      # `actions/checkout` 默认只取 1 个提交(浅克隆)。浅克隆里 `.git/shallow` 的
+      # graft 边界把历史截断,`git log -1 -- <任意路径>` 一律返回**边界那次提交**的
+      # 时间。`src/core/docShotsFresh.spec.ts` 判「文档图有没有比它展示的界面旧」
+      # 正是比两侧的 `git log` 时间 —— 浅克隆下两边恒等,于是**无论图多旧都是绿的**。
+      #
+      # 实测(2026-11-11,同一个提交 60600518 上跑同一条判据):
+      #   完整历史克隆        × 红:welcome / codex / world 三张旧于界面
+      #   `--depth 1` 浅克隆  ✓ 绿:什么都没查出来
+      # 而此前这里没写 fetch-depth,CI 跑的就是后者 —— 这条判据在 CI 上从没真正执行过。
+      #
+      # 代价:仓库 62 MB,全历史检出实测十几秒(CI 全程约 3 分钟,超时上限 15 分钟)。
+      # 想省这点时间而退回浅克隆,`docShotsFresh.spec` 的「判据的前提」会当场红 ——
+      # 红得指着原因,而不是假装查过。
       - name: 检出代码
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       # 工具链 + 依赖收口在 ./.github/actions/setup-vp-install(全仓九处同一段接线)。
       # run-install: false —— 下面的「缓存 bun install」必须先于 install 恢复,

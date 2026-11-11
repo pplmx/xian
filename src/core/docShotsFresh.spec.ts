@@ -36,8 +36,8 @@
  */
 import { describe, expect, it } from "vite-plus/test";
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 
 /**
  * 每张文档图 → 它展示的界面源码。
@@ -109,6 +109,88 @@ describe("文档截图 · 不得比界面更旧", () => {
         expect(lastCommitSec(src, ROOT), `查不到 ${src} 的提交时间`).not.toBeNull();
       }
     }
+  });
+
+  it("判据的前提:git log 对不同的路径要给出不同的时间", () => {
+    /*
+     * 上一条只核了「取得到时间」,而**取得时间**和**取得有分辨力的时间**是两回事。
+     *
+     * `actions/checkout` 默认 `fetch-depth: 1`(浅克隆)。浅克隆里 `.git/shallow`
+     * 的 graft 边界把历史截断,`git log -1 -- <任意路径>` 一律返回**边界那次提交**
+     * 的时间 —— 于是「图的时间 < 源码的时间」两边恒等,这条判据无论图多旧都是绿的。
+     *
+     * 实测(2026-11-11,同一个提交 60600518 上,同一份代码):
+     *
+     *   完整历史克隆            × 红: welcome / codex / world 三张旧于界面
+     *   `--depth 1` 浅克隆      ✓ 绿: 什么都没查出来
+     *
+     * 而当时三个 workflow 的 checkout 都没写 `fetch-depth`,CI 跑的就是后者。
+     * 也就是说这条判据在 CI 上**从来没真正执行过**,它自己不知道。
+     *
+     * 故这里核的是分辨力本身:把 SHOT_SOURCES 里登记的全部路径各取一次时间,
+     * 若**全都相等**,说明当前仓库的历史不够深(浅克隆 / graft 边界 / 单提交检出),
+     * 判据此刻没有意义 —— 与其绿着骗人,不如红着说清原因。
+     *
+     * 为什么是「全等」而不是「至少有一对不同」:若只有一对不同,可能纯属巧合
+     * (个别路径恰好在边界提交里被改过);全等才是历史被截断的确定特征。
+     * 反过来说,只要有一个路径的时间与别的不同,历史就确实保留到了那之前。
+     */
+    const times = new Set<number>();
+    for (const [shot, sources] of Object.entries(SHOT_SOURCES)) {
+      times.add(lastCommitSec(shot, ROOT)!);
+      for (const src of sources) times.add(lastCommitSec(src, ROOT)!);
+    }
+    expect(
+      times.size,
+      "git log 对所有登记路径给出了同一个时间 —— 当前仓库是浅克隆(graft 边界截断了历史)," +
+        "这条判据此刻无论图多旧都会绿。CI 上请在 checkout 补 `fetch-depth: 0`;" +
+        "本地可跑 `git fetch --unshallow`。" +
+        `\n  取到的唯一时间:${[...times].join(", ") || "(无)"}`,
+    ).toBeGreaterThan(1);
+  });
+
+  it("判据的前提:CI 的静态门是全历史检出", () => {
+    /*
+     * 上一条只能在本机发现「我现在跑在浅克隆里」。而 CI 上的浅克隆是**设计出来的**:
+     * `actions/checkout` 默认 `fetch-depth: 1`,不显式覆盖就永远是浅克隆 ——
+     * 上一条会在 CI 上红,但**红在初次改动之前**谁也看不到;等它红的时候,
+     * 读的人只会以为是这次提交弄坏了什么。
+     *
+     * 故把「CI 必须全历史检出」本身也变成判据:它守的不是截图,是这条判据的立身之本。
+     * 两者分工 —— 上一条问「我此刻有分辨力吗」,这一条问「CI 上还会有吗」。
+     *
+     * 为什么只钉 gate.yml:三个 workflow(build / deploy / publish)都经 `uses`
+     * 引用它,改这一处就覆盖全部;各自 job 里的 checkout 只用于打包,不跑 vitest。
+     * 这条接线本身由 `gateWiring.spec` 守着,若将来有人把 gate 拆开,那边会红。
+     */
+    const gate = readFileSync(join(ROOT, ".github/workflows/gate.yml"), "utf8");
+    const lines = gate.split("\n");
+    const at = lines.findIndex((l) => l.includes("uses: actions/checkout@"));
+    expect(at, "gate.yml 里找不到 checkout 步骤 —— 这条判据的前提不成立了").toBeGreaterThan(0);
+
+    /*
+     * 从 checkout 那一行往下看 5 行,找 `fetch-depth: 0`。
+     * 不去解析 YAML(仓库没有 YAML 依赖,为一条判据引一个不值得):
+     * `with:` 块在 `- name:` 之下、下一个 `- ` 之上,几行之内必现。
+     * 但「看 5 行」是个脆的写法,故先确认真的在块内 —— 若中间撞上另一个列表项,
+     * 说明结构变了,判据宁可报错也不要静默失准。
+     */
+    let depth: string | null = null;
+    for (let i = at + 1; i < Math.min(at + 6, lines.length); i += 1) {
+      const line = lines[i]!;
+      if (/^\s*-\s/.test(line)) break;
+      const m = /^\s*fetch-depth:\s*(\S+)/.exec(line);
+      if (m) {
+        depth = m[1]!;
+        break;
+      }
+    }
+    expect(
+      depth,
+      "gate.yml 的 checkout 没有写 `fetch-depth: 0` —— CI 因此是浅克隆," +
+        "`git log` 对所有路径返回同一个时间,`docShotsFresh` 那条截图判据在 CI 上永远不会变红。" +
+        "\n  代价只是多拉几十秒历史(仓库 62 MB);判据本身在 `src/core/docShotsFresh.spec.ts`。",
+    ).toBe("0");
   });
 
   it("图不比它展示的界面旧 —— 红了就跑 `bun scripts/shots.mjs`", () => {
