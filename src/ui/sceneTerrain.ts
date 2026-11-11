@@ -530,3 +530,34 @@ const AXIS_TERRAIN: Record<string, SceneTerrain> = {
 export function sceneTerrainOfAxis(axis: string | null | undefined): SceneTerrain | null {
   return (axis && AXIS_TERRAIN[axis]) || null;
 }
+
+/**
+ * 师承四脉 → 地形。
+ *
+ * 四脉是**四种完全不同的活法**,`data/mentors` 里每一脉都写着自己的形象与师尊:
+ *
+ *   剑修「一剑破万法」师尊青松剑叟   → 山岳(剑修立在山门上,青松二字就是那处)
+ *   丹修「草木通神」  师尊百草婆婆   → 林麓(草木为本)
+ *   阵修「定鼎乾坤」  师尊玄机子     → 宫阙(阵是构筑出来的格局,不是野地)
+ *   猎修「踏遍山河」  师尊哮天翁     → 星野(他望的是路与远处,不是某一处山门)
+ *
+ * 四脉各占一种,不重叠 —— 择师谱是一屏「择一而事之」的地方,
+ * 两脉画成同一片就等于那一屏只有三个选项。
+ */
+const MENTOR_TERRAIN: Record<string, SceneTerrain> = {
+  swordsman: "peaks",
+  alchemist: "forest",
+  arraymaster: "palace",
+  hunter: "sky",
+};
+
+/**
+ * 一位师尊那一脉长什么样。
+ *
+ * 认不出时落回**山岳**:师承是门内的四脉,一定属于某处山门 ——
+ * 这与 `sceneTerrainOfAxis` 回 null 不矛盾,那一处要回答的是「她随处可遇」,
+ * 而这里没有那种答案。
+ */
+export function sceneTerrainOfMentor(mentorId: string | null | undefined): SceneTerrain {
+  return (mentorId && MENTOR_TERRAIN[mentorId]) || "peaks";
+}

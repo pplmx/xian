@@ -17,6 +17,19 @@
       data-mentor-view="chosen"
       data-mentor-affinity
     >
+      <!--
+        这一脉的那片地 —— 与择师谱上是同一副长相。
+
+        师承弹窗是同一件事的两段:谱上「择一而事之」,契后「已定师承 · 转世不失」。
+        画的是同一片 —— 剑修立在山门,丹修在草木间,阵修守着格局,猎修望着路。
+      -->
+      <InkScene
+        class="mentor-dossier__scene"
+        variant="strip"
+        :terrain="sceneTerrainOfMentor(mentorVer.mentor?.id)"
+        aria-hidden="true"
+      />
+
       <header class="mentor-dossier__head">
         <span class="mentor-dossier__seal font-kai" aria-hidden="true">{{ mentorSeal }}</span>
         <div class="mentor-dossier__identity">
@@ -171,6 +184,19 @@
               </span>
             </span>
           </span>
+          <!--
+            这一脉的那片地 —— 落在**签内**,不是整谱一张底。
+
+            四脉是四种完全不同的活法(剑=山门、丹=草木、阵=格局、猎=山河),
+            而这一屏是「择一而事之」:四签并排比较,共用一张底就分不出谁是谁。
+          -->
+          <span class="mentor-choice__scene" aria-hidden="true">
+            <InkScene
+              variant="strip"
+              :terrain="sceneTerrainOfMentor(m.id)"
+              :world-id="player.world.id"
+            />
+          </span>
           <span class="mentor-choice__action font-kai" aria-hidden="true">
             {{ pendingMentor?.id === m.id ? "已择" : "择" }}
           </span>
@@ -233,6 +259,8 @@ import { modsPills, modsText } from "@/data/statNames";
 import type { MentorDef, MentorId } from "@/data/mentors";
 import { cnNumber, formatPercent } from "@/utils/format";
 import BaseModal from "@/components/common/BaseModal.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfMentor } from "@/ui/sceneTerrain";
 import { mentorBehaviorAxes } from "@/ui/mentorBehaviorAxes";
 
 /**
@@ -446,6 +474,47 @@ watch(
   display: grid;
   gap: 0.4rem;
   margin-top: 0.34rem;
+}
+
+/*
+ * 一脉的那片地 —— 落在签内。
+ *
+ * 跨过整签三列(grid-column: 1 / -1)放在正文之下:签的正文是
+ * 「门风 · 师尊 · 入门词条」三行读数,画不能挤在它们旁边(那一格只剩两栏,
+ * 画会窄到读不出是什么);另起一行、整签宽,四签并排时仍看得出是哪片地。
+ *
+ * 高度按画自己的比例交给容器,不写死 rem —— 这一签在 390 宽里正文栏约 200px,
+ * 写死 rem 会把顶部(月、雪点、云)裁掉,而那正是分辨四脉的东西。
+ */
+.mentor-choice__scene {
+  /*
+   * 占正文那一栏(第 2 列),与「择」并列 —— 不跨满整签。
+   *
+   * 跨满(`1 / -1`)试过:画把「择」挤到它下面一整行,四签每签高出一截,
+   * 而那个「择」正是玩家要按的东西,反倒离正文最远。
+   * 放在正文栏下方,画与「择」同行,签的节奏不变。
+   */
+  grid-column: 2 / 3;
+  display: block;
+  --ink-scene-h: 100%;
+  --ink-scene-ink: 1.2;
+  /* 四脉各有各的天,不继承玩家脚下那一片的世界色 */
+  --world-mountain: rgb(var(--color-ink-rgb));
+  margin-top: 0.34rem;
+  aspect-ratio: 420 / 160;
+  overflow: hidden;
+}
+
+/*
+ * 师承帖卷首那条 —— 与择师谱同一副长相。
+ * 定高的一条排在帖首:契后这一帖正文是行为契合、师尊评价与词条,
+ * 画占自己的高度就不会把读数推下去。
+ */
+.mentor-dossier__scene {
+  --ink-scene-h: 5.4rem;
+  --ink-scene-ink: 1.2;
+  --world-mountain: rgb(var(--color-ink-rgb));
+  margin-bottom: 0.6rem;
 }
 
 .mentor-choice {
