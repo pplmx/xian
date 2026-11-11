@@ -533,6 +533,7 @@ const CATEGORIES = [
       "homeRealmOnce",
       "apprenticeAwayOnce",
       "reincarnationBacktrack",
+      "reincarnationScene",
       "resetShowsLoss",
       "openingStepCount",
       "openingGift",

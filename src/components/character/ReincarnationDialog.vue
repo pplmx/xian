@@ -7,6 +7,30 @@
     >
       <ReincarnationStageRail :step="1" />
 
+      <!--
+        一世止步的那片天地 —— 三程共一份。
+
+        这是全作唯一会把存档推倒重来的仪式:玩家这一号人物的一世到此为止,
+        而三屏加起来 2000 行模板里原先一个 `<svg>` 都没有(只有三枚楷体字:终 / 照 / 生)。
+
+        画什么不用新立一套:`worldOf(player.major)` 给的正是**这一世止步在哪一界**,
+        而行世那一句写的就是「行世 N 载,止步于某境」—— 同一条读数。四界四副长相
+        (人间山岳 / 仙界星野 / 神界宫阙 / 混沌虚空)在 `ui/sceneTerrain` 里早就有。
+
+        落法是**路签下面的一条**,不是铺满整册、也不是垫在卷首背后:
+          · 铺满整册 —— 这一册会滚动(回照约 1140px、择生约 2180px),
+            画会落到册底,玩家要滚到底才见得着;
+          · 垫在卷首背后 —— 山脊正横在「先把此生的题、宿慧与交割账摊开」那一行上,
+            一屏里唯一一处「好看」变成一处读不清。
+        给它自己的一条高度,排在路签与卷首之间:打开就看得见,底下没有字。
+      -->
+      <InkScene
+        class="reincarnation-scene"
+        variant="strip"
+        :world-id="player.world.id"
+        aria-hidden="true"
+      />
+
       <header class="reincarnation-head">
         <span class="reincarnation-head__seal font-kai" aria-hidden="true">终</span>
         <div class="reincarnation-head__identity">
@@ -109,6 +133,14 @@
       data-reincarnation-review
     >
       <ReincarnationStageRail :step="2" />
+
+      <!-- 一世止步的那片天地 —— 理由见第一篇程(第一程那一处注释) -->
+      <InkScene
+        class="reincarnation-scene"
+        variant="strip"
+        :world-id="player.world.id"
+        aria-hidden="true"
+      />
 
       <header class="reincarnation-head">
         <span class="reincarnation-head__seal font-kai" aria-hidden="true">照</span>
@@ -349,6 +381,14 @@
       data-reincarnation-choice
     >
       <ReincarnationStageRail :step="3" />
+
+      <!-- 一世止步的那片天地 —— 理由见第一篇程(第一程那一处注释) -->
+      <InkScene
+        class="reincarnation-scene"
+        variant="strip"
+        :world-id="player.world.id"
+        aria-hidden="true"
+      />
 
       <header class="reincarnation-head">
         <span class="reincarnation-head__seal font-kai" aria-hidden="true">生</span>
@@ -762,6 +802,7 @@ import { formatNum, yearsShown } from "@/utils/format";
 import { useGameStore } from "@/stores/game";
 import { companionTimeLabel, companionTimeText } from "@/ui/companionTime";
 import BaseModal from "@/components/common/BaseModal.vue";
+import InkScene from "@/components/common/InkScene.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import ReincarnationStageRail from "@/components/character/ReincarnationStageRail.vue";
@@ -898,6 +939,27 @@ watch(view, (next) => {
 </script>
 
 <style scoped>
+/*
+ * 路签下面那条天地 —— 三程共一份。
+ *
+ * 落法试过三种,只有这一种对:
+ *   · 铺满整册(veil + inset:0)—— 这一册会滚动(回照约 1140px、择生约 2180px),
+ *     画落到册底,玩家要滚到底才见得着,等于没有;
+ *   · 垫在卷首背后 —— 山脊正横在「先把此生的题、宿慧与交割账摊开」那一行上,
+ *     一屏里唯一一处「好看」变成一处读不清;
+ *   · 定高的一条(strip)—— 排在路签与卷首之间,打开就看得见,底下没有字。
+ *
+ * 故用 strip,高度自己定。点景照画:四界之间的分别(山岳 / 星野 / 宫阙 / 虚空)
+ * 全靠它们读出来,只留山骨就又是同一片坡。
+ *
+ * 墨取 0.62:这一条上面紧挨着路签的朱砂底线与卷首的青色眉批,再浓一档就开始抢。
+ */
+.reincarnation-scene {
+  --ink-scene-h: 5.4rem;
+  --ink-scene-ink: 0.62;
+  margin-block: 0.15rem 0.6rem;
+}
+
 .reincarnation-folio {
   --reincarnation-line: rgb(var(--color-ink-rgb) / 0.14);
   --reincarnation-line-strong: rgb(var(--color-ink-rgb) / 0.23);
