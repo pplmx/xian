@@ -133,6 +133,7 @@ const CATEGORIES = [
       "misjudgmentLedger",
       "readmeStack",
       "designToc",
+      "lawCount",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",

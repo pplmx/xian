@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 673 个 spec;本作自己那部分 593 个) |
+| `bun run test` | 全量用例(全量 674 个 spec;本作自己那部分 594 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 673 个 spec = 宿主 551 + 引擎 80,别把 673 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 674 个 spec = 宿主 551 + 引擎 80,别把 674 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 673 个 spec(本作自己那部分 593 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 674 个 spec(本作自己那部分 594 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -902,7 +902,7 @@ FCP 没有实质变化(±16ms 是抖动),而**楷体换上一律变慢 130~200ms
 | `core/mortalRouteAccess.spec.ts` | 19.1s | 9.2~9.5s | 一半是争用 |
 | `core/worldGen.spec.ts` | 8.2s | 8.6~9.5s | 相当,争用占比小 |
 | `core/worldReroll.spec.ts` | 6.6s | 2.2~4.5s | 大部分是争用 |
-| 其余 ~593 个文件 | — | 合计 ~60s | |
+| 其余 ~594 个文件 | — | 合计 ~60s | |
 
 **只有 `phase21` 的耗时是真实的判据成本**,其余偏高都是并行争用。而它的 21504 场战斗
 是判据的设计规模 —— 减采样就等于降强度。
@@ -4377,14 +4377,14 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 593 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 594 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
 
 ```text
 第一版:326 个 spec · 4117 条标题
-修正后:593 个 spec · 6319 条标题   (+54%)
+修正后:594 个 spec · 6319 条标题   (+54%)
 ```
 
 > 这是一类**最难自查的错误**:工具跑得通、输出格式对、报出来的缺口具体到表与维度名 ——
@@ -4476,7 +4476,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**673 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**674 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -8345,3 +8345,53 @@ usage.md:336   预算「至多洗 50 次」
 **与其在文档里维护一份易碎的锚点,不如列成纯文本**:读者照样扫得到全貌,
 而文档不再有一个「换个渲染器就报错」的结构。判据 ①② 也随之改成
 「纯文本列表必须列全每个小节,且条目数与小节数相等」。
+
+### 第 141 轮:定价法则的条数,两份标题各停在一个旧值上
+
+按上轮承诺核 `alchemy.md` 与 `engine.md` 的结构。`engine.md` 干净(那张 38 行的
+「已迁移」表每行都有代码路径与判据)。`alchemy.md` 撞到一处:
+
+```text
+alchemy.md 标题       ## 九条法则(A–H + I/I2)
+pillValue.spec 注释   于是这里立七条法则…
+实际编号              A B C D E E2 E3 E4 F G G2 H I I2 J  = 15 条
+```
+
+**两处各说一个数,谁都不对。** 法则 A–J 是一条条长出来的(A–H 是最初八条,
+I/I2 是某一轮新增,J 又是后面一轮),而两份标题都停在各自写下的那一刻。
+
+### 这类数字比单个数值更难发现
+
+```text
+它不在任何一行数据里 —— 没有「LAW_COUNT = 9」这种常量
+它只在两句说明里 —— 一句在文档标题,一句在 spec 的注释
+没有任何判据会去数「【法则 X】」这种标记出现了几种
+```
+
+第 105~121 那十七轮核的都是**数值**(丹药多少味、功法多少部),而这条是**条数** ——
+「我们有几条法则」不是一个字段,是**数出来的**。
+
+已改:
+
+```text
+alchemy.md      ## 定价法则(十五条:A–J,含子条 C2 / E2~E4 / G2 / I2)
+pillValue.spec  于是这里立十五条法则(A–J,含子条),让每一味丹各安其位
+```
+
+标题下面那句「头八条(A … H)」保留 —— 它说的是**历史**(最初那八条),仍然准确。
+
+### 判据:`lawCount.spec`
+
+```text
+① 扫 spec 里所有 `【法则 X】`,去重后的种数就是真实条数(会打印出来)
+② alchemy.md 标题里写的数 = ①
+③ pillValue.spec 注释里写的数 = ①
+④ 编号要连续:主号 A–J 不断,子号的父号必须存在
+```
+
+②③ 都要**分开写** —— 因为它们是各自独立写下的,一处改了另一处不会自动跟。
+④ 是额外的一条:子号 `E2` 若挂在不存在的主号下,那是另一类错。
+
+> 这一轮与第 140 轮那处(design.md 目录说明写了「6355 行」)是同一族:
+> **文档里写了「数出来才知道的数」**。区别在于 6355 是我自己刚写的(插目录那一刻就过期),
+> 而十五条法则的两份标题是**长期漂移**的结果 —— 漂了很久,只是没人数过。
