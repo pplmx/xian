@@ -7962,3 +7962,49 @@ grep -oE 'assets/index-[a-zA-Z0-9_-]+\.js' dist/index.html | head -1
 
 第 129~133 这五轮里,误报的共同形状没变过:**探针认字面,判定要读上下文**。
 而这轮真正有价值的那一处(:126),恰恰不是探针报出来的 —— 是逐条读上下文读出来的。
+
+### 第 134 轮:把部署文档的每条声明都验了一遍
+
+上轮发现 `deployment.md:126` 那句绑死了版本号。这轮接着核这份文档的**其余每一条具体声明**。
+
+```text
+① 故障排查里的容器名            xuanshu —— 与 docker-compose.yml 的 container_name 一致 ✓
+② Dockerfile 的 bun 版本        oven/bun:1.4.3-alpine —— 与 package.json 的 packageManager
+                                "bun@1.4.3" 一致 ✓
+③ Dockerfile.ci                 不装 bun(产物在 runner 上构建好再复制进来)✓
+④ publish.yml 里的 bun          setup-vp-install 这个 composite action 按 packageManager 取版本
+                                —— 单一事实源,不会分叉 ✓
+⑤ Web/PWA 一节提到的四个文件    wrangler.jsonc / vite.config.ts / src/core/swPrecache.spec.ts
+                                / scripts/offline-check.mjs —— 全在 ✓
+⑥ 插件名                        xuanshu:sw-precache-manifest —— vite.config.ts 里确有此串 ✓
+⑦ offline-check 的第四/第五节   首访断网重开、子路径部署 —— 脚本头注释里逐条对得上 ✓
+⑧ 缓存版本派生                  public/sw.js:41 是 "xuanshu-v2-__CACHE_VERSION_SUFFIX__",
+                                后缀由构建注入 —— 与正文说的「前缀手写世代、后缀每版必变」一致 ✓
+```
+
+**八条全对。**
+
+### 这一轮与前两轮的区别
+
+```text
+第 132 轮   待办指向早已发过的 tag        —— 找得到,因为版本号能与 git tag 比
+第 133 轮   部署注释绑死了一个版本号      —— 找得到,因为版本号能与 package.json 比
+第 134 轮   八条声明                      —— 都对了,因为它们**本来就指向唯一事实源**
+```
+
+②④⑧ 三条尤其说明问题:它们不是「文档抄了一份常量、恰好没抄错」,而是
+**文档描述的那个机制本身就只有一个事实源** —— Dockerfile 引用 `packageManager`、
+composite action 读 `packageManager`、缓存后缀由构建期内容哈希派生。
+
+> 抄一份常量会漂;指向事实源不会。**这三处不是运气好,是设计成这样的。**
+
+### 所以「行动指令审计」这条线基本到底了
+
+```text
+development.md 的待办      已修(132)
+deployment.md 的构建注释   已修(133)
+deployment.md 其余八条     全对(134)
+```
+
+剩下的文档都是**规范性**(usage / design / alchemy / engine)与**编年史**(development / release-notes),
+前者的数字已由 `docs-check` + 各类 spec 钉着(见第 105~121 轮),后者按定义不跟现状对齐。
