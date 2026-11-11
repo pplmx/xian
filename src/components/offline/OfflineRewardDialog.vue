@@ -22,6 +22,33 @@
         >
       </p>
       <!--
+        这一夜是在**哪儿**过的 —— 归来卷轴是玩家隔夜/出差/一周没开之后的第一眼,
+        而这一作的历练是「在某一片地上挂一程」:雪山砍狼、江边打鲛、古战场掘剑。
+        卷轴上的账一向够细,唯独没有地点:只有「在路上」三个字,抬头也没有东西可看。
+
+        取景按**这一趟历练所在的地界**(`summary.region.icon`),不是按玩家的世界:
+        同一个「仙界」里有星野也有江海,而这一夜只发生在其中一处。
+
+        没有在途历练时整块不出 —— 那一夜只是闭关,不在任何一片地上;
+        给闭关也配一张地景,等于替玩家编一段他没走过的路。
+
+        画法是卷尾一条(与「突破结果」那一屏同一个落法):它有自己的高度、不压字,
+        故点景照画 —— 地界之间的分别全靠点景(水滴 / 火舌 / 断塔)读出来。
+      -->
+      <template v-if="summary.region">
+        <div class="offline-region" data-offline-region>
+          <InkScene
+            class="offline-region__scene"
+            :icon="summary.region.icon"
+            :world-id="player.world.id"
+          />
+          <p class="offline-region__caption">
+            <span class="offline-region__label">那一夜在</span>
+            <strong class="offline-region__name font-kai">{{ summary.region.name }}</strong>
+          </p>
+        </div>
+      </template>
+      <!--
         收益分两本账,不再是均质的一张流水:
           入账 —— 带回洞府的资源,数值是这张卡的主角(14px 楷体,与印信同一笔意);
           路上 —— 发生在外面的事(寿元在走、打过架、遇过人、捡过装备),
@@ -151,6 +178,7 @@ import { eventTierDef } from "@/core/eventTier";
 import { playSfx } from "@/core/audio";
 import BaseModal from "@/components/common/BaseModal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
+import InkScene from "@/components/common/InkScene.vue";
 import QualitySeal from "@/components/common/QualitySeal.vue";
 import SectionMark from "@/components/common/SectionMark.vue";
 
@@ -275,3 +303,61 @@ function close(): void {
   ui.offlineSummary = null;
 }
 </script>
+
+<style scoped>
+/*
+ * 那一夜所在的那片地 —— 卷尾一条画。
+ *
+ * ## 为什么是卷尾一条,不是铺满压字
+ *
+ * 突破结果那一屏同一个落法(见 styles/pages/cultivation.css 的长注释)。这一窗的
+ * 正文是**账**:入账 / 路上两组读数、拾得装备、际遇回执、离线上限那一段说明 ——
+ * 每一行都要读得清。把画垫在它们底下,山脊就会横穿某几行。
+ *
+ * 故给画留出自己的高度(`padding-bottom` 让出这一条),画落在卷尾、地名压在画上缘:
+ * 上是这一段带回了什么,下是这一夜站在哪里。
+ *
+ * ## 为什么在这里兜世界色
+ *
+ * `InkScene` 的山骨读 `--world-mountain`,而这扇弹窗是 `Teleport to="body"` 的 ——
+ * 那一层在 `.app-shell` 之外,世界色继承不过去。故按**玩家此刻所处的界**自己兜一档:
+ * 与首页、修行卷首那一档同源(那两处也是「此刻所处的界」)。
+ */
+.offline-region {
+  position: relative;
+  isolation: isolate;
+  margin-top: 1.1rem;
+  padding-top: 0.2rem;
+  padding-bottom: 5.4rem;
+  border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+}
+.offline-region__scene {
+  --ink-scene-h: 6rem;
+  /*
+   * 浓淡按卷尾一条调:这一条底下没有字,不必像 veil 那样让墨。
+   * 取 1.3 —— 与「突破结果」那一屏同一个档位(1.35),理由同:
+   * 再淡一档,山骨与点景(水滴 / 火舌 / 断塔)就只剩一条灰带,
+   * 而「这一夜在哪片地上」全靠它们读出来。
+   */
+  --ink-scene-ink: 1.3;
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+.offline-region__caption {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.4rem;
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: var(--type-note);
+}
+.offline-region__name {
+  color: rgb(var(--color-ink-soft-rgb));
+  font-size: var(--type-body);
+  letter-spacing: 0.14em;
+}
+</style>

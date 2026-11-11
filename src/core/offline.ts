@@ -312,6 +312,14 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   /** 本段普通战之外的区域之主战;归来卷轴的胜负与经历场次必须把它算进去 */
   let bossFights = 0;
   let bossWins = 0;
+  /**
+   * 这一夜挂在哪一处地界 —— 给归来卷轴取景用(见 OfflineSummary.region)。
+   *
+   * 在会话分支里填,不在 `if (session)` 之外查一次:没有在途历练时就是 null,
+   * 那表示「这一夜只是闭关,不在任何一片地上」—— 而「闭关」与「在雪岭挂机」
+   * 是两件事,卷轴不该给前者也配一张地景。
+   */
+  let regionIdentity: OfflineSummary["region"] = null;
   const session = adventure.session;
   /**
    * 挂机期间这趟历练的所得(灵石/修为/实物)。
@@ -322,6 +330,12 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
   const trip = { stone: gnZero(), exp: gnZero(), items: 0, wudao: 0 };
   if (session) {
     const region = regionDef(session.regionId);
+    /*
+     * 名字与图标一并带上,不只给图标 —— 卷轴要在画旁边写出地名。
+     * 坏档(地界 id 认不出)时 region 为 undefined,身份就留空:
+     * 宁可这一夜不配景,也不画一片「不知哪里」的山。
+     */
+    if (region) regionIdentity = { name: region.name, icon: region.icon };
     /**
      * 离线历练的收益以「打不打得过」为准,而不是区域境界门槛(minRealm)。
      * 能打过高阶副本、掉高阶装备,本就合理(获取代价在线在场);漏洞只在
@@ -813,6 +827,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
     recycledDust,
     recycledEquipment,
     eventReceipts,
+    region: regionIdentity,
     notes,
   };
   if (player.expFull) notes.push("修为已至圆满,可尝试突破");

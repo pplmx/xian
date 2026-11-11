@@ -1205,6 +1205,21 @@ export interface OfflineSummary {
   recycledEquipment: number;
   /** 无法从资源总差额与装备清单辨认的际遇所得(丹药/法宝/功法/增益等) */
   eventReceipts: OfflineEventReceipt[];
+  /**
+   * 这一夜挂机所在的那一处地界 —— 有在途历练时给,不在历练时给 null。
+   *
+   * 归来卷轴的第一眼是「我离开的这段时间发生了什么」,而这一作的历练是
+   * **在某一片地上**挂一程(雪山砍狼 / 江边打鲛 / 古战场掘剑)。卷轴上的账够细,
+   * 唯独没有地点:回来只看到「在路上」三个字,抬头也没有东西可看。
+   *
+   * 与 `BreakthroughView.kind` 同一条纪律:身份由 core 在造 summary 时带上
+   * (卷轴不自己查地界表,否则「这一趟在哪儿」会有两处说法),卷轴只交给
+   * `ui/sceneTerrain` 取景。
+   *
+   * 名字一并带着而不只给图标:卷轴要在画旁边写出地名 —— 玩家见到「寒潭幽窟」四个字
+   * 与见到一枚水滴图标,分量不一样。
+   */
+  region: { name: string; icon: string } | null;
   notes: string[];
 }
 

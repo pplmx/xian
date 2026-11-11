@@ -544,6 +544,7 @@ const CATEGORIES = [
       "breakthroughLore",
       "breakthroughFailInjury",
       "offlineEventTier",
+      "offlineScene",
       "recordBrokenNotice",
       "titleModsNotice",
       "gongfaTypeNotice",
