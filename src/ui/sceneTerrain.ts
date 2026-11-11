@@ -803,3 +803,33 @@ export function sceneTerrainOfGongfa(
 ): SceneTerrain {
   return (element && ELEMENT_TERRAIN[element]) || (type && TYPE_TERRAIN[type]) || "peaks";
 }
+
+/**
+ * 灵草品阶 → 地形。
+ *
+ * 五品灵草各自对应一段境界带(`data/herbGrades` 的 `HERB_GRADE_BANDS`),
+ * 而那一句「炼气~化神境的方子所用」正是从它反查出来的:
+ *
+ *   凡品 —— 炼气 ~ 化神         (人间界前半) → 山岳
+ *   灵品 —— 炼虚 ~ 渡劫         (人间界后半) → 林麓
+ *   仙品 —— 真仙 ~ 大罗         (仙界)       → 星野
+ *   神品 —— 神人 ~ 神帝         (神界)       → 宫阙
+ *   道品 —— 混沌真灵 ~ 混沌道祖 (混沌海)     → 虚空
+ *
+ * 五品对齐四大界域,故最后三档直接沿用 `sceneTerrainOfPlace` 的「世界 → 地形」
+ * 那份口径(仙界星野 / 神界宫阙 / 混沌虚空),不另起一套:同一片天在两处长得不一样,
+ * 下一个人就要问哪一处是对的。人间界那两品则按 `HERB_GRADE_BANDS` 自己分了前后
+ * (山岳 / 林麓)—— 界域表里人间界只有一种长相,而草分两品是**这一处**的事实。
+ */
+const HERB_GRADE_TERRAIN: Record<number, SceneTerrain> = {
+  1: "peaks",
+  2: "forest",
+  3: "sky",
+  4: "palace",
+  5: "void",
+};
+
+/** 一品灵草长在哪片地上;认不出落回山岳(人间界前段,最低那一品) */
+export function sceneTerrainOfHerbGrade(grade: number | null | undefined): SceneTerrain {
+  return (grade && HERB_GRADE_TERRAIN[grade]) || "peaks";
+}

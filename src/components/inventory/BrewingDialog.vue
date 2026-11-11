@@ -90,6 +90,19 @@
             「服之:修为 +80 点」折成 98px 高的四行(自检量到)。故这一档整块竖排:
             图标与名字一行,代价与成品各占整行,把握块改成左对齐另起一段。
           -->
+          <!--
+            这一炉要哪一品的草 —— 按方子的 `cost.herbGrade` 取景。
+
+            五品灵草各自对应一段境界带(凡品=炼气~化神、灵品=炼虚~渡劫、仙品=真仙~大罗、
+            神品=神人~神帝、道品=混沌真灵~混沌道祖),这一行本来就写着「凡品灵草×8」——
+            只是那三个字读不出「这是给哪个境界的方子」。
+
+            落法是行内右侧一小片背景(5rem 见方),不占整行:这一窗几十张方子,
+            给每一方一条横幅会把清单拉成两倍长。故只做行右侧的一枚小景,与那一枚
+            18px 图标同一侧、同一个意思(这一炉的来路)。
+
+            点景关掉(`:marks="false"`):这一小片底下压着「把握 / 双成 / 存」那一列读数。
+          -->
           <div
             class="flex items-start gap-3 tinylens:flex-col tinylens:items-stretch tinylens:gap-1.5"
           >
@@ -137,6 +150,11 @@
               <!-- 炼出来是什么:方子清单此前只报代价与把握,不报成品 -->
               <p class="t-note text-qing">{{ pillFuncText(r.def) }}</p>
             </div>
+            <!-- 这一炉的来路 —— 一小片,不占整行(理由见上面那段注释) -->
+            <span class="brew-scene" aria-hidden="true">
+              <InkScene :terrain="sceneTerrainOfHerbGrade(r.cost.herbGrade)" :marks="false" />
+            </span>
+
             <div class="shrink-0 text-right tinylens:w-full tinylens:text-left">
               <p
                 class="tabular text-title"
@@ -303,6 +321,8 @@ import { computed, nextTick, ref, watch } from "vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfHerbGrade } from "@/ui/sceneTerrain";
 import { HERB_GRADES, HERB_GRADE_SHORT } from "@/data/herbGrades";
 import { qualityDef } from "@/data/qualities";
 import { PILL_BATCH } from "@/core/pillService";
@@ -443,3 +463,32 @@ function brewTriesText(r: { guaranteeLeft: number; able: { successRate: number }
   return n === null ? "" : `平均 ${n} 炉成一炉`;
 }
 </script>
+
+<style scoped>
+/*
+ * 一炉的来路 —— 行右侧一小片,不占整行。
+ *
+ * 这一窗是**几十张方子**的清单:给每一方一条横幅会把清单拉成两倍长,
+ * 而这一小片与行首那枚 18px 图标是同一个意思(这一炉的来路),
+ * 只是画得出来「哪一品、哪个境界」。
+ *
+ * 定宽定高、绝对定位承在行内:`relative` 的定位盒是这一格自己,
+ * `overflow: hidden` 让画只在这一格内画。
+ */
+.brew-scene {
+  --ink-scene-h: 3.4rem;
+  --ink-scene-ink: 0.9;
+  position: relative;
+  display: block;
+  width: 3.4rem;
+  height: 3.4rem;
+  flex: none;
+  overflow: hidden;
+  pointer-events: none;
+}
+.brew-scene .ink-scene {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+}
+</style>
