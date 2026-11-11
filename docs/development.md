@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 664 个 spec;本作自己那部分 584 个) |
+| `bun run test` | 全量用例(全量 665 个 spec;本作自己那部分 585 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 664 个 spec = 宿主 551 + 引擎 80,别把 664 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 665 个 spec = 宿主 551 + 引擎 80,别把 665 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 664 个 spec(本作自己那部分 584 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 665 个 spec(本作自己那部分 585 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -4373,14 +4373,14 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 584 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 585 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
 
 ```text
 第一版:326 个 spec · 4117 条标题
-修正后:584 个 spec · 6319 条标题   (+54%)
+修正后:585 个 spec · 6319 条标题   (+54%)
 ```
 
 > 这是一类**最难自查的错误**:工具跑得通、输出格式对、报出来的缺口具体到表与维度名 ——
@@ -4472,7 +4472,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**664 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**665 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -7351,3 +7351,63 @@ layout-check.mjs:30033  69 条终局清单的两册回看           → 73
 > 这一轮四次误报(前三轮也有),全是同一个形状:**判据的正则认得字,但不认得字与字的邻接关系**。
 > 上一轮修的是「数字与全称词」,这一轮修的是「数字与量词后的限定词」——
 > 每一次都是**同一个词在不同上下文里意思不同**。
+
+### 第 121 轮:最后一类文本载体,以及一条写反了的断言
+
+上轮把 `scripts/` 也扫了。这轮把剩下的显性载体一口气查完:
+
+```text
+README.md         汉字数字 0 处;阿拉伯数字都由 docs-check 守着(spec 数)
+package.json      数字声明 0 处
+图片 alt 文本      带数字的 0 处
+describe 块名     汉字数字 0 处
+数据表的 hint/note  2 处,都在 data/ruleset.ts
+```
+
+**前四种都干净。** 第五种那两处是**机制参数**:
+
+```text
+超时判负 · 护盾上限 50% · 模拟预算守恒    → SHIELD_CAP_RATIO = 0.5          ✓
+同词条多来源 100/75/50/25 递减           → DIMINISH_WEIGHTS = [1,.75,.5,.25] ✓
+```
+
+### 顺着查下去发现 `data/ruleset.ts` 没有 spec
+
+它有四个容易写歪的地方,补了 6 条判据。其中一条我**第一次就写反了**:
+
+```text
+我写的:  expect(rulesetBefore("20.0", "19.5")).toBe(true)  // 「主版本号优先」
+实际:    rulesetBefore("20.0", "19.5") === false
+```
+
+20.0 比 19.5 **晚**,所以「20.0 早于 19.5」是 false。**实现是对的,断言是错的。**
+
+> 这是第 11 次「判据读错了东西」。前 10 次是字段名 / 参数含义 / 扫描范围 / 复刻公式 /
+> 属性而非内容 / 兜底 / 按文件名配对 / 衡量尺度 / 搜索范围。**这一次是「把命题的方向搞反」** ——
+> 比前几次更隐蔽:`rulesetBefore("20.0","19.5")` 读起来像「20.0 更早吗」,
+> 而答案 false 也「符合直觉」,不跑一遍就发现不了。
+
+### 「不含该纪元本身」不等于「不含当前版本」
+
+③ 那条判据值得单说。`rulesetChangesSince("19.0")` 会返回 `19.5 / 20.0 / 21.0 / 25.0` ——
+**包含当前版本 25.0**。
+
+一开始以为这是 bug。但读了调用点(`MarksPanel.vue:319`):玩家点开一条**旧纪道痕**,
+看到的该是「此后天道改了这些」,包括如今这一版。**若把当前版本排除,
+最新那次规则变更就永远不会显示给任何人。**
+
+于是判据写的不是「允许含当前版本」,而是**必须含**:
+
+```ts
+expect(fromOld.some((c) => c.version === RULESET_VERSION),
+  "从旧纪元查变更时,当前版本不在结果里 —— 最新那次规则变更没人看得到").toBe(true);
+```
+
+### 文本载体这条线到此结束
+
+```text
+文档 / 代码注释 / 用例名 / 脚本注释 / describe 块名 / README / package.json
+/ 图片 alt / 数据表 hint-note
+```
+
+**九类载体,全部扫过。** 前四类找到 21 处过时数字,后五类零处。
