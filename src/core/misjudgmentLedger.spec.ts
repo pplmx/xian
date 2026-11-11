@@ -8,7 +8,7 @@
  *
  * ```text
  *   ①~⑨   扫描读错了东西(遍历使用 / 文件内自用 / 值域巧合 / … / 按引号定界)
- *   ⑩~⑬   判定读错了东西(跨维度 / 跨 id 空间 / 把「没有写」当「缺」/ 量总数量不出结构)
+ *   ⑩~⑭   判定读错了东西(跨维度 / 跨 id 空间 / 把「没有写」当「缺」/ 量总数量不出结构)
  * ```
  *
  * 前九条是「找错地方」,后四条是「**找对了地方,解释错了**」——
@@ -17,7 +17,7 @@
  * ## 判据
  *
  * ① 那 13 条必须全在 —— 少一条就是有人删了教训;
- * ② ⑩~⑬ 这四条各自要带**具体案例**(文件名或数据名),不许只写抽象结论;
+ * ② ⑩~⑭ 这五条各自要带**具体案例**(文件名或数据名),不许只写抽象结论;
  * ③ 那一行里要有「找线索 / 判据必须能指名」这类**行动指令**,不许只列现象。
  *
  * ③ 看起来虚,但它守的是这篇文章的用途:清单不是给人感叹的,是给下一次
@@ -38,10 +38,10 @@ function falsePositiveRow(): string {
   return DOC.slice(start, end);
 }
 
-const MARKERS = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩", "⑪", "⑫", "⑬"] as const;
+const MARKERS = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩", "⑪", "⑫", "⑬", "⑭"] as const;
 
 describe("误判清单 · 它自己不许缩水", () => {
-  it("① 十三条编号全在,一条都不许少", () => {
+  it("① 十四条编号全在,一条都不许少", () => {
     const row = falsePositiveRow();
     /*
      * 每个编号必须**作为条目**出现,即后面紧跟一句**加粗的标题**(`⑬ **量总数…**`)。
@@ -61,7 +61,7 @@ describe("误判清单 · 它自己不许缩水", () => {
     expect(missing, "误判清单里少了这些条目 —— 有人删了教训:" + missing.join(" ")).toEqual([]);
   });
 
-  it("② ⑩~⑬ 各自要带具体案例,不许只写抽象结论", () => {
+  it("② ⑩~⑭ 各自要带具体案例,不许只写抽象结论", () => {
     const row = falsePositiveRow();
     /*
      * ⑩ 跨维度          → 应有「成就」「印」或「品质档位」
@@ -78,12 +78,30 @@ describe("误判清单 · 它自己不许缩水", () => {
         needles: ["prefers-reduced-motion", "style.css"],
       },
       { mark: "⑬", what: "量总数量不出结构", needles: ["data/events", "通用事件"] },
+      { mark: "⑭", what: "量入口量不出供给", needles: ["第 7 境", "minRealm", "50 个"] },
     ];
     for (const { mark, what, needles } of expectations) {
-      const at = row.indexOf(mark);
+      /*
+       * `at` 也必须找**条目形态**(编号 + 加粗标题),不能只找编号字符。
+       *
+       * 第一版写 `row.indexOf(mark)`,而 ⑭ 在这一行里出现了两次:一次是条目本身
+       * (`⑭ **量入口…**`),一次是末尾那句「**⑩~⑭ 这五条与前九条不同**」——
+       * `indexOf` 命中的是后者,于是切出来的是那句总结,「具体案例」必然查不到。
+       */
+      const at = row.indexOf(`${mark} **`);
       expect(at, `找不到编号 ${mark}`).toBeGreaterThan(0);
-      // 该编号到下一个编号之间那一段
-      const nextAt = MARKERS.map((m) => row.indexOf(m, at + 1)).filter((i) => i > at);
+      /*
+       * 切到**下一个条目**为止 —— 只认「编号 + 加粗标题」这种条目形态。
+       *
+       * 第一版找的是「下一个编号字符」,而这一行末尾还有一句
+       * 「**⑩~⑭ 这五条与前九条不同**」,里面的 ⑭ 被当成了下一段的起点,
+       * 于是最后一条(⑭)的切段只剩几个字,「具体案例」必然查不到。
+       * 与第 140 轮那次(目录说明里的「动效」冒充列表项)是同一个坑。
+       */
+      const nextAt = MARKERS.map((m) => {
+        const hit = row.indexOf(`${m} **`, at + 1);
+        return hit;
+      }).filter((i) => i > at);
       const segment = row.slice(at, nextAt.length > 0 ? Math.min(...nextAt) : undefined);
       expect(
         needles.some((n) => segment.includes(n)),
