@@ -1531,3 +1531,49 @@
   line-height: 1.6;
   letter-spacing: 0.02em;
 }
+
+/*
+ * 突破结果那一屏的劫相(见 components/cultivation/BreakthroughResultDialog)。
+ *
+ * ## 为什么是**卷尾一条画**,不是压在字底下的背景
+ *
+ * 劫势面板那一屏用的是 veil(绝对定位、铺满、压字):它是一张评估表,把画垫在字底下
+ * 反而让读数与笔墨互相干扰的代价可以接受。这一窗不一样 —— 它是一卷**结算**:
+ * 印、境界去向、逐道天雷的记述、那一重天的来历,一路排下来,最后一句是
+ * 「寿元增至 N 载」这类收束。
+ *
+ * 故这里给画留出**自己的高度**(`padding-bottom` 让出这一条),画落在卷尾:
+ * 上是印与账,下是劫灰散尽的天。试过 veil,结果山脊正好横在最后那两行 lore 上 ——
+ * 一屏里唯一一处「好看」变成唯一一处读不清。
+ *
+ * ## 为什么在这里兜世界色
+ *
+ * `InkScene` 的山骨读 `--world-mountain`,而这扇弹窗是 `Teleport to="body"` 的:
+ * 那一层在 `.app-shell` 之外,世界色继承不过去。故自己兜一档松烟墨 ——
+ * 一场劫是「天上落下来的」,不随脚下的界换色,这一档反而更对。
+ */
+.breakthrough-result {
+  position: relative;
+  isolation: isolate;
+  --world-mountain: rgb(var(--color-ink-rgb));
+  /* 给卷尾那条画让出高度:上不压字、下不露出画布硬边 */
+  padding-bottom: 6.2rem;
+}
+.breakthrough-result__scene {
+  --ink-scene-h: 7.2rem;
+  /*
+   * 浓淡按**卷尾一条**调:这一条底下没有字,不必像 veil 那样让墨。
+   * 取 1.35(劫势面板那一档是 1.5,但它那里还关掉了点景)。真渲染核过两档:
+   * 0.5 时 310px 宽里读出来是一条灰带、山脊与月/舟都分不出;1.35 时点景与山骨
+   * 都在 —— 而这一条画的全部用处就是「五种劫看起来不是同一片坡」。
+   */
+  --ink-scene-ink: 1.35;
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+.breakthrough-result > :not(.breakthrough-result__scene) {
+  position: relative;
+  z-index: 1;
+}

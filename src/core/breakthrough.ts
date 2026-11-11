@@ -194,7 +194,18 @@ export function breakthroughInfo(): BreakthroughInfo {
  * Phase 32.1:与 tribulationDecision 共用度量函数,预览与结算不可能分叉
  * Phase 32.2:灵根解法通道同样经 currentTribulationRelief 取,与预览同源
  * 渡劫难度随天时:与预览 currentTribulationPlan 同一乘数(雷鸣日+8%) */
-function runTribulation(targetMajor: number): { survived: boolean; log: string[] } {
+function runTribulation(targetMajor: number): {
+  survived: boolean;
+  log: string[];
+  /**
+   * 这一场掷中的劫型 —— 一并交回去,而不是让调用方再 `rollTribulation` 一次。
+   *
+   * 劫型是确定性派生的,重算一遍**今天**恰好等于同一个值;但那是巧合级的一致:
+   * 只要派生规则跟着天时/境界改一次,或者跨过午夜那一拍,结果屏与决斗屏就会
+   * 指着两种不同的劫。掷一次、交回去,是这里唯一不会分叉的写法。
+   */
+  kind: TribulationKind;
+} {
   const player = usePlayerStore();
   const mods = player.finalStats.mods;
   const waves = tribulationWaves(targetMajor);
@@ -230,13 +241,13 @@ function runTribulation(targetMajor: number): { survived: boolean; log: string[]
       regen;
     if (hpLeft <= 0) {
       log.push(`第 ${w} 道天雷轰然落下,你护体灵光崩碎,重伤坠地……`);
-      return { survived: false, log };
+      return { survived: false, log, kind };
     }
     const pct = Math.max(1, Math.round(hpLeft * 100));
     log.push(`第 ${w} 道天雷落下,你咬牙硬撼,气血余 ${Math.min(999, pct)}%。`);
   }
   log.push("雷云散尽,天光重开。你于劫灰中缓缓立起——渡劫,成了!");
-  return { survived: true, log };
+  return { survived: true, log, kind };
 }
 
 /** 尝试突破,返回展示数据(由 UI 弹窗呈现) */
@@ -254,10 +265,18 @@ export function attemptBreakthrough(): BreakthroughView | null {
 
   let success: boolean;
   let tribulationLog: string[] = [];
+  /**
+   * 这一场渡劫掷中的劫型 —— 小境界突破没有劫,给空串。
+   *
+   * 结果弹窗的劫相由它取景(见 ui/sceneTerrain 的 sceneTerrainOfTribulation),
+   * 故必须一路带到 view 上;弹窗自己不再掷一次(理由见 runTribulation 的返回注释)。
+   */
+  let tribulationKind = "";
   if (info.needTribulation) {
     const result = runTribulation(player.major + 1);
     success = result.survived;
     tribulationLog = result.log;
+    tribulationKind = result.kind;
     // 「渡过」才算渡过:失败不计数(否则连败三次自动解锁 a_trib3 劫后余生)
     if (success) track("tribulations");
   } else {
@@ -296,6 +315,7 @@ export function attemptBreakthrough(): BreakthroughView | null {
       isMajor: info.isMajor,
       toRealmName: realm.name,
       toRealmLore: realm.lore ?? "",
+      kind: tribulationKind,
       tribulationLog,
       message: !info.isMajor
         ? "灵台清明,经脉拓宽,修为更上一层。"
@@ -359,6 +379,7 @@ export function attemptBreakthrough(): BreakthroughView | null {
       // 失败时印面走「滞」,不用它;类型要求完整故照实给(仍是当前那一境)
       toRealmName: player.realm.name,
       toRealmLore: player.realm.lore ?? "",
+      kind: tribulationKind,
       tribulationLog,
       message: info.needTribulation
         ? "天威难测,此番渡劫失利。所幸道基未毁,来日再战。"

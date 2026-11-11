@@ -161,6 +161,16 @@ describe("突破 · 大关(渡劫)", () => {
     expect(view!.tribulationLog.length, "渡劫没有战报,玩家不知道自己怎么过来的").toBeGreaterThan(2);
     expect(view!.tribulationLog[view!.tribulationLog.length - 1]).toContain("渡劫");
     expect(useQuestsStore().counter("tribulations")).toBe(1);
+    /*
+     * 劫型要随结算一起交回去 —— 结果弹窗的劫相由它取景(见 ui/sceneTerrain 的
+     * sceneTerrainOfTribulation)。不让弹窗自己重掷,是因为那会变成两处各自推算
+     * 同一件事;这条钉「交回来的那个值真存在、且是五种劫之一」。
+     */
+    expect(view!.kind, "渡劫成功了却没带劫型 —— 结果屏画不出这一场劫").toBeTruthy();
+    expect(
+      ["thunder", "counterflow", "soulrend", "ironbody", "heavyrush"],
+      `劫型给了一个界面上没有长相的值:${view!.kind}`,
+    ).toContain(view!.kind);
   });
 
   it("没渡过:境界不动,一样要赔修为与疗伤", () => {
@@ -176,6 +186,12 @@ describe("突破 · 大关(渡劫)", () => {
     expect(useQuestsStore().counter("tribulations"), "没渡过就不该计数").toBe(0);
     expect(useQuestsStore().counter("breakthroughFails")).toBe(1);
     expect(view!.tribulationLog.some((l) => l.includes("重伤坠地"))).toBe(true);
+    /*
+     * 失败的那一屏也要带劫型:山一样在,只是这一趟没过去。
+     * 「过了才画、没过不画」会让同一场劫在两个结局里长得不一样 —— 那不是画面,
+     * 是给画面另加了一层判定。
+     */
+    expect(view!.kind, "渡劫失败就没有劫型了 —— 失败那一屏画不出这一场劫").toBeTruthy();
   });
 });
 

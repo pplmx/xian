@@ -1321,6 +1321,23 @@ export interface BreakthroughView {
    * 而 `lore` 这句话本来就是为这一刻写的。
    */
   toRealmLore: string;
+  /**
+   * 这一场劫的**劫型**(`thunder` / `counterflow` / `soulrend` / `ironbody` / `heavyrush`)。
+   *
+   * 与 `toRealmName` / `toRealmLore` 同一条纪律:**由 core 在造 view 时带上,弹窗只读**。
+   * 劫型本身是确定性派生的(`境界 × 31 + 今日天时`),但若让弹窗自己再调一次
+   * `rollTribulation`,同一件事就有两处推算 —— 今天跨过那一拍、或者派生规则哪天改了,
+   * 结果屏与决意屏就会指着两种不同的劫。故存在 view 上。
+   *
+   * 小境界突破没有劫,给空串(弹窗据此不画劫相)。
+   *
+   * 为什么是 `string` 而不是 `TribulationKind`:types 不许 import data
+   * (见 `PetPersonality` 那一段同一句纪律),而在这个字段上再抄一份 ids 的字面联合
+   * 只会多出第二本账 —— 弹窗只把它整份交给 `sceneTerrainOfTribulation`,那里的
+   * 「劫相表与 data/tribulations 逐键相等」一条已把五种劫钉住,**认不出的名字
+   * 落到虚空**(不抛也不空白),故这里收紧成一个联合型没有额外收益。
+   */
+  kind: string;
   tribulationLog: string[];
   message: string;
   /**

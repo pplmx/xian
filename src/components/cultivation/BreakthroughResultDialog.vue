@@ -6,10 +6,33 @@
   <BaseModal :open="view !== null" :closable="false" aria-label="突破结果">
     <div
       v-if="view"
-      class="text-center"
+      class="breakthrough-result text-center"
       data-breakthrough-result
       :data-breakthrough-outcome="view.success ? (view.isMajor ? 'major' : 'success') : 'fail'"
     >
+      <!--
+        劫相 —— 渡劫的**终场**。
+
+        决意之前那一屏(修行页的劫势面板)上一轮已经按这一种劫取了景,而渡过之后
+        回到这一扇窗里又只剩字:同一场劫,下注时看得见、开盅时看不见。
+
+        画的是**这一场劫**的长相,不是脚下地界 —— 与劫势面板同一条口径
+        (见 ui/sceneTerrain 的 sceneTerrainOfTribulation),故 `kind` 由 core 在
+        结算时带上,这里只读、不重掷。
+
+        小境界突破没有劫(`kind` 为空),这一层整块不出:一世几十次的小推进是节拍器,
+        每次都配一张劫相会让节拍器看起来像里程碑。
+
+        **点景照画**(与劫相面板相反):这一条在卷尾自己占着高度,底下没有字。
+        而「五种劫各有一副长相」正是靠点景分辨的 —— 只留山骨的话,江海、遗迹、星野
+        读起来都是同一片坡。劫相面板不得不关掉点景,因为那一屏四十行读数铺满整块。
+      -->
+      <InkScene
+        v-if="view.kind"
+        class="breakthrough-result__scene"
+        data-breakthrough-scene
+        :terrain="sceneTerrainOfTribulation(view.kind)"
+      />
       <!-- 印心:成功时朱砂墨点迸溅、金环荡开 -->
       <div class="relative mx-auto mt-2 h-20 w-20">
         <div v-if="view.success" class="ink-burst">
@@ -127,6 +150,8 @@
 import { computed } from "vue";
 import { useUiStore } from "@/stores/ui";
 import BaseModal from "@/components/common/BaseModal.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfTribulation } from "@/ui/sceneTerrain";
 
 const ui = useUiStore();
 

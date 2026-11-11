@@ -30,6 +30,7 @@ import { readSource } from "@/test/readSource";
 import { EVENTS } from "@/data/events";
 import { REGIONS } from "@/data/regions";
 import { WORLDS } from "@/data/realms";
+import { TRIBULATIONS } from "@/data/tribulations";
 import {
   SCENE_TERRAINS,
   sceneAccentInFront,
@@ -406,5 +407,74 @@ describe("山水景 · 真接线", () => {
      * 那与抽组件之前的水印是同一个问题,只是换了个位置。
      */
     expect(dialog, "景要由这条事件自己的标签决定").toMatch(/:tags="def\.tags"/);
+  });
+
+  it("突破结果那一屏也有画面 —— 戏眼的另一半不该还是纯文字", () => {
+    /*
+     * 渡劫的**半场**在劫势面板(决意前评估),**终场**在突破结果那一扇弹窗:
+     * 印、章、逐道天雷的记述、那一重天的来历 —— 全是字。
+     *
+     * 而这一屏正是玩家隔着天劫挣到一道门之后**唯一**看到的东西,一境一次、
+     * 二十一道境界各一次。上一轮给决意前那一屏补了劫相,却没补这一屏 ——
+     * 于是同一场劫:下决意时看得见,渡过之后又回到一张白纸上。
+     */
+    const dialog = readSource("src/components/cultivation/BreakthroughResultDialog.vue");
+    expect(dialog, "突破结果要有画面").toContain("<InkScene");
+    /*
+     * 画什么必须由**这一场劫**定,不是脚下的地界:同一个「雷鸣之劫」在人间界与神界
+     * 该是同一副长相,而同一个界的两场劫该是两副 —— 这与劫势面板同一条口径,
+     * 否则两屏对同一件事给出两种读法。
+     */
+    expect(dialog, "劫相要由这一场劫的劫型决定").toMatch(
+      /:terrain="sceneTerrainOfTribulation\(view\.kind\)"/,
+    );
+  });
+
+  it("突破结果读得到那一场劫的劫型 —— 不许让弹窗自己再掷一次", () => {
+    /*
+     * 劫型是**确定性**派生的(`targetMajor × 31 + 今日天时`),但它一旦在弹窗里
+     * 重算一遍,就成了两处各自推算同一件事:今天跨过今日天时那一拍、或哪天派生规则一改,
+     * 结果屏与决意屏就会指着两种不同的劫。
+     *
+     * 故由 core 在造 view 时把劫型带上,弹窗只读。与 `toRealmName` / `toRealmLore`
+     * 同一条纪律(见 ui/breakthroughLore.spec)。
+     */
+    const types = readSource("src/types/index.ts");
+    const iface = types.match(/export interface BreakthroughView \{[\s\S]*?\n\}/)?.[0] ?? "";
+    expect(iface, "定位不到 BreakthroughView —— 判据会空转").not.toBe("");
+    expect(iface, "BreakthroughView 要带上这一场劫的劫型").toContain("kind");
+    const core = readSource("src/core/breakthrough.ts");
+    /*
+     * 弹窗这一侧也要真读它 —— 存在 view 上却没人读,等于那句注释在说一件没发生的事。
+     * 同时钉死「不自己掷」:`rollTribulation` 只许留在 core 里那一处结算。
+     */
+    const dialog = readSource("src/components/cultivation/BreakthroughResultDialog.vue");
+    expect(dialog, "弹窗要读 view.kind 取景").toContain("view.kind");
+    expect(dialog, "弹窗不许自己再掷一次劫型").not.toContain("rollTribulation");
+    expect(core, "core 要把劫型带进 view").toMatch(/kind:\s*tribulationKind/);
+  });
+
+  it("劫相表与 data/tribulations 逐键相等 —— 加了第六种劫却忘了给长相,当场红", () => {
+    /*
+     * `BreakthroughView.kind` 是一根裸 `string`(types 不许 import data,故不抄
+     * `TribulationKind` 的字面联合)。于是「这五种劫」这件事**只在一处**被真正钉住:
+     * 就是这里 —— 劫相表的键集合与 data/tribulations 的 id 集合必须逐一相等。
+     *
+     * 两头都要红:加了新劫却没给长相(玩家抽到它就是一张虚空兜底),以及
+     * 长相表里留下一只不存在的劫(那是一只永远不会被选中的画法)。
+     * 只钉**集合**,不钉顺序:顺序属于 data 那一侧的自由。
+     */
+    const fromData = TRIBULATIONS.map((t) => t.id).sort();
+    const types = readSource("src/types/index.ts");
+    expect(types, "types 不该 import data —— 两处各写一份是既定约束").not.toMatch(
+      /from ["']@\/data\//,
+    );
+    /*
+     * 劫型集合的**唯一出处**仍是 data/tribulations:场景表里那五个键必须与之逐一相等。
+     * 于是「加了第六种劫却忘了给长相」与「长相表里留下一种不存在的劫」两头都红 ——
+     * 与 sceneTerrain 的「表里不留闲地形」同一条纪律。
+     */
+    const terrains = keysOfTable("TRIBULATION_TERRAIN").sort();
+    expect(terrains, "劫相表与 data/tribulations 的劫型分家了").toEqual(fromData);
   });
 });
