@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 666 个 spec;本作自己那部分 586 个) |
+| `bun run test` | 全量用例(全量 667 个 spec;本作自己那部分 587 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 666 个 spec = 宿主 551 + 引擎 80,别把 666 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 667 个 spec = 宿主 551 + 引擎 80,别把 667 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 666 个 spec(本作自己那部分 586 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 667 个 spec(本作自己那部分 587 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -4373,14 +4373,14 @@ unguarded(WANTED)     // 待查清单里,哪些维度没有任何标题命中它
 src/data/petVows.spec.ts  ← 「契语」的判据在这里
 ```
 
-而 `specTitles()` 只扫 `src/core/`。**全仓 586 个 spec 里有 225 个不在 core 下**
+而 `specTitles()` 只扫 `src/core/`。**全仓 587 个 spec 里有 225 个不在 core 下**
 (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)—— 量尺只伸到了 60% 的地方。
 
 改成递归扫 `src/` 全树之后:
 
 ```text
 第一版:326 个 spec · 4117 条标题
-修正后:586 个 spec · 6319 条标题   (+54%)
+修正后:587 个 spec · 6319 条标题   (+54%)
 ```
 
 > 这是一类**最难自查的错误**:工具跑得通、输出格式对、报出来的缺口具体到表与维度名 ——
@@ -4472,7 +4472,7 @@ tier13 belt   虎筋腰带  「腰背自生一股力」
 
 ### 一个观察:这条完全没有判据拦我
 
-改完之后跑全量,**666 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
+改完之后跑全量,**667 个 spec 全绿**。也就是说 `fixedMods` 的有无此前**没有任何判据在看** ——
 288 件装备里想漏几件就漏几件,只要总表头数字对得上。
 
 > 内容表的「条数对不对」和「每一条是否完整」是两件事。
@@ -7465,3 +7465,59 @@ GIVEN     16 个,4 单(尘 / 青 / 霜 / 砚)+ 12 双(临渊 / 疏影 / 照夜 �
 
 > 这一轮与前几轮的区别:前十七轮找的是**「写了但写错了」**,这轮找的是
 > **「写了但没人管」**。而没人管的地方恰恰不是最显眼的 —— 是那张 43 行的短表。
+
+### 第 123 轮:两处配套的修复,只有一处被守住
+
+上轮查出 `data/names.ts` 是唯一没有判据的数据表。这轮用同样的办法扫 `src/core/`:
+
+```text
+170 个模块
+43 个没有同名 spec
+  其中 38 个被别的 spec 读过
+  5 个完全没人读 —— 与第 89 轮 moduleCoverage.spec 的 PORT_ONLY 清单一致
+```
+
+逐个看下来,`loreThresholds.ts` 值得管 —— 它守着一处**曾经失效过**的设计:
+
+```text
+首领认知原本用「普通门槛 ×2」= [0, 2, 10, 28]
+而首领一条命只打一次(已靖后不复现)
+→ 「知其路数」(10 次)与「洞悉」(28 次)对首领永远够不着
+→ 专为首领写的两层情报(残血变阵 / 本相)没人看得到
+```
+
+修法是**两件配套的事**:
+
+```text
+loreThresholds.ts   首领门槛单独定档 [0, 1, 2, 3]
+regionRevival.ts    妖气复聚让「已靖」地界的旧主归来(REVIVE_AFTER_HOURS = 72)
+```
+
+**两件事必须同时成立**,少一件门槛就还是够不着。
+
+### 判据③把两处接了起来
+
+```text
+洞悉需 3 战 × 每战间隔 72 小时 = 216 小时 ≈ 9 天
+上界取 6 周:再长就不是「这一世能做完的内容」
+下界取 2 天:再短就失去「隔几天才见一面」的分量
+```
+
+注入验证:把 `REVIVE_AFTER_HOURS` 从 72 改成 400,③ 当场红。**它量的是两处之积,
+不是其中任何一处** —— 这正是「配套的修复要有一条配套的判据」的意思。
+
+### 判据②第一版误报了一次
+
+写的是「每一档首领门槛都严格低于普通门槛第五」,第 1 档两边都是 **1**:
+
+```text
+普通  [0, 1,  5, 14]
+首领  [0, 1,  2,  3]
+        ↑ 这一档相等
+```
+
+「见一面就该眼熟」对杂兵与首领**一视同仁**。改成从第 2 档起要求严格更低。
+
+> 这是第 12 次判据读错东西 —— 但与前 11 次不同:前几次是**读错了对象**,
+> 这次是**把设计读严了**。我默认「更低」是每一档的属性,而实际的设计是
+> **「高层要够得着」**。
