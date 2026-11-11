@@ -114,6 +114,7 @@ const CATEGORIES = [
       "eventProse",
       "designDocCounts",
       "docCrossCheck",
+      "docCoverageMap",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
