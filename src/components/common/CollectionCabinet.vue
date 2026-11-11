@@ -36,6 +36,22 @@
         :data-collection-total="cell.knownTotal"
         role="listitem"
       >
+        <!--
+          这一柜收的是哪类物事 —— 按 `cell.key` 取景。
+
+          `ui/collectionDesk` 把收藏收成九类(器 / 功 / 悟 / 丹 / 材 / 宝 / 兽 / 闻 / 赋),
+          而柜面上九只屉长得一样,区别只有那一枚 6px 的单字印。
+          九类对九种地形,故这里是一张**一对一**的表,不共用。
+
+          落法是柜屉内的背景(绝对定位、不接指针):那一格是按钮,
+          画占布局会把收录数挤走。点景关掉 —— 底下压着册名与收录数两行。
+        -->
+        <InkScene
+          class="collection-cabinet__scene"
+          :terrain="sceneTerrainOfCollection(cell.key)"
+          :marks="false"
+          aria-hidden="true"
+        />
         <button
           type="button"
           class="collection-cabinet__button"
@@ -68,6 +84,9 @@
 </template>
 
 <script setup lang="ts">
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfCollection } from "@/ui/sceneTerrain";
+
 interface CabinetCell {
   key: string;
   name: string;

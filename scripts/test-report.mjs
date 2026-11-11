@@ -549,6 +549,7 @@ const CATEGORIES = [
       "gongfaMainScene",
       "trialScene",
       "secretRealmScene",
+      "collectionScene",
       "resetShowsLoss",
       "openingStepCount",
       "openingGift",

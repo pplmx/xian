@@ -929,3 +929,39 @@ const SECRET_REALM_TERRAIN: Record<string, SceneTerrain> = {
 export function sceneTerrainOfSecretRealm(realmId: string | null | undefined): SceneTerrain {
   return (realmId && SECRET_REALM_TERRAIN[realmId]) || "peaks";
 }
+
+/**
+ * 九柜藏珍 → 地形。
+ *
+ * `ui/collectionDesk` 的 `COLLECTION_CATEGORY_MARKS` 把收藏收成九类
+ * (器 / 功 / 悟 / 丹 / 材 / 宝 / 兽 / 闻 / 赋),而地形也正好九种 ——
+ * 故这里是一张**一对一**的表,不必共用。九类各按它收的是什么取景:
+ *
+ *   器 —— 兵刃与冠服              → 雪原(锋)
+ *   功 —— 功法典籍                → 宫阙(藏经之阁)
+ *   悟 —— 悟道分支                → 星野(忽然明白的那一下)
+ *   丹 —— 丹药                    → 火域(炉)
+ *   材 —— 灵草与矿石              → 林麓(长出来的)
+ *   宝 —— 法宝                    → 虚空(法器自有其域)
+ *   兽 —— 灵兽                    → 山岳(兽在山上)
+ *   闻 —— 际遇与旧事              → 江海(过往如流)
+ *   赋 —— 天赋                    → 遗迹(刻在骨上的旧痕)
+ *
+ * 认不出落回山岳 —— 九柜总有柜在,没有「无处」这一档。
+ */
+const COLLECTION_TERRAIN: Record<string, SceneTerrain> = {
+  equip: "frost",
+  gongfa: "palace",
+  branch: "sky",
+  pill: "flame",
+  material: "forest",
+  artifact: "void",
+  pet: "peaks",
+  event: "water",
+  talent: "ruin",
+};
+
+/** 一只柜屉长什么样;认不出的落回山岳 */
+export function sceneTerrainOfCollection(cabinetKey: string | null | undefined): SceneTerrain {
+  return (cabinetKey && COLLECTION_TERRAIN[cabinetKey]) || "peaks";
+}
