@@ -164,13 +164,23 @@ function transformOf(accent: SceneAccent): string {
   overflow: hidden;
 }
 
+/*
+ * 画布**保持自己的比例**(420×160),只贴着容器下缘 —— 不随容器拉伸。
+ *
+ * 这一条是量出来的:战局那一格是 358×349,若按 100%/100% 铺,山骨会被纵向拉成
+ * 一根根尖刺(画好的坡岸成了尖三角)。`preserveAspectRatio="none"` 只是不报错,
+ * 它不会替人守住画的比例 —— 那是容器的事。
+ *
+ * 故用 `aspect-ratio` 定高:容器高多少都行,画只占下缘那一条,与设计稿同一个形状。
+ */
 .ink-scene__draw {
   position: absolute;
   right: 0;
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  height: auto;
+  aspect-ratio: 420 / 160;
   /*
    * 整幅画**共用的一个浓淡闸**。
    *

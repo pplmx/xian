@@ -57,6 +57,21 @@
         <small>敌我 · 回放 · 近战情报</small>
       </header>
 
+      <!--
+        这一处地界的山水 —— 战局是全作停留时间最长的一屏,而它此前完全是一张
+        白纸上的字。底图读当前地界的图标(见 ui/sceneTerrain),故在雪岭里打
+        与在江边打,抬头看见的不是同一幅画。
+
+        只做背景(veil):绝对定位、pointer-events:none、不占布局。战局这一块的
+        每一寸都排着名号、气血、章与战报,任何一寸被挤走都会把「战报进首屏」
+        那条判据撞红(390 上战报顶必须 < 屏高 − 76)。
+      -->
+      <InkScene
+        class="combat-arena__scene"
+        :world-id="player.world.id"
+        :icon="region?.icon"
+        :marks="false"
+      />
       <div class="combat-arena__body">
         <div class="combat-duel">
           <div
@@ -352,6 +367,7 @@ import type { CombatLogEntry } from "@/types";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import BattleIntelPanel from "@/components/adventure/BattleIntelPanel.vue";
+import InkScene from "@/components/common/InkScene.vue";
 import { nemesisAvengedText, nemesisChipText } from "@/ui/nemesisChip";
 import { chipsOf, type CombatChip } from "@/ui/combatChips";
 import { logQualityTone } from "@/ui/combatLogTone";

@@ -296,6 +296,17 @@ describe("山水景 · 真接线", () => {
     }
   });
 
+  it("战局那一栏也有这一处地界的山水 —— 停得最久的一屏不该是白纸", () => {
+    const panel = readSource("src/components/adventure/CombatPanel.vue");
+    expect(panel, "战局要按当前地界画景").toContain("<InkScene");
+    /*
+     * 战局底图必须读**当前地界**的图标:写死成某个地形就等于每一场战斗都在同一片地里
+     * 打 —— 而这一屏正是玩家停留时间最长的地方。
+     */
+    expect(panel, "底图要由当前地界决定").toMatch(/:icon="region\?\.icon"/);
+    expect(panel, "底图不许吃事件").toContain("data-combat-arena");
+  });
+
   it("历练页的际遇帖上有这一处地方的画面 —— 光有字不算画面", () => {
     const dialog = readSource("src/components/adventure/EventDialog.vue");
     expect(dialog, "际遇帖要按事件标签画景").toContain("<InkScene");

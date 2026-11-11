@@ -1474,11 +1474,36 @@
     min-width: 0;
   }
   .combat-duel {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     min-width: 0;
     padding: 0.62rem 0.78rem 0.46rem;
     background:
       radial-gradient(circle at 8% 12%, rgb(var(--color-cinnabar-rgb) / 0.035), transparent 38%),
       radial-gradient(circle at 92% 88%, rgb(var(--color-jade-rgb) / 0.035), transparent 38%);
+  }
+  /*
+   * 战局底下的那一处山水 —— 铺在**战局这一栏**的整块底上,不铺到征途簿上。
+   *
+   * 浓淡收到 0.4:这一格的字密(两位对手的名号、气血条、章、战报),底图再浓
+   * 就与笔画争视线 —— 战报是整页最该读得清的连续账页。
+   */
+  .combat-arena {
+    position: relative;
+    isolation: isolate;
+  }
+  .combat-arena__scene {
+    --ink-scene-h: 100%;
+    --ink-scene-ink: 0.34;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  /* 战局里的内容要压在山之上 —— 背景层一旦盖住字,这一屏就废了 */
+  .combat-arena > :not(.combat-arena__scene) {
+    position: relative;
+    z-index: 1;
   }
   .combat-combatant {
     position: relative;
