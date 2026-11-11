@@ -123,7 +123,7 @@ CI 绿了、tag 打上了，都不等于**线上拿到的是新产物**。两处
 最直接的核对不是看版本号（版本号在打包后的 JS 里），而是**比入口产物的文件名哈希**:
 
 ```bash
-# 本地 0.0.3 构建出来的入口
+# 本地刚构建出来的入口(先 bun run build)
 grep -oE 'assets/index-[a-zA-Z0-9_-]+\.js' dist/index.html | head -1
 # GitHub Pages 上的
 curl -s https://blog.yoooo.fun/xian/ | grep -oE 'index-[a-zA-Z0-9_-]+\.js' | head -1
