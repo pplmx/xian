@@ -101,6 +101,12 @@ describe("「N 味状态丹」这个数字,不许再错", () => {
        * 而 development.md 是个文件,所以这里再挡一次。
        */
       if (file.endsWith("/development.md")) continue;
+      /*
+       * 跳过其余 spec —— 它们的注释会为了说明「这里曾经错过」而引用错误值。
+       * 第 109 轮的 `pillPoolSize.spec` 就在文件头写了「32 味状态丹」来讲这次事故,
+       * 于是这条判据红在了一份**讲这条判据为什么存在**的文件上。
+       */
+      if (file.endsWith(".spec.ts")) continue;
       const text = readFileSync(file, "utf8");
       for (const m of text.matchAll(/(\d+)\s*味状态丹/g)) {
         hits += 1;
@@ -116,9 +122,15 @@ describe("「N 味状态丹」这个数字,不许再错", () => {
       wrong,
       "「N 味状态丹」写错了 —— 这个数字曾经从一写下就是错的(写 32,实为 23):" + wrong.join("、"),
     ).toEqual([]);
-    // 防空转:必须真的找到了几处,否则这条判据在扫空气
+    /*
+     * 防空转:必须真的找到了几处,否则这条判据在扫空气。
+     *
+     * 阈值从 3 降到 2 —— 原先那 3 处里有一处在 `.spec.ts` 的注释里,而第 109 轮
+     * 为了不让判据红在「讲事故的文件」上,把 `.spec.ts` 整体跳过了。
+     * 剩下 2 处是 `alchemy.md` 与 `pills.ts`,正好是这条要守的地方。
+     */
     expect(hits, "一处「N 味状态丹」都没找到 —— 说法改了,这条判据要跟着改").toBeGreaterThanOrEqual(
-      3,
+      2,
     );
   });
 

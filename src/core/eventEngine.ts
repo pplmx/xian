@@ -523,7 +523,7 @@ export function randomGiftPets(owned: ReadonlySet<string>, major: number) {
 }
 
 /**
- * 际遇给丹的境界差衰减系数。比掉落那条(0.5)大,因为际遇的池子是**全池 72 味**
+ * 际遇给丹的境界差衰减系数。比掉落那条(0.5)大,因为际遇的池子是**全池 75 味**
  * (含神品与可炼制的),衰减能真正改变分布:
  *
  * ```text

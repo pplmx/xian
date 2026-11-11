@@ -115,6 +115,7 @@ const CATEGORIES = [
       "designDocCounts",
       "docCrossCheck",
       "docCoverageMap",
+      "pillPoolSize",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
