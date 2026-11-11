@@ -602,3 +602,58 @@ const DAO_TERRAIN: Record<string, SceneTerrain> = {
 export function sceneTerrainOfDao(daoId: string | null | undefined): SceneTerrain {
   return (daoId && DAO_TERRAIN[daoId]) || "peaks";
 }
+
+/**
+ * 限时机缘卷 —— 两种缘起、洞府五处地点 → 地形。
+ *
+ * 这一卷有一个倒计时在走、几签只能择一、选定即生效 —— 它做的**恰恰是一个
+ * 来不及细读的决定**。那种屏上,画比字先到:玩家先看见「这是修行里的事」还是
+ * 「这是丹房里的事」,再决定要不要读下去。
+ *
+ * 两档分开写而不是一张表,因为它们是两个层次的身份:
+ *   · `kind` 是**这件事从哪来**(顿悟在修行里 / 巡游在洞府某处);
+ *   · `place` 只在洞府那一路才有,是**洞府里的哪一处**。
+ * 混成一张表会让「library」这种地点名与「enlightenment」这种缘起名平起平坐,
+ * 下一个人读不出哪一层管哪一层。
+ */
+const OPPORTUNITY_KIND_TERRAIN: Record<string, SceneTerrain> = {
+  /** 顿悟:修行里忽然亮起来的那一瞬 —— 星野(天光落在一个人身上) */
+  enlightenment: "sky",
+  /** 洞府巡游:在自己这一亩地里走动 —— 兜底给林麓(洞府坐落在山中) */
+  cave: "forest",
+};
+
+/**
+ * 洞府五处 —— 每一处是**一种不同的活计**,故五副长相不重叠。
+ *
+ *   灵田   —— 种(笔直成行的那种地)          → 山岳:梯田沿坡开
+ *   丹炉   —— 火                          → 火域
+ *   藏经阁 —— 存(层层叠起来的书)            → 宫阙
+ *   聚灵阵 —— 构(地上画出来的圈与线)        → 星野(阵纹亮起时像天上的图)
+ *   灵兽园 —— 养(有活物在里头)              → 林麓
+ *
+ * 这五种正好把九种地形里最"人间"的五种用掉,一处不与另一处重合。
+ */
+const CAVE_PLACE_TERRAIN: Record<string, SceneTerrain> = {
+  field: "peaks",
+  furnace: "flame",
+  library: "palace",
+  array: "sky",
+  garden: "forest",
+};
+
+/**
+ * 一张限时机缘卷长什么样。
+ *
+ * 认不出的地点落回**这一档自己的兜底**(洞府 → 林麓,顿悟 → 星野),
+ * 不回 null:这一卷必须有画,倒计时在走,画是唯一一眼能认的东西。
+ */
+export function sceneTerrainOfOpportunity(
+  kind: string | null | undefined,
+  place: string | null | undefined,
+): SceneTerrain {
+  if (kind === "cave") {
+    return (place && CAVE_PLACE_TERRAIN[place]) || OPPORTUNITY_KIND_TERRAIN.cave!;
+  }
+  return OPPORTUNITY_KIND_TERRAIN[kind ?? ""] ?? OPPORTUNITY_KIND_TERRAIN.enlightenment!;
+}

@@ -28,6 +28,23 @@
         </div>
       </header>
 
+      <!--
+        一眼先看见这是什么事 —— 限时机缘卷有倒计时在走、几签只能择一,
+        玩家**来不及细读**;那种屏上画比字先到。
+
+        取景分两层:`kind` 说明这件事从哪来(顿悟在修行里 / 巡游在洞府某处),
+        `place` 只在洞府那一路才有、说明是洞府哪一处。灵田与丹炉不是一回事。
+
+        落法是背景层(卷首那一条,绝对定位、不接指针):这一卷的正文是几个选项
+        与它们的后果,倒计时还在走 —— 把画排进流里就会把选项推下去。
+      -->
+      <InkScene
+        class="opportunity-scroll__scene"
+        :terrain="sceneTerrainOfOpportunity(kind, place)"
+        :marks="false"
+        aria-hidden="true"
+      />
+
       <div class="opportunity-scroll__meter" :class="{ 'is-urgent': urgent }" aria-hidden="true">
         <span :style="{ width: `${remainingPercent}%` }" />
       </div>
@@ -85,6 +102,8 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfOpportunity } from "@/ui/sceneTerrain";
 import { URGENT_COUNTDOWN_SEC } from "@/data/constants";
 import { cnNumber, formatCountdown } from "@/utils/format";
 import BaseModal from "@/components/common/BaseModal.vue";
@@ -100,6 +119,13 @@ interface OpportunityChoice {
 const props = defineProps<{
   open: boolean;
   kind: "enlightenment" | "cave";
+  /**
+   * 这一卷发生在洞府的哪一处(`field` / `furnace` / `library` / `array` / `garden`)。
+   *
+   * 只有洞府巡游那一路给;顿悟不在任何一处地里,传 null。取景要按它分开 ——
+   * 灵田与丹炉不是一回事,五处地点画成同一片就等于这一卷只有一枚印。
+   */
+  place?: string | null;
   seal: string;
   source: string;
   title: string;
@@ -124,11 +150,39 @@ const remainingPercent = computed(() => {
 </script>
 
 <style scoped>
+/*
+ * 卷首那片天 —— 一条定高的背景层。
+ *
+ * 一屏「限时 + 择一」的地方,玩家没有时间读长句,画要**先到**。
+ * 但正文是几个选项与它们的后果、倒计时还在走 —— 画占布局就会把它们推下去。
+ * 故绝对定位、不接指针,只落在卷首那一条。
+ *
+ * 点景关掉(`:marks="false"`):这条底下压着卷名与来源那两行,月与舟落在字上
+ * 两边都读不清 —— 与地界志卷首、行旅图那两处同一条理由。
+ */
+.opportunity-scroll__scene {
+  --ink-scene-h: 100%;
+  --ink-scene-ink: 0.62;
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 6.4rem;
+  pointer-events: none;
+}
+
 .opportunity-scroll {
   --opportunity-line: rgb(var(--color-ink-rgb) / 0.14);
   --opportunity-line-strong: rgb(var(--color-ink-rgb) / 0.22);
   --opportunity-paper: rgb(var(--color-paper-deep-rgb) / 0.34);
+  position: relative;
+  isolation: isolate;
   min-width: 0;
+}
+
+/* 读数压在画之上 —— 背景层若盖住字,这一卷就废了 */
+.opportunity-scroll > :not(.opportunity-scroll__scene) {
+  position: relative;
+  z-index: 1;
 }
 
 .opportunity-scroll__head {

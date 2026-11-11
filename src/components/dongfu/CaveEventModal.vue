@@ -69,6 +69,7 @@ const choices = computed(() =>
   <OpportunityScroll
     :open="show"
     kind="cave"
+    :place="event?.location ?? null"
     seal="巡"
     :source="`洞府巡游 · ${locationLabel}`"
     :title="event?.title ?? ''"

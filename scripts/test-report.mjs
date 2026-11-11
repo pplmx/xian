@@ -539,6 +539,7 @@ const CATEGORIES = [
       "bondScene",
       "mentorScene",
       "identityScene",
+      "opportunityScene",
       "resetShowsLoss",
       "openingStepCount",
       "openingGift",
