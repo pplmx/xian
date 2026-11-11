@@ -1,6 +1,38 @@
 @layer reset, shared, page, app-utilities;
 @layer page {
   /*
+   * 器评帖卷首那片天 —— 按**这一件是哪一席**取景(见 components/equipment/EquipmentDetailDialog)。
+   *
+   * **必须不占布局**:判据量过,器评帖在 1280 宽下卷身 1.232 屏,离 1.5 屏上限只剩
+   * 约 130px(`scripts/layout-check` 的「桌面浮层的卷身深度」)。占布局的画会把它推过去,
+   * 而那一条说「浮层是读一小块的地方,不该比读整页还累」。
+   *
+   * 故绝对定位、钉在面板顶、不接指针;高度写成定值而不是让它撑开流。
+   *
+   * 点景关掉(组件上 `:marks="false"`):这一层底下压着器首那几行(品阶、部位、
+   * 界域、阶数、在佩),月与舟落在字上两边都读不清。
+   */
+  .equip-dossier__scene {
+    /*
+     * 高度走**变量**而不是 height —— 这一层同时是 `.ink-scene` 本身,
+     * 而它自带 `height: var(--ink-scene-h, 100%)`。给 `height: 7rem` 会被那条
+     * scoped 规则盖过(组件里的选择器带 data-v,特指度更高),画就撑满整帖 ——
+     * 实测那一刻画盖住了词条与工坊两节。
+     */
+    --ink-scene-h: 7rem;
+    --ink-scene-ink: 0.45;
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    pointer-events: none;
+  }
+  /* 读数压在画之上 —— 背景层若盖住字,这一帖就废了 */
+  .equip-dossier__scene ~ * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /*
    * 丹药详情卷首那条 —— 这一味丹做什么用(见 views/InventoryView 的丹药详情弹窗)。
    *
    * 这一窗正文是品评、风味、效果、熟练度与服前提示(那一句还带警示色),

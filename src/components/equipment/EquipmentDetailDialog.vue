@@ -11,6 +11,25 @@
       data-equipment-dossier
       :style="dossierStyle"
     >
+      <!--
+        这一件是哪一席 —— 背景层。
+
+        器评帖是全作内容最多的一扇浮层,而整帖的"画面"是器首左上一枚 30px 图标:
+        一件「雾隐长枪」与一件「星罗法衣」几乎读不出差别,都是同一枚图标加一行小字。
+        席位是装备**最稳定的身份** —— 同席的件才互相抢,而点开器评帖第一件要知道的
+        就是「这是哪个部位的」。
+
+        **必须是背景层**(绝对定位、不占布局):有判据量过,这一帖在 1280 宽下
+        卷身 1.232 屏,离 1.5 屏上限只剩约 130px。占布局的画会把它推过去,
+        而那一条判据说的是「浮层是读一小块的地方,不该比读整页还累」。
+      -->
+      <InkScene
+        class="equip-dossier__scene"
+        :terrain="sceneTerrainOfSlot(template.slot)"
+        :marks="false"
+        aria-hidden="true"
+      />
+
       <header class="equip-dossier__hero" data-equipment-hero>
         <span class="equip-dossier__sigil" aria-hidden="true">
           <GameIcon :name="template.icon" :size="30" />
@@ -332,6 +351,8 @@ import { isZero, sub } from "@/utils/gnum";
 import type { AnyStatKey, GNum } from "@/types";
 import { AFFIX_RARITY_META, STAT_NAMES } from "@/data/statNames";
 import BaseModal from "@/components/common/BaseModal.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfSlot } from "@/ui/sceneTerrain";
 import QualitySeal from "@/components/common/QualitySeal.vue";
 import EquipNotePanel from "./EquipNotePanel.vue";
 import EquipSealPanel from "./EquipSealPanel.vue";

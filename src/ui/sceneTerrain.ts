@@ -691,3 +691,46 @@ const PILL_EFFECT_TERRAIN: Record<string, SceneTerrain> = {
 export function sceneTerrainOfPill(effect: string | null | undefined): SceneTerrain {
   return (effect && PILL_EFFECT_TERRAIN[effect]) || "peaks";
 }
+
+/**
+ * 十处装配席位 → 地形。
+ *
+ * 器评帖是全作内容最多的一扇浮层,而整帖的"画面"是器首左上一枚 30px 图标 ——
+ * 一件「雾隐长枪」与一件「星罗法衣」在帖上几乎读不出差别,都是同一枚图标加一行小字。
+ *
+ * 席位是装备**最稳定的身份**:同席的件才互相抢,而玩家点开器评帖,第一件要知道的
+ * 就是「这是哪个部位的」。
+ *
+ * 九种地形装十个席位,故必有一对共用 —— 那一对按"穿着时同在手上/在身上"来配:
+ *
+ *   武器   —— 锋刃,立在山门上           → 雪原(峰更锐,那正是刃的形状)
+ *   头冠   —— 戴在最高处                 → 宫阙
+ *   衣袍   —— 一层层裹住身体            → 林麓
+ *   护腕   —— 手上,与腰带同属"缠束"     → 遗迹(断柱与缠带是同一类形)
+ *   腰带   —— 手上,与护腕同属"缠束"     → 遗迹
+ *   鞋履   —— 走                             → 山岳
+ *   项链   —— 挂在颈前的一点光            → 星野
+ *   戒指   —— 一圈,套在指上              → 江海(涟漪也是圈)
+ *   法宝   —— 不属人身的器物              → 虚空
+ *   灵符   —— 纸,烧起来                  → 火域
+ *
+ * 护腕与腰带共用遗迹是这张表里唯一的重复 —— 它们是同一条工序的两件
+ * (缠手与束腰),而在帖上它们并排出现的机会本来就少。
+ */
+const SLOT_TERRAIN: Record<string, SceneTerrain> = {
+  weapon: "frost",
+  head: "palace",
+  body: "forest",
+  wrist: "ruin",
+  belt: "ruin",
+  boots: "peaks",
+  necklace: "sky",
+  ring: "water",
+  artifact: "void",
+  talisman: "flame",
+};
+
+/** 一件装备的席位 → 地形;认不出落回山岳 */
+export function sceneTerrainOfSlot(slot: string | null | undefined): SceneTerrain {
+  return (slot && SLOT_TERRAIN[slot]) || "peaks";
+}
