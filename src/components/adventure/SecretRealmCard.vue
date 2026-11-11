@@ -152,6 +152,25 @@
               :disabled="!canPay(r)"
               @click="enter(r.id)"
             >
+              <!--
+                这一处是什么地界 —— 按 `r.id` 取景。
+
+                `data/secretRealms` 的十五条每一条 desc 都把那一处写清楚了
+                (「草木枯而复荣」「万剑横空」「地火奔涌的石窟」「万流归墟,视之如渊」),
+                而 344 行模板里一个 `<svg>` 都没有 —— 八行名录只有八个名。
+
+                取景读**这一处**,不是玩家脚下的地:十五处若共用一张底,
+                这名录就还是八行字。
+
+                落法是这一条按钮内的背景(绝对定位、不接指针):画占布局会把
+                「入 境 →」挤走。点景关掉 —— 底下压着名与 desc 两行。
+              -->
+              <InkScene
+                class="adventure-secret__scene"
+                :terrain="sceneTerrainOfSecretRealm(r.id)"
+                :marks="false"
+                aria-hidden="true"
+              />
               <span class="flex flex-wrap items-baseline gap-2">
                 <span class="font-kai text-title text-ink">{{ r.name }}</span>
                 <!-- 付不起就报差(与聚气丹/建筑/法宝同款):一盏灰灯不说差多少等于没说完 -->
@@ -231,6 +250,8 @@ import { useEndgameStore } from "@/stores/endgame";
 import { SECRET_FINAL_WUDAO, secretRealmDef, type SecretRealmDef } from "@/data/secretRealms";
 import { cnNumber, formatGN, formatPercent } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfSecretRealm } from "@/ui/sceneTerrain";
 import {
   SECRET_LAYERS,
   abandonRealm,

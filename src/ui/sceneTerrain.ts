@@ -873,3 +873,59 @@ const TRIAL_TERRAIN: Record<string, SceneTerrain> = {
 export function sceneTerrainOfTrial(trialId: string | null | undefined): SceneTerrain {
   return (trialId && TRIAL_TERRAIN[trialId]) || "void";
 }
+
+/**
+ * 秘境 → 地形。
+ *
+ * `data/secretRealms` 的十五条 `SECRET_REALMS` 每一条的 desc 都把那一处写清楚了,
+ * 故按它**写的那个地方**取景,而不是按 id 顺序硬塞:
+ *
+ *   枯荣古境「草木枯而复荣」        → 林麓(草木)
+ *   剑冢幻境「万剑横空」            → 遗迹(断刃)
+ *   苦海渡舟「一叶渡苦海」          → 江海(渡)
+ *   风吟孤岛「孤岛薄雾,风里都是虚招」→ 星野(雾与风)
+ *   铁壁万壑「万壑铁壁,万军难摧」  → 山岳(壑与壁)
+ *   赤焰石窟「地火奔涌的石窟」      → 火域(地火)
+ *   陨星荒原「万界陨星坠落的荒原,碎石如雨。禁疗之地」→ 雪原(一片白、什么都长不出来)
+ *   青冥古渡「古渡千年,冥气侵体」  → 江海(古渡)
+ *   万妖谷  「万妖奔涌,攻如连珠」  → 林麓(谷里的活物)
+ *   星辰古殿「殿中星轨自行流转」    → 星野(星轨)
+ *   归墟之眼「万流归墟,视之如渊」  → 虚空(渊与墟)
+ *   雷泽天渊「雷海万道」            → 火域(雷海焚天;与赤焰同为「炽烈」那一类)
+ *   冥河渡  「冥河幽渡,饮血者众」  → 虚空(冥)
+ *   轩辕剑冢「十万残剑,择主而鸣」  → 遗迹(残剑)
+ *   筑仙台  「登台者众,成仙者稀」  → 宫阙(台与殿)
+ *
+ * 十五处落九种,必有共用 —— 每一对共用都说得通:江海两处都是「渡」,
+ * 遗迹两处都是「残骸」,虚空两处都是「渊 / 冥」,星野两处都是「高处」,
+ * 火域两处都是「炽烈」,林麓两处都是「活的草木」。九种地形全部用上。
+ *
+ * 写这张表时踩过一次:第一版把「陨星荒原」也归遗迹(与剑冢、轩辕同片),
+ * 结果九种地形只用到八种(缺雪原)—— 判据「九种用满」当场红。它的 desc 里
+ * 「禁疗之地」才是那一处的要害:一片白、什么都长不出来,雪原比遗迹贴得多。
+ *
+ * 认不出落回**山岳**:秘境都是某一处地界,没有「无处」这一档 ——
+ * 与 `sceneTerrainOfAxis` 回 null 不同,那里空表本身是一个答案。
+ */
+const SECRET_REALM_TERRAIN: Record<string, SceneTerrain> = {
+  sr_kurong: "forest",
+  sr_jianzhong: "ruin",
+  sr_kuye: "water",
+  sr_fengyin: "sky",
+  sr_tiebi: "peaks",
+  sr_chiyan: "flame",
+  sr_yunxing: "frost",
+  sr_qingming: "water",
+  sr_wanyao: "forest",
+  sr_xingchen: "sky",
+  sr_guixu: "void",
+  sr_leize: "flame",
+  sr_minghe: "void",
+  sr_xuanyuan: "ruin",
+  sr_zhuxian: "palace",
+};
+
+/** 一处秘境长什么样;认不出的落回山岳 */
+export function sceneTerrainOfSecretRealm(realmId: string | null | undefined): SceneTerrain {
+  return (realmId && SECRET_REALM_TERRAIN[realmId]) || "peaks";
+}
