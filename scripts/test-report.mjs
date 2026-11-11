@@ -117,6 +117,8 @@ const CATEGORIES = [
       "docCoverageMap",
       "pillPoolSize",
       "gongfaPoolReach",
+      "affixTransferUnique",
+      "engineCraft",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
