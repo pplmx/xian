@@ -73,6 +73,51 @@ export const isSourceOrScript = (name: string): boolean =>
   isSourceFile(name) || (name.endsWith(".mjs") && !name.endsWith(".spec.mjs"));
 
 /**
+ * 标出哪些行在**围栏代码块**里(` ``` ` / `~~~`),标题判定要跳过它们。
+ *
+ * ## 为什么需要
+ *
+ * 第 152 轮把 `releaseTodo.spec` 接过来时,判据当场红了:「待办里既没有 `git tag`
+ * 也没有占位符」。而人读文档明明写着。查下来是切少了 —— **114 字符 vs 4073**(6 行 vs 104 行)。
+ *
+ * 待办那一节的第一段就是 ` ```bash `,里面是:
+ *
+ * ```text
+ *   # 1) 先把版本号提上去 —— 不改这一行,release-check 会拦「tag 已存在」
+ *   # 2) 干净提交之后才打 tag
+ * ```
+ *
+ * 这两行以 `# ` 开头,而 `# ` 正是**一级标题**的写法。于是「切到下一个同级或更高级
+ * 标题」在第 6 行就停了(正好停在那行 ```bash 上):bash 注释冒充了一级标题。
+ * README 里那种「命令行 + `#` 注释」的块、`text` 块里的 `#` 行,全是同一个形状。
+ *
+ * ## 口径
+ *
+ * 按 CommonMark 的围栏规则:最多三格缩进、反引号或波浪号、收尾围栏字符相同且
+ * 长度不短于开头、收尾围栏后面只能有空白。**围栏没闭合时,其后一律按围栏内处理** ——
+ * 半截围栏本身就是坏的,这时宁可少切一节,也不要在里面换边界。
+ */
+function fencedLines(lines: string[]): boolean[] {
+  const inside: boolean[] = [];
+  let open: { char: string; length: number } | null = null;
+  for (const line of lines) {
+    const m = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line);
+    if (!open) {
+      // 反引号围栏的 info string 里不许再出现反引号,否则它不是围栏
+      const isFence = m !== null && (m[1]![0] === "~" || !m[2]!.includes("`"));
+      inside.push(isFence);
+      if (isFence) open = { char: m![1]![0]!, length: m![1]!.length };
+      continue;
+    }
+    inside.push(true);
+    if (m && m[1]![0] === open.char && m[1]!.length >= open.length && m[2]!.trim() === "") {
+      open = null;
+    }
+  }
+  return inside;
+}
+
+/**
  * 从一份 markdown 里切出**一个小节**的正文。
  *
  * ## 为什么要有这个函数
@@ -91,10 +136,11 @@ export const isSourceOrScript = (name: string): boolean =>
  * ## 用法
  *
  * ```ts
- * const body = markdownSection(doc, "## 待办 · 下一步");
+ * const body = markdownSection(doc, "## 待办 · 下一步", { stopAtSub: true });
  * ```
  *
- * 边界按**行首**匹配(行内出现的 `## ` 不算),到**下一个同级或更高级标题**为止:
+ * 边界按**行首**匹配(行内出现的 `## ` 不算、围栏代码块里的 `#` 也不算),
+ * 到**下一个同级或更高级标题**为止:
  *
  * ```text
  *   markdownSection(doc, "### 法则 J")
@@ -103,23 +149,34 @@ export const isSourceOrScript = (name: string): boolean =>
  *     → 切到下一个 `## ` 之前(不再往下切 `###`)
  * ```
  *
+ * `stopAtSub: true` 让它在**第一个小节也停**(`##` 停在 `###`,`###` 停在 `####`,
+ * 即停在下一个任意级别的标题)。两种口径都正当:按 markdown 语义,小节属于上一节;
+ * 而「待办 · 下一步」后面接着整份编年史,那些 `###` 是历史记录,不是待办。
+ * 故做成**显式开关**,默认不动 —— 默认值改了,别处的切法会静默变形。
+ *
  * 找不到标题时**抛错**而不是返回空串 —— 返回空串会让「找不到」伪装成「那节是空的」,
  * 而后者看起来像一条内容缺口。
  */
-export function markdownSection(doc: string, heading: string): string {
+export function markdownSection(
+  doc: string,
+  heading: string,
+  options: { stopAtSub?: boolean } = {},
+): string {
   const lines = doc.split("\n");
   const level = /^(#+)\s/.exec(heading)?.[1]?.length;
   if (!level) throw new Error(`markdownSection: 标题要以 # 开头,收到 ${JSON.stringify(heading)}`);
+  const inFence = fencedLines(lines);
 
-  // 标题必须**整行**相等(或行尾多几个空格),不许是行内提及
-  const start = lines.findIndex((l) => l.trimEnd() === heading.trimEnd());
+  // 标题必须**整行**相等(或行尾多几个空格),且不在围栏里 —— 不许是行内提及
+  const start = lines.findIndex((l, i) => !inFence[i] && l.trimEnd() === heading.trimEnd());
   if (start < 0) throw new Error(`markdownSection: 找不到标题 ${JSON.stringify(heading)}`);
 
-  // 到下一个「同级或更高级」的标题为止
+  // 到下一个「同级或更高级」的标题为止;stopAtSub 时任何标题都算边界
   let end = lines.length;
   for (let i = start + 1; i < lines.length; i += 1) {
+    if (inFence[i]) continue;
     const m = /^(#+)\s/.exec(lines[i]!);
-    if (m && m[1]!.length <= level) {
+    if (m && (options.stopAtSub || m[1]!.length <= level)) {
       end = i;
       break;
     }

@@ -40,24 +40,32 @@ import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { join } from "node:path";
-import { ROOT } from "@/test/readSource";
+import { ROOT, markdownSection } from "@/test/readSource";
 
-/** 从 `## 待办 · 下一步` 切到下一个 `## ` 之前 */
+/**
+ * 「待办 · 下一步」那一节 —— 切法交给 `markdownSection`,不在这里再写一份。
+ *
+ * ## 这里原先自己切,而它正是第 151 轮收掉的那种写法
+ *
+ * 第一版只找 `\n## `,而待办是**最后一节**、后面没有 `## `,于是切片一路吃到文件末尾
+ * (153936 字符),把第 114 轮那段历史记录里的 `git tag v0.0.2` 也报成了
+ * 「待办让人去打的 tag」。第二版补上 `\n### ` 取最小,数目对上了,但仍是
+ * **按词找边界** —— 而这正是 137 / 140 / 150 三轮踩的同一个坑。
+ *
+ * ## 换过来之后先红了,而红得有道理
+ *
+ * `markdownSection` 第 151 轮就写好了,可第一次接过来时判据报「待办里既没有
+ * `git tag` 也没有占位符」。查下来是**它切少了**:待办第一段就是 ` ```bash `,
+ * 里面的 `# 1) 先把版本号提上去` 以 `# ` 开头,被当成一级标题 —— 104 行切成 6 行,
+ * **114 字符 vs 4073 字符**。
+ *
+ * 故这一轮同时做了两件事:让 `markdownSection` 跳过围栏(判据在
+ * `src/test/markdownSection.spec.ts` 的 ⑥),并给它加 `stopAtSub`(⑦)——
+ * 待办后面接着整份编年史,那些 `###` 是历史记录,不该算进待办。
+ */
 function todoSection(): string {
   const doc = readFileSync(join(ROOT, "docs/development.md"), "utf8");
-  const start = doc.indexOf("## 待办 · 下一步");
-  expect(start, "`docs/development.md` 里找不到「## 待办 · 下一步」").toBeGreaterThan(0);
-  const rest = doc.slice(start + 1);
-  /*
-   * 切到下一个 `## ` 或 `### ` —— 两处都要找。
-   *
-   * 第一版只找 `\n## `,而「待办 · 下一步」是**最后一节**、后面没有 `## `,
-   * 于是切片一路吃到文件末尾(153936 字符),把第 114 轮那段历史记录里的
-   * `git tag v0.0.2` 也当成「待办让人去打的 tag」报了出来。
-   */
-  const candidates = [rest.indexOf("\n## "), rest.indexOf("\n### ")].filter((i) => i > 0);
-  const next = candidates.length > 0 ? Math.min(...candidates) : -1;
-  return next > 0 ? rest.slice(0, next) : rest;
+  return markdownSection(doc, "## 待办 · 下一步", { stopAtSub: true });
 }
 
 const PKG = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")) as { version: string };
