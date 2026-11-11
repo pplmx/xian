@@ -1,6 +1,21 @@
 @layer reset, shared, page, app-utilities;
 @layer page {
   /*
+   * 历练卷首的底 —— 脚下这片地界(见 ui/sceneTerrain)。
+   *
+   * 只做背景、只贴下缘:这一页在窄屏(≤430px)已经把本世行旅条整个收起,
+   * 才刚好把首个「出发」挤回首屏;任何占布局高度的一层都会把它又推下去。
+   */
+  .adventure-masthead__scene {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    --ink-scene-h: 3.4rem;
+    --ink-scene-ink: 0.5;
+    pointer-events: none;
+  }
+
+  /*
    * 历练案 —— 今日先看天时,眼下只认第一个真正能走的方向。
    *
    * 旧版把地界逐张包成卡,今日行旅、秘境与规则也各自成框。这一版把四章摊成

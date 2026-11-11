@@ -23,6 +23,18 @@
             </div>
           </template>
           <!--
+            卷首底 —— 这一页讲「山河有先后」,画的正是脚下这片地界。
+            窄屏(≤430px)上原本 167px 的正文已经不够一张地界卡,故这一层**只做背景**:
+            绝对定位、不占布局。它也不进 #visual —— 那个槽在窄屏是 hidden 的。
+          -->
+          <template #backdrop>
+            <InkScene
+              class="adventure-masthead__scene"
+              :world-id="player.world.id"
+              :icon="sceneIcon"
+            />
+          </template>
+          <!--
             本世行旅条 —— 路线进度、眼下去处与世界详情仍只认世界页同一份视图。
 
             窄屏(≤430px)把它收起来:它不是没用的东西,而是**这一页的第二个路线概览** ——
@@ -889,6 +901,7 @@ import {
 } from "@/ui/exploreModeText";
 import { currentWorldBias } from "@/core/mortalWorldService";
 import { usePlayerStore } from "@/stores/player";
+import InkScene from "@/components/common/InkScene.vue";
 import { useSettingsStore } from "@/stores/settings";
 import { petDef } from "@/data/pets";
 import { personalityEffects } from "@/core/petPersonality";
@@ -954,6 +967,18 @@ const game = useGameStore();
 const route = useRoute();
 const router = useRouter();
 const player = usePlayerStore();
+/**
+ * 卷首底与战局底共用这一处「眼下在哪」:优先正在打的那一处,否则本世第一段。
+ *
+ * 为什么不是「当前选中的地界」:历练页的默认视口是**列表**(还没选),而这一页
+ * 玩家停留时看得最多的就是列表。用「本世第一段」当默认,与地界志、行旅图同一口径。
+ */
+const sceneIcon = computed(() => {
+  const active = adventure.currentRegion?.icon;
+  if (active) return active;
+  const first = worldOverview.value?.places[0];
+  return first ? (regionDef(first.regionId)?.icon ?? "mountain") : "mountain";
+});
 const inventory = useInventoryStore();
 const settings = useSettingsStore();
 

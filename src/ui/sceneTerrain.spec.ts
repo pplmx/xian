@@ -301,6 +301,7 @@ describe("山水景 · 真接线", () => {
       ["src/views/CultivationView.vue", "修行内观台的卷首"],
       ["src/views/MortalWorldView.vue", "地界志的卷首"],
       ["src/components/world/MortalRouteMap.vue", "行旅图的纸下"],
+      ["src/views/AdventureView.vue", "历练卷首"],
     ] as const) {
       expect(readSource(file), `${file} 还没接山水(${why})`).toContain("<InkScene");
     }
