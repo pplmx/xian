@@ -66,7 +66,7 @@ export function learnRandomGongfa(specificId?: string): GongfaDef | null {
   /*
    * 权重再乘一个**就近因子** —— 只按品阶与灵根倾向加权是不够的。
    *
-   * `pool` 只按 `minRealm <= major + 1` 过滤,境界 20 时几乎全开(92 部里 91 部可抽);
+   * `pool` 只按 `minRealm <= major + 1` 过滤,境界 20 时全开(92 部全部可抽);
    * 而品阶权重让入门功法占优:实测境 20 时**低品阶合计 76.0%**,
    * 其中境界 0 的十九部入门功法独占 **56.8%** —— 玩家参悟十次,五六次撞见入门货。
    *
@@ -83,7 +83,7 @@ export function learnRandomGongfa(specificId?: string): GongfaDef | null {
  *
  * ## 为什么需要「就近因子」
  *
- * 池子只按 `minRealm <= major + 1` 过滤,境界 20 时 92 部里 91 部可抽;
+ * 池子只按 `minRealm <= major + 1` 过滤,境界 20 时 92 部全部可抽;
  * 而只按品阶与灵根加权的话,入门功法会占掉大半:实测境 20 时
  * **低品阶合计 76.0%,其中境界 0 的十九部独占 56.8%** ——
  * 玩家参悟十次,五六次撞见入门货。
