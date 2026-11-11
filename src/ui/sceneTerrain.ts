@@ -561,3 +561,44 @@ const MENTOR_TERRAIN: Record<string, SceneTerrain> = {
 export function sceneTerrainOfMentor(mentorId: string | null | undefined): SceneTerrain {
   return (mentorId && MENTOR_TERRAIN[mentorId]) || "peaks";
 }
+
+/**
+ * 八条道途 → 地形。
+ *
+ * 「修行画像」那一屏讲的不是「你在哪」,是「**你是谁**」—— 而道途就是那个答案。
+ * `data/endgame` 的每条 `DAO_PATHS` 都写着一种活法,八条是八种完全不同的东西,
+ * 故这里逐条取景,一条不许与另一条重合:
+ *
+ *   剑道  「极致的锋锐,换走厚重的余地」        → 雪原(峰更锐、雪线更低)
+ *   镇岳道「以身为岳,先立于不败」              → 山岳
+ *   长生道「不争一时之胜,只求万世长存」        → 林麓(活着、慢慢长的那种)
+ *   天机道「窥破天机,亦被天机所窥」            → 星野
+ *   杀伐道「以战证道。你我皆利刃,先断者输」    → 遗迹
+ *   连珠道「一击连着一击,流水不复」            → 江海
+ *   血河道「残血见真章,越残越凶」              → 火域
+ *   借势道「以守为攻,不先出手」                → 宫阙(守是构筑出来的,不是野地)
+ *
+ * 九种地形里只有虚空没被用:虚空是「什么都没有」,而八条道途都是**一种活法** ——
+ * 「什么都没有」不属于这八条里的任何一条。
+ */
+const DAO_TERRAIN: Record<string, SceneTerrain> = {
+  sword: "frost",
+  zhenyue: "peaks",
+  longevity: "forest",
+  fate: "sky",
+  slaughter: "ruin",
+  lianzhu: "water",
+  xuehe: "flame",
+  jieshi: "palace",
+};
+
+/**
+ * 一条道途长什么样。
+ *
+ * 未定道途(或认不出)落回**山岳**:修士未择道时就在山门里,
+ * 画像总要画点什么 —— 这与 `sceneTerrainOfAxis` 回 null 不矛盾,
+ * 那一处「随处可遇」本身是一个答案,这里「还没选」不是。
+ */
+export function sceneTerrainOfDao(daoId: string | null | undefined): SceneTerrain {
+  return (daoId && DAO_TERRAIN[daoId]) || "peaks";
+}

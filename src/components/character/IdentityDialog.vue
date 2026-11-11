@@ -7,6 +7,26 @@
     @close="emit('close')"
   >
     <article v-if="identity" class="identity-folio stagger-in" data-identity-folio>
+      <!--
+        这一世活成了哪片天 —— 按**道途**取景,不按脚下的地。
+
+        修行画像是「别人眼里的你」:称谓、由真实行迹归纳的叙事、行为特征词、道龄,
+        再往下是师承 / 道途 / 流派 / 悟道。这一屏讲的是「你是谁」,不是「你在哪」——
+        故取景读道途,写死 `player.world.id` 会让八条道途共用一片天。
+
+        画什么不用新立一套:`data/endgame` 的八条 `DAO_PATHS` 各自写着一种活法
+        (剑道「极致的锋锐」/ 镇岳「以身为岳」/ 血河「越残越凶」…),
+        界面上一条都没露过。
+
+        落法是卷首一条:这一帖正文是四章读数,画占自己的一行高度,不压字。
+      -->
+      <InkScene
+        class="identity-scene"
+        variant="strip"
+        :terrain="sceneTerrainOfDao(daoId)"
+        aria-hidden="true"
+      />
+
       <header class="identity-head" data-identity-head>
         <span class="identity-head__seal font-kai" aria-hidden="true">
           {{ identity.epithet.slice(0, 1) }}
@@ -148,9 +168,12 @@
 import { computed } from "vue";
 import { buildIdentity } from "@/core/identityService";
 import BaseModal from "@/components/common/BaseModal.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfDao } from "@/ui/sceneTerrain";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import { cnNumber, formatNum } from "@/utils/format";
 import { useGameStore } from "@/stores/game";
+import { useEndgameStore } from "@/stores/endgame";
 import { companionTimeLabel, companionTimeText } from "@/ui/companionTime";
 
 /**
@@ -163,6 +186,16 @@ const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 
 const game = useGameStore();
+const endgame = useEndgameStore();
+
+/**
+ * 这一世的道途 —— 画像取景的身份。
+ *
+ * 读 store 而不是从 `identity` 里取:`buildIdentity()` 给的是道途的**中文名**
+ * (叙事句要念「行剑道」而不是「行sword」),而取景要的是 id。
+ * 两处读同一个 `endgame.daoPath`,不存在两本账 —— 只是同一枚数的两种用法。
+ */
+const daoId = computed(() => endgame.daoPath);
 const identity = computed(() => buildIdentity());
 
 const identityRoots = computed(() => {
@@ -220,6 +253,24 @@ const riskLine = computed(() => {
 </script>
 
 <style scoped>
+/*
+ * 卷首那条画 —— 定高的一条,排在称谓之前。
+ *
+ * 这一帖四章全是读数(称谓与叙事、此身所历、行迹、命运),画占自己的一行高度,
+ * 不压在字上;容器按画自己的比例(420×160)定高,不写死 rem ——
+ * 写死会把顶部裁掉,而那正是分辨八条道途的东西。
+ *
+ * 八条道途各有各的天,故不继承玩家脚下那一片的世界色。
+ */
+.identity-scene {
+  --ink-scene-h: 100%;
+  --ink-scene-ink: 1.1;
+  --world-mountain: rgb(var(--color-ink-rgb));
+  margin-bottom: 0.7rem;
+  aspect-ratio: 420 / 160;
+  overflow: hidden;
+}
+
 .identity-folio {
   --identity-line: rgb(var(--color-ink-rgb) / 0.13);
   --character-accent: var(--color-cinnabar);
