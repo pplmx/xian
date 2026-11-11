@@ -112,6 +112,7 @@ const CATEGORIES = [
       "equipProse",
       "narrativeTables",
       "eventProse",
+      "designDocCounts",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
