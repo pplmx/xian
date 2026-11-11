@@ -71,3 +71,58 @@ export const isSpecFile = (name: string): boolean => name.endsWith(".spec.ts");
 /** 源码加上脚本(`scripts/*.mjs`)—— 判据要连真浏览器门一起扫时用 */
 export const isSourceOrScript = (name: string): boolean =>
   isSourceFile(name) || (name.endsWith(".mjs") && !name.endsWith(".spec.mjs"));
+
+/**
+ * 从一份 markdown 里切出**一个小节**的正文。
+ *
+ * ## 为什么要有这个函数
+ *
+ * 本仓有 12 个 spec 要读 `docs/*.md`,其中几处要「只取某一节」。切法各写各的,
+ * 而**踩同一个坑三次**:
+ *
+ * ```text
+ *   137 轮  misjudgmentLedger  正文里的圈号冒充了下一个条目
+ *   140 轮  designToc          目录上方说明里的「动效」冒充了列表项
+ *   150 轮  misjudgmentLedger  又一次 —— 修了 nextAt 却漏了 at
+ * ```
+ *
+ * 三次的形状一样:**用 `indexOf(某个词)` 找边界,而那个词在正文里也出现**。
+ *
+ * ## 用法
+ *
+ * ```ts
+ * const body = markdownSection(doc, "## 待办 · 下一步");
+ * ```
+ *
+ * 边界按**行首**匹配(行内出现的 `## ` 不算),到**下一个同级或更高级标题**为止:
+ *
+ * ```text
+ *   markdownSection(doc, "### 法则 J")
+ *     → 切到下一个 `### ` 或 `## ` 之前
+ *   markdownSection(doc, "## 待办")
+ *     → 切到下一个 `## ` 之前(不再往下切 `###`)
+ * ```
+ *
+ * 找不到标题时**抛错**而不是返回空串 —— 返回空串会让「找不到」伪装成「那节是空的」,
+ * 而后者看起来像一条内容缺口。
+ */
+export function markdownSection(doc: string, heading: string): string {
+  const lines = doc.split("\n");
+  const level = /^(#+)\s/.exec(heading)?.[1]?.length;
+  if (!level) throw new Error(`markdownSection: 标题要以 # 开头,收到 ${JSON.stringify(heading)}`);
+
+  // 标题必须**整行**相等(或行尾多几个空格),不许是行内提及
+  const start = lines.findIndex((l) => l.trimEnd() === heading.trimEnd());
+  if (start < 0) throw new Error(`markdownSection: 找不到标题 ${JSON.stringify(heading)}`);
+
+  // 到下一个「同级或更高级」的标题为止
+  let end = lines.length;
+  for (let i = start + 1; i < lines.length; i += 1) {
+    const m = /^(#+)\s/.exec(lines[i]!);
+    if (m && m[1]!.length <= level) {
+      end = i;
+      break;
+    }
+  }
+  return lines.slice(start, end).join("\n");
+}

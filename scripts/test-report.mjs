@@ -134,6 +134,7 @@ const CATEGORIES = [
       "readmeStack",
       "designToc",
       "lawCount",
+      "markdownSection",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
