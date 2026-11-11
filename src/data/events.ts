@@ -1,4 +1,4 @@
-/** 随机事件库 —— 123 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 129 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -1135,7 +1135,7 @@ export const EVENTS: EventDef[] = [
         o(40, "剑意凌厉,你强行参悟,气息紊乱。", { type: "buff", id: "injury" }),
       ]),
       c("拓下碑文", [
-        o(70, "你拓下碑文,换得几页残卷,或另有他用。", { type: "material", id: "page", amount: 12 }),
+        o(70, "你拓下碑文,换得几页残卷,或另有他用。", { type: "material", id: "page", amount: 2 }),
         o(30, "碑文剑威逼人,拓印时伤了心神。", { type: "buff", id: "injury" }),
       ]),
       leave("剑意非强求所得,你按捺住心思,转身离去。"),
@@ -1648,6 +1648,197 @@ export const EVENTS: EventDef[] = [
     { maxRealm: MORTAL_END },
   ),
   // ============ 仙界及以上际遇(准入境界 9-20)============
+  /**
+   * 第 9~11 境原本只有 3 / 2 / 2 个界外独占事件(第 136 轮 `eventSupplyCurve.spec` 量出),
+   * 而第 14 境起每境都有 4~9 个 —— 刚飞升那三境最薄。这里各补两个,把曲线接上。
+   *
+   * 三境各写一件事,不重复后面的「云海 / 神域 / 混沌」三类意象:
+   * 第 9 境写**初到**的不适应,第 10 境写**仙凡之别**,第 11 境写**旧物**。
+   */
+  ev(
+    "ev_poyun_ta",
+    "破云塔",
+    "云海下浮着一座倒悬的塔,塔尖朝下扎进雾里。你踏上去时,它缓缓转正 —— 像是等你很久了。",
+    ["general", "sky", "immortal"],
+    [
+      c(
+        "登塔",
+        [
+          o(60, "塔中一层悬着一面旧镜,照见你入门时的样子。镜面碎开,落下几片灵光。", {
+            type: "material",
+            id: "wudao",
+            amount: 18,
+          }),
+          o(40, "走到第九层便再上不去,塔顶那片天不属于你。你在阶上坐了很久。", {
+            type: "exp",
+            secs: 90,
+          }),
+        ],
+        { isDefault: true },
+      ),
+      c("绕塔而行", [
+        o(1, "塔基刻着一圈看不懂的字,你拓了一页下来。", {
+          type: "material",
+          id: "page",
+          amount: 2,
+        }),
+      ]),
+    ],
+    { minRealm: 9 },
+  ),
+  ev(
+    "ev_liuyun_ji",
+    "流云寄",
+    "一封未拆的信落在云上,封口压着仙门旧印。收信人的名字被云抹去了,只余一个字。",
+    ["general", "sky", "immortal"],
+    [
+      c(
+        "拆开",
+        [
+          o(50, "信里是一句极短的交代,末尾写着「不必回」。你读了三遍。", {
+            type: "exp",
+            secs: 120,
+          }),
+          o(30, "信纸一触即散,只留下一缕气机钻进你经脉。", {
+            type: "buff",
+            id: "bless_qingfeng",
+          }),
+          o(20, "信是假的 —— 封口那道印在你拆的瞬间反噬,掌心焦了一小块。", {
+            type: "buff",
+            id: "injury",
+          }),
+        ],
+        { isDefault: true },
+      ),
+      c("原样放回云里", [
+        o(1, "你把信放回原处,云很快把它带走了。", { type: "material", id: "dust", amount: 30 }),
+      ]),
+    ],
+    { minRealm: 9 },
+  ),
+  ev(
+    "ev_tianhe_du",
+    "天河渡口",
+    "一条看不见对岸的河横在面前,渡口立着一块碑:「过者不留名」。船在,人不在。",
+    ["general", "water", "immortal"],
+    [
+      c(
+        "上船",
+        [
+          o(55, "船自己动了。到岸时你身上少了一样本该带走的东西,却记不起是什么。", {
+            type: "material",
+            id: "wudao",
+            amount: 24,
+          }),
+          o(45, "船到河心停住,水面映出你在凡间的最后一夜。船轻轻靠回原岸。", {
+            type: "exp",
+            secs: 100,
+          }),
+        ],
+        { isDefault: true },
+      ),
+      c("沿河走", [
+        o(1, "走了半日,河仍在。你在岸边捡到一块被水磨圆的铁。", {
+          type: "material",
+          id: "ore",
+          amount: 30,
+        }),
+      ]),
+    ],
+    { minRealm: 10 },
+  ),
+  ev(
+    "ev_jiebei_ling",
+    "界碑铃",
+    "仙界与人间的界碑上系着一枚小铃。你靠近时它响了 —— 而四下无风。",
+    ["general", "immortal"],
+    [
+      c(
+        "解下小铃",
+        [
+          o(50, "铃音散开的一瞬,你听见了很远的地方有人在唤你的道号。", {
+            type: "buff",
+            id: "bless_jiyuan",
+          }),
+          o(50, "铃上积的是一层旧尘,擦净之后什么也没有。", {
+            type: "material",
+            id: "dust",
+            amount: 40,
+          }),
+        ],
+        { isDefault: true },
+      ),
+      c("摇一摇", [
+        o(70, "铃声一起,界碑后浮出一段路 —— 通往你此前没走过的一处。", {
+          type: "exp",
+          secs: 100,
+        }),
+        o(30, "铃声空落落地散在风里,没有回应。", { type: "nothing" }),
+      ]),
+    ],
+    { minRealm: 10 },
+  ),
+  ev(
+    "ev_jiuxian_canju",
+    "旧仙残局",
+    "石桌上一局未收的棋,黑白都已化石。你伸手时,一枚子自己挪了半格。",
+    ["general", "mountain", "immortal"],
+    [
+      c(
+        "落子",
+        [
+          o(45, "棋盘活了。你下了三十几手,最后输了半目 —— 却比来时明白多了。", {
+            type: "exp",
+            secs: 110,
+          }),
+          o(35, "一枚子落在你该落的地方。石桌裂开,底下是一小袋灵材。", {
+            type: "material",
+            id: "herb",
+            amount: 25,
+          }),
+          o(20, "你落了子,盘上却没有任何变化。对手早就走了。", { type: "nothing" }),
+        ],
+        { isDefault: true },
+      ),
+      c("收走棋子", [
+        o(1, "棋子入手极沉,不像石,也不像铁。", { type: "material", id: "ore", amount: 45 }),
+      ]),
+    ],
+    { minRealm: 11 },
+  ),
+  ev(
+    "ev_guanshan_jing",
+    "关山镜",
+    "山壁上嵌着一面大镜,里面照的不是你,是你还在凡间时住过的那间屋子。",
+    ["general", "mountain", "immortal"],
+    [
+      c(
+        "看进去",
+        [
+          o(50, "屋里的灯还亮着,桌上有半碗没吃完的饭。你站着看了一夜。", {
+            type: "exp",
+            secs: 105,
+          }),
+          o(30, "镜中有人抬头看你 —— 你看不清他的脸,却觉得他知道你成了。", {
+            type: "buff",
+            id: "bless_daoyun",
+          }),
+          o(20, "镜里的屋子早已塌了。你看了很久才认出那是同一处地方。", {
+            type: "nothing",
+          }),
+        ],
+        { isDefault: true },
+      ),
+      c("背过身去", [
+        o(1, "你没有再看第二眼。山风从背后吹过,很干净。", {
+          type: "material",
+          id: "wudao",
+          amount: 15,
+        }),
+      ]),
+    ],
+    { minRealm: 11 },
+  ),
   ev(
     "ev_xianmen_yize",
     "仙门遗泽",
@@ -2664,7 +2855,7 @@ export const FORTUNE_EVENTS: EventDef[] = [
           20,
           "剑气反噬,你吐出一口血,却记下了几分剑理。",
           { type: "buff", id: "injury" },
-          { type: "material", id: "page", amount: 12 },
+          { type: "material", id: "page", amount: 2 },
         ),
         o(15, "剑痕只是一道残影,你看罢两手空空。", { type: "nothing" }),
       ]),
@@ -2767,7 +2958,7 @@ export const FORTUNE_EVENTS: EventDef[] = [
     [
       c("记下丹方", [
         o(60, "丹方奥妙无穷,你逐字摹下,已得几分炼丹真意。", { type: "recipe" }),
-        o(40, "丹方后半已被虫蛀,只得残缺几字。", { type: "material", id: "page", amount: 12 }),
+        o(40, "丹方后半已被虫蛀,只得残缺几字。", { type: "material", id: "page", amount: 2 }),
       ]),
       c("放回原处", [o(1, "前人遗物,你不敢轻动,悄然离开。")], { isDefault: true }),
     ],
