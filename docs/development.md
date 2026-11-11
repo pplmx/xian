@@ -8485,3 +8485,66 @@ build.yml    302 行   Electron & Android:只在 tag 上 → 版本闸门 → �
 而这里恰恰不能取消 —— 因为取消会砍在一个非原子的中间态上。
 这类判断写不进判据(它是关于「取消发生在哪一刻」的),**但写进注释就够了**:
 下一个想改成 `true` 的人会先读到它。
+
+### 第 144 轮:发版说明与发版检查,两头都对得上
+
+上轮说这轮核 `docs/release-notes/`。三份正文(v0.0.1 102 行 / v0.0.2 50 行 / v0.0.3 50 行),
+核的是**它们与实际发版检查是否对得上**。
+
+### v0.0.3 的六条,条条在 `verify:release` 里
+
+```text
+发版正文写的                       verify-release.mjs 的检查
+关掉开发者工具(开发菜单只在未打包时)  → ok("开发者工具在 isPackaged 守卫内")
+设置改成原子落盘                     → ok("设置落盘是原子写(tmp + rename)")
+启用 asar 打包                       → ok("app.asar 在(N.N MB)")
+遮挡层渲染轮询加上限(150 次)          → ok("遮挡层轮询带次数上限(check(left) … )(150))")
+迁移器销毁时摘 handler 队列           → ok("迁移器销毁时摘 handler 队列")
+启动底色收成命名资源                  → ok("启动底色用命名资源 launch_background")
+```
+
+**六条一一对应。** 而 `verify-release.mjs` 里 `ok(` 共 9 处 —— 另外三处是主体检查
+(Windows 包里有没有 `app.asar`、`main.js` 能不能从 asar 里取到、以及解析 itself)。
+
+### v0.0.2 那八张图,在它自己的 tag 上都解析得到
+
+`v0.0.2.md` 的截图用的是**绝对 URL**(`raw.githubusercontent.com/…/v0.0.2/images/app/*.webp`),
+故 `docs-check` 不查它们(它只管仓库内的相对路径)。核了一下:
+
+```text
+git ls-tree v0.0.2 images/app/  →  13 个文件,正文引用的 8 张都在
+```
+
+而「正文里引用了与本版不同的 tag」这件事本身**有判据**:
+
+```text
+src/core/releaseCheck.ts:21   staleNoteTags —— 正文里的绝对链接里,与本版不同的那些
+src/core/releaseCheck.ts:54   staleNoteTags 非空 → blockers.push(「Release 页会碎图」)
+scripts/release-check.mjs:43  真正去扫正文、算出这个数组的地方
+```
+
+注释里那句「**复制上一版正文时最容易漏这一步**」正是它存在的原因。
+
+### 一处看着像问题、查下来不是
+
+```text
+ls -la docs/release-notes/
+  -rw-r--r--  v0.0.1.md
+  -rw-r--r--  v0.0.2.md
+  -rw-------  v0.0.3.md    ← 只有它有
+```
+
+第一反应是「v0.0.3 的权限不对」。核下来:
+
+```text
+git ls-files -s docs/release-notes/
+  100644  v0.0.1.md
+  100644  v0.0.2.md
+  100644  v0.0.3.md      ← 三份在 git 里都是 100644
+```
+
+**git 只记 644 与 755 两种模式**,600 与 644 在仓库里没有区别 —— 那个差异只活在
+当前工作区的一份 checkout 里,换个 clone 就没了。不是仓库问题,不必动。
+
+> 这是第 7 次「看着像错、查下来不是」。前六次的共同修法都是**读上下文**;
+> 这一次多走了一步:**查事实源**(`git ls-files` 而非 `ls`)。
