@@ -23,13 +23,14 @@
           />
           <span class="cultivation-masthead__ring cultivation-masthead__ring--outer" />
           <span class="cultivation-masthead__ring cultivation-masthead__ring--inner" />
-          <svg viewBox="0 0 440 160" preserveAspectRatio="none">
-            <path
-              class="cultivation-masthead__mountain"
-              d="M0 160 L42 118 L84 142 L128 96 L176 145 L228 84 L276 137 L326 108 L372 142 L408 116 L440 150 L440 160 Z"
-            />
-            <path d="M0 160 L62 138 L126 154 L194 126 L268 158 L340 136 L440 150 L440 160 Z" />
-          </svg>
+          <!--
+            这一界的天与地 —— 山骨按所处界换(人间山岳 / 仙界星野 / 神界宫阙 / 混沌虚空),
+            见 ui/sceneTerrain。与首页那片山**同一份画法**、同一份世界色,
+            只是各自给高度:一处算、两处继承之后,再没有「一处变了另一处没变」。
+          -->
+          <div class="cultivation-masthead__scene">
+            <InkScene :world-id="player.world.id" />
+          </div>
         </div>
       </template>
       <template #meta>
@@ -476,6 +477,7 @@ import GongfaDialog from "@/components/cultivation/GongfaDialog.vue";
 import BuffDialog from "@/components/cultivation/BuffDialog.vue";
 import RealmLadder from "@/components/cultivation/RealmLadder.vue";
 import CultivationDial from "@/components/cultivation/CultivationDial.vue";
+import InkScene from "@/components/common/InkScene.vue";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import GongfaSection from "@/components/cultivation/GongfaSection.vue";
 import BreakthroughCard from "@/components/cultivation/BreakthroughCard.vue";

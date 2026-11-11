@@ -26,14 +26,14 @@
         :data-home-sky-known="skyKnown"
       >
         <span v-for="i in sky.stars" :key="i" class="home-deck__star" :style="{ '--star': i }" />
-        <svg viewBox="0 0 420 160" preserveAspectRatio="none">
-          <path
-            class="home-deck__hero-mountain"
-            style="fill: var(--world-mountain)"
-            d="M0 160 L42 113 L86 137 L139 82 L196 139 L252 96 L312 146 L356 106 L420 145 L420 160 Z"
-          />
-          <path d="M0 160 L64 132 L126 153 L198 119 L270 157 L338 126 L420 150 L420 160 Z" />
-        </svg>
+        <!--
+          这一界的天与地 —— 山骨按所处界换(人间山岳 / 仙界星野 / 神界宫阙 / 混沌虚空),
+          见 ui/sceneTerrain。从前这里是一道写死的折线,四处页面共用同一座山,
+          读起来像水印而不是画面。
+        -->
+        <div class="home-deck__scene">
+          <InkScene :world-id="player.world.id" />
+        </div>
       </div>
 
       <header class="home-deck__hero-top">
@@ -417,6 +417,7 @@ import { mainQuestAt } from "@/core/engineChain";
 import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import CultivationOrb from "@/components/common/CultivationOrb.vue";
+import InkScene from "@/components/common/InkScene.vue";
 import InstallToHomeNotice from "@/components/common/InstallToHomeNotice.vue";
 import { keepNumberUnit } from "@/utils/keepNumberUnit";
 import { dailySettleSeal } from "@/ui/dailySettle";

@@ -72,6 +72,13 @@
       </p>
 
       <blockquote class="event-slip__narrative" data-event-narrative>
+        <!--
+          这一处地方的画面 —— 由事件标签定地形(山野 / 水乡 / 秘林 / 古战场 / 星野 …),
+          见 ui/sceneTerrain。它是**背景层**(veil),不占布局高度:
+          这张帖要回答的是「此事何择」,绝不能让一张图把选项挤出首屏
+          (实见 320 上第一个选项被顶出卷身,已有判据盯着)。
+        -->
+        <InkScene class="event-slip__scene" :tags="def.tags" :marks="false" />
         <span class="event-slip__mark" aria-hidden="true">遇</span>
         <p>{{ def.text }}</p>
       </blockquote>
@@ -234,6 +241,7 @@ import { aftermathText, shouldTriggerAftermath } from "@/core/worldMemory";
 import { echoFor, rollEcho, ECHO_CHANCE } from "@/core/fortuneEcho";
 import { eventTierDef, eventTierOf, tierOddsText, type EventTier } from "@/core/eventTier";
 import BaseModal from "@/components/common/BaseModal.vue";
+import InkScene from "@/components/common/InkScene.vue";
 import { EVENT_AUTO_RESOLVE_SECONDS, EXPLORE_MODES } from "@/data/constants";
 import { useNow } from "@/composables/useNow";
 import { cnNumber, formatCountdown } from "@/utils/format";

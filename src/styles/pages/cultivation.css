@@ -77,24 +77,20 @@
     mask-image: linear-gradient(102deg, black, transparent 74%);
   }
 
-  .cultivation-masthead__backdrop svg {
+  /*
+   * 这一界的天与地 —— 山骨由 InkScene 按世界画(见 ui/sceneTerrain)。
+   * 从前这里是一道写死的 qing 折线 + 一条 paper-dark 封底,十四处页面共用同一座山;
+   * 现在是共享组件,这一格只给它高度,形状与点景不在这里。
+   *
+   * 42% 与旧折线等高:换画法不改版式高度(修行卷首的首屏预算按旧值定的)。
+   */
+  .cultivation-masthead__scene {
     position: absolute;
     right: 0;
     bottom: 0;
     left: 0;
-    width: 100%;
     height: 42%;
-    fill: rgb(var(--color-qing-rgb) / 0.07);
-    opacity: 0.72;
-  }
-
-  .cultivation-masthead__backdrop svg path:last-child {
-    fill: rgb(var(--color-paper-dark-rgb) / 0.86);
-  }
-
-  .cultivation-masthead__mountain {
-    fill: var(--world-mountain);
-    opacity: 0.1;
+    overflow: hidden;
   }
 
   /*

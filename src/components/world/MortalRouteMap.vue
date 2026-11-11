@@ -4,23 +4,19 @@
     data-world-route-map
     aria-labelledby="world-route-heading"
   >
-    <!-- 纸下的远山只做地势,不承载信息;真正的路线与状态由下面的 SVG 和文字同源表达 -->
-    <svg
-      class="pointer-events-none absolute inset-x-0 bottom-0 h-24 w-full text-[color:var(--world-mountain)] opacity-8"
-      viewBox="0 0 300 96"
-      preserveAspectRatio="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M0 96 L24 62 L46 78 L77 40 L102 76 L137 50 L167 84 L198 35 L226 73 L254 55 L278 77 L300 48 L300 96 Z"
-        fill="currentColor"
-      />
-      <path
-        d="M0 96 L38 76 L67 88 L106 67 L144 91 L180 72 L217 89 L257 70 L300 82 L300 96 Z"
-        fill="currentColor"
-        opacity="0.52"
-      />
-    </svg>
+    <!--
+      纸下的地势只做氛围,不承载信息;真正的路线与状态由下面的 SVG 和文字同源表达。
+
+      画法从 ui/sceneTerrain 来 —— 与首页、修行卷首、地界志共用同一份山水,
+      地形按本世**第一段地界**的图标定:从什么地貌出发,这张底图就是什么地貌。
+    -->
+    <InkScene
+      class="pointer-events-none w-full"
+      style="--ink-scene-h: 6rem"
+      :world-id="worldId"
+      :icon="sceneIcon"
+      :marks="false"
+    />
 
     <div class="relative">
       <div class="flex items-start justify-between gap-3">
@@ -169,11 +165,16 @@
 import { computed } from "vue";
 import type { MortalStageStatus, PlaceView } from "@/core/mortalWorldService";
 import { clearedRoutePath, smoothRoutePath } from "@/ui/routeMap";
+import InkScene from "@/components/common/InkScene.vue";
 
 const props = defineProps<{
   places: PlaceView[];
   statuses: MortalStageStatus[];
   tierText: string;
+  /** 本世所在的界 —— 纸下那道山读它的世界色 */
+  worldId?: string;
+  /** 本世第一段地界的图标 —— 决定画哪一种地形 */
+  sceneIcon?: string;
 }>();
 
 const routePath = computed(() => smoothRoutePath(props.places));

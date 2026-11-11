@@ -89,18 +89,20 @@
     mask-image: linear-gradient(100deg, black, transparent 78%);
   }
 
-  .home-deck__hero-art svg {
+  /*
+   * 这一界的天与地 —— 山骨由 InkScene 按世界画(见 ui/sceneTerrain)。
+   *
+   * 从前这里是一道写死的 SVG 折线,四处页面共用同一座山。现在是共享组件:
+   * 这一格只负责给它一个**落脚的高度**,形状与点景不在这里。
+   *
+   * 为什么收在 46%:主舞台的下缘是法球座与「今日一步」,山再高就会顶到天时那几行字。
+   * 46% 与旧折线等高 —— 换画法不改版式高度(首屏预算按旧值定的)。
+   */
+  .home-deck__scene {
     position: absolute;
     inset: auto 0 0;
-    width: 100%;
     height: 46%;
-    fill: currentColor;
-    opacity: 0.12;
-  }
-
-  .home-deck__hero-art svg path:last-child {
-    fill: rgb(var(--color-paper-dark-rgb));
-    opacity: 0.8;
+    overflow: hidden;
   }
 
   /*

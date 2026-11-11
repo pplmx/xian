@@ -908,6 +908,8 @@
   }
   .event-slip__narrative {
     display: grid;
+    position: relative;
+    overflow: hidden;
     min-width: 0;
     grid-template-columns: auto minmax(0, 1fr);
     align-items: start;
@@ -920,7 +922,22 @@
       linear-gradient(112deg, rgb(var(--color-qing-rgb) / 0.025), transparent 44%),
       rgb(var(--color-paper-lifted-rgb) / 0.56);
   }
+  /*
+   * 际遇帖的底图 —— 由事件标签定地形(见 ui/sceneTerrain)。
+   *
+   * 它是**背景层**:absolute + pointer-events:none,不占一格布局高度。
+   * 这一窗在 320×568 上本来就贴着「第一项必须露得出来」这条线 —— 一张图占掉
+   * 60px,答案就滚出卷身了。故只用在该帖自己的叙述框里,且高度跟着叙述框。
+   *
+   * 淡到 0.5:叙述正文压在它上面,而那段字是楷体 14px。再浓一档,山脊与字的
+   * 笔画会争视线(这一处不承载信息,让位是它唯一的职责)。
+   */
+  .event-slip__scene {
+    opacity: 0.85;
+  }
   .event-slip__mark {
+    position: relative;
+    z-index: 1;
     display: grid;
     width: 1.72rem;
     height: 1.72rem;
@@ -932,6 +949,8 @@
     line-height: 1;
   }
   .event-slip__narrative p {
+    position: relative;
+    z-index: 1;
     min-width: 0;
     color: rgb(var(--color-ink-soft-rgb));
     font-family: var(--font-kai);

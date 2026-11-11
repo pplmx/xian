@@ -617,6 +617,7 @@ const CATEGORIES = [
       "kaiFontCoverage",
       "deadStyle.spec",
       "ledgerHeader",
+      "sceneTerrain",
     ],
   },
   {

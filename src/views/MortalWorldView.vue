@@ -7,22 +7,18 @@
       -->
       <FolioPageHeader class="world-masthead" :title="view.title" :subtitle="view.summary" featured>
         <template #backdrop>
-          <svg
-            class="pointer-events-none absolute inset-x-0 bottom-0 h-28 w-full text-[color:var(--world-mountain)] opacity-8"
-            viewBox="0 0 400 110"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M0 110 L52 48 L86 76 L132 32 L174 79 L216 55 L264 88 L318 38 L360 70 L400 45 L400 110 Z"
-              fill="currentColor"
-            />
-            <path
-              d="M0 110 L42 84 L93 103 L142 74 L188 101 L238 82 L290 104 L337 79 L400 96 L400 110 Z"
-              fill="currentColor"
-              opacity="0.5"
-            />
-          </svg>
+          <!--
+            这一世的地势 —— 由本世路线**第一处地界**的图标定(见 ui/sceneTerrain)。
+            玩家把「本世山河案」翻到正文时,卷首已经先给了一眼「这一世是山乡、水乡还是
+            残破的古战场」—— 那是这一页最该有的画面,而从前它是一道与别处共用的折线。
+          -->
+          <InkScene
+            class="pointer-events-none w-full"
+            style="--ink-scene-h: 7rem"
+            :world-id="player.world.id"
+            :icon="sceneIcon"
+            :marks="false"
+          />
         </template>
 
         <template #meta>
@@ -156,6 +152,8 @@
             :places="view.places"
             :statuses="stageStatuses"
             :tier-text="view.tierText"
+            :world-id="player.world.id"
+            :scene-icon="sceneIcon"
           />
 
           <section class="world-route" aria-labelledby="world-route-list-heading">
@@ -332,6 +330,7 @@ import GameIcon from "@/components/common/GameIcon.vue";
 import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import MortalRouteMap from "@/components/world/MortalRouteMap.vue";
 import WorldAtlas from "@/components/world/WorldAtlas.vue";
+import InkScene from "@/components/common/InkScene.vue";
 import { useAdventureStore } from "@/stores/adventure";
 import { usePlayerStore } from "@/stores/player";
 import { useUiStore } from "@/stores/ui";
@@ -399,6 +398,18 @@ const view = computed(() => {
 });
 
 const tierRangeText = computed(() => view.value?.tierText.replace(/^层级\s*/, "") ?? "");
+
+/**
+ * 卷首山图按哪一处地界的图标画 —— 取本世路线的**第一段**。
+ *
+ * 为什么不按「哪一类最多」统计:一条路线就是一趟从起点走到尽头的旅程,
+ * 卷首画的该是「你从什么样的地方出发」,而不是一份地貌统计的众数。
+ * 拿不到第一段时退回当前世界的地形(见 sceneTerrain 的兜底)。
+ */
+const sceneIcon = computed(() => {
+  const first = view.value?.places[0];
+  return first ? (regionDef(first.regionId)?.icon ?? "mountain") : "mountain";
+});
 const stageStatuses = computed(() =>
   mortalStageStatuses(view.value?.places.map((p) => p.nodeId) ?? [], adventure.mortalCleared),
 );
