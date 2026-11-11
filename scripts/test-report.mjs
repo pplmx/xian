@@ -132,6 +132,7 @@ const CATEGORIES = [
       "eventSupplyCurve",
       "misjudgmentLedger",
       "readmeStack",
+      "designToc",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
