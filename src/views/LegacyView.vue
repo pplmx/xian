@@ -327,6 +327,12 @@
                     :data-legacy-skill="row.id"
                   >
                     <span class="legacy-skill-desk__name">{{ row.name }}</span>
+                    <!--
+                      所属的道:同一份数据在炼丹界面已经报了(BrewingDialog 的 daoName 列),
+                      而这一页只报技艺名 —— 两处对同一件事的呈现不一致。道名比技艺名更粗一档,
+                      放在中间不抢境地的位置。
+                    -->
+                    <span class="legacy-skill-desk__dao">{{ row.daoName }}</span>
                     <span class="legacy-skill-desk__stage">{{ row.stage }}</span>
                     <span v-if="row.nextStage" class="legacy-skill-desk__next"
                       >离{{ row.nextStage }} {{ formatPercent(row.progress, 0) }}</span

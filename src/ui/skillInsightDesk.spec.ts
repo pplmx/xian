@@ -40,6 +40,7 @@
  * 九项全零时整块不出 —— 与器谱进度、敌手谱同一条纪律:没动过的不点名。
  */
 import { describe, expect, it } from "vite-plus/test";
+import { DAO_NAMES } from "@/data/crafting";
 import { skillInsightDesk } from "./skillInsightDesk";
 import { INSIGHT_SKILL_DIV } from "@/data/samsara";
 
@@ -119,6 +120,43 @@ describe("技艺进度 · 纯函数", () => {
   it("不认识的技艺 id 忽略 —— 不印一个查不到名字的行", () => {
     const desk = skillInsightDesk({ not_a_skill: 500 });
     expect(desk.rows).toEqual([]);
+  });
+
+  it("每行都报得出所属的道 —— 与炼丹界面同一份数据,不能一处报一处不报", () => {
+    /*
+     * `data/crafting` 的每门技艺都有 `dao`(识材道 / 炼丹道 / 灵火道 / 炼器道),
+     * 而 `BrewingDialog` 早就把它显示成了「道」那一列。宿慧这一页原先只报技艺名 ——
+     * 同一份数据,两个界面一个报一个不报。
+     *
+     * 这条守两件事:
+     * ① 每一行都带上 `daoName`;
+     * ② 那个名字来自 `DAO_NAMES`,不是另拼一份 —— 两处各拼一份迟早分叉。
+     */
+    const desk = skillInsightDesk({ discern: 400, condense: 400, smithing: 400 });
+    expect(desk.rows.length).toBeGreaterThan(0);
+    for (const row of desk.rows) {
+      expect(row.daoName, `${row.name} 没有报出所属的道`).toBeTruthy();
+      expect(
+        Object.values(DAO_NAMES),
+        `${row.name} 的道名「${row.daoName}」不在 DAO_NAMES 里 —— 是不是另拼了一份`,
+      ).toContain(row.daoName);
+    }
+    // 四条道都要能出现,不许只认得其中一条
+    const all = skillInsightDesk({
+      discern: 400,
+      herbLore: 400,
+      pairing: 400,
+      condense: 400,
+      temper: 400,
+      nurture: 400,
+      flame: 400,
+      smithing: 400,
+      inscribe: 400,
+    });
+    const daos = new Set(all.rows.map((r) => r.daoName));
+    expect(daos.size, "九门技艺只报出了 " + daos.size + " 条道").toBe(
+      Object.keys(DAO_NAMES).length,
+    );
   });
 
   it("报得出九项里有几项动过", () => {

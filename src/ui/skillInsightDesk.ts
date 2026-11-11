@@ -37,6 +37,7 @@
 import {
   SKILLS,
   skillLevelFromExp,
+  DAO_NAMES,
   skillNextStageName,
   skillStageName,
   skillStageProgress,
@@ -58,6 +59,13 @@ export interface SkillInsightRow {
   nextStage: string | null;
   /** 离下一境地的进度 0~1；已到顶为 1 */
   progress: number;
+  /**
+   * 所属的道（识材道 / 炼丹道 / 灵火道 / 炼器道）。
+   *
+   * 同一份数据在炼丹界面已经显示了（`BrewingDialog` 的 `daoName` 列），
+   * 而宿慧这一页原先只报技艺名 —— 两处对同一件事的呈现不一致。
+   */
+  daoName: string;
 }
 
 export interface SkillInsightDesk {
@@ -99,6 +107,7 @@ export function skillInsightDesk(skillExp: Readonly<Record<string, number>>): Sk
       // 三者读同一份 SKILL_STAGES（见 data/crafting），不会分叉
       nextStage: skillNextStageName(level),
       progress: skillStageProgress(level),
+      daoName: DAO_NAMES[def.dao],
     });
   }
   if (rows.length === 0) return EMPTY;

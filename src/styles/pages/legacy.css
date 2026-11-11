@@ -878,6 +878,16 @@
     overflow-wrap: anywhere;
     color: var(--color-ink-soft);
   }
+  /*
+    所属的道。比技艺名弱一档、比境地强半档 —— 它是「这一项归哪条路」的归类,
+    不是进度本身,所以用最浅的那档墨,且不参与换行时的伸缩(flex: none)。
+  */
+  .legacy-skill-desk__dao {
+    flex: none;
+    color: var(--color-ink-faint);
+    font-size: 0.92em;
+    opacity: 0.85;
+  }
   .legacy-skill-desk__stage {
     flex: none;
     color: var(--color-ink-faint);
