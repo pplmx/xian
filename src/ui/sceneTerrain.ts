@@ -438,3 +438,25 @@ export function sceneTerrainOfTags(tags: readonly string[] | null | undefined): 
   }
   return "peaks";
 }
+
+/**
+ * 天劫 → 地形。
+ *
+ * 五种劫各有一副"长相",不共用一个底:雷鸣是雷雨天(星野),逆流是灵气倒灌的江海,
+ * 裂魂是神魂被撼的虚空,铁躯是层层碾落的宫阙之压,重压是起手两道重击的悬空雷池。
+ *
+ * 这是**这一屏自己的身份**,与玩家站哪片地界无关 —— 渡劫那一刻的戏眼是天上落下
+ * 的那一道,不是脚下的山。故它不进 `sceneTerrainOfPlace`,单独一支。
+ */
+const TRIBULATION_TERRAIN: Record<string, SceneTerrain> = {
+  thunder: "sky",
+  counterflow: "water",
+  soulrend: "void",
+  ironbody: "palace",
+  heavyrush: "flame",
+};
+
+/** 一场天劫长什么样;认不出的劫名落到虚空(最不像「寻常风景」的那一种) */
+export function sceneTerrainOfTribulation(kind: string | null | undefined): SceneTerrain {
+  return (kind && TRIBULATION_TERRAIN[kind]) || "void";
+}

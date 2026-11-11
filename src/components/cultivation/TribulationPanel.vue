@@ -7,6 +7,21 @@
     一字未删,只是把「与你有关的三句」提到读数之前。
   -->
   <div class="cultivation-tribulation" data-cultivation-tribulation>
+    <!--
+      劫相 —— 这一屏是全作戏眼(跨大境界时的一次生死),而它此前是一整块纯文字:
+      四十行读数,一个字都不少,却没有任何东西让人先「看见」这场劫。
+
+      画的是**这一种劫**的长相,不是玩家脚下的地界(见 ui/sceneTerrain 的
+      sceneTerrainOfTribulation):渡劫那一刻的戏眼是天上落下的那一道。
+
+      只做背景:绝对定位、不占布局。这一屏的每一行都是决策依据,一行都不能被挤走。
+    -->
+    <InkScene
+      class="cultivation-tribulation__scene"
+      :terrain="sceneTerrainOfTribulation(plan.kind)"
+      :world-id="player.world.id"
+      :marks="false"
+    />
     <p class="cultivation-tribulation__lede">{{ plan.desc }}</p>
     <p class="mt-1 text-body text-ink-soft">
       主要风险:<span class="text-cinnabar">{{ plan.risks.join("; ") }}</span>
@@ -158,6 +173,8 @@ import { reliefOf } from "@/ui/elementGains";
 import { ELEMENTS } from "@/data/linggen";
 import { STAT_NAMES } from "@/data/statNames";
 import { TRIB_LOW_HP_TRIGGER } from "@/data/constants";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfTribulation } from "@/ui/sceneTerrain";
 import { formatPercent } from "@/utils/format";
 
 const player = usePlayerStore();

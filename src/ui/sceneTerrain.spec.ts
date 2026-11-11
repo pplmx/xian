@@ -36,6 +36,7 @@ import {
   sceneOf,
   sceneTerrainOfPlace,
   sceneTerrainOfTags,
+  sceneTerrainOfTribulation,
 } from "./sceneTerrain";
 
 const SOURCE = readSource("src/ui/sceneTerrain.ts");
@@ -367,6 +368,34 @@ describe("山水景 · 真接线", () => {
      */
     expect(panel, "底图要由当前地界决定").toMatch(/:icon="region\?\.icon"/);
     expect(panel, "底图不许吃事件").toContain("data-combat-arena");
+  });
+
+  it("五种天劫各有一副长相 —— 渡劫那一屏不该五种劫共用一张底", () => {
+    /*
+     * 渡劫是全作戏眼(跨大境界时的一次生死),而劫势面板原先是一整块 405px 的纯文字。
+     * 补画面时最容易走的路是「给它也画一片山」—— 但那样五种劫就是同一张底,
+     * 而它们本来是五件不同的事:雷鸣是雷雨天、逆流是灵气倒灌、裂魂是神魂被撼。
+     */
+    const kinds = ["thunder", "counterflow", "soulrend", "ironbody", "heavyrush"];
+    const terrains = kinds.map((k) => sceneTerrainOfTribulation(k));
+    expect(new Set(terrains).size, "有两种劫画成了同一片地 —— 那等于只有四种").toBe(kinds.length);
+    for (const t of terrains) expect(SCENE_TERRAINS).toContain(t);
+    // 认不出的劫名落到虚空(最不像寻常风景的那一种),不抛也不空白
+    expect(sceneTerrainOfTribulation("no_such_kind")).toBe("void");
+    expect(sceneTerrainOfTribulation(null)).toBe("void");
+  });
+
+  it("劫相面板真接上了 —— 且按这一种劫取景,不是按玩家脚下的地界", () => {
+    const panel = readSource("src/components/cultivation/TribulationPanel.vue");
+    expect(panel, "劫势面板要有画面").toContain("<InkScene");
+    /*
+     * 渡劫那一刻的戏眼是天上落下的那一道,不是脚下的山。写死成 worldId 会让
+     * 「同一种劫在人间界与神界长得一样」变成「同一个界的不同劫长得一样」——
+     * 恰好把话反过来说了。
+     */
+    expect(panel, "劫相要由 plan.kind 决定").toMatch(
+      /:terrain="sceneTerrainOfTribulation\(plan\.kind\)"/,
+    );
   });
 
   it("历练页的际遇帖上有这一处地方的画面 —— 光有字不算画面", () => {

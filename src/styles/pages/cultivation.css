@@ -977,12 +977,34 @@
   }
 
   .cultivation-tribulation {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     margin-top: 0.58rem;
     padding: 0.56rem 0 0.58rem 0.7rem;
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.075);
     border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.075);
     border-left: 2px solid rgb(var(--color-cinnabar-rgb) / 0.38);
     background: linear-gradient(90deg, rgb(var(--color-cinnabar-rgb) / 0.018), transparent 64%);
+  }
+  /*
+   * 劫相 —— 这一屏的底。
+   *
+   * 只占下缘那一条(4rem),不铺满:上面四十行读数全是决策依据,底图铺满会让每一行
+   * 都多一个要分辨的底;压在下缘时它是「这一场劫在天边」,而不是一层要透过它读字的膜。
+   */
+  .cultivation-tribulation__scene {
+    --ink-scene-h: 7.5rem;
+    --ink-scene-ink: 1.5;
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    pointer-events: none;
+  }
+  /* 读数压在山之上 —— 背景层若盖住字,这一屏就废了 */
+  .cultivation-tribulation > :not(.cultivation-tribulation__scene) {
+    position: relative;
+    z-index: 1;
   }
 
   .cultivation-tribulation__lede {
