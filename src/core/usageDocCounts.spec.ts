@@ -79,7 +79,20 @@ const CLAIMS: Claim[] = [
   { label: "品质", actual: QUALITIES.length, patterns: [/(\d+) 级品质/g] },
   { label: "丹药", actual: PILLS.length, patterns: [/(\d+) 种丹药/g, /(\d+) 丹药 \+/g] },
   { label: "法宝", actual: ARTIFACTS.length, patterns: [/(\d+) 件法宝/g] },
-  { label: "灵兽", actual: PETS.length, patterns: [/(\d+) 只灵兽/g] },
+  /*
+   * 灵兽与称号都还有**汉字数字**的写法(「四十四只」「二十九顶」),
+   * 第 115 轮就是靠这里发现的:`usage.md` 前文写「44 只灵兽 / 29 枚称号」,
+   * 后文写「三十顶 / 四十二只」—— 同一份文档自相矛盾。
+   */
+  {
+    label: "灵兽",
+    actual: PETS.length,
+    // 汉字写法只认两位数以上(「四十四只」),排除「一只/两只」这类量词
+    patterns: [
+      /(\d+) 只灵兽/g,
+      /([一二三四五六七八九]?十[一二三四五六七八九])只|([一二三四五六七八九]?十)只/g,
+    ],
+  },
   { label: "道侣", actual: DAOLU.length, patterns: [/(\d+) 位道侣/g] },
   { label: "师尊", actual: MENTORS.length, patterns: [/(\d+) 位师尊/g, /(\d+) 位师承/g] },
   { label: "人生主题", actual: LIFE_THEMES.length, patterns: [/(\d+) 种人生主题/g] },
@@ -112,7 +125,16 @@ const CLAIMS: Claim[] = [
     actual: MAIN_QUESTS.length,
     patterns: [/(\d+) 个主线任务/g, /(\d+) 主线任务/g],
   },
-  { label: "称号", actual: TITLES.length, patterns: [/(\d+) 枚称号/g, /(\d+) 称号 \+/g] },
+  {
+    label: "称号",
+    actual: TITLES.length,
+    patterns: [
+      /(\d+) 枚称号/g,
+      /(\d+) 称号 \+/g,
+      // 后文用「顶」做量词,且是汉字数字(只认两位数以上)
+      /([一二三四五六七八九]?十[一二三四五六七八九])顶|([一二三四五六七八九]?十)顶/g,
+    ],
+  },
   { label: "技艺", actual: SKILLS.length, patterns: [/(\d+) 门技艺/g] },
   { label: "洞府建筑", actual: BUILDINGS.length, patterns: [/(\d+) 建筑/g] },
   { label: "灵脉", actual: VEINS.length, patterns: [/(\d+) 条灵脉/g] },
@@ -165,11 +187,35 @@ describe("玩法文档 · 触感这一节", () => {
   });
 });
 
-/** 汉字数字(一到十)→ 阿拉伯数字;已经是数字的原样返回 */
+/**
+ * 汉字数字 → 阿拉伯数字;已经是数字的原样返回。
+ *
+ * 支持:`一` ~ `九十九`(含「十」「二十三」「九十」三种形态)。
+ * 第一版只会查单字的 `CN.indexOf(raw)`,于是「四十四」返回 `NaN` ——
+ * 判据报的是「文档写 NaN」,那个 NaN 本身就是这条判据的 bug。
+ */
 function cnToNumber(raw: string): number {
-  const CN = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
-  const i = CN.indexOf(raw);
-  return i >= 0 ? i : Number(raw);
+  if (/^\d+$/.test(raw)) return Number(raw);
+  const DIGIT: Record<string, number> = {
+    零: 0,
+    一: 1,
+    二: 2,
+    三: 3,
+    四: 4,
+    五: 5,
+    六: 6,
+    七: 7,
+    八: 8,
+    九: 9,
+  };
+  // 十 / 十一 / 二十 / 二十三 / 四十四
+  if (raw.includes("十")) {
+    const [head, tail] = raw.split("十");
+    const tens = head ? (DIGIT[head] ?? 0) : 1;
+    const ones = tail ? (DIGIT[tail] ?? 0) : 0;
+    return tens * 10 + ones;
+  }
+  return DIGIT[raw] ?? Number(raw);
 }
 
 /** 逐条核账:返回所有「找不到」与「对不上」;空数组才算过 */
@@ -177,7 +223,11 @@ function auditUsageDoc(text: string): string[] {
   const bad: string[] = [];
   for (const claim of CLAIMS) {
     for (const pattern of claim.patterns) {
-      const found = [...text.matchAll(pattern)].map((m) => cnToNumber(m[1]!));
+      /*
+       * 有的模式有两个捕获组(「X十Y」与「X十」两个备选),取第一个非空的。
+       * 只取 `m[1]` 会在走第二个备选时拿到 undefined。
+       */
+      const found = [...text.matchAll(pattern)].map((m) => cnToNumber((m[1] ?? m[2] ?? "")!));
       if (found.length === 0) {
         bad.push(`${claim.label}:文档里找不到 ${pattern.source}`);
         continue;
