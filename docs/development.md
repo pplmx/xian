@@ -7773,3 +7773,47 @@ buff   茶烟未散,所悟自多                 ← 药力在身上是什么样
 一旦换到「同一类东西的两个维度」,它报出来的每一条都要人工证伪。
 
 前两轮之所以干净利落,是因为那两对本来就是同一件事。**方法有效,但它的适用面比看起来窄。**
+
+### 第 130 轮:又一次跨 id 空间比较,以及一个真实的空位
+
+想找「可以扩充的玩法空间」,扫到 `COMBO_ARTS` 只有 **3 条**,而道途有 8 条 ——
+15 个流派配对里只有 3 个有组合技,看着是个空位。
+
+### 先踩了和第 129 轮一模一样的坑
+
+```text
+DAO_PATHS 的 id          sword, zhenyue, longevity, fate, slaughter, lianzhu, jieshi, xuehe
+COMBO_ARTS 的 pair       gangdun, fanzhen, muze, beishui, fengmang, lianji
+```
+
+两边**一个都对不上**,于是判定「6 个 id 全部找不到对应实体」。
+
+查下去才发现:`pair` 指的是 **`BUILD_STYLES` 的流派 id**,不是道途 id ——
+`playerSnap` 里 `matchComboArt(build.style.id, build.secondary.style.id)` 就是拿流派配的。
+
+> **第 129 轮的四次误判和第 130 轮的这一次是同一个形状:跨 id 空间比较。**
+> 「不对称」与「找不到引用」这两个探针,都会在**两套 id 看起来相似**的地方报假。
+
+### 抹掉误判之后,真实情况是这样
+
+```text
+BUILD_STYLES      6 个流派(beishui / gangdun / fanzhen / lianji / muze / fengmang)
+COMBO_ARTS        3 条组合技
+流派覆盖          6 / 6 —— 一个都没落下
+配对覆盖          3 / 15(C(6,2) = 15)
+```
+
+**3 条正好覆盖全部 6 个流派,两两不重复** —— 那是最小的完全覆盖方案,不是遗漏。
+
+### 15 种配对只做了 3 种,扩充成本在哪
+
+每加一条组合技要动两处:
+
+```text
+data/comboArts.ts   加一条 id / pair / name / desc / costText
+core/combat.ts      按 id 加真正的战斗逻辑(现有三条各自是一段独立判定)
+```
+
+`combat.ts` 里那三段是**具体机制**(护盾击破时反击、低血治疗增效、连击追加),
+不是填参数就能长的。故这一轮**不动它** —— 加三条组合技等于写三段战斗规则,
+而那需要设计决策(每条的代价与收益该怎么配),不是审计能定的。
