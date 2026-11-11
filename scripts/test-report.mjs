@@ -129,6 +129,7 @@ const CATEGORIES = [
       "loreThresholds",
       "terminology",
       "releaseTodo",
+      "eventSupplyCurve",
       "buildAdvisor",
       "playerMatchup",
       "powerRating",
