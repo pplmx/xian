@@ -35,6 +35,7 @@ const ROUTES = [
   "/titles",
   "/dongfu",
   "/legacy",
+  "/market",
 ];
 
 const browser = await chromium.launch({

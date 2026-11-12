@@ -813,3 +813,23 @@
     }
   }
 }
+
+/*
+ * 坊市卷首那片天 —— 这一处是人工的市集(见 views/MarketView.vue 的 #backdrop 注释)。
+ *
+ * backdrop 槽在页首容器最底层,故 `absolute` 贴底、不占布局:卷首读数不动。
+ *
+ * 高度走 `--ink-scene-h` —— 这一层同时就是 `.ink-scene` 本身,直接写 height 会被
+ * 组件内那条 `height: var(--ink-scene-h, 100%)` 盖过(器评帖那一轮踩过)。
+ *
+ * 墨取 0.18:与人物 / 行囊 / 天界 / 洞府 / 三生录五处卷首同一档 ——
+ * 卷首那一格压着 11px 读数,墨浓了像素门会红(人物页那一轮实测 0.34 → 4.42:1)。
+ */
+.market-masthead__scene {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  --ink-scene-h: 3.8rem;
+  --ink-scene-ink: 0.18;
+  pointer-events: none;
+}

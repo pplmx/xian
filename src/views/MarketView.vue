@@ -53,6 +53,8 @@ import { marketEquipView, type MarketEquipView } from "@/ui/marketShelf";
 import QualitySeal from "@/components/common/QualitySeal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfVolume } from "@/ui/sceneTerrain";
 import LedgerPulse from "@/components/common/LedgerPulse.vue";
 import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
@@ -532,6 +534,23 @@ function bountyReady(o: BountySlot): boolean {
       back-label="返回"
       featured
     >
+      <!--
+        坊市的底 —— 这一处是**人工的市集**,不是山野。
+
+        复用玄枢图五卷那条 `sceneTerrainOfVolume("belongings")`(宫阙):
+        「身外」那一卷讲「器、药、魂与藏珍」,而坊市正是这三样进出的地方 ——
+        两处同一片天,才读得出「这一卷的东西在这里买卖」。
+
+        落法是 backdrop 槽(最底层、不占布局),卷首读数一个字都不动。
+        点景只取地面那半:卷首压着货架读数与刷新倒计时。
+      -->
+      <template #backdrop>
+        <InkScene
+          class="market-masthead__scene"
+          :terrain="sceneTerrainOfVolume('belongings')"
+          marks="ground"
+        />
+      </template>
       <template #visual>
         <MarketArcade
           :goods="marketPulse.availableGoods"

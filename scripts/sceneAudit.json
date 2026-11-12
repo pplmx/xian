@@ -53,5 +53,10 @@
     "route": "/legacy",
     "scenes": 1,
     "terrains": ["void"]
+  },
+  {
+    "route": "/market",
+    "scenes": 1,
+    "terrains": ["palace"]
   }
 ]
