@@ -312,6 +312,23 @@
       @close="soulDetail = null"
     >
       <template v-if="soulDetail">
+        <!--
+          这一枚是什么样的魂 —— 与三席上那一层读**同一个字段、同一张表**
+          (`sceneTerrainOfSoul(soulDetail.type)`)。
+
+          上一轮只补了三席,于是出现一种别扭:席上看得见「这一席是什么魂」,
+          点进去看详情反而看不见了 —— 而详情里本来就只剩一枚 24px 印章字。
+          器魂是从别的器物上剥下来的,它唯一的身世就是那点形意,该画出来。
+
+          落法是弹窗内容区里的一层背景(绝对定位、不接指针):这一窗是印章字、
+          形意来历与词条账。点景只取地面那半 —— 印章字与阶名压在上半。
+        -->
+        <InkScene
+          class="soul-detail__scene"
+          :terrain="sceneTerrainOfSoul(soulDetail.type)"
+          marks="ground"
+          aria-hidden="true"
+        />
         <div class="flex items-center gap-3">
           <span
             class="grid h-12 w-12 shrink-0 place-items-center rounded-[2px] font-kai text-[24px]"

@@ -558,6 +558,7 @@ const CATEGORIES = [
       "regionIdentityScene",
       "regionSpread",
       "soulScene",
+      "soulDetailScene",
       "sceneDispatcherSpread",
       "sceneMarks",
       "sceneAccentSize",

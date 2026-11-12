@@ -687,3 +687,23 @@
   position: relative;
   z-index: 1;
 }
+
+/*
+ * 器魂详情里那片地 —— 这一枚是什么样的魂(见 views/SoulsView.vue 的详情弹窗)。
+ *
+ * 与三席上那层同表同档:两处读的是同一个 `type`,画就该是同一片地。
+ *
+ * 钉在弹窗内容区(那一层是 `relative`),脱离流、不接指针:
+ * 这一窗是印章字、形意来历与词条账。高度走 `--ink-scene-h`,
+ * 因为这一层同时就是 `.ink-scene` 本身,直接写 height 会被组件内那条盖过。
+ *
+ * 墨取 0.7 —— 与三席同档(低于这个档,60px 高的一格里山骨与点景看不出来)。
+ */
+.soul-detail__scene {
+  --ink-scene-h: 100%;
+  --ink-scene-ink: 0.7;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
