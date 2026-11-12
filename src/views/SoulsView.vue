@@ -311,6 +311,24 @@
       :title="soulDetail ? soulLabel(soulDetail) : ''"
       @close="soulDetail = null"
     >
+      <!--
+        这一枚是什么样的魂 —— 挂在**面板**上(`#backdrop` 插槽),不进滚动流。
+
+        与三席上那一层读同一个字段、同一张表(`sceneTerrainOfSoul`):
+        席上看得见「这一席是什么魂」,点进去也该看得见。
+
+        为什么走插槽而不是内容区:内容区(`.scroll-pane`)会滚,画放进去靠
+        `absolute; inset: 0` 解到它上面 —— 内容一变长(远征准备那次 998px vs 526px)
+        就撑满整段内容并跟着滚。插槽挂在面板上,只覆盖可视区。
+      -->
+      <template #backdrop>
+        <InkScene
+          class="soul-detail__scene"
+          :terrain="sceneTerrainOfSoul(soulDetail?.type)"
+          marks="ground"
+          aria-hidden="true"
+        />
+      </template>
       <template v-if="soulDetail">
         <!--
           这一枚是什么样的魂 —— 与三席上那一层读**同一个字段、同一张表**
@@ -323,12 +341,7 @@
           落法是弹窗内容区里的一层背景(绝对定位、不接指针):这一窗是印章字、
           形意来历与词条账。点景只取地面那半 —— 印章字与阶名压在上半。
         -->
-        <InkScene
-          class="soul-detail__scene"
-          :terrain="sceneTerrainOfSoul(soulDetail.type)"
-          marks="ground"
-          aria-hidden="true"
-        />
+
         <div class="flex items-center gap-3">
           <span
             class="grid h-12 w-12 shrink-0 place-items-center rounded-[2px] font-kai text-[24px]"

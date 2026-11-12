@@ -42,6 +42,34 @@ describe("弹窗里的画要站得住", () => {
     expect(gone, "名单里记着的画已经不在源码里 —— 名单过期了").toEqual([]);
   });
 
+  it("已加画的弹窗都要走 `#backdrop` 插槽 —— 内容区那条路会随内容滚", () => {
+    /*
+     * 三处弹窗(器魂详情、道途确认、藏珍详情)原先把画放在**默认插槽**(内容区)里,
+     * 靠 `absolute; inset: 0` 解到 `.scroll-pane` 上。眼下内容都不溢出,
+     * 所以量不出问题 —— 但那是**碰巧**:同一个写法在远征准备那扇弹窗里
+     * (内容 998px vs 可视区 526px)立刻露馅,画撑满整段内容并跟着滚。
+     *
+     * 判据要钉的不是「今天没坏」,是「别走那条会坏的路」。
+     */
+    const offenders: string[] = [];
+    for (const { cls, file } of MODAL_SCENES) {
+      const src = readSource(file);
+      /*
+       * 从 `class="..."` 往回找最近的 `<BaseModal` 与 `<template #backdrop>`:
+       * 若在两者之间**没有** `#backdrop`,说明这处画落在默认插槽里。
+       */
+      const at = src.indexOf(cls);
+      if (at < 0) continue;
+      const before = src.slice(Math.max(0, at - 1200), at);
+      const modalAt = before.lastIndexOf("<BaseModal");
+      const slotAt = before.lastIndexOf("<template #backdrop>");
+      if (modalAt >= 0 && slotAt < modalAt) {
+        offenders.push(`${cls}(${file.split("/").pop()})`);
+      }
+    }
+    expect(offenders, "这些画还在内容区里 —— 内容一变长就会跟着滚(远征准备那次实测)").toEqual([]);
+  });
+
   it("`#backdrop` 插槽在面板层,不在滚动流里", () => {
     /*
      * 这个插槽是这一轮留下的基础设施:`.modal-backdrop` 必须是面板的**直接子级**

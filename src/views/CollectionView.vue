@@ -483,6 +483,18 @@
 
     <!-- 图鉴详情 -->
     <BaseModal :open="detail !== null" :title="detail?.entry.name ?? ''" @close="detail = null">
+      <!--
+        这一件属于哪一柜 —— 挂在**面板**上(`#backdrop` 插槽),不进滚动流。
+        读 `detail.catKey`,与九柜页柜屉那层同一张表(`sceneTerrainOfCollection`)。
+      -->
+      <template #backdrop>
+        <InkScene
+          class="collection-detail__scene"
+          :terrain="sceneTerrainOfCollection(detail?.catKey)"
+          marks="ground"
+          aria-hidden="true"
+        />
+      </template>
       <div v-if="detail" class="collection-detail">
         <!--
           这一件属于哪一柜 —— 读 `detail.catKey`,与九柜页柜屉那层**同一张表**
@@ -496,12 +508,7 @@
           落法是弹窗内容区里的一层背景:绝对定位、不接指针,点景只取地面那半
           (图标、类名与品评压在上半)。
         -->
-        <InkScene
-          class="collection-detail__scene"
-          :terrain="sceneTerrainOfCollection(detail.catKey)"
-          marks="ground"
-          aria-hidden="true"
-        />
+
         <div
           v-if="detail.entry.icon"
           class="mb-3 grid h-12 w-12 place-items-center rounded-[2px] bg-ink/5"

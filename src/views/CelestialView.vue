@@ -310,6 +310,18 @@
 
     <!-- 道途选择确认:一世只此一次,点了就锁到转世 -->
     <BaseModal :open="pendingDao !== undefined" title="定下道途" @close="pendingDaoId = null">
+      <!--
+        这一条道途长什么样 —— 挂在**面板**上(`#backdrop` 插槽),不进滚动流。
+        读 `pendingDao.id`,与道途列表、玄枢图同一张表(`sceneTerrainOfDao`)。
+      -->
+      <template #backdrop>
+        <InkScene
+          class="dao-confirm__scene"
+          :terrain="sceneTerrainOfDao(pendingDao?.id)"
+          marks="ground"
+          aria-hidden="true"
+        />
+      </template>
       <template v-if="pendingDao">
         <!--
           这一条道途长什么样 —— 读 `pendingDao.id`,与道途选择列表、玄枢图**同一张表**
@@ -320,12 +332,7 @@
           看不见」是同一个形状。落法是弹窗内容区里的一层背景:绝对定位、不接指针,
           点景只取地面那半(名与 desc 压在上半)。
         -->
-        <InkScene
-          class="dao-confirm__scene"
-          :terrain="sceneTerrainOfDao(pendingDao.id)"
-          marks="ground"
-          aria-hidden="true"
-        />
+
         <p class="font-kai text-title tracking-wider text-ink">{{ pendingDao.name }}</p>
         <p class="mt-1.5 t-body text-ink-soft">{{ pendingDao.desc }}</p>
         <p v-for="(r, i) in pendingDao.ruleText" :key="i" class="mt-0.5 text-body text-qing">
