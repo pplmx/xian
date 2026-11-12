@@ -560,6 +560,7 @@ const CATEGORIES = [
       "soulScene",
       "soulDetailScene",
       "daoConfirmScene",
+      "collectionDetailScene",
       "sceneDispatcherSpread",
       "sceneMarks",
       "sceneAccentSize",

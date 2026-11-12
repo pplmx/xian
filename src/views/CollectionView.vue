@@ -484,6 +484,24 @@
     <!-- 图鉴详情 -->
     <BaseModal :open="detail !== null" :title="detail?.entry.name ?? ''" @close="detail = null">
       <div v-if="detail" class="collection-detail">
+        <!--
+          这一件属于哪一柜 —— 读 `detail.catKey`,与九柜页柜屉那层**同一张表**
+          (`sceneTerrainOfCollection`)。
+
+          柜屉上早就按柜取景、九种地形各一片;而玩家点开**单件藏品**时,
+          弹窗里只剩一枚 24px 图标、类名、品评与描述 —— 一笔画都没有。
+          与器魂(席上看得见、点进详情看不见)、道途确认(列表里看得见、
+          确认那一屏看不见)是同一条通病:同一个身份,前一步画了,后一步没画。
+
+          落法是弹窗内容区里的一层背景:绝对定位、不接指针,点景只取地面那半
+          (图标、类名与品评压在上半)。
+        -->
+        <InkScene
+          class="collection-detail__scene"
+          :terrain="sceneTerrainOfCollection(detail.catKey)"
+          marks="ground"
+          aria-hidden="true"
+        />
         <div
           v-if="detail.entry.icon"
           class="mb-3 grid h-12 w-12 place-items-center rounded-[2px] bg-ink/5"
@@ -564,6 +582,7 @@ import {
 } from "@/ui/collectionDesk";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfCollection } from "@/ui/sceneTerrain";
 import CollectionCabinet from "@/components/common/CollectionCabinet.vue";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import FolioNote from "@/components/common/FolioNote.vue";
@@ -1071,7 +1090,7 @@ function catComplete(cat: CodexCat): boolean {
 // ---- 详情弹窗 ----
 // 脚注各类口径不同(旧七类记收录时日、灵材记照面回数、悟道记所属功法),
 // 故由条目自带 foot,此处不再拼装
-const detail = ref<{ catName: string; entry: CodexEntry } | null>(null);
+const detail = ref<{ catKey: string; catName: string; entry: CodexEntry } | null>(null);
 
 /**
  * 藏珍详情的品评 —— 只在这条目真带品阶时出。
@@ -1086,6 +1105,10 @@ const detailVerdict = computed(() => {
 });
 
 function openDetail(cat: CodexCat, entry: CodexEntry): void {
-  detail.value = { catName: cat.name, entry };
+  /*
+   * 连 `cat.key` 一起存 —— 取景要的是那个键(`sceneTerrainOfCollection`),
+   * 而不是 `catName`。把展示文案当数据用,改一次册名就全落兜底。
+   */
+  detail.value = { catKey: cat.key, catName: cat.name, entry };
 }
 </script>

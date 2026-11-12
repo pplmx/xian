@@ -1036,7 +1036,13 @@ export function sceneTerrainOfSecretRealm(realmId: string | null | undefined): S
  *
  * 认不出落回山岳 —— 九柜总有柜在,没有「无处」这一档。
  */
-const COLLECTION_TERRAIN: Record<string, SceneTerrain> = {
+/**
+ * 九柜 → 地形。
+ *
+ * 导出是为了让判据读**同一张表**:九柜页的柜屉与藏珍详情弹窗都走这张,
+ * 判据若另抄一份键名,改一次柜子就悄悄对不上了。
+ */
+export const COLLECTION_TERRAIN: Record<string, SceneTerrain> = {
   equip: "frost",
   gongfa: "palace",
   branch: "sky",
