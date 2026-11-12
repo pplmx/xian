@@ -1822,3 +1822,32 @@
   --ink-scene-ink: 0.34;
   pointer-events: none;
 }
+
+/*
+ * 灵草坊五行里那片地 —— 这一品草长在哪(见 components/inventory/HerbShopDialog)。
+ *
+ * 脱离流、钉在那一行内:那行是品名、持有、单价与买 1 / 买 10 两个按钮,
+ * 画占布局会把它们挤走。行本身要 `position: relative` 才承得住它。
+ *
+ * 高度走 `--ink-scene-h`:这一层同时就是 `.ink-scene` 本身,直接写 height 会被
+ * 组件内那条 `height: var(--ink-scene-h, 100%)` 盖过(器评帖那一轮踩过)。
+ *
+ * 点景只取地面那半(组件上 `marks="ground"`);墨取 0.22 ——
+ * 行里那几段数字是玩家判断「买哪一品」的依据,画只做底。
+ */
+.herb-shop-row {
+  position: relative;
+  isolation: isolate;
+}
+.herb-shop__scene {
+  --ink-scene-h: 100%;
+  --ink-scene-ink: 0.22;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.herb-shop-row > :not(.herb-shop__scene) {
+  position: relative;
+  z-index: 1;
+}

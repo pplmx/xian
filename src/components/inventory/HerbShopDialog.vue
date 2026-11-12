@@ -6,7 +6,28 @@
       >——高一品贵十倍;每品的持有、单价与落处都摊在下面,闲石多时再图一炉高品。
     </p>
     <div class="divide-y divide-ink/10 border-y border-ink/10" data-herb-shop-ledger>
-      <div v-for="row in marketRows" :key="row.grade" :data-herb-shop-row="row.grade" class="py-3">
+      <div
+        v-for="row in marketRows"
+        :key="row.grade"
+        :data-herb-shop-row="row.grade"
+        class="herb-shop-row py-3"
+      >
+        <!--
+          这一品草长在哪片地上 —— 按 `row.grade` 取景。
+
+          **直接复用开炉炼丹那条** `sceneTerrainOfHerbGrade`(五品各对应一段境界带)。
+          同一味草在「炼丹」与「买草」两处必须长在同一片地上 —— 两处各立一张表,
+          同一个品阶会在两个窗里长出两片天。
+
+          落法是行内背景(绝对定位、不接指针):那行是品名、持有、单价与两个按钮,
+          画占布局会把它们挤走。点景只取地面那半 —— 行内正文压在上半。
+        -->
+        <InkScene
+          class="herb-shop__scene"
+          :terrain="sceneTerrainOfHerbGrade(row.grade)"
+          marks="ground"
+          aria-hidden="true"
+        />
         <div
           class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 tinylens:grid-cols-1 tinylens:gap-y-2"
         >
@@ -82,6 +103,8 @@
 
 <script setup lang="ts">
 import BaseModal from "@/components/common/BaseModal.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfHerbGrade } from "@/ui/sceneTerrain";
 import { formatGN } from "@/utils/format";
 import { useHerbShop } from "@/composables/useHerbShop";
 
