@@ -1206,3 +1206,45 @@ const SOUL_TERRAIN: Record<string, SceneTerrain> = {
 export function sceneTerrainOfSoul(soulType: string | null | undefined): SceneTerrain {
   return (soulType && SOUL_TERRAIN[soulType]) || "peaks";
 }
+
+/**
+ * 少数地界按**它自己是什么**取景,压过通用图标。
+ *
+ * 图标是通用符号(`mountain` / `gem`),一个图标要服务好几处地界,于是
+ * 五处不同的地方此前走成了同一片山 —— 而它们的 `desc` 里各自写着是什么地方,
+ * 那是这一处自己的身份,比通用图标近一层:
+ *
+ *   kunlun       「万古冰封的圣山」                → 雪原
+ *   jinyuan      「一渊金气沉如渊海」              → 江海
+ *   wanshendian  「一万尊神像并列成堂」            → 宫阙
+ *   wudaoya      「混沌道祖曾在这面崖下坐了三万年」 → 虚空
+ *   qingyun      「云雾缭绕的山麓」                → 山岳(与图标同,显式在册是为了让这一格有据可查)
+ *
+ * 只收这五处 —— 别的地界的图标本来就够用。往这张表里加之前先问:
+ * 「它的描述里是不是写着一个图标说不出、而画得出的所在?」
+ */
+export const REGION_TERRAIN_OVERRIDE: Record<string, SceneTerrain> = {
+  kunlun: "frost",
+  jinyuan: "water",
+  wanshendian: "palace",
+  wudaoya: "void",
+  qingyun: "peaks",
+};
+
+/**
+ * 一处地界长什么样 —— 先认它自己(见 `REGION_TERRAIN_OVERRIDE`),认不出再退回图标与标签。
+ *
+ * 不是 `find` 一把 `REGIONS`:这份文件是纯数据、不引 `data/regions`
+ * (那会让模块图绕成一个圈)。调用方把这一处自己的 `icon` 与 `tags` 交进来,
+ * 这里只负责「先看它自己」这一道判断。
+ */
+export function sceneTerrainOfRegion(place: {
+  regionId?: string | null;
+  icon?: string | null;
+  tags?: readonly string[] | null;
+  worldId?: string | null;
+}): SceneTerrain {
+  const own = place.regionId ? REGION_TERRAIN_OVERRIDE[place.regionId] : undefined;
+  if (own) return own;
+  return sceneTerrainOfPlace(place);
+}

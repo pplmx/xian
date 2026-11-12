@@ -31,7 +31,7 @@
             <InkScene
               class="adventure-masthead__scene"
               :world-id="player.world.id"
-              :icon="sceneIcon"
+              :terrain="sceneTerrain"
               :marks="false"
             />
           </template>
@@ -908,6 +908,7 @@ import { petDef } from "@/data/pets";
 import { personalityEffects } from "@/core/petPersonality";
 import { useUiStore } from "@/stores/ui";
 import { REGIONS, regionDef, DANGER_NAMES } from "@/data/regions";
+import { sceneTerrainOfRegion } from "@/ui/sceneTerrain";
 import { worldOf, type WorldDef } from "@/data/realms";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import AdventureCompass from "@/components/adventure/AdventureCompass.vue";
@@ -974,12 +975,30 @@ const player = usePlayerStore();
  * 为什么不是「当前选中的地界」:历练页的默认视口是**列表**(还没选),而这一页
  * 玩家停留时看得最多的就是列表。用「本世第一段」当默认,与地界志、行旅图同一口径。
  */
-const sceneIcon = computed(() => {
-  const active = adventure.currentRegion?.icon;
+const activeRegionId = computed(() => {
+  const active = adventure.currentRegion?.id;
   if (active) return active;
-  const first = worldOverview.value?.places[0];
-  return first ? (regionDef(first.regionId)?.icon ?? "mountain") : "mountain";
+  return worldOverview.value?.places[0]?.regionId ?? null;
 });
+const activeRegionDef = computed(() => {
+  const id = activeRegionId.value;
+  return id ? regionDef(id) : undefined;
+});
+/**
+ * 卷首那片天的取景 —— 按**这一处地界自己是什么**(`sceneTerrainOfRegion`),
+ * 而不是只按它的图标。
+ *
+ * 图标是通用符号,一个图标要服务好几处地界,于是「昆仑雪岭」(万古冰封的圣山)与
+ * 「青云山麓」此前走成了同一片山 —— 而前者明明是雪原。
+ * 取景表见 `ui/sceneTerrain` 的 `REGION_TERRAIN_OVERRIDE`。
+ */
+const sceneTerrain = computed(() =>
+  sceneTerrainOfRegion({
+    regionId: activeRegionId.value,
+    icon: activeRegionDef.value?.icon,
+    worldId: player.world.id,
+  }),
+);
 const inventory = useInventoryStore();
 const settings = useSettingsStore();
 

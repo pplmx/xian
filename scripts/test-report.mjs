@@ -555,6 +555,7 @@ const CATEGORIES = [
       "atlasScene",
       "sceneDistinct",
       "regionIconScene",
+      "regionIdentityScene",
       "soulScene",
       "sceneDispatcherSpread",
       "sceneMarks",
