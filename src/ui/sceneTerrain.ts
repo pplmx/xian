@@ -407,7 +407,18 @@ const WORLD_TERRAIN: Record<string, SceneTerrain> = {
  */
 const ICON_TERRAIN: Record<string, SceneTerrain> = {
   mountain: "peaks",
-  sunset: "peaks",
+  /*
+   * 落日归**火域**而非山岳。原先 `mountain` / `sunset` / `gem` 三个图标全落山岳,
+   * 于是玩家从「青云山麓」走到「落霞谷」,头顶那片天一点没变 ——
+   * 而这两处一个讲山骨、一个讲霞光,是意象上最该分开的一对。
+   * 霞是暖的,火域那一道外撇的峰头正好接得住。
+   */
+  sunset: "flame",
+  /*
+   * 矿脉留在山岳 —— 它本来就是「从山里凿出来」。一度挪去遗迹想给山岳松一格,
+   * 结果把遗迹挤到五个(sword/skull/gem/scroll/shield),更糟;山岳这边
+   * 只有 mountain 一个,加回 gem 正好两个。
+   */
   gem: "peaks",
   trees: "forest",
   leaf: "forest",
