@@ -49,6 +49,7 @@ const ROUTES = [
   { path: "/titles", stable: true },
   { path: "/dongfu", stable: true },
   { path: "/legacy", stable: true },
+  { path: "/codex", stable: true },
   { path: "/market", stable: true },
   { path: "/apprentice", stable: true },
 ];

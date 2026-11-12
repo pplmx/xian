@@ -16,14 +16,14 @@
   {
     "route": "/world",
     "scenes": 2,
-    "terrains": ["peaks"],
+    "terrains": ["ruin"],
     "minH": 96,
     "stable": false
   },
   {
     "route": "/adventure",
     "scenes": 1,
-    "terrains": ["peaks"],
+    "terrains": ["ruin"],
     "minH": 54,
     "stable": false
   },
@@ -74,6 +74,13 @@
     "scenes": 1,
     "terrains": ["void"],
     "minH": 61,
+    "stable": true
+  },
+  {
+    "route": "/codex",
+    "scenes": 1,
+    "terrains": ["void"],
+    "minH": 26,
     "stable": true
   },
   {
