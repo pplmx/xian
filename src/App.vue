@@ -85,6 +85,19 @@
       <template v-else>已在另一处打开 · 本页只读,进度不会保存</template>
     </div>
 
+    <!--
+      纸纹独立成一层 —— 它**不随内容滚动**。
+
+      此前那四层渐变(其中一条 `repeating-radial-gradient` 是同心圆条纹)
+      直接挂在下面的滚动容器上,又配了 `background-attachment: local`:
+      每一次滚动位移都要求浏览器把四层渐变重画一遍。实测(CPU 降 10 倍、真触摸手势)
+      把 `background-image` 摘掉后,滚动那一段的 TaskDuration 从 0.373s 降到 0.277s
+      —— 四分之一的开销只为一层纸纹。
+
+      挪到这里之后,纸纹只画一次;滚动容器自己只留纯色底。
+    -->
+    <div class="folio-surface__grain" aria-hidden="true" />
+
     <main
       ref="scrollHost"
       id="folio-main"

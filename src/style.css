@@ -1115,7 +1115,28 @@
       width: 100%;
     }
   }
+  /*
+   * 滚动容器只留**纯色**底。
+   *
+   * 四层渐变与 `background-attachment: local` 挪去了 `.folio-surface__grain`
+   * (见上一条的注释):那四层挂在滚动容器上时,每滚一帧都要重画一遍。
+   */
   .folio-surface {
+    background-color: var(--color-paper);
+  }
+  /*
+   * 纸纹 —— **独立一层,不随内容滚动**。
+   *
+   * `fixed` 而不是 `absolute`:滚动容器自己有 `overflow-y-auto`,若把这一层放进去,
+   * 它就跟着内容动(等于没挪)。`fixed` 让它钉在视口上,只画一次。
+   *
+   * `pointer-events: none` 与 `z-index: 0`:它在正文(`z-10`)之下,只做底。
+   */
+  .folio-surface__grain {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
     background-color: var(--color-paper);
     background-image:
       radial-gradient(circle at 16% 4%, rgb(var(--color-qing-rgb) / 0.055), transparent 21rem),
@@ -1132,7 +1153,6 @@
         transparent 95%,
         rgb(var(--color-ink-rgb) / 0.025)
       );
-    background-attachment: local;
   }
   .atlas-trigger {
     border-radius: 0;

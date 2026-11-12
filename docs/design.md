@@ -1589,6 +1589,18 @@ store、不 import core,只认传进来的字符串),九个地形各给两条山
   (`kind` 为空),这一层整块不出:一世几十次的小推进是节拍器,每次都配一张劫相
   会让节拍器看起来像里程碑。这一窗在 `Teleport to="body"` 里,`.app-shell` 的
   `--world-mountain` 继承不过去,故它自己兜一档松烟墨;
+- 滚动容器不许挂「每帧都要重画」的背景 —— `.folio-surface` 是全站唯一的滚动容器,
+  它此前同时挂着四层渐变(含一条 `repeating-radial-gradient` 同心圆条纹)与
+  `background-attachment: local`(让背景跟着内容滚)。两者合起来,每一次滚动位移
+  都要求浏览器把四层渐变重画一遍。实测(CPU 降 10 倍、真触摸手势):把
+  `background-image` 摘掉后,滚动那一段的 TaskDuration 从 0.373s 降到 0.277s ——
+  四分之一的开销只为一层纸纹。修法是把纸纹抽成独立的 `.folio-surface__grain`
+  (`position: fixed`,只画一次),滚动容器自己只留纯色底。
+  判据 `ui/scrollSurfacePaint` 五条:滚动容器上不许有 `background-attachment: local`、
+  不许挂同心圆条纹、纸纹必须挪到独立层且真的挂进外壳(不许直接删掉 —— 它是界面底子)。
+  另测过「给滚动容器内的 SVG 加 `contain: strict` / `will-change`」:三种模式
+  (基准 / 加提示 / 整个隐藏)的 TaskDuration 是 0.283 / 0.289 / 0.294 —— 没有差别,
+  故画面层不是这处卡顿的来源,没有做画蛇添足的改动;
 - 上一轮只修了卷首,**其余十处场景同样淡到看不见** —— 把全表按
   `--ink-scene-ink × 0.16` 排一遍才发现:天道熔炉的行内画 0.038、灵草坊 0.035、
   分解行 0.042、玄枢图五卷 0.048、试炼档案 0.051、藏珍柜屉 0.054、战局 0.054、
