@@ -554,6 +554,7 @@ const CATEGORIES = [
       "atlasScene",
       "sceneDistinct",
       "sceneMarks",
+      "sceneClearance",
       "resetShowsLoss",
       "openingStepCount",
       "openingGift",

@@ -271,9 +271,14 @@ const SHAPES: Record<SceneTerrain, SceneShape> = {
     far: "M0 160 L36 116 L96 116 C112 116 120 92 148 92 L196 92 C210 92 214 74 238 74 L296 74 C310 74 314 96 340 96 L392 96 L420 104 L420 160 Z",
     near: "M0 160 L420 160 L420 152 C356 147 296 155 236 151 C176 147 116 156 56 152 C38 151 18 153 0 154 Z",
     accents: accents([
-      { kind: "pagoda", x: 118, y: 128, scale: 1.5 },
-      { kind: "pagoda", x: 214, y: 118, scale: 1.1 },
-      { kind: "pagoda", x: 306, y: 130, scale: 1.7 },
+      /*
+       * 塔脚压到画幅最下缘(y 138~150)。原本立在 118~130,在**窄画框**里
+       * (九柜藏珍那一格只有 119px 宽,画被压到 118×45)塔顶正好顶到文字行的下沿
+       * —— 实测差 1~2px。塔本来该立在地上,而不是悬在半坡。
+       */
+      { kind: "pagoda", x: 118, y: 148, scale: 1.5 },
+      { kind: "pagoda", x: 214, y: 140, scale: 1.1 },
+      { kind: "pagoda", x: 306, y: 150, scale: 1.7 },
       { kind: "cloud", x: 70, y: 62, scale: 1.6 },
       { kind: "cloud", x: 350, y: 50, scale: 1.3 },
     ]),

@@ -1115,10 +1115,20 @@
   isolation: isolate;
 }
 .collection-cabinet__scene {
-  --ink-scene-h: 100%;
+  /*
+   * 画只占抽屉**下半**。
+   *
+   * 原先是 `inset: 0`(铺满整只屉)——上一轮把点景换成中间档之后,「功」那一格
+   * 三座塔的顶正好顶到「余 91」的下沿(实测塔顶 y=484~485,那行字下沿 y=486,
+   * 相差 1~2px)。1px 的运气不算净空:字与画之间得有看得出来的余量。
+   *
+   * 故高度收到 `62%`,贴下缘:文字行落在画之上,画落在抽屉底部那片留白里。
+   */
+  --ink-scene-h: 62%;
   --ink-scene-ink: 0.34;
   position: absolute;
-  inset: 0;
+  inset-inline: 0;
+  bottom: 0;
   overflow: hidden;
   pointer-events: none;
 }
