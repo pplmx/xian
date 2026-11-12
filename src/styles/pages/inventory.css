@@ -1819,7 +1819,7 @@
   inset-inline: 0;
   bottom: 0;
   --ink-scene-h: 3.8rem;
-  --ink-scene-ink: 0.34;
+  --ink-scene-ink: 0.45;
   pointer-events: none;
 }
 

@@ -556,6 +556,7 @@ const CATEGORIES = [
       "sceneDispatcherSpread",
       "sceneMarks",
       "sceneAccentSize",
+      "sceneInkFloor",
       "modalWorldInherit",
       "sceneAuditStable",
       "sceneClearance",

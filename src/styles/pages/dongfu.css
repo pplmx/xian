@@ -892,6 +892,6 @@
   inset-inline: 0;
   bottom: 0;
   --ink-scene-h: 3.8rem;
-  --ink-scene-ink: 0.18;
+  --ink-scene-ink: 0.55;
   pointer-events: none;
 }

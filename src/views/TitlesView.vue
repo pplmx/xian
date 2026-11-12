@@ -17,7 +17,7 @@
           class="titles-masthead__scene"
           terrain="forest"
           :world-id="player.world.id"
-          :marks="false"
+          marks="ground"
         />
       </template>
     </FolioPageHeader>
