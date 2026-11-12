@@ -656,3 +656,34 @@
     }
   }
 }
+
+/*
+ * 器魂每一席里那片地 —— 这一席装着什么样的魂(见 views/SoulsView.vue)。
+ *
+ * 脱离流、钉在那一席内:席上还有印章字、名与按钮,画占布局会把它们挤走。
+ * 席本身要 `position: relative` 才承得住它。
+ *
+ * 高度走 `--ink-scene-h`:这一层同时就是 `.ink-scene` 本身,直接写 height 会被
+ * 组件内那条 `height: var(--ink-scene-h, 100%)` 盖过(器评帖那一轮踩过)。
+ *
+ * 点景只取地面那半(组件上 `marks="ground"`);墨取 0.7 ——
+ * 印章字与名是玩家判断「这一席装的是什么」的依据,画只做底。
+ * 0.7 是实测过的档:低于它山骨与点景在 60px 高的席里看不出来(见 docs/design.md
+ * 关于「两层浓淡闸相乘」那一节)。
+ */
+.soul-seat {
+  position: relative;
+  isolation: isolate;
+}
+.soul-seat__scene {
+  --ink-scene-h: 100%;
+  --ink-scene-ink: 0.7;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.soul-seat > :not(.soul-seat__scene) {
+  position: relative;
+  z-index: 1;
+}

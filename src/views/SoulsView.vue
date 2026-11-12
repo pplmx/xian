@@ -96,7 +96,25 @@
               :data-soul-seat-index="i"
             >
               <span class="soul-seat__ordinal" aria-hidden="true">{{ seatOrdinal(i) }}席</span>
+              <!--
+                这一席装着什么样的魂 —— 按 `soulAt(i).type` 取景。
+
+                `src/data/souls.ts` 的六种类型各写着它是什么形状的魂(锋=一往无前的锐、
+                盾=罡气的形状、棘=把力还回去、连=出手不止一次、泽=不肯断的生机、
+                背=越绝境越亮),而这一席原先只有一枚楷体印章字 ——
+                装「锋魂」还是「泽魂」,玩家只能靠那一个字的笔画去认。
+
+                六魂对六种地形,不共用:同席换一枚魂,画就换一片地。
+                落法是席内背景(绝对定位、不接指针):席上还有印章字、名与按钮。
+                点景只取地面那半 —— 印章字压在上半。
+              -->
               <template v-if="soulAt(i)">
+                <InkScene
+                  class="soul-seat__scene"
+                  :terrain="sceneTerrainOfSoul(soulAt(i)!.type)"
+                  marks="ground"
+                  aria-hidden="true"
+                />
                 <button
                   class="soul-seat__detail active:scale-95"
                   :aria-label="detailLabel(soulAt(i)!)"
@@ -570,6 +588,8 @@
 
 <script setup lang="ts">
 import "@/styles/pages/souls.css";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfSoul } from "@/ui/sceneTerrain";
 import { focusListRow } from "@/composables/useListFocus";
 import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";

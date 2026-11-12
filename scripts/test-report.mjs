@@ -554,6 +554,7 @@ const CATEGORIES = [
       "scrollSurfacePaint",
       "atlasScene",
       "sceneDistinct",
+      "soulScene",
       "sceneDispatcherSpread",
       "sceneMarks",
       "sceneAccentSize",

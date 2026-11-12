@@ -1166,3 +1166,32 @@ const FURNACE_TERRAIN: Record<string, SceneTerrain> = {
 export function sceneTerrainOfFurnace(resource: string | null | undefined): SceneTerrain {
   return (resource && FURNACE_TERRAIN[resource]) || "peaks";
 }
+
+/**
+ * 六种器魂 → 地形。
+ *
+ * `src/data/souls.ts` 的六种类型各写着它**是什么形状的魂**,按那个意象取景:
+ *
+ *   锋 fengmang —— 「一往无前的那一分锐」  → 雪原(峰最锐,那正是刃的形状)
+ *   盾 gangdun  —— 「罡气的形状」          → 宫阙(层层檐像甲片叠起来)
+ *   棘 fanzhen  —— 「把力还回去」          → 遗迹(断柱与倒刺是同一类形)
+ *   连 lianji   —— 「出手从来不止一次」    → 星野(连珠是星,不是一次日出)
+ *   泽 muze     —— 「存着不肯断的生机」    → 林麓(草泽里长出来的活气)
+ *   背 beishui  —— 「越绝境越亮」          → 火域(绝境里的火)
+ *
+ * 六种正好对上六种地形,不共用 —— 同席换一枚魂,画就该换一片地。
+ * 认不出落回山岳(器之本是山中矿)。
+ */
+const SOUL_TERRAIN: Record<string, SceneTerrain> = {
+  fengmang: "frost",
+  gangdun: "palace",
+  fanzhen: "ruin",
+  lianji: "sky",
+  muze: "forest",
+  beishui: "flame",
+};
+
+/** 一枚器魂长什么样;认不出的落回山岳 */
+export function sceneTerrainOfSoul(soulType: string | null | undefined): SceneTerrain {
+  return (soulType && SOUL_TERRAIN[soulType]) || "peaks";
+}
