@@ -12,12 +12,12 @@
   {
     "route": "/world",
     "scenes": 2,
-    "terrains": ["peaks"]
+    "terrains": ["forest"]
   },
   {
     "route": "/adventure",
     "scenes": 1,
-    "terrains": ["peaks"]
+    "terrains": ["forest"]
   },
   {
     "route": "/character",
@@ -48,5 +48,10 @@
     "route": "/dongfu",
     "scenes": 1,
     "terrains": ["peaks"]
+  },
+  {
+    "route": "/legacy",
+    "scenes": 1,
+    "terrains": ["void"]
   }
 ]

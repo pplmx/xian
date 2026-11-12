@@ -41,6 +41,7 @@ const MUST_HAVE_BACKDROP = [
   "src/views/MortalWorldView.vue",
   "src/views/TitlesView.vue",
   "src/views/DongfuView.vue",
+  "src/views/LegacyView.vue",
 ] as const;
 
 describe("卷首山水景的覆盖面", () => {

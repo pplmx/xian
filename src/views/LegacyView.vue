@@ -15,6 +15,24 @@
           <span>宿慧 {{ insight }}</span>
         </p>
       </template>
+      <!--
+        三生录的底 —— 按**跨世**取景,复用玄枢图五卷那条 `sceneTerrainOfVolume("fate")`
+        (虚空:天机那一卷「跨世的道途与选择」)。
+
+        这一页讲的是「一世一笔」,而一世之内的山野在上一世已经放下了 —— 故取
+        界外那一片,而不是任何一处具体地界。与玄枢图「天机」卷签同一片天,
+        两处长得一样才算同一条道途。
+
+        落法是 backdrop 槽(最底层、不占布局),卷首那几行读数一个字都不动。
+        点景只取地面那半:卷首压着「第 N 世 / 宿慧 N」那一行。
+      -->
+      <template #backdrop>
+        <InkScene
+          class="legacy-masthead__scene"
+          :terrain="sceneTerrainOfVolume('fate')"
+          marks="ground"
+        />
+      </template>
       <template #visual>
         <LegacyWheel
           :life="currentLife"
@@ -972,6 +990,8 @@
 
 <script setup lang="ts">
 import "@/styles/pages/legacy.css";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfVolume } from "@/ui/sceneTerrain";
 import { focusListRow } from "@/composables/useListFocus";
 import { computed, ref } from "vue";
 import { useEndgameStore } from "@/stores/endgame";

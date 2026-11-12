@@ -34,6 +34,7 @@ const ROUTES = [
   "/celestial",
   "/titles",
   "/dongfu",
+  "/legacy",
 ];
 
 const browser = await chromium.launch({
