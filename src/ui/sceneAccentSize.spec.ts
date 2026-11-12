@@ -28,13 +28,15 @@
 import { describe, expect, it } from "vite-plus/test";
 import { SCENE_TERRAINS, STROKE, sceneOf } from "@/ui/sceneTerrain";
 
-/** 一条 SVG 路径的包围盒高度(单位)—— 取全部数字对里的 y 极差 */
-function pathHeight(d: string): number {
+/** 一条 SVG 路径的包围盒(单位)—— 数字成对出现,偶位是 x、奇位是 y */
+function pathBox(d: string): { w: number; h: number } {
   const nums = d.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+  const xs: number[] = [];
   const ys: number[] = [];
-  /* 数字是成对的 x y;弧命令后面也跟一对终点坐标,按同样的读法落进去即可 */
+  for (let i = 0; i < nums.length; i += 2) xs.push(nums[i]!);
   for (let i = 1; i < nums.length; i += 2) ys.push(nums[i]!);
-  return ys.length ? Math.max(...ys) - Math.min(...ys) : 0;
+  if (xs.length === 0 || ys.length === 0) return { w: 0, h: 0 };
+  return { w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };
 }
 
 /** 全站最矮的一档容器(藏珍柜屉的画只有 45px 高) */
@@ -47,7 +49,7 @@ describe("点景在真实显示尺寸下要认得出来", () => {
     const tooSmall: string[] = [];
     for (const terrain of SCENE_TERRAINS) {
       const accents = sceneOf(terrain).accents;
-      const sizes = accents.map((a) => pathHeight(STROKE[a.kind]) * a.scale * k);
+      const sizes = accents.map((a) => pathBox(STROKE[a.kind]).h * a.scale * k);
       const biggest = Math.max(...sizes);
       /*
        * 门槛 6px,不是 4px。4px 是照着「包围盒非空」定的 —— 实测判据在 4px 时全绿,
@@ -61,5 +63,29 @@ describe("点景在真实显示尺寸下要认得出来", () => {
       }
     }
     expect(tooSmall, "这几档在窄格里认不出点景 —— 只剩山骨,等于没画").toEqual([]);
+  });
+
+  it("点景不许拉成一根线 —— 宽与扁两头都要有分寸", () => {
+    /*
+     * 高度够、宽度够,合起来仍可能是一根线:`bird` 是 18×3.4 单位 ——
+     * 宽而极扁,在 45px 的格子里渲染成 5.8×1.1px,读作「一道横线」而不是「两只雀」。
+     *
+     * 这不是说鸟必须画成方块 —— 鸟本来就该扁。钉的是**比例别失控**:
+     * 一枚点景的宽高比超过 6:1 时,它在这一档里已经不是一个可辨的记号了。
+     * (云 28×6 = 4.7:1、水纹 26×6.4 = 4:1 都在限内;鸟 18×3.4 = 5.3:1 也在 ——
+     *  故这条判据眼下应当是绿的,它的价值是**防以后**把某一笔越画越扁。)
+     */
+    const tooFlat: string[] = [];
+    for (const terrain of SCENE_TERRAINS) {
+      for (const a of sceneOf(terrain).accents) {
+        const { w, h } = pathBox(STROKE[a.kind]);
+        if (h === 0) continue;
+        const ratio = w / h;
+        if (ratio > 6) {
+          tooFlat.push(`${terrain} 的 ${a.kind} 宽高比 ${ratio.toFixed(1)}:1(${w}×${h} 单位)`);
+        }
+      }
+    }
+    expect(tooFlat, "这几笔被拉成了线 —— 在窄格里读不出形状").toEqual([]);
   });
 });
