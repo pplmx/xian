@@ -1,6 +1,23 @@
 <template>
   <div class="folio-page folio-page--stack stagger-in">
     <FolioPageHeader title="洞府营造" back-to="home" back-label="返回" featured compact>
+      <!--
+        洞府的底 —— 按**这一座洞府营在哪儿**取景。
+
+        复用洞府七作那条 `sceneTerrainOfBuilding("mansion")`(山岳:依山而居)。
+        不按「已营几座」变,也不按世界变:这一页讲的是**这一处家业**,
+        而不是「此刻人在哪一界」—— 洞府是落脚处,换界之后它仍在那儿。
+
+        落法是 backdrop 槽(最底层、不占布局),卷首那几行读数一个字都不动。
+        点景只取地面那半:卷首压着「已营 N / 7」「离线可攒 N 时」两行。
+      -->
+      <template #backdrop>
+        <InkScene
+          class="dongfu-masthead__scene"
+          :terrain="sceneTerrainOfBuilding('mansion')"
+          marks="ground"
+        />
+      </template>
       <template #meta>
         <p class="dongfu-masthead__meta">
           <span
@@ -335,6 +352,8 @@ import LedgerPulse from "@/components/common/LedgerPulse.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import BuildingLedgerRow from "@/components/dongfu/BuildingLedgerRow.vue";
 import DongfuAtlas from "@/components/dongfu/DongfuAtlas.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfBuilding } from "@/ui/sceneTerrain";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import DongfuGatewayRow from "@/components/dongfu/DongfuGatewayRow.vue";
 import VeinInvestCard from "@/components/dongfu/VeinInvestCard.vue";

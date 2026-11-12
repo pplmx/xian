@@ -37,7 +37,8 @@
     "prepare": "vp config --no-agent",
     "check:all": "bun scripts/clean-dist.mjs && vp fmt --check && bun run check && bun run test && bun run build && bun run check:shuffle",
     "release:check": "bun scripts/release-check.mjs",
-    "verify:release": "bun scripts/verify-release.mjs"
+    "verify:release": "bun scripts/verify-release.mjs",
+    "audit:scenes": "bun scripts/audit-scenes.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",

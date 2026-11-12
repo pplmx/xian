@@ -40,6 +40,7 @@ const MUST_HAVE_BACKDROP = [
   "src/views/CultivationView.vue",
   "src/views/MortalWorldView.vue",
   "src/views/TitlesView.vue",
+  "src/views/DongfuView.vue",
 ] as const;
 
 describe("卷首山水景的覆盖面", () => {
@@ -122,6 +123,25 @@ describe("卷首山水景的覆盖面", () => {
         tooDark.push(`${path} 的卷首墨 ${ink} 偏浓(上限 0.25)`);
     }
     expect(tooDark, "卷首墨太浓会把那几行 11px 读数压到 AA 以下 —— 像素门会红").toEqual([]);
+  });
+
+  it("凡取景的页,卷首那片天都要真接上 —— 不是写在名单里就算", () => {
+    /*
+     * 这一条把「有没有画」的账从源码推进一步:不只查模板里有没有 `<InkScene`,
+     * 还要**在浏览器里量到它**。
+     *
+     * 为什么需要:洞府页的措辞与结构都「像」有画 —— 它有 `DongfuAtlas` 自绘 SVG、
+     * 有 `#visual` 槽,单看源码很容易以为这一屏已经有画了;而实测那一屏
+     * `scenes = 0`(卷首根本没有山水景)。**结构对了不等于画看得见**。
+     *
+     * 判据读的是 `scripts/sceneAudit.json`(由 scripts/audit-scenes.mjs 生成,
+     * 一次真浏览器跑出来的每页可见场数),与 shots / layout-check 同一套口径:
+     * 生成一次、比一次,而不是每次测试都开浏览器。
+     */
+    const audit = readSource("scripts/sceneAudit.json");
+    const rows = JSON.parse(audit) as Array<{ route: string; scenes: number }>;
+    const empty = rows.filter((r) => r.scenes === 0).map((r) => r.route);
+    expect(empty, "这些主页面在真浏览器里一场景都量不到 —— 等于玩家看不到画").toEqual([]);
   });
 
   it("每处卷首景都交代了「为什么是这片天」", () => {

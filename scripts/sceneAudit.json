@@ -1,0 +1,52 @@
+[
+  {
+    "route": "/",
+    "scenes": 1,
+    "terrains": ["void"]
+  },
+  {
+    "route": "/cultivation",
+    "scenes": 1,
+    "terrains": ["void"]
+  },
+  {
+    "route": "/world",
+    "scenes": 2,
+    "terrains": ["peaks"]
+  },
+  {
+    "route": "/adventure",
+    "scenes": 1,
+    "terrains": ["peaks"]
+  },
+  {
+    "route": "/character",
+    "scenes": 1,
+    "terrains": ["frost"]
+  },
+  {
+    "route": "/inventory?tab=equip",
+    "scenes": 1,
+    "terrains": ["frost"]
+  },
+  {
+    "route": "/collection?tab=collection",
+    "scenes": 10,
+    "terrains": ["flame", "forest", "frost", "palace", "peaks", "ruin", "sky", "void", "water"]
+  },
+  {
+    "route": "/celestial",
+    "scenes": 1,
+    "terrains": ["flame"]
+  },
+  {
+    "route": "/titles",
+    "scenes": 1,
+    "terrains": ["forest"]
+  },
+  {
+    "route": "/dongfu",
+    "scenes": 1,
+    "terrains": ["peaks"]
+  }
+]
