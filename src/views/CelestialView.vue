@@ -311,6 +311,21 @@
     <!-- 道途选择确认:一世只此一次,点了就锁到转世 -->
     <BaseModal :open="pendingDao !== undefined" title="定下道途" @close="pendingDaoId = null">
       <template v-if="pendingDao">
+        <!--
+          这一条道途长什么样 —— 读 `pendingDao.id`,与道途选择列表、玄枢图**同一张表**
+          (`sceneTerrainOfDao`)。
+
+          这一屏是此世最后一次能读到这处道途的地方(点下去就锁到转世),而它此前
+          只有名、desc、规则与章法,一笔画都没有 —— 与器魂「席上看得见、点进详情
+          看不见」是同一个形状。落法是弹窗内容区里的一层背景:绝对定位、不接指针,
+          点景只取地面那半(名与 desc 压在上半)。
+        -->
+        <InkScene
+          class="dao-confirm__scene"
+          :terrain="sceneTerrainOfDao(pendingDao.id)"
+          marks="ground"
+          aria-hidden="true"
+        />
         <p class="font-kai text-title tracking-wider text-ink">{{ pendingDao.name }}</p>
         <p class="mt-1.5 t-body text-ink-soft">{{ pendingDao.desc }}</p>
         <p v-for="(r, i) in pendingDao.ruleText" :key="i" class="mt-0.5 text-body text-qing">
@@ -399,7 +414,7 @@ import { purityAxes, purityAxesSummary } from "@/ui/swordPurityAxes";
 import { formatNum, formatPercent } from "@/utils/format";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import InkScene from "@/components/common/InkScene.vue";
-import { sceneTerrainOfCelestial } from "@/ui/sceneTerrain";
+import { sceneTerrainOfCelestial, sceneTerrainOfDao } from "@/ui/sceneTerrain";
 import LedgerPulse from "@/components/common/LedgerPulse.vue";
 import LedgerTally from "@/components/common/LedgerTally.vue";
 import UnopenedFolio from "@/components/common/UnopenedFolio.vue";

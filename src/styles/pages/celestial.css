@@ -1937,3 +1937,25 @@
   position: relative;
   z-index: 1;
 }
+
+/*
+ * 定下道途 · 确认弹窗里那片地 —— 这一条道途长什么样
+ * (见 views/CelestialView.vue 的 `#backdrop` 注释)。
+ *
+ * 与道途选择列表、玄枢图同表同档:三处读的是同一个 `id`,画就该是同一片地。
+ *
+ * 钉在弹窗内容区(那一层是 `relative`),脱离流、不接指针:这一窗是名、desc、
+ * 规则、章法与两个按钮。高度走 `--ink-scene-h` —— 这一层同时就是 `.ink-scene`
+ * 本身,直接写 height 会被组件内那条盖过(器评帖那一轮踩过)。
+ *
+ * 墨取 0.7 —— 与器魂详情同档(低于这个档,一格里山骨与点景看不出来)。
+ * 山色不自己兜:`BaseModal` 的面板带 `data-world`(第 41 轮),弹窗继承世界色。
+ */
+.dao-confirm__scene {
+  --ink-scene-h: 100%;
+  --ink-scene-ink: 0.7;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
