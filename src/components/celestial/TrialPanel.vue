@@ -74,14 +74,16 @@
         hint="规则随机,每探一次天机便换一副面孔"
         :fact="mutationDraw.length ? `已窥 ${mutationRows.length} 条` : '待窥'"
       />
+      <!--
+        「应 战」与「再探」排在变数清单**之前**。
+
+        变数文案长短不一(「天时紧迫」7 字、「药石无灵」21 字),而清单是三条
+        各自换行的行账 —— 195 CSS px 下「应 战」原先随文案长短在 1178~1209px
+        之间上下挪 31px,玩家每探一次天机就得重新找按钮。动作只依赖「这条变数
+        要花多少」(mutationDaoShort),不依赖那三条写多长,故它排在清单前面。
+        清单本身不丢:它在下方照旧逐条摊开,只是不再夹在玩家和按钮中间。
+      -->
       <div v-if="mutationDraw.length" class="celestial-trial-mutation">
-        <div class="celestial-trial-mutation__rows">
-          <p v-for="m in mutationRows" :key="m!.id" class="celestial-trial-omen">
-            <span aria-hidden="true">◇</span>
-            <span>{{ m!.name }}</span>
-            <span class="celestial-trial-omen__text">{{ m!.text }}</span>
-          </p>
-        </div>
         <div class="celestial-trial-actions">
           <button
             class="celestial-trial-action celestial-trial-action--primary"
@@ -96,6 +98,13 @@
           <button class="celestial-trial-action" @click="mutationDraw = rollMutators()">
             再探
           </button>
+        </div>
+        <div class="celestial-trial-mutation__rows">
+          <p v-for="m in mutationRows" :key="m!.id" class="celestial-trial-omen">
+            <span aria-hidden="true">◇</span>
+            <span>{{ m!.name }}</span>
+            <span class="celestial-trial-omen__text">{{ m!.text }}</span>
+          </p>
         </div>
       </div>
       <div v-else class="celestial-trial-mutation celestial-trial-mutation--empty">

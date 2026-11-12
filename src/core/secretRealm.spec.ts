@@ -293,6 +293,17 @@ describe("秘境 · 推得动、出得来", () => {
     expect(card, "列表渲染必须走收口后的 visibleList").toContain('v-for="r in visibleList"');
     expect(card, "余册要能展开且报状态").toContain(':aria-expanded="secretListExpanded"');
     expect(card, "展开控制要有稳定落点给运行时门").toContain("data-secret-realm-toggle");
+    /*
+     * 展开控制排在它自己展开的名录**之前**。
+     *
+     * 原先它在名录之后:展开时被自己放出来的那五处顶下去 280~380px,
+     * 收起又弹回原处 —— 同一枚钮在两次按压之间自己搬家。这正是
+     * docs/design.md 那条「折叠钮须在正文之前」,此处先前漏了。
+     */
+    expect(
+      card.indexOf("data-secret-realm-toggle"),
+      "秘境名录的展开钮跑到了名录后面 —— 一按它自己就沉下去几百像素",
+    ).toBeLessThan(card.indexOf('id="secret-realm-list"'));
     expect(card, "名录数只表示已到境界,不能把付不起、灰着的秘境也叫「可入」").not.toContain(
       "处可入",
     );

@@ -667,6 +667,8 @@
     cursor: not-allowed;
   }
   .celestial-trial-mutation__rows {
+    /* 动作在上、清单在下:那道账线画在清单顶上,把它与上面的钮隔开 */
+    margin-top: 0.62rem;
     border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
   }
   .celestial-trial-actions,

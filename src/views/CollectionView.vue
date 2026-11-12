@@ -203,6 +203,66 @@
                     >
                   </header>
 
+                  <!--
+                    这一组的**两枚控件都排在行清单之前**:「再看 N 枚」与
+                    「已达成 N 枚」。
+
+                    原先它们都在行之后:按一次「再看」放出 8 行,钮被自己放出来的
+                    那 8 行顶下去约 480~560px;「已达成」更惨 —— 它还要再被「再看」
+                    顶一次。同一枚钮在两次按压之间自己搬家,且正好落在拇指最敏感
+                    的区段。折叠钮排在它自己展开的正文之前,是本仓的成文纪律
+                    (见 `docs/design.md`);「再看」虽然是加长清单,但它控制的
+                    同样是按钮下方那一片,同一条规矩适用。
+
+                    两枚并排一行:上面只有组头(高度恒定),下面才是会变长的行清单,
+                    于是这两枚钮的位置只由组头决定,不再由它们自己的结果决定。
+                    极窄档(`tinylens`)上下叠,与器评帖那两枚折叠钮同一摆法。
+
+                    与九柜、名号谱、法宝册同一条:先给一批,玩家显式续开再放下一批,
+                    排序与整份清单仍留在数据层。收的是版面,不是内容 ——
+                    逐行的条件、进度与赏格一条不少,只是不再同时铺在屏上。
+                  -->
+                  <div
+                    v-if="groupHiddenOf(g) > 0 || g.done > 0"
+                    class="achievement-scroll__controls tinylens:flex-col"
+                  >
+                    <button
+                      v-if="groupHiddenOf(g) > 0"
+                      type="button"
+                      class="achievement-scroll__more"
+                      :data-achievement-more="g.direction"
+                      :data-promised="nextGroupBatchOf(g)"
+                      @click="showMoreGroup(g)"
+                    >
+                      再看 {{ nextGroupBatchOf(g) }} 枚 · 余 {{ groupHiddenOf(g) }}
+                    </button>
+                    <!--
+                      已达成收成一叠,默认合着。
+
+                      一组里「在追」与「已成」原是同一条长队:境界精进那组 21 行,
+                      其中 10 行是档案。玩家展开一组是来看「还差什么」,不是来数
+                      已经拿过什么 —— 档案默认收起来,要看赏格再点开这一叠。
+                      收的是版面,不是内容:每一行的条件、进度与赏格一项不少。
+                    -->
+                    <button
+                      v-if="g.done > 0"
+                      type="button"
+                      class="achievement-scroll__done"
+                      :aria-expanded="doneDirection === g.direction"
+                      :aria-controls="doneBodyId(gi)"
+                      data-achievement-done-toggle
+                      @click="toggleDone(g.direction)"
+                    >
+                      <span class="achievement-scroll__done-count text-body tabular"
+                        >已达成 {{ g.done }} 枚</span
+                      >
+                      <span class="achievement-scroll__done-hint">档案</span>
+                      <span class="achievement-scroll__done-arrow" aria-hidden="true">{{
+                        doneDirection === g.direction ? "▾" : "▸"
+                      }}</span>
+                    </button>
+                  </div>
+
                   <AchievementEntry v-for="row in activeRowsOf(g)" :key="row.def.id" :row="row" />
 
                   <!--
@@ -217,42 +277,6 @@
                     排序与整份清单仍留在数据层。收的是版面,不是内容 ——
                     逐行的条件、进度与赏格一条不少,只是不再同时铺在屏上。
                   -->
-                  <button
-                    v-if="groupHiddenOf(g) > 0"
-                    type="button"
-                    class="achievement-scroll__more"
-                    :data-achievement-more="g.direction"
-                    :data-promised="nextGroupBatchOf(g)"
-                    @click="showMoreGroup(g)"
-                  >
-                    再看 {{ nextGroupBatchOf(g) }} 枚 · 余 {{ groupHiddenOf(g) }}
-                  </button>
-
-                  <!--
-                    已达成收成一叠,默认合着。
-
-                    一组里「在追」与「已成」原是同一条长队:境界精进那组 21 行,
-                    其中 10 行是档案。玩家展开一组是来看「还差什么」,不是来数
-                    已经拿过什么 —— 档案默认收起来,要看赏格再点开这一叠。
-                    收的是版面,不是内容:每一行的条件、进度与赏格一项不少。
-                  -->
-                  <button
-                    v-if="g.done > 0"
-                    type="button"
-                    class="achievement-scroll__done"
-                    :aria-expanded="doneDirection === g.direction"
-                    :aria-controls="doneBodyId(gi)"
-                    data-achievement-done-toggle
-                    @click="toggleDone(g.direction)"
-                  >
-                    <span class="achievement-scroll__done-count text-body tabular"
-                      >已达成 {{ g.done }} 枚</span
-                    >
-                    <span class="achievement-scroll__done-hint">赏格与达成记录收在这一叠</span>
-                    <span class="achievement-scroll__done-arrow" aria-hidden="true">{{
-                      doneDirection === g.direction ? "▾" : "▸"
-                    }}</span>
-                  </button>
                   <div
                     v-show="doneDirection === g.direction"
                     :id="doneBodyId(gi)"

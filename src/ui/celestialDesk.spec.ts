@@ -399,4 +399,28 @@ describe("天界案 · 天门星图先立意,四册再落到总账", () => {
     );
     expect(expedition, "极窄档行程退到下一行").toContain("tinylens:ml-0 tinylens:basis-full");
   });
+  /*
+   * 天道变数:「应 战」不许被它前面那三条变数文案推着走。
+   *
+   * 变数文案长短差三倍(「天时紧迫」7 字、「药石无灵」21 字),而三条各占一行
+   * 且会折行。原先动作排在这三条**之后**:195 CSS px 下「应 战」随文案长短在
+   * 1178~1209px 之间挪 31px,玩家每探一次天机就得重新找按钮。
+   *
+   * 动作只依赖「这条变数要花多少」(mutationDaoShort),不依赖那三条写多长,
+   * 故它排在清单之前。判据在源码层钉顺序;真浏览器位移由 layout-check 的
+   * 「变数按钮不许被变数文案推着走」量。
+   */
+  it("天道变数的「应 战」排在变数清单之前 —— 探一次换一副文案,按钮一步不动", () => {
+    const trial = source("src/components/celestial/TrialPanel.vue");
+    const mutationAt = trial.indexOf("data-celestial-mutation");
+    const actionsAt = trial.indexOf("celestial-trial-actions", mutationAt);
+    const rowsAt = trial.indexOf("celestial-trial-mutation__rows", mutationAt);
+
+    expect(mutationAt, "天道变数那一章要有稳定落点").toBeGreaterThan(-1);
+    expect(actionsAt, "变数那一章要有动作行").toBeGreaterThan(-1);
+    expect(rowsAt, "变数清单要有稳定落点").toBeGreaterThan(-1);
+    expect(actionsAt, "「应 战」又跑回变数清单后面了 —— 文案一长一短,按钮就上下挪").toBeLessThan(
+      rowsAt,
+    );
+  });
 });

@@ -20271,6 +20271,119 @@ async function taskIdentityFolio() {
   return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
 }
 
+/**
+ * 天道变数:「应 战」不许被它前面那三条变数文案推着走。
+ *
+ * 变数文案长短差三倍(「天时紧迫」7 字、「药石无灵」21 字),三条各占一行且会
+ * 折行。原先动作排在这三条**之后**:195 CSS px 下「应 战」随文案长短在
+ * 1178~1209px 之间挪 31px —— 玩家每探一次天机,手就要重新找按钮。
+ *
+ * 动作只依赖「这条变数要花多少」(mutationDaoShort),不依赖那三条写多长,
+ * 故它排在清单之前。这条判据连按十余次「再探 / 窥探变数」(每次文案都换),
+ * 要求「应 战」的绝对位置一次都不挪,同时要求变数文案**确实变过长短**
+ * (否则判据在空转 —— 文案没换,什么都没量到)。
+ */
+async function taskMutationActionAnchored() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 195, height: 422 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    slices.endgame = {
+      ...slices.endgame,
+      endgameTutorialSeen: true,
+      resourceDialogSeen: true,
+    };
+    await seedSave(ctx, slices, "__mutationAnchored");
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/celestial?tab=trial", 900);
+    await clearOverlays(page);
+
+    const tutorialClose = page.getByRole("button", { name: "知道了" }).first();
+    if (await tutorialClose.count()) {
+      await tutorialClose.click({ timeout: 2000 }).catch(() => {});
+      await page.waitForTimeout(200);
+    }
+
+    /** 「应 战」的绝对位置 + 三条变数文案的合计高度 */
+    const read = () =>
+      page.evaluate(() => {
+        const chap = document.querySelector('[data-celestial-trial-chapter="mutation"]');
+        if (!chap) return null;
+        const fire = [...chap.querySelectorAll("button")].find((b) =>
+          (b.textContent || "").includes("应 战"),
+        );
+        if (!fire) return null;
+        const rows = [...chap.querySelectorAll(".celestial-trial-omen")];
+        return {
+          top: Math.round(fire.getBoundingClientRect().top + window.scrollY),
+          rowsH: Math.round(rows.reduce((a, r) => a + r.getBoundingClientRect().height, 0)),
+          n: rows.length,
+        };
+      });
+
+    const samples = [];
+    for (let i = 0; i < 12; i += 1) {
+      const clicked = await page.evaluate(() => {
+        const chap = document.querySelector('[data-celestial-trial-chapter="mutation"]');
+        const btn = [...(chap?.querySelectorAll("button") ?? [])].find((b) =>
+          /窥探变数|再探/.test(b.textContent || ""),
+        );
+        if (!btn || btn.disabled) return false;
+        btn.click();
+        return true;
+      });
+      if (!clicked) break;
+      await page.waitForTimeout(130);
+      checked += 1;
+      const now = await read();
+      if (now) samples.push(now);
+    }
+
+    if (samples.length < 3) {
+      failures.push(`[195-mutation] 变数定位:只探到 ${samples.length} 次,判据没跑起来(要 ≥3)`);
+    } else {
+      const tops = samples.map((x) => x.top);
+      const rowsH = samples.map((x) => x.rowsH);
+      const spread = Math.max(...tops) - Math.min(...tops);
+      const rowsSpread = Math.max(...rowsH) - Math.min(...rowsH);
+      if (rowsSpread === 0) {
+        failures.push(
+          `[195-mutation] 变数定位:连探 ${samples.length} 次,三条变数合计高度一次没变` +
+            `(${rowsH.join("/")}) —— 判据没量到东西,别当它绿了`,
+        );
+      }
+      if (spread > 1) {
+        failures.push(
+          `[195-mutation] 变数定位:「应 战」被变数文案推着走 ${spread}px` +
+            `(位置 ${tops.join(" → ")};文案高 ${rowsH.join(" → ")})` +
+            ` —— 动作要排在变数清单之前`,
+        );
+      }
+      if (failures.length === 0) {
+        console.log(
+          `\n变数定位:连探 ${samples.length} 次、三条文案合计高 ${Math.min(...rowsH)}~${Math.max(...rowsH)}px,` +
+            `「应 战」始终在 ${tops[0]}px 处(位移 ${spread}px)`,
+        );
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[195-mutation] 变数定位页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
 /** 天界试炼续卷:四章、八门印谱、单份证道帖、四程立契约台与三档印阵 */
 async function taskCelestialTrialFold() {
   const failures = [];
@@ -22203,6 +22316,175 @@ async function taskCodexFold() {
     pixelContrastFails: [],
     zoomFails: [],
   };
+}
+
+/**
+ * 折叠钮不许被它自己放出来的内容推着走 —— 散在三处的同一族群。
+ *
+ * 这一族与器评帖的「重铸词条」同形:一枚钮,按下去放出一批行,而那批行长在
+ * 它自己上方。玩家的手感是「同一枚钮每次都在别处」,而静态看模板完全正常。
+ *
+ * 三处各量一遍:
+ *
+ *   一 **秘境名录**的「展开其余 N 处」—— 原先在名录之后,展开时被自己放出来的
+ *      五处顶下去 280~380px。折叠钮须在它自己展开的正文之前,本仓有明文。
+ *   二 **成就谱**组内的「再看 N 枚」与「已达成 N 枚」—— 原先都在行清单之后,
+ *      「已达成」还要再被「再看」顶一次;后者一按放 8 行(480~560px)。
+ *   三 **历练战局**的「收兵回府」—— 战败时战斗分析由 watch **自动**展开
+ *      (180~320px),而出口原先排在它后面:输的那一刻正是最想收兵的时刻。
+ *
+ * 三处都要求:按一次之后,钮的绝对位置一步不动。成就谱那条还要「先点再看、
+ * 再点已达成」按两轮,因为它们的位移是叠加的。
+ */
+async function taskDisclosureTogglesAnchored() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    slices.endgame = {
+      ...slices.endgame,
+      endgameTutorialSeen: true,
+      resourceDialogSeen: true,
+    };
+    await seedSave(ctx, slices, "__disclosureAnchored");
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+
+    /** 读某枚钮相对文档的绝对位置(含滚动补偿) */
+    const absTopOf = (selector) =>
+      page.evaluate((sel) => {
+        const el = document.querySelector(sel);
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        return Math.round(r.top + window.scrollY);
+      }, selector);
+
+    // ---- 壹 · 秘境名录 ----
+    await openRoute(page, "/adventure", 900);
+    await clearOverlays(page);
+    /*
+     * 秘境卡本身默认是收起的(卡头一行),先把它摊开,里面的名录开关才在版面上。
+     * 不展开就量到 0 —— 祖先 `display: none` 时 `getBoundingClientRect()` 全零,
+     * 判据会以「钮一步没动」白白变绿(实测踩过一次)。
+     */
+    await page.evaluate(() => {
+      const btn = document.querySelector("[data-secret-realm-card-toggle]");
+      if (btn && btn.getAttribute("aria-expanded") !== "true") btn.click();
+    });
+    await page.waitForTimeout(320);
+    await page
+      .locator("[data-secret-realm-toggle]")
+      .first()
+      .scrollIntoViewIfNeeded({ timeout: 3000 })
+      .catch(() => {});
+    await page.waitForTimeout(220);
+    const secretBefore = await absTopOf("[data-secret-realm-toggle]");
+    checked += 1;
+    if (secretBefore === null) {
+      failures.push("[390-anchor] 秘境名录:找不到「展开其余 N 处」钮");
+    } else {
+      const opened = await page.evaluate(() => {
+        const btn = document.querySelector("[data-secret-realm-toggle]");
+        if (!btn) return false;
+        btn.click();
+        return true;
+      });
+      if (!opened) {
+        failures.push("[390-anchor] 秘境名录:展开钮点不动");
+      } else {
+        await page.waitForTimeout(320);
+        const secretAfter = await absTopOf("[data-secret-realm-toggle]");
+        const rowsOpened = await page.evaluate(
+          () => document.querySelectorAll("#secret-realm-list > button").length,
+        );
+        if (rowsOpened <= 2) {
+          failures.push(
+            `[390-anchor] 秘境名录:展开之后名录只有 ${rowsOpened} 处 —— 判据没量到东西`,
+          );
+        }
+        if (secretAfter !== null && Math.abs(secretAfter - secretBefore) > 1) {
+          failures.push(
+            `[390-anchor] 秘境名录:展开钮被自己放出的名录推走 ` +
+              `${Math.abs(secretAfter - secretBefore)}px(${secretBefore} → ${secretAfter})` +
+              ` —— 折叠钮要排在名录之前`,
+          );
+        }
+        if (failures.length === 0) {
+          console.log(
+            `\n折叠钮定位 · 秘境名录:展开 ${rowsOpened} 处,钮仍在 ${secretBefore}px 处不动`,
+          );
+        }
+        // 收起复位,后面的场景不受影响
+        await page.evaluate(() => {
+          const btn = document.querySelector("[data-secret-realm-toggle]");
+          if (btn?.getAttribute("aria-expanded") === "true") btn.click();
+        });
+      }
+    }
+
+    // ---- 贰 · 成就谱组内两枚 ----
+    await openRoute(page, "/collection", 900);
+    await clearOverlays(page);
+    checked += 1;
+    const doneBefore = await absTopOf("[data-achievement-done-toggle]");
+    const moreBefore = await absTopOf("[data-achievement-more]");
+    if (doneBefore === null) {
+      failures.push("[390-anchor] 成就谱:找不到「已达成 N 枚」折叠钮");
+    } else {
+      if (moreBefore !== null) {
+        await page.evaluate(() => document.querySelector("[data-achievement-more]")?.click());
+        await page.waitForTimeout(300);
+        const doneAfterMore = await absTopOf("[data-achievement-done-toggle]");
+        if (doneAfterMore !== null && Math.abs(doneAfterMore - doneBefore) > 1) {
+          failures.push(
+            `[390-anchor] 成就谱:「再看 N 枚」按下之后「已达成」被推走 ` +
+              `${Math.abs(doneAfterMore - doneBefore)}px(${doneBefore} → ${doneAfterMore})` +
+              ` —— 同组的控件要先于点清单`,
+          );
+        }
+      }
+      // 已达成自己展开:钮本身也不许跟着动
+      await page.evaluate(() => document.querySelector("[data-achievement-done-toggle]")?.click());
+      await page.waitForTimeout(300);
+      const doneAfterSelf = await absTopOf("[data-achievement-done-toggle]");
+      const doneRows = await page.evaluate(() => {
+        const btn = document.querySelector("[data-achievement-done-toggle]");
+        const id = btn?.getAttribute("aria-controls") || "";
+        return id
+          ? (document.getElementById(id)?.querySelectorAll("[data-achievement-id]").length ?? 0)
+          : 0;
+      });
+      if (doneRows === 0) {
+        failures.push("[390-anchor] 成就谱:「已达成」展开之后一行档案都没有 —— 判据没量到东西");
+      }
+      if (doneAfterSelf !== null && Math.abs(doneAfterSelf - doneBefore) > 1) {
+        failures.push(
+          `[390-anchor] 成就谱:「已达成」被自己展开的 ${doneRows} 行档案推走 ` +
+            `${Math.abs(doneAfterSelf - doneBefore)}px(${doneBefore} → ${doneAfterSelf})`,
+        );
+      }
+      if (failures.length === 0) {
+        console.log(
+          `\n折叠钮定位 · 成就谱:「再看」与「已达成 ${doneRows} 行档案」轮流展开,` +
+            `「已达成」钮始终在 ${doneBefore}px 处`,
+        );
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390-anchor] 折叠钮定位页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
 }
 
 /** 成就谱首屏的眼下可追:先列最近三枚,方向卷目按需展开 */
@@ -32855,10 +33137,12 @@ const TASKS = [
   ["道躯三章与行藏拆卷", taskCharacterFold],
   ["修行画像的两章与根因", taskIdentityFolio],
   ["天界试炼续卷的四章、八门与四程", taskCelestialTrialFold],
+  ["变数按钮不许被变数文案推着走", taskMutationActionAnchored],
   ["天界证道战卷的四章与场次键盘", taskCelestialBattleScroll],
   ["天界内层三册的章节与并读", taskCelestialInnerVolumes],
   ["界域志首屏的此刻优先", taskCodexFold],
   ["成就谱首屏的眼下可追", taskAchievementFold],
+  ["折叠钮不许被自己放出的内容推着走", taskDisclosureTogglesAnchored],
   ["器灵尘进本次所得", taskCombatDustLedger],
   ["品质读数只增不减", taskQualityPeakMonotonic],
   ["品质成就的报喜盖品阶印", taskAchievementSeal],

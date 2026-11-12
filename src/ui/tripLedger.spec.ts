@@ -144,4 +144,24 @@ describe("际遇帖要说得出「你还在哪一趟里」", () => {
     );
     expect(dialog, "档名取唯一那一份档位表,不另写").toContain("EXPLORE_MODES[s.mode].name");
   });
+  /*
+   * 「收兵回府」排在战斗分析之前 —— 出口不许被自动展开的诊断书顶走。
+   *
+   * BattleIntelPanel 里有个 watch:战败即 `showAnalysis = true`(那块纸
+   * 180~320px)。原先 `combat-actions` 排在它之后,于是**每输一场**出口就被
+   * 自动往下顶一次 —— 而输的那一刻正是玩家最想收兵的时刻。战报区本身是定高
+   * 滚动框,推人的从来不是它。
+   */
+  it("收兵回府排在战斗分析之前 —— 战败自动展开不许把出口顶下去", () => {
+    const panel = source("src/components/adventure/CombatPanel.vue");
+    const actionsAt = panel.indexOf('class="combat-actions"');
+    const intelAt = panel.indexOf("<BattleIntelPanel");
+
+    expect(actionsAt, "收兵动作区要有稳定落点").toBeGreaterThan(-1);
+    expect(intelAt, "战斗分析要在").toBeGreaterThan(-1);
+    expect(
+      actionsAt,
+      "收兵又排到了战斗分析后面 —— 战败时分析自动展开,出口每次都被顶下去",
+    ).toBeLessThan(intelAt);
+  });
 });

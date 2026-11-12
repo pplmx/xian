@@ -299,40 +299,50 @@
           </div>
         </div>
 
+        <!--
+            收兵回府 —— 本作**唯一**会退出历练的动作,从前一键即走。
+
+            按下去之前没有任何地方说得出「这一趟算不算数」,而按下之后只有一条 2.6 秒的
+            提示条飘过去。而门槛确实存在(见 EXPLORE_TRIP_MIN_BATTLES):不满 3 场的收兵
+            **不计入**「完成历练」—— 而成就「行万里路 / 踏遍山河」、日课「每日历练」、
+            人生主题全读那个计数。玩家攒了 2 场手动收兵,以为走完一趟,实际什么也没算。
+
+            同仓别的不可逆动作都做了二段式并摊开后果(远征「确认中道而返」、秘境「确认弃境」),
+            只有这个最高频的是一键走。现在补齐,并把「本趟几场、算不算」摊在确认行里 ——
+            这个数用 sessionRecordText,与收尾播报同一份实现,不另拼一遍。
+
+            **它排在 `BattleIntelPanel` 之前**,理由与器评帖的工坊同源:战败时
+            战斗分析由 watch **自动展开**(见 BattleIntelPanel 的 `showAnalysis`),
+            那块纸 180~320px 又恰好长在出口上方 —— 玩家最想「收兵回府」的那一刻,
+            正是每次自动把出口往下顶 180~320px 的那一刻。战报区本身是定高滚动框,
+            推人的从来不是它,是它下面这块自动展开的诊断书。
+          -->
+        <div class="combat-actions">
+          <template v-if="!leaveArmed">
+            <button class="btn-ghost combat-actions__stop text-body" @click="leaveArmed = true">
+              收兵回府
+            </button>
+          </template>
+          <template v-else>
+            <p class="combat-actions__ask text-note" data-combat-leave-ask>
+              {{ leaveAskText }}
+            </p>
+            <div class="combat-actions__armed">
+              <button class="btn-ghost flex-1 text-body" @click="leaveArmed = false">再想想</button>
+              <button
+                class="btn-seal flex-1 text-body"
+                data-combat-leave-confirm
+                @click="confirmLeave"
+              >
+                确认收兵
+              </button>
+            </div>
+          </template>
+        </div>
+
         <BattleIntelPanel />
       </div>
     </section>
-
-    <!--
-      收兵回府 —— 本作**唯一**会退出历练的动作,从前一键即走。
-
-      按下去之前没有任何地方说得出「这一趟算不算数」,而按下之后只有一条 2.6 秒的
-      提示条飘过去。而门槛确实存在(见 EXPLORE_TRIP_MIN_BATTLES):不满 3 场的收兵
-      **不计入**「完成历练」—— 而成就「行万里路 / 踏遍山河」、日课「每日历练」、
-      人生主题全读那个计数。玩家攒了 2 场手动收兵,以为走完一趟,实际什么也没算。
-
-      同仓别的不可逆动作都做了二段式并摊开后果(远征「确认中道而返」、秘境「确认弃境」),
-      只有这个最高频的是一键走。现在补齐,并把「本趟几场、算不算」摊在确认行里 ——
-      这个数用 sessionRecordText,与收尾播报同一份实现,不另拼一遍。
-    -->
-    <div class="combat-actions">
-      <template v-if="!leaveArmed">
-        <button class="btn-ghost combat-actions__stop text-body" @click="leaveArmed = true">
-          收兵回府
-        </button>
-      </template>
-      <template v-else>
-        <p class="combat-actions__ask text-note" data-combat-leave-ask>
-          {{ leaveAskText }}
-        </p>
-        <div class="combat-actions__armed">
-          <button class="btn-ghost flex-1 text-body" @click="leaveArmed = false">再想想</button>
-          <button class="btn-seal flex-1 text-body" data-combat-leave-confirm @click="confirmLeave">
-            确认收兵
-          </button>
-        </div>
-      </template>
-    </div>
   </div>
 </template>
 

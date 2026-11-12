@@ -143,6 +143,30 @@
             秘境是支线,不该用八张说明卡把历练首屏整页占满。
             先亮当前境界最近的两处,余册由玩家自己展开;名录总数仍直说。
           -->
+          <!--
+            折叠钮排在它**自己展开的名录之前**。
+
+            原先它在名录之后:展开时它被自己放出来的那五处顶下去 280~380px,
+            再按一次收起又弹回原处 —— 同一枚钮在两次按压之间自己搬家,
+            而这正是 `docs/design.md` 早写下的那条「折叠钮须在正文之前」。
+
+            名录`.space-y-1.5` 那一摞的行距靠容器自身的 margin 撑:钮挪到它前面
+            之后,把原来钮上的 `mt-1.5` 换成钮下的 `mb-1.5`,上下气口不变。
+          -->
+          <button
+            v-if="list.length > SECRET_REALM_PREVIEW"
+            class="mb-1.5 flex min-h-[28px] w-full items-center justify-center rounded-[2px] border border-dashed border-ink/15 px-3 py-1 text-note text-ink-faint active:scale-99 active:text-ink-soft"
+            :aria-expanded="secretListExpanded"
+            aria-controls="secret-realm-list"
+            data-secret-realm-toggle
+            @click="secretListExpanded = !secretListExpanded"
+          >
+            {{
+              secretListExpanded
+                ? `收起秘境名录 · 共 ${list.length} 处`
+                : `展开其余 ${list.length - SECRET_REALM_PREVIEW} 处 · 共 ${list.length} 处`
+            }}
+          </button>
           <div id="secret-realm-list" class="space-y-1.5">
             <button
               v-for="r in visibleList"
@@ -195,20 +219,6 @@
               }}
             </p>
           </div>
-          <button
-            v-if="list.length > SECRET_REALM_PREVIEW"
-            class="mt-1.5 flex min-h-[28px] w-full items-center justify-center rounded-[2px] border border-dashed border-ink/15 px-3 py-1 text-note text-ink-faint active:scale-99 active:text-ink-soft"
-            :aria-expanded="secretListExpanded"
-            aria-controls="secret-realm-list"
-            data-secret-realm-toggle
-            @click="secretListExpanded = !secretListExpanded"
-          >
-            {{
-              secretListExpanded
-                ? `收起秘境名录 · 共 ${list.length} 处`
-                : `展开其余 ${list.length - SECRET_REALM_PREVIEW} 处 · 共 ${list.length} 处`
-            }}
-          </button>
         </div>
       </template>
     </div>
