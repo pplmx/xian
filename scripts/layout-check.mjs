@@ -9176,9 +9176,16 @@ async function taskInventoryAccounting() {
           `${equipBatchPlan.ended} «${equipBatchPlan.text}»`,
       );
     }
+    /*
+     * 价签要读**强化那一处**,不是弹窗里第一处「器灵尘×N」。
+     *
+     * 器评帖里现在有三处尘价(重铸 / 封存 / 强化),而工坊排在强化上面 ——
+     * 从前这里取第一处匹配,工坊一上移就读成了重铸价,判据报「所见非所付」。
+     * 落点由 `data-equipment-upgrade-price` 给出,与那句「强化写着扣多少」同源。
+     */
     const costLine = await page.evaluate(() => {
-      const p = document.querySelector(".modal-panel");
-      const m = /器灵尘×(\d+)/.exec(p?.innerText || "");
+      const el = document.querySelector("[data-equipment-upgrade-price]");
+      const m = /器灵尘×(\d+)/.exec(el?.textContent || "");
       return m ? Number(m[1]) : null;
     });
     if (costLine === null)
@@ -14413,6 +14420,150 @@ async function taskFolioOrdinal() {
       console.log(
         `\n册次水印:${seen.map((r) => `${r.tag}「${r.text}」(${r.numeral})`).join(" · ")}`,
       );
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
+ * 重铸按钮不许被它自己的结果推着走。
+ *
+ * ## 缺口
+ *
+ * 重铸会**连词条条数一起重掷**(凡品 1 条、仙品 8 条,见 data/qualities 的
+ * `affixes` 区间)。而「重铸词条」原先排在词条账**之后**:每按一次,按钮就被
+ * 上面那摞长出来的词条往下顶。静态判据量不出这个 —— 条数只有在真洗出来之后
+ * 才变,而「洗一次按钮跳多远」是布局问题。
+ *
+ * 修法是把工坊(重铸 / 自动重铸 / 词条转移)挪到词条账之前:它只依赖
+ * 「这一件是什么」(阶数、封存数、铭纹),不依赖词条条数。
+ *
+ * ## 判据
+ *
+ *   一 打开器评帖,记下「重铸词条」相对卷身顶的位置;
+ *   二 连按八次重铸(随机源钉成 Math.random = 1,条数会真的在区间内变);
+ *   三 词条条数**确实变过**(否则这条判据在空转 —— 条数没变,什么都没量到);
+ *   四 按钮位置一次都没挪(容差 1px,给子像素取整)。
+ *
+ * 容差刻意不放大:这条守的正是「一点都不许挪」。修 bug 之前实测同一件在
+ * 796px 与 1008px 之间来回跳,量级是两百多像素,不是半像素抖动。
+ */
+async function taskReforgeButtonAnchored() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    // 尘与石都管够,点得动八次
+    slices.resources = { ...slices.resources, dust: 100000, spiritStone: { m: 1, e: 9 } };
+    await seedSave(ctx, slices, "__reforgeAnchoredFixture");
+
+    const page = await ctx.newPage();
+    /*
+     * 随机源钉成 1:引擎掷条数时走同一个 rng,掷 1 就取区间上界。
+     * 但仍要让条数**真的变化** —— 玩家的实际处境是条数在区间里来回掷,
+     * 判据只需保证「变过」,不必复刻某一条具体序列。
+     */
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/inventory", 900);
+    await clearOverlays(page);
+
+    checked += 1;
+    const openedItem = await page.evaluate(() => {
+      const btn = document.querySelector("main button[data-uid]");
+      if (!btn) return false;
+      btn.click();
+      return true;
+    });
+    if (!openedItem) {
+      failures.push("[390] 重铸定位:行囊里没有任何装备可开");
+    } else {
+      await page.waitForTimeout(450);
+    }
+
+    /** 读「重铸词条」钮相对卷身内容顶的绝对位置,以及当前词条条数 */
+    const readAnchored = () =>
+      page.evaluate(() => {
+        const pane = document.querySelector("[data-folio-modal-scroll]");
+        if (!pane) return null;
+        const btn = [...pane.querySelectorAll("button")].find((b) =>
+          (b.textContent || "").includes("重铸词条"),
+        );
+        if (!btn) return null;
+        const paneTop = pane.getBoundingClientRect().top;
+        return {
+          top: Math.round(btn.getBoundingClientRect().top - paneTop + pane.scrollTop),
+          affixes: pane.querySelectorAll(".equip-dossier__affix").length,
+          scroll: pane.scrollTop,
+        };
+      });
+
+    const first = await readAnchored();
+    checked += 1;
+    if (!first) {
+      failures.push("[390] 重铸定位:器评帖里找不到「重铸词条」钮");
+    } else {
+      const tops = [first.top];
+      const counts = [first.affixes];
+      for (let i = 0; i < 8; i++) {
+        checked += 1;
+        const clicked = await page.evaluate(() => {
+          const pane = document.querySelector("[data-folio-modal-scroll]");
+          const btn = [...(pane?.querySelectorAll("button") ?? [])].find((b) =>
+            (b.textContent || "").includes("重铸词条"),
+          );
+          if (!btn || btn.disabled) return false;
+          btn.click();
+          return true;
+        });
+        if (!clicked) break;
+        await page.waitForTimeout(220);
+        const now = await readAnchored();
+        if (!now) {
+          failures.push(`[390] 重铸定位:第 ${i + 1} 次重铸之后读不到钮 —— 面板被换掉了`);
+          break;
+        }
+        tops.push(now.top);
+        counts.push(now.affixes);
+      }
+      /*
+       * 防空转:条数真变过吗?
+       * 若这条判据跑在一个词条数恒定的档上(比如夹具恰好每次掷出同样条数),
+       * 「按钮没挪」就是白拿的 —— 必须是真的经历了条数变化。
+       */
+      const spread = Math.max(...tops) - Math.min(...tops);
+      const countSpread = Math.max(...counts) - Math.min(...counts);
+      if (countSpread === 0) {
+        failures.push(
+          `[390] 重铸定位:连洗 ${tops.length - 1} 次,词条条数一次没变(${counts.join("/")})` +
+            ` —— 这条判据没量到东西,别当它绿了`,
+        );
+      }
+      if (spread > 1) {
+        failures.push(
+          `[390] 重铸定位:「重铸词条」钮被自己的结果推着走 ${spread}px` +
+            `(位置 ${tops.join(" → ")};word 条数 ${counts.join(" → ")})` +
+            ` —— 工坊要排在词条账之前,或让动作区不随条数变化`,
+        );
+      }
+      if (failures.length === 0) {
+        console.log(
+          `\n重铸定位:连洗 ${tops.length - 1} 次、词条 ${counts[0]} → ${counts.at(-1)} 条,` +
+            `「重铸词条」钮始终在卷身 ${tops[0]}px 处(位移 ${spread}px)`,
+        );
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 重铸定位页面异常:${[...new Set(pageErrors)].join(" | ")}`);
     }
   } finally {
     await ctx.close();
@@ -32664,6 +32815,7 @@ const TASKS = [
   ["道历收录不再露现实时间", taskCodexMoment],
   ["共鸣缺口说得出还差哪件", taskResonanceGap],
   ["重铸预算开洗前摊开总价", taskReforgeBudget],
+  ["重铸按钮不许被自己的结果推着走", taskReforgeButtonAnchored],
   ["册次水印写汉字且说得清第几册", taskFolioOrdinal],
   ["册目读法一句话一种数字", taskFolioPosition],
   ["提示条的去路真能点开", taskToastTarget],

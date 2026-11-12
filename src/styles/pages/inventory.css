@@ -1014,6 +1014,80 @@
   .equip-dossier__workshop > .equip-dossier__section-head {
     margin: -0.55rem -0.65rem 0.5rem;
   }
+  /*
+   * 炉验 —— 工坊里那几行「这一炉按什么规矩走、你手上攒了什么」。
+   *
+   * 从前它是五段 `text-center` 的散文,叠在重铸钮下方:整块浮层别处都是左对齐的
+   * 账(器性、行迹、共鸣缺口),只有这一坨居中,读起来像一条横幅;五行里还有
+   * 两行各说一遍器谱。改成左题签 + 右账目的定义列表:
+   *
+   *   · `dt` 走楷体、soft 档墨(与「行迹」的题签同一个颜色角色),`nowrap` 保证
+   *     四字题签不被拆成两行;
+   *   · `dd` 是账目:主值在前(正文墨/石青),注解退 faint 一档、前置一枚中点,
+   *     与「成色 67 /100 · 中上」「封存 1/2」同一条「主值 + 注解」的节奏;
+   *   · 只用一道上账线,不铺底、不套框(见 docs/design.md 的「最多一层容器边」)。
+   *
+   * `dt + dd` 同排、窄档仍同排 —— 这是两列关系,不是两条并列的长句:
+   * 195 CSS px 下 `dd` 自己折行,题签不跟着折,「掷点保底」就不会被拆成两行。
+   */
+  .equip-forge-ledger {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+    column-gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding-top: 0.42rem;
+    border-top: 1px dashed rgb(var(--color-ink-rgb) / 0.12);
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .equip-forge-ledger > dt {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  .equip-forge-ledger > dd {
+    min-width: 0;
+    padding-block: 0.14rem;
+    /*
+     * **不许** `overflow-wrap: anywhere`。
+     *
+     * 判据「数字与量词不许被换行拆开」量到过:「已重铸 0 次 · 已封存 0/2」
+     * 在 195 CSS px 下被拆成「已重铸 0 次 · 已封存 」+ 换行 +「0/2」——
+     * `anywhere` 允许在任意字符间断行,数字与量词就这么被切开了。
+     * 这里改回 `break-word`(只在整个词装不下时才断),再让数字那几段 nowrap。
+     */
+    overflow-wrap: break-word;
+    color: rgb(var(--color-ink-soft-rgb));
+  }
+  /*
+   * 只有真读数那一段整段不折:「新词条 ≥ 0%」「已重铸 0 次」不许被拆成
+   * 「已重铸 0」+「次」。散文那段(条数 ≤ 8 与数值一并重掷)要能折 ——
+   * 195 CSS px 下它本来就要占两行,nowrap 会当场顶出面板(实测四条探针同时红)。
+   */
+  .equip-forge-ledger__value {
+    white-space: nowrap;
+  }
+  /* 注解退一档:保底 %、器谱 %、这一炉的条数先读,规矩后读 */
+  .equip-forge-ledger__aside {
+    color: rgb(var(--color-ink-faint-rgb));
+  }
+  .equip-forge-ledger__aside::before {
+    content: "·";
+    margin-inline: 0.3rem;
+    color: rgb(var(--color-ink-rgb) / 0.35);
+  }
+  /*
+   * 桌面两栏流里,工坊是一条**横条**:`column-span: all`,横贯两栏。
+   *
+   * 它本来就不是一块内容,而是一排动作(重铸 / 封存 / 自动重铸 / 词条转移)
+   * 加一张炉验账。塞进 389px 的半栏里,账目每行要折成两三行(实测整块 260px
+   * 全是零碎的折行高);横跨两栏之后账目在桌面摊成并读的两列,整条两百来像素。
+   *
+   * 这也不是新写法:器首(`equip-dossier__hero`)早在同一套多栏流里 `column-span: all`,
+   * 理由一样 —— 横条不该被栏缝劈开(劈开之后「掷点保底」与它的数值会分在两头)。
+   */
   @media (min-width: 620px) {
     .inventory-workshop__grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));

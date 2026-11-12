@@ -239,123 +239,20 @@ function triesOf(id: string, minRoll = 0): number | null {
 
 <template>
   <!--
-    自动重铸:洗到指定词条即停(玩家反馈,可多选、可给最低值)。
-    注意它**不属于**上方的天机推演(修士实验室) —— 那是真仙+未装备才有的
-    v-if="canWhatIf" 段;重铸是凡人也在用的功能,若嵌在里面,普通玩家点开
-    开关只会变字、词条格子与「开洗」永远不渲染(实测即玩家反馈的「没生效」)。
+    工坊这一段按「动作在前、账目在后」重排(2026-11-12)。
+
+    原先的顺序是:重铸/封存 → 五段居中的散文 → 两个折叠钮 → 自动重铸面板。
+    由此有两处会自己推着自己跑:
+      一 重铸会**连条数一起重掷**(凡品 1 条、仙品 8 条,见 data/qualities 的
+         affixes 区间),而重铸钮就排在词条账下面 —— 每按一次,按钮被自己长出来的
+         词条往下顶,实测同一件在 796px 与 1008px 之间来回跳,幅度 212px;
+      二 自动重铸的折叠钮排在**它自己的面板之上那五段散文上**,收起/展开会让
+         钮本身挪位;面板里的「开 洗」又被上面的滑杆往下推。
+    故现在的顺序是:动作行(重铸 / 封存价)→ 炉验账 → 两枚折叠钮 → 各自的展开正文。
+    每个钮都排在它自己展开的正文**之前**(disclosure 的标准摆法),也没有一枚
+    排在会随操作变长的那一摞之后 —— 反复按的那几枚钮,位置只由「这一件是什么」
+    决定,不再由它们自己的结果决定。
   -->
-  <div
-    v-if="autoOpen && reforgeCostVal"
-    data-equipment-auto-reforge
-    class="mt-3 border-t border-ink/10 pt-2.5"
-  >
-    <p class="mb-1 text-body text-ink-soft">
-      洗到这些词条出现就停(任一命中即停,至多 {{ AUTO_TARGET_LIMIT }} 条)
-    </p>
-    <div class="scroll-pane grid max-h-36 grid-cols-3 gap-1 overflow-y-auto tinylens:grid-cols-2">
-      <button
-        v-for="af in affixOptions"
-        :key="af.id"
-        class="rounded-[2px] px-1 py-1 text-note leading-tight active:opacity-60"
-        :aria-pressed="isAutoTarget(af.id)"
-        :class="
-          isAutoTarget(af.id) ? 'border border-cinnabar text-cinnabar' : 'bg-ink/4 text-ink-faint'
-        "
-        @click="toggleAutoTarget(af.id)"
-      >
-        {{ af.name
-        }}<span v-if="triesOf(af.id)" class="mt-0.5 block text-note text-ink-soft"
-          >约 {{ triesOf(af.id) }} 次</span
-        >
-      </button>
-    </div>
-    <div v-if="autoTargets.length" class="mt-1.5 space-y-1">
-      <div v-for="t in autoTargets" :key="t.affixId" class="space-y-0.5 text-note text-ink-faint">
-        <p class="flex items-center gap-2">
-          <span class="w-10 shrink-0 font-kai text-ink-soft">{{
-            affixDef(t.affixId)?.name ?? t.affixId
-          }}</span>
-          <input
-            v-model.number="t.minRoll"
-            type="range"
-            min="0"
-            :max="REFORGE_ROLL_MAX"
-            step="0.05"
-            :aria-label="`自动重铸:${affixDef(t.affixId)?.name ?? t.affixId} 保留阈值`"
-            class="min-w-0 grow accent-cinnabar"
-          />
-          <span class="w-12 shrink-0 text-right tabular"
-            >≥{{ formatPercent(t.minRoll ?? 0, 0) }}</span
-          >
-        </p>
-        <p
-          class="pl-12 text-note tabular"
-          :class="autoTriesOf(t) === null ? 'text-cinnabar' : 'text-ink-soft'"
-        >
-          <template v-if="autoTriesOf(t) === null">不会命中</template>
-          <template v-else>按当前门槛,约 {{ autoTriesOf(t) }} 次</template>
-        </p>
-      </div>
-    </div>
-    <div class="mt-1.5 flex flex-wrap items-center gap-2">
-      <label class="flex min-w-0 items-center gap-1">
-        <span class="text-note text-ink-faint tabular">至多洗</span>
-        <input
-          v-model.number="autoBudget"
-          type="number"
-          min="1"
-          :max="REFORGE_BUDGET_MAX"
-          aria-label="自动重铸至多洗几次"
-          class="w-16 min-w-0 rounded-[2px] border border-ink/15 bg-paper/70 px-1 py-0.5 text-[16px] tabular"
-          @change="clampAutoBudget"
-        />
-        <span class="text-note text-ink-faint tabular">次</span>
-      </label>
-      <button
-        class="btn-ghost ml-auto shrink-0 whitespace-nowrap !px-3 !py-1 !text-body"
-        :disabled="!autoTargets.length || !autoReachable || !autoAffordable"
-        :title="
-          !autoTargets.length
-            ? '先点一条要洗到的词条'
-            : !autoReachable
-              ? '这些目标当前不会命中'
-              : autoAffordable
-                ? undefined
-                : '灵石或器灵尘不足'
-        "
-        @click="runAutoReforge"
-      >
-        开 洗
-      </button>
-    </div>
-    <p class="mt-1 text-note tabular" data-equipment-reforge-budget>
-      <span class="text-ink-faint"
-        >每洗 器灵尘×{{ formatGN(reforgeCostVal.dust) }} · 灵石
-        {{ formatGN(reforgeCostVal.stone) }}</span
-      >
-      <!--
-        总账这一行:至多洗几次、这一押最多花多少、手上够不够。
-        从前只有单价与逐条的「约 N 次」—— 单看「每洗 12 尘」会觉得便宜,
-        乘上 50 次才是真的要花掉的数。
-      -->
-      <span
-        v-if="autoBudgetCost"
-        class="mt-0.5 block"
-        :class="autoBudgetCost.enough ? 'text-ink-soft' : 'text-cinnabar'"
-        data-equipment-reforge-budget-total
-      >
-        {{ reforgeBudgetLine(autoBudgetCost, formatGN) }}
-      </span>
-    </p>
-    <!-- 首洗就付不起,预告就把它摆出来(与重铸/封存同款):灰钮不许只有 broke toast -->
-    <p v-if="autoTargets.length && !autoAffordable" class="mt-1 text-note text-cinnabar tabular">
-      尚差 器灵尘×{{ formatGN(Math.max(0, reforgeCostVal.dust - resources.dust)) }} · 灵石
-      {{ formatGN(Math.max(0, toNum(reforgeCostVal.stone) - toNum(resources.spiritStone))) }}
-    </p>
-    <p v-if="autoTargets.length && !autoReachable" class="mt-1 text-note text-cinnabar">
-      这些目标不会命中:封存词条不重掷,或阈值已到 {{ formatPercent(REFORGE_ROLL_MAX, 0) }}。
-    </p>
-  </div>
   <!-- 重铸与封存 (Phase 30.1) -->
   <template v-if="reforgeCostVal || sealCostVal">
     <div class="flex gap-2 text-body tinylens:flex-col">
@@ -388,52 +285,213 @@ function triesOf(id: string, minRoll = 0): number | null {
     <p v-if="sealCostVal && !sealAffordable" class="mt-1 text-note text-cinnabar tabular">
       封存尚差 {{ formatGN(sealShortfall) }} 灵石
     </p>
+
     <!--
-      重铸到底做什么,得在按下之前说清:条数与数值一并重掷(封存的不动),
-      不限次数、成本只随「阶数」与「封存数」走 —— 与旧版"越洗越贵、上限十次"不同。
+      炉验 —— 这一炉按什么规矩走、你手上已经攒了什么。
+
+      从前这四笔是五段 `text-center` 的散文:整块浮层的正文都是左对齐的账
+      (器性、行迹、共鸣缺口),只有这一坨居中,读起来像一条横幅广告;而且
+      五行里有两行各说一遍器谱。改成左题签 + 右账目的定义列表:与器性、行迹
+      同一套排法,行高收掉一半,信息一条不少 —— 样式在
+      `styles/pages/inventory.css` 的 `.equip-forge-ledger`。
     -->
-    <p v-if="reforgeCostVal" class="text-center t-note text-ink-faint">
-      重掷未封存的词条:条数(≤{{ affixCap }} 条)与数值一并重掷,封存的不动 ·
-      不限次数,成本随阶数与封存数走
-    </p>
-    <p v-if="reforgeCostVal" class="text-center text-note text-qing tabular">
-      新词条掷点 ≥ {{ formatPercent(reforgeFloor, 0) }}（铭纹·{{ inscribeStage }}
-      {{ formatPercent(inscribeFloor, 0) }} + 器谱 {{ formatPercent(blueprintBonus, 0) }}）,封存不受
-    </p>
-    <p v-if="reforgeCostVal" class="text-center text-note text-ink-faint tabular">
-      器谱 {{ formatPercent(blueprintMastery, 0) }} · 每次成功重铸 +
-      {{ formatPercent(BLUEPRINT_MASTERY_PER_REFORGE, 0) }} ·
-      <template v-if="blueprintReforgesLeft > 0">
-        再成功重铸 {{ blueprintReforgesLeft }} 次读通
-      </template>
-      <template v-else>已读通</template>
-    </p>
-    <p v-if="reforgeCostVal" class="text-center text-note text-ink-faint tabular">
-      读通后:额外保底 +{{ formatPercent(BLUEPRINT_ROLL_BONUS_MAX, 0) }} · 宿慧 +{{
-        INSIGHT_PER_BLUEPRINT
-      }}
-    </p>
-    <p v-if="inst" class="text-center text-note text-ink-faint tabular">
-      已重铸 {{ inst.reforgeCount ?? 0 }} 次 · 已封存 {{ (inst.sealedAffixIds ?? []).length }}/{{
-        sealCapacity(inst)
-      }}
-    </p>
-    <button
-      v-if="reforgeCostVal"
-      class="btn-ghost min-h-[28px] w-full whitespace-nowrap !py-1 !text-body"
-      :aria-expanded="autoOpen"
-      :title="autoOpen ? undefined : '洗到指定词条即停'"
-      @click="autoOpen = !autoOpen"
+    <dl v-if="reforgeCostVal" class="equip-forge-ledger" data-equipment-forge-ledger>
+      <dt>掷点保底</dt>
+      <dd>
+        <span class="tabular equip-forge-ledger__value"
+          >新词条 ≥ {{ formatPercent(reforgeFloor, 0) }}</span
+        >
+        <span class="equip-forge-ledger__aside tabular"
+          >铭纹·{{ inscribeStage }} {{ formatPercent(inscribeFloor, 0) }} ＋ 器谱
+          {{ formatPercent(blueprintBonus, 0) }}</span
+        >
+      </dd>
+      <dt>器谱</dt>
+      <dd>
+        <span class="tabular equip-forge-ledger__value">{{
+          formatPercent(blueprintMastery, 0)
+        }}</span>
+        <span class="equip-forge-ledger__aside tabular"
+          >每洗 +{{ formatPercent(BLUEPRINT_MASTERY_PER_REFORGE, 0) }} ·
+          <template v-if="blueprintReforgesLeft > 0">再 {{ blueprintReforgesLeft }} 次</template>
+          <template v-else>已</template>读通 · 保底再 +{{
+            formatPercent(BLUEPRINT_ROLL_BONUS_MAX, 0)
+          }}
+          · 宿慧 +{{ INSIGHT_PER_BLUEPRINT }}</span
+        >
+      </dd>
+      <dt>这一炉</dt>
+      <dd>
+        <span
+          >条数 ≤ <span class="tabular">{{ affixCap }}</span> 与数值一并重掷</span
+        >
+        <span class="equip-forge-ledger__aside">封存的不动 · 不计次数</span>
+        <template v-if="inst">
+          <!--
+            「N 次」「N/M」各自锁成一段:195 CSS px 下整句会折行,数字与量词
+            若被拆开就成了「已封存 」+ 换行 +「0/2」—— 判据量到过这一条。
+          -->
+          <span class="equip-forge-ledger__aside tabular"
+            ><span class="equip-forge-ledger__value">已重铸 {{ inst.reforgeCount ?? 0 }} 次</span>
+            · 已封存
+            <span class="equip-forge-ledger__value"
+              >{{ (inst.sealedAffixIds ?? []).length }}/{{ sealCapacity(inst) }}</span
+            ></span
+          >
+        </template>
+      </dd>
+    </dl>
+
+    <!--
+      折叠钮一律排在它自己展开的正文之前 —— 收放时钮本身一步不动。
+      从前自动重铸的面板在钮**上方**:收起/展开,钮自己跟着上下一整块。
+      两枚并排(极窄档 tinylens 上下叠),它们上面是炉验账,高度与词条条数无关。
+    -->
+    <div class="mt-1 flex gap-2 tinylens:flex-col">
+      <button
+        v-if="reforgeCostVal"
+        class="btn-ghost min-h-[28px] flex-1 whitespace-nowrap !py-1 !text-body"
+        :aria-expanded="autoOpen"
+        :title="autoOpen ? undefined : '洗到指定词条即停'"
+        @click="autoOpen = !autoOpen"
+      >
+        {{ autoOpen ? "收起自动重铸" : "自动重铸" }}
+      </button>
+      <button
+        class="btn-ghost min-h-[28px] flex-1 whitespace-nowrap !py-1 !text-body"
+        :aria-expanded="transferOpen"
+        @click="transferOpen = !transferOpen"
+      >
+        {{ transferOpen ? "收起词条转移" : "词条转移 · 移至别件" }}
+      </button>
+    </div>
+
+    <!--
+      自动重铸:洗到指定词条即停(玩家反馈,可多选、可给最低值)。
+      注意它**不属于**天机推演(修士实验室) —— 那是真仙+未装备才有的
+      v-if="canWhatIf" 段;重铸是凡人也在用的功能,若嵌在里面,普通玩家点开
+      开关只会变字、词条格子与「开洗」永远不渲染(实测即玩家反馈的「没生效」)。
+    -->
+    <div
+      v-if="autoOpen && reforgeCostVal"
+      data-equipment-auto-reforge
+      class="mt-2 border-t border-ink/10 pt-2.5"
     >
-      {{ autoOpen ? "收起自动重铸" : "自动重铸" }}
-    </button>
-    <button
-      class="btn-ghost min-h-[28px] w-full whitespace-nowrap !py-1 !text-body"
-      :aria-expanded="transferOpen"
-      @click="transferOpen = !transferOpen"
-    >
-      {{ transferOpen ? "收起词条转移" : "词条转移 · 移至别件" }}
-    </button>
+      <p class="mb-1 text-body text-ink-soft">
+        洗到这些词条出现就停(任一命中即停,至多 {{ AUTO_TARGET_LIMIT }} 条)
+      </p>
+      <!-- 多选格是定高滚动框:再多候选也只占 max-h-36,不推动下面那排「开 洗」 -->
+      <div class="scroll-pane grid max-h-36 grid-cols-3 gap-1 overflow-y-auto tinylens:grid-cols-2">
+        <button
+          v-for="af in affixOptions"
+          :key="af.id"
+          class="rounded-[2px] px-1 py-1 text-note leading-tight active:opacity-60"
+          :aria-pressed="isAutoTarget(af.id)"
+          :class="
+            isAutoTarget(af.id) ? 'border border-cinnabar text-cinnabar' : 'bg-ink/4 text-ink-faint'
+          "
+          @click="toggleAutoTarget(af.id)"
+        >
+          {{ af.name
+          }}<span v-if="triesOf(af.id)" class="mt-0.5 block text-note text-ink-soft"
+            >约 {{ triesOf(af.id) }} 次</span
+          >
+        </button>
+      </div>
+      <!--
+        开洗这一排在多选格**之下、逐条阈值之上**:它上面那两块高度都是定的
+        (说明一行 + 定高滚动框),故这一排不会被自己选中的东西推着走;
+        而逐条阈值往下长,长的是它下面那片地方。
+      -->
+      <div class="mt-1.5 flex flex-wrap items-center gap-2">
+        <label class="flex min-w-0 items-center gap-1">
+          <span class="text-note text-ink-faint tabular">至多洗</span>
+          <input
+            v-model.number="autoBudget"
+            type="number"
+            min="1"
+            :max="REFORGE_BUDGET_MAX"
+            aria-label="自动重铸至多洗几次"
+            class="w-16 min-w-0 rounded-[2px] border border-ink/15 bg-paper/70 px-1 py-0.5 text-[16px] tabular"
+            @change="clampAutoBudget"
+          />
+          <span class="text-note text-ink-faint tabular">次</span>
+        </label>
+        <button
+          class="btn-ghost ml-auto shrink-0 whitespace-nowrap !px-3 !py-1 !text-body"
+          :disabled="!autoTargets.length || !autoReachable || !autoAffordable"
+          :title="
+            !autoTargets.length
+              ? '先点一条要洗到的词条'
+              : !autoReachable
+                ? '这些目标当前不会命中'
+                : autoAffordable
+                  ? undefined
+                  : '灵石或器灵尘不足'
+          "
+          @click="runAutoReforge"
+        >
+          开 洗
+        </button>
+      </div>
+      <p class="mt-1 text-note tabular" data-equipment-reforge-budget>
+        <span class="text-ink-faint"
+          >每洗 器灵尘×{{ formatGN(reforgeCostVal.dust) }} · 灵石
+          {{ formatGN(reforgeCostVal.stone) }}</span
+        >
+        <!--
+          总账这一行:至多洗几次、这一押最多花多少、手上够不够。
+          从前只有单价与逐条的「约 N 次」—— 单看「每洗 12 尘」会觉得便宜,
+          乘上 50 次才是真的要花掉的数。
+        -->
+        <span
+          v-if="autoBudgetCost"
+          class="mt-0.5 block"
+          :class="autoBudgetCost.enough ? 'text-ink-soft' : 'text-cinnabar'"
+          data-equipment-reforge-budget-total
+        >
+          {{ reforgeBudgetLine(autoBudgetCost, formatGN) }}
+        </span>
+      </p>
+      <!-- 首洗就付不起,预告就把它摆出来(与重铸/封存同款):灰钮不许只有 broke toast -->
+      <p v-if="autoTargets.length && !autoAffordable" class="mt-1 text-note text-cinnabar tabular">
+        尚差 器灵尘×{{ formatGN(Math.max(0, reforgeCostVal.dust - resources.dust)) }} · 灵石
+        {{ formatGN(Math.max(0, toNum(reforgeCostVal.stone) - toNum(resources.spiritStone))) }}
+      </p>
+      <p v-if="autoTargets.length && !autoReachable" class="mt-1 text-note text-cinnabar">
+        这些目标不会命中:封存词条不重掷,或阈值已到 {{ formatPercent(REFORGE_ROLL_MAX, 0) }}。
+      </p>
+      <!-- 选中之后的阈值明细:逐条往下长,长的是「开 洗」之下那一片 -->
+      <div v-if="autoTargets.length" class="mt-1.5 space-y-1">
+        <div v-for="t in autoTargets" :key="t.affixId" class="space-y-0.5 text-note text-ink-faint">
+          <p class="flex items-center gap-2">
+            <span class="w-10 shrink-0 font-kai text-ink-soft">{{
+              affixDef(t.affixId)?.name ?? t.affixId
+            }}</span>
+            <input
+              v-model.number="t.minRoll"
+              type="range"
+              min="0"
+              :max="REFORGE_ROLL_MAX"
+              step="0.05"
+              :aria-label="`自动重铸:${affixDef(t.affixId)?.name ?? t.affixId} 保留阈值`"
+              class="min-w-0 grow accent-cinnabar"
+            />
+            <span class="w-12 shrink-0 text-right tabular"
+              >≥{{ formatPercent(t.minRoll ?? 0, 0) }}</span
+            >
+          </p>
+          <p
+            class="pl-12 text-note tabular"
+            :class="autoTriesOf(t) === null ? 'text-cinnabar' : 'text-ink-soft'"
+          >
+            <template v-if="autoTriesOf(t) === null">不会命中</template>
+            <template v-else>按当前门槛,约 {{ autoTriesOf(t) }} 次</template>
+          </p>
+        </div>
+      </div>
+    </div>
+
     <AffixTransferPanel v-if="transferOpen && inst" :source="inst" @close="transferOpen = false" />
   </template>
 </template>

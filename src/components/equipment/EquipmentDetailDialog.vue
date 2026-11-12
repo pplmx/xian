@@ -127,6 +127,27 @@
 
       <EquipNotePanel class="equip-dossier__note" />
 
+      <!--
+        工坊(重铸 / 自动重铸 / 词条转移)排在词条账**之前**。
+
+        重铸会连条数一起重掷(凡品 1 条、仙品 8 条 —— 见 data/qualities 的
+        affixes 区间)。原先工坊在词条账之后,于是每按一次「重铸词条」,按钮就被
+        上面那摞长出来的词条往下顶:实测同一件反复重铸,按钮在 796px 与 1008px
+        之间来回跳,幅度 212px —— 玩家正要连洗,手却每次都落空,还得重新找。
+
+        工坊只依赖「这一件是什么」(阶数、封存数、铭纹),不依赖词条条数;
+        放在词条账之前,按钮就不再是被它自己的结果推着走的。这条顺序由
+        `equipDossier.spec` 钉源码、由 `layout-check` 的「重铸按钮不许被自己的
+        结果推着走」钉真浏览器位移。
+      -->
+      <section class="equip-dossier__workshop" data-equipment-workshop>
+        <header class="equip-dossier__section-head">
+          <span>工坊</span>
+          <small>重铸、封存与词条转移</small>
+        </header>
+        <EquipReforgePanel />
+      </section>
+
       <p v-if="setInfo" class="equip-dossier__resonance">
         <span class="font-kai" :class="setInfo.active ? 'text-jade' : 'text-violet-ink'">
           共鸣「{{ setInfo.def.name }}」{{ setInfo.count }}/{{ setInfo.def.required }}
@@ -171,6 +192,9 @@
           </p>
         </div>
       </section>
+
+      <EquipUpgradePanel />
+      <EquipWhatIfPanel />
 
       <section
         v-if="resolved.affixLines.length"
@@ -272,17 +296,6 @@
             <span class="w-7 shrink-0 text-right tabular">{{ formatPercent(s.progress, 0) }}</span>
           </p>
         </div>
-      </section>
-
-      <EquipUpgradePanel />
-      <EquipWhatIfPanel />
-
-      <section class="equip-dossier__workshop" data-equipment-workshop>
-        <header class="equip-dossier__section-head">
-          <span>工坊</span>
-          <small>重铸、封存与词条转移</small>
-        </header>
-        <EquipReforgePanel />
       </section>
     </div>
 

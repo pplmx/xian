@@ -196,10 +196,77 @@ describe("器评帖 · 装备详情先给身份与换装结论", () => {
     expect(css).toMatch(
       /@media \(max-width: 220px\)\s*\{[\s\S]{0,2600}\.equip-dossier__workshop\s*\{[\s\S]{0,180}padding-inline:\s*0/,
     );
-    expect(reforge).toContain(
-      'class="btn-ghost min-h-[28px] w-full whitespace-nowrap !py-1 !text-body"',
+    // 两枚折叠钮并排(自动重铸 / 词条转移):同一个角色类,极窄档上下叠
+    expect(reforge, "折叠钮仍走同一个角色类").toContain(
+      'class="btn-ghost min-h-[28px] flex-1 whitespace-nowrap !py-1 !text-body"',
+    );
+    expect(reforge, "极窄档两枚叠成上下两行,不并排挤成两个半截").toMatch(
+      /class="mt-1 flex gap-2 tinylens:flex-col"[\s\S]{0,400}min-h-\[28px\] flex-1/,
     );
     expect(transfer).toContain("tinylens:pt-2");
     expect(transfer).toContain("chip-ink !whitespace-nowrap");
+  });
+  /*
+   * 重铸按钮不许被它自己的结果推着走。
+   *
+   * 重铸会**连词条条数一起重掷**(凡品 1 条、仙品 8 条,见 data/qualities 的
+   * `affixes` 区间)。原先工坊排在词条账之后,于是每按一次「重铸词条」,按钮就被
+   * 上面那摞长出来的词条往下顶 —— 实测同一件反复重铸,按钮在 796px 与 1008px
+   * 之间来回跳,幅度 212px。玩家正要连洗,手却每次都落空。
+   *
+   * 修法是把工坊挪到词条账**之前**:它只依赖「这一件是什么」(阶数、封存数、
+   * 铭纹),不依赖词条条数。判据在源码层钉顺序,真浏览器层由
+   * `layout-check` 的「重铸按钮不许被自己的结果推着走」量位移。
+   */
+  it("工坊排在词条账之前 —— 重铸按钮不许被自己重掷出的条数推着走", () => {
+    const workshopAt = dialog.indexOf("data-equipment-workshop");
+    const affixAt = dialog.indexOf("data-equipment-affixes");
+
+    expect(workshopAt, "工坊要有稳定落点").toBeGreaterThan(-1);
+    expect(affixAt, "词条账要有稳定落点").toBeGreaterThan(-1);
+    expect(workshopAt, "工坊又跑回词条账之后了 —— 重铸一次改条数,按钮就跟着上下跳").toBeLessThan(
+      affixAt,
+    );
+  });
+
+  it("折叠钮排在它自己展开的正文之前 —— 收放时钮本身一步不动", () => {
+    const reforge = source("src/components/equipment/EquipReforgePanel.vue");
+
+    // 「自动重铸」钮 vs 自动重铸面板:「开 洗」那一组在面板里,钮必须在面板之前
+    const autoBtnAt = reforge.indexOf(':aria-expanded="autoOpen"');
+    const autoPanelAt = reforge.indexOf("data-equipment-auto-reforge");
+    expect(autoBtnAt, "自动重铸钮要在").toBeGreaterThan(-1);
+    expect(autoPanelAt, "自动重铸面板要在").toBeGreaterThan(-1);
+    expect(autoBtnAt, "「自动重铸」钮跑到了它自己展开的面板后面 —— 一收一放钮就挪位").toBeLessThan(
+      autoPanelAt,
+    );
+
+    // 「词条转移」钮 vs 转移面板:同一套摆法
+    const transferBtnAt = reforge.indexOf(':aria-expanded="transferOpen"');
+    const transferPanelAt = reforge.indexOf("<AffixTransferPanel");
+    expect(transferBtnAt, "词条转移钮要在").toBeGreaterThan(-1);
+    expect(transferPanelAt, "词条转移面板要在").toBeGreaterThan(-1);
+    expect(transferBtnAt, "「词条转移」钮跑到了它自己的面板后面").toBeLessThan(transferPanelAt);
+  });
+
+  it("自动重铸的「开 洗」排在会长的滑杆之前 —— 选中的条数变多,开洗不往下走", () => {
+    const reforge = source("src/components/equipment/EquipReforgePanel.vue");
+    const fireAt = reforge.indexOf('@click="runAutoReforge"');
+    // 逐条阈值滑杆:每多选一条目标就多一行,把下面的东西往下推
+    const sliderAt = reforge.indexOf("保留阈值");
+
+    expect(fireAt, "「开 洗」要在").toBeGreaterThan(-1);
+    expect(sliderAt, "保留阈值滑杆要在").toBeGreaterThan(-1);
+    expect(
+      reforge.slice(0, sliderAt),
+      "保留阈值滑杆要真的是那枚 range 输入,不是在别处顺嘴提了一句",
+    ).toContain('type="range"');
+    expect(fireAt, "「开 洗」跑到了滑杆下面 —— 多选一条目标,按钮就往下挪一行").toBeLessThan(
+      sliderAt,
+    );
+    // 多选格本身是定高滚动框:候选再多也占 max-h-36,不推动下面那一排
+    expect(reforge, "词条多选格要是定高滚动框").toMatch(
+      /data-equipment-auto-reforge[\s\S]{0,400}max-h-36/,
+    );
   });
 });

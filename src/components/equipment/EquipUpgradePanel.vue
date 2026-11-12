@@ -59,9 +59,15 @@ function doUpgradeAll(): void {
 <template>
   <template v-if="inst && upCost">
     <div class="ink-divider my-3" />
+    <!--
+      `data-equipment-upgrade-price` 是给判据的落点:器评帖里现在有三处
+      「器灵尘×N」(重铸、封存、强化),而「强化写着扣多少就要扣多少」那条
+      判据必须读**强化这一处**的价 —— 从前它取的是弹窗里第一处匹配,
+      工坊往上挪之后第一处变成了重铸价,判据当场红(所见非所付)。
+    -->
     <p class="flex items-center justify-between text-body text-ink-faint">
       <span>强化 +{{ inst.level + 1 }} / 上限 {{ equipLevelCap() }}</span>
-      <span class="tabular"
+      <span class="tabular" data-equipment-upgrade-price
         >器灵尘×{{ formatGN(upCost.dust) }} · 灵石 {{ formatGN(upCost.stone) }}</span
       >
     </p>
