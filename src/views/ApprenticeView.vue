@@ -49,6 +49,8 @@ import ProgressBar from "@/components/common/ProgressBar.vue";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import FolioNote from "@/components/common/FolioNote.vue";
 import ApprenticeCourt from "@/components/apprentice/ApprenticeCourt.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfVolume } from "@/ui/sceneTerrain";
 
 const appr = useApprenticeStore();
 const player = usePlayerStore();
@@ -432,6 +434,23 @@ function dispatchSelected(a: OwnedApprentice): void {
       back-label="返回"
       featured
     >
+      <!--
+        门庭的底 —— 弟子是**道场里的人事**,按玄枢图「道场」那一卷取景。
+
+        复用 `sceneTerrainOfVolume("estate")`(林麓):那一卷的说明就是
+        「家业、人事与周转」—— 弟子正是「人事」这一半。两处同一片天才读得出
+        「这一卷的人和这里有关」。
+
+        落法是 backdrop 槽(最底层、不占布局),卷首读数一个字都不动。
+        点景只取地面那半:卷首压着「本境 N 席」与收徒价签。
+      -->
+      <template #backdrop>
+        <InkScene
+          class="apprentice-masthead__scene"
+          :terrain="sceneTerrainOfVolume('estate')"
+          marks="ground"
+        />
+      </template>
       <template #visual>
         <ApprenticeCourt :nodes="courtNodes" :slots="slots" :idle="pulse.idle" :away="pulse.away" />
       </template>

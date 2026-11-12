@@ -12,12 +12,12 @@
   {
     "route": "/world",
     "scenes": 2,
-    "terrains": ["forest"]
+    "terrains": ["water"]
   },
   {
     "route": "/adventure",
     "scenes": 1,
-    "terrains": ["forest"]
+    "terrains": ["water"]
   },
   {
     "route": "/character",
@@ -58,5 +58,10 @@
     "route": "/market",
     "scenes": 1,
     "terrains": ["palace"]
+  },
+  {
+    "route": "/apprentice",
+    "scenes": 1,
+    "terrains": ["forest"]
   }
 ]
