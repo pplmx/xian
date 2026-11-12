@@ -948,14 +948,6 @@
    * 笔画会争视线(这一处不承载信息,让位是它唯一的职责)。
    */
   .event-slip__scene {
-    /*
-   * 这一层是 **Teleport 到 body** 的弹窗里的画:`--world-mountain` 定义在
-   * `.app-shell[data-world=…]` 上,弹窗不在那棵子树里,取不到值 ——
-   * `InkScene` 那句 `fill: var(--world-mountain, currentColor)` 会退化成 currentColor,
-   * 于是不管在哪一界,弹窗里的山都是同一种颜色。
-   * 故在这一层自己给一个固定墨色(与突破结果 / 试炼档案两处既有做法一致)。
-   */
-    --world-mountain: rgb(var(--color-ink-rgb));
     opacity: 0.85;
   }
   .event-slip__mark {

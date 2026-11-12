@@ -496,17 +496,9 @@ watch(
    */
   grid-column: 2 / 3;
   display: block;
-  /*
-   * 择师谱是 **Teleport 到 body** 的弹窗:`--world-mountain` 定义在
-   * `.app-shell[data-world=…]` 上,弹窗不在那棵子树里,取不到值 ——
-   * `InkScene` 那句 `fill: var(--world-mountain, currentColor)` 会退化成 currentColor。
-   * 故在这一层自己给一个固定墨色(与同组件的dossier、突破结果、试炼档案一致)。
-   */
-  --world-mountain: rgb(var(--color-ink-rgb));
   --ink-scene-h: 100%;
   --ink-scene-ink: 1.2;
   /* 四脉各有各的天,不继承玩家脚下那一片的世界色 */
-  --world-mountain: rgb(var(--color-ink-rgb));
   margin-top: 0.34rem;
   aspect-ratio: 420 / 160;
   overflow: hidden;
@@ -520,7 +512,6 @@ watch(
 .mentor-dossier__scene {
   --ink-scene-h: 5.4rem;
   --ink-scene-ink: 1.2;
-  --world-mountain: rgb(var(--color-ink-rgb));
   margin-bottom: 0.6rem;
 }
 

@@ -425,14 +425,6 @@
      * 1.35 与「突破结果」「归来卷轴」那两处同一档 —— 它们也是定高的一条。
      */
     --ink-scene-ink: 1.35;
-    /*
-     * 山色自己兜一档松烟墨,**不继承**玩家所在的界。
-     *
-     * `--world-mountain` 从 `.app-shell` 下来,读的是「你此刻站在哪一界」。
-     * 而这一栏讲的是**天界自己的六界**:玩家此刻在混沌海,赤炎天照样该是赤炎天。
-     * 继承下来的话,六行会一起染上混沌的墨蓝,六副长相又退回成一片。
-     */
-    --world-mountain: rgb(var(--color-ink-rgb));
     margin-top: 0.42rem;
   }
 
@@ -473,14 +465,6 @@
     padding-bottom: 2.6rem;
   }
   .marks-compare__scene {
-    /*
-   * 这一层是 **Teleport 到 body** 的弹窗里的画:`--world-mountain` 定义在
-   * `.app-shell[data-world=…]` 上,弹窗不在那棵子树里,取不到值 ——
-   * `InkScene` 那句 `fill: var(--world-mountain, currentColor)` 会退化成 currentColor,
-   * 于是不管在哪一界,弹窗里的山都是同一种颜色。
-   * 故在这一层自己给一个固定墨色(与突破结果 / 试炼档案两处既有做法一致)。
-   */
-    --world-mountain: rgb(var(--color-ink-rgb));
     --ink-scene-h: 100%;
     --ink-scene-ink: 0.75;
     position: absolute;
@@ -1942,14 +1926,6 @@
   isolation: isolate;
 }
 .furnace-row__scene {
-  /*
-   * 这一层是 **Teleport 到 body** 的弹窗里的画:`--world-mountain` 定义在
-   * `.app-shell[data-world=…]` 上,弹窗不在那棵子树里,取不到值 ——
-   * `InkScene` 那句 `fill: var(--world-mountain, currentColor)` 会退化成 currentColor,
-   * 于是不管在哪一界,弹窗里的山都是同一种颜色。
-   * 故在这一层自己给一个固定墨色(与突破结果 / 试炼档案两处既有做法一致)。
-   */
-  --world-mountain: rgb(var(--color-ink-rgb));
   --ink-scene-h: 100%;
   --ink-scene-ink: 0.24;
   position: absolute;

@@ -161,13 +161,6 @@ const remainingPercent = computed(() => {
  * 两边都读不清 —— 与地界志卷首、行旅图那两处同一条理由。
  */
 .opportunity-scroll__scene {
-  /*
-   * 这一层在 **Teleport 到 body** 的弹窗里:`--world-mountain` 定义在
-   * `.app-shell[data-world=…]` 上,弹窗不在那棵子树里,取不到值 ——
-   * `InkScene` 那句 `fill: var(--world-mountain, currentColor)` 会退化成 currentColor。
-   * 故在这一层自己给一个固定墨色(与突破结果 / 试炼档案两处既有做法一致)。
-   */
-  --world-mountain: rgb(var(--color-ink-rgb));
   --ink-scene-h: 100%;
   --ink-scene-ink: 0.62;
   position: absolute;

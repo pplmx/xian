@@ -555,7 +555,7 @@ const CATEGORIES = [
       "sceneDistinct",
       "sceneMarks",
       "sceneAccentSize",
-      "modalSceneWorld",
+      "modalWorldInherit",
       "sceneClearance",
       "dismantleScene",
       "affixTransferScene",

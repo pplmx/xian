@@ -1589,6 +1589,18 @@ store、不 import core,只认传进来的字符串),九个地形各给两条山
   (`kind` 为空),这一层整块不出:一世几十次的小推进是节拍器,每次都配一张劫相
   会让节拍器看起来像里程碑。这一窗在 `Teleport to="body"` 里,`.app-shell` 的
   `--world-mountain` 继承不过去,故它自己兜一档松烟墨;
+- 弹窗**继承**世界色,而不是各自写死一片黑 —— 上一条只对了一半:给十六处各补一句
+  `--world-mountain: rgb(var(--color-ink-rgb))` 之后,退化的毛病没了,但十六处**全成
+  同一种固定墨色**;玩家站在仙界(蓝山)打开弹窗,里面仍是黑山 —— 跨过"弹窗边界"
+  山色会突变。这一轮改成单点根治:让 `BaseModal` 的面板自己带 `:data-world="player.world.id"`,
+  并把四界那几条世界色规则的选择器从 `.app-shell[data-world=…]` 扩成也命中裸
+  `[data-world=…]`(人间那一支原本没有 `[data-world]` 属性,补上 `[data-world="mortal"]`)。
+  这样弹窗里的画**跟着世界换**,以后新加的弹窗**自动**正确。
+  实地验过:仙界/#3c6c98、神界/#7054a0、混沌/#50648a —— 面板变量与山骨 fill 一致;
+  同时把上一轮那十六处写死的值撤掉(它们会盖过继承来的世界色)。
+  判据 `ui/modalWorldInherit` 三条:面板带 data-world(且绑的是 player.world.id,
+  不是常数)、四界各有一条不带 `.app-shell` 前缀的选择器、写死的值已撤净;
+  取代了上一轮的 `ui/modalSceneWorld`(它要求每处写死,方向正好相反);
 - 弹窗里的山色 —— `BaseModal` 是 `<Teleport to="body">` 的,而 `--world-mountain`
   定义在 `.app-shell[data-world=…]` 上;弹窗不在那棵子树里,`InkScene` 那句
   `fill: var(--world-mountain, currentColor)` 取不到值,山骨退化成 `currentColor` ——

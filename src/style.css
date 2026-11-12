@@ -2822,7 +2822,13 @@
    人间界 = 默认态(宣纸的白雾),仙界 = 云上金庭的天青,神界 = 紫气东来,
    混沌 = 玄冥深海的墨蓝(雾略收、光晕压暗)。 */
 
-  .app-shell {
+  /*
+   * 四界的世界色。选择器同时命中 `.app-shell`(页面外壳)与裸 `[data-world=…]`
+   * (弹窗面板 —— `BaseModal` 是 Teleport 到 body 的,不在 `.app-shell` 那棵子树里)。
+   * 只挂 `.app-shell` 时,弹窗里的山骨退化成 currentColor,不管在哪一界都是同一种黑。
+   */
+  .app-shell,
+  [data-world="mortal"] {
     --world-glow-rgb: 168 63 57;
     --world-mountain: rgb(var(--color-ink-rgb));
     /* 章节标题杆(全页高频的装饰色) —— 人间=朱砂、仙界=石青、神界=紫、混沌=幽蓝 */
@@ -2830,19 +2836,22 @@
     /* 世界的「此刻」文字色(世界名 / 地图上你现在的位置) —— 取色板里过 AA 的现存色 */
     --world-accent: var(--color-cinnabar);
   }
-  .app-shell[data-world="immortal"] {
+  .app-shell[data-world="immortal"],
+  [data-world="immortal"] {
     --world-glow-rgb: 90 140 190;
     --world-mountain: rgb(60 108 152);
     --world-bar: rgb(76 132 178 / 0.85);
     --world-accent: var(--color-qing);
   }
-  .app-shell[data-world="god"] {
+  .app-shell[data-world="god"],
+  [data-world="god"] {
     --world-glow-rgb: 130 100 190;
     --world-mountain: rgb(112 84 160);
     --world-bar: rgb(140 108 200 / 0.85);
     --world-accent: var(--color-violet-ink);
   }
-  .app-shell[data-world="chaos"] {
+  .app-shell[data-world="chaos"],
+  [data-world="chaos"] {
     --world-glow-rgb: 92 112 150;
     --world-mountain: rgb(80 100 138);
     --world-bar: rgb(96 120 158 / 0.85);

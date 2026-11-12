@@ -14,14 +14,6 @@
    */
   .equip-dossier__scene {
     /*
-   * 这一层是 **Teleport 到 body** 的弹窗里的画:`--world-mountain` 定义在
-   * `.app-shell[data-world=…]` 上,弹窗不在那棵子树里,取不到值 ——
-   * `InkScene` 那句 `fill: var(--world-mountain, currentColor)` 会退化成 currentColor,
-   * 于是不管在哪一界,弹窗里的山都是同一种颜色。
-   * 故在这一层自己给一个固定墨色(与突破结果 / 试炼档案两处既有做法一致)。
-   */
-    --world-mountain: rgb(var(--color-ink-rgb));
-    /*
      * 高度走**变量**而不是 height —— 这一层同时是 `.ink-scene` 本身,
      * 而它自带 `height: var(--ink-scene-h, 100%)`。给 `height: 7rem` 会被那条
      * scoped 规则盖过(组件里的选择器带 data-v,特指度更高),画就撑满整帖 ——
@@ -1800,14 +1792,6 @@
   isolation: isolate;
 }
 .decompose-row__scene {
-  /*
-   * 这一层是 **Teleport 到 body** 的弹窗里的画:`--world-mountain` 定义在
-   * `.app-shell[data-world=…]` 上,弹窗不在那棵子树里,取不到值 ——
-   * `InkScene` 那句 `fill: var(--world-mountain, currentColor)` 会退化成 currentColor,
-   * 于是不管在哪一界,弹窗里的山都是同一种颜色。
-   * 故在这一层自己给一个固定墨色(与突破结果 / 试炼档案两处既有做法一致)。
-   */
-  --world-mountain: rgb(var(--color-ink-rgb));
   --ink-scene-h: 100%;
   --ink-scene-ink: 0.26;
   position: absolute;
@@ -1856,14 +1840,6 @@
   isolation: isolate;
 }
 .herb-shop__scene {
-  /*
-   * 这一层是 **Teleport 到 body** 的弹窗里的画:`--world-mountain` 定义在
-   * `.app-shell[data-world=…]` 上,弹窗不在那棵子树里,取不到值 ——
-   * `InkScene` 那句 `fill: var(--world-mountain, currentColor)` 会退化成 currentColor,
-   * 于是不管在哪一界,弹窗里的山都是同一种颜色。
-   * 故在这一层自己给一个固定墨色(与突破结果 / 试炼档案两处既有做法一致)。
-   */
-  --world-mountain: rgb(var(--color-ink-rgb));
   --ink-scene-h: 100%;
   --ink-scene-ink: 0.22;
   position: absolute;

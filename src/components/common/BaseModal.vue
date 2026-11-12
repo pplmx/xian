@@ -15,6 +15,7 @@
           tabindex="-1"
           data-folio-modal
           class="modal-panel folio-modal paper-grain relative flex max-h-[84vh] w-full flex-col overflow-hidden bg-paper outline-none"
+          :data-world="player.world.id"
           :class="[panelSizeClass, props.panelClass]"
           @keydown="onPanelKeydown"
         >
@@ -106,6 +107,7 @@ if (typeof window !== "undefined") window.addEventListener("keydown", onWindowKe
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, useTemplateRef, watch } from "vue";
 import { useRoute } from "vue-router";
+import { usePlayerStore } from "@/stores/player";
 import { cnNumber } from "@/utils/format";
 import { navigationPositionOf } from "@/ui/navigation";
 
@@ -151,6 +153,8 @@ const props = withDefaults(
 
 const emit = defineEmits<{ close: [] }>();
 const route = useRoute();
+/* 弹窗面板要带当前世界 —— 世界色那几条规则的选择器已扩到 [data-world=…] */
+const player = usePlayerStore();
 /*
  * 面板宽度 —— 手机按原样,桌面书桌上**跟着书桌一起展开**。
  *

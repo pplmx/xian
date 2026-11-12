@@ -326,13 +326,6 @@ function openDetail(uid: string): void {
  * (器评帖那一轮踩过,画撑满整帖)。
  */
 .slot-candidate__scene {
-  /*
-   * 这一层在 **Teleport 到 body** 的弹窗里:`--world-mountain` 定义在
-   * `.app-shell[data-world=…]` 上,弹窗不在那棵子树里,取不到值 ——
-   * `InkScene` 那句 `fill: var(--world-mountain, currentColor)` 会退化成 currentColor。
-   * 故在这一层自己给一个固定墨色(与突破结果 / 试炼档案两处既有做法一致)。
-   */
-  --world-mountain: rgb(var(--color-ink-rgb));
   --ink-scene-h: 5.6rem;
   --ink-scene-ink: 0.45;
   position: absolute;
