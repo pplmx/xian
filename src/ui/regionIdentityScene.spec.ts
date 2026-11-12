@@ -27,7 +27,12 @@
  */
 import { describe, expect, it } from "vite-plus/test";
 import { REGIONS } from "@/data/regions";
-import { REGION_TERRAIN_OVERRIDE, sceneTerrainOfRegion, SCENE_TERRAINS } from "@/ui/sceneTerrain";
+import {
+  REGION_TERRAIN_OVERRIDE,
+  sceneTerrainOfPlace,
+  sceneTerrainOfRegion,
+  SCENE_TERRAINS,
+} from "@/ui/sceneTerrain";
 
 const 名单 = ["kunlun", "jinyuan", "wanshendian", "wudaoya", "qingyun"];
 
@@ -53,13 +58,28 @@ describe("地界按它自己是什么取景", () => {
     }
   });
 
-  it("名单外的地界仍然走图标 —— 行为不变", () => {
+  it("每一条覆盖都真的带来区分 —— 不许白写一条", () => {
     /*
-     * 这一条防的是"顺手把整表都改了":只有那五处需要按自身身份取景,
-     * 其余地界的图标本来就够用。若哪天有人往映射表里塞了别的 id,这里会红。
+     * 原先这一条写的是「名单外不许加」(只准五处)。那个数字在下一轮就被正当推翻了:
+     * 全表摊开数发现 66% 的地界挤在三片天上,于是按各处的描述又收了十二条。
+     * 钉一个数字,挡的是"改",不是"改错" —— 而真正要防的是**白写**:
+     * 某条覆盖的值若与它本来就会落到的地形一样,那条覆盖什么也没做。
+     *
+     * 故改成钉实质:每一条 `id → 地形` 都必须与「这一处按图标取景会落到的地形」不同。
+     * (唯一例外是 qingyun —— 它显式在册,是为了让「山麓归山岳」有据可查,
+     * 下面单独给它一条豁免并写明理由。)
      */
-    const 只该有这些 = new Set(名单);
-    const 多出来的 = Object.keys(REGION_TERRAIN_OVERRIDE).filter((id) => !只该有这些.has(id));
-    expect(多出来的, "映射表里多了名单外的地界 —— 请先想清楚它为什么需要按 id 取景").toEqual([]);
+    const 显式在册 = new Set(["qingyun"]);
+    const 白写: string[] = [];
+    for (const [id, terrain] of Object.entries(REGION_TERRAIN_OVERRIDE)) {
+      if (显式在册.has(id)) continue;
+      const region = REGIONS.find((r) => r.id === id);
+      if (!region) continue;
+      const byIcon = sceneTerrainOfPlace({ icon: region.icon });
+      if (byIcon === terrain) {
+        白写.push(`${id} 覆盖成 ${terrain},而它按图标本来就落 ${byIcon} —— 这条覆盖什么也没做`);
+      }
+    }
+    expect(白写, "这些覆盖没带来任何区分 —— 要么删掉,要么改成真正对得上描述的那片地").toEqual([]);
   });
 });
