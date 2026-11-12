@@ -558,6 +558,7 @@ const CATEGORIES = [
       "regionIdentityScene",
       "regionSpread",
       "realmVolumeScene",
+      "realmCodexWorldColor",
       "soulScene",
       "soulDetailScene",
       "daoConfirmScene",
