@@ -1081,3 +1081,35 @@ const QUALITY_TERRAIN: Record<number, SceneTerrain> = {
 export function sceneTerrainOfQuality(rank: number | null | undefined): SceneTerrain {
   return (rank !== null && rank !== undefined && QUALITY_TERRAIN[rank]) || "peaks";
 }
+
+/**
+ * 洞府七座 → 地形。
+ *
+ * `data/buildings` 的七座各管一摊事,按**这一座营在哪儿**取景:
+ *
+ *   洞府   —— 住处本身      → 山岳(依山而居)
+ *   聚灵阵 —— 引气入内的法阵 → 星野(接天)
+ *   炼丹炉 —— 火与炉        → 火域
+ *   炼器台 —— 锻与淬        → 雪原(淬火之寒)
+ *   灵田   —— 种灵草        → 林麓
+ *   藏经阁 —— 藏书          → 宫阙(阁)
+ *   灵兽园 —— 养兽          → 江海(放养之地,水草丰处)
+ *
+ * 七座落七种,不共用 —— 七张卡并排时,共用一张底就等于只有一种建筑。
+ *
+ * 认不出落回山岳 —— 洞府本身那一座,与「认不出就按最常见的那种算」同一条纪律。
+ */
+const BUILDING_TERRAIN: Record<string, SceneTerrain> = {
+  mansion: "peaks",
+  array: "sky",
+  alchemy: "flame",
+  forge: "frost",
+  field: "forest",
+  library: "palace",
+  beast: "water",
+};
+
+/** 一座洞府建筑长什么样;认不出的落回山岳 */
+export function sceneTerrainOfBuilding(buildingId: string | null | undefined): SceneTerrain {
+  return (buildingId && BUILDING_TERRAIN[buildingId]) || "peaks";
+}

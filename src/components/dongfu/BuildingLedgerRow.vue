@@ -10,6 +10,21 @@
     :data-state="info.canUpgrade ? 'ready' : level > 0 ? 'built' : 'empty'"
     @animationend.self="flashing = false"
   >
+    <!--
+      这一座营在哪儿 —— 按 `props.def.id` 取景。
+
+      `data/buildings` 的七座各管一摊事(住处 / 法阵 / 炉 / 台 / 田 / 阁 / 园),
+      而 244 行模板里一个 `<svg>` 都没有 —— 七张卡的区别只有那枚 15px 图标与几个数。
+
+      落法是卡内背景(绝对定位、不接指针):卡面是图标、名、等级、进度条与详情开关,
+      画占布局会把它们挤走。点景只取地面那半 —— 卡面正文压在上半。
+    -->
+    <InkScene
+      class="dongfu-building__scene"
+      :terrain="sceneTerrainOfBuilding(props.def.id)"
+      marks="ground"
+      aria-hidden="true"
+    />
     <header class="dongfu-building__head">
       <span class="dongfu-building__mark" aria-hidden="true">
         <GameIcon :name="props.def.icon" :size="15" />
@@ -168,6 +183,8 @@ import { studyEta } from "@/core/loreService";
 import { mansionShortfallOf } from "@/core/engineFacilities";
 import { formatDuration, formatGN } from "@/utils/format";
 import GameIcon from "@/components/common/GameIcon.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfBuilding } from "@/ui/sceneTerrain";
 import { keepNumberUnit } from "@/utils/keepNumberUnit";
 
 /** 连升一次至多升几级(与连炼×5 / 灵脉+5 同一种有界批量) */

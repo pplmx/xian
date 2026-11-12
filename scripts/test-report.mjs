@@ -558,6 +558,7 @@ const CATEGORIES = [
       "dismantleScene",
       "affixTransferScene",
       "mastheadScene",
+      "buildingScene",
       "resetShowsLoss",
       "openingStepCount",
       "openingGift",
