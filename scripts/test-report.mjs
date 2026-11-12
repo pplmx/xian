@@ -559,6 +559,7 @@ const CATEGORIES = [
       "affixTransferScene",
       "mastheadScene",
       "buildingScene",
+      "furnaceScene",
       "resetShowsLoss",
       "openingStepCount",
       "openingGift",

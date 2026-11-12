@@ -1916,3 +1916,32 @@
   --ink-scene-ink: 0.34;
   pointer-events: none;
 }
+
+/*
+   * 天道熔炉四行里那片地 —— 这一味是什么(见 components/celestial/FurnaceDialog)。
+   *
+   * 脱离流、钉在那一行内:那一行是存量、熔尽按钮与确认条,画占布局会把它们挤走。
+   * 行本身要 `position: relative` 才承得住它。
+   *
+   * 高度走 `--ink-scene-h`:这一层同时就是 `.ink-scene` 本身,直接写 height 会被
+   * 组件内那条 `height: var(--ink-scene-h, 100%)` 盖过(器评帖那一轮踩过)。
+   *
+   * 点景只取地面那半(组件上 `marks="ground"`);墨取 0.24 ——
+   * 行里那两段字是玩家判断「熔哪一味」的依据,画只做底。
+   */
+.furnace-row {
+  position: relative;
+  isolation: isolate;
+}
+.furnace-row__scene {
+  --ink-scene-h: 100%;
+  --ink-scene-ink: 0.24;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.furnace-row > :not(.furnace-row__scene) {
+  position: relative;
+  z-index: 1;
+}

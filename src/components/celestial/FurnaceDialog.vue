@@ -3,7 +3,22 @@
   <BaseModal :open="open" title="天道熔炉" @close="emit('close')">
     <p class="mb-2 t-body text-ink-faint">前尘俗物,皆可熔作道源。</p>
     <div class="mt-1 divide-y divide-ink/10 border-y border-ink/10" data-furnace-ledger>
-      <div v-for="row in furnaceRows" :key="row.rate.resource" class="py-2.5">
+      <div v-for="row in furnaceRows" :key="row.rate.resource" class="furnace-row py-2.5">
+        <!--
+          这一味熔得出什么 —— 按 `row.rate.resource` 取景。
+
+          `data/endgame` 的 `FURNACE_RATES` 就是那四行(矿 / 残页 / 灵草 / 尘),
+          而 212 行模板里一个 `<svg>` 都没有 —— 四行只有名与数。
+
+          落法是行内背景(绝对定位、不接指针):那一行是存量、按钮与确认条,
+          画占布局会把它们挤走。点景只取地面那半 —— 正文压在上半。
+        -->
+        <InkScene
+          class="furnace-row__scene"
+          :terrain="sceneTerrainOfFurnace(row.rate.resource)"
+          marks="ground"
+          aria-hidden="true"
+        />
         <div
           class="flex items-center justify-between gap-2 tinylens:flex-col tinylens:items-stretch"
         >
@@ -148,6 +163,8 @@ import {
 import { formatGN, formatNum } from "@/utils/format";
 import { subClamp, toNum } from "@/utils/gnum";
 import BaseModal from "@/components/common/BaseModal.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfFurnace } from "@/ui/sceneTerrain";
 
 const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();

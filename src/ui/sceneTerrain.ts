@@ -1113,3 +1113,29 @@ const BUILDING_TERRAIN: Record<string, SceneTerrain> = {
 export function sceneTerrainOfBuilding(buildingId: string | null | undefined): SceneTerrain {
   return (buildingId && BUILDING_TERRAIN[buildingId]) || "peaks";
 }
+
+/**
+ * 天道熔炉四味 → 地形。
+ *
+ * `data/endgame` 的 `FURNACE_RATES` 就是那四行(ore / page / herb / dust),
+ * 按**这一味是什么**取景,不按「一炉多少」排:
+ *
+ *   矿   ore  —— 从山里凿出来   → 山岳
+ *   残页 page —— 书阁里散出的   → 宫阙
+ *   灵草 herb —— 长出来的       → 林麓
+ *   尘   dust —— 碾碎之后剩下的 → 遗迹
+ *
+ * 四味落四种,不共用 —— 四行并排时共用一张底就等于只有一种料。
+ * 认不出落回山岳(矿:四味里最「从地里来」的那一味)。
+ */
+const FURNACE_TERRAIN: Record<string, SceneTerrain> = {
+  ore: "peaks",
+  page: "palace",
+  herb: "forest",
+  dust: "ruin",
+};
+
+/** 熔炉一行长什么样;认不出的落回山岳 */
+export function sceneTerrainOfFurnace(resource: string | null | undefined): SceneTerrain {
+  return (resource && FURNACE_TERRAIN[resource]) || "peaks";
+}
