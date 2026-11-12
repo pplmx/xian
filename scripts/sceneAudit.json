@@ -3,78 +3,91 @@
     "route": "/",
     "scenes": 1,
     "terrains": ["void"],
-    "minH": 158
+    "minH": 158,
+    "stable": true
   },
   {
     "route": "/cultivation",
     "scenes": 1,
     "terrains": ["void"],
-    "minH": 116
+    "minH": 116,
+    "stable": true
   },
   {
     "route": "/world",
     "scenes": 2,
-    "terrains": ["ruin"],
-    "minH": 96
+    "terrains": ["peaks"],
+    "minH": 96,
+    "stable": false
   },
   {
     "route": "/adventure",
     "scenes": 1,
-    "terrains": ["ruin"],
-    "minH": 54
+    "terrains": ["peaks"],
+    "minH": 54,
+    "stable": false
   },
   {
     "route": "/character",
     "scenes": 1,
     "terrains": ["frost"],
-    "minH": 61
+    "minH": 61,
+    "stable": true
   },
   {
     "route": "/inventory?tab=equip",
     "scenes": 1,
     "terrains": ["frost"],
-    "minH": 61
+    "minH": 61,
+    "stable": true
   },
   {
     "route": "/collection?tab=collection",
     "scenes": 10,
     "terrains": ["flame", "forest", "frost", "palace", "peaks", "ruin", "sky", "void", "water"],
-    "minH": 58
+    "minH": 58,
+    "stable": true
   },
   {
     "route": "/celestial",
     "scenes": 1,
     "terrains": ["flame"],
-    "minH": 61
+    "minH": 61,
+    "stable": true
   },
   {
     "route": "/titles",
     "scenes": 1,
     "terrains": ["forest"],
-    "minH": 67
+    "minH": 67,
+    "stable": true
   },
   {
     "route": "/dongfu",
     "scenes": 1,
     "terrains": ["peaks"],
-    "minH": 61
+    "minH": 61,
+    "stable": true
   },
   {
     "route": "/legacy",
     "scenes": 1,
     "terrains": ["void"],
-    "minH": 61
+    "minH": 61,
+    "stable": true
   },
   {
     "route": "/market",
     "scenes": 1,
     "terrains": ["palace"],
-    "minH": 61
+    "minH": 61,
+    "stable": true
   },
   {
     "route": "/apprentice",
     "scenes": 1,
     "terrains": ["forest"],
-    "minH": 61
+    "minH": 61,
+    "stable": true
   }
 ]

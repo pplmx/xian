@@ -22,21 +22,35 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const INDEX = `file://${join(ROOT, "dist/index.html")}`;
 const OUT = join(ROOT, "scripts/sceneAudit.json");
 
-/** 主页面清单 —— 与 mastheadScene.spec 的「该有画的页」对齐,只多不少 */
+/**
+ * 主页面清单 —— 与 mastheadScene.spec 的「该有画的页」对齐,只多不少。
+ *
+ * `stable` 说的是**这条路由的地形是不是每次都一样**,不是「这页有没有画」:
+ *
+ *   · 大多数页的取景来自固定身份(世界的底子、页签、某一处地界的定义),
+ *     同一份存档每次跑都是同一片地;
+ *   · `/world` 与 `/adventure` 的取景读 `adventure.currentRegion?.icon` ——
+ *     会话没定下来时退回「本世第一个地界」,而那一处由世界生成决定。
+ *     实测连跑三次得 peaks / forest / ruin 三种 —— 故标 false。
+ *
+ * 标这一栏的理由很实际:这份 JSON 是要提交进仓库当判据输入的。
+ * 若不区分,提交的就是一个随机快照,下一个人重跑总会看到不一样的 diff,
+ * 而没人能说清哪份对。
+ */
 const ROUTES = [
-  "/",
-  "/cultivation",
-  "/world",
-  "/adventure",
-  "/character",
-  "/inventory?tab=equip",
-  "/collection?tab=collection",
-  "/celestial",
-  "/titles",
-  "/dongfu",
-  "/legacy",
-  "/market",
-  "/apprentice",
+  { path: "/", stable: true },
+  { path: "/cultivation", stable: true },
+  { path: "/world", stable: false },
+  { path: "/adventure", stable: false },
+  { path: "/character", stable: true },
+  { path: "/inventory?tab=equip", stable: true },
+  { path: "/collection?tab=collection", stable: true },
+  { path: "/celestial", stable: true },
+  { path: "/titles", stable: true },
+  { path: "/dongfu", stable: true },
+  { path: "/legacy", stable: true },
+  { path: "/market", stable: true },
+  { path: "/apprentice", stable: true },
 ];
 
 const browser = await chromium.launch({
@@ -56,7 +70,7 @@ try {
   await seedSave(ctx, slices, "__sceneaudit");
   const page = await ctx.newPage();
   const rows = [];
-  for (const route of ROUTES) {
+  for (const { path: route, stable } of ROUTES) {
     await page.goto(INDEX + "#" + route, { waitUntil: "load" });
     await page.waitForTimeout(2300);
     /* 开局与成就弹窗会盖住整屏,先收干净 */
@@ -87,12 +101,14 @@ try {
         minH: heights.length ? Math.min(...heights) : 0,
       };
     });
-    rows.push({ route, ...m });
+    rows.push({ route, ...m, stable });
   }
   mkdirSync(dirname(OUT), { recursive: true });
   writeFileSync(OUT, JSON.stringify(rows, null, 2) + "\n", "utf8");
   for (const r of rows)
-    console.log(`${r.route}  scenes=${r.scenes}  minH=${r.minH}  ${r.terrains.join(",") || "-"}`);
+    console.log(
+      `${r.route}  scenes=${r.scenes}  minH=${r.minH}  ${r.stable ? "稳定" : "随生成"}  ${r.terrains.join(",") || "-"}`,
+    );
   console.log(`\n→ ${OUT}`);
 } finally {
   await browser.close();
