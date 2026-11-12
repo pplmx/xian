@@ -72,11 +72,19 @@ try {
         const b = e.getBoundingClientRect();
         return b.width > 0 && b.height > 0;
       });
+      /*
+       * 除了「有没有」,还记「多大」。
+       *
+       * 判据只看场数时,一处画被压成 20px 的窄条也算「有画」——那和没有差不多。
+       * 记下最小可见高度,下一轮要收紧时就有依据,而不是凭印象说「这一处太薄」。
+       */
+      const heights = scenes.map((e) => Math.round(e.getBoundingClientRect().height));
       return {
         scenes: scenes.length,
         terrains: Array.from(new Set(scenes.map((s) => s.getAttribute("data-scene-terrain")))).sort(
           (a, b) => (a ?? "").localeCompare(b ?? ""),
         ),
+        minH: heights.length ? Math.min(...heights) : 0,
       };
     });
     rows.push({ route, ...m });
@@ -84,7 +92,7 @@ try {
   mkdirSync(dirname(OUT), { recursive: true });
   writeFileSync(OUT, JSON.stringify(rows, null, 2) + "\n", "utf8");
   for (const r of rows)
-    console.log(`${r.route}  scenes=${r.scenes}  ${r.terrains.join(",") || "-"}`);
+    console.log(`${r.route}  scenes=${r.scenes}  minH=${r.minH}  ${r.terrains.join(",") || "-"}`);
   console.log(`\n→ ${OUT}`);
 } finally {
   await browser.close();

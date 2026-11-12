@@ -142,9 +142,20 @@ describe("卷首山水景的覆盖面", () => {
      * 生成一次、比一次,而不是每次测试都开浏览器。
      */
     const audit = readSource("scripts/sceneAudit.json");
-    const rows = JSON.parse(audit) as Array<{ route: string; scenes: number }>;
+    const rows = JSON.parse(audit) as Array<{ route: string; scenes: number; minH: number }>;
     const empty = rows.filter((r) => r.scenes === 0).map((r) => r.route);
     expect(empty, "这些主页面在真浏览器里一场景都量不到 —— 等于玩家看不到画").toEqual([]);
+
+    /*
+     * 除了「有没有」,还钉「多大」:
+     * 一处画被压成 20px 的窄条也算「有场」,但那和没有差不多 ——
+     * 420×160 的比例在 20px 高时,每一 SVG 单位只剩 0.13px,山骨与人形都糊成一片。
+     * 下限取 48px:实测最矮的一处是 54px(历练页卷首),留一点余量给它。
+     */
+    const tooThin = rows
+      .filter((r) => r.minH > 0 && r.minH < 48)
+      .map((r) => `${r.route} 最矮一处只有 ${r.minH}px`);
+    expect(tooThin, "这些页的画被压得太薄 —— 接上了也读不出是什么").toEqual([]);
   });
 
   it("每处卷首景都交代了「为什么是这片天」", () => {
