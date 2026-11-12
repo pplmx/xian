@@ -1592,15 +1592,25 @@ store、不 import core,只认传进来的字符串),九个地形各给两条山
 - 滚动容器不许挂「每帧都要重画」的背景 —— `.folio-surface` 是全站唯一的滚动容器,
   它此前同时挂着四层渐变(含一条 `repeating-radial-gradient` 同心圆条纹)与
   `background-attachment: local`(让背景跟着内容滚)。两者合起来,每一次滚动位移
-  都要求浏览器把四层渐变重画一遍。实测(CPU 降 10 倍、真触摸手势):把
-  `background-image` 摘掉后,滚动那一段的 TaskDuration 从 0.373s 降到 0.277s ——
-  四分之一的开销只为一层纸纹。修法是把纸纹抽成独立的 `.folio-surface__grain`
+  都要求浏览器把四层渐变重画一遍。修法是把纸纹抽成独立的 `.folio-surface__grain`
   (`position: fixed`,只画一次),滚动容器自己只留纯色底。
+  **幅度不作断言** —— 这条改动的收益量不出来,原因见下面「量不出来的东西」一节。
   判据 `ui/scrollSurfacePaint` 五条:滚动容器上不许有 `background-attachment: local`、
   不许挂同心圆条纹、纸纹必须挪到独立层且真的挂进外壳(不许直接删掉 —— 它是界面底子)。
   另测过「给滚动容器内的 SVG 加 `contain: strict` / `will-change`」:三种模式
-  (基准 / 加提示 / 整个隐藏)的 TaskDuration 是 0.283 / 0.289 / 0.294 —— 没有差别,
-  故画面层不是这处卡顿的来源,没有做画蛇添足的改动;
+  (基准 / 加提示 / 整个隐藏)互在噪声内,故画面层不是这处卡顿的来源,
+  没有做画蛇添足的改动;
+
+  **量不出来的东西(记在这里,免得下一个人重蹈)**:
+  移动端的滚动流畅度,大头在**光栅化与合成**,而 Chrome 的 `Performance.getMetrics`
+  只报 Layout / RecalcStyle / Script / Task,不含光栅化。实测同一页、同一操作:
+  LayoutCount 恒为 1、RecalcStyleCount 恒为 61、LayoutDuration 与 RecalcStyleDuration
+  都是 0 —— 改与不改一模一样;而 TaskDuration 的**单次**读数在 0.045s 到 0.401s 之间
+  跳(九倍),12 轮交替 A/B 的中位数差 17%,但样本区间相互覆盖,不足以支撑任何幅度断言。
+  故 `background-attachment: local` 这条改动的方向是确定的(它确实会在每次滚动位移
+  时重画四层渐变),**但"省了多少"在本仓现有工具下测不出来**。
+  要真量,得在真机上用 Chrome DevTools 的 Performance 面板看 Raster 与 Composite
+  那两条轨,或者用 `framebuffer` 级的 trace —— 不在无头环境的能力范围内;
 - 上一轮只修了卷首,**其余十处场景同样淡到看不见** —— 把全表按
   `--ink-scene-ink × 0.16` 排一遍才发现:天道熔炉的行内画 0.038、灵草坊 0.035、
   分解行 0.042、玄枢图五卷 0.048、试炼档案 0.051、藏珍柜屉 0.054、战局 0.054、

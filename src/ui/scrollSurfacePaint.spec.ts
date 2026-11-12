@@ -78,4 +78,57 @@ describe("滚动容器不许挂每帧重画的背景", () => {
     const app = readSource("src/App.vue");
     expect(app, "App.vue 里要有那层独立背景的节点").toMatch(/folio-surface__/);
   });
+
+  it("注释里不许写没量住的收益数字", () => {
+    /*
+     * 这一条是**自省**,针对本仓已经犯过一次的错:
+     * 这条改动的提交与注释里曾写着「TaskDuration 从 0.373s 降到 0.277s,四分之一」。
+     * 那是**单次**读数,而同一页同一操作的 TaskDuration 在 0.045~0.401s 之间跳
+     * (九倍)。12 轮交替 A/B 的中位数虽然差 17%,样本区间却相互覆盖 ——
+     * 那条「四分之一」是无根据的。
+     *
+     * 光栅化不在 `Performance.getMetrics` 里统计:改与不改,LayoutCount 恒为 1、
+     * RecalcStyleCount 恒为 61、两项 CSS 耗时都是 0 —— 一模一样。
+     * 故本仓对这条改动的收益**只能给方向,不能给幅度**。
+     *
+     * 判据:这两处注释里若再次出现「降了百分之多少 / 省了四分之一」这类断言,
+     * 必须同时写着测量方法(真机 / Raster trace)。没有方法就不许有数字。
+     */
+    const text = readSource("src/App.vue") + readSource("src/style.css");
+    /*
+     * 匹配「动词 …… 数字 + 单位」这一整句。动词与数字之间允许任意字
+     * (写成「降低了 0.373s」也算)—— 第一版把间隔限死成 12 个字,
+     * 实测漏掉了真正想拦的那种写法。
+     */
+    const claims = [
+      ...text.matchAll(
+        /(?:降到|降低|省了|省下|减少|缩短|快了|提升)[^。\n；]{0,30}?(\d+(?:\.\d+)?)\s*(?:s\b|秒|%|毫秒|ms)/g,
+      ),
+    ]
+      .map((m) => m[0].trim())
+      /*
+       * 排除 `prefers-reduced-motion` 那一节 —— 那里写「时长压到 0.01ms」是
+       * **无障碍约定**(尽量取消动效),与"渲染收益"无关。实测第一版就误报了它。
+       */
+      .filter((c) => {
+        const at = text.indexOf(c);
+        const near = text.slice(Math.max(0, at - 300), at + c.length);
+        return !/reduced-motion|减少动效|prefers-reduced/.test(near);
+      });
+    /*
+     * 逐条判断,不是"全文出现过就算" —— 第一版写成对 `text` 整体做 /真机|Raster/ 过滤,
+     * 而这两篇注释里**本来就**提到了「光栅化」与「真机」,于是任何新写的数字都会被放行。
+     * 正确口径:每一条断言附近(同一句 / 同 200 字内)必须写着测量方法。
+     */
+    const unsupported = claims.filter((c) => {
+      const at = text.indexOf(c);
+      if (at < 0) return true;
+      const near = text.slice(Math.max(0, at - 400), at + c.length + 400);
+      return !/真机|Raster|trace|DevTools|量不出|不作断言/.test(near);
+    });
+    expect(
+      unsupported,
+      "注释里给了收益数字却没写测量方法 —— 本仓量不到光栅化,这种数字是单次噪声",
+    ).toEqual([]);
+  });
 });

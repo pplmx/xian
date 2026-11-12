@@ -90,9 +90,12 @@
 
       此前那四层渐变(其中一条 `repeating-radial-gradient` 是同心圆条纹)
       直接挂在下面的滚动容器上,又配了 `background-attachment: local`:
-      每一次滚动位移都要求浏览器把四层渐变重画一遍。实测(CPU 降 10 倍、真触摸手势)
-      把 `background-image` 摘掉后,滚动那一段的 TaskDuration 从 0.373s 降到 0.277s
-      —— 四分之一的开销只为一层纸纹。
+      每一次滚动位移都要求浏览器把四层渐变重画一遍。
+
+      **收益幅度不作断言**:光栅化不在 Chrome `Performance.getMetrics` 的统计范围里
+      (实测改与不改,LayoutCount / RecalcStyleCount 完全相同),而 TaskDuration 的
+      单次读数在九倍区间内跳 —— 本仓现有工具量不出这条改动的幅度。
+      方向是确定的:背景不再跟着内容滚,就少一层每帧重画。
 
       挪到这里之后,纸纹只画一次;滚动容器自己只留纯色底。
     -->
