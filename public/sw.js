@@ -250,6 +250,46 @@ async function cacheFirst(request) {
   return res;
 }
 
+/**
+ * 页面侧握手的应答 —— 「你自己是哪个版本?」
+ *
+ * ## 为什么必须有这一条
+ *
+ * 页面能拿到 `registration.installing` / `waiting` / `controller` 三个 worker 对象,
+ * 却**读不到它们的 `CACHE_VERSION`** —— 那是另一个全局里的变量。没有这条应答,
+ * 页面就只剩"装好了一个新 worker"这一个信号,而它不足以判断"这个比正在跑的新吗"。
+ *
+ * 线上发版走 CDN,边缘最终一致:同一时刻两台边缘可能还各有新旧两份 sw.js。
+ * 浏览器两次 `update()` 撞上不同边缘,就在两个版本间来回翻。此前页面把**每一次**
+ * 装到 installed 都当成「有新版」,于是玩家点了刷新、过一会又弹,刷多少次都停不下来
+ * (实测两边缘交替时:`- 弹 弹 弹 弹 弹 弹 弹`,永不收敛)。
+ *
+ * 有了版本号,页面就能说清「翻回旧版不算新版」。
+ *
+ * ## 为什么不只用 `SKIP_WAITING`
+ *
+ * 那条消息原先由页面的 `reload()` 发出去,注释写着「向等待中的 SW 补一次通知」——
+ * 而 sw.js 里**从来没有 message 监听**,那条消息一路没人接。顺手在这里一并接住:
+ * 本作的 install 已经自己 `skipWaiting()`,所以收到它时通常已经是多余的一步;
+ * 留着是为了老版本 SW 还在场上时也能被推一把。
+ */
+self.addEventListener("message", (event) => {
+  const data = event.data || {};
+  if (data.type === "SKIP_WAITING") {
+    void self.skipWaiting();
+    return;
+  }
+  if (data.type !== "XUANSHU_SW_VERSION") return;
+  /*
+   * 应答走 `MessageChannel` 的端口,不走 `clients.matchAll()` ——
+   * 后者在页面有多个标签时不知道该回哪一个,而这条消息天生是"谁问我答谁"。
+   * 端口没带(event.ports 为空)就静默丢弃:那是别的来源发的,不是我们的握手。
+   */
+  const port = event.ports && event.ports[0];
+  if (!port) return;
+  port.postMessage({ type: "XUANSHU_SW_VERSION", version: CACHE_VERSION });
+});
+
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;

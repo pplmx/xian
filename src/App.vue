@@ -120,7 +120,7 @@
     <BottomNavigation v-if="game.started && route.name !== 'create'" />
 
     <!-- 全局浮层 -->
-    <UpdatePrompt :visible="updateReady" @refresh="swHandle?.reload()" />
+    <UpdatePrompt :visible="updateReady" @refresh="swHandle?.reload()" @later="onUpdateLater" />
     <ToastHost />
     <NavigationAtlas v-if="game.started" :open="atlasOpen" @close="atlasOpen = false" />
     <template v-if="overlaysReady">
@@ -321,6 +321,24 @@ let writerWatch: number | undefined;
 /** 刷新交给玩家自己按:自动重载会让人以为页面崩了 */
 const reloadPage = (): void => window.location.reload();
 
+/**
+ * 「稍后」—— 收起这一版的提示,但不放弃更新。
+ *
+ * 两件事都要做:
+ *   一 把横幅熄灭(`updateReady = false`)。此前它没有写回 false 的路径,
+ *      于是 `UpdatePrompt` 一旦亮起就永久挂在屏幕上 —— 玩家正在一场战斗中间时,
+ *      那块横幅既不是错误也赶不走。
+ *   二 记下「这一版我认过了」(`swHandle.defer()` 落进 localStorage),免得下一次
+ *      `update()` 撞上同一版又把横幅刷回来。真正发了下一版时仍会重新亮。
+ *
+ * 只熄灭当前这一次,不设"以后都别再提示我"的开关 —— 「稍后」的意思是晚点再说,
+ * 不是放弃更新。真正的去重靠 `defer()` 记的那一版版本号:下一版来时回调照常触发。
+ */
+function onUpdateLater(): void {
+  updateReady.value = false;
+  swHandle?.defer();
+}
+
 onMounted(() => {
   unsubscribeTheme = initTheme(() => settings.theme);
   /*
@@ -357,7 +375,8 @@ onMounted(() => {
     navigator.serviceWorker
       .getRegistration()
       .then((reg) => {
-        if (reg) swHandle = useServiceWorkerUpdate(reg, () => (updateReady.value = true));
+        if (!reg) return;
+        swHandle = useServiceWorkerUpdate(reg, () => (updateReady.value = true));
       })
       .catch(() => {
         /* 拿不到 registration 则无更新提示,功能照常 */
