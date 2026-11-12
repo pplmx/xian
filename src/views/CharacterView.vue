@@ -1,6 +1,24 @@
 <template>
   <div class="folio-page folio-page--stack stagger-in">
     <FolioPageHeader title="道躯" subtitle="根骨、灵根与道途" featured compact>
+      <!--
+        道躯的底 —— 按**此人立在哪条道上**取景(`endgame.daoPath`)。
+
+        复用修行画像那条 `sceneTerrainOfDao`:八条道途各一片天,而道途正是这一屏
+        底下那份总案在讲的东西(三围、权重、占战力比都是按道途折算的)。
+        没择道途时那一条回 `peaks` —— 尚未立道的人站在寻常山里,与画像同一条口径。
+
+        落法是 backdrop 槽(渲染在最底层、不占布局),故正文一个字都不动。
+        点景只取地面那半:这一屏卷首密集排着名号、境界、灵根与道途四行读数。
+      -->
+      <template #backdrop>
+        <InkScene
+          class="character-masthead__scene"
+          :terrain="sceneTerrainOfDao(endgame.daoPath)"
+          :world-id="player.world.id"
+          :marks="'ground'"
+        />
+      </template>
       <template #meta>
         <p class="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-body">
           <span class="whitespace-nowrap">
@@ -642,6 +660,7 @@ import { ACHIEVEMENTS } from "@/data/achievements";
 import { REALMS, WORLDS } from "@/data/realms";
 import { detectBuild } from "@/core/buildDetect";
 import { useLoadoutsStore } from "@/stores/loadouts";
+import { useEndgameStore } from "@/stores/endgame";
 import { modOf } from "@/core/statsCalc";
 import {
   DIMINISH_KEYS,
@@ -660,6 +679,8 @@ import { cnNumber, formatNum, formatPercent } from "@/utils/format";
 import { multText } from "@/ui/multText";
 import { add, gn, mulN, ratio } from "@/utils/gnum";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfDao } from "@/ui/sceneTerrain";
 import LedgerHeader from "@/components/common/LedgerHeader.vue";
 import TapNumber from "@/components/common/TapNumber.vue";
 import type { AnyStatKey } from "@/types";
@@ -692,6 +713,7 @@ const divinationOn = computed(() => !!player.activeDivination);
 
 const quests = useQuestsStore();
 const loadouts = useLoadoutsStore();
+const endgame = useEndgameStore();
 
 const stats = computed(() => player.finalStats);
 /** 战力详情:三围各一行,并标明它们在战力里的权重 —— 战力是加权和(见 powerScore),

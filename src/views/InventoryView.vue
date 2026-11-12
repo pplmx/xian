@@ -6,6 +6,19 @@
       首屏让给今日检点与九席。
     -->
     <FolioPageHeader title="行囊" subtitle="九佩随身,余珍入藏" featured compact>
+      <!--
+        行囊的底 —— 按**这一页正在看的那一席**取景。
+
+        复用器评帖那条 `sceneTerrainOfSlot`:九个部位各一片天,而这一屏的主视觉
+        (`InventoryReliquary`)本来就在讲九佩;页签从「装备」切到「丹匣」时,
+        取景跟着那一册走,不是一律一片坡。
+
+        落法是 backdrop 槽(最底层、不占布局),正文一个字都不动。
+        点景只取地面那半:卷首压着「器灵尘」那行读数与九佩的格。
+      -->
+      <template #backdrop>
+        <InkScene class="inventory-masthead__scene" :terrain="mastheadTerrain" :marks="'ground'" />
+      </template>
       <template #meta>
         <div class="inventory-masthead__meta">
           <span
@@ -714,6 +727,7 @@ import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import InkTabs from "@/components/common/InkTabs.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfSlot } from "@/ui/sceneTerrain";
 import { sceneTerrainOfPill } from "@/ui/sceneTerrain";
 import { pillEffectOf } from "@/ui/itemText";
 import ArtifactPanel from "@/components/inventory/ArtifactPanel.vue";
@@ -756,6 +770,21 @@ const lore = useLoreStore();
 
 // 修行页与玄枢寻册都能带 `?tab=` 直达分册;页面内换签也把落点写回地址。
 const tab = useRouteTab(INVENTORY_CHAPTERS, "equip");
+
+/*
+ * 卷首那片天 —— 跟着页签走,不是一律一片坡。
+ *
+ * 「装备」那一册讲的是九处装配,取武器席那片天(器评帖同一条表);
+ * 「丹药」那一册讲的是丹匣与开炉,取火域(炉与火);
+ * 其余册(材料 / 藏珍)回到山岳 —— 那是这一作里「寻常之物」的底。
+ *
+ * 不新立一套表:`sceneTerrainOfSlot` 是器评帖那一轮建的,丹药那册直接用
+ * `sceneTerrainOfPill` 的「炉」那一档语义,故这里按册 id 分派。
+ */
+const mastheadTerrain = computed(() => {
+  if (tab.value === "pill") return sceneTerrainOfPill("exp");
+  return sceneTerrainOfSlot("weapon");
+});
 
 /**
  * 丹药签的「现在能开炉」圆点:有一味方子门槛(blockers 空)且料钱两道账都付得起

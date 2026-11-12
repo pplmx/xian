@@ -7,6 +7,19 @@
       back-label="返回"
       featured
     >
+      <!--
+        天界的底 —— 按**这一屏正在看的那一界**取景。
+        复用远征那条 `sceneTerrainOfCelestial`:五界各一片天(赤炎=火域 / 星陨=星野 /
+        万刃=遗迹 / 无生=雪原 / 无相=虚空),而这一屏讲的正是「去哪一界证道」。
+        未启程时(还没选界)落到虚空 —— 那是「界外」,与 `sceneTerrainOfTrial`
+        认不出时的兜底同一条纪律:认不出的不冒充寻常风景。
+
+        落法是 backdrop 槽(最底层、不占布局),正文一个字都不动。
+      -->
+      <template #backdrop>
+        <InkScene class="celestial-masthead__scene" :terrain="mastheadTerrain" :marks="'ground'" />
+      </template>
+
       <template v-if="unlocked" #visual>
         <CelestialGateMap
           :active="celTab"
@@ -385,6 +398,8 @@ import { swordPurity, SWORD_PURITY_MAX_LAYERS } from "@/core/daoDepth";
 import { purityAxes, purityAxesSummary } from "@/ui/swordPurityAxes";
 import { formatNum, formatPercent } from "@/utils/format";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfCelestial } from "@/ui/sceneTerrain";
 import LedgerPulse from "@/components/common/LedgerPulse.vue";
 import LedgerTally from "@/components/common/LedgerTally.vue";
 import UnopenedFolio from "@/components/common/UnopenedFolio.vue";
@@ -446,6 +461,19 @@ const affordableExpeditions = computed(
 );
 
 /** 天界四册只在卷首汇一次；面板里的逐项明细继续各报各的。 */
+/*
+ * 卷首那片天 —— 按**这一屏正在看的那一界**取景。
+ *
+ * 正在征伐某界时取那一界(worldRun.worldId);否则取当前页签对应的那一册
+ * 首界;都没走到(未启程)落虚空 —— 那是「界外」,与本作其它「认不出就别冒充
+ * 寻常风景」的兜底同一条纪律。
+ */
+const mastheadTerrain = computed(() => {
+  if (endgame.worldRun?.worldId) return sceneTerrainOfCelestial(endgame.worldRun.worldId);
+  const first = expeditionWorlds.value[0]?.id;
+  return first ? sceneTerrainOfCelestial(first) : sceneTerrainOfCelestial("void");
+});
+
 const celestialPulse = computed(() =>
   celestialOverview({
     daoChosen: endgame.daoPath !== null,

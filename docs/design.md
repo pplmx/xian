@@ -1589,6 +1589,17 @@ store、不 import core,只认传进来的字符串),九个地形各给两条山
   (`kind` 为空),这一层整块不出:一世几十次的小推进是节拍器,每次都配一张劫相
   会让节拍器看起来像里程碑。这一窗在 `Teleport to="body"` 里,`.app-shell` 的
   `--world-mountain` 继承不过去,故它自己兜一档松烟墨;
+- 卷首山水景的覆盖面 —— 前二十几轮逐个界面加画、每轮只量当屏,这轮把全站 37 处
+  `InkScene` 与面积测量对了一遍,发现**哪些页的卷首有山水景是历史偶然,不是标准**:
+  有 `#backdrop` 的只有 AdventureView / CollectionView / CultivationView /
+  MortalWorldView / SoulsView / TitlesView,而人物 / 行囊 / 天界这三屏——玩家点得最多
+  的三屏——都没有,可它们同样用了 `FolioPageHeader`,而那个组件的 `backdrop` 槽
+  本来就是干这个的。故补上三处:人物按**道途**取景(复用画像那条 `sceneTerrainOfDao`)、
+  行囊按**当前页签**取景(装备=武器席、丹药=炉)、天界按**正在征伐的那一界**取景
+  (复用远征那条 `sceneTerrainOfCelestial`,未启程落虚空)。人物页那片天随后被
+  **像素门当场抓住**:墨 0.34 太重,卷首那两行 11px 读数(«人间界» / «道途未成»)
+  对比度掉到 4.42:1 / 4.32:1(需 4.5)。压到 0.18 才全绿 —— 卷首那一格压着四行
+  细小读数,墨要比别处淡得多,这条实测写进了判据(上限 0.25);
 - 词条转移 —— 这一屏是**两件**、两个部位,故画**两片天**:源件按自己的部位取景、
   目标件按自己的部位取景(复用器评帖那条 `sceneTerrainOfSlot`)。`transferCandidates`
   里目标件**允许是别的部位**(`sameSlot` 只用于排序优先,准入是 `targetBlock`),
