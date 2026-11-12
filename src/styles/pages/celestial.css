@@ -473,6 +473,14 @@
     padding-bottom: 2.6rem;
   }
   .marks-compare__scene {
+    /*
+   * 这一层是 **Teleport 到 body** 的弹窗里的画:`--world-mountain` 定义在
+   * `.app-shell[data-world=…]` 上,弹窗不在那棵子树里,取不到值 ——
+   * `InkScene` 那句 `fill: var(--world-mountain, currentColor)` 会退化成 currentColor,
+   * 于是不管在哪一界,弹窗里的山都是同一种颜色。
+   * 故在这一层自己给一个固定墨色(与突破结果 / 试炼档案两处既有做法一致)。
+   */
+    --world-mountain: rgb(var(--color-ink-rgb));
     --ink-scene-h: 100%;
     --ink-scene-ink: 0.75;
     position: absolute;
@@ -1934,6 +1942,14 @@
   isolation: isolate;
 }
 .furnace-row__scene {
+  /*
+   * 这一层是 **Teleport 到 body** 的弹窗里的画:`--world-mountain` 定义在
+   * `.app-shell[data-world=…]` 上,弹窗不在那棵子树里,取不到值 ——
+   * `InkScene` 那句 `fill: var(--world-mountain, currentColor)` 会退化成 currentColor,
+   * 于是不管在哪一界,弹窗里的山都是同一种颜色。
+   * 故在这一层自己给一个固定墨色(与突破结果 / 试炼档案两处既有做法一致)。
+   */
+  --world-mountain: rgb(var(--color-ink-rgb));
   --ink-scene-h: 100%;
   --ink-scene-ink: 0.24;
   position: absolute;

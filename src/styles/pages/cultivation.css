@@ -1588,6 +1588,13 @@
   padding-bottom: 6.2rem;
 }
 .breakthrough-result__scene {
+  /*
+   * 突破结果是 **Teleport 到 body** 的弹窗:`--world-mountain` 定义在
+   * `.app-shell[data-world=…]` 上,弹窗不在那棵子树里,取不到值 ——
+   * `InkScene` 那句 `fill: var(--world-mountain, currentColor)` 会退化成 currentColor。
+   * 故在这一层自己给一个固定墨色(与试炼档案同一做法)。
+   */
+  --world-mountain: rgb(var(--color-ink-rgb));
   --ink-scene-h: 7.2rem;
   /*
    * 浓淡按**卷尾一条**调:这一条底下没有字,不必像 veil 那样让墨。
@@ -1633,6 +1640,14 @@
    * 与名、类两行错开(墨 0.16,不压字)。
    */
 .buff-detail__scene {
+  /*
+   * 这一层是 **Teleport 到 body** 的弹窗里的画:`--world-mountain` 定义在
+   * `.app-shell[data-world=…]` 上,弹窗不在那棵子树里,取不到值 ——
+   * `InkScene` 那句 `fill: var(--world-mountain, currentColor)` 会退化成 currentColor,
+   * 于是不管在哪一界,弹窗里的山都是同一种颜色。
+   * 故在这一层自己给一个固定墨色(与突破结果 / 试炼档案两处既有做法一致)。
+   */
+  --world-mountain: rgb(var(--color-ink-rgb));
   --ink-scene-h: 1.6rem;
   --ink-scene-ink: 0.16;
   position: absolute;
