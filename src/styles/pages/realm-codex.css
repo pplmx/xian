@@ -856,3 +856,52 @@
     }
   }
 }
+
+/*
+ * 界域志每一卷的脊背 —— 这一卷是哪一界的天
+ * (见 views/RealmCodexView.vue 的卷首注释)。
+ *
+ * 卷首本身要 `position: relative` 才承得住它;画脱离流、不接指针,
+ * 世名、卷次与描述照旧压在上面。
+ *
+ * 高度走 `--ink-scene-h`:这一层同时就是 `.ink-scene` 本身,
+ * 直接写 height 会被组件内那条 `height: var(--ink-scene-h, 100%)` 盖过
+ * (器评帖那一轮踩过)。
+ *
+ * 墨取 0.34 —— **不是**卷首那一档的 0.55:实测 0.55 时,卷首那行 10px 的
+ * (「凡尘俗世,修士自此处引气入体」)掉到 4.08:1、
+ * 过不了 4.5 的像素门 —— 那行字压在画的正中,不像别处卷首只压 11px 读数。
+ * 0.34 是这一处量出来的上界。
+ */
+.realm-volume__head {
+  position: relative;
+  isolation: isolate;
+}
+.realm-volume__scene {
+  /*
+   * **只铺卷首的下半**,不铺满。
+   *
+   * 为什么:这一卷的卷首是「世名 / 卷次 / 描述」三行叠在一起,而那行 10px 的
+   * `realm-volume__desc` 落在正中。画铺满时(inset: 0),它直接压在这行字后面 ——
+   * 实测 0.55 时掉到 4.08:1、0.34 时 4.37:1,都要把墨压到 0.22 才过像素门;
+   * 而 0.22 对应的实际浓度只有 0.035,低于「看得见」的下限 0.06,
+   * 那又等于没画(`sceneInkFloor` 当场把这一档拦下)。
+   *
+   * 两个约束一起把「铺满」这条路堵死了。故改成贴底的一条:高度 1.6rem,
+   * 落在描述那行之下 —— 画只做卷尾的一道地气,文字区一寸不占。
+   * 2.4rem 试过:那条会重新压到描述,日间掉到 3.85:1、夜间 4.19:1,两档都红。
+   * 1.6rem 是这一处的上界 —— 它比别处卷首(54~158px)薄得多,
+   * 因为这一卷的卷首本身就矮(63px),而中间那行 10px 淡字没有让位的余地。
+   */
+  --ink-scene-h: 1.6rem;
+  --ink-scene-ink: 0.75;
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.realm-volume__head > :not(.realm-volume__scene) {
+  position: relative;
+  z-index: 1;
+}

@@ -170,6 +170,21 @@
               :data-world="row.world.id"
             >
               <header class="realm-volume__head">
+                <!--
+                  这一卷是哪一界的天 —— 读 `row.world.id`,与首页、修行卷首同一条路
+                  (`WORLD_TERRAIN` 就在 `sceneTerrainOfCelestial` 背后)。
+
+                  界域志讲「四界成卷」,而四卷的脊背此前是同一张纸:除卷首那枚
+                  `RealmAtlas` 图谱外,每一卷没有任何画。翻四卷读到的是四段文字。
+                  落法是卷首内的一层背景(绝对定位、不接指针),点景只取地面那半 ——
+                  世名、卷次与描述压在它上面。
+                -->
+                <InkScene
+                  class="realm-volume__scene"
+                  :world-id="row.world.id"
+                  marks="ground"
+                  aria-hidden="true"
+                />
                 <span class="realm-volume__mark" aria-hidden="true">{{ row.mark }}</span>
                 <div class="realm-volume__copy">
                   <!--
@@ -648,6 +663,7 @@
 
 <script setup lang="ts">
 import "@/styles/pages/realm-codex.css";
+import InkScene from "@/components/common/InkScene.vue";
 import { computed, nextTick, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { gameNow } from "@/core/enginePause";
