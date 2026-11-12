@@ -561,6 +561,7 @@ const CATEGORIES = [
       "buildingScene",
       "furnaceScene",
       "herbShopScene",
+      "buffScene",
       "resetShowsLoss",
       "openingStepCount",
       "openingGift",

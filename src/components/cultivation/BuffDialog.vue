@@ -1,6 +1,23 @@
 <template>
   <BaseModal :open="def !== undefined" :title="def?.name ?? ''" @close="close">
     <template v-if="def">
+      <!--
+        这一态长什么样 —— 按 `def.icon` 取景。
+
+        `src/data/buffs.ts` 的 35 种状态用了 17 种图标,而 180 行模板里一个 `<svg>` 都没有 ——
+        三种状态的区别只有那枚 17px 图标与几个数。按**图标**取景比按 `kind` 细得多,
+        而 `ICON_TERRAIN` 那张表本来就存在(地界与事件一直在用),本轮补上了它缺的
+        六个图标(wind / moon / footprints / ghost / sun / paw)。
+
+        落法是背景层(绝对定位、不接指针):这一窗是名、说明、逐条效果与合计,
+        画占布局会把它们推下去。点景只取地面那半 —— 正文压在上半。
+      -->
+      <InkScene
+        class="buff-detail__scene"
+        :terrain="sceneTerrainOfPlace({ icon: def.icon })"
+        marks="ground"
+        aria-hidden="true"
+      />
       <p class="flex items-center gap-2">
         <span
           class="grid h-9 w-9 shrink-0 place-items-center rounded-[2px]"
@@ -106,6 +123,8 @@ import { STAT_NAMES } from "@/data/statNames";
 import { formatCountdown, formatDuration, formatPercent } from "@/utils/format";
 import type { AnyStatKey, StatMods } from "@/types";
 import BaseModal from "@/components/common/BaseModal.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfPlace } from "@/ui/sceneTerrain";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 
