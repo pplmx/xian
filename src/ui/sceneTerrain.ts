@@ -1044,3 +1044,40 @@ const VOLUME_TERRAIN: Record<string, SceneTerrain> = {
 export function sceneTerrainOfVolume(volumeId: string | null | undefined): SceneTerrain {
   return (volumeId && VOLUME_TERRAIN[volumeId]) || "peaks";
 }
+
+/**
+ * 品质九档 → 地形。
+ *
+ * `data/qualities` 的 `QUALITIES` 是九档(凡品 0 → 神品 8),而地形也正好九种 ——
+ * 这是一张能做**一对一**的表,不必共用。九档各按「这一档的料有多足」取景,
+ * 倍率(mult)是现成的刻度:
+ *
+ *   凡品 1.0  → 山岳(随手拾来的)
+ *   良品 1.25 → 林麓
+ *   精品 1.6  → 江海
+ *   灵品 2.1  → 星野(有灵)
+ *   玄品 2.8  → 火域(玄而烈)
+ *   地品 3.7  → 雪原(地脉之寒)
+ *   天品 5.0  → 宫阙(天家之物)
+ *   仙品 6.8  → 虚空(仙者不在此界)
+ *   神品 9.5  → 遗迹(神物残响)
+ *
+ * 认不出的落回**山岳** —— 那是表里最低的一档(凡品),与「认不出就按最低算」
+ * 同一条兜底纪律。
+ */
+const QUALITY_TERRAIN: Record<number, SceneTerrain> = {
+  0: "peaks",
+  1: "forest",
+  2: "water",
+  3: "sky",
+  4: "flame",
+  5: "frost",
+  6: "palace",
+  7: "void",
+  8: "ruin",
+};
+
+/** 一档品质长什么样;认不出的落回山岳 */
+export function sceneTerrainOfQuality(rank: number | null | undefined): SceneTerrain {
+  return (rank !== null && rank !== undefined && QUALITY_TERRAIN[rank]) || "peaks";
+}

@@ -16,9 +16,25 @@
       <label
         v-for="row in decomposeRows"
         :key="row.rank"
-        class="flex items-center gap-2.5 rounded-[2px] px-2.5 py-1.5"
+        class="decompose-row flex items-center gap-2.5 rounded-[2px] px-2.5 py-1.5"
         :class="settings.decomposeRanks.includes(row.rank) ? 'bg-paper-deep/80' : ''"
       >
+        <!--
+          这一档是什么料 —— 按 `row.rank` 取景。
+
+          `data/qualities` 的九档(凡品 → 神品)倍率从 1.0 到 9.5,而这一屏把九档
+          列成九行,区别只有那枚色字与数字。九档对九种地形,故是一张**一对一**的表。
+
+          落法是行内背景(绝对定位、不接指针):那行是勾选项,
+          画占布局会把「现存 N 件 · 返还多少」挤走。点景只取地面那半
+          (`marks="ground"`)—— 这一行底下压着品阶名与件数。
+        -->
+        <InkScene
+          class="decompose-row__scene"
+          :terrain="sceneTerrainOfQuality(row.rank)"
+          marks="ground"
+          aria-hidden="true"
+        />
         <input
           type="checkbox"
           class="h-4 w-4 accent-cinnabar"
@@ -217,6 +233,8 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import BaseModal from "@/components/common/BaseModal.vue";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfQuality } from "@/ui/sceneTerrain";
 import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";
 import { useSettingsStore } from "@/stores/settings";

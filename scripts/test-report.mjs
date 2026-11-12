@@ -555,6 +555,7 @@ const CATEGORIES = [
       "sceneDistinct",
       "sceneMarks",
       "sceneClearance",
+      "dismantleScene",
       "resetShowsLoss",
       "openingStepCount",
       "openingGift",
