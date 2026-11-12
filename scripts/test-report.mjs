@@ -561,6 +561,7 @@ const CATEGORIES = [
       "soulDetailScene",
       "daoConfirmScene",
       "collectionDetailScene",
+      "modalBackdropFit",
       "sceneDispatcherSpread",
       "sceneMarks",
       "sceneAccentSize",

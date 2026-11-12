@@ -5091,3 +5091,18 @@
     }
   }
 }
+
+/*
+ * 弹窗背景层 —— 盖住整块面板、但不进滚动流。
+ *
+ * `absolute` 相对 `.modal-panel`(它是 `relative`,且自身不滚),
+ * `z: 0` 让正文那一层(`scroll-pane` 是 `z-10`)压在上面。
+ * 子级交给插槽里的 `InkScene` 自己定高度。
+ */
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}

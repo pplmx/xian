@@ -62,6 +62,20 @@
             class="ink-divider mx-5 shrink-0"
             aria-hidden="true"
           />
+          <!--
+            背景层插槽 —— 挂在**面板**上,不进滚动流。
+
+            为什么需要它:弹窗内容可能比可视区高。画若放进下面的 scroll-pane,
+            `absolute; inset: 0` 会把它撑成整段内容那么高,于是它跟着内容一起滚 ——
+            可视区里只剩最底下一小截。放在这里(面板本身是 `relative` 且不滚),
+            画就只覆盖可视区。
+
+            但**内容满屏的弹窗仍不该加画**:整屏都是控件时,画只在最底下露一点,
+            读不出是哪儿(远征准备那次实测 998px 内容 vs 526px 可视区,撤掉了)。
+          -->
+          <div v-if="$slots.backdrop" class="modal-backdrop" aria-hidden="true">
+            <slot name="backdrop" />
+          </div>
           <div
             data-folio-modal-scroll
             class="scroll-pane relative z-10 grow overflow-y-auto px-5 py-3 tinylens:px-3"
