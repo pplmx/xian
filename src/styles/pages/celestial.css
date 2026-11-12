@@ -494,7 +494,7 @@
   }
   .celestial-trial-dossier__scene {
     --ink-scene-h: 100%;
-    --ink-scene-ink: 0.32;
+    --ink-scene-ink: 0.7;
     position: absolute;
     inset: 0;
     overflow: hidden;
@@ -1927,7 +1927,7 @@
 }
 .furnace-row__scene {
   --ink-scene-h: 100%;
-  --ink-scene-ink: 0.24;
+  --ink-scene-ink: 0.75;
   position: absolute;
   inset: 0;
   overflow: hidden;

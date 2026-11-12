@@ -1633,7 +1633,7 @@
    */
 .buff-detail__scene {
   --ink-scene-h: 1.6rem;
-  --ink-scene-ink: 0.16;
+  --ink-scene-ink: 0.7;
   position: absolute;
   inset-inline: 0;
   /*

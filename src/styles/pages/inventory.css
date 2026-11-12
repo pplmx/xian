@@ -1793,7 +1793,7 @@
 }
 .decompose-row__scene {
   --ink-scene-h: 100%;
-  --ink-scene-ink: 0.26;
+  --ink-scene-ink: 0.7;
   position: absolute;
   inset: 0;
   overflow: hidden;
@@ -1841,7 +1841,7 @@
 }
 .herb-shop__scene {
   --ink-scene-h: 100%;
-  --ink-scene-ink: 0.22;
+  --ink-scene-ink: 0.7;
   position: absolute;
   inset: 0;
   overflow: hidden;

@@ -49,7 +49,7 @@ function mastheadScenes(): Found[] {
     .map((n) => readFileSync(join(PAGES_DIR, n), "utf8"))
     .join("\n");
   const found: Found[] = [];
-  for (const m of css.matchAll(/\.([a-z][a-z0-9-]*-masthead__scene)\s*\{([^}]*)\}/g)) {
+  for (const m of css.matchAll(/\.([a-z][a-z0-9-]*__scene)\s*\{([^}]*)\}/g)) {
     const rule = m[2]!;
     const ink = Number(rule.match(/--ink-scene-ink:\s*([\d.]+)/)?.[1] ?? "1");
     found.push({ cls: m[1]!, ink });

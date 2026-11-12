@@ -1405,7 +1405,7 @@
      */
     --world-mountain: rgb(var(--color-ink-rgb));
     --ink-scene-h: 100%;
-    --ink-scene-ink: 0.3;
+    --ink-scene-ink: 0.7;
     position: absolute;
     inset: 0;
     overflow: hidden;

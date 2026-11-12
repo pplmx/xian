@@ -1125,7 +1125,7 @@
    * 故高度收到 `62%`,贴下缘:文字行落在画之上,画落在抽屉底部那片留白里。
    */
   --ink-scene-h: 62%;
-  --ink-scene-ink: 0.34;
+  --ink-scene-ink: 0.7;
   position: absolute;
   inset-inline: 0;
   bottom: 0;

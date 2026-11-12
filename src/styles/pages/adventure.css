@@ -1510,7 +1510,7 @@
   }
   .combat-arena__scene {
     --ink-scene-h: 100%;
-    --ink-scene-ink: 0.34;
+    --ink-scene-ink: 0.7;
     position: absolute;
     inset: 0;
     pointer-events: none;
@@ -2910,7 +2910,7 @@
 }
 .adventure-secret__scene {
   --ink-scene-h: 100%;
-  --ink-scene-ink: 0.3;
+  --ink-scene-ink: 0.7;
   position: absolute;
   inset: 0;
   overflow: hidden;
