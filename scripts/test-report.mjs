@@ -556,6 +556,7 @@ const CATEGORIES = [
       "sceneMarks",
       "sceneClearance",
       "dismantleScene",
+      "affixTransferScene",
       "resetShowsLoss",
       "openingStepCount",
       "openingGift",

@@ -11,6 +11,8 @@ import { computed, nextTick, ref, watch } from "vue";
 import type { EquipmentInstance } from "@/types";
 import { affixDef } from "@/data/affixes";
 import { equipmentTemplate } from "@/data/equipment";
+import InkScene from "@/components/common/InkScene.vue";
+import { sceneTerrainOfSlot } from "@/ui/sceneTerrain";
 import { QUALITIES, qualityDef } from "@/data/qualities";
 import { formatGN } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
@@ -50,6 +52,25 @@ watch(
 );
 
 const source = computed(() => props.source);
+
+/*
+ * 这一趟从**哪一席**挪到**哪一席** —— 两件各自按自己的部位取景。
+ *
+ * 源件与目标件各带 `templateId`,而 `equipmentTemplate(...).slot` 就是它的部位;
+ * 取景直接复用器评帖那条 `sceneTerrainOfSlot`(九个部位各一片天)。
+ *
+ * 为什么是**两处**而不是一处:`transferCandidates` 里目标件**允许是别的部位**
+ * (`sameSlot` 只用于排序优先,准入条件是 `targetBlock`)。故这一趟可以是
+ * 跨部位的 —— 而「从这一席挪到那一席」正是这一屏在做的事,不是「又选了一件同类」。
+ */
+const sourceSlotTerrain = computed(() => {
+  const slot = source.value ? equipmentTemplate(source.value.templateId)?.slot : undefined;
+  return sceneTerrainOfSlot(slot ?? null);
+});
+const targetSlotTerrain = computed(() => {
+  const slot = target.value ? equipmentTemplate(target.value.templateId)?.slot : undefined;
+  return sceneTerrainOfSlot(slot ?? null);
+});
 const candidates = computed(() =>
   source.value && affixId.value ? transferCandidates(source.value, affixId.value) : [],
 );
@@ -155,7 +176,7 @@ function doTransfer(): void {
 <template>
   <div
     data-equipment-affix-transfer
-    class="mt-2 border-t border-ink/10 pt-2.5 text-body tinylens:pt-2"
+    class="affix-transfer mt-2 border-t border-ink/10 pt-2.5 text-body tinylens:pt-2"
   >
     <div class="mb-2 flex flex-wrap items-center gap-2">
       <span class="shrink-0 font-medium text-ink tinylens:order-1">词条转移</span>
@@ -177,6 +198,14 @@ function doTransfer(): void {
     </template>
 
     <template v-else>
+      <!--
+        源件那一席 —— 这一趟从哪儿出发。
+        落法是这一块内的背景(绝对定位、不接指针):正文是词条按钮、候选行与价签,
+        画占布局会把它们推下去。点景只取地面那半(底下压着字)。
+      -->
+      <div class="affix-transfer__scene affix-transfer__scene--source">
+        <InkScene :terrain="sourceSlotTerrain" marks="ground" aria-hidden="true" />
+      </div>
       <!-- 选源件词条 -->
       <div class="mb-2">
         <p class="mb-1 text-note text-ink-faint">抽哪一条?点选源件词条</p>
@@ -193,6 +222,14 @@ function doTransfer(): void {
         </div>
       </div>
 
+      <!--
+        目标那一席 —— 这一趟落到哪儿。
+        与源件那片天**分开算**:目标件允许是别的部位(`transferCandidates` 里
+        `sameSlot` 只用于排序),故两片天可能不同 —— 那正是「挪」这个字的画面。
+      -->
+      <div class="affix-transfer__scene affix-transfer__scene--target">
+        <InkScene :terrain="targetSlotTerrain" marks="ground" aria-hidden="true" />
+      </div>
       <!-- 选目标件 -->
       <div v-if="affixId" class="mb-2">
         <p
@@ -366,3 +403,38 @@ function doTransfer(): void {
     </template>
   </div>
 </template>
+
+<style scoped>
+/*
+ * 词条转移的两片天 —— 这一趟从哪一席挪到哪一席(见上面的 computed 注释)。
+ *
+ * 两块都是**短条**,不是整块铺底:这一块正文是词条按钮、候选行与价签,
+ * 铺满整块会与字抢。故各占一小段高(3.4rem),钉在各自那一段的顶上。
+ *
+ * 高度走 `--ink-scene-h`:这一层同时就是 `.ink-scene` 本身,直接写 height 会被
+ * 组件内那条 `height: var(--ink-scene-h, 100%)` 盖过(器评帖那一轮踩过)。
+ *
+ * 点景只取地面那半(模板上 `marks="ground"`):底下压着按钮与价签。
+ * 墨取 0.3 —— 这一块每一行都是玩家做决定的依据,画只做底。
+ */
+/*
+ * 两片天都是**行内的短带**,不是铺底。
+ *
+ * 第一版把两片都钉在整块上(源件 top:0、目标 top:50%),实测直接压在字上:
+ * 源件那片(1~55)盖住「词条转移」与「抽走源件一条词条…」,目标那片(83~137)
+ * 盖住「收起」与「抽哪一条?」—— 两片都不读不出,字也读不清。
+ *
+ * 故改成:各自只占**自己那一段**里的一小条,高度 2.4rem、贴着那一段的顶,
+ * 且两块各自带自己的 `position: relative` 锚 —— 画落在该段的留白里。
+ */
+.affix-transfer__scene {
+  --ink-scene-h: 2.4rem;
+  --ink-scene-ink: 0.28;
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 2.4rem;
+  overflow: hidden;
+  pointer-events: none;
+}
+</style>
