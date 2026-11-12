@@ -49,7 +49,7 @@
         <InkScene
           class="marks-compare__scene"
           :terrain="sceneTerrainOfCelestial(lc.targetId)"
-          :marks="false"
+          :marks="'ground'"
           aria-hidden="true"
         />
         <p class="text-body text-ink-soft tabular">

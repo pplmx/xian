@@ -20,7 +20,7 @@
       v-if="slotName"
       class="slot-candidate__scene"
       :terrain="sceneTerrainOfSlot(slotName)"
-      :marks="false"
+      :marks="'ground'"
       aria-hidden="true"
     />
     <div

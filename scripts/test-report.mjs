@@ -553,6 +553,7 @@ const CATEGORIES = [
       "sceneFit",
       "atlasScene",
       "sceneDistinct",
+      "sceneMarks",
       "resetShowsLoss",
       "openingStepCount",
       "openingGift",

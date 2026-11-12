@@ -41,7 +41,7 @@
       <InkScene
         class="opportunity-scroll__scene"
         :terrain="sceneTerrainOfOpportunity(kind, place)"
-        :marks="false"
+        :marks="'ground'"
         aria-hidden="true"
       />
 
@@ -157,7 +157,7 @@ const remainingPercent = computed(() => {
  * 但正文是几个选项与它们的后果、倒计时还在走 —— 画占布局就会把它们推下去。
  * 故绝对定位、不接指针,只落在卷首那一条。
  *
- * 点景关掉(`:marks="false"`):这条底下压着卷名与来源那两行,月与舟落在字上
+ * 点景关掉(`:marks="'ground'"`):这条底下压着卷名与来源那两行,月与舟落在字上
  * 两边都读不清 —— 与地界志卷首、行旅图那两处同一条理由。
  */
 .opportunity-scroll__scene {

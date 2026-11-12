@@ -178,7 +178,7 @@
             <InkScene
               class="celestial-trial-dossier__scene"
               :terrain="sceneTerrainOfTrial(selectedTrial.id)"
-              :marks="false"
+              :marks="'ground'"
               aria-hidden="true"
             />
 

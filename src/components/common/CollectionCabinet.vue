@@ -49,7 +49,7 @@
         <InkScene
           class="collection-cabinet__scene"
           :terrain="sceneTerrainOfCollection(cell.key)"
-          :marks="false"
+          :marks="'ground'"
           aria-hidden="true"
         />
         <button

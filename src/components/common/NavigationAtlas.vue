@@ -121,7 +121,7 @@
               <InkScene
                 class="atlas-volume__scene"
                 :terrain="sceneTerrainOfVolume(group.id)"
-                :marks="false"
+                :marks="'ground'"
                 aria-hidden="true"
               />
               <span class="atlas-volume__number" aria-hidden="true">{{

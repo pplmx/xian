@@ -101,7 +101,7 @@
             给每一方一条横幅会把清单拉成两倍长。故只做行右侧的一枚小景,与那一枚
             18px 图标同一侧、同一个意思(这一炉的来路)。
 
-            点景关掉(`:marks="false"`):这一小片底下压着「把握 / 双成 / 存」那一列读数。
+            点景关掉(`:marks="'ground'"`):这一小片底下压着「把握 / 双成 / 存」那一列读数。
           -->
           <div
             class="flex items-start gap-3 tinylens:flex-col tinylens:items-stretch tinylens:gap-1.5"
@@ -152,7 +152,7 @@
             </div>
             <!-- 这一炉的来路 —— 一小片,不占整行(理由见上面那段注释) -->
             <span class="brew-scene" aria-hidden="true">
-              <InkScene :terrain="sceneTerrainOfHerbGrade(r.cost.herbGrade)" :marks="false" />
+              <InkScene :terrain="sceneTerrainOfHerbGrade(r.cost.herbGrade)" :marks="'ground'" />
             </span>
 
             <div class="shrink-0 text-right tinylens:w-full tinylens:text-left">

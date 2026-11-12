@@ -168,7 +168,7 @@
               <InkScene
                 class="adventure-secret__scene"
                 :terrain="sceneTerrainOfSecretRealm(r.id)"
-                :marks="false"
+                :marks="'ground'"
                 aria-hidden="true"
               />
               <span class="flex flex-wrap items-baseline gap-2">

@@ -78,7 +78,7 @@
           这张帖要回答的是「此事何择」,绝不能让一张图把选项挤出首屏
           (实见 320 上第一个选项被顶出卷身,已有判据盯着)。
         -->
-        <InkScene class="event-slip__scene" :tags="def.tags" :marks="false" />
+        <InkScene class="event-slip__scene" :tags="def.tags" :marks="'ground'" />
         <span class="event-slip__mark" aria-hidden="true">遇</span>
         <p>{{ def.text }}</p>
       </blockquote>

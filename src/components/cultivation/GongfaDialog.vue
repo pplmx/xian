@@ -70,7 +70,7 @@
       <div class="gongfa-detail__scene">
         <InkScene
           :terrain="sceneTerrainOfGongfa(def.element, def.type)"
-          :marks="false"
+          :marks="'ground'"
           aria-hidden="true"
         />
       </div>
@@ -508,7 +508,7 @@ function toggleSub(): void {
  * 同特指度下顺序决定谁赢;写在组件内、同一个 data-v 上反而更稳(上一轮在器评帖上
  * 踩过一次 height 被盖过、画撑满整帖)。
  *
- * 点景关掉(模板上 `:marks="false"`):这一层底下压着眉题与品评那几行,
+ * 点景关掉(模板上 `:marks="'ground'"`):这一层底下压着眉题与品评那几行,
  * 月与舟落在字上两边都读不清。
  */
 /*

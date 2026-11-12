@@ -27,7 +27,7 @@
         <InkScene
           class="cultivation-gongfa__main-scene"
           :terrain="sceneTerrainOfGongfa(mainDef.element, mainDef.type)"
-          :marks="false"
+          :marks="'ground'"
           aria-hidden="true"
         />
         <span class="cultivation-gongfa__main-seal">主</span>

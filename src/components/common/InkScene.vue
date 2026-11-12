@@ -95,13 +95,21 @@ const props = withDefaults(
     icon?: string | null;
     tags?: readonly string[] | null;
     /**
-     * 画不画点景(月、舟、塔、松……)。
+     * 画哪一半点景。
      *
-     * 默认画。**不讲道理地铺满整块时**才关掉:那一格底下压着别人的字
-     * (地界志卷首的换界框、行旅图的路线上方的读数),点景落在字上只会两边都读不清。
-     * 山骨本身压不碍事 —— 它是连续的一片,字浮在上面仍分得出笔墨。
+     *   `"both"`(默认)—— 全都画
+     *   `"ground"` —— 只画贴着山脚那一半(松、塔、舟、水纹、断柱、火星)
+     *   `false`   —— 一枚都不画
+     *
+     * 为什么要有中间档:点景分两半,而压字的主要是**天上那批**——月、日、云、鸟、
+     * 雪都落在画的上半,正文从上往下排,正撞在那里。地上那批贴着山脚,
+     * 几乎是画面最下缘,压不到字;而恰恰是它们(松 / 塔 / 舟 / 柱)把各档分了开来。
+     *
+     * 前几轮只有「全画」与「全不画」两档,于是凡底下有字的地方一律关了,
+     * 那些画就退化成一道淡墨坡 —— 实测九柜藏珍的九只屉点景数全是 0,
+     * 截图里真的是同一片坡(上一轮把天际线拉开只是补救)。
      */
-    marks?: boolean;
+    marks?: boolean | "both" | "ground";
   }>(),
   { variant: "veil", terrain: undefined, worldId: null, icon: null, tags: null, marks: true },
 );
@@ -118,11 +126,19 @@ const resolved = computed<SceneTerrain>(() => {
 });
 
 const shape = computed(() => sceneOf(resolved.value));
+/*
+ * 两半点景各按这一档过滤(见 marks 的注释):
+ *   "ground" —— 天上那批一枚不画,地上那批照画
+ *   false    —— 两批都空
+ * 不写成 `=== true`,因为默认值同时接受 "both" 与 true(向后兼容既有调用点)。
+ */
+const drawSky = computed(() => props.marks !== false && props.marks !== "ground");
+const drawGround = computed(() => props.marks !== false);
 const skyAccents = computed(() =>
-  props.marks ? shape.value.accents.filter((a) => !sceneAccentInFront(a.kind)) : [],
+  drawSky.value ? shape.value.accents.filter((a) => !sceneAccentInFront(a.kind)) : [],
 );
 const groundAccents = computed(() =>
-  props.marks ? shape.value.accents.filter((a) => sceneAccentInFront(a.kind)) : [],
+  drawGround.value ? shape.value.accents.filter((a) => sceneAccentInFront(a.kind)) : [],
 );
 
 function transformOf(accent: SceneAccent): string {

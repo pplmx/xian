@@ -187,6 +187,13 @@ const SHAPES: Record<SceneTerrain, SceneShape> = {
       { kind: "bird", x: 132, y: 44, scale: 0.8 },
       { kind: "bird", x: 158, y: 35, scale: 0.6 },
       { kind: "cloud", x: 76, y: 66, scale: 1.3 },
+      /*
+       * 山岳原先四枚点景**全在天上**(月、两鸟、云),地面一枚也没有 ——
+       * 于是 `marks: "ground"` 这一档对它等于全关,山岳在矮条里就只剩一道坡。
+       * 补两株挂在山脚松:山岳与林麓的区别本就该是「松少而山高」。
+       */
+      { kind: "pine", x: 118, y: 142, scale: 0.7 },
+      { kind: "pine", x: 336, y: 146, scale: 0.62 },
     ]),
   },
   // 林麓:山势压平,松成排 —— 松是这一档最认得出的一笔
@@ -228,11 +235,16 @@ const SHAPES: Record<SceneTerrain, SceneShape> = {
     far: "M0 160 L36 130 C56 112 66 86 82 78 C96 92 100 118 116 126 C134 136 142 104 158 88 C172 104 178 128 196 136 C214 144 222 108 240 92 C254 108 260 132 278 140 C296 148 306 112 322 98 C334 112 344 132 362 138 C380 144 396 128 420 122 L420 160 Z",
     near: "M0 160 L52 148 C104 156 148 144 196 151 C244 158 288 146 336 152 C372 156 400 150 420 152 L420 160 Z",
     accents: accents([
-      { kind: "ember", x: 62, y: 92, scale: 1.1 },
-      { kind: "ember", x: 132, y: 62, scale: 0.9 },
-      { kind: "ember", x: 224, y: 78, scale: 1.2 },
-      { kind: "ember", x: 322, y: 58, scale: 1 },
-      { kind: "ember", x: 392, y: 84, scale: 0.8 },
+      /*
+       * 火星全归**地面层**:它们是火域唯一的记号,而且本来就该在山脚烧。
+       * 原先有两枚飘在 y=58 / 62(画的上半,正文压着),中间档会把火域
+       * 那一档的辨识记号削掉一半 —— 故把五枚都收到山脚一带。
+       */
+      { kind: "ember", x: 62, y: 126, scale: 1.1 },
+      { kind: "ember", x: 132, y: 138, scale: 0.9 },
+      { kind: "ember", x: 224, y: 120, scale: 1.2 },
+      { kind: "ember", x: 322, y: 140, scale: 1 },
+      { kind: "ember", x: 392, y: 128, scale: 0.8 },
     ]),
   },
   // 遗迹:断柱与半座塔 —— 古战场与秘境的记号
@@ -277,6 +289,13 @@ const SHAPES: Record<SceneTerrain, SceneShape> = {
       { kind: "cloud", x: 214, y: 38, scale: 1.2 },
       { kind: "cloud", x: 352, y: 68, scale: 1.1 },
       { kind: "bird", x: 56, y: 30, scale: 0.6 },
+      /*
+       * 星野原先五枚**全在天上**,地面一枚也没有 —— 中间档对它等于全关。
+       * 云海之上也是要落脚的:补一株松与一片浪脚(仙界的水边),
+       * 与云海共用同一片天,只是把「地」也画出来。
+       */
+      { kind: "pine", x: 104, y: 150, scale: 0.6 },
+      { kind: "wave", x: 300, y: 152, scale: 0.8 },
     ]),
   },
   // 雪原:峰更锐、雪线更低,雪点落在半空
@@ -291,6 +310,13 @@ const SHAPES: Record<SceneTerrain, SceneShape> = {
       { kind: "flake", x: 236, y: 54, scale: 1.1 },
       { kind: "flake", x: 322, y: 36, scale: 0.9 },
       { kind: "flake", x: 388, y: 62, scale: 1 },
+      /*
+       * 雪原原先六枚**全在天上**(月与五枚雪),地面一枚也没有 ——
+       * 中间档对它等于全关。补两株压雪的松:雪线以下总有活着的,
+       * 那也是雪原与虚空的分界(前者有生,后者只剩碎晶)。
+       */
+      { kind: "pine", x: 108, y: 148, scale: 0.62 },
+      { kind: "pine", x: 350, y: 152, scale: 0.56 },
     ]),
   },
   // 虚空:山骨只留一线,碎晶悬在半空 —— 混沌海与「界外」的记号
@@ -303,8 +329,15 @@ const SHAPES: Record<SceneTerrain, SceneShape> = {
       { kind: "shard", x: 188, y: 30, scale: 1.1 },
       { kind: "shard", x: 286, y: 58, scale: 1.8 },
       { kind: "shard", x: 356, y: 26, scale: 1 },
-      { kind: "flake", x: 44, y: 92, scale: 0.8 },
-      { kind: "flake", x: 240, y: 88, scale: 0.7 },
+      /* 虚空那两枚雪点原在 y=92/88,悬在画的中腰 —— 归到「天上的」那一批,故落在 84 以下 */
+      { kind: "flake", x: 44, y: 74, scale: 0.8 },
+      { kind: "flake", x: 240, y: 70, scale: 0.7 },
+      /*
+       * 虚空原先六枚**全在半空**(碎晶与雪),地面一枚也没有 —— 中间档对它
+       * 等于全关。补一道贴地的水纹:归墟之「流」本来就该在脚下,
+       * 而这一档仍然没有建筑、没有松 —— 虚空要的是「空」,不是「荒」。
+       */
+      { kind: "wave", x: 190, y: 150, scale: 1 },
     ]),
   },
 };

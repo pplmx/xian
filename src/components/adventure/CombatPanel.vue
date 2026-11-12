@@ -70,7 +70,7 @@
         class="combat-arena__scene"
         :world-id="player.world.id"
         :icon="region?.icon"
-        :marks="false"
+        :marks="'ground'"
       />
       <div class="combat-arena__body">
         <div class="combat-duel">

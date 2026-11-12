@@ -26,7 +26,7 @@
       <InkScene
         class="equip-dossier__scene"
         :terrain="sceneTerrainOfSlot(template.slot)"
-        :marks="false"
+        :marks="'ground'"
         aria-hidden="true"
       />
 

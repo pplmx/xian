@@ -20,7 +20,7 @@
       class="cultivation-tribulation__scene"
       :terrain="sceneTerrainOfTribulation(plan.kind)"
       :world-id="player.world.id"
-      :marks="false"
+      :marks="'ground'"
     />
     <p class="cultivation-tribulation__lede">{{ plan.desc }}</p>
     <p class="mt-1 text-body text-ink-soft">

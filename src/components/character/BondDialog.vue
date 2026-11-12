@@ -31,7 +31,7 @@
         v-if="herTerrain"
         class="bond-scene"
         :terrain="herTerrain"
-        :marks="false"
+        :marks="'ground'"
         aria-hidden="true"
       />
 
@@ -614,7 +614,7 @@ function answerIntent(response: IntentResponse): void {
  * 故收成卷首一条(7rem,盖住帖名与她那行身份),正文滚过去时从它上面经过:
  * 打开就看见她属于哪片地,读账时底下是干净的纸。
  *
- * 点景关掉(组件上 `:marks="false"`):这一条仍压着帖名与身份那两行,
+ * 点景关掉(组件上 `:marks="'ground'"`):这一条仍压着帖名与身份那两行,
  * 月与舟落在字上两边都读不清 —— 与地界志卷首、行旅图那两处同一条理由。
  */
 .bond-scene {
