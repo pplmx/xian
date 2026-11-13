@@ -42,15 +42,9 @@
  * ② 时长必须走 `formatDuration`,不许 `cnNumber(...)` 拼秒数。
  */
 import { describe, expect, it } from "vite-plus/test";
+import { stripComments } from "@/test/stripComments";
 import { readSource } from "@/test/readSource";
 
-/** 抹掉注释 —— 注释里**举例**说明旧写法时，那段字不是玩家看得见的文案 */
-function stripComments(src: string): string {
-  return src
-    .replace(/<!--[\s\S]*?-->/g, "")
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
-}
 import { BT_FAIL_EXP_LOSS } from "@/data/constants";
 import { breakthroughFailLoss } from "./breakthrough";
 

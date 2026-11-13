@@ -37,15 +37,11 @@
  * 或者干脆都不写。判据只钉「不许出现大于真实步数的分母」。
  */
 import { describe, expect, it } from "vite-plus/test";
+import { stripComments } from "@/test/stripComments";
 import { readSource } from "@/test/readSource";
 
 const CREATE = "src/views/CreateView.vue";
 const WELCOME = "src/views/WelcomeView.vue";
-
-/** 去注释 —— 注释里为讲清缘由会引用旧值,不该被当成界面文案 */
-function stripComments(src: string): string {
-  return src.replace(/<!--[\s\S]*?-->/g, "");
-}
 
 /** 开局真实的分步:欢迎(入世)→ 建号(立命)。建号后直接进游戏。 */
 const OPENING_STEPS = 2;

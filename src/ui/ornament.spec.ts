@@ -18,15 +18,12 @@
  *   花饰分隔的位置 —— 只在页面层,弹窗是密集面板,一枚墨点会与数据争视线。
  */
 import { describe, expect, it } from "vite-plus/test";
+import { stripComments } from "@/test/stripComments";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { readStyleCss } from "@/test/readStyleCss";
 
 const ROOT = resolve(__dirname, "../..");
-
-function stripComments(text: string): string {
-  return text.replace(/\/\*[\s\S]*?\*\//g, "");
-}
 
 const CSS_RAW = readStyleCss();
 const CSS = stripComments(CSS_RAW);

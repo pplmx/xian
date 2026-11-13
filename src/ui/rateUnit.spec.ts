@@ -33,6 +33,7 @@
  * 「/秒」等其它写法它都看不见 —— 那些归 `formatRate` 自己的用例与真浏览器门。
  */
 import { describe, expect, it } from "vite-plus/test";
+import { stripComments } from "@/test/stripComments";
 import { resolve } from "node:path";
 import { readFileSync } from "node:fs";
 import { ROOT, isSourceFile, walkFiles } from "@/test/readSource";
@@ -53,20 +54,6 @@ const FILES = walkFiles(resolve(ROOT, "src"), isSourceFile).map((full) => ({
   path: full.slice(ROOT.length + 1).replace(/\\/g, "/"),
   text: readFileSync(full, "utf8"),
 }));
-
-/**
- * 抹掉注释 —— 注释里**举例**说明「这里曾经印成 `每秒 ${formatRate(...)}`」时,
- * 那段字不是玩家看得见的文案,不该算违规。
- *
- * 抹法是等长替换(保留换行与偏移),报出的行号仍对应原文件。三套注释都要认:
- * JS 行注释、JS 块注释、以及 `.vue` 模板里的 `<!-- -->`。
- */
-function stripComments(src: string): string {
-  return src
-    .replace(/<!--[\s\S]*?-->/g, (m) => m.replace(/[^\n]/g, " "))
-    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "))
-    .replace(/(^|[^:])\/\/[^\n]*/g, (m, lead: string) => lead + " ".repeat(m.length - lead.length));
-}
 
 /**
  * `每秒` 后面紧跟着 `formatRate(` —— 包括插值 `{{ }}` 与模板串 `${}` 两种包法,

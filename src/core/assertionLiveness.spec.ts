@@ -33,6 +33,7 @@
  * **元判据**:它们共用的那几个变量,每一个都得先被证明存在。
  */
 import { describe, expect, it } from "vite-plus/test";
+import { stripComments } from "@/test/stripComments";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -40,11 +41,6 @@ const ROOT = resolve(__dirname, "../..");
 
 /** 用到 `FILES.find` 的 spec 文件 —— 目前只有这一份,新加的自动纳入 */
 const SPEC_FILES = ["src/core/uiLayering.spec.ts", "src/core/layoutMeasure.spec.ts"];
-
-/** 去掉注释,只留代码 */
-function stripComments(text: string): string {
-  return text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-}
 
 /**
  * 抽出所有**裸的** `FILES.find(...)` —— 即 `fileAt` 定义之外的那些。

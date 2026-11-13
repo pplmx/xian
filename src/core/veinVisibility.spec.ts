@@ -18,6 +18,7 @@
  * 将来若新增第五条脉、或把某条脉挪去别的通道,这里会先红。
  */
 import { beforeEach, describe, expect, it } from "vite-plus/test";
+import { stripComments } from "@/test/stripComments";
 import { createPinia, setActivePinia } from "pinia";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -35,14 +36,6 @@ const DEDICATED_CHANNELS: Readonly<Record<string, string>> = {
 /** 一条脉是否有任何可观测通道(判据本体,便于故障注入) */
 function hasObservableChannel(def: VeinDef, channels: Readonly<Record<string, string>>): boolean {
   return Object.keys(def.perPoint).length > 0 || def.id in channels;
-}
-
-/** 去掉注释,免得注释里提一嘴就算「接上了」 */
-function stripComments(src: string): string {
-  return src
-    .replace(/<!--[\s\S]*?-->/g, "")
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/\/\/[^\n]*/g, "");
 }
 
 const CARD_SRC = stripComments(

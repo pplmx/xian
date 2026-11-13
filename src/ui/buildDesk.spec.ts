@@ -1,29 +1,10 @@
 import { describe, expect, it } from "vite-plus/test";
+import { stripComments } from "@/test/stripComments";
 import { readSource } from "@/test/readSource";
 import { BUILD_STYLES, buildAffinityRows } from "@/core/buildDetect";
 import { buildCoreGaps, buildStageMeter } from "./buildDesk";
 
 const source = readSource;
-
-/**
- * 去掉注释,只留代码。
- *
- * 下面几条判据按「从 `const stageGapText` 切到下一个 `const`」的方式取一段源码
- * 再断言。切出来的那段**包含说明注释**,而注释里为了讲清来龙去脉会引用旧文案
- * (「距成形还差 25% 契合」)。于是「正文该保留缺口明细」这条 `/还差/` 断言
- * 可以靠注释里的引文满足 —— 真把正文字面量删掉,判据照样绿。
- *
- * 实测过:把 `stageGapText` 的返回值改成「下一条识别线…未过」(不含「还差」),
- * `expect(gap).toMatch(/还差/)` 仍通过,因为上面那段注释里写着「还差多少」
- * 与「距成形还差 25% 契合」。这正是本仓反复记的那类假绿。
- *
- * 故凡「按切片断言源码」的判据都先过这一层。保留换行,方便报错时对行。
- */
-function stripComments(text: string): string {
-  return text
-    .replace(/\/\*[\s\S]*?\*\//g, (block) => block.replace(/[^\n]/g, " "))
-    .replace(/(^|[^:])\/\/.*$/gm, "$1");
-}
 
 describe("铸道案 · 六路、形状与下一步同读此刻", () => {
   it("契合按雏形 / 成形 / 大成三段推进，坏数归零、顶阶走满", () => {

@@ -34,18 +34,11 @@
  * ③ 明日预告不许再出现裸的 `渡劫×N`。
  */
 import { describe, expect, it } from "vite-plus/test";
+import { stripComments } from "@/test/stripComments";
 import { readSource } from "@/test/readSource";
 import { WEATHERS } from "@/core/weather";
 
 const HOME = readSource("src/views/HomeView.vue");
-
-/** 抹掉注释 —— 注释里举例说明旧写法时，那段字不是玩家看得见的文案 */
-function stripComments(src: string): string {
-  return src
-    .replace(/<!--[\s\S]*?-->/g, "")
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
-}
 
 const CODE = stripComments(HOME);
 

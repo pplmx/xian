@@ -39,12 +39,8 @@
  * 判据会红;若别处也长出同款,把它登记进 `KNOWN_DEAD_FALLBACKS` 并同样清掉。
  */
 import { describe, expect, it } from "vite-plus/test";
+import { stripComments } from "@/test/stripComments";
 import { readSource } from "@/test/readSource";
-
-/** 去掉块注释与行注释 —— 判据认代码,不认注释里的解释 */
-function stripComments(text: string): string {
-  return text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-}
 
 /** 已经清掉、且不许再加回来的死兜底:文件 + 那句文案的特征 */
 const REMOVED_DEAD_FALLBACKS = [

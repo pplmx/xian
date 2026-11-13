@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 747 个 spec;本作自己那部分 667 个) |
+| `bun run test` | 全量用例(全量 748 个 spec;本作自己那部分 668 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 747 个 spec = 宿主 667 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 748 个 spec = 宿主 668 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 747 个 spec(本作自己那部分 667 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 748 个 spec(本作自己那部分 668 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -9652,3 +9652,54 @@ if (dtSec < 1) return null;
 
 > 第 2 条值得记:那是**判据自己的地基判据**在报警 —— 它逼我看清了「漏报」与
 > 「误伤」的代价不对称。
+
+### 第 173 轮:找「测试工具自己的分叉」——`stripComments` 有八份,已经不一致
+
+原先计划是找「中期体验空白」。走了一遍中期各阶段(金丹 / 元婴 / 化神):
+
+```text
+今日一步      每段都有明确目标(破境 / 完善流派 / 深入下一地)
+主线 23/32    每境都有新章节
+日课八条      每条都给了去处(上一轮的判据)
+44 处区域     串成一条 requireCleared 链,内容量充足
+功法           后段每境稳定解锁 3 部
+```
+
+**这一层没有空白。** 于是换了个角度:查**测试工具自己**有没有分叉。
+
+### 找到了:一个被复制八次的函数
+
+`stripComments` 是「注释冒充正文」那条纪律的解药（`docs/审计规范.md` 第三节）。
+它被复制到了**十三份**用例里（比我预想的多），而逐份核对后，实现**已经不一致**:
+
+```text
+rulesetEra / softCapVisibility / veinVisibility   三种注释都抹
+deadFallback / assertionLiveness / testDeterminism 只抹块注释与整行 //
+breakthroughCost / weatherUnitConsistency          三种都抹,且避开 ://
+```
+
+两种漏法都真实存在:
+
+1. **漏 HTML 注释** —— `.vue` 里的注释就是 `<!-- … -->`。只抹块注释与行注释的版本
+   对模板注释完全无效，而那正是 Vue 项目里最常见的一种；
+2. **漏行尾 `//`** —— 只认整行注释的实现，对 `const a = 1; // 旧写法` 无效。
+
+分叉方向不对称:**宽的那份能挡住误报，窄的那份挡不住** —— 而它们是同一个工具的副本，
+谁也不会去核对另一份。
+
+### 改法:收成一份 `src/test/stripComments.ts`
+
+按最宽的那版（三种注释都抹、行尾也剥、避开 `://`），十三份用例全部改成 import。
+受影响的那些用例全绿 —— 说明宽的那版没有破坏任何原有断言。
+
+再补 `core/stripCommentsParity.spec`:用例里不许再有本地副本。
+
+### 判据自己踩了三个坑
+
+1. 文件头的表格里写了 `/* */`，**把文档注释提前闭合了** —— 解析失败；
+2. 想用 `new Function` 把各份实现求值比对，而函数体里含正则字面量
+   `/\*[\s\S]*?\*\//`，`new Function` 把它当真正则解析、报语法错。
+   改成**比实现文本** —— 这里要判的本来就是「八份是否一致」，比文本更直接；
+3. 又举报了自己 —— 「地基」那一条里就写着两份样本实现。排除自身。
+
+故障注入:往 `rateUnit.spec.ts` 塞一份本地副本，判据当场报出那个文件名。

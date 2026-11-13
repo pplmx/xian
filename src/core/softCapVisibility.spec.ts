@@ -14,19 +14,12 @@
  * 各键的 diminish 并不相同(0.5 / 0.4),抄一个数就是撒谎。
  */
 import { describe, expect, it } from "vite-plus/test";
+import { stripComments } from "@/test/stripComments";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { SOFT_CAPS } from "@/data/constants";
 import { isSoftCapped, mergeMods } from "@/core/statsCalc";
 import type { AnyStatKey } from "@/types";
-
-/** 去掉注释与模板注释,免得注释里提一嘴就算「接上了」 */
-function stripComments(src: string): string {
-  return src
-    .replace(/<!--[\s\S]*?-->/g, "")
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/\/\/[^\n]*/g, "");
-}
 
 const CHAR_VIEW_SRC = stripComments(
   readFileSync(resolve(__dirname, "../views/CharacterView.vue"), "utf8"),

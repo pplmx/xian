@@ -13,6 +13,7 @@
  *   ③ 道痕列表必须真的接上这条口径,而不是只在注释里提过。
  */
 import { describe, expect, it } from "vite-plus/test";
+import { stripComments } from "@/test/stripComments";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
@@ -22,14 +23,6 @@ import {
   rulesetBefore,
   rulesetChangesSince,
 } from "@/data/ruleset";
-
-/** 去掉注释,免得注释里提一嘴就算「接上了」(与 veinVisibility 同法) */
-function stripComments(src: string): string {
-  return src
-    .replace(/<!--[\s\S]*?-->/g, "")
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/\/\/[^\n]*/g, "");
-}
 
 const MARKS_VIEW_SRC = stripComments(
   // 道痕 tab 拆出后判据随本体走(components/celestial/MarksPanel.vue)

@@ -674,6 +674,8 @@ const CATEGORIES = [
       "offlineClockSkew",
       // 一次探针落进 src/,「全量测试」的读数就不可信了 —— 文档写了结论,但没有判据
       "testSurfaceHygiene",
+      // stripComments 曾有八份副本,而它们已经分叉了(窄的挡不住行尾 // 与 HTML 注释)
+      "stripCommentsParity",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

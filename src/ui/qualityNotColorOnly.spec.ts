@@ -35,6 +35,7 @@
  * 白名单只放这两处。再来一个想进白名单的,得先回答:它凭什么不盖、不写?
  */
 import { describe, expect, it } from "vite-plus/test";
+import { stripComments } from "@/test/stripComments";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
@@ -59,11 +60,6 @@ function walkVue(dir: string, out: string[] = []): string[] {
     }
   }
   return out;
-}
-
-/** 去掉注释,避免注释里提到 `qualityDef(x).color` 就算数 */
-function stripComments(src: string): string {
-  return src.replace(/<!--[\s\S]*?-->/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
 }
 
 describe("品阶不许只靠颜色", () => {

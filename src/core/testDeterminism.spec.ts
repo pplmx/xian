@@ -23,6 +23,7 @@
  * 其余形态(随机数没播种、真实定时器)由各自的用例负责,不在这里一刀切。
  */
 import { describe, expect, it } from "vite-plus/test";
+import { stripComments } from "@/test/stripComments";
 import { readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 
@@ -41,10 +42,6 @@ function specFiles(): string[] {
   walk(SRC);
   return out.sort();
 }
-
-/** 去掉注释 —— 注释里会引用这种写法做说明,不剥会被自己的文档绊到 */
-const stripComments = (text: string): string =>
-  text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
 describe("测试确定性 · 不许对真实时钟做相等断言", () => {
   const files = specFiles();
