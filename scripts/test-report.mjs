@@ -664,6 +664,8 @@ const CATEGORIES = [
       "mainChainApex",
       // 「N / 8 条已满」的分母是假的 —— 三条功劳的 full 写死成 false
       "apexDeedsFull",
+      // 源码注释里让人去读一份不存在的文档 —— docs-check 只扫文档正文
+      "docRefExistence",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

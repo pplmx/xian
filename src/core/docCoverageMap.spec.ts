@@ -66,6 +66,18 @@ const DOC_MAP: readonly {
     note: "现状陈述(法宝/灵兽/功法件数与功法三分类)对数据源",
   },
   {
+    file: "审计规范.md",
+    kind: "normative",
+    /*
+     * 守它的是**它自己的存在性** —— 这份文档被 `contentReachabilityAudit.spec`
+     * 的文件头点名,而此前一直不存在(第 168 轮才发现)。
+     * `docRefExistence.spec` 验的就是「源码点名的文档必须真实存在」,
+     * 对这份文档来说,那条判据既是它的守卫也是它存在的理由。
+     */
+    guard: "core/docRefExistence.spec.ts",
+    note: "判据自身的编写规范:每条都要能被打红;由 docRefExistence 守着存在性",
+  },
+  {
     file: "alchemy.md",
     kind: "normative",
     guard: "core/docCrossCheck.spec.ts",
