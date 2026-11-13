@@ -10922,6 +10922,61 @@ async function taskWeatherSky() {
       }
     }
 
+    /*
+     * 「今日渡劫 ×1.08」—— 那个倍率乘在什么上,原来说不清。
+     *
+     * 天时是算出来的,故这里扫一段天数把**雷鸣日**撞出来(全库只有它一个
+     * `tribulationMult > 1`)。撞到就核那一行说清了单位:光有 ×N 不算。
+     */
+    checked += 1;
+    {
+      let found = null;
+      /*
+       * 雷鸣日**只在人间界的天象池里**（实测 `WEATHERS` 里唯一 `tribulationMult > 1`
+       * 的是它；仙界 / 神界 / 混沌海三个池都没有）。展示档在真仙期（仙界），
+       * 扫多少天都撞不到 —— 第一版就在那儿扫了 40 天，白扫。
+       * 故这一支把玩家压回炼气（人间界），再逐日扫。
+       */
+      for (let day = 0; day < 60 && !found; day += 1) {
+        const slices = showcaseSlices("light");
+        slices.player = { ...slices.player, major: 0, sub: 0 };
+        /*
+         * 用 **day 9** 这个已知雷鸣日做基准（实测 major 0 / totalPlaySec
+         * 86400×12 时 todayWeather 给出雷鸣），逐日 ±1 扫附近那一段。
+         * 不从头扫 60 天:页面上线后 totalPlaySec 会自己走几百毫秒，
+         * 跨日的边界因此不稳 —— 扫「那一天的中间」才可靠。
+         */
+        slices.game = { ...slices.game, totalPlaySec: 86400 * (12 + day - 3) + 3600 };
+        await seedSave(ctx, slices, `__skyLeiming${day}`);
+        await page.close();
+        page = await ctx.newPage();
+        watchPageErrors(page, pageErrors);
+        await openRoute(page, "/", 700);
+        const probe = await page.evaluate(() => ({
+          name: document.querySelector(".home-deck__weather-line strong")?.textContent?.trim(),
+          effects: (document.querySelector(".home-deck__effects")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+        }));
+        if (probe.name?.includes("雷鸣") || /渡劫/.test(probe.effects)) found = probe;
+      }
+      if (found) {
+        console.log(`[390] 天时雷伤:撞上 «${found.name}» —— «${found.effects}»`);
+      }
+      if (!found) {
+        /*
+         * 扫不到不算过 —— 那说明这一支本轮什么都没验。红一次比假装绿好:
+         * 雷鸣日是确定性算出来的（已知 day N 是雷鸣），扫不到就是夹具或
+         * 时间轴出了变化，得有人看。
+         */
+        failures.push("[390] 天时雷伤:扫不到一个带渡劫倍率的天时 —— 这一支没有验到任何东西");
+      } else if (!/雷伤|雷威|每道雷|伤害/.test(found.effects)) {
+        failures.push(
+          `[390] 天时雷伤:«${found.effects}» 只给了裸乘数 —— 读不出它乘在伤害、成功率还是雷数上`,
+        );
+      }
+    }
+
     if (pageErrors.length) {
       failures.push(`[390] 夜色页面异常:${[...new Set(pageErrors)].join(" | ")}`);
     }

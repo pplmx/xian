@@ -71,8 +71,16 @@
           <p v-if="tomorrowWeather" class="home-deck__tomorrow">{{ tomorrowBrief }}</p>
           <div v-if="weatherEffects.length || weatherTribulation" class="home-deck__effects">
             <span v-for="effect in weatherEffects" :key="effect">{{ effect }}</span>
+            <!--
+              「今日渡劫 ×1.08」只给了裸乘数 —— 读不出它乘在伤害、成功率还是雷数上,
+              而这三件事的对策完全不同(堆血量 / 攒材料 / 换个日子)。
+
+              它实际乘在**每一道雷的伤害**上(见 core/breakthrough 的
+              `waveDamage(... weatherMult ...)`)。故把单位写出来:雷伤 +8%。
+              数字仍读 `tribulationMult` —— 改常数不撒谎。
+            -->
             <span v-if="weatherTribulation" class="is-danger"
-              >今日渡劫 ×{{ weatherTribulation }}</span
+              >今日渡劫 · 雷伤 +{{ formatPercent(weatherTribulation - 1, 0) }}</span
             >
           </div>
         </div>
