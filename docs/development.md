@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 755 个 spec;本作自己那部分 675 个) |
+| `bun run test` | 全量用例(全量 756 个 spec;本作自己那部分 676 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 755 个 spec = 宿主 675 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 756 个 spec = 宿主 676 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 755 个 spec(本作自己那部分 675 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 756 个 spec(本作自己那部分 676 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -10107,3 +10107,53 @@ apexEtaVisibility   三处锚点（data- 属性 / computed 名 / 纯函数出口
 
 **启发式太粗，不能拿它造判据** —— 造出来会是一个只会误报的门。
 故这个方向放弃，只做确认过的那两条。
+
+### 第 182 轮:转世那三程 —— 我差点把一个正确实现报成缺陷
+
+按计划查跨世代延续。把转世流程完整走了一遍:
+
+```text
+辞世 → 回照（只读不落账）→ 择生（落子不可撤回）
+```
+
+回照那一屏的账目逐项核过:
+
+```text
+36 项 = 随魂 12 + 折损 4 + 归尘 20        加得上
+宿慧 303 → 下一阶「熟知天界」600 → 尚差 297   与 SAMSARA_STAGES 对得上
+功法 / 道源 / 镇压 / 道友  都是「折损带走」    与 samsaraAudit 的 mode 一致
+```
+
+### 差点报错的那一次
+
+用 `player.rebirth()` 单独测道侣，发现**转世后 bond 原样留着** —— 而账目说
+「道友 · 折损带走」。差一点就把它当成缺陷。
+
+查下去发现:**归档在 `confirmReincarnation` 里，不在 `rebirth` 里。**
+
+```text
+370  const bondRec = archiveBond();        ← 读 bond 并置 null
+371  if (bondRec) player.recordBond(bondRec);
+397  player.rebirth(view.nextLinggen);      ← 之后才重生
+```
+
+顺序是对的。**是我的测法绕过了整条流程。**
+
+> 这是这一轮最值得记的一条:单测一个函数之前先问「它在真实流程里的位置是什么」。
+> 拿孤立调用去证明流程缺陷，很容易得到一个假的结论 —— 而且它看起来特别像真的。
+
+### 补的判据:`core/rebirthArchiveOrder.spec`
+
+顺序保障此前**没有判据**（`bondEvents.spec` 与 `daoluService.spec` 只测
+`archiveBond()` 本身）。三条:
+
+```text
+archiveBond 在 player.rebirth 之前    反过来归档只能拿到 null，这一世与谁同行不留痕
+归档之后紧接着 recordBond             产出了却不写，等于没归档
+前提自检                              那三个符号都还叫这个名字
+```
+
+前提自检沿用第 181 轮那条结论:让「判据过时」的红先说话，
+而不是混在「产品坏了」里。
+
+两次故障注入都精确命中:把归档挪到 rebirth 之后 → 红;删掉 recordBond → 前提自检先红。

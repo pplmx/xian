@@ -690,6 +690,8 @@ const CATEGORIES = [
       "layoutViewportCoverage",
       // 日课是自动领赏的,但这依赖「先结算再翻页」那条顺序 —— 顺序没人守着
       "dailySettleOrder",
+      // 转世时「先归档再清空」:顺序反了,这一世的道侣就不留痕,而界面不会有任何异常
+      "rebirthArchiveOrder",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

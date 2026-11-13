@@ -5125,6 +5125,42 @@ apexEtaVisibility   三处锚点（data- 属性 / computed 名 / 纯函数出口
 
 **启发式太粗，不能拿它造判据** —— 造出来会是一个只会误报的门。故放弃。
 
+### 转世时「先归档、再清空」—— 顺序反了，这一世的道侣就不留痕
+
+转世账目（`core/samsaraAudit`）对「道友」写的是:
+
+```text
+mode: partial
+detail: 关系归档入履历(archiveBond)，人不留下；留的是曾同行这件事
+```
+
+实现分两步：`archiveBond()` 产出一条记录并顺手 `setBond(null)` 清空，
+然后 `player.recordBond(rec)` 写进履历。**顺序是全部**：`archiveBond()` 读的是
+`player.bond`，而它自己会把它置 null。若归档排在 `player.rebirth()` 之后，
+归档读到的就是 null —— **这一世与谁同行，一点痕迹都不留**，而界面上不会有任何异常：
+履历里只是少了一条。
+
+#### 一个差点报错的地方
+
+动手写判据之前，先用 `player.rebirth()` 单独测了一遍，发现道侣原样留着，
+**差点报成缺陷**。查下去发现归档在 `confirmReincarnation` 里，不在 `rebirth` 里：
+
+```text
+370  const bondRec = archiveBond();        ← 读 bond 并置 null
+371  if (bondRec) player.recordBond(bondRec);
+397  player.rebirth(view.nextLinggen);      ← 之后才重生
+```
+
+顺序是对的。**是测法绕过了整条流程。**
+
+单测一个函数之前先问「它在真实流程里的位置是什么」。拿孤立调用去证明流程缺陷，
+很容易得到一个假的结论 —— 而且它看起来特别像真的。
+
+#### 判据
+
+`core/rebirthArchiveOrder.spec` 三条：`archiveBond` 在 `player.rebirth` 之前、
+归档之后紧接着 `recordBond`、前提自检。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
