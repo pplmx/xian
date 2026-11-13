@@ -19547,32 +19547,50 @@ async function taskCultivationFold() {
        *   ① 真在页面上（接线）；② 带「按此刻」的限定（这个数会变，不许许诺精确到达日）；
        *   ③ 数百天量级只报天、不报小时（那个数每刷新都在跳，报到小时是虚假精度）。
        */
-      const apexEta = await page.evaluate(() => {
-        const el = document.querySelector("[data-cultivation-apex-eta]");
-        if (!el) return null;
-        const r = el.getBoundingClientRect();
-        return {
-          text: (el.textContent || "").replace(/\s+/g, " ").trim(),
-          w: Math.round(r.width),
-          over: el.scrollWidth > el.clientWidth + 1,
-          right: Math.round(r.right),
-        };
-      });
-      if (!apexEta || !apexEta.text) {
-        failures.push("[390-cultivation] 没有「至大道尽头约 N」的读数 —— 长线目标没有时间尺度");
-      } else if (!/按此刻行速/.test(apexEta.text)) {
-        failures.push(`[390-cultivation] 长线读数没有「按此刻」的限定 —— «${apexEta.text}»`);
-      } else if (!/约\s*\d+\s*天/.test(apexEta.text)) {
-        failures.push(`[390-cultivation] 长线读数没报天数 —— «${apexEta.text}»`);
-      } else if (/小时|分|秒/.test(apexEta.text)) {
-        failures.push(
-          `[390-cultivation] 数百天量级报到了小时 —— 虚假精度，而且它每刷新都在跳:«${apexEta.text}»`,
-        );
-      } else if (apexEta.over) {
-        failures.push(`[390-cultivation] 长线读数溢出了容器 —— «${apexEta.text}»`);
-      } else if (apexEta.w < 60) {
-        failures.push(`[390-cultivation] 长线读数的热区只有 ${apexEta.w}px —— 文字被挤掉了`);
+      /*
+       * 三档手机宽度都要量 —— 只守 390 会让 320 与 375 上的折行 / 溢出漏掉。
+       * 这条读数带中文与数字,窄屏最容易在这里被挤成两行或溢出容器。
+       */
+      for (const vp of [
+        { width: 390, height: 844 },
+        { width: 375, height: 812 },
+        { width: 320, height: 568 },
+      ]) {
+        await page.setViewportSize({ width: vp.width, height: vp.height });
+        await page.waitForTimeout(160);
+        const apexEta = await page.evaluate(() => {
+          const el = document.querySelector("[data-cultivation-apex-eta]");
+          if (!el) return null;
+          const r = el.getBoundingClientRect();
+          return {
+            text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+            w: Math.round(r.width),
+            over: el.scrollWidth > el.clientWidth + 1,
+            right: Math.round(r.right),
+            vw: window.innerWidth,
+          };
+        });
+        const tag = `[${vp.width}-cultivation]`;
+        if (!apexEta || !apexEta.text) {
+          failures.push(`${tag} 没有「至大道尽头约 N」的读数 —— 长线目标没有时间尺度`);
+        } else if (!/按此刻行速/.test(apexEta.text)) {
+          failures.push(`${tag} 长线读数没有「按此刻」的限定 —— «${apexEta.text}»`);
+        } else if (!/约\s*\d+\s*天/.test(apexEta.text)) {
+          failures.push(`${tag} 长线读数没报天数 —— «${apexEta.text}»`);
+        } else if (/小时|分|秒/.test(apexEta.text)) {
+          failures.push(
+            `${tag} 数百天量级报到了小时 —— 虚假精度，而且它每刷新都在跳:«${apexEta.text}»`,
+          );
+        } else if (apexEta.over) {
+          failures.push(`${tag} 长线读数溢出了容器 —— «${apexEta.text}»`);
+        } else if (apexEta.right > apexEta.vw + 1) {
+          failures.push(`${tag} 长线读数右缘越界 ${apexEta.right} > ${apexEta.vw}`);
+        } else if (apexEta.w < 60) {
+          failures.push(`${tag} 长线读数的热区只有 ${apexEta.w}px —— 文字被挤掉了`);
+        }
       }
+      // 收尾把视口还原成这一支的默认值,别影响后面的检查
+      await page.setViewportSize({ width: 390, height: 844 });
     }
 
     if (rendered === 0) {
