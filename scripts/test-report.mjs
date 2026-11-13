@@ -672,6 +672,8 @@ const CATEGORIES = [
       "playerNameSanitize",
       // 时钟回拨:lastActiveAt 落在未来时,离线结算该什么都不给;启动还要把它拉回现在
       "offlineClockSkew",
+      // 一次探针落进 src/,「全量测试」的读数就不可信了 —— 文档写了结论,但没有判据
+      "testSurfaceHygiene",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

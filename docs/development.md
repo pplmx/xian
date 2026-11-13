@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 746 个 spec;本作自己那部分 666 个) |
+| `bun run test` | 全量用例(全量 747 个 spec;本作自己那部分 667 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 746 个 spec = 宿主 666 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 747 个 spec = 宿主 667 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 746 个 spec(本作自己那部分 666 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 747 个 spec(本作自己那部分 667 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -9611,3 +9611,44 @@ if (dtSec < 1) return null;
 
 > 第 3 次尤其值得记:**它和第 2 次是同一类错**——「文件里有这串字」不等于
 > 「那一处接线还在」。差一点就把它当成「已验证」提交了。
+
+### 第 172 轮:读文档找「承诺了却没兑现」——找到一条纪律型承诺
+
+计划是读文档找接口承诺。扫了两类:
+
+```text
+引用不存在的 spec      12 处命中,逐条查过:一处是历史叙述(记一场事故),
+                        一处是 superpowers 归档(文档自检已豁免)—— 都不是坏的
+「一律 / 永不 / 绝不」 124 处,抽样查了 8 处(affixTransfer 去重、先手差额、
+                        聚气丹短差、daoNote 夹回…),全部都有判据守着
+```
+
+覆盖率比预想高得多。
+
+### 但找到一条**纪律型**承诺没被判据守着
+
+`docs/development.md` 记着一场真实事故:
+
+```text
+?? src/core/__probe_tmp.spec.ts     ← 注释写着 TEMPORARY PROBE
+```
+
+并行侦察留下的探针。收尾验证时 `vp test run` 从「627 文件 / 5823 过」变成
+「628 文件 / 2 败」,而 `git log` 干净、自己的改动早已提交并验过。
+
+文档写下的结论是:**收尾验证之前先跑一次 `git status --short`**。那条结论是对的,
+但它是一条**动作纪律** —— 只能靠人记得。而「记得」正是本仓反复失手的地方。
+
+补 `core/testSurfaceHygiene.spec`:文件名带 `probe/tmp/temp/scratch/demo` 这类词,
+或文件头 20 行自认 `TEMPORARY` 的 spec,不许留在 `src/` 里。
+
+故障注入用的是**事故里那个真实文件名** `__probe_tmp.spec.ts`,两条判据当场同时红。
+
+### 判据自己踩了两个坑
+
+1. **又举报了自己**——它的文件头写着那两个词(说明判据在抓什么)。排除自身;
+2. 修「前缀式 `tmpHelper`」时想放宽正则,一测发现**放宽后像 `template` 这样的名字会误伤**。
+   改回精确形态,并把「误伤检查」也写成断言:宁可漏一个臆想的名字,不要误伤真文件。
+
+> 第 2 条值得记:那是**判据自己的地基判据**在报警 —— 它逼我看清了「漏报」与
+> 「误伤」的代价不对称。
