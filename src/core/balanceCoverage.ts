@@ -61,11 +61,15 @@ export function specTitles(): Map<string, string[]> {
 /**
  * 仓库里**全部** spec 文件的绝对路径。
  *
- * 第一版只扫 `src/core/` —— 而全仓 551 个 spec 里有 **225 个不在 core 下**
+ * 第一版只扫 `src/core/` —— 而**约四成的 spec 不在 core 下**
  * (`src/data/`、`src/ui/`、`src/stores/`、`src/composables/` …)。
  * 于是 `src/data/petVows.spec.ts` 里那条「每只灵兽都有契语」明明在,
  * 审计却报「灵兽 / 契语一一对应 没有判据在管」——
- * **量尺只伸到了 60% 的地方**,而它报出来的缺口看起来跟真的一样。
+ * **量尺只伸到一半多一点的地方**,而它报出来的缺口看起来跟真的一样。
+ *
+ * 这里**不写那几个绝对数**:它们每加一个 spec 就漂一点,而注释没有门对账。
+ * `commentScaleClaims.spec` 会抓「全仓 N 个 spec」这类断言与真实数量不符 ——
+ * 但更省事的写法是压根不写。要读数请看那份判据的输出。
  */
 function allSpecFiles(): string[] {
   const out: string[] = [];

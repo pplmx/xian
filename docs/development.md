@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 748 个 spec;本作自己那部分 668 个) |
+| `bun run test` | 全量用例(全量 749 个 spec;本作自己那部分 669 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 748 个 spec = 宿主 668 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 749 个 spec = 宿主 669 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 748 个 spec(本作自己那部分 668 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 749 个 spec(本作自己那部分 669 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -9703,3 +9703,46 @@ breakthroughCost / weatherUnitConsistency          三种都抹,且避开 ://
 3. 又举报了自己 —— 「地基」那一条里就写着两份样本实现。排除自身。
 
 故障注入:往 `rateUnit.spec.ts` 塞一份本地副本，判据当场报出那个文件名。
+
+### 第 174 轮:注释里的规模数 —— 两处写着 551,实际已 669
+
+上一轮的教训是「工具副本会分叉」。这一轮顺着查**注释里的规模数**。
+
+`core/balanceCoverage` 的文件头用一组数论证一件事:
+
+```text
+第一版只扫 src/core/ —— 而全仓 551 个 spec 里有 225 个不在 core 下 ……
+量尺只伸到了 60% 的地方,而它报出来的缺口看起来跟真的一样。
+```
+
+那段论证**是对的、也值得留着**。但三个数全过时了:
+
+```text
+写的   551 总 / 225 非 core  (60%)
+实际   669 总 / 279 非 core  (58%)
+```
+
+同一组数还出现在 `balanceCoverage.spec` 里 —— 一个数写两处,**两处一起过期**,
+而没有任何门会红:它们只是注释。
+
+> `docs/design.md` 那条「注释里的规模数,是最难发现的那本账」说的就是它:
+> 文档有 `docs-check` 对账,而**注释没有**。一段论证若靠数字支撑,数字漂了,
+> 那段论证就开始骗人 —— 后来者会拿它当依据("量尺只到 60%"),而它已经不是那个数。
+
+### 改法:不写绝对数,比写对一次更稳
+
+两处都改成「约四成的 spec 不在 core 下」。**写对一次不等于守得住** ——
+数字每加一个 spec 就漂，而改注释的人不会重跑判据。把精度让给真正会读它的判据。
+
+补 `core/commentScaleClaims.spec`:「全仓 N 个 spec」「M 个不在 core 下」这类断言
+必须与真实数量一致。只认这一种 —— 别的规模数（"8 种机制家族""64 套数值"）
+依赖各自的数据源，硬编码会把一条好判据变成第二本账。
+
+故障注入:往 `balanceCoverage.ts` 塞回「全仓 551 个 spec」，判据当场红。
+
+### 判据自己踩的坑（第三次同一种）
+
+「地基」那一条里逐字引着过期数字 → 判据举报自己 → 排除自身。
+这已是第三次（`testSurfaceHygiene`、`stripCommentsParity`、这一次）。
+值得记的是:**判据文件里引样例是必要的**（否则读者不知道它在抓什么），
+故「排除自身」不是权宜，是这类判据的固定写法。
