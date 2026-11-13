@@ -429,9 +429,42 @@ const displayed = ref<CombatLogEntry[]>([]);
 const playbackDone = computed(() => {
   const total = battle.value?.result.log.length ?? 0;
   // displayed 只留最近 100 行,长战斗的 total 会更大 —— 取两者的小值比较
-  return total > 0 && displayed.value.length >= Math.min(total, 100);
+  return total > 0 && displayed.value.length >= Math.min(total, BATTLE_LOG_MAX);
 });
-const battleLogTotal = computed(() => Math.min(battle.value?.result.log.length ?? 0, 100));
+/**
+ * 战报**最多留几行** —— 一个数决定三件事:截断到几行、报「共几行」、判「是否读完」。
+ *
+ * 为什么是 100:一场普通遭遇 4~8 行、首领战 20~30 行，100 行足够把最长的一场
+ * 完整摊开;而它同时是**手机上愿意滑的上限** —— 再长就没人翻到底了。
+ *
+ * 从前这个数**写在五个地方**（`Math.min(…, 100)` 两处、`slice(-100)` 一处、
+ * `slice(-99)` 一处），且 `-99` 那处读起来像另一个数（它的意思正是「留 99 加 1 = 100」）。
+ * 改上限时漏掉 `-99`，回放就会长到 101 行、与「共 100 行」的读数对不上。
+ */
+const BATTLE_LOG_MAX = 100;
+
+/**
+ * 同屏最多几条伤害飘字。
+ *
+ * 为什么是 5:同屏 5 条已经能把一次连击读成「连着打了几下」;
+ * 再多就互相叠住、数字看不清（飘字的存活时长见下面的 `BATTLE_FLOAT_MS`）。
+ */
+const BATTLE_FLOAT_MAX = 5;
+
+/**
+ * 一条飘字在屏上停多久。
+ *
+ * 为什么是 900ms:回放最快一档每 90ms 出一行（见 `COMBAT_PLAYBACK_MIN_MS`），
+ * 900ms 正好容得下**十行**的飘字同时在场 —— 再多就与「5 条上限」打架:
+ * 上限先到，先出的那条会被顶掉，玩家看到的是数字跳了一下就没了。
+ *
+ * 两个数是一对:`BATTLE_FLOAT_MAX` 管同屏条数，这个管存活时长。
+ */
+const BATTLE_FLOAT_MS = 900;
+
+const battleLogTotal = computed(() =>
+  Math.min(battle.value?.result.log.length ?? 0, BATTLE_LOG_MAX),
+);
 
 const php = ref(1);
 const ehp = ref(1);
@@ -683,7 +716,7 @@ function playBattle(instant = false): void {
   defeated.value = null;
   const entries = b.result.log;
   if (instant) {
-    displayed.value = entries.slice(-100);
+    displayed.value = entries.slice(-BATTLE_LOG_MAX);
     const last = entries[entries.length - 1];
     php.value = last?.php ?? 1;
     ehp.value = last?.ehp ?? 1;
@@ -702,14 +735,14 @@ function playBattle(instant = false): void {
       defeated.value = b.result.win ? "e" : "p";
       return;
     }
-    displayed.value = [...displayed.value.slice(-99), entry];
+    displayed.value = [...displayed.value.slice(-(BATTLE_LOG_MAX - 1)), entry];
     php.value = entry.php;
     ehp.value = entry.ehp;
     if (entry.dmg) {
       const id = floatSeq;
       floatSeq += 1;
       floats.value = [
-        ...floats.value.slice(-5),
+        ...floats.value.slice(-(BATTLE_FLOAT_MAX - 1)),
         {
           id,
           text: `-${entry.dmg}`,
@@ -719,7 +752,7 @@ function playBattle(instant = false): void {
       ];
       setTimeout(() => {
         floats.value = floats.value.filter((f) => f.id !== id);
-      }, 900);
+      }, BATTLE_FLOAT_MS);
       // 受击方原样震颤(既有),攻击方同步横踏 —— 出手与挨打才成一对
       triggerShake(entry.side === "p" ? "e" : "p", entry.t === "crit");
       triggerStrike(entry.side);
