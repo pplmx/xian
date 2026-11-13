@@ -47,9 +47,23 @@ export interface SamsaraLedgerGroup extends HeritageGroup {
 }
 
 export interface SamsaraBalance {
+  /** 完整留下的项数 —— 「随魂」那一行报的就是它 */
   full: number;
+  /** 只留一部分的项数 —— 「折损」那一行 */
   partial: number;
+  /** 随皮囊散去的项数 —— 「归尘」那一行 */
   reset: number;
+  /**
+   * 留下来的**总**项数（完整 + 折损）。
+   *
+   * 这个字段两次害过人:两个弹窗的「随魂」那一行一个读 `keep`、一个读 `full`，
+   * 于是同一份存档在两张屏上读到「16 / 4 / 20」与「12 / 4 / 20」——
+   * 前者加起来 40，而副题写着「36 项」。折损那 4 项本来就已经单独报了，
+   * `keep` 再数一遍就是把同一批东西数了两次。
+   *
+   * 故它现在的用途**只有一个**:回答「这一世总共带走几项」（那不是三档之一）。
+   * 任何一档的读数都必须取 `full` / `partial` / `reset`。
+   */
   keep: number;
   total: number;
 }
@@ -87,6 +101,10 @@ export function samsaraLedger(groups: HeritageGroup[] = heritageGroups()): Samsa
   }));
 }
 
+/**
+ * 三档读数 + 两个汇总。三档**互斥**（一项只属于一档），故
+ * `full + partial + reset === total` 恒成立 —— 判据 `reincarnationLedgerCount.spec` 钉着它。
+ */
 export function samsaraBalance(ledger: SamsaraLedgerGroup[] = samsaraLedger()): SamsaraBalance {
   const count = (mode: HeritageMode) => ledger.find((group) => group.mode === mode)?.count ?? 0;
   const full = count("full");

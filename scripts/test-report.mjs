@@ -648,6 +648,8 @@ const CATEGORIES = [
       "buildingPairing",
       // 参悟池不分门:主修签底下报的「尚余 24 部」只有全池的 39%
       "gongfaPoolTruth",
+      // 轮回台账:两个弹窗一个读 keep、一个读 full → 三行加起来 40 而总数写 36
+      "reincarnationLedgerCount",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

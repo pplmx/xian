@@ -10186,6 +10186,8 @@ async function taskRebirthFolio() {
           summary: summary.map((el) => ({
             text: (el.textContent || "").replace(/\s+/g, " ").trim(),
             overflow: el.scrollWidth > el.clientWidth + 1,
+            /* 三档那个数本身 —— 用来核「加起来等于总数」，见下面的断言 */
+            n: Number((el.querySelector(".tabular")?.textContent || "").trim()),
           })),
           summaryColumns: summaryBox ? getComputedStyle(summaryBox).gridTemplateColumns : "",
           critical,
@@ -10221,6 +10223,32 @@ async function taskRebirthFolio() {
       const folio = await readRebirthFolio();
       const criticalIds = new Set(folio?.critical.map((row) => row.id));
       checked += 1;
+      /*
+       * 三档数相加必须等于总项数 —— 两个弹窗曾经一个读 `keep`、一个读 `full`,
+       * 于是同一份存档在两张屏上读到「16 / 4 / 20」与「12 / 4 / 20」。
+       * 「折损」那 4 项本来就单独报了，第一行再数一遍就是把同一批东西数两次。
+       */
+      {
+        const nums = (folio?.summary ?? []).map((row) => row.n);
+        /*
+         * 总数在章首那一格（「叁 此世交割 … 36 项」）。不能拿整段文字里**第一个**
+         * 「N 项」—— 那会命中文案里的「12 项」之类的别处读数（实测就这样误报过）。
+         * 故从 `data-rebirth-summary` 之后的章首里取，且要求它等于三档之和。
+         */
+        const total = Number(
+          (/此世交割[\s\S]{0,80}?(\d+)\s*项/.exec(folio?.text ?? "") ?? [])[1] ?? NaN,
+        );
+        if (nums.length === 3 && nums.every((n) => Number.isFinite(n))) {
+          const sum = nums.reduce((a, b) => a + b, 0);
+          if (Number.isFinite(total) && sum !== total) {
+            failures.push(
+              `[390-rebirth] 三档相加 ${nums.join("+")}=${sum}，而总数写「${total} 项」—— 有一档被数了两遍`,
+            );
+          }
+        } else {
+          failures.push(`[390-rebirth] 三档读数取不到:${JSON.stringify(nums)}`);
+        }
+      }
       if (
         !folio ||
         folio.gateState !== "open" ||

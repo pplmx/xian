@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 734 个 spec;本作自己那部分 654 个) |
+| `bun run test` | 全量用例(全量 735 个 spec;本作自己那部分 655 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 734 个 spec = 宿主 654 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 735 个 spec = 宿主 655 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 734 个 spec(本作自己那部分 654 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 735 个 spec(本作自己那部分 655 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -9103,3 +9103,43 @@ GONGFA.filter((g) => g.minRealm <= major + 1 && !cultivation.learned[g.id])
 
 顺带把 `CORE_PINIA_SPECS` 从 112 抬到 113 —— 新的判据量的就是 store 上的两个输入
 （境界、已习），手搓一份输入等于在测另一条公式。理由写进了基线注释。
+
+### 第 160 轮:转世 —— 同一份账,两张屏读出两个数
+
+转世是本作最重的那次循环。它的台账有 36 项,分三档。两个弹窗读同一份
+`samsaraBalance`,而第一行读的不是同一个字段:
+
+```text
+确认页   balance.full  → 12
+入口页   balance.keep  → 16      (keep = full + partial = 12 + 4)
+```
+
+于是同一份存档:入口页「16 / 4 / 20」加起来 40,而副题写着「36 项」。
+
+### 一个字段两种读法
+
+`samsaraBalance` 同时给了 `full` 与 `keep`,两个名字都合理 —— 「三档里的第一档」
+与「留下来的总数」。写第一个弹窗的人要前者,写第二个的人以为要后者。
+**两份代码各自都读得通,只有把两张屏并排放才看得出不对劲。**
+
+这类错和上一轮的「参悟池按门过滤」是同一族:都不是算错,是**同一个东西被赋予了两个含义**。
+
+### 改法
+
+- `keep` 保留(它回答「这一世总共带走几项」,那不是三档之一),但接口注释写清
+  「任何一档的读数必须取 full / partial / reset」;
+- `RebirthDialog` 的 `keepCount` 改名 `fullCount` —— 名字里带 `keep` 会再引来一次误读。
+
+### 判据与两次自误
+
+浏览器门量渲染出来的三档数,相加必须等于章首那个「N 项」。
+故障注入验过:把 `full` 换回 `keep`,门报 `三档相加 16+4+20=40,而总数写「36 项」`。
+
+取总数时我自己踩了两次:
+
+1. 正则拿整段文字里**第一个**「N 项」—— 命中文案里的「12 项」,门报
+   `12+4+20=36,而总数写「12 项」`(数对了,取数取错了);
+2. 改成正则锚在「此世交割」章首之后,才量到真的 36。
+
+顺带把 `CORE_PINIA_SPECS` 从 113 抬到 114:那份台账由 `heritageGroups()` 从 player
+与各 store 现推,手搓一份就不是玩家那一世的账了。

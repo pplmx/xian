@@ -60,8 +60,8 @@
         <div class="rebirth-balance" data-rebirth-summary>
           <p class="rebirth-balance__row is-keep">
             <span>随魂</span>
-            <strong class="tabular">{{ keepCount }}</strong>
-            <small>项留下</small>
+            <strong class="tabular">{{ fullCount }}</strong>
+            <small>项完整留下</small>
           </p>
           <p class="rebirth-balance__row is-partial">
             <span>折损</span>
@@ -394,7 +394,14 @@ const gateRealm = computed(
 const heritageLedger = computed(() => samsaraLedger(heritageGroups()));
 const heritageBalance = computed(() => samsaraBalance(heritageLedger.value));
 const totalCount = computed(() => heritageBalance.value.total);
-const keepCount = computed(() => heritageBalance.value.keep);
+/*
+ * 「随魂」那一行报的是**完整留下**的那一档（`full`），不是 `keep`。
+ *
+ * `keep = full + partial` 是个汇总，不是三档之一；拿它当第一行，就会与下面
+ * 「折损 4」把同一批项数两遍 —— 三行加起来 40，而副题写着「36 项」。
+ * 往生三程那一页读的是 `full`，两张屏因此曾经对不上（见 `reincarnationLedgerCount.spec`）。
+ */
+const fullCount = computed(() => heritageBalance.value.full);
 const partialCount = computed(() => heritageBalance.value.partial);
 const resetCount = computed(() => heritageBalance.value.reset);
 const criticalRows = computed(() => criticalSamsaraRows(heritageLedger.value));
