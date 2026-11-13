@@ -10931,13 +10931,14 @@ async function taskWeatherSky() {
     checked += 1;
     {
       let found = null;
+      let foundTomorrow = null;
       /*
        * 雷鸣日**只在人间界的天象池里**（实测 `WEATHERS` 里唯一 `tribulationMult > 1`
        * 的是它；仙界 / 神界 / 混沌海三个池都没有）。展示档在真仙期（仙界），
        * 扫多少天都撞不到 —— 第一版就在那儿扫了 40 天，白扫。
        * 故这一支把玩家压回炼气（人间界），再逐日扫。
        */
-      for (let day = 0; day < 60 && !found; day += 1) {
+      for (let day = 0; day < 60 && !(found && foundTomorrow); day += 1) {
         const slices = showcaseSlices("light");
         slices.player = { ...slices.player, major: 0, sub: 0 };
         /*
@@ -10957,11 +10958,33 @@ async function taskWeatherSky() {
           effects: (document.querySelector(".home-deck__effects")?.textContent || "")
             .replace(/\s+/g, " ")
             .trim(),
+          /* 明日预告也是同一个倍率的出口 —— 两处必须先说同一件事 */
+          tomorrow: (document.querySelector(".home-deck__tomorrow")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
         }));
         if (probe.name?.includes("雷鸣") || /渡劫/.test(probe.effects)) found = probe;
+        /*
+         * 另一侧:今日不打雷、**明日**打雷的那一天也要量。
+         * 第 165 轮实测这里曾写着「渡劫×1.08」—— 与今日那一枚并排两种读法。
+         */
+        else if (/雷鸣/.test(probe.tomorrow)) foundTomorrow = probe;
       }
       if (found) {
         console.log(`[390] 天时雷伤:撞上 «${found.name}» —— «${found.effects}»`);
+      }
+      /*
+       * 明日预告那一侧:同一屏上不许出现第二种读法。
+       * 「一个数字两个出口，迟早分叉」—— 这一支就是那次分叉的现场。
+       */
+      if (!foundTomorrow) {
+        failures.push("[390] 天时雷伤:扫不到一个「明日雷鸣」的天 —— 预告那一侧没验到");
+      } else if (!/雷伤|雷威|每道雷|伤害/.test(foundTomorrow.tomorrow)) {
+        failures.push(
+          `[390] 天时雷伤:明日预告 «${foundTomorrow.tomorrow}» 没有单位词 —— 与今日那一枚读法不同`,
+        );
+      } else {
+        console.log(`[390] 天时雷伤:明日预告 «${foundTomorrow.tomorrow}»`);
       }
       if (!found) {
         /*

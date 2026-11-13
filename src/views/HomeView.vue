@@ -80,7 +80,7 @@
               数字仍读 `tribulationMult` —— 改常数不撒谎。
             -->
             <span v-if="weatherTribulation" class="is-danger"
-              >今日渡劫 · 雷伤 +{{ formatPercent(weatherTribulation - 1, 0) }}</span
+              >今日渡劫 · {{ tribulationLine(weatherTribulation) }}</span
             >
           </div>
         </div>
@@ -561,12 +561,25 @@ const tomorrowWeather = computed(() => upcomingWeather(2, player.major)[1]);
  * 它按游玩时长翻页(见上面 weatherLeft 的注释),写成「明日」会被读成
  * 「现实明天」,而挂机一夜并不会换来它。
  */
+/**
+ * 天时那个加险倍率的**唯一**读法 —— 今日那一枚与明日预告共用这一处。
+ *
+ * 上一轮只改了今日那一行，明日预告还写着「渡劫×1.08」—— 同一屏上两种读法，
+ * 而新手第一屏就会同时看到它们。**一个数字两个出口，迟早分叉**，故收成这一个函数。
+ *
+ * 倍率乘的是**每一道雷的伤害**（见 core/breakthrough 的 `waveDamage(... weatherMult ...)`），
+ * 故单位写作「雷伤 +N%」：说清它乘在什么上，而不只是给一个乘数。
+ */
+function tribulationLine(mult: number): string {
+  return mult > 1 ? `雷伤 +${formatPercent(mult - 1, 0)}` : "";
+}
+
 const tomorrowBrief = computed(() => {
   const t = tomorrowWeather.value;
   if (!t) return "";
   const mod = modsText(t.mods);
-  const trib = t.tribulationMult > 1 ? ` · 渡劫×${t.tribulationMult}` : "";
-  return ` · 下一天时${t.name}${mod ? `(${mod}${trib})` : ""}`;
+  const trib = tribulationLine(t.tribulationMult);
+  return ` · 下一天时${t.name}${mod ? `(${mod}${trib ? ` · ${trib}` : ""})` : ""}`;
 });
 
 const mainQuest = computed(() => mainQuestAt(quests.mainIdx));

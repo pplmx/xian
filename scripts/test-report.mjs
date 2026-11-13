@@ -658,6 +658,8 @@ const CATEGORIES = [
       "dailyRouteHint",
       // 「今日渡劫 ×1.08」只给裸乘数 —— 读不出它乘在伤害、成功率还是雷数上
       "weatherTribulationUnit",
+      // 上一轮只改了今日那一行,明日预告还写着「渡劫×1.08」—— 同一屏两种读法
+      "weatherUnitConsistency",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
