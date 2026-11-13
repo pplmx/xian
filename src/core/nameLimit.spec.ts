@@ -32,11 +32,24 @@
  * 绕过它直接调函数时靠这一处)。它读同一个常数。
  */
 import { describe, expect, it } from "vite-plus/test";
-import { readSource } from "@/test/readSource";
+import { readSource, walkFiles, isSourceFile } from "@/test/readSource";
 
 /** 用到「名字上限」的那几处 —— 一处写成路径 + 期望读到的常数名 */
+/**
+ * 读「起名上限」的四处场景。
+ *
+ * **`CreateView.vue` 曾漏在这里**（第 187 轮发现）:它那时已经被下面那条
+ * 「不许手写 8」的兜底扫到了,但**没有**被这条「必须读常量」检查 ——
+ * 两条判据的范围不一样,而漏的那一半正好是「它真的读了 `PLAYER_NAME_MAX` 吗」。
+ *
+ * 建号页是这个名字最要紧的一处（玩家一生只在这里起一次名）,
+ * 它反而没被检查，这个组合很危险:改成 `:maxlength="8"` 时，
+ * 「不许手写」那条会红，但改成 `:maxlength="PLAYER_NAME_MAX + 0"` 之类仍在
+ * 语义上正确、形制上可疑的写法时，没有人看着。
+ */
 const NAME_SITES = [
   { file: "src/views/BuildView.vue", kind: "maxlength" },
+  { file: "src/views/CreateView.vue", kind: "maxlength" },
   { file: "src/components/celestial/TrialPanel.vue", kind: "maxlength" },
   { file: "src/components/character/ReincarnationDialog.vue", kind: "maxlength" },
   { file: "src/core/loadoutService.ts", kind: "slice" },
@@ -53,7 +66,7 @@ describe("起名的上限 · 一个常数", () => {
     expect(player, "它该是 NAME_MAX 的别名").toMatch(/export const PLAYER_NAME_MAX\s*=\s*NAME_MAX/);
   });
 
-  it("四处名字场景都读同一个常数", () => {
+  it("五处名字场景都读同一个常数", () => {
     for (const site of NAME_SITES) {
       const src = readSource(site.file);
       if (site.kind === "maxlength") {
@@ -64,6 +77,36 @@ describe("起名的上限 · 一个常数", () => {
         expect(src, `${site.file} 不该再手写 slice(0, 8)`).not.toMatch(/slice\(0,\s*8\)/);
       }
     }
+  });
+
+  it("清单覆盖了全仓所有「起名」场景（不在名单里的文件不该用 maxlength 存道号）", () => {
+    /*
+     * 上面那份清单是**手工维护**的 —— 这一条是它的覆盖判据:
+     * 扫全仓所有 `maxlength=` 出现处，凡**引用 NAME_MAX / PLAYER_NAME_MAX 的**
+     * 都必须在 `NAME_SITES` 里。漏一个，那处就没有「必须读常量」这条检查。
+     *
+     * 用「引用常量」而不是「出现 maxlength」作为识别条件，是因为
+     * `EquipNotePanel` 的 `:maxlength="4"` 是**装备备注**，不是起名 ——
+     * 它不该被这份清单收编。
+     */
+    const listed = new Set<string>(NAME_SITES.map((s) => s.file));
+    const offenders: string[] = [];
+    let scanned = 0;
+    for (const f of walkFiles("src", isSourceFile)) {
+      const src = readSource(f);
+      if (/maxlength/.test(src)) scanned += 1;
+      if (!/maxlength/.test(src)) continue;
+      if (!/NAME_MAX|PLAYER_NAME_MAX/.test(src)) continue;
+      // 常量定义处自己当然会出现 NAME_MAX —— 它不是「场景」
+      if (f.endsWith("utils/nameLimit.ts")) continue;
+      if (!listed.has(f)) offenders.push(f);
+    }
+    expect(
+      offenders,
+      "这些文件的 maxlength 读了起名上限，却不在 NAME_SITES 里 —— 没人检查它是否真的读了常量",
+    ).toEqual([]);
+    // 防空转:路径写错时上面那个空集断言会永远通过
+    expect(scanned, "一个带 maxlength 的文件都没扫到 —— 判据空转").toBeGreaterThan(2);
   });
 
   it("还有没有别的地方手写这个 8 —— 一处都不许留", () => {
