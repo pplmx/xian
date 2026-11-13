@@ -533,7 +533,8 @@ describe("死导出审计", () => {
  * | `inventory.hasNewItem` | 完全没人用 —— 界面用的是 `newItemCount` 与 `isNewItem` |
  * | `lore.advanceEnemyLore` | 被 `advanceEnemyLoreIfDue` 取代后留下的旧出口 |
  * | `dongfu.addVeinPoint` / `setVeinMain` | 只有 spec 在用(与「顶层导出只被 spec 用」同一条红线) |
- * | `endgame.equippedSouls` / `totalClears` | 暴露了,但运行时一次都没读 |
+ * | `endgame.equippedSouls` | 暴露了,但运行时一次都没读 |
+ * | `endgame.totalClears` | 已在「此世功业」里接上(破界那一行),此处销账 |
  *
  * 这类暴露的代价不是性能,是**误导**:读代码的人看见 `hasNewItem` 会以为
  * 「新件提醒」走的是它,而实际走的是 `newItemCount`。下次改需求就改错地方。
@@ -609,8 +610,6 @@ describe("死导出审计 · store 暴露的字段", () => {
     "stores/game.ts → saveVersion": "存档版本号:读档判定走的是 store 内部,这个出口留给迁移脚本",
     "stores/endgame.ts → soulTutorialSeen":
       "器魂引导已看标记:引导判定走 core,这个出口留着给将来的「重看引导」",
-    "stores/endgame.ts → totalClears":
-      "破界总次数:界面读的是每个世界的 recordWorldClear,聚合暂无消费者",
     "stores/player.ts → setRegionEvent": "危地事件注入:只有测试用(与 dongfu 那两条同类)",
     "stores/quests.ts → advanceMain":
       "主线推进:运行时的推进走 questService,这个出口是给测试用的快捷方式",

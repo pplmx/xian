@@ -689,6 +689,7 @@ const CATEGORIES = [
       "/apex.spec",
       "apexDesk",
       "apexCultivation",
+      "apexDeeds",
     ],
   },
   {

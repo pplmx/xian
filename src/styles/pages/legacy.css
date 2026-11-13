@@ -186,6 +186,50 @@
     font-size: var(--type-note);
     line-height: 1.6;
   }
+  /*
+   * 此世功业 —— 八条读数排成两列。
+   *
+   * 与同页其余账同一套语言:左题签楷体、右读数 tabular;满了的那条用石青
+   * (信息色,不是奖励色)。不铺底、不套框 —— 它是「这一世修成了什么」的证明,
+   * 不是第八张卡片。
+   */
+  .legacy-apex__deeds {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1.1rem;
+    margin-top: 0.4rem;
+    padding-top: 0.36rem;
+    border-top: 1px dashed rgb(var(--color-ink-rgb) / 0.12);
+  }
+  .legacy-apex__deed {
+    display: flex;
+    min-width: 0;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding-block: 0.1rem;
+  }
+  .legacy-apex__deed > dt {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-note);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+  .legacy-apex__deed > dd {
+    min-width: 0;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    text-align: right;
+  }
+  .legacy-apex__deed > dd.is-full {
+    color: rgb(var(--color-qing-rgb));
+  }
+  .legacy-apex__deed-sum {
+    margin-top: 0.28rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
   .legacy-apex__note {
     margin-top: 0.24rem;
     color: rgb(var(--color-ink-faint-rgb));

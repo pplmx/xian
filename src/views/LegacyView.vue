@@ -109,6 +109,25 @@
             这一世已经走完了。道果与宿慧随神魂带走，下一世从「入山契」重新开始 ——
             而这一笔，会留在历世卷里。
           </p>
+          <!--
+            此世功业 —— 「这一世到底修成了什么」。
+
+            满级玩家打开任何一个页面看到的都是分散的读数(攻击、道痕、试炼、功法、
+            器谱),而「我把这一世修成了什么」没有任何一处回答。这一栏只读已发生的
+            事实,不引入任何新资源 —— 终局已经补了两条经济线,再加一条产出会让它
+            重新变成刷数字。这里的作用是把已有的东西收成一份可读的证明。
+          -->
+          <dl class="legacy-apex__deeds" data-legacy-apex-deeds>
+            <div v-for="d in apexDeedsRow" :key="d.id" class="legacy-apex__deed">
+              <dt>{{ d.label }}</dt>
+              <dd :class="d.full ? 'is-full' : ''" :data-deed-full="d.full ? 'true' : 'false'">
+                {{ d.value }}
+              </dd>
+            </div>
+          </dl>
+          <p class="legacy-apex__deed-sum">
+            {{ apexDeedSum.done }} / {{ apexDeedSum.total }} 条已满
+          </p>
         </div>
       </section>
 
@@ -1021,7 +1040,13 @@ import { sceneTerrainOfVolume } from "@/ui/sceneTerrain";
 import { focusListRow } from "@/composables/useListFocus";
 import { computed, ref } from "vue";
 import { useEndgameStore } from "@/stores/endgame";
+import { useCultivationStore } from "@/stores/cultivation";
 import { apexRecord } from "@/core/apex";
+import { apexDeedSummary, apexDeeds } from "@/core/apexDeeds";
+import { MAX_MARKS } from "@/stores/endgame";
+import { TRIALS } from "@/data/endgame";
+import { WORLDS } from "@/data/realms";
+import { GONGFA } from "@/data/gongfa";
 import { daoPathDef } from "@/data/endgame";
 import { realmDef } from "@/data/realms";
 import { usePlayerStore } from "@/stores/player";
@@ -1092,6 +1117,7 @@ import {
 const tab = useRouteTab(LEGACY_CHAPTERS, "samsara");
 
 const endgame = useEndgameStore();
+const cultivation = useCultivationStore();
 const player = usePlayerStore();
 const quests = useQuestsStore();
 const adventure = useAdventureStore();
@@ -1570,6 +1596,37 @@ const milestoneRows = computed(() =>
       return { id: m.id, life: m.life, name: def?.name ?? m.id, desc: def?.desc ?? "" };
     }),
 );
+
+/**
+ * 此世功业 —— 只读既有事实,不新算任何东西(见 `core/apexDeeds`)。
+ *
+ * 每个输入都有现成来源:试炼读 `trialRecords`、道痕读 `marks` 与 `MAX_MARKS`、
+ * 功法读 `cultivation.learned` 与 `GONGFA`、敌手读 `lore.enemyLore`、
+ * 器谱读 `lore.blueprintLore`、破界读 `worldClears`、碑记读 `milestones`。
+ * 没有一处是这一栏自己数出来的。
+ */
+const apexDeedsRow = computed(() =>
+  apexDeeds({
+    trialsCleared: Object.values(endgame.trialRecords ?? {}).filter((r) => (r?.clears ?? 0) > 0)
+      .length,
+    trialsTotal: TRIALS.length,
+    marks: endgame.marks.length,
+    marksCap: MAX_MARKS,
+    worldsCrossed: apexRecordRow.value.worldsCrossed,
+    worldsTotal: WORLDS.length,
+    gongfaLearned: Object.keys(cultivation.learned ?? {}).length,
+    gongfaTotal: GONGFA.length,
+    // 用 store 上现成的 getter,不在这里另写一遍「算不算读通」的判据
+    enemiesKnown: lore.masteredEnemyCount,
+    blueprintsMastered: lore.masteredBlueprintCount,
+    // 破界总次数走 store 现成的 totalClears,不在这里对 Record 求和
+    worldClears: endgame.totalClears,
+    milestonesDone: endgame.milestones.length,
+    milestonesTotal: MILESTONE_TOTAL,
+  }),
+);
+
+const apexDeedSum = computed(() => apexDeedSummary(apexDeedsRow.value));
 
 const recordRows = computed(() =>
   RECORD_DEFS.map((def) => {
