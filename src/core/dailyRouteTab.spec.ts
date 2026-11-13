@@ -30,15 +30,33 @@
  */
 import { describe, expect, it } from "vite-plus/test";
 import { DAILY_ROUTES, dailyRouteOf } from "@/ui/dailyRoutes";
-import { INVENTORY_CHAPTERS, CELESTIAL_CHAPTERS, COLLECTION_CHAPTERS } from "@/ui/navigation";
+import {
+  INVENTORY_CHAPTERS,
+  CELESTIAL_CHAPTERS,
+  COLLECTION_CHAPTERS,
+  TITLES_CHAPTERS,
+  LEGACY_CHAPTERS,
+  MARKET_CHAPTERS,
+  CODEX_CHAPTERS,
+} from "@/ui/navigation";
 import { readSource } from "@/test/readSource";
 import { stripComments } from "@/test/stripComments";
 
-/** 有分册的页面 → 它的章节 id 集合 */
+/**
+ * 有分册的页面 → 它的章节 id 集合。
+ *
+ * **七处** —— 与 `grep useRouteTab src/views/*.vue` 的清单逐一对齐。
+ * 第一版只列了三个库(背包 / 天界 / 藏珍),而实际有七个页面用 `useRouteTab`;
+ * 名字 / 轮回 / 坊市 / 修仙录那四处的去处若不带 `?tab=`,这条判据看不见。
+ */
 const CHAPTERS: Record<string, readonly string[]> = {
   "/inventory": INVENTORY_CHAPTERS.map((c) => c.id),
   "/celestial": CELESTIAL_CHAPTERS.map((c) => c.id),
   "/collection": COLLECTION_CHAPTERS.map((c) => c.id),
+  "/titles": TITLES_CHAPTERS.map((c) => c.id),
+  "/legacy": LEGACY_CHAPTERS.map((c) => c.id),
+  "/market": MARKET_CHAPTERS.map((c) => c.id),
+  "/codex": CODEX_CHAPTERS.map((c) => c.id),
 };
 
 describe("日课去处 · 必须落到那一册，不是那本书的封面", () => {
@@ -89,6 +107,35 @@ describe("日课去处 · 必须落到那一册，不是那本书的封面", () 
       expect(r!.route, `${key} 没有去处`).toMatch(/^\//);
       expect(r!.label, `${key} 的去处没有文案`).toBeTruthy();
     }
+  });
+
+  it("那张分册表覆盖了**所有**用 useRouteTab 的页面", () => {
+    /*
+     * 这一条是防空转的第三层:分册表若漏了一页,针对那一页的检查就静默不发生。
+     * 第一版就漏了四处（`grep useRouteTab src/views/*.vue` 有七个结果,表里只有三个）。
+     *
+     * 做法:从视图源码里读出「哪些路由用了 useRouteTab」,再与表对齐。
+     */
+    const views = readSource("src/router/index.ts");
+    void views;
+    const used: string[] = [];
+    for (const f of [
+      "src/views/CelestialView.vue",
+      "src/views/CollectionView.vue",
+      "src/views/InventoryView.vue",
+      "src/views/LegacyView.vue",
+      "src/views/MarketView.vue",
+      "src/views/RealmCodexView.vue",
+      "src/views/TitlesView.vue",
+    ]) {
+      if (/useRouteTab\(/.test(stripComments(readSource(f)))) used.push(f);
+    }
+    expect(used.length, "一个用 useRouteTab 的视图都没扫到").toBeGreaterThan(3);
+    expect(
+      Object.keys(CHAPTERS).length,
+      `有 ${used.length} 个页面用 useRouteTab（${used.map((f) => f.split("/").pop()).join(" / ")}),` +
+        `而分册表只有 ${Object.keys(CHAPTERS).length} 项 —— 漏掉的那几页不会被检查`,
+    ).toBe(used.length);
   });
 
   it("`useRouteTab` 确实认 ?tab=（否则带上也没用）", () => {
