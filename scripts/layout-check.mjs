@@ -20767,6 +20767,49 @@ async function taskApexEnding() {
       const pageErrors = [];
       watchPageErrors(page, pageErrors);
 
+      /*
+       * ---- 〇 · 首页主线 ----
+       *
+       * 第 166 轮实测:走到顶的玩家,首页「长期道途」写着 **28/32**，挂着一条
+       * 早就过去的「突破至神王境」。末四条主线的赏格一分未发 —— 因为结算一次
+       * 只推 5 节（那是防恒真的守卫），而到顶之后再没有事件来推第二次。
+       *
+       * 这一支量终局的真相:主线下标该到 length（页面读「主线已尽」），
+       * 且那个计数不许印成 33/32。
+       */
+      await openRoute(page, "/", 900);
+      await clearOverlays(page);
+      checked += 1;
+      {
+        const quest = await page.evaluate(() => {
+          const card = document.querySelector("[data-home-mainquest]");
+          return {
+            count: (card?.querySelector(".home-card__count")?.textContent || "").trim(),
+            text: (card?.textContent || "").replace(/\s+/g, " ").trim(),
+          };
+        });
+        const m = /^(\d+)\/(\d+)$/.exec(quest.count);
+        if (!m) {
+          failures.push(`[${vp.tag}-apex] 首页主线的进度读不出来:«${quest.count}»`);
+        } else {
+          const [idx, total] = [Number(m[1]), Number(m[2])];
+          if (idx > total) {
+            failures.push(`[${vp.tag}-apex] 主线下标印成了 ${quest.count} —— 多算了一格`);
+          }
+          if (idx !== total) {
+            failures.push(
+              `[${vp.tag}-apex] 走到顶了主线还停在 ${quest.count} —— ` +
+                `还有条件已满足的没结算（末几条的赏格没发）`,
+            );
+          }
+          if (!quest.text.includes("主线已尽")) {
+            failures.push(
+              `[${vp.tag}-apex] 主线推完了却没读「主线已尽»:«${quest.text.slice(0, 60)}»`,
+            );
+          }
+        }
+      }
+
       // ---- 一 · 修行页 ----
       await openRoute(page, "/cultivation", 900);
       await clearOverlays(page);

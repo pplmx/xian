@@ -104,11 +104,31 @@ describe("主线任务链对账 —— 推到哪一节、发什么、说什么",
     richPlayer(20, ALL_AT_ONCE);
     resources.spiritStone = gn(0);
     track("kills", 0); // 触发一轮结算(计数本身不再加)
-    const frozen = legacyAdvance(0);
-    expect(quests.mainIdx).toBe(frozen);
-    expect(quests.mainIdx).toBe(MAIN_CHAIN_MAX_STEPS); // 这一轮被守卫截在 5 节
+    /*
+     * **口径变更（第 166 轮）**：一次结算现在会一路推到底，不再被 5 节截住。
+     *
+     * 原先这里是 `expect(mainIdx).toBe(MAIN_CHAIN_MAX_STEPS)` —— 它把**守卫的数值**
+     * 当成了契约。而那条 5 是防「条件恒真」的守卫，不是「每次最多推进几节」的配额：
+     * 结算的触发点是事件（计数器 / 突破 / 读档），不是每帧。于是境界到顶、计数器
+     * 不再动的玩家再也等不到第二次结算 —— 实测停在 28/32，末四条主线的赏格一分未发。
+     *
+     * 对账的那件事没变：走过几节、发什么赏、说什么话，与冻结口径**逐节一致**。
+     * 变的是「一轮走多远」—— 故这里比的是**终点**（推到底）而不是中途的 5。
+     * 守卫本身仍由 `MAIN_CHAIN_MAX_STEPS` 那条判据守着（单次调用不超上限）。
+     */
+    const expectedEnd = (() => {
+      let at = 0;
+      while (at < MAIN_QUESTS.length) {
+        const cur = MAIN_QUESTS[at];
+        if (!cur || !evalCond(cur.cond)) break;
+        at += 1;
+      }
+      return at;
+    })();
+    expect(quests.mainIdx, "一次结算该一路推到底").toBe(expectedEnd);
+    expect(quests.mainIdx).toBeGreaterThan(MAIN_CHAIN_MAX_STEPS); // 确实跨过了守卫那一档
     expect(toasts.filter((t) => t.startsWith("任务完成"))).toEqual(
-      MAIN_QUESTS.slice(0, MAIN_CHAIN_MAX_STEPS).map((q) => `任务完成「${q.name}」`),
+      MAIN_QUESTS.slice(0, expectedEnd).map((q) => `任务完成「${q.name}」`),
     );
     // 奖励到账:与冻结口径同一批(逐节 stoneTier 累加),这里只钉"发了且不为 0"
     expect(formatExact(resources.spiritStone)).not.toBe(formatExact(gn(0)));

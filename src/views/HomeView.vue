@@ -187,7 +187,7 @@
           <h2>长期道途</h2>
           <span class="home-card__rule" aria-hidden="true" />
           <span class="home-card__count tabular"
-            >{{ quests.mainIdx + 1 }}/{{ MAIN_QUESTS.length }}</span
+            >{{ Math.min(quests.mainIdx + 1, MAIN_QUESTS.length) }}/{{ MAIN_QUESTS.length }}</span
           >
         </header>
         <template v-if="mainQuest">

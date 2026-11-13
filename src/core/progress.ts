@@ -314,23 +314,42 @@ function checkMainQuest(): void {
    * 一次结算可以连推多节(玩家一口气满足后面几节是常事),守卫是 5 节 ——
    * 顺序与迁移前一致:逐节"发赏 → 提示",再把下标一次落账(见 core/engineChain)。
    */
-  const out = advanceMainChain(quests.mainIdx, (node) => {
+  const done = (node: { id: string }): boolean => {
     const def = mainQuestDefById(node.id);
     return def !== undefined && evalCond(def.cond);
-  });
-  for (const def of out.advanced) {
-    grantReward(def.reward, true);
-    notify(`任务完成「${def.name}」`, "success");
+  };
+  /*
+   * 撞上「一次最多 5 节」的守卫时**接着推**，而不是把剩下的留到下一次。
+   *
+   * 那个 5 是防「条件恒真」导致一帧跳完整条链的守卫，不是配额。可它此前同时是
+   * 每次结算的上限，而结算的触发点是「计数器变了 / 突破 / 读档」这类**事件**，
+   * 不是每帧。于是一个境界到顶的玩家 —— 境界不再动，计数器也未必再动 ——
+   * 再也等不到第二次结算:实测 `主线 28/32` 一直停在那里，末四条主线的赏格
+   * （灵石与悟道点）一分未发，而页面上还挂着一条早就过去的「突破至神王境」。
+   *
+   * 修法保留守卫（每轮仍是 5 节，防恒真），只是**一轮里推到底**:
+   * 真出恒真事故时那个 `capped` 仍会打印，而正常存档不必等下一次事件。
+   */
+  let index = quests.mainIdx;
+  for (let round = 0; round < 64; round += 1) {
+    const out = advanceMainChain(index, done);
+    for (const def of out.advanced) {
+      grantReward(def.reward, true);
+      notify(`任务完成「${def.name}」`, "success");
+    }
+    if (out.index === index) break;
+    index = out.index;
+    if (out.capped) {
+      // 守卫是为了挡住"条件恒真"这类内容事故,不该静默:说一句,好查
+      console.warn(
+        "[进度] 主线一次结算撞上限,请检查条件是否恒真:",
+        out.index,
+        MAIN_QUESTS[out.index]?.id,
+      );
+    }
+    if (out.atEnd) break;
   }
-  if (out.index !== quests.mainIdx) quests.setMainIndex(out.index);
-  if (out.capped) {
-    // 守卫是为了挡住"条件恒真"这类内容事故,不该静默:说一句,好查
-    console.warn(
-      "[进度] 主线一次结算撞上限,请检查条件是否恒真:",
-      out.index,
-      MAIN_QUESTS[out.index]?.id,
-    );
-  }
+  if (index !== quests.mainIdx) quests.setMainIndex(index);
 }
 
 function checkDaily(): void {

@@ -660,6 +660,8 @@ const CATEGORIES = [
       "weatherTribulationUnit",
       // 上一轮只改了今日那一行,明日预告还写着「渡劫×1.08」—— 同一屏两种读法
       "weatherUnitConsistency",
+      // 走到顶的人主线停在 28/32 —— 还有四条条件早已满足的没结算
+      "mainChainApex",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
