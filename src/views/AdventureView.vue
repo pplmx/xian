@@ -134,6 +134,25 @@
                   <strong>{{ biasLabel }}</strong>
                   <p>只放大此路所得。</p>
                 </div>
+                <!--
+                  本世逆旅契 —— 它正在改这一页上的每一场战斗。
+
+                  契在立下的那一刻(转世弹窗)与转世那一屏都报过,而它**生效的现场**
+                  这一页此前一个字都没有:签了「逆锋契」(敌人攻击 +30%、生命 +20%)
+                  的存档,整页 DOM 里连「逆旅」二字都搜不到。于是玩家只会在战报里
+                  看到「打不过」,再把账算在装备或境界上。
+
+                  文案读 `LifeTrialDef.ruleText`(与立契那一屏同一份),不在视图里另写。
+                  没立契时整行不出 —— 否则全站每页多一句「本世未立契」的噪音。
+                -->
+                <div v-if="activeTrial" data-life-trial-hint class="adventure-briefing__fact">
+                  <span class="adventure-briefing__eyebrow">本世逆旅</span>
+                  <strong class="text-cinnabar"
+                    ><span class="font-kai" aria-hidden="true">{{ activeTrial.seal }}</span>
+                    {{ activeTrial.name }}</strong
+                  >
+                  <p>{{ activeTrial.ruleText }} —— 本世每一场历练都按此算。</p>
+                </div>
               </FolioNote>
               <div class="adventure-briefing__tiers">
                 <!--
@@ -948,6 +967,7 @@ import {
   visibleRegionRows,
   worldView,
 } from "@/core/mortalWorldService";
+import { activeLifeTrial } from "@/core/lifeTrialService";
 import { biasEffectOf } from "@/core/mortalBias";
 import { regionEventDef } from "@/core/regionEvent";
 import { isRetreating } from "@/core/earlyGameService";
@@ -1108,6 +1128,14 @@ const chainDesk = computed(() => {
 
 /** 本世所钟:只在一个渠道上 +15%,与世界页/战报/归来卷轴同一个标签源 */
 const biasLabel = computed(() => biasEffectOf(adventure.mortalWorld?.bias)?.label ?? "");
+
+/**
+ * 本世逆旅契 —— 它改的是这一页上每一场战斗的规则，故在生效现场报一声。
+ *
+ * 读 `activeLifeTrial()`（与立契弹窗、转世那一屏同一份来源）。
+ * 没立契时是 null，模板整行不出。
+ */
+const activeTrial = computed(() => activeLifeTrial());
 
 /** 顶部行旅条:世界名、路线进度与眼下去处都从世界页同一份视图来 */
 const worldOverview = computed(() => {

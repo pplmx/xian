@@ -17485,11 +17485,42 @@ async function taskExploreModes() {
       hasTouch: true,
     });
     try {
-      await seedSave(ctx, showcaseSlices("light"), `__exploreModes${vp.tag}`);
+      /*
+       * 逆旅契押在这一档存档上 —— 本世签了「逆锋契」(敌人攻击 +30%、生命 +20%)。
+       *
+       * 第 162 轮实测:签了契的存档打开历练页,**整页 DOM 里连「逆旅」二字都搜不到**,
+       * 而它正改着这一页上每一场战斗。这一支既验「有契要说」,也验「无契不出」。
+       */
+      const modesSlices = showcaseSlices("light");
+      modesSlices.player.reincarnation = {
+        ...modesSlices.player.reincarnation,
+        daoFruit: 200,
+        trial: { trialId: "tr_ni", at: Date.now(), paid: 48 },
+      };
+      await seedSave(ctx, modesSlices, `__exploreModes${vp.tag}`);
       const page = await ctx.newPage();
       const pageErrors = [];
       watchPageErrors(page, pageErrors);
       await openRoute(page, "/adventure", 700);
+      checked += 1;
+      {
+        const hint = await page.evaluate(() => {
+          const el = document.querySelector("[data-life-trial-hint]");
+          return el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null;
+        });
+        if (hint === null) {
+          failures.push(
+            `[${vp.tag}-modes] 本世立着逆旅契,历练页却一个字都没说 —— 而它正改着每一场战斗`,
+          );
+        } else {
+          // 要报出契名与**它加的难度**，不能只说「有契在身」
+          for (const need of ["逆锋契", "敌人攻击", "+30%"]) {
+            if (!hint.includes(need)) {
+              failures.push(`[${vp.tag}-modes] 逆旅契那一行没报出「${need}」:«${hint}»`);
+            }
+          }
+        }
+      }
 
       const trigger = page.locator("[data-region-action]").filter({ hasText: "出发" }).first();
       if ((await trigger.count()) === 0) {
