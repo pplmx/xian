@@ -704,6 +704,8 @@ const CATEGORIES = [
       "breakthroughFeedback",
       // 市场购入成功没有任何回执 —— 三条失败都有话说,成功那条没有
       "marketPurchaseReceipt",
+      // 同一个形状在收徒上又出现一次 —— 故立一条扫全仓的判据,挡这个形状本身
+      "actionReceiptSymmetry",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

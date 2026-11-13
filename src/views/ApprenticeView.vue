@@ -194,6 +194,20 @@ function doRecruit(): void {
   const r = appr.recruit(player.major);
   if (r === "full") notify(`槽位已满(${pulse.value.total}/${slots.value}),收不下新弟子`, "warn");
   else if (r === "poor") notify("灵石不足,收徒不成", "warn");
+  else if (r === "ok") {
+    /*
+     * 成功了要有回执 —— 与市场购入同一个形状（三条失败都有话说、成功那条没有）。
+     *
+     * 玩家花掉一笔灵石，界面上只多出一行弟子。收的**是谁**是他最想知道的
+     * （收徒是收藏性质的事，弟子各有天赋），故回执要带上名字，不是一句「收徒成功」。
+     *
+     * 名字从**刚加进去的那一个**取（`recruit` 把它 push 在末尾），
+     * 不重新挑一次 —— 重挑会拿到另一个人的名字。
+     */
+    const fresh = appr.apprentices[appr.apprentices.length - 1];
+    const name = fresh ? (apprenticeDef(fresh.archId)?.name ?? "一名弟子") : "一名弟子";
+    notify(`收得弟子「${name}」`, "success");
+  }
 }
 
 /** 一键派发的库存快照；计划与落库同一拍读取,不另留第二份缺度。 */
