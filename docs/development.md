@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 743 个 spec;本作自己那部分 663 个) |
+| `bun run test` | 全量用例(全量 744 个 spec;本作自己那部分 664 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 743 个 spec = 宿主 663 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 744 个 spec = 宿主 664 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 743 个 spec(本作自己那部分 663 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 744 个 spec(本作自己那部分 664 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -9478,3 +9478,42 @@ export const MAIN_CHAIN_MAX_STEPS = 5;
 守卫是 `docRefExistence.spec`。
 
 故障注入:把文档挪走,判据当场红。
+
+### 第 169 轮:跨系统一致性 —— 查了一层,是干净的
+
+这一轮按计划查跨系统一致性。逐条对:
+
+| 查的 | 结论 |
+| --- | --- |
+| 历练修为与修炼修为是否同尺 | 同尺(`expFromSecs` × `cultPerSec`) |
+| 三条修为渠道的平衡 | 挂机+历练 9050.4 / 闭关 9000 —— 差 0.56%,与文档写的 0.6% 一致 |
+| 八条道途 `rules` 与 `ruleText` | 八条全部对得上 |
+| 洞府「合府加成」与各座自己的数 | 修炼 16+15=31 ✓ 灵气 50 ✓ 炼丹 25 ✓ 炼器 16 ✓ 战斗修为 12 ✓ |
+| 战力三项百分比 | 46+19+35 = 100 ✓ |
+| 灵草价格文案 | 直接读 `herbBuyPrice(1)` / `(5)`,同源 |
+| 模板里硬编码的百分数 | 扫出 45 处,**逐条都是注释**,没有一处是玩家看的字 |
+
+**这一层是干净的。** 前面几轮把这个仓库的界面收得比预想紧。
+
+### 于是补一条真正缺的判据
+
+`daoPathCoverage.spec` 已经有两条守章法的判据:
+
+- 「章法里每个百分数都能在该道途的数值里找到」—— 守 `<pct>%`;
+- 「中文数词承诺也要核」—— 守「至多 N 层」那类**层数**。
+
+两条都不管 `perRounds.interval` —— 它是**回合数**,既不是百分数也不是层数。
+而它是长生道最核心的机制(每五回合回一次气血、凝一次护盾,同时敌方攻击也涨一次);
+「长生不怕鏖战,最怕爆发」那句定性话,靠的就是这个数。
+
+新判据守「这个数必须出现在章法里」:把 `interval` 从 5 改成 4,若章法还写「五」,
+玩家据以选路的字就少了一半。数字与中文数词都要认 —— 这一页真实写的是「每五回合」。
+
+故障注入:把 `interval` 改成 4,判据当场报
+`长生道: 章法里没有「每4回合」`。
+
+### 一个自己造的门槛
+
+第一版探测写成 `每\s*5\s*回合`,于是 `longevity` 报「covered: false」——
+而界面明明写着「每五回合得一印」。**中文数词**,全站章法都这么写。
+判据里补了 `cnNumber` 转换,并另有一条判它的地基(3/5/10/12/20/35 与越界 null)。

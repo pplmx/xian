@@ -666,6 +666,8 @@ const CATEGORIES = [
       "apexDeedsFull",
       // 源码注释里让人去读一份不存在的文档 —— docs-check 只扫文档正文
       "docRefExistence",
+      // perRounds 的回合数既不是百分数也不是层数 —— 两条老判据都不管它
+      "daoPerRoundsText",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
