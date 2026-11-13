@@ -323,11 +323,39 @@ const sellablePills = computed(() =>
     .filter((p) => p.def?.recipe?.stoneBase),
 );
 
+/**
+ * 货名 —— 与货架渲染读同一套（`pillDef` / 材质别名 / 装备模板）。
+ *
+ * 抽出来是为了让**回执**说出玩家刚买的那一件。此前只有三条失败分支有话说,
+ * 成功那条没有:灵石花掉、货架少一件,屏幕上什么也没发生。
+ */
+function slotName(slot: { idx: number; kind: string; pillId?: string; matId?: string }): string {
+  if (slot.kind === "pill" && slot.pillId) return pillDef(slot.pillId)?.name ?? slot.pillId;
+  if (slot.kind === "material") return slot.matId === "herb" ? "灵草" : "玄铁";
+  /*
+   * 装备：名字读 `previews` —— 那是货架卡**自己用的那一份**（`marketEquipView`）。
+   * 另算一遍 `marketEquipInstance` 虽然也会得到同一件，但两份实现迟早分叉；
+   * 而回执说错名字比没有回执更糟。
+   *
+   * 兜底「兵刃」只在预览确实算不出来时用（理论上不会）。
+   */
+  return previews.value[slot.idx]?.template.name ?? "兵刃";
+}
+
 function buySlot(idx: number): void {
+  /*
+   * 购买前先记下这一格叫什么 —— `buy` 成功后 `slot.sold` 变 true、货架重排，
+   * 事后再取就拿不准是哪一格了。与「所见即所得」同一条纪律:
+   * 玩家点的是屏幕上这一张，回执也必须说这一张。
+   */
+  const slotBefore = market.stock.find((s) => s.idx === idx);
+  const label = slotBefore ? slotName(slotBefore) : "货";
   const r = market.buy(idx);
   if (r === "poor") notify("灵石不足,购入不成", "warn");
   else if (r === "bagfull") notify("行囊已满,灵石已退回", "warn");
   else if (r === "expired") notify("货架刚换新,请按新货再买", "warn");
+  else if (r === "sold") notify(`「${label}」已经售出`, "warn");
+  else if (r === "ok") notify(`购入「${label}」`, "success");
 }
 
 /** 购入短差:买得起念全价,付不起换口「尚差 X 石」 */

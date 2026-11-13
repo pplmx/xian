@@ -702,6 +702,8 @@ const CATEGORIES = [
       "brewHerbGradeNaming",
       // 突破成功只有音效与境界名变化,同境内逐层那八次是静默的
       "breakthroughFeedback",
+      // 市场购入成功没有任何回执 —— 三条失败都有话说,成功那条没有
+      "marketPurchaseReceipt",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
