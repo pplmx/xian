@@ -642,6 +642,8 @@ const CATEGORIES = [
       "tripViability",
       // 试炼押道源之前先看这一场:种子定死,故预览与真打必须逐位相同
       "trialForecast",
+      // 破境卡的代价行:18% 是裸身的数,时长也不该用 cnNumber 拼成「一百五十秒」
+      "breakthroughCost",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

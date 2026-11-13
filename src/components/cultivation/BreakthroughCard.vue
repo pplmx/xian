@@ -144,10 +144,9 @@
          减多少由 buff 本体现算:这里曾读 injury 的 desc,而 desc 现在只写风味 ——
          数值若留在那句风味里,改 mods 之后这行就成了唯一不跟的那处。 -->
       <p v-if="!player.atMaxRealm" class="cultivation-breakthrough__risk tabular">
-        突破不成损修为 {{ formatPercent(BT_FAIL_EXP_LOSS) }}、身负
-        <span class="text-cinnabar">重伤</span>({{ modsText(injuryDef.mods) }},持续
-        {{ cnNumber(INJURY_DURATION) }}
-        秒,可引气静养平复)(破境返还词条可减修为损,首败跬步传承可全免)
+        突破不成损修为 {{ failLossText }}、身负 <span class="text-cinnabar">重伤</span>({{
+          modsText(injuryDef.mods)
+        }},持续 {{ injuryDurationText }},可引气静养平复)({{ failLossNote }};首败跬步传承可全免)
       </p>
 
       <!-- Phase 28 突破准备:静坐调息 / 服聚气丹(无劫突破时,一次性加成) -->
@@ -222,7 +221,13 @@ import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useCultivationStore } from "@/stores/cultivation";
 import { useUiStore } from "@/stores/ui";
-import { attemptBreakthrough, breakthroughInfo, expectedTries } from "@/core/breakthrough";
+import {
+  attemptBreakthrough,
+  breakRefundOf,
+  breakthroughFailLoss,
+  breakthroughInfo,
+  expectedTries,
+} from "@/core/breakthrough";
 import { todayWeather } from "@/core/weather";
 import { stageAt } from "@/data/samsara";
 import { totalInsight } from "@/core/samsaraService";
@@ -238,14 +243,8 @@ import {
 import { BREAKTHROUGH_PREP_OPTIONS } from "@/data/earlyGame";
 import { buffDef } from "@/data/buffs";
 import { modsText } from "@/data/statNames";
-import { BT_FAIL_EXP_LOSS, BT_LUCK_TO_RATE, INJURY_DURATION } from "@/data/constants";
-import {
-  cnNumber,
-  formatCountdown,
-  formatDuration,
-  formatNum,
-  formatPercent,
-} from "@/utils/format";
+import { BT_LUCK_TO_RATE, INJURY_DURATION } from "@/data/constants";
+import { formatCountdown, formatDuration, formatNum, formatPercent } from "@/utils/format";
 import TribulationPanel from "@/components/cultivation/TribulationPanel.vue";
 import QiShortfallNote from "@/components/cultivation/QiShortfallNote.vue";
 import { useGameNow } from "@/composables/useGameNow";
@@ -305,6 +304,41 @@ function startPrep(option: "meditate" | "pill"): void {
  * 减多少、减哪几项只有 mods 一处能说。
  */
 const injuryDef = buffDef("injury")!;
+
+/**
+ * 突破失败**实际**损失多少修为 —— 读结算那一份乘法（`core/breakthrough` 的
+ * `breakthroughFailLoss`），不在这里再乘一遍。
+ *
+ * 此前卡上直接印 `formatPercent(BT_FAIL_EXP_LOSS)`，也就是「裸身」时的 18%，
+ * 而「可减免」写在句尾括号里 —— 带着「圆融」天赋或「稳固」词条的人，
+ * 真实损失是 16.2% / 14.4% / 12.6%。决策现场该印的是他自己那一份。
+ */
+const breakRefund = computed(() => breakRefundOf(player.finalStats.mods));
+const failLoss = computed(() => breakthroughFailLoss(breakRefund.value));
+const failLossText = computed(() => formatPercent(failLoss.value));
+/**
+ * 减免那一句：返还为 0 时说「无减免」，有则把「减了多少」摊开。
+ *
+ * 只在**真的有**减免时才报数 —— 裸身玩家读到「破境返还 0%」是噪音，
+ * 而那句「可减免」本来就已经说清了这条路的存在。
+ */
+const failLossNote = computed(() =>
+  breakRefund.value > 0
+    ? `破境返还 ${formatPercent(breakRefund.value, 0)} 已计入`
+    : "破境返还词条可减修为损",
+);
+/**
+ * 伤势时长 —— 与结算弹窗同一个格式化（`formatDuration`）。
+ *
+ * 此前这里把它拼成「持续 一百五十 秒」（手写的秒数，且中间多一格）；
+ * 而同一个失败，结算弹窗写着「伤势 2分30秒」。同一件事两处两种读法。
+ *
+ * 时长仍引 `INJURY_DURATION` 这一枚共用常量（它与 `buffDef("injury")` 是同一个数，
+ * 只是那条判据要求「读常量」而不是「读 buff」）—— 格式化交给 `formatDuration`。
+ */
+const injuryDurationText = computed(() =>
+  formatDuration(Math.min(INJURY_DURATION, injuryDef.durationSec)),
+);
 
 // PLAN_COLOR/verdictLabel 只服务瓦片;风险/准备/折算/天时/界膜/道数各群随本体迁入 TribulationPanel
 const PLAN_COLOR: Record<TribulationPlan["verdict"], string> = {

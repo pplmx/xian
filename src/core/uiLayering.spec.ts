@@ -2622,9 +2622,15 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 玩家不知道破境还有修为折损。代价要读常量(改常数不撒谎),并点出返还/跬步对冲。
     // 代价行自 CultivationView 拆出随本体迁入 BreakthroughCard —— 钉随走(拆分第五轮 · 一)。
     const cult = fileAt("components/cultivation/BreakthroughCard.vue");
-    expect(cult?.src, "突破不成要摊损修为,读 BT_FAIL_EXP_LOSS 常量").toContain(
-      "formatPercent(BT_FAIL_EXP_LOSS)",
-    );
+    /*
+     * 判据认的是「这个数来自结算」，不是某一句具体写法。
+     *
+     * 原先钉的是 `formatPercent(BT_FAIL_EXP_LOSS)` —— 那条在**当时**是对的，
+     * 但它把「裸身的 18%」钉成了契约:带着破境返还的人真实损失是 16.2%/14.4%，
+     * 卡上仍印 18%（第 157 轮修掉）。现在改为必须走结算那份乘法
+     * （`breakthroughFailLoss`），它内部仍读 `BT_FAIL_EXP_LOSS` —— 改常数照样不撒谎。
+     */
+    expect(cult?.src, "突破不成要摊损修为,读结算那份乘法").toContain("breakthroughFailLoss(");
     expect(cult?.src, "代价要对冲说清(返还/跬步)").toContain("跬步传承可全免");
   });
 

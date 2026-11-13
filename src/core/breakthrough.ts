@@ -63,6 +63,23 @@ export function breakRefundOf(mods: Parameters<typeof modOf>[0]): number {
   return Math.min(0.8, modOf(mods, "breakRefund"));
 }
 
+/**
+ * 突破失败**实际**损失多少修为 —— 结算与破境卡共用的那一份乘法。
+ *
+ * `BT_FAIL_EXP_LOSS × (1 − breakRefundOf(mods))`。
+ *
+ * 抽出来是因为破境卡此前只印了裸身的 18%,把「可减免」写在句尾括号里 ——
+ * 而玩家身上若带着「圆融」天赋或「稳固」词条,真实损失是 16.2% / 14.4% / 12.6%。
+ * 印在决策现场的那个数该是**他自己那一份**,不是「什么也没有时」的那一份。
+ *
+ * `refund` 直接收比例（0.1 = 减免一成），封顶与结算同走 `breakRefundOf` ——
+ * 两处各封各的迟早会分叉（一边 80% 一边 100%）。
+ */
+export function breakthroughFailLoss(refund: number): number {
+  const r = Number.isFinite(refund) ? Math.max(0, Math.min(0.8, refund)) : 0;
+  return BT_FAIL_EXP_LOSS * (1 - r);
+}
+
 export function firstUnlockAnnouncement(fromMajor: number, toMajor: number): string | null {
   const toName = realmDef(toMajor).name;
   if (fromMajor < VEIN_UNLOCK_MAJOR && toMajor >= VEIN_UNLOCK_MAJOR)
@@ -353,13 +370,15 @@ export function attemptBreakthrough(): BreakthroughView | null {
   } else {
     const mods = player.finalStats.mods;
     const refund = breakRefundOf(mods);
+    // 与破境卡同一份乘法（`breakthroughFailLoss`）—— 两处各写一遍迟早对不上
+    const expLoss = breakthroughFailLoss(refund);
     /*
      * 渡劫跬步(宿命传承):本世首次渡劫失败,修为不散。
      * `consumeHeritageUse` 返回 true 表示「这一次被免掉了」—— 要记下来,
      * 因为失败弹窗那一行下一步得说「此番未损修为」而不是「修为已折」。
      */
     const sparedByHeritage = player.consumeHeritageUse("dubu");
-    if (!sparedByHeritage) player.loseExpPct(BT_FAIL_EXP_LOSS * (1 - refund));
+    if (!sparedByHeritage) player.loseExpPct(expLoss);
     cultivation.addBuff("injury", Date.now());
     track("breakthroughFails");
     playSfx("fail");
@@ -379,7 +398,7 @@ export function attemptBreakthrough(): BreakthroughView | null {
     if (sparedByHeritage) {
       parts.push("渡劫跬步护住了这一身修为");
     } else {
-      parts.push(`修为折损 ${formatPercent(BT_FAIL_EXP_LOSS * (1 - refund))}`);
+      parts.push(`修为折损 ${formatPercent(expLoss)}`);
     }
     /*
      * 伤势这一句要摊开 —— 「要先调息」是形容词,玩家读不出代价。
