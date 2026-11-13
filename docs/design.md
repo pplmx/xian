@@ -4670,6 +4670,47 @@ perRounds: { interval: 5, playerHealPct: 0.04, playerShieldPct: 0.04, enemyAtkGr
 
 故障注入：把 `interval` 改成 4，判据当场报 `长生道: 章法里没有「每4回合」`。
 
+### 坏档里的道号:`sanitize()` 修了十几个字段，唯独没修 name
+
+往存档里塞一个错类型的道号（`name: 12345`），顶栏照原样印出来:
+
+```text
+玄 一 12345 炼气·一层 320/150载
+```
+
+同一份坏档里，`major: "abc"` 被规整成炼气·一层、`NaN` 灵石被规整成 0、
+`sub: null` 夹回 0、`linggen: "bogus"` 不崩、`petId` / `titleId` / `mentor`
+都按存在性校验过了 —— **只有道号没修**。
+
+#### 为什么这一条值得修
+
+`sanitize()` 的判据不是「好看」，而是**下游会崩或会撒谎**。道号两样都沾:
+
+- **会崩**：名字进模板插值。对象进来印成 `[object Object]`；超长串把顶栏顶穿
+  （`setName` 裁到 `PLAYER_NAME_MAX`，读档这条路不裁）；
+- **会撒谎**：数字、布尔、null 进来时，界面会把它当**真名**印出去 ——
+  玩家看到的不是「无名散修」而是某种残留物，而**没有任何一处提示这份档是坏的**。
+
+与 `lifespanBonusYears` 那条注释同一个口径（「写坏会让它变 NaN」）——
+只是道号坏掉时不会立刻死，而是悄悄显示一个不是名字的东西。
+
+#### 改法
+
+```ts
+const raw: unknown = name.value;
+const text = typeof raw === "string" ? raw.trim() : "";
+name.value = text ? text.slice(0, PLAYER_NAME_MAX) : DEFAULT_PLAYER_NAME;
+```
+
+坏值回落到**默认道号**而不是空串 —— 空串会让顶栏那一格塌掉。
+顺带把那个字面量提成 `DEFAULT_PLAYER_NAME`（初始值与 sanitize 两处都读它）。
+
+#### 判据
+
+`core/playerNameSanitize.spec`：数字 / null / undefined / 布尔 / 对象 / 超长 / 空白
+七种坏值各一条，外加一条「合法名字原样保留 —— sanitize 不许改写正常数据」。
+故障注入：把 sanitize 那一块删掉，五条当场红。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,

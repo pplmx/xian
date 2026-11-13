@@ -668,6 +668,8 @@ const CATEGORIES = [
       "docRefExistence",
       // perRounds 的回合数既不是百分数也不是层数 —— 两条老判据都不管它
       "daoPerRoundsText",
+      // 坏档里塞 name: 12345,顶栏就照原样印出来 —— sanitize 修了十几个字段,唯独没修它
+      "playerNameSanitize",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

@@ -141,6 +141,9 @@ const CORE_STORE_SITES = 159;
  * 换一个手工拼的快照就不是开局玩家了,判据会失去它唯一的意义。
  * 同属「被测量对象本身就要 Pinia」。
  *
+ * 111 → 116:playerNameSanitize.spec 量的是 `sanitize()` 对道号的处理 ——
+ * 而 `name` 就在 player store 上，手搓一份读档状态测的就不是那条真路径了。
+ *
  * 111 → 115:mainChainApex.spec 量的是「走到顶的玩家,主线推不推得完」——
  * 而 `mainIdx`、计数器与境界三样都在 store 上。拿手搓的一份去喂 `checkMainQuest`，
  * 测的就不是那条真路径了。
@@ -159,7 +162,7 @@ const CORE_STORE_SITES = 159;
  * 就要 Pinia」；而**被测的预览模块本身仍然是纯的**（core 侧没有新增 store 依赖，
  * 见本文件上面那条基线没有动）。
  */
-const CORE_PINIA_SPECS = 115;
+const CORE_PINIA_SPECS = 116;
 
 function sources(dir: string): { name: string; text: string }[] {
   return readdirSync(dir)

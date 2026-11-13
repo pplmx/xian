@@ -48,6 +48,9 @@ import { rng } from "@/utils/random";
  */
 export const PLAYER_NAME_MAX = NAME_MAX;
 
+/** 留白时的默认道号 —— 建号页承诺的就是这一个名字（只在本模块内用，故不导出） */
+const DEFAULT_PLAYER_NAME = "无名散修";
+
 export const usePlayerStore = defineStore(
   "player",
   () => {
@@ -57,7 +60,11 @@ export const usePlayerStore = defineStore(
     const resources = useResourcesStore();
     const endgame = useEndgameStore();
 
-    const name = ref("无名散修");
+    /*
+     * 默认道号 —— 玩家留白不填时的落名（建号页那句「留白不填，便以『无名散修』入卷」）。
+     * 提升到常量:读档 sanitize 与初始值两处都读它，免得两处各写一份字面量。
+     */
+    const name = ref(DEFAULT_PLAYER_NAME);
     const linggen = ref<LinggenProfile | null>(null);
     const major = ref(0);
     const sub = ref(0);
@@ -672,6 +679,21 @@ export const usePlayerStore = defineStore(
 
     /** 存档修复 */
     function sanitize(): void {
+      /*
+       * 道号 —— `sanitize()` 修了十几个字段，唯独没修它。
+       *
+       * 坏档里塞一个 `name: 12345`，顶栏就照原样印出「玄一 12345 炼气·一层」；
+       * 对象会印成 `[object Object]`，超长串会把顶栏顶穿（`setName` 裁到
+       * `PLAYER_NAME_MAX`，而读档这条路不裁）。
+       *
+       * 与其余字段同一条判据:坏值回落到**默认道号**而不是空串 ——
+       * 空串会让顶栏那一格塌掉，而「不是名字的东西」比「一眼看出没起名」更糟。
+       */
+      {
+        const raw: unknown = name.value;
+        const text = typeof raw === "string" ? raw.trim() : "";
+        name.value = text ? text.slice(0, PLAYER_NAME_MAX) : DEFAULT_PLAYER_NAME;
+      }
       exp.value = gn(exp.value);
       if (!Number.isFinite(age.value)) age.value = START_AGE;
       // 境界只从下界兜,不上限会怎样:手改档/旧 bug 把 major 推过 MAX_MAJOR,下游
