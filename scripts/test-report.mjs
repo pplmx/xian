@@ -684,6 +684,9 @@ const CATEGORIES = [
       "rulesetEra",
       "qimen",
       "gateRuleText",
+      // 终局(Map / 四屏 / 碑记)属于这一册:走完全程才见到的那些内容
+      "/apex.spec",
+      "apexDesk",
     ],
   },
   {
@@ -697,6 +700,8 @@ const CATEGORIES = [
       "playerLab",
       "legacy",
       "identity",
+      // 择道相性:八选一、一世不可改,是整世最重的一次决策
+      "daoAffinity",
       "samsara",
       "reincarnationDesk",
       "reincarnationFloor",

@@ -205,31 +205,88 @@
                 <p v-if="daoStory" class="celestial-dao__story">「{{ daoStory }}」</p>
               </article>
 
-              <div v-else class="celestial-dao__choices">
-                <button
-                  v-for="dao in DAO_PATHS"
-                  :key="dao.id"
-                  type="button"
-                  class="celestial-dao__choice hoverable:hover:border-cinnabar"
-                  @click="pickDao(dao.id)"
-                >
-                  <span class="celestial-dao__choice-head">
-                    <span class="celestial-dao__seal" aria-hidden="true">{{ dao.seal }}</span>
-                    <span class="celestial-dao__choice-name">{{ dao.name }}</span>
-                  </span>
-                  <span class="celestial-dao__choice-desc">{{ dao.desc }}</span>
-                  <span v-for="(r, i) in dao.ruleText" :key="i" class="celestial-dao__choice-rule">
-                    · {{ r }}
-                  </span>
-                  <span
-                    v-for="(r, i) in dao.deepText"
-                    :key="`d${i}`"
-                    class="celestial-dao__choice-deep"
+              <!--
+                择道之前先看自己 —— 八条道途各有一得、各有一失,而玩家凭什么在八条里挑?
+
+                道途**一世只能选一次**(见 chooseDaoPath 的非空即拒),这是整世最重、
+                最不可逆的一个决定;而原先的界面是八张卡并排摊开,没有任何参照物:
+                玩家既不知道自己是什么打法,也无法一眼比出八条路的取舍。
+                这一栏把已有的修行画像(`core/identity` 的 cultivatorProfile)先摆出来,
+                再在每张卡上标出它与你惯用打法合不合。
+
+                画像不足 5 则道痕时不成形 —— 那时**不装作有结论**,直说还没够。
+              -->
+              <template v-else>
+                <aside class="celestial-dao__prelude" data-celestial-dao-prelude>
+                  <template v-if="daoProfile">
+                    <p class="celestial-dao__prelude-verdict">「{{ daoProfile.verdict }}」</p>
+                    <p class="celestial-dao__prelude-traits">
+                      <span>{{ daoProfile.buildTendency }}</span>
+                      <span>常用 {{ daoProfile.favoriteBuild }}</span>
+                      <span>风险 {{ daoProfile.riskText }}</span>
+                    </p>
+                    <p class="celestial-dao__prelude-note">
+                      这是你迄今的打法;下面八条道途照它标了“合不合”。
+                    </p>
+                  </template>
+                  <template v-else>
+                    <p class="celestial-dao__prelude-verdict">
+                      「道痕未满 {{ PROFILE_MIN_MARKS }} 则，画像尚不成形。」
+                    </p>
+                    <p class="celestial-dao__prelude-note">
+                      走几趟天道试炼与远征，画像成形后再来选也不迟 —— 道途一旦定下，此世不再更改。
+                    </p>
+                  </template>
+                </aside>
+
+                <div class="celestial-dao__choices">
+                  <button
+                    v-for="dao in DAO_PATHS"
+                    :key="dao.id"
+                    type="button"
+                    class="celestial-dao__choice hoverable:hover:border-cinnabar"
+                    @click="pickDao(dao.id)"
                   >
-                    ◇ {{ r }}
-                  </span>
-                </button>
-              </div>
+                    <span class="celestial-dao__choice-head">
+                      <span class="celestial-dao__seal" aria-hidden="true">{{ dao.seal }}</span>
+                      <span class="celestial-dao__choice-name">{{ dao.name }}</span>
+                    </span>
+                    <span class="celestial-dao__choice-desc">{{ dao.desc }}</span>
+                    <!--
+                    「和你惯用的打法合不合」—— 读的是同一份 mods(见 core/daoAffinity),
+                    不是手写的「剑道适合爆发流」那种分类。玩家画像成形时才有这一行:
+                    否则是在拿一张没成形的画像下结论。
+                  -->
+                    <span
+                      v-if="daoAffinityOf(dao.id)"
+                      class="celestial-dao__choice-affinity"
+                      :class="`is-${daoAffinityOf(dao.id)!.verdict}`"
+                      :data-dao-affinity="daoAffinityOf(dao.id)!.verdict"
+                    >
+                      <template v-if="daoAffinityOf(dao.id)!.verdict === 'fits'">
+                        与你惯用的「{{ daoProfile?.favoriteBuild }}」同向 —— 把它的长处再推一把
+                      </template>
+                      <template v-else-if="daoAffinityOf(dao.id)!.verdict === 'clashes'">
+                        与「{{ daoProfile?.favoriteBuild }}」相冲 —— 它拿走的正是你那一路赖以立身的
+                      </template>
+                    </span>
+                    <span
+                      v-for="(r, i) in dao.ruleText"
+                      :key="i"
+                      class="celestial-dao__choice-rule"
+                    >
+                      · {{ r }}
+                    </span>
+                    <span
+                      v-for="(r, i) in dao.deepText"
+                      :key="`d${i}`"
+                      class="celestial-dao__choice-deep"
+                    >
+                      ◇ {{ r }}
+                    </span>
+                  </button>
+                </div>
+              </template>
             </section>
 
             <!-- 天道熔炉 / 器魂:两处门径 -->
@@ -409,6 +466,9 @@ import {
 import { realmDef, WORLD_BREAK_MAJOR } from "@/data/realms";
 import { todayChallenge } from "@/core/dailyChallenge";
 import { chooseDaoPath, endgameUnlocked } from "@/core/endgameService";
+import { PROFILE_MIN_MARKS, cultivatorProfile } from "@/core/identity";
+import { BUILD_IDS, affinityFor, buildNameOf } from "@/core/daoAffinity";
+import type { DaoAffinity } from "@/core/daoAffinity";
 import { celestialOverview } from "@/core/celestialOverview";
 import { soulOverview } from "@/core/soulOverview";
 import { currentDaoNarrative } from "@/core/identity";
@@ -683,6 +743,39 @@ const puritySummary = computed(() => purityAxesSummary(purity.value));
 
 /** 道途选择二段式:先弹确认,再落一子。道途一世只定一次,误触即被锁死到转世 */
 const pendingDaoId = ref<(typeof DAO_PATHS)[number]["id"] | null>(null);
+/**
+ * 择道之前先看的画像 —— 复用三生录那一份(`core/identity` 的 cultivatorProfile)。
+ *
+ * 不在这里另算一套:同一个人在三生录与天界看到的画像必须是同一份,
+ * 否则「我是个稳健型修士」这句话在两页会不一样。
+ */
+const daoProfile = computed(() => cultivatorProfile(endgame.marks));
+
+/**
+ * 这条道途与玩家**惯用打法**的相性。
+ *
+ * 只在画像成形时给结论(道痕不足 5 则时 `daoProfile` 为 null):
+ * 拿一张没成形的画像去说「与你同向」,那是在编。
+ */
+function daoAffinityOf(daoId: string): DaoAffinity | null {
+  const build = endgame.marks.length >= PROFILE_MIN_MARKS ? buildIdOfProfile() : null;
+  if (!build) return null;
+  const aff = affinityFor(daoId, build);
+  // 中性不必占一行 —— 「没加成也没冲突」不是决策依据,只在新手眼里像噪音
+  return aff.verdict === "neutral" ? null : aff;
+}
+
+/**
+ * 玩家惯用打法的**流派 id**。
+ *
+ * `cultivatorProfile.favoriteBuild` 是展示名(「罡盾流」),而 `affinityFor` 要 id。
+ * 故反查一次 —— 名字只有一处来源(`BUILD_PROFILES[i].name`),不在这里另抄一张表。
+ */
+function buildIdOfProfile(): string | null {
+  const name = daoProfile.value?.favoriteBuild;
+  if (!name) return null;
+  return BUILD_IDS.find((id) => buildNameOf(id) === name) ?? null;
+}
 const pendingDao = computed(() =>
   pendingDaoId.value ? daoPathDef(pendingDaoId.value) : undefined,
 );

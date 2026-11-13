@@ -97,7 +97,23 @@
       </div>
 
       <div class="home-deck__next-slot" data-home-focus>
-        <RouterLink v-if="firstStep" :to="firstStep.to" class="home-deck__next active:scale-99">
+        <!--
+          到顶之后,这一格换口。
+
+          它原来是「今日一步 / 当前道途」—— 两者都在回答「接下来往哪走」。
+          而走到大道尽头的玩家,系统已经没有「下一步」可递了:`generateCurrentGoal`
+          在到顶时会跳过突破那一支(见 core/goal),于是这里落进「静」的空档 ——
+          一屏「眼下没有下一步」的说明。这是把一个**阶段**当成了**没有内容**。
+
+          终局这一格该说的是:这一世走完了、你成了什么、接下来还能去哪。
+          故到顶时整格换成一块「此生已尽」的终局屏(见 ApexBriefing)。
+        -->
+        <ApexBriefing v-if="player.atMaxRealm" />
+        <RouterLink
+          v-else-if="firstStep"
+          :to="firstStep.to"
+          class="home-deck__next active:scale-99"
+        >
           <span class="home-deck__next-tag">今日一步</span>
           <span class="home-deck__next-body">
             <span class="home-deck__next-title">{{ firstStep.text }}</span>
@@ -418,6 +434,7 @@ import GameIcon from "@/components/common/GameIcon.vue";
 import ProgressBar from "@/components/common/ProgressBar.vue";
 import CultivationOrb from "@/components/common/CultivationOrb.vue";
 import InkScene from "@/components/common/InkScene.vue";
+import ApexBriefing from "@/components/common/ApexBriefing.vue";
 import InstallToHomeNotice from "@/components/common/InstallToHomeNotice.vue";
 import { keepNumberUnit } from "@/utils/keepNumberUnit";
 import { dailySettleSeal } from "@/ui/dailySettle";

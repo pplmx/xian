@@ -20384,6 +20384,213 @@ async function taskMutationActionAnchored() {
   return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
 }
 
+/**
+ * 大道尽头 —— 终局四屏。
+ *
+ * 为什么这条必须单独跑:全站巡页用的是**默认夹具**(真仙四层),而终局是玩家走得
+ * 最远才见到的一屏 —— 它坏了没有任何常规巡页抓得到。上一轮修到顶的显示时,
+ * 就是因为没有这一条,`mortal · immortal · god · chaos` 这种内部 id 差点漏到界面上
+ * (实测抓到过一次)。
+ *
+ * 四处落点,都要求「到顶时在、未到顶时不在」:
+ *   一 修行页:「下一步」那一章换成「大道尽头」,破境卡不再出现;
+ *   二 首页:「今日一步 / 当前道途」换成终局屏;
+ *   三 天界道途:择道前有画像栏,未择道时八张卡一张不少;
+ *   四 三生录:出现「此世终笔」。
+ *
+ * 外加一条**读数自洽**:界面上不许出现内部 id(界域名 `mortal`/`immortal`、
+ * 道途键 `sword`、碑记键 `first_apex`) —— 这类东西正是终局这一屏最容易漏的。
+ */
+async function taskApexEnding() {
+  const failures = [];
+  let checked = 0;
+  /** 内部 id 的黑名单:界域名、道途 id、碑记 id、流派 id 都不该出现在文案里 */
+  const INTERNAL_ID =
+    /\b(?:mortal|immortal|god|chaos)\b|「(?:sword|zhenyue|longevity|fate|slaughter|lianzhu|jieshi|xuehe)」|first_apex|\b(?:beishui|gangdun|fanzhen|lianji|muze|fengmang)\b/;
+
+  /**
+   * 造一份到顶存档:末境最后一层、修为与灵气都远超需求。
+   *
+   * 改的是 `showcaseSlices` 的**副本**,不动夹具本体 —— 其余任务依赖它停在真仙四层。
+   */
+  const apexSlices = () => {
+    const slices = showcaseSlices("light");
+    slices.player.major = 20; // 末境(混沌道祖),与 data/realms 的 REALMS.length 同源
+    slices.player.sub = 9; // 最后一层
+    slices.player.exp = { m: 9, e: 30 };
+    slices.resources = { ...slices.resources, qi: { m: 9, e: 30 } };
+    /*
+     * 道途**留空** —— 择道仪式只在「还没选」时出现(选过之后那一章换成已定卡片)。
+     * 夹具默认是 `daoPath: "sword"`,不改就会走另一支,画像栏与八张卡都量不到。
+     * 道痕也留空:不足 5 则时画像未成形,那正是要确认的另一支。
+     */
+    slices.endgame = { ...slices.endgame, daoPath: null, marks: [] };
+    return slices;
+  };
+
+  for (const vp of [
+    { width: 390, height: 844, tag: "390" },
+    { width: 1280, height: 800, tag: "1280" },
+  ]) {
+    const ctx = await auditContext({
+      viewport: { width: vp.width, height: vp.height },
+      deviceScaleFactor: 2,
+      isMobile: vp.width < 500,
+      hasTouch: vp.width < 500,
+    });
+    try {
+      await seedSave(ctx, apexSlices(), `__apexEnding${vp.tag}`);
+      const page = await ctx.newPage();
+      const pageErrors = [];
+      watchPageErrors(page, pageErrors);
+
+      // ---- 一 · 修行页 ----
+      await openRoute(page, "/cultivation", 900);
+      await clearOverlays(page);
+      checked += 1;
+      const cult = await page.evaluate(() => {
+        const apex = document.querySelector("[data-cultivation-apex]");
+        const next = document.querySelector("[data-cultivation-next]");
+        const breakCard = document.querySelector('[data-cultivation-action="breakthrough"]');
+        const pursuits = [...document.querySelectorAll("[data-cultivation-apex-pursuit]")];
+        return {
+          hasApex: Boolean(apex),
+          hasNext: Boolean(next),
+          hasBreakCard: Boolean(breakCard),
+          pursuits: pursuits.length,
+          pendingFirst: pursuits[0]?.getAttribute("data-pending") ?? null,
+          text: (apex?.textContent || "").replace(/\s+/g, " ").trim(),
+        };
+      });
+      if (!cult.hasApex) failures.push(`[${vp.tag}-apex] 修行页没有「大道尽头」那一章`);
+      if (cult.hasNext) failures.push(`[${vp.tag}-apex] 修行页到顶了还挂着「下一步」那一章`);
+      if (cult.hasBreakCard) failures.push(`[${vp.tag}-apex] 修行页到顶了还挂着破境卡`);
+      if (cult.pursuits === 0) {
+        failures.push(`[${vp.tag}-apex] 终局印记没有报出任何「还想去哪」—— 判据没量到东西`);
+      }
+      if (cult.text && INTERNAL_ID.test(cult.text)) {
+        failures.push(`[${vp.tag}-apex] 终局印记漏出内部 id:${INTERNAL_ID.exec(cult.text)?.[0]}`);
+      }
+
+      // ---- 二 · 首页 ----
+      await openRoute(page, "/", 900);
+      await clearOverlays(page);
+      checked += 1;
+      const home = await page.evaluate(() => {
+        const brief = document.querySelector("[data-home-apex]");
+        const goal = document.querySelector("[data-home-goal]");
+        return {
+          hasBrief: Boolean(brief),
+          hasGoal: Boolean(goal),
+          text: (brief?.textContent || "").replace(/\s+/g, " ").trim(),
+        };
+      });
+      if (!home.hasBrief) failures.push(`[${vp.tag}-apex] 首页没有终局屏`);
+      if (home.hasGoal) failures.push(`[${vp.tag}-apex] 首页到顶了还挂着「当前道途」那一格`);
+      if (home.text && INTERNAL_ID.test(home.text)) {
+        failures.push(`[${vp.tag}-apex] 首页终局屏漏出内部 id:${INTERNAL_ID.exec(home.text)?.[0]}`);
+      }
+
+      // ---- 三 · 天界道途(未择道) ----
+      await openRoute(page, "/celestial?tab=dao", 900);
+      await clearOverlays(page);
+      checked += 1;
+      const dao = await page.evaluate(() => ({
+        prelude: Boolean(document.querySelector("[data-celestial-dao-prelude]")),
+        choices: document.querySelectorAll(".celestial-dao__choice").length,
+        preludeText: (document.querySelector("[data-celestial-dao-prelude]")?.textContent || "")
+          .replace(/\s+/g, " ")
+          .trim(),
+      }));
+      if (!dao.prelude) {
+        failures.push(`[${vp.tag}-apex] 天界择道前没有画像栏 —— 八选一没有参照物`);
+      }
+      if (dao.choices === 0) {
+        failures.push(`[${vp.tag}-apex] 天界八条道途一张都没渲染(画像栏把 v-if 链挤断了?)`);
+      }
+      if (dao.preludeText && INTERNAL_ID.test(dao.preludeText)) {
+        failures.push(
+          `[${vp.tag}-apex] 择道画像漏出内部 id:${INTERNAL_ID.exec(dao.preludeText)?.[0]}`,
+        );
+      }
+
+      // ---- 四 · 三生录 ----
+      await openRoute(page, "/legacy", 900);
+      await clearOverlays(page);
+      checked += 1;
+      const legacy = await page.evaluate(() => ({
+        hasApex: Boolean(document.querySelector("[data-legacy-apex]")),
+        text: (document.querySelector("[data-legacy-apex]")?.textContent || "")
+          .replace(/\s+/g, " ")
+          .trim(),
+      }));
+      if (!legacy.hasApex) failures.push(`[${vp.tag}-apex] 三生录没有「此世终笔」`);
+      if (legacy.text && INTERNAL_ID.test(legacy.text)) {
+        failures.push(`[${vp.tag}-apex] 此世终笔漏出内部 id:${INTERNAL_ID.exec(legacy.text)?.[0]}`);
+      }
+
+      /*
+       * ---- 五 · 终局屏在「已择道」那一支上 ----
+       *
+       * 上面那一趟刻意把 `daoPath` 留空(择道仪式只在未选时出现)。但终局屏
+       * **提到道途名**的地方正是「已择」那一支 —— 曾经直接把 `endgame.daoPath`
+       * 插进文案,页面显示「此世行「sword」」。那一支不单独跑一遍就量不到。
+       */
+      checked += 1;
+      const chosenSlices = apexSlices();
+      chosenSlices.endgame = { ...chosenSlices.endgame, daoPath: "sword" };
+      const ctx2 = await auditContext({
+        viewport: { width: vp.width, height: vp.height },
+        deviceScaleFactor: 2,
+        isMobile: vp.width < 500,
+        hasTouch: vp.width < 500,
+      });
+      try {
+        await seedSave(ctx2, chosenSlices, `__apexChosen${vp.tag}`);
+        const page2 = await ctx2.newPage();
+        const errs2 = [];
+        watchPageErrors(page2, errs2);
+        await openRoute(page2, "/", 900);
+        await clearOverlays(page2);
+        const chosenText = await page2.evaluate(() =>
+          (document.querySelector("[data-home-apex]")?.textContent || "")
+            .replace(/\s+/g, " ")
+            .trim(),
+        );
+        if (!chosenText) {
+          failures.push(`[${vp.tag}-apex] 已择道的终局屏没渲染出来 —— 判据没量到东西`);
+        } else {
+          // 道途名要报「剑道」,不是键 "sword"
+          if (/「sword」/.test(chosenText)) {
+            failures.push(`[${vp.tag}-apex] 终局屏把道途键原样印出来了:「sword」`);
+          }
+          if (!/「剑道」/.test(chosenText)) {
+            failures.push(`[${vp.tag}-apex] 终局屏没有报出已择道途的道名(应含「剑道」)`);
+          }
+        }
+        if (errs2.length) {
+          failures.push(`[${vp.tag}-apex] 已择道终局屏页面异常:${[...new Set(errs2)].join(" | ")}`);
+        }
+      } finally {
+        await ctx2.close();
+      }
+
+      if (pageErrors.length) {
+        failures.push(`[${vp.tag}-apex] 终局页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+      }
+      if (failures.length === 0 && vp.tag === "390") {
+        console.log(
+          `\n大道尽头:四处落点齐全(修行页 ${cult.pursuits} 条去处 · 首页终局屏 · 择道画像 + ` +
+            `${dao.choices} 条道途 · 三生录终笔),界面无内部 id 泄漏`,
+        );
+      }
+    } finally {
+      await ctx.close();
+    }
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
 /** 天界试炼续卷:四章、八门印谱、单份证道帖、四程立契约台与三档印阵 */
 async function taskCelestialTrialFold() {
   const failures = [];
@@ -33138,6 +33345,7 @@ const TASKS = [
   ["修行画像的两章与根因", taskIdentityFolio],
   ["天界试炼续卷的四章、八门与四程", taskCelestialTrialFold],
   ["变数按钮不许被变数文案推着走", taskMutationActionAnchored],
+  ["大道尽头的终局四屏", taskApexEnding],
   ["天界证道战卷的四章与场次键盘", taskCelestialBattleScroll],
   ["天界内层三册的章节与并读", taskCelestialInnerVolumes],
   ["界域志首屏的此刻优先", taskCodexFold],

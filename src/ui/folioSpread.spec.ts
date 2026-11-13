@@ -103,7 +103,13 @@ describe("宽屏册页 · 从手机单叶展开成桌面双页", () => {
     expect(view).toContain('<article class="cultivation-register folio-span-all"');
     expect(view).toContain('class="cultivation-register__main"');
     expect(view).toMatch(/<section\s+class="cultivation-register__chapter cultivation-ledger"/);
-    expect(view).toMatch(/<section\s+class="cultivation-register__chapter cultivation-next"/);
+    // 这两个 chapter 现在各带条件(到顶走 apex 那一支),故 class 与 v-if 之间可能跨行
+    expect(view).toMatch(
+      /<section\s+(?:v-else\s+)?class="cultivation-register__chapter cultivation-next"/,
+    );
+    expect(view, "到顶那一支也要在同一册续卷里").toMatch(
+      /<section\s+v-if="player\.atMaxRealm"\s+class="cultivation-register__chapter[^"]*"/,
+    );
     expect(view).toContain("data-cultivation-ledger");
     expect(view).toContain("data-cultivation-next");
   });

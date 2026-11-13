@@ -86,6 +86,32 @@
         </div>
       </section>
 
+      <!--
+        终局一笔 —— 这一世走完了。
+
+        三生录此前只有**旧世**的一笔(见下方 `legacy-history`),而当世走完时
+        没有一处「这一世结束了」的收口:玩家到顶之后翻这一页,仍是一堆"进行中"的
+        面板(阶梯、随身所知、宿敌、器谱、技艺),看不出这一世已经合上。
+
+        这一块只在到顶时出现,报四笔:走到哪、成了什么、留下什么、接下来去哪。
+        与首页那一格、修行页那一枚印记同源(`core/apex`),三处说的是同一件事。
+      -->
+      <section v-if="player.atMaxRealm" class="legacy-apex" data-legacy-apex>
+        <span class="legacy-apex__seal" aria-hidden="true">{{ apexRecordRow.realmMark }}</span>
+        <div class="legacy-apex__copy">
+          <p class="legacy-apex__eyebrow">此世终笔 · 第 {{ apexRecordRow.life }} 世</p>
+          <p class="legacy-apex__realm">{{ apexRecordRow.realmLabel }}</p>
+          <p class="legacy-apex__line">
+            {{ apexRecordRow.daoText }} · {{ apexRecordRow.marks }} 则道痕 ·
+            {{ apexRecordRow.milestones.done }}/{{ apexRecordRow.milestones.total }} 枚碑记
+          </p>
+          <p class="legacy-apex__note">
+            这一世已经走完了。道果与宿慧随神魂带走，下一世从「入山契」重新开始 ——
+            而这一笔，会留在历世卷里。
+          </p>
+        </div>
+      </section>
+
       <LegacyChapterRail v-model="tab" :tabs="legacyRailTabs" />
 
       <section
@@ -754,14 +780,14 @@
             description="节点是首次破界留下的路标；宿敌只记败过三次以上的对手，雪耻后仍留名。"
             score-label="节点"
             :score-value="milestoneRows.length"
-            :score-suffix="`/ ${MILESTONE_DEFS.length}`"
+            :score-suffix="`/ ${MILESTONE_TOTAL}`"
           />
 
           <div class="legacy-ledger__grid">
             <article class="legacy-panel">
               <p class="legacy-panel__label">
                 修行节点
-                <span>{{ milestoneRows.length }} / {{ MILESTONE_DEFS.length }}</span>
+                <span>{{ milestoneRows.length }} / {{ MILESTONE_TOTAL }}</span>
               </p>
               <div v-if="milestoneRows.length" class="legacy-timeline">
                 <article
@@ -995,14 +1021,17 @@ import { sceneTerrainOfVolume } from "@/ui/sceneTerrain";
 import { focusListRow } from "@/composables/useListFocus";
 import { computed, ref } from "vue";
 import { useEndgameStore } from "@/stores/endgame";
+import { apexRecord } from "@/core/apex";
+import { daoPathDef } from "@/data/endgame";
+import { realmDef } from "@/data/realms";
 import { usePlayerStore } from "@/stores/player";
 import { useAdventureStore } from "@/stores/adventure";
 import { useLoreStore } from "@/stores/lore";
 import { cnNumber, formatPercent } from "@/utils/format";
 import {
   cultivatorProfile,
-  MILESTONE_DEFS,
-  milestoneDef,
+  MILESTONE_TOTAL,
+  milestoneRowOf,
   PROFILE_MIN_MARKS,
   RECORD_DEFS,
 } from "@/core/identity";
@@ -1498,6 +1527,30 @@ function showPreviousChronicle(): void {
 
 const profile = computed(() => cultivatorProfile(endgame.marks));
 
+/**
+ * 终局那一笔 —— 与首页、修行页同源(`core/apex` 的 apexRecord)。
+ *
+ * 三处说的是同一件事,故读同一份函数:这里多带一个「印章单字」与「道途名」,
+ * 都是本页的展示需要,不改变读数本身。
+ */
+const apexRecordRow = computed(() => {
+  const rec = apexRecord({
+    major: player.major,
+    sub: player.sub,
+    life: player.reincarnation.count + 1,
+    marks: endgame.marks.length,
+    milestonesDone: endgame.milestones.length,
+  });
+  return {
+    ...rec,
+    // 印章取境界首字(本仓的印都是单字:境 / 道 / 器 / 痕)
+    realmMark: realmDef(player.major).name.slice(0, 1),
+    daoText: endgame.daoPath
+      ? `此世行「${daoPathDef(endgame.daoPath)?.name ?? endgame.daoPath}」`
+      : "此世未立道途",
+  };
+});
+
 /** 奇缘录:只有起了头的缘才露面(往后的路不说破) */
 const chainRows = computed(() => chainProgressRows());
 const unfinishedChains = computed(
@@ -1511,7 +1564,9 @@ const milestoneRows = computed(() =>
   [...endgame.milestones]
     .sort((a, b) => a.at - b.at)
     .map((m) => {
-      const def = milestoneDef(m.id);
+      // 走 milestoneRowOf 而不是 milestoneDef:「大道尽头」不在静态表里,
+      // 用后者会当场漏出内部 id `first_apex`
+      const def = milestoneRowOf(m.id);
       return { id: m.id, life: m.life, name: def?.name ?? m.id, desc: def?.desc ?? "" };
     }),
 );
@@ -1558,7 +1613,7 @@ const legacyRailTabs = computed(() =>
       chapter.id === "samsara"
         ? `第 ${currentLife.value} 世`
         : chapter.id === "journey"
-          ? `${milestoneRows.value.length}/${MILESTONE_DEFS.length}`
+          ? `${milestoneRows.value.length}/${MILESTONE_TOTAL}`
           : chapter.id === "fate"
             ? `${unfinishedChains.value} 未了`
             : chapter.id === "chronicle"

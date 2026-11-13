@@ -402,6 +402,50 @@
     margin-top: 0.8rem;
   }
 
+  /*
+   * 终局屏 —— 到顶之后那一格。
+   *
+   * 沿用 `.home-deck__next` 的同一块纸与同一道左侧朱砂短笔:到了终点这件事
+   * 不该靠"更大的框"来说,而该靠它写的内容。故只补三处 ——
+   * 去处那一排(并列两枚,不抢中心)、以及不换行断开的读数。
+   */
+  .home-deck__next--apex {
+    grid-template-areas:
+      "tag tag"
+      "body body"
+      "actions actions";
+    align-items: start;
+  }
+  /* 三块各归各的区:不指定的话 grid-area 全是 auto,会按行流乱排 */
+  .home-deck__next--apex > .home-deck__next-tag {
+    grid-area: tag;
+  }
+  .home-deck__next--apex > .home-deck__next-body {
+    grid-area: body;
+  }
+  .home-deck__next--apex > .home-deck__apex-actions {
+    grid-area: actions;
+    margin-top: 0;
+  }
+  .home-deck__apex-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.9rem;
+    margin-top: 0.28rem;
+    padding-top: 0.36rem;
+    border-top: 1px dashed rgb(var(--color-ink-rgb) / 0.12);
+  }
+  .home-deck__apex-go {
+    border: 0;
+    background: transparent;
+    padding: 0.1rem 0;
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+    text-align: left;
+  }
+  .home-deck__apex-go:active {
+    opacity: 0.6;
+  }
   .home-deck__next {
     display: grid;
     grid-template-areas:

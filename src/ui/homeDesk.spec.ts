@@ -29,7 +29,7 @@ describe("首页指挥台 · 先给今日一步，再摊长期账", () => {
   it("今日一步优先，当前目标只在今日一步退场后接管", () => {
     const home = homeTemplate();
 
-    expect(home).toMatch(/<RouterLink\s+v-if="firstStep"/);
+    expect(home).toMatch(/<RouterLink\s+v-else-if="firstStep"/);
     expect(home).toMatch(/v-else-if="currentGoal"/);
     expect(home).toContain("data-home-goal");
     expect(home).toMatch(/v-if="firstStep && currentGoal"[\s\S]{0,260}currentGoal\.text/);

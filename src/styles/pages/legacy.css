@@ -140,6 +140,58 @@
     font-size: 7px;
     line-height: 1;
   }
+  /*
+   * 终局一笔 —— 这一世走完了。
+   *
+   * 与同页的「修行画像」同一套形制:左侧一枚单字印 + 右栏三行读数,不铺底、
+   * 不套框。差别只在印色:那一块用石青(信息),这一块用朱砂 —— 它是这一册的
+   * 收口,本页唯一一处「已经结束」的地方。
+   */
+  .legacy-apex {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 2.35rem minmax(0, 1fr);
+    gap: 0.5rem 0.72rem;
+    padding: 0.72rem 0.12rem 0.66rem;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.12);
+  }
+  .legacy-apex__seal {
+    display: flex;
+    width: 2.35rem;
+    height: 2.35rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.55);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    line-height: 1;
+  }
+  .legacy-apex__copy {
+    min-width: 0;
+  }
+  .legacy-apex__eyebrow {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    letter-spacing: 0.12em;
+  }
+  .legacy-apex__realm {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+  }
+  .legacy-apex__line {
+    margin-top: 0.16rem;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+    line-height: 1.6;
+  }
+  .legacy-apex__note {
+    margin-top: 0.24rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.6;
+  }
   .legacy-profile {
     --legacy-profile-accent: var(--color-qing);
     --legacy-profile-accent-rgb: var(--color-qing-rgb);

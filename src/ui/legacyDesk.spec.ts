@@ -131,7 +131,7 @@ describe("三生案 · 本世、所知与旧缘同读此刻", () => {
     expect(view).not.toContain("<InkTabs");
     expect(view).toContain("const legacyRailTabs = computed");
     expect(view).toContain("第 ${currentLife.value} 世");
-    expect(view).toContain("`${milestoneRows.value.length}/${MILESTONE_DEFS.length}`");
+    expect(view).toContain("`${milestoneRows.value.length}/${MILESTONE_TOTAL}`");
     expect(view).toContain("`${unfinishedChains.value} 未了`");
     expect(view).toContain("`${recordCount.value}/${RECORD_DEFS.length}`");
     for (const tab of ["samsara", "journey", "fate", "record"]) {

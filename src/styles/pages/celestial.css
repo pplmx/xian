@@ -274,6 +274,53 @@
     font-size: var(--type-body);
     line-height: 1.7;
   }
+  /*
+   * 择道之前先看自己 —— 这一栏是「八选一、一世不可改」这件事缺的那半张纸。
+   *
+   * 走的是本页既有语言:一句画像判词(楷体,与章首题签同族) + 一行带点分隔的
+   * 属性短句 + 一行说明。不铺底、不套框 —— 它不是一张卡,是这道题的题干。
+   */
+  .celestial-dao__prelude {
+    margin-top: 0.6rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed rgb(var(--color-ink-rgb) / 0.12);
+  }
+  .celestial-dao__prelude-verdict {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+    line-height: 1.6;
+  }
+  .celestial-dao__prelude-traits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.1rem 0.7rem;
+    margin-top: 0.22rem;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+  }
+  .celestial-dao__prelude-traits > span + span::before {
+    content: "·";
+    margin-inline-end: 0.4rem;
+    color: rgb(var(--color-ink-rgb) / 0.35);
+  }
+  .celestial-dao__prelude-note {
+    margin-top: 0.3rem;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.6;
+  }
+  /* 相性那一行:合 / 冲 只换颜色,不加底 —— 本仓的强色只有朱砂与石青 */
+  .celestial-dao__choice-affinity {
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .celestial-dao__choice-affinity.is-fits {
+    color: rgb(var(--color-qing-rgb));
+  }
+  .celestial-dao__choice-affinity.is-clashes {
+    color: rgb(var(--color-cinnabar-rgb));
+  }
   .celestial-dao__choices {
     display: grid;
     min-width: 0;

@@ -31,7 +31,7 @@ import { tribulationDef, TRIBULATIONS, type TribulationKind } from "@/data/tribu
 import { NO_RELIEF, type TribulationRelief } from "@/data/linggenAffinity";
 import { reliefFelt } from "./linggenAffinity";
 import { track, trackRealm, checkStateAchievements } from "./progress";
-import { recordMilestone } from "./identity";
+import { APEX_MILESTONE, recordMilestone } from "./identity";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useCultivationStore } from "@/stores/cultivation";
@@ -324,6 +324,14 @@ export function attemptBreakthrough(): BreakthroughView | null {
     const crossedWorld = info.isMajor && player.major > 0 && isWorldEntry(player.major);
     const world = crossedWorld ? worldOf(player.major) : null;
     if (world) recordMilestone(`first_${world.id}`);
+    /*
+     * 走到大道尽头 —— 这一世的终点。
+     *
+     * 中途的每个节点都有碑(飞升 / 破界 / 归返混沌 / 初立道途…),唯独**走到终点**
+     * 没有:玩家把一世修满,除了境界数字变了,没有留下任何一处「这件事发生过」。
+     * 记在突破成功之后的那一刻(它本身也是一次突破),与其余节点同一个落点。
+     */
+    if (player.atMaxRealm) recordMilestone(APEX_MILESTONE.id);
     const baseMessage = `境界跃迁,天地翻覆。${realm.desc}。寿元增至 ${player.lifespanMax} 载。`;
     // 大关进阶时附上这一境的出处(可解释性:境界名不是随手堆的字)
     const loreLine = `——「${realm.basis}」${realm.lore}`;

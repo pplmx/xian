@@ -675,6 +675,160 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /*
+   * 终局印记 —— 「已至大道尽头」那一章。
+   *
+   * 它替代的是「下一步」那一整章:破境卡不可能再发生,闭关也不再是为突破做准备。
+   * 故这里不沿用 `.cultivation-action` 那套「动作卡」形制,而是回到本页的账线语言:
+   * 左题签 + 右账目(与器性、行迹、共鸣缺口同一套),不铺底、不套框、不加第二枚强色。
+   *
+   * 基调是「一世一笔」而不是「通关」:到了这件事由读数说,不由装饰说。
+   */
+  .cultivation-apex {
+    min-width: 0;
+  }
+  .cultivation-apex__head {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.75rem minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0 0.55rem;
+    padding: 0.68rem 0.1rem 0.5rem;
+  }
+  .cultivation-apex__seal {
+    grid-row: span 2;
+    display: flex;
+    width: 1.75rem;
+    height: 1.75rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgb(var(--color-cinnabar-rgb) / 0.55);
+    color: rgb(var(--color-cinnabar-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    line-height: 1;
+  }
+  .cultivation-apex__title {
+    min-width: 0;
+  }
+  .cultivation-apex__eyebrow {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    letter-spacing: 0.12em;
+  }
+  .cultivation-apex__name {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-title);
+    letter-spacing: 0.04em;
+  }
+  .cultivation-apex__verdict {
+    grid-column: 2;
+    margin-top: 0.1rem;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+    line-height: 1.6;
+  }
+  /* 四笔读数:与器评帖那张炉验账同一套排法 */
+  .cultivation-apex__ledger {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+    column-gap: 0.5rem;
+    margin-top: 0.3rem;
+    padding-top: 0.42rem;
+    border-top: 1px dashed rgb(var(--color-ink-rgb) / 0.12);
+    font-size: var(--type-note);
+    line-height: 1.5;
+  }
+  .cultivation-apex__ledger > dt {
+    color: rgb(var(--color-ink-soft-rgb));
+    font-family: var(--font-kai);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  .cultivation-apex__ledger > dd {
+    min-width: 0;
+    padding-block: 0.14rem;
+    overflow-wrap: break-word;
+    color: rgb(var(--color-ink-soft-rgb));
+  }
+  .cultivation-apex__value {
+    color: rgb(var(--color-ink-rgb));
+    white-space: nowrap;
+  }
+  .cultivation-apex__aside {
+    color: rgb(var(--color-ink-faint-rgb));
+  }
+  .cultivation-apex__aside::before {
+    content: "·";
+    margin-inline: 0.3rem;
+    color: rgb(var(--color-ink-rgb) / 0.35);
+  }
+  /* 「尚可做的事」—— 这一块是到顶后这一页的核心,不是附件 */
+  .cultivation-apex__pursuits {
+    margin-top: 0.55rem;
+    padding-top: 0.42rem;
+    border-top: 1px dashed rgb(var(--color-ink-rgb) / 0.12);
+  }
+  .cultivation-apex__caption {
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    letter-spacing: 0.1em;
+  }
+  .cultivation-apex__pursuit {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 0.1rem 0.5rem;
+    width: 100%;
+    border: 0;
+    border-top: 1px solid rgb(var(--color-ink-rgb) / 0.065);
+    background: transparent;
+    padding: 0.44rem 0.1rem;
+    text-align: left;
+  }
+  .cultivation-apex__pursuit:first-of-type {
+    border-top: 0;
+  }
+  /* 已做完的沉一档:仍可回看,但不再是待办 */
+  .cultivation-apex__pursuit.is-settled .cultivation-apex__pursuit-name,
+  .cultivation-apex__pursuit.is-settled .cultivation-apex__pursuit-hint {
+    color: rgb(var(--color-ink-faint-rgb));
+  }
+  .cultivation-apex__pursuit-name {
+    color: rgb(var(--color-ink-rgb));
+    font-family: var(--font-kai);
+    font-size: var(--type-body);
+  }
+  .cultivation-apex__pursuit-progress {
+    color: rgb(var(--color-qing-rgb));
+    font-family: var(--font-sans);
+    font-size: var(--type-note);
+  }
+  .cultivation-apex__pursuit-hint {
+    grid-column: 1;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .cultivation-apex__pursuit-go {
+    grid-row: 1;
+    grid-column: 2;
+    color: rgb(var(--color-ink-faint-rgb));
+    font-size: var(--type-note);
+  }
+  .cultivation-apex__pursuit:active {
+    opacity: 0.6;
+  }
+  /* 到顶后闭关那一块单独续在印记之下,不再与破境卡并排 */
+  .cultivation-apex-chapter__rows {
+    margin-top: 0.5rem;
+    padding-top: 0.42rem;
+    border-top: 1px dashed rgb(var(--color-ink-rgb) / 0.12);
+  }
+
   .cultivation-action {
     min-width: 0;
     padding: 0.68rem 0.1rem 0.76rem;

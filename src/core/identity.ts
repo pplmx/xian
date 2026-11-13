@@ -6,6 +6,7 @@ import type { DaoMark, DaoPathId, MarkReplay } from "@/types";
 import { DAO_PATHS, celestialWorldDef } from "@/data/endgame";
 import { NO_PACT_MULT, pactDef } from "@/data/pacts";
 import { PACT_END_HP_FLOOR } from "@/data/constants";
+import { MAX_MAJOR, realmDef } from "@/data/realms";
 import { usePlayerStore } from "@/stores/player";
 import { useEndgameStore } from "@/stores/endgame";
 import { notify } from "./notify";
@@ -38,6 +39,31 @@ export const MILESTONE_DEFS: { id: string; name: string; desc: string }[] = [
 
 export function milestoneDef(id: string): (typeof MILESTONE_DEFS)[number] | undefined {
   return MILESTONE_DEFS.find((m) => m.id === id);
+}
+
+/**
+ * 到顶这一枚里程碑 —— 跨世不灭的「首次」里最末的一枚。
+ *
+ * 此前 `MILESTONE_DEFS` 里**没有「走到大道尽头」这一枚**:玩家把一世修到终点,
+ * 除了境界数字变了,没有留下任何一处「这件事发生过」的记录 —— 而飞升、破界、
+ * 初立道途这些中途节点都有。
+ *
+ * 它不在静态表里,因为**只有真走到那一刻才该出现**(见 `core/breakthrough`
+ * 在突破成功之后调 `recordMilestone`)。放在这里而不是 `core/apex`,是为了让
+ * `milestoneDef` 一处就能查到全部文案 —— `apex` 反过来读它,不构成循环。
+ */
+export const APEX_MILESTONE = {
+  id: "first_apex",
+  name: "大道尽头",
+  desc: `证道${realmDef(MAX_MAJOR).name}·圆满 —— 一世修行走到了尽头`,
+} as const;
+
+/** 里程碑总数 —— **含终局那一枚**,界面那个分母只认这一处 */
+export const MILESTONE_TOTAL = MILESTONE_DEFS.length + 1;
+
+/** 按 id 取里程碑文案 —— 静态表 + 终局那一枚,界面只认这一个入口 */
+export function milestoneRowOf(id: string): { id: string; name: string; desc: string } | undefined {
+  return milestoneDef(id) ?? (id === APEX_MILESTONE.id ? APEX_MILESTONE : undefined);
 }
 
 /** 记节点(以当前世数) */

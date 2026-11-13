@@ -129,7 +129,7 @@
               <span v-if="btInfo.targetLabel" class="text-qing"
                 >下一步 → {{ btInfo.targetLabel }}</span
               >
-              <span v-else class="text-qing" data-cultivation-apex>已至大道尽头</span>
+              <span v-else class="text-qing" data-cultivation-apex-note>已至大道尽头</span>
             </div>
             <div
               data-value-row
@@ -286,8 +286,33 @@
         <!--
           修行账回答「现在走到哪」,下一步只回答「此刻做哪件事」。
           破境先于闭关:前者是这一境的出口,后者是留在原地的加速。
+
+          **到顶之后整章换形**:不再有「下一步」这个说法 —— 破境不可能发生、
+          闭关也不再是为了突破做准备。此时该报的是「这一世走到了哪里、还能去哪」,
+          那是 `ApexSeal` 的活,不是破境卡的。闭关与观象仍在,但降为「尚可做的事」
+          里的一件,不再占据「下一步」的位置。
         -->
         <section
+          v-if="player.atMaxRealm"
+          class="cultivation-register__chapter cultivation-apex-chapter"
+          data-cultivation-chapter="apex"
+          data-cultivation-apex
+        >
+          <FolioChapterHead
+            data-cultivation-chapter-head
+            index="贰"
+            title="大道尽头"
+            hint="一世之修行,到此为止"
+            :fact="realmDef(MAX_MAJOR).name"
+          />
+          <ApexSeal />
+          <!-- 闭关与观象仍可做,只是不再是「为突破做准备」 -->
+          <div class="cultivation-next__rows cultivation-apex-chapter__rows">
+            <RetreatCard />
+          </div>
+        </section>
+        <section
+          v-else
           class="cultivation-register__chapter cultivation-next"
           data-cultivation-chapter="next"
           data-cultivation-next
@@ -441,6 +466,7 @@
 <script setup lang="ts">
 import "@/styles/pages/cultivation.css";
 import { realmOrdinalText } from "@/core/realmLadder";
+import { MAX_MAJOR, realmDef } from "@/data/realms";
 import { computed, ref } from "vue";
 import { RouterLink } from "vue-router";
 import { usePlayerStore } from "@/stores/player";
@@ -485,6 +511,7 @@ import InkScene from "@/components/common/InkScene.vue";
 import FolioChapterHead from "@/components/common/FolioChapterHead.vue";
 import GongfaSection from "@/components/cultivation/GongfaSection.vue";
 import BreakthroughCard from "@/components/cultivation/BreakthroughCard.vue";
+import ApexSeal from "@/components/cultivation/ApexSeal.vue";
 import RetreatCard from "@/components/cultivation/RetreatCard.vue";
 import QiShortfallNote from "@/components/cultivation/QiShortfallNote.vue";
 import { cultivationChapter } from "@/ui/cultivationDesk";
