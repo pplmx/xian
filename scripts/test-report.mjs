@@ -680,6 +680,8 @@ const CATEGORIES = [
       "commentScaleClaims",
       // 设置页的开关:拨了没反应是玩家最难报清楚的一类问题 —— 没有任何判据问过
       "settingsWiring",
+      // 道侣事件的四个触发点(踏界/首胜/濒死/破首领)都接了,但没人守着 —— 少接一个就静默失效
+      "bondEventTriggers",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

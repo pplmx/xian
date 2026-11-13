@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 750 个 spec;本作自己那部分 670 个) |
+| `bun run test` | 全量用例(全量 751 个 spec;本作自己那部分 671 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 750 个 spec = 宿主 670 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 751 个 spec = 宿主 671 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 750 个 spec(本作自己那部分 670 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 751 个 spec(本作自己那部分 671 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -9791,3 +9791,49 @@ reduceMotion  CombatPanel 跳过回放、GauntletPanel 直接出结果
 ```
 
 第二种才是这条判据真正的用途:**下一个加开关的人**。
+
+### 第 176 轮:道侣事件的触发点 —— 四个都接了,但没人守着
+
+这一轮查「数据表里写了、玩家永远碰不到」的内容。逐张表过:
+
+```text
+CLASSICS 11 部   RealmCodexView 有真入口
+CHAINS 8 条      eventEngine + AdventureView 的链册
+BOND_EVENTS 7 条 daoluService.offerBondEvent
+丹药 18 种无方   randomDropPill 按 minRealm 掉落,minRealm 全在 0..20
+```
+
+都可达。但 `BOND_EVENTS` 这一张查出了值得记的东西:
+
+七条事件各自绑着一个 `triggers` 数组，遍历下来用了**四个**触发点
+（踏入新地界 / 首胜之后 / 濒死之际 / 击破首领）。实测四个都在
+`core/exploration` 里接了。
+
+**但这件事没有判据守着。** 加一条事件、给它一个新触发点，而探索流程里忘了调
+`offerBondEvent("…")` —— 那条事件就永远不出现，而且**不会有任何报错**:
+它只是静静地待在数据表里。
+
+`contentReachabilityAudit` 已经守了十二个维度（丹方 / 灵材 / 敌人 / 区域链 /
+灵兽 / 法宝 / 功法 / 技艺 / 炼器…），**唯独没有这一维**。
+
+### 判据:`core/bondEventTriggers.spec`
+
+三个方向都核:
+
+```text
+正向   数据表声明的每个触发点,源码里都真的调过
+逐条   每条事件至少能被一个已接的触发点触发到
+反向   代码里的触发点都在声明的集合里(写错就静默无效)
+```
+
+### 故障注入第一次没红 —— 又是「注释冒充正文」
+
+把 `offerBondEvent("bossDefeated")` **注释掉**，判据照绿:
+我的正则匹配到了注释里的那一行，而产品其实已经不再触发。
+
+这正是 `docs/审计规范.md` 第三节那条。改成先 `stripComments` 再匹配，
+删掉那一行（而不是注释掉）之后判据当场点名 `bossDefeated`。
+
+> 这次值得记的是:**我刚写完一条关于「注释不是正文」的判据，
+> 就在下一条判据里犯了同一个错。** 纪律写在文档里不等于会照着做 ——
+> 唯一可靠的是把 `stripComments` 变成默认动作，而不是每次想起来再调。
