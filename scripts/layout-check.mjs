@@ -17638,6 +17638,29 @@ async function taskExploreModes() {
       if (previewState.pressureVisible === false) {
         failures.push(`[${vp.tag}-modes] 境界压制被收进了折叠区 —— 它是这一趟的风险,该一直露着`);
       }
+      /*
+       * ⑦ 每一档都要答得出「打不打得过」。
+       *
+       * 第 155 轮实测:新号在青云山麓的四档里,两档**单场必败**,而卡上只写着
+       * 「整趟约 装备 291 件」。玩家按下去几十秒后收到「你身负重伤…此行胜 0 场」。
+       * 故四个档位每一张卡都必须带一行「能走多远」—— 它是上面那三个产出数的前提。
+       *
+       * 只量**在不在**,不量措辞:文案会随平衡调整变,而「有没有那一行」是契约。
+       */
+      const viability = await page.evaluate(() =>
+        [...document.querySelectorAll("[data-explore-mode]")].map((row) => ({
+          id: row.getAttribute("data-explore-mode-id") ?? "",
+          text: (row.querySelector("[data-explore-mode-viability]")?.textContent ?? "").trim(),
+        })),
+      );
+      if (viability.length === 0) {
+        failures.push(`[${vp.tag}-modes] 一档模式行都没读到 —— 判据取错了地方`);
+      }
+      for (const row of viability) {
+        if (!row.text) {
+          failures.push(`[${vp.tag}-modes] 「${row.id}」这一档没说打不打得过 —— 产出数字没有前提`);
+        }
+      }
       // ⑥ 390 一档四行必须全部落在卷身内(实测 616/616,一次都不用滚)
       if (vp.tag === "390") {
         const fit = await page.evaluate(() => {

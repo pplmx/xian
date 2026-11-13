@@ -2597,6 +2597,24 @@
     line-height: 1.5;
     overflow-wrap: anywhere;
   }
+  /*
+    这一档「打不打得过」—— 印在产出之前的那一行。
+
+    它反问的是上面三个产出数的前提,故读作「这几件拿得到吗」。
+    「必败 / 多半走不完」走朱砂(与「凶险」「付不起」同一族:这是要拦住你的信息);
+    其余仍是墨色弱字,不抢档名与收益那两行。
+  */
+  /*
+    它不单独占一行:390×844 上卷身只有 616px,四档必须全部落在里面
+    (排版门的 `[390-modes] 四个档位没有全部落在卷身内` 就是为这件事设的)。
+    故并进「收益 ×N · 敌势 ×N」那一行,以「·」相接 —— 一档仍只占四行。
+  */
+  .adventure-mode__viability {
+    color: rgb(var(--color-ink-faint-rgb));
+  }
+  .adventure-mode__viability.is-hopeless {
+    color: rgb(var(--color-cinnabar-rgb));
+  }
   @media (max-width: 220px) {
     /* 195 档:时长从右端退回自己一行,别把档名挤扁 */
     .adventure-mode__duration {

@@ -856,6 +856,26 @@
           <span class="adventure-mode__odds tabular">
             收益 ×{{ m.rewardMult }} · 敌势
             <span :class="m.dangerTotal > 1 ? 'text-cinnabar' : ''">×{{ m.dangerTotal }}</span>
+            <!--
+              「这一档我打不打得过」—— 上面那三个产出数的**前提**。
+
+              第 155 轮实测:新号在青云山麓选「深入探寻」,单场胜率 **0%**,
+              而这张卡上写着「整趟约 装备 107 件」。玩家按下去几十秒后收到
+              「你身负重伤…此行胜 0 场」—— 卡上一句提示都没有。
+              先答「拿得到吗」,再答「能拿多少」;两者是同一个决定的两半。
+
+              **并进这一行、不另起一行**:390×844 上卷身 616px,四档必须全部
+              落在里面(排版门的 `[390-modes] 四个档位没有全部落在卷身内` 专管这件事)。
+            -->
+            <template v-if="m.viabilityText">
+              <span aria-hidden="true"> · </span>
+              <span
+                class="adventure-mode__viability"
+                :class="{ 'is-hopeless': m.viabilityHopeless }"
+                data-explore-mode-viability
+                >{{ m.viabilityText }}</span
+              >
+            </template>
           </span>
           <!--
             敌势 ×2.1 是个**笼统的乘数**:玩家不知道它从哪来、哪几项是自己能改的。
@@ -882,7 +902,7 @@
 import "@/styles/pages/adventure.css";
 import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import type { ExploreMode, RegionDef, RegionRecall, WorldId } from "@/types";
+import type { CombatantSnap, ExploreMode, RegionDef, RegionRecall, WorldId } from "@/types";
 import { useAdventureStore } from "@/stores/adventure";
 import { useGameStore } from "@/stores/game";
 import { useInventoryStore } from "@/stores/inventory";
@@ -892,6 +912,11 @@ import {
   expectedPillBattlesPerPiece,
 } from "@/core/loot";
 import { exploreTripPlan } from "@/core/explorationPlan";
+import { tripViability, tripViabilityText } from "@/core/tripViability";
+import { buildPlayerSnap } from "@/core/playerSnap";
+import { makeEnemySnap } from "@/core/combat";
+import { placeContent } from "@/core/mortalWorldService";
+import { enemyDef } from "@/data/enemies";
 import {
   bagOverflowText,
   exploreModeRow,
@@ -930,6 +955,8 @@ import { REALMS } from "@/data/realms";
 import { BAG_CAPACITY, EXPLORE_MODES, EXPLORE_TRIP_MIN_BATTLES } from "@/data/constants";
 import {
   exploreEventChance,
+  explorationFoeDanger,
+  explorationRules,
   regionFoeOrigin,
   regionRealmPressure,
   startExploration,
@@ -1369,19 +1396,91 @@ function foeLineFor(
   return { total: Number((modeMult * petMult * evMult).toFixed(2)), parts };
 }
 
+/**
+ * 「这一档会撞见哪些敌人」的快照 —— 与 `runBattle` 同一个取法。
+ *
+ * `runBattle` 里那一句是:
+ *
+ * ```ts
+ * const content = placeContent(region.id);
+ * const eDefId = bossDue ? content.boss : rng.pick([...content.enemies]);
+ * const eSnap = makeEnemySnap(eDef, region.tier, dangerFactor, foeOrigin);
+ * ```
+ *
+ * 这里照抄前三步(敌源、层级、危险因子),只是**不打乱地全取一遍**:
+ * 出行窗要回答的是「这一档的敌人整体有多强」,不是「下一次会撞见谁」。
+ * 首领按 `winsUntilRegionBoss` 的口径单独补一枚 —— 打满一趟必然撞上它。
+ *
+ * 不复刻任何数值:层级、人形与危险因子全部交给 `makeEnemySnap` 与
+ * `explorationFoeDanger`（后者就是 `runBattle` 用的那一个）。
+ */
+function tripFoeSnaps(
+  region: RegionDef,
+  mode: ExploreMode,
+  playerSnap: ReturnType<typeof buildPlayerSnap>,
+): { foes: CombatantSnap[]; boss: CombatantSnap | null } {
+  const content = placeContent(region.id);
+  const { total: dangerFactor, origin: foeOrigin } = explorationFoeDanger({
+    tier: region.tier,
+    targetMinRealm: region.minRealm,
+    playerMajor: player.major,
+    mode,
+    regionDanger: region.danger,
+    petId: player.petId,
+    eventId: player.currentRegionEvent(region.id)?.eventId ?? null,
+  });
+  void playerSnap;
+  /*
+   * 首领**不进小怪池** —— 它每 10 胜才出一次，强度也不是一个量级。
+   * 混进池子里轮着取，量出来的胜率既不像小怪也不像首领（实测新号 75%，
+   * 而小怪 98~100%、首领 0%）。
+   */
+  const foes = [...new Set(content.enemies)]
+    .map((id) => enemyDef(id))
+    .filter((def): def is NonNullable<typeof def> => Boolean(def))
+    .map((def) => makeEnemySnap(def, region.tier, dangerFactor, foeOrigin));
+  const bossDef = content.boss ? enemyDef(content.boss) : undefined;
+  const boss = bossDef ? makeEnemySnap(bossDef, region.tier, dangerFactor, foeOrigin) : null;
+  return { foes, boss };
+}
+
 const modeRows = computed(() => {
   const region = modeTarget.value;
   const eventChance = region
     ? exploreEventChance(region.id, player.finalStats.mods, game.totalPlaySec)
     : 0;
-  return MODE_LIST.map((m) =>
-    exploreModeRow({
-      plan: exploreTripPlan({
-        mode: m.id,
-        petId: player.petId,
-        mods: player.finalStats.mods,
-        eventChance,
-      }),
+  /*
+   * 「这一档我打不打得过」—— 整趟产出那些数的前提。
+   *
+   * 敌源、危险因子与战斗规则全部**照 `runBattle` 抄一遍口径**（同一份
+   * `placeContent` / `explorationFoeDanger` / `explorationRules`），
+   * 但惊动的是同一个 `resolveCombat`:这样窗里报的胜率与真打不会有第二本账。
+   * 代价是每次开窗几毫秒（实测 100 场 22ms,四个档位各取样 24 场）。
+   *
+   * 只算一次、四个档位共用 —— 它与构筑/地界有关,与档位无关的那部分（玩家快照、
+   * 敌群）在每个档位都一样;真正随档位变的只有危险因子。
+   */
+  const tripSnap = buildPlayerSnap();
+  const tripRules = explorationRules();
+  return MODE_LIST.map((m) => {
+    const plan = exploreTripPlan({
+      mode: m.id,
+      petId: player.petId,
+      mods: player.finalStats.mods,
+      eventChance,
+    });
+    const foeSet = region ? tripFoeSnaps(region, m.id, tripSnap) : null;
+    const viability = foeSet
+      ? tripViability({
+          playerSnap: tripSnap,
+          foes: foeSet.foes,
+          boss: foeSet.boss,
+          plannedBattles: plan.battles,
+          rules: tripRules,
+        })
+      : null;
+    return exploreModeRow({
+      plan,
       materialsPerBattle: expectedMaterialsPerBattle({
         bias: currentWorldBias(),
         mods: player.finalStats.mods,
@@ -1414,7 +1513,15 @@ const modeRows = computed(() => {
        * 只算**包里的**,不算已穿在身上的(那 120 格是包,不是全身)。
        */
       bagFree: Math.max(0, BAG_CAPACITY - inventory.bagItems.length),
-    }),
-  );
+      viabilityText: viability ? tripViabilityText(viability) : null,
+      /*
+       * 「多半走不完」与「必败」都上色 —— 判的是**同一个读数**（单场胜率与打满概率），
+       * 不去匹配上面刚拼出来的那句话。
+       */
+      viabilityHopeless: viability
+        ? viability.battleWinRate <= 0.05 || viability.surviveChance < 0.5
+        : false,
+    });
+  });
 });
 </script>

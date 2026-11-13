@@ -106,6 +106,25 @@ export interface ExploreModeRow {
    * 已过滤掉 ×1 的项:没做的事不必占字数。空数组表示这一档敌势没有额外来源。
    */
   foeParts: string[];
+  /**
+   * 「这一档我打不打得过」—— 整趟产出那些数的**前提**（见 `core/tripViability`）。
+   *
+   * 第 155 轮实测:新号在青云山麓选「深入探寻」,单场胜率 **0%**,
+   * 而窗上仍写着「整趟约 装备 107 件」。玩家按下去几十秒后收到
+   * 「你身负重伤…此行胜 0 场」—— 窗里一句提示都没有。
+   *
+   * 印在产出**之前**:先回答「拿得到吗」，再回答「能拿多少」。
+   * `null` 表示无从估计（没有敌源可取样），此时不印这一行 ——
+   * 印一句「未知」比不印更糟。
+   */
+  viabilityText: string | null;
+  /**
+   * 这一档是不是「多半走不完 / 必败」—— 模板据此把它画成朱砂色。
+   *
+   * 不带这个布尔，模板就得去正则匹配自己刚拼出来的那句话（「几乎必败」），
+   * 那是把文案当数据用；改一个字就静默失效。
+   */
+  viabilityHopeless: boolean;
 }
 
 /**
@@ -132,6 +151,15 @@ export function exploreModeRow(input: {
    * 不给则退回档位自己的倍率(旧行为)。
    */
   dangerTotal?: number;
+  /**
+   * 这一档「打不打得过」的读数 —— 由调用方从 `core/tripViability` 算好传进来。
+   *
+   * 不给（或不传 `viability`）时退回旧行为:不印这一行。这样排行/文案之外的
+   * 调用点（例如将来别处的预览）不会因为多了一个必填参数而一起漂。
+   */
+  viabilityText?: string | null;
+  /** 这一档是否「多半走不完 / 必败」—— 由 `core/tripViability` 的读数给出 */
+  viabilityHopeless?: boolean;
 }): ExploreModeRow {
   const { plan } = input;
   const mode = EXPLORE_MODES[plan.mode];
@@ -158,6 +186,14 @@ export function exploreModeRow(input: {
     rewardMult: mode.rewardMult,
     dangerMult: mode.dangerMult,
     dangerTotal: input.dangerTotal ?? mode.dangerMult,
+    viabilityText: input.viabilityText ?? null,
+    /*
+     * 「必败」与「多半走不完」都要上色：前者是「按下去一事无成」，
+     * 后者是「上面那些数要打掉大半」—— 两种都该在扫视时被看见。
+     * 判据放在这里而不是模板里，是为了让它读同一个字段（`battleWinRate`），
+     * 而不是去匹配自己拼出来的句子。
+     */
+    viabilityHopeless: input.viabilityHopeless ?? false,
   };
 }
 
