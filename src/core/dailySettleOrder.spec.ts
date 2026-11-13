@@ -32,6 +32,28 @@ import { stripComments } from "@/test/stripComments";
 const PROGRESS = "src/core/progress.ts";
 
 describe("日课 · 先结算再翻页", () => {
+  it("判据的前提还在 —— 那三个函数都还叫这个名字", () => {
+    /*
+     * 防空转的第一层（与 `startupOrder.spec` 同一种写法）。
+     *
+     * 下面三条都靠 `indexOf("function checkDaily()")` 这类**按名字找**的方式定位。
+     * 若哪天函数被重命名，`indexOf` 返回 -1，而断言里那句
+     * `expect(idx).toBeGreaterThan(-1)` 会让它红在「找不到」——
+     * 那是**判据过时**的红，不是产品坏了的红。两者混在一起时，
+     * 下一个人最容易做的事是「把这条判据删掉」。
+     *
+     * 故这一条先单独把「前提还在」报出来。
+     */
+    const src = stripComments(readSource(PROGRESS));
+    for (const name of [
+      "export function track(",
+      "function checkDaily()",
+      "export function rolloverDailyIfNeeded()",
+    ]) {
+      expect(src, `判据的前提没了：${name} —— 判据该跟着改，不是删掉`).toContain(name);
+    }
+  });
+
   it("track 里必须调 checkDaily —— 进度一涨就结算，不留「待领」", () => {
     const src = stripComments(readSource(PROGRESS));
     const idx = src.indexOf("export function track(");

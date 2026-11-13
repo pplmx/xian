@@ -42,6 +42,21 @@ import { readSource } from "@/test/readSource";
 import { stripComments } from "@/test/stripComments";
 
 describe("长线时间尺度 · 到顶还要多久必须可见", () => {
+  it("判据的前提还在 —— 那三处锚点都还在", () => {
+    /*
+     * 防空转（与 `startupOrder.spec` 同一写法）。
+     *
+     * 下面几条靠「锚点字符串」定位:`data-cultivation-apex-eta`、`const apexEtaLine`、
+     * `export function apexEtaText`。锚点一旦被改名，判据会红在「找不到」——
+     * 那是**判据过时**的红。这一条先把话说清楚:**看到这条红，改判据，别删判据。**
+     */
+    const view = stripComments(readSource("src/views/CultivationView.vue"));
+    const core = stripComments(readSource("src/core/apexEta.ts"));
+    expect(view, "视图里的锚点没了").toContain("data-cultivation-apex-eta");
+    expect(view, "视图里的 computed 改名了").toContain("const apexEtaLine");
+    expect(core, "纯函数的出口改名了").toContain("export function apexEtaText");
+  });
+
   it("修行页给出了「到大道尽头」的全局读数", () => {
     /*
      * 这一条是**接线判据**:读数存在不等于它在页面上。
