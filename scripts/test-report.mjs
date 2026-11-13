@@ -686,6 +686,8 @@ const CATEGORIES = [
       "apexEtaVisibility",
       // 数百天报到小时是虚假精度 —— 而那个数每刷新都在跳
       "longRangePrecision",
+      // 一档视口不叫「守住了」:新增的中文读数断言必须多档或显式豁免
+      "layoutViewportCoverage",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

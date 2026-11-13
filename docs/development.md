@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 753 个 spec;本作自己那部分 673 个) |
+| `bun run test` | 全量用例(全量 754 个 spec;本作自己那部分 674 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 753 个 spec = 宿主 673 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 754 个 spec = 宿主 674 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 753 个 spec(本作自己那部分 673 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 754 个 spec(本作自己那部分 674 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -9953,3 +9953,57 @@ layout-check（修行 5 项）      390px 与 200% 缩放都不溢出，热区 �
 
 > 记这一条是为了留证据:**「核过、判断不改」也是一个结论**，
 > 不是每次巡页都必须产出改动。
+
+### 第 179 轮:一档视口不叫「守住了」—— 但也不能要求 1098 条全跑九档
+
+顺着上一轮那条线查下去，撞上一个**取舍**:
+
+```text
+layout-check    122 个任务 · 9 个视口 · 1098 条带 [390] 标签的断言
+全跑九档        门从 ~5 分钟变成 ~45 分钟
+```
+
+一刀切是不行的。真正要区分的是两类断言:
+
+```text
+通用项（横向可滚 / 触控尺寸 / 像素对比度）   页面巡游已在九档各跑一遍
+中文读数（一句带汉字与数字的长文案）          窄屏最容易折行 / 溢出 / 被压掉，
+                                              而这类通常只写在 390 分支里
+```
+
+第 178 轮那条就属于第二类 —— 原始形态是「一档 + 无声明」，
+而**没有任何东西会提醒下一个写这类断言的人**。
+
+### 判据:`core/layoutViewportCoverage.spec`
+
+扫 `layout-check` 里**读了 textContent 又量了 rect** 的断言块，要求它
+至少两档（`setViewportSize` 循环），或在注释里写「单档足够」并给理由。
+
+### 用「基线只许减」而不是「全都要改」
+
+实测 43 块存量。为什么不是 0:
+
+1. 这条判据是**启发式**的 —— 那 43 块里大部分与宽度无关，量几何只是为了**定位**
+   （「取这一行所在位置，再读它的序号」），不是断言宽高;
+2. 1098 条带 `[390]` 标签是既有取舍，一把改九档是另一种失职。
+
+故基线记在判据里，**新增会让它红**。
+
+### 两次故障注入都验过
+
+```text
+新加一块「一档 + 无声明」的断言     44 > 43 → 红
+新加一块带「单档足够」注释的断言     43 ≤ 43 → 绿（豁免真的生效）
+```
+
+第一条证明它能挡新增，第二条证明豁免不是空话 ——
+两个方向都验，否则「基线」很容易变成「永远绿」。
+
+### 判据自己踩的坑:分段切错了
+
+第一版用 `indexOf("await page.evaluate(", m.index + 10)` 切块 —— 而本块的
+`await page.evaluate(` 就在 `const x =` 之后 12 个字符处，切出来只有十来个字符，
+**267 块全是 0 命中**。改成「先收集全部 evaluate 位置，再取严格大于本块的那个」。
+
+> 又一次是「判据自己瞎了」:0 命中时报的是「一块都没扫到」，
+> 而不是「全都通过」——**防空转那条断言救了这次**。
