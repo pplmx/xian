@@ -36,7 +36,7 @@ import { useEndgameStore } from "@/stores/endgame";
 import { useGameStore } from "@/stores/game";
 import type { GNum, LifeReview, ReincarnationView } from "@/types";
 import { recordMilestone } from "./identity";
-import { resetApexCultRemainder } from "./apexCultivation";
+import { resetApexCultRemainder, resetApexQiRemainder } from "./apexCultivation";
 import { abandonExpedition } from "./expedition";
 import { gnZero } from "@/utils/gnum";
 import { librarySubGongfaSlots } from "@/data/buildings";
@@ -331,6 +331,7 @@ export function confirmReincarnation(
    * 没有主人的账)。
    */
   resetApexCultRemainder();
+  resetApexQiRemainder();
   resources.spiritStone = gnZero() as GNum;
   resources.setQi(0, 1);
   resources.wudao = 0;

@@ -75,7 +75,7 @@ import { equipmentTemplate } from "@/data/equipment";
 import { herbGradeOfMajor } from "@/data/herbGrades";
 import { tierMajor } from "./tierScale";
 import { usePlayerStore } from "@/stores/player";
-import { routeCultGain } from "@/stores/apexCultivation";
+import { routeCultGain, routeQiGain } from "@/stores/apexCultivation";
 import { useResourcesStore } from "@/stores/resources";
 import { useDongfuStore } from "@/stores/dongfu";
 import { useCultivationStore } from "@/stores/cultivation";
@@ -243,12 +243,17 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
 
   // ---- 修炼 ----
   const expBefore = { ...player.exp };
+  // 熔真所得要在总结里报出来:满级时修为不进 exp,只看 exp 会写「修为 +0」
+  const daoSourceBefore = useEndgameStore().daoSource;
   // 满级之后这一笔走大道熔真(见 core/apexCultivation);回来时的「所得」照旧记
   routeCultGain(mulN(gn(player.cultPerSec), passiveSec));
 
   // ---- 灵气 ----
   const qiBefore = resources.qi;
-  resources.setQi(resources.qi + player.qiRegenPerSec * passiveSec, player.qiCapValue);
+  const qiRegen = player.qiRegenPerSec * passiveSec;
+  resources.setQi(resources.qi + qiRegen, player.qiCapValue);
+  // 满级且已存满:这一夜的灵气溢出也入炉(见 stores/apexCultivation)
+  routeQiGain(qiBefore, qiRegen);
 
   // ---- 建筑产出 ----
   const herbBefore = resources.herb;
@@ -809,6 +814,8 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
 
   const summary: OfflineSummary = {
     seconds: dtSec,
+    // 满级之后修为不进 exp 而进道源(见 stores/apexCultivation),两笔分开报
+    daoSource: Math.max(0, useEndgameStore().daoSource - daoSourceBefore),
     cappedSeconds: capSec,
     capped: dtSec > capSec + 1,
     exp: sub(player.exp, expBefore),

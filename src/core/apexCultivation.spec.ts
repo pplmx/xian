@@ -13,9 +13,12 @@ import { SUB_LEVELS } from "@/data/constants";
 import { baseCultPerSec, expRequirement } from "@/core/formulas";
 import {
   APEX_CULT_TO_DAO_RATIO,
+  APEX_QI_TO_DAO_RATIO,
   apexCultivationTick,
   apexFurnaceEta,
+  apexQiTick,
   resetApexCultRemainder,
+  resetApexQiRemainder,
 } from "./apexCultivation";
 
 describe("大道熔真 · 判据只有一处", () => {
@@ -205,5 +208,77 @@ describe("大道熔真 · 一天之内必须看得见", () => {
     const eta = apexFurnaceEta(perSec, expReq);
     expect(eta, "满级必须报得出「还差多久得一枚」").toBeTruthy();
     expect(eta.length).toBeGreaterThan(1);
+  });
+});
+
+/*
+ * 灵气那条线 —— 与修为同一个病,同一套约束。
+ *
+ * 满级之后灵气的唯一去处是突破(没了)与疗伤(很少受伤),而它每秒仍回
+ * 9.28e11、约 35 小时把 `qiBankCap` 存满,之后永久封顶。满级玩家看着
+ * 「灵气 100%」那条进度条,和看修为一样。
+ */
+describe("大道熔真 · 灵气满溢", () => {
+  beforeEach(() => {
+    resetApexQiRemainder();
+  });
+
+  it("一天之内看得见,又不至于一天一枚道果", () => {
+    const qiCap = toNumSafe(expRequirement(MAX_MAJOR, SUB_LEVELS - 1)); // 占位,下面用真实值
+    void qiCap;
+    /*
+     * 分母是 `qiBankCap`(标称容量的 QI_BANK_MULT 倍)。第一版误用 `qiCap` 当分母,
+     * 算出来一天 2053 枚 —— 是修为那条的 41 倍。这条用例钉的就是分母不能取错:
+     * 若有人再把分母改回 qiCap,一天会变成十倍以上,这里立刻红。
+     */
+    const ratio = APEX_QI_TO_DAO_RATIO;
+    // 一天回复量 / 存灵上限 × 折算率 = 一天的枚数
+    // 取末境实测的比值:regen 9.28e11、bankCap 1.17e17 ⇒ 一天约 0.685 份
+    const perDayFrac = (9.28e11 * 86400) / 1.17e17;
+    const perDay = perDayFrac * ratio;
+    expect(perDay, `灵气一天出 ${perDay.toFixed(0)} 枚`).toBeGreaterThanOrEqual(1);
+    expect(perDay, `灵气一天出 ${perDay.toFixed(0)} 枚,太快`).toBeLessThan(100);
+  });
+
+  it("与修为那条同量级 —— 两条线不许差一个数量级(第一版差了 41 倍)", () => {
+    const cultPerDay = (6.01e13 / 1.1e20) * APEX_CULT_TO_DAO_RATIO * 86400;
+    const qiPerDay = ((9.28e11 * 86400) / 1.17e17) * APEX_QI_TO_DAO_RATIO;
+    const ratio = qiPerDay / cultPerDay;
+    expect(ratio, `灵气/修为 = ${ratio.toFixed(2)},两条线的量级该接近`).toBeGreaterThan(0.2);
+    expect(ratio).toBeLessThan(5);
+  });
+
+  it("不到一份就没有,且余数不丢", () => {
+    const bank = 1000;
+    const one = bank / APEX_QI_TO_DAO_RATIO; // 刚好一份的回复量
+    const half = one / 2;
+    const a = apexQiTick(half, bank);
+    const b = apexQiTick(half, bank);
+    expect(a + b, "两次半份合起来该是一份").toBe(1);
+  });
+});
+
+/*
+ * 离线归来账上必须看得见熔真所得。
+ *
+ * 满级之后修为不进 `exp`(走熔真),而离线总结原先只报 `exp` ——
+ * 玩家挂一夜回来,账上写着「修为 +0」,明明有产出却一处都没说。
+ */
+describe("大道熔真 · 离线归来账", () => {
+  it("离线总结里有 daoSource 这一笔", () => {
+    const src = readSource("src/core/offline.ts");
+    expect(src, "离线总结要算熔真所得").toContain("daoSource:");
+    expect(src, "要记结算前的道源").toContain("daoSourceBefore");
+  });
+
+  it("归来报告把道源列出来 —— 不许只写「修为 +0」", () => {
+    const dlg = readSource("src/components/offline/OfflineRewardDialog.vue");
+    expect(dlg, "要有道源那一行").toContain("s.daoSource");
+    expect(dlg, "文案要说清它是余修炼来的").toContain("余修炼作");
+  });
+
+  it("未满级那一档不变 —— 修为仍然进 exp,否则绝大多数玩家会看到空账", () => {
+    const src = readSource("src/stores/apexCultivation.ts");
+    expect(src, "未满级仍走 gainExp").toContain("player.gainExp(gained)");
   });
 });

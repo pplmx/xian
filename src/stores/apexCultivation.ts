@@ -17,7 +17,7 @@
 import { usePlayerStore } from "@/stores/player";
 import { useEndgameStore } from "@/stores/endgame";
 import { notify } from "@/core/notify";
-import { apexCultivationTick } from "@/core/apexCultivation";
+import { apexCultivationTick, apexQiTick } from "@/core/apexCultivation";
 import { formatGN } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import type { GNum } from "@/types";
@@ -47,4 +47,34 @@ export function routeCultGain(gained: GNum): void {
    * 整个屏幕糊住。这里 22 天才一枚,频率天然够低。
    */
   notify(`大道熔真:这一炉余修炼作道源 +${formatGN(daoSource)}`, "success");
+}
+
+/**
+ * 满级之后:灵气**存满溢出**的那部分也入炉。
+ *
+ * 为什么只在存满时算:未满级时灵气是给突破与疗伤用的资源,把它算成产出等于
+ * 凭空多给一份 —— 同一笔灵气会既付掉突破、又换成道源。只有满级之后、
+ * `qiBankCap` 已经顶住,新回的那些灵气才是**真的没有去处**。
+ *
+ * 入参是「这一拍本来回了多少」,不是前后差值 —— 存满之后 `setQi` 会把值
+ * 钳在同一个数上,差值恒为 0(第一版就是这么写的,于是**永远产不出**,
+ * 而单测如果只验「没存满时不产」还会全绿)。
+ *
+ * 与修为那条同一个入口(引擎心跳),不另起计时线。
+ *
+ * @param before 这一拍之前的灵气
+ * @param regen  这一拍本该回多少
+ */
+export function routeQiGain(before: number, regen: number): void {
+  const player = usePlayerStore();
+  if (!player.atMaxRealm) return;
+  if (!Number.isFinite(regen) || regen <= 0) return;
+  const bankCap = player.qiBankCapValue;
+  // 只有「已经存满」时,新回的这部分才是溢出 —— 否则它还有用(疗伤)
+  if (before < bankCap) return;
+  // 分母取 `qiBankCap`(灵气真正的天花板),不是标称容量 —— 后者差一个数量级
+  const daoSource = apexQiTick(regen, bankCap);
+  if (daoSource <= 0) return;
+  useEndgameStore().addDaoSource(daoSource);
+  notify(`大道熔真:灵气满溢炼作道源 +${formatGN(daoSource)}`, "success");
 }

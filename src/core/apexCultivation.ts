@@ -89,7 +89,48 @@ export function resetApexCultRemainder(): void {
 }
 
 /**
- * 还差多久炼出下一枚道源 —— 给界面报「约 22 天得 1 道源」。
+ * 灵气 → 道源的折算率:**每一份 `qiBankCap` 换多少道源**。
+ *
+ * 与修为同一个病:满级之后灵气的**唯一**去处是突破(没了)与疗伤(很少受伤),
+ * 而它每秒仍回 9.28e11、约 35 小时把 `qiBankCap` 存满 —— 之后永久封顶,
+ * 再没有任何去处。
+ *
+ * ## 定标(第二版,第一版错了)
+ *
+ * 第一版拿 `qiCap`(标称上限,1.17e16)当分母、取 300,算下来**一天 2053 枚** ——
+ * 是修为那条(50 枚)的 41 倍,把整个终局经济一脚踢歪。错在分母:灵气能积到
+ * 标称容量的 10 倍(`QI_BANK_MULT`),拿小一个数量级的分母去除,自然大十倍。
+ *
+ * 现在拿 `qiBankCap`(真正的天花板)当分母,并取 **90**:
+ * 一天约 **57 枚**,与修为的 50 枚同量级 —— 两条线合起来一天 100 余枚,
+ * 仍是转世(69600 道源)的 1/700,不构成替代。
+ */
+export const APEX_QI_TO_DAO_RATIO = 90;
+
+/**
+ * 满级之后,把溢出的灵气也炼作道源。
+ *
+ * 与修为那条分开计余数:两者的「一份」差 65 倍,共用余数会让灵气那一侧
+ * 永远攒不满(被修为的大数淹没)。
+ */
+let remainQi = 0;
+
+export function apexQiTick(gained: number, qiBankCap: number): number {
+  if (!Number.isFinite(gained) || gained <= 0) return 0;
+  if (!Number.isFinite(qiBankCap) || qiBankCap <= 0) return 0;
+  remainQi += (gained / qiBankCap) * APEX_QI_TO_DAO_RATIO;
+  const whole = Math.floor(remainQi);
+  if (whole <= 0) return 0;
+  remainQi -= whole;
+  return whole;
+}
+
+/** 转世时复位 —— 与修为那条同一条理由 */
+export function resetApexQiRemainder(): void {
+  remainQi = 0;
+}
+
+/** 还差多久炼出下一枚道源 —— 给界面报「约 22 天得 1 道源」。
  *
  * 为什么必须报:满级之后修速那一格仍在跳(每秒 5.7e13),而进度条不动。
  * 没有这一句,玩家只看到「数字在涨、什么也没发生」—— 那正是这条路被

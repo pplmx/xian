@@ -108,9 +108,20 @@
             卷首这一行却只是占着位置指路。
             充盈后的加成是「值不值得等」的答案,那两处都没说,正好由这一格给。
           -->
-          <span class="cultivation-masthead__readout-note tabular">{{
-            qiRichInfo.on ? "充盈 · 修炼加成" : `充盈后修炼 +${formatPercent(QI_RICH_BONUS)}`
-          }}</span>
+          <!--
+            满级之后这一格也换口:灵气充盈的「修炼 +15%」对满级玩家毫无意义
+            (修为走熔真了,加成落在一条已经封顶的线上)。此时该说的是
+            「存满之后溢出的那部分去了哪」——与修为那一格同一条口径。
+          -->
+          <span class="cultivation-masthead__readout-note tabular">
+            <template v-if="player.atMaxRealm">
+              <template v-if="qiAtBankCap">已存满 · 满溢炼作道源</template>
+              <template v-else>未存满 · 存满后溢出入炉</template>
+            </template>
+            <template v-else>{{
+              qiRichInfo.on ? "充盈 · 修炼加成" : `充盈后修炼 +${formatPercent(QI_RICH_BONUS)}`
+            }}</template>
+          </span>
         </div>
       </div>
     </FolioPageHeader>
@@ -545,6 +556,9 @@ const resources = useResourcesStore();
  * 与 `core/apexCultivation` 的折算同源(它读 `APEX_CULT_TO_DAO_RATIO`),
  * 不在这里另算一遍天数。未满级时返回空串,调用方那一格走原口径。
  */
+/** 灵气是否已顶到存灵上限(满级之后判「满溢入炉」用) */
+const qiAtBankCap = computed(() => resources.qi >= player.qiBankCapValue);
+
 const apexFurnaceEtaText = computed(() =>
   player.atMaxRealm ? apexFurnaceEta(player.cultPerSec, toNum(player.expReq)) : "",
 );

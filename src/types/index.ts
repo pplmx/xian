@@ -1176,6 +1176,14 @@ export interface OfflineSummary {
   stone: GNum;
   /** 灵气回充量(受上限约束,故记实际差额) */
   qi: number;
+  /**
+   * 满级之后熔真所得的道源 —— 未满级时恒为 0。
+   *
+   * 满级玩家的修为不再进 `exp`(那条线走熔真),若只报 `exp`,玩家的离线
+   * 归来账上会写着「修为 +0」—— 明明挂了一夜,账上什么都没有。故两笔分开报:
+   * 未满级看 `exp`,满级看这一笔。
+   */
+  daoSource: number;
   herb: number;
   ore: number;
   /** 功法残页实际增量 */

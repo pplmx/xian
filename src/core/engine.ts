@@ -12,7 +12,7 @@ import {
 } from "@/data/constants";
 import { useGameStore } from "@/stores/game";
 import { usePlayerStore } from "@/stores/player";
-import { routeCultGain } from "@/stores/apexCultivation";
+import { routeCultGain, routeQiGain } from "@/stores/apexCultivation";
 import { useResourcesStore } from "@/stores/resources";
 import { useDongfuStore } from "@/stores/dongfu";
 import { useCultivationStore } from "@/stores/cultivation";
@@ -268,8 +268,12 @@ class GameEngine {
       // 修为增长
       // 满级之后这一笔走大道熔真(见 core/apexCultivation):同一笔修为只走一边
       routeCultGain(mulN(gn(player.cultPerSec), dt));
-      // 灵气恢复
-      resources.setQi(resources.qi + player.qiRegenPerSec * dt, player.qiCapValue);
+      // 灵气恢复 —— 满级之后存满溢出的那部分走大道熔真(见 stores/apexCultivation)
+      const qiBefore = resources.qi;
+      const qiRegen = player.qiRegenPerSec * dt;
+      resources.setQi(resources.qi + qiRegen, player.qiCapValue);
+      // 存满之后新回的这部分是溢出,走熔真(入参是本拍回复量,不是前后差值)
+      routeQiGain(qiBefore, qiRegen);
       // 建筑产出:dongfu 只算数,记进资源账是这一步的事(见 dongfu.produce 的说明)
       for (const [key, whole] of Object.entries(dongfu.produce(dt))) {
         resources.addSmall(key as SmallResourceId, whole as number);

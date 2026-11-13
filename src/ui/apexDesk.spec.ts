@@ -144,3 +144,33 @@ describe("终局 · 碑记真的要记下来", () => {
     expect(core, "要记下终局那一枚").toContain("recordMilestone(APEX_MILESTONE.id)");
   });
 });
+
+/*
+ * 满级之后,卷首那三格都要改口 —— 它们原先报的每一句都失效了。
+ *
+ * 「此刻行速」:修为走熔真了,那个数不再进修为。
+ * 「灵气 +充盈后修炼 +15%」:加成落在一条已经封顶的线上,毫无意义。
+ * 「本境 圆满」:原先配一句「还需过某一关」,现在该说「大道已尽」。
+ *
+ * 三格里任何一格不改口,玩家就会看到「数字在跳、什么也没发生」——
+ * 那正是终局主循环看起来在转、其实断了的样子。
+ */
+describe("终局 · 卷首三格都改口", () => {
+  const view = readSource("src/views/CultivationView.vue");
+
+  it("修速那一格:满级改成「大道熔真」并报 ETA", () => {
+    expect(view, "要按 atMaxRealm 分叉").toContain("player.atMaxRealm");
+    expect(view, "要改口成大道熔真").toContain("大道熔真");
+    expect(view, "要报「还差多久得一枚」").toContain("apexFurnaceEtaText");
+  });
+
+  it("灵气那一格:满级改成「满溢入炉」,不再说修炼加成", () => {
+    expect(view, "要判存满").toContain("qiAtBankCap");
+    expect(view, "要改口").toContain("满溢炼作道源");
+  });
+
+  it("未满级时三格仍是原口径 —— 改口不许波及绝大多数玩家", () => {
+    expect(view, "未满级仍报此刻行速").toContain("此刻行速");
+    expect(view, "未满级仍报充盈加成").toContain("QI_RICH_BONUS");
+  });
+});

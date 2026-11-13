@@ -237,6 +237,18 @@ const rows = computed<RewardRow[]>(() => {
           : "";
     list.push({ icon: "flame", label: "修为", value: `+${formatGN(s.exp)}${push}`, gain: true });
   }
+  /*
+   * 熔真所得 —— 满级之后修为不进 `exp`(那条线走熔真),故这一行必须单独列。
+   * 没有它,满级玩家挂一夜回来看到的是「修为 +0」,账上什么也没有:
+   * 明明有产出,却因为没有一处说它,等于没有。
+   */
+  if (s.daoSource > 0)
+    list.push({
+      icon: "flame",
+      label: "道源",
+      value: `+${formatGN(s.daoSource)} · 余修炼作`,
+      gain: true,
+    });
   if (s.stone.m > 0)
     list.push({ icon: "gem", label: "灵石", value: `+${formatGN(s.stone)}`, gain: true });
   if (s.qi > 0)
