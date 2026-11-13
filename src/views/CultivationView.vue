@@ -125,7 +125,11 @@
           <div class="cultivation-ledger__primary" data-cultivation-primary>
             <div class="cultivation-ledger__primary-head">
               <span>本境修为</span>
-              <span class="text-qing">下一步 → {{ btInfo.targetLabel }}</span>
+              <!-- 到顶就没有「下一步」:末境硬算会钳回末境自己,拼出「混沌道祖·一层」 -->
+              <span v-if="btInfo.targetLabel" class="text-qing"
+                >下一步 → {{ btInfo.targetLabel }}</span
+              >
+              <span v-else class="text-qing" data-cultivation-apex>已至大道尽头</span>
             </div>
             <div
               data-value-row
@@ -528,6 +532,7 @@ const stage = computed(() =>
     expFull: player.expFull,
     breakthroughReady: btInfo.value.ready,
     breakthroughReason: btInfo.value.reason,
+    atMaxRealm: player.atMaxRealm,
     retreating: isRetreating(),
     injured: cultivation.hasBuff("injury"),
   }),
@@ -573,13 +578,22 @@ const {
    * 它每天都在动。故把它从脚注提成独立一行(用 text 走时长格式,没有精确值可展开)。
    */
   etaRow: { label: "预计", hint: "按当前修炼速度;未计战斗所得与丹药" },
-  /** 修为见满还需多久(已满/无速率时说人话,不给假时长) */
-  fullText: "已满 —— 下一步是突破",
+  /**
+   * 修为见满还需多久(已满/无速率时说人话,不给假时长)。
+   *
+   * 到顶之后没有「下一步是突破」—— 那一步不存在了。读到「已满 —— 下一步是突破」
+   * 而人已经站在大道尽头,是把终点写成了中转站。
+   */
+  fullText: player.atMaxRealm ? "已满 —— 已是大道尽头" : "已满 —— 下一步是突破",
   almostText: "就要满了",
   rateEmptyText: "当前无修为进项",
   formatEta: (sec) => `约 ${formatDuration(sec)}`,
   note: () => {
-    if (player.expFull) return "修为已满 —— 下一步是突破,不是再攒。";
+    if (player.expFull) {
+      return player.atMaxRealm
+        ? "修为已满 —— 已是大道尽头,不必再攒。"
+        : "修为已满 —— 下一步是突破,不是再攒。";
+    }
     return undefined;
   },
 });

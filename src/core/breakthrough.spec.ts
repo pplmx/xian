@@ -23,7 +23,8 @@ import type { StatMods } from "@/types";
 import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useCultivationStore } from "@/stores/cultivation";
-import { REALMS, WORLDS } from "@/data/realms";
+import { MAX_MAJOR, REALMS, WORLDS, realmLabel } from "@/data/realms";
+import { SUB_LEVELS } from "@/data/constants";
 
 describe("渡劫成功率推演", () => {
   beforeEach(() => {
@@ -280,5 +281,54 @@ describe("气运折算 · 系数只有一个出处", () => {
   it("常量本身有个名字,不是散在公式里", () => {
     const consts = readFileSync(resolve(__dirname, "../data/constants.ts"), "utf8");
     expect(consts, "常量要有名字与说明").toMatch(/export const BT_LUCK_TO_RATE = 0\.05;/);
+  });
+});
+
+/*
+ * 到顶的「下一境」—— 玩家报了:「已经混沌道祖圆满,却还显示下一境 混沌道祖·一层」。
+ *
+ * 根因是**越界加一被静默钳回**:`realmDef(MAX_MAJOR + 1)` 与 `SUB_NAMES[0]` 两头都会
+ * `Math.min` 到边界,于是末境不报错、悄悄回绕成末境自己,`nextSub = 0` 再把它拼成
+ * 「混沌道祖·一层」。玩家已经在圆满,界面却写着「下一境 一层」。
+ *
+ * 到顶就是没有下一境 —— 与 `skillNextStageName`(技艺到「大成」返回 null)同一条口径。
+ */
+describe("突破 · 已至大道尽头没有「下一境」", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
+
+  it("末境圆满:targetLabel 为 null(不是被钳回来的「混沌道祖·一层」)", () => {
+    const player = usePlayerStore();
+    player.major = MAX_MAJOR;
+    player.sub = SUB_LEVELS - 1;
+    expect(player.atMaxRealm, "前提:确实到顶").toBe(true);
+
+    const info = breakthroughInfo();
+    expect(info.ready, "到顶不可再破").toBe(false);
+    expect(info.reason).toBe("已至大道尽头");
+    expect(info.targetLabel, "到顶不该有下一境").toBeNull();
+  });
+
+  it("末境倒数第二层:targetLabel 退回「圆满」,不是 null", () => {
+    const player = usePlayerStore();
+    player.major = MAX_MAJOR;
+    player.sub = SUB_LEVELS - 2;
+    const info = breakthroughInfo();
+    expect(info.targetLabel).toBe(realmLabel(MAX_MAJOR, SUB_LEVELS - 1));
+  });
+
+  it("倒数第二境圆满:该跨向末境一层,不是 null", () => {
+    const player = usePlayerStore();
+    player.major = MAX_MAJOR - 1;
+    player.sub = SUB_LEVELS - 1;
+    const info = breakthroughInfo();
+    expect(info.targetLabel, "还没到顶,跨境目标要照常给").toBe(realmLabel(MAX_MAJOR, 0));
+  });
+
+  it("故障注入:照老写法算,末境会得到「混沌道祖·一层」—— 这正是那条错", () => {
+    // 老代码就是 `realmLabel(major + 1, 0)`,两头钳完变成末境自己
+    expect(realmLabel(MAX_MAJOR + 1, 0)).toBe(realmLabel(MAX_MAJOR, 0));
+    expect(realmLabel(MAX_MAJOR + 1, 0)).not.toBe(realmLabel(MAX_MAJOR, SUB_LEVELS - 1));
   });
 });

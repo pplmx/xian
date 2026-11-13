@@ -15,8 +15,15 @@
             {{ btInfo.ready ? "可破" : btInfo.reason }}
           </span>
         </div>
-        <p class="cultivation-action__lede">
+        <!--
+          到顶之后不再有「下一境」—— 那时 `targetLabel` 是 null(见 core/breakthrough):
+          末境上硬算会被钳回末境自己,拼出「混沌道祖·一层」,而玩家已经在圆满。
+        -->
+        <p v-if="btInfo.targetLabel" class="cultivation-action__lede">
           下一境 {{ btInfo.targetLabel }} · 成败、代价与此刻能补的筹码都在这一账。
+        </p>
+        <p v-else class="cultivation-action__lede" data-cultivation-at-apex>
+          大道已尽,再无可破之境 —— 这一世的修行到此为止。
         </p>
       </div>
     </header>
@@ -59,6 +66,17 @@
               <template v-if="tribPlan.risks.length"> · {{ tribPlan.risks[0] }}</template>
             </p>
           </template>
+          <!--
+            「非大关」只在大关之外成立。到顶时 `tribPlan` 同样为 null,但此时是
+            **没有下一关了**,不是"这一关不用渡劫" —— 说「非大关」会与下方那句
+            「此乃大关,需渡天劫」当场打架(实测同屏并存)。
+          -->
+          <p
+            v-else-if="player.atMaxRealm"
+            class="cultivation-breakthrough__value font-kai text-ink-faint"
+          >
+            已至尽头
+          </p>
           <p v-else class="cultivation-breakthrough__value font-kai text-ink-faint">非大关</p>
         </div>
       </div>
@@ -105,7 +123,15 @@
 
       <!-- 劫势详情(决意前评估:风险维度 + 建议)→ TribulationPanel,注释与读数群随本体迁入 -->
       <TribulationPanel v-if="tribPlan" :plan="tribPlan" />
-      <p data-value-row class="cultivation-breakthrough__cost text-body text-ink-soft tabular">
+      <!--
+        到顶就不摊这一笔了:突破不可能发生,「耗灵气多少」与「此乃大关,需渡天劫」
+        都是在描述一件不存在的事 —— 后者还会与上面那句「已至尽头」当场打架。
+      -->
+      <p
+        v-if="!player.atMaxRealm"
+        data-value-row
+        class="cultivation-breakthrough__cost text-body text-ink-soft tabular"
+      >
         耗灵气 {{ formatNum(btInfo.qiCost) }}
         <template v-if="btInfo.needTribulation">
           ·
@@ -117,7 +143,7 @@
          且不复述「只损修为」那种不完整的账。
          减多少由 buff 本体现算:这里曾读 injury 的 desc,而 desc 现在只写风味 ——
          数值若留在那句风味里,改 mods 之后这行就成了唯一不跟的那处。 -->
-      <p class="cultivation-breakthrough__risk tabular">
+      <p v-if="!player.atMaxRealm" class="cultivation-breakthrough__risk tabular">
         突破不成损修为 {{ formatPercent(BT_FAIL_EXP_LOSS) }}、身负
         <span class="text-cinnabar">重伤</span>({{ modsText(injuryDef.mods) }},持续
         {{ cnNumber(INJURY_DURATION) }}
@@ -293,7 +319,17 @@ const PLAN_COLOR: Record<TribulationPlan["verdict"], string> = {
  * 「是不是大关」由 player.isMajorStep 直接给,与 btInfo.needTribulation 同源
  * (见 breakthrough.ts 的 needTribulation = isMajorStep),值守恒不靠副产物。
  */
-const tribPlan = computed(() => (player.isMajorStep ? currentTribulationPlan(player) : null));
+/*
+ * 到顶之后不再有「这一劫」—— 末境圆满时 `isMajorStep` 仍为真(sub 已满),若不拦,
+ * 上面那张劫势账会照算一份**永远不会来的天劫**:玩家已经站在大道尽头,
+ * 界面却在评估下一关的劫型、道数与风险。
+ *
+ * `currentTribulationPlan` 的返回类型不可为空,故这道闸在调用方 —— 与本卡其余
+ * 「到顶改口」的地方(`btInfo.targetLabel` 为 null)同一条口径。
+ */
+const tribPlan = computed(() =>
+  !player.atMaxRealm && player.isMajorStep ? currentTribulationPlan(player) : null,
+);
 
 /**
  * 下一个大关将遇何劫 —— 只在「熟知天界」以后给（`heavenInsight`）。
@@ -311,6 +347,12 @@ const tribPlan = computed(() => (player.isMajorStep ? currentTribulationPlan(pla
  */
 const nextTribPreview = computed(() => {
   if (!stageAt(totalInsight()).heavenInsight) return null;
+  /*
+   * 到顶之后没有「下一个大关」—— `nextTribulationPreview` 的注释早写明
+   * 「到顶时调用方传 null」,而这里此前没传:`major + 1` 越界又被钳回末境,
+   * 于是终局玩家看到「下一个大关是某劫」,而那个大关不存在。
+   */
+  if (player.atMaxRealm) return null;
   return nextTribulationPreview(true, rollTribulation(player.major + 1), player.major + 1);
 });
 

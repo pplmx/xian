@@ -262,3 +262,36 @@ describe("此刻最该做的一件事 · 真接线", () => {
     expect(hook, "不在本页说的判定要走共享函数").toContain("nextStepForPage(");
   });
 });
+
+/*
+ * 到顶之后不许再说「还需过某一关」。
+ *
+ * `breakthroughReason` 到顶时是「已至大道尽头」,直接拼进「还需过「…」」就成了
+ * 「修为已满,还需过「已至大道尽头」」—— 而上一支「可谋来世」才是那时该说的话。
+ */
+describe("下一步指引 · 已至大道尽头", () => {
+  it("到顶 + 修为满:给「可谋来世」,不给「还需过『已至大道尽头』」", () => {
+    const step = nextStepOf(
+      withX({
+        expFull: true,
+        breakthroughReady: false,
+        breakthroughReason: "已至大道尽头",
+        endgameReached: true,
+      }),
+    );
+    expect(step?.id, "到顶该指往来世").toBe("endgame");
+    expect(step?.text ?? "", "把终点当关卡了").not.toContain("还需过");
+  });
+
+  it("未到顶 + 修为满:照旧说清差哪一关", () => {
+    const step = nextStepOf(
+      withX({
+        expFull: true,
+        breakthroughReady: false,
+        breakthroughReason: "灵气不足",
+        endgameReached: false,
+      }),
+    );
+    expect(step?.text).toContain("还需过「灵气不足」");
+  });
+});

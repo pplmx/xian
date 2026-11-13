@@ -71,25 +71,37 @@ export function generateCurrentGoal(player: PlayerStore): Goal | null {
   // 1. 死后无目标
   if (player.dead) return null;
 
-  // 2. 修为接近突破(最高优先级)
-  if (player.expProgress >= 0.85) {
-    const next = realmLabel(player.major, Math.min(player.sub + 1, SUB_LEVELS - 1));
-    return {
-      type: "breakthrough",
-      text: `尝试突破「${next}」`,
-      progress: player.expProgress,
-      hint: "修为已近圆满,服用凝神丹或静坐调息可提升成功率",
-      destination: { to: "/cultivation", label: "去修炼" },
-    };
-  }
-  if (player.expProgress >= 0.5) {
-    const next = realmLabel(player.major, Math.min(player.sub + 1, SUB_LEVELS - 1));
-    return {
-      type: "breakthrough",
-      text: `向「${next}」迈进`,
-      progress: player.expProgress,
-      destination: { to: "/cultivation", label: "去修炼" },
-    };
+  /*
+   * 2. 修为接近突破(最高优先级)—— **但到顶之后就没有突破了**。
+   *
+   * 原先这两支对已至大道尽头的玩家照样触发:`Math.min(sub + 1, SUB_LEVELS - 1)` 把
+   * 「下一层」钳成了**当前这一层**,于是末境圆满的玩家看到「尝试突破「混沌道祖·圆满」」
+   * —— 让玩家去突破一个自己正待着的境界。修为攒满在末境是常态(越到后面越容易满),
+   * 所以这条不是罕见边界,而是终局玩家每天都会看到的那一句。
+   *
+   * 到顶之后跳过这两支,落到下面「还能做什么」的实际目标上。
+   */
+  const atApex = player.atMaxRealm;
+  if (!atApex) {
+    if (player.expProgress >= 0.85) {
+      const next = realmLabel(player.major, Math.min(player.sub + 1, SUB_LEVELS - 1));
+      return {
+        type: "breakthrough",
+        text: `尝试突破「${next}」`,
+        progress: player.expProgress,
+        hint: "修为已近圆满,服用凝神丹或静坐调息可提升成功率",
+        destination: { to: "/cultivation", label: "去修炼" },
+      };
+    }
+    if (player.expProgress >= 0.5) {
+      const next = realmLabel(player.major, Math.min(player.sub + 1, SUB_LEVELS - 1));
+      return {
+        type: "breakthrough",
+        text: `向「${next}」迈进`,
+        progress: player.expProgress,
+        destination: { to: "/cultivation", label: "去修炼" },
+      };
+    }
   }
 
   // 3. 检测 Build 完整度(中期核心目标)

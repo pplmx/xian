@@ -82,7 +82,14 @@ export interface BreakthroughInfo {
   qiCost: number;
   isMajor: boolean;
   needTribulation: boolean;
-  targetLabel: string;
+  /**
+   * 下一境的名字。
+   *
+   * **已至大道尽头时为 null** —— 那时没有下一境,调用方据此改口(见 `atMaxRealm`)。
+   * 从前它恒为字符串,末境上会被钳成「混沌道祖·一层」,于是界面上「下一境」与
+   * 「已至大道尽头」同时出现,自相矛盾。
+   */
+  targetLabel: string | null;
   /** 突破准备状态(就绪时 rate 已并入加成,见 AN 接线) */
   prep: BreakthroughPrepView;
 }
@@ -165,9 +172,10 @@ export function breakthroughInfo(): BreakthroughInfo {
       modOf(mods, "luck") * BT_LUCK_TO_RATE +
       (prep.ready ? prep.bonus : 0),
   );
+  const atMaxRealm = player.atMaxRealm;
   let ready = true;
   let reason = "";
-  if (player.atMaxRealm) {
+  if (atMaxRealm) {
     ready = false;
     reason = "已至大道尽头";
   } else if (!player.expFull) {
@@ -185,7 +193,18 @@ export function breakthroughInfo(): BreakthroughInfo {
     qiCost,
     isMajor,
     needTribulation,
-    targetLabel: realmLabel(nextMajor, nextSub),
+    /*
+     * 已至大道尽头就没有「下一境」—— 这里必须给 null,不能照算。
+     *
+     * `realmDef()` 与 `SUB_NAMES` 两头都会**钳**到边界(见 data/realms 的
+     * `Math.min(MAX_MAJOR, major)`),于是 `major + 1` 在末境上不报错、悄悄回绕成末境自
+     * 己;`nextSub = 0` 又把它拼成「混沌道祖·一层」。玩家已经在「混沌道祖·圆满」,
+     * 界面却写着「下一境 混沌道祖·一层」—— 已经在终点,却被告知还有一个前方。
+     *
+     * 与 `skillNextStageName`(技艺到「大成」返回 null)同一条口径:到顶就是 null,
+     * 调用方据此改口,而不是各自去猜。
+     */
+    targetLabel: atMaxRealm ? null : realmLabel(nextMajor, nextSub),
     prep,
   };
 }
@@ -374,7 +393,8 @@ export function attemptBreakthrough(): BreakthroughView | null {
     view = {
       success: false,
       fromLabel,
-      toLabel: info.targetLabel,
+      // 失败时印面走「滞」,不用它;类型要求完整故给当前那一境(与 toRealmName 同一条)
+      toLabel: player.realmName,
       isMajor: info.isMajor,
       // 失败时印面走「滞」,不用它;类型要求完整故照实给(仍是当前那一境)
       toRealmName: player.realm.name,

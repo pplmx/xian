@@ -9,6 +9,9 @@ import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
 import { gn, toNum, gnZero } from "@/utils/gnum";
 import { generateCurrentGoal } from "./goal";
+import { MAX_MAJOR, realmLabel } from "@/data/realms";
+import { SUB_LEVELS } from "@/data/constants";
+import { expRequirement } from "./formulas";
 
 const { setBuild } = vi.hoisted(() => ({ setBuild: { value: null as unknown } }));
 vi.mock("./buildDetect", () => ({ detectBuild: () => setBuild.value }));
@@ -209,5 +212,45 @@ describe("修行目标(Phase 29)", () => {
     adventure.cleared = [];
     useResourcesStore().spendHerbs(1, useResourcesStore().herbOf(1)); // 灵草见底
     expect(generateCurrentGoal(player)).toBeNull();
+  });
+});
+
+/*
+ * 到顶之后不该再有「突破」目标。
+ *
+ * 原先 `Math.min(sub + 1, SUB_LEVELS - 1)` 把「下一层」钳成**当前这一层**:
+ * 末境圆满的玩家看到「尝试突破「混沌道祖·圆满」」—— 让他去突破一个自己正待着的
+ * 境界。而末境攒满修为是常态(越到后面越容易满),所以这不是罕见边界,
+ * 是终局玩家每天都会看到的那一句。
+ */
+describe("修行目标 · 已至大道尽头", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    setBuild.value = null;
+  });
+
+  it("末境圆满 + 修为已满:不再给突破目标,也不报当前这一境为「下一境」", async () => {
+    const player = usePlayerStore();
+    player.major = MAX_MAJOR;
+    player.sub = SUB_LEVELS - 1;
+    player.exp = expRequirement(MAX_MAJOR, SUB_LEVELS - 1);
+    expect(player.atMaxRealm, "前提:确实到顶了").toBe(true);
+
+    const goal = generateCurrentGoal(player as never);
+    expect(goal, "到顶仍要有目标 —— 只是不该是突破").not.toBeNull();
+    expect(goal?.type, "到顶之后还给突破目标").not.toBe("breakthrough");
+    expect(goal?.text ?? "", "不该让玩家去突破自己正待着的境界").not.toContain(
+      realmLabel(MAX_MAJOR, SUB_LEVELS - 1),
+    );
+  });
+
+  it("末境倒数第二层:突破目标照常,指向「圆满」", () => {
+    const player = usePlayerStore();
+    player.major = MAX_MAJOR;
+    player.sub = SUB_LEVELS - 2;
+    player.exp = expRequirement(MAX_MAJOR, SUB_LEVELS - 2);
+    const goal = generateCurrentGoal(player as never);
+    expect(goal?.type, "还没到顶,该照常给突破").toBe("breakthrough");
+    expect(goal?.text).toContain(realmLabel(MAX_MAJOR, SUB_LEVELS - 1));
   });
 });

@@ -129,7 +129,14 @@ export function nextStepOf(input: NextStepInput): NextStep | null {
      */
     return { id: "equip", text: "行囊里有未上阵的一件", route: "inventory" };
   }
-  if (input.expFull && input.breakthroughReason.trim()) {
+  /*
+   * 「还需过某一关」—— **到顶除外**。
+   *
+   * `breakthroughReason` 填的是「为什么还不能破」,到顶时是「已至大道尽头」;
+   * 直接拼进「还需过「…」」就成了「修为已满,还需过「已至大道尽头」」——
+   * 把终点写成了一道门。到顶该走上面那条「可谋来世」,故这里先排掉。
+   */
+  if (!input.endgameReached && input.expFull && input.breakthroughReason.trim()) {
     const reason = input.breakthroughReason.trim();
     return { id: "gate", text: `修为已满,还需过「${reason}」`, route: "cultivation" };
   }

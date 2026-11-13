@@ -4,6 +4,14 @@ export interface CultivationStageInput {
   breakthroughReason: string;
   retreating: boolean;
   injured: boolean;
+  /**
+   * 已至大道尽头。
+   *
+   * `breakthroughReason` 在到顶时也是「已至大道尽头」——它填的是**为什么不能破**,
+   * 不是「还差哪一关」。原先这里把 reason 直接当关卡名拼进 `还需过「${reason}」这一关`,
+   * 于是终局玩家读到「还需过「已至大道尽头」这一关」:把终局状态当成了一道门。
+   */
+  atMaxRealm?: boolean;
 }
 
 export interface CultivationStage {
@@ -27,6 +35,18 @@ export function cultivationStageOf(input: CultivationStageInput): CultivationSta
     };
   }
   if (input.expFull) {
+    /*
+     * 到顶和「差一关」是两件事:`breakthroughReason` 在到顶时同样有值(「已至大道尽头」),
+     * 但它说的是**为什么不能破**,不是「还差哪一道门」。原先不区分,终局玩家会读到
+     * 「还需过「已至大道尽头」这一关」—— 把终点当关卡。
+     */
+    if (input.atMaxRealm) {
+      return {
+        key: "full",
+        label: "大道已尽",
+        hint: "本境已是大道尽头，再无可破之境 —— 这一世的修行到此为止。",
+      };
+    }
     const reason = input.breakthroughReason.trim();
     return {
       key: "full",
