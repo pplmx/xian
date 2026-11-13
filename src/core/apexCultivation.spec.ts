@@ -282,3 +282,28 @@ describe("大道熔真 · 离线归来账", () => {
     expect(src, "未满级仍走 gainExp").toContain("player.gainExp(gained)");
   });
 });
+
+/*
+ * 离线那一屏的文案不许在满级时撒谎。
+ *
+ * 实测抓到过:满级玩家挂一夜回来,归来账底部写着「修为已至圆满,可尝试突破」
+ * —— 而到顶之后突破不可能发生(破境卡整张都不渲染)。同屏还写着
+ * 「道源 +56 · 余修炼作」,两句话互相打脸。
+ */
+describe("大道熔真 · 离线那屏的文案", () => {
+  it("满级时说熔真,不说「可尝试突破」", () => {
+    const src = readSource("src/core/offline.ts");
+    expect(src, "要按满级分叉").toContain("player.atMaxRealm");
+    expect(src, "满级那一支要说熔真").toContain("余修尽数熔作道源");
+    // 未满级那一支必须保留,否则绝大多数玩家会看到错的文案
+    expect(src, "未满级仍说可尝试突破").toContain("可尝试突破");
+  });
+
+  it("道源那一行的图标不与修为撞 —— 两行同用 flame 时看不出是新东西", () => {
+    const dlg = readSource("src/components/offline/OfflineRewardDialog.vue");
+    // 修为那一行用 flame(既有),道源那一行不该也是 flame
+    const daoBlock = dlg.slice(dlg.indexOf('label: "道源"') - 200, dlg.indexOf('label: "道源"'));
+    expect(daoBlock, "道源那一行还沿用修为的火焰图标").not.toContain('icon: "flame"');
+    expect(daoBlock, "道源该有自己的图标").toContain("icon:");
+  });
+});

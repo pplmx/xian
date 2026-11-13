@@ -244,7 +244,8 @@ const rows = computed<RewardRow[]>(() => {
    */
   if (s.daoSource > 0)
     list.push({
-      icon: "flame",
+      // 道源是天界的道之气,不是修为那种「火候」—— flame 与上面「修为」那行撞了图标
+      icon: "sparkles",
       label: "道源",
       value: `+${formatGN(s.daoSource)} · 余修炼作`,
       gain: true,

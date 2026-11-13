@@ -839,7 +839,13 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
     region: regionIdentity,
     notes,
   };
-  if (player.expFull) notes.push("修为已至圆满,可尝试突破");
+  /*
+   * 满级之后不能再说「可尝试突破」—— 突破不可能发生(破境卡整张都不渲染)。
+   * 那时这一幕的主角是**熔真**:这一夜的余修炼成了道源,该说的是这个。
+   */
+  if (player.expFull) {
+    notes.push(player.atMaxRealm ? "修为已至大道尽头,余修尽数熔作道源" : "修为已至圆满,可尝试突破");
+  }
   if (summary.ageYears > 0) notes.push(`闭关期间寿元流逝 ${summary.ageYears} 载`);
   if (expiredBuffList.length > 0) {
     notes.push(`闭关期间增益到期:${expiredBuffList.join("、")}`);
