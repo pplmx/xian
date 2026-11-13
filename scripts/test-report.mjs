@@ -700,6 +700,8 @@ const CATEGORIES = [
       "dailyRouteTab",
       // 灵草五品与丹药九档重名(凡品/灵品/仙品/神品),同屏出现只靠标签与后缀分开
       "brewHerbGradeNaming",
+      // 突破成功只有音效与境界名变化,同境内逐层那八次是静默的
+      "breakthroughFeedback",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

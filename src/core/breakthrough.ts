@@ -329,6 +329,20 @@ export function attemptBreakthrough(): BreakthroughView | null {
     // 境界名现取),自带「跨过才触发」—— 同境内逐层突破(from==to)不会重复轰炸。
     const announcement = firstUnlockAnnouncement(prevMajor, player.major);
     if (announcement) notify(announcement, "rare");
+    /*
+     * 同境逐层也要有一句 —— 那一句此前没有。
+     *
+     * 上面那条 `announcement` 只在**首次跨入门槛**时触发（`from === to` 时返回 null），
+     * 而同境内逐层突破占九次里的八次:境界名从「元婴·五层」变「元婴·六层」，
+     * 一声音效、修为扣掉 —— 玩家拿到的全是**损失**感，没有**成就**感。
+     *
+     * 别处同类动作都有文字:吃药「服下 …」、强化「「X」强化至 +N」、连强「连强至 +N」。
+     * 最重的那个反倒没有，这是补上的那一句。
+     *
+     * 境界名**现取** `player.realmName`（`advanceRealm` 已跑过），不拼字面量 ——
+     * 改境界表不会让这句话撒谎。
+     */
+    if (!announcement) notify(`破境成功 —— 已至「${player.realmName}」`, "success");
     cultivation.clearNegativeBuffs();
     track("breakthroughs");
     trackRealm();
