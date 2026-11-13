@@ -1004,6 +1004,26 @@
     color: rgb(var(--color-jade-rgb));
   }
 
+  /*
+    日课行尾那枚「去历练 ›」—— 它答的是「这句话要去哪儿做」。
+
+    行本身是 `1.5rem minmax(0,1fr) auto` 三列栅格（序号 / 正文 / 进度）。
+    不加这条规则时它被塞进第三列，实测宽度只剩 24px（文字全被压掉）。
+    故让它自己占满一整行、靠右 —— 与进度条那一行同样 `1 / -1`，
+    只是排在正文之后、进度条之前。
+  */
+  .home-daily__route {
+    grid-column: 1 / -1;
+    justify-self: end;
+    margin-top: -0.1rem;
+    color: rgb(var(--color-qing-rgb));
+    font-size: var(--type-note);
+    white-space: nowrap;
+  }
+  .home-daily__route:active {
+    opacity: 0.6;
+  }
+
   .home-daily__track {
     grid-column: 1 / -1;
     height: 2px;

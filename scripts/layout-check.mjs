@@ -11133,6 +11133,58 @@ async function taskDailySeal() {
       failures.push(`[390] 日课结契:还差一笔就盖了印 «${partial.text}»`);
     }
 
+    /*
+     * 三 去哪做 —— 每一笔日课都要给一条路。
+     *
+     * 第 163 轮实测:八行日课是八个不可点的 <li>,玩家知道要做什么、不知道去哪儿做
+     * （「击败敌人」在历练页、「炼成丹药」在背包）。这一支量**渲染出来的链接**:
+     * 每一行都要有一枚指向真实路由的入口，且路径落在已知页面里。
+     */
+    checked += 1;
+    {
+      /*
+       * 只量**未做**的那些 —— 已做的收在另一叠里（`data-daily-done="true"`），
+       * 它们本来就不该再给一个「去做」的入口:事情已经做完了。
+       * 第一版没排除它们，于是「全清」那一档把五笔已做的当成「没有去处」报了出来
+       * —— 那是判据没分清两叠,不是产品少了一条路。
+       */
+      const routed = await page.evaluate(() =>
+        [...document.querySelectorAll(".home-daily__row:not([data-daily-done='true'])")].map(
+          (row) => {
+            const link = row.querySelector("[data-daily-route]");
+            return {
+              text: (row.textContent || "").replace(/\s+/g, " ").trim().slice(0, 24),
+              href: link?.getAttribute("href") ?? null,
+              label: (link?.textContent || "").trim(),
+              width: link?.getBoundingClientRect().width ?? 0,
+            };
+          },
+        ),
+      );
+      if (routed.length === 0) {
+        /* 全清那一档本来就一条未做的都没有 —— 那不是失败 */
+        console.log("[390] 日课去路:这一档没有未做的日课(全清),跳过");
+      } else {
+        const unrouted = routed.filter((r) => !r.href);
+        if (unrouted.length) {
+          failures.push(
+            `[390] 日课去路:${unrouted.length} 笔日课没有去处 —— «${unrouted[0].text}»`,
+          );
+        }
+        const badHref = routed.filter((r) => r.href && !/^#\/[a-z]*$/.test(r.href));
+        if (badHref.length) {
+          failures.push(`[390] 日课去路:去处不是一条应用内路由 —— «${badHref[0].href}»`);
+        }
+        // 入口被挤成一条线时（实测未加样式前只有 24px，文字全被压掉）也算没过
+        const squashed = routed.filter((r) => r.href && r.width < 28);
+        if (squashed.length) {
+          failures.push(
+            `[390] 日课去路:入口被挤到 ${Math.round(squashed[0].width)}px，文字读不出来 —— «${squashed[0].label}»`,
+          );
+        }
+      }
+    }
+
     if (pageErrors.length) {
       failures.push(`[390] 日课结契页面异常:${[...new Set(pageErrors)].join(" | ")}`);
     }

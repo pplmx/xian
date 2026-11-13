@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 737 个 spec;本作自己那部分 657 个) |
+| `bun run test` | 全量用例(全量 738 个 spec;本作自己那部分 658 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 737 个 spec = 宿主 657 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 738 个 spec = 宿主 658 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 737 个 spec(本作自己那部分 657 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 738 个 spec(本作自己那部分 658 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -9216,3 +9216,40 @@ GONGFA.filter((g) => g.minRealm <= major + 1 && !cultivation.learned[g.id])
 而视图里 `activeLifeTrial` 只出现在 script 的 computed 里,模板用的是 `activeTrial`。
 判据写成「两个词挨得近」就必然误报。改成取出承载那一行的元素,断言它的 `v-if`
 条件就是 `activeTrial` —— **判那件事,不判两个词的距离。**
+
+### 第 163 轮:日课说得出做什么,说不出「去哪儿做」
+
+首页列着八笔日课,每笔都把进度与赏格摊开。而它们是八个**不可点**的 `<li>`:
+
+```text
+01 今日击败 15 个敌人   得 灵石 249.9万   0/15
+04 今日炼成 2 枚丹药     得 悟道点×6       0/2
+```
+
+新玩家知道要做什么,不知道去哪儿做。而首页别处(门径两格)都写着「入府 →」「踏天 →」
+—— 日课是唯一一组「给了任务却不给路」的条目。
+
+### 一张满的表
+
+`ui/dailyRoutes` 把「计数器 → 去哪儿做」写成一张表,并用
+`Readonly<Record<CounterKey, DailyRouteHint>>` 强制它**是满的**。写的时候就漏了
+`battles` —— 类型当场拦住。这比「运行时发现某个日课没链接」早得多。
+
+口径定成「**这件事在哪个页面由玩家亲手触发**」而不是「哪个系统在算它」:
+`kills` 由战斗算,而玩家亲手打怪的地方是历练页。
+
+### 顺带修掉一个自己造的布局问题
+
+加完链接先量了三档宽度:390 / 320 / 195 全部 `overflow: false`,看起来没问题。
+再量链接本身 —— **宽度只有 24px**,文字全被压掉了。原因是那一行是
+`1.5rem minmax(0,1fr) auto` 三列栅格,新元素被塞进第三列。
+
+补 `grid-column: 1 / -1; justify-self: end` 之后是 37px、右缘落在容器内。
+这条也做成了判据(入口宽度 < 28px 即失败)—— **「没溢出」不等于「看得见」。**
+
+### 判据自己的两个坑
+
+1. `walkFiles` 第二个参数是**谓词**(收完整路径),不是 glob。按 glob 的直觉写成
+   `f.includes("router")`,结果一个文件都没走到,判据红在「没读到路由表」上;
+2. 没排除「已做」那一叠(`data-daily-done="true"`)。全清那一档把五笔已做的
+   当成「没有去处」报了出来 —— 事情做完了本来就不该再给一个「去做」的入口。

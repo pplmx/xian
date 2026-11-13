@@ -283,6 +283,26 @@
               <span class="home-daily__reward tabular">得 {{ rewardText(t.reward) }}</span>
             </span>
             <span class="home-daily__count tabular">{{ t.progress }}/{{ t.target }}</span>
+            <!--
+              「今日击败 15 个敌人」这句话没说要往哪走。
+
+              八笔日课此前是八个不可点的 <li>:玩家知道要做什么,不知道去哪儿做 ——
+              「击败敌人」在历练页、「炼成丹药」在背包、「强化装备」也在背包。
+              而首页别处(门径两格)都写着「入府 →」「踏天 →」,日课是唯一一组
+              「给了任务却不给路」的条目。
+
+              去处读 `ui/dailyRoutes` 那一张表(与判据同一份);表里没有就整枚不出,
+              不让界面去猜。
+            -->
+            <RouterLink
+              v-if="dailyRoute(t.counterKey)"
+              :to="dailyRoute(t.counterKey)!.route"
+              class="home-daily__route"
+              :data-daily-route="t.counterKey"
+              :aria-label="`${dailyRoute(t.counterKey)!.label} —— ${t.desc}`"
+            >
+              {{ dailyRoute(t.counterKey)!.label }} ›
+            </RouterLink>
             <span class="home-daily__track" aria-hidden="true">
               <span
                 :style="{
@@ -405,6 +425,7 @@
 <script setup lang="ts">
 import "@/styles/pages/home.css";
 import { computed, ref, onMounted } from "vue";
+import { dailyRouteOf } from "@/ui/dailyRoutes";
 import { RouterLink } from "vue-router";
 import { usePlayerStore } from "@/stores/player";
 import { useUiStore } from "@/stores/ui";
@@ -553,6 +574,9 @@ const dailyAllDone = computed(
   () => dailyRows.value.length > 0 && dailyRows.value.every((r) => r.done),
 );
 const dailyDoneCount = computed(() => dailyRows.value.filter((r) => r.done).length);
+
+/** 这笔日课该去哪儿做 —— 读 `ui/dailyRoutes` 那张表，表里没有就整枚不出 */
+const dailyRoute = (key: string) => dailyRouteOf(key);
 /**
  * 日课分两叠:未做的留在页上,已做的收成一叠(默认合着)。
  *

@@ -654,6 +654,8 @@ const CATEGORIES = [
       "skillStageWording",
       // 逆旅契在身,历练页一个字都不说 —— 而它正改着每一场战斗
       "lifeTrialVisibility",
+      // 日课说得出做什么,却说不出「去哪儿做」—— 八行全是不可点的 li
+      "dailyRouteHint",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
