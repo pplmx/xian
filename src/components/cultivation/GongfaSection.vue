@@ -105,9 +105,11 @@
           <span v-if="activeGongfaItems.length" class="tabular"
             >· 现看 {{ gongfaPage.start + 1 }}–{{ gongfaPage.shown }}</span
           >
-          <span v-if="gongfaPoolLeft[gongfaCat] > 0"
-            >· 参悟池尚余 {{ gongfaPoolLeft[gongfaCat] }} 部</span
-          >
+          <!--
+            参悟不分门:那枚按残页抽的是**全池**（主修 / 辅修 / 秘术一起抽）。
+            故三签报同一个数 —— 贴在某门底下报「这一门还剩几部」是在撒谎。
+          -->
+          <span v-if="comprehendLeft > 0">· 参悟池尚余 {{ comprehendLeft }} 部</span>
           <span v-else>· 已收全,待更高境界再探</span>
         </p>
 
@@ -386,16 +388,13 @@ watch(
   },
 );
 
-/** 逐门参悟池余量 —— 与全局 comprehendLeft 同源,仅按门过滤:minRealm ≤ 当前 + 1 且未习得 */
-const gongfaPoolLeft = computed<Record<GongfaType, number>>(() => {
-  const out = {} as Record<GongfaType, number>;
-  for (const t of GONGFA_CAT_ORDER) {
-    out[t] = GONGFA.filter(
-      (g) => g.type === t && g.minRealm <= player.major + 1 && !cultivation.learned[g.id],
-    ).length;
-  }
-  return out;
-});
+/*
+ * 参悟池**不分门** —— 这里曾经按门类各算一份（`gongfaPoolLeft`），于是主修签底下
+ * 报的是「还有 24 部主修」，而参悟真正抽的是**全池 62 部**（见 `core/gongfaService`
+ * 的 `learnRandomGongfa`:池子只按 `minRealm <= major + 1` 与「未习得」过滤，
+ * 没有 `g.type` 这一条）。那个数只有全池的 39%，而它是玩家判断「再点几次能把主修
+ * 补上」的唯一读数。三签现在共用 `comprehendLeft`，见下。
+ */
 
 function onGongfaCatKeydown(e: KeyboardEvent): void {
   if ((e.target as HTMLElement).getAttribute?.("role") !== "tab") return;

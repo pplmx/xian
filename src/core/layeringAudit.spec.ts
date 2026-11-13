@@ -141,13 +141,17 @@ const CORE_STORE_SITES = 159;
  * 换一个手工拼的快照就不是开局玩家了,判据会失去它唯一的意义。
  * 同属「被测量对象本身就要 Pinia」。
  *
+ * 111 → 113:gongfaPoolTruth.spec 量的是「参悟池」—— 那池子的定义就是
+ * `GONGFA.filter(g => g.minRealm <= player.major + 1 && !cultivation.learned[g.id])`,
+ * 两个输入都在 store 上（境界、已习）。手搓一份输入就等于在测另一条公式。
+ *
  * 111 → 112:trialForecast.spec 要证明「试炼预览与真打逐位相同」——
  * 而真打那一半就是 `challengeTrial`（扣道源、记战绩、发赏，全在 store 上）。
  * 拿一个手搓的战斗替身去比，比的就不再是那条承诺。同属「被测量对象本身
  * 就要 Pinia」；而**被测的预览模块本身仍然是纯的**（core 侧没有新增 store 依赖，
  * 见本文件上面那条基线没有动）。
  */
-const CORE_PINIA_SPECS = 112;
+const CORE_PINIA_SPECS = 113;
 
 function sources(dir: string): { name: string; text: string }[] {
   return readdirSync(dir)

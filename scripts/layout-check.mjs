@@ -19284,6 +19284,42 @@ async function taskCultivationFold() {
     const rendered = await openRoute(page, "/cultivation", 700);
     checked += 1;
     /*
+     * 参悟池不分门 —— 主修 / 辅修 / 秘术三签必须报**同一个数**。
+     *
+     * 第 159 轮实测:主修签底下写「参悟池尚余 24 部」,而参悟真正抽的是全池 62 部
+     * （`learnRandomGongfa` 只按境界与「未习得」过滤，没有 `g.type`）。
+     * 那个数只有全池的 39%，而它是玩家判断「再点几次能把主修补上」的唯一读数。
+     *
+     * 量的是**渲染出来的三签**：逐签点一遍，把「参悟池尚余 N 部」那个数读回来。
+     */
+    {
+      const poolReadings = [];
+      for (const label of ["主修", "辅修", "秘术"]) {
+        await page.evaluate((name) => {
+          const tab = [...document.querySelectorAll("[role='tab']")].find((t) =>
+            (t.textContent || "").includes(name),
+          );
+          tab?.click();
+        }, label);
+        await page.waitForTimeout(180);
+        poolReadings.push(
+          await page.evaluate(() => {
+            const text = document.querySelector("main")?.innerText || "";
+            const m = /参悟池尚余\s*(\d+)\s*部/.exec(text);
+            return { label: "", n: m ? Number(m[1]) : null };
+          }),
+        );
+      }
+      const nums = poolReadings.map((r) => r.n);
+      if (nums.some((n) => n === null)) {
+        failures.push(`[390-cult] 功法三签里有一签没报「参悟池尚余 N 部」:${JSON.stringify(nums)}`);
+      } else if (new Set(nums).size > 1) {
+        failures.push(
+          `[390-cult] 三签报的参悟池不一样(${nums.join(" / ")})—— 参悟不分门,三签该是同一个池子`,
+        );
+      }
+    }
+    /*
      * 天数可窥 —— `SamsaraStageDef.heavenInsight`（「熟知天界」，600 宿慧）
      * 此前全仓没有任何产品代码读它，只有数据定义与一条单调性判据。
      *

@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 733 个 spec;本作自己那部分 653 个) |
+| `bun run test` | 全量用例(全量 734 个 spec;本作自己那部分 654 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 733 个 spec = 宿主 653 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 734 个 spec = 宿主 654 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 733 个 spec(本作自己那部分 653 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 734 个 spec(本作自己那部分 654 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -9073,3 +9073,33 @@ text.replace(/[+\-−]?\d[\d.,]*/g, "").replace(/升至\s*\d+\s*级/g, "")
 六行全部误报,门当场红了一片。**先删短语,再删符号。**
 故障注入则反着验了一遍:把视图退回各取第 0 个,门报的是精确的一条
 `forge «强化上限» → «炼器省耗»`,没有噪音。
+
+### 第 159 轮:参悟池 —— 一份本来不分门的池子被按门过滤了
+
+功法页主修签底下读「参悟池尚余 24 部」。而参悟那一边的过滤条件是:
+
+```ts
+GONGFA.filter((g) => g.minRealm <= major + 1 && !cultivation.learned[g.id])
+```
+
+**没有 `g.type`。** 实测真仙期全池 62 部（主修 24 / 辅修 25 / 秘术 13），
+主修签报的 24 只有三成九。而它是玩家判断「再点几次能把主修补上」的唯一读数。
+
+### 两份口径各自都自洽
+
+`gongfaPoolLeft` 是逐门 `filter(g => g.type === t …)`,写得很规整;
+参悟那边也是规整的一行。**错不在写法,在于给一份本来不分门的池子加了一个维度。**
+这类错搜源码搜不出来 —— 只有在界面上把那一行念一遍才看得见。
+
+### 改法与判据
+
+三签共用 `comprehendLeft`。判据两头都量:
+
+- `core/gongfaPoolTruth.spec`:池子随境界增长、**且不等于任何单一门类的数目**
+  （第二条是防「哪天池子恰好只剩一门时判据失去意义」）、视图不许再出现
+  `g.type === t`、模板不许再接按门取的余量;
+- 浏览器门逐签点过去量**渲染出来的**那个数。故障注入验过:让主修签故意报 24,
+  门报 `三签报的参悟池不一样(24 / 62 / 62)`。
+
+顺带把 `CORE_PINIA_SPECS` 从 112 抬到 113 —— 新的判据量的就是 store 上的两个输入
+（境界、已习），手搓一份输入等于在测另一条公式。理由写进了基线注释。
