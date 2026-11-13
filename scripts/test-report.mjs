@@ -644,6 +644,8 @@ const CATEGORIES = [
       "trialForecast",
       // 破境卡的代价行:18% 是裸身的数,时长也不该用 cnNumber 拼成「一百五十秒」
       "breakthroughCost",
+      // 建筑卡的「现 / 将」:两个集合各取第 0 个,第一行不变就必然错位
+      "buildingPairing",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

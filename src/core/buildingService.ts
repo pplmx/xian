@@ -21,6 +21,24 @@ export interface BuildingUpgradePreview {
    * (如每 3 级才涨的强化上限)都不该当成「增益」搬上来。
    */
   lines: string[];
+  /**
+   * 与 `lines` **逐下标对齐**的「当前那一行」—— `rows[i].current` 是
+   * `rows[i].next` 这一项升级前的样子。
+   *
+   * 为什么要带上:卡片正文那两格是「现 X / 将 Y」。原先视图左边取
+   * `currentLines[0]`、右边取 `upgradePreview().lines[0]` —— 两个「第一个」
+   * 是**不同的集合**（一个是整张效果表，一个是「只留下变了的」），
+   * 于是只要**第一行这一级不变**就必然错位:
+   *
+   * ```text
+   * 炼器台 4→5   左:强化上限 +2（不变的那一行）
+   *              右:炼器省耗 +20%（变了的那一行）
+   * ```
+   *
+   * 两格说的不是同一件事，而玩家要判断的正是「这一项多得到什么」。
+   * 把「当前」与「下一级」配好对一起给出，视图就不必（也没法）各取各的下标。
+   */
+  rows: { current: string; next: string }[];
   /** 首建(0→1):还没有当前效果,预览=整张下一级效果 */
   built: boolean;
 }
@@ -43,11 +61,19 @@ export function buildingUpgradePreview(
 ): BuildingUpgradePreview {
   const def = buildingDef(id)!;
   const toLevel = level + Math.max(1, steps);
-  if (toLevel > (cap ?? def.maxLevel)) return { nextLevel: toLevel, lines: [], built: level === 0 };
+  if (toLevel > (cap ?? def.maxLevel))
+    return { nextLevel: toLevel, lines: [], rows: [], built: level === 0 };
   const cur = level > 0 ? def.effectText(level) : [];
   const nxt = def.effectText(toLevel);
-  const lines = nxt.filter((line, i) => line !== cur[i]);
-  return { nextLevel: toLevel, lines, built: level === 0 };
+  /*
+   * 逐行配对：`effectText` 的行序对同一座建筑是稳定的（同一项永远在同一位置），
+   * 故按下标取「当前那一行」就是那一项的现值。
+   * 只留下**这一级真的变了**的项，并把它的现值一起带上（见 `rows` 的注释）。
+   */
+  const rows = nxt
+    .map((next, i) => ({ current: cur[i] ?? "", next }))
+    .filter((row) => row.current !== row.next);
+  return { nextLevel: toLevel, lines: rows.map((r) => r.next), rows, built: level === 0 };
 }
 
 export interface BuildingUpgradeInfo {

@@ -220,7 +220,25 @@ const progressLabel = computed(
 );
 /** 账面默认只露当前首项;完整效果在详情里 */
 const currentLines = computed(() => (level.value > 0 ? props.def.effectText(level.value) : []));
-const primaryCurrent = computed(() => currentLines.value[0] ?? props.def.desc);
+/**
+ * 卡片正文那两格「现 / 将」—— 必须是**同一项**的前后。
+ *
+ * 原先左边取 `currentLines[0]`、右边取 `preview.lines[0]`，而这两个「第一个」
+ * 来自不同的集合（整张效果表 vs 只留下变了的行），于是只要第一行这一级不变
+ * 就必然错位。炼器台 4→5 实测:
+ *
+ * ```text
+ * 现  强化上限 +2            ← 这一级没变
+ * 将  升至 5 级 · 炼器省耗 +20%   ← 变的是这一项
+ * ```
+ *
+ * 现在两侧都读 `preview.rows[0]`（core 已把现值与下一级配好对）:
+ * 「现」报那一项的现值，「将」报它的新值，两格永远说同一件事。
+ */
+const primaryRow = computed(() => preview.value.rows[0] ?? null);
+const primaryCurrent = computed(
+  () => primaryRow.value?.current || currentLines.value[0] || props.def.desc,
+);
 /** 数字、量级与量词之间只许换行在分隔处,不许把「6 株」拆成两行 */
 
 /** 连升整批会实际花掉的总账(只读预演,与 buildingUpgradeN 同一判定) —— 按下前把总数摊开 */
@@ -231,7 +249,7 @@ const batchPreview = computed(() =>
 );
 /** 下一级增益预览:账面已显当前效果与代价,这里补「升上去会怎样」(effectText 同源,只报会变的行) */
 const preview = computed(() => buildingUpgradePreview(props.def.id, level.value, cap.value));
-const primaryPreview = computed(() => preview.value.lines[0] ?? "");
+const primaryPreview = computed(() => primaryRow.value?.next ?? "");
 /** 灵兽园联动:洞府与宠物两系统彼此看见(只对 beast 这一座特例,其余建筑不理会) */
 const beastCompanionName = computed(() =>
   props.def.id === "beast" && player.petId ? petDef(player.petId)?.name : undefined,

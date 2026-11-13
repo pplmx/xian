@@ -4089,6 +4089,67 @@ dataTextAudit「重伤时长应引 INJURY_DURATION」
 
 判据落在 `core/breakthroughCost.spec`（算术 + 视图接线，含「不许再 cnNumber 拼秒数」）。
 
+### 建筑卡的「现 / 将」:两个「第一个」来自不同的集合
+
+洞府七作每张卡的正文是两格:
+
+```text
+现  强化上限 +2
+将  升至 5 级 · 炼器省耗 +20%
+```
+
+玩家要判断的是「花 4197 石 + 75 玄铁，**比现在多得到什么**」——
+而这两句说的不是同一件事。
+
+#### 根因不是文案，是两个下标
+
+```ts
+const currentLines   = computed(() => level > 0 ? props.def.effectText(level) : []);
+const primaryCurrent = computed(() => currentLines.value[0] ?? props.def.desc);
+
+// 只留**会变**的行（见 core/buildingService）
+const preview        = computed(() => buildingUpgradePreview(id, level, cap));
+const primaryPreview = computed(() => preview.value.lines[0] ?? "");
+```
+
+`primaryCurrent` 取的是**整张效果表**的第一行，`primaryPreview` 取的是
+**只留下变了的行**的第一行 —— 两个「第一个」来自两个不同的集合。
+于是只要**第一行这一级不变**，必然错位。炼器台恰好是「强化上限每 2 级才涨 1」:
+
+```text
+lv 4  强化上限 +2（不变）   炼器省耗 +16%
+lv 5  强化上限 +2（同左）   炼器省耗 +20%   ← 变的只有第二行
+```
+
+凡「某几行隔几级才动」的建筑都会踩，不只是炼器台。
+
+#### 改法：把配对放进 core，视图不可能再各取各的
+
+`BuildingUpgradePreview` 除了 `lines`，再给一份**逐下标对齐**的 `rows`:
+
+```ts
+rows: { current: string; next: string }[]   // current 是 next 这一项升级前的样子
+```
+
+`effectText` 的行序对同一座建筑是稳定的（同一项永远在同一位置），按下标配对即可。
+视图那两格都读 `preview.rows[0]`:
+
+```text
+现  炼器省耗 +16%
+将  升至 5 级 · 炼器省耗 +20%
+```
+
+#### 判据
+
+- `core/buildingPairing.spec`:逐级扫六座建筑（炼器台 4→5 单列一条），
+  断言每一级「现 / 将」的**项名**相同 —— 项名是把数字与符号剥掉之后剩下的那串字；
+- `layout-check` 的「洞府首屏的营造优先」：量**渲染出来的那两格**，
+  去掉数字与符号后必须一致。故障注入验过 —— 把视图退回各取第 0 个，
+  门当场报 `forge «强化上限» → «炼器省耗»`。
+
+判据归一化的顺序也踩了一次：第一版先剥数字再剥「升至 N 级」抬头，
+于是抬头已经变成「升至〈空〉级」认不出来，六行全部误报。**先删短语，再删符号。**
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,

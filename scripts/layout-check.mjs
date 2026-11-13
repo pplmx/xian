@@ -18892,10 +18892,21 @@ async function taskDongfuFold() {
           const button = row.querySelector("[data-building-action]");
           const rowRect = row.getBoundingClientRect();
           const buttonRect = button?.getBoundingClientRect();
+          /*
+           * 卡片正文的「现 / 将」两格 —— 必须是同一项的前后。
+           *
+           * 第 158 轮实测炼器台 4→5 读到「现 强化上限 +2 / 将 炼器省耗 +20%」:
+           * 两个集合各取第 0 个，而第一个集合是整张效果表、第二个只留变了的行，
+           * 于是第一行这一级不变就必然错位。这里量**渲染出来的那两格**。
+           */
+          const facts = [...row.querySelectorAll(".dongfu-building__fact")].map((el) =>
+            (el.textContent || "").replace(/\s+/g, " ").trim(),
+          );
           return {
             id: row.getAttribute("data-dongfu-building-row"),
             ratio: buttonRect && rowRect.width > 0 ? buttonRect.width / rowRect.width : 1,
             rowBackground: getComputedStyle(row).backgroundImage,
+            facts,
           };
         });
         const probe = document.createElement("span");
@@ -19047,6 +19058,44 @@ async function taskDongfuFold() {
           `[390-dongfu] 主升级键又铺回整行账带:${wideActions
             .map((entry) => `${entry.id} ${Math.round(entry.ratio * 100)}%`)
             .join(" / ")}`,
+        );
+      }
+      /*
+       * 卡片正文那两格「现 / 将」必须是同一项的前后。
+       *
+       * 第 158 轮实测炼器台 4→5 读到「现 强化上限 +2 / 将 炼器省耗 +20%」——
+       * 左边取整张效果表的第一行、右边取「只留下变了的行」的第一行，
+       * 于是第一行这一级不变就必然错位。这里量**渲染出来的那两格**:
+       * 去掉数字与符号后，两格说的必须是同一件事。
+       */
+      /*
+       * 先把「升至 N 级」这个抬头去掉，再抽标签。
+       * 顺序反了的话，`升至 5 级` 里的数字先被剥成 `升至  级`，抬头就认不出来了
+       * —— 第一版正是这么写的，六行全部误报（实测当场就红了）。
+       */
+      const factLabel = (text) =>
+        text
+          .replace(/^\s*现\s*/, "")
+          .replace(/^\s*将\s*/, "")
+          .replace(/升至\s*\d+\s*级/g, "")
+          .replace(/建成后/g, "")
+          .replace(/[+\-−]?\d[\d.,]*/g, "")
+          .replace(/[×%]/g, "")
+          .replace(/[·|]/g, "")
+          .replace(/\s+/g, "")
+          .trim();
+      const mismatchedFacts = fold.actions
+        .filter((entry) => entry.facts.length >= 2)
+        .map((entry) => ({
+          id: entry.id,
+          cur: factLabel(entry.facts[0]),
+          next: factLabel(entry.facts[1]),
+        }))
+        .filter((entry) => entry.cur && entry.next && entry.cur !== entry.next);
+      if (mismatchedFacts.length) {
+        failures.push(
+          `[390-dongfu] 建筑的「现 / 将」报的不是同一件事:` +
+            mismatchedFacts.map((e) => `${e.id} «${e.cur}» → «${e.next}»`).join(" / "),
         );
       }
       const tintedRows = fold.actions.filter((entry) => entry.rowBackground !== "none");
