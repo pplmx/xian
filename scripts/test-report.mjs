@@ -688,6 +688,8 @@ const CATEGORIES = [
       "longRangePrecision",
       // 一档视口不叫「守住了」:新增的中文读数断言必须多档或显式豁免
       "layoutViewportCoverage",
+      // 日课是自动领赏的,但这依赖「先结算再翻页」那条顺序 —— 顺序没人守着
+      "dailySettleOrder",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
