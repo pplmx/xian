@@ -97,7 +97,9 @@ describe("首页指挥台 · 先给今日一步，再摊长期账", () => {
     expect(view).toContain(
       "dailyRows.value.length ? dailyDoneCount.value / dailyRows.value.length : 0",
     );
-    expect(view).toContain("dailyRowsOf(dailyStateOf(quests.daily), quests.counters)");
+    expect(view).toContain(
+      "dailyRowsOf(dailyStateOf(quests.daily), quests.counters, player.atMaxRealm)",
+    );
     expect(view).toMatch(/\{\{ dailyDoneCount \}\}\/\{\{ dailyRows\.length \}\}/);
     expect(view).toContain("keepNumberUnit(t.desc)");
     expect(view).toContain("得 {{ rewardText(t.reward) }}");

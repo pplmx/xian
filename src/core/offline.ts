@@ -75,6 +75,7 @@ import { equipmentTemplate } from "@/data/equipment";
 import { herbGradeOfMajor } from "@/data/herbGrades";
 import { tierMajor } from "./tierScale";
 import { usePlayerStore } from "@/stores/player";
+import { routeCultGain } from "@/stores/apexCultivation";
 import { useResourcesStore } from "@/stores/resources";
 import { useDongfuStore } from "@/stores/dongfu";
 import { useCultivationStore } from "@/stores/cultivation";
@@ -242,7 +243,8 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
 
   // ---- 修炼 ----
   const expBefore = { ...player.exp };
-  player.gainExp(mulN(gn(player.cultPerSec), passiveSec));
+  // 满级之后这一笔走大道熔真(见 core/apexCultivation);回来时的「所得」照旧记
+  routeCultGain(mulN(gn(player.cultPerSec), passiveSec));
 
   // ---- 灵气 ----
   const qiBefore = resources.qi;
@@ -462,7 +464,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
           player.cultPerSec,
           INSTANT_EXP_LAYER_CAP * wins,
         );
-        player.gainExp(expGain);
+        routeCultGain(expGain);
         trip.stone = add(trip.stone, stoneGain);
         trip.exp = add(trip.exp, expGain);
         // 材料 —— 离线也会撞见新灵材,只是次数封顶,免得回来一屏 toast

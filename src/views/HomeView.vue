@@ -546,7 +546,7 @@ const mainProgress = computed(() => currentMainQuestProgress());
 
 const dailyRows = computed(() =>
   // 与发赏判定同源:进度 = 今日增量,`done` = 本期已经结算过
-  dailyRowsOf(dailyStateOf(quests.daily), quests.counters),
+  dailyRowsOf(dailyStateOf(quests.daily), quests.counters, player.atMaxRealm),
 );
 /** 今日日课是否全毕:三条各结清才算(不给唯一解 —— 没定义日课就不报) */
 const dailyAllDone = computed(

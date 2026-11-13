@@ -320,9 +320,13 @@ export const useQuestsStore = defineStore(
      * 换期:把此刻的计数器记成本期基准。
      * 幂等由库保证(同一期再叫一次不会把当天已攒的进度清掉 —— 心跳每次都问"该换期了吗")。
      */
-    function rolloverDaily(period: string): void {
+    function rolloverDaily(period: string, atMaxRealm = false): void {
+      /*
+       * `atMaxRealm` 由调用方给,本 store 不读 player —— 与 `moment` 同一条纪律
+       * (见上面那段注释):store 只算账,状态由外面递进来。
+       */
       daily.value = dailyShapeOf(
-        rolloverDailyBoard(dailyStateOf(daily.value), counters.value, period),
+        rolloverDailyBoard(dailyStateOf(daily.value), counters.value, period, atMaxRealm),
       );
     }
 

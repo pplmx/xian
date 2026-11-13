@@ -238,6 +238,12 @@ export interface DailyTaskDef {
   id: string;
   name: string;
   desc: string;
+  /**
+   * 读哪个计数器。
+   *
+   * 加 `tribulations` 是为了满级那条替代日课(见 `APEX_DAILY_SUBSTITUTE`):
+   * 满级玩家不能再突破,但仍在渡劫。
+   */
   counterKey:
     | "kills"
     | "pillsUsed"
@@ -246,9 +252,47 @@ export interface DailyTaskDef {
     | "pillsCrafted"
     | "upgrades"
     | "bossKills"
-    | "equipsGained";
+    | "equipsGained"
+    | "tribulations";
   target: number;
   reward: QuestDef["reward"];
+}
+
+/**
+ * 满级之后的替代日课 —— 只替换**满级玩家做不到的那一条**。
+ *
+ * 「每日破境」要求今日尝试突破 2 次,而走到大道尽头之后突破**不可能发生**
+ * (`player.atMaxRealm` 时破境卡整张都不渲染)。8 条固定任务板里,这一条会
+ * 永远停在 0/2 —— 玩家每天打开首页都看到一次「你做不到」,而且没有任何
+ * 办法把它做掉。这不是难,是不可能。
+ *
+ * 替代项读的是满级玩家**真的还在做**的事:打天道试炼、渡劫、凝魂、打首领。
+ * 这里选 `tribulations`(渡劫)—— 满级玩家仍会为天界试炼与远征渡劫,
+ * 且它与被替换掉的那条同属「战斗侧的进阶动作」,不是随便换个计数器。
+ */
+export const APEX_DAILY_SUBSTITUTE: Omit<DailyTaskDef, "counterKey"> & {
+  counterKey: DailyTaskDef["counterKey"];
+} = {
+  id: "d_trib",
+  name: "每日渡劫",
+  desc: "今日渡劫 1 次",
+  counterKey: "tribulations",
+  target: 1,
+  reward: { wudao: 6 },
+};
+
+/**
+ * 这一档玩家该看到的日课。
+ *
+ * 未满级:原样返回 `DAILY_TASKS`(那是绝大多数时候,也是判据的主力口径)。
+ * 已满级:把「每日破境」换成 `APEX_DAILY_SUBSTITUTE`,其余七条不动 —— 满级玩家
+ * 仍要斩妖、服药、历练、炼丹、强化、斩将、鉴器,只有那一条失效。
+ *
+ * 做成函数而不是两份静态表:两份表会漂(改一处忘了另一处),而这里只有一条替换规则。
+ */
+export function dailyTasksFor(atMaxRealm: boolean): DailyTaskDef[] {
+  if (!atMaxRealm) return DAILY_TASKS;
+  return DAILY_TASKS.map((t) => (t.id === "d_break" ? APEX_DAILY_SUBSTITUTE : t));
 }
 
 /** 每日任务:按当日计数器增量结算 */

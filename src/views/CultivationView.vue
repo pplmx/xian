@@ -70,13 +70,31 @@
           <span class="cultivation-masthead__readout-note">{{ stage.hint }}</span>
         </div>
         <div class="cultivation-masthead__readout-cell">
-          <span class="cultivation-masthead__readout-label">此刻行速</span>
+          <!--
+            满级之后这一格换口。
+
+            未满级时它报「此刻行速 XXX/秒」—— 那个数就是修为进账,有意义。
+            而满级之后修为被 `subClamp` 夹死、涨不上去,同一个数却仍在跳:
+            玩家看到每秒 5.7e13 的数字,底下进度条一动不动,没有一处说清
+            「这些修为去哪了」。那正是终局主循环「看起来在转、其实断了」的样子。
+
+            现在满级时这一格报**熔真产出**(见 core/apexCultivation):同一笔修为
+            走的是另一条路,界面也如实改口 —— 数还在跳,但它有去处了。
+          -->
+          <span class="cultivation-masthead__readout-label">{{
+            player.atMaxRealm ? "大道熔真" : "此刻行速"
+          }}</span>
           <strong class="cultivation-masthead__readout-value tabular">{{
             formatRate(player.cultPerSec)
           }}</strong>
-          <span class="cultivation-masthead__readout-note tabular"
-            >基础 {{ formatRate(cultBase) }} · 加成 {{ formatPercent(cultMultiplier) }}</span
-          >
+          <span class="cultivation-masthead__readout-note tabular">
+            <template v-if="player.atMaxRealm">
+              余修尽数入炉 · 约 {{ apexFurnaceEtaText }} 得 1 道源
+            </template>
+            <template v-else>
+              基础 {{ formatRate(cultBase) }} · 加成 {{ formatPercent(cultMultiplier) }}
+            </template>
+          </span>
         </div>
         <div class="cultivation-masthead__readout-cell">
           <span class="cultivation-masthead__readout-label">灵气</span>
@@ -466,6 +484,7 @@
 <script setup lang="ts">
 import "@/styles/pages/cultivation.css";
 import { realmOrdinalText } from "@/core/realmLadder";
+import { apexFurnaceEta } from "@/core/apexCultivation";
 import { MAX_MAJOR, realmDef } from "@/data/realms";
 import { computed, ref } from "vue";
 import { RouterLink } from "vue-router";
@@ -520,6 +539,16 @@ import { todayWeather } from "@/core/weather";
 
 const player = usePlayerStore();
 const resources = useResourcesStore();
+/**
+ * 满级时「还差多久炼出一枚道源」。
+ *
+ * 与 `core/apexCultivation` 的折算同源(它读 `APEX_CULT_TO_DAO_RATIO`),
+ * 不在这里另算一遍天数。未满级时返回空串,调用方那一格走原口径。
+ */
+const apexFurnaceEtaText = computed(() =>
+  player.atMaxRealm ? apexFurnaceEta(player.cultPerSec, toNum(player.expReq)) : "",
+);
+
 const practiceChapter = cultivationChapter("practice");
 const nextChapter = cultivationChapter("next");
 const supportChapter = cultivationChapter("support");

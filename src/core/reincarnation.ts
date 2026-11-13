@@ -36,6 +36,7 @@ import { useEndgameStore } from "@/stores/endgame";
 import { useGameStore } from "@/stores/game";
 import type { GNum, LifeReview, ReincarnationView } from "@/types";
 import { recordMilestone } from "./identity";
+import { resetApexCultRemainder } from "./apexCultivation";
 import { abandonExpedition } from "./expedition";
 import { gnZero } from "@/utils/gnum";
 import { librarySubGongfaSlots } from "@/data/buildings";
@@ -324,6 +325,12 @@ export function confirmReincarnation(
   player.setLifeTrial(null);
 
   // 重置今生
+  /*
+   * 大道熔真的余数随这一世作废 —— 它记的是「满级之后还差多少凑一枚道源」,
+   * 转世后修为归零,上辈子的零头不该带到下一世的熔炉里(那会是一份
+   * 没有主人的账)。
+   */
+  resetApexCultRemainder();
   resources.spiritStone = gnZero() as GNum;
   resources.setQi(0, 1);
   resources.wudao = 0;

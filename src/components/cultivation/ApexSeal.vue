@@ -31,6 +31,9 @@ import { usePlayerStore } from "@/stores/player";
 import { useEndgameStore } from "@/stores/endgame";
 import { MANUAL_REBIRTH_MIN_MAJOR } from "@/core/reincarnation";
 import { TRIAL_TOTAL, apexPursuits, apexRecord } from "@/core/apex";
+import { apexFurnaceEta } from "@/core/apexCultivation";
+import { toNum } from "@/utils/gnum";
+import { formatGN } from "@/utils/format";
 import { MAX_MAJOR, WORLDS, realmDef } from "@/data/realms";
 
 const player = usePlayerStore();
@@ -47,6 +50,14 @@ const record = computed(() =>
     milestonesDone: endgame.milestones.length,
   }),
 );
+
+/**
+ * 还差多久炼出下一枚道源 —— 与卷首那一格同源(`core/apexCultivation`)。
+ *
+ * 「余修尽数入炉」这一笔必须摆在终局印记里:它是到顶之后**唯一仍在产出的
+ * 那条线**,而玩家原先在修行页找不到它 —— 修速在跳,没有任何一处说它去了哪。
+ */
+const furnaceEta = computed(() => apexFurnaceEta(player.cultPerSec, toNum(player.expReq)));
 
 const pursuits = computed(() =>
   apexPursuits({
@@ -111,6 +122,13 @@ function go(route: string): void {
         <span class="cultivation-apex__aside">
           {{ record.profileFormed ? "修行画像已成形" : "道痕尚浅,画像未成形" }}
         </span>
+      </dd>
+      <dt>熔真</dt>
+      <dd>
+        <span class="cultivation-apex__value">余修尽数入炉</span>
+        <span class="cultivation-apex__aside tabular"
+          >约 {{ furnaceEta }} 得 1 道源 · 现持 {{ formatGN(endgame.daoSource) }}</span
+        >
       </dd>
       <dt>碑记</dt>
       <dd>

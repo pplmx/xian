@@ -17,6 +17,7 @@ import { studyTick } from "./loreService";
 import { useLoreStore } from "@/stores/lore";
 import { useGameStore } from "@/stores/game";
 import { usePlayerStore } from "@/stores/player";
+import { useEndgameStore } from "@/stores/endgame";
 import { useDongfuStore } from "@/stores/dongfu";
 import { useResourcesStore } from "@/stores/resources";
 import { useAdventureStore } from "@/stores/adventure";
@@ -189,20 +190,37 @@ describe("离线结算同源吃天时(ISS-027 续)", () => {
    * 扩界冒烟:离线结算此前只在元婴期(major 3)验过。
    * 高界的修为/灵气量级跨了十几个数量级,若某处仍按旧口径算,离线一结算就现形。
    */
-  it("混沌道祖离线结算不崩:修为有增、数值有限", () => {
+  it("混沌道祖离线结算不崩:数值有限,产出去向正确", () => {
     const game = useGameStore();
     const player = usePlayerStore();
+    const endgame = useEndgameStore();
     game.markStarted();
     game.lastActiveAt = Date.now() - GAP_HOURS * 3600 * 1000;
     player.major = 20;
     player.sub = 9;
 
     const before = toNum(player.exp);
+    const daoBefore = endgame.daoSource;
     const summary = settleOffline(Date.now());
 
     expect(summary, "高界离线应产出总结").not.toBeNull();
-    expect(toNum(player.exp), "高界离线修为未增长").toBeGreaterThan(before);
     expect(Number.isFinite(toNum(player.exp))).toBe(true);
+    expect(Number.isFinite(daoBefore) || daoBefore === undefined).toBe(true);
+    /*
+     * 这一条原是「高界离线修为有增」—— 而 `major 20 / sub 9` **正是满级**,
+     * 满级之后修为会被 `subClamp` 夹在需求值上,本来就不该再涨。
+     *
+     * 于是这一处改成验**产出没有消失,只是换了去向**:满级之后这一笔修为走
+     * 大道熔真(见 `stores/apexCultivation`),进的是道源。
+     * 只验修为的话,这条路修好之后这条用例会以「没增长」变红,
+     * 而真相是「增长改道了」—— 判据得跟着改口,不能反过来把功能禁掉。
+     */
+    const expGrew = toNum(player.exp) > before;
+    const daoGrew = endgame.daoSource > (daoBefore ?? 0);
+    expect(
+      expGrew || daoGrew,
+      `满级离线两头都没动静:修为 ${before} → ${toNum(player.exp)},道源 ${daoBefore} → ${endgame.daoSource}`,
+    ).toBe(true);
   });
 
   /**

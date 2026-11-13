@@ -337,7 +337,12 @@ function checkDaily(): void {
   const quests = useQuestsStore();
   // 一次结算"达成且本期没领过"的(顺序即 DAILY_TASKS 顺序),先记账再发赏 ——
   // 发赏若又牵动 track,重新进来也认得出"已经领过"了
-  const settled = settleDailies(dailyStateOf(quests.daily), quests.counters);
+  // 满级玩家那一档要换板(「每日破境」对他们是做不到的),故带上当前状态
+  const settled = settleDailies(
+    dailyStateOf(quests.daily),
+    quests.counters,
+    usePlayerStore().atMaxRealm,
+  );
   if (settled.settled.length === 0) return;
   quests.setDailyState(dailyShapeOf(settled.state));
   for (const row of settled.settled) {
@@ -353,7 +358,8 @@ export function rolloverDailyIfNeeded(): void {
   const quests = useQuestsStore();
   const today = todayStr();
   if (quests.daily.date !== today) {
-    quests.rolloverDaily(today);
+    // 满级那一档的日课板不同(见 dailyTasksFor),换期时也要按当前状态挑板
+    quests.rolloverDaily(today, usePlayerStore().atMaxRealm);
   }
 }
 

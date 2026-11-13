@@ -684,9 +684,11 @@ const CATEGORIES = [
       "rulesetEra",
       "qimen",
       "gateRuleText",
-      // 终局(Map / 四屏 / 碑记)属于这一册:走完全程才见到的那些内容
+      // 终局(Map / 四屏 / 碑记 / 满级之后的修为去哪)属于这一册:
+      // 走完全程才见到的那些内容
       "/apex.spec",
       "apexDesk",
+      "apexCultivation",
     ],
   },
   {

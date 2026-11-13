@@ -12,6 +12,7 @@ import {
 } from "@/data/constants";
 import { useGameStore } from "@/stores/game";
 import { usePlayerStore } from "@/stores/player";
+import { routeCultGain } from "@/stores/apexCultivation";
 import { useResourcesStore } from "@/stores/resources";
 import { useDongfuStore } from "@/stores/dongfu";
 import { useCultivationStore } from "@/stores/cultivation";
@@ -265,7 +266,8 @@ class GameEngine {
       // 天时已并入 finalStats.mods(player store),修炼/灵气/战斗/掉落/渡劫全链路生效,
       // 这里不再手动乘 weatherCult/weatherQi,否则与 mods 中的天时重复叠加
       // 修为增长
-      player.gainExp(mulN(gn(player.cultPerSec), dt));
+      // 满级之后这一笔走大道熔真(见 core/apexCultivation):同一笔修为只走一边
+      routeCultGain(mulN(gn(player.cultPerSec), dt));
       // 灵气恢复
       resources.setQi(resources.qi + player.qiRegenPerSec * dt, player.qiCapValue);
       // 建筑产出:dongfu 只算数,记进资源账是这一步的事(见 dongfu.produce 的说明)
