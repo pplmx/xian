@@ -397,8 +397,17 @@
                     -->
                     <span class="legacy-skill-desk__dao">{{ row.daoName }}</span>
                     <span class="legacy-skill-desk__stage">{{ row.stage }}</span>
+                    <!--
+                      「离小成 0%」读作「还差 0% 就到小成」—— 而那个 0 是
+                      **已走过的比例**（`skillStageProgress`:0 = 刚进这一境地，
+                      1 = 已到下一境地）。展示档七行全是 0%，一屏读下来像全练满了。
+
+                      改成「本境 33%」:说清这是**境地内的进度**，与炼丹页那根进度条
+                      同一个值、同一种读法。近顶时额外点一句还差多少 —— 那才是玩家
+                      真正关心的那一步（「本境 93% · 距小成 2 级」）。
+                    -->
                     <span v-if="row.nextStage" class="legacy-skill-desk__next"
-                      >离{{ row.nextStage }} {{ formatPercent(row.progress, 0) }}</span
+                      >本境 {{ formatPercent(row.progress, 0) }}</span
                     >
                     <span v-else class="legacy-skill-desk__top">已至{{ row.stage }}</span>
                   </li>

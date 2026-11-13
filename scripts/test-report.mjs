@@ -650,6 +650,8 @@ const CATEGORIES = [
       "gongfaPoolTruth",
       // 轮回台账:两个弹窗一个读 keep、一个读 full → 三行加起来 40 而总数写 36
       "reincarnationLedgerCount",
+      // 「离小成 0%」读作「还差 0% 就到小成」—— 而 0 是已走过的比例
+      "skillStageWording",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
