@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 749 个 spec;本作自己那部分 669 个) |
+| `bun run test` | 全量用例(全量 750 个 spec;本作自己那部分 670 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 749 个 spec = 宿主 669 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 750 个 spec = 宿主 670 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 749 个 spec(本作自己那部分 669 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 750 个 spec(本作自己那部分 670 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -9746,3 +9746,48 @@ breakthroughCost / weatherUnitConsistency          三种都抹,且避开 ://
 这已是第三次（`testSurfaceHygiene`、`stripCommentsParity`、这一次）。
 值得记的是:**判据文件里引样例是必要的**（否则读者不知道它在抓什么），
 故「排除自身」不是权宜，是这类判据的固定写法。
+
+### 第 175 轮:设置页的开关 —— 逐个核过都接了,但没人守着
+
+这一轮先排除了几条**误判**,值得记下来（都是我的探测写错，不是产品错）:
+
+```text
+「20 只灵兽 id 未被引用」   petVows 按 id 作 key 引用,我的正则只找字符串字面量
+「51 种丹药未被引用」       丹药走 PILLS.filter(...) 泛化访问,是设计
+「96 个数据字段无人读」     activeName/activeDesc 是工厂函数参数名，不是字段
+「5 个模块没有 spec」       都是薄适配层（端口接线、纯转发、模型装配）
+「四张数据表形状漂移」      实测 75/49/92/44 条，各自形状**完全一致**
+```
+
+于是落到一件我核过、但**没有判据守着**的事:设置页的十一个开关。
+
+逐个对:
+
+```text
+dndEvents     core/exploration 的弹窗闸 + 历练页的提示行
+hapticsOn     stores/ui 的触感开关（与 reduceMotion 相与）
+reduceMotion  CombatPanel 跳过回放、GauntletPanel 直接出结果
+其余八个       各有真消费点
+```
+
+**十一个都接了。** 但 `settings.spec` 只测「系统减少动效时默认值」，
+`settingsSanitize.spec` 只测坏值夹回 —— **没有任何一条会问「这个开关有没有人读」**。
+
+「开关摆在那儿，拨了没反应」是玩家最容易撞上、也最难报清楚的一类问题:
+它没有报错，只是不生效。
+
+### 判据:`core/settingsWiring.spec`
+
+- 开关清单**从源码现读**（`const x = ref(...)`），不手抄 —— 手抄一份清单就是第二本账；
+- 消费点必须出现在**声明与接线之外** —— `stores/settings.ts` 与 `SettingsView.vue`
+  两处都排除（那是声明与接线，不是消费）；
+- 三个高危项单独点名（触感 / 动效 / 勿扰）—— 建大清单的判据容易被一条空断言糊过去。
+
+两次故障注入都精确命中:
+
+```text
+把 ui store 里的 hapticsOn 摘掉   → 「这些开关在设置页上能拨,但没有任何地方读它」
+往 store 里加一个 autoSellJunk     → 当场点名那个新开关
+```
+
+第二种才是这条判据真正的用途:**下一个加开关的人**。

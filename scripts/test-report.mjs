@@ -678,6 +678,8 @@ const CATEGORIES = [
       "stripCommentsParity",
       // 注释里的规模数:两处曾写着「全仓 551 个 spec」,而实际已是 669 —— 注释没有门对账
       "commentScaleClaims",
+      // 设置页的开关:拨了没反应是玩家最难报清楚的一类问题 —— 没有任何判据问过
+      "settingsWiring",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
