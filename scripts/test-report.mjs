@@ -662,6 +662,8 @@ const CATEGORIES = [
       "weatherUnitConsistency",
       // 走到顶的人主线停在 28/32 —— 还有四条条件早已满足的没结算
       "mainChainApex",
+      // 「N / 8 条已满」的分母是假的 —— 三条功劳的 full 写死成 false
+      "apexDeedsFull",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

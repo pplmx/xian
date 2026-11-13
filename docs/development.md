@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 741 个 spec;本作自己那部分 661 个) |
+| `bun run test` | 全量用例(全量 742 个 spec;本作自己那部分 662 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 741 个 spec = 宿主 661 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 742 个 spec = 宿主 662 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 741 个 spec(本作自己那部分 661 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 742 个 spec(本作自己那部分 662 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -9398,3 +9398,37 @@ export const MAIN_CHAIN_MAX_STEPS = 5;
    计数器(`explores 1` / `kills 10`),跳级玩家从没打过一场。补了「计数器摆满」;
 2. 第一版第一条判据要求「单次调用就推完」—— 那是**想改掉守卫**。改成两条:
    单次不超上限(守卫还在)、一次结算推到 length(玩家那一侧)。
+
+### 第 167 轮:终局那一句「N / 8 条已满」,永远到不了 8
+
+走到顶的三生录列八条功业,末尾汇总:
+
+```text
+0 / 8 条已满
+```
+
+而八条里 `敌手 / 器谱 / 破界` 三条的 `full` 写死成 `false`。注释写着理由:
+
+> 图鉴与器谱没有「总数」的可靠口径(敌手按区域生成、器谱按装备模板),
+> 报绝对数而不报比例 —— 编一个分母比不报更糟。
+
+那个判断是对的。**但结论下错了:「不报比例」不等于「永远不算达成」。**
+于是分母是假的:玩家把三样全做到,汇总仍是 `5 / 8`。
+
+改成按「这件事发生过没有」判（`> 0`）。分母不可知时,「有没有」仍然可知。
+
+### 判据修了三版才对
+
+1. 「汇总分母 == 条数」—— 挡不住三条恒假(分母仍是 8,只是上界是 5);
+2. 加「三条标签存在」—— 存在不等于已满,仍红不了;
+3. 改成量**做过之后有没有翻成已满**,才真的钉住。
+
+中间还有一个夹具坑:`seedSave` 的 `addInitScript` 自带一次性守卫,同一个 context
+里注第二份不生效 —— 判据在**正确实现**上也红,因为它量的是一份没落进去的存档。
+改成另开一个 context。
+
+> 这一轮大部分时间花在「让判据真的能红」上。三次以为写好了,故障注入都还是绿 ——
+> 每次都是判据看错了地方。**故障注入不是形式,它是唯一的证明。**
+
+顺带:`showcaseSlices` 里没有 `lore` 切片,第一版写 `...deedSlices.lore` 展开
+`undefined`,`enemyLore` 反而没落进去。

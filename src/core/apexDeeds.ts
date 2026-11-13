@@ -104,27 +104,35 @@ export function apexDeeds(input: ApexDeedInput): ApexDeed[] {
     /*
      * 图鉴与器谱没有「总数」的可靠口径(敌手按区域生成、器谱按装备模板),
      * 报绝对数而不报比例 —— 编一个分母比不报更糟。
+     *
+     * 但**「不报比例」不等于「永远不算达成」**。这三条此前 `full` 写死成
+     * `false`,于是末尾那句「N / 8 条已满」的分母是假的:玩家把敌手全认遍、
+     * 器谱全读通、破界全踏破,汇总仍是 `5 / 8` —— 终局最该收束成一句
+     * 「我这一世成了什么」的地方,永远欠三条。
+     *
+     * 现在按「这件事发生过没有」判:`> 0`。那不是编分母,是同一件事的另一问法 ——
+     * 分母不可知时,「有没有」仍然可知。
      */
     {
       id: "enemy",
       label: "敌手",
       value: `认得 ${input.enemiesKnown} 种`,
-      full: false,
-      key: 0.5,
+      full: input.enemiesKnown > 0,
+      key: input.enemiesKnown > 0 ? 1 : 0,
     },
     {
       id: "blueprint",
       label: "器谱",
       value: `读通 ${input.blueprintsMastered} 张`,
-      full: false,
-      key: 0.5,
+      full: input.blueprintsMastered > 0,
+      key: input.blueprintsMastered > 0 ? 1 : 0,
     },
     {
       id: "clear",
       label: "破界",
       value: `${input.worldClears} 次`,
-      full: false,
-      key: 0.5,
+      full: input.worldClears > 0,
+      key: input.worldClears > 0 ? 1 : 0,
     },
   ];
   return rows.sort((a, b) => b.key - a.key).map(({ key: _key, ...deed }) => deed);

@@ -20810,6 +20810,129 @@ async function taskApexEnding() {
         }
       }
 
+      /*
+       * ---- 〇之二 · 此世功业的分母 ----
+       *
+       * 第 167 轮实测:八条功业里 `敌手 / 器谱 / 破界` 三条的 `full` 写死成 `false`,
+       * 于是末尾那句「N / 8 条已满」的分母是假的 —— 玩家把这三样全做到,
+       * 汇总也只到 5/8。
+       *
+       * 这一支把三样都摆成「做过」,量汇总是否真能读到 8/8。
+       */
+      /*
+       * 这一支另开一个 context:同一个 context 里 `seedSave` 用的 `addInitScript`
+       * 只在**首次导航**前生效（它自带一次性守卫），故在已跑过一屏的 context 上
+       * 再注一份，`/legacy` 读到的仍是旧档 —— 第一版就栽在这儿:
+       * 判据在**正确实现**上也红，因为它量的是一份没落进去的存档。
+       */
+      const deedsCtx = await auditContext({
+        viewport: { width: vp.width, height: vp.height },
+        deviceScaleFactor: 2,
+        isMobile: vp.width < 500,
+        hasTouch: vp.width < 500,
+      });
+      try {
+        const deedSlices = apexSlices();
+        /*
+         * 把「没有分母」那三样都摆成**做过**：破界记一次胜、器谱读通一张、敌手洞悉一种。
+         *
+         * 这三条此前 `full: false`，故这里正是要它们翻成已满的地方。
+         * 两个数值口径要对:
+         *   敌手「洞悉」= 认知层到 `ENEMY_LORE_MAX`（3），塞 1 仍是「眼熟」;
+         *   器谱「读通」= 掌握度 ≥ 1。
+         *
+         * `showcaseSlices` 里**没有 lore 切片**（实测 keys 里没有它），故这里整份给,
+         * 不是展开一份不存在的字段 —— 第一版写成 `...deedSlices.lore` 展开
+         * `undefined`,`enemyLore` 反而没落进去，门在正确实现上也会红。
+         */
+        deedSlices.endgame = { ...deedSlices.endgame, worldClears: { mortal_secret: 1 } };
+        deedSlices.lore = { enemyLore: { e_wolf: 3 }, blueprintLore: { t_jian: 1 } };
+        deedSlices.endgame = {
+          ...deedSlices.endgame,
+          milestones: Array.from({ length: 14 }, (_, i) => ({
+            id:
+              [
+                "first_immortal",
+                "first_god",
+                "first_chaos",
+                "first_dao",
+                "first_world",
+                "first_ni",
+                "first_wushang",
+                "first_qisha",
+                "first_void",
+                "first_custom",
+                "first_daily",
+                "first_rewrite",
+                "first_rebirth",
+              ][i] ?? "first_apex",
+            life: 1,
+            at: Date.now(),
+          })),
+        };
+        await seedSave(deedsCtx, deedSlices, `__apexDeeds${vp.tag}`);
+        const deedPage = await deedsCtx.newPage();
+        watchPageErrors(deedPage, pageErrors);
+        await openRoute(deedPage, "/legacy", 900);
+        await clearOverlays(deedPage);
+        checked += 1;
+        const deeds = await deedPage.evaluate(() => {
+          const sec = document.querySelector("[data-legacy-apex]");
+          if (!sec) return null;
+          return {
+            sum: (sec.querySelector(".legacy-apex__deed-sum")?.textContent || "").trim(),
+            rows: [...sec.querySelectorAll("[data-legacy-apex-deeds] > div")].map((d) => ({
+              label: (d.querySelector("dt")?.textContent || "").trim(),
+              full: d.querySelector("dd")?.getAttribute("data-deed-full") ?? null,
+            })),
+          };
+        });
+        if (!deeds) {
+          failures.push(`[${vp.tag}-apex] 到顶却没有「此世功业」那一栏`);
+        } else if (deeds.rows.length !== 8) {
+          failures.push(`[${vp.tag}-apex] 此世功业该有八条,实见 ${deeds.rows.length}`);
+        } else {
+          /*
+           * 分母必须是真的:八条里的每一条都要有可判定的 `full` 落点。
+           * 三条恒 `false` 时，汇总的上界就是 5 —— 那正是这一支要挡的。
+           */
+          const sum = /^(\d+)\s*\/\s*(\d+)/.exec(deeds.sum);
+          if (!sum) {
+            failures.push(`[${vp.tag}-apex] 此世功业的汇总读不出来:«${deeds.sum}»`);
+          } else if (Number(sum[2]) !== deeds.rows.length) {
+            failures.push(`[${vp.tag}-apex] 汇总分母 ${sum[2]} 与条数 ${deeds.rows.length} 不一致`);
+          }
+          if (deeds.rows.some((r) => r.full === null)) {
+            failures.push(`[${vp.tag}-apex] 有功劳条目没有 full 落点 —— 分母可能是假的`);
+          }
+          /*
+           * 最硬的一条:三条「没有分母」的功劳（敌手 / 器谱 / 破界）在**做过之后**
+           * 必须能变成已满。把它们卡在 `full: false` 时，汇总的上界是 5，
+           * 而页面上那句「N / 8 条已满」就成了假分母。
+           *
+           * 这一支先把三样都做成「做过」，再看那三条是否翻成了已满。
+           */
+          const byLabel = Object.fromEntries(deeds.rows.map((r) => [r.label, r.full]));
+          for (const label of ["敌手", "器谱", "破界"]) {
+            if (!(label in byLabel)) {
+              failures.push(`[${vp.tag}-apex] 此世功业里没有「${label}」那一条`);
+            } else if (byLabel[label] !== "true") {
+              /*
+               * 这一档把破界真的做过一次（`worldClears`）—— 那一条必须翻成已满。
+               * 三条卡在 `full: false` 时，汇总的上界是 5，
+               * 而页面上那句「N / 8 条已满」就成了假分母。
+               */
+              failures.push(
+                `[${vp.tag}-apex] 「${label}」这一档已经做过，却没翻成已满` +
+                  ` —— 该条恒 false 时，汇总永远到不了 8`,
+              );
+            }
+          }
+        }
+      } finally {
+        await deedsCtx.close();
+      }
+
       // ---- 一 · 修行页 ----
       await openRoute(page, "/cultivation", 900);
       await clearOverlays(page);
