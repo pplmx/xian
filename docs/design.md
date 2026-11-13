@@ -4711,6 +4711,38 @@ name.value = text ? text.slice(0, PLAYER_NAME_MAX) : DEFAULT_PLAYER_NAME;
 七种坏值各一条，外加一条「合法名字原样保留 —— sanitize 不许改写正常数据」。
 故障注入：把 sanitize 那一块删掉，五条当场红。
 
+### 时钟回拨：`lastActiveAt` 落在未来时
+
+玩家的系统时钟会往回跳：手机自动校时、时区切换、手改时间。一旦 `lastActiveAt`
+比当前时刻还晚，`settleOffline` 那行算式就是:
+
+```ts
+const dtSec = Math.max(0, (nowMs - game.lastActiveAt) / 1000);
+if (dtSec < 1) return null;
+```
+
+`Math.max(0, …)` 把它压成 0，于是直接返回 null —— **什么都不给**。这是对的。
+但这条**没有判据**：现有 `offlineFuzz.spec` 里 `lastActiveAt` 一律是
+`Date.now() - hours * 3600_000`（永远在过去），「未来」那一支从来没被走过。
+
+#### 还有一半：谁来把它拉回现在
+
+结算函数自己不改时间戳——那是**启动链路**的事（`engine.boot` 在结算之后无条件
+`game.stampActive(now)`）。若不盖这一章，未来时间戳会原样留在存档里，玩家
+**每一次启动都判定「离线时长 = 负 → 跳过」**，于是每一天都白过，而界面上不会有
+任何异常——只是永远没有离线收益。
+
+#### 判据自己错了三次
+
+1. 只调 `settleOffline(now)` 就断言「时间戳被拉回」—— 而拉回它的是启动链路。
+   **判据红在产品正确的地方**；
+2. 改成自己调 `stampActive` 后绿了 —— 但把 boot 那行删掉照样绿（实测），
+   因为它量的是自己搭的场景；
+3. 补源码判据后又写成 `/game\.stampActive\(now\);/` —— 同文件里 `onVisibility`、
+   `onUnload` 也有盖章，删掉 boot 那行它还是绿。锚到 `lastTickAt` 那一处才真的红。
+
+第 3 次与第 2 次是同一类错：**「文件里有这串字」不等于「那一处接线还在」**。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
