@@ -125,9 +125,8 @@
                 <div class="adventure-briefing__omen">
                   <span class="adventure-briefing__eyebrow">星象值日</span>
                   <p>
-                    {{ mansionLine }} —— 利
-                    <strong>{{ favoredWorldName }}</strong>
-                    ,在其地历练际遇概率{{ mansionLuckText() }},他处不加。
+                    {{ mansionLine }} —— 利<strong>{{ favoredWorldName }}</strong
+                    >,在其地历练际遇概率{{ mansionLuckText() }},他处不加。
                   </p>
                 </div>
                 <div v-if="biasLabel" data-bias-hint class="adventure-briefing__fact">

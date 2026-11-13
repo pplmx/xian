@@ -1002,9 +1002,20 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
     const view = src("../components/celestial/TutorialDialog.vue");
     // 原实现是无 href 的 <a @click>,不在 Tab 序列里,键盘用户根本走不到;
     // 且文字承诺「去熔炉」动作却只关导览 —— 改为真按钮(type=button)才可达
-    expect(view, "天道熔炉该是真按钮(可聚焦)").toMatch(
-      /<button\s+type="button"[\s\S]{0,200}天道熔炉\s*<\/button>/,
-    );
+    /*
+     * 判据认的是「这一枚按钮真的包着那四个字」,不是标点长什么样。
+     *
+     * 原先写的是 `天道熔炉\s*<\/button>` —— 它要求文本后紧跟一个完整的闭标签。
+     * 而那句话的标点必须并在闭标签同一行(否则行内元素后的换行会印出一个空格,
+     * 见 `ui/inlineSeam.spec`),oxfmt 于是把它排成 `天道熔炉</button\n  >,熔作道源`:
+     * **闭标签被折在 `>` 前断开**,而 `</button>` 这个字面量不再连续出现。
+     * 断言因此红在排版上,与被守的那件事(可聚焦、含这四个字)毫无关系。
+     */
+    const furnaceButton =
+      /<button\b[\s\S]{0,240}?type="button"[\s\S]{0,240}?天道熔炉[\s\S]{0,40}?<\/button\b/.exec(
+        view ?? "",
+      );
+    expect(furnaceButton?.[0], "天道熔炉该是一枚 type=button 的真按钮(可聚焦)").toBeTruthy();
     expect(view, "不该再有无 href 却挂 @click 的 <a>(键盘到不了的可交互元素)").not.toMatch(
       /<a[^>]*@click=[^>]*>[\s\S]{0,40}天道熔炉/,
     );

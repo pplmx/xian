@@ -5,24 +5,20 @@
       <p class="font-kai text-ink">凡间所得,终有尽时。</p>
       <p class="text-ink-soft">
         玄铁、功法残页、灵石……到了此境,皆可献入
+        <!-- 标点并在闭标签那一行:换行会在行内元素后编译成一个空格,印成「献入 天道熔炉 ,熔作道源」 -->
         <button
           type="button"
           class="-my-2 inline-block py-2 align-baseline text-qing underline underline-offset-2 active:opacity-60"
           @click="emit('close')"
         >
-          天道熔炉
-        </button>
-        ,熔作道源。
+          天道熔炉</button
+        >,熔作道源。
       </p>
       <p class="text-ink-soft">
-        道源,助你
-        <b class="text-cinnabar">此世</b>
-        问道——叩天界、立契约、踏试炼。
+        道源,助你<b class="text-cinnabar">此世</b>问道——叩天界、立契约、踏试炼。
       </p>
       <p class="text-ink-soft">
-        道源又可凝作道果,道果随神魂不灭,助你
-        <b class="text-violet-ink">来世</b>
-        更进一步。
+        道源又可凝作道果,道果随神魂不灭,助你<b class="text-violet-ink">来世</b>更进一步。
       </p>
       <p class="mt-2 text-body text-ink-faint">
         一句话:

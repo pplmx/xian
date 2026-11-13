@@ -641,6 +641,8 @@ const CATEGORIES = [
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
+      // 句中内联控件:闭标签后的换行会在标点前漏出一个空格
+      "inlineSeam",
       "specReadSource.spec",
     ],
   },

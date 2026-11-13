@@ -258,10 +258,10 @@
               <span class="text-ink-soft">此形既成,不主动换界就不会再变。</span>
             </p>
             <p>
-              舍 <span class="text-cinnabar">道果</span>
-              可立即换一方天地,清空本世路线进度; 待
-              <span class="text-violet-ink">兵解转世</span>
-              ,也会另开一片天地—— 与此世不同的地界、不同的路、不同的规矩。
+              舍 <span class="text-cinnabar">道果</span> 可立即换一方天地,清空本世路线进度; 待<span
+                class="text-violet-ink"
+                >兵解转世</span
+              >,也会另开一片天地—— 与此世不同的地界、不同的路、不同的规矩。
             </p>
             <p>
               此外诸界仍在,可回 <span class="text-qing">历练</span>
