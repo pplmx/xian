@@ -2704,11 +2704,25 @@ describe("界面分层 · 浮层只有一个出处", () => {
 
   it("闭关该收多少要摊开且不手抄 —— 按现倍率折算,不许定性「×2.5」", () => {
     // 闭关决意原先只给「修炼 +150%」的定性;在已有速度增益时按「每秒×2.5」预估会虚高。
-    // 要按现倍率折算 base 再算(factor×现倍率+buff),并把「闭关后每秒 / 多收」摊成数。
+    // 要按现倍率折算 base 再算(factor×现倍率+buff),并把「闭关后速率 / 多收」摊成数。
     // 拆分后闭关卡归 RetreatCard,判据随本体改指子面板
     const retreatCard = fileAt("components/cultivation/RetreatCard.vue");
-    expect(retreatCard?.src, "要摊闭关后每秒").toContain("闭关后每秒");
+    /**
+     * 只认**前瞻行那个返回值**里的「闭关后」。
+     *
+     * 原先这里断言的是字符串 `闭关后每秒` —— 而那一句本身就是错的:formatRate 自带
+     * 「/秒」,两句都写会印成「闭关后每秒 ≈ 4.034亿/秒」(见 ui/rateUnit.spec)。
+     * 改成认「闭关后」与「formatRate(retreatPerSec)」两件事同时出现在前瞻行里:
+     * 前半是「摊开」,后半是「按现倍率折算」,都不许被后来的改写顺手抹掉。
+     */
+    expect(retreatCard?.src, "要摊闭关后的速率").toMatch(
+      /闭关后[^\n]{0,12}formatRate\(retreatPerSec\)/,
+    );
     expect(retreatCard?.src, "按现倍率折算,不手写常数").toContain("mult + r");
+    // 那一笔「约多收」是五分钟的**总量**,不许借 formatRate 的速率单位报数
+    expect(retreatCard?.src, "多收的总量要走 formatGN,不走速率口径").toMatch(
+      /约多收\s*\{\{\s*formatGN\(retreatExtra\)/,
+    );
   });
 
   it("读屏可访问名与付不起的原因 —— 占位输入给 aria-label,修到顶置灰时列差", () => {

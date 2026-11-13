@@ -38,11 +38,14 @@
         闭关 · {{ retreatMinutes }}分钟 修炼 {{ formatSignedPercent(retreatPct, 0) }}(期间无法历练)
       </button>
       <!-- 闭关该收多少就摊多少:照现倍率折算 base,不只在定性「+150%」上打转。
-           只在未闭关头展示为**前瞻**;闭关中现速率已含 +150%,再折算一遍会重复叠加,故撤 -->
+           只在未闭关头展示为**前瞻**;闭关中现速率已含 +150%,再折算一遍会重复叠加,故撤。
+           「闭关后」后面不许写「每秒」—— formatRate 自带「/秒」,两句都写就印成
+           「闭关后每秒 ≈ 4.034亿/秒」。那一笔「约多收」是**五分钟的总量**,
+           走 formatGN 报数,不借速率的单位(借了就成了「503.6亿/秒 修为」)。 -->
       <p v-if="!retreating" class="cultivation-action__forecast tabular">
-        闭关后每秒 ≈ {{ formatRate(retreatPerSec) }}(现 {{ formatRate(player.cultPerSec) }})·{{
+        闭关后 ≈ {{ formatRate(retreatPerSec) }}(现 {{ formatRate(player.cultPerSec) }})·{{
           retreatMinutes
-        }}分钟约多收 {{ formatRate(retreatExtra) }} 修为
+        }}分钟约多收 {{ formatGN(retreatExtra) }} 修为
       </p>
     </div>
   </article>
@@ -56,7 +59,7 @@ import { isRetreating, startRetreat, getRetreatRemainingSec } from "@/core/early
 import { modOf } from "@/core/statsCalc";
 import { buffDef } from "@/data/buffs";
 import { formatSignedPercent } from "@/utils/format";
-import { formatCountdown, formatRate } from "@/utils/format";
+import { formatCountdown, formatGN, formatRate } from "@/utils/format";
 import { useGameNow } from "@/composables/useGameNow";
 
 const player = usePlayerStore();

@@ -177,7 +177,14 @@ const { rows: qiDetailRows, note: qiDetailNote } = useProgressEta({
     hint: () =>
       `容量之外还在攒的部分;可积到 ${formatNum(player.qiBankCapValue)}(容量的 ${QI_BANK_MULT} 倍)`,
   },
-  remainRow: { label: "还差", hint: () => `每秒 ${formatRate(player.qiRegenPerSec)}` },
+  /*
+   * 这一行的 hint 说的是「缺口靠什么补上」。
+   *
+   * 原先写的是 `每秒 ${formatRate(...)}` —— 而 formatRate 自带 `/秒`,
+   * 于是弹窗里印成「每秒 445.3万/秒」,两个单位叠在一起。改成「按 … 回复」:
+   * 单位只由 formatRate 说一次,这句也才答的是「按什么速率补」而不是「每秒」。
+   */
+  remainRow: { label: "还差", hint: () => `按 ${formatRate(player.qiRegenPerSec)} 回复` },
   etaRow: { label: "预计回满", hint: "按当前回复速度" },
   fullText: "已满",
   rateEmptyText: "当前无回复",

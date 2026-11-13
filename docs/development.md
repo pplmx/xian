@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 727 个 spec;本作自己那部分 647 个) |
+| `bun run test` | 全量用例(全量 728 个 spec;本作自己那部分 648 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 727 个 spec = 宿主 647 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 728 个 spec = 宿主 648 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 727 个 spec(本作自己那部分 647 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 728 个 spec(本作自己那部分 648 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -8733,3 +8733,70 @@ AssertionError: expected '⑬' to be ''
 这条判据本来的意图是「玩家看到的字要画得出」,而 `readSource.ts` 的注释玩家看不到 ——
 但它**不区分注释与正文**,一律扫。故处理方式不是把它加进白名单(**那是放松判据**),
 而是**注释里改用「圈号」二字**:一个注释例子不值得让字体名单多一个例外。
+
+### 第 153 轮:「每秒」与 `/秒` 在同一句里说了两遍
+
+这一轮换了个问法:**把每页渲染出来的字抓下来,按形状看**,而不是继续读源码找"说法"。
+做法很土 —— 展品档与后期档各跑一遍十七个路由,把 `innerText` 逐行存下来,
+再按一组形状（重复单位、相邻同句、`-0%`、`NaN`）扫一遍。第一眼就撞上一条自相矛盾的:
+
+```text
+/cultivation  闭关后每秒 ≈ 4.034亿/秒（现 2.355亿/秒）·5分钟约多收 503.6亿/秒 修为
+```
+
+`formatRate()` 的返回值**自带**单位,而调用方又手写了一次「每秒」。
+
+### 顺着 `formatRate` 把每一个调用点看一遍
+
+全仓 `formatRate(` 一共 15 处。逐个看下来，修掉四处：
+
+```text
+闭关卡前瞻行    闭关后每秒 ≈ {{ formatRate(…) }}        → 印成「每秒 X/秒」
+闭关卡前瞻行    约多收 {{ formatRate(retreatExtra) }}    → 总量被说成了速率
+修为浮层「还需」  `每秒 ${formatRate(player.cultPerSec)}` → 同上
+灵气浮层「还差」  `每秒 ${formatRate(player.qiRegenPerSec)}` → 两处（顶栏与修炼页）
+```
+
+第二处比第一处更值得记：`retreatExtra` 是 `(闭关后速率 − 现速率) × 时长`，
+**量纲是修为总量**，却借了速率的口径报数。同一句里混着两个量纲，
+而它们长得一模一样 —— 「503.6亿/秒 修为」既重复了单位，又量错了东西。
+
+### 判据写给谁
+
+修这四处只花了几分钟，难的是**让第五处不会出现**。四条错误散在三个文件、
+分属三张不同的浮层（闭关卡、修为浮层、灵气浮层，后两者还各有一份顶栏版本），
+没有一处是「同一个组件渲染出来的」；本仓也没有 `@vue/test-utils`。
+而错的形状只有一种：**单位被写了两遍**。
+
+故写成源码形状判据 `src/ui/rateUnit.spec.ts`：扫「`每秒` 之后紧跟 `formatRate(`」。
+第一次跑就没通过 —— 而它报出的四条与真浏览器抓到的一模一样，
+这正是这条判据值得留下的理由：**它第一次执行就复现了玩家看到的那一屏。**
+
+### 判据自己踩的两个坑
+
+```text
+一  注释里举例写着「原先的 `每秒 ${formatRate(...)}`」—— 那是给人看的说明,
+   不是玩家看得见的文案。判据先抹掉三种注释(行 / 块 / 模板),抹法是等长替换,
+   报出的行号仍对应原文件。
+二  uiLayering 那条老判据断言的是字符串 `闭关后每秒` —— 它把**错误的那一句**
+   钉成了契约。改成断言「闭关后」与「formatRate(retreatPerSec)」同时出现在前瞻行,
+   再加一条「多收的总量走 formatGN」。
+```
+
+第二条是这一轮真正的收获：**一条老判据可以正在守卫一个错误**。
+它当年守的意图（「要摊开、不手抄常数」）是对的，落成字面量之后，
+就把那句错的文案一起钉死了。改它的方式不是删掉，而是把它想守的两件事
+重新表达成不依赖那句错文案的形状。
+
+### 同一轮的第二个落点:浏览器门里补一条「单位只说一次」
+
+源码判据挡得住「第五处」,但它看不见**真渲染出来**的样子 —— 那两个数字是从 store 里
+现算的,`formatRate` 拿到的可能是 `GNum` 也可能是一个 `number`。故在 `layout-check` 的
+「闭关的跨页承诺」里补一条最便宜的量法:点开闭关卡前后,把修行页上含 `/秒` 的行抓出来,
+断言**没有任何一行同时含有两次 `/秒`**。这条与源码判据守的不是同一件事:
+
+```text
+源码判据   防「调用方手写了一次单位」这一类写法
+浏览器门   防「拼出来的那一行真有两个单位」—— 数据换成 GNum、写成拼接、走 computed,
+           源码判据看不见,这条看得见
+```

@@ -8960,6 +8960,32 @@ async function taskRetreat() {
     const retreatBtn = page.locator("main button", { hasText: /闭\s*关/ }).first();
     if ((await retreatBtn.count()) === 0) failures.push("[390] 闭关场景:修行页找不到「闭关」入口");
     else {
+      /*
+       * 判的是「同一段文字里,单位被说了两遍」。
+       *
+       * `formatRate()` 自带「/秒」,调用方再写「每秒」就印成
+       * 「闭关后每秒 ≈ 4.034亿/秒」—— 实测过,见 `src/ui/rateUnit.spec.ts`。
+       * 源码判据只认那一种写法;这里量**真渲染出来的叶子节点** ——
+       * 数从 store 现算、换成 GNum、中间过 computed 的写法源码判据看不见,这条看得见。
+       *
+       * 只取没有子元素的节点:一行里并排两个读数(「闭关后 ≈ A/秒(现 B/秒)」)
+       * 是正当写法,而它会被拼成两段各自只有一个单位。`每秒` 与 `/秒` 同段才是错的。
+       */
+      const rateLines = await page.evaluate(() =>
+        [...document.querySelectorAll("main *")]
+          .filter((el) => el.children.length === 0)
+          .map((el) => (el.textContent || "").trim())
+          .filter((text) => text.includes("/秒")),
+      );
+      if (rateLines.length === 0) {
+        failures.push("[390] 速率单位:修行页上一段含「/秒」的读数都没读到 —— 判据取错了地方");
+      }
+      const doubled = rateLines.filter((text) => text.includes("每秒") && text.includes("/秒"));
+      if (doubled.length > 0) {
+        failures.push(
+          `[390] 速率单位:同一段里「每秒」与「/秒」各说了一遍 —— ${doubled.join(" | ")}`,
+        );
+      }
       await retreatBtn.click({ timeout: 3000 }).catch(() => {});
       await page.waitForTimeout(800);
       const started = await page.evaluate(() => ({

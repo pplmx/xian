@@ -638,6 +638,9 @@ const CATEGORIES = [
       // 剑意纯度的「已达 / 欠何」两侧读数:此前视图只 filter(c => c.ok),
       // 未达那半永远到不了界面 —— 源码层判据守它不许退回去
       "swordPurityAxes",
+      // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
+      // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
+      "rateUnit",
       "specReadSource.spec",
     ],
   },

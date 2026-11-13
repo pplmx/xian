@@ -641,7 +641,12 @@ const {
   },
   remainRow: {
     label: "还需",
-    hint: () => (player.expFull ? "已至圆满,可尝试突破" : `每秒 ${formatRate(player.cultPerSec)}`),
+    /*
+     * formatRate 自带「/秒」,这里不许再手写一遍 —— 原先的 `每秒 ${formatRate(...)}`
+     * 会在浮层里印成「每秒 2.355亿/秒」。
+     */
+    hint: () =>
+      player.expFull ? "已至圆满,可尝试突破" : `按 ${formatRate(player.cultPerSec)} 累积`,
   },
   /**
    * 玩家点名要的那一行:绝对值到「京」以后看不出涨落,**"还要多久"才看得见变化** ——
@@ -723,7 +728,7 @@ const { rows: qiDetailRows, note: qiDetailNote } = useProgressEta({
     hint: () =>
       `容量之外还在攒的部分;可积到 ${formatNum(player.qiBankCapValue)}(容量的 ${QI_BANK_MULT} 倍)`,
   },
-  remainRow: { label: "还差", hint: () => `每秒 ${formatRate(player.qiRegenPerSec)}` },
+  remainRow: { label: "还差", hint: () => `按 ${formatRate(player.qiRegenPerSec)} 回复` },
   etaRow: { label: "预计回满", hint: "按当前回复速度" },
   fullText: "已满",
   rateEmptyText: "当前无回复",
