@@ -696,6 +696,8 @@ const CATEGORIES = [
       "auditDocExamples",
       // 审计规范第一节要求「每条判据都附故障注入配方」—— 而这条要求本身没有判据守着
       "auditFaultRecipe",
+      // 日课「去服药」只送到背包封面,默认落在装备册 —— 玩家还得自己再点一次
+      "dailyRouteTab",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

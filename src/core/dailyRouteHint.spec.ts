@@ -68,8 +68,15 @@ describe("日课 · 去哪儿做", () => {
   it("去处都是真实注册的路由 —— 拼错一条，点下去什么也不会发生", () => {
     const routes = registeredRoutes();
     expect(routes.size, "没读到路由表").toBeGreaterThan(5);
+    /*
+     * 比的是**路径部分**:`/inventory?tab=pill` 的路径是 `/inventory`,
+     * 路由表里注册的也是 `/inventory`。第一版拿整条字符串去比，
+     * 加了 tab 参数之后全部报「没有对应路由」（实测）。
+     * query 的合法性由 `dailyRouteTab.spec` 那一层守。
+     */
+    const pathOf = (route: string) => route.split("?")[0]!;
     const bad = Object.entries(DAILY_ROUTES)
-      .filter(([, hint]) => hint.route !== "/" && !routes.has(hint.route))
+      .filter(([, hint]) => pathOf(hint.route) !== "/" && !routes.has(pathOf(hint.route)))
       .map(([key, hint]) => `${key} → ${hint.route}`);
     expect(bad, "这些去处没有对应的路由").toEqual([]);
   });

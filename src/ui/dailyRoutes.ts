@@ -52,12 +52,12 @@ export const DAILY_ROUTES: Readonly<Record<CounterKey, DailyRouteHint>> = {
   bossKills: { route: "/adventure", label: "去斩将" },
   explores: { route: "/adventure", label: "去历练" },
   // 炼成丹药 / 服药 —— 背包的丹药册（开炉弹窗在那儿）
-  pillsCrafted: { route: "/inventory", label: "去开炉" },
-  pillsUsed: { route: "/inventory", label: "去服药" },
-  pillsFailed: { route: "/inventory", label: "去开炉" },
+  pillsCrafted: { route: "/inventory?tab=pill", label: "去开炉" },
+  pillsUsed: { route: "/inventory?tab=pill", label: "去服药" },
+  pillsFailed: { route: "/inventory?tab=pill", label: "去开炉" },
   // 强化、分解、得装备 —— 背包
-  upgrades: { route: "/inventory", label: "去强化" },
-  decomposed: { route: "/inventory", label: "去分解" },
+  upgrades: { route: "/inventory?tab=equip", label: "去强化" },
+  decomposed: { route: "/inventory?tab=equip", label: "去分解" },
   equipsGained: { route: "/adventure", label: "去历练" },
   // 突破与渡劫 —— 修行页
   breakthroughs: { route: "/cultivation", label: "去破境" },
