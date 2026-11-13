@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 751 个 spec;本作自己那部分 671 个) |
+| `bun run test` | 全量用例(全量 753 个 spec;本作自己那部分 673 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 751 个 spec = 宿主 671 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 753 个 spec = 宿主 673 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 751 个 spec(本作自己那部分 671 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 753 个 spec(本作自己那部分 673 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -9837,3 +9837,74 @@ BOND_EVENTS 7 条 daoluService.offerBondEvent
 > 这次值得记的是:**我刚写完一条关于「注释不是正文」的判据，
 > 就在下一条判据里犯了同一个错。** 纪律写在文档里不等于会照着做 ——
 > 唯一可靠的是把 `stripComments` 变成默认动作，而不是每次想起来再调。
+
+### 第 177 轮:完整曲线跑一遍 —— 到顶是 228 天,而玩家看不见
+
+按计划做「从新号到通关」的曲线模拟。用 `core/progressionSim` 跑:
+
+```text
+major  1 :    0.1 小时
+major  5 :   23.6 小时  (1 天)
+major  9 : 1285.7 小时  (54 天)
+major 20 : 5476.7 小时  (228 天)
+```
+
+**这条曲线是刻意的** —— `progressionSim.spec` 守着「长尾不超过 10 倍」与
+「每境增幅 < 2 倍」，设计文档也逐行对过账。曲线本身没有问题。
+
+问题在**玩家看不见它**:
+
+```text
+修行页有「本境修为 · 约 13 秒」        只到下一层
+有一整条 21 境全景梯（RealmLadder）     只有「已至 / 当前 / 未至」三种点
+没有任何一处说「到大道尽头还要多久」
+```
+
+一个要玩两百多天的长线目标，玩家在第一天只能看到「下一层 13 秒」——
+他没有任何办法判断这条路有多长。这不是难度问题，是**决策信息不完整**
+（`AGENTS.md` 的「决策信息完整」与「让看不见的机制可见」两条都指向它）。
+
+### 改法:新增 `core/apexEta`
+
+```text
+apexEta(major, sub, cultPerSec)   按玩家真实速度，对每个剩余层求和
+apexEtaText(...)                  拼成给玩家看的那一句（纯函数，可测）
+```
+
+与 `progressionSim` 的分工说清了:`progressionSim` 用**模型假设**回答「通用玩家
+每境多久」（服务于设计对账），`apexEta` 用**这位玩家此刻的真实速度**回答
+「他还要多久」。两者不能互相顶替 —— 模型对设计对账是对的，对单个玩家是错的。
+
+修行页全景梯下面加一行:「按此刻行速，至大道尽头约 500 天」。
+
+### 虚假精度：第一版报了「520天20小时」
+
+`formatDuration` 直接套上去是这样。两个问题:
+
+1. **虚假精度** —— 数百天量级报到小时是假精确;
+2. **它每刷新都在跳** —— 分母是「此刻行速」，buff 到期与灵气涨落会让那 20 小时
+   来回变。**看起来精确却在抖，比明确粗粒度更误导。**
+
+改成分档:一天以内走 `formatDuration`，一天到百天报「N 天」，百天以上报
+「约 N 天」并**百位取整** —— 这个量级上玩家要判断的是「几个月的事还是几年的事」。
+
+### 判据自己错了三次
+
+1. 断言「必须 import `progressionSim`」—— 那是判据错，两者分工不同;
+2. 断言「整文件里不许出现 `baseCultPerSec`」—— 而修行页本来就有一格
+   「基础 1.3/秒 · 加成 113%」，它读那个完全应该。**要禁的是这一格自己拼曲线**;
+3. 扫模板里那段找「按此刻」—— 而文案在 computed 里拼，模板只有 `{{ }}`。
+
+三次都是「判据看错了地方」，产品一直是对的。
+
+### 四道门都验过
+
+```text
+core/apexEtaVisibility.spec   读数在页面上、来自纯模块、到顶说「已至」、带「按此刻」
+core/longRangePrecision.spec  分档精度、不报小时、速度不可用时不印数字
+layout-check（修行 5 项）      390px 与 200% 缩放都不溢出，热区 ≥60px
+浏览器实测                     「按此刻行速,至大道尽头约 500 天」
+```
+
+两条故障注入都精确命中:改回 `formatDuration` → 判据与 layout 门同时红;
+摘掉那个 `data-` 属性 → 接线判据红。

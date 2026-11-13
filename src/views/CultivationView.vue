@@ -149,6 +149,17 @@
           <!-- 仙路 21 境全景:已至/当前/未至一眼可辨,界门立界,四界分列 -->
           <div class="cultivation-ledger__ladder" data-cultivation-route>
             <RealmLadder :major="player.major" />
+            <!--
+              全景梯只回答「走到第几境」,不回答「还要多久」—— 而这条路按此刻行速
+              是两百多天(见 core/apexEta 的注释)。长线目标没有时间尺度,
+              玩家就没法判断这条路有多长。
+
+              文案必须带「按此刻行速」:这个数随换装备、吃丹、转世而变,
+              许诺一个精确到达日就是撒谎(与上面那三格「此刻行速」同一口径)。
+            -->
+            <p class="cultivation-ledger__apex-eta text-ink-faint" data-cultivation-apex-eta>
+              <template v-if="apexEtaLine">{{ apexEtaLine }}</template>
+            </p>
           </div>
 
           <div class="cultivation-ledger__primary" data-cultivation-primary>
@@ -515,6 +526,7 @@ import { qiRepairView, repairWithQi } from "@/core/qiRepair";
 import { isRetreating } from "@/core/earlyGameService";
 import { useNow } from "@/composables/useNow";
 import { useProgressEta } from "@/composables/useProgressEta";
+import { apexEtaText } from "@/core/apexEta";
 import { buffDef } from "@/data/buffs";
 import { pillDef } from "@/data/pills";
 import type { PillDef } from "@/types";
@@ -607,6 +619,17 @@ const stage = computed(() =>
     injured: cultivation.hasBuff("injury"),
   }),
 );
+
+/**
+ * 「按此刻行速,到大道尽头还要多久」。
+ *
+ * 全景梯只说「第几境」,而这条路按此刻行速是两百多天(见 core/apexEta)。
+ * 长线目标没有时间尺度,玩家就没法判断它有多长 —— 这一格补的就是那件事。
+ *
+ * 三支：到顶 → 「已至大道尽头」；速度不可用 → 不报（不印 Infinity）；
+ * 其余 → 「按此刻行速,至大道尽头约 N」。
+ */
+const apexEtaLine = computed(() => apexEtaText(player.major, player.sub, player.cultPerSec));
 
 /**
  * 修为数值详情的两行 + 一句人话。

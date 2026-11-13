@@ -560,6 +560,22 @@
     padding: 0.75rem 0 0.7rem;
   }
 
+  /*
+   * 「至大道尽头约 N」—— 挂在全景梯下面一行。
+   *
+   * 它是**读数**不是装饰:左对齐于梯的左缘,字号比正文再小一档,
+   * 用 ink-faint（与「第 N / 21 境」同类信息色）。不加底、不加框 ——
+   * 与修行页既有语言一致（本作不铺第三枚强色）。
+   */
+  .cultivation-ledger__apex-eta {
+    margin-top: 0.35rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    text-align: center;
+    /* 200% 缩放下这一行会长,允许换行但不许溢出 */
+    overflow-wrap: anywhere;
+  }
+
   .cultivation-ledger__primary {
     position: relative;
     z-index: 1;

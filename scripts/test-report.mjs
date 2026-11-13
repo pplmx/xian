@@ -682,6 +682,10 @@ const CATEGORIES = [
       "settingsWiring",
       // 道侣事件的四个触发点(踏界/首胜/濒死/破首领)都接了,但没人守着 —— 少接一个就静默失效
       "bondEventTriggers",
+      // 长线目标没有时间尺度:修行页只给本境 ETA,而到顶是两百多天
+      "apexEtaVisibility",
+      // 数百天报到小时是虚假精度 —— 而那个数每刷新都在跳
+      "longRangePrecision",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

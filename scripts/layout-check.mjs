@@ -19536,6 +19536,43 @@ async function taskCultivationFold() {
       } else if (preview.length < 16) {
         failures.push(`[390-cultivation] 天数可窥只报了劫名，没说它会怎么伤到你 —— «${preview}»`);
       }
+
+      /*
+       * 「至大道尽头约 N」—— 长线目标的时间尺度。
+       *
+       * 这一格是第 177 轮补的:修行页原本只有本境 ETA（「约 13 秒」），
+       * 而这条路按此刻行速是两百多天。全景梯只说「第几境」，不说还要多久。
+       *
+       * 三条都要:
+       *   ① 真在页面上（接线）；② 带「按此刻」的限定（这个数会变，不许许诺精确到达日）；
+       *   ③ 数百天量级只报天、不报小时（那个数每刷新都在跳，报到小时是虚假精度）。
+       */
+      const apexEta = await page.evaluate(() => {
+        const el = document.querySelector("[data-cultivation-apex-eta]");
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        return {
+          text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+          w: Math.round(r.width),
+          over: el.scrollWidth > el.clientWidth + 1,
+          right: Math.round(r.right),
+        };
+      });
+      if (!apexEta || !apexEta.text) {
+        failures.push("[390-cultivation] 没有「至大道尽头约 N」的读数 —— 长线目标没有时间尺度");
+      } else if (!/按此刻行速/.test(apexEta.text)) {
+        failures.push(`[390-cultivation] 长线读数没有「按此刻」的限定 —— «${apexEta.text}»`);
+      } else if (!/约\s*\d+\s*天/.test(apexEta.text)) {
+        failures.push(`[390-cultivation] 长线读数没报天数 —— «${apexEta.text}»`);
+      } else if (/小时|分|秒/.test(apexEta.text)) {
+        failures.push(
+          `[390-cultivation] 数百天量级报到了小时 —— 虚假精度，而且它每刷新都在跳:«${apexEta.text}»`,
+        );
+      } else if (apexEta.over) {
+        failures.push(`[390-cultivation] 长线读数溢出了容器 —— «${apexEta.text}»`);
+      } else if (apexEta.w < 60) {
+        failures.push(`[390-cultivation] 长线读数的热区只有 ${apexEta.w}px —— 文字被挤掉了`);
+      }
     }
 
     if (rendered === 0) {
