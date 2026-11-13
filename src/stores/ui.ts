@@ -53,6 +53,18 @@ export const useUiStore = defineStore("ui", () => {
    *  这句,用自家 aria-live 补上,读完即清(只在创角→首页这一趟念)。 */
   const worldEnter = ref<string | null>(null);
 
+  /**
+   * 提示条**同时最多几条**。
+   *
+   * 为什么是 5:实测连发 8 条后屏幕上剩 5 条，底缘到 237px（屏高 844px），
+   * 不遮挡正文第一屏。密度再高就开始盖内容 —— 那时玩家会以为界面卡住了，
+   * 而提示条本身说的是「刚才发生了什么」，不该抢正文。
+   *
+   * 为什么不是更少:一场战斗里可能同时发生「镇压结算 + 连胜赏赐 + 掉落报喜」，
+   * 三四条并列是常态;少于 3 会让同时发生的事互相顶掉。
+   */
+  const TOAST_MAX = 5;
+
   function toast(
     text: string,
     kind: Toast["kind"] = "info",
@@ -65,7 +77,10 @@ export const useUiStore = defineStore("ui", () => {
     const stamped = seal && QUALITY_IDS.has(seal as QualityId) ? (seal as QualityId) : undefined;
     // 去路同样先对一次账:点了没反应的提示比不可点的提示更让人困惑
     const way = toastTargetOf(target) ?? undefined;
-    toasts.value = [...toasts.value.slice(-4), { id, text, kind, seal: stamped, target: way }];
+    toasts.value = [
+      ...toasts.value.slice(-(TOAST_MAX - 1)),
+      { id, text, kind, seal: stamped, target: way },
+    ];
     /*
      * 停多久也跟着品阶走 —— 与那道光(ui/flashTier)、那一声(ui/rareSfx)同一把尺。
      * 从前只有两档:`rare ? 4200 : 2600`,于是神品与灵品停一样久。

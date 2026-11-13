@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 763 个 spec;本作自己那部分 683 个) |
+| `bun run test` | 全量用例(全量 764 个 spec;本作自己那部分 684 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 763 个 spec = 宿主 683 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 764 个 spec = 宿主 684 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 763 个 spec(本作自己那部分 683 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 764 个 spec(本作自己那部分 684 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -10601,3 +10601,60 @@ function doRecruit(): void {
 
 「地基」那三条样本是**缩进**的，而我的正则用 `\n\}` 收尾，一个都匹配不到。
 改成 `\n\s*\}`。
+
+### 第 192 轮:提示条上限是个裸数 —— 改成 40 也没有判据会拦
+
+按计划查「状态变化但玩家不知道」的反面:**说得太多**。
+
+先核了几件事，都是健康的:
+
+```text
+buff 到期      「X 的效果已结束」有通报
+弟子归来        启动路径与收徒页共用同一条通报格式化（注释里记着「此前整条不通报」已修）
+连胜赏赐        「连胜 N 场,赏灵石 … · 悟道点 …」—— 注释标明是全库审计抓出的缺口
+灵气溢出        修行页那格写着「满 → 未存满 · 存满后溢出入炉」
+实测刷屏        连发 8 条，屏幕上剩 5 条，底缘 237px（屏高 844），不遮挡正文
+```
+
+最后那条「剩 5 条」让我去看了上限。
+
+### 上限是个裸数
+
+```ts
+toasts.value = [...toasts.value.slice(-4), { id, text, kind, ... }];
+```
+
+`slice(-4)` 加一条 = 同时最多 5 条。**这个数是对的**，但它:
+
+1. **没有名字** —— 读代码的人要自己算「-4 + 1 = 5」;
+2. **没有来由** —— 为什么是 5 而不是 4 或 6，一句解释也没有。
+
+而**改成 40 不会有任何判据拦住** —— 那时十条一屏的提示会把正文整片盖住，
+而玩家会以为界面卡住了。
+
+### 改法:具名 + 写清来由
+
+```ts
+/**
+ * 提示条同时最多几条。
+ *
+ * 为什么是 5:实测连发 8 条后屏幕上剩 5 条，底缘到 237px（屏高 844px），
+ * 不遮挡正文第一屏。密度再高就开始盖内容。
+ *
+ * 为什么不是更少:一场战斗里可能同时发生「镇压结算 + 连胜赏赐 + 掉落报喜」，
+ * 三四条并列是常态;少于 3 会让同时发生的事互相顶掉。
+ */
+const TOAST_MAX = 5;
+```
+
+### 判据:`stores/toastCap.spec`
+
+三条:是具名常量（不是裸数）、上限在 3~6 之间、常量旁写清了来由。
+
+浏览器复验:上限仍是 5 条、底缘 237px，与改动前逐位相同。
+
+### 这一轮的意义
+
+前两轮补的是**缺的回执**。这一轮补的是**已有的数没有名字与来由** ——
+它不算缺陷，但它是「下一个人改它时只能猜」的那种隐患。
+而判据把「猜」变成了「红」。
