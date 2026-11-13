@@ -25,6 +25,11 @@
  * ③ 那两处「前提自检」的 spec，确实各有一条「判据的前提」。
  *
  * 只核**文档明确断言过**的那几处 —— 不追求覆盖全文，那会把判据变成第二份文档。
+ *
+ * ## 故障注入
+ *
+ * 把文档里某个 `X.spec` 改成不存在的名字 → 「点名的 spec 都落得了盘」红。
+ * 删掉 `stripCommentsParity` 里那句排除自身 → 「都真的排除了自身」红。
  */
 import { describe, expect, it } from "vite-plus/test";
 import { existsSync } from "node:fs";

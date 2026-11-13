@@ -29,6 +29,11 @@
  * ② 反向也要:代码里调用的触发点必须是 `BondTrigger` 联合类型里有的
  *    （写错一个字符串，类型会拦住 —— 但字面量若绕过类型，这里兜一层）;
  * ③ 每条事件至少能被一个已接的触发点触发到。
+ *
+ * ## 故障注入
+ *
+ * 删掉 `core/exploration` 里那行 `offerBondEvent("bossDefeated")`（**删掉，不是注释掉**——
+ * 注释掉时正则仍会匹配到，判据照绿，实测踩过）→ 「每个触发点都在源码里被调用过」红。
  */
 import { describe, expect, it } from "vite-plus/test";
 import { walkFiles, isSourceFile, readSource } from "@/test/readSource";

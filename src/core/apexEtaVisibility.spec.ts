@@ -36,6 +36,11 @@
  * 这个数是**按此刻行速**推算的,不是承诺:玩家会换装备、转世、吃丹,
  * 速度会变。故文案里必须带上「按此刻行速」这层限定 —— 与修行页
  * 「此刻行速」那三格同一口径。许诺一个精确到达时间才是撒谎。
+ *
+ * ## 故障注入
+ *
+ * 摘掉 `data-cultivation-apex-eta` → 「读数在页面上」那条当场红。
+ * 把 `apexEtaLine` 改成自己拼公式 → 「来自纯曲线模块」那条红。
  */
 import { describe, expect, it } from "vite-plus/test";
 import { readSource } from "@/test/readSource";

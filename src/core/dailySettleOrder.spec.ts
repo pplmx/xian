@@ -24,6 +24,13 @@
  * ③ `rolloverDailyIfNeeded` 只在**日期真的变了**时才换（不无条件清空）。
  *
  * 三条都不看「某个字面量」——看的是**顺序与条件**，那才是保障的来源。
+ *
+ * ## 故障注入
+ *
+ * 摘掉 `track` 里的 `checkDaily()` → 红。
+ * 把 `setDailyState` 提到 `settleDailies` 之前 → 红。
+ * 把换期的日期守卫改成 `if (true)` → 红。
+ * 把 `track` 改名 → 「前提还在」先红（并提示改判据而不是删判据）。
  */
 import { describe, expect, it } from "vite-plus/test";
 import { readSource } from "@/test/readSource";

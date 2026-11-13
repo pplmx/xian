@@ -29,6 +29,10 @@
  * ① 读档后道号必须是**非空字符串**，且不超 `PLAYER_NAME_MAX`;
  * ② 坏值回落到默认道号（`无名散修`），不是空串 —— 空串会让顶栏那一格塌掉;
  * ③ 正常名字原样保留（sanitize 不许改写合法数据）。
+ *
+ * ## 故障注入
+ *
+ * 把 `player.sanitize()` 里那段道号修形删掉 → 五条同时红（数字/null/对象/超长/空白）。
  */
 import { describe, expect, it } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";

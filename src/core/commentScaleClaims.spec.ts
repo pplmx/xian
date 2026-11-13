@@ -37,6 +37,11 @@
  * 只认这一种断言:「spec 文件数」是本判据能**精确数出来**的东西。
  * 别的规模数（"8 种机制家族""64 套数值"）依赖各自的数据源，不能在这里硬编码 ——
  * 那会把一条好判据变成第二本账。
+ *
+ * ## 故障注入
+ *
+ * 往 `core/balanceCoverage` 塞回「全仓 551 个 spec」→ 当场红。
+ * 把正则改成匹配不到（比如加个 `NOMATCH` 后缀）→ 「地基」那条红，证明它没有空转。
  */
 import { describe, expect, it } from "vite-plus/test";
 import { walkFiles, isSpecFile, readSource, isSourceFile } from "@/test/readSource";

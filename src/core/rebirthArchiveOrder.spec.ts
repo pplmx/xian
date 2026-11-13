@@ -32,6 +32,11 @@
  * 差点报成缺陷。**是我的测法绕过了整条流程** —— 归档在 `confirmReincarnation`
  * 里，不在 `rebirth` 里。这条判据因此按**函数内的相对位置**判，
  * 而不是去复现一条不完整的调用链。
+ *
+ * ## 故障注入
+ *
+ * 把 `archiveBond()` 挪到 `player.rebirth()` 之后 → 「先归档」那条红。
+ * 删掉 `player.recordBond(bondRec)` → 「前提还在」与「紧接着写进履历」同时红。
  */
 import { describe, expect, it } from "vite-plus/test";
 import { readSource } from "@/test/readSource";

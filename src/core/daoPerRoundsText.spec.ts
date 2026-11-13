@@ -27,6 +27,11 @@
  * 把 `interval` 从 5 改成 4，章法若还写「五」，玩家据以选路的字就撒谎了。
  *
  * 数字与中文数词都要认 —— 这不是宽容，是这一页真实的写法（全站章法走中文数词）。
+ *
+ * ## 故障注入
+ *
+ * 把长生道的 `perRounds.interval` 从 5 改成 4、章法仍写「五」→ 当场红。
+ * 把 `cnNumber` 的中文数词表改错 → 「地基」那条红，证明中文写法真的被认得出。
  */
 import { describe, expect, it } from "vite-plus/test";
 import { DAO_PATHS } from "@/data/endgame";

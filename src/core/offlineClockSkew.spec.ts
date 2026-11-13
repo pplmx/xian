@@ -24,6 +24,12 @@
  * ② 也不写坏存档：境界、修为、资源都不动;
  * ③ 结算之后 `lastActiveAt` 要被拉回现在 —— 否则玩家会**永远**等不到离线收益
  *    （每一次启动都判定「未来」，每一天都白过）。
+ *
+ * ## 故障注入
+ *
+ * 把 `engine.boot` 里那行 `game.stampActive(now)` 删掉 → 「启动之后被拉回现在」红。
+ * （注意:只写成 `/game\.stampActive\(now\);/` 是不够的——同文件里 `onVisibility`、
+ * `onUnload` 也有盖章，删掉 boot 那行仍会绿。锚到 `lastTickAt` 那一处才真的红。）
  */
 import { describe, expect, it } from "vite-plus/test";
 import { createPinia, setActivePinia } from "pinia";

@@ -34,6 +34,10 @@
  * ② 不许出现「小时 / 分 / 秒」这类更细的单位;
  * ③ 一天以内仍走 `formatDuration`（那里细粒度是有意义的）;
  * ④ 到顶与速度不可用时不报数字。
+ *
+ * ## 故障注入
+ *
+ * 把 `apexEtaText` 的分档改回直接 `formatDuration` → 「不报小时」与「百位取整」两条同时红。
  */
 import { describe, expect, it } from "vite-plus/test";
 import { apexEtaText } from "./apexEta";

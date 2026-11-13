@@ -25,6 +25,11 @@
  *
  * 只认 `settings.<key>` 这种读法。写自己的 store 用 `.value`，界面上读 store 用
  * `settings.x` —— 两种都在扫。
+ *
+ * ## 故障注入
+ *
+ * 把 `stores/ui` 里的 `settings.hapticsOn` 摘掉 → 两条同时红（总清单 + 高危项点名）。
+ * 往 settings store 加一个没人读的 `autoSellJunk` → 当场点名那个新开关。
  */
 import { describe, expect, it } from "vite-plus/test";
 import { walkFiles, isSourceFile, readSource } from "@/test/readSource";
