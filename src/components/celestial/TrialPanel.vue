@@ -229,6 +229,21 @@
                       : `首破得 ${selectedTrial.rewardDaoSource}`
                   }}
                 </p>
+                <!--
+                  「这一门我打不打得过」—— 押那道源**之前**的读数。
+
+                  试炼的种子定死，故这是同一套输入在同一种子上跑出来的**同一个结果**，
+                  不是估算（见 `core/trialForecast` 与 `trialForecast.spec` 的逐门比对）。
+                  付钱之前知道会不会打水漂，不该是一项道途的特权。
+                -->
+                <p
+                  v-if="forecastText"
+                  class="celestial-trial-dossier__forecast text-note tabular"
+                  :class="{ 'is-lost': trialForecast && !trialForecast.cleared }"
+                  data-celestial-trial-forecast
+                >
+                  {{ forecastText }}
+                </p>
                 <button
                   class="celestial-trial-action"
                   :disabled="!endgame.daoPath || daoEntryShort(selectedTrial.entryCost) > 0"
@@ -512,6 +527,11 @@ import {
   rollMutators,
 } from "@/core/expedition";
 import { challengeTrial } from "@/core/endgameService";
+import { forecastTrial, trialForecastText } from "@/core/trialForecast";
+import { currentDaoRules } from "@/core/endgameService";
+import { buildPlayerSnap } from "@/core/playerSnap";
+import { mergeRules } from "@/core/gauntlet";
+import { usePlayerStore } from "@/stores/player";
 import {
   CHALLENGE_ENTRY_COST,
   CHALLENGE_MAX_MUTATORS,
@@ -538,6 +558,7 @@ import { NAME_MAX } from "@/utils/nameLimit";
 const props = defineProps<{ daily: DailyChallenge | null }>();
 const emit = defineEmits<{ report: [ReportView] }>();
 const endgame = useEndgameStore();
+const player = usePlayerStore();
 const { daoEntryShort } = useDaoEntry();
 /** 今日天道/挑战书入口同价:门票都取自 CHALLENGE_ENTRY_COST */
 const challengeDaoShort = computed(() => daoEntryShort(CHALLENGE_ENTRY_COST));
@@ -562,6 +583,35 @@ const selectedTrialIndex = computed(() =>
     0,
     TRIALS.findIndex((trial) => trial.id === selectedTrial.value.id),
   ),
+);
+
+/**
+ * 「这一门我打不打得过」—— 押那道源**之前**的读数。
+ *
+ * 试炼的种子定死（`seedOf(trial.id, 0)`，见 `core/endgameService`），故这不是
+ * 估算：把同一套输入在同一个种子上跑一遍，结果与真打逐位相同
+ * （判据 `core/trialForecast.spec` 逐门比对过）。
+ *
+ * 这在道途章法里本就有承诺 —— 天机道写着「天机透视:远征启程前，可窥见敌人招式
+ * 明细与此战胜算」，而 `previewFight` 只接了远征。这一处把那句承诺补到试炼上，
+ * 且**不限于天机道**:押钱之前知道会不会打水漂，不该是一项道途特权。
+ */
+const trialForecast = computed(() => {
+  /* 读 store 的这一半留在视图:core/trialForecast 是纯模块（分层纪律，见那边的注释） */
+  const stats = player.celestialStats;
+  return forecastTrial({
+    trialId: selectedTrial.value.id,
+    playerSnap: buildPlayerSnap(true),
+    ref: { attack: stats.attack, defense: stats.defense, maxHp: stats.maxHp },
+    mods: stats.mods,
+    playerMajor: player.major,
+    daoPath: endgame.daoPath,
+    rules: mergeRules(currentDaoRules(), selectedTrial.value.rules),
+    alreadyCleared: Boolean(endgame.trialRecords[selectedTrial.value.id]?.clears),
+  });
+});
+const forecastText = computed(() =>
+  trialForecast.value ? trialForecastText(trialForecast.value) : null,
 );
 
 // ---- 天道变数 ----

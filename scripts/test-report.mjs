@@ -640,6 +640,8 @@ const CATEGORIES = [
       "swordPurityAxes",
       // 「这一趟能走多远」—— 出行窗只报产出不报能不能拿到,是本轮在真浏览器里量到的坑
       "tripViability",
+      // 试炼押道源之前先看这一场:种子定死,故预览与真打必须逐位相同
+      "trialForecast",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

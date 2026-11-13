@@ -27,6 +27,7 @@ import { buildPlayerSnap } from "./playerSnap";
 import { detectBuild } from "./buildDetect";
 import { SWORD_PER_WIN, SLAUGHTER_PER_WIN } from "./daoDepth";
 import { recordMilestone, trackClearRecords } from "./identity";
+import { trialLineup } from "./trialForecast";
 import {
   celestialJudgement,
   mergeRules,
@@ -446,7 +447,6 @@ export function rewriteMark(mark: DaoMark): ExpeditionResult | null {
 /** 天道试炼(极限 Build 挑战,记录最少总回合;剑意/杀意逐胜叠层同样生效) */
 export function challengeTrial(trialId: string): ExpeditionResult | null {
   const endgame = useEndgameStore();
-  const player = usePlayerStore();
   const trial = trialDef(trialId);
   if (!trial || !endgameUnlocked()) return null;
   if (!endgame.daoPath) {
@@ -457,33 +457,32 @@ export function challengeTrial(trialId: string): ExpeditionResult | null {
     notify(`道源不足,尚差 ${trial.entryCost - endgame.daoSource} 道源`, "warn");
     return null;
   }
+  /*
+   * 敌群 / 规则 / 逐胜叠层 / 种子 —— 一律取自 `core/trialForecast` 的 `trialLineup`。
+   *
+   * 那一段同时供**出发前预览**使用(天机道「窥见此战胜算」在试炼这一册上
+   * 此前是空的)。两处若各写一份,改平衡那天预览与真打就会分叉,
+   * 而分叉的方向是玩家吃亏:他按预览决定要不要押那 15 道源。
+   */
+  const player = usePlayerStore();
   const stats = player.celestialStats;
-  const ref = { attack: stats.attack, defense: stats.defense, maxHp: stats.maxHp };
-  if (!trial) return null;
-  const judgement = celestialJudgement(stats.mods, player.major, trial.anchorTier);
-  const foes = [];
-  for (let i = 0; i < trial.fights; i += 1) {
-    foes.push(
-      worldFoeSnap(
-        TRIAL_FOES[i % TRIAL_FOES.length]!,
-        ref,
-        Math.pow(trial.escalation, i),
-        judgement,
-      ),
-    );
-  }
-  const rules = mergeRules(currentDaoRules(), trial.rules);
-  const perWin =
-    endgame.daoPath === "sword"
-      ? SWORD_PER_WIN
-      : endgame.daoPath === "slaughter"
-        ? SLAUGHTER_PER_WIN
-        : undefined;
-  // 试炼同样押道源入场:清败可复现,种子按试炼 id 定死
-  const trialRng = new RandomService(mulberry32(seedOf(trial.id, 0)));
-  const report = runGauntlet(buildPlayerSnap(true), foes, rules, trial.healBetweenPct, trialRng, {
-    perWinPlayerMods: perWin,
+  const lineup = trialLineup({
+    trialId: trial.id,
+    ref: { attack: stats.attack, defense: stats.defense, maxHp: stats.maxHp },
+    mods: stats.mods,
+    playerMajor: player.major,
+    daoPath: endgame.daoPath,
   });
+  if (!lineup) return null;
+  const trialRng = new RandomService(mulberry32(lineup.seed));
+  const report = runGauntlet(
+    buildPlayerSnap(true),
+    lineup.foes,
+    mergeRules(currentDaoRules(), trial.rules),
+    trial.healBetweenPct,
+    trialRng,
+    { perWinPlayerMods: lineup.perWinPlayerMods },
+  );
 
   let reward = 0;
   if (report.cleared) {

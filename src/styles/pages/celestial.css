@@ -907,6 +907,30 @@
     font-size: var(--type-note);
     line-height: 1.55;
   }
+  /*
+    押道源之前的「打不打得过」—— 与上面那行代价同席。
+
+    「止步第 N 战」走朱砂:它与「凶险」「付不起」同一族 ——
+    这条信息的用途就是让人**别**按下那个按钮。可破时留墨色弱字，
+    不抢「首破得 N」那一行。
+  */
+  .celestial-trial-dossier__forecast {
+    min-width: 0;
+    /*
+     * 独占一行（`flex-basis: 100%`）：
+     * 决策行是 `flex-wrap + space-between` 的排法，「代价 · 演武按钮」两枚各归一侧。
+     * 这一句比代价长得多（「止步第 7 战（7 战中过 6 战）—— 道源照扣」），
+     * 若跟它们抢同一行，会把右侧那枚按钮挤到自己压不住的位置 —— 实测它直接
+     * 铺到「应 试」底下去了。
+     */
+    flex: 1 1 100%;
+    color: rgb(var(--color-ink-soft-rgb));
+    font-size: var(--type-note);
+    line-height: 1.55;
+  }
+  .celestial-trial-dossier__forecast.is-lost {
+    color: rgb(var(--color-cinnabar-rgb));
+  }
   .celestial-trial-dossier__decision .celestial-trial-action {
     flex: none;
   }

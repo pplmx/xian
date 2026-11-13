@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 730 个 spec;本作自己那部分 650 个) |
+| `bun run test` | 全量用例(全量 731 个 spec;本作自己那部分 651 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 730 个 spec = 宿主 650 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 731 个 spec = 宿主 651 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 730 个 spec(本作自己那部分 650 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 731 个 spec(本作自己那部分 651 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -8921,3 +8921,60 @@ major=9   寻常  100% | 深入  100% | 涉险 100% | 长线 32.0%
 
 > 这类冲突值得记一笔:**新信息与老版面约束打架时,先问那条约束守的是什么**。
 > 这里守的是「四档可比」,所以让新信息去适应行宽,而不是让行宽去适应新信息。
+
+### 第 156 轮:同一个坑的第二个实例 —— 这次在终局
+
+上一轮在**历练出行窗**修掉「只报产出、不报把握」。这一轮走开局到终局的那条线,
+在天界试炼上撞见同一个形状:
+
+```text
+道源 15 · 首破得 52
+[应 试]
+```
+
+每门押 15 道源,而打不打得过、会止步第几战,付钱之前一个字都没有。
+
+### 先找「这件事本来能不能算准」
+
+改之前先问了一句:试炼的结果是随机的吗?翻到 `challengeTrial` 里:
+
+```ts
+const trialRng = new RandomService(mulberry32(seedOf(trial.id, 0)));
+```
+
+**定死的。** 而且注释写着理由:「押道源的战斗卖的是重打同一场,同界同契同变数
+重打两次结果必须一致」。实测连打两次,`fightsWon` 与 `totalRounds` 逐位相同。
+
+那就不是「估算胜率」,而是**可以给出精确答案**。这两件事在玩家那里的可信度
+完全不同 ——「约七成胜算」是猜,「止步第 7 战」是事实。
+
+### 顺便发现一条承诺是空的
+
+天机道的章法写着:「天机透视:远征启程前,可窥见敌人招式明细与此战胜算」。
+而 `previewFight` 只接了远征三处,试炼一处都没有。
+
+补的时候没有把预览做成道途专属:**押钱之前知道会不会打水漂,不该是一项特权**。
+天机道那一句仍然有它的分量 —— 它在远征上给的是**逐场敌人招式**。
+
+### 分层纪律拦下了我,而且它是对的
+
+第一版 `trialForecast` 直接读了两个 store,三条判据当场一起红:
+
+```text
+新增的 core → store 模块(把纯模块拖下水?):trialForecast.ts
+新增了静态导入环:endgameService.ts → trialForecast.ts
+import store 的处数 160 > 159
+```
+
+第一反应是「在点名名单里加一行」。停了一下之后发现:`trialForecast` **本来就是纯的**
+—— 它需要的输入(玩家三维、词条、道途、规则)全都可以由调用方给。改成收值之后,
+不需要动那条基线,环也没了。
+
+> 值得记的是那条判据的措辞:「把纯模块拖下水?」。它不是拦「新模块」,
+> 它拦的是**一个本可以纯的东西被拖进了 store**。这次它说对了。
+
+### 自己改出来的排版问题,被门抓住
+
+读数加上去之后排版门红在重叠上 —— 决策行是 `flex-wrap + space-between`,
+那句话说到底比代价长得多,直接把「应 试」按钮压到句子底下。补 `flex: 1 1 100%`
+让它独占一行,并把这条重叠也做成判据(`把握读数与应试按钮重叠`)。

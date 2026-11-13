@@ -20763,6 +20763,26 @@ async function taskCelestialTrialFold() {
               detail?.querySelector(".celestial-trial-dossier__name")?.textContent || ""
             ).trim(),
             actionCount: detail?.querySelectorAll("[data-celestial-trial-action]").length ?? 0,
+            /*
+             * 「押道源之前先看这一场」—— 试炼档案必须带一行「照此刻的构筑…」。
+             * 只量**在不在**、以及它与按钮不重叠:文案会随平衡变,
+             * 而「付钱前有没有那一行」是契约。
+             */
+            forecastText: (
+              detail?.querySelector("[data-celestial-trial-forecast]")?.textContent ?? ""
+            ).trim(),
+            forecastOverlapsAction: (() => {
+              const f = detail?.querySelector("[data-celestial-trial-forecast]");
+              if (!f || !action) return null;
+              const fr = f.getBoundingClientRect();
+              const ar = action.getBoundingClientRect();
+              return !(
+                fr.right <= ar.left ||
+                ar.right <= fr.left ||
+                fr.bottom <= ar.top ||
+                ar.bottom <= fr.top
+              );
+            })(),
             actionRatio:
               actionRect && detailRect && detailRect.width > 0
                 ? actionRect.width / detailRect.width
@@ -20846,6 +20866,21 @@ async function taskCelestialTrialFold() {
       ) {
         failures.push(
           `[390-trial] 试炼门印数与实际不符(实见 ${mobile.seals} 枚 / ${new Set(mobile.sealIds).size} 个互异 id / ${mobile.sealTops.length} 个栅格项)`,
+        );
+      }
+      /*
+       * 押道源之前的读数:试炼档案必须说得出「打不打得过」。
+       *
+       * 第 156 轮实测:十门全破 0,界面只写「道源 15 · 首破得 52」——
+       * 打不打得过、会止步第几战,玩家在付钱之前一个字都看不到。
+       * 而试炼的种子定死,这件事本来就能给出**精确**答案。
+       */
+      if (!mobile.forecastText) {
+        failures.push("[390-trial] 试炼档案没说打不打得过 —— 押道源之前没有把握读数");
+      }
+      if (mobile.forecastOverlapsAction) {
+        failures.push(
+          `[390-trial] 把握读数与「应试」按钮重叠了 —— 读数会盖住按钮:«${mobile.forecastText}»`,
         );
       }
       if (
