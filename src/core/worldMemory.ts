@@ -122,6 +122,21 @@ export function prosperityYieldMult(p: RegionProsperity): number {
 // ============ S2: 宿敌记忆 ============
 
 /** 标记为宿敌所需败北次数 */
+/**
+ * 宿敌列表**最多记几个**。
+ *
+ * 为什么是 50:宿敌按「同一敌人败你三次」入账，一场历练能记下几个 ——
+ * 50 条足够覆盖一个玩家十几个小时的行迹。而它渲染在**修仙录**的「征战录」栏里,
+ * 再多那一栏就滚不到底了，而玩家不会翻那么远。
+ *
+ * 上限到了会**丢掉最旧的**（不是拒绝新的）:玩家最想知道的是「最近谁老赢我」。
+ *
+ * 从前这个数写在两处（`slice(-49)` ×2），两处都是差一写法 ——
+ * 读起来像「49 个」，实际是「留 49 加 1 = 50」。改一处漏一处，
+ * 在线单场与离线整段两条路径就会给出不同长度的列表，而玩家看到的是同一个栏。
+ */
+export const NEMESIS_MAX = 50;
+
 export const NEMESIS_THRESHOLD = 3;
 
 /** 由敌人图鉴 id 组装宿敌记录(内部用;首次败北即 lossCount=1) */
@@ -153,7 +168,7 @@ export function recordLoss(
   }
   const created = makeNemesis(enemyId, enemyName, regionId, now);
   return {
-    list: [...nemeses.slice(-49), created],
+    list: [...nemeses.slice(-(NEMESIS_MAX - 1)), created],
     becameNemesis: created.lossCount >= threshold,
   };
 }
@@ -192,7 +207,7 @@ export function recordLossBatch(
     : { enemyId, enemyName, regionId, lossCount: count, lastLossAt: now };
   const list = existing
     ? nemeses.map((x) => (x.enemyId === enemyId ? next : x))
-    : [...nemeses.slice(-49), next];
+    : [...nemeses.slice(-(NEMESIS_MAX - 1)), next];
   // 与单场同义:只有「这一批把它推过门槛」才算新成宿敌,已过门槛的再败不重复播报
   return { list, becameNemesis: !wasNemesis && next.lossCount >= threshold };
 }
