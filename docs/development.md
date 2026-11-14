@@ -15602,3 +15602,37 @@ dataTextAudit      守「判据自己认不认得出它要认的」（正则是�
 ### 差额判据在，三条自证也在
 
 214 处 notify 有 173 处带 kind。工作区干净、全量 801 / 6764 全绿。
+
+### 订正（第 295 轮）：灵兽性子是带数的，我上一轮查错了文件
+
+第 281 轮我写「图鉴只写『更容易掉宝』不给数字」。**那是错的。**
+
+```ts
+// ui/itemText.ts:207
+export function petTraitText(def: PetDef): string {
+  const e = personalityEffects(def.id);
+  if (e.exploreDurMult !== 1) parts.push(`历练时长 ${delta(e.exploreDurMult)}`);
+  if (e.dangerMult !== 1) parts.push(`敌势 ${delta(e.dangerMult)}`);
+  if (e.dropLuck !== 0) parts.push(`掉落气运 +${formatPercent(e.dropLuck)}`);
+  if (e.lossReduction > 0) parts.push(`危急护主,免败 ${formatPercent(e.lossReduction)}(仅在线对战)`);
+}
+```
+
+而名号页读它（`dataTextAudit.spec` 的「灵兽的性子带数，出处与结算同源」钉着
+`TitlesView.vue` 必须 `toContain("petTraitText(")`）。
+
+**四个数全在，而且 `lossReduction` 那一条还带着一句机制说明:**
+
+```text
+危急护主,免败 2%(仅在线对战)
+```
+
+注释解释了为什么不叫「战败率」:
+
+> `lossReduction` 的真实机制是「危急时灵兽护主、免于败绩」的概率，不是战败率本身削 X 点
+> —— 名前不叫「战败率」，免得读出「这场败得更少一点」的错觉。
+
+**我上一轮只查了 `codex.ts`（图鉴）这一条路径，就断言「mods 一个字都没进界面」。**
+
+而 `codex.ts:644` 那句确实只有定性描述，所以「我查到的那一处」是真的 —— 但它不是全部。
+这与「查错文件」是同一类:**一个入口没有，不等于所有入口没有。**
