@@ -792,6 +792,8 @@ const CATEGORIES = [
       "toastActionNotLink",
       // 「减少动效」要一并关掉触感;而 haptics.spec 只守 pulseHaptics 那一层,不守 enabled 怎么算
       "hapticReduceMotion",
+      // 自动重铸那句必须是「至多」不是「预计」:上界与期望混成一句,玩家会算错账
+      "reforgeWording",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
