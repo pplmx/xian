@@ -122,6 +122,39 @@ spec 文件名比文档更全 —— 文档只记「值得记的那一条」，�
 三条都不管，才轮到你写。**加一条判据的成本不只是它本身，还有它以后每次都要维护、
 每次误报都要有人去分辨。**
 
+### 一个已被验空的形状：裸字符串键 + 静默兜底
+
+第 134~158 轮补了五条判据，它们有同一个形状:
+
+```text
+一个「键」没有类型约束（裸 string，或 Record<string, …> 的键）
++ 一条查不到时的兜底（return false / ?? 0 / if (!x) return 中性值）
+= 配错了不会报错，只会静默地少一件事
+```
+
+```text
+轮次  判据                      守什么
+134   counterWiring             声明了 CounterKey 但没人 track()
+136   rewardRefIntegrity        奖励里发不存在的称号 / 丹药
+142   heritageRefIntegrity      HeritageId = string，拼错的 id 让天赋永不生效
+143   styleAffinityCoverage     新流派没补克制矩阵，评级静默变 3 星
+158   regionDifficultyOrder     区域在列表里放错位置，难度曲线回头
+```
+
+**这一族已经查空**（DaoNoteBook / worldClears / SkillId / TRAIT_NAMES / ECO_LEVEL_NAMES
+逐个核过，全被类型系统或既有判据覆盖）。再遇到这个形状时可以直接对照上表，
+不必重走一遍。
+
+而它旁边还有两个**明确不该加**的类别:
+
+```text
+叙事文案的专有名词   「自炼气一路走到混沌道祖」是写作，不是断言。绑到 REALMS[0].name
+                     会让它变成机器拼装的模板 —— 而这一句的全部价值就在「有人写」
+
+不可测的不变式       法宝「重排不动强度」要求比较同 tier 的不同品质，而数据里每个 tier
+                     的品质是唯一的。构造假数据只能测「我以为的公式」，不是测产品
+```
+
 ## 测试与事实源
 
 - `vp check`（oxfmt / oxlint / ts / rumdl）+ `vp test` 必过才能提交。
