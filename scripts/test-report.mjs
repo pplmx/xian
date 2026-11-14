@@ -766,6 +766,8 @@ const CATEGORIES = [
       "earlyGameTexts",
       // moduleCoverage 扫了 components 的文本,但判据体只遍历 core —— 组件从不被点名
       "componentCoverage",
+      // 声明了 CounterKey 但没人 track(),引用它的成就永远拿不到
+      "counterWiring",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

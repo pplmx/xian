@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 793 个 spec;本作自己那部分 713 个) |
+| `bun run test` | 全量用例(全量 794 个 spec;本作自己那部分 714 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 793 个 spec = 宿主 713 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 794 个 spec = 宿主 714 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 793 个 spec(本作自己那部分 713 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 794 个 spec(本作自己那部分 714 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -13873,3 +13873,54 @@ it("科学计数 mantissa 四舍五入到 10 时进位(9.99…eN → 1.00eN+1,�
 
 工作区干净、全量 793 / 6735 全绿。
 **后期每境界可用事件 36~63 条**，远高于「开始重复」的阈值。
+
+### 第 258 轮:19 个计数器，19 处累加 —— 但这条约束没人守
+
+查「成就里有没有拿不到的条目」:从 `ACHIEVEMENTS` 里抽出全部 `counter(...)` 的键，
+再去 `src` 里数每个键有没有 `track("键")` 调用。
+
+```text
+battles 2   bossKills 2   breakthroughFails 1   breakthroughs 1
+buildingUpgrades 2        decomposed 1         equipsGained 1
+events 1    explores 4    gongfaLearned 2      kills 3
+offlineClaims 1           pillsCrafted 1       pillsFailed 1
+pillsUsed 1 reincarnations 1  soulsRefined 1   tribulations 1   upgrades 2
+```
+
+**19 个键，每个至少 1 处。没有死条目。** 目标值也都可达（失败 5 次 / 渡劫 3 次 / 转世 3 次）。
+
+### 但这条约束此前没人守
+
+`achievementHint.spec` 已经双向守着「计数器键 ↔ 方向表」:
+
+```text
+① CounterKey 里的每个键,COUNTER_DIRECTIONS 里都有
+② 方向表里不许有已经消失的键
+```
+
+它守的是「有没有一句话说明往哪走」，**不是「那个数会不会涨」**。而后者的失败是静默的:
+`track(key)` 的形参是 `CounterKey`，只要键在联合里就编译得过;
+若没有一处真的调它，那个键永远是 0，引用它的成就在游戏里永远灰着，**玩家找不到任何解释**。
+
+按 `AGENTS.md` 的三问:类型系统不管（字符串字面量联合不校验调用点）、
+浏览器巡游不管（要玩到那个境界才触发）、既有判据不管（只查方向表）——**三条都不管，该加。**
+
+### 判据:`core/counterWiring.spec` 四条
+
+```text
+① 防空转:扫得到 >10 个键、>10 个调用点
+② 每个 CounterKey 都至少有一处 track() 调用
+③ PENDING 里不许留已经接上的键(名单不常驻)
+④ PENDING 的每一条都写了理由
+```
+
+### 故障注入：把一个累加点摘掉
+
+把 `offline.ts:884` 的 `track("offlineClaims");` 注释掉:
+
+```text
+× 每个 CounterKey 都至少有一处 track() 调用
+  这些计数器没有任何地方累加 —— 引用它的成就永远拿不到，玩家也看不到任何解释:offlineClaims
+```
+
+精确点名，恢复即绿。
