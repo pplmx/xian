@@ -13351,3 +13351,55 @@ FolioPageHeader #visual   <RealmAtlas :rows="realmAtlasRows" :major="player.majo
 出来的都是「已经做了」。
 
 **边际收益确实已经极低。** 这不是找得不够，是这个产品在这个粒度上已经做完。
+
+### 第 247 轮:离线挂机那一夜，日课算不算 —— 算，而我又被自己的 grep 骗了一次
+
+查「时间」这条线。放置游戏的核心是时间，故挑了三个具体问题:
+
+```text
+① 离线效率 0.9 是不是「偷工减料」   → 有意设计，offlineCap.spec 有判据
+② 离线挂机算不算进日课的「历练」    → 见下
+③ 离线与挂机是否等价                 → 修为与灵气全额，材料/钻研/历练 9 折，有意
+```
+
+### 第 ② 条差点写成缺陷
+
+第一遍 grep:
+
+```bash
+grep -n 'explores\|recordLossBatch\|track(' src/core/offline.ts | head -6
+```
+
+看到的是 `track("kills")` / `track("battles")` / `recordLossBatch` —— **没有 `explores`**。
+于是以为「离线挂机一夜，日课里的历练不会涨」。
+
+再查一次，不截断:
+
+```text
+src/core/offline.ts:785        track("explores")
+```
+
+它在那儿:
+
+```ts
+if (simSec >= remainSec) {
+  adventure.setSession(null);
+  track("explores");
+  notes.push(`${region.name}之行圆满结束`);
+}
+```
+
+**离线历练走完会计数，并推一条「之行圆满结束」。**
+
+### 这次错在工具，不在判断
+
+`head -6` 把第 785 行截掉了。而这已经是这一批探测里**第五次因为取数方式不完整而误判**
+（前四次:DOM 位置、inset 阴影、「层」当成「境」、数组写法）。
+
+> 前四次是「看错了」，这一次是「没看到」。而「没看到」更危险 —— 它看起来像证据确凿:
+> 搜索结果里确实没有那个词。
+
+### 三个问题都查实了
+
+工作区干净、全量 793 / 6735 全绿。三个问题都查实了:离线挂机与在线挂机的差别是**有意设计的
+9 折**，而日课计数不受影响。
