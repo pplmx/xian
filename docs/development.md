@@ -18543,3 +18543,94 @@ first-paint            冷启动 1321KB / FCP 404ms / 楷体换上 2029ms ——
 ### 全部门槛跑过，两次伪红判明是环境
 
 工作区干净。
+
+### 第 356 轮:256 轮结项 —— 仓现在是什么状态
+
+目标是「持续深入迭代，优化，美化，从游戏玩家角度，从游戏产品角度，从可玩性等等各种合理性角度」。
+256 轮走完，这里是它现在的实际状态。
+
+### 规模
+
+```text
+源码        1247 个 .ts / .vue
+spec        727 个（core 438 个）
+文档        design 15152 行 · development 18545 行 · usage 761 行
+版本        0.0.3（三次 tag 已发，v0.0.1 / v0.0.2 / v0.0.3）
+```
+
+### 全部门槛
+
+```text
+check          绿（oxfmt / oxlint / vue-tsc / rumdl / docs-check）
+test           807 文件全绿（含引擎侧与宿主侧）
+test:report    退出码 0 —— 每个 spec 都登记在 CATEGORIES
+layout-check   全部 ✓
+check:ui       52 项全 ✓
+first-paint    三条读数都在预算内
+offline-check  通过
+check:engine   通过
+```
+
+### 这 256 轮找到并修掉的**真实产品缺陷**
+
+```text
+divinationCost 先扣后抽            → 抽失败时材料已经扣了（4ddd95d3）
+FRUIT_CONSUMERS 漏两个道果出口      → 手写清单与产品漂移（c80e0048）
+fruitOutlets.irreversible 过时     → 逆旅契早有宿主，清单说没有（1852aa9e）
+```
+
+**三个。而 250+ 轮里其余时间是「查了，是对的」与「补判据，让它以后也是对的」。**
+
+### 新增的判据
+
+```text
+counterWiring        rewardRefIntegrity     heritageRefIntegrity
+styleAffinityCoverage regionDifficultyOrder gongfaQualityRealm
+componentCoverage    saveFailureNotice      modalFocusReturn
+swAssetStrategy      resetDisclosure        adventurePreviewCaveat
+matchupCaveat        daoFruitOutlets        toastActionNotLink
+hapticReduceMotion   reforgeWording
+```
+
+**17 条。其中 6 条是「守设计」型（resetDisclosure / adventurePreviewCaveat /
+matchupCaveat / toastActionNotLink / hapticReduceMotion / reforgeWording）——
+删掉那段设计，界面照样能跑、测试照样绿，然后玩家会碰到一次糟糕的体验。**
+
+### 已判明「不必再查」的方向
+
+`AGENTS.md` 里那张表列了 11 条。而这一批又添了几条:
+
+```text
+文档里的结构数            有 dataHeaderAudit 两条守着（我第 323 轮说「没有」是错的）
+源码注释里的过时计数       八处已改；不为它加判据（误报面极大，失效温和）
+叙述性数字                与结构数声明是两件事，docNumeralForms 的边界划得对
+经济模拟的「待补法宝炼化」 是自陈缺口，不是缺陷
+progressionSim 不可靠      已有判据守着「偏差必须大于 50 倍」
+```
+
+### 三条留给后来者的
+
+```text
+① 判「有」读一处就够，判「没有」要把所有写法都过一遍
+   —— 这一批犯过七次，全是搜索写窄了或读了文件头
+
+② 别为了讲一个过时的数，把它原样抄进文档
+   —— docNumeralForms 会当场抓住你，我重复踩了四次。用「N 顶」这类占位
+
+③ 部分修复比完全不修复更容易骗人
+   —— 补了一行却漏了另外四行，玩家人为已经修过了。故判据要有「五行之和 = 抬头」这种整量校验
+```
+
+### 这个目标接下来还能往哪走
+
+```text
+发版        v0.0.3 之后已有 194+ 次提交 —— 但发版是显式动作，须用户点头
+真实存档校准  progressionSim 高估两个数量级，重建它才能谈任何绝对时长
+可玩性      「第一个任务要多久」这类问题目前没有可信的尺子，故未量化
+```
+
+**前两条都要用户决定，第三条要先把第二条做完。**
+
+### 八个门槛逐个跑过，结项记录写完
+
+工作区干净。
