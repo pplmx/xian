@@ -96,16 +96,30 @@ describe("出口空间 · 两个正交维度", () => {
     console.log(`\n理想:${ideal.label} —— ${ideal.verdict}`);
   });
 
-  it("合格出口里六项之中五项已有宿主系统,不必从零造", () => {
+  it("合格出口全部已有宿主系统,不必从零造", () => {
+    /*
+     * 第 310 轮订正:这条原先是「六项之中五项已有宿主」，并只断言
+     * `hosted >= ok.length - 1` —— 那条断言允许「恰好一个没有宿主」。
+     *
+     * 而 `hasHost` 的最后一项（不可逆的人生选择）早就有了宿主:逆旅契
+     * （`data/lifeTrials.ts`，花道果为这一世签一份只加难度的契）。清单没跟上，
+     * 于是它一直标着 `hasHost: false`，而那条断言对此毫无反应。
+     *
+     * 现在改成:合格出口必须**全部**有宿主。将来真出现一个没有宿主的候选，
+     * 它要么落进 `hasHost: false`（这条红，逼人确认），要么先找到宿主再登记。
+     */
     const ok = qualifiedOutlets();
-    const hosted = ok.filter((o) => o.hasHost);
-    expect(ok.length).toBeGreaterThan(rejectedOutlets().length);
-    expect(hosted.length).toBeGreaterThanOrEqual(ok.length - 1);
-    console.log(
-      `\n合格 ${ok.length} 项:${ok.map((o) => o.name).join("、")}` +
-        `\n其中 ${hosted.length} 项已有可挂载的系统(lifeThemes / mutators / worldGen / lore / 图鉴),` +
-        `\n只有「${ok.find((o) => !o.hasHost)?.name}」需要新建`,
-    );
+    const missing = ok.filter((o) => !o.hasHost).map((o) => o.name);
+    expect(
+      missing,
+      "这些合格出口标着「尚无宿主」—— 若宿主其实已经有了，改清单；若真的没有，" +
+        "请在此显式说明为什么可以留一个没有宿主的候选:" +
+        missing.join(" / "),
+    ).toEqual([]);
+    expect(
+      ok.length,
+      "合格出口不该比否决的还少 —— 出口空间审计的目的正是找出可行项",
+    ).toBeGreaterThan(rejectedOutlets().length);
   });
 
   it("被否决的两项恰是最容易想到的两种兑换", () => {

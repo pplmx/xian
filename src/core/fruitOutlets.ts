@@ -233,8 +233,8 @@ export const OUTLETS: OutletCandidate[] = [
     spend: "consume",
     payload: "access",
     rebuildsLoop: false,
-    hasHost: false,
-    note: "尚无宿主系统;须新建。参照师承的「拿一次锁死」写法",
+    hasHost: true,
+    note: "宿主是逆旅契(lifeTrials):花道果为这一世签一份只加难度的契,转世时记入履历、不进任何计算",
   },
 ];
 
