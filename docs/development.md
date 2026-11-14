@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 804 个 spec;本作自己那部分 724 个) |
+| `bun run test` | 全量用例(全量 805 个 spec;本作自己那部分 725 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 804 个 spec = 宿主 724 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 805 个 spec = 宿主 725 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 804 个 spec(本作自己那部分 724 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 805 个 spec(本作自己那部分 725 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -17143,3 +17143,64 @@ it("坊市验货签也读同一句 —— 买之前就该看得懂", () => {
 ### 九条判据接着那一节的全部声明
 
 工作区干净。工作区干净、全量 804 / 6775 全绿。
+
+### 第 327 轮:提示条的去路必须是动作 —— 而这条没有判据守
+
+`docs/usage.md` 的「提示条的去路」那一节，最后一句是:
+
+> 去路是**动作**而不是路由链接:提示条浮在任意页面上，做成链接会把玩家从现在这一页带走，
+> 而他可能正在看战斗回放。
+
+**理由很硬**:提示条是全局浮层，出现在任何页面上。做成 `<RouterLink>` 或 `href` 就会导航 ——
+玩家正在看的东西（战斗回放、一段叙事、一个弹窗）会当场被换掉。
+
+### 而它一条判据都没有
+
+`toastTarget.spec` 八条，全在守「目标认不认得、写坏的怎么办」:
+
+```text
+装备与法宝各认 / 空 id 一律当没有 / 带目标的提示把目标存下来 /
+不填去路的提示没有 target / 写坏的去路不进队列 /
+装备目标打开器评帖 / 法宝目标打开法宝详情 / 没有去路的提示只收起自己
+```
+
+**一条都没守「去路的形态」。** 而三项检查也都不管:
+
+```text
+类型系统      模板里的 @click vs href，管不到
+浏览器巡游    点得到、有反应，看不出「有没有把玩家带走」
+既有判据      见上
+```
+
+### 判据:`core/toastActionNotLink.spec` 三条
+
+```text
+① ToastHost.vue 里确实有可点的去路（防空转）
+② 那个去路走的是 @click（动作）
+③ 它**不是** RouterLink / router-link / href
+```
+
+第 ③ 条只要串一出现就红，不看它是否同时还有 `@click` —— 因为 `href="#"` 配 `@click`
+看着能用，而在真机上会动滚动位置与历史栈。
+
+### 故障注入：给去路加一个 href
+
+给那个按钮加一个 `href="#"`:
+
+```text
+× 去路不是 RouterLink / href —— 提示条浮在任意页面上
+  提示条用了链接形态 —— 玩家正在看战斗回放时点它会被带走:href=
+```
+
+精确命中，恢复即绿。
+
+### 这一轮补的是第 11 条「守设计」的判据
+
+```text
+290  resetDisclosure            重置会失去什么
+300  adventurePreviewCaveat     星级不是胜率
+301  matchupCaveat              胜率是方向不是概率
+327  toastActionNotLink         去路是动作不是链接（本轮）
+```
+
+**四条的共同点:删掉那段设计，界面照样能跑、测试照样绿 —— 然后玩家会碰到一次糟糕的体验。**
