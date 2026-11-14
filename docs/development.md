@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 785 个 spec;本作自己那部分 705 个) |
+| `bun run test` | 全量用例(全量 786 个 spec;本作自己那部分 706 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 785 个 spec = 宿主 705 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 786 个 spec = 宿主 706 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 785 个 spec(本作自己那部分 705 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 786 个 spec(本作自己那部分 706 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -11843,3 +11843,54 @@ Loadout.savedAt           赋值（loadoutService）但不读
 
 三个方向都验过是对的，第四件事（全量巡游）是一次确认。结论是:
 **最近几轮那些改动没有碰坏任何布局或无障碍**。
+
+### 第 217 轮:「减少动效」的 JS 那一层有判据，全局 CSS 规则一条都没有
+
+查设置项是否真的生效。实测（在浏览器里拨开关）:
+
+```text
+关闭    .app-shell 没有 reduce-motion 类，动画时长 4.5s
+打开    有该类，动画时长 1e-05s
+```
+
+两套机制:
+
+```css
+@media (prefers-reduced-motion: reduce) { * { … } }   ← 系统偏好
+.reduce-motion * { … }                                ← 应用内开关
+```
+
+都作用于 `*`（含 `::before` / `::after`）、都带 `!important`，故组件不必逐个接。
+
+### 已有判据只守了 JS 那一层
+
+```text
+uiLayering.spec       判 CombatPanel 必须读 settings.reduceMotion（战报回放要跳过）
+settingsWiring.spec   判它接进了 CombatPanel / GauntletPanel
+```
+
+两条都在守**组件里的那个开关**。而那条 `.reduce-motion *` 全局规则若被删，
+**两条都不会红** —— 于是所有 CSS 动画（呼吸、脉冲、浮层入场）在「已勾选减少动效」的
+玩家屏幕上照旧跑。
+
+### 判据:`ui/reduceMotionGlobalRule.spec`
+
+三条:规则在且覆盖元素与两个伪元素、四条声明齐全且都带 `!important`、系统偏好那条同款也在。
+
+### 判据自己错了一次（第十九次）
+
+第三条第一版取「第一个 `prefers-reduced-motion` 媒体查询」。而文件里有两个:
+一个是 `.ink-choice__option` 的局部过渡，一个才是全局那条。抓到局部那个，判据红得没道理。
+
+改成匹配 `*` 那一支。
+
+### 一次没生效的故障注入
+
+第一次注入「删掉整块规则」时，判据全绿。查下来是**我的正则没匹配上**——
+注释 `/* 设置项:减少动效 */` 写在规则**之后**，而我的模式假设它在之前。`grep -c` 显示
+`reduce-motion` 还有 3 处，规则根本没被删掉。
+
+重做一次（`count now: 0`）才真的红。
+
+> **故障注入本身也要确认生效。** 一次没删掉的「注入」得到的是假绿，
+> 而它看起来和真绿一模一样。

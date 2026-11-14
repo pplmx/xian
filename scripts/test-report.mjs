@@ -750,6 +750,8 @@ const CATEGORIES = [
       "reincarnationViewFields",
       // 全类型扫:521 个字段里另有 3 个只写不读 —— 这条把「预留」也管起来了
       "typeFieldCoverage",
+      // 「减少动效」的 JS 那一层有两条判据守着,而全局 CSS 规则本身一条都没有
+      "reduceMotionGlobalRule",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
