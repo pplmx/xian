@@ -714,6 +714,8 @@ const CATEGORIES = [
       "nemesisCap",
       // 核心词条凑齐后仍说「继续寻找关键装备」—— 进度条 100% 与提示语打架
       "goalBuildHint",
+      // 跨过雏形线后仍说「再补 ⋯ 便会成路」—— 同一个形状,另一处
+      "buildDiscoveryGapText",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

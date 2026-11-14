@@ -42,10 +42,18 @@
     </div>
 
     <p class="build-discovery__reading">
-      <template v-if="hasTrace">
+      <template v-if="hasTrace && closestGap > 0">
         最近的是「{{ closest.style.name }}」。再补
         <span>{{ closestGapText }}</span>
         ，核心词条平均跨过 {{ formatPercent(STYLE_EMERGENCE_AFFINITY, 0) }} 便会成路。
+      </template>
+      <!--
+        已经跨过雏形线:说「成了」。这一支原先不存在 —— gap 归零时仍走上面那句，
+        读出来是「再补最后一步，核心词条平均跨过 25% 便会成路」，而玩家已经跨过了。
+      -->
+      <template v-else-if="hasTrace">
+        最近的是「{{ closest.style.name }}」，已经跨过
+        {{ formatPercent(STYLE_EMERGENCE_AFFINITY, 0) }} 的雏形线 —— 这一路已立得住。
       </template>
       <template v-else>
         眼下{{
@@ -152,9 +160,21 @@ const props = defineProps<{
 const closest = computed(() => props.rows[0]!);
 const hasTrace = computed(() => props.rows.some((row) => row.activeTerms > 0));
 const closestGap = computed(() => Math.max(0, STYLE_EMERGENCE_AFFINITY - closest.value.affinity));
-const closestGapText = computed(() =>
-  closestGap.value > 0 ? `${formatPercent(closestGap.value, 0)} 契合` : "最后一步",
-);
+/**
+ * 离雏形线还差多少。
+ *
+ * 只在**还没到线**时才需要这个读数 —— 到了线就不该再说「再补」。
+ * 从前这里给 `gap === 0` 返回「最后一步」,而它在模板里是这样读的:
+ *
+ * ```text
+ * 最近的是「某某流」。再补 最后一步，核心词条平均跨过 25% 便会成路。
+ * ```
+ *
+ * 两处不通:「再补最后一步」读不通（补是补一个量）;更要紧的是那一整句的前提错了 ——
+ * 那时已经跨过 25%，而这句话还在说「跨过便会成路」。
+ * 与首页道途卡那个「进度 100% 还说继续寻找」是同一个形状。
+ */
+const closestGapText = computed(() => `${formatPercent(closestGap.value, 0)} 契合`);
 
 function rowGap(row: BuildAffinityRow): number {
   return Math.max(0, STYLE_EMERGENCE_AFFINITY - row.affinity);
