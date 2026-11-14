@@ -9656,6 +9656,46 @@ git log --diff-filter=A → 8aeec8f3  test(a11y): 焦点返回 —— 实现对�
 而更值得记的是这两轮本身：它们不产出功能，只校准我自己的说法。
 **一个会写错的判断，比一个没写的判断更危险** —— 后来者会信它。
 
+### 9 个 ui 模块「没有同名 spec」—— 9 个都有覆盖
+
+`src/ui` 88 个文件。先筛出没有同名 `.spec.ts` 的:
+
+```text
+achievementHint  dailyRoutes  earlyGameText  enemyLore  exploreModeText
+folioArrival     folioTurn    qualityPeakStores  useNextStep
+```
+
+**9 个。** 而早有一轮学到的第一条就是：「没有同名 spec ≠ 零覆盖」
+（那轮实测 46 个里 40 个其实有覆盖，87% 是误报）。故换正确的问法：
+**有没有任何 spec 导入过它。**
+
+```text
+achievementHint 1  dailyRoutes 2  earlyGameText 6  enemyLore 4
+exploreModeText 3  qualityPeakStores 2  useNextStep 3
+folioArrival 0     folioTurn 0
+```
+
+**两个是 0。** 差点写成「这两个没人测」。
+
+#### 而它们有
+
+```ts
+// ui/folioChrome.spec.ts
+import { folioArrivalTextOf } from "./folioArrival";
+import { folioTurnDirectionOf } from "./folioTurn";
+```
+
+**用的是相对导入 `"./folioArrival"`，而我 grep 的是 `"ui/folioArrival"`。**
+
+```text
+路径式引用    ui/xxx          我的写法
+相对式引用    ./xxx           判据里其实用这个
+```
+
+**同一个模块，两种写法；我只查了一种，就得到 0。**
+
+> 这是「查一个入口就断言整类」的第五次。而这次的形式最朴素：**grep 的字符串写窄了。**
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
