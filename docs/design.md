@@ -11464,6 +11464,39 @@ development.md    chronicle   null                            工程日志:数�
 
 第 ② 条守的是**总数与分项同时正确** —— 只对总数会漏掉「三类分成 92 / 0 / 0」这种错。
 
+### 我第 328 轮补的判据，与既有那条是「文档 vs 实现」的分工，不是重复
+
+`core/usageDocCounts.spec` 里有一条:
+
+```ts
+it("说清两个开关各管各的,以及减少动效会一并关掉", () => {
+  const section = doc.slice(at, at + 1400);
+  expect(section).toMatch(/独立|各管各的|各自/);
+  expect(section).toContain("减少动效");
+});
+```
+
+**第一眼以为第 328 轮补的 `hapticReduceMotion.spec` 是重复的。**
+
+#### 而两条守的不是同一件事
+
+```text
+usageDocCounts.spec     切出手册「触感」那一节，查**文档里说了这句话**
+hapticReduceMotion.spec 查 stores/ui.ts 里 enabled 那行**真的把 reduceMotion 相与进去了**
+```
+
+**前者守文案，后者守接线。** 一条说「手册承诺了」，另一条说「代码兑现了」。
+
+#### 而这正是 docCoverageMap 那句「那个 spec 真的读它」的另一面
+
+```text
+usageDocCounts.spec   读 docs/usage.md（守文案）
+hapticReduceMotion    读 stores/ui.ts（守实现）
+```
+
+**若只有前者，手册说得天花乱坠而实现没接上，全绿；若只有后者，实现对了而手册没承诺，
+玩家不知道有这个开关。**
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,

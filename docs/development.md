@@ -18007,3 +18007,49 @@ development.md    chronicle   null                            工程日志:数�
 ### 7 对 7 全等，六份规范性文档各有守卫
 
 编年史理由写明。工作区干净、全量 807 / 6784 全绿。
+
+### 第 345 轮:我第 328 轮补的判据,与既有那条是「文档 vs 实现」的分工，不是重复
+
+`core/usageDocCounts.spec` 里有一条:
+
+```ts
+it("说清两个开关各管各的,以及减少动效会一并关掉", () => {
+  const at = doc.search(/^## 触感[：:]/m);
+  const section = doc.slice(at, at + 1400);
+  expect(section, "该说触感开关与音效独立").toMatch(/独立|各管各的|各自/);
+  expect(section, "该说减少动效会一并关掉触感").toContain("减少动效");
+});
+```
+
+**第一眼以为我第 328 轮补的 `hapticReduceMotion.spec` 是重复的。**
+
+### 而两条守的不是同一件事
+
+```text
+usageDocCounts.spec     这条判据切出手册「触感」那一节，查**文档里说了这句话**
+hapticReduceMotion.spec 查 stores/ui.ts 里 enabled 那行**真的把 reduceMotion 相与进去了**
+```
+
+**前者守文案，后者守接线。** 一条说「手册承诺了」，另一条说「代码兑现了」。
+
+### 而这正是 docCoverageMap 里那句「那个 spec 真的读它」的另一面
+
+```text
+docCoverageMap.spec   「规范性文档都有判据，且那个 spec 真的读它」
+usageDocCounts.spec   读 docs/usage.md（守文案）
+hapticReduceMotion    读 stores/ui.ts（守实现）
+```
+
+**两份文档、两个目标、两条判据。** 若只有前者，手册说得天花乱坠而实现没接上，全绿;
+若只有后者，实现对了而手册没承诺，玩家不知道有这个开关。
+
+### 故第 328 轮那条不是重复，是补上了另一半
+
+```text
+当时我的判断       「haptics.spec 九条都在守 pulseHaptics 那一层，一条都没守 enabled 怎么算」
+补完之后回头看     ✓ 这个判断成立 —— 而 usageDocCounts 那条管的是文档，不构成重复
+```
+
+### 两条判据分工清楚，互不重复
+
+工作区干净。工作区干净、全量 807 / 6784 全绿。
