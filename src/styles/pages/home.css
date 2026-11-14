@@ -1012,10 +1012,25 @@
     故让它自己占满一整行、靠右 —— 与进度条那一行同样 `1 / -1`，
     只是排在正文之后、进度条之前。
   */
+  /*
+    可点区域的高度:200% 缩放下(195px 视口)这条链接原本只有 **37x15px** ——
+    而日课是首页最常点的一栏(每天八条)。宽度的问题早修过一次(见上面那段注释),
+    高度没修:font-size 配 line-height 正好 15px,一个「看起来没问题、点起来要瞄准」的尺寸。
+
+    故给它一个真正的盒子:inline-flex 让竖向 padding 真的撑开可点区域
+    (默认 inline 的竖向 padding 会溢出到行外，点到的还是那 15px),
+    min-height 兜住字号变小的情况。
+  */
   .home-daily__route {
     grid-column: 1 / -1;
     justify-self: end;
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.75rem;
+    padding-block: 0.25rem;
+    padding-inline: 0.25rem;
     margin-top: -0.1rem;
+    margin-right: -0.25rem;
     color: rgb(var(--color-qing-rgb));
     font-size: var(--type-note);
     white-space: nowrap;

@@ -726,6 +726,8 @@ const CATEGORIES = [
       "zeroExternalRequests",
       // 上一轮的教训:判据读了 verify 里 test 阶段还不存在的产物 —— 那它什么都没核
       "specArtifactIndependence",
+      // 日课去处链接在 200% 缩放下只有 37x15 —— 日课是首页最常点的一栏
+      "dailyRouteTapSize",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
