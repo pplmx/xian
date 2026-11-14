@@ -736,6 +736,8 @@ const CATEGORIES = [
       "modalFocusReturn",
       // 方向键规则曾有两份实现(InkTabs 手写 + useTabKeys 纯函数)—— 改一处漏一处两边都不红
       "tabKeySingleSource",
+      // 构筑模拟的基准三维 { attack, defense, maxHp } 在 buildSearch 与 buildSim 里各写一份
+      "buildBaseSingleSource",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

@@ -6179,6 +6179,39 @@ src/components/common/InkTabs.vue   自己写了一份同样的取模
 
 > 这是「守意图」与「守字面」的差别。**字面在重构面前一定过期，而意图不会。**
 
+### 构筑模拟的基准三维写在两个文件里
+
+接着「两本账」的线系统扫。先排除了三组同名不同义的：
+
+```text
+recordLoss        earlyGameService（连胜）/ worldMemory（宿敌）—— 签名完全不同
+enemyLoreView     engineCodex（引擎适配）/ ui/enemyLore（界面封装）
+gongfaModsAt      inflationAudit（按境界取最优）/ stores（按 id+等级查引擎）
+```
+
+三组都只是**名字撞了**，不是两份实现。撞到的那一组：
+
+```text
+core/buildSearch.ts:41   const BASE = { attack: 100, defense: 55, maxHp: 1400 };
+core/buildSim.ts:31      const BASE = { attack: 100, defense: 55, maxHp: 1400 };
+```
+
+两处的用法**逐字相同**，而**没有一条判据保证它们相等**。
+
+#### 为什么这算缺陷
+
+`buildSim` 拿它算「六路流派各自的基础三维」，`buildSearch` 拿它算「随机撒点的候选构筑」。
+两者最终都要进**同一场战斗推演**比高低。若有人调了其中一处（把 `maxHp` 从 1400 提到 1600），
+两边就在同一张表上比**不同基准**的构筑 —— 而报告里看不出任何异常。
+
+#### 改法
+
+`BASE` 从 `buildSim` 导出（并写下它为什么只有一份），`buildSearch` 改为 import。
+`buildSearch` 本来就 import 着 `buildSim` 的 `ENEMY_ARCHETYPES` 与 `WALL_IDS`，
+所以这只是一行的事。
+
+跑全量确认行为不变：**779 文件 / 6677 用例全绿**，含 `buildSearch` 的指纹分布逐位一致。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,

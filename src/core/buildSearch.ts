@@ -10,7 +10,7 @@ import { ARTIFACTS } from "@/data/artifacts";
 import { resolveCombat } from "./combat";
 import { powerScore } from "./formulas";
 import { detectBuild } from "./buildDetect";
-import { ENEMY_ARCHETYPES, WALL_IDS } from "./buildSim";
+import { BASE, ENEMY_ARCHETYPES, WALL_IDS } from "./buildSim";
 
 /** 可随机的词条空间(上限 ≈ 中期成型构筑的可达值) */
 const KEY_RANGES: [AnyStatKey, number][] = [
@@ -37,8 +37,6 @@ const KEY_RANGES: [AnyStatKey, number][] = [
   ["stunRate", 0.15],
   ["speed", 0.35],
 ];
-
-const BASE = { attack: 100, defense: 55, maxHp: 1400 };
 
 export interface RandomBuild {
   idx: number;

@@ -28,7 +28,15 @@ export interface BuildProfile {
   hpMult: number;
 }
 
-const BASE = { attack: 100, defense: 55, maxHp: 1400 };
+/**
+ * 构筑模拟的基准三维 —— **全仓唯一一处**。
+ *
+ * `buildSim` 拿它算六路流派各自的基础三维，`buildSearch` 拿它算随机撒点的候选构筑;
+ * 两者最终都要进同一场战斗推演比高低。故只许有这一份：
+ * 从前 `buildSearch.ts` 里也写过一份同样的字面量，调了一处而不调另一处，
+ * 就会在同一张表上比不同基准的构筑，而报告里看不出任何异常。
+ */
+export const BASE = { attack: 100, defense: 55, maxHp: 1400 };
 const ARTIFACT_LEVEL = 3;
 
 export const BUILD_PROFILES: BuildProfile[] = [
