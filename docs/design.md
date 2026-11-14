@@ -8309,6 +8309,61 @@ heritageRefIntegrity.spec  core → data  （不是错地址）
 
 **`HeritageId = string` 这个类型缺口，两条合起来才被真正填上。**
 
+### 新增一个流派忘了补矩阵 —— 评级会静默退化成「3 星、无理由」
+
+`core/buildAdvisor.ts` 里有两张按流派 id 索引的表:
+
+```ts
+const STYLE_TRAIT_AFFINITY: Record<string, Record<EcoTrait, number>> = { beishui: {…}, … };
+const STYLE_BOSS_AFFINITY: Record<string, number> = { beishui: 2, … };
+```
+
+键类型是**裸 `string`**，而权威流派表是 `data/souls.ts` 的 `SoulTypeId`。两边没有类型约束。
+
+#### 而兜底把它变成了静默降级
+
+```ts
+const affinity = STYLE_TRAIT_AFFINITY[styleId];
+if (!affinity) return { stars: 3, reasons: [] };   // 中性，看起来完全正常
+```
+
+「新加一个流派、忘了补矩阵」在界面上表现为那个流派**永远 3 星、没有任何理由**。
+
+#### 实测：六个 id 都对得上
+
+```text
+SOUL_TYPES      fengmang gangdun fanzhen lianji muze beishui
+两张表的键      同上六个
+```
+
+没拼错。但 `buildAdvisor.spec` 五条里**没有一条守着完整性**（它验的是矩阵里
+几组具体克制关系），故这是空白。**该加。**
+
+#### 判据:`core/styleAffinityCoverage.spec` 四条
+
+```text
+① 防空转：SOUL_TYPES >2，两张表各 >2 行
+② 每个流派在 STYLE_TRAIT_AFFINITY 里有整行（四个特性齐全）
+③ 每个流派在 STYLE_BOSS_AFFINITY 里有值
+④ 反向也不许多：表里不许有 SOUL_TYPES 之外的键
+```
+
+#### 故障注入
+
+在 `SOUL_TYPES` 里插一个 `jiuxiao`（不补任何表）:
+
+```text
+× 这些流派在克制矩阵里没有整行 —— 它们的适配评级会静默退化成「3 星、无理由」:jiuxiao
+× 这些流派没有首领克制值 —— 会兜到 0，面对首领的理由缺一条:jiuxiao
+```
+
+两条同时命中，恢复即绿。
+
+#### 这条判据读的是源码文本
+
+两张表不是导出的，只能从 `buildAdvisor.ts` 里解析。故第 ① 条防空转在这里格外要紧：
+**解析正则一旦失效，判据会退化成永远绿**。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,

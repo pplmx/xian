@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 796 个 spec;本作自己那部分 716 个) |
+| `bun run test` | 全量用例(全量 797 个 spec;本作自己那部分 717 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 796 个 spec = 宿主 716 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 797 个 spec = 宿主 717 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 796 个 spec(本作自己那部分 716 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 797 个 spec(本作自己那部分 717 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -14097,3 +14097,65 @@ heritageRefIntegrity.spec core → data   （不是错地址）
 ```
 
 **`HeritageId = string` 这个类型缺口，两条合起来才被真正填上。**
+
+### 第 263 轮:新增一个流派忘了补矩阵 —— 评级会静默退化成「3 星、无理由」
+
+`core/buildAdvisor.ts` 里有两张按流派 id 索引的表:
+
+```ts
+const STYLE_TRAIT_AFFINITY: Record<string, Record<EcoTrait, number>> = { beishui: {…}, … };
+const STYLE_BOSS_AFFINITY: Record<string, number> = { beishui: 2, … };
+```
+
+键类型是**裸 `string`**，而权威流派表是 `data/souls.ts` 的 `SoulTypeId`
+（`beishui | gangdun | fanzhen | lianji | muze | fengmang`）。两边没有类型约束。
+
+### 而兜底把它变成了静默降级
+
+```ts
+const affinity = STYLE_TRAIT_AFFINITY[styleId];
+if (!affinity) return { stars: 3, reasons: [] };   // 中性，看起来完全正常
+```
+
+「新加一个流派、忘了补矩阵」在界面上表现为那个流派**永远 3 星、没有任何理由**
+—— 玩家看到的是一个中性评价，不会想到那是漏配。
+
+### 实测:六个 id 都对得上
+
+```text
+SOUL_TYPES      fengmang gangdun fanzhen lianji muze beishui
+两张表的键      同上六个
+```
+
+没拼错。但 `buildAdvisor.spec` 五条里**没有一条守着完整性**（它验的是矩阵里
+几组具体克制关系），故这是空白。
+
+按三问:类型系统不管（`Record<string, …>`）、浏览器巡游不管（3 星看起来正常）、
+既有判据不管（只验具体克制）—— **该加。**
+
+### 判据:`core/styleAffinityCoverage.spec` 四条
+
+```text
+① 防空转:SOUL_TYPES >2，两张表各 >2 行
+② 每个流派在 STYLE_TRAIT_AFFINITY 里有整行（burst/multi/pierce/dodge 齐全）
+③ 每个流派在 STYLE_BOSS_AFFINITY 里有值
+④ 反向也不许多:表里不许有 SOUL_TYPES 之外的键（改名后的残骸）
+```
+
+### 故障注入：插一个没有矩阵行的流派
+
+在 `SOUL_TYPES` 里插一个 `jiuxiao`（不补任何表）:
+
+```text
+× 每个流派在 STYLE_TRAIT_AFFINITY 里都有整行
+  这些流派在克制矩阵里没有整行 —— 它们的适配评级会静默退化成「3 星、无理由」:jiuxiao
+× 每个流派在 STYLE_BOSS_AFFINITY 里都有值
+```
+
+两条同时命中，恢复即绿。
+
+### 这条判据读的是源码文本
+
+两张表不是导出的，只能从 `buildAdvisor.ts` 里解析。故第 ① 条防空转在这里格外要紧:
+**解析正则一旦失效，判据会退化成永远绿** —— 它检查的是「解析出来的行」，
+解析不到任何行时，`missing` 反而会是空的。这一条靠 ① 的 `>2` 兜住。
