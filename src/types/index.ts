@@ -668,7 +668,6 @@ export interface NemesisRecord {
   /** 玩家被击败次数 */
   lossCount: number;
   /** 最后一次败北时间 */
-  lastLossAt: number;
   /** 首次雪耻时间(击败宿敌) */
   avengedAt?: number;
 }
@@ -1583,5 +1582,4 @@ export interface Loadout {
   artifactIds: string[];
   /** 槽位 → 装备 uid */
   equipment: Partial<Record<EquipSlot, string>>;
-  savedAt: number;
 }

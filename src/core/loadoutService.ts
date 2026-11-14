@@ -47,7 +47,6 @@ export function captureLoadout(name: string): Loadout | null {
     subGongfa: [...cultivation.subGongfa],
     artifactIds: [...inventory.equippedArtifacts],
     equipment: { ...inventory.equipped },
-    savedAt: Date.now(),
   };
   loadouts.add(loadout);
   notify(`构筑「${loadout.name}」已存入行囊`, "success");

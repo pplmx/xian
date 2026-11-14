@@ -139,14 +139,19 @@ export const NEMESIS_MAX = 50;
 
 export const NEMESIS_THRESHOLD = 3;
 
-/** 由敌人图鉴 id 组装宿敌记录(内部用;首次败北即 lossCount=1) */
+/**
+ * 由敌人图鉴 id 组装宿敌记录（内部用；首次败北即 lossCount=1）。
+ *
+ * `_now` 已不参与 —— 从前这里写 `lastLossAt`,而那个字段全仓零读取（见
+ * `core/typeFieldCoverage`）。参数留着是为了不让调用处的签名跟着变。
+ */
 function makeNemesis(
   enemyId: string,
   enemyName: string,
   regionId: string,
-  now: number,
+  _now: number,
 ): NemesisRecord {
-  return { enemyId, enemyName, regionId, lossCount: 1, lastLossAt: now };
+  return { enemyId, enemyName, regionId, lossCount: 1 };
 }
 
 /** 记录一次败北:更新宿敌计数,新增或累加 */
@@ -160,7 +165,7 @@ export function recordLoss(
 ): { list: NemesisRecord[]; becameNemesis: boolean } {
   const existing = nemeses.find((n) => n.enemyId === enemyId);
   if (existing) {
-    const next = { ...existing, lossCount: existing.lossCount + 1, lastLossAt: now };
+    const next = { ...existing, lossCount: existing.lossCount + 1 };
     return {
       list: nemeses.map((n) => (n.enemyId === enemyId ? next : n)),
       becameNemesis: next.lossCount >= threshold,
@@ -194,7 +199,8 @@ export function recordLossBatch(
   enemyId: string,
   enemyName: string,
   regionId: string,
-  now: number,
+  /* 与 makeNemesis 同理：`lastLossAt` 已删，这个参数不再参与。留着不改调用处签名 */
+  _now: number,
   times: number,
   threshold = NEMESIS_THRESHOLD,
 ): { list: NemesisRecord[]; becameNemesis: boolean } {
@@ -203,8 +209,8 @@ export function recordLossBatch(
   const existing = nemeses.find((x) => x.enemyId === enemyId);
   const wasNemesis = existing !== undefined && existing.lossCount >= threshold;
   const next: NemesisRecord = existing
-    ? { ...existing, lossCount: existing.lossCount + count, lastLossAt: now }
-    : { enemyId, enemyName, regionId, lossCount: count, lastLossAt: now };
+    ? { ...existing, lossCount: existing.lossCount + count }
+    : { enemyId, enemyName, regionId, lossCount: count };
   const list = existing
     ? nemeses.map((x) => (x.enemyId === enemyId ? next : x))
     : [...nemeses.slice(-(NEMESIS_MAX - 1)), next];

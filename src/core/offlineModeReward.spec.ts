@@ -497,7 +497,7 @@ describe("离线整批结算的战后记账(连胜赏格 / 宿敌 / 雪耻)", ()
         enemyName: "赤目野狼",
         regionId: "qingyun",
         lossCount: 3,
-        lastLossAt: Date.now() - 1000,
+        // lastLossAt 已删（全仓零读取，见 core/typeFieldCoverage）
       },
     ]);
     const s = settleOffline(Date.now())!;

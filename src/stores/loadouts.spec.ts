@@ -19,7 +19,7 @@ const base: Loadout = {
   subGongfa: [],
   artifactIds: [],
   equipment: {},
-  savedAt: 0,
+  // savedAt 已删（全仓零读取，见 core/typeFieldCoverage）
 };
 
 describe("构筑快照自修", () => {
@@ -48,7 +48,7 @@ describe("构筑快照自修", () => {
       subGongfa: ["gongfa_mu"],
       artifactIds: ["zhaohun"],
       equipment: { weapon: "uid-1" },
-      savedAt: 100,
+      // savedAt 已删（全仓零读取，见 core/typeFieldCoverage）
     };
     loadouts.list = [good, { ...base, id: "h", equipment: {} }];
     loadouts.sanitize();

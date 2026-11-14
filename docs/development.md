@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 784 个 spec;本作自己那部分 704 个) |
+| `bun run test` | 全量用例(全量 785 个 spec;本作自己那部分 705 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 784 个 spec = 宿主 704 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 785 个 spec = 宿主 705 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 784 个 spec(本作自己那部分 704 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 785 个 spec(本作自己那部分 705 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -11752,3 +11752,47 @@ stageAdvanced  界面读 1 处
 | 2 | 用**局部变量名**去搜 view 字段的消费者 | 那是两个不同的东西 —— 赋值处的变量名与结构上的字段名不必同名 |
 
 两次都是搜索方式的问题。**变量的名字不是结构的名字。**
+
+### 第 215 轮:全类型扫 521 个字段，另有 3 个只写不读
+
+沿用前两轮那个口径（**用类型定义作事实源**），这一轮把它推广到
+`src/types/index.ts` 的**全部 69 个接口、521 个字段**:
+
+```text
+RegionRecall.since        赋值（deriveProsperity）但不读
+NemesisRecord.lastLossAt  赋值（worldMemory 三处）但不读，也不参与排序
+Loadout.savedAt           赋值（loadoutService）但不读
+```
+
+521 里只有这 3 个 —— **覆盖面本身很干净**。但它们是同一个形状:算出来、存进去、然后谁也不要。
+
+### 处理:两个删掉，一个登记
+
+`RegionRecall.since` 与另两个不同:它有明确语义（「本次状态自何时起」），
+只是还没有界面用它。删掉它会让「这一档还能持续多久」将来无处安放。
+
+故判据给两条路:**要么有人读，要么登记在 `RESERVED` 里并写明原因。**
+名单不常驻 —— 一旦有人接上，判据会红，提醒销账。
+
+另两个（`lastLossAt` / `savedAt`）直接删。它们的赋值参数成了未使用，
+按惯例改成 `_now` 并写下为什么留着（不改调用处签名）。
+
+跑全量确认:**785 文件 / 6698 用例全绿**。
+
+### 判据:`core/typeFieldCoverage.spec`
+
+四条:扫到的规模（防空转）、只写不读的字段都在 `RESERVED` 里、
+`RESERVED` 里的每条都**还真的**没人读（接上了要销账）、每条都写了原因。
+
+口径是「`.field` 这种读法才算被读；`field: value` 是写，不算」。
+
+### 一次自己造成的返工
+
+故障注入时我用 `git checkout src/core/worldMemory.ts` 还原注入 ——
+**而那把这个文件里我删掉的东西全部还原了**。发现时 `lastLossAt` 又回到了 4 处。
+
+> 注入要用「备份 → 还原备份」，不要用 `git checkout` ——
+> 它还原的是**上次提交**，不是「注入之前」。我恰好在这个文件里既做了改动、
+> 又往同一文件注入，于是两者一起没了。
+
+重做一遍并把改动重新验过（785 / 6698 全绿）才提交。
