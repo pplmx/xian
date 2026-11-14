@@ -720,6 +720,8 @@ const CATEGORIES = [
       "boundaryBranchText",
       // 删档是唯一不可逆的动作,而「有二次确认」这件事没有判据守着
       "resetConfirmGuard",
+      // 没勾隐私同意就不该能入山 —— 一条承诺,而改起来只是删掉一个 :disabled
+      "openingConsentGate",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

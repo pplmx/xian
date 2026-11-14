@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 770 个 spec;本作自己那部分 690 个) |
+| `bun run test` | 全量用例(全量 771 个 spec;本作自己那部分 691 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 770 个 spec = 宿主 690 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 771 个 spec = 宿主 691 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 770 个 spec(本作自己那部分 690 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 771 个 spec(本作自己那部分 691 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -10961,3 +10961,64 @@ footer 里至少两颗按钮，其中一个不是 confirmReset
 第五条第一版断言「弹窗里必须出现 `resetConfirm.value = false`」——
 而实测放弃那一支是 `@click="closeReset"`，赋值发生在那个小函数里。
 改成「footer 有两个按钮，且那个非 confirmReset 的 handler 内部真的把 resetConfirm 关掉」。
+
+### 第 199 轮:走一遍新玩家的第一段路 —— 四次探测失误，零个产品缺陷
+
+这一轮只做一件事:**从零开始，把新玩家的第一段路走完。**
+
+### 走通的路径
+
+```text
+#/welcome   卷一 · 入世 01/02
+            「玄之又玄 · 众妙之门」「四界 · 二十一境」
+            「无需账号 · 进度只在本机 · 不加载外部脚本」
+  ↓ 点「启封入山」
+入山契弹窗   三条：档只留本机 / 断网仍可修行 / 去留由你
+            未勾选隐私同意时，「署印入山」是 disabled 的
+  ↓ 勾选 → 点「署印入山」
+转场         「云深不知处 · 一念修行 · 仙路自此始」，2500ms
+  ↓
+#/create    卷一 · 立命 02/02
+            道号（最多八字，留白则「无名散修」，实时 3/8 字）
+            灵根（伪灵根 · 土/火/金 三资质数值 · 修行倍率 ×1.26）
+```
+
+**每一段都有说明、都有置灰、都有反馈。** 这条路上没有需要「猜」的地方。
+
+### 但我的探测失误了四次
+
+| 次 | 我怎么错的 | 真相 |
+| --- | --- | --- |
+| 1 | `locator("button", { hasText: "启封入山" })` 点不动 | 该用 `[data-opening-enter]` |
+| 2 | 用原生 `.click()` 勾 checkbox，Vue 的 v-model 没接住 | 该用 Playwright 的 `.check()` |
+| 3 | 等 1.8 秒就断言「没跳转」 | 转场是 2500ms |
+| 4 | 读 `document.body.innerText` 找转场文字，找不到 | 转场层不在那个容器里 |
+
+四次**全是探测方法的问题**，没有一次是产品的问题。
+
+> 这是这一会话里最该记下的一条:**「我没观测到」与「它不存在」是两件事。**
+> 前三次我差点写进结论，每次都是多查一层才发现是自己的错。
+> 而第 4 次尤其危险 —— 我已经准备把它记成「转场期间没有提示」了。
+
+### 结论
+
+新玩家第一段路是完整的。这一轮**没有改任何产品代码**。
+
+### 顺带补的一条:没勾隐私同意就不能入山
+
+走那条路时注意到:「我已阅读并同意《隐私政策》」那个勾选框没勾上时，
+「署印入山」是灰的。实测确认（未勾选时 `disabled: true`，勾上才可用）。
+
+而**没有判据守着它**。
+
+这不是交互偏好，是**承诺**:欢迎页写着「无需账号 · 进度只在本机 · 不加载外部脚本」，
+弹窗里写着「山门只与你订三件事」。那句「我已阅读并同意」若变成「不勾也能进」，
+那份承诺就成了摆设 —— 而改起来只是删掉一个 `:disabled`。
+
+### 判据:`ui/openingConsentGate.spec`
+
+三条:勾选框绑着 v-model、确认按钮的 `disabled` 由「勾没勾」决定、
+确认这一步至少有一层核过（`:disabled` 只挡鼠标，键盘与脚本仍能触发）。
+
+故障注入:把 `:disabled="!agreed"` 改成 `:disabled="false"` → 第二条红;
+删掉 `v-model` → 第一条红。
