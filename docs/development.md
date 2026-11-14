@@ -15114,3 +15114,45 @@ ac(...)   67 条
 ### 两项都查清了
 
 「档位」三义只在注释里、成就 67 条覆盖六条线。
+
+### 第 284 轮:老存档遇上新字段 —— 靠 ref 默认值，而每个落盘的 store 都有 sanitize
+
+查存档的向后兼容:`SAVE_VERSION = 2`、`migrateLegacyPrefix()`、`migrateInventorySlice()`
+与 `migrateResourcesSlice()`。但**新字段**怎么兜?
+
+### 移交给 Pinia 插件与 ref 默认值
+
+```ts
+// main.ts:34
+pinia.use(piniaPluginPersistedstate);
+
+// stores/player.ts:129
+const eventChains = ref<EventChainState>({});
+```
+
+`eventChains` 在 `storage.ts` 里**一处都没有** —— 它不是靠迁移补齐的，
+而是靠 `ref({})` 的初始值:`piniaPluginPersistedstate` 遇到存档缺这个键时，
+保持 ref 的初始值。**故新增字段天然向后兼容，不必写迁移。**
+
+### 而 `null` 那种坏档呢
+
+若存档里是 `eventChains: null`（不是缺失），插件会原样恢复 `null` —— 那才是风险。
+查下来 `player.ts` 里没有任何 `asNumberRecord` 清洗（`cultivation` / `endgame` / `inventory`
+都有）。
+
+**但那件事有专门的判据:**
+
+```text
+saveSanitizeCoverage.spec
+  ① 凡有 persist 的 store,都定义了 sanitize
+  ② 反空转:认得出「落盘但没有 sanitize」的坏样本
+  ③ ui store 确实不落盘 —— 豁免要成立
+```
+
+第 ① 条正是我担心的那类:**每个落盘的 store 必须自己处理坏数据**，
+而不是指望上游统一清洗。故「`player` 没有 asNumberRecord」不是漏 ——
+它的 sanitize 在别处。
+
+### 三层都成立
+
+新字段靠 ref 默认值、坏档靠每个 store 的 sanitize、后者有判据守着。

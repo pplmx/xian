@@ -9136,6 +9136,42 @@ core/constants.ts     「1.18 是同时满足这两条的档位」 —— 难度
 
 **这类冲突作者已经处理过。**
 
+### 老存档遇上新字段 —— 靠 ref 默认值，而每个落盘的 store 都有 sanitize
+
+查存档的向后兼容：`SAVE_VERSION = 2`、`migrateLegacyPrefix()`、
+`migrateInventorySlice()` 与 `migrateResourcesSlice()`。但**新字段**怎么兜?
+
+#### 移交给 Pinia 插件与 ref 默认值
+
+```ts
+// main.ts:34
+pinia.use(piniaPluginPersistedstate);
+
+// stores/player.ts:129
+const eventChains = ref<EventChainState>({});
+```
+
+`eventChains` 在 `storage.ts` 里**一处都没有** —— 它不是靠迁移补齐的，
+而是靠 `ref({})` 的初始值。**故新增字段天然向后兼容，不必写迁移。**
+
+#### 而 `null` 那种坏档呢
+
+若存档里是 `eventChains: null`（不是缺失），插件会原样恢复 `null` —— 那才是风险。
+查下来 `player.ts` 里没有任何 `asNumberRecord` 清洗（`cultivation` / `endgame` /
+`inventory` 都有）。
+
+**但那件事有专门的判据:**
+
+```text
+saveSanitizeCoverage.spec
+  ① 凡有 persist 的 store,都定义了 sanitize
+  ② 反空转:认得出「落盘但没有 sanitize」的坏样本
+  ③ ui store 确实不落盘 —— 豁免要成立
+```
+
+第 ① 条正是这类：**每个落盘的 store 必须自己处理坏数据**，而不是指望上游统一清洗。
+故「`player` 没有 asNumberRecord」不是漏 —— 它的 sanitize 在别处。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
