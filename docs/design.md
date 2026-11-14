@@ -9219,6 +9219,43 @@ if (!info.canUpgrade) {
 
 **「要不要给失败提示」这个问题，答案取决于那里有没有随机。**
 
+### playSfx 只出现三处 —— 因为其余全走 notify 的 kind
+
+查「玩家在大多数操作里听不到声音」这个担心。先数 `playSfx`:
+
+```text
+core/audio.ts          1（定义）
+core/breakthrough.ts   3
+core/pillService.ts    6
+```
+
+**只有两处调用点。** 建筑升级、装备强化、转世 —— 都没有。
+
+#### 但音效有 12 种，而且覆盖面不靠这两处
+
+```ts
+export type SfxName =
+  | "click" | "success" | "warn" | "info" | "rare" | "rareHigh" | "rareTop"
+  | "win" | "lose" | "breakthrough" | "majorBreak" | "fail";
+```
+
+关键是：`notify(msg, kind)` 的 `kind` 会自动配一声（`toastLifeMs({ kind, seal })` 与
+`hapticTierOf(rank)` 都按它走）。故**全仓每一条 `notify(..., "rare")` 都自带声音**，
+`playSfx` 只留给不经 notify 的地方（战斗结算、炸炉、突破）。
+
+#### 而「哪里该响」有判据守着
+
+`uiLayering.spec`:
+
+> 世界越界有一声 —— 换一片天，不许静默揭幕。
+>
+> 越界是全流程最重大事件（入仙界/神界/混沌海），视觉有 2.8s 揭幕遮罩，从此却没有声音
+> —— **该响就响，不能让最高潮静静流过**。判据：揭示触发时必须 playSfx('worldRise')，
+> 音效引擎里 worldRise 要有自己的庄严谱，不许退回 breakthrough。
+
+它连「`worldRise` 要进 `SfxName` 联合」与「要有自己的 `case`」都断言了 —— **防止新事件
+借用别人的声音**。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
