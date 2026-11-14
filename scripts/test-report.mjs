@@ -718,6 +718,8 @@ const CATEGORIES = [
       "buildDiscoveryGapText",
       // 那个形状已出两次 —— 立一条判据挡住「两支写成同一句」这种退化
       "boundaryBranchText",
+      // 删档是唯一不可逆的动作,而「有二次确认」这件事没有判据守着
+      "resetConfirmGuard",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
