@@ -17953,3 +17953,57 @@ docCoverageMap.spec    这份文档**有没有人守**、守它的人是不是�
 ### 八条数值对账，五条覆盖对账
 
 工作区干净。工作区干净、全量 807 / 6784 全绿。
+
+### 第 343 轮:文档覆盖表是 7 条，而顶层恰好 7 份 .md
+
+上一轮读了 `core/docCoverageMap.spec` 的五条判据。这一轮去核那份 `DOC_MAP` 与文件系统:
+
+```text
+DOC_MAP 里的文件                     7 条
+docs/ 顶层真实存在的 .md             7 份
+```
+
+```text
+usage.md          normative   core/usageDocCounts.spec.ts     每个结构数都等于真实条数
+design.md         normative   core/designDocCounts.spec.ts    现状陈述对数据源
+审计规范.md        normative   core/docRefExistence.spec.ts   「判据自身的编写规范」
+alchemy.md        normative   core/docCrossCheck.spec.ts      「N 味状态丹」等说法对数据源
+engine.md         normative   core/docCrossCheck.spec.ts      库引用条数由脚本现算
+deployment.md     normative   core/gateWiring.spec.ts         部署与门的接线
+development.md    chronicle   null                            工程日志:数字是快照,不对账是对的
+```
+
+**7 对 7，且判据「`docs/` 顶层每一份 .md 都在表里」双向核对。**
+
+### 而 `审计规范.md` 那一行的注释值得记
+
+> 守它的是**它自己的存在性** —— 这份文档被 `contentReachabilityAudit.spec` 的文件头点名，
+> 而此前一直不存在（第 168 轮才发现）。`docRefExistence.spec` 验的就是「源码点名的文档
+> 必须真实存在」，对这份文档来说，**那条判据既是它的守卫也是它存在的理由**。
+
+**「既是守卫也是存在的理由」** —— 一份「怎么写判据」的文档，自己是由「源码点了名就得存在」
+这条判据逼出来的。**这是这一层最自洽的一处。**
+
+### 而 `development.md` 被判成编年史，理由写得最清楚
+
+> 工程日志:按轮次记当时发生了什么，**数字是快照，不对账是对的**。
+
+**「不对账是对的」** —— 不是懒得管，是这类文档的性质决定了它不该被对账:
+每一轮记的是那一刻的数，而那个数后来变了，日志不该跟着改。
+
+证明就是这份开发日志本身:它从第 1 轮记到第 340 轮，每一轮的「800 个 spec」
+在写下的那一刻都是真的。
+
+### 而 `designDocCounts.spec` 三条
+
+```text
+「法宝 N 件、灵兽 N 只、功法 N 部各有品阶」与表一致
+「N 部功法分成三类:主修 a / 辅修 b / 秘术 c」总数与分项都一致
+反空转:这三张表都非空,且 design.md 真的读到了
+```
+
+第 ② 条守的是**总数与分项同时正确** —— 只对总数会漏掉「三类分成 92 / 0 / 0」这种错。
+
+### 7 对 7 全等，六份规范性文档各有守卫
+
+编年史理由写明。工作区干净、全量 807 / 6784 全绿。

@@ -11421,6 +11421,49 @@ docCoverageMap.spec    这份文档**有没有人守**、守它的人是不是�
 
 **前者管内容，后者管覆盖。两层都是机械的 —— 没有一层靠「记得去看一眼」。**
 
+### 文档覆盖表是 7 条，而顶层恰好 7 份 .md
+
+```text
+DOC_MAP 里的文件                     7 条
+docs/ 顶层真实存在的 .md             7 份
+```
+
+```text
+usage.md          normative   core/usageDocCounts.spec.ts     每个结构数都等于真实条数
+design.md         normative   core/designDocCounts.spec.ts    现状陈述对数据源
+审计规范.md        normative   core/docRefExistence.spec.ts   判据自身的编写规范
+alchemy.md        normative   core/docCrossCheck.spec.ts      「N 味状态丹」等说法对数据源
+engine.md         normative   core/docCrossCheck.spec.ts      库引用条数由脚本现算
+deployment.md     normative   core/gateWiring.spec.ts         部署与门的接线
+development.md    chronicle   null                            工程日志:数字是快照,不对账是对的
+```
+
+#### 而 `审计规范.md` 那一行的注释值得记
+
+> 守它的是**它自己的存在性** —— 这份文档被 `contentReachabilityAudit.spec` 的文件头点名，
+> 而此前一直不存在（第 168 轮才发现）。**那条判据既是它的守卫也是它存在的理由。**
+
+**一份「怎么写判据」的文档，自己是由「源码点了名就得存在」这条判据逼出来的。**
+
+#### 而 `development.md` 被判成编年史，理由写得最清楚
+
+> 工程日志：按轮次记当时发生了什么，**数字是快照，不对账是对的**。
+
+**「不对账是对的」** —— 不是懒得管，是这类文档的性质决定了它不该被对账：
+每一轮记的是那一刻的数，而那个数后来变了，日志不该跟着改。
+
+证明就是这份开发日志本身：它从第 1 轮记到今天，每一轮的「N 个 spec」在写下的那一刻都是真的。
+
+#### 而 `designDocCounts.spec` 三条
+
+```text
+「法宝 N 件、灵兽 N 只、功法 N 部各有品阶」与表一致
+「N 部功法分成三类:主修 a / 辅修 b / 秘术 c」总数与分项都一致
+反空转
+```
+
+第 ② 条守的是**总数与分项同时正确** —— 只对总数会漏掉「三类分成 92 / 0 / 0」这种错。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
