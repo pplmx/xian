@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 794 个 spec;本作自己那部分 714 个) |
+| `bun run test` | 全量用例(全量 795 个 spec;本作自己那部分 715 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 794 个 spec = 宿主 714 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 795 个 spec = 宿主 715 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 794 个 spec(本作自己那部分 714 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 795 个 spec(本作自己那部分 715 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -13921,6 +13921,66 @@ pillsUsed 1 reincarnations 1  soulsRefined 1   tribulations 1   upgrades 2
 ```text
 × 每个 CounterKey 都至少有一处 track() 调用
   这些计数器没有任何地方累加 —— 引用它的成就永远拿不到，玩家也看不到任何解释:offlineClaims
+```
+
+精确点名，恢复即绿。
+
+### 第 259 轮:奖励里发不存在的称号 —— 玩家拿不到，也没有任何提示
+
+顺着上一轮（计数器有没有累加点）的同一种问法:**数据里引用了某样东西，那样东西真的在吗?**
+
+### 四处引用，全部有效
+
+```text
+事件 effects 里的 pill.id   → 全部能解析
+成就 reward.titleId(29 个)  → 全部能解析
+主线 reward.titleId/pillId   → 0 个（主线不发这两样）
+功法分支 gongfaId(199 个)    → 全部能解析
+```
+
+### 但失败是静默的
+
+`core/progress.ts` 发赏时:
+
+```ts
+if (bundle.pillId && acquirePill(bundle.pillId, 1)) { … }
+if (bundle.titleId && titleDef(bundle.titleId)) { … }
+```
+
+两个条件**对未知 id 都返回假**，整段跳过 —— 玩家拿不到那枚丹药、那个名号，
+**而没有任何提示说他少了什么**。类型系统救不了（两个字段都是 `string`）;
+`dataIntegrity.spec` 管的是「区域引用的敌人与首领」，不管这两个。
+
+按三问:类型系统不管、浏览器巡游不管（要玩到那里才触发）、既有判据不管 —— **该加。**
+
+### 判据:`core/rewardRefIntegrity.spec` 四条
+
+```text
+① 防空转:扫得到 >50 个奖励包，其中带 titleId/pillId 的 >10
+② 每个 titleId 都指向真实称号
+③ 每个 pillId 都指向真实丹药
+④ 称号与丹药的 id 集合本身不含重复（重复会让 byId 表静默覆盖）
+```
+
+### 写这条判据时撞了两次类型墙
+
+```text
+① event.outcomes          —— 没有这个字段，是 event.choices[].outcomes[]
+② outcome.reward          —— 没有这个字段，是 outcome.effects[]，
+                             丹药写成 { type: "pill", id?, count }
+```
+
+两次都是 `vue-tsc` 当场报的 —— **这是类型系统在这里真正起作用的地方**:
+它拦住了「我以为的数据形状」。而它拦不住的是「引用了一个不存在的 id」，
+那正是这条判据要补的。
+
+### 故障注入：改坏一个 titleId
+
+把 `a_r0` 的 `titleId: "ti_churu"` 改成 `"ti_nope_x"`:
+
+```text
+× 每个 titleId 都指向真实称号
+  这些奖励发的是不存在的称号 —— 玩家拿不到，也没有任何提示:成就 a_r0→ti_nope_x
 ```
 
 精确点名，恢复即绿。
