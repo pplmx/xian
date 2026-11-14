@@ -10455,6 +10455,40 @@ src/ui/eventText.ts      TS2366: （同上）
 
 结构完整性交类型系统，语义正确性才交判据。
 
+### 交互会不会卡 —— store 里一个 watch 都没有
+
+从「玩家点一下到有反馈」这个角度查性能。先看最容易出事的形状：**watch 触发连锁更新。**
+
+```text
+stores/*.ts 里的 watch()        0 个
+stores/player.ts 的 computed     34 个
+views + components 的 watch     46 个
+```
+
+**store 层零 watch** —— 所有响应式都是 computed（惰性求值 + 缓存），故不存在
+「改一个值 → 触发三个 watch → 各自再改值」的雪崩路径。UI 层的 46 个 watch
+是生命周期与派生同步，而 `perf-profile` 已量过 17 个视图全部达标。
+
+#### 而「交互延迟」这件事，判了不单独加判据
+
+```text
+ui-smoke.mjs    已经在真浏览器里点每个页面、检查有反应
+layout-check    已经在真浏览器里量布局
+perf-profile    已经量每个视图的渲染耗时
+```
+
+**再加一条交互延迟判据，与 `ui-smoke` 的重叠远大于增量**，而且它需要在 CI 里
+启动浏览器、给每次点击计时 —— 成本高、抖动大、误报难分辨。
+
+#### 顺带核了 EventCond
+
+```text
+EventCond 定义       3 种（realm / stone / element）
+eventEngine 的 case  3 个
+```
+
+**齐。** 同样由类型系统守。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,

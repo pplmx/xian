@@ -16679,3 +16679,47 @@ src/ui/eventText.ts(99,4):       error TS2366: （同上）
 ### 12 种全有处理，第 13 种会被 tsc 拦住
 
 工作区干净。工作区干净、全量 804 / 6775 全绿。
+
+### 第 317 轮:交互会不会卡 —— store 里一个 watch 都没有
+
+从「玩家点一下到有反馈」这个角度查性能。先看最容易出事的形状:**watch 触发连锁更新。**
+
+```text
+stores/*.ts 里的 watch()        0 个
+stores/player.ts 的 computed     34 个
+views + components 的 watch     46 个
+```
+
+**store 层零 watch** —— 所有响应式都是 computed（惰性求值 + 缓存），故不存在
+「改一个值 → 触发三个 watch → 各自再改值」的雪崩路径。UI 层的 46 个 watch
+是生命周期与派生同步，而 `perf-profile` 已量过 17 个视图全部达标。
+
+### 而「交互延迟」这件事，我判了不单独加判据
+
+想查「点下去到有反馈」的时间。而:
+
+```text
+ui-smoke.mjs    已经在真浏览器里点每个页面、检查有反应
+layout-check    已经在真浏览器里量布局
+perf-profile    已经量每个视图的渲染耗时
+```
+
+**再加一条交互延迟判据，与 `ui-smoke` 的重叠远大于增量**，而且它需要在 CI 里
+启动浏览器、给每次点击计时 —— 成本高、抖动大、误报难分辨。
+
+按 AGENTS.md「什么时候不加判据」的三条:第三条（既有判据已在管）已经成立，故不加。
+
+### 顺带核了 EventCond
+
+上一轮核了 `EventEffect` 的 12 支。这一轮核它的姊妹类型 `EventCond`:
+
+```text
+EventCond 定义     3 种（realm / stone / element）
+eventEngine 的 case  3 个
+```
+
+**齐。** 同样由类型系统守（同一份 `switch` 无 `default`、返回类型不含 `undefined`）。
+
+### store 零 watch，EventCond 齐
+
+交互延迟交给既有的浏览器巡游。工作区干净、全量 804 / 6775 全绿。
