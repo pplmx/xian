@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 792 个 spec;本作自己那部分 712 个) |
+| `bun run test` | 全量用例(全量 793 个 spec;本作自己那部分 713 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 792 个 spec = 宿主 712 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 793 个 spec = 宿主 713 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 792 个 spec(本作自己那部分 712 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 793 个 spec(本作自己那部分 713 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -12842,3 +12842,64 @@ apprenticeReapText       拼徒儿收获，纯拼接
 这一轮只收了四个里的两个 —— 剩下 92 个多是内部工具函数（`runMatchup` / `randomBuild` /
 `fruitAtLife`），其正确性由调用它们的上层判据间接覆盖。**把 96 个都钉住是过度监管**，
 而「面向玩家的文案函数必须被覆盖」是一条能站住的线。
+
+### 第 236 轮:134 个组件，4 个零提及 —— 而组件从不被点名判
+
+上一轮那个方法（先量盲区，再判断值不值得补）用到 `.vue` 上:
+
+```text
+src 下 .vue 组件           134
+在任何 spec 里被提到        130
+零提及                       4
+  components/common/InstallToHomeNotice.vue
+  components/common/SectionMark.vue
+  components/common/UpdatePrompt.vue
+  components/common/ValueRow.vue
+```
+
+抽查四个:
+
+```text
+UpdatePrompt        36 行模板，逻辑全在 useServiceWorkerUpdate（那个有 spec）
+ValueRow            29 行纯展示，无业务逻辑
+SectionMark         13 行纯展示
+InstallToHomeNotice 46 行安装提示条
+```
+
+**没有一个是「该有 spec 却没有」的。** 97% 的覆盖也不是判据逼出来的，是自发习惯。
+
+### 但那个缺口是真的
+
+`core/moduleCoverage.spec` 的注释里写着它扫了 `src/components` 与 `src/views`，
+而它的判据体只遍历 `src/core`:
+
+```ts
+for (const file of readdirSync(join(ROOT, "src/core")))
+```
+
+**组件只是「被搜到的语料」，本身从不被点名判。** 今天 97% 是习惯，明天可以是 40%。
+
+### 判据:`core/componentCoverage.spec`
+
+不要求每个组件都有 spec（那会把 `SectionMark` 这种 13 行纯展示也逼出一条测试），
+只守**基线不再变差**:零提及的组件清单不许超过记录的那一批。新增一个而不被提到就红，
+要么补测试，要么加进 `DISPLAY_ONLY` 写明为什么它是纯展示。名单不常驻，有人提了就红。
+
+### 判据自己错了两次（第二十七、二十八次）
+
+```text
+① 第三条「DISPLAY_ONLY 的每一条都还真的没人提」一上来就红 —— 红的正是名单里那四个。
+   因为**本文件写下了它们的名字**。判据必须排除自己，否则它在自证。
+
+② 收紧后 ValueRow 仍被当成「已有人提」，而 exportReach.spec 里那是某个更长的标识符
+   （以 Value 开头、以 Row 结尾）。子串撞名。改成「前面不能是字母」才认对。
+```
+
+### 还有一次副作用，出在别的判据上
+
+`exportReach.spec` 用纯文本正则建倒排表（**注释里的词也算**），而我第一版在注释里
+直接写了那个长标识符 —— 于是它被当成「有外部使用者」，`exportReach` 那条
+「基线里的条目已不存在，从 BASELINE 删掉它」立刻红。
+
+改法是把注释里那个名字换成描述（「某个更长的标识符」）。这不是第一次:
+第 232 轮也踩过同一形状 —— **注释里提一个标识符，会喂给别的判据**。
