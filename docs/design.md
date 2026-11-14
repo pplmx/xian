@@ -8364,6 +8364,42 @@ SOUL_TYPES      fengmang gangdun fanzhen lianji muze beishui
 两张表不是导出的，只能从 `buildAdvisor.ts` 里解析。故第 ① 条防空转在这里格外要紧：
 **解析正则一旦失效，判据会退化成永远绿**。
 
+### 想再找一个「裸 string 键 + 静默降级」—— 这一族已经走完了
+
+上一轮成功过（流派克制矩阵缺行会静默变 3 星），故这一轮沿同一条路找下一处。
+
+#### 找过的五处，全部已有人管
+
+```text
+DaoNoteBook = Record<string, DaoNote>      → 不是固定枚举索引，是任意数据袋
+worldClears: Record<string, number>        → 消费处有 ?? 0，worldIds 来自数据本身
+SkillId = "discern" | "herbLore" | …       → 字面量联合，类型系统已覆盖
+TRAIT_NAMES: Record<EcoTrait, string>      → 键类型是 EcoTrait，缺键编译就报
+ECO_LEVEL_NAMES = ["", "低", "中", "高"]   → 与 EcoLevel = 0|1|2|3 数量巧合相符
+```
+
+第五处严格说是**隐式巧合**：`EcoLevel` 若扩到 4，数组仍是 4 项，
+`ECO_LEVEL_NAMES[4]` 会是 `undefined`。但增加生态档位要同时改矩阵、文案与判定，
+不是一处能悄悄漏的，故不加判据。
+
+#### 换到「转世」—— 那个最不可逆的操作
+
+读了 `confirmReincarnation` 的全过程。它比预想的更讲究:
+
+```text
+① 先 setReincarnationView(null) —— 若某步抛错，view 已空，重入立即返回
+② 履历里的 linggen 必须是**拷贝** —— 否则「十世旧账会一起显示成最新那世的牌面」
+③ 妖气复聚与靖洁时刻必须连坐清掉 —— 否则内存态 ≠ 持久态分叉
+④ 悟道分支记录不随层数折回而删 —— 否则重修到满级后能改选另一条分支
+```
+
+每条都写在一个具体的、会发生的故障上。而它有九条判据，覆盖防重入、拷贝、
+分叉与「预告与结算逐条相同」。
+
+#### 这一轮没有改东西
+
+两条线都走完了：**引用完整性**、**转世**。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
