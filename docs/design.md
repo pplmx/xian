@@ -7077,6 +7077,55 @@ after    major=9 sub=4
 写这组判据时用 `gn(6.1, 4)` 想构造「6.1 万」，实际构造出的是 `6.1` ——
 `gn` 只收一个参数（number 或 `{m,e}`），第二个被忽略。
 
+### 按「判据测的是复制品吗」扫一遍全仓
+
+上一轮的教训是「判据可以测库、测复制品，就是不测产品」。这一轮拿这个视角扫全仓。
+
+#### 扫出来的 16 处同名函数，全是正当脚手架
+
+```text
+core/daoPerRoundsText.spec.ts: cnNumber
+core/synergyScan.spec.ts:       winRate
+ui/folioChapterHead.spec.ts:    walk
+…
+```
+
+抽查了三处:
+
+```text
+cnNumber（spec）   只处理 0~99，用来从文本里认回合数
+cnNumber（产品）   处理 0~9999，带「零」位补全     → 用途不同，巧合同名
+
+winRate（spec）    循环调 resolveCombat 取胜率     → 是测试脚手架，调的就是产品函数
+```
+
+**spec 里有辅助函数是正常的。** 真正的问题不是「有没有同名」。
+
+#### 再看那一族「计算 + 显示」的对
+
+```text
+FurnaceDialog.vue:195    stoneShort          toNum(subClamp(…))     ← 已判
+FurnaceDialog.vue:197    daoShort            Math.max(0, 100 - daoSource)
+MarksPanel.vue:236       rewriteShort        daoEntryShort(…)       ← 统一入口
+ExpeditionPanel.vue:642  expeditionEntryShort daoEntryShort(…)      ← 统一入口
+ExpeditionPanel.vue:644  voidRerollShort     daoEntryShort(…)       ← 统一入口
+TrialPanel.vue:564       challengeDaoShort   daoEntryShort(…)       ← 统一入口
+TrialPanel.vue:566       mutationDaoShort    daoEntryShort(…)       ← 统一入口
+BreakthroughCard.vue:290 prepPillShort       pillPrepShortfall(…)   ← 统一入口
+```
+
+八处里**六处走 `daoEntryShort()` 这一个入口**，两处单独算:
+
+- `stoneShort` —— GNum，必须 `subClamp`（已判）
+- `daoShort` —— `DAO_SOURCE_PER_FRUIT = 100`、`daoSource` 是 `ref(0)`，本就是小整数
+
+**没有第八种写法。** 作者显然系统地识别过这件事，而不是碰巧写对。
+
+#### 这一轮没有改东西
+
+扫了两遍，两次都空手。但空手本身是一个读数:
+**「同一个数在两处算」这个形状，在这个仓里已经被收敛过了。**
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
