@@ -80,8 +80,19 @@ release. Add a tool name to select part of the graph. For example, run
 
 三次都是**同一个动作缺失**：动手前没搜。
 
-故改任何东西之前，先用两三个关键词在 `docs/development.md` 与 `docs/design.md` 里搜一遍。
-搜不到，再动手。
+故改任何东西之前，先搜两处:
+
+```text
+docs/development.md · docs/design.md     149 条「第 N 轮」结论 + 392 条表格记录
+ls src/core/*.spec.ts 等                  422 个 core spec，文件名就是它们守的题目
+```
+
+spec 文件名比文档更全 —— 文档只记「值得记的那一条」，而 spec 是**每一件被守的事**。
+第 234 轮查「修为溢出会不会浪费」时，文档里只搜到灵气那条（第 233 轮）；
+`ls src/core/*.spec.ts | grep banking` 才看见 `realmBanking.spec.ts` 早把修为与灵气
+两样都判过了（六条）。
+
+两处都搜不到，再动手。
 
 ## 测试与事实源
 
