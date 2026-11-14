@@ -744,6 +744,8 @@ const CATEGORIES = [
       "phaseAnnounce",
       // 战报的即时事件文本(命中/会心/闪避)全仓 spec 零覆盖 —— 与相位那句同一类缺口
       "combatLogEvents",
+      // 战果面板只被查了两个标签;类型上的每个统计字段都该有去处
+      "battleStatsDisplay",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
