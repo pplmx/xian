@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 798 个 spec;本作自己那部分 718 个) |
+| `bun run test` | 全量用例(全量 799 个 spec;本作自己那部分 719 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 798 个 spec = 宿主 718 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 799 个 spec = 宿主 719 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 798 个 spec(本作自己那部分 718 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 799 个 spec(本作自己那部分 719 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -14381,3 +14381,54 @@ CultivationView.vue:583
 
 三处扣费顺序都对、三处不可逆操作都有二次确认、修炼页的信息摊开方式是有意的。
 工作区干净、全量 798 / 6753 全绿。
+
+### 第 268 轮:难度曲线是平滑的 —— 而没人守着它
+
+查「难度曲线是不是真的存在」。先把 44 个区域的顺序摊出来:
+
+```text
+tier      1,2,3,…,20,21,21,22,22,23,23,…,31,31,32,32
+minRealm  0,0,1,1,1,2,2,3,3,3,4,4,…,19,19,20,20
+```
+
+两条都单调不减，后来 tier 每档配两个区域。**曲线平滑，没有陡增。**
+
+### 而它没有任何类型约束
+
+`tier` 是 `number`、`minRealm` 是 `number` —— 往 `REGIONS` 中间插一个 tier 更小的区域，
+编译不报、界面也不报，**玩家只会看到「越往后越轻松」**。
+
+查既有判据:`engineProgressionAudit.spec` 有五条很强的（格数、步长、换界形状、
+内容强度与战斗快照同源），但**都不管区域在列表里的顺序**。
+
+按三问:类型系统不管、浏览器巡游不管（要真打一场才感觉出来）、既有判据不管 —— **该加。**
+
+### 判据:`core/regionDifficultyOrder.spec` 四条
+
+```text
+① 防空转:区域 >20、tier 跨度 >20
+② tier 单调不减（允许相等:后期一档两个区域是有意的）
+③ minRealm 单调不减
+④ tier 不许跳档（每一档都至少有一个区域承接）
+```
+
+第 ④ 条是这一族特有的一维:**跳档意味着某个难度没有任何区域承接** ——
+玩家会在两个相邻区域之间遇到一段空档。
+
+### 故障注入：把首区推到 tier 999
+
+把青云山麓的 tier 从 1 改成 999:
+
+```text
+× tier 单调不减
+  这些相邻区域的 tier 倒退了 —— 玩家会看到越往后越轻松:青云山麓(tier 999) → 落霞谷(tier 2)
+× tier 不许跳档
+```
+
+两条同时命中，恢复即绿。
+
+### 一个读字段的教训
+
+期间我看 `hpMult` 从 T1 的 1.41 涨到 T32 的 3.93，差点说「跨档强度只涨了 2.8 倍」——
+但 `hpMult` 是**同 tier 内的横向修饰**（同一档里谁更肉），跨档强度由 tier 本身换算。
+**又一次用字段名代替了字段语义。**
