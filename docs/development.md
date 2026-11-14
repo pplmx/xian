@@ -15033,3 +15033,38 @@ dropLuck 0.06        → 「掉落品质 +0.06」        语焉不详 —— 加
 ### 这一轮改了 1 行注释
 
 改对了。而那句「图鉴不给数字」**我没动** —— 它不是漏，是四个字段里有两个还没想好怎么说。
+
+### 第 282 轮:注释里的「N 种」抽查四处 —— 四处全对，上一轮那处是唯一遗漏
+
+上一轮修了 `petTraits.ts` 的「四种」（实际六种）。这一轮系统查同类:注释里写「N 种」，
+而紧邻的类型是不是真有 N 个值。
+
+### 抽查四处
+
+```text
+data/bondIntent.ts:91   「玩家的三种回应」      IntentResponse = accept | refuse | ignore       3  ✓
+core/breakthrough.ts    「全部五种劫型」        TribulationKind = thunder|counterflow|soulrend|
+                                                ironbody|heavyrush                            5  ✓
+core/overviewNecessity  「三种情形」            AccessCase = routeLocked|routeOpen|offRoute    3  ✓
+core/engineFacilities   「会按小时产出的三种资源」  documented as 灵田/藏经阁 + 一处             3  ✓
+```
+
+**四处全对。** 加上上一轮那处，这五个样本里只有 `petTraits` 一个过时了。
+
+### 那要不要把「注释里的 N」做成判据
+
+**不要。** 理由有三:
+
+```text
+① 收益极小 —— 五个样本里一个过时，而那一个已经修了
+② 误报容易 —— 「三种性质」「五种劫型」这类说法有时指的不是紧邻的那个类型，
+   而是要人读上下文才明白（`contentGateAudit` 的「门槛的三种性质」就不是 GateKind 的个数）
+③ 真要机械检查，得解析注释与类型声明的关系 —— 那正是 `dataIntegrity.spec` 明确
+   拒绝过的那类「正则启发式，只会漏且吵」
+```
+
+按「什么时候不加判据」第三条（既有判据已在管 / 成本大于收益），这一族**不加**。
+
+### 抽查结论
+
+四处注释数字全对、上一轮那处是唯一遗漏、这条不值得做成判据。

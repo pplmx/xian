@@ -9081,6 +9081,34 @@ dropLuck 0.06        → 「掉落品质 +0.06」        语焉不详
 `data/petTraits.ts` 的文件头写着「**四种**性格」，而类型有六个 id、表里也是六行。
 **「四种」是加 `rapid` / `wary` 之前的数字，没跟着改。**
 
+### 注释里的「N 种」抽查四处 —— 四处全对，上一轮那处是唯一遗漏
+
+上一轮修了 `petTraits.ts` 的「四种」（实际六种）。这一轮系统查同类：注释里写「N 种」，
+而紧邻的类型是不是真有 N 个值。
+
+#### 抽查四处
+
+```text
+data/bondIntent.ts      「玩家的三种回应」      accept | refuse | ignore                       3  ✓
+core/breakthrough.ts    「全部五种劫型」        thunder|counterflow|soulrend|ironbody|heavyrush 5  ✓
+core/overviewNecessity  「三种情形」            routeLocked|routeOpen|offRoute                 3  ✓
+core/engineFacilities   「会按小时产出的三种资源」                                               3  ✓
+```
+
+**四处全对。** 加上上一轮那处，五个样本里只有 `petTraits` 一个过时了。
+
+#### 那要不要把「注释里的 N」做成判据
+
+**不要。** 理由有三:
+
+```text
+① 收益极小 —— 五个样本里一个过时，而那一个已经修了
+② 误报容易 —— 「三种性质」这类说法有时指的不是紧邻的那个类型，
+   要人读上下文才明白（contentGateAudit 的「门槛的三种性质」就不是 GateKind 的个数）
+③ 真要机械检查，得解析注释与类型声明的关系 —— 那正是 dataIntegrity.spec 明确
+   拒绝过的那类「正则启发式，只会漏且吵」
+```
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
