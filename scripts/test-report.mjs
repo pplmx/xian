@@ -724,6 +724,8 @@ const CATEGORIES = [
       "openingConsentGate",
       // 「不发任何外部请求」是对玩家说的强承诺,而此前没有任何判据在源码/产物上核它
       "zeroExternalRequests",
+      // 上一轮的教训:判据读了 verify 里 test 阶段还不存在的产物 —— 那它什么都没核
+      "specArtifactIndependence",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

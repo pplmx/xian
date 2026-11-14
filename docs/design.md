@@ -5873,6 +5873,34 @@ clean-dist  →  check  →  test  →  test:report  →  vp build  →  …
 三条：全程只有那一处同源注册、没有任何写死的外部主机、判据自己认得出四种网络调用
 （且不把 `prefetch` 误伤成 `fetch`）。
 
+### 判据不许依赖「跑 test 时还不存在」的产物
+
+上一轮发现 `zeroExternalRequests.spec` 第一版扫 `dist/` —— 而 `verify` 里
+`test` 早于 `build`，那条判据在真实链路里**什么都没核**。
+
+这一轮先做两件核对：
+
+```text
+① 逐份看其余依赖 existsSync 的判据
+   docShotsFresh / swPrecache / favicon / gateWiring / releasePipeline
+   —— 全都读 public/、src/ 或配置文件（常驻文件），不依赖产物
+② 唯一真的要产物的 offline-check.mjs
+   —— 它不在 test 链路里，是独立脚本，且开头就写着「先跑 bun run build」
+```
+
+**没有第二处同类问题。** 于是把那句教训做成判据：扫全仓 spec，凡在**路径构造**里
+出现 `dist/` / `build/` / `out/` 的，点名。
+
+#### 三处误报，都是判据自己造的
+
+| 误报 | 原因 | 修法 |
+| --- | --- | --- |
+| 它自己 | 地基那几条样本里带着 `"dist/"` 字面量 | 跳过自身 |
+| `swPrecache.spec` | 那行是 `toContain('join(ROOT, "dist/sw.js")')` —— 读的是**那个脚本的正文**，不是 dist 里的文件 | 排除 `toContain(` / `toMatch(` / `includes(` 形态 |
+
+> 判据要认的是「**读产物**」，而不是「**文本里出现 dist**」。
+> 这两件事差得很远，而正则看不出差别 —— 得靠排除具体的写法。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
