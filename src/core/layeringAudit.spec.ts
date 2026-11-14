@@ -164,8 +164,13 @@ const CORE_STORE_SITES = 159;
  * 拿一个手搓的战斗替身去比，比的就不再是那条承诺。同属「被测量对象本身
  * 就要 Pinia」；而**被测的预览模块本身仍然是纯的**（core 侧没有新增 store 依赖，
  * 见本文件上面那条基线没有动）。
+ *
+ * 117 → 118:goalBuildHint.spec 量的是「核心词条凑齐之后,首页那张卡说什么」——
+ * 而那张卡的输入是 `generateCurrentGoal(player)`,player 是 store 本身。
+ * 手搓一份 mods 去喂它,测的就不是玩家真会看到的那句话。
+ * 被测量的 `core/goal` 仍然只读传入的 player,没有新增 store 依赖。
  */
-const CORE_PINIA_SPECS = 117;
+const CORE_PINIA_SPECS = 118;
 
 function sources(dir: string): { name: string; text: string }[] {
   return readdirSync(dir)

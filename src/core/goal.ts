@@ -112,11 +112,26 @@ export function generateCurrentGoal(player: PlayerStore): Goal | null {
     // 分母按这一路的核心词条数走(见 detectBuild 的 coreTotal):写死一个数会让
     // 核心词条少的那几路永远停在半路,进度条也就只是在骗人。
     const total = Math.max(1, build.coreTotal);
+    /*
+     * 凑齐了就该换一句话。
+     *
+     * 从前无论凑没凑齐都写「继续寻找关键装备」—— 而进度条已经 100% 时
+     * 那句话指向的下一步**不存在**。玩家会去找,找不到,然后怀疑是不是漏了什么。
+     *
+     * 进度条说满了、提示语说还差,这两句在打架;而这一仓的纪律里写着
+     * 「界面上出现的每个数字都与结算同源」。
+     *
+     * 凑齐之后说什么:`stageName` 已经分「雏形 / 成形 / 大成」三档
+     * （见 core/buildDetect),直接用它的读数,不在这里另造一套分档。
+     */
+    const done = core >= total;
     return {
       type: "build",
-      text: `完善「${style}」流派`,
+      text: done ? `「${style}」流派已${build.stageName}` : `完善「${style}」流派`,
       progress: Math.min(1, core / total),
-      hint: `当前已凑出 ${core}/${total} 个核心词条,继续寻找关键装备`,
+      hint: done
+        ? `${total}/${total} 个核心词条已齐 —— 这一路的装备不再有缺口,可以换一路或去推地界`
+        : `当前已凑出 ${core}/${total} 个核心词条,继续寻找关键装备`,
       destination: { to: "/build", label: "去构筑" },
     };
   }

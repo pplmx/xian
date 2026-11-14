@@ -712,6 +712,8 @@ const CATEGORIES = [
       "battleLogCap",
       // 宿敌上限 slice(-49) 写在两处 —— 读起来像 49 个，实际是 50
       "nemesisCap",
+      // 核心词条凑齐后仍说「继续寻找关键装备」—— 进度条 100% 与提示语打架
+      "goalBuildHint",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

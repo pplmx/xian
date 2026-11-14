@@ -5597,6 +5597,58 @@ export const NEMESIS_MAX = 50;
    `export const NEMESIS_MAX`，那个 `export` 被当成了「隔着别的代码」；
 2. 那条判据的注释里写了闭注释符，**把文档注释提前闭合了** —— 解析失败。
 
+### 进度条 100% 了，提示语还在说「继续寻找关键装备」
+
+`core/goal` 的流派分支:
+
+```ts
+const core = Math.min(build.coreValues.length, build.coreTotal);
+const total = Math.max(1, build.coreTotal);
+hint: `当前已凑出 ${core}/${total} 个核心词条,继续寻找关键装备`,
+```
+
+而 `detectBuild` 里:
+
+```ts
+coreValues: best.terms.filter((term) => term.value > 0),  // 只留已有贡献的
+coreTotal: best.terms.length,                              // 全量
+```
+
+于是玩家把这一路的核心词条**全凑齐**（`core === total`，进度 1.0）时，
+首页最显眼那格仍写着「**继续寻找关键装备**」—— 而已经没有下一件可找了。
+
+这是这一仓纪律明令要避免的那种：**进度条说满了、提示语说还差，两句话在打架。**
+玩家会去找，找不到，然后怀疑是不是自己漏了什么。
+
+#### 改法
+
+```ts
+const done = core >= total;
+text: done ? `「${style}」流派已${build.stageName}` : `完善「${style}」流派`,
+hint: done
+  ? `${total}/${total} 个核心词条已齐 —— 这一路的装备不再有缺口,可以换一路或去推地界`
+  : `当前已凑出 ${core}/${total} 个核心词条,继续寻找关键装备`,
+```
+
+`stageName` 已经分「雏形 / 成形 / 大成」三档（见 `core/buildDetect`），
+直接读它，不在这里另造一套分档。
+
+#### 判据
+
+其中一条是**行为判据**：直接调 `generateCurrentGoal`，把背水流两个核心词条
+顶到参考值以上，然后断言 `progress === 1` 且 `hint` 不含「继续寻找」。
+
+这条独立有效：把分支改回单句之后，源码形状那几条仍绿，**只有它红**。
+
+#### 一个被记下来的误判
+
+实测首页「当前道途」在 major 2 / 9 / 16 / 20 上都是同一句
+「完善『背水流』流派 · 1/2 个核心词条」，我一度以为这是缺陷。
+
+**不是。** 那是夹具造成的：展示档的装备与词条是固定的，只改境界当然不会改变流派。
+
+「夹具不变而输入变」时，输出的不变来自夹具，不是来自代码。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,

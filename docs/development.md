@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 766 个 spec;本作自己那部分 686 个) |
+| `bun run test` | 全量用例(全量 767 个 spec;本作自己那部分 687 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 766 个 spec = 宿主 686 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 767 个 spec = 宿主 687 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 766 个 spec(本作自己那部分 686 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 767 个 spec(本作自己那部分 687 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -10751,3 +10751,65 @@ export const NEMESIS_MAX = 50;
    而声明是 `export const NEMESIS_MAX`，那个 `export` 被当成了「隔着别的代码」。
    改成允许 `export`。
 2. 那条判据的注释里写了 `*/`，**把文档注释提前闭合了** —— 解析失败。换成了「闭注释」。
+
+### 第 195 轮:进度条 100% 了，提示语还在说「继续寻找关键装备」
+
+按计划查中后期玩家是否「没事可做」。**第一个方向判断错了**，记下来。
+
+### 误判:以为跨境界的「下一步」不变
+
+实测首页「当前道途」在 major 2 / 9 / 16 / 20 上都是同一句
+「完善『背水流』流派 · 1/2 个核心词条」，我一度以为这是缺陷。
+
+**不是。** 那是夹具造成的:展示档的装备与词条是固定的，只改境界当然不会改变流派。
+真实玩家会持续换装备。
+
+> 记这一条:「夹具不变而输入变」时，输出的不变来自夹具，不是来自代码。
+
+### 真缺陷:凑齐之后仍说「继续寻找」
+
+`core/goal` 的流派分支:
+
+```ts
+const core = Math.min(build.coreValues.length, build.coreTotal);
+const total = Math.max(1, build.coreTotal);
+hint: `当前已凑出 ${core}/${total} 个核心词条,继续寻找关键装备`,
+```
+
+而 `detectBuild` 里:
+
+```ts
+coreValues: best.terms.filter((term) => term.value > 0),  // 只留已有贡献的
+coreTotal: best.terms.length,                              // 全量
+```
+
+于是玩家把这一路的核心词条**全凑齐**（`core === total`，进度 1.0）时，
+首页最显眼那格仍写着「**继续寻找关键装备**」—— 而已经没有下一件可找了。
+
+这是这一仓纪律明令要避免的那种:**进度条说满了、提示语说还差，两句话在打架。**
+玩家会去找，找不到，然后怀疑是不是自己漏了什么。
+
+### 改法:凑齐了就说凑齐了
+
+```ts
+const done = core >= total;
+text: done ? `「${style}」流派已${build.stageName}` : `完善「${style}」流派`,
+hint: done
+  ? `${total}/${total} 个核心词条已齐 —— 这一路的装备不再有缺口,可以换一路或去推地界`
+  : `当前已凑出 ${core}/${total} 个核心词条,继续寻找关键装备`,
+```
+
+`stageName` 已经分「雏形 / 成形 / 大成」三档（见 `core/buildDetect`），
+直接读它，不在这里另造一套分档。
+
+### 判据:`core/goalBuildHint.spec`
+
+四条，其中一条是**行为判据**:直接调 `generateCurrentGoal`,把背水流两个核心词条
+顶到参考值以上，然后断言 `progress === 1` 且 `hint` 不含「继续寻找」。
+
+这条独立有效:把分支改回单句之后，源码形状那三条有两條仍绿，**只有它红**。
+
+### 基线变动
+
+`layeringAudit` 的 `CORE_PINIA_SPECS` 117 → 118 —— 这条行为判据要建 Pinia,
+因为被测的 `generateCurrentGoal(player)` 输入就是 store。按既有惯例写了说明。
