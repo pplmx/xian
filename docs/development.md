@@ -14330,3 +14330,54 @@ resources.spendSmall("wudao", DIVINATION_COST);
 ```
 
 精确命中，恢复即绿。
+
+### 第 267 轮:上一轮修的那类，全仓只有那一个
+
+第 266 轮修了「先扣悟道点、再摇卦」，这一轮把同类的四处全查了一遍。
+
+### 三处扣费后执行，都对
+
+```text
+buildingService.ts:181   spendStone → spendSmall → setLevel → track → notify
+                         canUpgrade 已在前置判定里挡掉不够的情况，
+                         后面几步都不会抛，故安全
+
+endgameService.ts:92     if (!paid) { notify("…不足,熔铸作罢"); return 0; }
+                         paid 来自 spendHerbsAll / spendSmall 的返回值 —— 扣不成即退
+
+eventEngine.ts:310       if (!resources.spendStone(v)) return null;
+                         注释还记着一个踩过的坑:「入不敷出就拒绝，不『把整份余额奉上』
+                         —— 传余额拷贝会让 gte 恒真、清零收场」
+```
+
+**三处都有显式的失败分支。** 第 266 轮那处（`spendSmall` 不看返回值、紧跟着一个可能抛的分支）
+**是全仓唯一的一个**。
+
+### 顺带查了「不可逆操作有没有二次确认」
+
+```text
+SecretRealmCard   confirmAbandon 二段式按钮
+CombatPanel       confirmLeave
+ReincarnationDialog   data-reincarnation-confirm-gate —— 还带 confirmGate.state，
+                      注释写着「这是本作最贵的一次不可逆操作，故把最意外的两样点出来」
+```
+
+都在。
+
+### 还查了「修炼页为什么没有『注 · 』」
+
+`注 ·` 这种折叠说明在别的页有（历练 3 处、人物 2 处…），修炼页一处都没有。
+查下来是**刻意的**:
+
+```text
+CultivationView.vue:583
+ * 修炼速度的来路 —— 玩家最常盯的就是这一行，故**就地摊开**
+```
+
+**最常盯的那一行不折叠，直接展开**；而「来路」是另一枚就地开的键（第 209 行）。
+不是缺说明，是说明的位置不同。
+
+### 三处都对
+
+三处扣费顺序都对、三处不可逆操作都有二次确认、修炼页的信息摊开方式是有意的。
+工作区干净、全量 798 / 6753 全绿。

@@ -8493,6 +8493,47 @@ resources.spendSmall("wudao", DIVINATION_COST);
 > 而源码层查顺序的前提是「名字别改」—— 故三条判据都先断 `indexOf > 0`，
 > 名字一改就红，而不是静默变成 -1。
 
+### 上一轮修的那类，全仓只有那一个
+
+第 266 轮修了「先扣悟道点、再摇卦」，这一轮把同类的四处全查了一遍。
+
+#### 三处扣费后执行，都对
+
+```text
+buildingService    canUpgrade 已在前置判定里挡掉不够的情况，后面几步都不会抛
+endgameService     if (!paid) { notify("…不足,熔铸作罢"); return 0; }
+eventEngine        if (!resources.spendStone(v)) return null;
+```
+
+**三处都有显式的失败分支。** 第 266 轮那处（`spendSmall` 不看返回值、紧跟着一个
+可能抛的分支）**是全仓唯一的一个**。
+
+#### 顺带查了「不可逆操作有没有二次确认」
+
+```text
+SecretRealmCard        confirmAbandon 二段式按钮
+CombatPanel            confirmLeave
+ReincarnationDialog    data-reincarnation-confirm-gate —— 还带 confirmGate.state，
+                       注释写着「这是本作最贵的一次不可逆操作，故把最意外的两样点出来」
+```
+
+都在。
+
+#### 还查了「修炼页为什么没有『注 · 』」
+
+`注 ·` 这种折叠说明在别的页有（历练 3 处、人物 2 处…），修炼页一处都没有。
+查下来是**刻意的**:
+
+```text
+ * 修炼速度的来路 —— 玩家最常盯的就是这一行，故**就地摊开**
+```
+
+**最常盯的那一行不折叠，直接展开。** 不是缺说明，是说明的位置不同。
+
+#### 三处都对
+
+三处扣费顺序都对、三处不可逆操作都有二次确认、修炼页的信息摊开方式是有意的。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
