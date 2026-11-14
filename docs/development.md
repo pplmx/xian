@@ -16214,3 +16214,60 @@ daoFruitOutlets.spec  新增（反向对账）
 
 > **一条判据可以长期绿着，同时它守的那句话已经是假的。**
 > 而它绿的原因不是产品没问题，是判据看不见那一部分产品。
+
+### 第 308 轮:顺着上一轮那个模式查「绝对命题」—— 而这次的两处都有判据
+
+上一轮的发现是:**一条判据可以长期绿着，同时它守的那句话已经是假的。**
+这一轮顺着查同类。全仓 74 条 `it()` 标题带「没有任何 / 只有一 / 从不 / 绝不 / 永远不」，
+逐个核不现实，故挑两处最像的:
+
+### 一 `battleFactor.spec` 第 31 条「全局只有一个实现」
+
+```ts
+const exploration = readFileSync(resolve(__dirname, "./exploration.ts"), "utf8");
+const offline = readFileSync(resolve(__dirname, "./offline.ts"), "utf8");
+expect(offline).toContain("explorationFoeDanger");
+expect(offline).not.toContain("1 + (region.danger - 1) * 0.05");
+```
+
+**枚举型:只看两个文件。** 而实际有三处调用:
+
+```text
+core/exploration.ts:384
+core/offline.ts:366
+views/AdventureView.vue:1451   ← 判据不看它
+```
+
+查下来第三处**是调用同一个函数**，不是另写一份实现 —— 故那条断言仍然成立。
+而「只有一份实现」这件事，另有 `foeOrigin.spec` 从账目一致性那一侧守着。
+
+### 二 `exploration.ts` 里那个 0.05 出现了四次
+
+```text
+249  注释里的公式
+260  dangerFactorFor 的实现         ← 真值
+290  foeOrigin 的展示项
+310  regionFoeOrigin 的展示项
+```
+
+**四处硬编码同一个 0.05。** 若改 260 而忘了 290 / 310，界面会报一个与实算不同的数。
+
+### 故障注入两轮，都红
+
+```text
+只改 260（真值）           → battleFactor + foeOrigin 各一条红
+只改 290 / 310（展示）     → foeOrigin 第 122 与 163 条红
+```
+
+**「选地卡片只报与出行方式无关的那一半」这条判据正是守第 310 行的。**
+故这不是缺口 —— 账目与实数的一致性已被守着。
+
+### 而「第 31 条是枚举型」这一处，我判了不加
+
+要把它改成扫描型，得先定义「什么算第二份实现」。用正则数 `dangerFactorFor` 的调用次数
+会把 `AdventureView` 那次正常调用也算进去 —— **只会漏且吵**，与 `dataIntegrity.spec`
+拒绝过的那类一样。
+
+### 两处都查过
+
+一处有另一条判据从别的角度守着，一处已被故障注入证实会红。
