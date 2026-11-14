@@ -118,6 +118,22 @@ const NUMERIC_LEAK = ["NaN", "Infinity", "undefined"];
 const SKIP = /分解|删除|清空|重置|兵解|转世|散尽|导出|导入|隐私|关于我们|出 秘 境|暂别/;
 
 /**
+ * 「← 某某」这类**返回钮**必须在**点击之前**跳过。
+ *
+ * 从前它们是「点了再 break」：循环里有一道离页守卫，hash 一变就 `leftPage = true`
+ * 并中断。可那 12 个页面（`/codex` `/souls` `/titles` `/settings` `/build`
+ * `/collection` `/legacy` `/dongfu` `/world` `/celestial` `/market` `/apprentice`）
+ * 的**第 0 个按钮就是 `← 人物`** —— 于是每页只点了一两次，余下十来个按钮一个都没点到，
+ * 而报告里那行「中途离页 12 页」读起来像一条正常读数。
+ *
+ * `--depth 25` 也救不回来:那个参数限制的是「取前 N 个按钮」，
+ * 而第 1 个就把循环掐断了。
+ *
+ * 跳过返回钮不等于取消离页守卫 —— 真有别的按钮改了 hash 时仍要停下。
+ */
+const BACK_NAV = /^\s*[←‹<]/;
+
+/**
  * 分析脚本的域名在自检里断掉(见 lib/pageErrors.mjs 里那段实测说明):
  * 不是为了省时间,而是不让第三方脚本的加载与异常掺进这道门。
  */
@@ -317,6 +333,7 @@ async function runRoute(route) {
     if (!text || SKIP.test(text)) continue;
     if (!(await b.isVisible().catch(() => false))) continue;
     if (await b.isDisabled().catch(() => false)) continue;
+    if (BACK_NAV.test(text)) continue;
     controls += 1;
     const before = errors.length;
     const beforeFp = await fingerprint();
