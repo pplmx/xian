@@ -14902,3 +14902,45 @@ stage < 0   缘断
 ### 提示在，三态也分开
 
 奇缘录据此标「缘断」而非「已了」。工作区干净、全量 800 / 6760 全绿。
+
+### 第 279 轮:战斗界面没有胜算预览 —— 因为普通历练没有「打不打」这个决策点
+
+`CombatPanel` 830 行，是全仓最大的组件之一。先摊它挂了哪些信息:
+
+```text
+data-combat-arena / clock / desk / dust / foe / goal / ledger / next / player
+data-combat-first-sight / nemesis / nemesis-avenged / leave-ask / leave-confirm
+```
+
+14 个，覆盖战场、回合、敌我、宿敌、复仇、初见、离开确认。
+
+### 唯独没有胜算
+
+```text
+SecretRealmCard  有「战前预览:敌人/胜算/战利(与实战同源,见 secretLayerPreview)」
+CombatPanel      搜 preview / 预估 / 胜算   零命中
+```
+
+第一反应是缺口。但查下去:
+
+```text
+普通历练   战斗是自动推进的，玩家没有「打不打」的选择
+秘境       进层前要选，故必须有胜算
+```
+
+**没有决策点的地方不该有胜算** —— 给了反而变成噪音（每场小怪都报一个百分比）。
+
+### 而界面上真有的那个决策，提示是齐的
+
+```text
+first-sight     初见（第一次遇到这只）
+nemesis         宿敌（败过三次）
+nemesis-avenged 已雪耻
+leave-ask / leave-confirm   中途离开要两段确认
+```
+
+**「打」不由你选，「走」由你选**，所以离开有确认，而开战没有。
+
+### 十四项都齐，缺席也有理由
+
+14 项信息齐、胜算的缺席有理由、离开的两段确认在。工作区干净、全量 800 / 6760 全绿。
