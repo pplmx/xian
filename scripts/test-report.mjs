@@ -758,6 +758,8 @@ const CATEGORIES = [
       "swAssetStrategy",
       // 冒烟脚本每页第 0 个按钮是「← 返回」,点了就离页,12 页的覆盖被掐掉
       "uiSmokeBackNav",
+      // 「尚差 N 石」算得对不对没人核 —— 而错一次(裸尾数相减)事故已经发生过
+      "furnaceShortfall",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
