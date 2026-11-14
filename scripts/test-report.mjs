@@ -782,6 +782,8 @@ const CATEGORIES = [
       "gongfaQualityRealm",
       // 重置是不可逆的,而「会失去什么」那块说明挂在 v-if 上,没有任何门会红
       "resetDisclosure",
+      // 历练预览的两句免责防的是「星级=胜率」与「战力高=稳赢」;删了不会有任何门红
+      "adventurePreviewCaveat",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
