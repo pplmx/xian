@@ -8709,6 +8709,42 @@ distance 0 时 nearBonus = 1 + 4×5 = 21
 
 **一刀切「个位数百分比」会压死至宝的初见；它想到了「初见窗」这个例外。**
 
+### UI 层的越界与转世的门槛 —— 两处都稳，而我又差点读错一个数
+
+#### UI 文案的边界
+
+`src/ui/itemText.ts` 的 `equipMetaText` 拼的是「部位 · 界域 · 阶」:
+
+```ts
+return `${EQUIP_SLOT_NAMES[t.slot]} · ${worldNameOfTier(t.tier)} · ${t.tier} 阶`;
+```
+
+`t.slot` 是 `EquipSlot` 联合，类型系统管住。而 `t.tier` 是 `number` —— 越界会怎样?
+
+```text
+tierMajor   Math.max(0, Math.min(TIER_MAJOR.length - 1, tier - 1))
+worldOf     Math.max(0, Math.min(MAX_MAJOR, major)) ?? WORLDS[last]
+```
+
+**两处都钳了。** 传 0 或 99 都不会崩、不会拼出 `undefined`。
+
+#### 转世门槛：不是 107 天
+
+前几轮量过的那串数（m0 0.3h / m4 47h / m8 107 天 / m12 216 天）里，
+107 天那一档是**深修到某境界**的耗时，而差点被当成「第一次转世要多久」。
+
+查真实门槛:
+
+```text
+core/reincarnation.ts:47   export const MANUAL_REBIRTH_MIN_MAJOR = 2;
+```
+
+**m2 = 筑基境**，按同一串数据推算约在 2~5 小时 —— **第一次转世是「玩一个晚上」的量级。**
+节奏是对的。
+
+> 这是这批里第 N 次「用一个相邻的数字代替了该查的那个数字」。
+> 上一串耗时是**境界推进**的，转世门槛是**另一件事**；两者恰好在同一份数据里，容易被顺手借用。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,

@@ -14596,3 +14596,43 @@ distance 0 时 nearBonus = 1 + 4×5 = 21
 
 上一轮那句设计说明不只是说明 —— 它有公式、有数字对账、有三条判据，其中一条
 连例外都写进了判据的注释里。**我又一次想加的东西，已经有人做得更细。**
+
+### 第 272 轮:UI 层的越界与转世的门槛 —— 两处都稳，而我又差点读错一个数
+
+### UI 文案的边界
+
+`src/ui/itemText.ts` 的 `equipMetaText` 拼的是「部位 · 界域 · 阶」:
+
+```ts
+return `${EQUIP_SLOT_NAMES[t.slot]} · ${worldNameOfTier(t.tier)} · ${t.tier} 阶`;
+```
+
+`t.slot` 是 `EquipSlot` 联合，类型系统管住。而 `t.tier` 是 `number` —— 越界会怎样?
+
+```text
+tierMajor   Math.max(0, Math.min(TIER_MAJOR.length - 1, tier - 1))
+worldOf     Math.max(0, Math.min(MAX_MAJOR, major)) ?? WORLDS[last]
+```
+
+**两处都钳了。** 传 0 或 99 都不会崩、不会拼出 `undefined`。
+
+### 转世门槛:不是 107 天
+
+前几轮量过的那串数（m0 0.3h / m4 47h / m8 107 天 / m12 216 天）里，
+107 天那一档是**深修到某境界**的耗时，而我差点把它当成「第一次转世要多久」。
+
+查真实门槛:
+
+```text
+core/reincarnation.ts:47   export const MANUAL_REBIRTH_MIN_MAJOR = 2;
+```
+
+**m2 = 筑基境**，按同一串数据推算约在 2~5 小时 —— **第一次转世是「玩一个晚上」的量级，
+不是三个月。** 节奏是对的。
+
+> 这是这批里第 N 次「用一个相邻的数字代替了该查的那个数字」。
+> 上一串耗时是**境界推进**的，转世门槛是**另一件事**；两者恰好在同一份数据里，容易被顺手借用。
+
+### 边界钳全，门槛合理
+
+UI 边界钳全、转世门槛合理。工作区干净、全量 800 / 6760 全绿。
