@@ -1,5 +1,9 @@
 /**
- * 灵兽性格的内容表 —— 四种性格各改哪几项、叫什么、怎么说。
+ * 灵兽性格的内容表 —— 六种性格各改哪几项、叫什么、怎么说。
+ *
+ * 类型声明里有六个 id(`greedy|steady|fierce|cautious|rapid|wary`),而本表的行数
+ * 由 `core/petTraitBreadth.spec` 三条钉住:正好六条、与类型对得上、**每种都真有灵兽在用**。
+ * 先前这里写「四种」—— 那是加 `rapid` / `wary` 之前的数字,没跟着改。
  *
  * 为什么单独成文件:装配公共库(core/engineWorld)与查询性格效果(core/petPersonality)
  * 都要读它,而查询那侧还要用库算"叠加在中性值上是什么结果"。

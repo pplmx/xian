@@ -9037,6 +9037,50 @@ export function personalityEffects(petId: string | null): PetPersonalityEffects 
 **第 ④ 条正是我担心的那一点。** 我没有想到的是第 ③ 条：光有六条定义不够，
 还得每种都有灵兽在穿 —— 否则那一档永远不出现。
 
+### 图鉴只写「更容易掉宝」不给数字 —— 而这次的理由站得住
+
+顺着上一轮的六种性格，查玩家能不能看到它们的**数值**。
+
+#### 图鉴只渲染一句定性描述
+
+```ts
+`性格 ${PERSONALITY_NAMES[def.personality]}:${personalityDesc(def.personality)}`
+```
+
+而 `desc` 是:
+
+```ts
+id: "greedy",
+desc: "更容易发现稀有之物,但也会招来危险。",
+mods: { exploreDurMult: 1.0, dangerMult: 1.05, dropLuck: 0.06, lossReduction: 0 },
+```
+
+**`mods` 里的四个数一个字都没进界面。** `PET_TRAITS` 的消费者只有 `engineWorld`
+与 `petFateOrder` —— 没有任何界面读 `mods`。
+
+#### 第一反应是「决策信息不完整」
+
+按「不能只给定性形容词」，这像是该补的。
+
+#### 但 `exploreModeText.ts` 的注释拦住了
+
+> `dangerMult` 是个**笼统的乘数**：玩家看到一个 ×2.1，不知道它从哪来。
+
+```text
+exploreDurMult 1.1   → 「历练时长 +10%」        能说
+lossReduction 0.02   → 「2% 概率护住败绩」       能说
+dangerMult 1.05      → 「危险 ×1.05」           语焉不详
+dropLuck 0.06        → 「掉落品质 +0.06」        语焉不详
+```
+
+**后两个直接印出来，会把「更容易掉宝」换成「掉落品质 +0.06」，玩家更看不懂。**
+真正的解法是先设计一套口径（危险怎么拆、掉落怎么讲）。
+
+#### 于是只改了确定错的那处
+
+`data/petTraits.ts` 的文件头写着「**四种**性格」，而类型有六个 id、表里也是六行。
+**「四种」是加 `rapid` / `wary` 之前的数字，没跟着改。**
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
