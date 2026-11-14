@@ -7243,6 +7243,54 @@ ls src/core/*.spec.ts | grep -i banking
 
 但它把上一轮那条纪律补全了 —— **只查文档会漏掉一半**。
 
+### 1364 个导出里，96 个在 422 个 spec 里一次都没被提到
+
+前两轮修的是「怎么找」。这一轮按改正后的方法走完三步，再动手。
+
+#### 第一步：不猜主题，直接量
+
+按词频挑「覆盖稀疏的主题」不成立（`affinity` 只有两个 spec 文件，
+可 `linggenAffinity` 里就有 18 条判据）。改成直接量:
+
+```text
+全仓 export function        1364
+其中在 422 个 spec 里零提及   96
+```
+
+收窄到「名字以 Text/Line/Label/Desc 结尾 + 面向玩家」，只剩四个:
+
+```text
+core/apprenticeService.ts:apprenticeReapText
+core/buildAdvisor.ts:starsText
+core/earlyGameService.ts:streakRewardText
+core/resilience.ts:resilienceText
+```
+
+#### 第二步：抽查，两个可以放过
+
+```ts
+starsText(stars)     "★".repeat(stars) + "☆".repeat(5 - stars)
+                     调用方三处都从 buildAdvisor 拿 stars，
+                     而那边是 Math.max(1, Math.min(5, …)) —— 上游已钳住
+apprenticeReapText   拼徒儿收获，纯拼接
+```
+
+#### 第三步：后两个带数字与阈值，补上
+
+`streakRewardText` 里有两处 `> 0`。若两个奖励都是 0，它只吐「连胜 N 场」——
+**玩家会以为连胜什么都没给。**
+
+`resilienceText` 的三档判词在界面上是**与保留率并排**显示的。阈值若被改动而文案没跟上，
+玩家会看到「道基浑厚」配一个很低的保留率。
+
+故障注入：删掉 `if (stone > 0)` → 两条红；`>= 0.75` 改成 `> 0.75` → 边界那条红。
+
+#### 96 这个数字本身值得记
+
+它说明「判据覆盖」这件事有盲区，而且盲区**可以量出来**。
+剩下 92 个多是内部工具函数，其正确性由调用它们的上层判据间接覆盖。
+**把 96 个都钉住是过度监管**，而「面向玩家的文案函数必须被覆盖」是一条能站住的线。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,

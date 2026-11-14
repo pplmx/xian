@@ -762,6 +762,8 @@ const CATEGORIES = [
       "furnaceShortfall",
       // 人物页四组是不是把 AnyStatKey 的每个键都摆出来了 —— 新增词条忘了分组会漏
       "statGroupCoverage",
+      // 连胜奖励与韧性判词会讲给玩家听,而全仓 422 个 spec 一次都没提过它们
+      "earlyGameTexts",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

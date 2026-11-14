@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 791 个 spec;本作自己那部分 711 个) |
+| `bun run test` | 全量用例(全量 792 个 spec;本作自己那部分 712 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 791 个 spec = 宿主 711 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 792 个 spec = 宿主 712 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 791 个 spec(本作自己那部分 711 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 792 个 spec(本作自己那部分 712 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -12784,3 +12784,61 @@ ls src/core/*.spec.ts | grep -i banking
 ### 补全的是纪律本身
 
 它把上一轮那条纪律补全了 —— **只查文档会漏掉一半**。
+
+### 第 235 轮:1364 个导出里，96 个在 422 个 spec 里一次都没被提到
+
+前两轮修的是「怎么找」。这一轮按改正后的方法走完三步，再动手。
+
+### 第一步：不猜主题，直接量
+
+按词频挑「覆盖稀疏的主题」不成立（`affinity` 只有两个 spec 文件，
+可 `linggenAffinity` 里就有 18 条判据）。改成直接量:
+
+```text
+全仓 export function        1364
+其中在 422 个 spec 里零提及   96
+```
+
+收窄到「名字以 Text/Line/Label/Desc 结尾 + 面向玩家」，只剩四个:
+
+```text
+core/apprenticeService.ts:apprenticeReapText
+core/buildAdvisor.ts:starsText
+core/earlyGameService.ts:streakRewardText
+core/resilience.ts:resilienceText
+```
+
+### 第二步：抽查，两个可以放过
+
+```ts
+starsText(stars)         "★".repeat(stars) + "☆".repeat(5 - stars)
+                         调用方三处都从 buildAdvisor 拿 stars，
+                         而那边是 Math.max(1, Math.min(5, …)) —— 上游已钳住
+apprenticeReapText       拼徒儿收获，纯拼接
+```
+
+### 第三步：后两个带数字与阈值，补上
+
+`streakRewardText(streak, stone, wudao)` 拼「连胜 N 场 · 灵石 +X · 悟道点 +Y」，
+里面有两处 `> 0`。若两个奖励都是 0，它只吐「连胜 N 场」—— **玩家会以为连胜什么都没给。**
+
+`resilienceText` 是三档阈值（0.75 / 0.45），而这三个判词在界面上是**与保留率并排**显示的。
+阈值若被改动而文案没跟上，玩家会看到「道基浑厚」配一个很低的保留率。
+
+判据共九条，钉住:
+连胜场次一定出现、两项各报数量、某一项为 0 时不写它、两项都为 0 时不吐空串也不编 `+0`、
+单段不带多余分隔符;韧性的三档不重复、边界落在 `>=` 那一侧、每档说了后果、极端值不吐空串。
+
+故障注入:
+
+```text
+删掉 if (stone > 0) 那道判断        → 两条红
+把 >= 0.75 改成 > 0.75             → 边界那条红
+```
+
+### 96 这个数字本身值得记
+
+它说明「判据覆盖」这件事有盲区，而且盲区**可以量出来**。
+这一轮只收了四个里的两个 —— 剩下 92 个多是内部工具函数（`runMatchup` / `randomBuild` /
+`fruitAtLife`），其正确性由调用它们的上层判据间接覆盖。**把 96 个都钉住是过度监管**，
+而「面向玩家的文案函数必须被覆盖」是一条能站住的线。
