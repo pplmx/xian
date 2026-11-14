@@ -7384,6 +7384,43 @@ data 下所有 export const → 在生产代码里被用到：全部
 它给这几十轮的「一直加判据」加了一道刹车。**盲区不都是缺口** ——
 有的盲区是别人已经用别的方式盖住了。
 
+### 奖励承诺兑现了吗 —— 兑现，而且兜底方向是安全的
+
+查「承诺与行为一致」这条线，挑的是日课奖励。
+
+#### 换算同源
+
+```text
+结算  progress.ts:111   stoneByTier(playerTier(), bundle.stoneTier)
+文案  progress.ts:167   stoneByTier(tier, bundle.stoneTier)
+```
+
+同一个函数、同一套层级折实。而 `rewardTextAtTier` 的注释自己写着「与 grantReward
+同一套换算，界面标的是实发额」。
+
+#### 唯一一处「参数不同」，查下来是对的
+
+```text
+progress.ts:182         rewardTextAtTier(bundle, playerTier())          ← 与实发同参
+CollectionView.vue:672  rewardTextAtTier(row.def.reward, quests.achievedTiers[row.def.id] ?? 1)
+```
+
+第二处传的是**成就达成时的层级** —— 而成就是在那时结算的，按那时显示才对。
+**这是有意设计，不是两本账。**
+
+#### 那个 `?? 1` 兜底
+
+只有「老存档里没有这一格」才会落到 1。实测一份正常存档：`achievedTiers` 16 条，
+值是 1 / 3 / 5 …
+
+老存档落 tier 1 意味着**显示得比实际少**（1 是最低档）—— **降级方向是安全的**：
+宁可少写，不多写。若反过来兜底成高档，玩家会以为拿过更多。
+
+#### 一个读数
+
+连续几轮空手。近 12 次提交里 `test/` 4 个、AGENTS.md 那份 3 次、`docs/design.md` 5 个，
+**产品代码零改动** —— 重心已从「改产品」转到「守住已有质量」。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
