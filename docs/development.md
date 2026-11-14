@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 768 个 spec;本作自己那部分 688 个) |
+| `bun run test` | 全量用例(全量 769 个 spec;本作自己那部分 689 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 768 个 spec = 宿主 688 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 769 个 spec = 宿主 689 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 768 个 spec(本作自己那部分 688 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 769 个 spec(本作自己那部分 689 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -10870,3 +10870,41 @@ v-else-if="hasTrace"                 已经跨过 25% 的雏形线，这一路�
 
 三条都不是代码错了，是**注释里的字**触发的。前两条我选择改自己的措辞而不是改判据 ——
 那两条判据的意图（不许硬编码流派名 / 字体覆盖）都是对的。
+
+### 第 197 轮:把那个形状本身挡一下 —— 以及为什么只挡了一半
+
+「到边界之后那句话没换」这个形状，最近两轮各出过一次:
+
+```text
+第 195 轮  core/goal        core === total 时仍说「继续寻找关键装备」（进度条却已 100%）
+第 196 轮  BuildDiscovery   closestGap === 0 时仍说「再补 ⋯ 跨过便会成路」
+```
+
+故这一轮把它做成判据:扫全仓 `xxxGap / xxxLeft / xxxShort > 0 ? A : B`，
+断言**两支的文案不一样**。它挡的是最常见的退化 —— 分岔被删掉、或两支写成同一句。
+
+### 但只覆盖到七分之二
+
+人工数下来全仓有 7 处这种分支，判据只扫到 **2 处** —— 其余几处是**跨行**写的
+（`?` 与 `:` 分在两行）。
+
+要判跨行那种的「两支是否同一句」，需要跨行配对括号，写出来是一段脆弱的小解析器，
+换来的是「多覆盖 5 处」。
+
+**判断是不做。** 与其造一个半可靠的全量扫描，不如把边界说清楚:
+判据在它能做到的那部分有效，而那句 `expect(n).toBeGreaterThan(1)` 会在覆盖面变小时先叫。
+
+> 一条判据的价值不在于它覆盖多少，而在于**它不覆盖哪里是写明的**。
+
+### 顺带核过的那几处
+
+```text
+EventDialog     left > 0 ? 「余 X」 : 「即将结算」              对
+SoulsView       emptySeats > 0 ? 「尚空 N 席」 : 「三席俱满」    对
+SoulsView       idleSouls > 0 ? 「可择一缕入席」 : 「待凝形意」   对
+BrewingDialog   guaranteeLeft > 0 ? 「必成」 : 成功率            对
+ApprenticeView  recruitShort > 0 ? 「收徒 · 尚差 X 石」 : 「收徒」 对
+MarketView      herbSellShort > 0 ? 「尚差 X 灵草」 : 「售灵草×N」  对
+```
+
+只有上一轮修的那一处是错的。**「核过、都对」也是一个结论。**
