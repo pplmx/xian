@@ -6028,6 +6028,48 @@ clean-dist  →  check  →  test  →  test:report  →  vp build  →  …
 > 第 202 轮修的是**症状**，这一轮修的是**为什么没人发现症状**。
 > 后者的价值高一层：它保证下一处同样的东西不会又是一次「玩家先看见」。
 
+### 存档写失败有状态判据，没有「玩家会不会知道」的判据
+
+`App.vue` 那段处理做得很完整：
+
+```ts
+const warnSaveFailure = (): void => {
+  ui.toast("存档写入失败 —— 浏览器存储可能已满,建议先导出备份", "warn");
+};
+unsubscribeSaveFailure = subscribeSaveWriteFailure((failure) => {
+  if (failure) warnSaveFailure();
+  else ui.toast("存档已恢复写入", "info");
+});
+// 启动迁移可能在 App 订阅之前就已经写失败;别因错过那一次回调而静默带病运行。
+if (saveWriteFailure() !== null) warnSaveFailure();
+```
+
+连「订阅晚于失败」那个时序洞都补上了。
+
+但它没有判据：
+
+```text
+importCorruption.spec   测的是 saveWriteFailure() 的**状态**
+saveMigration.spec      同上
+—— 而「玩家会不会收到那句话」是 App.vue 的职责，一条都没有测
+```
+
+静默的存档失败是这一作最坏的一种 bug：玩家玩得正兴起，而他从此的进度都不进档。
+
+#### 判据的四条
+
+订阅在、失败与恢复各有一句话、启动时补读一次、`warnSaveFailure` 自己必须 toast。
+
+#### 判据自己错了一次（第十六次）
+
+第四条第一版写的是「订阅窗口里有一处 `ui.toast(`」。
+故障注入：把 `warnSaveFailure` 改成只 `console.warn` —— **判据照样绿**，
+因为恢复那条 toast 把它凑满了。
+
+收紧成「那个函数**自己**要有 toast」，才真的红。
+
+> 这是「数数量」与「查那一处」的差别。数数量在有多处同类调用时永远够。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,

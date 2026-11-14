@@ -730,6 +730,8 @@ const CATEGORIES = [
       "dailyRouteTapSize",
       // 200% 缩放档量了触控尺寸却没判它 —— 那个数被扔掉了,所以上一轮那个 15px 一路全绿
       "zoomTapGate",
+      // 存档写失败的「状态」有两份判据,而「玩家会不会收到那句话」一条都没有
+      "saveFailureNotice",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

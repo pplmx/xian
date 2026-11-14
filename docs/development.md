@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 775 个 spec;本作自己那部分 695 个) |
+| `bun run test` | 全量用例(全量 776 个 spec;本作自己那部分 696 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 775 个 spec = 宿主 695 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 776 个 spec = 宿主 696 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 775 个 spec(本作自己那部分 695 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 776 个 spec(本作自己那部分 696 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -11261,3 +11261,53 @@ if (info.smallTargets?.length)
 
 第 202 轮修的是**症状**，这一轮修的是**为什么没人发现症状**。
 后者的价值高一层:它保证下一处同样的东西不会又是一次「玩家先看见」。
+
+### 第 205 轮:存档写失败有状态判据，没有「玩家会不会知道」的判据
+
+接着上一轮「量了但没判」那类继续查。这一轮先扫了一遍 `measurePage` 的 17 个返回字段，
+逐个核它们有没有被 `problemsOf` / `zoomProblems` 判 —— **全部用上了**，
+上一轮修的那处是唯一的漏。
+
+然后转到存档安全，撞到一件事。
+
+### `App.vue` 那段做得很完整
+
+```ts
+const warnSaveFailure = (): void => {
+  ui.toast("存档写入失败 —— 浏览器存储可能已满,建议先导出备份", "warn");
+};
+unsubscribeSaveFailure = subscribeSaveWriteFailure((failure) => {
+  if (failure) warnSaveFailure();
+  else ui.toast("存档已恢复写入", "info");
+});
+// 启动迁移可能在 App 订阅之前就已经写失败;别因错过那一次回调而静默带病运行。
+if (saveWriteFailure() !== null) warnSaveFailure();
+```
+
+连「订阅晚于失败」那个时序洞都补上了。
+
+### 但它没有判据
+
+```text
+importCorruption.spec   测的是 saveWriteFailure() 的**状态**
+saveMigration.spec      同上
+—— 而「玩家会不会收到那句话」是 App.vue 的职责，一条都没有测
+```
+
+静默的存档失败是这一作最坏的一种 bug:玩家玩得正兴起，而他从此的进度都不进档。
+
+### 判据:`core/saveFailureNotice.spec`
+
+四条:订阅在、失败与恢复各有一句话、启动时补读一次、`warnSaveFailure` 自己必须 toast。
+
+### 判据自己错了一次（第十六次）
+
+第四条第一版写的是「订阅窗口里有一处 `ui.toast(`」。
+故障注入:把 `warnSaveFailure` 改成只 `console.warn` —— **判据照样绿**，
+因为恢复那条 toast 把它凑满了。
+
+收紧成「那个函数**自己**要有 toast」，才真的红。
+
+> 这是「数数量」与「查那一处」的差别。数数量在有多处同类调用时永远够。
+
+三次故障注入分别命中三条不同判据（恢复提示 / 启动补读 / 只 console）。
