@@ -774,6 +774,8 @@ const CATEGORIES = [
       "heritageRefIntegrity",
       // 新增流派忘了补克制矩阵时,适配评级会静默退化成「3 星、无理由」
       "styleAffinityCoverage",
+      // 先扣费后摇卦:摇卦抛错时悟道点白扣,而探针测不出来(那条 throw 结构上不可达)
+      "divinationCost",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

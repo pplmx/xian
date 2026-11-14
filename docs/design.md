@@ -8444,6 +8444,55 @@ src 下 .vue 里 atMaxRealm 出现 17 处：突破卡、ApexSeal / ApexBriefing�
 而这个形状在仓里还有没有（DaoNoteBook / worldClears / SkillId / TRAIT_NAMES /
 ECO_LEVEL_NAMES）—— 逐个查过，**全部已被类型系统或既有判据覆盖**。
 
+### 先扣悟道点、再摇卦 —— 那条 throw 一旦真的抛，钱就白扣了
+
+换了一类问题：**会抛错但没人接住**的地方。`src/core` 里只有三处 `throw`:
+
+```text
+core/divination.ts:98    if (!reading) throw new Error("摇卦失败:六爻未成卦");
+core/loot.ts:561         const unhandled: never = key; throw …（穷尽性检查）
+core/metaSim.ts:58       参数越界
+```
+
+后两处都是**编译期就拦住**的（`never` 收口），只有第一处是运行时断言。
+
+#### 而它的调用方是「先扣费后办事」
+
+```ts
+resources.spendSmall("wudao", DIVINATION_COST);   // 先扣
+const reading = drawHexagram(rand);              // 再摇（可能抛）
+```
+
+`drawHexagram` 今天**不可能**抛：`castLines` 必然给六个 0/1。但那是**断言，不是保证**
+—— 一旦哪天 `castLines` 改了或卦表变了，那一抛就发生在扣费之后：玩家少了悟道点、
+没拿到卦，页面还白屏。
+
+#### 改了：两行顺序
+
+```ts
+const reading = drawHexagram(rand);
+resources.spendSmall("wudao", DIVINATION_COST);
+```
+
+代价是零。而「先扣钱、后办事」这个顺序问题在别处一样危险，故锁成判据。
+
+#### 判据:`core/divinationCost.spec` 三条
+
+```text
+① 先摇出卦，再扣悟道点（摇卦抛错时不许白扣）
+② 「卦在身」与「悟道点不足」两条早退都在扣费之前（拒绝时不许扣钱）
+③ 落状态在扣费之后（中途失败不许留下「没付钱的卦」）
+```
+
+#### 为什么只能用源码层判据
+
+想用行为测（注入一个「让摇卦失败」的 rand）**做不到**：`castLines` 只用
+`rand.chance(0.5)` 取布尔，无论怎么注入六爻都会成卦。那条 `throw` 是**结构上不可达**的。
+
+> 这条判据守的不是一个能复现的 bug，而是一个**没被关上的窗口**。
+> 而源码层查顺序的前提是「名字别改」—— 故三条判据都先断 `indexOf > 0`，
+> 名字一改就红，而不是静默变成 -1。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,

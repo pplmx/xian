@@ -28,8 +28,18 @@ export function askDivination(rand: RandomService = rng): DivinationOutcome {
   if (!resources.hasSmall("wudao", DIVINATION_COST)) {
     return { ok: false, reason: `悟道点不足(需 ${DIVINATION_COST} 点)。` };
   }
-  resources.spendSmall("wudao", DIVINATION_COST);
+  /*
+   * 先摇出卦，再扣费。
+   *
+   * 反过来写过一版：先 `spendSmall` 再 `drawHexagram`。`drawHexagram` 里有一条
+   * 「六爻未成卦」的断言（`readingOfLines` 返回 null 时抛），今天不可达
+   * （`castLines` 必然给 6 个 0/1），但它是断言不是保证 —— 一旦哪天 `castLines`
+   * 改了或表变了，那一抛就发生在扣费之后:玩家少了悟道点，没拿到卦，页面还白屏。
+   *
+   * 换过来的代价是零（两行顺序），而「先扣钱、后办事」这类顺序问题在别处也一样危险。
+   */
   const reading = drawHexagram(rand);
+  resources.spendSmall("wudao", DIVINATION_COST);
   const now = Date.now();
   player.setDivination({
     hexagram: reading.hexagram.name,
