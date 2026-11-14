@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 805 个 spec;本作自己那部分 725 个) |
+| `bun run test` | 全量用例(全量 806 个 spec;本作自己那部分 726 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 805 个 spec = 宿主 725 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 806 个 spec = 宿主 726 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 805 个 spec(本作自己那部分 725 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 806 个 spec(本作自己那部分 726 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -17204,3 +17204,74 @@ it("坊市验货签也读同一句 —— 买之前就该看得懂", () => {
 ```
 
 **四条的共同点:删掉那段设计，界面照样能跑、测试照样绿 —— 然后玩家会碰到一次糟糕的体验。**
+
+### 第 328 轮:「减少动效也关触感」—— 那个相与没有判据守
+
+`docs/usage.md` 的「触感」那一节:
+
+> 另外，**开了「减少动效」也会一并关掉触感**:那个开关的语义是「别给我动的东西」，
+> 而震动比动画更直接作用在身体上。**两处要一起开才会震**。
+
+实现是 `stores/ui.ts` 里的一行:
+
+```ts
+pulseHaptics(hapticTierOf(rank), {
+  enabled: settings.hapticsOn && !settings.reduceMotion,
+});
+```
+
+### 而它一条判据都没有 —— 相与那半段
+
+`haptics.spec` 九条，其中最像的那条是:
+
+```ts
+it("开关关掉就不震", () => {
+  pulseHaptics("rareTop", { enabled: false });
+  expect(calls.length, "关掉开关后不该震").toBe(0);
+  …
+});
+```
+
+**它验证 `pulseHaptics` 遵守 `enabled`，但没验证那个 `enabled` 是怎么算出来的。**
+
+于是把 `&& !settings.reduceMotion` 删掉，全部测试照样绿:
+
+```text
+类型系统      少用一个变量，不报错
+浏览器巡游    震动在测试环境里观察不到
+既有判据      只守 pulseHaptics 那一层
+```
+
+**而它的后果是对身体的作用**:一个明确说过「别给我动的东西」的人，拿到神品时手机会震三下。
+
+### 判据:`core/hapticReduceMotion.spec` 三条
+
+```text
+① enabled 那一行仍在（防空转）
+② 它同时读 hapticsOn 与 reduceMotion（相与）
+③ reduceMotion 是取反参与的 —— 不然语义正好反了
+```
+
+第 ③ 条守的是那个最容易写错的字:`!settings.reduceMotion` 少一个 `!`，
+就变成「**开了减少动效才震**」。
+
+### 两轮故障注入，都红
+
+```text
+删掉 && !settings.reduceMotion   → 第 ② 与第 ③ 条同时红（一行里两件事都缺了）
+把 ! 去掉                        → 第 ③ 条红
+  「reduceMotion 没有取反 —— 那会变成『开了减少动效才震』，语义正好反了」
+```
+
+### 这是第 5 条「守设计」的判据
+
+```text
+290  resetDisclosure            重置会失去什么
+300  adventurePreviewCaveat     星级不是胜率
+301  matchupCaveat              胜率是方向不是概率
+327  toastActionNotLink         去路是动作不是链接
+328  hapticReduceMotion         减少动效一并关触感（本轮）
+```
+
+**五条里，这一条最贴近身体** —— 前四条守的是「玩家会不会读错」，这一条守的是
+「玩家说了别动，还有东西在动」。

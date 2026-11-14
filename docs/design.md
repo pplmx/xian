@@ -10855,6 +10855,51 @@ it("坊市验货签也读同一句 —— 买之前就该看得懂", () => {
 × 提示条用了链接形态 —— 玩家正在看战斗回放时点它会被带走:href=
 ```
 
+### 「减少动效也关触感」—— 那个相与没有判据守
+
+`docs/usage.md` 的「触感」那一节:
+
+> 另外，**开了「减少动效」也会一并关掉触感**:那个开关的语义是「别给我动的东西」，
+> 而震动比动画更直接作用在身体上。**两处要一起开才会震**。
+
+实现是 `stores/ui.ts` 里的一行:
+
+```ts
+enabled: settings.hapticsOn && !settings.reduceMotion,
+```
+
+#### 而它一条判据都没有
+
+`haptics.spec` 九条，其中最像的那条是「开关关掉就不震」:
+
+```ts
+pulseHaptics("rareTop", { enabled: false });
+expect(calls.length, "关掉开关后不该震").toBe(0);
+```
+
+**它验证 `pulseHaptics` 遵守 `enabled`，但没验证那个 `enabled` 是怎么算出来的。**
+
+于是把 `&& !settings.reduceMotion` 删掉，全部测试照样绿。**而它的后果是对身体的作用** ——
+一个明确说过「别给我动的东西」的人，拿到神品时手机会震三下。
+
+#### 判据:`core/hapticReduceMotion.spec` 三条
+
+```text
+① enabled 那一行仍在（防空转）
+② 它同时读 hapticsOn 与 reduceMotion（相与）
+③ reduceMotion 是取反参与的 —— 不然语义正好反了
+```
+
+第 ③ 条守的是那个最容易写错的字：少一个 `!`，就变成「**开了减少动效才震**」。
+
+#### 两轮故障注入，都红
+
+```text
+删掉 && !settings.reduceMotion   → 第 ② 与第 ③ 条同时红
+把 ! 去掉                        → 第 ③ 条红
+  「reduceMotion 没有取反 —— 那会变成『开了减少动效才震』，语义正好反了」
+```
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
