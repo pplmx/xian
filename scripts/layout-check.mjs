@@ -1644,6 +1644,23 @@ function zoomProblems(info, tag) {
   );
   if (actionableWrapped.length)
     problems.push(`短动作标签被折行(200%):${actionableWrapped.join(" | ")}`);
+  /*
+   * 触控尺寸 —— 这一条**量了却一直没判**。
+   *
+   * `measurePage()` 早就把 `smallTargets` 算出来了(可点元素最小值与清单),
+   * 但这条判据链此前只判溢出 / 滚偏 / 越界 / 折行 / 竖排五类,**那个数被扔掉了**。
+   * 而 195 是唯一会遇到它的档(VIEWPORTS 八档里没有 195,整站巡游不覆盖它),
+   * 于是「200% 缩放下可点元素够不够大」在全库范围内没有任何一条门看过。
+   *
+   * 代价实测过:首页日课的去处链接在这一档是 37x15,一路全绿
+   * (修在第 202 轮;那一段 CSS 的注释还记着更早一次「宽度只剩 24px」的修复 ——
+   *  宽度修过、高度没修,而没人量过高度)。
+   *
+   * 口径与 problemsOf 里那条**同一把尺**(28px,声明了 min-height 的按 27.5 算渲染精度),
+   * 不在这里另立一个数。
+   */
+  if (info.smallTargets?.length)
+    problems.push(`可点元素过小(200% 下,触控下限 28×28):${info.smallTargets.join(" | ")}`);
   return problems;
 }
 

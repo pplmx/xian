@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 774 个 spec;本作自己那部分 694 个) |
+| `bun run test` | 全量用例(全量 775 个 spec;本作自己那部分 695 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 774 个 spec = 宿主 694 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 775 个 spec = 宿主 695 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 774 个 spec(本作自己那部分 694 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 775 个 spec(本作自己那部分 695 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -11168,3 +11168,96 @@ clean-dist  →  check  →  test  →  test:report  →  vp build  →  …
 
 两次故障注入分别命中:删掉 `min-height` + padding → 第一条红;
 删掉 `display: inline-flex` → 第三条红。
+
+### 第 203 轮:三个方向全达标，而且对应的判据都已经存在
+
+接着上一轮「能改成量的地方容易漏」继续查。这一轮查了三件事:
+
+```text
+触控目标   15 个页面全部量过：没有一个可点元素低于 24px（高或宽）
+加载       欢迎页 167ms 可见，DOM 就绪 70ms，传输 9.9KB
+导航       底栏五项各自 355~513ms，无异常
+无障碍名   五项各有可读名称，「洞府」带 aria-current="page"
+```
+
+**全部通过。** 然后去查「这些事有没有判据守着」——
+
+### 都有了，而且比我要写的更严
+
+`layout-check.mjs` 里:
+
+```text
+第 26 行    把「底部导航五项」「控件都有可访问名」「可点元素不小于 28px」一并核对
+第 373 行   弹窗里面的控件也要过同样两条尺子
+第 896 行   可点元素高度下限 28px —— 量法写得很细：
+            能识子像素抖动（27.6px 不判）、报数带一位小数、记录了三次实测的 47/26 个不足
+```
+
+我要写的是「≥24px」，而那里是 **28px**；我要写的是「15 个页面」，而那里已经覆盖
+九档视口 × 129 个具名任务，其中 195×422（200% 缩放）单独起了一个任务逐扇点开量。
+
+### 这一轮的三次判断失误
+
+| 次 | 我以为 | 真相 |
+| --- | --- | --- |
+| 1 | 「行囊」导航 3007ms 卡住 | 底栏没有文字可搜，选择器没匹配上；按 href 测是 358ms |
+| 2 | 五个底栏标签 `aria-label` 全为 null | 它们有可见文字标签，**不需要** aria-label；实测五项都有可读名 |
+| 3 | 触控目标缺一条整站判据 | `layout-check` 早就有，而且门槛更严、量法更细 |
+
+三次都是「我没看到」被当成了「它不存在」—— 与第 199 轮同一类错。
+
+> 这一轮**没有改任何代码**。结论是：这三个方向不需要我再做一遍。
+
+### 第 204 轮:追上一轮那个 15px 为什么没被拦住 —— 它被量过，然后被扔了
+
+第 202 轮修了日课去处链接（200% 缩放下 37×15）。这一轮去追:**`layout-check.mjs` 里
+明写着「可点元素高度下限 28px」，为什么它没拦住？**
+
+### 三段事实
+
+```text
+① 28px 门在 measurePage() 里量 —— 那个字段叫 smallTargets
+② 200% 缩放档走 measureZoomScale() → 它**确实**调了 measurePage()
+③ 但 zoomProblems() 只判六类:溢出 / 外壳滚偏 / 越界 / 主值行折行 / 竖排 / 短标签折行
+   —— **没有判 smallTargets**
+```
+
+也就是说:那个数**量了、算出来了、然后扔掉了**。
+
+而 `VIEWPORTS` 八档（390/375/320/620/844/768/959/1280）里没有 195 ——
+200% 缩放是独立档，只走 `zoomProblems` 这条链。于是**全库没有任何一条门看过
+「200% 缩放下可点元素够不够大」**。
+
+### 补上之前先量存量
+
+在 195 档上把 15 个页面全量扫了一遍（用与 `layout-check` 同一把尺:28px，
+声明了 `min-height` 的按 27.5 算渲染精度）:
+
+```text
+total small: 0
+```
+
+**存量已清零** —— 第 202 轮那一修之后，全库没有第二处。故补上判据不会炸出一片红。
+
+### 改法:把那个数接回判据链
+
+`zoomProblems()` 里加一条，口径与 `problemsOf` 里那条**同一把尺**，不另立数:
+
+```js
+if (info.smallTargets?.length)
+  problems.push(`可点元素过小(200% 下,触控下限 28×28):${info.smallTargets.join(" | ")}`);
+```
+
+跑 `--only "页面巡游[390]"`（47 个页面 × 视口组合）确认全绿。
+
+### 判据:`core/zoomTapGate.spec`
+
+三条:前提还在、`zoomProblems` 的函数体里有 `smallTargets`、且它真的被
+`problems.push` 成一条失败（只读下标不算）。
+
+第三条是分开写的 —— 上一轮那个 15px 的成因正是「读了下标，没判它」。
+
+### 这一轮真正修的是什么
+
+第 202 轮修的是**症状**，这一轮修的是**为什么没人发现症状**。
+后者的价值高一层:它保证下一处同样的东西不会又是一次「玩家先看见」。
