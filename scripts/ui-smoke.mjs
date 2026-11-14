@@ -134,6 +134,13 @@ const SKIP = /分解|删除|清空|重置|兵解|转世|散尽|导出|导入|隐
 const BACK_NAV = /^\s*[←‹<]/;
 
 /**
+ * 眉批那一步（`FolioPageHeader` 上的「》此生道途已定,可谋来世›」）也是导航钮，
+ * 但文字以 `》` 开头、**不带 `←`** —— 只靠字形匹配会漏掉（`/souls` 就是这样仍被带离的）。
+ * 按它的显式属性认，比猜字形可靠。
+ */
+const NEXT_STEP_ATTR = "data-folio-next-step";
+
+/**
  * 分析脚本的域名在自检里断掉(见 lib/pageErrors.mjs 里那段实测说明):
  * 不是为了省时间,而是不让第三方脚本的加载与异常掺进这道门。
  */
@@ -334,6 +341,7 @@ async function runRoute(route) {
     if (!(await b.isVisible().catch(() => false))) continue;
     if (await b.isDisabled().catch(() => false)) continue;
     if (BACK_NAV.test(text)) continue;
+    if ((await b.getAttribute(NEXT_STEP_ATTR).catch(() => null)) !== null) continue;
     controls += 1;
     const before = errors.length;
     const beforeFp = await fingerprint();

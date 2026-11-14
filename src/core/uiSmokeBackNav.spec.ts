@@ -84,6 +84,29 @@ describe("界面冒烟 · 返回钮不该把整页的遍历带离", () => {
     ).toBe(true);
   });
 
+  it("「眉批那一步」也要跳过 —— 它没有 ← 前缀，靠显式属性认", () => {
+    const src = stripComments(readSource(SMOKE));
+    /*
+     * `FolioPageHeader.vue` 上那枚「》此生道途已定,可谋来世›」是导航钮，
+     * 但文字以 `》` 开头、不带 `←`。它带了 `data-folio-next-step` 属性 ——
+     * 按其属性认，比猜字形可靠。
+     */
+    /*
+     * 又是同一类错:第一版写 `expect(src).toContain("data-folio-next-step")` ——
+     * 那只看「文件里出现这个字符串」，把循环里那行调用删掉之后照样绿（常量还在）。
+     *
+     * 故这里也只认「循环体里真的调用了」。
+     */
+    const at = src.indexOf("for (const b of buttons");
+    const end = src.indexOf("\n  }", at);
+    const loop = src.slice(at, end);
+    expect(
+      /getAttribute\(\s*NEXT_STEP_ATTR\s*\)/.test(loop),
+      "没有在循环里按 `data-folio-next-step` 认那枚眉批导航钮 —— 它不带 ← 前缀，" +
+        "只靠字形匹配会漏掉（`/souls` 就是这样仍被带离的）",
+    ).toBe(true);
+  });
+
   it("离页守卫本身仍在（跳过返回钮不等于取消这道守卫）", () => {
     const src = stripComments(readSource(SMOKE));
     const at = src.indexOf("for (const b of buttons");
