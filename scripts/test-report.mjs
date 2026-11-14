@@ -734,6 +734,8 @@ const CATEGORIES = [
       "saveFailureNotice",
       // 弹窗关掉后焦点要还回原处 —— 键盘用户不会掉到页面顶端,而这段没有判据
       "modalFocusReturn",
+      // 方向键规则曾有两份实现(InkTabs 手写 + useTabKeys 纯函数)—— 改一处漏一处两边都不红
+      "tabKeySingleSource",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

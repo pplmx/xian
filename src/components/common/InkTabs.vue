@@ -49,6 +49,7 @@
 
 <script setup lang="ts" generic="T extends string">
 import { computed, useTemplateRef } from "vue";
+import { tabKeyTarget } from "@/composables/useTabKeys";
 
 const props = defineProps<{
   tabs: readonly { id: T; label: string; dot?: boolean }[];
@@ -73,17 +74,18 @@ function focusTab(i: number): void {
   target.focus();
 }
 
-/** 键盘漫游:←/→ 循环、Home/End 到头尾;方向键 preventDefault,免得替页面翻动 */
+/**
+ * 键盘漫游:←/→ 循环、Home/End 到头尾;方向键 preventDefault,免得替页面翻动。
+ *
+ * 规则本身读 `useTabKeys.tabKeyTarget` —— 那是这份规则的**唯一实现**。
+ * 这里从前手写了一份同样的取模，而两者都不会在对方的改动下变红:
+ * `tabKeyTarget` 的注释里写着「少个 `+count` 会算出 -1，焦点被送到列表末尾,
+ * 而屏幕上什么都看不出来」—— 那样的 bug 若只在一处被抓到，另一处照样会犯。
+ */
 function onKeydown(e: KeyboardEvent): void {
-  const n = props.tabs.length;
-  let target = -1;
-  if (e.key === "ArrowRight") target = (activeIdx.value + 1) % n;
-  else if (e.key === "ArrowLeft") target = (activeIdx.value - 1 + n) % n;
-  else if (e.key === "Home") target = 0;
-  else if (e.key === "End") target = n - 1;
-  if (target >= 0) {
-    e.preventDefault();
-    focusTab(target);
-  }
+  const { index, handled } = tabKeyTarget(e.key, activeIdx.value, props.tabs.length);
+  if (!handled) return;
+  e.preventDefault();
+  focusTab(index);
 }
 </script>

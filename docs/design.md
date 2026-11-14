@@ -6143,6 +6143,42 @@ void nextTick(() => {
 打开时记下 `document.activeElement`、关闭时送回去、还之前核 `isConnected`、
 以及「送进去」与「还回去」是两种不同的 `.focus()` 目标。
 
+### 方向键那套规则曾有两份实现
+
+接着无障碍线继续查。先量了键盘可达性:
+
+```text
+首页 11 个交互元素   全部 tabIndex >= 0
+8 个页面的 tablist   方向键都能走（ArrowRight 焦点与选中同步移动）
+换页/往返            ArrowRight → ArrowLeft 都回到原处
+```
+
+**都正常。** 但顺着查实现，发现两套:
+
+```text
+src/composables/useTabKeys.ts    tabKeyTarget(key, current, count) → 纯函数，6 条判据
+src/components/common/InkTabs.vue   自己写了一份同样的取模
+```
+
+而 `useTabKeys` 的注释里写着它**为什么存在**:
+
+> 「少个 `+count` 会算出 -1，焦点被送到列表末尾 —— 而屏幕上什么都看不出来」
+
+同一套规则两处实现，就是仓库纪律里说的「两本账」：改一处、漏另一处，**两边都不会红**。
+
+#### 改法
+
+`InkTabs` 改读那个纯函数。浏览器复验：8 个页面 `ArrowRight → ArrowLeft` 往返全部
+回到原处，与重构前逐位相同。
+
+#### 一条既有判据变红了，而它是对的
+
+`uiLayering.spec` 里那条断言 `InkTabs` 的源码里要出现 `ArrowRight` —— 重构后那个字符串
+搬到了别处。那条判据的**意图**是「方向键要能漫游」，不是「这个词必须写在这个文件」。
+故改成 `/ArrowRight/.test(src) || /tabKeyTarget/.test(src)`，再注入一次验证它仍然会红。
+
+> 这是「守意图」与「守字面」的差别。**字面在重构面前一定过期，而意图不会。**
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,

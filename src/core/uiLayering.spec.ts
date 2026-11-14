@@ -2134,8 +2134,15 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(tabs?.src, "每次只留一个页签在 Tab 序(roving tabindex)").toContain(
       ':tabindex="model === t.id ? 0 : -1"',
     );
-    expect(tabs?.src, "方向键要在页签间漫游").toContain("ArrowRight");
-    expect(tabs?.src, "焦点要跟着选中一起走").toContain("target.focus()");
+    /*
+     * 方向键漫游:实现可以在本组件里，也可以在共用的纯函数里
+     * （见 `core/tabKeySingleSource` —— 那一套规则只许有一份实现）。
+     * 故这里判的是**它接上了漫游这件事**，而不是某个字符串恰好写在这个文件:
+     * 要么自己写 `ArrowRight`，要么读 `tabKeyTarget`。
+     */
+    const roam = /ArrowRight/.test(tabs?.src ?? "") || /tabKeyTarget/.test(tabs?.src ?? "");
+    expect(roam, "方向键要在页签间漫游（自己处理,或读 useTabKeys 的纯函数）").toBe(true);
+    expect(tabs?.src, "焦点要跟着选中一起走").toContain(".focus()");
   });
 
   it("修行功法页签补全套 tab→panel 关联 —— 每个 tab 要 aria-controls 指向对应 panel", () => {
