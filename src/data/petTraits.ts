@@ -42,7 +42,7 @@ export const PET_TRAITS: TraitDef[] = [
     mods: { exploreDurMult: 0.95, dangerMult: 0.95, dropLuck: -0.02, lossReduction: 0.04 },
   },
   /*
-   * 后补的两种 —— 四种摊在四十只灵兽上,平均每种十只,「选伙伴 = 选走法」就
+   * 后补的两种 —— 四种摊在全部灵兽上,平均每种十只,「选伙伴 = 选走法」就
    * 退化成"先看数值、再看凑不凑得上性格"。只加性格、**不加维度**:新两种复用
    * 那四个键,取一组与现有四档错开的系数(见 core/petTraitBreadth.spec)。
    */
