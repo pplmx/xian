@@ -16453,3 +16453,46 @@ const qiRich = computed(() => resources.qi >= qiCapValue.value * QI_RICH_THRESHO
 **三次都是「描述产品的文字与产品本身对不上」，而三次都不会让任何门红。**
 前两次是清单，这一次是一份审计报告 —— 而它比清单更难查，因为它不是数据结构，
 是一段议论。
+
+### 第 312 轮:存档会不会无限长 —— 两个会长的数组都自带上限
+
+前面几轮查的是「文字与产品对不上」。这一轮换个方向:**玩家玩几百小时后，存档会不会胀到
+拖慢加载、或撞上 localStorage 配额？**
+
+### 先数落盘的 store
+
+```text
+17 个 store 用 persistConfig("…") 落盘
+（adventure / apprentice / bounty / cultivation / diag / dongfu / endgame / game /
+  inventory / loadouts / lore / market / pacingTelemetry / player / …）
+```
+
+### 再找「会长」的数组
+
+全仓 `stores/*.ts` 里的 `.push()` 大多进的是**局部变量**（`clean` / `sources` / `reaped`），
+不落盘。真正落盘的只有两处:
+
+```text
+adventure.biasHistory          mortalBiasHistory.value = biasHistory.slice(-BIAS_POOL.length)
+pacingTelemetry.events         events.value = [...events.value.slice(-119), {...}]
+```
+
+**两处都自带上限。** 前者按 `BIAS_POOL.length`（世界偏见只有那几种），
+后者写死 119 条。
+
+### 而配额不足也有兜底
+
+`storage.ts:755`:
+
+> (配额不足是移动端的家常便饭)时，**回滚到旧档**而不是留下半清的存档。
+
+故即使某天真撞上配额，也不会写出半截存档。
+
+### 17 个落盘 store，两个会长数组都有界
+
+配额不足有回滚。
+
+### 而这一轮的收获是一个「排除」
+
+存档膨胀这个方向**查完就没有隐患**，故它不值得再查第二遍。这类结论与「发现缺陷」
+一样有用 —— 它把一个方向关掉了。
