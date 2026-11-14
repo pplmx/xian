@@ -9,6 +9,8 @@
  * `灵兽 +1` 是永久资产却不加速轮回;`资质地板 +5` 只是个数字,
  * 却持续作用于整个生命周期 —— 这两者不该记在同一张表上。
  */
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
 import {
   COMPOUND_ASSETS,
@@ -64,6 +66,38 @@ describe("复利链 · 谁真的会让下一世更快", () => {
         `\n却都不在「浅轮回还剩几项」的计数里。` +
         `\n用资产数量算健康度会低估复利面,这正是要换指标的原因`,
     );
+  });
+
+  it("灵气充盈不构成自动复利:它是本世即时状态,不跨世", () => {
+    /*
+     * `statsCalc` 的 `cultExtra` 有三个来源:
+     *
+     *   linggenExtra   灵根倍率        ← 本审计追的那条（资质地板 → growthMult）
+     *   daoCultExtra   道果            ← 本审计追的那条
+     *   qiRichExtra    灵气充盈        ← 这一条
+     *
+     * 前两条跨世累积,故是复利;第三条读的是 `resources.qi >= cap × 阈值` ——
+     * **本世即时状态**,转世即散、且要玩家把灵气攒上去。故它不是复利,
+     * 也就不在那把尺子上。
+     *
+     * 没有这一条时,读者对着 `cultExtra` 的三项只看审计讲了两项,
+     * 会以为漏了一路。
+     */
+    const statSrc = readFileSync(resolve(__dirname, "./statsCalc.ts"), "utf8");
+    expect(statSrc, "cultExtra 的构成变了 —— 这条判据的前提要重新核").toContain(
+      "const cultExtra = linggenExtra + daoCultExtra + qiRichExtra;",
+    );
+    // 灵气充盈的判法是「余额 vs 容量×阈值」，是即时状态
+    const playerSrc = readFileSync(resolve(__dirname, "../stores/player.ts"), "utf8");
+    expect(playerSrc, "qiRich 不再是即时计算 —— 若它变成跨世累积，它就是第四条复利").toContain(
+      "const qiRich = computed(() => resources.qi >=",
+    );
+    // 而审计里没有任何一项把灵气充盈算成自动复利
+    const auto = autoCompounding().map((a) => a.name);
+    expect(
+      auto.some((n) => n.includes("灵气")),
+      "灵气充盈被算进复利了 —— 它不跨世",
+    ).toBe(false);
   });
 
   it("认知不构成自动复利:它走炼制链,要玩家真去炼才兑现", () => {

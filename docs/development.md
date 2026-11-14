@@ -16391,3 +16391,65 @@ fruitOutlets.spec    那条判据从「至多允许一个没有宿主」改成�
 
 **两次都是「手写清单 vs 产品实在」的漂移，而两次判据都没红。**
 一次是判据只看清单内部;一次是判据的措辞留了一个例外，而例外本身失效了。
+
+### 第 311 轮:`cultExtra` 有三项，审计只讲了两项 —— 而第三项不是漏
+
+`statsCalc.ts:113`:
+
+```ts
+const cultExtra = linggenExtra + daoCultExtra + qiRichExtra;
+```
+
+**三项。** 而 `compoundingAudit.ts` 追的是两条:
+
+```text
+轮回次数 → aptitudeFloorNow → rollLinggen → growthMult → linggenMult → cultExtra
+道果     → effectiveDaoFruit → 同一个 cultExtra
+```
+
+### 第三项是 `qiRichExtra`，而它不是复利
+
+```ts
+// stores/player.ts:264
+const qiRich = computed(() => resources.qi >= qiCapValue.value * QI_RICH_THRESHOLD_RATIO);
+```
+
+**它读的是「此刻灵气是否充盈」—— 本世即时状态。** 转世即散，而且还要玩家把灵气攒上去。
+**它不跨世，故不在那把尺子上。**
+
+### 但审计里一个字都没提它
+
+对着 `cultExtra` 的三项，读者只看审计讲了两项，会以为漏了一路。
+
+### 补了一条判据（照「认知不构成自动复利」那一节的写法）
+
+```text
+① cultExtra 的构成仍是三项（前提还在）
+② qiRich 仍是即时计算（若它变成跨世累积，它就是第四条复利）
+③ 没有任何一项自动复利名叫「灵气」相关
+```
+
+第 ① 条尤其重要:它守的是**这条判据自己的前提**。若哪天 `cultExtra` 多出第四项，
+第 ① 条会红，逼人回来重新划分「哪几项跨世」。
+
+### 故障注入：让灵气充盈跨世
+
+把 `qiRich` 改成读 `reincarnation.value.daoFruit`:
+
+```text
+× 灵气充盈不构成自动复利:它是本世即时状态,不跨世
+```
+
+精确命中，恢复即绿。
+
+### 这一轮与前三轮的关系
+
+```text
+第 307 轮  清单漏「有」（道果出口）
+第 310 轮  清单错「无」（hasHost）
+第 311 轮  审计少说了一项（qiRichExtra）
+```
+
+**三次都是「描述产品的文字与产品本身对不上」，而三次都不会让任何门红。**
+前两次是清单，这一次是一份审计报告 —— 而它比清单更难查，因为它不是数据结构，
+是一段议论。
