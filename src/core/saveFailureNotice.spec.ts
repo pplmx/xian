@@ -41,6 +41,7 @@
  * 删掉恢复那句 `ui.toast("存档已恢复写入")` → 「失败与恢复各有一句话」红。
  * 删掉启动时那句 `if (saveWriteFailure() !== null) warnSaveFailure()` → 「启动时补一次」红。
  * 把 `warnSaveFailure` 改成只 `console.warn` → 「warnSaveFailure 自己必须 toast」红。
+ * 把 `onBlockedSaveWrite` 的回调改成空函数 → 「只读页也要说一声」红。
  */
 import { describe, expect, it } from "vite-plus/test";
 import { readSource } from "@/test/readSource";
@@ -88,6 +89,55 @@ describe("存档写入失败 · 要让玩家知道", () => {
       "订阅之后没有主动补读一次 `saveWriteFailure()` —— 启动迁移若在订阅之前就失败过，" +
         "那一次回调永远收不到，玩家带着一个不会存盘的游戏继续玩",
     ).toMatch(/if\s*\(\s*saveWriteFailure\(\)/);
+  });
+
+  it("只读页也要说一声 —— 那是另一种静默失败", () => {
+    /*
+     * 多标签页时，后开的那个是**只读**的:操作在内存里都「成功」，只是不落盘。
+     * 不吭声的话，玩家刷新后才发现白忙 —— 与写盘失败是同一类静默失败，
+     * 只是原因不同（一个是存储满，一个是这一页不该写）。
+     *
+     * 故这条判据要求:订阅了 `onBlockedSaveWrite`，并在回调里 toast。
+     */
+    const src = stripComments(readSource(APP));
+    /*
+     * 定位**调用处**而不是 import 行 —— 第一版用 `indexOf` 命中了 import，
+     * 于是后面找 `=>` 时抓到的是别的箭头函数（实测断言里出现了 `{turnDirection.value}`）。
+     */
+    const at = src.lastIndexOf("onBlockedSaveWrite(");
+    expect(
+      at,
+      "没有订阅「写被拦下」—— 多标签页时后开的那一页是只读的，而玩家会以为操作成功了",
+    ).toBeGreaterThan(-1);
+    /*
+     * 只看**回调函数体**，不看后面 400 字符 ——
+     * 第一版取固定窗口，于是扫到了后面 `settleReturn` 那几句 `notify(`，
+     * 把回调改成空函数判据照样绿（实测）。
+     */
+    const open = src.indexOf("(", at);
+    const arrow = src.indexOf("=>", open);
+    expect(arrow, "回调不是箭头函数 —— 判据要跟着改").toBeGreaterThan(-1);
+    const braceStart = src.indexOf("{", arrow);
+    expect(braceStart, "回调不是块体 —— 判据要跟着改").toBeGreaterThan(-1);
+    let depth = 0;
+    let braceEnd = -1;
+    for (let i = braceStart; i < src.length; i += 1) {
+      if (src[i] === "{") depth += 1;
+      else if (src[i] === "}") {
+        depth -= 1;
+        if (depth === 0) {
+          braceEnd = i;
+          break;
+        }
+      }
+    }
+    expect(braceEnd, "回调体没闭合").toBeGreaterThan(braceStart);
+    const body = src.slice(braceStart, braceEnd + 1);
+    expect(
+      body,
+      "订阅了写被拦下，却在回调里不吭声 —— 只读页的操作在内存里都「成功」，" +
+        "玩家刷新后才发现白忙",
+    ).toMatch(/\.toast\(|notify\(/);
   });
 
   it("失败那条不是 log 了事 —— warnSaveFailure 自己必须 toast", () => {
