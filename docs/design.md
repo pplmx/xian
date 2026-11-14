@@ -10380,6 +10380,41 @@ core/expIncome.ts
 
 **而「百世」不是设计的目标深度，是判据用来证明「无上限累积」的外推点。**
 
+### 我第 307/310 轮补的那种判据，仓里早有一个更彻底的解法
+
+最近几轮反复撞上「手写清单与产品漂移」（道果出口漏登记、`hasHost` 过时）。
+这一轮在 `samsaraAudit.spec` 里看到**这个问题的最佳解**:
+
+```ts
+it("存档里的每个字段都登记了跨世去留 —— 从 $state 倒推,不靠手写清单", () => {
+  const keys = Object.keys(usePlayerStore().$state).sort();
+  expect(keys.length, "取不到 player 存档字段,断言形同虚设").toBeGreaterThan(20);
+  const unmapped = keys.filter((k) => !(k in STATE_KEY_ROWS) && !(k in NO_ROW_NEEDED));
+  expect(unmapped, `这些存档字段没有跨世去留的结论:${unmapped.join("、")}`).toEqual([]);
+});
+```
+
+#### 它做了三件事
+
+```text
+① 基准不是手写清单,是 $state —— 产品变了，基准自己跟着变
+② 有一条 NO_ROW_NEEDED 兜底表，但要求写明理由，不许留空
+③ 还有一条反向断言:「手写清单与倒推清单不打架」
+```
+
+第 ③ 条同时查「每个字段指向的行存在」与「每行至少被某个字段用到」。
+
+**手写清单存语义，倒推清单保完整。** 两者互为约束，谁都不许单方面漂移。
+
+#### 而这不是孤例
+
+```text
+saveRoundTrip.spec    「凡持久化的 store 都在导出清单里,清单里也不许有已不存在的 store」
+offlineScope.spec     「玩家分片只许动 {exp, age, bond};终局分片一个键都不许动」
+```
+
+两条都是**双向**或**白名单**式 —— 同样不依赖「记住去更新清单」。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
