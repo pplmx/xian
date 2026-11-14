@@ -6212,6 +6212,48 @@ core/buildSim.ts:31      const BASE = { attack: 100, defense: 55, maxHp: 1400 };
 
 跑全量确认行为不变：**779 文件 / 6677 用例全绿**，含 `buildSearch` 的指纹分布逐位一致。
 
+### Boss 机制家族里那一大块数值，没有消费方
+
+按**重复字面量**找，撞到：
+
+```text
+core/bossArchetypes.ts   hpThreshold 0.5 · damageBonus 0.6 · skill mult 2.6   ← 狂化
+data/enemies.ts          hpThreshold 0.5 · damageBonus 0.5 · skill mult 2.2   ← 狂化
+```
+
+同一个「狂化」相位，两个文件里的数值不同。查下来：
+
+```text
+ARCHETYPES 的消费者     ui/enemyLore.ts:140 —— 只读 .name 与 .seal（家族名 + 印章）
+其余字段                phases / coreMods / coreSkills / statPersonality 全仓零引用
+```
+
+那 137 行里**只有名字与印章是活的**。
+
+#### 为什么这比「两套实现」更有害
+
+后来的人看到 `bossArchetypes.ts` 里写着 `damageBonus: 0.6`，会以为调它就能改狂暴型强度。
+改完跑一遍 —— **什么都没变，也没有任何判据红**。真正的数值在 `data/enemies.ts`。
+
+而文件头原来写的是「主机制 / 副机制 / 数值人格」，那更像在说这些配置在生效。
+
+#### 改法：不删数据，让它说清自己是什么
+
+保留那一段（它记录着设计意图），但把文件头改成：
+
+```text
+活的     id · name · seal · desc     —— 图鉴读 name 与 seal
+不参与   phases · coreMods · coreSkills · statPersonality
+实战数值不在这里 —— 全在 data/enemies，那是唯一被战斗读取的一份
+```
+
+#### 判据
+
+三条：图鉴只读 name/seal（事实基础）、**没有任何战斗代码读那些字段**、文件头写明了这件事。
+
+第二条是这条判据真正的价值：若哪天有人真让战斗读 `ARCHETYPES.phases`，它会红，
+提醒「先把两份合成一份」—— 否则两边数值不同，改了不等于生效。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,

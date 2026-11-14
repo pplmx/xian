@@ -738,6 +738,8 @@ const CATEGORIES = [
       "tabKeySingleSource",
       // 构筑模拟的基准三维 { attack, defense, maxHp } 在 buildSearch 与 buildSim 里各写一份
       "buildBaseSingleSource",
+      // bossArchetypes 里那一大块数值没有消费方,而它与实战用的不同 —— 改那里什么都不会变
+      "bossArchetypeDeadData",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

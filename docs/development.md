@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 779 个 spec;本作自己那部分 699 个) |
+| `bun run test` | 全量用例(全量 780 个 spec;本作自己那部分 700 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 779 个 spec = 宿主 699 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 780 个 spec = 宿主 700 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 779 个 spec(本作自己那部分 699 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 780 个 spec(本作自己那部分 700 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -11511,3 +11511,53 @@ maxHp:   gn(BASE.maxHp   * 倍率),
 三条:两个文件都还在用这个基准、字面量只出现一次、两文件之间有 import 相连。
 
 故障注入:把那行抄回 `buildSearch.ts` → 第二条红并点名两个文件。
+
+### 第 210 轮:Boss 机制家族里那一大块数值，没有消费方
+
+接着上一轮「数值层面的两本账」继续扫。这次按**重复字面量**找:
+
+```text
+core/bossArchetypes.ts   hpThreshold 0.5 · damageBonus 0.6 · skill mult 2.6   ← 狂化
+data/enemies.ts          hpThreshold 0.5 · damageBonus 0.5 · skill mult 2.2   ← 狂化
+```
+
+同一个「狂化」相位，两个文件里的数值不同。
+
+### 查下来:一份是活的，一份是陪衬
+
+```text
+ARCHETYPES 的消费者     ui/enemyLore.ts:140 —— 只读 .name 与 .seal（家族名 + 印章）
+其余字段                phases / coreMods / coreSkills / statPersonality
+                        全仓零引用
+```
+
+那 137 行里**只有名字与印章是活的**。`phases` 那一段从不参与战斗，
+却摆在与实战数据同一个 `BossPhase` 类型下。
+
+### 为什么这比「两套实现」更有害
+
+后来的人看到 `bossArchetypes.ts` 里写着 `damageBonus: 0.6`，会以为调它就能改狂暴型强度。
+改完跑一遍 —— **什么都没变，也没有任何判据红**。真正的数值在 `data/enemies.ts`。
+
+而文件头原来写的是「主机制 / 副机制 / 数值人格」，那更像在说这些配置在生效。
+
+### 改法:不删数据，让它说清自己是什么
+
+保留那一段（它记录着设计意图:每个家族本来打算长什么样），但把文件头改成:
+
+```text
+活的     id · name · seal · desc     —— 图鉴读 name 与 seal
+不参与   phases · coreMods · coreSkills · statPersonality
+实战数值不在这里 —— 全在 data/enemies，那是唯一被战斗读取的一份
+```
+
+并写明改强度该去哪、以及「若要让这里的生效，必须先把两份合成一份」。
+
+### 判据:`core/bossArchetypeDeadData.spec`
+
+三条:图鉴只读 name/seal（事实基础）、**没有任何战斗代码读那些字段**、文件头写明了这件事。
+
+第二条是这条判据真正的价值:若哪天有人真让战斗读 `ARCHETYPES.phases`，它会红，
+提醒「先把两份合成一份」—— 否则两边数值不同，改了不等于生效。
+
+故障注入:让图鉴读 `phases[0].hpThreshold` → 前两条同时红;删掉文件头说明 → 第三条红。

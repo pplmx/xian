@@ -1,13 +1,27 @@
 /**
- * Boss 机制家族 —— Phase 30.7
+ * Boss 机制家族 —— **展示层的名字与印章**
  *
- * 8 种机制家族,每个 Boss 具有明确战斗身份:
- * 玩家看到名字时,想的不是"多少战力",而是"它考我什么"。
+ * 8 种机制家族,每个 Boss 有一个战斗身份:玩家看到名字时,想的不是「多少战力」,
+ * 而是「它考我什么」。
  *
- * 配置原则:
- * - 主机制:决定 Boss 的核心行为(攻击模式/词条/技能)
- * - 副机制:可选的补充行为(增强难度但不改变核心)
- * - 数值人格:攻防血倍率的差异化设计,不再全部"高攻高血"
+ * ## 这份表里哪些字段是活的
+ *
+ * ```text
+ * 活的     id · name · seal · desc     —— 图鉴读 name 与 seal（见 ui/enemyLore）
+ * 不参与   phases · coreMods · coreSkills · statPersonality
+ * ```
+ *
+ * **实战数值不在这里。** 敌人的相位、技能倍率、词条全部来自 `data/enemies` ——
+ * 那是唯一被战斗读取的一份。
+ *
+ * 而两边的数值**并不相同**（举一例:狂暴型的狂化相位,这里写 `damageBonus: 0.6`、
+ * 技能 `mult: 2.6`;`data/enemies` 里实战用的是 `0.5` 与 `2.2`）。
+ *
+ * ## 所以调强度请改 `data/enemies`
+ *
+ * 这一段数值保留是为了**记录设计意图**（每个家族本来打算长什么样）。
+ * 若哪天要让它生效，必须先把两份合成一份 —— `bossArchetypeDeadData.spec`
+ * 会在有人开始读这些字段时变红，提醒这一点。
  */
 
 import type { BossArchetype, BossPhase, EnemySkill, StatMods } from "@/types";
