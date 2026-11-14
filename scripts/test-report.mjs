@@ -742,6 +742,8 @@ const CATEGORIES = [
       "bossArchetypeDeadData",
       // 相位触发的「【X】狂化!」只有配置类判据,没有一条核它在战报里真的出现
       "phaseAnnounce",
+      // 战报的即时事件文本(命中/会心/闪避)全仓 spec 零覆盖 —— 与相位那句同一类缺口
+      "combatLogEvents",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
