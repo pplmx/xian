@@ -18053,3 +18053,62 @@ hapticReduceMotion    读 stores/ui.ts（守实现）
 ### 两条判据分工清楚，互不重复
 
 工作区干净。工作区干净、全量 807 / 6784 全绿。
+
+### 第 346 轮:`ROUTE_WORDS` 手写 19 条，而路由表恰好 19 条
+
+`core/usageDocCounts.spec` 最后一条:
+
+```ts
+it("usage.md 里每个页面的关键词都在", () => {
+  const missing = Object.entries(ROUTE_WORDS)
+    .filter(([, word]) => !DOC.includes(word))
+    .map(([route, word]) => `${route}(${word})`);
+  expect(missing, "这些页面在手册里点不到名").toEqual([]);
+});
+```
+
+**而 `ROUTE_WORDS` 是一张手写表** —— 于是它自己有「清单会不会过期」的风险:
+新增一个页面而忘了登记，这条判据就看不见它。
+
+### 两手各数一遍
+
+```bash
+grep -oE 'name: "[a-z]+"' src/router/index.ts     → 19 条
+sed -n '306,326p' src/core/usageDocCounts.spec.ts → 19 条
+```
+
+```text
+ROUTES=19  WORDS=19
+路由有此表无    （空）
+此表有路由无    （空）
+```
+
+**两向差集都空。** 19 个页面、19 个关键词，一一对应。
+
+### 而这一次我差点又写错
+
+第一次数的时候我用的是:
+
+```bash
+grep -oE 'path: "[a-z]+"' src/router/index.ts     → 0 条
+```
+
+**因为 `path` 是 `"/welcome"`（带前导斜杠），而我要的其实是 `name:`。**
+`ROUTES=0` 时若不去核，就会写成「路由表一条都没扫到」。
+
+**又回到那条:判「有没有」，要把它可能存在的几种写法都过一遍。**
+
+### 而「这张表要不要改成推导」——判了不加
+
+```text
+要守什么       手册要覆盖每一个页面
+这份表怎么来   手写 19 条，与路由表一一对应
+若有人加页     gateWiring.spec 会先红（冒烟与排版清单里没有它）
+               → 那时开发者要看那个页面，顺手把它登记进 ROUTE_WORDS
+```
+
+**前置判据已经存在，故这一份不必升级成推导式。**
+
+### 19 对 19，差集两空
+
+而升级的必要性由前置判据挡掉。工作区干净、全量 807 / 6784 全绿。
