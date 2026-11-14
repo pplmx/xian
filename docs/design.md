@@ -7126,6 +7126,47 @@ BreakthroughCard.vue:290 prepPillShort       pillPrepShortfall(…)   ← 统一
 扫了两遍，两次都空手。但空手本身是一个读数:
 **「同一个数在两处算」这个形状，在这个仓里已经被收敛过了。**
 
+### 六个词条「没有去处」——它们其实就在那儿
+
+人物页有一份 `STAT_GROUPS`（`ui/characterDesk`），把词条折成四组：修行 / 历练 / 斗法 / 百艺。
+它列出 **39 个**键。而 `AnyStatKey = PercentStatKey | SpecialKey` 一共 **45 个**。差六个:
+
+```text
+alchemyYield    炼丹双成率      craftExpGain    炼丹心得
+craftSalvage    定心护料        forgeDiscount   炼器省耗
+qiCapPct        灵气上限        beastPct        灵兽属性效果
+```
+
+六个全都在生效，六条中文名也都在 `data/statNames` 里，而在任何 `.vue` 里都搜不到 ——
+看起来是「玩家拿到这些词条之后，界面上一个字都看不到它」。
+
+#### 一看源码
+
+```ts
+{
+  key: "craft",
+  mark: "艺",
+  title: "百艺",
+  hint: "丹器、灵兽与容量",
+  keys: ["alchemyYield", "craftExpGain", "craftSalvage", "forgeDiscount", "qiCapPct", "beastPct"],
+},
+```
+
+**六个一个不少，就在「百艺」组里。**
+
+#### 判据自己错了（第二十六次）：只认一种数组写法
+
+第一版的 `listedKeys()` 只匹配**多行**数组（`^\s{6}"(\w+)",$`），而「百艺」那一组是
+**单行六键**。整组被漏掉。
+
+> 这次错得比前几次更值得记：**判据给出的「缺口」，与我手工数出的「缺口」完全一致**，
+> 于是两边互相印证，看起来特别可信。而它们其实是同一个误读 ——
+> `keys` 可以写成两种形状，我只认了一种。
+
+#### 判据留下
+
+它现在守的是一件真事：**新增一个词条而不给它分组，会立刻红**。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
