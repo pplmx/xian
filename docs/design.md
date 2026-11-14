@@ -8003,6 +8003,52 @@ docs/design.md:239  收的是版面，不是内容。
 
 > 一份「不做」清单，和一份「已做」清单一样有用 —— 前者省掉重走，后者省掉重查。
 
+### 478 个「core 里有人调、UI 里没人提」的函数 —— 抽查两个都是活的
+
+想找一个更细的缺口：**core 里被内部调用，却从不被任何 `.vue` 读的函数**。
+这类函数「算出来了但玩家看不到」，比死导出更隐蔽。
+
+#### 扫出来 478 个
+
+478 —— 这个数字本身就说明问题：**这方法不成立。** 大部分 core 函数是内部实现细节。
+抽查两个:
+
+```text
+battleDataRows
+  → battleAnalysis.ts:510 内部调它，结果进 BattleAnalysis.dataRows
+  → analyzeBattle 被 BattleIntelPanel.vue 与 CelestialReportLedger.vue 调用
+  → 活着
+
+firstUnlockAnnouncement
+  → breakthrough.ts:330 拿到结果，紧接 notify(announcement, "rare")
+  → 活着，而且是 rare 档（有闪现、音效、触感）
+```
+
+#### 错在只看直接引用
+
+两个都是**通过一层间接到达 UI**：一个走 `analyzeBattle`、一个走 `notify`。
+而我的正则只认「`.vue` 里出现过这个名字」。
+
+这是同一类错的第六次:
+
+```text
+第 199 轮  native .click() 代替 .check()
+第 232 轮  listedKeys() 只认多行数组
+第 236 轮  ValueRow 命中 pillValueRow 子串
+第 241 轮  previousElementSibling 被当成标签
+第 247 轮  head -6 截掉了第 785 行
+第 255 轮  只看直接引用，不看间接路径
+```
+
+**六次，六种形状，同一个原因：用「结构上的邻近」代替「语义上的连通」。**
+
+> 判「某函数有没有到达玩家」，不能看它有没有出现在 `.vue` 里 ——
+> 要看它的**结果**最终去了哪。而这个追踪只能一层层读代码，没法用一条正则代替。
+
+#### 这一轮没有改东西
+
+478 这个数字没被当成缺口清单，它是一条**方法失效的证据**。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
