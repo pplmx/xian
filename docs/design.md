@@ -9172,6 +9172,53 @@ saveSanitizeCoverage.spec
 第 ① 条正是这类：**每个落盘的 store 必须自己处理坏数据**，而不是指望上游统一清洗。
 故「`player` 没有 asNumberRecord」不是漏 —— 它的 sanitize 在别处。
 
+### 失败长什么样 —— 炸炉写进掌握度，而建筑根本没有失败这条路径
+
+查「玩家会被扣东西却没有任何提示」的场景。
+
+#### 炼丹失败：扣了料，但报三件事
+
+```ts
+if (!succeeded) {
+  useLoreStore().addRecipeMastery(id, 0.02);      // 炸炉长记性
+  track("pillsFailed");
+  if (!quiet) playSfx("fail");
+  const kept = cost.herb - spent;
+  if (!quiet)
+    notify(
+      kept > 0 ? `${failLine(able.weakness)} 残料尚存,保得灵草 ×${kept}` : failLine(able.weakness),
+      "warn",
+    );
+}
+```
+
+**三件事：一句为什么失败、一个保住了多少料的数、一点没白炸的掌握度。**
+而注释写着这个数为什么必须报:
+
+> 保料必须报数：定心丹「爆炸保料 +50%」与技艺的护料本钱，得让玩家用眼睛收账。
+
+#### 建筑升级：没有「材料够但失败」这回事
+
+```ts
+if (!info.canUpgrade) {
+  notify(info.reason, "warn");
+  return false;
+}
+// 之后直接 spendStone / spendSmall / setLevel，全部确定
+```
+
+建筑升级是**确定性**的 —— 门槛过了就成。故它只有两条路：不行（并说清差多少），
+或者成了。**没有第三条「付了钱但失败」。**
+
+#### 两处的对照
+
+```text
+炼丹   有随机  → 必有失败 → 失败要报「省下多少」
+建筑   无随机  → 无失败 → 只需报「差多少」
+```
+
+**「要不要给失败提示」这个问题，答案取决于那里有没有随机。**
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,

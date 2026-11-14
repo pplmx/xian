@@ -15156,3 +15156,56 @@ saveSanitizeCoverage.spec
 ### 三层都成立
 
 新字段靠 ref 默认值、坏档靠每个 store 的 sanitize、后者有判据守着。
+
+### 第 285 轮:失败长什么样 —— 炸炉写进掌握度，而建筑根本没有失败这条路径
+
+查「玩家会被扣东西却没有任何提示」的场景。
+
+### 炼丹失败:扣了料，但报三件事
+
+```ts
+if (!succeeded) {
+  useLoreStore().addRecipeMastery(id, 0.02);      // 炸炉长记性
+  track("pillsFailed");
+  if (!quiet) playSfx("fail");                     // 一声音
+  const spent = spentOf(roll, "herb") as number;
+  const kept = cost.herb - spent;
+  if (!quiet)
+    notify(
+      kept > 0 ? `${failLine(able.weakness)} 残料尚存,保得灵草 ×${kept}` : failLine(able.weakness),
+      "warn",
+    );
+  return { ok: false, count: 0, salvaged: kept };
+}
+```
+
+**三件事:一句为什么失败、一个保住了多少料的数、一点没白炸的掌握度。**
+而注释写着这个数为什么必须报:
+
+> 保料必须报数:定心丹「爆炸保料 +50%」与技艺的护料本钱，得让玩家用眼睛收账。
+
+### 建筑升级:没有「材料够但失败」这回事
+
+```ts
+if (!info.canUpgrade) {
+  notify(info.reason, "warn");
+  return false;
+}
+// 之后直接 spendStone / spendSmall / setLevel，全部确定
+```
+
+建筑升级是**确定性**的 —— 门槛过了就成。故它只有两条路:不行（并说清差多少），
+或者成了。**没有第三条「付了钱但失败」**，也就不需要一个失败提示。
+
+### 两处的对照
+
+```text
+炼丹   有随机  → 必有失败 → 失败要报「省下多少」
+建筑   无随机  → 无失败 → 只需报「差多少」
+```
+
+**「要不要给失败提示」这个问题，答案取决于那里有没有随机。**
+
+### 两处都完整
+
+「炸炉长记性」把失败变成进度，而建筑连失败都没有。
