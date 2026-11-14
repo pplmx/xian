@@ -8889,6 +8889,50 @@ data/events.ts   once: true   8 条
 `once: true` 在这里不是「剧情只能看一次」，而是**机制必需**：同一只神兽不能发两次。
 故它们集中在混沌海也是对的 —— 神品灵兽本来就该是终局之物。
 
+### 奇缘链 —— 21 个 stage 与 21 个事件，一个不缺，而且是活的
+
+`EVENT_DECK` 的构造里有一句 `filter((ev) => !chainOfEvent(ev.id))` —— 奇缘链的事件
+**不进随机池**，它们是另一条线。于是查这条线。
+
+#### 先查引用完整性，第一次查错了文件
+
+`CHAINS` 的 stage 长这样:
+
+```ts
+stages: ["old_man_stone_1", "old_man_stone_2", "old_man_stone_3"],
+```
+
+去 `data/events.ts` 里 grep `"old_man_stone_1"` —— **0 命中**，差点写成「链引用了不存在的事件」。
+
+查 `chains.ts:113` 才发现：**链的事件定义在 `chains.ts` 自己的 `CHAIN_EVENTS` 里**。
+**又一次查错了文件。**
+
+#### 正确的对比
+
+```text
+CHAINS 的 stage 去重后     21
+CHAIN_EVENTS 的 id         21
+comm -23 差集              空
+```
+
+**一个不缺。**
+
+#### 而它是活的，不是只用来建模的
+
+```ts
+for (const chain of CHAINS) {
+  const done = player.eventChains[chain.id] ?? 0;
+  const eventId = chain.stages[done];
+  if (!eventId) continue;              // 这条缘已了
+  if (!eventInRealmBand(def, major)) continue;
+  out.push({ chainId: chain.id, stage: done, event: def });
+}
+```
+
+- 进度存在 `player.eventChains[chainId]`（存档字段）
+- `pickChainStageEvent` 从「此刻该走的那几程」里掷一程
+- `chainProgressRows` 给界面供「奇缘录」：已起了头的缘才列，未起的不先说破
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,

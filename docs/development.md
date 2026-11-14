@@ -14805,3 +14805,58 @@ data/events.ts   once: true   8 条
 ### 三项都查清了
 
 一次性占 5.4%、8 条全是神兽发放、后期池子仍有几十条。工作区干净、全量 800 / 6760 全绿。
+
+### 第 277 轮:奇缘链 —— 21 个 stage 与 21 个事件，一个不缺，而且是活的
+
+`EVENT_DECK` 的构造里有一句 `filter((ev) => !chainOfEvent(ev.id))` —— 奇缘链的事件
+**不进随机池**，它们是另一条线。于是查这条线。
+
+### 先查引用完整性，第一次查错了文件
+
+`CHAINS` 的 stage 长这样:
+
+```ts
+stages: ["old_man_stone_1", "old_man_stone_2", "old_man_stone_3"],
+```
+
+去 `data/events.ts` 里 grep `"old_man_stone_1"` —— **0 命中**，差点写成「链引用了不存在的事件」。
+
+查 `chains.ts:113` 才发现:**链的事件定义在 `chains.ts` 自己的 `CHAIN_EVENTS` 里**，
+不在 `events.ts`。**我又一次查错了文件。**
+
+### 正确的对比
+
+```text
+CHAINS 的 stage 去重后     21
+CHAIN_EVENTS 的 id         21
+comm -23 差集              空
+```
+
+**一个不缺。** 且 `CHAINS` 里 7 条链的 stage 总数正好把这 21 个事件分完。
+
+### 而它是活的，不是只用来建模的
+
+`eventEngine.ts` 里:
+
+```ts
+export function pendingChainStages(major: number) {
+  for (const chain of CHAINS) {
+    const done = player.eventChains[chain.id] ?? 0;
+    const eventId = chain.stages[done];
+    if (!eventId) continue;              // 这条缘已了
+    const def = eventDef(eventId);
+    if (!def) continue;
+    if (!eventInRealmBand(def, major)) continue;
+    out.push({ chainId: chain.id, stage: done, event: def });
+  }
+}
+```
+
+- 进度存在 `player.eventChains[chainId]`（存档字段）
+- 走完 `continue`，境界不够 `continue`
+- `pickChainStageEvent` 从「此刻该走的那几程」里掷一程
+- `chainProgressRows` 给界面供「奇缘录」：已起了头的缘才列，未起的不先说破
+
+### 三项都成立
+
+引用闭合、运行时有真驱动、进度有界面出口。工作区干净、全量 800 / 6760 全绿。
