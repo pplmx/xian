@@ -10415,6 +10415,46 @@ offlineScope.spec     「玩家分片只许动 {exp, age, bond};终局分片一�
 
 两条都是**双向**或**白名单**式 —— 同样不依赖「记住去更新清单」。
 
+### 事件效果的 12 种类型，会不会有一种没人处理 —— 类型系统已经拦了
+
+`EventEffect` 是一个 12 支的联合:
+
+```text
+stone exp material equipment pill recipe gongfa artifact buff lifespan pet nothing
+```
+
+而结算在 `core/eventEngine.ts` 的 `applyEffect`。**若某种类型没人处理，玩家的奖励会静默消失。**
+
+#### 先数两边的支数
+
+```text
+EventEffect 定义          12 种
+applyEffect 的 case       12 个（含 nothing）
+```
+
+**齐。** 而 `eventEngine` 里还有 `realm` / `element` 两个 case —— 那是 `EventCond` 的
+switch（选项前置条件），不属 effect。
+
+#### 再问「将来加第 13 种，会不会有人忘」
+
+**这是类型系统的事，不必加判据。** 实测：往 `EventEffect` 里插一个 `{ type: "probeNewType" }`，
+`vue-tsc -b` 立刻两处报错:
+
+```text
+src/core/eventEngine.ts  TS2366: Function lacks ending return statement
+src/ui/eventText.ts      TS2366: （同上）
+```
+
+**两处都拦。** 因为两个函数的返回类型都不含 `undefined` 且 `switch` 无 `default` ——
+新增一支就必然走到「没有 return」。
+
+#### 而这正是 `dataIntegrity.spec` 文件头的那条
+
+> 属性键**拼错**这一类不在此处 —— 类型系统已经拦住了。**故不要再加一份正则启发式，
+> 那只会漏且吵。**
+
+结构完整性交类型系统，语义正确性才交判据。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,

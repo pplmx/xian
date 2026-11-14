@@ -16634,3 +16634,48 @@ fruitOutlets 的 hasHost 改成「全部必须有宿主」 —— 比原来严�
 ### 三条倒推式判据都在
 
 工作区干净。工作区干净、全量 804 / 6775 全绿。
+
+### 第 316 轮:事件效果的 12 种类型，会不会有一种没人处理 —— 类型系统已经拦了
+
+`EventEffect` 是一个 12 支的联合:
+
+```text
+stone exp material equipment pill recipe gongfa artifact buff lifespan pet nothing
+```
+
+而结算在 `core/eventEngine.ts` 的 `applyEffect`。**若某种类型没人处理，玩家的奖励会静默消失。**
+
+### 先数两边的支数
+
+```text
+EventEffect 定义          12 种
+applyEffect 的 case       12 个（含 nothing）
+```
+
+**齐。** 而 `eventEngine` 里还有 `realm` / `element` 两个 case —— 那是 `EventCond` 的
+switch（选项前置条件），不属 effect。
+
+### 再问「将来加第 13 种，会不会有人忘」
+
+**这是类型系统的事，不必加判据。** 实测:往 `EventEffect` 里插一个 `{ type: "probeNewType" }`，
+`vue-tsc -b` 立刻两处报错:
+
+```text
+src/core/eventEngine.ts(298,68): error TS2366: Function lacks ending return statement
+                                  and return type does not include 'undefined'.
+src/ui/eventText.ts(99,4):       error TS2366: （同上）
+```
+
+**两处都拦。** 因为两个函数的返回类型都不含 `undefined` 且 `switch` 无 `default` ——
+新增一支就必然走到「没有 return」。
+
+### 而这正是 `dataIntegrity.spec` 文件头的那条
+
+> 属性键**拼错**这一类不在此处 —— 类型系统已经拦住了。**故不要再加一份正则启发式，
+> 那只会漏且吵。**
+
+本条与本仓已有的判据分工一致:结构完整性交类型系统，语义正确性才交判据。
+
+### 12 种全有处理，第 13 种会被 tsc 拦住
+
+工作区干净。工作区干净、全量 804 / 6775 全绿。
