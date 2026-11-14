@@ -780,6 +780,8 @@ const CATEGORIES = [
       "regionDifficultyOrder",
       // 开局档出现高品功法会让玩家觉得「品质只是颜色」;品质表与境界表各查一维,没人合起来看
       "gongfaQualityRealm",
+      // 重置是不可逆的,而「会失去什么」那块说明挂在 v-if 上,没有任何门会红
+      "resetDisclosure",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
