@@ -6546,6 +6546,45 @@ configureAudio({ …, musicVol: musicVol / 100, sfxVol: sfxVol / 100 });
 
 > 判一个数对不对，要追到它的**来源**，不是看它长什么样。
 
+### 「断网仍可修行」的边界 —— 音频与字体不在预缓存里
+
+隐私弹窗写着「断网仍可修行」，而 `public/audio/` 有 544KB 采样、`assets/` 有 2.1MB 字体。
+查预缓存清单:
+
+```js
+.filter((f) => /^assets\/.*\.(?:js|css)$/.test(f))
+```
+
+**只收 JS 与 CSS。** 而 `vite.config.ts` 的注释写明了这是有意的取舍:
+
+> 字体与音频不预缓存 —— 2MB 字体与 544KB 音频会让安装变慢，而它们走 cache-first，
+> 联网时自然会补齐；真正决定「能不能起得来」的是 JS/CSS。
+
+#### 那么离线时有没有声音
+
+取决于另一条路由:
+
+```js
+if (req.mode === "navigate") { event.respondWith(networkFirst(req)); return; }
+event.respondWith(cacheFirst(req));
+```
+
+音频、字体、图标都落到 `cacheFirst` —— **玩过一局之后再断网，它们还在缓存里**。
+`public/sw.js` 第 11 行的注释也这么写着。**设计自洽。**
+
+#### 但这层没有判据
+
+`core/swPrecache.spec` 有 10 条判据，都在守**预缓存清单**。而 `fetch` 那两条路由
+**一条都没有**。
+
+若有人把 `event.respondWith(cacheFirst(req))` 改成直接 `return`，离线时音频与字体
+会全部 404 —— **而那 10 条判据都不会红**。
+
+#### 判据的四条
+
+前提（监听与两个策略函数都在）、导航走 network-first、其余走 cache-first、
+跨域被挡在前面。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
