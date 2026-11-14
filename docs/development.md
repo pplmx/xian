@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 776 个 spec;本作自己那部分 696 个) |
+| `bun run test` | 全量用例(全量 777 个 spec;本作自己那部分 697 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 776 个 spec = 宿主 696 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 777 个 spec = 宿主 697 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 776 个 spec(本作自己那部分 696 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 777 个 spec(本作自己那部分 697 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -11351,3 +11351,50 @@ unsubscribeBlockedWrite = onBlockedSaveWrite(() => {
 **两处都只有在故障注入下才现形** —— 改完不注入，它会一直绿着。
 
 复验:`onBlockedSaveWrite(() => {})` → 两条同时红（「失败与恢复各有一句话」+「只读页也要说一声」）。
+
+### 第 207 轮:查了三个方向都对，第四个方向补了判据
+
+这一轮先查了三件事，**全部正确**:
+
+```text
+离线归来账   8 小时回来：修为 +6.784兆 · 本境 23% · 灵气 +198.2亿 · 灵草 +216 ·
+             玄铁 +86 · 悟道点 +43 · 寿元流逝 8 载 —— 账目完整
+9 折说明     「离府 8小时:修为与灵气全额入账;材料、钻研与历练各按 9 折挂机折算」
+             —— 把「哪几样打折、哪几样不打折」说清了（洞府页同源）
+焦点返回     角色页 →「修行画像展卷」→ 收卷 → 焦点回到那颗按钮
+```
+
+### 其中「9 折」那条我一度判错
+
+先看到 `OfflineRewardDialog` 里只在 `summary.capped` 时才解释折算，以为恒定 9 折没说明。
+再读一遍完整弹窗文字，那句「各按 9 折挂机折算」**就在那里**，`capped` 说的是**另一层**
+（超时封顶）。是同一段文字里两层信息的区别，我看漏了。
+
+### 第四个方向:焦点返回没有判据
+
+`BaseModal` 里有一段:
+
+```ts
+lastFocused = document.activeElement as HTMLElement | null;
+// …
+const back = lastFocused;
+lastFocused = null;
+void nextTick(() => {
+  if (back && back.isConnected) back.focus();
+});
+```
+
+注释写着「记住是谁打开的,关闭后把焦点还回去(键盘用户不会"掉到页面顶端")」。实测正确。
+
+而 `modalDepth.spec` 查的是层级，**不看焦点**；全仓 spec 里 `lastFocused` 一次都没出现。
+
+这一段是**只要有人重构 `BaseModal` 就会丢**的那种代码 —— 不影响视觉、不影响鼠标玩家、
+测试里也看不见，只有键盘用户会发现焦点跑到了页面顶端。
+
+### 判据:`ui/modalFocusReturn.spec`
+
+四条:打开时记下 `document.activeElement`、关闭时送回去、
+还之前核 `isConnected`（那颗按钮可能已因列表刷新而不在）、
+以及「送进去」与「还回去」是两种不同的 `.focus()` 目标（前者是 panel/first/last）。
+
+故障注入:删掉 `isConnected` → 第三条红；整段焦点返还删掉 → 第二、三条同时红。
