@@ -740,6 +740,8 @@ const CATEGORIES = [
       "buildBaseSingleSource",
       // bossArchetypes 里那一大块数值没有消费方,而它与实战用的不同 —— 改那里什么都不会变
       "bossArchetypeDeadData",
+      // 相位触发的「【X】狂化!」只有配置类判据,没有一条核它在战报里真的出现
+      "phaseAnnounce",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
