@@ -8739,7 +8739,8 @@ worldOf     Math.max(0, Math.min(MAX_MAJOR, major)) ?? WORLDS[last]
 core/reincarnation.ts:47   export const MANUAL_REBIRTH_MIN_MAJOR = 2;
 ```
 
-**m2 = 筑基境**，按同一串数据推算约在 2~5 小时 —— **第一次转世是「玩一个晚上」的量级。**
+**m2 = 金丹境**（m0 炼气、m1 筑基、m2 金丹）。按同一串数据推算约在 5~10 小时 ——
+**第一次转世是「一两天」的量级。**
 节奏是对的。
 
 > 这是这批里第 N 次「用一个相邻的数字代替了该查的那个数字」。
