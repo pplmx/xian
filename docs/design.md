@@ -8253,6 +8253,62 @@ if (bundle.titleId && titleDef(bundle.titleId)) { … }
 `blockedKindOf` 里那两条字符串（`"需 "` / `"已至顶层"`）若被库改掉，归类会静默出错。
 但判据第 ② 条（realm / top 各归各档）**正好拦得住这个**。故**不需要再加判据**。
 
+### 传承的 id 是 `string`，而那条判据只查一个方向
+
+`src/data/heritage.ts:29` 写着:
+
+```ts
+export type HeritageId = string;
+```
+
+不是字面量联合 —— 而它的消费方式全是 `includes()`:
+
+```ts
+return owned.includes("yuanying") ? 1 : 0;
+```
+
+拼成 `"yuanyin"` 的后果是**静默的**：`includes` 返回 false，那条天赋永远不生效，
+**界面不会有任何提示**。
+
+#### 八条传承，各有各的去处
+
+```text
+danxin / yuanying / baihuang / tonggan / daotong / daoben   被动加成
+shouzhuo                                                   炼丹与炼器保底
+dubu                                                       突破免死
+```
+
+`heritageEffects.spec` 的「每个传承 id 都在 core/stores 里有消费点」已经守着
+「data 里的 id 有没有被用到」。
+
+#### 但它只查一个方向
+
+```text
+有判据:  data 里的每个 id  → 有没有被 core/stores 提到
+没判据:  core 里写的 id    → 在 data 里存不存在
+```
+
+反向那一半没人查。而 `HeritageId = string`，**类型系统也一个字都不说**。
+
+#### 判据:`core/heritageRefIntegrity.spec` 三条
+
+```text
+① 防空转：扫得到 >4 个传承、>4 处 id 字面量
+② 每个被硬编码的传承 id 都在 HERITAGE_DEFS 里
+③ 自检：凭空造 "yuanyin" / "nope" 时，抽取函数能认出来并判为不存在
+```
+
+第 ③ 条是这条判据自己的体检 —— 抽取函数写错会退化成永远绿。
+
+#### 两条判据合起来才算填上
+
+```text
+heritageEffects.spec       data → core  （不是空头支票）
+heritageRefIntegrity.spec  core → data  （不是错地址）
+```
+
+**`HeritageId = string` 这个类型缺口，两条合起来才被真正填上。**
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
