@@ -15745,3 +15745,59 @@ import { folioTurnDirectionOf } from "./folioTurn";
 ### 9 个模块都有覆盖
 
 工作区干净、全量 801 / 6764 全绿。
+
+### 第 299 轮:按新纪律查一次 —— 事件选项的后果提示
+
+上一轮把「说 X 不存在之前，先查它可能存在的写法」写进 AGENTS.md。这一轮**照它做一次**，
+挑「事件选项的后果提示」这个题目，先列它可能在哪:
+
+```text
+组件    components/adventure/EventDialog.vue
+UI 层   ui/eventText.ts
+类型    types/index.ts 的 EventChoice
+数据    data/events.ts 的 choices
+```
+
+### 四处都在，而且是一条完整的链
+
+```text
+types      hint?: string
+ui         choiceHintText(choice, tier) 把 hint 与**算出来的数**合并
+组件       <span v-if="row.hint"> 渲染
+数据       手写 hint（若只说「要灵石」会被算出来的数替掉）
+```
+
+### 而实现比预想的细
+
+```ts
+const lo = Math.min(...costs);  const hi = Math.max(...costs);
+const verb = payers === choice.outcomes.length ? "花费灵石" : "可能花费灵石";
+const spend = lo === hi ? `${verb} X` : `${verb} X–Y`;
+const gate = choice.cond?.type === "stone" ? choice.cond.tierAmount : 0;
+const reserve = gate > hi ? ` · 需备足 Z` : "";
+```
+
+四件事:
+
+```text
+① 花费可能是**区间**（竞拍那种高低价）—— 不报单一数字
+② 「花费」与「可能花费」分开 —— 取决于是否所有 outcome 都花钱
+③ 「需备足」与「花费」分开 —— 门槛高于最高花费时，那不是花掉的钱
+④ 手写 hint 若只说「要灵石」，被算出来的数替掉；说了别的则保留
+```
+
+**第 ③ 条尤其细**:「备足 300、实际花 120」和「花 300」在玩家心里是两件事。
+
+### 而它有四条判据
+
+```text
+① 同一花费只报一个数，竞拍那种高低价报区间
+② 际遇弹窗用算出来的提示，不再直接渲染手写 hint
+③ 际遇弹窗在置灰选项旁列出尚差（stone-gated）
+④ 失传丹方在按之前摊开得方、掌握度与学尽后的保底
+```
+
+### 四处都查过，四条判据都在
+
+工作区干净、全量 801 / 6764 全绿。
+**而这一轮的方法本身就是上一轮的产出** —— 先列位置再查，一次就查全了。
