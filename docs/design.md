@@ -7849,6 +7849,44 @@ o(20, "寿元已悄然厚了一层。", { type: "lifespan", pct: 0.02 })
 `desc`（风味）/ `gist`（来历）/ `rules`（数值）三个字段各司其职 ——
 这正是「可以有定性形容词」与「决策信息必须完整」能同时成立的原因。
 
+### 用代码验了那 6 个未勾选项 —— 6 条全已实现，而且本就不该回填
+
+上一轮学到「判是否实现只能读代码，不能看勾选框」。这一轮照做，去读那份被点名的计划:
+`docs/superpowers/specs/2026-09-24-herb-grades-and-market-design.md`。
+
+#### 六条，逐条读代码
+
+```text
+174  buyHerbs 五品明码标价        → core/herbMarketService.ts，useHerbShop 调它        ✓
+175  可炼方品阶 == 准入境界品阶   → data/herbGrades.spec.ts:67 逐方断言                ✓
+176  grantHerbs 默认按玩家境界    → stores/resources.ts:93  grade ?? herbGradeOfMajor  ✓
+177  herbExchange* 残留清除       → utils/storage.ts:552-553                         ✓
+178  economySim 去掉兑换建模       → 搜「兑换」「exchange」零命中                       ✓
+179  全量测试绿                   → 793 文件 / 6735 用例全绿                          ✓
+```
+
+**6 条全已实现。**
+
+#### 但那些勾选框**本就不该回填**
+
+本来想顺手勾上，先查了规矩:
+
+```text
+docs/development.md:6741
+tribulationDoc.spec     superpowers/specs     历史口径冻结
+```
+
+`docs/superpowers/specs/` 是**历史口径冻结**的归档 —— 记录的是「当时的计划」，
+不是「当前的进度」。**不回填是对的。**
+
+#### 这一轮的收获
+
+一百多轮里，这是第一次用**外部证据**确认仓库文档自己的判断成立。
+
+> 而顺带澄清了一个容易误判的点：**「未勾选」有两种含义** ——
+> 一种是真的没做，一种是「这是历史记录，本就不该改」。
+> 分辨它们的方法不是看勾选框，是看**这份文件属于哪一类**。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,

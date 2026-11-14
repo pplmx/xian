@@ -13551,3 +13551,54 @@ docs/development.md 的「待办 · 下一步」  作者自己认为接下来该
 但也写明:**读它不是为了找未完成项，而是为了知道哪些已经被判明「不该做」**
 （比如 Task 5「人物页历世卡」—— 注释里给了落点重复的三条理由）。
 而「是否实现」永远读代码，不读勾选框。
+
+### 第 251 轮:用代码验了那 6 个未勾选项 —— 6 条全已实现，而且本就不该回填
+
+上一轮学到「判是否实现只能读代码，不能看勾选框」。这一轮照做，去读那份被点名的计划:
+`docs/superpowers/specs/2026-09-24-herb-grades-and-market-design.md`。
+
+### 六条，逐条读代码
+
+```text
+174  服务层:无任何 herb→stone 路径;buyHerbs 五品明码标价、灵石足够才成交
+     → src/core/herbMarketService.ts 的 buyHerbs，useHerbShop 调它               ✓
+
+175  每味可炼方:消耗品阶 == herbGradeOfMajor(minRealm)
+     → src/data/herbGrades.spec.ts:67「新手村草进不了道祖丹的炉」逐方断言        ✓
+
+176  grantHerbs 无 grade 入参时默认按玩家境界;采集按区域定品
+     → src/stores/resources.ts:93  `grade ?? herbGradeOfMajor(usePlayerStore().major)`  ✓
+
+177  存档迁移幂等:旧标量 herb → 凡品;herbExchange* 残留清除;saveRoundTrip 绿
+     → src/utils/storage.ts:552-553  `delete next.herbExchangeUsed / herbExchangeRealm`  ✓
+
+178  economySim:去掉兑换建模
+     → src/core/economySim.ts 里搜「兑换」「exchange」，零命中                 ✓
+
+179  全量测试绿
+     → 793 文件 / 6735 用例全绿                                               ✓
+```
+
+**6 条全已实现。** 上一轮那条纪律（「6 个未勾选项逐个核下来全是已实现的验收标准」）
+用代码验了一遍，成立。
+
+### 但那些勾选框**本就不该回填**
+
+本来想顺手勾上，先查了规矩:
+
+```text
+docs/development.md:6741
+tribulationDoc.spec     superpowers/specs     历史口径冻结
+```
+
+`docs/superpowers/specs/` 是**历史口径冻结**的归档 —— 记录的是「当时的计划」，不是
+「当前的进度」。**不回填是对的。**
+
+### 这一轮的收获
+
+一百多轮里，这是第一次用**外部证据**确认仓库文档自己的判断成立:
+文档说那 6 条都实现了，我逐条读代码核实，确实都实现了。
+
+> 而顺带澄清了一个容易误判的点:**「未勾选」有两种含义** ——
+> 一种是真的没做，一种是「这是历史记录，本就不该改」。
+> 分辨它们的方法不是看勾选框，是看**这份文件属于哪一类**。
