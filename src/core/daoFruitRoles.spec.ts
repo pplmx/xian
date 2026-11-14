@@ -33,13 +33,23 @@ describe("道果职责 · 引用点全貌", () => {
     );
   });
 
-  it("道果没有任何消费出口:它不解锁、不兑换、不参与阶位", () => {
-    // 全部引用点里没有一处「花掉」道果
-    const spends = FRUIT_CONSUMERS.filter((c) => /消耗|扣除|spend|cost/i.test(c.evidence));
+  it("道果的出口只有两处:它不解锁、不兑换、不参与阶位", () => {
+    /*
+     * 第 307 轮订正:这条原先写的是「道果没有任何消费出口」。
+     * 那句在写下时是真的;后来历世试炼与换世重掷都花道果,它变成了假的 ——
+     * 而这条判据只筛这份清单内部，清单漏了那两处，于是它一直绿着。
+     * 现在改成「出口只有两处」，并由 `daoFruitOutlets.spec` 扫全仓反向对账。
+     */
+    const outlets = FRUIT_CONSUMERS.filter((c) => c.role === "outlet");
+    expect(outlets.map((o) => o.id).sort()).toEqual(["lifeTrial", "worldReroll"]);
+    // 「不解锁 / 不兑换 / 不参与阶位」三件事仍然成立:没有任何一条出口做这些
+    const spends = FRUIT_CONSUMERS.filter(
+      (c) => c.role !== "outlet" && /消耗|扣除|spend|cost/i.test(c.evidence),
+    );
     expect(spends).toHaveLength(0);
     console.log("\n以下系统与道果无关(此前一度被认为相关):");
     for (const n of NOT_FRUIT_DRIVEN) console.log(`  ${n.name.padEnd(10)} ${n.actual}`);
-    console.log("\n道果是纯单调递增的数字,只被读取,从不被花掉");
+    console.log("\n道果只在两处被花掉(历世试炼 / 换世重掷),其余引用全是读取");
   });
 
   it("战力职责非它不可,速度职责是历史遗留", () => {

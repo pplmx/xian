@@ -786,6 +786,8 @@ const CATEGORIES = [
       "adventurePreviewCaveat",
       // 对战模拟的胜率百分比旁边必须说明「是方向不是精确胜率」;删了同样不会有门红
       "matchupCaveat",
+      // 道果那份清单说「没有消费出口」,而实际有两个 —— 手写清单型判据守的是清单不是产品
+      "daoFruitOutlets",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

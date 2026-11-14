@@ -10036,6 +10036,53 @@ reincarnationLedgerCount.spec  转世点算
 `firstStep.spec`：开局指历练、修为圆满改指突破、闭关中不给「去历练」（那条路会被当场拦下）、
 已出师收卡、老档兜底……**十个分支，十条规定。**
 
+### 那句「道果没有任何消费出口」，现在是假的
+
+`daoFruitRoles.ts` 文件头写着:
+
+> 关键事实：**道果没有任何消费出口** —— 它不解锁天界、不进命题、不换任何东西、
+> 也不参与阶位。它只是一个单调递增的数字。
+
+而 `daoFruitRoles.spec` 有一条同名判据:
+
+```ts
+const spends = FRUIT_CONSUMERS.filter((c) => /消耗|扣除|spend|cost/i.test(c.evidence));
+expect(spends).toHaveLength(0);
+```
+
+#### 而道果有两个出口
+
+```text
+core/lifeTrialService.ts      player.spendDaoFruit(def.cost)    历世试炼签约
+views/MortalWorldView.vue     player.spendDaoFruit(n)           换世重掷
+```
+
+**这两处都真的让余额下降。** 那句「关键事实」在写下时是真的，后来变成假的。
+
+#### 为什么那条判据一直绿
+
+它**只在这份手写清单内部筛**。清单里没有历世试炼、也没有换世重掷 ——
+于是「清单里没有消费」成立。**判据守的是清单，不是产品。**
+
+这正是「清单型判据会漏掉未来新增」的教科书案例：**它漏的方式是「继续宣称没有」。**
+
+#### 判据:`core/daoFruitOutlets.spec` 三条（反向扫全仓）
+
+```text
+① 全仓扫 spendDaoFruit( 的调用点，至少找到一个（防空转）
+② 每一处调用所在文件，FRUIT_CONSUMERS 里都要有一条 role: "outlet" 记录
+③ daoFruitRoles.spec 里那条「没有任何消费出口」的标题必须已经改口
+```
+
+第 ③ 条只查标题、不查全文 —— 因为订正注释里会引用旧句，全文搜会误伤自己。
+
+#### 这是本轮最重要的发现
+
+不是「道果花了没登记」，而是:
+
+> **一条判据可以长期绿着，同时它守的那句话已经是假的。**
+> 而它绿的原因不是产品没问题，是判据看不见那一部分产品。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,

@@ -36,7 +36,15 @@ export type FruitRole =
   /** 展示与引导:只读不算 */
   | "display"
   /** 审计模拟:不在游戏逻辑内 */
-  | "sim";
+  | "sim"
+  /**
+   * 出口:把道果**花掉**,余额真的下降。
+   *
+   * 这一类在本文件建立时不存在 —— 那时道果确实没有任何出口。后来加了历世试炼与换世重掷,
+   * 文件头那句「道果没有任何消费出口」就此失真,而 hand-list 型判据不会自己发现。
+   * (第 307 轮补 `daoFruitOutlets.spec` 扫全仓才发现。)
+   */
+  | "outlet";
 
 /** 这个职责是否必须由道果承担 */
 export type Necessity =
@@ -70,9 +78,13 @@ export interface FruitConsumer {
 /**
  * 道果的全部引用点。
  *
- * 关键事实:**道果没有任何消费出口** —— 它不解锁天界、不进命题、
- * 不换任何东西、也不参与阶位(阶位走宿慧)。它只是一个单调递增的数字,
- * 被 computeFinalStats 读一次,同时喂给两个乘区
+ * 关键事实(第 307 轮订正):道果**有两个消费出口** —— 历世试炼签约与换世重掷。
+ * 它不解锁天界、不进命题、不参与阶位(阶位走宿慧);那两处花掉它是花在
+ * 「这一世的选择」上,不是买断某个系统。除此之外,它是一个单调递增的数字,
+ * 被 computeFinalStats 读一次,同时喂给两个乘区。
+ *
+ * 原先这里写的是「道果没有任何消费出口」。那句话在写下时是真的,
+ * 在两个出口加进来之后变成了假的 —— 而当时那条判据只查这份清单内部,不会红。
  */
 export const FRUIT_CONSUMERS: FruitConsumer[] = [
   {
@@ -128,6 +140,24 @@ export const FRUIT_CONSUMERS: FruitConsumer[] = [
     necessity: null,
     loop: "none",
     evidence: "审计口径复刻 computeFinalStats 的速度项,不在游戏逻辑内",
+  },
+  {
+    id: "lifeTrial",
+    name: "历世试炼签约",
+    site: "core/lifeTrialService.signLifeTrial",
+    role: "outlet",
+    necessity: "must",
+    loop: "indirect",
+    evidence: `player.spendDaoFruit(def.cost) —— 余额真的下降;换来的是「这一世带一条约定」`,
+  },
+  {
+    id: "worldReroll",
+    name: "换世重掷",
+    site: "views/MortalWorldView.rerollWorldByFruit",
+    role: "outlet",
+    necessity: "must",
+    loop: "indirect",
+    evidence: `player.spendDaoFruit(n)（经 worldReroll 注入的 spendFruit 回调）—— 换一个凡世出身`,
   },
 ];
 
