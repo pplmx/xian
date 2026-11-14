@@ -8170,6 +8170,55 @@ it("科学计数 mantissa 四舍五入到 10 时进位(9.99…eN → 1.00eN+1,�
 
 精确点名，恢复即绿。
 
+### 奖励里发不存在的称号 —— 玩家拿不到，也没有任何提示
+
+顺着上一轮（计数器有没有累加点）的同一种问法：**数据里引用了某样东西，那样东西真的在吗？**
+
+#### 四处引用，全部有效
+
+```text
+事件 effects 里的 pill.id   → 全部能解析
+成就 reward.titleId（29 个） → 全部能解析
+主线 reward.titleId/pillId   → 0 个
+功法分支 gongfaId（199 个）  → 全部能解析
+```
+
+#### 但失败是静默的
+
+`core/progress.ts` 发赏时:
+
+```ts
+if (bundle.pillId && acquirePill(bundle.pillId, 1)) { … }
+if (bundle.titleId && titleDef(bundle.titleId)) { … }
+```
+
+两个条件**对未知 id 都返回假**，整段跳过 —— 玩家拿不到那枚丹药、那个名号，
+**而没有任何提示说他少了什么**。
+
+类型系统救不了（两个字段都是 `string`）；`dataIntegrity.spec` 管的是
+「区域引用的敌人与首领」，不管这两个。**该加。**
+
+#### 判据:`core/rewardRefIntegrity.spec` 四条
+
+```text
+① 防空转：扫得到 >50 个奖励包，其中带 titleId/pillId 的 >10
+② 每个 titleId 都指向真实称号
+③ 每个 pillId 都指向真实丹药
+④ 称号与丹药的 id 集合本身不含重复（重复会让 byId 表静默覆盖）
+```
+
+#### 写这条判据时撞了两次类型墙
+
+```text
+① event.outcomes          —— 没有这个字段，是 event.choices[].outcomes[]
+② outcome.reward          —— 没有这个字段，是 outcome.effects[]，
+                             丹药写成 { type: "pill", id?, count }
+```
+
+两次都是 `vue-tsc` 当场报的 —— **这是类型系统在这里真正起作用的地方**：
+它拦住了「我以为的数据形状」。而它拦不住的是「引用了一个不存在的 id」，
+那正是这条判据要补的。
+
 ### 战局与地界卡上的三处断线 —— 数据都在,没人接
 
 同一轮还收拾了三处「数据有、界面没用」。三者形状一样:会话或存档里早就有那个数,
