@@ -746,6 +746,8 @@ const CATEGORIES = [
       "combatLogEvents",
       // 战果面板只被查了两个标签;类型上的每个统计字段都该有去处
       "battleStatsDisplay",
+      // 轮回 view 上两个字段赋值了没人读,其中一个还与 review.realmLabel 重复
+      "reincarnationViewFields",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",

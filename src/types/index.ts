@@ -1401,13 +1401,11 @@ export interface ReincarnationView {
   daoFruitGained: number;
   talentChoices: string[];
   extraTalents: string[];
-  prevRealmLabel: string;
   /** 上一世回顾 */
   review: LifeReview;
   /** 转世之后的宿慧总量 */
   insightAfter: number;
-  /** 转世之后所处的轮回阶 */
-  stageId: string;
+  /** 转世之后所处的轮回阶（名字与说明见下两行；阶的 id 内部用，不递给界面） */
   stageName: string;
   stageDesc: string;
   /** 这一世的经历是否让你进了一阶 */
