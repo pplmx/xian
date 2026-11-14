@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 799 个 spec;本作自己那部分 719 个) |
+| `bun run test` | 全量用例(全量 800 个 spec;本作自己那部分 720 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 799 个 spec = 宿主 719 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 800 个 spec = 宿主 720 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 799 个 spec(本作自己那部分 719 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 800 个 spec(本作自己那部分 720 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -14432,3 +14432,74 @@ minRealm  0,0,1,1,1,2,2,3,3,3,4,4,…,19,19,20,20
 期间我看 `hpMult` 从 T1 的 1.41 涨到 T32 的 3.93，差点说「跨档强度只涨了 2.8 倍」——
 但 `hpMult` 是**同 tier 内的横向修饰**（同一档里谁更肉），跨档强度由 tier 本身换算。
 **又一次用字段名代替了字段语义。**
+
+### 第 269 轮:开局档配神品功法会让「品质」变成颜色 —— 而没人把两张表合起来看
+
+数据里读出来的事实:
+
+```text
+m0        只有 mortal / fine
+m7~m13    immortal（仙品，rank 7）
+m15~m19   divine（神品，rank 8）
+```
+
+而 `data/gongfa.ts` 第 731~732 行把这条写成了一句话:
+
+> 秘术席最后五处断档:13 / 15 / 16 / 18 / 19。**品质照该境界的主修走**
+> （13 是仙品，15 及以上是神品），量级照同品质的邻居取。
+
+第 889 行再说一遍。**即「品质跟着境界走」是既定原则。**
+
+### 但两条既有判据各查一维
+
+```text
+gongfaQualityLadder.spec   九档都有货        —— 查品质覆盖
+gongfaRealmCoverage.spec   每个准入境界都有功法 —— 查境界覆盖
+```
+
+给 m0 加一部神品功法，**两条都会绿**。
+
+### 判据:`core/gongfaQualityRealm.spec` 三条
+
+```text
+① 防空转:功法 >50、品质档 >5、m0 功法 >5
+② 开局档（m0）只有凡品与良品（rank ≤ 1）
+③ 主修与辅修的品质上限随境界不回退（秘术不参与）
+```
+
+### 而第 ③ 条第一版写错了，实测当场红
+
+第一版写的是「**全表**品质上限随境界不回退」，跑出来:
+
+```text
+× 这些境界的品质上限比更浅的境界还低 —— 深修反而不如浅修:m8 的最高品质 rank 6 低于更浅境界的 7
+```
+
+查数据:
+
+```text
+m7  heaven ×2 + immortal ×1（x_nitian 逆天改命经，**secret**）
+m8  earth ×1 + heaven ×2      ← 最高 6
+m9  immortal ×3
+```
+
+**m7 那部仙品是秘术**，而秘术席本来就允许在更浅的境界出现更高品质。
+故「全表单调」不成立 —— **是我的判据写宽了，不是产品有问题。**
+
+改法是只看 `main` / `sub`，把 `secret` 排除。改完即绿。
+
+### 故障注入：让开局功法变神品
+
+把 `m_taixuan`（太玄引气诀，m0）的 `mortal` 改成 `divine`:
+
+```text
+× 开局档（m0）只有凡品与良品
+× 主修与辅修的品质上限随境界不回退
+```
+
+两条同时命中，恢复即绿。
+
+### 又一条「我自己错」的记录
+
+这是第 N 次判据第一版过严。而这次它红得很快（数据就在眼前），所以代价只是重写一条断言。
+**判据写宽的代价，是它会把正当的设计判成缺陷** —— 比漏判更难发现，因为它看起来像"抓到了问题"。

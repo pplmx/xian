@@ -778,6 +778,8 @@ const CATEGORIES = [
       "divinationCost",
       // 区域在列表里放错位置(tier/minRealm 倒退或跳档)不会编译报错,只会让难度曲线回头
       "regionDifficultyOrder",
+      // 开局档出现高品功法会让玩家觉得「品质只是颜色」;品质表与境界表各查一维,没人合起来看
+      "gongfaQualityRealm",
       // 速率单位:「/秒」只由 formatRate 说一次 —— 三处「每秒 X/秒」曾同时在
       // 修行页与两个浮层里印出来,而它们分属三个文件,逐个组件测不着
       "rateUnit",
