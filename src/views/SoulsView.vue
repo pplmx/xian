@@ -498,9 +498,15 @@
         <span v-if="soulPulse.refinableCount > 0"
           >此刻可凝 {{ soulPulse.affordableRefines }}/{{ soulPulse.refinableCount }} 件。</span
         >
-        <!-- 付不起置灰+列差(与秘境道源/聚气丹同款):灰按钮不告诉差多少等于没说完 -->
+        <!--
+          付不起置灰+列差(与秘境道源/聚气丹同款):灰按钮不告诉差多少等于没说完。
+          「尚差多少」之后还要说「怎么补」—— 道源没有挂机产出，只能靠熔炉与远征。
+          补法由 `useDaoEntry` 的 `daoFill` 给（与差额同源），不是一句通用的话。
+        -->
         <span v-if="soulPulse.shortfall > 0" class="text-cinnabar"
-          >尚差 {{ formatGN(soulPulse.shortfall) }} 道源可开一炉</span
+          >尚差 {{ formatGN(soulPulse.shortfall) }} 道源可开一炉<template v-if="soulFill">
+            · {{ soulFill.hint }}</template
+          ></span
         >
       </p>
       <div
@@ -661,6 +667,7 @@ import {
 import { useEndgameStore } from "@/stores/endgame";
 import { useInventoryStore } from "@/stores/inventory";
 import { usePlayerStore } from "@/stores/player";
+import { useDaoEntry } from "@/composables/useDaoEntry";
 import FolioNote from "@/components/common/FolioNote.vue";
 import FolioPageHeader from "@/components/common/FolioPageHeader.vue";
 import LedgerPulse from "@/components/common/LedgerPulse.vue";
@@ -720,6 +727,16 @@ const soulPulse = computed(() =>
     daoSource: endgame.daoSource,
   }),
 );
+
+/**
+ * 「尚差 N 道源」之后呢 —— 怎么补。
+ *
+ * 走 `useDaoEntry` 的 `daoFill`（与远征/试炼/道痕共用一处）:
+ * 补法要看**同一个缺口**，而缺口只有一处算。这一处原先只说差多少，
+ * 而道源没有挂机产出 —— 玩家读完不知道往哪走。
+ */
+const { daoFill } = useDaoEntry();
+const soulFill = computed(() => daoFill(soulPulse.value.shortfall ?? 0));
 
 const emptySeats = computed(() =>
   Math.max(0, soulPulse.value.slotTotal - soulPulse.value.activeCount),

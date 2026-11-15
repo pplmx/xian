@@ -260,6 +260,7 @@ import { useEndgameStore } from "@/stores/endgame";
 import { SECRET_FINAL_WUDAO, secretRealmDef, type SecretRealmDef } from "@/data/secretRealms";
 import { cnNumber, formatGN, formatPercent } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
+import { useDaoEntry } from "@/composables/useDaoEntry";
 import InkScene from "@/components/common/InkScene.vue";
 import { sceneTerrainOfSecretRealm } from "@/ui/sceneTerrain";
 import {
@@ -335,12 +336,21 @@ function canPay(r: SecretRealmDef): boolean {
 }
 
 /** 行内代价:买得起念全价,付不起换口「尚差 N」(与聚气丹/建筑/法宝同款句式) */
+const { daoFill } = useDaoEntry();
+
 function payText(r: SecretRealmDef): string {
   const c = entryCostOf(r, player.major);
   if (canPay(r)) return entryCostText(r, player.major);
-  return c.kind === "stone"
-    ? `尚差 ${formatGN(Math.max(0, toNum(c.stone) - toNum(resources.spiritStone)))} 石`
-    : `尚差 ${Math.max(0, c.daoSource - endgame.daoSource)} 道源`;
+  if (c.kind === "stone") {
+    return `尚差 ${formatGN(Math.max(0, toNum(c.stone) - toNum(resources.spiritStone)))} 石`;
+  }
+  /*
+   * 道源差着时要说「怎么补」—— 道源没有挂机产出，只能靠熔炉与远征。
+   * 走 `useDaoEntry` 的 `daoFill`，与远征/试炼/魂修共用一处:补法要看同一个缺口。
+   */
+  const short = Math.max(0, c.daoSource - endgame.daoSource);
+  const fill = daoFill(short);
+  return `尚差 ${short} 道源${fill ? ` · ${fill.hint}` : ""}`;
 }
 
 function enter(id: string): void {

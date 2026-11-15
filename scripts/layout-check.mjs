@@ -8995,6 +8995,72 @@ async function taskPageFill() {
   return { failures, checked };
 }
 
+/**
+ * 「尚差 N 道源」的补法要**处处都有** —— 不止远征那一处。
+ *
+ * 上一轮给远征补了 `daoFill`，这一轮接进魂修的凝炼台。而道源在别处还有
+ * 12 处「尚差」—— 判据若只量远征，其余那些坏了没人知道。
+ *
+ * 这里量的是**魂修那一处**:它是道源第二大的消费点（一炉 `SOUL_REFINE_COST`），
+ * 且道源没有挂机产出，玩家卡在这里同样无从下手。
+ */
+async function taskDaoFillElsewhere() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("late");
+    slices.player = { ...slices.player, major: 9, sub: 0, dead: false };
+    slices.endgame = { ...slices.endgame, daoSource: 0 };
+    // 给一件可凝的法器，否则凝炼台整个不出（"行囊中无可凝之器"）
+    await seedSave(ctx, slices, "__daoFillSoul");
+
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/souls", 1400);
+    await clearOverlays(page);
+    /*
+     * 那一句住在**凝炼台弹窗**里，不在页面上 —— 先点开它。
+     * 第一次写这条门时直接读 body，量到的是入口那行的摘要（「尚差 20 道源可开一炉」），
+     * 判据红得对，但红在"取错了样本"。
+     */
+    await page
+      .locator("button", { hasText: "凝炼台" })
+      .first()
+      .click({ timeout: 4000 })
+      .catch(() => {});
+    await page.waitForTimeout(700);
+    const info = await page.evaluate(() => {
+      const dlg = document.querySelector('[aria-label="凝炼台"]') ?? document.body;
+      const body = (dlg.textContent || "").replace(/\s+/g, " ");
+      const m = /尚差[^。]{0,60}道源[^。]{0,120}/.exec(body);
+      return { text: m ? m[0] : null, hasFill: /熔|攒/.test(m ? m[0] : "") };
+    });
+    if (!info.text) {
+      failures.push("[390] 道源补法要处处都有:魂修那一处没有「尚差 N 道源」（夹具没造对?）");
+    } else if (!info.hasFill) {
+      failures.push(`[390] 道源补法要处处都有:魂修只说了差多少，没说怎么补 «${info.text}»`);
+    }
+    if (pageErrors.length) {
+      failures.push(`[390] 道源补法页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n道源补法要处处都有:魂修 «${info.text}»`);
+    } else {
+      console.log(`\n道源补法要处处都有[未通过]:${JSON.stringify(info)}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked };
+}
+
 async function taskDaoFill() {
   const failures = [];
   let checked = 0;
@@ -34394,6 +34460,7 @@ const TASKS = [
   ["等一天值不值那一行", taskWaitPayoff],
   ["今天该去做什么", taskWeatherRoute],
   ["尚差道源怎么补", taskDaoFill],
+  ["道源补法要处处都有", taskDaoFillElsewhere],
   ["尚差残页怎么补", taskPageFill],
   ["背包里的账目", taskInventoryAccounting],
   ["际遇帖的门限与去向", taskEventSlip],
