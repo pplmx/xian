@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 824 个 spec;本作自己那部分 744 个) |
+| `bun run test` | 全量用例(全量 825 个 spec;本作自己那部分 745 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 824 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 825 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 824 个 spec(本作自己那部分 744 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 825 个 spec(本作自己那部分 745 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -20231,3 +20231,74 @@ data/chains.ts   荒坟前灯灭
 ```
 
 工作区干净、全量 824 / 6877 全绿；`check`、`test:report`、`check:ui` 同绿。
+
+### 第 377 轮:所有「可达性」审计都只问「能不能拿到」，不问「拿到几次」
+
+上一轮说要验收心魔面壁的实际频率。这一轮量了，而量出来的是**审计本身的一个盲区**。
+
+#### 先验收心魔
+
+```text
+   带心魔风险的选项     16 条路径（夜灯 / 幻海镜中 / 石桌残局 / 心魔叩关 / 万神残像 ……）
+   权重                 15~60
+   有没有一次性限制      全部 once:false —— 可重复遇到
+   各境界池子份额        m0 16.1% · m3 18.0% · m8 15.9% · m20 8.8%
+   每小时撞见机会        4~9 次（撞见不等于染上:玩家可以不冒险）
+```
+
+**面壁那条路用得上。** 它不是我上一轮担心的"一辈子 2-3 次"，验收通过。
+
+#### 但这一轮真正挖到的是：审计的盲区
+
+`core/` 下已有四个可达性审计:
+
+```text
+contentReachabilityAudit   10 组：丹方 / 灵材 / 敌人 / 区域 / 法宝 / 功法 / 技艺 ……
+exportReach · gongfaPoolReach · rewardReachability
+```
+
+它们回答的全是**「能不能拿到」**。而把这两条并排放:
+
+```text
+   闭关顿悟   可达 ✓    但一世只 6.1 次，全在前 6 小时（第 376 轮）
+   心魔       可达 ✓    一小时撞见 4~9 次（第 377 轮）
+```
+
+**同一个「可达」閘值下，一个几乎不存在、一个几乎常驻 —— 而两类都能通过全部现有审计。**
+
+故立了一条守**频率量级**的判据。阈值取很宽（一世 <1 次算稀有、每小时 >20 次算骚扰），
+因为要抓的是"量级错了"，不是"少了 3%"。
+
+#### 一条口径错误：我用了 `encountersPerHour` 而不是 `eventsPerHour`
+
+第一版判据红了，报「m0 每小时撞见心魔事件 48.4 次 —— 太频繁」。查下来是我算错:
+
+```text
+   encountersPerHour() = 300   每小时**遭遇**（战斗 + 际遇）
+   eventsPerHour()     =  48   每小时**际遇**（遭遇 × 际遇概率 0.16）
+```
+
+频率算的是"撞见某事件的次数"，必须用后者。用前者会让所有频率虚高 6.25 倍。
+
+**判据红得对，但红在了我自己算错上** —— 若不去查那两个函数的定义，很容易顺着
+"48 次太频繁"这个错误结论去改产品。
+
+#### 判据里额外钉的一条:池子必须按境界取
+
+```text
+   m0 的池子里不许出现「心魔叩关」（它是 m2 起）
+   m3 的池子里必须有「心魔叩关」
+```
+
+前半防"上界没判"，后半防"上界判反"。若 `poolAt` 写成全表过滤，
+上面两条频率判据就都建在错的份额上 —— **判据的基础本身要被证明**。
+
+#### 故障注入
+
+把 `EXPLORE_EVENT_CHANCE` 从 0.16 改成 0.005，判据当场红:
+
+```text
+× m0 每小时撞见心魔事件 0.2 次 —— 太稀有，那条路走不到
+```
+
+工作区干净、全量 825 / 6881 全绿；`check`、`test:report`、`check:ui` 同绿。
