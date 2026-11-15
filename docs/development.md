@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 814 个 spec;本作自己那部分 734 个) |
+| `bun run test` | 全量用例(全量 815 个 spec;本作自己那部分 735 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 814 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 815 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 814 个 spec(本作自己那部分 734 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 815 个 spec(本作自己那部分 735 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -19372,3 +19372,74 @@ m4+ 0%（EARLY_EVENT_DECAY 的意图:顿悟是前期玩法）
 ```
 
 工作区干净、全量 814 / 6833 全绿；`check`、`test:report` 同绿。
+
+### 第 366 轮:上一轮补的机制，界面上一处都没有
+
+第 365 轮给闭关补了第二个顿悟入口（出关时掷一次）。这一轮发现一件事:
+
+```text
+docs/usage.md    「闭关出关时可能有所悟」……   ← 写了
+界面              一个字都没有                  ← 没写
+```
+
+这正是 AGENTS.md 那条「让看不见的机制可见」要管的事:
+
+> 技艺进度、buff 叠加份数、合并真值、一次服药的上限、天时对渡劫与产出的影响
+> —— 该露的都要露进界面，**不许只活在注释或 README 里**。
+
+#### 为什么它值得露
+
+那一句改变的是「什么时候闭关」这个决策，而不只是"多一份奖励":
+
+```text
+   不知道有顿悟   闭关 = 什么时候缺修为什么时候点
+   知道有顿悟     闭关 = 一个可能带回来点什么的选择（前期 35%）
+```
+
+而「闭关」与「历练」本来就互斥（闭关期间不能外出历练），故这个认知差
+直接影响他今天做什么。
+
+#### 落点
+
+闭关卡上多一行，紧跟在已经有的「闭关后 ≈ X/秒 · 5 分钟约多收 N 修为」之后:
+
+```text
+   出关时约 35% 携带顿悟(与历练偶遇同一套选项)
+```
+
+三条口径:
+
+```text
+一 概率现算   读 retreatEnlightenChance（内部乘 EARLY_EVENT_DECAY），不手抄 35%
+二 给数不给话 「约 35%」而不是「可能有所悟」—— AGENTS.md:不能只给定性形容词
+三 该消失就消失 元婴之后那一行自动不在（留一条永不发生的承诺比不说更糟）
+```
+
+第三条是这一轮最要紧的一条。一个**总是**显示「35% 会有所悟」的提示，
+在元婴之后就是纯粹的欺骗 —— 玩家会照着它反复闭关，而一次也不会中。
+
+#### 三道既有判据各抓到一处
+
+```text
+① uiLayering「百分比显示统走 formatPercent」
+   我写了 `Math.round(x * 100)%` —— 与同屏其他百分比不同口径，边界也不一致
+
+② copyPunctuation「模板里不同时出现全角与半角中文括号」
+   我在注释与模板里混着用了（这个文件原本是半角）
+
+③ layout-check 的故障注入确认有效
+   把 `v-if` 里那个 `> 0` 去掉，门当场红:
+   「合体期仍挂着那一行 —— 而那时它永远不会发生」
+```
+
+①与②都不是"判据太严"，是这个仓早就统一过的口径，而我写新代码时没跟着走。
+
+#### 一句自省
+
+前九轮里有几轮在"找缺陷"上绕了远路。而这一轮的缺口**是我上一轮自己造出来的**
+—— 补了机制却忘了露它。这说明一件比"再找一个 bug"更有用的事:
+
+> **加一个机制之后，要跟着问一句「玩家怎么知道它」。**
+> 这一句不进判据，就会在下一轮变成同一个形状的新缺口。
+
+工作区干净、全量 815 / 6837 全绿；`check`、`test:report`、`check:ui` 同绿。

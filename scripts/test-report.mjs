@@ -488,6 +488,7 @@ const CATEGORIES = [
       "resourceSources",
       "artifactWudaoSink",
       "retreatEnlightenment",
+      "retreatEnlightenNote",
       "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",

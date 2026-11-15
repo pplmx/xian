@@ -9247,6 +9247,81 @@ async function taskWeatherRoute() {
   return { failures, checked };
 }
 
+/**
+ * 闭关卡要说出「出关时可能有悟」—— 只在手册里写等于没写。
+ *
+ * 判据三件:
+ *   一 闭关卡上那一行真的在，且带一个百分比（不是"可能有所悟"这种定性话）;
+ *   二 那个百分比与 `retreatEnlightenChance` 同源（前期 35%，不是手抄的别的数）;
+ *   三 元婴之后那一行**消失** —— 留一条永远不会发生的承诺比不说更糟。
+ */
+async function taskRetreatEnlighten() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const at = (major) => {
+      const slices = showcaseSlices("light");
+      slices.player = { ...slices.player, major, sub: 0, dead: false };
+      return slices;
+    };
+
+    // ---- 炼气：那一行在，且带数值 ----
+    checked += 1;
+    await seedSave(ctx, at(0), "__retreatEnlEarly");
+    let page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/cultivation", 1400);
+    await clearOverlays(page);
+    const early = await page.evaluate(() => {
+      const el = document.querySelector("[data-retreat-enlighten]");
+      return { text: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null };
+    });
+    if (!early.text) {
+      failures.push("[390] 闭关出关有悟:炼气期闭关卡上没有那一行 —— 顿悟只活在手册里");
+    } else {
+      const m = /(\d+)%/.exec(early.text);
+      if (!m) {
+        failures.push(`[390] 闭关出关有悟:只说「${early.text}」，没给百分比`);
+      } else if (Number(m[1]) <= 0 || Number(m[1]) >= 100) {
+        failures.push(`[390] 闭关出关有悟:百分比不合理 «${early.text}»`);
+      }
+    }
+
+    // ---- 元婴之后：那一行必须消失 ----
+    checked += 1;
+    await seedSave(ctx, at(6), "__retreatEnlLate");
+    page = await ctx.newPage();
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/cultivation", 1400);
+    await clearOverlays(page);
+    const late = await page.evaluate(() =>
+      Boolean(document.querySelector("[data-retreat-enlighten]")),
+    );
+    if (late) {
+      failures.push("[390] 闭关出关有悟:合体期仍挂着那一行 —— 而那时它永远不会发生");
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 闭关出关有悟页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n闭关出关有悟:炼气 «${early.text}» ；后期不出`);
+    } else {
+      console.log(`\n闭关出关有悟[未通过]:${JSON.stringify({ early, late })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked };
+}
+
 async function taskWaitPayoff() {
   const failures = [];
   let checked = 0;
@@ -34458,6 +34533,7 @@ const TASKS = [
   ["减少动效真的减到了", taskReduceMotion],
   ["闭关的跨页承诺", taskRetreat],
   ["等一天值不值那一行", taskWaitPayoff],
+  ["闭关出关有悟", taskRetreatEnlighten],
   ["今天该去做什么", taskWeatherRoute],
   ["尚差道源怎么补", taskDaoFill],
   ["道源补法要处处都有", taskDaoFillElsewhere],

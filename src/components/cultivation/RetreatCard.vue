@@ -47,6 +47,28 @@
           retreatMinutes
         }}分钟约多收 {{ formatGN(retreatExtra) }} 修为
       </p>
+      <!--
+        出关时可能有悟 —— 第 365 轮给闭关补了第二个顿悟入口(出关时掷一次)，
+        而它此前**只在手册里写着**，界面一个字都没有。AGENTS.md 的
+        「让看不见的机制可见」要管的正是这种事:该露的都要露进界面。
+
+        它改变的是「什么时候闭关」这个决策，而不只是"多一份奖励":
+          不知道   闭关 = 什么时候缺修为什么时候点
+          知道     闭关 = 一个可能带回来点什么的选择(前期 35%)
+
+        概率**现算**(`retreatEnlightenChance` → EARLY_EVENT_DECAY 同一条曲线)，
+        不手抄 35% —— 与这张卡里「时长与加成取自 buffs.ts」同一条纪律。
+
+        到了不会再出的境界(元婴之后)这一行自动消失:留一条永远不会发生的
+        承诺，比不说更糟。
+      -->
+      <p
+        v-if="!retreating && retreatEnlightenRate > 0"
+        class="cultivation-action__forecast"
+        data-retreat-enlighten
+      >
+        出关时约 {{ formatPercent(retreatEnlightenRate, 0) }} 携带顿悟(与历练偶遇同一套选项)
+      </p>
     </div>
   </article>
 </template>
@@ -55,10 +77,15 @@
 import { computed, ref, watch } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import { useUiStore } from "@/stores/ui";
-import { isRetreating, startRetreat, getRetreatRemainingSec } from "@/core/earlyGameService";
+import {
+  isRetreating,
+  startRetreat,
+  getRetreatRemainingSec,
+  retreatEnlightenChance,
+} from "@/core/earlyGameService";
 import { modOf } from "@/core/statsCalc";
 import { buffDef } from "@/data/buffs";
-import { formatSignedPercent } from "@/utils/format";
+import { formatPercent, formatSignedPercent } from "@/utils/format";
 import { formatCountdown, formatGN, formatRate } from "@/utils/format";
 import { useGameNow } from "@/composables/useGameNow";
 
@@ -103,6 +130,14 @@ const retreatPerSec = computed(() => {
 const retreatExtra = computed(
   () => (retreatPerSec.value - player.cultPerSec) * (retreatDef?.durationSec ?? 0),
 );
+/**
+ * 一次闭关出顿悟的概率（百分数，已按境界衰减）。
+ *
+ * 直接读 `retreatEnlightenChance` —— 它内部乘 `EARLY_EVENT_DECAY`，
+ * 故元婴之后为 0，模板那一行随之消失。不在这里另算一遍衰减。
+ */
+const retreatEnlightenRate = computed(() => retreatEnlightenChance(player.major));
+
 function beginRetreat(): void {
   if (startRetreat()) {
     ui.toast("你封洞闭关,心不外骛", "info");
