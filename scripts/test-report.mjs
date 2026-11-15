@@ -494,6 +494,7 @@ const CATEGORIES = [
       "tribPanelWeatherMajor",
       "tribTargetMajorSingleSource",
       "secsPerUnit",
+      "faceWall",
       "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",

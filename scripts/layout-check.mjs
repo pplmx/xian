@@ -9285,6 +9285,107 @@ async function taskWeatherRoute() {
  * 判据:在 m13（仙界最后一境，渡过去是神界）摆一份存档，看面板上报的天时
  * 属于**神界池**（神辉 / 法则潮 / 神威日），而不是仙界池。
  */
+/**
+ * 心魔有两条路 —— 静养（快、道心不长）与面壁破执（贵、得道心通明）。
+ *
+ * 判据三件:
+ *   一 身上没有心魔时，那两个按钮都不出 —— 不画「点了没反应」的钮;
+ *   二 有心魔时面壁的钮在，且报出的灵气数**比静养大**（贵出来的那份是道心的价钱）;
+ *   三 付不起时置灰并说出差多少（与静养同一条纪律）。
+ */
+async function taskHeartDemonTwoWays() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    /* 灵气给足 —— 否则两条路都停在"付不起"，量不出"面壁比静养贵" */
+    const withBuff = (buffs) => {
+      const slices = showcaseSlices("light");
+      slices.cultivation = { ...slices.cultivation, buffs };
+      slices.player = { ...slices.player, major: 3, sub: 0, dead: false };
+      slices.resources = { ...slices.resources, qi: 999999 };
+      return slices;
+    };
+    const now = Date.now();
+    const demonBuff = [{ defId: "curse_xinmo", startedAt: now, endsAt: now + 600_000 }];
+
+    // ---- 无心魔:两个钮都不出 ----
+    checked += 1;
+    await seedSave(ctx, withBuff([]), "__noDemon");
+    let page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/cultivation", 1400);
+    await clearOverlays(page);
+    const clean = await page.evaluate(() => ({
+      face: Boolean(document.querySelector("[data-cultivation-facewall]")),
+    }));
+    if (clean.face) {
+      failures.push("[390] 心魔两条路:身上没有心魔，面壁的钮却出来了");
+    }
+
+    // ---- 有心魔:面壁在，且比静养贵 ----
+    checked += 1;
+    await seedSave(ctx, withBuff(demonBuff), "__hasDemon");
+    page = await ctx.newPage();
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/cultivation", 1400);
+    await clearOverlays(page);
+    const demon = await page.evaluate(() => {
+      const faceBtn = document.querySelector("[data-cultivation-facewall]");
+      const text = faceBtn ? (faceBtn.textContent || "").replace(/\s+/g, " ").trim() : null;
+      // 静养那一条:同一节里报灵气消耗的那个钮
+      const all = [...document.querySelectorAll("button")].map((b) =>
+        (b.textContent || "").replace(/\s+/g, " ").trim(),
+      );
+      const repairText = all.find((t) => t.includes("静养")) ?? null;
+      return { text, repairText };
+    });
+    if (!demon.text) {
+      failures.push("[390] 心魔两条路:身上有心魔，面壁的钮却没出来 —— 这条路玩家走不到");
+    } else {
+      /*
+       * 「耗灵气 1.694万」——`formatNum` 会带万/亿单位，解析要认它，
+       * 否则量出来的两个数都是 null，比较形同虚设（第一版就是这样，
+       * 而它当时报的失败理由却是"没报灵气数"，读起来像产品问题）。
+       */
+      const num = (t) => {
+        const m = /灵气\s*([\d,.]+)\s*([万亿])?/.exec(t ?? "");
+        if (!m) return null;
+        const n = Number(m[1].replace(/,/g, ""));
+        if (Number.isNaN(n)) return null;
+        return m[2] === "万" ? n * 1e4 : m[2] === "亿" ? n * 1e8 : n;
+      };
+      const faceCost = num(demon.text);
+      const repairCost = num(demon.repairText);
+      if (faceCost === null) {
+        failures.push(`[390] 心魔两条路:面壁的钮没报灵气数 «${demon.text}»`);
+      } else if (repairCost !== null && faceCost <= repairCost) {
+        failures.push(
+          `[390] 心魔两条路:面壁(${faceCost}) 不比静养(${repairCost}) 贵 —— 那它就不是取舍`,
+        );
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 心魔两条路页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n心魔两条路:«${demon.text}» ；静养 «${demon.repairText}»`);
+    } else {
+      console.log(`\n心魔两条路[未通过]:${JSON.stringify({ clean, demon })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked };
+}
+
 async function taskTribWeatherBoundary() {
   const failures = [];
   let checked = 0;
@@ -34841,6 +34942,7 @@ const TASKS = [
   ["人物页报寿元", taskLifespanOnCharacter],
   ["词条释义", taskStatHint],
   ["渡劫面板天时取境", taskTribWeatherBoundary],
+  ["心魔两条路", taskHeartDemonTwoWays],
   ["今天该去做什么", taskWeatherRoute],
   ["尚差道源怎么补", taskDaoFill],
   ["道源补法要处处都有", taskDaoFillElsewhere],

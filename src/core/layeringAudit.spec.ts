@@ -84,6 +84,7 @@ const STATEFUL_CORE = new Set<string>([
   "engine.ts",
   "engineCraft.ts",
   "eventEngine.ts",
+  "faceWall.ts",
   "expedition.ts",
   "exploration.ts",
   "firstStep.ts",
@@ -126,7 +127,13 @@ const STATEFUL_CORE = new Set<string>([
 // sanitize 必须接进开机链路(storeResilience 的「sanitize 必须接进开机链路」判定);
 // storeResilience 与本基线对新增持久化 store 天然相抵,每 +1 都是新增系统的正当代价。
 // 158 → 159:reincarnation.ts 接上收徒的转世凝缘(resetForRebirth),同属新系统的转世接线代价。
-const CORE_STORE_SITES = 159;
+//
+// 159 → 161:faceWall.ts —— 心魔自己的化解路径（面壁破执）。
+// 它必须读三个 store:`cultivation` 看身上有没有心魔、`resources` 扣灵气、
+// `player` 取灵气容量上限（代价与静养同一条口径:标称容量 × 比例）。
+// 与 qiRepair.ts 完全同构 —— 那一份也读这三个。**新增的是第二条路，不是第二个口径**:
+// 代价仍是 `qiRepairCost() × FACE_WALL_QI_MULT`，没有另起算式。
+const CORE_STORE_SITES = 161;
 /**
  * core 用例里需要 Pinia 的文件数基线(只许减)—— 「core 逻辑绑在 Pinia 上」的硬读数
  *

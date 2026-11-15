@@ -213,6 +213,19 @@ export const useCultivationStore = defineStore(
       buffs.value = clearNegativeBuffList(buffs.value);
     }
 
+    /**
+     * 只清掉某一味状态（按 defId）。
+     *
+     * `clearNegativeBuffs` 是按**分类**清的（`injury` 一网打尽），
+     * 而有些化解方式只针对其中一种:面壁破的是心魔，不该顺手把外伤也养好
+     * （见 `core/faceWall`）。故补这一枚窄口。
+     */
+    function clearBuff(defId: string): void {
+      if (buffs.value.length === 0) return;
+      const next = buffs.value.filter((b) => b.defId !== defId);
+      if (next.length !== buffs.value.length) buffs.value = next;
+    }
+
     // Phase 31 A3:选择功法悟道分支(满级后一次,不可改)
     /**
      * 择道。
@@ -263,6 +276,7 @@ export const useCultivationStore = defineStore(
       pruneBuffs,
       shiftBuffEnds,
       clearNegativeBuffs,
+      clearBuff,
       chooseBranch,
       sanitize,
     };

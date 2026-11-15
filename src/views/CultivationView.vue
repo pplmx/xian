@@ -296,6 +296,30 @@
                     : `灵气不足(需 ${formatNum(repair.cost)})`
                 }}
               </button>
+              <!--
+                心魔自己的那条路 —— 面壁破执。
+
+                静养（上面那个按钮）把伤势与心魔一起清掉，快但道心不长。
+                面壁**只清心魔**、更贵，破执之后得一段「道心通明」。
+
+                只在真有心魔时出现:没有心魔就没有执可破，按钮不该常驻
+                （那是"点了没反应"的按钮）。代价与差额走 `faceWallView` 现算，
+                不在模板里手写倍数。
+              -->
+              <button
+                v-if="face.hasHeartDemon"
+                type="button"
+                class="cultivation-ledger-action mt-2"
+                :disabled="!face.canFace"
+                data-cultivation-facewall
+                @click="faceWallWithQi()"
+              >
+                {{
+                  face.canFace
+                    ? `面壁破执 · 只清心魔 · 得道心通明 · 耗灵气 ${formatNum(face.cost)}`
+                    : face.reason
+                }}
+              </button>
               <QiShortfallNote
                 v-if="repairBlock"
                 :short="repairBlock.short"
@@ -523,6 +547,7 @@ import { baseCultPerSec } from "@/core/formulas";
 import { modOf } from "@/core/statsCalc";
 import { usePill } from "@/core/pillService";
 import { qiRepairView, repairWithQi } from "@/core/qiRepair";
+import { faceWallView, faceWallWithQi, faceWallCost, hasHeartDemon } from "@/core/faceWall";
 import { isRetreating } from "@/core/earlyGameService";
 import { useNow } from "@/composables/useNow";
 import { useProgressEta } from "@/composables/useProgressEta";
@@ -772,6 +797,19 @@ const { rows: qiDetailRows, note: qiDetailNote } = useProgressEta({
 
 /** 灵气疗伤(修复)状态:负伤时才出现入口,代价随灵气容量指数增长 */
 const repair = computed(() => qiRepairView());
+/**
+ * 面壁那一格的读数 —— 代价与差额都由 `faceWallView` 现算，模板不手写倍数。
+ *
+ * 灵气读 `resources.qi`（与静养同一份），代价读 `faceWallCost()`（它是
+ * `qiRepairCost() × FACE_WALL_QI_MULT`，与静养同一条口径放大）。
+ */
+const face = computed(() =>
+  faceWallView({
+    hasHeartDemon: hasHeartDemon(),
+    qi: resources.qi,
+    cost: faceWallCost(),
+  }),
+);
 /**
  * 引气疗伤付不起时:短差与回够时长现算(与突破钮 btQiBlock 同款纪律)——
  * 灰钮不能只报「需 X」,站在钮前的人要知道差多少、等多久。

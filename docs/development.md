@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 820 个 spec;本作自己那部分 740 个) |
+| `bun run test` | 全量用例(全量 821 个 spec;本作自己那部分 741 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 820 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 821 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 820 个 spec(本作自己那部分 740 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 821 个 spec(本作自己那部分 741 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -19938,3 +19938,85 @@ data/secsPerUnit.spec  新判据，独立文件名，不占 timeUnits.spec
 ```
 
 工作区干净、全量 820 / 6859 全绿；`check`、`test:report`、`check:ui` 同绿。
+
+### 第 373 轮:心魔和伤势共用一条化解路径 —— 而它不是外伤
+
+前几轮都在做一致性收敛，这一轮回到目标本身:**加可玩性**。
+
+#### 怎么找到这一处的
+
+先按纪律搜了两处（`docs/` 与 spec 文件名），再逐个题材要素点了一遍:
+
+```text
+心魔 10 处 · 道心 20 · 因果 14 · 业力 0 · 门派 1 · 师徒 0 · 双修 1
+```
+
+`心魔` 命中 10 个文件，看起来"有"。而打开看:
+
+```ts
+// core/qiRepair.ts
+", qiRepairView 的 reason"  →  「你并无伤势或心魔在身」
+「你引灵气静养，伤势与心魔尽复」
+```
+
+**心魔和伤势共用同一条路。** 而引灵气能把伤口养好，不能把执念养没。
+
+#### 它到底值不值得改
+
+心魔不是渡劫失败给的（那条给 `injury`），它来自**事件**:
+
+```text
+data/events.ts   水里那个对你笑 / 棋局心神难拔 / 塔中阴气缠身
+data/chains.ts   荒坟前灯灭
+```
+
+也就是说:撞见一件邪事、染上心魔、付灵气就没了 —— 在玩法上它等价于"掉了点血"。
+而在修仙里，心魔是修行的一部分:破执之后道心更坚。**那一半此前不存在。**
+
+查过 `docs/design.md` 与 `docs/development.md`，`心魔` 只在一张表里出现过一次，
+没有任何"这是设计"的裁定 —— 故这是空白，不是裁决。
+
+#### 补的那一半:面壁破执
+
+```text
+静养（旧）  灵气 35% 容量   心魔没了           快，道心不长
+面壁（新）  灵气 56% 容量   心魔没了 + 道心通明  贵，但破执有得
+```
+
+三条口径:
+
+```text
+一 必须更贵   若同价，玩家永远选面壁（它多给一个增益），那条路就不是取舍
+二 报酬复用   `enlighten_cult_strong`（道心通明，修速 +35%、300 秒）本来就是
+              顿悟的选项之一。给它另立新 id，玩家会在两个名字下看到同一件事
+三 只清心魔   面壁破的是执，不是外伤 —— 故给 store 补了一枚窄口 `clearBuff(defId)`，
+              与按分类清的 `clearNegativeBuffs` 并存（后者那条契约不动，
+              `engineBuffsParity.spec` 照旧钉着「重伤与心魔都在 injury 分类内」）
+```
+
+#### 一个只有写测试才会发现的错
+
+第一版 `faceWallView` 在内部直接调 `faceWallCost()`（读 `player.qiCapValue`），
+于是判据一 import 它就炸在 `getActivePinia()`。
+
+那不只是"测试不便" —— 它说明这个号称"界面读数"的函数**偷偷依赖了全局状态**。
+改成代价由调用方传入，纯函数。
+
+#### 浏览器门抓到的两件事
+
+```text
+① 第一次跑:两个钮都在，但存档灵气不足，两条路都停在"付不起"，
+   量不出「面壁比静养贵」—— 那是**夹具没造对**，不是产品问题
+② 补足灵气后门报「没报灵气数」—— 而钮上明明写着「耗灵气 1.694万」。
+   是我的解析器只认 `/灵气 ([\d,]+)/`，不认「万」这个单位。
+   修好之后才真正量到:面壁 1.694万 / 静养 1.058万
+```
+
+②这次红得有价值:**它的失败理由写的是"产品没报数"，而实际是判据自己看不懂**。
+若不去看输出里那行 `«面壁破执 · 只清心魔 · 得道心通明 · 耗灵气 1.694万»`，
+很容易顺着自己的错误结论去改产品。
+
+故障注入确认有效:把 `FACE_WALL_QI_MULT` 改成 0.8，门当场红
+「面壁(8468) 不比静养(10580) 贵 —— 那它就不是取舍」。
+
+工作区干净、全量 821 / 6864 全绿；`check`、`test:report`、`check:ui` 同绿。
