@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 818 个 spec;本作自己那部分 738 个) |
+| `bun run test` | 全量用例(全量 819 个 spec;本作自己那部分 739 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 818 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 819 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 818 个 spec(本作自己那部分 738 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 819 个 spec(本作自己那部分 739 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -19787,3 +19787,75 @@ const tribWeather = computed(() => todayWeather(tribTargetMajor.value));
 两条一起红。修好后报「法则潮」（神界）。
 
 工作区干净、全量 818 / 6852 全绿；`check`、`test:report`、`check:ui` 同绿。
+
+### 第 371 轮:上一轮那个 bug 的成因，不是「写错了一个函数」
+
+第 370 轮修了渡劫面板取错境界。这一轮回头问了一个更有用的问题:
+**那个 bug 为什么会发生？**
+
+答案不是"某次改动写错了"，而是:
+
+```text
+   这个三目在运行时代码里出现了 4 次
+   core/tribulationDecision  × 2
+   ui/TribulationPanel       × 2      ← 同一个文件里两处，其中一处是对的、另一处是错的
+```
+
+**只要有一处改了、另一半没改，就又是一次「面板与结算对不上」。** 第 370 轮那次正是
+同一个文件里两个口径并存 —— 一处写对了 `tribTargetMajor`，另一处还在用 `player.major`。
+
+#### 为什么结果型判据救不了它
+
+本仓对「两本账」的纪律写得很清楚，但绝大多数判据守的是**结果**:
+
+```text
+   「预览的劫型 === 结算的劫型」
+   「面板的把握 === buildTribulationPlan 给的」
+```
+
+这些判据只在**有人跑它覆盖的那几条路径**上有效。表达式一旦散开，新增的第五条、
+第六条路径不会被任何结果判据覆盖 —— 而第 370 轮那个 bug 正好长在第五条上。
+
+故这一轮守**成因**:
+
+```text
+   断言的形状:那个三目在运行时代码里只出现一次
+```
+
+#### 做法:收成一处具名导出
+
+```ts
+export function tribulationTargetMajor(player): number {
+  return player.isMajorStep ? player.major + 1 : player.major;
+}
+```
+
+四处全部改用它。同时把 `BreakthroughCard` 里那一处内联的 `player.major + 1` 也换过来 ——
+那里虽然被守卫限定了"必是大关"、两者等价，但**同一个语义只写一遍**才是这条判据的意思。
+
+#### 判据里有一段自证
+
+```text
+「注释里的提及不算违规 —— 判据不会把解释当成第二份实现」
+  构造一段只在注释里提到它的源码，判据应当放行
+```
+
+没有这一段，判据会禁止所有解释这段逻辑的注释 —— 而那正是本仓最看重的记录。
+
+#### 两处旧判据跟着改，都**变得更严**了
+
+```text
+① tribulationWeatherParity「nextMajor 不再是 major + 1」
+   原:钉内联三目的字面写法
+   新:钉「nextMajor 从 tribulationTargetMajor 取」
+   —— 原来只钉写法，现在钉来源唯一
+
+② tribPanelWeatherMajor「tribTargetMajor 与结算是同一个表达式」
+   同理。原来钉的是内联写法 —— 那在第 371 轮之后成了**反面**:
+   内联反而更糟。
+```
+
+这是这条判据的一个附产品:**它把「内联写对」和「从唯一来源取」区分开了。**
+前者看起来对，但它是下一份拷贝的种子。
+
+工作区干净、全量 819 / 6855 全绿；`check`、`test:report`、`check:ui` 同绿。

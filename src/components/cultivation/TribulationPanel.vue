@@ -165,6 +165,7 @@ import {
   sustainScore,
   tribLowHpReduction,
   tribReduction,
+  tribulationTargetMajor,
   tribulationWaveSpan,
   type TribulationPlan,
 } from "@/core/tribulationDecision";
@@ -217,7 +218,7 @@ const PREP_STARS = ["·", "✧", "✧✧", "✧✧✧"] as const;
  * 它必须声明在 `tribWeather` **之前**:computed 是惰性的，写反了运行时也能跑，
  * 但那是一条脆弱的依赖 —— 改成 `effectScope` 或以后有人加 `immediate` 就会当场炸。
  */
-const tribTargetMajor = computed(() => (player.isMajorStep ? player.major + 1 : player.major));
+const tribTargetMajor = computed(() => tribulationTargetMajor(player));
 
 const tribWeather = computed(() => todayWeather(tribTargetMajor.value));
 const tribWeatherMult = computed(() =>
@@ -260,11 +261,7 @@ const tribLedger = computed(() => {
 
 /** 天威本身的长相(道数 + 单波区间):与结算同一批函数,不在界面里另算一遍 */
 const tribWave = computed(() =>
-  tribulationWaveSpan(
-    props.plan.def,
-    player.isMajorStep ? player.major + 1 : player.major,
-    tribWeather.value.tribulationMult,
-  ),
+  tribulationWaveSpan(props.plan.def, tribTargetMajor.value, tribWeather.value.tribulationMult),
 );
 
 /** Phase 32.2 与此劫气机相应的灵根:判据取自 tribulationRelief,界面说的与结算做的同源 */

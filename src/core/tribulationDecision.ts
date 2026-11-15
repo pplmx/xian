@@ -251,7 +251,7 @@ export function currentStatGuard(player: TribulationPlayer): TribStatGuard {
     major: player.major,
     sub: player.sub,
   });
-  const nextMajor = player.isMajorStep ? player.major + 1 : player.major;
+  const nextMajor = tribulationTargetMajor(player);
   const fold = statFoldAt(nextMajor);
   return { resist: raw.resist * fold, guard: raw.guard * fold };
 }
@@ -628,11 +628,36 @@ export function currentTribulationRelief(
   return tribulationRelief(rootElements(player.linggen?.roots), kind);
 }
 
+/**
+ * 「此刻这一劫打的是哪一境」—— **全仓唯一一处**。
+ *
+ * ```text
+ *   大关（sub 满）  major + 1   渡的是下一境的劫
+ *   小境          major        打的是本境的劫
+ * ```
+ *
+ * ## 为什么它值得一个具名函数
+ *
+ * 这个三目曾经在四处各写一遍:core 两处、渡劫面板两处。第 370 轮那个 bug
+ * 正是这么来的 —— 面板里 `tribTargetMajor` 写对了，而同一个文件里另一处
+ * 还在用 `player.major`，于是那一屏的天时与结算不是同一个境界。
+ *
+ * 结果型判据（「两个数相等」）只在有人跑它的那几条路径上有效;表达式一旦散开，
+ * 新增的第五条路径不会被任何结果判据覆盖。故把成因也收掉。
+ *
+ * 判据见 `core/tribTargetMajorSingleSource.spec`（含自证:注释里的提及不算违规）。
+ */
+export function tribulationTargetMajor(
+  player: Pick<TribulationPlayer, "major" | "isMajorStep">,
+): number {
+  return player.isMajorStep ? player.major + 1 : player.major;
+}
+
 /** 供 UI:当前玩家(含天时、灵根)的渡劫计划
  * 渡劫难度随天时(雷鸣日+8%):预览乘入 todayWeather().tribulationMult,
  * 与结算 runTribulation 同源(见 breakthrough.ts),预览与实算不可能分叉 */
 export function currentTribulationPlan(player: TribulationPlayer): TribulationPlan {
-  const nextMajor = player.isMajorStep ? player.major + 1 : player.major;
+  const nextMajor = tribulationTargetMajor(player);
   const kind = rollTribulation(nextMajor);
   return buildTribulationPlan(
     nextMajor,

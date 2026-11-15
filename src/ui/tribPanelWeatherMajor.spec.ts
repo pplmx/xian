@@ -62,9 +62,16 @@ describe("渡劫面板 · 天时取的境界", () => {
     expect(BREAKTHROUGH, "结算没有按 targetMajor 取天时").toMatch(
       /todayWeather\(\s*targetMajor\s*\)/,
     );
-    // 面板的 tribTargetMajor 与结算的 targetMajor 是同一个表达式
-    expect(PANEL, "tribTargetMajor 不再是「大关取下一境、小境取本境」").toMatch(
-      /tribTargetMajor\s*=\s*computed\(\(\)\s*=>\s*\(?player\.isMajorStep \? player\.major \+ 1 : player\.major\)?/,
+    /*
+     * 面板的 `tribTargetMajor` 现在**从 core 取**（第 371 轮把那个三目收成
+     * `tribulationTargetMajor` 一处）。
+     *
+     * 这条判据原本钉的是内联三目的字面写法 —— 那在第 371 轮之后成了**反面**:
+     * 内联反而更糟（四处各写一遍，正是第 370 轮那个 bug 的成因）。
+     * 故改成钉「它来自 core 那一个」。
+     */
+    expect(PANEL, "tribTargetMajor 不再从 core 取 —— 它自己那份就是第二个来源").toMatch(
+      /tribTargetMajor\s*=\s*computed\(\(\)\s*=>\s*tribulationTargetMajor\(player\)/,
     );
   });
 

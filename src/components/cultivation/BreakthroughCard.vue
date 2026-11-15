@@ -269,6 +269,7 @@ import {
   currentTribulationPlan,
   currentStatGuard,
   currentTribulationRelief,
+  tribulationTargetMajor,
   verdictLabel,
   type TribulationPlan,
 } from "@/core/tribulationDecision";
@@ -458,7 +459,11 @@ const noPointText = computed(() => {
  */
 const waitPayoff = computed(() => {
   if (player.atMaxRealm || !player.isMajorStep) return null;
-  const targetMajor = player.major + 1;
+  /*
+   * 走 `tribulationTargetMajor` 而不是内联 `player.major + 1` —— 这里虽然被上面的
+   * 守卫限定了"必是大关"，两者等价，但同一个语义只写一遍，别处改了这个数就跟着改。
+   */
+  const targetMajor = tribulationTargetMajor(player);
   const todayId = todayWeather(player.major).id;
   const future = upcomingWeather(6, player.major)
     .map((w) => w.id)

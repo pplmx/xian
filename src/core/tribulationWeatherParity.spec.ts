@@ -59,9 +59,14 @@ describe("渡劫天时 · 预览与结算同源", () => {
      * 上两条只管"各用了哪个变量名"。这一条管那个等式本身:
      * 若哪天把 nextMajor 的定义改成 `player.major`(不 +1),两条仍绿而实际分叉。
      */
-    expect(DECISION, "nextMajor 不再是 major + 1 —— 与结算的 targetMajor 对不上了").toMatch(
-      /const nextMajor = player\.isMajorStep \? player\.major \+ 1 : player\.major/,
-    );
+    /*
+     * 第 371 轮把那个三目收成了 `tribulationTargetMajor` 一处，故这里改钉
+     * 「nextMajor 从它取」—— 比原来更严:原来只钉写法，现在钉来源唯一。
+     */
+    expect(
+      DECISION,
+      "nextMajor 不再从 tribulationTargetMajor 取 —— 与结算的 targetMajor 可能对不上",
+    ).toMatch(/const nextMajor = tribulationTargetMajor\(player\)/);
     // 结算那边传的也是 +1 形态
     expect(BREAKTHROUGH, "runTribulation 的入参不再是 player.major + 1").toMatch(
       /runTribulation\(player\.major \+ 1\)/,

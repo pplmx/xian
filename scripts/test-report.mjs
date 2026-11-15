@@ -492,6 +492,7 @@ const CATEGORIES = [
       "lifespanOnCharacter",
       "statHints",
       "tribPanelWeatherMajor",
+      "tribTargetMajorSingleSource",
       "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",
