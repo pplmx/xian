@@ -9275,6 +9275,91 @@ async function taskWeatherRoute() {
  *      真正需要解释的那几条埋掉;
  *   三 释义与代码对得上（由 `statHints.spec` 在单元层管，这里只管渲染）。
  */
+/**
+ * 渡劫面板的天时按目标境取 —— 跨界三点（8/13/17）上两种取法给出不同的劫。
+ *
+ * 这一屏的全部意义是「渡劫前一眼对上」，而它此前用 `player.major` 取天时，
+ * 与结算的 `targetMajor` 不是同一个境界。跨界那三处两池不同，于是
+ * 劫名与真会渡的那一劫不是同一个。
+ *
+ * 判据:在 m13（仙界最后一境，渡过去是神界）摆一份存档，看面板上报的天时
+ * 属于**神界池**（神辉 / 法则潮 / 神威日），而不是仙界池。
+ */
+async function taskTribWeatherBoundary() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const GOD_POOL = ["神辉", "法则潮", "神威日"];
+    const IMMORTAL_POOL = ["仙雨", "紫气东来", "仙劫日"];
+    let sawGod = false;
+    let sawImmortal = false;
+    let sample = null;
+
+    // 多试几个游戏日 —— 天时按 totalPlaySec 翻页，单日可能恰好两池同名类
+    for (const day of [0, 3, 7, 12, 20]) {
+      checked += 1;
+      const slices = showcaseSlices("light");
+      // m13 + sub 满 = 站在仙界末境的关前，渡过去是神界
+      slices.game = { ...slices.game, totalPlaySec: day * 86400 };
+      slices.player = {
+        ...slices.player,
+        major: 13,
+        sub: 9,
+        dead: false,
+        exp: { m: 9 ** 15, e: 0 },
+      };
+      await seedSave(ctx, slices, `__tribBoundary${day}`);
+      const page = await ctx.newPage();
+      const pageErrors = [];
+      watchPageErrors(page, pageErrors);
+      await openRoute(page, "/cultivation", 1400);
+      await clearOverlays(page);
+      const txt = await page.evaluate(() => {
+        const panel = document.querySelector("[data-cultivation-tribulation]");
+        return panel ? (panel.textContent || "").replace(/\s+/g, " ") : null;
+      });
+      await page.close();
+      if (pageErrors.length) {
+        failures.push(`[390] 渡劫面板天时取境页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+      }
+      if (!txt) continue;
+      const hitGod = GOD_POOL.find((n) => txt.includes(n));
+      const hitImm = IMMORTAL_POOL.find((n) => txt.includes(n));
+      if (hitGod) {
+        sawGod = true;
+        sample ??= hitGod;
+      }
+      if (hitImm) sawImmortal = true;
+    }
+
+    if (!sawGod) {
+      failures.push(
+        "[390] 渡劫面板天时取境:五个游戏日里都没在 m13 的面板上看到神界天时 —— 仍按旧界池取?",
+      );
+    }
+    if (sawImmortal) {
+      failures.push(
+        "[390] 渡劫面板天时取境:m13 的面板上出现了仙界天时 —— 那是旧界的池子，与结算不是同一个",
+      );
+    }
+
+    if (failures.length === 0) {
+      console.log(`\n渡劫面板天时取境: m13 关前报的是神界天时（如「${sample}」），不是仙界池`);
+    } else {
+      console.log(`\n渡劫面板天时取境[未通过]:${JSON.stringify({ sawGod, sawImmortal })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked };
+}
+
 async function taskStatHint() {
   const failures = [];
   let checked = 0;
@@ -34755,6 +34840,7 @@ const TASKS = [
   ["闭关出关有悟", taskRetreatEnlighten],
   ["人物页报寿元", taskLifespanOnCharacter],
   ["词条释义", taskStatHint],
+  ["渡劫面板天时取境", taskTribWeatherBoundary],
   ["今天该去做什么", taskWeatherRoute],
   ["尚差道源怎么补", taskDaoFill],
   ["道源补法要处处都有", taskDaoFillElsewhere],

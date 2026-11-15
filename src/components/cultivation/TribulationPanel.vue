@@ -187,8 +187,39 @@ const props = defineProps<{
 const PREP_NAMES = { guard: "护持", sustain: "恢复", resist: "抗性", burst: "爆发" } as const;
 const PREP_STARS = ["·", "✧", "✧✧", "✧✧✧"] as const;
 
-/** 这天时是这场劫算进去的那一个(与结算/主页同源);倍率 >1 才挂字 */
-const tribWeather = computed(() => todayWeather(player.major));
+/**
+ * 这天时是这场劫算进去的那一个 —— **按 `tribTargetMajor` 取，不是 `player.major`**。
+ *
+ * 这是第 358 轮那条线的尾巴。那一轮修的是「预览 vs 结算」:
+ *
+ * ```text
+ *   预览 currentTribulationPlan   todayWeather(nextMajor)
+ *   结算 runTribulation           todayWeather(targetMajor)   ← 当时改对的
+ * ```
+ *
+ * 而这一行**漏掉了**，仍读 `player.major`;它的注释还写着「与结算同源」——
+ * 与主页对上了，与结算没对上。而这一屏存在的全部意义正是「渡劫前一眼对上」。
+ *
+ * `worldOf` 按界域分池，故只有跨界那三处（8 / 13 / 17）会取到不同池子:
+ *
+ * ```text
+ *   m13→14   旧池「紫气东来」= heavyrush  |  新池「神威日」= ironbody
+ *   m17→18   旧池「神辉」    = thunder    |  新池「本源涌动」= soulrend
+ * ```
+ *
+ * 一世只有三次大跃升，而那三次恰好是玩家最会反复看这一屏的三次。
+ * 判据见 `ui/tribPanelWeatherMajor.spec`（含一条反证:两池哪天合并了，那组判据该销账）。
+ */
+/**
+ * 这一劫打的是哪一境 —— **天时、界膜、结算三处共用这一个表达式**。
+ *
+ * 大关取下一境（渡的就是那一境的劫），小境取本境。
+ * 它必须声明在 `tribWeather` **之前**:computed 是惰性的，写反了运行时也能跑，
+ * 但那是一条脆弱的依赖 —— 改成 `effectScope` 或以后有人加 `immediate` 就会当场炸。
+ */
+const tribTargetMajor = computed(() => (player.isMajorStep ? player.major + 1 : player.major));
+
+const tribWeather = computed(() => todayWeather(tribTargetMajor.value));
 const tribWeatherMult = computed(() =>
   tribWeather.value.tribulationMult > 1 ? tribWeather.value.tribulationMult : null,
 );
@@ -198,13 +229,6 @@ const tribWeatherResistPenalty = computed(() => {
   return r < 0 ? formatPercent(r, 0) : null;
 });
 
-/**
- * 这一劫是不是「界膜」那一关(人间→仙界 / 仙界→神界 / 神界→混沌海)。
- *
- * 判据取自 tribulationDecision.statFoldAt(三维折算的折扣):
- * 界面与结算读的必须是同一个数,否则又会出现"显示有护持、结算没有"。
- */
-const tribTargetMajor = computed(() => (player.isMajorStep ? player.major + 1 : player.major));
 const worldStep = computed(() => statFoldAt(tribTargetMajor.value) < 1);
 
 /**

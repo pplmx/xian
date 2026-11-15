@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 817 个 spec;本作自己那部分 737 个) |
+| `bun run test` | 全量用例(全量 818 个 spec;本作自己那部分 738 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 817 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 818 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 817 个 spec(本作自己那部分 737 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 818 个 spec(本作自己那部分 738 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -19711,3 +19711,79 @@ const dodge = Math.min(0.95, Math.max(0, modOf(tMods,"dodgeRate") - modOf(aMods,
 那条注入的句子**正是**第一反应会写出来的形状。
 
 工作区干净、全量 817 / 6847 全绿；`check`、`test:report`、`check:ui` 同绿。
+
+### 第 370 轮:渡劫面板的天时取错了境界 —— 而注释写着「与结算同源」
+
+这一轮查的是「同一件事有没有两处用了不同的基准」。撞到第 358 轮那条线的**尾巴**。
+
+#### 那条线修了一半
+
+第 358 轮修的是「预览 vs 结算」:
+
+```text
+   预览 currentTribulationPlan   todayWeather(nextMajor)
+   结算 runTribulation           todayWeather(targetMajor)     ← 当时改对的
+```
+
+而**第三处**漏了 —— 渡劫面板:
+
+```ts
+// TribulationPanel.vue（改前）
+/** 这天时是这场劫算进去的那一个(与结算/主页同源);倍率 >1 才挂字 */
+const tribWeather = computed(() => todayWeather(player.major));
+```
+
+注释写着「与结算同源」，而它读的是 `player.major`。**它确实与主页对上了，
+但与结算没对上** —— 而这一屏存在的全部意义正是「渡劫前一眼对上」。
+
+更刺眼的是:同一个文件里**本来就有** `tribTargetMajor`（界膜判定在用），
+只是这一行没读它。
+
+#### 什么时候露馅:一世三次
+
+`worldOf` 按界域分池，故只有跨界那三处（8 / 13 / 17）会取到不同池子。量出来:
+
+```text
+   m13→14   旧池「紫气东来」= heavyrush  |  新池「神威日」= ironbody
+   m17→18   旧池「神辉」    = thunder    |  新池「本源涌动」= soulrend
+```
+
+也就是说:**在一世只有三次的大跃升前，那一屏上的劫名与真正会渡的那一劫不是同一个。**
+而那三次恰好是玩家最会反复看那一屏的三次。
+
+#### 修法与一条顺带发现的脆弱
+
+```text
+const tribTargetMajor = computed(() => ...)   ← 提到前面
+const tribWeather = computed(() => todayWeather(tribTargetMajor.value));
+```
+
+那两行原本是**反着的**（`tribWeather` 在前）。computed 惰性求值，故运行时能跑 ——
+但那不是"没问题"，是**没被触发**。哪天有人给它加 `immediate`、或搬进
+`effectScope` 先求值一次，就会当场撞 TDZ。故加了一条声明顺序的判据。
+
+#### 三条判据
+
+```text
+一 面板不按 player.major 取天时（静态断言）
+二 面板按 tribTargetMajor 取，且它与结算的 targetMajor 是同一个表达式
+三 反证:跨界三点上两池**真的**会给出不同劫型 —— 若哪天池子合并了，
+   这组判据会红，提醒销账，而不是留一堆守空气的断言
+```
+
+第三条是这一轮特意加的。一组守着某个 bug 的判据，在 bug 不可能再发生之后
+就成了纯负担 —— 让它自己说出来。
+
+#### 浏览器门真的复现了那个 bug
+
+新加的「渡劫面板天时取境」在 m13 关前摆档，看面板上报的是**神界池**还是仙界池。
+故障注入（把 `tribTargetMajor.value` 改回 `player.major`）之后:
+
+```text
+✗ 五个游戏日里都没在 m13 的面板上看到神界天时 —— 仍按旧界池取?
+✗ m13 的面板上出现了仙界天时 —— 那是旧界的池子，与结算不是同一个
+```
+
+两条一起红。修好后报「法则潮」（神界）。
+
+工作区干净、全量 818 / 6852 全绿；`check`、`test:report`、`check:ui` 同绿。
