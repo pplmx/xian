@@ -48,6 +48,29 @@ export const NEEDS_HINT = [
   "eventLuck",
   "breakRefund",
   "beastPct",
+  /*
+   * 第 369 轮补的四条 —— 同一类问题，但成因不同。
+   *
+   * 前八条是「名字本身指向不明」（气运、御劫、定心护料）。
+   * 这四条是「名字读起来不像概率」:
+   *
+   * ```text
+   *   闪避 +5%     读起来像"闪避能力提升了 5%"——而它是"每次被打有 5% 概率闪掉"
+   *   连击 +15%    读起来像"连击伤害 +15%"——而它是"每次出手有 15% 概率再打一次"
+   *   震慑 +3%     读起来像"震慑强度"——而它是"每次出手有 3% 概率让对方跳过一回合"
+   *   反击概率 +20% 这条**叫对了**（带「概率」二字），留着当对照组
+   * ```
+   *
+   * 五个词条（含 `critRate` 暴击率、`counterRate` 反击概率）都是
+   * `core/combat` 里的 `rng.chance(...)` —— 同一件事，三种叫法。
+   *
+   * **不改名字**:「闪避」「连击」在 41 / 30 处出现，且都是修仙题材里的正词；
+   * 改名的代价远大于补一句说明。故走 `STAT_HINTS` 这条路。
+   */
+  "dodgeRate",
+  "comboRate",
+  "stunRate",
+  "counterRate",
 ] as const;
 
 describe("词条释义 · 名字读不出作用的那些", () => {
@@ -101,6 +124,22 @@ describe("词条释义 · 名字读不出作用的那些", () => {
         src.includes(c.key) || src.includes(JSON.stringify(c.key).slice(1, -1)),
         `「${c.key}」的释义说它管某件事，而 ${c.file} 里找不到这个键 —— 释义与代码对不上`,
       ).toBe(true);
+    }
+  });
+
+  it("概率类词条要说明「这是概率」，不是「能力值」", () => {
+    /*
+     * 五个都是 `core/combat` 的 `rng.chance(...)` —— 每次判定掷一次。
+     * 而名字里只有「暴击率」「反击概率」两条带"率/概率"，另三条读起来像能力值。
+     *
+     * 判据:`dodgeRate` / `comboRate` / `stunRate` 的释义里要出现「概率」或「掷」
+     * 这类把它说成"一次判定"的词，不能只写"闪掉攻击"这种结果描述 ——
+     * 那仍然读不出它是每次掷的。
+     */
+    for (const k of ["dodgeRate", "comboRate", "stunRate"]) {
+      const hint = statHintOf(k);
+      expect(hint, `「${k}」没有释义`).toBeTruthy();
+      expect(hint!, `「${k}」的释义没有说清它是概率判定: ${hint}`).toMatch(/概率|掷|判定/);
     }
   });
 

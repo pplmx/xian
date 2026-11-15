@@ -9351,10 +9351,47 @@ async function taskStatHint() {
     if (pageErrors.length) {
       failures.push(`[390] 词条释义页面异常:${[...new Set(pageErrors)].join(" | ")}`);
     }
+    /*
+     * 第二条样本:「闪避」—— 名字读起来像能力值，而它是"每次被打掷一次"的概率。
+     * 判据不钉措辞，只钉它说出了**这是概率**（含「概率 / 掷 / 判定」之一）。
+     * 只测「气运」一条的话，这一类（名字像能力值）坏了没人知道。
+     */
+    checked += 1;
+    let dodgeText = null;
+    {
+      await page.evaluate(() => {
+        const groups = [...document.querySelectorAll("[data-character-modifier-group]")];
+        if (groups[0]) groups[0].click();
+      });
+      await page.waitForTimeout(600);
+      const hitDodge = await page.evaluate(() => {
+        const rows = [...document.querySelectorAll("[data-character-modifier-folio] button")];
+        const hit = rows.find((e) => (e.textContent || "").trim().startsWith("闪避"));
+        if (!hit) return false;
+        hit.click();
+        return true;
+      });
+      await page.waitForTimeout(600);
+      dodgeText = await page.evaluate(() => {
+        const el = document.querySelector("[data-character-modifier-hint]");
+        return el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null;
+      });
+      if (!hitDodge) {
+        // 这一支不是失败:那一组的词条取决于夹具，取不到就注明并跳过
+        dodgeText = null;
+      } else if (!dodgeText) {
+        failures.push("[390] 词条释义:「闪避」点开明细后没有释义");
+      } else if (!/概率|掷|判定/.test(dodgeText)) {
+        failures.push(
+          `[390] 词条释义:「闪避」的释义没说清它是概率判定 —— 读起来仍像能力值 «${dodgeText}»`,
+        );
+      }
+    }
+
     if (failures.length === 0) {
-      console.log(`\n词条释义:气运 → «${info.text}»`);
+      console.log(`\n词条释义:气运 → «${info.text}» ；闪避 → «${dodgeText ?? "（夹具未含此条）"}»`);
     } else {
-      console.log(`\n词条释义[未通过]:${JSON.stringify(info)}`);
+      console.log(`\n词条释义[未通过]:${JSON.stringify({ info, dodgeText })}`);
     }
   } finally {
     await ctx.close();

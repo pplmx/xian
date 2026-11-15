@@ -169,6 +169,31 @@ export const STAT_HINTS: Partial<Record<AnyStatKey, string>> = {
   breakRefund: "突破失败时折损的修为更少（最多抵八成）",
   /** `data/pets` + 灵兽园：灵兽自身词条的放大倍率 */
   beastPct: "所携灵兽的词条按此倍率放大",
+
+  /*
+   * ---- 概率类:名字读起来不像概率的那三条 ----
+   *
+   * 五个词条都是 `core/combat` 里的 `rng.chance(...)` —— 每次判定掷一次骰。
+   * 而名字里只有「暴击率」「反击概率」两条带"率/概率"字样，
+   * 另三条（闪避 / 连击 / 震慑）读起来像能力值:
+   *
+   * ```text
+   *   闪避 +5%     像"闪避能力提升了 5%"，实为"每次被打有 5% 概率闪掉"
+   *   连击 +15%    像"连击伤害 +15%"，实为"每次出手有 15% 概率再打一次"
+   *   震慑 +3%     像"震慑强度"，实为"每次出手有 3% 概率让对方跳过一回合"
+   * ```
+   *
+   * **不改名字**:「闪避」「连击」在仓里各出现 41 / 30 处，且都是修仙题材的正词;
+   * 改名的代价远大于补一句说明。
+   */
+  /** `core/combat`:`dodge = dodgeRate - 对方 accuracy`，再 `rng.chance(dodge)` */
+  dodgeRate: "每次被攻击时按此概率闪掉；对方命中会先抵掉一部分",
+  /** `core/combat`:出手后 `rng.chance(comboRate)` 命中则追打一次 */
+  comboRate: "每次出手后按此概率再追打一次",
+  /** `core/combat`:出手后 `rng.chance(stunRate)` 命中则对方跳过一回合 */
+  stunRate: "每次出手后按此概率让对方法术一滞、跳过一回合",
+  /** `core/combat`:被打后 `rng.chance(counterRate)` 命中则反打一次；多段攻击每段都可能挨 */
+  counterRate: "每次被攻击后按此概率反打一次（对多段攻击每段都可能触发）",
 };
 
 /**
