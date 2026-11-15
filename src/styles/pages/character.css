@@ -536,6 +536,16 @@
     font-size: var(--type-note);
     line-height: 1.45;
   }
+  /*
+   * 寿元那一行 —— 与资质地板同款，但将尽时整行转朱砂。
+   * 阈值由模板的 `is-alert` 给（读 LIFESPAN_WARN_RATIO，与顶栏同一档），
+   * 这里只负责"红成什么样"。
+   */
+  .character-dossier__lifespan.is-alert .character-dossier__floor-value,
+  .character-dossier__lifespan.is-alert .character-dossier__floor-label {
+    color: rgb(var(--color-cinnabar-rgb));
+  }
+
   .character-dossier__floor-value {
     color: var(--color-ink-soft);
     font-family: var(--font-kai);

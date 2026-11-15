@@ -489,6 +489,7 @@ const CATEGORIES = [
       "artifactWudaoSink",
       "retreatEnlightenment",
       "retreatEnlightenNote",
+      "lifespanOnCharacter",
       "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",

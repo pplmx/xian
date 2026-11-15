@@ -166,6 +166,35 @@
                 >
               </p>
               <!--
+                寿元 —— 全站**只有顶栏**报它，而顶栏在 320 档还收起（`compact:hidden`）。
+                人物页是「我此刻是什么样」的那一页:战力、灵根、资质地板都在，
+                唯独缺了那个**决定这一世还剩多久**的数。而寿元是本作唯一不可逆的东西
+                （修为能攒、资源能刷、伤势会好，只有它只走不回头）。
+
+                报**剩余**而不是只报 `age/max`:后者要心算，而后期那是两个七八位数相减
+                （混沌海寿元数十万亿载）。顶栏保持 age/max（它窄），这里给能直接用的那个数。
+
+                余数由 `player.lifespanMax - player.age` 现算 —— 不读 `realm.lifespanYears`
+                裸值（那会漏掉 lifespanPct 与丹药/际遇的加算，是两本账）。
+                将尽时与顶栏用**同一档** `LIFESPAN_WARN_RATIO` 变色。
+              -->
+              <p
+                class="character-dossier__floor character-dossier__lifespan"
+                :class="{ 'is-alert': player.lifespanRatio < LIFESPAN_WARN_RATIO }"
+                data-character-lifespan
+              >
+                <span class="character-dossier__floor-label">寿 元</span>
+                <span class="character-dossier__floor-value tabular"
+                  >余 {{ formatNum(lifespanRemaining) }} 载</span
+                >
+                <span class="character-dossier__floor-source tabular"
+                  >已过 {{ formatNum(player.age) }} / {{ formatNum(player.lifespanMax) }}</span
+                >
+                <span class="character-dossier__floor-gap tabular"
+                  >尚余 {{ formatPercent(player.lifespanRatio, 0) }}</span
+                >
+              </p>
+              <!--
                 灵根那一段解释收成一条「注」。
 
                 它答的是「倍率怎么算、五行管什么」—— 都是**为什么**,不是此刻的读数;
@@ -648,6 +677,7 @@
 <script setup lang="ts">
 import "@/styles/pages/character.css";
 import { realmOrdinalText } from "@/core/realmLadder";
+import { LIFESPAN_WARN_RATIO } from "@/data/constants";
 import { computed, nextTick, ref } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import { STAGE_NAMES } from "@/data/daolu";
@@ -707,6 +737,12 @@ import { aptitudeFloorBrief } from "@/ui/reincarnationDesk";
 import { totalInsight } from "@/core/samsaraService";
 
 const player = usePlayerStore();
+
+/**
+ * 还剩多少载 —— `lifespanMax` 已经含 `lifespanPct` 与丹/际遇的加算（见 store），
+ * 故这里只做一次减法，不读 `realm.lifespanYears` 裸值。
+ */
+const lifespanRemaining = computed(() => Math.max(0, player.lifespanMax - player.age));
 const [foundationChapter, modifiersChapter, catalogChapter] = characterChapters();
 /** 卦在身:时限制的一卦在跑 —— 界域志那一行要报出来(问卦就在那一册里) */
 const divinationOn = computed(() => !!player.activeDivination);

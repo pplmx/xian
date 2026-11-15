@@ -9255,6 +9255,92 @@ async function taskWeatherRoute() {
  *   二 那个百分比与 `retreatEnlightenChance` 同源（前期 35%，不是手抄的别的数）;
  *   三 元婴之后那一行**消失** —— 留一条永远不会发生的承诺比不说更糟。
  */
+/**
+ * 人物页要报寿元 —— 那是全站唯一不可逆的一条线。
+ *
+ * 之前只有顶栏 `{{age}}/{{max}}载`，而顶栏在 320 档是 `compact:hidden` ——
+ * 最窄的屏上，玩家一处也看不到这一世还剩多久。
+ *
+ * 判据三件:
+ *   一 人物页上有那一行，且给的是**剩余**（不是只给 age/max —— 后者要心算）;
+ *   二 平时不着重色;
+ *   三 将尽时变色（与顶栏同一档阈值）。
+ */
+async function taskLifespanOnCharacter() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    /** 造一份「寿元充裕」与「寿元将尽」的存档 */
+    const at = (ageYears) => {
+      const slices = showcaseSlices("light");
+      slices.player = { ...slices.player, major: 2, sub: 0, age: ageYears, dead: false };
+      return slices;
+    };
+
+    // ---- 充裕：那一行在，带「余 N 载」 ----
+    checked += 1;
+    await seedSave(ctx, at(100), "__lifespanFresh");
+    let page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/character", 1400);
+    await clearOverlays(page);
+    const fresh = await page.evaluate(() => {
+      const el = document.querySelector("[data-character-lifespan]");
+      return {
+        text: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null,
+        alert: el ? el.classList.contains("is-alert") : false,
+      };
+    });
+    if (!fresh.text) {
+      failures.push("[390] 人物页报寿元:人物页没有那一行 —— 只有顶栏报，而顶栏 320 档还隐藏");
+    } else {
+      if (!/余\s*[\d.]+/.test(fresh.text)) {
+        failures.push(`[390] 人物页报寿元:没有报「余 N 载」—— 玩家还得自己减 «${fresh.text}»`);
+      }
+      if (fresh.alert) {
+        failures.push(`[390] 人物页报寿元:寿元充裕却着了重色 «${fresh.text}»`);
+      }
+    }
+
+    // ---- 将尽：变色 ----
+    checked += 1;
+    await seedSave(ctx, at(1345), "__lifespanFading");
+    page = await ctx.newPage();
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/character", 1400);
+    await clearOverlays(page);
+    const fading = await page.evaluate(() => {
+      const el = document.querySelector("[data-character-lifespan]");
+      return {
+        text: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null,
+        alert: el ? el.classList.contains("is-alert") : false,
+      };
+    });
+    if (fading.text && !fading.alert) {
+      failures.push(`[390] 人物页报寿元:寿元将尽却没有变色 «${fading.text}»`);
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 人物页报寿元页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n人物页报寿元: «${fresh.text}» ；将尽变色 ${fading.alert}`);
+    } else {
+      console.log(`\n人物页报寿元[未通过]:${JSON.stringify({ fresh, fading })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked };
+}
+
 async function taskRetreatEnlighten() {
   const failures = [];
   let checked = 0;
@@ -34534,6 +34620,7 @@ const TASKS = [
   ["闭关的跨页承诺", taskRetreat],
   ["等一天值不值那一行", taskWaitPayoff],
   ["闭关出关有悟", taskRetreatEnlighten],
+  ["人物页报寿元", taskLifespanOnCharacter],
   ["今天该去做什么", taskWeatherRoute],
   ["尚差道源怎么补", taskDaoFill],
   ["道源补法要处处都有", taskDaoFillElsewhere],
