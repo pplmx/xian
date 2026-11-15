@@ -497,6 +497,7 @@ const CATEGORIES = [
       "faceWall",
       "faceWallReward",
       "eventChoiceDistinct",
+      "retreatDecayDisclosure",
       "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",

@@ -9737,6 +9737,13 @@ async function taskRetreatEnlighten() {
       } else if (Number(m[1]) <= 0 || Number(m[1]) >= 100) {
         failures.push(`[390] 闭关出关有悟:百分比不合理 «${early.text}»`);
       }
+      /*
+       * 概率会随境界衰减 —— 界面上要说。否则玩家把 35% 当成永久概率
+       * （炼气 35% → 金丹 12% → 元婴 3.5% → 化神 0；一世只撞见约 6 次）。
+       */
+      if (!/前期|境界越高/.test(early.text)) {
+        failures.push(`[390] 闭关出关有悟:只报当前概率、没说它会随境界降到 0 «${early.text}»`);
+      }
     }
 
     // ---- 元婴之后：那一行必须消失 ----
