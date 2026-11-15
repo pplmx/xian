@@ -9372,11 +9372,51 @@ async function taskHeartDemonTwoWays() {
       }
     }
 
+    /*
+     * 第三件:破得早所得纯 —— 按下去之前就要看得见"给哪一档"。
+     *
+     * 造两份档：心魔刚染上（剩余多）与快散了（剩余少），面壁钮上的说法必须不同。
+     * 只在有心魔且付得起时出现。
+     */
+    checked += 1;
+    const tierOf = async (remainMs) => {
+      const slices = withBuff([{ defId: "curse_xinmo", startedAt: now, endsAt: now + remainMs }]);
+      await seedSave(ctx, slices, `__demonTier${remainMs}`);
+      const p2 = await ctx.newPage();
+      watchPageErrors(p2, pageErrors);
+      await openRoute(p2, "/cultivation", 1400);
+      await clearOverlays(p2);
+      const t = await p2.evaluate(() => {
+        const b = document.querySelector("[data-cultivation-facewall]");
+        return b ? (b.textContent || "").replace(/\s+/g, " ").trim() : null;
+      });
+      await p2.close();
+      return t;
+    };
+    const freshText = await tierOf(590_000);
+    const staleText = await tierOf(30_000);
+    if (!freshText || !staleText) {
+      failures.push("[390] 心魔两条路:取不到面壁钮的文案 —— 量不出早晚之分");
+    } else if (freshText === staleText) {
+      failures.push(`[390] 心魔两条路:刚染上与快散了给的说法一样 —— 早晚没有区别 «${freshText}»`);
+    } else {
+      if (!freshText.includes("道心通明")) {
+        failures.push(`[390] 心魔两条路:执念浅时不给道心通明 «${freshText}»`);
+      }
+      if (!staleText.includes("静心凝神")) {
+        failures.push(`[390] 心魔两条路:执念深时不给静心凝神 «${staleText}»`);
+      }
+    }
+
     if (pageErrors.length) {
       failures.push(`[390] 心魔两条路页面异常:${[...new Set(pageErrors)].join(" | ")}`);
     }
     if (failures.length === 0) {
-      console.log(`\n心魔两条路:«${demon.text}» ；静养 «${demon.repairText}»`);
+      console.log(
+        `\n心魔两条路:«${demon.text}» ；静养 «${demon.repairText}»` +
+          `\n  执念浅 → «${freshText}»` +
+          `\n  执念深 → «${staleText}»`,
+      );
     } else {
       console.log(`\n心魔两条路[未通过]:${JSON.stringify({ clean, demon })}`);
     }

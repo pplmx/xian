@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 821 个 spec;本作自己那部分 741 个) |
+| `bun run test` | 全量用例(全量 822 个 spec;本作自己那部分 742 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 821 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 822 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 821 个 spec(本作自己那部分 741 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 822 个 spec(本作自己那部分 742 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -20020,3 +20020,75 @@ data/chains.ts   荒坟前灯灭
 「面壁(8468) 不比静养(10580) 贵 —— 那它就不是取舍」。
 
 工作区干净、全量 821 / 6864 全绿；`check`、`test:report`、`check:ui` 同绿。
+
+### 第 374 轮:上一轮加的那个按钮，其实没有判断
+
+第 373 轮加了「面壁破执」。这一轮先**验收它**，而不是继续找新缺口。
+
+#### 量出来的问题
+
+那一轮只钉了「面壁必须比静养贵」，没量**面壁相对"继续扛着"划不划算**:
+
+```text
+   心魔 600s × −30%     = 损 180 等效秒（扛满全程）
+   道心通明 300s × +35% = 得 105 等效秒
+
+   剩 600s 面壁  避免 180 + 得 105 = +285
+   剩 400s 面壁  避免 120 + 得 105 = +225
+   剩 200s 面壁  避免  60 + 得 105 = +165
+   剩  60s 面壁  避免  18 + 得 105 = +123
+```
+
+**每一档都是正收益。** 只要身上有心魔，面壁永远最优 —— 没有判断，只有一个看到就点的按钮。
+
+灵气并不构成制衡:m0 灵气回满 111 秒，面壁多付 21% 容量约合 23 秒，而收益是 123~285。
+
+#### 改法:破得早，所得纯
+
+修仙里「破执」本来就有早晚之分:心魔初起时一念清明就能勘破，拖久了执念深种，
+纵然破了也只余残悟。数据里正好有**两档现成的**:
+
+```text
+   enlighten_cult_strong  道心通明  300s × +35%  = 105 等效秒
+   enlighten_cult         静心凝神  600s × +20%  = 120 等效秒（长但缓）
+```
+
+故:剩余比例 ≥ 50%（执念浅）给强档，否则给缓档。两个都是顿悟里已有的，
+只是**按什么时候破来分**——不新造第三个 buff（那是三个名字说同一件事）。
+
+```text
+   刚染上就面壁  +285   ← 最划算
+   剩 120s 面壁  +156   ← 不亏，但明显少
+```
+
+#### 界面:按下去之前就要看得见
+
+```text
+   面壁破执 · 只清心魔 · 耗灵气 1.694万
+   心魔还剩 09分39秒 · 破执得「道心通明」 修炼速度 +35% · 执念尚浅
+```
+
+玩家判断的是「现在破还是再等等」。按完才知道给哪档，那个判断就没有依据。
+故剩余时长也报出来（每秒刷新）—— 剩余时长正是这一档的依据。
+
+#### 两个小坑
+
+```text
+① 时点:报酬按破执那一刻的心魔剩余决定，故 `heartDemonSpan()` 必须在
+   `clearBuff` **之前**取。清掉之后就问不到剩余了。
+② 视图里我先后写了 `tickSec` 与 `modsText` 两个不存在的名字 ——
+   正确的一个是 `useNow()` 的 `now`、一个要从 `@/data/statNames` import。
+   两次都是 type-check 拦住的（这正是"先查再写"的价钱）。
+```
+
+#### 浏览器门量了早晚两档
+
+```text
+执念浅 → «…心魔还剩 09分39秒 · 破执得「道心通明」 修炼速度 +35% · 执念尚浅»
+执念深 → «…心魔还剩 00分15秒 · 破执得「静心凝神」 修炼速度 +20% · 执念已深»
+```
+
+故障注入:把 `FACE_WALL_SHALLOW_RATIO` 改成 0，门当场红
+「执念深时不给静心凝神 «…破执得「道心通明」…执念尚浅»」。
+
+工作区干净、全量 822 / 6869 全绿；`check`、`test:report`、`check:ui` 同绿。

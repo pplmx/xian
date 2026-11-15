@@ -41,13 +41,63 @@ import { usePlayerStore } from "@/stores/player";
 import { useResourcesStore } from "@/stores/resources";
 import { useCultivationStore } from "@/stores/cultivation";
 import { notify } from "./notify";
+import { buffDef } from "@/data/buffs";
 import { qiRepairCost } from "./qiRepair";
 
 /** 面壁相对静养的倍数 —— 贵出来的那一份是"道心通明"的价钱 */
 export const FACE_WALL_QI_MULT = 1.6;
 
-/** 破执之后得的那一段增益（复用顿悟里已有的那个，不新立同义状态） */
+/**
+ * 破执之后得的那一段增益 —— **两档，按执念深浅**。
+ *
+ * ```text
+ *   执念浅（剩余还多）  道心通明  300s × +35%
+ *   执念深（快散了）    静心凝神  600s × +20%
+ * ```
+ *
+ * 两档都是 `data/buffs` 里现成的（顿悟的选项），语义分得开（澄澈 / 沉静）。
+ * 再造一档就是三个名字说同一件事 —— 那正是本仓反复修的那种分叉。
+ *
+ * ## 为什么要分早晚（第 374 轮量出来的）
+ *
+ * 第 373 轮只有强档一档，于是量出来「面壁在任何剩余时长下都是正收益」:
+ *
+ * ```text
+ *   剩 600s  +285    剩 400s  +225    剩 200s  +165    剩 60s  +123
+ * ```
+ *
+ * 每一档都划算 —— 那个按钮没有判断，只有"看到就点"。分成两档之后，
+ * 早破得强、晚破得缓，玩家才有"什么时候面壁"这件事要想。
+ */
 export const FACEWALL_REWARD_BUFF = "enlighten_cult_strong";
+
+/** 执念深了之后得的那一档（比强档长、但缓） */
+export const FACEWALL_REWARD_BUFF_LATE = "enlighten_cult";
+
+/**
+ * 「执念尚浅」的剩余比例阈值 —— 剩余超过这个比例算浅。
+ *
+ * 取 0.5:心魔总时长 600s，故剩 300s 以上得强档、以下得缓档。
+ * 太靠边（0.2 或 0.8）会让其中一档几乎不出现，那条路又变回单一选项。
+ */
+export const FACE_WALL_SHALLOW_RATIO = 0.5;
+
+/**
+ * 这一次面壁该给哪一档 —— 纯函数，坏输入一律按"执念已深"处理。
+ *
+ * 坏输入（NaN、剩余比总量还多）现实里不该出现（剩余取自 buff 的 endsAt），
+ * 但读数函数若算出 NaN，界面会印出「NaN%」；给缓档是保守方向。
+ */
+export function faceWallRewardFor(input: { remainSec: number; totalSec: number }): string {
+  const total = input.totalSec;
+  const remain = input.remainSec;
+  if (!Number.isFinite(remain) || !Number.isFinite(total) || total <= 0) {
+    return FACEWALL_REWARD_BUFF_LATE;
+  }
+  return remain / total >= FACE_WALL_SHALLOW_RATIO
+    ? FACEWALL_REWARD_BUFF
+    : FACEWALL_REWARD_BUFF_LATE;
+}
 
 /** 心魔的 buff id（与 `data/buffs` 一致；面壁只认这一个） */
 const HEART_DEMON_ID = "curse_xinmo";
@@ -109,6 +159,20 @@ export function hasHeartDemon(): boolean {
 }
 
 /**
+ * 身上那道心魔还剩多久 / 总共多久（毫秒）。
+ *
+ * 没有心魔时返回 null —— 调用方据此决定"那一行出不出现"，
+ * 而不是拿 0 去算比例（0/600 会被判成"执念已深"，那是在编一个不存在的状态）。
+ */
+export function heartDemonSpan(): { remainSec: number; totalSec: number } | null {
+  const buff = useCultivationStore().buffs.find((b) => b.defId === HEART_DEMON_ID);
+  if (!buff) return null;
+  const totalSec = buffDef(HEART_DEMON_ID)?.durationSec ?? 0;
+  const remainSec = Math.max(0, (buff.endsAt - Date.now()) / 1000);
+  return { remainSec, totalSec };
+}
+
+/**
  * 面壁破执 —— 付灵气、清心魔、得一段道心通明。
  *
  * 返回是否真的做了（判据与界面都读它，不必再去问模块态）。
@@ -130,8 +194,16 @@ export function faceWallWithQi(): boolean {
   }
 
   resources.setQi(resources.qi - view.cost, player.qiCapValue);
+  /*
+   * 破得早、所得纯 —— 报酬按**破执那一刻**心魔还剩多少决定。
+   * 时点必须在 clearBuff **之前**取:清掉之后就问不到剩余了。
+   */
+  const span = heartDemonSpan();
+  const reward = span ? faceWallRewardFor(span) : FACEWALL_REWARD_BUFF_LATE;
+
   cultivation.clearBuff(HEART_DEMON_ID);
-  cultivation.addBuff(FACEWALL_REWARD_BUFF, Date.now());
-  notify(`你面壁三日，执念渐消（耗灵气 ${view.cost}）—— 道心通明`, "success");
+  cultivation.addBuff(reward, Date.now());
+  const rewardName = buffDef(reward)?.name ?? "道心澄澈";
+  notify(`你面壁三日，执念渐消（耗灵气 ${view.cost}）—— ${rewardName}`, "success");
   return true;
 }

@@ -314,11 +314,27 @@
                 data-cultivation-facewall
                 @click="faceWallWithQi()"
               >
-                {{
-                  face.canFace
-                    ? `面壁破执 · 只清心魔 · 得道心通明 · 耗灵气 ${formatNum(face.cost)}`
-                    : face.reason
-                }}
+                <template v-if="face.canFace">
+                  面壁破执 · 只清心魔 · 耗灵气 {{ formatNum(face.cost) }}<br />
+                  <!--
+                    破得早所得纯 —— 两档的差别按下去之前就要看得见。
+                    玩家判断的是「现在破还是再等等」，按完才知道给哪档，那个判断就没有依据。
+
+                    还剩多久也报出来（`heartDemon` 每秒刷新）：剩余时长正是这一档的依据。
+                  -->
+                  <span class="text-note">
+                    心魔还剩 {{ formatCountdown(Math.round(heartDemon?.remainSec ?? 0)) }} ·
+                    破执得「{{ faceReward?.name }}」{{
+                      faceReward?.text ? ` ${faceReward.text}` : ""
+                    }}{{
+                      heartDemon &&
+                      heartDemon.remainSec / heartDemon.totalSec >= FACE_WALL_SHALLOW_RATIO
+                        ? " · 执念尚浅"
+                        : " · 执念已深"
+                    }}
+                  </span>
+                </template>
+                <template v-else>{{ face.reason }}</template>
               </button>
               <QiShortfallNote
                 v-if="repairBlock"
@@ -547,7 +563,15 @@ import { baseCultPerSec } from "@/core/formulas";
 import { modOf } from "@/core/statsCalc";
 import { usePill } from "@/core/pillService";
 import { qiRepairView, repairWithQi } from "@/core/qiRepair";
-import { faceWallView, faceWallWithQi, faceWallCost, hasHeartDemon } from "@/core/faceWall";
+import {
+  faceWallView,
+  faceWallWithQi,
+  faceWallCost,
+  faceWallRewardFor,
+  FACE_WALL_SHALLOW_RATIO,
+  hasHeartDemon,
+  heartDemonSpan,
+} from "@/core/faceWall";
 import { isRetreating } from "@/core/earlyGameService";
 import { useNow } from "@/composables/useNow";
 import { useProgressEta } from "@/composables/useProgressEta";
@@ -585,6 +609,7 @@ import { cultivationChapter } from "@/ui/cultivationDesk";
 import { skyOfWeather } from "@/ui/weatherSky";
 import { todayWeather } from "@/core/weather";
 import { SECS_PER_DAY } from "@/data/constants";
+import { modsText } from "@/data/statNames";
 
 const player = usePlayerStore();
 const resources = useResourcesStore();
@@ -803,6 +828,14 @@ const repair = computed(() => qiRepairView());
  * 灵气读 `resources.qi`（与静养同一份），代价读 `faceWallCost()`（它是
  * `qiRepairCost() × FACE_WALL_QI_MULT`，与静养同一条口径放大）。
  */
+/**
+ * 心魔剩余 —— 每秒刷新（与状态胶囊同一份心跳），否则"还剩多久"会僵在那里。
+ */
+const heartDemon = computed(() => {
+  void now.value;
+  return heartDemonSpan();
+});
+
 const face = computed(() =>
   faceWallView({
     hasHeartDemon: hasHeartDemon(),
@@ -810,6 +843,19 @@ const face = computed(() =>
     cost: faceWallCost(),
   }),
 );
+
+/**
+ * 这一次面壁会给哪一档 —— **破得早所得纯**。
+ *
+ * 两档的差别必须在按下去之前看得见:玩家要判断的就是"现在破还是再等等"，
+ * 若按完才知道给哪档，那个判断就没有依据。
+ */
+const faceReward = computed(() => {
+  const span = heartDemon.value;
+  if (!span) return null;
+  const id = faceWallRewardFor(span);
+  return { id, name: buffDef(id)?.name ?? "道心", text: modsText(buffDef(id)?.mods ?? {}) };
+});
 /**
  * 引气疗伤付不起时:短差与回够时长现算(与突破钮 btQiBlock 同款纪律)——
  * 灰钮不能只报「需 X」,站在钮前的人要知道差多少、等多久。

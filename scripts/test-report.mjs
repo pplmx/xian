@@ -495,6 +495,7 @@ const CATEGORIES = [
       "tribTargetMajorSingleSource",
       "secsPerUnit",
       "faceWall",
+      "faceWallReward",
       "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",
