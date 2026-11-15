@@ -9266,6 +9266,102 @@ async function taskWeatherRoute() {
  *   二 平时不着重色;
  *   三 将尽时变色（与顶栏同一档阈值）。
  */
+/**
+ * 词条释义 —— 名字读不出作用的那几条，点开要看得到「它管什么」。
+ *
+ * 判据三件:
+ *   一 有释义的词条（如气运）点开明细时那一行在，且说的不是名字的同义反复;
+ *   二 没有释义的词条（如攻击）点开时那一行**不出** —— 全表都塞释义会把
+ *      真正需要解释的那几条埋掉;
+ *   三 释义与代码对得上（由 `statHints.spec` 在单元层管，这里只管渲染）。
+ */
+async function taskStatHint() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    /** 造一份带「气运」词条的存档：天赋「福缘」给 luck +0.1 */
+    const slices = showcaseSlices("light");
+    slices.player = {
+      ...slices.player,
+      major: 3,
+      sub: 0,
+      dead: false,
+      reincarnation: { ...slices.player.reincarnation, talents: ["t_fuyuan"] },
+    };
+    await seedSave(ctx, slices, "__statHint");
+
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/character", 1400);
+    await clearOverlays(page);
+
+    /*
+     * 两步才能到那一卷:
+     *   ① 点一个词条分组（页面上是组，不是逐条）
+     *   ② 在展开的册里点「气运」那一行
+     *
+     * 第一版只做了①的一半（在组里的 DOM 找"气运"，可组只报标题与条数），
+     * 于是 opened=true 而弹窗没开 —— 判据红得对，但红在"取错了样本"。
+     */
+    const step1 = await page.evaluate(() => {
+      const groups = [...document.querySelectorAll("[data-character-modifier-group]")];
+      if (groups.length === 0) return false;
+      groups[0].click();
+      return true;
+    });
+    await page.waitForTimeout(700);
+    const step2 = await page.evaluate(() => {
+      const rows = [...document.querySelectorAll("[data-character-modifier-folio] button")];
+      const hit = rows.find((e) => (e.textContent || "").trim().startsWith("气运"));
+      if (!hit) return false;
+      hit.click();
+      return true;
+    });
+    await page.waitForTimeout(600);
+    const opened = step1 && step2;
+
+    const info = await page.evaluate(() => {
+      const el = document.querySelector("[data-character-modifier-hint]");
+      const dlg = document.querySelector("[data-character-modifier-detail]");
+      return {
+        text: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null,
+        opened: true,
+        dlgKey: dlg ? dlg.getAttribute("data-character-modifier-detail-key") : null,
+        dlgText: dlg ? (dlg.textContent || "").replace(/\s+/g, " ").slice(0, 120) : null,
+      };
+    });
+    if (!opened) {
+      failures.push("[390] 词条释义:找不到「气运」那一行 —— 夹具没造对");
+    } else if (!info.text) {
+      failures.push("[390] 词条释义:「气运」点开明细后没有「它管什么」那一行");
+    } else {
+      if (info.text.length < 5) failures.push(`[390] 词条释义:「气运」的释义太短 «${info.text}»`);
+      if (/^气运/.test(info.text)) {
+        failures.push(`[390] 词条释义:「气运」的释义以名字开头 —— 读起来像同义反复 «${info.text}»`);
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 词条释义页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n词条释义:气运 → «${info.text}»`);
+    } else {
+      console.log(`\n词条释义[未通过]:${JSON.stringify(info)}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked };
+}
+
 async function taskLifespanOnCharacter() {
   const failures = [];
   let checked = 0;
@@ -34621,6 +34717,7 @@ const TASKS = [
   ["等一天值不值那一行", taskWaitPayoff],
   ["闭关出关有悟", taskRetreatEnlighten],
   ["人物页报寿元", taskLifespanOnCharacter],
+  ["词条释义", taskStatHint],
   ["今天该去做什么", taskWeatherRoute],
   ["尚差道源怎么补", taskDaoFill],
   ["道源补法要处处都有", taskDaoFillElsewhere],

@@ -318,6 +318,20 @@
   .character-modifier-source__track > .is-negative {
     background: rgb(var(--color-cinnabar-rgb) / 0.64);
   }
+  /*
+   * 这一条词条管什么 —— 只在"名字读不出作用"的词条上出。
+   * 用 ink-soft 而不是 faint:它是**说明**，不是附注；但也不该比正文更亮，
+   * 否则玩家会先读解释再读数字。
+   */
+  .character-modifier-detail__hint {
+    margin-bottom: 0.45rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+    color: var(--color-ink-soft);
+    font-size: var(--type-note);
+    line-height: 1.62;
+  }
+
   .character-modifier-detail__note,
   .character-modifier-detail__warning,
   .character-modifier-notes p {

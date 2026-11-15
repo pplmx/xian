@@ -340,6 +340,22 @@
               :data-character-modifier-detail-key="breakdownKey ?? undefined"
             >
               <p class="character-modifier-detail__eyebrow">拆卷 · 来源明细</p>
+              <!--
+                这一条**管什么** —— 只在"名字读不出作用"的词条上出（`STAT_HINTS`
+                只收那一批，「攻击 +12%」这种不给释义，否则同义反复会把真正需要
+                解释的那几条埋掉）。
+
+                它放在来源明细**之上**:玩家点开这一卷，先要知道这一条是什么，
+                再看它是从哪儿来的。反过来读（先看七条来源、再知道气运管什么），
+                那七条数字是没有意义的。
+              -->
+              <p
+                v-if="breakdownHint"
+                class="character-modifier-detail__hint"
+                data-character-modifier-hint
+              >
+                {{ breakdownHint }}
+              </p>
               <div class="character-modifier-detail__sources">
                 <div
                   v-for="source in breakdownRows"
@@ -678,6 +694,7 @@
 import "@/styles/pages/character.css";
 import { realmOrdinalText } from "@/core/realmLadder";
 import { LIFESPAN_WARN_RATIO } from "@/data/constants";
+import { statHintOf } from "@/data/statNames";
 import { computed, nextTick, ref } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import { STAGE_NAMES } from "@/data/daolu";
@@ -873,6 +890,13 @@ const hasShieldMods = computed(() => SHIELD_MOD_KEYS.some((k) => modOf(stats.val
 
 /** 来源明细:点哪一行看哪一行 —— 数据来自 finalStats.breakdown,不在界面里另算 */
 const breakdownKey = ref<AnyStatKey | null>(null);
+/**
+ * 这一条词条**管什么** —— 没有释义的（多数名字是自明的）返回 null，那一段不出。
+ *
+ * 表在 `data/statNames` 的 `STAT_HINTS`，只收"读到名字仍不知道值多少"的那一批。
+ */
+const breakdownHint = computed(() => (breakdownKey.value ? statHintOf(breakdownKey.value) : null));
+
 const breakdownRows = computed(() => {
   const key = breakdownKey.value;
   if (!key) return [];

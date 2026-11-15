@@ -124,3 +124,59 @@ export function modsPills(mods: StatMods): { name: string; value: string; pct: n
       pct: v as number,
     }));
 }
+
+/**
+ * 词条释义 —— 只收**名字读不出作用**的那一批。
+ *
+ * ## 为什么不是全表 45 条都给一句
+ *
+ * 多数名字是自明的:「攻击 +12%」「防御 +5%」「修炼速度 +8%」—— 读到就知道它管什么。
+ * 给它们各写一句「提高攻击」是同义反复，只会把界面撑满、把真正需要解释的那几条埋掉。
+ *
+ * 故这里只收**读到名字仍然不知道它值多少**的那些:
+ *
+ * ```text
+ *   气运          可能是掉落 / 事件 / 突破 —— 三样都沾，且都不大
+ *   御劫          听起来像"对抗天劫"，而它具体乘在雷伤上
+ *   双倍战利      在哪儿双倍
+ *   溢疗成盾      "溢出"指的是什么
+ *   定心护料      "定心"不指向炼丹保料
+ * ```
+ *
+ * 它们出现在**不可逆的选择**里（天赋一生一次、灵脉投点不回收）时，
+ * 玩家读到名字却不知道值多少，就只能靠猜。
+ *
+ * ## 释义的口径
+ *
+ * 一句、说机制、不重复名字、不超过 30 字（词条旁边放得下）。
+ * **每一条都必须与代码对得上** —— 写错的释义比不写更糟，它会被当成说明来读。
+ * 由 `statHints.spec` 用真实消费点对账。
+ */
+export const STAT_HINTS: Partial<Record<AnyStatKey, string>> = {
+  /** `core/breakthrough`:`modOf(mods,"luck") × BT_LUCK_TO_RATE` → 小进阶成功率 */
+  luck: "兼济掉落品质、际遇与进阶成功率（各占一点，都不大）",
+  /** `core/tribulationDecision`:`settlementResist` 里乘在每道雷的伤害上 */
+  tribulationResist: "渡劫时按每道雷的伤害折算，降低雷伤",
+  /** `core/loot`:`rng.chance(doubleDropRate)` 命中则该次掉落翻倍 */
+  doubleDropRate: "历练结算时按此概率让这一趟掉落翻倍",
+  /** `core/buildSearch` 的战斗推演里，「治疗溢出」那部分转成护盾 */
+  overhealShield: "治疗超过上限的部分不浪费，转为护盾",
+  /** `core/engineCraft`:炼丹失败时保住材料的比例再乘 (1+craftSalvage) */
+  craftSalvage: "炼丹失败时保住材料的比例更高",
+  /** `core/exploration`:`EXPLORE_EVENT_CHANCE × (1+eventLuck)` */
+  eventLuck: "历练途中撞见际遇的概率更高",
+  /** `core/breakthrough`:`breakRefundOf` → 失败时少折修为（封顶 80%） */
+  breakRefund: "突破失败时折损的修为更少（最多抵八成）",
+  /** `data/pets` + 灵兽园：灵兽自身词条的放大倍率 */
+  beastPct: "所携灵兽的词条按此倍率放大",
+};
+
+/**
+ * 某条词条的释义；没有就返回 null。
+ *
+ * 调用方据此决定那一段要不要出 —— 不返回空串，因为「没有释义」与
+ * 「释义是空的」是两件事（后者是数据写坏了）。
+ */
+export function statHintOf(key: string): string | null {
+  return STAT_HINTS[key as AnyStatKey] ?? null;
+}

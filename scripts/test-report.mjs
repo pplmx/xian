@@ -490,6 +490,7 @@ const CATEGORIES = [
       "retreatEnlightenment",
       "retreatEnlightenNote",
       "lifespanOnCharacter",
+      "statHints",
       "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",
