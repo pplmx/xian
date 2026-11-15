@@ -24,6 +24,7 @@
 import { BATTLE_EXP_SECS, EXPLORE_BATTLE_INTERVAL, EXPLORE_EVENT_CHANCE } from "@/data/constants";
 import { buffDef } from "@/data/buffs";
 import { MAX_MAJOR } from "@/data/realms";
+import { SECS_PER_HOUR } from "@/data/constants";
 
 /**
  * 典型胜率 —— 与 core/economySim 的行为假设同一份:赢下来才结算修为。
@@ -40,7 +41,7 @@ export const TYPICAL_EVENT_EXP_SECS = 60;
 
 /** 每小时遭遇数(战斗 + 际遇):在线每 12 秒一次,离线照算 */
 export function encountersPerHour(): number {
-  return 3600 / EXPLORE_BATTLE_INTERVAL;
+  return SECS_PER_HOUR / EXPLORE_BATTLE_INTERVAL;
 }
 
 /** 每小时战斗次数(出际遇的那几次不算战斗) */
@@ -63,9 +64,9 @@ export function tripExpSecsPerHour(): number {
   return winsPerHour() * BATTLE_EXP_SECS + eventsPerHour() * TYPICAL_EVENT_EXP_SECS;
 }
 
-/** 挂机那一半:一小时就是 3600 秒闭关 */
+/** 挂机那一半:一小时就是这一个小时本身（秒数取自 data/timeUnits，不在这里写 3600） */
 export function idleExpSecsPerHour(): number {
-  return 3600;
+  return SECS_PER_HOUR;
 }
 
 /** 闭关那一半:修速 +150%(取自 buffs 本体,不在这里抄一个 150%) */

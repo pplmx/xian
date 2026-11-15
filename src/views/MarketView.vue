@@ -63,6 +63,7 @@ import MarketChapterRail from "@/components/market/MarketChapterRail.vue";
 import { useRouteTab } from "@/composables/useRouteTab";
 import { MARKET_CHAPTERS } from "@/ui/navigation";
 import { clampPercent } from "@/utils/unitRatio";
+import { SECS_PER_HOUR } from "@/data/constants";
 
 const market = useMarketStore();
 const bounty = useBountyStore();
@@ -132,7 +133,7 @@ const headerClock = computed(() => {
     return {
       label: "换榜",
       text: formatCountdown(bountyRemainingSec(bounty.bountyAt, now.value)),
-      title: `${BOUNTY_REFRESH_SECONDS / 3600} 小时一版`,
+      title: `${BOUNTY_REFRESH_SECONDS / SECS_PER_HOUR} 小时一版`,
     };
   }
   if (marketTab.value === "sell") {
@@ -145,7 +146,7 @@ const headerClock = computed(() => {
   return {
     label: "换货",
     text: formatCountdown(remainingSec.value),
-    title: `${MARKET_REFRESH_SECONDS / 3600} 小时一换`,
+    title: `${MARKET_REFRESH_SECONDS / SECS_PER_HOUR} 小时一换`,
   };
 });
 

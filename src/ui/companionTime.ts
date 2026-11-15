@@ -27,11 +27,12 @@
  * 一炷香的陪伴与三个月的陪伴,不该是同一个句子。
  */
 import { formatDuration } from "@/utils/format";
+import { SECS_PER_DAY } from "@/data/constants";
 
 /** 刚开号到「一个时辰」之内 —— 还没有值得报的累计 */
 const JUST_STARTED_SEC = 60;
 /** 一天 */
-const DAY_SEC = 86400;
+const DAY_SEC = SECS_PER_DAY;
 
 /** 非负有限值;坏值一律当 0 */
 function safeSeconds(totalSec: unknown): number {

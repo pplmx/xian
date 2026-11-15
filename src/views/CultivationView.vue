@@ -559,6 +559,7 @@ import QiShortfallNote from "@/components/cultivation/QiShortfallNote.vue";
 import { cultivationChapter } from "@/ui/cultivationDesk";
 import { skyOfWeather } from "@/ui/weatherSky";
 import { todayWeather } from "@/core/weather";
+import { SECS_PER_DAY } from "@/data/constants";
 
 const player = usePlayerStore();
 const resources = useResourcesStore();
@@ -706,7 +707,7 @@ const {
  * 阈值取一天:一天之内的事,读 ETA 本身就有意义;超过一天,ETA 只是在报一个
  * 遥远的日期,这时该把「怎么变快」摆出来。
  */
-const LONG_ETA_SEC = 86400;
+const LONG_ETA_SEC = SECS_PER_DAY;
 const longEtaHint = computed(() => {
   if (player.expFull) return "";
   const remain = toNum(subClamp(player.expReq, player.exp));

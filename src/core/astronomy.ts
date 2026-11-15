@@ -19,6 +19,7 @@ import { MANSION_EVENT_LUCK } from "@/data/constants";
 export { MANSION_EVENT_LUCK };
 import { formatPercent } from "@/utils/format";
 import type { WorldId } from "@/types";
+import { SECS_PER_DAY } from "@/data/constants";
 
 /**
  * 星象相合世界(星陨天)的破关道源加成。
@@ -41,7 +42,7 @@ export function mansionOfDay(day: number): MansionDef {
 
 /** 今日值日之宿(总秒数由调用方给) */
 export function todayMansion(totalPlaySec: number): MansionDef {
-  return mansionOfDay(Math.floor(totalPlaySec / 86400));
+  return mansionOfDay(Math.floor(totalPlaySec / SECS_PER_DAY));
 }
 
 /** 此宿所利之界域(四象配四界的游戏约定) */

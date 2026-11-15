@@ -54,6 +54,7 @@ export const STUDY_REACH_OVER = 1;
 // 档位与门槛住在 core/loreThresholds(单独一份,免得与 stores/lore 绕成环);这里转出,
 // 调用方与用例的 import 一行不用改
 import { ENEMY_LORE_LOSS_WEIGHT, ENEMY_LORE_MAX } from "./loreThresholds";
+import { SECS_PER_HOUR } from "@/data/constants";
 export {
   ENEMY_LORE_BOSS_THRESHOLDS,
   ENEMY_LORE_LOSS_WEIGHT,
@@ -290,7 +291,7 @@ export function studyEta(): StudyEta | null {
   const libLv = dongfu.levels.library;
   if (libLv <= 0) return null;
   const lore = useLoreStore();
-  const ratePerSec = (libLv * STUDY_MASTERY_PER_HOUR) / 3600;
+  const ratePerSec = (libLv * STUDY_MASTERY_PER_HOUR) / SECS_PER_HOUR;
   if (!(ratePerSec > 0)) return null;
 
   let lowest = 1;
@@ -369,7 +370,7 @@ export function studyTick(dtSec: number): void {
   const libLv = dongfu.levels.library;
   if (libLv <= 0 || dtSec <= 0) return;
   const lore = useLoreStore();
-  lore.studyFrac += (libLv * STUDY_MASTERY_PER_HOUR * dtSec) / 3600;
+  lore.studyFrac += (libLv * STUDY_MASTERY_PER_HOUR * dtSec) / SECS_PER_HOUR;
   if (lore.studyFrac < 0.001) return;
 
   // 先专精:挑一张已知但未通的方子,专补最生的那张

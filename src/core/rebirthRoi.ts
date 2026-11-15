@@ -29,6 +29,7 @@ import { DEFAULT_ASSUMPTIONS, type SimAssumptions, estimateCultMult } from "./pr
 import { BT_FAIL_EXP_LOSS, BT_QI_COST_RATIO, SUB_LEVELS } from "@/data/constants";
 import { toNum } from "@/utils/gnum";
 import { REBIRTH_REFERENCE_MAJOR } from "@/data/realms";
+import { SECS_PER_HOUR } from "@/data/constants";
 
 /**
  * 修满一个大境界的完整耗时(秒)。
@@ -71,7 +72,7 @@ export function fullHoursToReach(
 ): number {
   let sec = 0;
   for (let m = 0; m < targetMajor; m += 1) sec += fullSecondsForMajor(m, daoFruit, a);
-  return sec / 3600;
+  return sec / SECS_PER_HOUR;
 }
 
 /** 转世点:玩家在某个大境界圆满时选择轮回 */

@@ -59,6 +59,7 @@ import { baseCultPerSec, baseQiRegen, expRequirement, qiCap, stoneByTier } from 
 import { bearableRank, composeSuccessRate } from "./craftability";
 import { salvageRatio } from "./pillCraftNumbers";
 import { pillDropWeight } from "./loot";
+import { SECS_PER_HOUR } from "@/data/constants";
 
 // ============ 审计基准 ============
 
@@ -157,8 +158,8 @@ export function pillGainSecAt(def: PillDef, major: number): number {
         Math.min(i.expFixed, toNum(expRequirement(m, AUDIT_SUB))) / baseCultPerSec(m, AUDIT_SUB)
       );
     if (i.qiPct) return (i.qiPct * qiCap(m, AUDIT_SUB)) / baseQiRegen(m);
-    if (i.lifespanYears) return (i.lifespanYears * 3600) / AGE_YEARS_PER_HOUR;
-    if (i.wudao) return (i.wudao * 3600) / LIBRARY_WUDAO_PER_HOUR;
+    if (i.lifespanYears) return (i.lifespanYears * SECS_PER_HOUR) / AGE_YEARS_PER_HOUR;
+    if (i.wudao) return (i.wudao * SECS_PER_HOUR) / LIBRARY_WUDAO_PER_HOUR;
   }
   const rate = tempoRateOf(def);
   if (rate > 0 && def.buffId) return (buffDef(def.buffId)?.durationSec ?? 0) * rate;

@@ -18,6 +18,7 @@ import {
   DECOMPOSE_DUST,
 } from "@/data/constants";
 import { generateEquipment } from "./equipGen";
+import { SECS_PER_HOUR } from "@/data/constants";
 
 const WIN_RATE = 0.85;
 
@@ -45,7 +46,8 @@ export function simulateLootPressure(tier: number, samples = 600): LootPressure 
     rankCounts[rank]! += 1;
     dustSum += DECOMPOSE_DUST[rank] ?? 1;
   }
-  const winsPerHour = (3600 / EXPLORE_BATTLE_INTERVAL) * (1 - EXPLORE_EVENT_CHANCE) * WIN_RATE;
+  const winsPerHour =
+    (SECS_PER_HOUR / EXPLORE_BATTLE_INTERVAL) * (1 - EXPLORE_EVENT_CHANCE) * WIN_RATE;
   const dropsPerHour = winsPerHour * EQUIP_DROP_CHANCE;
   const avgRank = rankCounts.reduce((s, n, r) => s + n * r, 0) / samples;
   return {

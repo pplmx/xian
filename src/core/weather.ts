@@ -21,6 +21,7 @@ import { useGameStore } from "@/stores/game";
 import { createCycleSystem, type CycleContext } from "wanxiang-engine";
 import { worldOf } from "@/data/realms";
 import type { StatMods, WorldId } from "@/types";
+import { SECS_PER_DAY } from "@/data/constants";
 
 export type WeatherId =
   // 人间界
@@ -211,7 +212,7 @@ export function weatherDef(id: WeatherId): WeatherDef | undefined {
   return BY_ID.get(id);
 }
 
-const DAY_SEC = 86400;
+const DAY_SEC = SECS_PER_DAY;
 
 /**
  * 人间界的权重档：清和（无损益的那一条）占三成，其余等分七成。

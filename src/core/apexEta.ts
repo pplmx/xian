@@ -37,6 +37,7 @@ import { toNum } from "@/utils/gnum";
 import { formatDuration } from "@/utils/format";
 import { SUB_LEVELS } from "@/data/constants";
 import { MAX_MAJOR } from "@/data/realms";
+import { SECS_PER_DAY } from "@/data/constants";
 
 export interface ApexEta {
   /** 剩余秒数；已到顶为 0 */
@@ -113,7 +114,7 @@ export function apexEtaText(major: number, sub: number, cultPerSec: number): str
       ? ""
       : "此刻行速不可用 —— 先让修为跑起来。";
   }
-  const days = eta.remainSec / 86400;
+  const days = eta.remainSec / SECS_PER_DAY;
   if (days < 1) return `按此刻行速,至大道尽头约 ${formatDuration(eta.remainSec)}`;
   if (days < 100) return `按此刻行速,至大道尽头约 ${Math.round(days)} 天`;
   return `按此刻行速,至大道尽头约 ${Math.round(days / 100) * 100} 天`;

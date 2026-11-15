@@ -493,6 +493,7 @@ const CATEGORIES = [
       "statHints",
       "tribPanelWeatherMajor",
       "tribTargetMajorSingleSource",
+      "secsPerUnit",
       "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",

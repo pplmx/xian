@@ -3,6 +3,7 @@
  */
 import type { GNum } from "@/types";
 import { gn, toNum } from "./gnum";
+import { SECS_PER_DAY, SECS_PER_HOUR, SECS_PER_MINUTE } from "@/data/constants";
 
 /** 每 4 个数量级一个中文单位 */
 const UNITS = ["万", "亿", "兆", "京", "垓", "秭", "穰", "沟", "涧", "正", "载", "极"] as const;
@@ -163,9 +164,9 @@ export function formatSignedPercent(x: number, dp = 1): string {
 export function formatDuration(totalSec: number): string {
   if (!Number.isFinite(totalSec)) return NOT_AVAILABLE;
   const sec = Math.max(0, Math.floor(totalSec));
-  const d = Math.floor(sec / 86400);
-  const h = Math.floor((sec % 86400) / 3600);
-  const m = Math.floor((sec % 3600) / 60);
+  const d = Math.floor(sec / SECS_PER_DAY);
+  const h = Math.floor((sec % SECS_PER_DAY) / SECS_PER_HOUR);
+  const m = Math.floor((sec % SECS_PER_HOUR) / SECS_PER_MINUTE);
   const s = sec % 60;
   /*
    * 末位为 0 的那一段不写。
@@ -198,9 +199,9 @@ export function formatCountdown(totalSec: number): string {
   if (!Number.isFinite(totalSec)) return NOT_AVAILABLE;
   const sec = Math.max(0, Math.floor(totalSec));
   const pad2 = (n: number): string => String(n).padStart(2, "0");
-  const d = Math.floor(sec / 86400);
-  const h = Math.floor((sec % 86400) / 3600);
-  const m = Math.floor((sec % 3600) / 60);
+  const d = Math.floor(sec / SECS_PER_DAY);
+  const h = Math.floor((sec % SECS_PER_DAY) / SECS_PER_HOUR);
+  const m = Math.floor((sec % SECS_PER_HOUR) / SECS_PER_MINUTE);
   const s = sec % 60;
   if (d > 0) return `${d}天${pad2(h)}时`;
   if (h > 0) return `${pad2(h)}时${pad2(m)}分`;

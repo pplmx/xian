@@ -1009,6 +1009,7 @@ import FolioNote from "@/components/common/FolioNote.vue";
 import BaseModal from "@/components/common/BaseModal.vue";
 import CombatPanel from "@/components/adventure/CombatPanel.vue";
 import { useNow } from "@/composables/useNow";
+import { SECS_PER_DAY, SECS_PER_HOUR, SECS_PER_MINUTE } from "@/data/constants";
 
 const adventure = useAdventureStore();
 const game = useGameStore();
@@ -1085,9 +1086,9 @@ const lastTripWhen = computed(() => {
   if (!t) return "";
   const sec = Math.max(0, Math.floor((now.value - t.at) / 1000));
   if (sec < 60) return "方才";
-  if (sec < 3600) return `${Math.floor(sec / 60)} 分前`;
-  if (sec < 86400) return `${Math.floor(sec / 3600)} 时前`;
-  return `${Math.floor(sec / 86400)} 日前`;
+  if (sec < SECS_PER_HOUR) return `${Math.floor(sec / SECS_PER_MINUTE)} 分前`;
+  if (sec < SECS_PER_DAY) return `${Math.floor(sec / SECS_PER_HOUR)} 时前`;
+  return `${Math.floor(sec / SECS_PER_DAY)} 日前`;
 });
 
 /**

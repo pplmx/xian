@@ -37,6 +37,7 @@ import { buffDef } from "@/data/buffs";
 import { setDeathDialog } from "./uiPort";
 import { formatDuration } from "@/utils/format";
 import { recordRuntimeDiagnostic, summarizeError } from "./diagnostics";
+import { SECS_PER_HOUR } from "@/data/constants";
 
 export { enginePaused } from "./enginePause";
 
@@ -306,7 +307,7 @@ class GameEngine {
       // Phase 32.3: 藏经阁日夜翻检,学问自己在长
       studyTick(dt);
       // 寿元流逝
-      player.addAge((dt / 3600) * AGE_YEARS_PER_HOUR);
+      player.addAge((dt / SECS_PER_HOUR) * AGE_YEARS_PER_HOUR);
       this.checkDeath();
     }
 

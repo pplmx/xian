@@ -21,6 +21,7 @@ import { inscriptionFor } from "./inscription";
 import { deriveProsperity, prosperityYieldMult } from "./worldMemory";
 import { settleRegionRevivals } from "./regionRevival";
 import { AGE_YEARS_PER_HOUR } from "@/data/constants";
+import { SECS_PER_HOUR } from "@/data/constants";
 
 /** 区域统计数据(使用指数移动平均) */
 export interface RegionStats {
@@ -235,7 +236,7 @@ export function settleSuppressedRegions(
   const player = usePlayerStore();
   const resources = useResourcesStore();
 
-  const hours = dt / 3600;
+  const hours = dt / SECS_PER_HOUR;
   const total: SuppressedYield = {
     stone: gnZero(),
     expGain: gnZero(),

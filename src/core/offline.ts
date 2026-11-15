@@ -93,6 +93,7 @@ import { usePacingTelemetry } from "@/stores/pacingTelemetry";
 import { useMarketStore } from "@/stores/market";
 import { useBountyStore } from "@/stores/bounty";
 import { useApprenticeStore } from "@/stores/apprentice";
+import { SECS_PER_HOUR, MS_PER_SEC } from "@/data/constants";
 
 /**
  * 离线事件兜底池:世界标签不命中公共事件池时的默认通用际遇。
@@ -186,7 +187,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
    */
   const idle = planIdle(dtSec * 1000, {
     stepMs: 1000,
-    capMs: dongfu.offlineCapHours * 3600 * 1000,
+    capMs: dongfu.offlineCapHours * SECS_PER_HOUR * MS_PER_SEC,
     efficiency: OFFLINE_EFFICIENCY,
   });
   const capSec = idle.cappedMs / 1000;
@@ -807,7 +808,7 @@ export function settleOffline(nowMs: number): OfflineSummary | null {
 
   // ---- 寿元流逝(不受离线上限约束) ----
   const ageBefore = player.age;
-  player.addAge((dtSec / 3600) * AGE_YEARS_PER_HOUR);
+  player.addAge((dtSec / SECS_PER_HOUR) * AGE_YEARS_PER_HOUR);
 
   // ---- Buff 过期 ----
   cultivation.pruneBuffs(nowMs);

@@ -34,6 +34,7 @@
  * 它**不取代转世**:道果的大头仍来自兵解(`daoFruitGain`),这里只是让
  * 「修满之后继续玩」这件事有产出。它是终局的地板,不是终局的全部。
  */
+import { SECS_PER_DAY, SECS_PER_HOUR, SECS_PER_MINUTE } from "@/data/constants";
 
 /**
  * 满级修为 → 道源的折算率:**每一份 `expReq` 换多少道源**。
@@ -146,8 +147,8 @@ export function apexFurnaceEta(cultPerSec: number, expReq: number): string {
   const secs = expReq / cultPerSec / APEX_CULT_TO_DAO_RATIO;
   if (!Number.isFinite(secs) || secs <= 0) return "";
   if (secs < 60) return `${Math.round(secs)} 秒`;
-  if (secs < 3600) return `${Math.round(secs / 60)} 分钟`;
-  if (secs < 86400) return `${Math.round(secs / 3600)} 小时`;
-  const days = secs / 86400;
+  if (secs < SECS_PER_HOUR) return `${Math.round(secs / SECS_PER_MINUTE)} 分钟`;
+  if (secs < SECS_PER_DAY) return `${Math.round(secs / SECS_PER_HOUR)} 小时`;
+  const days = secs / SECS_PER_DAY;
   return days >= 10 ? `${Math.round(days)} 天` : `${days.toFixed(1)} 天`;
 }

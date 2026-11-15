@@ -62,6 +62,7 @@ import { generateEquipment } from "./equipGen";
 import { secondsForMajor } from "./progressionSim";
 import { eventsPerHour, tripExpSecsPerHour, winsPerHour } from "./expIncome";
 import { eventWudaoPerEncounter } from "./eventEngine";
+import { SECS_PER_HOUR } from "@/data/constants";
 
 // ---- 挂机行为假设 ----
 const UPGRADES_PER_HOUR = 3;
@@ -201,7 +202,7 @@ function artifactUpgradeWudaoToMax(qualityRank: number): number {
 
 export function auditEra(major: number): EraAudit {
   const tier = maxTierForMajor(major);
-  const eraHours = (secondsForMajor(major, 0) / 3600) * REAL_TIME_FACTOR || 0.1;
+  const eraHours = (secondsForMajor(major, 0) / SECS_PER_HOUR) * REAL_TIME_FACTOR || 0.1;
   const amortizeHours = Math.max(eraHours, MIN_AMORTIZE_HOURS);
   /**
    * 遭遇速率取自 core/expIncome —— 那是"一次遭遇值多少"的唯一口径所在地,
@@ -239,7 +240,7 @@ export function auditEra(major: number): EraAudit {
    */
   // 镇压红利(镇守道韵)未入本表数值:同源挂机曲线(core/suppress,每区 +8%/小时、封顶 +40%),
   // 任何境界都是挂机的固定加成,不改「比值恒平」的结论 —— 自报口径,不装健康。
-  const expIncome = 3600 + tripExpSecsPerHour();
+  const expIncome = SECS_PER_HOUR + tripExpSecsPerHour();
 
   // ---- 消耗(时期总量摊销到每小时) ----
   let stoneSinkEra = 0;

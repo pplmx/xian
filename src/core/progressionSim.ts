@@ -8,6 +8,7 @@ import { DAO_FRUIT_CULT_BONUS, SUB_LEVELS } from "@/data/constants";
 import { baseCultPerSec, daoFruitGain, expRequirement } from "./formulas";
 import { effectiveDaoFruit } from "./statsCalc";
 import { BUILDINGS } from "@/data/buildings";
+import { SECS_PER_HOUR } from "@/data/constants";
 
 /**
  * 洞府建筑能给多少修炼速度 —— **从建筑表算,不手写**。
@@ -90,7 +91,7 @@ export function hoursToReach(
   for (let m = 0; m < targetMajor; m += 1) {
     sec += secondsForMajor(m, daoFruit, a);
   }
-  return sec / 3600;
+  return sec / SECS_PER_HOUR;
 }
 
 export interface LifeRow {
