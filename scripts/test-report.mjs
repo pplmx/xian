@@ -486,6 +486,7 @@ const CATEGORIES = [
       "weatherRoutes",
       "daoSourceFill",
       "resourceSources",
+      "artifactWudaoSink",
       "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",

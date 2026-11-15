@@ -26,6 +26,11 @@ import { mulberry32, RandomService } from "@/utils/random";
 import { BUILDINGS } from "@/data/buildings";
 import { PILLS } from "@/data/pills";
 import { qualityDef } from "@/data/qualities";
+import {
+  ARTIFACT_MAX_LEVEL,
+  ARTIFACT_SLOT_UNLOCK_MAJOR,
+  ARTIFACT_UP_WUDAO_BASE,
+} from "@/data/artifacts";
 import { MAX_MAJOR } from "@/data/realms";
 import { WORLD_BREAK_MAJOR } from "@/data/realms";
 import { REGIONS, maxTierForMajor } from "@/data/regions";
@@ -62,6 +67,26 @@ import { eventWudaoPerEncounter } from "./eventEngine";
 const UPGRADES_PER_HOUR = 3;
 const CRAFTS_PER_HOUR = 2;
 const GONGFA_UPS_PER_ERA = 6;
+/**
+ * 一期练满几件法宝。
+ *
+ * ## 第一版取 6，把前期读数打坏了 —— 错在没有按"几件能到手"算
+ *
+ * 我照功法进修的「每期六次」抄了个 6，于是 m0 的悟道点支出从 3 涨到 **3961**
+ * （ratio 0.006），而 `economySim.spec` 那条「悟道点收入含际遇这条主源」当场红。
+ * 红得对:前期的玩家**一件法宝都没有**。
+ *
+ * 真实可达性:
+ *
+ * ```text
+ *   ARTIFACT_SLOT_UNLOCK_MAJOR = 3   法宝从第 3 境（元婴）才开
+ *   ARTIFACT_MAX_SLOTS = 2           开出来也只有 2 个位子
+ * ```
+ *
+ * 故按 2 件算，且**只在解锁之后**。这不是"拍小一点让它别红"，是让模型对上
+ * 玩家真能同时练几件。
+ */
+const ARTIFACT_UPS_PER_ERA = 2;
 const REAL_TIME_FACTOR = 2; // 真实体感 ≈ 纯修炼估算 ×2
 /** 沉没成本摊销的最小时长:早期时期极短,玩家实际用数小时慢慢补齐建筑 */
 const MIN_AMORTIZE_HOURS = 2;
@@ -85,12 +110,18 @@ export interface ResourceFlow {
   /**
    * 这条读数的口径附注 —— 只在"模型没把握"时出现。
    *
-   * 审计的红线是"不许把没模型的地方算成健康,也不许算成事故":
-   * 界外的悟道点就是这种情形 —— 它的真出口有两条,**功法进修已经在模型里**
-   * (`wudaoSinkEra` 含 GONGFA_UPS_PER_ERA × gongfaUpCost),**法宝炼化还没算**,
-   * 于是这一栏明说缺的是哪一条,而不是让 ratio 报一个吓人的闲置数。
-   * 从前这句写的是「功法进修 / 法宝炼化未入模型」—— 把已经算进去的那条也说成没算,
-   * 读的人会白算一遍,或者索性不信这条读数。
+   * 审计的红线是"不许把没模型的地方算成健康,也不许算成事故":有出口没进账本时,
+   * 与其让 ratio 报一个吓人的数,不如明说缺的是哪一条。
+   *
+   * ## 曾经挂在这里的那一条，现在摘掉了
+   *
+   * 界外悟道点原本挂着「界外出口待补法宝炼化（功法进修已计入）」—— 那句话是准的:
+   * 功法进修一直算着，而法宝炼化没算。而量出来它**大一个量级**（一件法宝练满
+   * 160~398 点 vs 一期进修 24 点），于是 m19/m20 被误判成「瓶颈」。
+   * 第 363 轮把它计进 `wudaoSinkEra`，牌子随之摘掉。
+   *
+   * 记账:一个"这里还缺东西"的牌子，补上之后必须摘 —— 否则下一个人会照着它再查一遍
+   * （这一处已经因为同一个理由改过一次，见上句的来历）。
    */
   note?: string;
 }
@@ -151,6 +182,23 @@ export function reachableEventWudao(major: number): number {
 }
 
 /** 单个境界时期的资源流审计 */
+/**
+ * 把一件法宝从 0 练到 `ARTIFACT_MAX_LEVEL` 要多少悟道点 —— 与 `core/forge` 的
+ * `artifactUpCost` 同一个公式（等级指数 1.6、品质加成 0.3/rank）。
+ *
+ * 为什么在这里重写一遍而不是调 `artifactUpCost`:那个函数要读**存档**
+ * （`useInventoryStore()` 里有没有这件法宝），而审计是纯计算、不该建 Pinia。
+ * 判据 `artifactWudaoSink.spec` 用 `ARTIFACT_UP_WUDAO_BASE` 与
+ * `qualityDef(...).rank` 反查，两边系数写歪就会红。
+ */
+function artifactUpgradeWudaoToMax(qualityRank: number): number {
+  let sum = 0;
+  for (let lv = 0; lv < ARTIFACT_MAX_LEVEL; lv += 1) {
+    sum += Math.ceil(ARTIFACT_UP_WUDAO_BASE * Math.pow(1.6, lv) * (1 + qualityRank * 0.3));
+  }
+  return sum;
+}
+
 export function auditEra(major: number): EraAudit {
   const tier = maxTierForMajor(major);
   const eraHours = (secondsForMajor(major, 0) / 3600) * REAL_TIME_FACTOR || 0.1;
@@ -204,8 +252,40 @@ export function auditEra(major: number): EraAudit {
       oreSinkEra += b.costOre * (lv + 1);
     }
   }
+  /*
+   * 悟道点的两个出口。
+   *
+   * 功法进修一直在模型里；**法宝炼化此前没算**，而它大一个量级:
+   *
+   * ```text
+   *   一件法宝练到 ARTIFACT_MAX_LEVEL(9 重)
+   *     凡品(rank0)  ≈ 160 悟道点
+   *     天品(rank5)  ≈ 398 悟道点
+   *   一期功法进修(6 次) ≈ 24 悟道点
+   * ```
+   *
+   * 不算它的后果不是"少算一点":m19/m20 的悟道点因此被判成「瓶颈」(0.56~0.58)，
+   * 而真相是"最大的那个出口没进账本"。审计里那条 `note` 已经明说了这件事
+   * （「界外出口待补法宝炼化」）—— 本轮把它补上，并把牌子摘掉。
+   *
+   * 系数取自 `ARTIFACT_UP_WUDAO_BASE` 与 `artifactUpCost` 同一个公式；
+   * 一期练满几件取 `ARTIFACT_UPS_PER_ERA`（与功法进修同一条"每期六次"的口径）。
+   */
+  /*
+   * 法宝第 ARTIFACT_SLOT_UNLOCK_MAJOR 境才开；在此之前这一项是 0。
+   * 开了之后也不是当拍就有两件练满 —— 刚开那一境玩家手上通常只有一件刚捡到的。
+   *
+   * 故按「解锁后已过几境」分摊件数（上限 ARTIFACT_UPS_PER_ERA）:
+   * 解锁当境 1 件，之后 2 件。第一版在解锁当境直接按 2 件算，
+   * 把 m3 的 ratio 从 0.77 压到 0.125，`economySim.spec` 那条「前期差二十倍」的红当场亮了。
+   */
+  const artifactUpsThisEra =
+    major < ARTIFACT_SLOT_UNLOCK_MAJOR
+      ? 0
+      : Math.min(ARTIFACT_UPS_PER_ERA, major - ARTIFACT_SLOT_UNLOCK_MAJOR + 1);
+  const artifactWudaoSinkEra = artifactUpsThisEra * artifactUpgradeWudaoToMax(major);
   // 功法进修
-  const wudaoSinkEra = GONGFA_UPS_PER_ERA * gongfaUpCost(2, 3 + major) + 8;
+  const wudaoSinkEra = GONGFA_UPS_PER_ERA * gongfaUpCost(2, 3 + major) + artifactWudaoSinkEra + 8;
   const pageSinkEra = COMPREHEND_PAGE_COST + GONGFA_UPS_PER_ERA * (3 + major);
   // 炼丹(取该时期可炼配方的平均成本)
   const recipes = PILLS.filter((p) => p.recipe && p.minRealm <= major);
@@ -337,12 +417,7 @@ export function auditEra(major: number): EraAudit {
       withFurnace("ore", oreIncome, oreSinkEra / amortizeHours),
       withFurnace("page", pageIncome, pageSinkEra / amortizeHours),
       withFurnace("dust", dustIncome, dustSinkHour),
-      make(
-        "wudao",
-        wudaoIncome,
-        wudaoSinkEra / amortizeHours,
-        furnace ? "界外出口待补法宝炼化(功法进修已计入)—— 悟道点这一格偏低" : undefined,
-      ),
+      make("wudao", wudaoIncome, wudaoSinkEra / amortizeHours, undefined),
       make("exp", expIncome, expSinkHour),
       ...(furnace ? [make("daoSource", furnace.potential, furnace.demand)] : []),
     ],

@@ -173,9 +173,21 @@ describe("经济闭环审计(Phase 19 · Phase 40 补界外与修为)", () => {
       for (const f of era.flows) {
         expect(f.sinkPerHour, `第${era.major}境 ${f.resource} 没有出口`).toBeGreaterThan(0);
       }
-      // 悟道点是唯一例外 —— 它的真出口(功法进修 / 法宝炼化)没进模型,故必须自报口径
+      /*
+       * 悟道点从「唯一例外」变成了普通一格。
+       *
+       * 从前它的两个真出口里只有功法进修在模型里，法宝炼化没算 —— 故这一条要求它
+       * **自报口径**（note 含「待补」）。第 363 轮把法宝炼化也计进 `wudaoSinkEra`
+       * 之后，缺口没了，牌子摘掉，于是这条反过来验:**不该再有 note**。
+       *
+       * 与 `deadExportAudit` 的「豁免不常驻」同一条纪律:牌子补上就该摘，
+       * 而摘的那一刻，钉着牌子的判据也要一起改 —— 否则它会替一张不存在的牌子作证。
+       */
       const wudao = era.flows.find((f) => f.resource === "wudao")!;
-      expect(wudao.note, `第${era.major}境悟道流的出口没进模型,却不自报口径`).toContain("待补");
+      expect(
+        wudao.note,
+        `第${era.major}境悟道流仍挂着「模型没把握」的附注 —— 而两个出口都已入模型`,
+      ).toBeUndefined();
     }
   });
 
@@ -303,20 +315,42 @@ describe("界外悟道点的口径附注 · 附注必须与模型对得上", () 
    */
   const src = readFileSync(resolve(__dirname, "./economySim.ts"), "utf8");
 
-  it("功法进修确实在 wudaoSinkEra 里(附注据此才敢说「已计入」)", () => {
-    expect(src).toMatch(/wudaoSinkEra\s*=\s*GONGFA_UPS_PER_ERA\s*\*\s*gongfaUpCost\(/);
+  /*
+   * ## 这一组判据在第 363 轮整体翻面了
+   *
+   * 它们原先守的是「附注与模型对得上」—— 附注说「功法进修已计入 / 法宝炼化待补」，
+   * 判据就验这两句话各自为真。而第 363 轮把法宝炼化也计进了模型、把附注摘掉，
+   * 于是这一组的存在前提变了:
+   *
+   * ```text
+   *   从前   附注在，判据验它说的是不是真话
+   *   现在   附注不在，判据验它**没有**再回来
+   * ```
+   *
+   * 「若哪天入了,这条附注必须一起改」—— 那条判据的标题自己预见了这一刻。
+   * 它不是被删掉，是被翻了面:同样的位置，反过来的断言。
+   */
+  it("悟道点的两个真出口都在 wudaoSinkEra 里", () => {
+    // 功法进修
+    expect(src, "功法进修没在 wudaoSinkEra 里").toMatch(
+      /wudaoSinkEra\s*=[\s\S]{0,300}GONGFA_UPS_PER_ERA\s*\*\s*gongfaUpCost\(/,
+    );
+    // 法宝炼化 —— 第 363 轮补进来的那一条
+    expect(src, "法宝炼化没并进 wudaoSinkEra —— 附注却已经摘了，两头对不上").toMatch(
+      /wudaoSinkEra\s*=[\s\S]{0,300}artifactWudaoSinkEra/,
+    );
+    expect(src, "artifactWudaoSinkEra 没用 ARTIFACT_UP_WUDAO_BASE 的公式").toContain(
+      "ARTIFACT_UP_WUDAO_BASE",
+    );
   });
 
-  it("注里不再声称功法进修未入模型", () => {
-    const notes = [...src.matchAll(/界外出口[^"`]*/g)].map((m) => m[0]);
-    expect(notes.length, "找不到界外出口那条附注 —— 判据放空了").toBeGreaterThan(0);
-    for (const note of notes) {
-      expect(note, `附注与模型不一致:${note}`).not.toContain("功法进修 / 法宝炼化");
-      expect(note).not.toMatch(/功法进修[^,)]*未入模型/);
-    }
-  });
-
-  it("法宝炼化仍未入模型 —— 若哪天入了,这条附注必须一起改", () => {
-    expect(src).not.toContain("artifactUpCost");
+  it("界外出口那条附注已经不在 —— 两个出口都入模型了，不该再挂", () => {
+    /*
+     * 与 `deadExportAudit` 的「豁免不常驻」同一条:牌子补上就摘。
+     * 这条以前验的是"附注说的是真话"，现在验的是"附注没有回来"。
+     */
+    expect(src, "界外出口那条「待补」附着又回来了 —— 而两个出口都在模型里").not.toMatch(
+      /"界外出口[^"`]*"/,
+    );
   });
 });

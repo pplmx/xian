@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 812 个 spec;本作自己那部分 732 个) |
+| `bun run test` | 全量用例(全量 813 个 spec;本作自己那部分 733 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 812 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 813 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 812 个 spec(本作自己那部分 732 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 813 个 spec(本作自己那部分 733 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -19214,3 +19214,76 @@ EquipReforgePanel 4 VeinInvestCard 4 FurnaceDialog 4 …
 而"又一个地方换成表里的句子"并不比"这里本来就说得对"更好。
 
 工作区干净、全量 812 / 6825 全绿；`check`、`test:report`、`check:ui` 同绿。
+
+### 第 364 轮:仓库自己挂的那块「待补」牌子 —— 补上，然后摘掉
+
+这一轮换了做法:不再猜「缺什么」，而是在源码里找**仓库自己声明的缺口**。
+
+```text
+src/core/economySim.ts:344
+  furnace ? "界外出口待补法宝炼化(功法进修已计入)—— 悟道点这一格偏低" : undefined
+```
+
+第 883b3706 次提交改准过它一回（从前写「功法进修 / 法宝炼化未入模型」，
+而功法进修一直算着）。**这次它是准的** —— 法宝炼化确实没进模型。
+
+#### 量出来:那个没算进去的出口，比算进去的那条大一个量级
+
+```text
+   一件法宝练到 9 重（ARTIFACT_MAX_LEVEL）
+     凡品（rank0）   ≈ 681 悟道点
+     天品（rank5）   ≈ 数百
+   一期功法进修（GONGFA_UPS_PER_ERA = 6 次）  ≈ 24 悟道点
+```
+
+也就是说:**界外悟道点最大的那个出口，整个不在账本里。** 而模型因此把 m10 判成
+「闲置 ratio=11.36」、把 m19/m20 判成「瓶颈」—— 那个读数把「有出口没算」当成了
+「出口过多」与「出口不足」两种相反的错。
+
+补进去之后:
+
+```text
+       改前                      改后
+m10    闲置 11.36          →    健康 2.83
+m12    过剩 7.96           →    过剩 3.05
+m19    瓶颈 0.58           →    瓶颈 0.50
+m20    瓶颈 0.56           →    瓶颈 0.50
+人间界悟道点的「全时期闲置」预警   3 个境界（×14/×37/×14）→ 1 个（×13）
+```
+
+#### 三处判据跟着翻面，其中一条自己预见了
+
+```text
+① economySim.spec「界外每样材料都有非零出口」
+   原:悟道点是唯一例外，故必须自报口径（note 含「待补」）
+   新:它不再是例外 —— note 必须为空
+
+② economySim.spec「法宝炼化仍未入模型 —— 若哪天入了,这条附注必须一起改」
+   ↑ 这条判据的**标题**预见了这一刻。它不是被删掉，是被翻了面:
+     同样的位置，反过来的断言（两个出口都在 wudaoSinkEra 里）
+
+③ exportReach.spec 的基线里删掉 `core/economySim.ts:auditEra`
+   —— 它现在有外部使用者了（新判据读它），基线那个口径是「只在本地用」
+```
+
+②那条值得单独记:**一个写着「若哪天 X，这里必须改」的判据，是给未来的自己留的字条。**
+而它触发时，正确动作不是删掉它，是把它翻面 —— 判据守的那个前提变了，断言方向也跟着变。
+
+#### 第一版把前期读数打坏了 —— 而这正好是判据在干活
+
+我照功法进修的「每期六次」抄了个 6 件，于是 m0 的悟道点支出从 3 涨到 **3961**
+（ratio 0.006）。`economySim.spec` 那条「前期不再是 0.05 那种差二十倍的读数」当场红。
+
+红得对:前期的玩家**一件法宝都没有**。真实可达性是
+
+```text
+ARTIFACT_SLOT_UNLOCK_MAJOR = 3   法宝从第 3 境（元婴）才开
+ARTIFACT_MAX_SLOTS = 2           开出来也只有 2 个位子
+```
+
+故改成「解锁当境 1 件、之后 2 件」。第二版仍红了一次（m3 的 ratio 从 0.77 压到 0.125），
+因为解锁当境直接按 2 件算了 —— 而刚开那一境玩家手上通常只有一件刚捡到的。
+
+**两次红都不是"调小一点让它别红"，是让模型对上玩家真能同时练几件。**
+
+工作区干净、全量 813 / 6828 全绿；`check`、`test:report` 同绿。
