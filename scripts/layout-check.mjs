@@ -8906,6 +8906,114 @@ async function taskReduceMotion() {
  *   三 小境（sub 未满）时它不在 —— 小境没有「此刻这一劫」，写「此劫」是假的；
  *   四 它说的档位词是决策档里的一个（稳渡/可渡/中等/高风险），不是劫名兜底。
  */
+/**
+ * 今天该去做什么 —— 首页天时那一块要给出一条**点得动**的路。
+ *
+ * 判据四件:
+ *   一 那条路在页面上，且带箭头（与「今日日课」的去处同一副长相）；
+ *   二 它真的点得动 —— 日课那一批当年就是八个不可点的 `<li>`，
+ *      所以这一条要真点一次，并确认路由变了；
+ *   三 落点是它自己说的那一页（`weatherRoute.route`），不是首页兜底；
+ *   四 渡劫更险的那几条（雷鸣 / 仙劫日 / 神威日）要把提醒也说出来 ——
+ *      那时候玩家最该知道的不是"去打怪"，是"别急着渡劫"。
+ */
+async function taskWeatherRoute() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    // 先播种一份真存档再开首页 —— 没有存档时首页是开场白，不是那一块
+    {
+      const slices = showcaseSlices("light");
+      slices.player = { ...slices.player, major: 1, sub: 3, dead: false };
+      await seedSave(ctx, slices, "__weatherRoute");
+    }
+    const ctxPage = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(ctxPage, pageErrors);
+    await openRoute(ctxPage, "/", 1200);
+    await clearOverlays(ctxPage);
+
+    checked += 1;
+    const info = await ctxPage.evaluate(() => {
+      const a = document.querySelector(".home-deck__weather-go");
+      return {
+        text: a ? (a.textContent || "").replace(/\s+/g, " ").trim() : null,
+        href: a ? a.getAttribute("href") : null,
+        tag: a ? a.tagName : null,
+      };
+    });
+    if (!info.text) {
+      failures.push("[390] 今天该去做什么:首页天时那一块没有去向");
+    } else {
+      if (info.tag !== "A") {
+        failures.push(`[390] 今天该去做什么:那一格是 <${info.tag}> —— 不是一条路`);
+      }
+      if (!info.text.includes("→")) {
+        failures.push(`[390] 今天该去做什么:没有箭头 «${info.text}»`);
+      }
+      // 真点一次：必须真的换到它说的那一页
+      const before = ctxPage.url();
+      await ctxPage
+        .locator(".home-deck__weather-go")
+        .first()
+        .click({ timeout: 4000 })
+        .catch(() => {});
+      await ctxPage.waitForTimeout(700);
+      const after = ctxPage.url();
+      if (after === before) {
+        failures.push(`[390] 今天该去做什么:点了没反应（还在 ${before}）`);
+      } else if (info.href && !after.includes(info.href.split("?")[0])) {
+        failures.push(`[390] 今天该去做什么:点到了 ${after}，与它写的 ${info.href} 不一致`);
+      }
+    }
+
+    // ---- 渡劫更险的那几条：提醒要说出来 ----
+    /*
+     * 直接造一份「今天必定是某条更险天时」的存档。天时按 totalPlaySec 派生，
+     * 故摆到那一天即可 —— 不在判据里重算天时公式。
+     */
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.player = { ...slices.player, major: 0, sub: 0, dead: false };
+      // 逐个游戏日摆过去，看有没有 .home-deck__weather-caution
+      let riskyDay = -1;
+      for (let d = 0; d < 60 && riskyDay < 0; d += 1) {
+        slices.game = { ...slices.game, totalPlaySec: d * 86400 };
+        await seedSave(ctx, slices, `__weatherCaution${d}`);
+        const p2 = await ctx.newPage();
+        await openRoute(p2, "/", 900);
+        const has = await p2.evaluate(() =>
+          Boolean(document.querySelector(".home-deck__weather-caution")),
+        );
+        await p2.close();
+        if (has) riskyDay = d;
+      }
+      if (riskyDay < 0) {
+        failures.push("[390] 今天该去做什么:60 个游戏日里没有一天是「渡劫更险」—— 判据取不到样本");
+      }
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 今天该去做什么页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n今天该去做什么:「${info.text}」→ ${info.href}（点得动）`);
+    } else {
+      console.log(`\n今天该去做什么[未通过]:${JSON.stringify(info)}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked };
+}
+
 async function taskWaitPayoff() {
   const failures = [];
   let checked = 0;
@@ -34117,6 +34225,7 @@ const TASKS = [
   ["减少动效真的减到了", taskReduceMotion],
   ["闭关的跨页承诺", taskRetreat],
   ["等一天值不值那一行", taskWaitPayoff],
+  ["今天该去做什么", taskWeatherRoute],
   ["背包里的账目", taskInventoryAccounting],
   ["际遇帖的门限与去向", taskEventSlip],
   ["择师谱的两步定契", taskMentorLedger],

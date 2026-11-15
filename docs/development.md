@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 809 个 spec;本作自己那部分 729 个) |
+| `bun run test` | 全量用例(全量 810 个 spec;本作自己那部分 730 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 809 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 810 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 809 个 spec(本作自己那部分 729 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 810 个 spec(本作自己那部分 730 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -18921,3 +18921,67 @@ m8 裸身   连续 20 天   档位恒为「高风险」   把握 27~29%
 
 工作区干净、全量 809 / 6799 全绿；`bun run check`、`bun run test:report`、
 `bun run check:ui` 同绿。
+
+### 第 360 轮:首页是「指挥台」，而天时那一块只报数、不报路
+
+`docs/development.md` 自己写着:
+
+> **主页的定位是"指挥台"不是"操作台"** —— 它回答「现在该做什么」，
+> 然后把玩家送到那一页。
+
+这一轮从这句话往下查，发现天时那一块是**唯一**一处「给了数却不给路」的地方:
+
+```text
+今日天时 · 月蚀        尚需修行 3 时 12 分
+月华暗涌，气运偏移。
+气运 +5% · 掉落率 +5%      ← 读完不知道该干什么
+```
+
+「气运 / 掉落率」只在**打怪结算**里生效（`core/loot` 的 `dropEntriesFor` / `luck`），
+而打怪在历练页。这一层推论一句都没写在屏上 —— 玩家要靠背 18 条天时才知道
+「月蚀日该去历练」。
+
+#### 这不是新问题，是同一屏上剩下那一处
+
+「今日日课」有过完全一样的缺口并且已经修过（第 163 轮，`ui/dailyRoutes`）:
+日课原先是八个不可点的 `<li>`，玩家知道要做什么、不知道去哪儿做。
+天时是那一屏上**唯一剩下的同型缺失** —— 修它不需要发明新东西，照那一处的做法即可。
+
+#### 判据抓到了两次分类错误
+
+这一步值得记，因为两次都是**判据对、我的表错**，而两次修的都是分类口径:
+
+```text
+① 第一版把 defensePct / maxHpPct 算进「战斗向」
+   → 凝霜（防御+6%·灵气+8%）/ 天朗（灵气+10%·气血+4%）/ 法则潮（防御+8%·减伤+6%）
+     全被判成"该去历练"
+   实情:防御与气血上限是**被动**属性，引擎每拍算进面板，玩家不需要去任何页面
+        才能吃到 —— 它们不构成"今天该去哪"的理由
+   修法:战斗向只收"出手才吃到"的几条
+        attackPct / damageBonus / speed / dodgeRate / firstStrike → core/combat
+        luck / dropRate                                          → core/loot
+        expGain                                                  → 打怪的修为入账
+        qiRegen 恰恰相反（engine 每秒自动回复）→ 归修炼向
+
+② 第二版「带修炼向词条就必须指向修行」把道音点名
+   → 道音 = 气运+10% · 掉落率+10% · 进阶成功率+3%
+   实情:三条词条里两条只在打的时候吃到、一条推进阶 —— 它指向哪边都对了一半
+   修法:判据加「**只**带修炼向、不带任何战斗向」才算"该去修行"；
+        两边都沾的由人判断，判据不去猜
+```
+
+两次的教训是同一条:**判据该问的是「这条天时的主要收益在哪边」，不是「它有没有某个词条」。**
+
+#### 那条路要真点一次
+
+`layout-check` 的「今天该去做什么」不只查元素在不在，它**真点一次**并核对路由变了。
+理由是日课那一批当年的形状正是"看着像路、其实点不动"。
+
+这一条门第一次跑也红了，红得对:我在**没有播种存档**的情况下开了首页 ——
+没有存档时首页是开场白，根本没有那一块。补上 `seedSave` 之后才量到真东西。
+
+顺带修了一处样式:`.home-deck__weather-go:hover` 是裸 `:hover`，
+被 `core/uiLayering.spec` 的「触屏点一下别把 hover 态黏住」当场拦住 ——
+改成 `@media (hover: hover)`，而 `:focus-visible` 留在外面（键盘焦点与悬停是两件事）。
+
+工作区干净、全量 810 / 6806 全绿；`bun run check`、`bun run test:report` 同绿。

@@ -83,6 +83,22 @@
               >今日渡劫 · {{ tribulationLine(weatherTribulation) }}</span
             >
           </div>
+          <!--
+            今天该去做什么 —— 与上面「今日日课」的去处同一条纪律:
+            首页是指挥台,给了数就要给路。选用 RouterLink 而不是文字:
+            那一格要真的点得动(日课那一批当年就是八个不可点的 <li>)。
+          -->
+          <RouterLink
+            v-if="weatherRoute"
+            class="home-deck__weather-go"
+            :to="weatherRoute.route"
+            :aria-label="`今日${weather.name} —— ${weatherRoute.label},前往`"
+          >
+            {{ weatherRoute.label }} →
+            <span v-if="weatherRoute.caution" class="home-deck__weather-caution">{{
+              weatherRoute.caution
+            }}</span>
+          </RouterLink>
         </div>
 
         <div class="home-deck__orb">
@@ -449,6 +465,7 @@ import { VEIN_UNLOCK_MAJOR } from "@/data/constants";
 import { LIFESPAN_WARN_RATIO } from "@/data/constants";
 import { WORLD_BREAK_MAJOR } from "@/data/realms";
 import { todayWeather, upcomingWeather, weatherRemainingSec } from "@/core/weather";
+import { weatherRouteOf } from "@/ui/weatherRoutes";
 import { cnNumber, formatCountdown, formatPercent } from "@/utils/format";
 import { generateCurrentGoal, type Goal } from "@/core/goal";
 import { currentMainQuestProgress } from "@/core/questProgress";
@@ -539,6 +556,17 @@ const weatherEffects = computed(() => weatherModText.value.split(" · ").filter(
 const weatherTribulation = computed(() =>
   weather.value.tribulationMult > 1 ? weather.value.tribulationMult : null,
 );
+/**
+ * 今天该去做什么 —— 效果行报了数,这一行报「所以去哪儿」。
+ *
+ * 「气运 +5% · 掉落率 +5%」这两个词对新手完全不可行动:它们只在**打怪结算**
+ * 里生效(`core/loot` 的 `dropEntriesFor` / `luck`),而打怪在历练页。
+ * 映射表与判据见 `ui/weatherRoutes` —— 那边按 `mods` 反推,不手抄名单。
+ *
+ * 与上面「今日日课」的去处(`ui/dailyRoutes`)是同一条纪律:
+ * 首页是指挥台,给了任务就要给路。
+ */
+const weatherRoute = computed(() => weatherRouteOf(weather.value));
 /**
  * 天时的两个读数(来自库的周期层):
  *   还有多久换 —— 天时是每天一次的确定性环境,玩家该知道它什么时候变;

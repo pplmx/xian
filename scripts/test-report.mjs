@@ -483,6 +483,7 @@ const CATEGORIES = [
       "stageBenefits",
       "heavenInsightPreview",
       "tribulationWaitPayoff",
+      "weatherRoutes",
       "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",

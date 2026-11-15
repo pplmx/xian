@@ -326,6 +326,54 @@
     color: rgb(var(--color-cinnabar-rgb));
   }
 
+  /*
+   * 今天该去做什么 —— 与「今日日课」的去处(`ui/dailyRoutes`)同一副长相:
+   * 一条真的点得动的路。用朱砂(行动色)而不是石青(信息色):
+   * 它是这一块里**唯一**要玩家做动作的东西,而上面几行都是在报信息。
+   */
+  .home-deck__weather-go {
+    display: inline-flex;
+    /*
+     * 触控下限 28px —— 与 `a.home-deck__after` 同一档。
+     *
+     * 第一版只有内联文字那么高（实测 41.6×16.0px），被 layout-check 的
+     * 触控下限当场拦住:一行 16px 高的链接在窄屏上要瞄着点。
+     * 故给 `min-height` + `align-items: center`，让热区真的够大。
+     */
+    min-height: 28px;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.35rem;
+    color: rgb(var(--color-cinnabar-rgb));
+    font-size: var(--type-note);
+    line-height: 1.5;
+    text-decoration: none;
+    border-bottom: 1px solid rgb(var(--color-cinnabar-rgb) / 0.4);
+  }
+
+  /*
+   * 悬停态只给真悬停设备 —— 触屏点一下会把 :hover 黏住,而这一格是 RouterLink,
+   * 黏住之后玩家以为它还"按着"。故包进 @media (hover: hover)
+   * (见 `core/uiLayering.spec` 的「触屏点一下别把 hover 态黏住」)。
+   *
+   * `:focus-visible` 留在外面:键盘焦点与悬停是两件事,窄屏也该看见。
+   */
+  .home-deck__weather-go:focus-visible {
+    border-bottom-color: rgb(var(--color-cinnabar-rgb));
+  }
+
+  @media (hover: hover) {
+    .home-deck__weather-go:hover {
+      border-bottom-color: rgb(var(--color-cinnabar-rgb));
+    }
+  }
+
+  /* 提醒(渡劫更险)跟在路后面 —— 它不是另一条路,故不着重色 */
+  .home-deck__weather-caution {
+    color: rgb(var(--color-ink-soft-rgb));
+  }
+
   .home-deck__orb {
     position: relative;
     display: flex;
