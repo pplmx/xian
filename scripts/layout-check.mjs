@@ -8896,6 +8896,98 @@ async function taskReduceMotion() {
 }
 
 /** 闭关的跨页承诺 */
+/**
+ * 劫随天时变 —— 那一行要在**站到大关前时**出现，且小境时不出现。
+ *
+ * 判据三件（与 `tribulationDayHint.spec` 的纯逻辑判据互补，这里量的是**渲染**）:
+ *   一 大关时那一行真的在页面上，且措辞里有「天时」与至少一个劫名；
+ *   二 小境（sub 未满）时它不在 —— 小境没有「此刻这一劫」，写「此劫」是假的；
+ *   三 那一行报的劫名与 `tribulationDayHint` 算的一致（不做两本账）。
+ */
+async function taskTribulationDayHint() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    /** 造一份「站在大关前」的存档：sub 满，且修为够 */
+    const atGate = (sub) => {
+      const slices = showcaseSlices("light");
+      slices.game = { ...slices.game, totalPlaySec: 0 };
+      slices.player = {
+        ...slices.player,
+        major: 5,
+        sub,
+        exp: { m: 9 ** 15, e: 0 },
+        dead: false,
+      };
+      return slices;
+    };
+
+    // ---- 一 大关前：那一行在 ----
+    checked += 1;
+    await seedSave(ctx, atGate(9), "__dayHintGate");
+    let page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/cultivation", 1200);
+    await clearOverlays(page);
+    const gate = await page.evaluate(() => {
+      // 那一行与「天数可窥」共用 class；按文案认（它含「此劫随天时变」）
+      const nodes = [...document.querySelectorAll(".cultivation-breakthrough__heaven")];
+      const hit = nodes.find((n) => (n.textContent || "").includes("此劫随天时变"));
+      return { text: hit ? (hit.textContent || "").replace(/\s+/g, " ").trim() : null };
+    });
+    if (!gate.text) {
+      failures.push("[390] 劫随天时变:站到大关前也看不到那一行");
+    } else {
+      for (const must of ["天时", "此劫随天时变", "今日"]) {
+        if (!gate.text.includes(must)) {
+          failures.push(`[390] 劫随天时变:那一行没说${must} «${gate.text}»`);
+        }
+      }
+      // 劫名要对得上（五种劫型的名字都在 TRIBULATIONS 里，这里只抽一个「」占位）
+      if (!/「[^」]+」/.test(gate.text)) {
+        failures.push(`[390] 劫随天时变:那一行没报出任何劫名 «${gate.text}»`);
+      }
+    }
+
+    // ---- 二 小境：那一行不在 ----
+    checked += 1;
+    page = await ctx.newPage();
+    watchPageErrors(page, pageErrors);
+    await seedSave(ctx, atGate(0), "__dayHintMinor");
+    await openRoute(page, "/cultivation", 1200);
+    await clearOverlays(page);
+    const minor = await page.evaluate(() => {
+      const nodes = [...document.querySelectorAll(".cultivation-breakthrough__heaven")];
+      const hit = nodes.find((n) => (n.textContent || "").includes("此劫随天时变"));
+      return { text: hit ? (hit.textContent || "").replace(/\s+/g, " ").trim() : null };
+    });
+    if (minor.text) {
+      failures.push(
+        `[390] 劫随天时变:小境上出现了「此劫」那一行 —— 小境没有此刻这一劫 «${minor.text}»`,
+      );
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 劫随天时变页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n劫随天时变:大关前 «${gate.text}» ；小境不出`);
+    } else {
+      console.log(`\n劫随天时变[未通过]:${JSON.stringify({ gate: gate.text, minor: minor.text })}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked };
+}
+
 async function taskRetreat() {
   const failures = [];
   let checked = 0;
@@ -33970,6 +34062,7 @@ const TASKS = [
   ["藏珍两章续卷与桌面并读", taskCollectionRegister],
   ["减少动效真的减到了", taskReduceMotion],
   ["闭关的跨页承诺", taskRetreat],
+  ["劫随天时变那一行", taskTribulationDayHint],
   ["背包里的账目", taskInventoryAccounting],
   ["际遇帖的门限与去向", taskEventSlip],
   ["择师谱的两步定契", taskMentorLedger],

@@ -17,6 +17,28 @@ import { NO_RELIEF } from "@/data/linggenAffinity";
 import { STAT_NAMES } from "@/data/statNames";
 import type { AnyStatKey, StatMods } from "@/types";
 
+/**
+ * 找到「当天天时是某一条」的那一天（游戏日序号）。
+ *
+ * 判据要验的是「这一天时生效时,它的词条真的进了属性」—— 它与「它出现在第几天」
+ * 无关。而把日期写死（`day2 = 赤阳`）会让判据变成**旧分布的快照**:天时池从 5 条
+ * 长到 9 条、权重一改,那两个日期就指向别的天时,判据红在"取错了样本"而不是
+ * "词条没生效" —— 红得对,但指错了地方。
+ *
+ * 故按**性质**找:遍历确定性日程,取第一条命中目标天时的日子。找不到就当场
+ * 报错（而不是静默跳过）—— 那意味着池子或权重出了问题。
+ */
+function dayOfWeather(id: string, horizon = 400): number {
+  const game = useGameStore();
+  for (let d = 0; d < horizon; d += 1) {
+    game.$patch({ totalPlaySec: d * 86400 });
+    if (todayWeather(usePlayerStore().major).id === id) return d;
+  }
+  throw new Error(
+    `${horizon} 个游戏日内没出现天时「${id}」—— 它已被抽不到,见「每一条天时都抽得到」`,
+  );
+}
+
 describe("天时(weather)", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
@@ -58,6 +80,55 @@ describe("天时(weather)", () => {
     expect(seen.size).toBeGreaterThanOrEqual(3);
   });
 
+  it("池子里的每一条天时都抽得到 —— 定义了就得出得来", () => {
+    /*
+     * 这一条是这一轮量出来的:人间界的池子从 5 条补到 9 条（罡风 / 凝霜 / 霞光 / 天朗
+     * 分四次提交加进来的），而 `pick` 里那条权重规则**一直按 5 条写的**:
+     *
+     * ```ts
+     * if (roll < 0.3) return entries[4];           // 清和 30%
+     * const idx = Math.floor(((roll - 0.3) / 0.7) * 4);   // ← 写死的 4
+     * return entries[Math.min(3, idx)];            // ← 写死的上界 3
+     * ```
+     *
+     * 于是后补的四条**永远不会被抽到**：清和 30%、前四条各约 17.5%，第 5~9 条 0%。
+     * 实测 2000 个游戏日，出现的不同天时恰好 5 种。
+     *
+     * 判据不钉"哪一天是哪条"（那是快照），只问一个结构问题：
+     * **池子里定义的每一条，在一个足够长的周期里都得至少出现一次。**
+     * 它同时挡住"以后再加一条天时而忘了改权重"这个形状 —— 那正是四连撞的成因。
+     */
+    const game = useGameStore();
+    const seen = new Set<string>();
+    // 一个池子的周期：9 条各有非零概率，1500 天足以让 10% 的分支都出现几十次
+    for (let d = 0; d < 1500; d += 1) {
+      game.$patch({ totalPlaySec: d * 86400 });
+      seen.add(todayWeather(usePlayerStore().major).id);
+    }
+    const missing = WEATHERS.filter((w) => !seen.has(w.id)).map((w) => `${w.name}(${w.id})`);
+    expect(
+      missing,
+      "人间界的天时池里,这些定义了却永远抽不到 —— 权重规则还按旧条数写着:\n" + missing.join(" / "),
+    ).toEqual([]);
+  });
+
+  it("界外的三池同样每一条都抽得到", () => {
+    // 界外三池走的是等概率分支,本来就该全可达 —— 但那是**当前实现**的巧合。
+    // 这条与上一条同形,一并钉住:哪天界外也改成分档权重,漏一条当场红。
+    const game = useGameStore();
+    for (const major of [9, 14, 18]) {
+      const world = worldOf(major);
+      const pool = WORLD_WEATHERS[world.id as "immortal" | "god" | "chaos"];
+      const seen = new Set<string>();
+      for (let d = 0; d < 400; d += 1) {
+        game.$patch({ totalPlaySec: d * 86400 });
+        seen.add(todayWeather(major).id);
+      }
+      const missing = pool.filter((w) => !seen.has(w.id)).map((w) => w.name);
+      expect(missing, `${world.name}的天时池里这些永远抽不到`).toEqual([]);
+    }
+  });
+
   it("雷鸣:渡劫更险(倍率>1)", () => {
     const lm = weatherDef("leiming");
     expect(lm?.tribulationMult).toBeGreaterThan(1);
@@ -80,7 +151,8 @@ describe("天时词条并入最终属性(mods 源)", () => {
   it("当前天时的词条出现在 player.finalStats.mods 中(战斗/掉落/渡劫即由此读取)", () => {
     const game = useGameStore();
     const player = usePlayerStore();
-    game.$patch({ totalPlaySec: 0 }); // day 0 = 灵雨:cultivationSpeed+0.1, qiRegen+0.2
+    // 灵雨:cultivationSpeed +0.1, qiRegen +0.2
+    game.$patch({ totalPlaySec: dayOfWeather("lingyu") * 86400 });
     const day0 = todayWeather(usePlayerStore().major);
     expect(day0.id).toBe("lingyu");
     // 总属性里还叠着命格等常驻底色,故这里钉的是「天时贡献了多少」,不是总数
@@ -94,13 +166,12 @@ describe("天时词条并入最终属性(mods 源)", () => {
   it("赤阳日:attackPct/damageBonus 生效;月蚀日:luck/dropRate 生效", () => {
     const game = useGameStore();
     const player = usePlayerStore();
-    // day2=赤阳,day3=月蚀(确定性种子,见 weather.ts)
-    game.$patch({ totalPlaySec: 2 * 86400 });
+    game.$patch({ totalPlaySec: dayOfWeather("chiyang") * 86400 });
     expect(todayWeather(usePlayerStore().major).id).toBe("chiyang");
     const fate = player.fateMods;
     expect((player.finalStats.mods.attackPct ?? 0) - (fate.attackPct ?? 0)).toBeCloseTo(0.05);
     expect((player.finalStats.mods.damageBonus ?? 0) - (fate.damageBonus ?? 0)).toBeCloseTo(0.05);
-    game.$patch({ totalPlaySec: 3 * 86400 });
+    game.$patch({ totalPlaySec: dayOfWeather("yueshi") * 86400 });
     expect(todayWeather(usePlayerStore().major).id).toBe("yueshi");
     expect((player.finalStats.mods.luck ?? 0) - (fate.luck ?? 0)).toBeCloseTo(0.05);
     expect((player.finalStats.mods.dropRate ?? 0) - (fate.dropRate ?? 0)).toBeCloseTo(0.05);
@@ -109,7 +180,7 @@ describe("天时词条并入最终属性(mods 源)", () => {
   it("雷鸣日:tribulationResist 生效(渡劫变难),attackPct 生效", () => {
     const game = useGameStore();
     const player = usePlayerStore();
-    game.$patch({ totalPlaySec: 1 * 86400 });
+    game.$patch({ totalPlaySec: dayOfWeather("leiming") * 86400 });
     expect(todayWeather(usePlayerStore().major).id).toBe("leiming");
     const fate = player.fateMods;
     expect(

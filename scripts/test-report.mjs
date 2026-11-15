@@ -482,6 +482,7 @@ const CATEGORIES = [
       "loreInsightByKind",
       "stageBenefits",
       "heavenInsightPreview",
+      "tribulationDayHint",
       "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",

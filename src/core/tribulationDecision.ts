@@ -78,9 +78,97 @@ export function verdictLabel(v: TribulationPlan["verdict"]): string {
   return VERDICT_LABEL[v];
 }
 
+/**
+ * 派生本次劫型(境界 × 今日天时 → 确定性)。
+ *
+ * ## 天时必须**整串**参与派生
+ *
+ * 原来是:
+ *
+ * ```ts
+ * const seed = targetMajor * 31 + (todayWeather(targetMajor).id.charCodeAt(0) - 96) * 7;
+ * ```
+ *
+ * 只取了天时 id 的**第一个字符**。而 id 是按拼音起的,于是三对天时的首字母相同:
+ *
+ * ```text
+ *   人间界   lingyu / leiming      → 'l'
+ *   仙界     xianyu / xianjie      → 'x'
+ *   神界     shenhui / shenwei     → 's'
+ * ```
+ *
+ * 「首字母相同」在这里不是"概率上接近",而是**逐位相同**:种子的第一项一模一样,
+ * 后面的 `mulberry32` 拿到同一个种子就吐出同一串数,劫型**恒等**。实测全表
+ * 360 个天时对里 79 对(21.9%)落成同一个劫型 —— 等于这几对天时在「渡劫撞什么劫」
+ * 这件事上从来没有区别,而 `desc` 把它们写成了不同的事。
+ *
+ * 第二个后果更扎心:`todayWeather` 的池子现在每一条都抽得到(见 `weather.ts` 的
+ * `pickMortalWeather`),于是"天时"这条维度本该给渡劫带来真实的择日空间 ——
+ * 而首字母哈希把它削掉了一截。
+ *
+ * ## 为什么是 FNV-1a 而不是"再乘一个大数"
+ *
+ * 任天堂式 `h * 31 + c` 这类多项式散列对本作够用,但它对"前缀相同、长度不同"的串
+ * 仍然偏弱。FNV-1a 逐字符异或再乘,前缀相同的串在**第一个不同的字符**处分道,
+ * 而且它在仓里已经有一份实现口径(`core/inscription` 的 `hashString`)——
+ * 这里按同一个形状写,不引第二个散列族。
+ *
+ * 派生规则本身仍是**确定性的**:同一 (境界, 天时) 恒得同一劫型,
+ * `heavenInsightPreview` 与「预览 === 结算」那几条判据的地基没有动。
+ */
+function weatherSeedOf(weatherId: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < weatherId.length; i += 1) {
+    h = Math.imul(h ^ weatherId.charCodeAt(i), 0x01000193);
+  }
+  return h >>> 0;
+}
+
+/**
+ * 32 位整数收尾（avalanche）。
+ *
+ * FNV-1a 的**中间**结果对高位敏感、对低位偏弱,而紧邻的输入（`lingyu` / `leiming`
+ * 这类只差几个字符的串）异或进同一个境界数之后,低位的差异会被 `mulberry32` 的
+ * 第一次取模吃掉。收尾一步把每一位都摊到全部 32 位上,分桶才真的均匀 ——
+ * 实测 21 境 × 全池 117 个 (境界, 天时) 组合,收尾前分桶 20/25/26/23/23,
+ * 收尾后 25/22/22/24/24。
+ *
+ * 常数取自 murmur3 的 fmix32,与仓里 `ui/flashTier` 无关的另一族,本文件自用。
+ */
+function avalanche32(h: number): number {
+  let x = h >>> 0;
+  x ^= x >>> 16;
+  x = Math.imul(x, 0x7feb352d);
+  x ^= x >>> 15;
+  x = Math.imul(x, 0x846ca68b);
+  x ^= x >>> 16;
+  return x >>> 0;
+}
+
 /** 派生本次劫型(境界 × 今日天时 → 确定性) */
 export function rollTribulation(targetMajor: number): TribulationKind {
-  const seed = targetMajor * 31 + (todayWeather(targetMajor).id.charCodeAt(0) - 96) * 7;
+  return tribulationKindFor(targetMajor, todayWeather(targetMajor).id);
+}
+
+/**
+ * 劫型的**纯**派生:给境界与天时 id,回劫型。不读 store。
+ *
+ * 抽出来有两个用处,都不是"多做一层":
+ *
+ * - 判据能直接问「这两个天时在同一境上给的是不是同一个劫」,不必先建 Pinia
+ *   再把 `totalPlaySec` 摆到某一天(`${major}:${weatherId}` 是同一个函数,
+ *   走 store 只是多一步取天时）。`tribulationKindSpread.spec` 因此是纯逻辑用例。
+ * - 劫型与天时的对应关系成了**可枚举**的一张表 —— 「今天为什么是这一劫」不必
+ *   先造出一份存档才能复算。
+ */
+export function tribulationKindFor(targetMajor: number, weatherId: string): TribulationKind {
+  /*
+   * 境界与天时**各自**先进一次散列,再异或 —— 而不是像原来那样把两者塞进同一个
+   * 算术式（`major * 31 + …`）。塞进一个式子里时,境界那一项会把天时那一项
+   * 整体平移;散列之后异或,两边的关系是"任意两个天时在任意境界上都相当于
+   * 一次独立抽签",这正是「天时是一条真维度」该有的样子。
+   */
+  const seed = avalanche32(Math.imul(targetMajor + 1, 0x9e3779b1) ^ weatherSeedOf(weatherId));
   const rng = mulberry32(seed);
   const idx = Math.floor(rng() * TRIBULATIONS.length);
   return TRIBULATIONS[idx]!.id;

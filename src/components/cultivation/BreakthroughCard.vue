@@ -96,6 +96,24 @@
       </p>
 
       <!--
+        劫随天时变 —— 「哪天渡劫」是一个每局都有的选择，而此前界面上从没说破。
+
+        `rollTribulation` 的种子是 `境界 × 今日天时`，故同一关在今天与明天渡，
+        撞上的可能是**两种不同的劫**。而界面此前只报「此劫 · 雷鸣劫」——
+        读起来是这个玩家"命里该有雷鸣劫"，而不是"他挑了雷鸣日渡劫"。
+
+        与上面那行「下一个大关」正交，故各占一行：
+          天数可窥   跨**境界**（提前几境知道）
+          这一行     跨**天时**（同一关，今天 / 以后分别撞什么）
+        后者**不需要**任何阶解锁 —— 藏起来只会让人在不知情时撞上最难的那一劫。
+      -->
+      <p v-if="dayHint && dayHint.upcoming.length" class="cultivation-breakthrough__heaven">
+        此劫随天时变 · 今日「{{ dayHint.today }}」，此后还会遇{{
+          dayHint.upcoming.map((u) => `「${u.name}」`).join("、")
+        }}
+      </p>
+
+      <!--
       破境增益 · 此刻在身:小进阶的成功率是谁在顶,突破前一眼见 —— buff→modsText,
       与开炉幕同款(不做两本账);大关不吃此益,故只在非天劫幕亮。
     -->
@@ -228,11 +246,11 @@ import {
   breakthroughInfo,
   expectedTries,
 } from "@/core/breakthrough";
-import { todayWeather } from "@/core/weather";
+import { todayWeather, upcomingWeather } from "@/core/weather";
 import { stageAt } from "@/data/samsara";
 import { totalInsight } from "@/core/samsaraService";
 import { rollTribulation } from "@/core/tribulationDecision";
-import { nextTribulationPreview } from "@/ui/heavenInsightPreview";
+import { nextTribulationPreview, tribulationDayHint } from "@/ui/heavenInsightPreview";
 import { prepareBreakthrough, pillPrepShortfall } from "@/core/earlyGameService";
 import { toNum } from "@/utils/gnum";
 import {
@@ -388,6 +406,28 @@ const nextTribPreview = computed(() => {
    */
   if (player.atMaxRealm) return null;
   return nextTribulationPreview(true, rollTribulation(player.major + 1), player.major + 1);
+});
+
+/**
+ * 劫随天时变 —— 「同一关，今天渡与过几天渡，撞的可能不是同一种劫」。
+ *
+ * 这行与 `nextTribPreview` 正交，故各算各的：
+ *   那一行跨**境界**（下一大关是什么劫，需要 600 宿慧解锁）
+ *   这一行跨**天时**（这一关今天 / 以后分别撞什么，人人都看得见）
+ *
+ * **只在 `isMajorStep` 亮**。小境上并没有「此刻这一劫」，写「此劫」是假的；
+ * 而「哪天渡劫」这个选择也只在人真站到大关前时才成立。小境玩家想知道
+ * 下一大关撞什么，那条由「天数可窥」回答（跨境界），不是这一行的事。
+ *
+ * 「以后」取 `upcomingWeather` 的预告 —— 与首页那一行明日预告同源，
+ * 不在这里另算天时。劫型交给 `tribulationDayHint`（它调 `tribulationKindFor`，
+ * 与结算同一个派入口），本处只负责把天时喂进去。
+ */
+const dayHint = computed(() => {
+  if (player.atMaxRealm || !player.isMajorStep) return null;
+  const targetMajor = player.major + 1;
+  const future = upcomingWeather(4, player.major).map((w) => w.id);
+  return tribulationDayHint(targetMajor, todayWeather(player.major).id, future);
 });
 
 /**

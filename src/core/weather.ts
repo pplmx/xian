@@ -214,6 +214,58 @@ export function weatherDef(id: WeatherId): WeatherDef | undefined {
 const DAY_SEC = 86400;
 
 /**
+ * 人间界的权重档：清和（无损益的那一条）占三成，其余等分七成。
+ *
+ * ## 为什么三成给「清和」
+ *
+ * 它是唯一一条 `mods` 为空的「无事发生」日 —— 天时这个系统的存在感靠**差异**，
+ * 若每天都带加成，那些加成很快就会变成看不见的底色，玩家也不会为了某一天
+ * 去改计划。留三成平常日，另外七成才有对照。
+ *
+ * ## 这份权重为什么必须按 `WEATHERS.length` 现算
+ *
+ * 原来这里是**写死的 5 条**:
+ *
+ * ```ts
+ * if (roll < 0.3) return entries[4];                  // 清和
+ * const idx = Math.floor(((roll - 0.3) / 0.7) * 4);   // ← 写死的 4
+ * return entries[Math.min(3, idx)];                   // ← 写死的上界 3
+ * ```
+ *
+ * 而池子后来**分四次**从 5 条长到 9 条（罡风 / 凝霜 / 霞光 / 天朗，各自一次提交，
+ * 每次只改 `WEATHERS` 与类型，没有人回头看这段权重）。于是后补的四条永远落在
+ * 可达范围之外：实测 2000 个游戏日只出现 5 种，第 5~9 条 0%。
+ *
+ * 一条天时写出来了、接上词条了、`weatherSky` 也给它配了天了，**却永远不会发生** ——
+ * 那不是"权重偏低"，是内容不存在。判据见 `weather.spec` 的「池子里的每一条天时
+ * 都抽得到」。
+ *
+ * 故这里改成按条数现算：加一条天时不用回来改权重，它自然分到那份七成里。
+ */
+const CALM_WEATHER_SHARE = 0.3;
+
+/**
+ * 人间界某一天抽到哪一条 —— 清和固定三成，其余等分，索引全部由池长推出。
+ *
+ * 入参取 `{ id: string }[]` 而不是 `WeatherDef[]`：库的 `pick` 递过来的是
+ * `CycleEntry`（它只认 `id` / `mods` / `attrs` 这些跨题材字段，不认识 `desc` 与
+ * `tribulationMult`）。这一层只按 id 认人，故不该要求更窄的类型 —— 否则
+ * 库一加字段就得在这里做一次无意义的转换。
+ */
+function pickMortalWeather(entries: readonly { id: string }[], roll: number): { id: string } {
+  // 清和是池里那条无损益日（`qinghe`）；用 id 定位而不是写死下标 ——
+  // 池子顺序会变，而「哪一条是无损益日」是语义，不该跟着下标漂。
+  const calmIdx = entries.findIndex((w) => w.id === "qinghe");
+  if (calmIdx < 0) return entries[Math.min(entries.length - 1, Math.floor(roll * entries.length))]!;
+  if (roll < CALM_WEATHER_SHARE) return entries[calmIdx]!;
+  // 其余各条等分剩下的份额。先按「无清和的池」取序号，再映射回真下标。
+  const others = entries.filter((_, i) => i !== calmIdx);
+  const rest = (roll - CALM_WEATHER_SHARE) / (1 - CALM_WEATHER_SHARE);
+  const idx = Math.min(others.length - 1, Math.floor(rest * others.length));
+  return others[idx]!;
+}
+
+/**
  * 天时换成"周期"这一层来管(见 packages/engine 的 cycles)。
  *
  * 库负责三件与题材无关的事:周期序号怎么从游戏时长里来、种子怎么派生、池子怎么切;
@@ -227,13 +279,8 @@ const CYCLES = createCycleSystem({
   seedOf: (day, ctx) =>
     ctx.salt ? day * 2654435761 + ctx.salt * 131 + 0x51ed : day * 2654435761 + 0x9e3779b9,
   pick: (entries, rng) => {
-    // 人间界:清和(第 5 条)30%,其余四条均分 70%
-    if (entries === WEATHERS) {
-      const roll = rng.next();
-      if (roll < 0.3) return entries[4];
-      const idx = Math.floor(((roll - 0.3) / 0.7) * 4);
-      return entries[Math.min(3, idx)];
-    }
+    // 人间界:清和 30%,其余各条等分 70%
+    if (entries === WEATHERS) return pickMortalWeather(entries, rng.next());
     // 界外各池等概率
     return entries[rng.int(0, entries.length - 1)];
   },
