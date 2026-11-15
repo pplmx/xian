@@ -96,7 +96,7 @@
       </p>
 
       <!--
-        劫随天时变 —— 「哪天渡劫」是一个每局都有的选择，而此前界面上从没说破。
+        等一天值不值 —— 「哪天渡劫」是一个每局都有的选择，而此前界面上从没说破。
 
         `rollTribulation` 的种子是 `境界 × 今日天时`，故同一关在今天与明天渡，
         撞上的可能是**两种不同的劫**。而界面此前只报「此劫 · 雷鸣劫」——
@@ -106,11 +106,23 @@
           天数可窥   跨**境界**（提前几境知道）
           这一行     跨**天时**（同一关，今天 / 以后分别撞什么）
         后者**不需要**任何阶解锁 —— 藏起来只会让人在不知情时撞上最难的那一劫。
+
+        **这一行报的是「等下去值不值」，不是「还有哪几种劫」。**
+        第一版就是后者，实测下来它对绝大多数玩家是**误导**:
+        天时只把伤害乘 0.92~1.12，而决策档按水位切 —— 21 个境界里 15 个
+        无论哪一天渡都掉在同一档(裸身玩家 20 天里档位恒定、把握只差 3~6pp)。
+        把三个劫名摆出来像"三选一"，玩家会为了不存在的好处白等一天。
+        故改成把两个数摊开:今日把握 X%，等下去最好也才 Y% —— 若同档就直说
+        「今日便可一试」。
       -->
-      <p v-if="dayHint && dayHint.upcoming.length" class="cultivation-breakthrough__heaven">
-        此劫随天时变 · 今日「{{ dayHint.today }}」，此后还会遇{{
-          dayHint.upcoming.map((u) => `「${u.name}」`).join("、")
-        }}
+      <p v-if="waitPayoff" class="cultivation-breakthrough__heaven" data-wait-payoff>
+        <template v-if="waitPayoff.worthWaiting">
+          等{{ waitPayoff.bestDay }}天可到「{{ waitPayoff.bestVerdict }}」{{
+            percentText(waitPayoff.bestRate)
+          }}
+          · 今日「{{ waitPayoff.todayVerdict }}」{{ percentText(waitPayoff.todayRate) }}
+        </template>
+        <template v-else>{{ noPointText }}</template>
       </p>
 
       <!--
@@ -250,11 +262,13 @@ import { todayWeather, upcomingWeather } from "@/core/weather";
 import { stageAt } from "@/data/samsara";
 import { totalInsight } from "@/core/samsaraService";
 import { rollTribulation } from "@/core/tribulationDecision";
-import { nextTribulationPreview, tribulationDayHint } from "@/ui/heavenInsightPreview";
+import { bestDayToBreakThrough, nextTribulationPreview } from "@/ui/heavenInsightPreview";
 import { prepareBreakthrough, pillPrepShortfall } from "@/core/earlyGameService";
 import { toNum } from "@/utils/gnum";
 import {
   currentTribulationPlan,
+  currentStatGuard,
+  currentTribulationRelief,
   verdictLabel,
   type TribulationPlan,
 } from "@/core/tribulationDecision";
@@ -408,8 +422,23 @@ const nextTribPreview = computed(() => {
   return nextTribulationPreview(true, rollTribulation(player.major + 1), player.major + 1);
 });
 
+/** 把握读数 —— 界面上只出现这一种写法,避免同屏两种百分比口径 */
+const percentText = (rate: number): string => formatPercent(rate, 0);
+
 /**
- * 劫随天时变 —— 「同一关，今天渡与过几天渡，撞的可能不是同一种劫」。
+ * 「择日无益」整句 —— 写成**一个** computed 而不是模板里两段插值。
+ *
+ * 两段插值会在中间留一个换行,渲染成「， 再等」那种多余空格(实测踩过)。
+ * 一句话就该是一个字符串。
+ */
+const noPointText = computed(() => {
+  const w = waitPayoff.value;
+  if (!w) return "";
+  return `择日无益 · 今日「${w.todayVerdict}」${percentText(w.todayRate)}，再等 ${w.horizonDays} 天最好也只到${percentText(w.bestRate)}`;
+});
+
+/**
+ * 等一天值不值 —— 「同一关，今天渡与过几天渡，值不值得等」。
  *
  * 这行与 `nextTribPreview` 正交，故各算各的：
  *   那一行跨**境界**（下一大关是什么劫，需要 600 宿慧解锁）
@@ -420,14 +449,30 @@ const nextTribPreview = computed(() => {
  * 下一大关撞什么，那条由「天数可窥」回答（跨境界），不是这一行的事。
  *
  * 「以后」取 `upcomingWeather` 的预告 —— 与首页那一行明日预告同源，
- * 不在这里另算天时。劫型交给 `tribulationDayHint`（它调 `tribulationKindFor`，
- * 与结算同一个派入口），本处只负责把天时喂进去。
+ * 不在这里另算天时。把握由 `bestDayToBreakThrough` 走 `buildTribulationPlan`
+ * 算 —— 与「此劫」那一格、与真正的结算同一个函数，不做两本账。
+ *
+ * 灵根解法与三维折算照 `currentTribulationPlan` 的口径传进去:
+ * 少传一样,这一行的把握就会与旁边「此劫」那一格对不上 —— 同屏两个数打架,
+ * 比不给数更糟。
  */
-const dayHint = computed(() => {
+const waitPayoff = computed(() => {
   if (player.atMaxRealm || !player.isMajorStep) return null;
   const targetMajor = player.major + 1;
-  const future = upcomingWeather(4, player.major).map((w) => w.id);
-  return tribulationDayHint(targetMajor, todayWeather(player.major).id, future);
+  const todayId = todayWeather(player.major).id;
+  const future = upcomingWeather(6, player.major)
+    .map((w) => w.id)
+    // 第一条就是今天,`bestDayToBreakThrough` 自己会把它放进 days[0]
+    .filter((id) => id !== todayId);
+  const kind = rollTribulation(targetMajor);
+  return bestDayToBreakThrough(
+    targetMajor,
+    player.finalStats.mods,
+    currentTribulationRelief(player, kind),
+    todayId,
+    future,
+    currentStatGuard(player),
+  );
 });
 
 /**

@@ -8897,16 +8897,25 @@ async function taskReduceMotion() {
 
 /** 闭关的跨页承诺 */
 /**
- * 劫随天时变 —— 那一行要在**站到大关前时**出现，且小境时不出现。
+ * 等一天值不值 —— 那一行要在**站到大关前时**出现，且给得出两个数。
  *
- * 判据三件（与 `tribulationDayHint.spec` 的纯逻辑判据互补，这里量的是**渲染**）:
- *   一 大关时那一行真的在页面上，且措辞里有「天时」与至少一个劫名；
- *   二 小境（sub 未满）时它不在 —— 小境没有「此刻这一劫」，写「此劫」是假的；
- *   三 那一行报的劫名与 `tribulationDayHint` 算的一致（不做两本账）。
+ * 判据四件（与 `tribulationWaitPayoff.spec` 的纯逻辑判据互补，这里量的是**渲染**）：
+ *   一 大关时那一行真的在页面上；
+ *   二 它报出**两个**百分比（今日 / 等下去最好）—— 只给劫名不算数，
+ *      本仓 AGENTS.md 明写「不能只给定性形容词」；
+ *   三 小境（sub 未满）时它不在 —— 小境没有「此刻这一劫」，写「此劫」是假的；
+ *   四 它说的档位词是决策档里的一个（稳渡/可渡/中等/高风险），不是劫名兜底。
  */
-async function taskTribulationDayHint() {
+async function taskWaitPayoff() {
   const failures = [];
   let checked = 0;
+  /*
+   * 两个分支都要真渲染过一遍。
+   *
+   * 「择日无益」是大多数境界的答案（21 境里 15 境无论哪天渡都同档），
+   * 而「等 N 天可到某档」只在少数（实测 m0 裸身:可渡 79% → 稳渡 92%）。
+   * 只测一支等于只测了一半 —— 另一支写法坏了没人知道。
+   */
   const ctx = await auditContext({
     viewport: { width: 390, height: 844 },
     deviceScaleFactor: 3,
@@ -8914,7 +8923,7 @@ async function taskTribulationDayHint() {
     hasTouch: true,
   });
   try {
-    /** 造一份「站在大关前」的存档：sub 满，且修为够 */
+    /** 造一份「站在大关前」的存档：sub 满 */
     const atGate = (sub) => {
       const slices = showcaseSlices("light");
       slices.game = { ...slices.game, totalPlaySec: 0 };
@@ -8928,59 +8937,104 @@ async function taskTribulationDayHint() {
       return slices;
     };
 
-    // ---- 一 大关前：那一行在 ----
+    // ---- 大关前：那一行在，且给出两个百分比 ----
     checked += 1;
-    await seedSave(ctx, atGate(9), "__dayHintGate");
+    await seedSave(ctx, atGate(9), "__waitPayoffGate");
     let page = await ctx.newPage();
     const pageErrors = [];
     watchPageErrors(page, pageErrors);
     await openRoute(page, "/cultivation", 1200);
     await clearOverlays(page);
     const gate = await page.evaluate(() => {
-      // 那一行与「天数可窥」共用 class；按文案认（它含「此劫随天时变」）
-      const nodes = [...document.querySelectorAll(".cultivation-breakthrough__heaven")];
-      const hit = nodes.find((n) => (n.textContent || "").includes("此劫随天时变"));
-      return { text: hit ? (hit.textContent || "").replace(/\s+/g, " ").trim() : null };
+      const el = document.querySelector("[data-wait-payoff]");
+      return { text: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null };
     });
     if (!gate.text) {
-      failures.push("[390] 劫随天时变:站到大关前也看不到那一行");
+      failures.push("[390] 等一天值不值:站到大关前也看不到那一行");
     } else {
-      for (const must of ["天时", "此劫随天时变", "今日"]) {
-        if (!gate.text.includes(must)) {
-          failures.push(`[390] 劫随天时变:那一行没说${must} «${gate.text}»`);
-        }
+      const pcts = gate.text.match(/\d+%/g) ?? [];
+      if (pcts.length < 2) {
+        failures.push(
+          `[390] 等一天值不值:只给了 ${pcts.length} 个百分比 —— 没有"等下去最好能到多少"这个数 «${gate.text}»`,
+        );
       }
-      // 劫名要对得上（五种劫型的名字都在 TRIBULATIONS 里，这里只抽一个「」占位）
-      if (!/「[^」]+」/.test(gate.text)) {
-        failures.push(`[390] 劫随天时变:那一行没报出任何劫名 «${gate.text}»`);
+      if (!/稳渡|可渡|中等|高风险/.test(gate.text)) {
+        failures.push(`[390] 等一天值不值:没报决策档 «${gate.text}»`);
+      }
+      if (!/择日无益|等\d+天/.test(gate.text)) {
+        failures.push(`[390] 等一天值不值:既没说"择日无益"也没说"等几天" «${gate.text}»`);
       }
     }
 
-    // ---- 二 小境：那一行不在 ----
+    // ---- 真有好处的那一支:开局玩家在 m0 实测能跨档（高风险 → 可渡） ----
+    /*
+     * 用**开局档**造这一支,而不是 showcaseSlices("light") ——
+     * 后者是中期满配,在 m0 已经站到「稳渡」,等下去只剩几个百分点,
+     * 于是它永远走不到"值得等"那一支(第一次写这条门时就撞上了)。
+     * 这一支要的是一份**真的还有决策空间**的玩家。
+     */
+    checked += 1;
+    {
+      const slices = showcaseSlices("light");
+      slices.game = { ...slices.game, totalPlaySec: 0 };
+      slices.player = {
+        ...slices.player,
+        major: 0,
+        sub: 9,
+        exp: { m: 9 ** 15, e: 0 },
+        dead: false,
+        // 开局玩家的面板:不带中期那一身词条
+        equipmentMods: undefined,
+      };
+      slices.inventory = {
+        ...slices.inventory,
+        equipped: {},
+        artifacts: [],
+        equippedArtifacts: [],
+      };
+      await seedSave(ctx, slices, "__waitPayoffGain");
+      const p2 = await ctx.newPage();
+      watchPageErrors(p2, pageErrors);
+      await openRoute(p2, "/cultivation", 1200);
+      await clearOverlays(p2);
+      const gain = await p2.evaluate(() => {
+        const el = document.querySelector("[data-wait-payoff]");
+        return { text: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null };
+      });
+      await p2.close();
+      if (!gain.text) {
+        failures.push("[390] 等一天值不值:m0 大关前看不到那一行");
+      } else if (!/等 ?\d+ ?天可到/.test(gain.text)) {
+        failures.push(
+          `[390] 等一天值不值:这一档本该建议等待（可渡→稳渡），却没报出"等几天可到某档" «${gain.text}»`,
+        );
+      }
+    }
+
+    // ---- 小境：那一行不在 ----
     checked += 1;
     page = await ctx.newPage();
     watchPageErrors(page, pageErrors);
-    await seedSave(ctx, atGate(0), "__dayHintMinor");
+    await seedSave(ctx, atGate(0), "__waitPayoffMinor");
     await openRoute(page, "/cultivation", 1200);
     await clearOverlays(page);
     const minor = await page.evaluate(() => {
-      const nodes = [...document.querySelectorAll(".cultivation-breakthrough__heaven")];
-      const hit = nodes.find((n) => (n.textContent || "").includes("此劫随天时变"));
-      return { text: hit ? (hit.textContent || "").replace(/\s+/g, " ").trim() : null };
+      const el = document.querySelector("[data-wait-payoff]");
+      return { text: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null };
     });
     if (minor.text) {
-      failures.push(
-        `[390] 劫随天时变:小境上出现了「此劫」那一行 —— 小境没有此刻这一劫 «${minor.text}»`,
-      );
+      failures.push(`[390] 等一天值不值:小境上出现了那一行 —— 小境没有此刻这一劫 «${minor.text}»`);
     }
 
     if (pageErrors.length) {
-      failures.push(`[390] 劫随天时变页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+      failures.push(`[390] 等一天值不值页面异常:${[...new Set(pageErrors)].join(" | ")}`);
     }
     if (failures.length === 0) {
-      console.log(`\n劫随天时变:大关前 «${gate.text}» ；小境不出`);
+      console.log(`\n等一天值不值:大关前 «${gate.text}» ；小境不出`);
     } else {
-      console.log(`\n劫随天时变[未通过]:${JSON.stringify({ gate: gate.text, minor: minor.text })}`);
+      console.log(
+        `\n等一天值不值[未通过]:${JSON.stringify({ gate: gate.text, minor: minor.text })}`,
+      );
     }
   } finally {
     await ctx.close();
@@ -34062,7 +34116,7 @@ const TASKS = [
   ["藏珍两章续卷与桌面并读", taskCollectionRegister],
   ["减少动效真的减到了", taskReduceMotion],
   ["闭关的跨页承诺", taskRetreat],
-  ["劫随天时变那一行", taskTribulationDayHint],
+  ["等一天值不值那一行", taskWaitPayoff],
   ["背包里的账目", taskInventoryAccounting],
   ["际遇帖的门限与去向", taskEventSlip],
   ["择师谱的两步定契", taskMentorLedger],

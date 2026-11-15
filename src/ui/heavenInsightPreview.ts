@@ -35,7 +35,17 @@
  * ## 这一层只算，不读 store
  */
 import { tribulationDef, type TribulationKind } from "@/data/tribulations";
-import { tribulationKindFor } from "@/core/tribulationDecision";
+import {
+  buildTribulationPlan,
+  tribulationKindFor,
+  verdictLabel,
+  NO_STAT_GUARD,
+  type TribStatGuard,
+  type TribulationPlan,
+} from "@/core/tribulationDecision";
+import { weatherDef, type WeatherId } from "@/core/weather";
+import { NO_RELIEF, type TribulationRelief } from "@/data/linggenAffinity";
+import type { StatMods } from "@/types";
 
 /** 下一境将遇之劫 —— 提前看得见的只有这四样 */
 export interface NextTribulationPreview {
@@ -73,80 +83,157 @@ export function nextTribulationPreview(
   return { kind: def.id, name: def.name, desc: def.desc, major: nextMajor };
 }
 
-/** 「这一天渡劫会撞什么」—— 一行里的一格 */
-export interface DayKindRow {
-  kind: TribulationKind;
-  name: string;
+/** 「那一天渡劫怎么样」—— 一行里的一格 */
+export interface DayPayoff {
+  /** 第几天(今天之后的第 N 天,1 起) */
+  day: number;
+  /** 那天的天时 */
+  weatherId: WeatherId;
+  /** 那天渡劫的把握(与 `buildTribulationPlan` 同一个数) */
+  rate: number;
+  /** 那天的决策档中文名(「稳渡 / 可渡 / 中等 / 高风险」) */
+  verdict: string;
 }
 
-/** 「劫随天时变」的读数:今天撞什么,以及接下来几天**还能撞到哪几种** */
-export interface TribulationDayHint {
-  /** 今天渡劫会撞的那一劫 */
-  today: string;
+/** 「等一天值不值」的读数 */
+export interface TribulationWaitPayoff {
+  /** 今天渡的把握 */
+  todayRate: number;
+  /** 今天渡的决策档 */
+  todayVerdict: string;
+  /** 接下来几天逐天的读数(含今天,**已按天排好**) */
+  days: DayPayoff[];
+  /** 其中把握最高的那一天(第几天,1 起;等于今天时是 0) */
+  bestDay: number;
+  /** 最好那天的把握 */
+  bestRate: number;
+  /** 最好那天的决策档 */
+  bestVerdict: string;
   /**
-   * 今天之后**还可能出现**的劫型,按首次出现的顺序去重。
+   * 这一眼望出去**看得到几天**（含今天）。
    *
-   * 去重是刻意的:5 种劫型对 9 条天时,未来三天里常常两天撞同一个 ——
-   * 逐天列会把「雷鸣 / 雷鸣 / 铁躯」摊出来,那不是信息,是噪音。
-   * 玩家要的是「还有哪几种可能」,不是「第几天是什么」。
+   * 它是「再等 N 天最好也只到 Y%」那一句里的 N 的来源,必须与真正被算过的天数
+   * 一致 —— 用 `days.length` 会少算:与今天同天时的那几天被跳过了(它们的结果
+   * 必然与今天相同),于是「再等 3 天」说的其实是一个只看了 2 天的视野。
    */
-  upcoming: DayKindRow[];
+  horizonDays: number;
+  /**
+   * 值不值得等 —— **只看档位有没有变**,不看把握涨了几个百分点。
+   *
+   * 理由在判据文件头:天时只把伤害乘上 0.92~1.12,而决策档是按水位切的。
+   * 把握从 33% 涨到 39% 在界面上仍然是同一个「高风险」—— 那时说"等更好"
+   * 就是让玩家白等一天。跨档才是他读得懂、也真的会改变决定的那个变化。
+   */
+  worthWaiting: boolean;
 }
 
 /**
- * 「劫随天时变」—— 这一行回答的是**一个一直存在、却没人说过**的决策问题。
+ * 「等一天值不值」—— 上一轮那一行只报了劫名,却没答这个问题。
  *
- * ## 它为什么该存在
+ * ## 为什么这一行必须给出数
  *
- * `rollTribulation` 的种子是`境界 × 今日天时`。也就是说「今天渡劫撞什么」
- * 每天都会变 —— 这是实现里就有的机制,而界面上从来没有一处说破:
+ * 第 358 轮补的那行是「此劫随天时变 · 今日「裂魂」，此后还会遇「重压」、「雷鸣」」。
+ * 它说清了答案每天会变,却**没说变好还是变坏**。而实测下来:
  *
  * ```text
- *   破境卡      「此劫 · 雷鸣劫」        ← 只报今天,不说"这个答案每天会变"
- *   渡劫面板    「今日天时 · 凝霜」      ← 只报天时本身,不报它与劫型的关系
+ * m1 裸身   20 天里档位恒为「高风险」   把握 33~39%
+ * m3 裸身   20 天里档位恒为「高风险」   把握 29~33%
+ * m8 裸身   20 天里档位恒为「高风险」   把握 27~29%
  * ```
  *
- * 于是玩家读到的是「我面对的是雷鸣劫」（命运），而不是「**我在哪一天渡劫**
- * 决定撞什么」（决策）。本作所有别的决策点都在摊数字，这一处是漏的。
+ * 把三个劫名摆出来,读起来像"三选一",而实际上**选哪个都掉在同一档里**。
+ * 玩家会为了一个不存在的好处去等 —— 那比不告诉他更糟。
  *
- * ## 它与「天数可窥」不是同一件事
+ * 而堆过抗性之后确实能跨档:
  *
- * - `nextTribulationPreview`（那一阶解锁的）答的是「**下一个大关**将遇何劫」——
- *   跨的是**境界**,是提前量；
- * - 这一行答的是「**同一关**,今天 / 明天分别撞什么」—— 跨的是**天时**,是择日。
+ * ```text
+ * m3 中量抗性   档位 [可渡 / 高风险 / 中等]   把握 40~65%
+ * m5 重度抗性   档位 [稳渡 / 可渡]             把握 80~95%
+ * ```
  *
- * 两者正交,故各占一行、各有各的判据。这一行**不需要**任何宿慧阶解锁:
- * 「哪天渡劫」是每个玩家都有的选择,藏起来只会让人在不知情的情况下撞上最难的那一劫。
+ * 故这一行的口径是**「等下去最好的那天能好多少」**,而不是「还有哪几种劫」。
+ *
+ * ## 不做两本账
+ *
+ * 每一个把握都由 `buildTribulationPlan` 算出 —— 与破境卡上「此劫」那一格、
+ * 与真正的结算都是同一个函数。这一层只负责把天时喂进去、把结果按天排开。
  *
  * ## 不读 store
  *
- * `upcomingWeatherIds` 由调用方给（界面本来就有 `upcomingWeather`），
- * 劫型走 `tribulationKindFor` 这一个纯派入口 —— 与结算同一个函数,
- * 不在这里重算种子（本作栽过"预览自己再掷一次"的事故,见 `sceneTerrain.spec`）。
+ * 天时 id 由调用方给(界面本来就有 `todayWeather` / `upcomingWeather`)。
+ * 往这里塞 `todayWeather()` 会把 pinia 拉进一个本该纯的模块 ——
+ * 本仓为这件事已经付过一次代价(见文件头的 `getActivePinia()` 那条)。
  */
-export function tribulationDayHint(
+export function bestDayToBreakThrough(
   targetMajor: number,
-  todayWeatherId: string,
-  upcomingWeatherIds: readonly string[],
-): TribulationDayHint | null {
+  mods: StatMods,
+  relief: TribulationRelief = NO_RELIEF,
+  todayWeatherId: string = "",
+  upcomingWeatherIds: readonly string[] = [],
+  stat: TribStatGuard = NO_STAT_GUARD,
+): TribulationWaitPayoff | null {
   if (!Number.isFinite(targetMajor) || targetMajor < 0) return null;
   if (upcomingWeatherIds.length === 0) return null;
-  const today = tribulationDef(tribulationKindFor(targetMajor, todayWeatherId));
-  if (!today) return null;
+
+  /** 某一天渡劫的完整计划 —— 与结算同一个入口 */
+  const planOn = (weatherId: string): TribulationPlan | null => {
+    const w = weatherDef(weatherId as WeatherId);
+    if (!w) return null;
+    return buildTribulationPlan(
+      targetMajor,
+      mods,
+      tribulationKindFor(targetMajor, weatherId),
+      relief,
+      w.tribulationMult,
+      stat,
+    );
+  };
+
+  const todayPlan = planOn(todayWeatherId);
+  if (!todayPlan) return null;
+
   /*
-   * 未来那几天里，「今天这一劫」不再列 —— 它已经在 `today` 里报过一次。
-   * 于是这一行读起来是「今天是 A；再等几天还会有 B / C」，而不是"A、A、B"。
+   * 「今天」也放进 `days` 里,`day = 0`。
+   *
+   * 这样「最好的一天」的计算天然包含"今天就是最好的那天"这个答案 ——
+   * 否则它会永远从明天开始找,于是**今天已经最优时仍报出一个更差的明天**,
+   * 那就是让玩家朝坏方向走。
    */
-  const seen = new Set<TribulationKind>([today.id]);
-  const upcoming: DayKindRow[] = [];
-  for (const wid of upcomingWeatherIds) {
+  const days: DayPayoff[] = [
+    {
+      day: 0,
+      weatherId: todayWeatherId as WeatherId,
+      rate: todayPlan.expectedRate,
+      verdict: verdictLabel(todayPlan.verdict),
+    },
+  ];
+  let best = days[0]!;
+  for (const [i, wid] of upcomingWeatherIds.entries()) {
     if (typeof wid !== "string" || wid.length === 0) continue;
-    const kind = tribulationKindFor(targetMajor, wid);
-    if (seen.has(kind)) continue;
-    const def = tribulationDef(kind);
-    if (!def) continue;
-    seen.add(kind);
-    upcoming.push({ kind: def.id, name: def.name });
+    // 与今天同一条天时不必重复算 —— 它的结果必然与今天相同
+    if (wid === todayWeatherId) continue;
+    const plan = planOn(wid);
+    if (!plan) continue;
+    const row: DayPayoff = {
+      day: i + 1,
+      weatherId: wid as WeatherId,
+      rate: plan.expectedRate,
+      verdict: verdictLabel(plan.verdict),
+    };
+    days.push(row);
+    if (row.rate > best.rate) best = row;
   }
-  return { today: today.name, upcoming };
+
+  return {
+    todayRate: todayPlan.expectedRate,
+    todayVerdict: verdictLabel(todayPlan.verdict),
+    days,
+    bestDay: best.day,
+    bestRate: best.rate,
+    bestVerdict: best.verdict,
+    // 今天 + 看得见的未来那几天（含与今天相同的天时 —— 它们也是"被望到的一天"）
+    horizonDays: 1 + upcomingWeatherIds.length,
+    // 只看档位:涨了几个百分点但没跨档,玩家在界面上看到的是同一个词
+    worthWaiting: best.verdict !== verdictLabel(todayPlan.verdict),
+  };
 }
