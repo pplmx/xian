@@ -56,7 +56,14 @@ export function getCurrentEnlightenment(): EnlightenmentEvent | null {
  * 冷却存在 player store(随档):顿悟给悟道点,闸门若挂模块,
  * 刷新一次页面就等于把 5 分钟冷却清掉 —— 那是「重开页面刷顿悟」。
  */
-export function mayTriggerEnlightenment(): void {
+/**
+ * 这一拍**能不能**掷顿悟 —— 冷却 / 界面忙 / 已到退出境界，三件事都在这里。
+ *
+ * 抽出来是因为顿悟现在有**两个入口**（战斗胜利、闭关出关），而"什么时候不许出"
+ * 对两个入口是同一套。两个入口各写一遍闸门，迟早一处漏掉冷却 ——
+ * 而漏掉的那个方向正好是"能刷"。见 `retreatEnlightenment.spec` 的「连着两次闭关」。
+ */
+function enlightenmentGateOpen(): boolean {
   /*
    * 界面正忙时这一拍不触发 —— 顿悟的弹窗挂在全局图层,而 BaseModal 没有互斥。
    * 玩家若正开着兵解往生(三程契约)或突破结果,机缘卷会直接叠上去:
@@ -65,14 +72,17 @@ export function mayTriggerEnlightenment(): void {
    * 注意这里**不消费冷却、不清窗口**:心跳每拍都会再来问,玩家合上手上那扇,
    * 下一次自然就触发了。若忙时直接 return 且算作已尝试,惊喜就真被吞掉了。
    */
-  if (hasOpenModal()) return;
+  if (hasOpenModal()) return false;
+  const player = usePlayerStore();
+  if (Date.now() - player.enlightenmentAt < 300000) return false; // 5分钟冷却
+  // EARLY_EVENT_DECAY:顿悟是"前期玩法",境界越高存在感越低,真仙后完全退出
+  return earlyEventDecay("enlightenment", player.major) > 0;
+}
+
+/** 把顿悟**发**出去（弹窗 + 记时 + 埋点）。调用方负责先过闸门与掷点。 */
+function openEnlightenment(): void {
   const player = usePlayerStore();
   const now = Date.now();
-  if (now - player.enlightenmentAt < 300000) return; // 5分钟冷却
-  // EARLY_EVENT_DECAY:顿悟是"前期玩法",境界越高存在感越低,真仙后完全退出
-  const presence = earlyEventDecay("enlightenment", player.major);
-  if (presence <= 0) return;
-  if (Math.random() > 0.08 * presence) return; // 8% × 当前境界存在感
 
   // 随机选3个不同类型的选项
   const pool = [...ENLIGHTENMENT_OPTIONS];
@@ -97,6 +107,62 @@ export function mayTriggerEnlightenment(): void {
   };
   player.setEnlightenmentAt(now);
   telemetry().record("enlightenment", "modal", "悟道顿悟浮现");
+}
+
+/**
+ * 战斗胜利之后的顿悟 —— 每场 8%（×境界存在感）。
+ *
+ * 从前的 `mayTriggerEnlightenment` 本体:闸门 + 掷点 + 发放三段揉在一起。
+ * 现在闸门与发放各自独立，两个入口共用，只有**概率**各处不同。
+ */
+export function mayTriggerEnlightenment(): void {
+  if (!enlightenmentGateOpen()) return;
+  const presence = earlyEventDecay("enlightenment", usePlayerStore().major);
+  if (Math.random() > 0.08 * presence) return; // 8% × 当前境界存在感
+  openEnlightenment();
+}
+
+/**
+ * 闭关一次中顿悟的概率 —— 与战斗那 8% **分开**的一份。
+ *
+ * ## 为什么必须分开
+ *
+ * 两个入口的"一次"不是同一个东西:
+ *
+ * ```text
+ *   战斗一次   每 12 秒一次遭遇，约 15 秒 —— 5 分钟里约 20 次机会
+ *   闭关一次   整整 5 分钟，只有 1 次机会
+ * ```
+ *
+ * 同一个 8% 在两边含义差 20 倍。若沿用战斗那个数，闭关会成为最差的顿悟来源，
+ * 而"闭关静修最该有所悟"这件事就只剩一句设定。
+ *
+ * 取 35%:一次闭关三分之一不到的概率有个交代，也让「要不要现在闭关」
+ * 变成一个可以考虑的决定 —— 而不是"反正随时闭都一样"。
+ */
+export const RETREAT_ENLIGHTEN_CHANCE = 0.35;
+
+/**
+ * 某境界下一次闭关出顿悟的概率（已乘境界存在感）。
+ *
+ * 复用 `EARLY_EVENT_DECAY` —— 与战斗那条同一张表。真仙之后 `presence` 为 0，
+ * 于是终局玩家不会被每 5 分钟弹一次窗。
+ */
+export function retreatEnlightenChance(major: number): number {
+  if (!Number.isFinite(major) || major < 0) return 0;
+  return RETREAT_ENLIGHTEN_CHANCE * earlyEventDecay("enlightenment", major);
+}
+
+/**
+ * 闭关**出关时**掷一次 —— 闭完了才可能有所悟，闭到一半不该被打断。
+ *
+ * 返回是否真的发出了（判据与 UI 都读它，不必再去问模块态）。
+ */
+export function mayTriggerRetreatEnlightenment(major: number): boolean {
+  if (!enlightenmentGateOpen()) return false;
+  if (Math.random() > retreatEnlightenChance(major)) return false;
+  openEnlightenment();
+  return true;
 }
 
 /** 选择悟道顿悟选项 */

@@ -169,8 +169,15 @@ const CORE_STORE_SITES = 159;
  * 而那张卡的输入是 `generateCurrentGoal(player)`,player 是 store 本身。
  * 手搓一份 mods 去喂它,测的就不是玩家真会看到的那句话。
  * 被测量的 `core/goal` 仍然只读传入的 player,没有新增 store 依赖。
+ *
+ * 118 → 119:retreatEnlightenment.spec 要证明「连着两次闭关,第二次不许再出」——
+ * 而"冷却"这件事存在 `player.enlightenmentAt` 里（刻意存在 store，见
+ * `mayTriggerEnlightenment` 的注释:挂模块态的话刷新页面就清掉了）。
+ * 拿一个手搓的时间戳替身去比，测的就不是那道**真闸**。
+ * 被测量的 `retreatEnlightenChance` 本身是纯的（只收一个 major 数）,
+ * 故 `core` 侧的 store 依赖没有新增 —— 下面那条 `CORE_STORE_SITES` 没有动。
  */
-const CORE_PINIA_SPECS = 118;
+const CORE_PINIA_SPECS = 119;
 
 function sources(dir: string): { name: string; text: string }[] {
   return readdirSync(dir)

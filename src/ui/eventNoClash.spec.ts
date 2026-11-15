@@ -59,13 +59,39 @@ describe("顿悟 · 别在玩家正处理别的事时砸下来", () => {
     expect(src, "不许再自建一份 Busy 标志").not.toMatch(/from ["']@\/core\/uiBusy["']/);
   });
 
-  it("顿悟触发前先问一句界面忙不忙", () => {
+  it("顿悟触发前先问一句界面忙不忙 —— 两个入口都不许绕过那道闸", () => {
+    /*
+     * ## 这条判据在第 364 轮改了形状，理由值得记
+     *
+     * 它原来钉的是 `mayTriggerEnlightenment` 的函数体里要有 `hasOpenModal`。
+     * 而第 364 轮给顿悟加了**第二个入口**（闭关出关），于是那道闸被抽成
+     * `enlightenmentGateOpen()` 由两个入口共用 —— 旧判据当场红，
+     * 因为它找的那个字符串搬到了函数外面。
+     *
+     * **判据红得对，但它守的东西变了**:从"这个函数里写着 hasOpenModal"
+     * 变成"两个入口都过同一道闸"。故改成:
+     *
+     * ```text
+     *   一 闸门本身要读浮层栈（hasOpenModal）
+     *   二 两个入口都要调那道闸 —— 谁绕过谁就把叠窗放回来
+     * ```
+     *
+     * 这比原来那条更严:原来只钉住一个入口，现在钉住两个。
+     */
     const src = readSource(SERVICE);
-    const fn = src.match(/export function mayTriggerEnlightenment[\s\S]{0,900}/)?.[0] ?? "";
-    expect(fn, "定位不到顿悟触发 —— 判据会空转").not.toBe("");
-    expect(fn, "触发前要检查浮层是否占着屏幕 —— 否则玩家开着往生契约时顿悟会叠上来").toContain(
+    const gate = src.match(/function enlightenmentGateOpen[\s\S]{0,900}?\n}/)?.[0] ?? "";
+    expect(gate, "定位不到那道闸 —— 判据会空转").not.toBe("");
+    expect(gate, "闸门里要检查浮层是否占着屏幕 —— 否则玩家开着往生契约时顿悟会叠上来").toContain(
       "hasOpenModal",
     );
+
+    for (const entry of ["mayTriggerEnlightenment", "mayTriggerRetreatEnlightenment"]) {
+      const fn = src.match(new RegExp(`export function ${entry}[\\s\\S]{0,600}?\\n}`))?.[0] ?? "";
+      expect(fn, `定位不到入口 ${entry} —— 判据会空转`).not.toBe("");
+      expect(fn, `入口 ${entry} 绕过了那道闸 —— 界面忙时顿悟会叠上来`).toContain(
+        "enlightenmentGateOpen",
+      );
+    }
   });
 
   it("core 不 import ui store —— 与 uiPort / enginePause 同一套理由", () => {

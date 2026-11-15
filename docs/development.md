@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 813 个 spec;本作自己那部分 733 个) |
+| `bun run test` | 全量用例(全量 814 个 spec;本作自己那部分 734 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 813 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 814 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 813 个 spec(本作自己那部分 733 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 814 个 spec(本作自己那部分 734 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -19287,3 +19287,88 @@ ARTIFACT_MAX_SLOTS = 2           开出来也只有 2 个位子
 **两次红都不是"调小一点让它别红"，是让模型对上玩家真能同时练几件。**
 
 工作区干净、全量 813 / 6828 全绿；`check`、`test:report` 同绿。
+
+### 第 365 轮:闭关的尽头该有东西 —— 而不是闭完就完了
+
+前七轮都在「找缺陷」与「补可见性」。这一轮换了个性质:不再找 bug，
+而是**给一个已有的机制补上它按题材本该有的那一半**。
+
+#### 问题:顿悟只有一个入口
+
+```text
+ENLIGHTENMENT_OPTIONS   7 种选项（悟道点、灵机、洞察……）
+触发点                   recordWin() —— 打赢一场之后
+```
+
+而「闭关」在修仙题材里恰恰是最该出顿悟的时候:收摄心神、周天运转、忽然有所悟。
+它现在是一个纯数值 buff（5 分钟、修速 +150%、禁外出历练），**期间与之后都没有任何
+事可能发生**:
+
+```text
+   原来的闭关   点下去 → 等 5 分钟 → 回到原处，只是修速快了一阵
+   这一轮之后   点下去 → 等 5 分钟 → 出关时可能带回来一点什么
+```
+
+#### 为什么不能直接复用那 8%
+
+两个入口的「一次」不是同一个东西:
+
+```text
+   战斗一次   每 12 秒一次遭遇 —— 5 分钟里约 20 次机会
+   闭关一次   整整 5 分钟 —— 只有 1 次机会
+```
+
+同一个 8% 在两边含义差 20 倍。故闭关那侧单独给一份 `RETREAT_ENLIGHTEN_CHANCE = 0.35`
+（一次闭关三分之一不到的概率有个交代），并复用 `EARLY_EVENT_DECAY` 的同一条衰减曲线。
+
+#### 抽出一道闸，两个入口共用
+
+原来的 `mayTriggerEnlightenment` 把「闸门 / 掷点 / 发放」三段揉在一起。加第二个入口时
+必须拆开 —— 而拆开的**方向**很要紧:
+
+```text
+闸门  enlightenmentGateOpen()   界面忙不忙 / 5 分钟冷却 / 境界是否已退出
+发放  openEnlightenment()       弹窗 + 记时 + 埋点
+掷点  各入口自己一份            战斗 8% × 存在感 / 闭关 35% × 存在感
+```
+
+闸门必须共用:两个入口各写一遍，迟早一处漏掉冷却 —— 而漏掉的方向正好是「能刷」
+（闭关 5 分钟、冷却 5 分钟，闭完立刻再闭就是两次机会）。
+
+#### 三处既有判据跟着改，其中一处变得**更严**
+
+```text
+① eventNoClash「顿悟触发前先问一句界面忙不忙」
+   原:mayTriggerEnlightenment 的函数体里要有 hasOpenModal
+   新:闸门里有 hasOpenModal，且**两个入口都调那道闸**
+   —— 原来只钉住一个入口，现在钉住两个
+
+② layeringAudit 的 CORE_PINIA_SPECS 118 → 119
+   「连着两次闭关第二次不许再出」测的是真闸，而冷却存在 player store 里
+   （刻意存在 store:挂模块态的话刷新页面就清掉）。手搓时间戳替身，测的就不是那道闸。
+
+③ tautologyGuard 抓到我写的 `expect(retreatEnlightenChance(-1)).toBeGreaterThanOrEqual(0)`
+   —— 它确实恒真（函数就是 return 0）。改成钉**不是 NaN**:
+   若哪天有人把守卫改成算术表达式，NaN 会静默传下去，而 `Math.random() > NaN`
+   恒为 false —— 那是「功能静默失效」，比抛错难查得多。
+```
+
+②③两条都不是「为了让判据过而改判据」，是判据指出了我的写法有问题。
+
+#### 顺带两个小错
+
+```text
+'⇒' 不在楷体子集里，kaiFontCoverage 当场红 —— 注释里也不许用字体画不出的字
+第一版判据只在 earlyGameService.ts 里找调用点，找到 1 处（那是定义）——
+实际调用在 core/engine.ts 的心跳里：出关这件事只有 buff 过期那一拍知道
+```
+
+#### 结果
+
+```text
+m0  理论 35%  实测 34%（200 次）
+m3  理论 3.5%
+m4+ 0%（EARLY_EVENT_DECAY 的意图:顿悟是前期玩法）
+```
+
+工作区干净、全量 814 / 6833 全绿；`check`、`test:report` 同绿。

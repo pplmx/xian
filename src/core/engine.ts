@@ -22,6 +22,7 @@ import { settleOffline, sanitizeOfflineInputs } from "./offline";
 import { checkStateAchievements, rolloverDailyIfNeeded } from "./progress";
 import {
   mayTriggerEnlightenment,
+  mayTriggerRetreatEnlightenment,
   mayTriggerCaveEvent,
   shiftEarlyGameWindows,
 } from "./earlyGameService";
@@ -32,6 +33,7 @@ import { flushSaveWrites } from "@/utils/storage";
 import { enginePaused, pauseElapsedMs, setEnginePaused } from "./enginePause";
 import { notify } from "./notify";
 import { expiredBuffNames as expiredBuffNamesOf } from "./engineBuffs";
+import { buffDef } from "@/data/buffs";
 import { setDeathDialog } from "./uiPort";
 import { formatDuration } from "@/utils/format";
 import { recordRuntimeDiagnostic, summarizeError } from "./diagnostics";
@@ -282,10 +284,19 @@ class GameEngine {
       // 与离线「归来明账」同一份过期名(见 engineBuffs.expiredBuffNames)。
       // 起点用 lastTickAt:上一拍还活着、这一拍才到期 = 这次掉速的直接原因。
       const expiredNames = expiredBuffNamesOf(cultivation.buffs, this.lastTickAt, now);
+      /*
+       * 闭关**出关**这一拍 —— 在 prune 之前问，因为"刚结束"这件事只有这一刻知道。
+       * 与战斗那条 8% 分开算，理由见 `mayTriggerRetreatEnlightenment`。
+       *
+       * 时点放在这里而不是 `startRetreat` 那一侧:闭到一半弹窗会把 5 分钟切成两段，
+       * 而"出关时有所悟"才是这个设定的样子。
+       */
+      const retreatJustEnded = expiredNames.includes(buffDef("retreat")?.name ?? "闭关");
       cultivation.pruneBuffs(now);
       if (expiredNames.length > 0) {
         notify(`${expiredNames.join("、")} 的效果已结束`, "info");
       }
+      if (retreatJustEnded) mayTriggerRetreatEnlightenment(player.major);
       // 历练推进
       tickExploration(now, game.totalPlaySec);
       // Phase 28: 悟道顿悟触发(修炼时随机)

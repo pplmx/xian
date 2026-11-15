@@ -487,6 +487,7 @@ const CATEGORIES = [
       "daoSourceFill",
       "resourceSources",
       "artifactWudaoSink",
+      "retreatEnlightenment",
       "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",
