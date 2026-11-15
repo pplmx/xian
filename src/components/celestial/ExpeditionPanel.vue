@@ -233,6 +233,19 @@
                   : `启 程(道源 ${world.entryCost} · 破界底赏 ${world.rewardDaoSource})`
             }}
           </button>
+          <!--
+            「尚差 N 道源」之后呢 —— 差额说了，怎么补也要说。
+            道源不会自己长:没有挂机产出，只能靠熔炉与远征主动去挣。
+            补法由 `useDaoEntry` 的 `daoFill` 给（与按钮上的差同源），
+            且它报的是**他手里那点存量**能熔多少，不是一句通用的话。
+          -->
+          <p
+            v-if="daoEntryShort(world.entryCost) > 0"
+            class="mt-1.5 tabular text-note text-ink-faint"
+            data-dao-fill
+          >
+            {{ daoFill(world.entryCost)?.hint }}
+          </p>
         </article>
 
         <!-- 虚界之门:程序化生成 + 裁判过审 -->
@@ -547,7 +560,7 @@ const emit = defineEmits<{ outcome: [StepOutcome | null, string] }>();
 const endgame = useEndgameStore();
 const player = usePlayerStore();
 const game = useGameStore();
-const { daoEntryShort } = useDaoEntry();
+const { daoEntryShort, daoFill } = useDaoEntry();
 
 /**
  * 星象相合世界(starTied,如星陨天):今日值日星象所利之界 == 本世之界 → 破界道源取加成。

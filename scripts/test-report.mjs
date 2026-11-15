@@ -484,6 +484,7 @@ const CATEGORIES = [
       "heavenInsightPreview",
       "tribulationWaitPayoff",
       "weatherRoutes",
+      "daoSourceFill",
       "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",

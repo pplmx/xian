@@ -8917,6 +8917,103 @@ async function taskReduceMotion() {
  *   四 渡劫更险的那几条（雷鸣 / 仙劫日 / 神威日）要把提醒也说出来 ——
  *      那时候玩家最该知道的不是"去打怪"，是"别急着渡劫"。
  */
+/**
+ * 「尚差 N 道源」之后呢 —— 差额说了，怎么补也要说。
+ *
+ * 判据三件:
+ *   一 付不起那个入口下面，那一行真的在（不能只有按钮上的差额）;
+ *   二 它说的是**他手里那点存量**能熔多少 —— 不是一句通用的话;
+ *   三 付得起时不出现（没有坑就不用指路）。
+ */
+async function taskDaoFill() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    // 真仙之后才开天界；道源给 0，材料给一点（熔得动但不够）
+    const at = (daoSource, ore) => {
+      const slices = showcaseSlices("late");
+      slices.player = { ...slices.player, major: 9, sub: 0, dead: false };
+      slices.endgame = { ...slices.endgame, daoSource };
+      slices.resources = { ...slices.resources, ore, page: 0, herb: 0, dust: 0 };
+      return slices;
+    };
+
+    // ---- 差道源：那一行在 ----
+    checked += 1;
+    await seedSave(ctx, at(0, 300), "__daoFillShort");
+    let page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/celestial", 1400);
+    await clearOverlays(page);
+    /*
+     * 远征面板在「远征」那一页签后面 —— 不切过去它根本不渲染。
+     * 页签是 `role="tab"`（InkTabs），按角色找，别按"含'远征'的 button"找:
+     * 后者会先命中页头那个「炉天道熔炉」，点了哪儿也不去。
+     */
+    /*
+     * 页签是吸顶的（`.tab-rail`），滚过去点容易被自己压住 —— 直接派发一次点击。
+     * 这不是绕开判据:本门量的是"那一行在不在"，不是"页签好不好点"
+     *（页签的可点性由别的门管）。
+     */
+    await page.evaluate(() => {
+      const t = [...document.querySelectorAll('[role="tab"]')].find(
+        (x) => (x.textContent || "").trim() === "远征",
+      );
+      if (t) t.click();
+    });
+    await page.waitForTimeout(700);
+    const short = await page.evaluate(() => {
+      const el = document.querySelector("[data-dao-fill]");
+      return {
+        text: el ? (el.textContent || "").replace(/\s+/g, " ").trim() : null,
+      };
+    });
+    if (!short.text) {
+      failures.push("[390] 尚差道源怎么补:付不起时没有那一行 —— 玩家只知道差多少");
+    } else if (!/熔|攒/.test(short.text)) {
+      failures.push(`[390] 尚差道源怎么补:那一行没说怎么补 «${short.text}»`);
+    }
+
+    // ---- 付得起：那一行不在 ----
+    checked += 1;
+    await seedSave(ctx, at(9999, 0), "__daoFillEnough");
+    page = await ctx.newPage();
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/celestial", 1400);
+    await clearOverlays(page);
+    await page.evaluate(() => {
+      const t = [...document.querySelectorAll('[role="tab"]')].find(
+        (x) => (x.textContent || "").trim() === "远征",
+      );
+      if (t) t.click();
+    });
+    await page.waitForTimeout(700);
+    const enough = await page.evaluate(() => Boolean(document.querySelector("[data-dao-fill]")));
+    if (enough) {
+      failures.push("[390] 尚差道源怎么补:道源充足时仍挂着补法 —— 让玩家以为还差点什么");
+    }
+
+    if (pageErrors.length) {
+      failures.push(`[390] 尚差道源怎么补页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n尚差道源怎么补:«${short.text}» ；充足时不出`);
+    } else {
+      console.log(`\n尚差道源怎么补[未通过]:${JSON.stringify(short)}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked };
+}
+
 async function taskWeatherRoute() {
   const failures = [];
   let checked = 0;
@@ -34226,6 +34323,7 @@ const TASKS = [
   ["闭关的跨页承诺", taskRetreat],
   ["等一天值不值那一行", taskWaitPayoff],
   ["今天该去做什么", taskWeatherRoute],
+  ["尚差道源怎么补", taskDaoFill],
   ["背包里的账目", taskInventoryAccounting],
   ["际遇帖的门限与去向", taskEventSlip],
   ["择师谱的两步定契", taskMentorLedger],
