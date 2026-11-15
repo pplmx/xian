@@ -8925,6 +8925,76 @@ async function taskReduceMotion() {
  *   二 它说的是**他手里那点存量**能熔多少 —— 不是一句通用的话;
  *   三 付得起时不出现（没有坑就不用指路）。
  */
+/**
+ * 「尚差 N 残页」之后呢 —— 差额说了，怎么补也要说。
+ *
+ * 判据三件:
+ *   一 差残页时那一句里有**一条路**（可点的链接）;
+ *   二 它说清了残页怎么来（不是"去历练"三个字了事）;
+ *   三 不差残页时不出这句（没有坑不用指路）。
+ */
+async function taskPageFill() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const at = (page) => {
+      const slices = showcaseSlices("light");
+      slices.player = { ...slices.player, major: 2, sub: 3, dead: false };
+      slices.resources = { ...slices.resources, page };
+      return slices;
+    };
+
+    checked += 1;
+    await seedSave(ctx, at(0), "__pageFillShort");
+    let page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/cultivation", 1400);
+    await clearOverlays(page);
+    const short = await page.evaluate(() => {
+      const a = document.querySelector(".cultivation-gongfa__fill");
+      return {
+        text: a ? (a.textContent || "").replace(/\s+/g, " ").trim() : null,
+        href: a ? a.getAttribute("href") : null,
+      };
+    });
+    if (!short.text) {
+      failures.push("[390] 尚差残页怎么补:差残页时那一句里没有路 —— 玩家只知道差多少");
+    } else if (short.text.replace(/\s/g, "").length < 6) {
+      failures.push(`[390] 尚差残页怎么补:只说「${short.text}」，没说残页怎么来`);
+    }
+
+    checked += 1;
+    await seedSave(ctx, at(9999), "__pageFillEnough");
+    page = await ctx.newPage();
+    watchPageErrors(page, pageErrors);
+    await openRoute(page, "/cultivation", 1400);
+    await clearOverlays(page);
+    const enough = await page.evaluate(() =>
+      Boolean(document.querySelector(".cultivation-gongfa__fill")),
+    );
+    if (enough) failures.push("[390] 尚差残页怎么补:残页够时仍挂着补法");
+
+    if (pageErrors.length) {
+      failures.push(`[390] 尚差残页怎么补页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+    }
+    if (failures.length === 0) {
+      console.log(`\n尚差残页怎么补:「${short.text}」→ ${short.href}`);
+    } else {
+      console.log(`\n尚差残页怎么补[未通过]:${JSON.stringify(short)}`);
+    }
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked };
+}
+
 async function taskDaoFill() {
   const failures = [];
   let checked = 0;
@@ -34324,6 +34394,7 @@ const TASKS = [
   ["等一天值不值那一行", taskWaitPayoff],
   ["今天该去做什么", taskWeatherRoute],
   ["尚差道源怎么补", taskDaoFill],
+  ["尚差残页怎么补", taskPageFill],
   ["背包里的账目", taskInventoryAccounting],
   ["际遇帖的门限与去向", taskEventSlip],
   ["择师谱的两步定契", taskMentorLedger],

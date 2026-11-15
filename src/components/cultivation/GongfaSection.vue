@@ -238,13 +238,34 @@
         <span v-if="comprehendLeft === 0" class="ml-1 text-note text-ink-faint"
           >· 此境功法已尽数参悟</span
         >
+        <!--
+          这里**只能**写差额，链接必须放到按钮外面。
+          `<button>` 里套 `<a>` 是无效的 HTML:读屏只会念一个按钮，
+          键盘 Tab 会在一个"按钮"里停两次。实测被 layout-check 当场抓住:
+            「控件里套着控件(读屏只念一个按钮):button«于藏经阁参悟功法…」里套着 1 个可聚焦件(a)」
+        -->
         <span v-else-if="pageShort > 0" class="ml-1 text-note text-ink-faint"
-          >· 尚差 {{ pageShort }} 残页</span
+          >· 尚差 {{ pageShort }} {{ resourceNameOf("page") }}</span
         >
         <span v-else class="ml-1 text-note text-ink-faint"
           >· 池中尚有 {{ comprehendLeft }} 部未参</span
         >
       </button>
+      <!--
+        「尚差 N 残页」之后呢 —— 差额说了，怎么补也要说。
+        残页只有一条来路（历练途中的际遇与掉落，见 core/loot 的
+        `addSmall("page", …)`），而这一句原先只说差多少，玩家读完不知道往哪走。
+        来路表在 `ui/resourceSources`；放在按钮**外面**的理由见上。
+        热区给足 28px —— 与同屏其余链接同一档（一行 12px 高的字点不中）。
+      -->
+      <RouterLink
+        v-if="pageShort > 0"
+        class="cultivation-gongfa__fill"
+        :to="pageSource.route"
+        :aria-label="`尚差 ${pageShort} ${resourceNameOf('page')} —— ${pageSource.how}`"
+      >
+        残页差 {{ pageShort }} · {{ pageSource.how }} →
+      </RouterLink>
     </div>
   </section>
 </template>
@@ -275,6 +296,7 @@ import QualitySeal from "@/components/common/QualitySeal.vue";
 import GameIcon from "@/components/common/GameIcon.vue";
 import InkScene from "@/components/common/InkScene.vue";
 import { sceneTerrainOfGongfa } from "@/ui/sceneTerrain";
+import { resourceNameOf, resourceSourceOf } from "@/ui/resourceSources";
 import { cultivationChapter } from "@/ui/cultivationDesk";
 
 const player = usePlayerStore();
@@ -449,6 +471,8 @@ const comprehendLeft = computed(
 
 /** 参悟还差几页残页 —— 与 comprehendGongfa 的消耗同源,付不起就置灰并写差 */
 const pageShort = computed(() => Math.max(0, COMPREHEND_PAGE_COST - resources.page));
+/** 残页从哪来 —— 「尚差 N」之后那一句，与差额同一处出 */
+const pageSource = resourceSourceOf("page") ?? { route: "/adventure", how: "历练途中的际遇" };
 
 /** 池里还有货且残页够 —— 才能点参悟 */
 const canComprehend = computed(

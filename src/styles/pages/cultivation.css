@@ -1082,6 +1082,32 @@
    * 故与上方 measure 之间留一道细线，且用 faint 档：读它时不必打断
    * 「此刻这一劫怎么样」那几句。
    */
+  /*
+   * 「尚差 N 残页 —— 视历练途中的际遇」那一句里的路。
+   * 与同屏别的链接同一档:朱砂(行动色),下划线由 border 提供而不是 text-decoration
+   * （后者在长中文里会切到行间，难读）。
+   */
+  .cultivation-gongfa__fill {
+    /* 热区 28px —— 与 a.home-deck__after 同一档；一行 12px 高的字点不中 */
+    display: inline-flex;
+    min-height: 28px;
+    align-items: center;
+    margin-top: 0.15rem;
+    color: rgb(var(--color-cinnabar-rgb));
+    text-decoration: none;
+    border-bottom: 1px solid rgb(var(--color-cinnabar-rgb) / 0.4);
+  }
+
+  .cultivation-gongfa__fill:focus-visible {
+    border-bottom-color: rgb(var(--color-cinnabar-rgb));
+  }
+
+  @media (hover: hover) {
+    .cultivation-gongfa__fill:hover {
+      border-bottom-color: rgb(var(--color-cinnabar-rgb));
+    }
+  }
+
   .cultivation-breakthrough__heaven {
     margin-top: 0.5rem;
     padding-top: 0.4rem;

@@ -485,6 +485,7 @@ const CATEGORIES = [
       "tribulationWaitPayoff",
       "weatherRoutes",
       "daoSourceFill",
+      "resourceSources",
       "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",

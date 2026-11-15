@@ -475,6 +475,11 @@ describe("死导出审计", () => {
     // 埋点聚合:把道源/道果/三个教学标记收成一份读数,供诊断与用例核对,
     // 界面各处直接读 store 字段,不需要这份聚合。
     cognitionStats: "埋点聚合读数:道源/道果/教学标记收成一份供诊断与用例核对,界面直读 store",
+    // 资源清单:与 core/economySim 的 AuditResource 同集合,只服务 resourceSources.spec 的
+    // 「表是满的」与「两份清单不许漂」两条。界面按资源名现查 RESOURCE_SOURCES,
+    // 不需要这份全集 —— 它存在的意义就是被对账。
+    AUDIT_RESOURCES:
+      "资源全集清单:服务 resourceSources.spec 的「表是满的 / 与 economySim 同集合」两判据;界面不与它耦合",
   };
 
   it("运行时模块里的导出,不能只被 spec 用到 —— 那是骨架空转的样子", () => {
