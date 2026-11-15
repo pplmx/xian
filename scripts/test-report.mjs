@@ -496,6 +496,7 @@ const CATEGORIES = [
       "secsPerUnit",
       "faceWall",
       "faceWallReward",
+      "eventChoiceDistinct",
       "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",
