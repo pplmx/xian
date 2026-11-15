@@ -4265,11 +4265,20 @@ async function taskEngineModals() {
     const requiredKinds = new Set(["enlightenment", "cave"]);
     /*
      * 洞府巡游挂在引擎 30 秒周期检查上,而这条夹具从 load 到此处只过了数秒。
-     * 旧上限 20 / 40 秒都在并发满载时误报过「触发接线断了」:渲染任务会把首轮
-     * 周期挤晚。给足 80 秒,同时按 kind 精确找卷,避免另一扇机缘先出现时
-     * `.modal-panel:last()` 把要量的事件顶掉。
+     * 旧上限 20 / 40 / 80 秒都误报过「触发接线断了」,而前三次都只把秒数往上抬、
+     * 没有量过它到底为什么要等这么久 —— 第 357 轮实测(本地稳定复现):
+     *
+     *   t=48..66  顿悟卷开着,占住屏幕;mayTriggerCaveEvent 的 hasOpenModal() 把它挡掉
+     *             (这是对的:两扇不许叠在一起,而顿悟的注释写明忙时不消费冷却)
+     *   t=68      顿悟到点自己收场
+     *   t=96      巡游才弹出 —— 它还要再等自己的下一个 30 秒周期
+     *
+     * 故最坏路径是「顿悟开满一窗(约 20 秒)+ 一次周期(30 秒)」,而钉成必中之后
+     * 顿悟必然先出。140 秒 = 96 秒实测值 + 约 45% 余量;再紧一点会在满载时复现误报。
+     *
+     * 同时按 kind 精确找卷,避免另一扇机缘先出现时 `.modal-panel:last()` 把要量的事件顶掉。
      */
-    for (let i = 0; i < 160 && [...requiredKinds].some((kind) => !seen.has(kind)); i += 1) {
+    for (let i = 0; i < 280 && [...requiredKinds].some((kind) => !seen.has(kind)); i += 1) {
       await page.waitForTimeout(500);
       const info = await page.evaluate(
         (seenKinds) => {
