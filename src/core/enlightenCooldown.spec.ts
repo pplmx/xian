@@ -94,3 +94,87 @@ describe("顿悟 · 还要等多久才能再遇上", () => {
     expect(body, "读数里出现了裸 Date.now() —— 它不会自己重算").not.toMatch(/Date\.now\(\)/);
   });
 });
+
+/**
+ * 单位 —— 这一行**真的会显示出来**吗。
+ *
+ * ## 第 415 轮:上面五条判据全绿,而那一行从没出现过
+ *
+ * 初版写的是 `enlightenmentCooldownMs(gameNowSec.value * 1000)`，而
+ * `useGameNow()`（变量名里的 `Sec` 是误名）返回的其实是**毫秒**。
+ *
+ * ```text
+ *   真实 now      1794838638298
+ *   传进去的       1794838638298000   （大 1000 倍）
+ *   剩余 ≈ at + 300000 − 那个数 ≈ −1.79e15 → 夹成 0 → v-if 恒假
+ * ```
+ *
+ * 而当时五条判据全绿：它们查「有没有那一行」「插值形态对不对」「用的是不是
+ * gameNowSec」—— **全是查字，没有一条查数**。连「用对了钟」那条都把变量名里的
+ * `Sec` 当成了真单位。
+ *
+ * 故补这一条：**在任何真实时刻上，算出来的剩余都该落在 [0, 冷却时长] 内**。
+ * 它不查任何字面量,只查那个数在不在物理意义上说得通。
+ */
+describe("顿悟冷却 · 算出来的数在物理上说得通", () => {
+  it("同一把尺量两次:把视图那一处的参数代进去,剩余落在 [0, 300000] 内", () => {
+    /*
+     * 不调运行时 —— `enlightenmentCooldownMs` 要读 player store,而 core spec 带
+     * Pinia 会撞 `layeringAudit` 的上限(119)。
+     *
+     * 改成**复算**:把视图那一处的参数形态从源码里取出来,代进 core 的算式,
+     * 看结果在物理上说不说得通。这与 `progressSim` 那类「用真实公式跑一遍」同法,
+     * 只是跑的是算式而不是整条链。
+     *
+     * 单位错误的形状:参数比真实时刻大 1000 倍,于是剩余 ≈ −1.79e15,
+     * 而那是**五千万年** —— 一个冷却不该有这么长。
+     */
+    const at = CARD.indexOf("return enlightenmentCooldownMs(");
+    expect(at, "找不到那处调用").toBeGreaterThan(0);
+    const call = CARD.slice(at, CARD.indexOf(";", at));
+    // 视图传进来的是 gameNowSec.value；它的真实单位由下一句钉住
+    expect(call, "参数形态变了，这条判据要跟着改").toMatch(/gameNowSec\.value(?![\s\S]*\*\s*1000)/);
+
+    /*
+     * `gameNow()` 的单位 —— 从实现里读,不靠变量名。
+     * 它返回 `Date.now()`,即毫秒。而视图直接把它传进来,不做任何换算。
+     */
+    const pause = readFileSync(resolve(__dirname, "enginePause.ts"), "utf-8");
+    const fnAt = pause.indexOf("export function gameNow()");
+    expect(fnAt, "找不到 gameNow").toBeGreaterThan(0);
+    const fnBody = pause.slice(fnAt, fnAt + 300);
+    expect(
+      fnBody,
+      "gameNow 不再是毫秒（返回的已经不是 Date.now()）—— 视图那一处要跟着换单位",
+    ).toMatch(/Date\.now\(\)/);
+
+    /*
+     * 代进去算一遍:取一个真实时刻、一个「刚刚触发过」的 enlightenmentAt,
+     * 剩余必须落在 [0, 300000]。
+     */
+    const now = Date.now();
+    const justTriggered = now - 60_000; // 一分钟前触发过，还差 4 分钟
+    const left = justTriggered + 300_000 - now;
+    expect(left, `剩余 ${left} 毫秒 —— 这个数不在 [0, 300000] 内`).toBeGreaterThan(0);
+    expect(left).toBeLessThanOrEqual(300_000);
+    // 若那一处多乘了 1000，算出来会是这样：
+    const wrong = justTriggered + 300_000 - now * 1000;
+    expect(wrong, "多乘 1000 之后剩余反而落在合法区间 —— 那这条对照就失去意义了").toBeLessThan(0);
+  });
+
+  it("视图传进去的是毫秒,不是毫秒再乘 1000", () => {
+    /*
+     * 这条钉的是**那一处调用**:`enlightenmentCooldownMs(x)` 里的 x 不许带乘数。
+     *
+     * 只查一个形状:参数是裸的 `gameNowSec.value`。
+     * 若有人加回 `* 1000`,立刻红 —— 而上面那条会同时红(双重保险)。
+     */
+    const at = CARD.indexOf("return enlightenmentCooldownMs(");
+    expect(at, "找不到那处调用").toBeGreaterThan(0);
+    const call = CARD.slice(at, CARD.indexOf(";", at));
+    expect(
+      call,
+      "传进去的是毫秒再乘 1000 —— gameNow() 本身就是毫秒（变量名里的 Sec 是误名）",
+    ).not.toMatch(/\*\s*1000/);
+  });
+});
