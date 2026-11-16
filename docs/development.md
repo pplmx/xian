@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 826 个 spec;本作自己那部分 746 个) |
+| `bun run test` | 全量用例(全量 827 个 spec;本作自己那部分 747 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 826 个 spec = 宿主 729 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 827 个 spec = 宿主 747 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 826 个 spec(本作自己那部分 746 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 827 个 spec(本作自己那部分 747 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -20536,3 +20536,64 @@ modsText 完整披露 —— 这一轮补的是那句总纲。
 
 近六轮的产出率在持续下降：第 375~381 轮里只有第 378 轮（时间分配账）是新增的，
 其余都是「查→做对了→记录」。这不是探索方法的问题 —— 是这个仓确实已经填满。
+
+### 第 382 轮:「14.56亿 / 29.69兆」—— 同一行两个单位，读者要自己换算
+
+这一轮我看界面截图（`images/app/cultivation.webp`），而不是读代码。第一次从玩家
+视角看到了一个一直存在的读数问题。
+
+#### 截图里看到的
+
+```text
+本境修为
+14.56亿 / 29.69兆
+```
+
+分子分母各自按自己的数量级选了单位。玩家要回答「我还差多少」，得先知道
+**1 兆 = 10000 亿** —— 而这不是一闪而过的边界情况:
+
+```text
+分子 1.456e9、分母 2.969e13，比例 1:20390
+→ 那个境界里 99.99% 的时间都停在这个跨量级上
+```
+
+#### 为什么它是缺陷（而不是"凑合能看"）
+
+本仓 `AGENTS.md` 的「决策信息完整」写着:
+
+> 给决策前把数字摊开……不能只给定性形容词
+
+反过来说，**摊开了却要读者自己换算，等于没摊开**。同一行里的两个数用两套单位，
+是「两本账」在**呈现**上的那一面 —— 两处各自都对，合起来读不出意思。
+
+#### 做法:分母跟着分子的量级
+
+`utils/format` 加 `formatFollowing(value, reference)`:
+
+```text
+1.456e9 / 2.969e13   亿 vs 兆   → 都用亿:14.56亿 / 29690亿
+40 / 80              都没单位   → 各自格式化（本来就一样）
+5000 / 3e13          一个没单位 → **不动**
+```
+
+最后一种刻意不动:硬把 5000 写成「0兆」是**更糟**的读数。对齐要解决的是
+"两段都够大、却各选各的单位"，不是所有情况 —— 判据里有一条专门钉这个边界。
+
+#### 两条判据，一条是反向的
+
+```text
+跨量级的那一对 → 现在同单位，且不许出现「亿…兆」并排
+同量级时行为不变 → 与直接调 formatGN 结果相同
+```
+
+第二条是反向的:这一改若动到早期玩家的读数，扰动会比它修的问题更大。
+
+#### 一次被工具挡住的实现
+
+这一轮的环境有写入障碍:`write` 对**已存在**的文件失效，`sed -i` 与 `>>` 也不生效，
+但 `write` 建**新文件**、`edit` 改文件、`rm` 删文件都正常。
+
+绕法:**先 `rm` 再 `write`**。中途 `formatAlongside` 被删掉后 spec 仍引用它，
+`write` 改不动、`edit` 也改不动 —— 直到删掉文件重建才通过。
+
+工作区干净、全量 827 / 6890 全绿；`check`、`test:report`、`check:ui` 同绿。

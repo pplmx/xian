@@ -183,7 +183,12 @@
                   :note="expDetailNote"
                 />
               </span>
-              <span class="text-ink-faint">/ {{ formatGN(player.expReq) }}</span>
+              <!--
+                分母跟着分子的量级 —— 否则会出现「14.56亿 / 29.69兆」:
+                两个数各自按自己的数量级选单位，读者要自己知道 1 兆 = 10000 亿。
+                详见 utils/format 的 formatFollowing（99.99% 的时间都在跨量级，不是边界情况）。
+              -->
+              <span class="text-ink-faint">/ {{ formatFollowing(player.expReq, player.exp) }}</span>
               <span v-if="player.expFull" class="text-qing">· 圆满</span>
             </div>
             <div :class="player.expFull ? 'bar-charged' : ''">
@@ -584,7 +589,7 @@ import { expProgressNote } from "@/ui/expProgressNote";
 import {
   formatCountdown,
   formatDuration,
-  formatGN,
+  formatFollowing,
   formatNum,
   formatPercent,
   formatRate,

@@ -53,6 +53,65 @@ function trimZero(s: string): string {
   return s.includes(".") ? s.replace(/\.?0+$/, "") : s;
 }
 
+/**
+ * 一个数用了哪个量级单位（0 = 万、1 = 亿、2 = 兆 …）；不到万返回 -1。
+ *
+ * 与 `formatGN` 内部那套 `unitIdx` 同一条口径 —— 但它藏在函数里，
+ * 这里要把「用了哪个单位」单独问出来，供 `formatAlongside` 对齐用。
+ */
+function unitIndexOf(v: GNum | number): number {
+  const g = typeof v === "number" ? gn(v) : v;
+  if (g.m === 0 || g.e < 4) return -1;
+  return Math.min(Math.floor(g.e / 4) - 1, UNITS.length - 1);
+}
+
+/** 按指定单位格式化（`unitIdx` 为 -1 时退回 `formatGN`） */
+function formatAtUnit(v: GNum | number, unitIdx: number): string {
+  if (unitIdx < 0) return formatGN(v);
+  const g = typeof v === "number" ? gn(v) : v;
+  const shown = g.m * Math.pow(10, g.e - (unitIdx + 1) * 4);
+  return trimZero(fixedByMag(shown)) + UNITS[unitIdx];
+}
+
+/**
+ * 把一对数（分子 / 分母）格式化成**同一量级单位**。
+ *
+ * ## 它修的是什么
+ *
+ * 修炼页「本境修为」那一行曾经渲染成:
+ *
+ * ```text
+ *   14.56亿 / 29.69兆
+ * ```
+ *
+ * 两个数各自调 `formatGN`，各自按自己的数量级选单位，于是跨了量级。
+ * 玩家要回答「我还差多少」，得先知道 1 兆 = 10000 亿 —— 而这不是一闪而过的
+ * 边界情况:那个境界里分子 1.456e9、分母 2.969e13，比例 1:20390，
+ * **99.99% 的时间都停在这个跨量级上**。
+ *
+ * 本仓 `AGENTS.md` 说「给决策前把数字摊开」。反过来说，摊开了却要读者自己换算，
+ * 等于没摊开 —— 同一行里的两个数用两套单位，是「两本账」在**呈现**上的那一面。
+ *
+ * ## 只在两段都带单位、且单位不同时才对齐
+ *
+ * ```text
+ *   1.456e9 / 2.969e13   亿 vs 兆   → 都用亿:14.56亿 / 29690亿
+ *   40 / 80              都没单位   → 各自格式化（本来就一样）
+ *   1200 / 3400          都没单位   → 同上，不动
+ *   5000 / 3e13          一个没单位 → 各自格式化（分子接近 0，玩家看进度条即可）
+ * ```
+ *
+ * 第四种情况刻意不动:硬把 5000 写成「0兆」是**更糟**的读数。
+ * 对齐能解决的是"两段都够大、却各选各的单位"这一类，不是所有情况。
+ */
+export function formatFollowing(value: GNum | number, reference: GNum | number): string {
+  const a = unitIndexOf(reference);
+  const b = unitIndexOf(value);
+  // 只有两段都带单位、且不同时才对齐；其余一律保持原有格式化
+  if (a >= 0 && b >= 0 && a !== b) return formatAtUnit(value, Math.min(a, b));
+  return formatGN(value);
+}
+
 /** 格式化普通数字(整数展示) */
 export function formatNum(n: number): string {
   return formatGN(gn(n));

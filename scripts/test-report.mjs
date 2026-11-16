@@ -500,6 +500,7 @@ const CATEGORIES = [
       "retreatDecayDisclosure",
       "mechanismFrequency",
       "timeAllocation",
+      "progressUnitAlign",
       "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",
