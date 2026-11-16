@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 840 个 spec;本作自己那部分 760 个) |
+| `bun run test` | 全量用例(全量 841 个 spec;本作自己那部分 761 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 840 个 spec = 宿主 760 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 841 个 spec = 宿主 761 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 840 个 spec(本作自己那部分 760 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 841 个 spec(本作自己那部分 761 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -21761,3 +21761,64 @@ return (entry ? weatherDef(entry.id as WeatherId) : undefined) ?? WEATHERS[4]!;
 这一轮只做了一屏(秘境卡)，而全仓有 19 个页面。
 
 工作区干净、全量 840 / 6965 全绿;check、test:report、check:ui 同绿。
+
+### 第 399 轮:星陨天五条规则,只说出去三条
+
+上一轮记下的方向是「逐屏做同屏自洽检查」。这一轮做的是天界世界的规则卡。
+
+#### 方法:把 ruleText 与 rules 并排看
+
+天界世界由两半组成 —— `rules`(真值)与 `ruleText`(给玩家读的)。
+把两者并排打印出来，缺口就直接露了:
+
+```text
+星陨天: enemyAtkMult=1.25 ✗未提 · healMult=0.75 ✗未提 · maxRounds=26 ✓
+赤炎天: enemyAtkMult=1.4 ✓ · healMult=0.65 ✓ · maxRounds=32 ✗未提
+无生天: enemyAtkMult=1.15 ✓ · healMult=0.3 ✓ · shieldCapRatio=0.25 ✓
+```
+
+星陨天漏了两条最影响打法的:**敌人攻击 +25%(挨得更重)、治疗效率 -25%(不能靠回血磨)**。
+那一界被描述成一个「回合短、会心多」的地方，而实际上它同时也在削续航 ——
+带着续航流进来的人是照着错的信息做的决定。
+
+而同一组里的无生天三条全报，**故这不是「风格简省」，是这一条漏了**。
+
+#### 为什么此前没人发现
+
+道途有一族完整的 `ruleText` 判据，`daoPathCoverage.spec` 第 210 行那句注释
+还记着实测事故:
+
+> 实测:`ruleText` 曾写「自身造成伤害 -12%」而 `rules` 是 -0.1
+
+**同一个形状，在天界世界这一侧一条都没有。** 两者都由 `rules` + `ruleText`
+两半组成，而只有一半有人守。
+
+顺带把赤炎天的 `maxRounds: 32` 也补上数(原写「回合上限骤减」)——
+同一字段，星陨天报数、赤炎天只说形容词，玩家读到的东西不对等。
+
+判据三条:每条数值规则都要报出来、报出来的数要与 rules 对得上(报了但报错更糟)、
+同一字段的口径要一致。三次故障注入:还原原措辞 → 2 红、报错数 → 1 红。
+
+#### 方法账
+
+这一轮比上一轮快得多 —— 上一轮前六个方向全否，这一轮第一个方向就立住了。
+差别在**问法**:
+
+```text
+上一轮前六个    「哪里可能有 bug」        —— 靠猜
+上一轮第七个    「同屏两句话能不能同时为真」—— 靠摆在一起看
+这一轮          「这个结构由两半组成，两半对得上吗」
+```
+
+第三种问法最省力，因为它有一个**机械的入口**:找到「真值 + 派生文案」这种成对结构，
+然后把两边打印出来。这一轮只用了一次(天界世界)，而全仓这种成对结构还有不少:
+
+```text
+ruleText / rules          天界世界（本轮）· 道途（早有判据）
+desc     / rules          秘境（上一轮）· 世界 · 契约
+effectText / mods         建筑（已同源）· 天赋 · 法宝
+```
+
+下一轮的方向:**把这几对逐个摆开看**，尤其是还没有判据的那几对。
+
+工作区干净、全量 841 / 6968 全绿;check、test:report、check:ui 同绿。

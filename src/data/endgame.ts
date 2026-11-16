@@ -273,7 +273,7 @@ export const CELESTIAL_WORLDS: CelestialWorldDef[] = [
     seal: "炎",
     anchorTier: 22,
     desc: "天穹燃烧,雷火贯体。此界只问一件事:你扛得住几击?",
-    ruleText: ["敌人攻击 +40%", "真伤横行,烈焰炙烤(治疗 -35%)", "回合上限骤减(拖字诀必败)"],
+    ruleText: ["敌人攻击 +40%", "真伤横行,烈焰炙烤(治疗 -35%)", "回合上限 32(拖字诀必败)"],
     rules: { enemyAtkMult: 1.4, maxRounds: 32, healMult: 0.65, enemyExtraMods: { critRate: 0.1 } },
     entryCost: 20,
     fights: 6,
@@ -376,8 +376,9 @@ export const CELESTIAL_WORLDS: CelestialWorldDef[] = [
     desc: "星斗倾颓,陨石如雨。此界以星象为刀,逼你于天威之下寻一线生机",
     ruleText: [
       "星陨密集,回合紧迫(上限 26 回合)",
-      "敌借星威,会心频发(敌方会心率 +15%)",
-      "天威之下,重装与反震反得其道",
+      "敌借星威,出手更重(敌人攻击 +25%)、会心频发(敌方会心率 +15%)",
+      "星光灼身,回气受挫(治疗效率 -25%)",
+      "天威之下,重装与反震反得其道(我方会心率 +10%、会心伤害 +50%)",
     ],
     rules: {
       enemyAtkMult: 1.25,

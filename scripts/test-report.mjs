@@ -683,6 +683,8 @@ const CATEGORIES = [
       "weatherPoolCoverage",
       // 秘境的「禁疗」只否战内,不否层间 —— 同一张卡上两句话不许打架
       "secretRealmHealScope",
+      // 天界世界的 ruleText 要把 rules 说全(道途早有这一族,天界这侧没有)
+      "celestialRuleText",
       // 计数器 → 行为的一张满表:师承与素行两个消费者都读它,半张表各自长是这里的缺口
       "counterText",
       // 「这一趟能走多远」—— 出行窗只报产出不报能不能拿到,是本轮在真浏览器里量到的坑
