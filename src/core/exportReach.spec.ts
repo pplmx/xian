@@ -70,7 +70,6 @@ const BASELINE = new Set([
   "core/equipSet.ts:PRIMORDIAL_SET_SHIELD",
   "core/equipSet.ts:PRIMORDIAL_SET_SHIELD_POWER",
   "core/eventEngine.ts:eventWudaoExpectation",
-  "core/expIncome.ts:idleExpSecsPerHour",
   "core/expedition.ts:MUTATION_ESCALATION",
   "core/fingerprints.ts:MECHANIC_FAMILIES",
   "core/fruitOutlets.ts:QUADRANTS",

@@ -499,6 +499,7 @@ const CATEGORIES = [
       "eventChoiceDistinct",
       "retreatDecayDisclosure",
       "mechanismFrequency",
+      "timeAllocation",
       "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",
