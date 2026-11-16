@@ -67,6 +67,18 @@ const WANTED = [
   // ---- 灵兽补充 ----
   { table: "灵兽", dimension: "契语与灵兽一一对应", keywords: ["契语"] },
   { table: "灵兽", dimension: "性格表全覆盖", keywords: ["性格"] },
+  /*
+   * ---- 器魂 ----
+   *
+   * 第 395 轮补。此前这一整张表**不在清单里** —— 而法宝有一族完整的横向审计
+   * (`artifactLadder.spec`),器魂六阶却一条都没有:`souls.spec` 那 12 条管的是
+   * 「六类名实相符」「品质映射单调」「高阶强于低阶」,都是两端与类型,
+   * 中间五格怎么走没人问。`SOUL_GRADES` 只有 `soulModsFor` 一个消费点,
+   * 手改某一档的 mult 不会有任何东西变红。
+   */
+  { table: "器魂", dimension: "六阶严格递增", keywords: ["六档", "严格递增"] },
+  { table: "器魂", dimension: "相邻档增量同量级", keywords: ["相邻档的增量"] },
+  { table: "器魂", dimension: "倍率现值快照", keywords: ["倍率现值快照"] },
 ] as const;
 
 describe("横向对账 · 覆盖审计", () => {
