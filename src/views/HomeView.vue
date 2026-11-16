@@ -518,7 +518,13 @@ const resources = useResourcesStore();
 const now = useNow();
 
 // Phase 29 修行目标:只给方向,不替玩家做决定(goal.ts 此前零展示,接线摆上主页)
-const currentGoal = computed<Goal | null>(() => generateCurrentGoal(player));
+/*
+ * 终局状态由这里递进去 —— `core/goal` 不 import store（见 layeringAudit 的约束）。
+ * 两个数都来自 `endgame` store 本身，不在这里另算。
+ */
+const currentGoal = computed<Goal | null>(() =>
+  generateCurrentGoal(player, { daoPath: endgame.daoPath, daoSource: endgame.daoSource }),
+);
 /** 新手第一步(开局这一段才有;给不给完全由存档推出来,没有"已看过"字段) */
 const firstStep = computed(() => currentFirstStep());
 

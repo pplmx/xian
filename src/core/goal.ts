@@ -18,13 +18,31 @@ import { useAdventureStore } from "@/stores/adventure";
 import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
 import { detectBuild } from "./buildDetect";
+import { WORLD_BREAK_MAJOR } from "@/data/realms";
+import { CELESTIAL_WORLDS } from "@/data/endgame";
 import { realmLabel } from "@/data/realms";
 import { REGIONS } from "@/data/regions";
 import { EQUIP_SLOT_NAMES } from "@/data/equipment";
 import { SUB_LEVELS } from "@/data/constants";
 import type { EquipSlot } from "@/types";
 
-export type GoalType = "breakthrough" | "equipment" | "explore" | "material" | "build";
+export type GoalType =
+  | "breakthrough"
+  | "equipment"
+  | "explore"
+  | "material"
+  | "build"
+  /*
+   * 终局三支（第 428 轮补）。
+   *
+   * 前五个各守一件「当下该做的小事」；而真仙以上、六支全不命中的玩家
+   * 此前拿到的是 `null` —— 首页那张卡整块不渲染，界面对他说的唯一一句话是
+   * 「你没有下一步」。而那三样（道途 / 远征 / 天道秘境）本来就是这一作
+   * 最重的内容，只是 `goal` 此前一条都不认识。
+   */
+  | "path"
+  | "expedition"
+  | "endgame";
 
 export interface GoalDestination {
   to: string;
@@ -67,7 +85,19 @@ const GEAR_SLOTS: EquipSlot[] = [
 const MATERIAL_LOW_HERB = 10;
 
 /** 纯函数:根据玩家状态生成当前目标 */
-export function generateCurrentGoal(player: PlayerStore): Goal | null {
+export function generateCurrentGoal(
+  player: PlayerStore,
+  /**
+   * 终局状态 —— **由调用方传入**，不在这里 import endgame store（第 428 轮）。
+   *
+   * `core/goal` 的既有约束是「只读传入的 player，不新增 store 依赖」
+   * （见 `layeringAudit.spec` 第 178 行）。终局那三支确实要读 `daoPath` 与
+   * `daoSource`，但那是**调用方的事** —— 由它把两个数递进来，这个函数仍是纯的。
+   *
+   * 不传时按「未到终局」处理（老调用方与用例都不必改）。
+   */
+  endgame?: { daoPath: string | null; daoSource: number },
+): Goal | null {
   // 1. 死后无目标
   if (player.dead) return null;
 
@@ -191,6 +221,72 @@ export function generateCurrentGoal(player: PlayerStore): Goal | null {
       progress: filled / GEAR_SLOTS.length,
       hint: `还缺一件${slotName},历练所得的装备里常有`,
       destination: { to: "/inventory?tab=equip", label: "去行囊" },
+    };
+  }
+
+  /*
+   * 7. 终局:前面六支全不命中时，玩家其实还有事可做 —— 只是那些事
+   *    **都不在 `goal` 分得清的维度里**（第 428 轮补）。
+   *
+   * ## 那个空档
+   *
+   * 六支各自守着一件「当下该做的小事」:突破、构筑、推地界、采料、补装备。
+   * 而一位走到真仙以上、地界推完、装备齐、材料足的玩家**六支全不命中**,
+   * `generateCurrentGoal` 返回 `null` —— 首页那张卡 `v-else-if="currentGoal"`
+   * 整块不渲染。
+   *
+   * 实测复现过:
+   *
+   * ```text
+   *   adv.cleared = 全部区域 · herb 充足 · 九个装备槽全填 · major 12
+   *   → 目标: null（首页那张卡整块不显示）
+   * ```
+   *
+   * ## 为什么这一支不是「凑数」
+   *
+   * 那个阶段的人**确实有下一步**,而且是这一作最重的那几样:道途、远征、
+   * 每日天道、秘境、历世试炼。只是它们都挂在真仙之后,而 `goal` 此前
+   * 一条都不认识 —— 于是「没事可做」成了界面对终局玩家说的唯一一句话。
+   *
+   * ## 门槛读同一个常量
+   *
+   * `WORLD_BREAK_MAJOR`,与 `endgameUnlocked()` 同一个 —— 不另写一个 9。
+   * 两支的顺序是「先看有没有该打的远征,再看有没有该刷的天道,最后才泛指」:
+   * 泛指那一句是兜底,它只在**真的什么都指不出**时才出现。
+   */
+  if (player.major >= WORLD_BREAK_MAJOR && endgame) {
+    /*
+     * 道途未定 —— 这是真仙之后第一个不可逆的选择,也是最该被推到头上的那一步。
+     * 它排在最前:没有道途,远征与每日天道都开不了（见 `core/expedition` 的守卫）。
+     */
+    if (!endgame.daoPath) {
+      return {
+        type: "path",
+        text: "立下此世的道途",
+        hint: "七道各有一得,也各有代价;落子后须待转世再选",
+        destination: { to: "/celestial", label: "去天界" },
+      };
+    }
+    /*
+     * 有可打的远征就先去 —— 「已备道源」这句话读 `entryCost`,
+     * 与远征页自己的可负担判定同源（不在首页另算一笔）。
+     */
+    const affordable = CELESTIAL_WORLDS.filter((w) => endgame.daoSource >= w.entryCost).length;
+    if (affordable > 0) {
+      return {
+        type: "expedition",
+        text: `${affordable} 界已备道源`,
+        hint: "择契、看路、再叩天门 —— 远征给的是道源与道痕",
+        destination: { to: "/celestial", label: "去远征" },
+      };
+    }
+    // 都没得打时，最后泛指一句：这一作在终局**仍然有每日可做的事**，
+    // 而「没有目标」不是其中任何一项
+    return {
+      type: "endgame",
+      text: "今日天道与秘境尚可一探",
+      hint: "道源不足时，天道熔炉可献祭闲置资财",
+      destination: { to: "/celestial", label: "去天界" },
     };
   }
   return null;

@@ -23854,3 +23854,71 @@ exportReach   auditWorld 现在有新使用者了，从 BASELINE 销账。
 报出「快照 100% → 实测 0%」。
 
 工作区干净、全量 857 / 7059 全绿;check、test:report、check:ui 同绿。
+
+### 第 428 轮:终局玩家的首页,那张卡整块不渲染
+
+#### 复现
+
+`generateCurrentGoal` 有六支:突破 / 构筑 / 推地界 / 采料 / 补装备。
+把玩家摆到「六支全不命中」再跑:
+
+```text
+adv.cleared = 全部区域 · herb 99999 · 九个装备槽全填 · major 12
+→ 目标: null
+```
+
+而首页那张卡写的是 `v-else-if="currentGoal"` —— **整块不渲染**。
+界面对一位修到玄仙的玩家说的唯一一句话是:**你没有下一步**。
+
+#### 那个阶段其实最有事可做
+
+道途、远征、每日天道、秘境、历世试炼全都挂在真仙之后,而 `goal` 一条都不认识。
+于是这一作最重的内容,在首页上**从来没有被推荐过一次**。
+
+#### 补三支
+
+```text
+① 无道途          → 「立下此世的道途」
+                    没有它，远征与每日天道都开不了（见 core/expedition 的守卫）
+② 有道途、道源够  → 「N 界已备道源」  ← N 读 entryCost，与远征页同源
+③ 有道途、道源少  → 「今日天道与秘境尚可一探」
+```
+
+`GoalType` 随之扩三个:`path` / `expedition` / `endgame`。
+门槛读 `WORLD_BREAK_MAJOR`,与 `endgameUnlocked()` 同一个常量。
+
+**终局状态由调用方传入,`core/goal` 不 import endgame store。** 初版我直接
+`useEndgameStore()`,被 `layeringAudit` 当场拦下（161 → 162）—— 而那条判据的
+注释里早写着:「被测量的 `core/goal` 仍然只读传入的 player,**没有新增 store 依赖**」。
+故改成 `generateCurrentGoal(player, { daoPath, daoSource })`:那个函数仍是纯的,
+两个数由 `HomeView` 从 store 递进来。不传时按「未到终局」处理,老调用方不必改。
+
+#### 判据四条（追加到 `core/goal.spec`）
+
+```text
+① 真仙以上、六支全空 → 不返回 null，且先指道途
+② 有道途但道源不够   → 指天道与秘境（不指远征，那一步会被守卫拦下）
+③ 道源够             → 「N 界已备」，且 N 与 entryCost 复算一致
+④ 反差：真仙以下的同类状态仍然返回 null —— 那时「没有下一步」是真话
+```
+
+④ 是这一族的老习惯:新增分支在它的前提不成立时不该改变输出。
+一个元婴期、地界推完、装备齐、材料足的玩家,确实没有「终局」那几样东西。
+
+#### 两次注入
+
+```text
+删掉终局三支     → ①②③ 同时红，④ 仍绿（它测的正是「不该变」）
+门槛改成 14      → ①②③ 同时红
+```
+
+#### 一条自找的麻烦，记下来
+
+写判据时我用脚本补 import,而 `goal.spec` 里**已经**有 `useResourcesStore` /
+`useInventoryStore` 这两行 —— 脚本不检查就直接插,结果四条新用例全红在
+「REGIONS is not defined」这类「根本没跑起来」的错误上。
+
+**这跟「判据红了」是两件事:前者是判据坏了,后者是产品坏了。** 先看清报错是
+`ReferenceError` 还是 `AssertionError`,再决定去改哪一边。
+
+工作区干净、全量 857 / 7063 全绿;check、test:report、check:ui 同绿。

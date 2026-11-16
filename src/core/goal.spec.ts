@@ -9,7 +9,10 @@ import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
 import { gn, toNum, gnZero } from "@/utils/gnum";
 import { generateCurrentGoal } from "./goal";
-import { MAX_MAJOR, realmLabel } from "@/data/realms";
+import { MAX_MAJOR, realmLabel, WORLD_BREAK_MAJOR } from "@/data/realms";
+import { useEndgameStore } from "@/stores/endgame";
+import { REGIONS } from "@/data/regions";
+import { CELESTIAL_WORLDS } from "@/data/endgame";
 import { SUB_LEVELS } from "@/data/constants";
 import { expRequirement } from "./formulas";
 
@@ -252,5 +255,126 @@ describe("修行目标 · 已至大道尽头", () => {
     const goal = generateCurrentGoal(player as never);
     expect(goal?.type, "还没到顶,该照常给突破").toBe("breakthrough");
     expect(goal?.text).toContain(realmLabel(MAX_MAJOR, SUB_LEVELS - 1));
+  });
+});
+
+/**
+ * 终局三支 —— 六支全不命中时，界面不该对玩家说「你没有下一步」。
+ *
+ * ## 由来（第 428 轮）
+ *
+ * `generateCurrentGoal` 有六支：突破 / 构筑 / 推地界 / 采料 / 补装备。
+ * 而一位走到真仙以上、地界推完、装备齐、材料足的玩家**六支全不命中**，
+ * 返回 `null` —— 首页那张卡 `v-else-if="currentGoal"` 整块不渲染。
+ *
+ * 实测复现过：
+ *
+ * ```text
+ *   adv.cleared = 全部区域 · herb 充足 · 九个装备槽全填 · major 12
+ *   → 目标: null（首页那张卡整块不显示）
+ * ```
+ *
+ * 而那个阶段的人**确实有下一步**，还是这一作最重的几样：道途、远征、
+ * 每日天道、秘境。只是它们都挂在真仙之后，而 `goal` 此前一条都不认识。
+ *
+ * ## 判据
+ *
+ * ① 六支全不命中、境界在真仙以上时，`generateCurrentGoal` 不许返回 null；
+ * ② 三支的先后是「道途 → 有可打的远征 → 泛指」—— 顺序有据（没有道途，远征开不了）；
+ * ③ 道源那句读的是 `entryCost`，不另算一笔（与远征页同源）；
+ * ④ 反差：真仙**以下**的同类状态仍然返回 null —— 那时「没有下一步」是真话。
+ */
+describe("终局目标 · 六支全空时仍有下一步", () => {
+  /** 把玩家摆到「六支全不命中」的状态 */
+  function saturate(): void {
+    const adv = useAdventureStore();
+    const res = useResourcesStore();
+    const inv = useInventoryStore() as unknown as { equipped: Record<string, string | null> };
+    adv.unlocked = REGIONS.map((r) => r.id);
+    adv.cleared = REGIONS.map((r) => r.id);
+    res.addSmall("herb", 99999);
+    /*
+     * 九个装备槽全填 —— 槽位名取自 `goal.ts` 的 GEAR_SLOTS（它是私有的，
+     * 故这里按同一份清单写）。若哪天槽位增减，这条会因「装备槽有空位」而红，
+     * 提醒回来对一遍。
+     */
+    for (const s of [
+      "weapon",
+      "head",
+      "body",
+      "wrist",
+      "belt",
+      "boots",
+      "necklace",
+      "ring",
+      "talisman",
+    ]) {
+      inv.equipped[s] = "fake-uid";
+    }
+  }
+
+  it("真仙以上、六支全空 → 不返回 null，且先指道途", () => {
+    setActivePinia(createPinia());
+    const player = usePlayerStore();
+    saturate();
+    player.major = WORLD_BREAK_MAJOR + 3;
+    player.sub = 9;
+    const goal = generateCurrentGoal(player, { daoPath: null, daoSource: 0 });
+    expect(
+      goal,
+      "六支全空时返回了 null —— 首页那张卡整块不显示，界面对终局玩家说的唯一一句话是「你没有下一步」",
+    ).not.toBeNull();
+    expect(goal!.type, "没有道途时该先指道途 —— 没有它，远征与每日天道都开不了").toBe("path");
+    expect(goal!.destination?.to, "道途那一步在天界页").toBe("/celestial");
+  });
+
+  it("有道途但道源不够 → 指天道与秘境，而不是 null", () => {
+    setActivePinia(createPinia());
+    const player = usePlayerStore();
+    const endgame = useEndgameStore();
+    saturate();
+    player.major = WORLD_BREAK_MAJOR + 3;
+    player.sub = 9;
+    endgame.chooseDao("sword");
+    const goal = generateCurrentGoal(player, { daoPath: "sword", daoSource: 0 });
+    expect(goal, "有道途、道源不足时返回了 null").not.toBeNull();
+    expect(goal!.type, "道源不够时不该指远征 —— 那一步会被守卫拦下").toBe("endgame");
+  });
+
+  it("道源够 → 报出「几界已备」，且那个数读 entryCost 不另算", () => {
+    setActivePinia(createPinia());
+    const player = usePlayerStore();
+    const endgame = useEndgameStore();
+    saturate();
+    player.major = WORLD_BREAK_MAJOR + 3;
+    player.sub = 9;
+    endgame.chooseDao("sword");
+    endgame.addDaoSource(1000);
+    const goal = generateCurrentGoal(player, { daoPath: "sword", daoSource: 1000 });
+    expect(goal!.type, "道源充足时该指远征").toBe("expedition");
+    /*
+     * 那个数必须是「道源 ≥ entryCost 的界数」—— 与远征页自己的可负担判定同源。
+     * 这里复算一遍：若实现里换了口径，这条会红。
+     */
+    const want = CELESTIAL_WORLDS.filter((w) => 1000 >= w.entryCost).length;
+    expect(goal!.text, `「几界已备」与 entryCost 复算对不上（该是 ${want} 界）`).toContain(
+      `${want} 界`,
+    );
+  });
+
+  it("反差：真仙以下的同类状态，仍然返回 null —— 那时「没有下一步」是真话", () => {
+    /*
+     * 这一族的老习惯：新增的分支在它的前提不成立时不该改变输出。
+     * 一个元婴期、地界推完、装备齐、材料足的玩家，确实没有「终局」那几样东西。
+     */
+    setActivePinia(createPinia());
+    const player = usePlayerStore();
+    saturate();
+    player.major = WORLD_BREAK_MAJOR - 5;
+    player.sub = 9;
+    expect(
+      generateCurrentGoal(player, { daoPath: "sword", daoSource: 1000 }),
+      "境界还没到真仙，却给出了终局目标 —— 那几样此时根本不存在",
+    ).toBeNull();
   });
 });
