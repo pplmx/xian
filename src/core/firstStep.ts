@@ -62,6 +62,14 @@ export function homeStatusText(input: {
    * 灵气上限随境界涨、破境消耗按比例算，攒满要时间。
    */
   qiShort?: boolean;
+  /**
+   * 灵气还差多久回满（第 420 轮）。
+   *
+   * 只说「灵气不足」等于告诉玩家「卡住了」而不说「卡多久」—— 而这两件事
+   * 对下一步的决定完全不同:三分钟可以等,二十分钟该去做别的。
+   * 空串表示算不出来（无回复速度），那时只报「灵气不足」。
+   */
+  qiEtaText?: string;
 }): string {
   if (input.dead) return "陨落";
   if (input.exploringSecret) return "探秘中";
@@ -76,7 +84,10 @@ export function homeStatusText(input: {
    * 而「修为已满」本身还要再分一次:灵气不够时它不是「一步之遥」,是「卡住了」。
    * 两句话的下一步完全不同(去突破 vs 等灵气),故分开说。
    */
-  if (input.expFull) return input.qiShort ? "修为已满 · 灵气不足" : "修为已满";
+  if (input.expFull) {
+    if (!input.qiShort) return "修为已满";
+    return input.qiEtaText ? `修为已满 · 灵气不足,约 ${input.qiEtaText}` : "修为已满 · 灵气不足";
+  }
   return "修炼中";
 }
 

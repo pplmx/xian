@@ -298,6 +298,7 @@ import { BT_MAX_RATE } from "@/data/constants";
 import TribulationPanel from "@/components/cultivation/TribulationPanel.vue";
 import QiShortfallNote from "@/components/cultivation/QiShortfallNote.vue";
 import { useGameNow } from "@/composables/useGameNow";
+import { qiEta } from "@/core/qiEta";
 
 const player = usePlayerStore();
 const resources = useResourcesStore();
@@ -325,10 +326,12 @@ const btInfo = computed(() => {
  */
 const btQiBlock = computed(() => {
   if (btInfo.value.ready || btInfo.value.reason !== "灵气不足") return null;
-  const short = Math.max(0, Math.ceil(btInfo.value.qiCost - resources.qi));
-  const sec =
-    player.qiRegenPerSec > 0 ? Math.ceil(short / player.qiRegenPerSec) : Number.POSITIVE_INFINITY;
-  return { short, eta: Number.isFinite(sec) ? `约 ${formatDuration(sec)}` : "当前无回复" };
+  /*
+   * 算式抽到 `core/qiEta`（第 420 轮）—— 首页那一行也要报同一件事，
+   * 两处各写一遍迟早分叉。
+   */
+  const { short, sec } = qiEta(btInfo.value.qiCost, resources.qi, player.qiRegenPerSec);
+  return { short, eta: sec !== null ? `约 ${formatDuration(sec)}` : "当前无回复" };
 });
 
 // Phase 28 突破准备:按钮文案/耗时/药价全部来自 BREAKTHROUGH_PREP_OPTIONS,不再在视图里写第二份

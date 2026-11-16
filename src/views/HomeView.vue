@@ -471,6 +471,9 @@ import { generateCurrentGoal, type Goal } from "@/core/goal";
 import { currentMainQuestProgress } from "@/core/questProgress";
 import { currentFirstStep, homeStatusText } from "@/core/firstStep";
 import { breakthroughInfo } from "@/core/breakthrough";
+import { qiEta } from "@/core/qiEta";
+import { useResourcesStore } from "@/stores/resources";
+import { formatDuration } from "@/utils/format";
 import { rewardText } from "@/core/progress";
 import { modsText } from "@/data/statNames";
 import { isRetreating } from "@/core/earlyGameService";
@@ -511,6 +514,7 @@ const dailyPending = computed(() => {
   return !!d && endgame.dailyDoneDay !== d.day;
 });
 const quests = useQuestsStore();
+const resources = useResourcesStore();
 const now = useNow();
 
 // Phase 29 修行目标:只给方向,不替玩家做决定(goal.ts 此前零展示,接线摆上主页)
@@ -536,6 +540,15 @@ const statusText = computed(() =>
      * 而它只在修为已满时才有意义，故与 `expFull` 一起读。
      */
     qiShort: player.expFull && breakthroughInfo().reason === "灵气不足",
+    /*
+     * 还要等多久 —— 与突破卡同一份算式（`core/qiEta`），不在这里另算。
+     * 只说「卡住了」而不说「卡多久」，玩家没法决定是等还是去做别的。
+     */
+    qiEtaText: (() => {
+      if (!player.expFull || breakthroughInfo().reason !== "灵气不足") return "";
+      const { sec } = qiEta(breakthroughInfo().qiCost, resources.qi, player.qiRegenPerSec);
+      return sec !== null ? formatDuration(sec) : "";
+    })(),
   }),
 );
 
