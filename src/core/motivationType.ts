@@ -192,8 +192,8 @@ export const CONDITIONS: StructuralCondition[] = [
     desc: "同一个入口每次给出不同的东西,而不是从固定清单里挑",
     trialMeets: false,
     voidMeets: true,
-    hostReady: false,
-    note: "逆旅契是四条常量;worldGen 换种子生成。凡界的区域/敌人/事件目前都是静态定义",
+    hostReady: true,
+    note: "逆旅契是四条常量;worldGen 换种子生成。凡界此前是静态的 —— 而 mortalWorldGen 补上之后,每一世换的是地界组合与顺序、路线骨架、事件节奏、规则与资源偏向(见 mortalGate)",
   },
   {
     id: "noveltyFloor",
@@ -210,8 +210,8 @@ export const CONDITIONS: StructuralCondition[] = [
     desc: "变的是「有什么」,不是「强多少」",
     trialMeets: false,
     voidMeets: true,
-    hostReady: false,
-    note: "逆旅契只动 CombatRules 的乘区;虚界连敌人机制集合都换。凡界需要能重组区域/敌人/事件",
+    hostReady: true,
+    note: "逆旅契只动 CombatRules 的乘区;虚界连敌人机制集合都换。凡界重组的是地界链(哪几处、什么顺序)、骨架与节奏 —— 不是数值",
   },
 ];
 

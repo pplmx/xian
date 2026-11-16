@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 862 个 spec;本作自己那部分 782 个) |
+| `bun run test` | 全量用例(全量 863 个 spec;本作自己那部分 783 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 862 个 spec = 宿主 782 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 863 个 spec = 宿主 783 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 862 个 spec(本作自己那部分 782 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 863 个 spec(本作自己那部分 783 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -24659,4 +24659,83 @@ even 改成强烈递减（× (5 - wave)）          → ①② 红
 
 即使「这句话是对的」，**证明它对**与**让它以后一直对**仍是两件事。
 
-工作区干净、全量 862 / 7091 全绿；check、test:report、check:ui 同绿。
+工作区干净、全量 863 / 7095 全绿；check、test:report、check:ui 同绿。
+
+### 第 444 轮:判据与它守的数据一起过时,于是谁也没红
+
+#### 上一轮埋的线
+
+第 443 轮结尾我提到 `motivationType.spec` 有一条结论没落地。这一轮去看它：
+
+```text
+凡界现成可用的只有 1/3 条（新颖度判据本身是通用的）。
+另两条卡在同一处：凡界的区域/敌人/事件都是静态定义，
+没有可重组的内容层 —— 这才是「买到不同的世界」的真实成本
+```
+
+#### 而它已经做到了
+
+`mortalWorldGen` 生成的东西，实测四世：
+
+```text
+第1世  short_weave / front / heaven_wrath  / 灵石充盈
+第2世  weave       / flat  / foe_combo     / 典籍散佚
+第3世  shallow     / mid   / time_thinning / 药气氤氲
+第4世  short_weave / mid   / heal_scarce   / 矿脉深厚
+```
+
+**每一世在链、骨架、节奏、规则、偏向五样上都不同**，而且第 5 世因为凑不够新颖度
+**未过门**（弃用 60 个候选）—— 门是真的在筛。
+
+#### 那个错是怎么活下来的
+
+```text
+判据          expect(ready).toBeLessThan(CONDITIONS.length)   ← 断言「凡界还没做到」
+它守的数据     hostReady: false + note「凡界都是静态定义」
+两者互相印证  → 谁也没红 → 一过时就是很久
+```
+
+**判据与数据互为对方的证据。** 这比单独一处写错更耐活 ——
+第 433 轮那次（分散档摘要）也是同一个形状：`expect(withTerrain.length).toBe(0)`
+把缺口写成了期望。
+
+#### 修了什么
+
+```text
+motivationType.ts      两条 hostReady: false → true，note 改写
+motivationType.spec.ts 那条断言从 `toBeLessThan(3)` 改成 `toBe(3)`，并写明改动理由
+                       末条结论「凡界需要一个可重组的内容层」→ 改成「已经接上了」
+```
+
+**而且它确实接上了**：`reincarnation` 第 363 行转世时自动调 `rerollMortalWorld()`，
+每世换一方天地，不花道果。故「不同的一世」是既有内容，不在道果的货架上。
+
+#### 新判据四条（`core/mortalDiscoveryGate.spec`）
+
+```text
+① 六世的地界链不能只产出一条
+② 骨架 / 节奏 / 规则 / 偏向四维各自都在变
+③ NOVELTY_MIN 大于零 —— 「每次不同」不是概率
+④ 反差：敌人表仍是静态的 —— 生成器重组的是「哪一段路上遇到谁」
+```
+
+#### 一次「没红」教会我改判据
+
+① 的初版**直接调 `generateMortalWorld`**。故障注入把 `mortalGate` 里的种子钉死 ——
+**没红**。因为那条判据量的是「生成器能产出不同的世界」，不是
+「**游戏实际拿到的**世界不同」。
+
+改成从 `generateGatedMortal` 取样之后，同一个注入让三条同时红。
+
+> 判据要量**玩家实际经过的那条链**，不是它下面的某个纯函数。
+> 这与第 434 轮那条「纯函数的判据只证明算对了，不证明送到了」是同一个道理 ——
+> 只是这次往下沉了一层。
+
+#### 另一个自己写坏的断言
+
+① 里我还写过「四维合起来应当比链更分散」—— 实测 `4 > 4` 不成立，红了。
+那前提是错的:它以为会有「链相同而骨架不同」的组合，而实际四维本来就一一对应。
+
+改成正确口径:**没有两个完全相同的世界** —— 这个断言在任何产出下都有意义。
+
+工作区干净、全量 863 / 7095 全绿；check、test:report、check:ui 同绿。

@@ -99,16 +99,40 @@ describe("动机类型 · 探索型消费的三个结构条件", () => {
     );
   });
 
-  it("最要紧的发现:这三条项目里已经实现过一遍了", () => {
-    // worldGen 完整实现了生成式 + 新颖度门 + 内容级改变,
-    // 但它只服务天界(真仙之后),凡界轮回一条都用不上
+  it("这三条凡界也全部满足了 —— mortalWorldGen 把它们补齐了", () => {
+    /*
+     * ## 这条断言改过一次（第 444 轮）
+     *
+     * 原先它写的是 `expect(ready).toBeLessThan(CONDITIONS.length)` ——
+     * 断言「凡界只满足一部分」，并配一句「凡界的区域/敌人/事件都是静态定义，
+     * 没有可重组的内容层」。
+     *
+     * 而 `mortalWorldGen` 早把这件事做了:每一世换的是
+     * **地界组合与顺序、路线骨架、事件节奏、规则与资源偏向**。实测六世:
+     *
+     * ```text
+     *   骨架 short_weave / brisk / lateclimb / weave ×2
+     *   节奏 front / back ×2 / flat / twin ×2
+     *   规则 heaven_wrath ×2 / foe_swift / foe_onslaught / foe_combo ×2
+     *   地界序  5 段、4 段、6 段、6 段、6 段、4 段 —— 无一重复
+     * ```
+     *
+     * 而那两条 `hostReady: false` 的 `note` 也一直写着「凡界目前都是静态定义」——
+     * **判据与它守的数据一起过时了**，两者互相印证，于是谁也没红。
+     *
+     * 现在这条改成正向断言:凡界三条全满足。若哪天有人把 `mortalWorldGen`
+     * 摘掉、或把某条 `hostReady` 改回 false，它会红。
+     */
     const ready = hostReadyCount();
-    expect(ready).toBeGreaterThan(0);
-    expect(ready).toBeLessThan(CONDITIONS.length);
+    expect(
+      ready,
+      `凡界只满足 ${ready}/${CONDITIONS.length} 条 —— ` +
+        "若这是有意的退步，请连同这条断言与本文件的 note 一起改；" +
+        "若是误改，mortalWorldGen 那条链断了",
+    ).toBe(CONDITIONS.length);
     console.log(
-      `\n凡界现成可用的只有 ${ready}/${CONDITIONS.length} 条(新颖度判据本身是通用的)。` +
-        `\n另两条卡在同一处:凡界的区域/敌人/事件都是静态定义,` +
-        `\n没有可重组的内容层 —— 这才是「买到不同的世界」的真实成本`,
+      `\n凡界 ${ready}/${CONDITIONS.length} 条全满足 —— mortalWorldGen 提供了可重组的内容层` +
+        `\n(地界组合与顺序 · 路线骨架 · 事件节奏 · 规则与偏向)`,
     );
   });
 
@@ -121,9 +145,12 @@ describe("动机类型 · 探索型消费的三个结构条件", () => {
     console.log(
       "\n禁丹 / 独器 / 异途沿的仍是同一条路:限制是已知的," +
         "\n签之前就知道会发生什么 —— 扩的是范围,不是动机类型。" +
-        "\n\n要让道果买到「不同的一世」而非「更难的同一世」," +
-        "\n凡界需要一个可重组的内容层,再套上已有的新颖度判据。" +
-        "\n在那之前,逆旅契作为挑战型内容是成立的,不该被硬塞奖励去充当长期动力",
+        "\n\n要让道果买到「不同的一世」而非「更难的同一世」,需要一条探索型的出口。" +
+        "\n而它的**结构条件凡界已经满足了**(mortalWorldGen 提供可重组的内容层," +
+        "\n新颖度门 NOVELTY_MIN 在 mortalGate 里否决不够新的候选)。" +
+        "\n而且它**已经接上了** —— 转世时 reincarnation 第 363 行自动调 rerollMortalWorld()," +
+        "\n每世换一方天地,不花道果。故「不同的一世」是既有内容,不在道果的货架上。" +
+        "\n\n逆旅契作为挑战型内容仍然是成立的,不该被硬塞奖励去充当长期动力",
     );
   });
 });
