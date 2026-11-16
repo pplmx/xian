@@ -56,6 +56,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { generateMortalWorld } from "./mortalWorldGen";
 import { REGIONS } from "@/data/regions";
+import { worldIdentity } from "./mortalIdentity";
 
 const ICON = new Map(REGIONS.map((r) => [r.id, r.icon]));
 const STATIC_TIER = new Map(REGIONS.map((r) => [r.id, r.tier]));
@@ -64,26 +65,75 @@ const STATIC_TIER = new Map(REGIONS.map((r) => [r.id, r.tier]));
 const SEEDS = Array.from({ length: 24 }, (_, i) => i * 37 + 1);
 
 describe("本世路线 · 六处地界不该出现两次同一片天", () => {
-  it("① 一条路线内的图标种类数不低于 3 —— 现状地板，不是目标", () => {
+  it("① 一条路线内图标不重复", () => {
     /*
-     * 目标当然是「零重复」，而修它的代价（名字集中度）比它本身更贵。
-     * 这条守的是**地板**：最差的那一世（六处撞成三种）不许再往下跌。
-     *
-     * 若哪天有人找到两全的改法（比如让图标偏好只在不会加剧名字集中时生效），
-     * 这条应当被改回 `toEqual([])` —— 那才是真正的目标。
+     * 第 459 轮这条是「地板 ≥3」—— 当时无条件偏好被回退了。
+     * 第 460 轮做了**条件式**去重（只在命名形态不变时才换），两个指标同时改善，
+     * 故这里改回真正的目标。
      */
-    const floor: { seed: number; kinds: number; names: string }[] = [];
+    const clashes: string[] = [];
     for (const seed of SEEDS) {
       const w = generateMortalWorld(seed);
       const icons = w.chain.map((c) => ICON.get(c.fromId) ?? `unknown:${c.fromId}`);
-      const kinds = new Set(icons).size;
-      if (kinds < 3) floor.push({ seed, kinds, names: icons.join(",") });
+      const seen = new Map<string, string>();
+      for (const [i, icon] of icons.entries()) {
+        const prev = seen.get(icon);
+        if (prev) clashes.push(`seed ${seed}：「${prev}」与「${w.chain[i]!.name}」都是 ${icon}`);
+        else seen.set(icon, w.chain[i]!.name);
+      }
     }
+    /*
+     * ## 口径（第 460 轮定）
+     *
+     * 条件式去重的约束是「替换后命名形态不变」。有些世界**换无可换** ——
+     * 邻近候选里非重复的就那么几处，而换掉它们会改动命名形态。那时
+     * 保留一处重复比改动形态划算（后者会让名字集中，而名字更常被看到）。
+     *
+     * 故这条量的是**残留世界的占比**，不是「必须为零」:
+     *
+     * ```text
+     *   24 颗种子实测   seed 593 与 seed 667 各残留两处（cloud 与 castle 池子大）
+     *   → 2 / 24 = 8.3%
+     * ```
+     *
+     * 上限取 1/4 —— 压住「退回无条件版之前那种大面积重复」，又不惩罚无解的世界。
+     */
+    const worldsWithClash = new Set(clashes.map((c) => /seed (\d+)/.exec(c)![1]));
+    const ratio = worldsWithClash.size / SEEDS.length;
     expect(
-      floor,
-      "有一条路线的图标种类跌破 3 种 —— 比记录时的最差情形还差：" +
-        floor.map((f) => `seed ${f.seed} 只有 ${f.kinds} 种(${f.names})`).join(";"),
-    ).toEqual([]);
+      ratio,
+      `${worldsWithClash.size}/${SEEDS.length} 个世界的路线里有图标重复（上限 1/4）——` +
+        "走一趟看到两次同样的景：" +
+        clashes.join(";"),
+    ).toBeLessThanOrEqual(0.25);
+  });
+
+  it("④ 反差：去重不许以「名字集中」为代价", () => {
+    /*
+     * 这是第 459 轮那条回退的教训，现在变成一条判据。
+     *
+     * 无条件偏好会让名字种类从 21 掉到 17、最高占比升到 23.3%。
+     * 条件式去重只在**命名形态不变**时才换，故分布应当基本不动。
+     *
+     * 阈值取 20% —— 60 颗种子下条件式版 16.7%，无条件版 23.3%。留 3.3pp 余量。
+     * 留出余量，但压住「退回无条件版」那种退化。
+     */
+    /*
+     * 样本量**必须大**：24 颗时最高占比只有 16.7%，任何阈值都抓不到退化。
+     * 「名字集中」是分布特征，小样本量测不出来 —— 这是第 460 轮注入验证发现的。
+     */
+    const NAMING_SEEDS = Array.from({ length: 60 }, (_, i) => i * 37 + 1);
+    const names = new Map<string, number>();
+    for (const seed of NAMING_SEEDS) {
+      const n = worldIdentity(generateMortalWorld(seed)).name;
+      names.set(n, (names.get(n) ?? 0) + 1);
+    }
+    const top = [...names.values()].sort((a, b) => b - a)[0] ?? 0;
+    const share = top / NAMING_SEEDS.length;
+    expect(
+      share,
+      `某个名字占了 ${(share * 100).toFixed(1)}% 的世界 —— 去重把名字压集中了`,
+    ).toBeLessThanOrEqual(0.2);
   });
 
   it("② 反差：链长仍是变化的 —— 不许为了凑图标去改骨架", () => {

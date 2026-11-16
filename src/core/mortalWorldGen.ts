@@ -312,6 +312,34 @@ function nearTier<T extends { tier: number }>(
  * 首段不再需要锚点:可达性已迁到 mortalWorld.route,
  * 第一段天然可进入,与旧 REGIONS 解锁链无关
  */
+/**
+ * 地貌构成 → 命名形态。**与 `mortalIdentity.worldIdentity` 同一套阈值**。
+ *
+ * ## 为什么内联而不 import
+ *
+ * `mortalIdentity` 已经 import 了本文件的 `mortalNovelty`，反向 import 会成环。
+ * 而这里要的只是三个数比较大小 —— 复制十行比拆环便宜。
+ *
+ * ## 为什么不怕两本账
+ *
+ * `mortalRouteIconVariety.spec` 的第 ④ 条守「去重之后名字不许变集中」——
+ * 若两处阈值漂了，那条会红。而且这两个常量与 `DOMINANCE_SINGLE` /
+ * `DOMINANCE_DUAL` 是同一组取值（0.6 / 0.66）。
+ */
+/** 地界 id → 地貌（与 mortalIdentity.terrainOf 同源：都读 RegionDef.icon） */
+const TERRAIN_OF = new Map(MORTAL_REGIONS.map((r) => [r.id, r.icon]));
+const DOM_SINGLE = 0.6;
+const DOM_DUAL = 0.66;
+function formOfTerrains(terrains: readonly string[]): "single" | "dual" | "scattered" {
+  const counts = new Map<string, number>();
+  for (const t of terrains) counts.set(t, (counts.get(t) ?? 0) + 1);
+  const sorted = [...counts.values()].sort((a, b) => b - a);
+  const total = Math.max(1, terrains.length);
+  const dominance = (sorted[0] ?? 0) / total;
+  const dualShare = ((sorted[0] ?? 0) + (sorted[1] ?? 0)) / total;
+  return dominance >= DOM_SINGLE ? "single" : dualShare >= DOM_DUAL ? "dual" : "scattered";
+}
+
 export function generateMortalWorld(seed: number): MortalWorld {
   const rng = new RandomService(mulberry32(seed));
   // 先定骨架与节奏 —— 它们决定段数,也决定玩家感受到的推进形状
@@ -343,6 +371,57 @@ export function generateMortalWorld(seed: number): MortalWorld {
       const r = rest[0]!;
       usedRegion.add(r.id);
       picked.push(r);
+    }
+  }
+
+  /*
+   * ## 条件式去重：只在不改变命名形态时才换（第 460 轮）
+   *
+   * 第 459 轮试过无条件偏好「选没用过的图标」——路线图标重复 14/30 → 0，
+   * 但名字种类 21 → 17、最高占比 18.3% → 23.3%，被 `mortalIdentity.spec` 拦下。
+   *
+   * 回退时留下的判断：**问题不在偏好，而在它无条件生效**。
+   * 偏好改变的只是「选哪几处地界」，它不该改变这一世的**命名形态**——
+   * 若某次替换会把「双轴」世界变成「单轴」，那才是名字集中的来源。
+   *
+   * 故这里分两步：
+   *   · 先按原口径选完（名实相符优先，行为不变）；
+   *   · 再尝试消除图标重复，**且要求替换前后 `formOfTerrains` 完全相同**。
+   *
+   * 形态不变时，多世的地貌构成分布不变 —— 名字分布也不变。
+   */
+  {
+    const formBefore = formOfTerrains(picked.map((r) => TERRAIN_OF.get(r.id) ?? "?"));
+    const seen = new Set<string>();
+    for (let i = 0; i < picked.length; i += 1) {
+      const here = picked[i]!;
+      const terrain = TERRAIN_OF.get(here.id) ?? "?";
+      if (!seen.has(terrain)) {
+        seen.add(terrain);
+        continue;
+      }
+      /*
+       * 这一处与前面某处撞了。找一撮候选：邻近、未用、且**换完之后形态不变**。
+       * 找不到就保留原样 —— 宁可留一处重复，也不动命名形态。
+       */
+      const near = MORTAL_REGIONS.filter(
+        (r) =>
+          !picked.some((p) => p.id === r.id) &&
+          Math.abs(r.tier - tiers[i]!) <= REGION_NAME_TIER_BAND &&
+          !seen.has(TERRAIN_OF.get(r.id) ?? "?"),
+      );
+      let swapped = false;
+      for (const cand of near) {
+        const trial = [...picked];
+        trial[i] = cand;
+        if (formOfTerrains(trial.map((r) => TERRAIN_OF.get(r.id) ?? "?")) === formBefore) {
+          picked[i] = cand;
+          seen.add(TERRAIN_OF.get(cand.id) ?? "?");
+          swapped = true;
+          break;
+        }
+      }
+      if (!swapped) seen.add(terrain);
     }
   }
 
