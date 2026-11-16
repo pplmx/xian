@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 855 个 spec;本作自己那部分 775 个) |
+| `bun run test` | 全量用例(全量 856 个 spec;本作自己那部分 776 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 855 个 spec = 宿主 775 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 856 个 spec = 宿主 776 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 855 个 spec(本作自己那部分 775 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 856 个 spec(本作自己那部分 776 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -23680,3 +23680,89 @@ secretRealmScene       地形映射表里没有这三处
 ```
 
 工作区干净、全量 855 / 7048 全绿;check、test:report、check:ui 同绿。
+
+### 第 426 轮:今天为什么是这一界 —— 那句话从来没有过
+
+#### 起点:一个查了但没能修的缺陷
+
+`celestialSim` 报告,终局五天里**三个界的最佳通关率是 100%**
+（星陨天 / 万刃天 / 无生天）,今日天道的候选因此实际只剩 2 个。
+
+逐流派打出来:
+
+```text
+赤炎天	16/48/40/52/52/36	可行5     ← 健康
+星陨天	100/100/100/24/0/4	可行3
+万刃天	100/100/100/8/64/0	可行4
+无生天	64/100/100/92/0/72	可行5
+无相天	84/92/92/48/16/40	可行5
+```
+
+**背水 / 罡盾 / 反震 三族在那两天都是 100%** —— 它们都是「减伤 + 续航」型,
+而那两个界的 `rules` 里没有一条压得住续航（对比赤炎天的 `maxRounds 32 + healMult 0.65`）。
+
+试了八组参数:
+
+```text
+enemyAtkMult 1.3  → 52/100/96/0/64/0   罡盾仍 100
+enemyAtkMult 1.5  → 0/12/12/0/64/0     全面崩塌，可行 1
+maxRounds 24 + healMult 0.6 → 96/0/92/8/0/0  可行 2
+```
+
+**可行区间极窄:一端压不住,另一端全崩。** 上一轮已经因为改终局数值被
+`daoPathCoverage` 拦过一次（剑道 76 vs 基线 77）——
+故这一轮**不动它**,记档留给有完整调参轮的时候。
+
+#### 改成修「玩家看不见这件事」
+
+绕回去查界面,发现连**基本的那句说明**都没有:
+
+```text
+界面印的是：今日天道：无相天 · 赏 N 道源 · 可行 4/6 流派
+```
+
+而 `todayChallenge` 会顺延最多 16 次候选。实测当天:
+
+```text
+#0 星陨天   驳回：此局近乎无解,天道不受此约
+#1 赤炎天   驳回：此局近乎无解,天道不受此约
+#2 无相天   通过
+```
+
+**玩家读到「今日 · 无相天」时,会以为那是掷出来的 —— 而它其实是被挑过的。**
+
+#### 实现
+
+```text
+dailyCandidates()   候选轨迹（每个候选的世界与驳回理由）
+dailySkipNote()     一句话：「今日掠过 2 处：星陨天、赤炎天（…）→ 落于无相天」
+draftAt(day, t)     草案生成抽出来一处 —— todayChallenge 与 dailyCandidates 共用
+```
+
+一次即过时 `dailySkipNote` 返回 `null`:那种情况下「为什么是这一界」的答案是
+「没什么特别」,而多印一句只会让人以为背后有文章。
+
+#### 判据七条（`core/dailyCandidateTrace.spec`）
+
+```text
+① 同一天问两次，候选完全一样（不掷骰）
+② 候选轨迹与真正的今日天道指向同一界        ← 接线
+③ 一次即过时不印那句话
+④ 顺延过时，那句话点名跳过了哪几处、落在哪
+⑤ 反差：跳过理由一致才合并，不一致时不许只印第一条
+⑥ 世界名不许漏出 undefined
+⑦ 界面上真的读了那句话                     ← 接线
+```
+
+② 是这一轮真正要紧的一条:两处**各掷一套**的话,界面描述的就是一个
+玩家不会遇到的天道。实现上靠 `draftAt` 抽出一处来防,判据靠这条来验。
+
+两次注入:让 `todayChallenge` 另掷一套 → ② 红;删掉界面那一行 → ⑦ 红。
+
+#### 这一轮的取法
+
+一个查清但**不该在本轮修**的缺陷（终局平衡），
+与一个**能立刻修好**的信息缺口（今天为何是这一界）——
+后者不解决前者,但它让前者从「没人知道」变成「界面上写着」。
+
+工作区干净、全量 856 / 7055 全绿;check、test:report、check:ui 同绿。

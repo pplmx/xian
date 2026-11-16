@@ -464,7 +464,7 @@ import {
   daoPathDef,
 } from "@/data/endgame";
 import { realmDef, WORLD_BREAK_MAJOR } from "@/data/realms";
-import { todayChallenge } from "@/core/dailyChallenge";
+import { todayChallenge, dailySkipNote } from "@/core/dailyChallenge";
 import { chooseDaoPath, endgameUnlocked } from "@/core/endgameService";
 import { PROFILE_MIN_MARKS, cultivatorProfile } from "@/core/identity";
 import { BUILD_IDS, affinityFor, buildNameOf } from "@/core/daoAffinity";
@@ -527,6 +527,8 @@ const unlocked = computed(() => endgameUnlocked());
 
 /** 今日天道同时供卷首总账、页签朱点与试炼面板使用。 */
 const daily = computed(() => (unlocked.value && endgame.daoPath ? todayChallenge() : null));
+/** 「今日为何是这一界」—— 没顺延过时为 null，界面上就不印那一句 */
+const dailySkip = computed(() => (daily.value ? dailySkipNote() : null));
 
 const activeRunWorld = computed(() =>
   endgame.worldRun ? resolveWorld(endgame.worldRun.worldId) : undefined,
@@ -647,7 +649,13 @@ const celestialLead = computed(() => {
       tab: "trial" as const,
       mark: "应题",
       title: "今日天道尚待应战",
-      detail: `${dailyWorld.value.name} · 赏 ${daily.value.verdict.reward} 道源 · 可行 ${daily.value.verdict.viable}/${BUILD_PROFILES.length} 流派`,
+      detail:
+        `${dailyWorld.value.name} · 赏 ${daily.value.verdict.reward} 道源 · 可行 ${daily.value.verdict.viable}/${BUILD_PROFILES.length} 流派` +
+        /*
+         * 顺延过才补这一句（`dailySkipNote` 一次即过时返回 null）——
+         * 「今天为什么是这一界」在有顺延时才是个真问题。
+         */
+        (dailySkip.value ? ` · ${dailySkip.value}` : ""),
     };
   }
   if (affordableExpeditions.value > 0) {
