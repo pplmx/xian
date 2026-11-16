@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 839 个 spec;本作自己那部分 759 个) |
+| `bun run test` | 全量用例(全量 840 个 spec;本作自己那部分 760 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 839 个 spec = 宿主 759 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 840 个 spec = 宿主 760 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 839 个 spec(本作自己那部分 759 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 840 个 spec(本作自己那部分 760 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -21697,3 +21697,67 @@ return (entry ? weatherDef(entry.id as WeatherId) : undefined) ?? WEATHERS[4]!;
 而是多问了一句:**这件事是不是已经有人管了,而「有人」包括类型系统。**
 
 工作区干净、全量 839 / 6961 全绿;check、test:report、check:ui 同绿。
+
+### 第 398 轮:秘境的「禁疗」,把层间那 20% 一起否掉了
+
+这一轮开头查了七个方向,**全部不成立**:
+
+```text
+决策密度              每 1.2 分钟一次决策 —— 挂机游戏的健康值
+事件选项质量          129 个事件全有 2~3 个选项，期望值相同只有 3 个
+敌人无 desc           不是缺内容：ui/enemyLore 按四层逐级揭示体格/路数/变阵
+内容密度              每境 12~19 条，既有审计有裁决
+寿元台阶              境 8→9 跳 100 倍是「跨界大跃」，连文案都由 ascensionLeap() 派生
+首领机制覆盖          44 只首领覆盖全部 8 种机制，每只都有
+待办区                是发版流程说明，没有未完成的功能项
+```
+
+第七个方向才立住:**秘境的「禁疗」**。
+
+#### 缺口
+
+`SecretRealmDef` 有两条互不相干的血量机制:
+
+```text
+  rules.healMult       战斗之内的每一口治疗乘它（0.25 ~ 0.8）
+  healBetweenPct       打完一层、进下一层之前的回血（0.15 ~ 0.5）
+```
+
+四个秘境的 desc 把第一条说成了整个秘境的性质:
+
+```text
+苦海渡舟   「回气极慢」      healMult 0.5  层间 +30%
+陨星荒原   「禁疗之地」      healMult 0.25 层间 +20%
+青冥古渡   「疗愈见拙」      healMult 0.8  层间 +20%
+冥河渡     「此渡禁疗」      healMult 0.5  层间 +20%
+```
+
+而卡片上**同时**印着「层间回血 20%」—— 同一张卡上两句话打架。
+「禁疗」是绝对话，读到的人不会自己猜「哦这是说战内」，而这条读数直接影响
+「这一层硬撑过去，下一层能不能缓过来」。
+
+#### 修
+
+把 desc 措辞限定为「战内」。陨星那句还补了「层间才得喘息」——
+它的 `healMult` 只有 0.25，战内几近无治疗，层间那 20% 是唯一的口子。
+
+判据四条，守**语义**不守句子:说「禁疗」的必须含「战内」;层间回血的不许把整处
+说成无治疗;反过来 healMult < 1 的也不许一字不提;最后一条把两条机制的并存摊开,
+让读者知道这个混淆从哪来。
+
+三次故障注入:还原四处原措辞 → 2 红;抹掉一处 healMult 的 desc → 1 红。
+
+#### 方法账
+
+这一轮的「否掉率」是十轮里最高的(7/8)。而它的代价也最明显:
+**前六个方向花掉了大半轮时间，全靠逐个猜。**
+
+回头看，第七个方向之所以立住，是因为它换了个问法 ——
+不是「哪里可能有 bug」，而是**「界面上同一处出现的两句话，能不能同时为真」**。
+这个问法有一个好处:它不需要猜，只需要把同一屏的文案与数据摆在一起看。
+
+故下一轮的方向记在这里:**逐屏做「同屏自洽」检查** ——
+一张卡上的每一句话、每一个数，两两之间是否矛盾。
+这一轮只做了一屏(秘境卡)，而全仓有 19 个页面。
+
+工作区干净、全量 840 / 6965 全绿;check、test:report、check:ui 同绿。
