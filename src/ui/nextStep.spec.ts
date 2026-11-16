@@ -12,7 +12,7 @@
  */
 import { describe, expect, it } from "vite-plus/test";
 import { readSource } from "@/test/readSource";
-import { nextStepForPage, nextStepOf, type NextStepInput } from "./nextStep";
+import { nextStepForPage, nextStepsOf, type NextStepInput } from "./nextStep";
 
 const base: NextStepInput = {
   major: 3,
@@ -32,46 +32,48 @@ const withX = (patch: Partial<NextStepInput>): NextStepInput => ({ ...base, ...p
 
 describe("此刻最该做的一件事 · 优先级", () => {
   it("挂着的际遇最先 —— 它挡着历练往前走", () => {
-    const step = nextStepOf(withX({ pendingEvent: true, expFull: true, breakthroughReady: true }));
+    const step = nextStepsOf(
+      withX({ pendingEvent: true, expFull: true, breakthroughReady: true }),
+    )[0];
     expect(step?.id).toBe("event");
     expect(step?.route).toBe("adventure");
   });
 
   it("正在历练排第二 —— 这一程没了结,别的都靠后", () => {
-    const step = nextStepOf(withX({ exploring: true, expFull: true, breakthroughReady: true }));
+    const step = nextStepsOf(withX({ exploring: true, expFull: true, breakthroughReady: true }))[0];
     expect(step?.id).toBe("explore");
   });
 
   it("破境条件齐排在终点之前", () => {
-    const step = nextStepOf(
+    const step = nextStepsOf(
       withX({ expFull: true, breakthroughReady: true, endgameReached: true }),
-    );
+    )[0];
     expect(step?.id).toBe("breakthrough");
   });
 
   it("终点已至排在未领的赏之前 —— 该谋来世,不是继续攒", () => {
-    const step = nextStepOf(withX({ endgameReached: true, rewardReady: true }));
+    const step = nextStepsOf(withX({ endgameReached: true, rewardReady: true }))[0];
     expect(step?.id).toBe("endgame");
     expect(step?.route).toBe("legacy");
   });
 
   it("未领的赏排在洞府收账之前", () => {
-    const step = nextStepOf(withX({ rewardReady: true, dongfuAffordable: true }));
+    const step = nextStepsOf(withX({ rewardReady: true, dongfuAffordable: true }))[0];
     expect(step?.id).toBe("reward");
   });
 
   it("洞府收账排在法宝空位之前", () => {
-    const step = nextStepOf(withX({ dongfuAffordable: true, artifactSeatOpen: true }));
+    const step = nextStepsOf(withX({ dongfuAffordable: true, artifactSeatOpen: true }))[0];
     expect(step?.id).toBe("dongfu");
   });
 
   it("法宝空位排在更好的装备之前", () => {
-    const step = nextStepOf(withX({ artifactSeatOpen: true, betterEquipAvailable: true }));
+    const step = nextStepsOf(withX({ artifactSeatOpen: true, betterEquipAvailable: true }))[0];
     expect(step?.id).toBe("artifact");
   });
 
   it("修为满了但条件未齐 —— 说清缺哪一关", () => {
-    const step = nextStepOf(withX({ expFull: true, breakthroughReason: "筑基丹" }));
+    const step = nextStepsOf(withX({ expFull: true, breakthroughReason: "筑基丹" }))[0];
     expect(step?.id).toBe("gate");
     expect(step?.text).toContain("筑基丹");
   });
@@ -79,7 +81,7 @@ describe("此刻最该做的一件事 · 优先级", () => {
 
 describe("此刻最该做的一件事 · 只吐一条", () => {
   it("九项全开时也只有一条", () => {
-    const step = nextStepOf({
+    const step = nextStepsOf({
       major: 9,
       expFull: true,
       breakthroughReady: true,
@@ -91,24 +93,24 @@ describe("此刻最该做的一件事 · 只吐一条", () => {
       artifactSeatOpen: true,
       rewardReady: true,
       endgameReached: true,
-    });
+    })[0];
     expect(step).not.toBeNull();
     // 输出是一个对象,不是数组 —— 结构上就决定了只有一条
     expect(Array.isArray(step)).toBe(false);
   });
 
   it("一条都不成立时闭嘴 —— 不说废话", () => {
-    expect(nextStepOf(base)).toBeNull();
+    expect(nextStepsOf(base)).toHaveLength(0);
   });
 
   it("修为满了但 reason 是空的,也不硬凑一句", () => {
-    expect(nextStepOf(withX({ expFull: true, breakthroughReason: "  " }))).toBeNull();
+    expect(nextStepsOf(withX({ expFull: true, breakthroughReason: "  " }))).toHaveLength(0);
   });
 });
 
 describe("此刻最该做的一件事 · 不在本页说", () => {
   it("指向本页的那句被滤掉 —— 玩家已经站在那儿了", () => {
-    const step = nextStepOf(withX({ dongfuAffordable: true }));
+    const step = nextStepsOf(withX({ dongfuAffordable: true }))[0];
     expect(step?.route).toBe("dongfu");
     expect(nextStepForPage(step, "dongfu")).toBeNull();
     expect(nextStepForPage(step, "adventure")).toEqual(step);
@@ -149,7 +151,7 @@ describe("此刻最该做的一件事 · 措辞", () => {
       withX({ expFull: true, breakthroughReason: "某关" }),
     ];
     for (const input of inputs) {
-      const step = nextStepOf(input)!;
+      const step = nextStepsOf(input)[0]!;
       expect(step.text, `${step.id} 的文案变了`).toBe(EXPECTED[step.id]);
     }
   });
@@ -172,7 +174,7 @@ describe("此刻最该做的一件事 · 措辞", () => {
       withX({ expFull: true, breakthroughReason: "某关" }),
     ];
     for (const input of inputs) {
-      const step = nextStepOf(input)!;
+      const step = nextStepsOf(input)[0]!;
       for (const word of BANNED) {
         expect(step.text, `「${step.text}」里还留着通知体的「${word}」`).not.toContain(word);
       }
@@ -192,7 +194,7 @@ describe("此刻最该做的一件事 · 措辞", () => {
       withX({ expFull: true, breakthroughReason: "某关" }),
     ];
     for (const input of inputs) {
-      const step = nextStepOf(input)!;
+      const step = nextStepsOf(input)[0]!;
       expect(step, "每一种状态都该给出建议").not.toBeNull();
       // 一行之内说得完:眉批与副题同段,长一句就会把下面挤走
       expect(step.text.length, `「${step.text}」太长了`).toBeLessThanOrEqual(14);
@@ -259,7 +261,7 @@ describe("此刻最该做的一件事 · 真接线", () => {
       .replace(/^\s*\/\//gm, "");
     expect(headerCode, "模板里不许手写建议文案").not.toMatch(/该去|先走完|可去破境/);
     const hook = readSource("src/ui/useNextStep.ts");
-    expect(hook, "不在本页说的判定要走共享函数").toContain("nextStepForPage(");
+    expect(hook, "不在本页说的判定要走共享函数").toMatch(/nextStepForPage(From)?\(/);
   });
 });
 
@@ -271,27 +273,27 @@ describe("此刻最该做的一件事 · 真接线", () => {
  */
 describe("下一步指引 · 已至大道尽头", () => {
   it("到顶 + 修为满:给「可谋来世」,不给「还需过『已至大道尽头』」", () => {
-    const step = nextStepOf(
+    const step = nextStepsOf(
       withX({
         expFull: true,
         breakthroughReady: false,
         breakthroughReason: "已至大道尽头",
         endgameReached: true,
       }),
-    );
+    )[0];
     expect(step?.id, "到顶该指往来世").toBe("endgame");
     expect(step?.text ?? "", "把终点当关卡了").not.toContain("还需过");
   });
 
   it("未到顶 + 修为满:照旧说清差哪一关", () => {
-    const step = nextStepOf(
+    const step = nextStepsOf(
       withX({
         expFull: true,
         breakthroughReady: false,
         breakthroughReason: "灵气不足",
         endgameReached: false,
       }),
-    );
+    )[0];
     expect(step?.text).toContain("还需过「灵气不足」");
   });
 });

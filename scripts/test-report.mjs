@@ -422,6 +422,7 @@ const CATEGORIES = [
       "assertionLiveness",
       "flashTier",
       "rareSfx",
+      "nextStepSamePageFallback",
       "nextStep",
       "titleMoment",
       "lifespanWarning",

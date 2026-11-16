@@ -96,38 +96,39 @@ export interface NextStepInput {
  *
  * 一条都不成立时返回 null:那时界面上说什么都是废话,不如不说。
  */
-export function nextStepOf(input: NextStepInput): NextStep | null {
+export function nextStepsOf(input: NextStepInput): NextStep[] {
+  const out: NextStep[] = [];
   if (input.pendingEvent) {
-    return { id: "event", text: "一桩际遇候你决断", route: "adventure" };
+    out.push({ id: "event", text: "一桩际遇候你决断", route: "adventure" });
   }
   if (input.exploring) {
-    return { id: "explore", text: "此程未完,且先走完", route: "adventure" };
+    out.push({ id: "explore", text: "此程未完,且先走完", route: "adventure" });
   }
   if (input.expFull && input.breakthroughReady) {
     /*
      * 与修行页那句**不重复**:那一页的卷首正文已经写着「修为圆满,破境条件已齐」。
      * 但别的页上看不到那句话,故这里仍要说 —— 只是措辞指向「去哪」而不是「是什么」。
      */
-    return { id: "breakthrough", text: "关隘已开,可去破境", route: "cultivation" };
+    out.push({ id: "breakthrough", text: "关隘已开,可去破境", route: "cultivation" });
   }
   if (input.endgameReached) {
-    return { id: "endgame", text: "此生道途已定,可谋来世", route: "legacy" };
+    out.push({ id: "endgame", text: "此生道途已定,可谋来世", route: "legacy" });
   }
   if (input.rewardReady) {
-    return { id: "reward", text: "有赏未领", route: "collection" };
+    out.push({ id: "reward", text: "有赏未领", route: "collection" });
   }
   if (input.dongfuAffordable) {
-    return { id: "dongfu", text: "洞府有可收的一笔", route: "dongfu" };
+    out.push({ id: "dongfu", text: "洞府有可收的一笔", route: "dongfu" });
   }
   if (input.artifactSeatOpen) {
-    return { id: "artifact", text: "法宝有位,尚缺一件上阵", route: "inventory" };
+    out.push({ id: "artifact", text: "法宝有位,尚缺一件上阵", route: "inventory" });
   }
   if (input.betterEquipAvailable) {
     /*
      * 措辞只说得出「未上阵」这一件事 —— 判据那边用的是「行囊里有没穿上的」,
      * 而不是一次真正的换装模拟。说「更合手」会超出它知道的范围。
      */
-    return { id: "equip", text: "行囊里有未上阵的一件", route: "inventory" };
+    out.push({ id: "equip", text: "行囊里有未上阵的一件", route: "inventory" });
   }
   /*
    * 「还需过某一关」—— **到顶除外**。
@@ -138,9 +139,9 @@ export function nextStepOf(input: NextStepInput): NextStep | null {
    */
   if (!input.endgameReached && input.expFull && input.breakthroughReason.trim()) {
     const reason = input.breakthroughReason.trim();
-    return { id: "gate", text: `修为已满,还需过「${reason}」`, route: "cultivation" };
+    out.push({ id: "gate", text: `修为已满,还需过「${reason}」`, route: "cultivation" });
   }
-  return null;
+  return out;
 }
 
 /**
@@ -148,7 +149,48 @@ export function nextStepOf(input: NextStepInput): NextStep | null {
  *
  * 指向本页的建议是废话:玩家已经站在那儿了。只有指向别处的才值得占一行。
  */
-export function nextStepForPage(step: NextStep | null, page: NextStepRoute): NextStep | null {
+export function nextStepForPage(
+  step: NextStep | null | undefined,
+  page: NextStepRoute,
+): NextStep | null {
   if (!step) return null;
   return step.route === page ? null : step;
+}
+
+/**
+ * 当前页该显示哪一条 —— 按优先级取**第一条不指向本页的**。
+ *
+ * ## 它修的是什么
+ *
+ * `nextStepForPage` 只做「一条的过滤」，于是有一个很常见的空白:
+ *
+ * ```text
+ *   玩家站在历练页
+ *     际遇挂着     （最高优先级，指向 adventure = 本页）  → 被滤掉
+ *     有赏未领     （指向 collection）                    → 本该说，却没人去取
+ *   -> 这一页一句话都不显示
+ * ```
+ *
+ * 「这一条不该在本页说」不等于「什么都不说」。而「挂着的际遇」恰好是
+ * **最常成立**的那一条（历练途中随时会冒出来），玩家于是最容易在历练页上
+ * 看到一片空白 —— 恰恰是最该告诉他「还有赏没领」的那一页。
+ *
+ * ## 三条边界
+ *
+ * ```text
+ *   次高的也指向本页  → 继续往下找
+ *   全都指向本页      → 返回 null（那时说什么都是废话）
+ *   一条都不成立      → 返回 null（不硬凑）
+ * ```
+ */
+export function nextStepForPageFrom(
+  steps: readonly NextStep[],
+  page: NextStepRoute,
+): NextStep | null {
+  // 逐条过 `nextStepForPage` —— 过滤规则仍然只有那一处，这里只负责「换下一条」
+  for (const step of steps) {
+    const shown = nextStepForPage(step, page);
+    if (shown) return shown;
+  }
+  return null;
 }

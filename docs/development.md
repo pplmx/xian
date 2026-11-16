@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 828 个 spec;本作自己那部分 748 个) |
+| `bun run test` | 全量用例(全量 829 个 spec;本作自己那部分 749 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 828 个 spec = 宿主 747 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 829 个 spec = 宿主 747 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 828 个 spec(本作自己那部分 748 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 829 个 spec(本作自己那部分 749 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -20745,3 +20745,80 @@ formatGN 对、TapNumber 也对；视觉对、aria-label 也对。
 三道真浏览器门；截图只是文档素材（8 条路由，全站 20 条）。
 
 工作区干净、全量 828 / 6893 全绿。
+
+### 第 386 轮:本页那条被滤掉之后，次高的那条没有顶上来
+
+这一轮查「玩家知不知道下一步该做什么」，顺着 `ui/nextStep.ts` 读下去，
+发现一个**很常见的空白**。
+
+#### 缺陷
+
+```text
+玩家站在历练页
+  际遇挂着   （最高优先级，指向 adventure = 本页）  -> 被滤掉
+  有赏未领   （指向 collection）                    -> 本该说，却没人去取
+  => 这一页一句话都不显示
+```
+
+根因在 `nextStepForPage` 只做「一条的过滤」:
+
+```ts
+if (!step) return null;
+return step.route === page ? null : step;
+```
+
+「这一条不该在本页说」不等于「什么都不说」，而实现把前者当成了后者。
+
+#### 为什么它比听起来严重
+
+「挂着的际遇」恰好是**最常成立**的那一条（历练途中随时会冒出来）。
+故玩家最容易在历练页上看到一片空白 —— 而那恰恰是最该告诉他
+「还有赏没领」的那一页。
+
+#### 改法
+
+```text
+nextStepsOf(input)              按优先级返回整张表（原逻辑逐条 push，顺序不变）
+nextStepForPageFrom(steps, page) 取第一条不指向本页的；全都指向本页才 null
+nextStepForPage(step, page)      保留为原子过滤，被上面那个逐条调用
+```
+
+过滤规则仍只有一处 —— `nextStepForPageFrom` 不自己判 route，
+它逐条过 `nextStepForPage`，只是「换下一条」而已。
+
+#### 一条既有判据要跟着放宽
+
+`nextStep.spec` 里有一条:
+
+```text
+expect(hook, "不在本页说的判定要走共享函数").toContain("nextStepForPage(")
+```
+
+它钉的是**函数名**，而判据该钉的是**「有没有走共享函数」**。改成
+`toMatch(/nextStepForPage(From)?\(/)` —— 这不是放水，是那条判据
+本来就不该认识具体哪个函数名。
+
+#### 新增判据 6 条
+
+```text
+际遇指向本页时，「有赏未领」要顶上来说
+次高的也指向本页时，继续往下找
+全都指向本页时才闭嘴 —— 那时说什么都是废话
+一条都不成立时仍是 null —— 不硬凑
+本页不是最高那条时，照旧返回最高那条
+清单本身仍按优先级排 —— 顺序是这套设计的全部意义
+```
+
+#### 环境注记
+
+写盘通道这一轮又断了一次。实测下来:
+
+```text
+writeFileSync（bun 脚本）  报 ok 但文件未变    <- 不可靠
+edit 工具 / sed -i        无效果               <- 不可靠
+python3 + open().write()  成功                  <- 这一轮可用
+```
+
+故本轮的改动用 `python3` 落盘。以后遇到写不进去时，先换 Python 试一次。
+
+工作区干净、全量 829 / 6899 全绿；check、test:report、check:ui 同绿。

@@ -32,8 +32,8 @@ import { currentMainQuestProgress } from "@/core/questProgress";
 import { artifactSeatCap } from "@/core/loadoutService";
 import { useEndgameStore } from "@/stores/endgame";
 import {
-  nextStepForPage,
-  nextStepOf,
+  nextStepForPageFrom,
+  nextStepsOf,
   type NextStep,
   type NextStepInput,
   type NextStepRoute,
@@ -137,7 +137,12 @@ export function useNextStep(routeName: () => unknown) {
   return computed<NextStep | null>(() => {
     const here = nextStepPageOf(routeName());
     if (!here) return null;
-    // 指向本页的建议是废话(玩家已经站在那儿了)—— 那条判定收在 nextStep 里
-    return nextStepForPage(nextStepOf(currentNextStepInput()), here);
+    /*
+     * 指向本页的建议是废话(玩家已经站在那儿了),但**只滤那一条**,不是全不说。
+     * 从前这里取 `nextStepOf`（短路取最高一条）再滤——于是最高那条指向本页时，
+     * 这一页就一句话都没有了，哪怕次高的指向别处、本可以说。
+     * 现在取整张表按优先级找第一条不指向本页的。
+     */
+    return nextStepForPageFrom(nextStepsOf(currentNextStepInput()), here);
   });
 }
