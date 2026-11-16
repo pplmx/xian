@@ -49,6 +49,17 @@ const PAIRS: {
     gapClaim: /缺的是机制,不是内容|缺的不是解释文本,是过程中的足迹/,
     evidence: "data/bondFootprints.ts",
   },
+  {
+    what: "总览取消出发",
+    /*
+     * `overviewNecessity.spec` 曾建议「保留总览,取消常规出发」,
+     * 而产品保留了出发 —— MortalWorldView 的 `depart()` 仍在。
+     * 那个文件自己第 105 行已写了「事后更正」,但第 165 行那条测试
+     * 直到第 454 轮才跟着改。
+     */
+    gapClaim: /建议:保留总览,取消常规出发/,
+    evidence: "views/MortalWorldView.vue",
+  },
 ];
 
 describe("spec 说「缺的是 X」· X 是否已经做了", () => {
