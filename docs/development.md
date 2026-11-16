@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 861 个 spec;本作自己那部分 781 个) |
+| `bun run test` | 全量用例(全量 862 个 spec;本作自己那部分 782 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 861 个 spec = 宿主 781 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 862 个 spec = 宿主 782 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 861 个 spec(本作自己那部分 781 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 862 个 spec(本作自己那部分 782 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -24578,3 +24578,85 @@ CombatPanel.vue         + foeFamilyName，取自 enemyDef(id).family
 若哪天有人给其中一处换了来源,③ 会立刻分叉。
 
 工作区干净、全量 861 / 7088 全绿;check、test:report、check:ui 同绿。
+
+### 第 441 轮:那句「起手两道最重」,与波形数据对得上吗
+
+#### 换了做法
+
+前两轮（第 437、440）都是**先猜一个缺陷再去查**，两次查空。第 440 轮结尾自己写了结论：
+
+> 结构性对照产出稳定；猜测缺陷产出不稳定。
+
+这一轮就换了做法 —— 不猜，去量「界面上的一句话**算不算数**」。
+
+#### 那句话
+
+`TribulationPanel` 在给出 `min–max` 区间的同时还附一句定性描述：
+
+```text
+共 8 道，单波 32%–56% 最大气血（合计约 …），逐道加重
+共 8 道，单波 49%–40% 最大气血（合计约 …），起手两道最重
+```
+
+来自 `plan.def.waveShape === "frontLoaded" ? A : B` —— 一个**二元分支**。
+
+#### 量下来的结果：它是对的
+
+用真实的 `tribulationWaveSpan`（它内部调的就是结算那个 `waveMultiplier`）算每一劫：
+
+```text
+雷鸣[even]        波8  first=0.32 last=0.56 最重第8道 → 逐道加重 ✓
+逆流[even]        波8  first=0.27 last=0.48 最重第8道 → 逐道加重 ✓
+裂魂[even]        波8  first=0.29 last=0.50 最重第8道 → 逐道加重 ✓
+铁躯[even]        波8  first=0.26 last=0.45 最重第8道 → 逐道加重 ✓
+重压[frontLoaded] 波8  first=0.49 last=0.40 最重第2道 → 起手两道最重 ✓
+```
+
+**五劫全对。** 这一轮没有缺陷可修。
+
+#### 但那条判据值得写
+
+原因不是「三元表达式写错了」，而是**那句文案此前没有任何东西守着**：
+
+```text
+三元表达式判断的是 waveShape 这个字面值
+这句话说的是「波形实际上长什么样」
+两者一旦分叉（有人给 even 加了递减、给 frontLoaded 改了段长），
+界面上那句话会静默变成假话，而编译、类型、既有单测全绿
+```
+
+#### 判据三条（`core/waveShapeTruth.spec`）
+
+```text
+① 每一劫都能被这句话说中 —— 按真实波形核：说「逐道加重」的 last 必须 > first，
+   说「起手两道最重」的最重那道必须在第 1 或第 2 道
+② 反差：两种形状确实不同 —— 否则那句话无论怎么写都对
+③ 加第三种波形时这条会红，并指出它不在那两句之内
+```
+
+#### 三次注入
+
+```text
+even 改成轻度递减（× (1.2 - wave×0.05)）  → 没红
+even 改成强烈递减（× (5 - wave)）          → ①② 红
+加第三种波形 backLoaded                    → ③ 红并点名
+```
+
+**第一次没红也是信息**：轻度递减被 `tribulationWaveDamage` 自身的递增盖过了，
+方向没变。判据守的是语义方向，不是任意小扰动 —— 这个灵敏度是对的。
+
+③ 尤其值得：`TribulationWaveShape` 是联合类型，加成员时 `vue-tsc` **不会报错**
+（三元表达式对任何 string 都有分支）。故那条判据把「加了第三种」变成一次
+**必须做的决定**。
+
+#### 这一轮的形状
+
+```text
+第 437 轮  猜「枚举有空洞」        → 查空
+第 440 轮  猜「单场胜率会骗人」     → 查空
+第 441 轮  量「界面上的一句话算不算数」 → 对得上，但之前没人守 → 补判据
+```
+
+即使「这句话是对的」，**证明它对**与**让它以后一直对**仍是两件事。
+
+工作区干净、全量 862 / 7091 全绿；check、test:report、check:ui 同绿。
