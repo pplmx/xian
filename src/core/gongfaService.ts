@@ -3,7 +3,7 @@
  */
 import { rng } from "@/utils/random";
 import { GONGFA, GONGFA_TYPE_NAMES, gongfaDef } from "@/data/gongfa";
-import { qualityDef } from "@/data/qualities";
+import { qualityBaseWeight } from "@/data/qualities";
 import { COMPREHEND_PAGE_COST } from "@/data/constants";
 import { GONGFA_SYSTEM } from "./engineWorld";
 import { gongfaAffinity, rootElements } from "./linggenAffinity";
@@ -108,7 +108,7 @@ export function gongfaDrawWeight(
   elements: readonly ElementId[],
   major: number,
 ): number {
-  const qualityWeight = 100 / (1 + qualityDef(def.quality).rank * 1.5);
+  const qualityWeight = qualityBaseWeight(def.quality);
   const distance = Math.max(0, major - def.minRealm);
   const proximity = 1 + Math.max(0, 12 - distance) * 1.5;
   return qualityWeight * gongfaAffinity(def.element, elements) * proximity;

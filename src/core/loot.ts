@@ -5,7 +5,7 @@ import type { ArtifactDef, EquipmentInstance, GNum, QualityId, RegionDef } from 
 import { rng } from "@/utils/random";
 import { add, gnZero, isZero } from "@/utils/gnum";
 import { formatGN } from "@/utils/format";
-import { qualityDef } from "@/data/qualities";
+import { qualityBaseWeight, qualityDef } from "@/data/qualities";
 import { equipmentTemplate } from "@/data/equipment";
 import { PILLS } from "@/data/pills";
 import { ARTIFACTS, artifactDef } from "@/data/artifacts";
@@ -354,7 +354,7 @@ export const ARTIFACT_NEAR_BONUS = 4;
  * 用加法而非指数衰减,是为了不把旧法宝彻底关掉(图鉴里的旧格子仍点得亮)。
  */
 export function artifactDropWeight(def: ArtifactDef, tier: number): number {
-  const qualityWeight = 100 / (1 + qualityDef(def.quality).rank * 1.5);
+  const qualityWeight = qualityBaseWeight(def.quality);
   const distance = Math.max(0, tier - def.fromTier);
   return qualityWeight * (1 + ARTIFACT_NEAR_BONUS * Math.max(0, ARTIFACT_NEAR_WINDOW - distance));
 }

@@ -143,3 +143,32 @@ const BY_ID = new Map<QualityId, QualityDef>(QUALITIES.map((q) => [q.id, q]));
 export function qualityDef(id: QualityId): QualityDef {
   return BY_ID.get(id) ?? QUALITIES[0]!;
 }
+
+/**
+ * 品质稀有度的**基础抽取权重** —— 品质越高越难抽到。
+ *
+ * ## 为什么要把它单独拿出来（第 450 轮）
+ *
+ * 同一个式子 `100 / (1 + rank × 1.5)` 在两个池子里各写了一遍:
+ *
+ * ```text
+ *   core/gongfaService.ts  gongfaDrawWeight      功法参悟
+ *   core/loot.ts           artifactDropWeight    法宝掉落
+ * ```
+ *
+ * 两处**故意有不同的就近加成**(功法窗口 12、法宝窗口 5),但「品质本身值多少」
+ * 那一项必须是同一个 —— 否则调整一边会让另一个池子的稀有度悄悄失准,
+ * 而这种漂移在两份代码里都看不出来(它们各自读起来都是对的)。
+ *
+ * ## 为什么系数是 1.5
+ *
+ * 见 `gongfaService` 那段参数论证(W3 K1 → 71.5% / W12 K1.5 → 33.5%)。
+ * 那个论证针对的是**就近窗口**,而品质这一项两个池子共用同一条曲线:
+ *
+ * ```text
+ *   rank 0(凡品) 100 → rank 5(地品) 22.2 → rank 6(天品) 15.4
+ * ```
+ */
+export function qualityBaseWeight(id: QualityId): number {
+  return 100 / (1 + qualityDef(id).rank * 1.5);
+}

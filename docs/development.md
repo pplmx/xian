@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 866 个 spec;本作自己那部分 786 个) |
+| `bun run test` | 全量用例(全量 867 个 spec;本作自己那部分 787 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 866 个 spec = 宿主 786 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 867 个 spec = 宿主 787 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 866 个 spec(本作自己那部分 786 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 867 个 spec(本作自己那部分 787 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -24956,3 +24956,74 @@ README 改回 18 个       → ① 红
 **假缺陷比漏掉更坏，它会让人去改一个本来对的东西。**
 
 工作区干净、全量 866 / 7103 全绿；check、test:report、check:ui 同绿。
+
+### 第 450 轮:同一个品质权重,两个池子各写了一遍
+
+#### 上一轮定的方向
+
+第 449 轮结尾我判断:文档数字那一层已查透,下一轮该找**代码 A 处 vs 代码 B 处**
+的不一致 —— `singleSourceAudit` 守着七处，但它只覆盖登记过的那七个。
+
+用了一个可机械判的抓法:**扫 core 下所有「含运算的长赋值行」，找跨文件完全相同的**。
+五个命中，其中一个是真重复:
+
+```text
+core/gongfaService.ts   const qualityWeight = 100 / (1 + qualityDef(def.quality).rank * 1.5);
+core/loot.ts            const qualityWeight = 100 / (1 + qualityDef(def.quality).rank * 1.5);
+```
+
+#### 但它们**不该**被合并
+
+```text
+功法  qualityWeight × 灵根亲和 × (1 + max(0, 12 - distance) × 1.5)     窗口 12、倍率 1.5
+法宝  qualityWeight × (1 + ARTIFACT_NEAR_BONUS × max(0, 5 - distance))  窗口 5、倍率 4
+```
+
+两处的**就近加成是刻意不同的**——功法按境界远近、法宝按层级远近。
+合并成一个函数会把手感拉平，那不是该做的事。
+
+**该同源的是「品质本身值多少」那一项。**
+
+#### 那种漂移为什么危险
+
+```text
+改了功法的 1.5 → 0.9
+→ 功法池变平（高品更容易撞见）
+→ 法宝池不变
+→ 没有任何东西会红，而两个池子的稀有度悄悄分家
+```
+
+而两份代码**各自读起来都是对的** —— 这是它比一般重复更难发现的原因。
+
+#### 修法
+
+```text
+data/qualities.ts   + qualityBaseWeight(id) —— 唯一的基础权重
+core/gongfaService  qualityWeight = qualityBaseWeight(def.quality)
+core/loot           qualityWeight = qualityBaseWeight(def.quality)
+```
+
+就近加成留在原处，各算各的。
+
+#### 一条既有判据当场抓到我
+
+写注释时我用了「**品质**稀有度的基础权重 —— **品阶**越高越难抽到」，
+`terminologyConsistency.spec` 立刻红:「同一行同时提品质与品阶」。
+
+那条判据的规矩是这两个词不许在说同一件事时混用。改成「品质越高越难抽到」。
+**这是本轮唯一一次被既有判据挡下 —— 而它挡得对。**
+
+#### 判据三条（`core/qualityBaseSingleSource.spec`）
+
+```text
+① 两条公式都读 qualityBaseWeight，不各写一遍（并禁止硬编码 1.5 那份回来）
+② 基础权重对每一档品质落在确定值上，且严格单调递减（高品质更难抽）
+③ 反差：就近加成仍各算各的 —— 那两个函数不该被合并
+```
+
+③ 守的是边界:**同源的是基础项，不是整个函数**。它同时防止两种过度修正 ——
+有人为了「去重」把两个池子合并，也有人把基础项也拆开。
+
+两次注入:把 `loot` 改回硬编码 → ① 红。
+
+工作区干净、全量 867 / 7106 全绿；check、test:report、check:ui 同绿。
