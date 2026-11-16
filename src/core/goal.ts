@@ -273,10 +273,24 @@ export function generateCurrentGoal(
      */
     const affordable = CELESTIAL_WORLDS.filter((w) => endgame.daoSource >= w.entryCost).length;
     if (affordable > 0) {
+      /*
+       * **不写「N 界已备」**（第 430 轮改）。
+       *
+       * 那句话原样是 `${affordable} 界已备道源`,读起来像「可以在备得起的那几个里挑」——
+       * 而实测五个世界的 `entryCost` **全都是 20**（赤炎天/星陨天/万刃天/无生天/无相天）,
+       * 于是 N 只可能是 0 或 5,中间那 1~4 永远不会出现。
+       *
+       * 一句「5 界已备」其实在说「你有 20 道源」。**报门槛比报个数有用**:
+       * 玩家要知道的是「还差多少」,而「几个界备得起」在代价全同时是个假选择。
+       *
+       * 代价**不是硬编码 20** —— 它从数据取（`CELESTIAL_WORLDS[].entryCost` 的最小值）,
+       * 这样哪天五个世界定了不同的价,这句话仍然对。
+       */
+      const cheapest = Math.min(...CELESTIAL_WORLDS.map((w) => w.entryCost));
       return {
         type: "expedition",
-        text: `${affordable} 界已备道源`,
-        hint: "择契、看路、再叩天门 —— 远征给的是道源与道痕",
+        text: `道源已备，可叩天门（每界 ${cheapest} 起）`,
+        hint: "择契、看路 —— 远征给的是道源与道痕",
         destination: { to: "/celestial", label: "去远征" },
       };
     }

@@ -341,7 +341,7 @@ describe("终局目标 · 六支全空时仍有下一步", () => {
     expect(goal!.type, "道源不够时不该指远征 —— 那一步会被守卫拦下").toBe("endgame");
   });
 
-  it("道源够 → 报出「几界已备」，且那个数读 entryCost 不另算", () => {
+  it("道源够 → 报门槛，不报一个假选择", () => {
     setActivePinia(createPinia());
     const player = usePlayerStore();
     const endgame = useEndgameStore();
@@ -353,12 +353,22 @@ describe("终局目标 · 六支全空时仍有下一步", () => {
     const goal = generateCurrentGoal(player, { daoPath: "sword", daoSource: 1000 });
     expect(goal!.type, "道源充足时该指远征").toBe("expedition");
     /*
-     * 那个数必须是「道源 ≥ entryCost 的界数」—— 与远征页自己的可负担判定同源。
-     * 这里复算一遍：若实现里换了口径，这条会红。
+     * ## 为什么这里断言的是「门槛」而不是「几个界」
+     *
+     * 初版那句话是 `${affordable} 界已备道源`。而实测五个世界的 `entryCost`
+     * **全都是 20** —— N 只可能是 0 或 5，中间那 1~4 永远不会出现。
+     * 一句「5 界已备」其实在说「你有 20 道源」，读起来却像「五选五」。
+     *
+     * 故改成报门槛。判据也跟着钉门槛：那个数必须等于 entryCost 的最小值，
+     * 且**从数据取**（不写死 20）。
      */
-    const want = CELESTIAL_WORLDS.filter((w) => 1000 >= w.entryCost).length;
-    expect(goal!.text, `「几界已备」与 entryCost 复算对不上（该是 ${want} 界）`).toContain(
-      `${want} 界`,
+    const cheapest = Math.min(...CELESTIAL_WORLDS.map((w) => w.entryCost));
+    expect(goal!.text, `该报门槛「每界 ${cheapest} 起」`).toContain(`每界 ${cheapest} 起`);
+    /*
+     * 反差：不许再出现「N 界已备」—— 那个数是假的（只会是 0 或 5）。
+     */
+    expect(goal!.text, "又写回了「N 界已备」—— 五个界的代价相同时，那个数是假选择").not.toMatch(
+      /\d+ 界已备/,
     );
   });
 
