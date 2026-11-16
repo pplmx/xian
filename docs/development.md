@@ -22861,3 +22861,80 @@ inventory.hasNewItem   底导实际读 newItemCount，此导出留着是因为�
 ```
 
 工作区干净、全量 848 / 7003 全绿;check、test:report、check:ui 同绿。
+
+### 第 414 轮:书里写着「本世的关系结局」,而那件事从没发生过
+
+#### 怎么找到的
+
+接着前几轮的「只写不读」线,这一轮翻 `LifeRecord`(历世履历的类型)。逐字段看时:
+
+```text
+index / major / realmLabel / age / themeId / themeResult / insight
+trialId / linggen / at          ← 都有人在写，也有人在读
+bond: { name, stage, ending }   ← 注释写着「本世的关系结局(Phase 33.8);未遇见任何人为 null」
+```
+
+而 `recordLife()` 的调用点(转世流程)里,**没有 `bond` 这一行**:
+
+```ts
+player.recordLife({
+  index, major, realmLabel, age, themeId, themeResult, insight,
+  trialId: archiveLifeTrial(),
+  linggen: ...,
+  at: Date.now(),
+});     ← 没有 bond
+```
+
+再查读取侧:`LegacyView` / `legacyDesk` / 全仓 `.vue` —— **零处**。
+
+#### 那件事其实发生了,只是走的另一条路
+
+```text
+archiveBond() → player.recordBond(bondRec) → BondDialog 的「历世同行」
+  共 N 段 · 名号 · STAGE_NAMES · ENDING_NAMES · 共历 M 次
+```
+
+**同一个信息有出口,而 `LifeRecord.bond` 是那次重构留下的壳。** 它有一行声明与一句
+写得很像实现了的注释,读者会以为履历经里记着每一世的道侣 —— 而它没有。
+
+删掉了。
+
+#### 为什么原来的判据没抓到
+
+`typeFieldCoverage.spec` 问的是「**写**进去了却没人**读**」: `written && !read`。
+而 `LifeRecord.bond` 的 `written` 与 `read` **都是假** —— 它落在两条判据之间的缝里。
+
+故这轮补了两条:
+
+```text
+① 从没写过也没读过（types/index.ts）          —— 实测 0 处，那个文件是干净的
+② 同上，但扫 data/ 的四个运行时状态接口     —— 穷举名单，改名或删掉会红
+   LifeRecord / LifeVow / LifeTrialState / SoulInstance
+```
+
+`data/` 下其余接口都是**内容表**(静态声明,字段本来就由 UI 直接取),不收。
+
+#### 一个判据的边界,写进注释
+
+补完判据后做故障注入「把 `bond` 加回去」—— **没有变红**。查下去:
+
+```text
+全仓 19 处 .bond 命中
+ 18 处是 BondState 那一侧（player.bond）
+  1 处是 CSS 类名 .bond-scene
+```
+
+也就是说**这条判据按字段名判定,分不出「这个名字在哪个接口上被读」**。
+它挡住的是「一个字段名全仓没人碰」,挡不住「同名不同接口」。
+
+真要分接口得走 TypeScript 语法树(像 `deadExportAudit` 那样)。而实测这一类
+(运行时状态接口里既没写过也没读过)只有 `LifeRecord.bond` 一个,且已删 ——
+**收益不足以付那个成本。故把边界写进注释,不把判据做复杂。**
+
+#### 一句记在案上的话
+
+`LifeRecord.bond` 那种「一行声明 + 一句像实现了的注释」是最难查的:
+它既不报错、也不影响行为,而**读者会信它**。这也是三年来第一次有人问
+「这个字段谁在写」时才发现它从来没有过。
+
+工作区干净、全量 848 / 7005 全绿;check、test:report、check:ui 同绿。

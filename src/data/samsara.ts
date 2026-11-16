@@ -158,8 +158,6 @@ export interface LifeRecord {
   insight: number;
   /** 本世签下的逆旅契;未签为 null(老存档无此字段) */
   trialId?: string | null;
-  /** 本世的关系结局(Phase 33.8);未遇见任何人为 null */
-  bond?: { name: string; stage: string; ending: string } | null;
   /**
    * 本世持用的灵根(转世归档时快照,修仙录的历世履历据此回望每世牌面)。
    *
