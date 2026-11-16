@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 859 个 spec;本作自己那部分 779 个) |
+| `bun run test` | 全量用例(全量 860 个 spec;本作自己那部分 780 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 859 个 spec = 宿主 779 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 860 个 spec = 宿主 780 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 859 个 spec(本作自己那部分 779 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 860 个 spec(本作自己那部分 780 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -24459,3 +24459,59 @@ CombatPanel.vue         + foeFamilyName，取自 enemyDef(id).family
 （第三步仍然要人工剔掉函数参数名 —— 那是这套筛子的噪声源，记在这里。）
 
 工作区干净、全量 859 / 7080 全绿;check、test:report、check:ui 同绿。
+
+### 第 438 轮:同一个数据表,另一半没跟上
+
+#### 增量来自上一轮
+
+第 436 轮给敌人补了族名章 —— `beastFamilyName()` 成了 `BEAST_FAMILIES.name` 的唯一入口,
+`combatChips` 的 `family` 那一枚章把它送上了敌人战线。
+
+而同一个数据表还有**另一半**:44 只灵兽分属 17 个族,谱上只有 icon,
+读不出一只是狐还是月华。**上一轮补的是敌人那一侧,灵兽这一侧没跟上。**
+
+#### 这一轮的工作量很小
+
+```text
+敌人侧（第 436 轮）  data → beastFamilyName() → combatChips.family → CombatPanel
+灵兽侧（第 438 轮）  data → beastFamilyName() → TitlesView 的 row.familyName
+```
+
+同一个入口,第二位消费者。**没有新造任何东西** —— 这正是第 436 轮那个入口的设计意图
+（「唯一的名字入口」），而它在两天后就等到了第二个用户。
+
+渲染位置是「性格 + 数值并一行」那一处:族名与性格名并排,因为两者都是
+「这一只属于什么」—— 一个是先天的品类,一个是后天的走法。
+
+#### 一条写坏又改对的判据
+
+第四条初版写的是「族名不许与灵兽名相同」。实测 `pet_qilin` 红:
+它的族名与名字**都是「麒麟」** —— 那是合法的,它就叫麒麟,也归麒麟族。
+
+真正该守的不是「两个字面不相同」,而是**实现路径**:那一行读的是
+`beastFamilyName(def.family)` 而不是 `def.name`。
+
+> 判据要盯「它是怎么来的」,不是「它长什么样」。
+> 面值相等可以是巧合,来源相同才是事实。
+
+#### 判据四条（`core/petFamilyShown.spec`）
+
+```text
+① 谱行构造里 familyName 取自 beastFamilyName
+② 模板渲染出来，且带 data-pet-family 锚
+③ 44 只灵兽每一只都有非空族名，且不超过 4 字
+④ 反差：族名不是从灵兽自己的名字里来的
+```
+
+两次注入:族名改用 `def.name` → ① 红;模板不渲染 → ② 红。
+
+#### 这一轮的形状
+
+```text
+补完一处之后，问一句：同一个数据的另一半在哪？
+```
+
+第 436 轮补敌人、第 438 轮补灵兽 —— **中间隔了一轮**,那一轮我在查别的。
+这个「另一半」是回来才看见的。
+
+工作区干净、全量 860 / 7084 全绿;check、test:report、check:ui 同绿。

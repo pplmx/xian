@@ -475,7 +475,10 @@
                     </p>
                     <!-- 性格 + 数值并一行:定性的话之外还要给数(换不换这只伙伴,靠「更容易」三个字算不出来) -->
                     <p class="name-beast-ledger__trait">
-                      {{ row.personalityName }}
+                      <span class="name-beast-ledger__family" data-pet-family>{{
+                        row.familyName
+                      }}</span>
+                      · {{ row.personalityName }}
                       <span>{{ row.personalityDesc }}</span>
                       <template v-if="row.traitText">
                         · <span class="tabular">{{ row.traitText }}</span>
@@ -549,6 +552,7 @@ import { notify } from "@/core/notify";
 import { PERSONALITY_NAMES, personalityDesc } from "@/core/petPersonality";
 import type { StatMods } from "@/types";
 import { petTraitText } from "@/ui/itemText";
+import { beastFamilyName } from "@/data/beastFamilies";
 import { qualityDef } from "@/data/qualities";
 import { peakQualityFromStores } from "@/ui/qualityPeakStores";
 import { modsText } from "@/data/statNames";
@@ -757,6 +761,12 @@ const petRows = computed(() =>
       personalityName: PERSONALITY_NAMES[def.personality],
       personalityDesc: personalityDesc(def.personality),
       traitText: petTraitText(def),
+      /*
+       * 族名 —— 与敌人那一侧同源（`beastFamilyName`）。44 只灵兽分属 17 个族，
+       * 而此前谱上只有 icon，读不出「这一只是什么」：狐与月华、走兽与草木，
+       * 图标是抽象符号，名字才是可理解的概念（第 438 轮）。
+       */
+      familyName: beastFamilyName(def.family),
       /** 结缘那一刻 —— 与称号同一份道历;未结缘的没有这一刻 */
       momentText: owned ? codexMomentText(quests.petMoments[def.id]) : "",
       state: petState,
