@@ -56,6 +56,35 @@ function costOf(def: (typeof SECRET_REALMS)[number]): number {
 }
 
 /**
+ * 两个秘境是否**同一种货币** —— 跨货币的代价不可通约。
+ *
+ * ## 第 421 轮补：这条边界是被新内容撞出来的
+ *
+ * 此前 `costOf` 把灵石与道源当成同一量纲,直接比大小 —— 之所以没出错,
+ * 是因为**天界那七处的代价(30~55)全都远低于凡境最高的 200**,
+ * 两类从不交错,比出来的顺序恰好也对。
+ *
+ * 而这一轮补了三处高境秘境(90 / 130 / 180 道源)之后,道源撞进了灵石的量级,
+ * 判据立刻报「赤焰石窟(代价 150 石)比枯朽禅林(130 道源)更贵」——
+ * **150 石与 130 道源根本不是可以比较的两个数**。
+ *
+ * 正确口径:**同一册内比较**。两册各有自己的定价曲线:
+ *
+ * ```text
+ *   凡境册  灵石 40 → 200，收益 1.2 → 1.7
+ *   天界册  道源 30 → 180，收益 1.4 → 3.7
+ * ```
+ *
+ * 册与册之间没有可比性 —— 道源要从天界挣,灵石从历练挣,两者的稀缺度差着量级。
+ */
+function sameCurrency(
+  a: (typeof SECRET_REALMS)[number],
+  b: (typeof SECRET_REALMS)[number],
+): boolean {
+  return a.gate === b.gate;
+}
+
+/**
  * 一次完整秘境的总战利(不含层间结算的灵石差价,只看 `rewardMult` 的乘数部分)。
  *
  * `Σ_{layer=1..SECRET_LAYERS} (12 + 6×layer) × rewardMult` —— 与
@@ -71,13 +100,20 @@ function totalReward(def: (typeof SECRET_REALMS)[number]): number {
 
 describe("秘境 · 性价比不许单调递减", () => {
   it("① 总收益随代价单调递增", () => {
-    const sorted = [...SECRET_REALMS].sort((a, b) => costOf(a) - costOf(b));
+    /*
+     * **按册分别排序**,不把两册混在一起 —— 灵石与道源不可通约（见 `sameCurrency`）。
+     */
+    const sorted = [...SECRET_REALMS].sort(
+      (a, b) => a.gate.localeCompare(b.gate) || costOf(a) - costOf(b),
+    );
     expect(sorted.length, "秘境太少 —— 判据量不出趋势").toBeGreaterThanOrEqual(10);
 
     const drops: string[] = [];
     for (let i = 1; i < sorted.length; i += 1) {
       const prev = sorted[i - 1]!;
       const cur = sorted[i]!;
+      // 跨册不比：两种货币不可通约
+      if (!sameCurrency(prev, cur)) continue;
       // 代价相同的两个秘境不强求收益相等,只在代价真涨了时才比
       if (costOf(cur) <= costOf(prev)) continue;
       if (totalReward(cur) < totalReward(prev)) {
@@ -97,10 +133,29 @@ describe("秘境 · 性价比不许单调递减", () => {
      *
      * 三分之一这条线:目前实测是 1.30 / 3.36 ≈ 0.39。留一点余量到 1/3。
      */
+    /*
+     * 同样按册分别算 —— 每成本的分母是那册自己的货币。
+     */
     const perCost = SECRET_REALMS.map((d) => ({
       name: d.name,
+      gate: d.gate,
       value: totalReward(d) / costOf(d),
     })).sort((a, b) => b.value - a.value);
+    /*
+     * 只在天界册内比 —— 那是「贵而给得少」这个问题真正会发生的那一册
+     * （凡境册只有 1.2~1.7 的倍率跨度，本来就没有这个风险）。
+     */
+    for (const gate of ["mortal", "celestial"] as const) {
+      const inGate = perCost.filter((x) => x.gate === gate);
+      if (inGate.length < 2) continue;
+      const bestIn = inGate[0]!;
+      const worstIn = inGate[inGate.length - 1]!;
+      expect(
+        worstIn.value / bestIn.value,
+        `${gate} 册里最贵的「${worstIn.name}」每成本只有「${bestIn.name}」的 ` +
+          `${((worstIn.value / bestIn.value) * 100).toFixed(0)}% —— 高级秘境纯粹是坑`,
+      ).toBeGreaterThan(1 / 3);
+    }
     const best = perCost[0]!;
     const worst = perCost[perCost.length - 1]!;
     expect(

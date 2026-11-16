@@ -1010,6 +1010,10 @@ const SECRET_REALM_TERRAIN: Record<string, SceneTerrain> = {
   sr_minghe: "void",
   sr_xuanyuan: "ruin",
   sr_zhuxian: "palace",
+  // 后半程三处（第 421 轮）：各按地名取景
+  sr_wuxiang: "palace", // 无相空城 —— 城郭俱在
+  sr_kuxiu: "forest", // 枯朽禅林 —— 禅林
+  sr_daoyuan: "void", // 道源劫渊 —— 渊底
 };
 
 /** 一处秘境长什么样;认不出的落回山岳 */

@@ -67,6 +67,10 @@ describe("秘境名录 · 这一处是什么地界", () => {
       sr_minghe: "void",
       sr_xuanyuan: "ruin",
       sr_zhuxian: "palace",
+      // 后半程三处（第 421 轮补）：无相空城取城郭、枯朽禅林取林麓、道源劫渊取渊底
+      sr_wuxiang: "palace",
+      sr_kuxiu: "forest",
+      sr_daoyuan: "void",
     };
     const actual = Object.fromEntries(
       SECRET_REALMS.map((r) => [r.id, sceneTerrainOfSecretRealm(r.id)]),

@@ -246,6 +246,74 @@ export const SECRET_REALMS: SecretRealmDef[] = [
     healBetweenPct: 0.3,
     rewardMult: 2.15,
   },
+
+  /*
+   * ---- 后半程的三处（第 421 轮补）----
+   *
+   * ## 缺口
+   *
+   * 十五处秘境的 `minMajor` 只覆盖 3~9:凡境八处从元婴到渡劫逐境铺开,
+   * 天界七处**全部挤在 9 境**。而境界一共 21 个 ——
+   * **玄仙(10) 到 混沌道祖(20) 这十一境一处秘境都没有**,
+   * 也就是后半程**一半以上的境界**里,这个玩法整个消失了。
+   *
+   * 此前 `contentDensity.spec` 里有一条判据标题写着「秘境只有两阶是设计,不是漏做」,
+   * 而它**只打印了那一列,没有任何断言**,设计文档里也找不到这条裁决。
+   * 故那句话是无据的 —— 这一轮按「缺内容」处理。
+   *
+   * ## 定价
+   *
+   * 按 `secretRealmValue.spec` 那两条:总收益随代价单调递增、每成本不低于最划算者的 1/3。
+   * 三处的代价 90 / 130 / 180,倍率 2.7 / 3.2 / 3.7:
+   *
+   * ```text
+   *   cost  总收益   每成本
+   *    30   100.8    3.36   （星辰古殿，最划算）
+   *    55   162.0    2.95   （轩辕剑冢，此前最贵）
+   *    90   194.4    2.16
+   *   130   230.4    1.77
+   *   180   266.4    1.48   ← 与最划算者之比 0.44 > 1/3
+   * ```
+   *
+   * ## 三处各是一种「后半程才配得上」的难法
+   *
+   * 不是把数字调大,而是各换一条**玩家要改打法**的规则:
+   * 玄仙那处考「护盾无用的地方你怎么活」,神将那处考「不能靠回血磨」,
+   * 道祖那处考「攻强而命薄,抢不抢得下来」。
+   */
+  {
+    id: "sr_wuxiang",
+    gate: "celestial",
+    name: "无相空城",
+    desc: "城郭俱在,而无一物可执。此地不认护盾、不认外物 —— 能挡的都挡不住,战内疗愈亦滞,只剩你本身那副筋骨",
+    minMajor: 12,
+    cost: { daoSource: 90 },
+    rules: { shieldCapRatio: 0, healMult: 0.7, enemyAtkMult: 1.15 },
+    healBetweenPct: 0.25,
+    rewardMult: 2.7,
+  },
+  {
+    id: "sr_kuxiu",
+    gate: "celestial",
+    name: "枯朽禅林",
+    desc: "林中无生,唯余枯骨。此地拒一切生机 —— 治疗十不存一,磨字诀在这里是死路",
+    minMajor: 15,
+    cost: { daoSource: 130 },
+    rules: { healMult: 0.15, enemyHpMult: 1.2 },
+    healBetweenPct: 0.35,
+    rewardMult: 3.2,
+  },
+  {
+    id: "sr_daoyuan",
+    gate: "celestial",
+    name: "道源劫渊",
+    desc: "渊底藏一线道源,而渊壁尽是劫火。攻门大开、命门也大开 —— 抢得下来的是你的,抢不下来的是它的",
+    minMajor: 18,
+    cost: { daoSource: 180 },
+    rules: { playerAtkMult: 1.45, enemyAtkMult: 1.5, playerStartHpPct: 0.6 },
+    healBetweenPct: 0.2,
+    rewardMult: 3.7,
+  },
 ];
 
 const BY_ID = new Map(SECRET_REALMS.map((r) => [r.id, r]));
