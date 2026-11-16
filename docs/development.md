@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 848 个 spec;本作自己那部分 768 个) |
+| `bun run test` | 全量用例(全量 849 个 spec;本作自己那部分 769 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 848 个 spec = 宿主 768 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 849 个 spec = 宿主 769 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 848 个 spec(本作自己那部分 768 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 849 个 spec(本作自己那部分 769 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -23087,3 +23087,67 @@ gameNowSeconds()  →  gameNowMs()        （它返回毫秒）
 不是加注释说明它**。注释只有读到的人才知道,而名字是每个用它的人都会读到的。
 
 工作区干净、全量 848 / 7010 全绿;check、test:report、check:ui 同绿。
+
+### 第 417 轮:把「名字断言了单位」变成判据
+
+上一轮改了两个导出的名字（`gameNowSeconds` → `gameNowMs`、局部 `gameNowSec` → `nowMs`），
+并在 `useGameNow.spec` 里加了两条只管那一个模块的判据。这一轮把它推广到全仓。
+
+#### 先核一遍现有名字对不对
+
+```text
+Sec 结尾的导出     bountyRemainingSec / marketRemainingSec / weatherRemainingSec /
+                   getRetreatRemainingSec / pillGainSec         —— 五个都真的返回秒
+Ms 结尾的导出      pauseElapsedMs / toastLifeMs / enlightenmentCooldownMs
+                                                                —— 三个都真的返回毫秒
+Mult 结尾的导出    explorationSpeedMult / biasChanceMult / prosperityYieldMult /
+                   artifactQualityMult / artifactLevelMult      —— 中性值都是 1
+Ratio 结尾的导出   winChanceFromRatio（返回 0.05~0.95）/
+                   salvageRatio（0.2~0.5）                       —— 都是 0~1 的比值
+```
+
+**都合规。** 也就是说上一轮那次是唯一的实例 —— 但**判据仍然值得有**,
+因为它是唯一一个「能靠名字主动骗到人」的形状。
+
+#### 判据三条（`core/unitNameMatches.spec`）
+
+```text
+① Ms 结尾的导出，函数体里确实在做毫秒运算
+② 名字里带 Sec / Second 的局部变量，不许接毫秒来源（useGameNow / gameNowMs / gameNow）
+③ 判据自证：写坏的片段要被命中，写对的片段不该被命中
+```
+
+① 的合法写法收四种：乘 1000、直接减两个毫秒时刻、读 `*Ms/*At` 字段、
+返回本模块里一张**名字能看出是时间**的全大写常量表（`TOAST_LIFE` / `*_DURATION` 等）。
+
+第四条是判据第一次跑时被 `toastLifeMs` 逼出来的 —— 它按档返回 `TOAST_LIFE.base` 等，
+而那张表是 2600 / 4200 / 5200 / 5600（毫秒）。**初版判据不认这种写法，把它算成「找不到毫秒运算」。**
+
+#### 为什么不做成「跑一遍看返回值」
+
+那要造状态、起 Pinia、控制时钟。`layeringAudit` 不允许 core spec 随便带 Pinia,
+带了的也要维护。而**单位错误必然是「算式里没有那次换算」**—— 那正是静态能看出来的。
+
+#### ② 的口径故意很窄
+
+不扫所有 `*Sec` 变量:仓里大量 `remainSec` / `cooldownSec` 是**真的秒**,逐个判定会变成猜。
+只钉「名字说 Sec、来源是毫秒」这个组合 —— 而那正是第 416 轮那次事故的正身。
+
+#### 两次注入
+
+```text
+加一个体里毫无毫秒运算的 `pauseElapsedBadMs` → ① 红，点名文件与函数名
+把某处的 nowMs 改回 remainSec                 → ② 红，点名「remainSec = useGameNow()」
+```
+
+#### 方法账
+
+```text
+第 415 轮   判据在读字，而缺陷在数里
+第 416 轮   去改那个会骗人的名字
+第 417 轮   给「名字不许骗人」建一条判据
+```
+
+三轮是一个完整的小循环:发现形状 → 修实例 → 让形状不再能出现。
+
+工作区干净、全量 849 / 7013 全绿;check、test:report、check:ui 同绿。
