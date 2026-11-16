@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 854 个 spec;本作自己那部分 774 个) |
+| `bun run test` | 全量用例(全量 855 个 spec;本作自己那部分 775 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 854 个 spec = 宿主 774 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 855 个 spec = 宿主 775 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 854 个 spec(本作自己那部分 774 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 855 个 spec(本作自己那部分 775 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -23616,3 +23616,67 @@ secretRealmScene       地形映射表里没有这三处
 而它缺的不是实现,是一句「我为什么空着」的记录。
 
 工作区干净、全量 854 / 7044 全绿;check、test:report、check:ui 同绿。
+
+### 第 425 轮:终局五天的规则,两个方向都对不上
+
+第 399 轮修过星陨天「五条规则只说三条」。这一轮按同一个形状重扫五天,抓到**两处,方向相反**:
+
+```text
+万刃天  ruleText 三条，其中「受击反制收益极高」在 rules 里**什么都没有**
+        → 说了的没做。玩家照它堆反击率，会发现完全没用。
+
+无相天  ruleText 三条都没提 rules 里那条 enemyExtraMods.critRate
+        → 做了的没说。敌方会心 +12% 一直生效，而玩家读那三句推不出来。
+```
+
+#### 为什么不能只数条数
+
+一条 `ruleText` 可能对应 `rules` 里好几个键,也可能对应 **`foes` 里的东西**
+（万刃天的「血厚如山」= `hpR 1.7`,无相天的「闪避极高」= `mods.dodgeRate`）。
+故数条数没有意义 —— 五天实测出来 3 条文案 / 2~8 个实体键,毫无相关性。
+
+#### 判据（`core/celestialRuleTruth.spec`）四条
+
+```text
+① 每个世界至少要有一条带数的规则 —— 全是形容就等于没说
+② 文案里的每个数，都能在实现里找到同一个（容差 1，比例/百分数互认，减量写法认 1-n）
+③ 反差：rules 里那几条真的会生效的顶层键，不许一条文案都不提
+④ 反空转：五天都扫到了
+```
+
+#### 这一轮最值得记的：两条判据打架
+
+① 初版写的是「**每条**规则都带数」。于是我给无相天写了「敌人闪避 30~35%」——
+而闪避写在 `foes[].mods` 上,**不在 `rules` 里**;`dataTextAudit` 的规矩是
+「文案里的百分比必须在 `rules` 里找得到」,**两条判据当场打架**（实测）。
+
+那个 35% 是对的、那句文案也是对的 —— **错的是「每条都要带数」这个口径**。
+`foes` 上的属性（闪避、速度、血量倍率）本来该用相对说法,玩家在战斗日志里看得到结果;
+而 `rules` 上的（治疗削减、回合上限）必须给数,否则玩家算不出对策。
+
+**退一步:每个世界至少一条带数的。** 那一条通常是 `rules` 里最要紧的那条。
+
+#### 一次被既有判据拦下的越界
+
+我本来给万刃天**补了一条真的反击规则**（`playerExtraMods: { counterRate: 0.3, counterDamage: 0.6 }`,
+与「借势天」同一套键）。`daoPathCoverage` 立刻红:
+
+```text
+这些道途选下去净亏 —— 剑道(76 vs 基线 77)
+```
+
+降到 0.2/0.4 仍然红。**故退回「只修文案」**:把「受击反制收益极高」改成实际存在的
+「敌方会心率 +10%」。
+
+> 这一处记下来:**终局五天的平衡是紧的** —— 往任何一个世界加一条玩家增益,
+> 都会牵动七条道途的通过数。要真加规则,得连着跑一轮全道途对账,
+> 而那不属于「修文案」这个范围。
+
+#### 两次注入
+
+```text
+无相天退回「敌人闪避极高」        → ① 红
+删掉万刃天的实现、文案保留        → ② 红，指名「反击威力 +60% 找不到」
+```
+
+工作区干净、全量 855 / 7048 全绿;check、test:report、check:ui 同绿。
