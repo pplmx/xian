@@ -49,6 +49,22 @@
           数值来自 core 的 expectedTries(与 realms.sim 同一个口径),不在这里另算。
         -->
           <p v-if="triesText" class="cultivation-breakthrough__aside tabular">{{ triesText }}</p>
+          <!--
+            封顶吃掉了多少 —— 只在真的溢出时说。
+
+            基础率 71~95%、封顶 98%,故「天命 + 圆融」这种常见搭配就已经溢出 5 个百分点,
+            再叠一炉聚气丹是 13 个点。面板原先只印「98%」,玩家看不出自己为那几个点
+            付的天赋位/丹药是白花的 —— 见 `BreakthroughInfo.rateOverflow` 的注释。
+          -->
+          <p
+            v-if="btInfo.rateOverflow > 0"
+            class="cultivation-breakthrough__aside cultivation-breakthrough__cap"
+            data-breakthrough-cap
+          >
+            裸算 {{ formatPercent(btInfo.rateRaw, 0) }} · 封顶
+            {{ formatPercent(BT_MAX_RATE, 0) }} —— 多出的
+            {{ formatPercent(btInfo.rateOverflow, 0) }} 不计
+          </p>
         </div>
         <div class="cultivation-breakthrough__measure">
           <p class="cultivation-breakthrough__label">
@@ -278,6 +294,7 @@ import { buffDef } from "@/data/buffs";
 import { modsText } from "@/data/statNames";
 import { BT_LUCK_TO_RATE, INJURY_DURATION } from "@/data/constants";
 import { formatCountdown, formatDuration, formatNum, formatPercent } from "@/utils/format";
+import { BT_MAX_RATE } from "@/data/constants";
 import TribulationPanel from "@/components/cultivation/TribulationPanel.vue";
 import QiShortfallNote from "@/components/cultivation/QiShortfallNote.vue";
 import { useGameNow } from "@/composables/useGameNow";

@@ -89,16 +89,7 @@ export interface ExploreModeRow {
   materialsPerBattle: string;
   rewardMult: number;
   dangerMult: number;
-  /**
-   * 这一档的**收益**在档位倍率之外还乘了哪几项(区域事件等)。
-   *
-   * 与 `foeParts` 完全对称:敌势那一行早就摊开了区域事件的危险倍率,
-   * 而收益这一行只报档位自己的数 —— 妖潮日(收益 ×1.2)那 20% 一直在到账,
-   * 界面上一个字都没有。危险说了、收益没说,比两边都不说更糟。
-   *
-   * 空数组表示档位之外没有加成,模板就此不渲染这一段。
-   */
-  rewardParts: string[];
+
   /** 档位倍率 × 区域事件等之后的**实发**收益倍率 —— 与敌势的 `dangerTotal` 对称 */
   rewardTotal: number;
   /**
@@ -118,6 +109,13 @@ export interface ExploreModeRow {
    * 已过滤掉 ×1 的项:没做的事不必占字数。空数组表示这一档敌势没有额外来源。
    */
   foeParts: string[];
+  /**
+   * `foeParts` 里属于**区域事件**的那一项（原文）；没有事件时为 null。
+   *
+   * 模式行不印它 —— 它已经在选地卡上摊过一遍，而在这里会以 8 个字 ×4 行
+   * 把第四档挤出 390 的卷身（见 `AdventureView.otherFoeParts`）。
+   */
+  foeEventPart: string | null;
   /**
    * 「这一档我打不打得过」—— 整趟产出那些数的**前提**（见 `core/tripViability`）。
    *
@@ -163,15 +161,18 @@ export function exploreModeRow(input: {
    * 不给则退回档位自己的倍率(旧行为)。
    */
   dangerTotal?: number;
-  /**
-   * 收益在档位倍率之外还乘了哪几项 —— 与 `foeParts` 对称。
-   * 不给则空(视图不渲染那一段)。
-   */
-  rewardParts?: string[];
+
   /**
    * 实发收益倍率 —— 档位 × 区域事件。不给则退回档位自己的倍率(旧行为)。
    */
   rewardTotal?: number;
+  /**
+   * `foeParts` 里属于**区域事件**的那一项（原文）。
+   *
+   * 模式行不印它 —— 它已经在选地卡上摊过一遍，而在这里会以 8 个字 ×4 行
+   * 把第四档挤出 390 的卷身（见 `AdventureView.otherFoeParts`）。
+   */
+  foeEventPart?: string | null;
   /**
    * 这一档「打不打得过」的读数 —— 由调用方从 `core/tripViability` 算好传进来。
    *
@@ -206,8 +207,8 @@ export function exploreModeRow(input: {
     pillPerTrip: perTrip(input.pillBattlesPerPiece, plan.battles),
     rewardMult: mode.rewardMult,
     dangerMult: mode.dangerMult,
-    rewardParts: input.rewardParts ?? [],
     rewardTotal: input.rewardTotal ?? mode.rewardMult,
+    foeEventPart: input.foeEventPart ?? null,
     dangerTotal: input.dangerTotal ?? mode.dangerMult,
     viabilityText: input.viabilityText ?? null,
     /*

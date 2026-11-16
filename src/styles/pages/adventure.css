@@ -2583,11 +2583,17 @@
    * `敌势 ×2.1` 是个笼统的乘数:玩家不知道哪几项是自己改得动的
    * (换档位能改,妖潮只能等)。故用 faint 一档,它是补充,不是又一个要读的数。
    */
+  /*
+   * 敌势的来源（「涉险求机 ×1.9 · 灵兽之性 ×1.1」）—— **内联**，跟着那个总数走。
+   *
+   * 曾经是 `display: block`，于是每档独占一行。平时看不出代价（四档正好装得下），
+   * 而第 392 轮押上一场区域事件之后，每档多出一项「仙兽成群 ×1.15」共 8 个字，
+   * 四档各多一行 —— 390×844 的卷身只有 616px，「四个档位没有全部落在卷身内」
+   * 当场红。摊开来源是对的，但它不该以「挤掉第四档」为代价。
+   */
   .adventure-mode__foe {
-    display: block;
     color: rgb(var(--color-ink-faint-rgb));
     font-size: var(--type-note);
-    line-height: 1.5;
     overflow-wrap: anywhere;
   }
   .adventure-mode__overflow {
@@ -2612,13 +2618,7 @@
   .adventure-mode__viability {
     color: rgb(var(--color-ink-faint-rgb));
   }
-  /*
-    「收益」后面那一截来源(「妖潮 ×1.2」)—— 与「敌势」那边同一个档次。
-    用 faint 一档:它答的是「这个数从哪来」,不是又一个要读的读数。
-  */
-  .adventure-mode__odds-parts {
-    color: rgb(var(--color-ink-faint-rgb));
-  }
+
   .adventure-mode__viability.is-hopeless {
     color: rgb(var(--color-cinnabar-rgb));
   }

@@ -18880,6 +18880,36 @@ async function taskExploreModes() {
         daoFruit: 200,
         trial: { trialId: "tr_ni", at: Date.now(), paid: 48 },
       };
+      /*
+       * 这一支的存档是 major 9（真仙），故「妖潮」在界面上叫「仙兽成群」
+       * （见 regionEvent.ts 的 worlds 表）。名字从同一份数据取，不写死。
+       */
+      /* 押一场区域事件在本页地界上 —— 第 392 轮修的正是它:
+       * 区域事件改**两件事**(收益 ×1.2 与危险 ×1.15),而界面从前只摊了危险那一半。
+       * 不押事件,这一支就永远拍不到 `rewardParts`,那条缺陷也就永远量不到。
+       */
+      modesSlices.player.regionEvent = {
+        regionId: "qingyun",
+        eventId: "yaochao",
+        endsAt: Date.now() + 3600_000,
+      };
+      /*
+       * 这一档存档下「妖潮」的界面名。
+       *
+       * 不从 `core/regionEvent` import —— 它有一处 `@/data/realms` 的**值导入**，
+       * 而本脚本在 Vite 之外跑 bun，解析不了别名。故从源码文本里取；
+       * 下面那条防空转断言保证真取到了（第 392 轮踩过同一个坑）。
+       */
+      const EVENT_NAME_AT_FIXTURE = (() => {
+        const src = readFileSync(join(ROOT, "src/core/regionEvent.ts"), "utf8");
+        // major 9 = 真仙 = 仙界带 —— 取 worlds.immortal 那个名字
+        const block =
+          /id:\s*"yaochao"[\s\S]*?worlds:\s*\{[\s\S]*?immortal:\s*\{\s*name:\s*"([^"]+)"/.exec(src);
+        return block?.[1] ?? "";
+      })();
+      if (!EVENT_NAME_AT_FIXTURE) {
+        throw new Error("没从 regionEvent.ts 取到「妖潮」在仙界的名字 —— 取值口径要跟着数据结构走");
+      }
       await seedSave(ctx, modesSlices, `__exploreModes${vp.tag}`);
       const page = await ctx.newPage();
       const pageErrors = [];
@@ -18905,7 +18935,18 @@ async function taskExploreModes() {
         }
       }
 
-      const trigger = page.locator("[data-region-action]").filter({ hasText: "出发" }).first();
+      /*
+       * 夹具押的是 `qingyun` 上的区域事件，故**必须点同一处**的出发 ——
+       * 「第一个出发」在 major 9 的展品档上不一定是青云山麓（界面按当前/
+       * 第一个可进的地界排序）。第一版直接点 `.first()`，于是事件挂在一个
+       * 没被打开的界上，判据红成了「产品没算事件」——**那是夹具点错了地方**。
+       */
+      const trigger = page
+        .locator("[data-region-card]")
+        .filter({ has: page.locator("[data-region-action]", { hasText: "出发" }) })
+        .filter({ hasText: "青云山麓" })
+        .locator("[data-region-action]")
+        .first();
       if ((await trigger.count()) === 0) {
         failures.push(`[${vp.tag}-modes] 找不到任何一个「出发」入口,模式窗没开成`);
         continue;
@@ -18983,6 +19024,13 @@ async function taskExploreModes() {
             id: row.getAttribute("data-explore-mode-id"),
             battles: Number(row.getAttribute("data-explore-mode-battles")),
             text: (row.textContent || "").replace(/\s+/g, " ").trim(),
+            /*
+             * 收益那一格报的实发倍率（档位 × 区域事件）。
+             * 第 392 轮之前它印的是档位自己的数，妖潮日 1.2 被写成 1。
+             */
+            rewardTotal: Number(
+              row.querySelector("[data-reward-total]")?.getAttribute("data-reward-total") ?? NaN,
+            ),
           })),
           unitBreaks,
           overflow,
@@ -19016,6 +19064,43 @@ async function taskExploreModes() {
             `[${vp.tag}-modes] ${row.id} 又用「趟一件/趟一枚」给每场读数当单位 —— 那正是差三个数量级的老毛病`,
           );
         }
+      }
+      /*
+       * ①b 收益那一格必须算上区域事件 —— 这一支的存档押着「妖潮」(收益 ×1.2)。
+       *
+       * 第 392 轮之前,这一格印的是档位自己的 `rewardMult`,于是妖潮日四档全报
+       * 「×1 / ×1.4 / ×1.9 / ×2.4」而实际是 ×1.2 起。危险那一半早就摊了事件,
+       * 收益这一半没摊 —— 玩家据此读到「这一天没有额外好处,只是更凶险」。
+       *
+       * 判据按**乘法**断:实发 = 档位 × 1.2(妖潮的 rewardMult),且必须 **> 档位**。
+       */
+      for (const row of info.rows) {
+        const modeMult = { normal: 1, deep: 1.4, risky: 1.9, prolonged: 2.4 }[row.id];
+        if (modeMult === undefined) continue;
+        if (!Number.isFinite(row.rewardTotal)) {
+          failures.push(`[${vp.tag}-modes] ${row.id} 的「收益」格没报出实发倍率`);
+          continue;
+        }
+        if (!(row.rewardTotal > modeMult)) {
+          failures.push(
+            `[${vp.tag}-modes] ${row.id} 的收益报 ×${row.rewardTotal},等于档位自己的 ×${modeMult}` +
+              ` —— 押着的妖潮(×1.2)没算进去`,
+          );
+        }
+        if (Math.abs(row.rewardTotal - modeMult * 1.2) > 0.06) {
+          failures.push(
+            `[${vp.tag}-modes] ${row.id} 的收益报 ×${row.rewardTotal},而档位×妖潮应是 ×${(modeMult * 1.2).toFixed(2)}`,
+          );
+        }
+        /*
+         * **不在模式行里**要来源名。
+         *
+         * 第一版要了，而它和同一支里的「四个档位全部落在卷身内」互相打架：
+         * 「仙兽成群 ×1.15」8 个字 ×4 档，390 的可卷身只有 616px，第四档当场被挤出去。
+         * 来源名摊在**选地卡**那一行（「此地之敌：… · 区域事件 ×1.15」），
+         * 两者分工：卡说「为什么」，模式行说「这一档实际拿多少」。
+         * 故这里只要求**收益率确实涨了**，不要求它在这四行里把来源再讲一遍。
+         */
       }
       // ② 场次随档位严格递增
       for (let i = 1; i < info.rows.length; i += 1) {

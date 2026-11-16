@@ -93,9 +93,40 @@ export function firstUnlockAnnouncement(fromMajor: number, toMajor: number): str
 export interface BreakthroughInfo {
   ready: boolean;
   reason: string;
-  /** 修炼突破的基础成功率(未计天劫) */
+  /**
+   * 修炼突破的基础成功率(未计天劫)—— **已过封顶**。
+   *
+   * 封顶见 `BT_MAX_RATE`(98%):裸算超过它一律按 98% 判,超出的那部分不再生效。
+   * `rateRaw` 是封顶之前的数,两者的差就是被天花板吃掉的那一截。
+   */
   rate: number;
   rateText: string;
+  /**
+   * 封顶之前的裸成功率 —— 只在**撞到天花板时**才有意义。
+   *
+   * ## 为什么要把它交出来(第 393 轮)
+   *
+   * 基础率是 71%~95%(见 `BT_SUB_BASE_RATE` 与 `BT_SUB_DECAY`),而封顶是 98%。
+   * 于是**从第一层起**,任何一个 `breakthroughRate` 来源(天命 +5% / 圆融 +3% /
+   * 聚气丹 +8% / 静坐 +8% / 法宝 / 道音天时 +N)只要配上两个就触顶:
+   *
+   * ```text
+   *   天命 + 圆融      裸算 103%  → 实发 98%   溢出 5pp
+   *   再叠聚气丹       裸算 111%  → 实发 98%   溢出 13pp
+   *   再叠静坐         裸算 119%  → 实发 98%   溢出 21pp
+   * ```
+   *
+   * 而面板只印一个 `rateText`。玩家看到「98%」以为自己已经堆到顶了,
+   * 却看不出**他为此付的那部分代价（天赋位 / 一炉丹 / 一次坐等）已经白花**——
+   * 这违反本仓「让看不见的机制可见」:封顶是一条真规则,而它的代价此前只活在
+   * `clampRate` 那一行里。
+   *
+   * 不把 `rate` 改成裸值:判定读的就是封顶后的数,预览与结算必须同源。
+   * 多给一个数,让界面自己把差额说出来。
+   */
+  rateRaw: number;
+  /** 被 98% 那条线吃掉的成功率(百分点,已夹到 ≥0;未触顶时为 0) */
+  rateOverflow: number;
   qiCost: number;
   isMajor: boolean;
   needTribulation: boolean;
@@ -183,12 +214,16 @@ export function breakthroughInfo(): BreakthroughInfo {
   const mods = player.finalStats.mods;
   // Phase 28 突破准备:就绪的静坐/丹药加成并入展示率(消费在 attemptBreakthrough,一次性)
   const prep = breakthroughPrepState();
-  const rate = clampRate(
+  /*
+   * 裸算一次,再夹。两个数都要留着:判定读夹后的,界面读差额。
+   * 别把这里写成 `rate = clampRate(...)` 再倒推裸值 —— 倒推不出来。
+   */
+  const rateRaw =
     breakthroughBaseRate(player.major, player.sub) +
-      modOf(mods, "breakthroughRate") +
-      modOf(mods, "luck") * BT_LUCK_TO_RATE +
-      (prep.ready ? prep.bonus : 0),
-  );
+    modOf(mods, "breakthroughRate") +
+    modOf(mods, "luck") * BT_LUCK_TO_RATE +
+    (prep.ready ? prep.bonus : 0);
+  const rate = clampRate(rateRaw);
   const atMaxRealm = player.atMaxRealm;
   let ready = true;
   let reason = "";
@@ -207,6 +242,9 @@ export function breakthroughInfo(): BreakthroughInfo {
     reason,
     rate,
     rateText: formatPercent(rate, 0),
+    rateRaw,
+    // 只报被天花板吃掉的那一截;负数(被下限抬起来)不算溢出
+    rateOverflow: Math.max(0, rateRaw - rate),
     qiCost,
     isMajor,
     needTribulation,

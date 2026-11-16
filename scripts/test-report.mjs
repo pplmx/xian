@@ -671,6 +671,8 @@ const CATEGORIES = [
       "apprenticeSeekPill",
       // 出行窗的「收益 ×N」:敌势摊了区域事件、收益没摊 —— 两半必须同一把尺子
       "adventureRewardLine",
+      // 突破成功率撞 98% 天花板时,那截被吃掉的数要说出来
+      "breakthroughRateCap",
       // 计数器 → 行为的一张满表:师承与素行两个消费者都读它,半张表各自长是这里的缺口
       "counterText",
       // 「这一趟能走多远」—— 出行窗只报产出不报能不能拿到,是本轮在真浏览器里量到的坑

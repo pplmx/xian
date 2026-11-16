@@ -881,9 +881,7 @@
             -->
             <span :class="m.rewardTotal > 1 ? 'text-qing' : ''" :data-reward-total="m.rewardTotal"
               >收益 ×{{ m.rewardTotal }}</span
-            ><template v-if="m.rewardParts.length">
-              <span class="adventure-mode__odds-parts">（{{ m.rewardParts.join(" · ") }}）</span>
-            </template>
+            >
             <span aria-hidden="true"> · </span>敌势
             <span :class="m.dangerTotal > 1 ? 'text-cinnabar' : ''">×{{ m.dangerTotal }}</span>
             <!--
@@ -915,8 +913,21 @@
             这里把与**这一次选择**有关的部分摊开:档位、灵兽之性、区域事件。
             层级补偿不在这里(它由地界层级定,选地卡已经报过,同一件事不说两遍)。
           -->
-          <span v-if="m.foeParts.length" class="adventure-mode__foe">
-            {{ m.foeParts.join(" · ") }}
+          <!--
+            来源（灵兽之性 / 区域事件）**并进上一行**，不再另起一行。
+
+            第 392 轮押上一场区域事件后，这里每档多出一项「仙兽成群 ×1.15」共 8 个字，
+            四档各折一行 —— 390×844 的卷身只有 616px，
+            排版门「四个档位没有全部落在卷身内」当场红。
+            摊开来源是对的，代价不能是挤掉第四档：**决定要看全四档才做得出**。
+
+            故这一格只留 `foeParts` 里**档位之外、且不是区域事件**的那几项
+            （如今只剩灵兽之性）。区域事件的倍率已经在选地卡那一行
+            「此地之敌：… · 区域事件 ×1.15」里摊过，同一件事不在两处各说一遍；
+            而它在**收益格**上的作用（`rewardTotal`）是本轮新露的，那才是玩家要的账。
+          -->
+          <span v-if="otherFoeParts(m).length" class="adventure-mode__foe">
+            {{ otherFoeParts(m).join(" · ") }}
           </span>
         </button>
       </div>
@@ -1437,6 +1448,19 @@ function foeLineFor(
 }
 
 /**
+ * `foeParts` 里可以印在模式行上的那几项 —— 去掉区域事件。
+ *
+ * 区域事件的倍率与它的名字已经在**选地卡**上摊过一遍（「此地之敌：… · 区域事件 ×1.15」）。
+ * 而在模式窗里，它是让「四个档位没有全部落在卷身内」的那 8 个字 ×4 行 ——
+ * 390×844 的卷身只有 616px。**同一件事不在两处各说一遍**，而这一处的代价是挤掉第四档。
+ *
+ * 留在这一格的只剩灵兽之性（每档不同、且玩家此刻能换）。
+ */
+function otherFoeParts(m: { foeParts: string[]; foeEventPart: string | null }): string[] {
+  return m.foeEventPart ? m.foeParts.filter((p) => p !== m.foeEventPart) : m.foeParts;
+}
+
+/**
  * 这一档的**收益**由哪几项乘起来 —— 与敌势那条完全对称。
  *
  * ## 缺口(第 392 轮)
@@ -1460,24 +1484,18 @@ function foeLineFor(
  * 后两者走各自的路),故这里实际只会出区域事件一项 —— 但**按数据算**
  * 而不是按"我知道只有一项"硬写:哪天灵兽加了收益词条,这里自己会跟上。
  */
-function rewardLineFor(
-  mode: ExploreMode,
-  region: RegionDef | null,
-): { total: number; parts: string[] } {
+function rewardLineFor(mode: ExploreMode, region: RegionDef | null): { total: number } {
   const modeMult = EXPLORE_MODES[mode].rewardMult;
-  if (!region) return { total: modeMult, parts: [] };
+  if (!region) return { total: modeMult };
   const ev = player.currentRegionEvent(region.id);
   const evDef = ev ? regionEventDef(ev.eventId, player.major) : undefined;
   const evMult = evDef?.rewardMult ?? 1;
   /*
-   * 灵兽之性对收益的影响:**只经 `dropLuck`**,而那条走的是掉落品质/机率窗口,
-   * 不是 `rewardMult` 这条倍率。故这里不乘它 —— 与 `core/loot` 的算法一致
-   * (见 `dropEntriesFor` 只吃 `rewardMult`,`luck` 单独传)。
+   * 灵兽之性对收益的影响**只经 `dropLuck`**,那条走的是掉落品质/机率窗口,
+   * 不是 `rewardMult` 这条倍率 —— 与 `core/loot` 的 `dropEntriesFor` 一致
+   * (它只吃 `rewardMult`,`luck` 单独传)。故这里不乘灵兽。
    */
-  const parts = [{ label: evDef?.name ?? "", ratio: evMult }]
-    .filter((p) => p.label && p.ratio !== 1)
-    .map((p) => `${p.label} ×${Number(p.ratio.toFixed(2))}`);
-  return { total: Number((modeMult * evMult).toFixed(2)), parts };
+  return { total: Number((modeMult * evMult).toFixed(2)) };
 }
 
 /**
@@ -1590,7 +1608,21 @@ const modeRows = computed(() => {
        */
       ...(() => {
         const f = foeLineFor(m.id, region);
-        return { foeParts: f.parts, dangerTotal: f.total };
+        /*
+         * 事件那一项的原文 —— 用来把它从模式行的来源里剔掉（见 `otherFoeParts`）。
+         * 由 `foeLineFor` 的同一批输入算出，不在这里另拼一遍名字。
+         */
+        const ev = region ? player.currentRegionEvent(region.id) : null;
+        const evDef = ev ? regionEventDef(ev.eventId, player.major) : undefined;
+        const eventPart =
+          evDef && evDef.dangerMult !== 1
+            ? `${evDef.name} ×${Number(evDef.dangerMult.toFixed(2))}`
+            : null;
+        return {
+          foeParts: f.parts,
+          dangerTotal: f.total,
+          foeEventPart: f.parts.includes(eventPart ?? "") ? eventPart : null,
+        };
       })(),
       /*
        * 收益的来源 —— 与敌势那条**同一把尺子**。
@@ -1601,7 +1633,7 @@ const modeRows = computed(() => {
        */
       ...(() => {
         const r = rewardLineFor(m.id, region);
-        return { rewardParts: r.parts, rewardTotal: r.total };
+        return { rewardTotal: r.total };
       })(),
       /*
        * 行囊还能再装几件 —— 整趟的装备期望远超这个数时,模式窗要把差额说出来。
