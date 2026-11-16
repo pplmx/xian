@@ -49,6 +49,7 @@ import { useCultivationStore } from "@/stores/cultivation";
 import { useQuestsStore } from "@/stores/quests";
 import { usePlayerStore } from "@/stores/player";
 import { PETS } from "@/data/pets";
+import { beastFamilyName } from "@/data/beastFamilies";
 import { petVow } from "@/data/petVows";
 import { PERSONALITY_NAMES, personalityDesc } from "@/core/petPersonality";
 import { clampBlueprintMastery, isBlueprintMastered } from "@/core/blueprintMastery";
@@ -641,6 +642,16 @@ export function describePet(
       // 契语(它对你说的那一句)排在 flavor 之后、数值之前 —— 收进图鉴就是「见过这一只」的凭证
       petVow(def.id),
       petFuncText(def),
+      /*
+       * 族类 —— 「这一只是什么」（第 439 轮）。
+       *
+       * 与名号页同源（`beastFamilyName`）。两处资料此前不一致：名号页第 438 轮
+       * 已有族名，而图鉴这一册没有 —— 同一只灵兽，两处读到的信息不一样。
+       *
+       * 排在功能之后、性格之前：族类是**先天**的品类，性格是**后天**的走法，
+       * 先说「它是什么」，再说「它怎么走」。
+       */
+      `族类 ${beastFamilyName(def.family)}`,
       `性格 ${PERSONALITY_NAMES[def.personality]}:${personalityDesc(def.personality)}`,
       petTraitText(def),
     ]
