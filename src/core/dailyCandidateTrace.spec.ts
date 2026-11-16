@@ -72,8 +72,16 @@ describe("今日天道 · 候选轨迹", () => {
     if (passedAt === 0) {
       expect(dailySkipNote(), "今天第一次候选就过，却还在说「掠过 N 处」—— 那是废话").toBeNull();
     } else {
-      // 其余情形下这条判据不适用，用一个显式断言避免「静默跳过」
-      expect(passedAt === 0 || passedAt > 0).toBe(true);
+      /*
+       * 今天顺延过 —— 「一次即过」这一条对今天不适用。
+       *
+       * 这里原本写的是 `expect(passedAt === 0 || passedAt > 0).toBe(true)`，
+       * 而那是个**恒真断言**（lint 也点了名：oxc/double-comparisons）——
+       * 判据里出现恒真断言，等于把「今天不适用」伪装成「今天通过了」。
+       *
+       * 改成明说：今天确实顺延过，由下面那条反向覆盖。
+       */
+      expect(passedAt, "今日没有一个候选通过 —— 那是另一种情形").toBeGreaterThan(0);
     }
   });
 
