@@ -69,14 +69,49 @@ export function tierOfMajor(major: number): number {
   return maxTierForMajor(major);
 }
 
-/** 入口代价:凡境按当前层级折算灵石;天界是道源定额 */
+/**
+ * 天界册道源代价随层级抬高 —— **此前完全不抬**（第 423 轮修）。
+ *
+ * ## 那个问题
+ *
+ * 原文两行:
+ *
+ * ```ts
+ *   stone:    stoneByTier(tierOfMajor(major), def.cost.stone)   // 按层级指数放大
+ *   daoSource: def.cost.daoSource                               // 一个常数
+ * ```
+ *
+ * 石灵按 `STONE_TIER_GROWTH(1.9)^(tier−1)` 涨,真仙(tier 21)→道祖(tier 32)是
+ * **×1165**;而道源那一支纹丝不动。于是同一处天界秘境,越往后越便宜:
+ * 到道祖时,一笔 90 道源的入场费在当世收入里只占 **0.1%** —— 门槛形同虚设。
+ *
+ * ## 为什么不是按灵石那个 ×1165
+ *
+ * 灵石与道源**不是同一种东西**:灵石随产出膨胀(历练/建筑都在涨),道源只从
+ * 熔炉与转世来,它的收入增长慢得多 —— 修到真仙转世得 66300,修到道祖得 277500,
+ * 只有 **×4.19**。把道源也乘 1165,玩家根本付不起。
+ *
+ * 故按**道源自己的收入比例**抬:以真仙(tier 21)为基准,每层 +0.32 倍,
+ * 到 tier 32 正好约 ×4.2。那个 0.32 是 (4.19−1)/11 取整,写在这里是为了让
+ * 「为什么是这个数」有据可查 —— 它来自道源收入曲线,不是随手定的。
+ */
+const DAO_COST_PER_TIER = 0.32;
+const DAO_COST_BASE_TIER = 21;
+
+export function daoSourceCostAt(def: SecretRealmDef, major: number): number {
+  const base = "daoSource" in def.cost ? def.cost.daoSource : 0;
+  const scale = 1 + Math.max(0, tierOfMajor(major) - DAO_COST_BASE_TIER) * DAO_COST_PER_TIER;
+  return Math.round(base * scale);
+}
+
+/** 入口代价:凡境按当前层级折算灵石;天界按层级抬道源（见 `daoSourceCostAt`） */
 export function entryCostOf(
   def: SecretRealmDef,
   major: number,
 ): { kind: "stone"; stone: GNum } | { kind: "daoSource"; daoSource: number } {
   return "stone" in def.cost
     ? { kind: "stone", stone: stoneByTier(tierOfMajor(major), def.cost.stone) }
-    : { kind: "daoSource", daoSource: def.cost.daoSource };
+    : { kind: "daoSource", daoSource: daoSourceCostAt(def, major) };
 }
 
 /** 代价的可读文案(界面直接用,不另写一份) */
