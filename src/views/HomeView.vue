@@ -154,7 +154,7 @@
           class="home-deck__next"
           data-home-goal
         >
-          <span class="home-deck__next-tag">当前道途</span>
+          <span class="home-deck__next-tag">{{ currentGoalTag }}</span>
           <span class="home-deck__next-body">
             <span class="home-deck__next-title">{{ currentGoal.text }}</span>
             <span v-if="currentGoal.hint" class="home-deck__next-copy">{{ currentGoal.hint }}</span>
@@ -518,6 +518,46 @@ const resources = useResourcesStore();
 const now = useNow();
 
 // Phase 29 修行目标:只给方向,不替玩家做决定(goal.ts 此前零展示,接线摆上主页)
+/**
+ * 那一格标签 —— 按 `GoalType` 分流，不一律写「当前道途」（第 429 轮）。
+ *
+ * ## 那个错位
+ *
+ * 标签此前是写死的「当前道途」。而 `GoalType` 有八种，此前只有五种在用它 ——
+ * 「尝试突破」「完善流派」「深入某地」都还能读作「道途」，故一直没露馅。
+ *
+ * 第 428 轮补的三支让它露了：
+ *
+ * ```text
+ *   立下此世的道途          写在「当前道途」下 —— 贴切（虽然它还没立）
+ *   5 界已备道源            写在「当前道途」下 —— 完全不是道途，是远征
+ *   今日天道与秘境尚可一探   写在「当前道途」下 —— 更远
+ * ```
+ *
+ * 判据还查到一件事：**全仓没有一处读过 `goal.type`** —— 那个字段从被造出来
+ * 起就只是类型标注。故这一处是它第一个消费者。
+ *
+ * ## 为什么不是把标签删掉
+ *
+ * 那一格是「系统递来的下一步」，而「下一步」有三种性质完全不同的来源:
+ * 一件当下要做的小事 / 一次不可逆的选择 / 一整个界域的推进。
+ * 标签就是用来分这件事的 —— 删了之后三样看起来一样。
+ */
+const currentGoalTag = computed(() => {
+  switch (currentGoal.value?.type) {
+    case "path":
+      // 一世只能选一次，且不可改（见 data/endgame 的 DAO_PATHS）
+      return "当下抉择";
+    case "expedition":
+      return "远征";
+    case "endgame":
+      // 泛指那一支：没有更具体的下一步，只剩「今日还能做什么」
+      return "今日可做";
+    default:
+      return "当前道途";
+  }
+});
+
 /*
  * 终局状态由这里递进去 —— `core/goal` 不 import store（见 layeringAudit 的约束）。
  * 两个数都来自 `endgame` store 本身，不在这里另算。

@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 857 个 spec;本作自己那部分 777 个) |
+| `bun run test` | 全量用例(全量 858 个 spec;本作自己那部分 778 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 857 个 spec = 宿主 777 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 858 个 spec = 宿主 778 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 857 个 spec(本作自己那部分 777 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 858 个 spec(本作自己那部分 778 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -23922,3 +23922,67 @@ adv.cleared = 全部区域 · herb 99999 · 九个装备槽全填 · major 12
 `ReferenceError` 还是 `AssertionError`,再决定去改哪一边。
 
 工作区干净、全量 857 / 7063 全绿;check、test:report、check:ui 同绿。
+
+### 第 429 轮:三种性质不同的目标,长了同一张脸
+
+#### 顺着上一轮查
+
+第 428 轮给首页补了终局三支。这一轮问了一句:**那三支在界面上长得对吗?**
+
+看模板:
+
+```html
+<span class="home-deck__next-tag">当前道途</span>
+```
+
+标签是**写死的**。而 `GoalType` 有八种,此前只有五种在用它 ——
+「尝试突破」「完善流派」「深入某地」都还能读作「道途」,故一直没露馅。
+
+第 428 轮补的三支让它露了:
+
+```text
+立下此世的道途          写在「当前道途」下 —— 贴切（虽然它还没立）
+5 界已备道源            写在「当前道途」下 —— 完全不是道途，是远征
+今日天道与秘境尚可一探   写在「当前道途」下 —— 更远
+```
+
+#### 一个顺带查到的事实
+
+`grep 'goal.type' src` —— **全仓没有一处读过那个字段**。
+它从被造出来起就只是类型标注。`HomeView` 这一处是它第一个消费者。
+
+#### 实现
+
+```text
+path        →  当下抉择   （一世只能选一次，且不可改）
+expedition  →  远征
+endgame     →  今日可做   （没有更具体的下一步，只剩「今日还能做什么」）
+default     →  当前道途   （前五种：突破 / 构筑 / 推地界 / 采料 / 补装备）
+```
+
+不把标签删掉的理由:那一格是「系统递来的下一步」,而**下一步有三种性质
+完全不同的来源** —— 一件当下要做的小事 / 一次不可逆的选择 / 一整个界域的推进。
+标签就是用来分这件事的;删了之后三样看起来一样。
+
+#### 判据四条（`core/goalTagByType.spec`）
+
+```text
+① 标签读 currentGoalTag，不是写死的字面量
+② 三支各有各的标签，且互不相同
+③ 前五种仍写「当前道途」—— 它们确实在说往哪条路上走
+④ 反差：标签表要覆盖全部 GoalType —— 将来加第九种时，这条会红
+```
+
+④ 的口径是「落进 default 那一批**显式登记**」:加新类型时,要么给它写 case,
+要么登记进 `FALLTHROUGH` —— 两者都行,但**必须有人做一次决定**。
+
+#### 一个自己写坏又修好的定位
+
+① 初版直接找第一个 `home-deck__next-tag`,抓到的是「今日一步」那张卡（另一张）,
+于是判据红在一个与它无关的地方。改成先定位 `data-home-goal` 那张卡再往里找。
+
+> 这是这一族的老毛病:**判据要找的是「那一处」,不是「第一个长得像的」。**
+
+两次注入:标签写死 → ① 红;远征与道途标签重复 → ② 红并列出三个值。
+
+工作区干净、全量 858 / 7067 全绿;check、test:report、check:ui 同绿。
