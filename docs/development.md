@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 831 个 spec;本作自己那部分 751 个) |
+| `bun run test` | 全量用例(全量 832 个 spec;本作自己那部分 752 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 831 个 spec = 宿主 751 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 832 个 spec = 宿主 752 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 831 个 spec(本作自己那部分 751 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 832 个 spec(本作自己那部分 752 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -20978,3 +20978,114 @@ counterText 把 kills 写成键名    → 1 红（说法不许是键名）
 这正是判据该做的:它报的是「读数里没说出她是哪一道」,而我凭印象填了个名字。
 
 工作区干净、全量 831 / 6918 全绿;check、test:report、check:ui 同绿。
+
+### 第 389 轮:「多走几处地界,新的相遇会自己找上来」—— 而它永远找不上来了
+
+第 388 轮补了「素行之向」,收尾时顺手留了个疑问:同行帖那片空白(`bond-quiet`)
+到底在什么情况下出现。这一轮去量了,撞到一处**永远做不到的建议**。
+
+#### 量出来的事实
+
+七件共同事件全历尽之后:
+
+```text
+这一世还开着几件           = 0
+offerBondEvent 四次情境位   = null / null / null / null
+meet("dl_zhaoyan")         = false   ← 已有同行者时直接返回
+doneEvents                 = 7/7
+```
+
+而界面还是老一句:
+
+```text
+此刻没有未了之言
+多走几处地界，新的相遇会自己找上来。
+```
+
+走多少地界都不会再有共同事件,也不会有第二个人。**那句话在那一档上是空头承诺。**
+
+#### 根因:一个 `v-else` 装下了四种处境
+
+```text
+① 她还在，只是这一会儿没事说     → 「多走走」成立
+② 这一世的共同事件全历尽了       → 走多少都没用
+③ 她已经陨落                     → 有专门那句
+④ 她已经离去                     → 有专门那句
+```
+
+③④早就分出来了,①②共用一句。而①②的差别正是「还会不会有下一件」。
+
+#### 这事仓里已经修过一次
+
+`docs/usage.md` 写着:
+
+> 混沌道祖·圆满就是这条路的尽头:到那里就没有「下一境」了,破境账、当前目标、
+> 下一步指引与修行阶段都改口说「已至大道尽头」,不再报一个不存在的关口 ——
+> **终点不该被写成中转站**。
+
+境界那一条在 `core/goal` 里由 `atApex` 分出来了。道侣这一处是同一个形状的第二次 ——
+**同一句纪律写进手册时没有想到它还有别的入口。**
+
+#### 改法
+
+```text
+core/bondQuiet     bondQuietLine(facts) → { kind, title, copy }
+                   死 → 散 → 历尽 → 没事说（顺序：人不在了，「多走走」自然也不成立）
+BondDialog         那一个 v-else 读 quiet.title / quiet.copy，并带 data-bond-quiet-kind
+```
+
+三条口径:
+
+- **说「此世」不说「这个系统」**。下一世还有别人 —— 用完的是这一世的内容；
+- **两种「零」要分开**。`done >= total` 是「真的走完了」；`done < total` 而盒子暂时空
+  （境界不够、还没解锁）时「多走走」仍是对的；
+- **`total` 为 0 不算历尽**。内容表被误清空时 `0 >= 0` 当场成立，界面会说
+  「已尽数走过」—— 那会把一次内容事故包装成设计。
+
+#### 一条判据第一版写宽了,当场误伤
+
+「历尽那档不许再承诺还会有新的」,第一版正则:
+
+```ts
+const PROMISES_MORE = /多走|新的相遇|自己找上来|还会|再有/
+```
+
+而我写的文案是「往后的路,你们只并肩,不再有新的事」—— **「不再有」里的「再有」被判成
+「承诺还会有」**。那不是文案的错,是判据读不懂否定句。
+
+第一反应是去改文案躲开它,改完立刻觉得不对:那是让判据决定文案怎么写。
+正解是收窄判据 —— 它该禁的是**可执行的方向**(「去吧,那里有新的」),
+不是「不会再有新的」这个说法本身。同时补一条反向断言:
+**历尽那档还必须说穿「已经走完」**,只说「暂无」而不说「已尽」,
+玩家仍会以为是自己运气不好。
+
+#### 四次故障注入
+
+```text
+历尽那档改回旧文案        → 2 红（两档同一句 / 不许承诺还会有）
+删掉 total>0 的保护       → 1 红（内容表空了不算历尽）
+删掉死/散分支             → 2 红（四档互不相同 / 优先级）
+模板不再读 quiet          → 2 红（同源 / 视图读 quiet）
+```
+
+#### 浏览器门第一次量到那块
+
+上一支同行帖夹具挂着一个待决事件(`pendingEventId: "be_jie"`),故它永远走
+`bond-now` 分支 —— **`bond-quiet` 那一块在真浏览器里从来没被量到过**。
+新增一支「同行帖历尽时的空态」:夹具的 `doneEvents` 取内容表全部 id(不手写七个),
+390 与 195 两档都量。故障注入:把夹具改回只历一件,门当场报
+「档 idle / 正文「多走几处地界…」」。
+
+#### 两处顺带撞到的东西
+
+```text
+exportReach.spec   我在注释里写了 availableBondEvents 的名字，
+                   而那条判据把「任何文件里出现这个名字」都算引用 ——
+                   基线里那条「只在本地用」于是被我的一句散文消掉了。
+                   改法：改写注释，不改判据（那条判据的口径是对的）。
+layout-check       data/bondEvents 有一处 @/data/daolu 的值导入，
+                   而脚本在 Vite 之外跑 bun，解析不了别名 ——
+                   改为从源码文本取 id，并加一条防空转。
+```
+
+工作区干净、全量 832 / 6928 全绿;check、test:report、check:ui 同绿。

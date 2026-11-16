@@ -271,6 +271,25 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const INDEX = `file://${join(ROOT, "dist/index.html")}`;
 const SHOTS_DIR = "/tmp/layout-shots";
+/**
+ * 全部共同事件 id —— 「历尽」那一档的夹具用它，**不手写七个**。
+ *
+ * 不从 `data/bondEvents` 直接 import:`data/bondEvents` 有一处 `@/data/daolu`
+ * 的**值导入**（`LEAN_TENSION`），而本脚本在 Vite 之外跑 `bun`，解析不了别名。
+ * 故从源码文本里取 id —— 仍是同一份事实源，只是换了一条读法。
+ * 下面那条防空转断言保证它真取到了东西。
+ */
+const ALL_BOND_EVENTS = [
+  ...readFileSync(join(ROOT, "src/data/bondEvents.ts"), "utf8").matchAll(
+    /\n\s+id:\s*"(be_[a-z_]+)",/g,
+  ),
+].map((m) => m[1]);
+if (ALL_BOND_EVENTS.length === 0) {
+  throw new Error(
+    "从 src/data/bondEvents.ts 里一个共同事件 id 都没取到 —— 取值口径要跟着数据结构走",
+  );
+}
+
 const SHOTS = process.argv.includes("--shots");
 
 const VIEWPORTS = [
@@ -11170,6 +11189,162 @@ async function taskBondFolio() {
 
     if (pageErrors.length)
       failures.push(`[390] 同行帖场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+  } finally {
+    await ctx.close();
+  }
+  return { failures, checked, contrastFails: [], pixelContrastFails: [], zoomFails: [] };
+}
+
+/**
+ * 同行帖走到「此世的缘分已尽数走过」那一档 —— 四种空态里的第三种。
+ *
+ * ## 为什么单独一支
+ *
+ * 上一支夹具里挂着一个待决事件(`pendingEventId: "be_jie"`),故它永远走
+ * `bond-now` 分支,`bond-quiet` 那一块在真浏览器里**从来没被量到过**。
+ * 而本轮修的正是那一块的第三档:
+ *
+ * ```text
+ * 七件共同事件全历尽之后
+ *   这一世还开着几件              = 0
+ *   offerBondEvent 四次情境位   = null / null / null / null
+ *   meet(另一个人)              = false（已有同行者）
+ * ```
+ *
+ * 而界面当时还在说「多走几处地界，新的相遇会自己找上来」——
+ * 一条永远做不到的建议。
+ *
+ * ## 判据
+ *
+ * 全历尽的存档打开同行帖:`data-bond-quiet-kind` 必须是 `exhausted`,
+ * 且那一段文字里**不许**再出现「多走」「新的相遇」这类还会再来的指引 ——
+ * 同时必须说得出「已经全部走过」。390 与 195 两档都要收住。
+ */
+async function taskBondQuietExhausted() {
+  const failures = [];
+  let checked = 0;
+  const ctx = await auditContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  try {
+    const slices = showcaseSlices("light");
+    /*
+     * `doneEvents` 取内容表的**全部 id** —— 不手写七个。
+     * 手写会在加第 8 件事件之后立刻失效（那时它其实没历尽），
+     * 而这一支的整个意义就是「真的全历尽了」。
+     */
+    slices.player = {
+      ...slices.player,
+      bond: {
+        daoluId: "dl_qingli",
+        stage: "daolv",
+        fate: 100,
+        trust: 100,
+        accord: 100,
+        shared: 12,
+        metAt: Date.now() - 86400000 * 9,
+        fallen: false,
+        departed: false,
+        doneEvents: [...ALL_BOND_EVENTS],
+        pendingEventId: null,
+        opportunities: 80,
+        nextEventAt: 86,
+        lastKind: "mortal",
+        intent: null,
+        intentPending: false,
+      },
+    };
+    await seedSave(ctx, slices, "__bondQuietFixture");
+
+    const page = await ctx.newPage();
+    const pageErrors = [];
+    watchPageErrors(page, pageErrors);
+    const rendered = await openRoute(page, "/character", 650);
+    if (!rendered) failures.push("[390] 全历尽场景:/character 没有渲染出来");
+    await clearOverlays(page);
+
+    const entry = page.locator("main button", { hasText: /道\s*侣/ }).first();
+    checked += 1;
+    if ((await entry.count()) === 0) {
+      failures.push("[390] 全历尽场景:人物页找不到「道侣」入口");
+    } else {
+      await entry.click({ timeout: 4000 }).catch(() => {});
+      const opened = await page
+        .locator("[data-bond-quiet]")
+        .waitFor({ state: "visible", timeout: 5000 })
+        .then(() => true)
+        .catch(() => false);
+      if (!opened) failures.push("[390] 全历尽时没有落到「没有未了之言」那一块");
+      if (opened) await settleVisuals(page);
+    }
+
+    const readQuiet = () =>
+      page.evaluate(() => {
+        const el = document.querySelector("[data-bond-quiet]");
+        const panel = el?.closest(".modal-panel");
+        if (!el || !panel) return null;
+        return {
+          kind: el.getAttribute("data-bond-quiet-kind"),
+          title: (el.querySelector("[data-bond-quiet-title]")?.textContent || "").trim(),
+          copy: (el.querySelector("[data-bond-quiet-copy]")?.textContent || "").trim(),
+          text: (el.textContent || "").replace(/\s+/g, " ").trim(),
+          overflow: el.scrollWidth > el.clientWidth + 1,
+          panelScrollWidth: panel.scrollWidth,
+          panelWidth: panel.clientWidth,
+        };
+      });
+
+    if (await page.locator("[data-bond-quiet]").count()) {
+      const quiet = await readQuiet();
+      checked += 1;
+      if (
+        !quiet ||
+        quiet.kind !== "exhausted" ||
+        quiet.overflow ||
+        /多走|新的相遇|自己找上来/.test(quiet.text) ||
+        !/全部走过|已尽|走完|到头/.test(quiet.text)
+      ) {
+        failures.push(
+          `[390] 全历尽时空态说的不是「已经走完」:` +
+            `档 ${quiet?.kind || "无"} / 标题 «${quiet?.title || "无"}» / ` +
+            `正文 «${quiet?.copy || "无"}» / 溢 ${quiet?.overflow ?? "?"}`,
+        );
+      }
+
+      checked += 1;
+      if (!quiet || quiet.panelScrollWidth > quiet.panelWidth + 1) {
+        failures.push(
+          `[390] 全历尽时面板横向溢出:${quiet?.panelScrollWidth ?? 0}>${quiet?.panelWidth ?? 0}`,
+        );
+      }
+
+      await page.setViewportSize({ width: 195, height: 422 });
+      await settleVisuals(page);
+      const narrow = await readQuiet();
+      checked += 1;
+      if (
+        !narrow ||
+        narrow.overflow ||
+        narrow.panelScrollWidth > narrow.panelWidth + 1 ||
+        narrow.kind !== "exhausted"
+      ) {
+        failures.push(
+          `[195] 全历尽时空态没收住:档 ${narrow?.kind || "无"} / ` +
+            `溢 ${narrow?.overflow ?? "?"} / ` +
+            `面板 ${narrow?.panelScrollWidth ?? 0}>${narrow?.panelWidth ?? 0}`,
+        );
+      }
+      if (SHOTS) {
+        mkdirSync(SHOTS_DIR, { recursive: true });
+        await page.screenshot({ path: join(SHOTS_DIR, "bond-quiet-exhausted-195.png") });
+      }
+    }
+
+    if (pageErrors.length)
+      failures.push(`[390] 全历尽场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
   } finally {
     await ctx.close();
   }
@@ -35036,6 +35211,7 @@ const TASKS = [
   ["际遇帖的门限与去向", taskEventSlip],
   ["择师谱的两步定契", taskMentorLedger],
   ["同行帖的此刻与后果", taskBondFolio],
+  ["同行帖历尽时的空态", taskBondQuietExhausted],
   ["往生帖的门槛与去留", taskRebirthFolio],
   ["真打一场历练战斗", taskCombatReplay],
   ["敌人卡最挤的一档", taskEnemyCard],

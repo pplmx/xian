@@ -184,21 +184,19 @@
         </section>
       </section>
 
-      <section v-else class="bond-quiet" data-bond-quiet>
+      <!--
+        没有待答的事 —— 这**不是一种处境**,而是四种（见 core/bondQuiet）。
+
+        原先这里一个 `v-else` 说尽，副文永远是「多走几处地界，新的相遇会自己找上来」。
+        而七件共同事件全历尽之后，四次情境位全部回 null、`meet()` 也直接 false ——
+        那句话在那一档上是**永远做不到的建议**。世界到顶之后指引还在说「再往前走」，
+        与本仓 `docs/usage.md` 那句「终点不该被写成中转站」是同一个形状。
+      -->
+      <section v-else class="bond-quiet" data-bond-quiet :data-bond-quiet-kind="quiet.kind">
         <span class="bond-quiet__seal font-kai" aria-hidden="true">宁</span>
         <div>
-          <p class="bond-quiet__title">
-            {{ bond.fallen ? "此世同行已止" : bond.departed ? "此世已分道" : "此刻没有未了之言" }}
-          </p>
-          <p class="bond-quiet__copy">
-            {{
-              bond.fallen
-                ? "人不随转世回来，历世同行仍留在卷末。"
-                : bond.departed
-                  ? "关系停在此处，走远的人不会再追问。"
-                  : "多走几处地界，新的相遇会自己找上来。"
-            }}
-          </p>
+          <p class="bond-quiet__title" data-bond-quiet-title>{{ quiet.title }}</p>
+          <p class="bond-quiet__copy" data-bond-quiet-copy>{{ quiet.copy }}</p>
         </div>
       </section>
 
@@ -420,7 +418,8 @@ import {
   type IntentAftermath,
   type IntentResponse,
 } from "@/data/bondIntent";
-import { LEAN_STANCE_SHIFT, TRIGGER_NAMES, type BondChoice } from "@/data/bondEvents";
+import { BOND_EVENTS, LEAN_STANCE_SHIFT, TRIGGER_NAMES, type BondChoice } from "@/data/bondEvents";
+import { bondQuietLine } from "@/core/bondQuiet";
 import { bondLeanAxes, bondLeanSummary } from "@/ui/bondLeanAxes";
 import {
   firstNewVisibleIndex,
@@ -528,6 +527,21 @@ const leanShiftText = computed(() => {
 });
 /** 一行说完 —— 读屏与窄屏用，不含任何两列排版的暗示 */
 const leanSummary = computed(() => (leanAxes.value ? bondLeanSummary(leanAxes.value) : ""));
+
+/**
+ * 没有待答的事时该说哪一句 —— 四种处境,一个 `v-else` 装不下。
+ *
+ * `done` 取 `bond.doneEvents.length`,`total` 取内容表的真实件数（不手写 7）。
+ * 判据见 `core/bondQuiet.spec`。
+ */
+const quiet = computed(() =>
+  bondQuietLine({
+    fallen: bond.value?.fallen ?? false,
+    departed: bond.value?.departed ?? false,
+    done: bond.value?.doneEvents.length ?? 0,
+    total: BOND_EVENTS.length,
+  }),
+);
 const pendingEventTriggers = computed(() =>
   (pendingEvent.value?.triggers ?? [])
     .map((t) => TRIGGER_NAMES[t])
