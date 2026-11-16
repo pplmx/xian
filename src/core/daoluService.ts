@@ -639,6 +639,22 @@ export function pendingIntent(): BondIntent | null {
 }
 
 /**
+ * 酝酿中的意图 —— **包括她还没开口的那些**（第 409 轮）。
+ *
+ * `pendingIntent` 只给「已经在等你回应」的那一份。而足迹要回答的是开口**之前**
+ * 玩家看到了什么,故它需要那份正在攒、还没到门槛的意图 —— 也就是 `b.intent` 本身:
+ * `speakIntent` 只改 `raised`,意图从第一次被她想起时就在 `b.intent` 里躺着。
+ *
+ * 与 `pendingIntent` 的区别只在于**不过滤 `intentPending`**;两处读的是同一个字段,
+ * 不存在第二本账。
+ */
+export function brewingIntent(): BondIntent | null {
+  const b = currentBond();
+  if (!b || b.departed || b.fallen) return null;
+  return b.intent ?? null;
+}
+
+/**
  * 回应她的提议。
  *
  * 三种回应各有不同后果,**忽略不等于回绝** ——

@@ -24,7 +24,9 @@
 import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { SPARK_NAMES, SPARK_WEIGHT } from "@/data/bondIntent";
+import { SPARK_NAMES, SPARK_WEIGHT, TEMPER_RESERVE } from "@/data/bondIntent";
+import type { BondIntent } from "@/data/bondIntent";
+import { footprintsOf } from "@/data/bondFootprints";
 import { BOND_EVENTS, TRIGGER_NAMES } from "@/data/bondEvents";
 import { DAOLU } from "@/data/daolu";
 
@@ -64,14 +66,63 @@ function levelOf(evidence: string[], footprints: number): Traceability {
  * evidence 只填**玩家真的能看到**的东西 —— 界面上有的、
  * 提示里出现过的。内部字段(sparks / ripeness / opportunities)一律不算
  */
+/**
+ * 「她开口」那条链的足迹数 —— **实测，不是手写**（第 409 轮改）。
+ *
+ * 原先这里是 `footprints: 0` 一个常量。那个 0 是本轮之前的事实，
+ * 而它被写死在 spec 里之后就不再跟着产品走了：本轮补上足迹机制，
+ * 这个常量仍然说 0，于是「没有任何一条达到可追溯」那条判据会继续绿着 ——
+ * 一条**记录缺口的判据**，在缺口被补上之后反而变成了假绿的来源。
+ *
+ * 现在它从 `footprintsOf` 真的数一遍：沿一条完整的酝酿之路走一遍，
+ * 数出她开口之前玩家能读到几句。
+ */
+function measuredFootprints(): number {
+  /*
+   * 取一位真实道侣的所求，沿酝酿从 0.05 扫到门槛之前，
+   * 记下出现过的**不同句子**数 —— 同一句重复出现不算新足迹。
+   */
+  const d = DAOLU[0]!;
+  const bar = TEMPER_RESERVE[d.temper];
+  const seen = new Set<string>();
+  for (let r = 0.05; r < bar; r += 0.05) {
+    const intent = {
+      daoluId: d.id,
+      wish: d.pursuit,
+      line: "",
+      ripeness: r,
+      sparks: [],
+      raised: 0,
+      responses: [],
+      settled: false,
+    } satisfies BondIntent;
+    for (const f of footprintsOf(intent, d.temper)) seen.add(f.text);
+  }
+  return seen.size;
+}
+
+const MEASURED_FOOTPRINTS = measuredFootprints();
+
 const LINKS: CausalLink[] = [
   {
     surface: "她开口提出自己的事",
     cause: "共历 / 支持 / 未了之事的征兆累积到酝酿度上限",
     // 弹窗里常驻「她所求」,故玩家翻一下能明白她为什么想去
-    evidence: ["道侣弹窗常驻「她所求」", "开口那句话本身点明了方向"],
-    footprints: 0,
-    level: "abrupt",
+    evidence: [
+      "道侣弹窗常驻「她所求」",
+      "开口那句话本身点明了方向",
+      // 第 409 轮补上：开口之前她自己的那几句征兆（data/bondFootprints）
+      "开口前「此刻」那一行逐层浮现的三句征兆",
+    ],
+    footprints: MEASURED_FOOTPRINTS,
+    level: levelOf(
+      [
+        "道侣弹窗常驻「她所求」",
+        "开口那句话本身点明了方向",
+        "开口前「此刻」那一行逐层浮现的三句征兆",
+      ],
+      MEASURED_FOOTPRINTS,
+    ),
   },
   {
     surface: "共同事件出现",
@@ -97,14 +148,36 @@ const LINKS: CausalLink[] = [
 ].map((l) => ({ ...l, level: levelOf(l.evidence, l.footprints) }));
 
 describe("因果可感知 · 现状", () => {
-  it("没有任何一条因果链达到「可追溯」", () => {
-    // 可追溯的条件是原因累积期间留下过足迹。当前全部为 0
-    expect(LINKS.every((l) => l.footprints === 0)).toBe(true);
-    expect(LINKS.some((l) => l.level === "traceable")).toBe(false);
+  it("「她开口」这一条已经补到可追溯，其余三条停在可推断", () => {
+    /*
+     * 第 409 轮之前：四条链的足迹数全为 0。
+     * 本轮补上 `data/bondFootprints` 之后，「她开口」那条有了三句征兆。
+     *
+     * 这一条从「记录一个缺口」改成「钉住补上之后的分布」：
+     * 至少一条可追溯，且剩下的仍列得清楚 —— 免得以后有人以为全好了。
+     */
+    const traceable = LINKS.filter((l) => l.level === "traceable");
+    expect(traceable.length, "一条可追溯的都没有 —— 足迹机制是不是被摘掉了？").toBeGreaterThan(0);
+    /*
+     * 其余三条是 `inferable` 而不是 `abrupt`：它们没有过程足迹，
+     * 但弹窗里常驻的说明让玩家翻一下能想明白。这两个档位别混为一谈 ——
+     * `abrupt` 是「怎么都想不到」，`inferable` 是「要翻一下」。
+     */
+    const stillAbrupt = LINKS.filter((l) => l.level === "abrupt").map((l) => l.surface);
+    const inferable = LINKS.filter((l) => l.level === "inferable").map((l) => l.surface);
     console.log(
-      "\n四条链的足迹数全为 0 —— 原因在暗中累积,玩家收到结果之前" +
-        "\n没有任何征兆。这正是「她为什么在这一刻开口」无法回答的原因",
+      `\n可追溯 ${traceable.length} 条：${traceable.map((l) => l.surface).join("、")}` +
+        `\n可推断 ${inferable.length} 条（有说明、无过程足迹）：${inferable.join("、")}` +
+        `\n突兀 ${stillAbrupt.length} 条：${stillAbrupt.join("、") || "—"}`,
     );
+    /*
+     * 「她开口」必须在可追溯那一边 —— 这是本轮的直接产物，
+     * 若它掉回去，说明 bondFootprints 与界面的接线断了。
+     */
+    expect(
+      LINKS.find((l) => l.surface === "她开口提出自己的事")?.level,
+      "「她开口」这一条掉回了突兀 —— 足迹没接上界面",
+    ).toBe("traceable");
   });
 
   it("内部记着原因,界面上也确实能看到(本轮补上了这条展示)", () => {
@@ -179,14 +252,27 @@ describe("因果可感知 · 本轮的边界", () => {
     );
   });
 
-  it("结论:代码层的因果已经稳了,缺的是让它浮出水面", () => {
-    // 34.1 的 907 项测试证明系统内部有因果;
-    // 本审计证明这些因果目前没有留下玩家可见的足迹
-    expect(LINKS.every((l) => l.cause.length > 0)).toBe(true);
-    expect(LINKS.every((l) => l.footprints === 0)).toBe(true);
+  it("结论:代码层的因果已经稳了,而足迹也已经长出一条", () => {
+    /*
+     * 34.1 的 907 项测试证明系统内部有因果。
+     * 本审计原先证明「这些因果没有留下玩家可见的足迹」——
+     * 第 409 轮补上 `bondFootprints` 之后，其中一条有了。
+     *
+     * 剩下的三条仍靠「弹窗常驻的说明」让玩家能推断，而不是靠过程中的痕迹。
+     * 这条判据不改写成「全都好了」——它钉住现状：原因都有，足迹有一条。
+     */
+    expect(
+      LINKS.every((l) => l.cause.length > 0),
+      "有链讲不出原因 —— 那不是视觉问题",
+    ).toBe(true);
+    const withFootprints = LINKS.filter((l) => l.footprints > 0);
+    expect(
+      withFootprints.length,
+      "一条有足迹的都没有 —— bondFootprints 的接线断了",
+    ).toBeGreaterThan(0);
     console.log(
-      "\n每条链都有真实原因(代码层已验证),但每条链的足迹数都是 0。" +
-        "\n下一步不是加功能,是让已有的因果在过程中露出痕迹",
+      `\n每条链都有真实原因(代码层已验证);其中 ${withFootprints.length}/${LINKS.length} 条` +
+        "\n在过程中留下了玩家可见的足迹。其余仍靠弹窗里的常驻说明供人推断。",
     );
   });
 });

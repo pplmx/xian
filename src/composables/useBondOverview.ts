@@ -1,7 +1,8 @@
 import { computed } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import { daoluDef } from "@/data/daolu";
-import { pendingBondEvent, pendingIntent } from "@/core/daoluService";
+import { brewingIntent, pendingBondEvent, pendingIntent } from "@/core/daoluService";
+import { footprintsOf } from "@/data/bondFootprints";
 
 /**
  * 道侣域的共享投影 —— 人物页道侣入口卡与道侣弹窗(BondDialog)都要读的那一批。
@@ -31,6 +32,29 @@ export function useBondOverview() {
   );
   /** 道侣有未答的事(她自己提的言 / 世界递的事) —— 入口那一行要报出来 */
   const hasBondWord = computed(() => !!pendingEvent.value || !!herIntent.value);
+  /**
+   * 开口之前的那些征兆(第 409 轮)。
+   *
+   * `bondCausality.spec` 量过:她开口前的足迹数为 0 —— 玩家看到的是
+   * 「她忽然停下」,而在此之前一条线索都没有。这里补的就是那段时间里
+   * 玩家该看到的轻量记忆,由 ripeness 派生(见 data/bondFootprints)。
+   */
+  const footprints = computed(() =>
+    bondDef.value && !bond.value?.departed && !bond.value?.fallen
+      ? footprintsOf(brewingIntent(), bondDef.value.temper)
+      : [],
+  );
+  /** 只看最新一条 —— 界面上一次只印一句,多了就成了日志 */
+  const latestFootprintLine = computed(() => footprints.value.at(-1)?.text ?? "");
 
-  return { bond, bondDef, pastBonds, pendingEvent, herIntent, hasBondWord };
+  return {
+    bond,
+    bondDef,
+    pastBonds,
+    pendingEvent,
+    herIntent,
+    hasBondWord,
+    footprints,
+    latestFootprintLine,
+  };
 }

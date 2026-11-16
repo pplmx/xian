@@ -66,6 +66,20 @@
           </div>
         </div>
 
+        <!--
+          开口之前的征兆（第 409 轮）：她开口前的足迹数原本是 0 —— 玩家看到的是
+          「她忽然停下」，而在此之前一条线索都没有。这几句由**她自己的酝酿程度**
+          派生（见 data/bondFootprints），不是另记的计数器，界面上也不出现任何数值。
+          她已开口时这一句让位给下面那句她的话 —— 两处同时说会互相削弱。
+        -->
+        <p
+          v-if="!herIntent && latestFootprintLine"
+          class="bond-line bond-line--faint"
+          data-bond-footprint
+        >
+          <span>此刻</span>{{ latestFootprintLine }}
+        </p>
+
         <section v-if="herIntent" class="bond-intent" data-bond-intent>
           <p class="bond-kicker">她开了口</p>
           <blockquote class="bond-quote">{{ herIntent.line }}</blockquote>
@@ -438,7 +452,8 @@ import { clampPercent } from "@/utils/unitRatio";
 const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 
-const { bond, bondDef, pastBonds, pendingEvent, herIntent } = useBondOverview();
+const { bond, bondDef, pastBonds, pendingEvent, herIntent, latestFootprintLine } =
+  useBondOverview();
 
 /**
  * 她那片地 —— 取 `terrains` 的第一轴(相遇偏好的主地貌)。
