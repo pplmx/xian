@@ -112,8 +112,46 @@ export function qualityQuantileAt(tier: number, p: number): number {
   return weights.length - 1;
 }
 
+/**
+ * 按 id 取装备档位 —— **取不到就抛**,不静默退回「常规」。
+ *
+ * ## 这个兜底真的伤过人（第 396 轮，伤的是我自己）
+ *
+ * 原先是 `?? GEAR_PROFILES[1]`。我拿三个想当然的 id（`poor` / `mid` / `rich`）
+ * 跑 `contentCoverageAudit`，得到的三行**逐位相同**，差点把「贫穷与富裕装备下
+ * 压制率完全一样」写成一个实测缺陷 —— 真正的原因是三次都退回同一个默认档。
+ *
+ * 真实 id 是 `casual` / `typical` / `optimized`。
+ *
+ * ## 为什么是抛而不是给个更响的默认
+ *
+ * 这一族的形状在 `AGENTS.md` 里点过名：
+ *
+ * ```text
+ *   一个「键」没有类型约束（裸 string）
+ *   + 一条查不到时的兜底（?? 默认值）
+ *   = 配错了不会报错，只会静默地少一件事
+ * ```
+ *
+ * 本函数的返回值直接决定「玩家穿什么装备」这个口径。静默退到「常规」意味着
+ * 一个写错的调用会照着另一个档位出数，而读数的人以为自己在看「随缘档」——
+ * 审计的全部结论都建立在这一个参数上，它不能有静默兜底。
+ *
+ * ## 为什么不直接把参数改成联合类型
+ *
+ * 那当然更强，但 `GEAR_PROFILES` 是 `GearProfile[]`、`id` 是 `string`，
+ * 改成字面量联合要动类型定义与所有构造点。而本轮要挡住的是
+ * **「写错时不吭声」**这一件事 —— 抛错就够，且不改任何现有调用方的写法。
+ * 类型收窄留给将来有正当理由时再动。
+ */
 export function gearProfile(id: string): GearProfile {
-  return GEAR_PROFILES.find((p) => p.id === id) ?? GEAR_PROFILES[1]!;
+  const found = GEAR_PROFILES.find((p) => p.id === id);
+  if (!found) {
+    throw new Error(
+      `装备档位 "${id}" 不存在 —— 现有:${GEAR_PROFILES.map((p) => p.id).join(" / ")}`,
+    );
+  }
+  return found;
 }
 
 /**

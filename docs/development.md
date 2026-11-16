@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 837 个 spec;本作自己那部分 757 个) |
+| `bun run test` | 全量用例(全量 838 个 spec;本作自己那部分 758 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 837 个 spec = 宿主 757 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 838 个 spec = 宿主 758 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 837 个 spec(本作自己那部分 757 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 838 个 spec(本作自己那部分 758 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -21566,3 +21566,69 @@ clampRate 恒返回地板           → 第一版全绿
 而「哪张表该进去」的判断，需要一次横向对照（法宝有、器魂没有）才能得出。
 
 工作区干净、全量 837 / 6955 全绿;check、test:report、check:ui 同绿。
+
+### 第 396 轮:一个静默兜底,让「三档完全相同」看起来像产品结论
+
+这一轮几乎没有产出缺陷 —— 我查的每一条都被既有实现或既有裁决否掉了。
+**但我在查的过程中自己踩了一个坑，而那个坑本身是真缺陷。**
+
+#### 我踩的坑
+
+`inflationAudit.gearProfile(id)` 原先这样写：
+
+```ts
+return GEAR_PROFILES.find((p) => p.id === id) ?? GEAR_PROFILES[1]!;
+```
+
+我拿三个想当然的 id(`poor` / `mid` / `rich`)跑 `contentCoverageAudit`:
+
+```text
+[poor] 死亡点 境-1
+  境0:100% 境1:80% 境2:86% …
+[mid]  死亡点 境-1
+  境0:100% 境1:80% 境2:86% …      ← 一字不差
+[rich] 死亡点 境-1
+  境0:100% 境1:80% 境2:86% …
+```
+
+我写下「贫穷与富裕装备下压制率完全一样 —— 这显然不对」,差点把它报成缺陷。
+真实 id 是 `casual` / `typical` / `optimized`,三次都退回了同一个默认档。
+
+换成正确 id 之后,三档分别是 89.1% / 92.8% / 97.5% —— 差异明显,维度是活的。
+
+#### 为什么它算缺陷而不是我的疏忽
+
+`AGENTS.md` 点过这一族的名字:**裸字符串键 + 静默兜底 = 配错不报错,只会静默地少一件事。**
+
+而这个函数的返回值决定「玩家穿什么装备」这个口径,整个膨胀审计的每一条结论都建立在
+它上面。它的失败**看起来像产品结论** —— 不同档位出同一组数,读起来是
+「装备投入没有区别」,而不是「你参数写错了」。这正是它比一般兜底更危险的地方:
+**错得有理有据。**
+
+改成取不到就抛,并把现有 id 列进错误。判据四条,其中第四条是给我的坑量身定做的:
+若三档真的出同一组数,**即便 id 全写对**,这个维度也是死的 —— 而审计会照旧打印
+三份一样的表。
+
+两次故障注入:还原静默兜底 → 1 红;恒返回同一档 → 2 红。
+
+#### 这一轮被否掉的方向(记下来免得重走)
+
+```text
+敌人 tier 的 atkMult 波动       powerScale 的指数增长完全压住，实际攻击无回落
+五种劫型的静态倍率被支配         每种都有专属机制（裂魂=爆发削劫、重压=前置爆发…）
+境 10 渡劫「堆满减伤也过不去」    满抗性即可渡过，而抗性上限 80% > 减伤上限 60% 是数值设计
+面板没说清抗性与减伤的差别        TribulationPanel 有一整块五行明细，连折算来源都标了
+灵脉的 perPoint 为空            走独立常量 insightDiscountOf，卡片已按 store 读数
+内容压制率 89%                    inflationAudit.spec 有裁决：死亡点消失(-1) 是治理成功
+```
+
+六条,全部不成立。
+
+#### 方法账
+
+前九轮里,这一轮的「否掉率」最高(6/7)。而唯一的收获来自**我自己的误用** ——
+这提示了一个更有效的方向:**不必猜产品哪里错,去看「哪些 API 会在用错时静默给出
+看似合理的结果」**。这一族本仓点过名,但它名单上列的五个都被修了,
+而我这一轮遇到的是名单外的第六个。
+
+工作区干净、全量 838 / 6959 全绿;check、test:report、check:ui 同绿。
