@@ -67,6 +67,74 @@ describe("地界图标要分得开", () => {
     expect(crowded, "同一片地上挤了五个以上**地界**图标 —— 走到另一处时头顶那片天没变").toEqual([]);
   });
 
+  it("同一层里的两处地界不许用同一个图标", () => {
+    /*
+     * ## 由来（第 454 → 458 轮）
+     *
+     * 上一条守的是「落日与山岳」那一对**特例** —— 文件头写得很清楚:
+     *
+     * > 真正值钱的是下一条:**落日与山岳**那一对必须分开 ——
+     * > 那不是"挤不挤"的问题,是「走过来天没变」的问题。
+     *
+     * 而「走过来天没变」是一**类**问题,不是一个特例。同层两处地界
+     * 共用同一个图标时,玩家在同一境界段里从甲走到乙,头顶那片天**一模一样** ——
+     * 与落霞谷那次是同一件事,只是没被点名。
+     *
+     * 实测(改前)有两处:
+     *
+     * ```text
+     *   t29  神帝天宫(castle) / 帝阙天阶(castle)      ← 都是封闭宫阙
+     *   t31  神魔渊(skull)    / 神魔古祭(skull)       ← 都是深渊骸骨
+     * ```
+     *
+     * ## 为什么按「同层」而不是「全表」
+     *
+     * 全表只有十几种图标、四十四个地界,跨层重复必然发生(castle 用了五次),
+     * 而跨层的两处玩家**不会在同一境界段里先后遇到** —— 那时他已经走过几十小时,
+     * 记忆里的那一片天早就淡了。压「全表不重复」是不可能的目标;
+     * 压「同层不重复」才是玩家真能感知的那一格。
+     *
+     * ## 为什么是「图标」而不是「地形」
+     *
+     * 上一条量的是 `sceneTerrainOfPlace`(图标落到哪片天),它管的是**压缩拥挤度**;
+     * 这一条量的是图标本身 —— 两个不同图标可能落在同一片天(那由地形条数决定,
+     * 是既有约束),但**同一个图标**必然画出同一片天。故这一条更硬,也该更早满足。
+     */
+    const byTier = new Map<number, typeof REGIONS>();
+    for (const r of REGIONS) {
+      if (!byTier.has(r.tier)) byTier.set(r.tier, []);
+      byTier.get(r.tier)!.push(r);
+    }
+    const clashes: string[] = [];
+    for (const [tier, rs] of [...byTier].sort((a, b) => a[0] - b[0])) {
+      const byIcon = new Map<string, string[]>();
+      for (const r of rs) {
+        if (!byIcon.has(r.icon)) byIcon.set(r.icon, []);
+        byIcon.get(r.icon)!.push(r.name);
+      }
+      for (const [icon, names] of byIcon) {
+        if (names.length > 1) {
+          clashes.push(`t${tier} 的 ${names.join(" / ")} 都用了「${icon}」`);
+        }
+      }
+    }
+    expect(
+      clashes,
+      "同一层里的两处地界共用同一个图标 —— 从甲走到乙,头顶那片天没变:" + clashes.join(";"),
+    ).toEqual([]);
+  });
+
+  it("反差:跨层重复是允许的 —— 这一条只压同层", () => {
+    /*
+     * 全表四十四个地界、十几种图标,跨层重复必然发生。若哪天有人把这条判据
+     * 扩成「全表不许重复」,它一定会红,而修法只能是造十几个新图标 ——
+     * 那不是玩家感知得到的东西。这条显式记录边界。
+     */
+    const icons = REGIONS.map((r) => r.icon);
+    const reused = icons.length - new Set(icons).size;
+    expect(reused, "全表已经没有任何图标复用 —— 这条边界用例失去意义,请复核").toBeGreaterThan(0);
+  });
+
   it("落日与山岳不许是同一片天", () => {
     /*
      * 点名这一对:它们是「最该分开却被塞进同一格」的典型 ——
