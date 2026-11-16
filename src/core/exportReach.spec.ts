@@ -55,7 +55,6 @@ function allFiles(): string[] {
  */
 const BASELINE = new Set([
   "core/audio.ts:startBgm",
-  "core/celestialSim.ts:auditWorld",
   "core/collectionProgress.ts:COLLECTION_INITIAL_OPEN_MAX",
   "core/compare.ts:measureOnWorld",
   "core/contentGateAudit.ts:humanEventGoldShare",
