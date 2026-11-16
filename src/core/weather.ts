@@ -305,11 +305,65 @@ function contextOf(major: number): CycleContext {
 /**
  * 当天天时(确定性:游戏日 + 界域 → 种子 → 天时,同一天内不换)。
  * 人间界沿用五日天时;仙界及以上取该界域的专属天象池。
+ *
+ * ## 那两层兜底原来把**配置错误**伪装成了天气（第 397 轮）
+ *
+ * 原先是:
+ *
+ * ```ts
+ * return (entry ? weatherDef(entry.id as WeatherId) : undefined) ?? WEATHERS[4]!;
+ * ```
+ *
+ * `WEATHERS[4]` 是「清和」—— 而它的 `mods` 是**空对象**。于是三种完全不同的处境
+ * 被压成同一个结果:
+ *
+ * ```text
+ *   ① 周期还没到           entry 为 undefined       → 清和   （正常兜底）
+ *   ② 池名写错             entriesOf 返回 []        → 清和   （配错，该报）
+ *   ③ 条目里的 id 认不出    weatherDef 返回 undefined → 清和   （配错，该报）
+ * ```
+ *
+ * ②③ 的后果不是「少一件事」而是**整个天时系统静默消失**:玩家在每个界域都看到
+ * 同一句「风和日丽,四时清和」,所有天时加成为 0,而没有任何地方会红。
+ * 现实里它最可能这样发生:加一个新界域,`WORLDS` 加了、`WORLD_WEATHERS` 忘了补 ——
+ * 那一界的玩家从此只有清和天。
+ *
+ * ## 现在怎么分
+ *
+ * 业务兜底(①)保留:还没走到那一周期时,给一个无效果的默认天时是对的。
+ * 配错(②③)则**大声抛错** —— 它们只可能来自数据写错,而写错的那一天
+ * 应该有人立刻知道,而不是让玩家在无声的晴天里过一辈子。
+ *
+ * 抛错而不是返回一个更显眼的默认天时:那仍会被当成「今天天气不错」,
+ * 只是换个名字。这一层要的是**在开发期就炸**,不是换个方式沉默。
  */
 export function todayWeather(major: number): WeatherDef {
   const game = useGameStore();
+  const world = worldOf(major);
+  /*
+   * 先单独问一件事:这一界的池在不在。
+   * 不问 `CYCLES.at` 要结果再猜 —— 它把「池空」与「周期未到」都压成 undefined,
+   * 拆不出来。池名取自 `contextOf` 的同一处口径,不在这里另算。
+   */
+  const pool = world.id === "mortal" ? "mortal" : world.id;
+  const hasPool = pool === "mortal" || pool in WORLD_WEATHERS;
+  if (!hasPool) {
+    throw new Error(
+      `界域「${world.name}」(${world.id})没有天时池 —— WORLD_WEATHERS 里只有 ` +
+        `${Object.keys(WORLD_WEATHERS).join(" / ")}。补上它的池，否则这一界永远是「清和」（无任何天时效果）`,
+    );
+  }
   const entry = CYCLES.at(game.totalPlaySec, contextOf(major)).entry;
-  return (entry ? weatherDef(entry.id as WeatherId) : undefined) ?? WEATHERS[4]!;
+  // ① 周期还没到:业务兜底,保留
+  if (!entry) return WEATHERS[4]!;
+  const def = weatherDef(entry.id as WeatherId);
+  if (!def) {
+    throw new Error(
+      `天时条目里的 id「${entry.id}」不在 WEATHERS / WORLD_WEATHERS 里 —— ` +
+        "认不出就退回「清和」等于让那一界的玩家永远没有天时",
+    );
+  }
+  return def;
 }
 
 /** 距离天时更替还有多久(界面用) */

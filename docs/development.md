@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 838 个 spec;本作自己那部分 758 个) |
+| `bun run test` | 全量用例(全量 839 个 spec;本作自己那部分 759 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 838 个 spec = 宿主 758 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 839 个 spec = 宿主 759 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 838 个 spec(本作自己那部分 758 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 839 个 spec(本作自己那部分 759 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -21632,3 +21632,68 @@ return GEAR_PROFILES.find((p) => p.id === id) ?? GEAR_PROFILES[1]!;
 而我这一轮遇到的是名单外的第六个。
 
 工作区干净、全量 838 / 6959 全绿;check、test:report、check:ui 同绿。
+
+### 第 397 轮:天时的兜底,把配置错误伪装成「今天天气不错」
+
+上一轮记下的下一步是「扫所有带 `?? 默认值` 的查表函数,逐个判断那个兜底是业务合理
+还是掩盖配错」。这一轮照着做了。
+
+#### 九处静默兜底,六处不是问题
+
+```text
+eventTierDef        参数是 EventTier 联合类型,查不到在类型上不可能
+qualityDef          参数是 QualityId 联合类型,同上
+mortalWorldGen:393  rng.int() 保证索引有效,?? 只是类型兜底
+fate.ts:66          宫位固定,stars[0] 必存在
+realms.ts x2        WORLDS 覆盖 0~20,理论不落空
+```
+
+#### 一处是真问题
+
+```ts
+return (entry ? weatherDef(entry.id as WeatherId) : undefined) ?? WEATHERS[4]!;
+```
+
+`WEATHERS[4]` 是「清和」—— 而它的 `mods` 是**空对象**。三种处境被压成同一个结果:
+
+```text
+① 周期还没到           → 清和   （正常兜底，该留）
+② 池名写错             → 清和   （配错，该报）
+③ 条目里的 id 认不出    → 清和   （配错，该报）
+```
+
+②③ 的后果不是「少一件事」,而是**整个天时系统静默消失**。而兜底值恰好是无效果的那一条 ——
+若它退到「雷鸣」(渡劫更难),玩家至少会发现异常;退到「清和」,什么都不发生。
+
+#### 判据写了五条,删到两条
+
+这是这一轮真正学到的:
+
+```text
+① 每个非人间界域都有天时池     → 类型系统保证。实测把 god: 改成 godtypo:，
+                                vue-tsc 当场报 TS2353
+② 池里的每个条目 id 都认得出   → 结构上不可能。池直接就是 WEATHERS/WORLD_WEATHERS
+                                数组本身，条目自带 id
+③ 全境界走一遍                 → 需要 Pinia，而 layeringAudit 基线是「只许减」。
+                                抬基线是松动别人的约束；加纯入口导出会触发 deadExportAudit
+```
+
+③那条最可惜 —— 它验的是 `contextOf` 那段 `world.id === "mortal" ? "mortal" : world.id`
+的映射,是真正在类型系统之外的东西。但两条路都不好,故不写。
+
+留的两条是类型系统看不到的:源码层验「两处 throw 都在、业务兜底还在」,
+以及「兜底那个清和确实无效果」(它是这个兜底危险的原因,哪天清和被加了效果,
+整段判断的前提就变了)。
+
+**这一轮真正的收获不是那个 throw,是删掉了三条不该加的判据。**
+
+#### 方法账
+
+前两轮各有一个「不是产品错、是工具骗人」的发现(392 的夹具视野、396 的静默兜底)。
+这一轮把上一轮记下的方向真跑了一遍:**九处里一处真问题,六处类型系统已管**。
+这个比例说明 `?? 默认值` 这一族基本被清算过了 —— 剩下的都在类型系统看得见的地方。
+
+十轮里第一次出现「我写的判据比该写的多」,而这次的判断依据不是「搜两处文档」,
+而是多问了一句:**这件事是不是已经有人管了,而「有人」包括类型系统。**
+
+工作区干净、全量 839 / 6961 全绿;check、test:report、check:ui 同绿。
