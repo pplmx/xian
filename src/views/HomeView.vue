@@ -470,6 +470,7 @@ import { cnNumber, formatCountdown, formatPercent } from "@/utils/format";
 import { generateCurrentGoal, type Goal } from "@/core/goal";
 import { currentMainQuestProgress } from "@/core/questProgress";
 import { currentFirstStep, homeStatusText } from "@/core/firstStep";
+import { breakthroughInfo } from "@/core/breakthrough";
 import { rewardText } from "@/core/progress";
 import { modsText } from "@/data/statNames";
 import { isRetreating } from "@/core/earlyGameService";
@@ -527,6 +528,14 @@ const statusText = computed(() =>
     injured: cultivation.hasBuff("injury"),
     retreating: isRetreating(),
     expFull: player.expFull,
+    /*
+     * 修为已满时再分一次：灵气够不够破境（第 419 轮）。
+     *
+     * 取的是**突破那一侧的真值**（`breakthroughInfo().reason`），不在这里另算
+     * 「qiCost > qi」—— 那道判据在 `core/breakthrough` 里，两处各写一遍迟早分叉。
+     * 而它只在修为已满时才有意义，故与 `expFull` 一起读。
+     */
+    qiShort: player.expFull && breakthroughInfo().reason === "灵气不足",
   }),
 );
 

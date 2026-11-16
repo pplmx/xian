@@ -46,6 +46,22 @@ export function homeStatusText(input: {
   retreating: boolean;
   /** 修为已满 —— 闲坐时该说「修为已满」,把突破那一步推到眼前 */
   expFull: boolean;
+  /**
+   * 修为已满，但**灵气不够破境**（第 419 轮补）。
+   *
+   * 此前只有 `expFull` 一档，于是「修为已满」被当成一个终态 ——
+   * 而它其实是两种处境：
+   *
+   * ```text
+   *   修为已满 + 灵气够      一步之遥，去突破
+   *   修为已满 + 灵气不够    卡住了，要等灵气（或去补）
+   * ```
+   *
+   * 前者点进去就能破；后者点进去才发现「还差多少缕、回够要多久」。
+   * 玩家在首页看到「修为已满」时不会想到第二种 —— 而它恰恰是后期最常见的那种：
+   * 灵气上限随境界涨、破境消耗按比例算，攒满要时间。
+   */
+  qiShort?: boolean;
 }): string {
   if (input.dead) return "陨落";
   if (input.exploringSecret) return "探秘中";
@@ -53,9 +69,14 @@ export function homeStatusText(input: {
   if (input.sessionActive) return `历练中 · ${input.regionName}`;
   if (input.injured) return "疗伤中";
   if (input.retreating) return "闭关中";
-  // 修为满了还写「修炼中」,等于告诉玩家「该干嘛还干嘛」—— 修为不会自己长,
-  // 该突破那一步得有人递到眼前
-  if (input.expFull) return "修为已满";
+  /*
+   * 修为满了还写「修炼中」,等于告诉玩家「该干嘛还干嘛」—— 修为不会自己长,
+   * 该突破那一步得有人递到眼前。
+   *
+   * 而「修为已满」本身还要再分一次:灵气不够时它不是「一步之遥」,是「卡住了」。
+   * 两句话的下一步完全不同(去突破 vs 等灵气),故分开说。
+   */
+  if (input.expFull) return input.qiShort ? "修为已满 · 灵气不足" : "修为已满";
   return "修炼中";
 }
 
