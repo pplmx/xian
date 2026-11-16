@@ -46,7 +46,14 @@ describe("章与条件 · 纯函数决定哪几枚", () => {
   it("什么都没有时返回空 —— 那时整块不渲染,不留一条空行", async () => {
     const { chipsOf } = await import("@/ui/combatChips");
     expect(
-      chipsOf({ isBoss: false, nemesis: "", traits: [], firstSight: false, avenged: "" }),
+      chipsOf({
+        isBoss: false,
+        nemesis: "",
+        traits: [],
+        family: "",
+        firstSight: false,
+        avenged: "",
+      }),
     ).toEqual([]);
   });
 
@@ -56,6 +63,7 @@ describe("章与条件 · 纯函数决定哪几枚", () => {
       isBoss: true,
       nemesis: "宿敌 · 已败三次",
       traits: ["tough"],
+      family: "",
       firstSight: true,
       avenged: "",
     });
@@ -72,6 +80,7 @@ describe("章与条件 · 纯函数决定哪几枚", () => {
       isBoss: false,
       nemesis: "",
       traits: [],
+      family: "",
       firstSight: false,
       avenged: "旧仇已雪",
     });
@@ -82,7 +91,14 @@ describe("章与条件 · 纯函数决定哪几枚", () => {
   it("空字符串的章不算内容 —— 不因为没有文案就占一行", async () => {
     const { chipsOf } = await import("@/ui/combatChips");
     expect(
-      chipsOf({ isBoss: false, nemesis: "  ", traits: [], firstSight: false, avenged: "" }),
+      chipsOf({
+        isBoss: false,
+        nemesis: "  ",
+        traits: [],
+        family: "",
+        firstSight: false,
+        avenged: "",
+      }),
     ).toEqual([]);
   });
 });
@@ -94,5 +110,89 @@ describe("章与条件 · 不碰结算", () => {
       .replace(/^\s*\/\/.*$/gm, "");
     expect(src).not.toMatch(/from ["']@\/stores\//);
     expect(src).not.toMatch(/from ["']@\/core\//);
+  });
+});
+
+/**
+ * 族类章 —— 29 个族类各有一个词，而它此前从未上过界面。
+ *
+ * ## 由来（第 436 轮）
+ *
+ * `BEAST_FAMILIES` 里每个族类都有 `name`（注释：「族类在人话里的名字」）——
+ * 而 **全仓没有一处读它**。敌人与灵兽的界面上只出现图标（`beastIcon`），
+ * 玩家读不出「这一族叫什么」。
+ *
+ * 图标是抽象符号，名字才是可理解的概念。故补一个 `beastFamilyName()` 并接进
+ * 这一块章 —— 放在这一块而不是另起一行，是因为这一块的条件与内容同源
+ * （见 `combatChips.ts` 的文件头），另起一行会重新引入那个坑。
+ *
+ * ## 判据
+ *
+ * ① 族类章在「身份」那一侧（首领 / 宿敌之后、词条之前）—— 它属于「这是谁」；
+ * ② 空串不占位；
+ * ③ `beastFamilyName()` 对 29 个族类都给出非空的名字；
+ * ④ 反差：`covers` 那个字段**不该**被拿来当族名 —— 它是给写数据的人看的归类说明。
+ */
+describe("族类章 · 29 个族名要上得了界面", () => {
+  const base = {
+    isBoss: false,
+    nemesis: "",
+    traits: [] as string[],
+    family: "",
+    firstSight: false,
+    avenged: "",
+  };
+
+  it("① 族类章在身份那一侧：首领 → 宿敌 → 族类 → 词条", async () => {
+    const { chipsOf } = await import("@/ui/combatChips");
+    const ids = chipsOf({
+      ...base,
+      isBoss: true,
+      nemesis: "宿敌 · 已败三次",
+      family: "狼",
+      traits: ["tough"],
+    }).map((c) => c.id);
+    expect(ids, "族类章的位置不对 —— 它是身份，不是这一场的词条").toEqual([
+      "boss",
+      "nemesis",
+      "family",
+      "trait:tough",
+    ]);
+  });
+
+  it("② 空串不占位", async () => {
+    const { chipsOf } = await import("@/ui/combatChips");
+    expect(chipsOf({ ...base, family: "  " }), "空族名占了一枚章").toEqual([]);
+  });
+
+  it("③ beastFamilyName 对每个族类都给出非空的名字", async () => {
+    const { BEAST_FAMILIES, beastFamilyName } = await import("@/data/beastFamilies");
+    const families = Object.keys(BEAST_FAMILIES);
+    expect(families.length, "族类太少 —— 判据量不到东西").toBeGreaterThanOrEqual(20);
+    const empty: string[] = [];
+    for (const f of families) {
+      const name = beastFamilyName(f as never);
+      if (!name.trim()) empty.push(f);
+      /*
+       * 而且它与 `covers` 不是同一句话 —— 后者是「狼;妖狼、火狼、霜狼一类」，
+       * 那种带分号与顿号的长句不是给玩家看的族名。
+       */
+      expect(name, `族名「${name}」不该是同表里那句 covers`).not.toContain("；");
+      expect(name, `族名「${name}」太长 —— 它是标签，不是说明`).not.toContain(";");
+    }
+    expect(empty, "这些族类没有名字:" + empty.join("、")).toEqual([]);
+  });
+
+  it("④ 反差：族名不许拿 covers 冒充", async () => {
+    const { BEAST_FAMILIES, beastFamilyName } = await import("@/data/beastFamilies");
+    const same: string[] = [];
+    for (const [f, def] of Object.entries(BEAST_FAMILIES)) {
+      if (beastFamilyName(f as never) === (def as { covers: string }).covers) same.push(f);
+    }
+    expect(
+      same,
+      "这些族类的名字直接用了 covers —— 那一个是给写数据的人看的归类说明，不是给玩家的词:" +
+        same.join("、"),
+    ).toEqual([]);
   });
 });

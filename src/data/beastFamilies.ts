@@ -71,3 +71,22 @@ export const BEAST_FAMILIES: Record<BeastFamily, BeastFamilyDef> = {
 export function beastIcon(family: BeastFamily): string {
   return BEAST_FAMILIES[family].icon;
 }
+
+/**
+ * 族类的名字 —— 玩家可读的那个词（「狼」「狐」「月华」）。
+ *
+ * ## 为什么要有这个入口（第 436 轮）
+ *
+ * `name` 字段从数据表建起来那天就在，注释写着「族类在人话里的名字」——
+ * 而**全仓没有一处读它**。补的正是这一支:29 个族类各有一个词，
+ * 而敌人与灵兽的界面上只出现图标，玩家读不出「这一族叫什么」。
+ *
+ * ## 与 `covers` 的分工
+ *
+ * 同表里还有 `covers`（「狼;妖狼、火狼、霜狼一类」）—— 那一个是
+ * **给写数据的人看的归类说明**，不是给玩家看的句子，故它不进这个入口。
+ * 两者不该混：一个说「叫什么」，一个说「怎么归」。
+ */
+export function beastFamilyName(family: BeastFamily): string {
+  return BEAST_FAMILIES[family].name;
+}

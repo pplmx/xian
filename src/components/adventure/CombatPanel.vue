@@ -360,6 +360,7 @@ import {
   LOW_HP_THRESHOLD,
 } from "@/data/constants";
 import { WIN_STREAK_REWARDS } from "@/data/earlyGame";
+import { beastFamilyName } from "@/data/beastFamilies";
 import { formatCountdown, formatGN } from "@/utils/format";
 import { useNow } from "@/composables/useNow";
 import {
@@ -639,11 +640,28 @@ const firstSight = computed(() => battle.value?.firstSight === true);
  * 该显示哪几枚章 —— 块的显示与否与块内的内容**都读它**。
  * 这一处是本轮的重点:从前那个 v-if 是"每枚章条件之或",加一枚章忘了改就是一片空白。
  */
+/**
+ * 这一只属哪一族的人话名字 —— 空串表示不显示（第 436 轮补）。
+ *
+ * `BEAST_FAMILIES` 里 29 个族类各有 `name`，而此前**全仓没有一处读它**：
+ * 敌人与灵兽的界面上只有图标，玩家读不出「这一族叫什么」。
+ *
+ * 与 `enemyTraits` 那条同类：都读 `enemyDef`，都是「这是谁 / 它会怎么打」。
+ * 区别是族类属于**身份**（不随这一场的词条变动），故它在 chips 里紧跟宿敌。
+ */
+const foeFamilyName = computed(() => {
+  const id = battle.value?.enemyId;
+  if (!id) return "";
+  const def = enemyDef(id);
+  return def ? beastFamilyName(def.family) : "";
+});
+
 const combatantChips = computed(() =>
   chipsOf({
     isBoss: Boolean(battle.value?.isBoss),
     nemesis: nemesisChip.value,
     traits: shownTraits.value,
+    family: foeFamilyName.value,
     firstSight: firstSight.value,
     avenged: nemesisAvenged.value,
   }),
@@ -659,6 +677,11 @@ function chipClass(chip: CombatChip): string {
     case "firstSight":
     case "avenged":
       return "border-jade/60 text-jade";
+    /*
+     * 族类章与词条章同色系 —— 两者都是「这一只的属性」，
+     * 而首领/宿敌/初见/雪耻说的是「这一场的处境」。用色分开这两类。
+     */
+    case "family":
     default:
       return "border-violet-ink/50 text-violet-ink";
   }
@@ -675,6 +698,9 @@ function chipText(chip: CombatChip): string {
       return "初见";
     case "avenged":
       return nemesisAvenged.value;
+    /* 族类章印族名（「狼」「月华」…）—— 取自 BEAST_FAMILIES 的 name，不在这里抄一份 */
+    case "family":
+      return foeFamilyName.value;
     default:
       return chip.traitId ? (TRAIT_NAMES[chip.traitId as keyof typeof TRAIT_NAMES] ?? "") : "";
   }

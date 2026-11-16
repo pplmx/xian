@@ -29,6 +29,19 @@ export interface ChipFacts {
   nemesis: string;
   /** 敌人自带词条的 id 列表 */
   traits: readonly string[];
+  /**
+   * 这一只属哪一族的人话名字（「狼」「月华」…）—— 空串表示不显示。
+   *
+   * ## 为什么加它（第 436 轮）
+   *
+   * `BEAST_FAMILIES` 里 29 个族类各有 `name`（「族类在人话里的名字」），
+   * 而**全仓没有一处读它** —— 敌人与灵兽的界面上只出现图标，玩家读不出
+   * 「这一族叫什么」。图标是抽象符号，名字才是可理解的概念。
+   *
+   * 放在这一块而不是另起一行：这一块的条件与内容同源（见文件头），
+   * 另起一行会重新引入「加一枚忘了改条件」那个坑。
+   */
+  family: string;
   firstSight: boolean;
   /** 雪耻那句(未雪耻时是空串) */
   avenged: string;
@@ -54,6 +67,11 @@ export function chipsOf(facts: ChipFacts): CombatChip[] {
   const chips: CombatChip[] = [];
   if (facts.isBoss) chips.push({ id: "boss" });
   if (facts.nemesis.trim()) chips.push({ id: "nemesis" });
+  /*
+   * 族类紧跟身份章 —— 它也是「这是谁」，不是「这场的新鲜事」。
+   * 空串不占位（与其余每一枚同一条规则）。
+   */
+  if (facts.family.trim()) chips.push({ id: "family" });
   for (const t of facts.traits) {
     if (t) chips.push({ id: `trait:${t}`, traitId: t });
   }
