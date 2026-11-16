@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 853 个 spec;本作自己那部分 773 个) |
+| `bun run test` | 全量用例(全量 854 个 spec;本作自己那部分 774 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 853 个 spec = 宿主 773 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 854 个 spec = 宿主 774 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 853 个 spec(本作自己那部分 773 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 854 个 spec(本作自己那部分 774 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -23540,3 +23540,79 @@ secretRealmScene       地形映射表里没有这三处
 > **注入也要验证它真的注进去了。**
 
 工作区干净、全量 853 / 7039 全绿;check、test:report、check:ui 同绿。
+
+### 第 424 轮:一条灵脉投进去什么也不发生 —— 而它不是缺陷
+
+#### 怎么找到的
+
+这轮查「七条灵脉是否各有不同方向」,打印了每条的 `perPoint`:
+
+```text
+青木灵脉: {cultivationSpeed: 0.004}
+赤炎灵脉: {forgeDiscount: 0.003}
+玉髓灵脉: {alchemyYield: 0.005}
+寒冥灵脉: {}                          ← 空的
+庚金灵脉: {maxHpPct: 0.002}
+玄黄灵脉: {damageReduction: 0.002}
+云泽灵脉: {qiRegen: 0.003}
+```
+
+而寒冥灵脉的 `desc` 明写「静水映月,**功法进修所费更少**」——
+**投点之后什么都不会发生**,看起来是一个确定的缺陷。
+
+#### 查下去:它走的是另一条通道
+
+```text
+六条      perPoint → veinModsOf 汇总成 StatMods，进属性合并
+寒冥      perPoint: {}
+          → insightDiscountOf(points) 每点 0.4%、封顶 50%
+          → store 的 insightDiscount，功法参悟实扣时读它
+```
+
+两条通道的**量纲不同**:六条折的是「产出」,寒冥折的是「消耗」。硬塞进 `perPoint`
+反而会错——`StatMods` 里没有一个键能表达「功法残页消耗 −x%」。
+
+故 `{}` 是**有意留空**。我差点把它写成一条缺陷。
+
+#### 但那个「有意」此前没被记下来
+
+`engineVeinParity.spec` 用 `Object.entries(perPoint)` 遍历,**空对象直接跳过** ——
+它分不出「有意握手另一通道」与「忘了填」,两者都是静默通过。
+
+#### 判据五条（`core/veinChannelCoverage.spec`）
+
+```text
+① 每条灵脉至少一条加成通道（perPoint 非空，或在 DEDICATED_CHANNEL 里登记）
+② 登记了独立通道的，那条通道真的接上了（换算入口存在、有人在调、封顶在）
+③ 反差：perPoint 为空的，必须都在名单里（名单是穷举的，不许顺手放行）
+④ 反空转 + 名单不常驻（内容删了要销账）
+⑤ 寒冥的 desc 与通道对得上 —— 说的事就是做的事
+```
+
+名单里每条要写明**那条通道是什么**与**换算入口在哪**,这样下一个读代码的人
+不会把它当成漏填。
+
+#### 三次注入，其中一次抓出了判据自己的漏洞
+
+```text
+从名单移除寒冥        → ①③ 同时红，指名「投点之后什么都没有」
+改名 insightDiscount  → ⑤ **绿着** ← 判据漏了
+再改成完全不同的名字  → ⑤ 红
+```
+
+第二次为什么绿:⑤ 初版用的是 `/insightDiscount/`,把变量名改成
+`insightDiscount_UNUSED` 之后**这个词还在文件里**,正则照样命中。
+
+**判据要钉的是「被读」,不是「这个词在文件里」** —— 第 410 轮那个形状,
+这次穿在一条新判据身上。改成 `/\binsightDiscount(?![_\w])/` 之后才真的红。
+
+#### 这一轮真正记下来的东西
+
+```text
+看到一条"空的"，先查它是不是有第二条通道
+```
+
+七条里六条同构,第七条不同构 —— **不同构的那条最像缺陷,也最可能是设计**。
+而它缺的不是实现,是一句「我为什么空着」的记录。
+
+工作区干净、全量 854 / 7044 全绿;check、test:report、check:ui 同绿。
