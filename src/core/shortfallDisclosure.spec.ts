@@ -69,8 +69,28 @@ describe("付不起的按钮 · 必须报出还差多少", () => {
       const src = readFileSync(full, "utf8");
       for (const m of src.matchAll(/<button\b[^>]*:disabled="([^"]+)"[^>]*>/g)) {
         const expr = m[1]!;
-        // 只看「资源不足」这一类 —— 结构性禁用(如「上一程」)不算
-        if (!/(afford|canPay|enough)/i.test(expr)) continue;
+        /*
+         * 只看「付不起 / 装不下」这一类 —— 结构性禁用(如「上一程」)不算。
+         *
+         * ## 词表原来只有一半（第 401 轮）
+         *
+         * 原先只认 `afford|canPay|enough` 三个词。而仓里表达同一件事的写法还有:
+         *
+         * ```text
+         *   r.shortHerb || r.shortStone      （BrewingDialog 的「炼制」）
+         *   stoneShort > 0 / daoShort > 0    （FurnaceDialog / ExpeditionPanel）
+         *   currentPillOverflow === 'full'   （InventoryView 的「服用」）
+         *   !row.affordable10                （HerbShopDialog 的「买 10」）
+         * ```
+         *
+         * 这些按钮当时**每一条都有说明**（「尚差 N 石」「药力已顶满——这一颗将白费」
+         * 「· 灵草坊可补 ›」），但它们从来没被这条判据看过一眼 ——
+         * 一旦哪天有人删掉那些说明，这里不会红。
+         *
+         * 故把词表补全。**宁可粗,不要漏**:这一层要回答的是「这类按钮有没有被看过」,
+         * 至于说明写在哪一处，下面那段 ±1500 的窗口负责。
+         */
+        if (!/(afford|canPay|enough|short|overflow|full)/i.test(expr)) continue;
         if (STRUCTURAL_DISABLE.has(expr)) continue;
         checked += 1;
 
@@ -93,8 +113,16 @@ describe("付不起的按钮 · 必须报出还差多少", () => {
       }
     }
 
-    // 防空转:真的量到了资源型按钮
-    expect(checked, "一个资源型禁用按钮都没找到 —— 判据在空转").toBeGreaterThan(8);
+    /*
+     * 防空转:真的量到了资源型按钮。
+     *
+     * 阈值从 8 提到 14 —— 第 401 轮补全词表后实测从 11 涨到 18(多看到 7 个
+     * 用 `short` / `overflow` / `full` 表达的按钮)。取 14 是为了留一点余量:
+     * 若哪天有人把词表改回去,checked 会掉回 11 附近,这里立刻红。
+     */
+    expect(checked, "量到的资源型禁用按钮太少 —— 词表被改窄了(补全后实测 18 个)").toBeGreaterThan(
+      14,
+    );
 
     expect(
       bare,
