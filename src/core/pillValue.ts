@@ -79,7 +79,13 @@ export const AUDIT_SKILL = 60;
 const AUDIT_MASTERY = 1;
 const AUDIT_MATERIAL_LORE = 1;
 
-/** 一场战斗的期望灵草产出(见 core/loot.ts:afterWin —— 五成概率掉 1~3 株) */
+/**
+ * 一场战斗的期望灵草产出(见 core/loot.ts 的 `dropEntriesFor`:五成概率掉 1~3 株)。
+ *
+ * 写的是**寻常游历(收益 ×1)**的口径 —— 定价法则比的是「自炼 vs 掉落」在同一档下的账,
+ * 而 `herb` 那一项自第 390 轮起也吃 `rewardMult`。取 ×1 是保守的一侧:
+ * 高倍率档掉得更多,自炼的相对优势只会更小,不会更大。
+ */
 const HERB_PER_BATTLE = 0.5 * 2;
 /** 一场战斗的期望灵石产出系数(rng.float(0.8,1.2) 的均值为 1.0) */
 const STONE_AMT_PER_BATTLE = 10;

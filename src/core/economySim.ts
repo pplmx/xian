@@ -217,6 +217,16 @@ export function auditEra(major: number): EraAudit {
 
   // ---- 生产 ----
   const stoneIncome = winsThisHour * toNum(stoneByTier(tier, 10));
+  /*
+   * 掉落收入这三行写的是**寻常游历(收益 ×1)**的口径 —— 与 `core/loot` 的
+   * `dropEntriesFor` 同源:灵草五成掉 1~3(均值 2)、玄铁 35% 掉 1~2(均值 1.5)、
+   * 残页 12% 掉 1~2(均值 1.5)。
+   *
+   * 境界曲线审计比的是「同一境界下收入与消耗的比值」,用的必须是一个**定档**口径;
+   * 取 ×1 就是取最保守的那一档。第 390 轮让 herb/ore 也吃 `rewardMult` 之后,
+   * 这三行仍对 —— 它们本就只在倍率 1 上成立(玩家切到涉险档会赚更多,
+   * 而那条账在出行窗里按档位现算,不在这张审计表里)。
+   */
   const herbIncome = winsThisHour * 0.5 * 2 + fieldLv * FIELD_HERB_PER_HOUR;
   const oreIncome = winsThisHour * 0.35 * 1.5 + fieldLv * FIELD_ORE_PER_HOUR;
   const pageIncome = winsThisHour * PAGE_DROP_CHANCE * 1.5;

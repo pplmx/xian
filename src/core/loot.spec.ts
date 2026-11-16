@@ -545,6 +545,76 @@ describe("派发前的材料期望 · 每场,只给件数不给概率", () => {
     expect(run(1.6)).toBeGreaterThan(run(1));
   });
 
+  it("涨幅要**追得上**倍数 —— 只查单调会放过「×2.4 只多 8%」", () => {
+    /*
+     * ## 这一条是第 390 轮补的,因为上一条放过了真缺陷
+     *
+     * 上一条只断言「高倍率 > 低倍率」—— 单调成立即可。而实测(修之前):
+     *
+     * ```text
+     * rewardMult ×1  → 材料/场 1.700
+     * rewardMult ×4  → 材料/场 2.200     ← 只有 1.29 倍
+     * ```
+     *
+     * 根因:`dropEntriesFor` 里**只有 page / equipment / pill 乘了 rewardMult**,
+     * 而 herb / ore 两条一分不乘 —— 它们占每场材料的大头,所以总期望几乎不动。
+     *
+     * 界面上那句「收益 ×2.4」与下面那行「材料 N 件」是同一张卡上的两行,
+     * 玩家必然把它们读成一件事。**只查单调,就永远发现不了「倍率乘歪了」**
+     * —— 而「乘歪了」与「没乘」在界面上都表现为「数字不变」。
+     *
+     * ## 口径:留一档余量给概率封顶
+     *
+     * 灵草命中率 0.5 × 2.4 = 1.2,进判定前被钳到 1 —— 故最高档只到 2.18 倍
+     * 而不是 2.4。故这条按「不低于倍数的 85%」断,而不是精确相等:
+     * 封顶是**规则**(不许必出),不是缺陷。
+     */
+    for (const mult of [1.4, 1.9]) {
+      const ratio = run(mult) / run(1);
+      expect(
+        ratio,
+        `收益 ×${mult} 只换来材料 ×${ratio.toFixed(2)} —— 材料那两项没乘 rewardMult`,
+      ).toBeGreaterThan(mult * 0.85);
+    }
+  });
+
+  it("三条材料项同比例放大 —— 份额不被倍率冲掉", () => {
+    /*
+     * 修法把它们乘上去之后,要紧的是**不要冲掉资源偏向的语义**:
+     * 「这一界矿脉深厚」应该表现为「玄铁那一项更重」,而不是「倍率一高就全变灵草」。
+     * 三者同乘一个标量,份额自然不变 —— 这条钉住那件事。
+     */
+    const a = expectedMaterialsPerBattle({
+      mods: {} as never,
+      rewardMult: 1,
+      isBoss: false,
+      luck: 0,
+    });
+    const b = expectedMaterialsPerBattle({
+      mods: {} as never,
+      rewardMult: 1.4,
+      isBoss: false,
+      luck: 0,
+    });
+    expect(b / a, "×1.4 档的材料期望没有跟着走").toBeGreaterThan(1.3);
+    // 换了倍率之后,同一份偏向仍给出同一个相对权重
+    const biasedA = expectedMaterialsPerBattle({
+      bias: "ore",
+      mods: {} as never,
+      rewardMult: 1,
+      isBoss: false,
+      luck: 0,
+    });
+    const biasedB = expectedMaterialsPerBattle({
+      bias: "ore",
+      mods: {} as never,
+      rewardMult: 1,
+      isBoss: false,
+      luck: 0,
+    });
+    expect(biasedA, "同一份偏向两次读数不一致").toBe(biasedB);
+  });
+
   it("自证:同参数两次调用结果一致(不偷吃随机数)", () => {
     expect(run(1.3)).toBe(run(1.3));
   });
@@ -557,9 +627,20 @@ describe("派发前的材料期望 · 每场,只给件数不给概率", () => {
      *
      * 这条按**具体值**断言,取整方式一变就红。
      */
+    /*
+     * ## 这三个数在第 390 轮改过一次,原因写在 `loot.ts` 的 herb/ore 那一段
+     *
+     * 改之前:×1 → 1.7 · ×1.5 → 1.8 · ×2 → 1.9
+     * 改之后:×1 → 1.7 · ×1.5 → 2.6 · ×2 → 3.4
+     *
+     * 差别来自 herb/ore 现在也乘 `rewardMult` 了 —— 而**这条判据守的东西没变**:
+     * 一位小数是四舍五入而不是向下取整。改的是被测对象的曲线,不是断言的口径。
+     *
+     * 取整方式若退回 `Math.floor`,×1.5 会给 2.5(而不是 2.6)、×2 会给 3.3 —— 两条都红。
+     */
     expect(run(1), "默认档材料期望").toBe(1.7);
-    expect(run(1.5), "×1.5 档要进位到 1.8(向下取整会给 1.7)").toBe(1.8);
-    expect(run(2), "×2 档要进位到 1.9(向下取整会给 1.8)").toBe(1.9);
+    expect(run(1.5), "×1.5 档要进位到 2.6(向下取整会给 2.5)").toBe(2.6);
+    expect(run(2), "×2 档要进位到 3.4(向下取整会给 3.3)").toBe(3.4);
   });
 });
 

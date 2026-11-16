@@ -121,12 +121,23 @@ function legacyDrops(
   rng.float(0.8, 1.2); // 灵石浮动:不参与掉落,但占着随机流里的那一格
 
   // 材料 —— 数量进财货库存,同时抽出"你到底捡到了什么"推进认知
-  if (rng.chance(0.5)) {
+  /*
+   * 这两条原先写的是裸 `rng.chance(0.5)` / `rng.chance(0.35)`(不乘 rewardMult)。
+   * 第 390 轮查出那是缺陷而非本作选择:herb/ore 是全表唯一不乘倍率的两项,
+   * 于是「收益 ×2.4」在每场材料上只兑现 1.06 倍(见 loot.spec 里那条涨幅判据)。
+   *
+   * ## 这是对账基准,**不是第二份实现**
+   *
+   * 这份 legacyDrops 的用途是「冻结迁移前的判定,证明换成库之后随机流不变」。
+   * 当被对账的行为本身被判为缺陷并修正时,冻结的那一份也要跟着改 ——
+   * 否则它保护的是缺陷。改这里要同时改 test 名,让人看得出对的是哪一条基准。
+   */
+  if (rng.chance(capChance(0.5 * rewardMult))) {
     const n = rng.int(1, 3) * doubled;
     resources.addSmall("herb", n);
     harvestMaterials(tier, "herb", n);
   }
-  if (rng.chance(0.35)) {
+  if (rng.chance(capChance(0.35 * rewardMult))) {
     const n = rng.int(1, 2) * doubled;
     resources.addSmall("ore", n);
     harvestMaterials(tier, "ore", n);
@@ -227,14 +238,32 @@ describe('概率进判定前归一 —— 叠过 1 的只是必中,不是"更必
   });
 
   it("倍率堆到天上:残页/丹药钳到 1,装备封在 0.9,法宝也不出 [0,1]", () => {
+    /*
+     * ## 这一条按**性质**断言,不按下标(第 390 轮改的)
+     *
+     * 原先它写死 `chances[3]` / `[4]` / `[5]`:假定「翻倍 → 灵草 → 灵矿 → 残页 → 装备
+     * → 丹药 → 法宝」这套顺序与**每一档各掷一次**都不会变。
+     *
+     * 而第 390 轮让 herb/ore 也吃 `rewardMult` 之后,倍率 10 时它们的概率被钳到 1 ——
+     * 钳到 1 仍然要掷(必中也是掷),但 `chances` 里那几格的值与位置都变了,
+     * 于是按位读出来的「残页 0.12 × 10 = 1.2 → 1」落到了别的判定上。
+     *
+     * 按下标断言在这里本来就不是好写法:它守的是「概率被钳过」,
+     * 而这件事与「第几个 chance 调用」无关。改成三条性质:
+     *   ① 每一次判定都不许超出 [0,1];
+     *   ② 装备那一条恰好落在 0.9(它有自己的 90% 上限,不是 1);
+     *   ③ 确实发生了钳制(有一条正好是 1)—— 否则「都没触顶」也会让 ① 通过。
+     */
     const region = regionDef("qingyun")!;
     const run = runSeeded(11, region, 10, true, "now");
-    // 判定顺序 = 声明顺序:翻倍 → 灵草 → 灵矿 → 残页 → 装备 → 丹药 → 法宝
     const chances = chancesOf(run.calls);
-    expect(chances[3]).toBe(1); // 残页 0.12 × 10 = 1.2 → 1
-    expect(chances[4]).toBe(0.9); // 装备 0.3 × 10 × 2.5 = 7.5 → 上限 0.9
-    expect(chances[5]).toBe(1); // 丹药 0.08 × 10 × 3 = 2.4 → 1
-    expect(chances[6]).toBeLessThanOrEqual(1); // 法宝 0.015 × 6 = 0.09,一律过一遍归一
+    expect(chances.length, "一次判定都没记到 —— 判据会空转").toBeGreaterThan(4);
+    for (const p of chances) {
+      expect(p, `有一条判定超出了 [0,1]:${p}`).toBeGreaterThanOrEqual(0);
+      expect(p, `有一条判定超出了 [0,1]:${p}`).toBeLessThanOrEqual(1);
+    }
+    expect(chances, "装备那条 90% 的上限没生效").toContain(0.9);
+    expect(chances, "倍率 10 却一条都没被钳到 1 —— 钳制没发生").toContain(1);
   });
 
   it("倍率正常时不触顶:各条就是各自的基础概率(该吃词条的那条照吃)", () => {

@@ -381,9 +381,45 @@ export function dropEntriesFor(input: {
 }): Record<string, DropEntry> {
   const { bias, mods, rewardMult, isBoss, luck } = input;
   return {
-    // 材料 —— 数量进标量库存,同时抽出"你到底捡到了什么"推进认知
-    herb: { key: "herb", chance: 0.5 * biasChanceMult(bias, "herb"), count: [1, 3] as const },
-    ore: { key: "ore", chance: 0.35 * biasChanceMult(bias, "ore"), count: [1, 2] as const },
+    /*
+     * 材料 —— 数量进标量库存,同时抽出"你到底捡到了什么"推进认知。
+     *
+     * ## 它们也必须乘 `rewardMult`(第 390 轮修)
+     *
+     * 这两条此前是**全表唯一不乘倍率的两项**。而它们在界面上被摆在同一句里:
+     *
+     * ```text
+     * 收益 ×2.4 · 敌势 ×2.6
+     * 整趟约 装备 N 件 · 丹药 M 枚 · 材料 K 件
+     * ```
+     *
+     * 玩家读「收益 ×2.4」,眼睛落在下面那三条产出上。而实测(第 390 轮):
+     *
+     * ```text
+     * rewardMult ×1  → 材料/场 1.700
+     * rewardMult ×4  → 材料/场 2.200     ← 只有 1.29 倍
+     * ```
+     *
+     * 因为这两条不乘,而唯一乘的那项(`page`)只占每场材料的一小截 ——
+     * 于是多花一倍时间换来的材料几乎不变,而卡上写着 ×2.4。
+     *
+     * **乘上之后份额不变**:三条材料项同比例放大,「偏哪种材料」仍由
+     * `biasChanceMult` 决定,不会把资源偏向的语义冲掉。
+     *
+     * 灵草命中率 0.5 × 2.4 = 1.2 —— 超过 1 由掉落层在判定前钳到 [0,1]
+     * (见下面那段「概率在进判定前先钳到 [0,1]」),故长线云游的灵草是
+     * **每场必掉**而不是不掉。这一点在 `loot.spec` 里有判据盯着。
+     */
+    herb: {
+      key: "herb",
+      chance: 0.5 * rewardMult * biasChanceMult(bias, "herb"),
+      count: [1, 3] as const,
+    },
+    ore: {
+      key: "ore",
+      chance: 0.35 * rewardMult * biasChanceMult(bias, "ore"),
+      count: [1, 2] as const,
+    },
     page: {
       key: "page",
       chance: PAGE_DROP_CHANCE * rewardMult * biasChanceMult(bias, "page"),
