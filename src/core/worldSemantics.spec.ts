@@ -136,34 +136,71 @@ describe("语义完整度 · 摘要是否携带地貌信息", () => {
     expect(seen.size).toBeGreaterThan(1);
   });
 
-  it("发现:分散档的摘要不含实际地貌构成", () => {
-    // single/dual 的摘要里有地貌词;scattered 只有「山川无序、诸相杂陈」,
-    // 玩家读不出这一世究竟由哪些地貌组成
+  it("分散档的摘要说得出「由几样地貌组成」（第 433 轮修）", () => {
+    /*
+     * ## 此前
+     *
+     * 摘要是一句固定话「山川无序、诸相杂陈」—— 而分散档占 54/240（22.5%），
+     * 且它与另外两档**不对称**:
+     *
+     * ```text
+     *   单一档  「生机断绝的废墟之世」    ← 说了是废墟
+     *   双轴档  「天象与废墟交错之世」    ← 说了是天象与废墟
+     *   分散档  「杂涌之世」              ← 什么都没说
+     * ```
+     *
+     * 玩家读前两档能判断「这一世会反复遇到哪类地形」，第三档只能看到「很杂」。
+     *
+     * ## 现在
+     *
+     * 「废墟与山岳等 4 种地貌交错」—— 报**头两样 + 总数**，
+     * 不逐一列出（那是下方路线图在做的事，见本文件另一条「摘要不重复…」）。
+     */
     const scattered = POOL.filter((w) => worldIdentity(w).form === "scattered");
-    expect(scattered.length).toBeGreaterThan(0);
+    expect(scattered.length, "样本里没有分散档 —— 这条判据量不到东西").toBeGreaterThan(0);
     const withTerrain = scattered.filter((w) => {
       const s = worldIdentity(w).summary;
       return terrainSeq(w).some((t) => s.includes(t));
     });
-    console.log(
-      `\n分散档 ${scattered.length} 世中,摘要含实际地貌词的有 ${withTerrain.length} 世` +
-        `\n摘要模板:「${worldIdentity(scattered[0]!).summary}」` +
-        `\n实际构成:${terrainSeq(scattered[0]!).join("、")}` +
-        "\n—— 摘要没有把「由哪些地貌组成」告诉玩家",
-    );
-    expect(withTerrain.length).toBe(0);
+    expect(
+      withTerrain.length,
+      `分散档 ${scattered.length} 世里,摘要含实际地貌词的只有 ${withTerrain.length} 世 —— ` +
+        "与单一档、双轴档不对称：前两档说了地形，这一档只说了「很杂」",
+    ).toBe(scattered.length);
+    /*
+     * 而且那个「几样」要真的是实际种数 —— 不能随手写一个数。
+     */
+    const wrongCount: string[] = [];
+    for (const w of scattered) {
+      const s = worldIdentity(w).summary;
+      const want = new Set(terrainSeq(w)).size;
+      const m = /等 (\d+) 种地貌交错/.exec(s);
+      if (m && Number(m[1]) !== want)
+        wrongCount.push(`${worldIdentity(w).name}: 写 ${m[1]},实 ${want}`);
+    }
+    expect(wrongCount, "摘要里的种数与实际对不上:" + wrongCount.join("、")).toEqual([]);
   });
 
-  it("分散档摘要的组合空间只有 bias × 主题", () => {
+  it("分散档摘要不再只由 bias × 主题决定", () => {
+    /*
+     * 修之前：54 世只有 20 种「名字+摘要」组合 —— 名字与摘要都只由
+     * 「资源偏向 × 规则主题」决定，与地貌无关。
+     *
+     * 修之后：地貌构成进了摘要，组合数应当显著增加。
+     */
     const scattered = POOL.filter((w) => worldIdentity(w).form === "scattered");
     const summaries = new Set(scattered.map((w) => worldIdentity(w).summary));
     const names = new Set(scattered.map((w) => worldIdentity(w).name));
     console.log(
       `\n分散档 ${scattered.length} 世:${names.size} 种名字、${summaries.size} 种摘要` +
-        "\n名字与摘要都只由「资源偏向 × 规则主题」决定,与地貌、路线、生态无关",
+        "\n摘要现在带地貌构成,不再只由「资源偏向 × 规则主题」决定",
     );
-    // 摘要种类远少于世界数 —— 名字之外的第一道区分并没起作用
-    expect(summaries.size).toBeLessThan(scattered.length / 2);
+    expect(
+      summaries.size,
+      `分散档 ${scattered.length} 世只有 ${summaries.size} 种摘要 —— 地貌构成没进摘要`,
+    ).toBeGreaterThan(scattered.length / 2);
+    // 名字仍然只由 bias × 主题决定（这一轮只动摘要，没动命名）
+    expect(names.size, "名字的种类不该因为这一轮而暴涨").toBeLessThan(scattered.length);
   });
 });
 
