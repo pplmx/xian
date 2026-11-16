@@ -1,7 +1,7 @@
 import { computed } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import { daoluDef } from "@/data/daolu";
-import { brewingIntent, pendingBondEvent, pendingIntent } from "@/core/daoluService";
+import { bondEventGap, brewingIntent, pendingBondEvent, pendingIntent } from "@/core/daoluService";
 import { footprintsOf } from "@/data/bondFootprints";
 
 /**
@@ -47,6 +47,19 @@ export function useBondOverview() {
   /** 只看最新一条 —— 界面上一次只印一句,多了就成了日志 */
   const latestFootprintLine = computed(() => footprints.value.at(-1)?.text ?? "");
 
+  /**
+   * 离下一次共同事件还差几个历练情境(第 410 轮)。
+   *
+   * 两个数一直在攒,却从没在界面上出现过 —— 玩家打了很多场什么也没等到时,
+   * 分不清是「还差两场」还是「这段关系已经无事了」。前者等一等就有,后者等也白等,
+   * 而这两件事在界面上长得一模一样。
+   */
+  const eventGap = computed(() => bondEventGap());
+  /** 还差几个 —— 已够门槛时给 0（下一次情境就会触发） */
+  const eventShort = computed(() =>
+    eventGap.value ? Math.max(0, eventGap.value.need - eventGap.value.have) : null,
+  );
+
   return {
     bond,
     bondDef,
@@ -56,5 +69,7 @@ export function useBondOverview() {
     hasBondWord,
     footprints,
     latestFootprintLine,
+    eventGap,
+    eventShort,
   };
 }

@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 845 个 spec;本作自己那部分 765 个) |
+| `bun run test` | 全量用例(全量 846 个 spec;本作自己那部分 766 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 845 个 spec = 宿主 765 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 846 个 spec = 宿主 766 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 845 个 spec(本作自己那部分 765 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 846 个 spec(本作自己那部分 766 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -22539,3 +22539,85 @@ BondDialog 的注释        原先写「由 ripeness 派生」——而旧判据
 删掉了。**这是这仓的判据链真的在干活的一个证据。**
 
 工作区干净、全量 845 / 6987 全绿;check、test:report、check:ui 同绿。
+
+### 第 410 轮:共同事件的机会点一直在攒,而玩家看不到
+
+上一轮补了「她开口之前的足迹」。这一轮顺着 `bondCausality` 判为 `abrupt` 的
+另一条链（共同事件）往下查,找到同一类缺口。
+
+#### 缺口
+
+`daoluService` 里有两个数:
+
+```text
+opportunities   每遇到一个历练情境（首胜、败北、击破首领、踏入新地界…）+1
+nextEventAt     攒到这个数就抽一件共同事件，并弹一句「她似乎有话要说」
+```
+
+实测:**这两个数在任何 `.vue` 里都没出现过。**
+
+于是玩家在历练里打了很多场、什么也没等到时,分不清:
+
+```text
+还差两场              →  等一等就有
+这段关系已经无事了     →  等也白等
+```
+
+**这两件事在界面上长得一模一样** —— 而那正是玩家会得出「这游戏坏了」的时刻。
+
+#### 实现
+
+`bondEventGap()` 返回 `{ have, need }`,接在道侣弹窗「此刻」区块:
+
+```text
+下一次际遇   还差 3 个历练情境
+下一次际遇   已在眼前，下一程便会遇上
+```
+
+**不返回百分比。** 机会点不是线性进度条（每次事件后门槛会推远:下次是 `opportunities + 6`）,
+说「还差 3 个情境」比「45%」有用得多。
+
+**已有人待决事件时不显示。** 那时该看的是那件事本身,不是进度 —— 两句话同时出现会互相削弱。
+
+#### 一个判据写错又改对的例子
+
+初版第一条判据里,「反差」那一句写的是:
+
+```ts
+expect(VIEW).toMatch(/eventShort\s*>\s*0/);
+```
+
+而那个比较**在 `v-if` 里本来就存在**。于是故障注入「把正文改成写死的『还差几个历练情境』」
+**测不出来** —— 实测确认了这一点。
+
+改成直接要求插值形态:
+
+```ts
+expect(VIEW).toMatch(/还差\s*\{\{\s*eventShort\s*\}\}/);
+```
+
+再注入,立刻红。
+
+**这与第 393/398 轮撞过的形状是同一个**:钉住的是一个名字的出现,不是那个值被用到了正文里。
+而这已经是第三次了 —— 故把它记在这里:**写「反差」那一条时,先问自己
+「若有人把它改成一个写死的常量,前面几条还绿吗」**。若答案是「绿」,那这一条不够。
+
+#### 判据四条
+
+```text
+① 界面真的印出来了（读模板，钉住 data-bond-event-gap 与插值形态）
+② 读数取自 opportunities / nextEventAt 那两个真数，不是另算一份
+③ 已有人待决 / 她已不在时不给进度
+④ 不返回百分比（门槛会推远，百分比会误导）
+```
+
+第三次注入:读数改成常量 `{have: 0, need: 6}` → ② 红。
+
+#### 一条判据被 layeringAudit 挡回来的事
+
+第四条本想运行时构造（灌一份 player store 再调 `bondEventGap()`），
+但 core spec 带 Pinia 会撞 `layeringAudit` 的上限(119)。改成读源码判形状 ——
+**判据该守的是「那个守卫还在不在」,不是「跑一遍看它会不会 return null」**。
+破线去换一次运行时验证,代价大于收益。
+
+工作区干净、全量 846 / 6991 全绿;check、test:report、check:ui 同绿。

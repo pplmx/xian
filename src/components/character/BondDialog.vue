@@ -80,6 +80,19 @@
           <span>此刻</span>{{ latestFootprintLine }}
         </p>
 
+        <!--
+          离下一件共同事件还差几个历练情境（第 410 轮）。
+          这两个数一直在攒却从没显示过 —— 玩家打了很多场什么也没等到时，
+          分不清是「还差两场」还是「这段关系已经无事了」：前者等一等就有，
+          后者等也白等，而它们在界面上长得一模一样。
+          已有待决事件时不显示 —— 那时该看的是那件事本身，不是进度。
+        -->
+        <p v-if="eventShort !== null" class="bond-line bond-line--faint" data-bond-event-gap>
+          <span>下一次际遇</span>
+          <template v-if="eventShort > 0">还差 {{ eventShort }} 个历练情境</template>
+          <template v-else>已在眼前，下一程便会遇上</template>
+        </p>
+
         <section v-if="herIntent" class="bond-intent" data-bond-intent>
           <p class="bond-kicker">她开了口</p>
           <blockquote class="bond-quote">{{ herIntent.line }}</blockquote>
@@ -452,7 +465,7 @@ import { clampPercent } from "@/utils/unitRatio";
 const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 
-const { bond, bondDef, pastBonds, pendingEvent, herIntent, latestFootprintLine } =
+const { bond, bondDef, pastBonds, pendingEvent, herIntent, latestFootprintLine, eventShort } =
   useBondOverview();
 
 /**

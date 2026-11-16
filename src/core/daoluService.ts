@@ -409,6 +409,35 @@ export function offerBondEvent(
   return picked;
 }
 
+/**
+ * 距离下一次共同事件还差几个历练情境（第 410 轮）。
+ *
+ * ## 为什么值得露出来
+ *
+ * `opportunities` 每遇到一个历练情境（首胜、败北、击破首领、踏入新地界…）+1，
+ * 攒到 `nextEventAt` 就抽一件共同事件、并主动弹一句「她似乎有话要说」。
+ * 而这两个数**从来不在界面上出现过** —— 玩家在历练里打了很多场、什么也没等到，
+ * 无从判断是「还差两场」还是「这段关系已经无事了」。
+ *
+ * 前者是等一等就有，后者是等也白等。**这两件事在界面上长得一模一样**，
+ * 而那正是玩家会得出「这游戏坏了」的那种时刻。
+ *
+ * ## 口径
+ *
+ * 返回 `{ have, need }`：已有 / 需要。`have >= need` 时下一次历练情境就会触发；
+ * 而「还要几个」= `max(0, need - have)`。
+ *
+ * 不返回百分比 —— 机会点不是线性的进度条（每次事件后门槛会推远），
+ * 说「还差 3 个情境」比「45%」有用得多。
+ */
+export function bondEventGap(): { have: number; need: number } | null {
+  const b = currentBond();
+  if (!b || b.fallen || b.departed) return null;
+  // 已有待决事件时不再攒 —— 此时该看的是那件事本身,不是进度
+  if (b.pendingEventId) return null;
+  return { have: b.opportunities, need: b.nextEventAt };
+}
+
 /** 当下待决的共同事件(供界面读取,不再由打开弹窗触发) */
 export function pendingBondEvent(): BondEventDef | null {
   const id = currentBond()?.pendingEventId;
