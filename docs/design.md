@@ -2860,11 +2860,11 @@ store、不 import core,只认传进来的字符串),九个地形各给两条山
 「长刀配斧形图标、长枪配枪形图标」这种近似对得上、细看不对的情形一直在。
 
 敌人与灵兽的形按**族类**发(`src/data/beastFamilies.ts`),不按「大类够用」。原先是数据里
-直接写 icon,于是 132 只敌人只用了 19 枚形:46 只挤在一枚骷髅里(独角妖狼、霞光巨蟒、
+直接写 icon,于是所有敌人只共用十几枚形:一枚骷髅里挤着几十只(独角妖狼、霞光巨蟒、
 黑风妖王、玄冰蛟、万妖林主都是一枚骷髅),兽爪那一枚同时是野狼、野猪、石猿、灵狐 与
 「麒麟」;灵兽那边应龙与螭龙幼子是星芒、麒麟是兽爪、雪背小龟是一面盾。现在数据里写的是
-族类(`family`),形由 `BEAST_FAMILIES` 给出 —— 29 族对 29 枚形,146 条(132 名敌人 +
-14 只灵兽)各归其族:狼 `wolf`、狐 `fox`、豕 `boar`、熊 `bear`、猿 `ape`、鹿 `deer`、
+族类(`family`),形由 `BEAST_FAMILIES` 给出 —— **29 族对 29 枚形,当下 184 条
+(140 名敌人 + 44 只灵兽)各归其族**:狼 `wolf`、狐 `fox`、豕 `boar`、熊 `bear`、猿 `ape`、鹿 `deer`、
 蛇蛟 `serpent`、龙 `dragon`、麒麟 `qilin`、龟 `turtle`、蝠 `bat`、羽禽 `bird`、鱼 `fish`、
 走兽 `paw`、草木 `leaf`、水属 `waves`、亡灵 `ghost`、傀儡 `puppet`、剑器 `sword`、枪器
 `spear`、甲士 `shield`、妖魔 `demon`、仙 `immortal`、神 `god`、灵 `sparkles`、星辰 `star`、
