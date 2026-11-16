@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 843 个 spec;本作自己那部分 763 个) |
+| `bun run test` | 全量用例(全量 844 个 spec;本作自己那部分 764 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 843 个 spec = 宿主 763 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 844 个 spec = 宿主 764 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 843 个 spec(本作自己那部分 763 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 844 个 spec(本作自己那部分 764 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -22371,3 +22371,80 @@ core/progressionSim.spec.ts    筑基 8.0分 · 金丹 34.4分 · 元婴 2.0时 
 > 而「早有现成的」在这仓里的概率,比一般仓库高得多 —— 843 个 spec 不是摆设。
 
 工作区干净、全量 843 / 6977 全绿;check、test:report、check:ui 同绿。
+
+### 第 408 轮:把第 388 轮那个缺陷变成一条能自己跑的判据
+
+上一轮结尾定的方向:**从「有机制但玩家看不见」反向找** —— 遍历 core 导出的能力,
+看哪些从未出现在任何 `.vue` 里。第 388 轮「素行之向没有 UI」正是这么发现的。
+
+#### 先查「有没有人已经做过」
+
+`exportReach.spec` 名字最像,读它的文件头:
+
+> · **算全部** `.ts` / `.vue`,**含** `*.spec.ts` —— 测试引用也是引用,
+> 一个只被测试用的导出不该被算作"没人用"。
+
+**这句话就是缺口所在。** 它问的是「除定义处之外还有人用吗」,而测试引用也算。
+于是一个只被 spec 用过、没有任何 `.vue` 够得到的模块,在它那里永远是绿的:
+
+```text
+core/foo.ts 导出 bar()
+foo.spec.ts 引用 bar()        ← exportReach 认为「有人用」，绿
+没有 .vue 够得到 core/foo.ts  ← 而玩家永远看不见它
+```
+
+**素行之向就是长这个样子的** —— 它有完整的 spec,所以 `exportReach` 一直绿着。
+
+#### 四个方向的实测
+
+```text
+从 .vue 出发的 import 闭包，core 里够不到的          26 个，逐个读文件头 → 全是审计/模拟
+同样的闭包，ui / stores / composables / data         0 / 0 / 0 / 0 个孤岛
+store 里从不进 .vue 的字段                          47 个，抽查后全是内部状态或经 ui 转手
+「体验型」字段里既没进 .vue 也无人读的              2 个，都已在 deadExportAudit 的名单上
+```
+
+**四个方向,零缺陷。** 但第一个方向的形状值得钉 —— 它是一个能自动发现
+「素行之向」那类缺陷的机器。
+
+#### 判据:`core/uiReachability.spec`
+
+```text
+① 从全部 .vue 出发，按静态 import 扩散，算出可达集合（动态 import 也认 ——
+   路由表就是 () => import(...)，不认它会让全部页面变成不可达）
+② ui / stores / composables / data 四个目录零容忍 —— 它们没有一个是「只给测试用」的
+③ core 例外，但要在 CORE_ALLOWED_UNREACHABLE 里逐条登记理由
+④ 反向销账：名单里已接上界面的，判据会红
+⑤ 反空转：真的量到了数十个 .vue 与两百多个模块
+```
+
+③ 的名单只收两类:**审计/模拟/基线**（跑一次出报告，玩家不读）、
+**由别的可达模块转手**（自己没有独立出口）。**不收「以后可能要用」** —— 那种该删。
+
+#### 三次故障注入
+
+```text
+从名单里删掉 lootSim                    → 1 红（未登记理由）
+新建一个没人 import 的 src/ui/__orphan.ts → 1 红（ui 目录零容忍）
+把 releaseCheck 接进 HomeView            → 1 红（该销账了）
+```
+
+第三条是这一族里少见的:**判据会要求你销账**。名单不是永久豁免,接上之后它自己红。
+
+#### 一个自我改正
+
+初版对「理由」的要求是 `why.trim().length < 6`,而「掉落模拟」「发版检查」正好四个字,
+于是两条**已经登记好**的也被算成「没写理由」。
+
+**长度不是充分性的代理。** 一句话说得够不够,机器判不了 —— 改成只要非空即可,留给人看。
+
+#### 方法账
+
+```text
+第 388 轮   手工发现「素行之向没有 UI」      一次性的
+第 408 轮   把那个形状变成判据              从此自动
+```
+
+这轮真正的产出不是又查了一遍,而是**让上一轮那种发现不再靠运气**。
+
+工作区干净、全量 844 / 6978 全绿;check、test:report、check:ui 同绿。

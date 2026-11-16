@@ -689,6 +689,8 @@ const CATEGORIES = [
       "gongfaBaseOvershoot",
       // 族类与形一一对应,且文档里「N 族对 N 枚形」那个数对得上
       "beastFamilyBipartite",
+      // 从 .vue 出发的 import 闭包:写了的代码,玩家够得着吗(第 388 轮那个缺陷的自动化)
+      "uiReachability",
       // 计数器 → 行为的一张满表:师承与素行两个消费者都读它,半张表各自长是这里的缺口
       "counterText",
       // 「这一趟能走多远」—— 出行窗只报产出不报能不能拿到,是本轮在真浏览器里量到的坑
