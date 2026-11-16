@@ -5,7 +5,7 @@ import { mulberry32, rng } from "@/utils/random";
 import { formatDuration, formatPercent } from "@/utils/format";
 import { buffDef } from "@/data/buffs";
 import { modsText } from "@/data/statNames";
-import { realmDef, realmLabel, worldOf, isWorldEntry } from "@/data/realms";
+import { realmDef, realmLabel, worldOf, isWorldEntry, WORLD_BREAK_MAJOR } from "@/data/realms";
 import {
   BT_FAIL_EXP_LOSS,
   BT_LUCK_TO_RATE,
@@ -87,6 +87,29 @@ export function firstUnlockAnnouncement(fromMajor: number, toMajor: number): str
   // 凡境秘境与法宝第二槽同拍(门槛同为元婴):合并成一条,一次突破只出一次声
   if (fromMajor < ARTIFACT_SLOT_UNLOCK_MAJOR && toMajor >= ARTIFACT_SLOT_UNLOCK_MAJOR)
     return `${toName}既成,凡境秘境之门开启,法宝位亦添一席 —— 一处灵石换一趟,出则散,慎入`;
+  /*
+   * 破界入天界 —— **游戏里最大的一次解锁,此前一声不响**（第 422 轮补）。
+   *
+   * 跨过 `WORLD_BREAK_MAJOR`（真仙）这一道,同时开了四样东西:
+   *
+   * ```text
+   *   道途      这一世的修行方向（此道的取舍从这里才开始存在）
+   *   每日挑战  天道每日一题,过了今日就丢
+   *   历世试炼  用道果签下的逆旅契
+   *   远征      整界域的推进
+   * ```
+   *
+   * 而 `firstUnlockAnnouncement` 此前只认灵脉(2 境)与法宝席(3 境),**真仙这一档什么都没有**。
+   * 于是玩家在某次普通的逐层突破后,世界悄悄变大了 —— 而那一刻的提示音与前一境
+   * 一模一样,只有一个境界名换了字。
+   *
+   * 门槛读 `WORLD_BREAK_MAJOR`,与 `endgameUnlocked()` 同一个常量 —— 不另写一个 9。
+   *
+   * 文案里不列全四样的玩法细节:这一句的职责是「告诉你世界变大了」,
+   * 详情在各页自己的引导里。写太长会变成一段没人读的说明。
+   */
+  if (fromMajor < WORLD_BREAK_MAJOR && toMajor >= WORLD_BREAK_MAJOR)
+    return `${toName}既成,人间界自此在身后 —— 道途、每日天道、历世试炼与远征,皆从此刻开启`;
   return null;
 }
 
