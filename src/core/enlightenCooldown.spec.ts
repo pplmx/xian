@@ -22,7 +22,7 @@
  * ② 冷却已过时返回 0，不是负数；
  * ③ 界面真的印出来了，且是插值不是写死的话；
  * ④ 只在冷却中显示 —— 已可触发时再写一句，会把「随时可能」变成一条待办；
- * ⑤ 用的是游戏钟（`gameNowSec` 那套 1 秒心跳），不是裸 `Date.now()` ——
+ * ⑤ 用的是游戏钟（`useGameNow` 那套 1 秒心跳（**值是毫秒**）），不是裸 `Date.now()` ——
  *    后者在 computed 里不会自己重算，倒计时会停在打开页面那一刻。
  */
 import { describe, expect, it } from "vite-plus/test";
@@ -85,12 +85,12 @@ describe("顿悟 · 还要等多久才能再遇上", () => {
     /*
      * 裸 `Date.now()` 在 computed 里不会自己重算:倒计时会停在打开页面那一刻,
      * 而那是一个**看起来在走、其实不动**的读数 —— 比不显示更糟。
-     * 本组件已有 `retreatRemaining` 用 `gameNowSec` 那套 1 秒心跳,这里跟它一致。
+     * 本组件已有 `retreatRemaining` 用 `useGameNow` 那套 1 秒心跳（**值是毫秒**）,这里跟它一致。
      */
     const start = CARD.indexOf("const enlightenCooldownMs");
     expect(start, "找不到 enlightenCooldownMs 的 computed").toBeGreaterThan(0);
     const body = CARD.slice(start, start + 400);
-    expect(body, "读数没有接游戏钟 —— 倒计时会停在打开页面那一刻").toMatch(/gameNowSec/);
+    expect(body, "读数没有接游戏钟 —— 倒计时会停在打开页面那一刻").toMatch(/nowMs/);
     expect(body, "读数里出现了裸 Date.now() —— 它不会自己重算").not.toMatch(/Date\.now\(\)/);
   });
 });
@@ -132,8 +132,8 @@ describe("顿悟冷却 · 算出来的数在物理上说得通", () => {
     const at = CARD.indexOf("return enlightenmentCooldownMs(");
     expect(at, "找不到那处调用").toBeGreaterThan(0);
     const call = CARD.slice(at, CARD.indexOf(";", at));
-    // 视图传进来的是 gameNowSec.value；它的真实单位由下一句钉住
-    expect(call, "参数形态变了，这条判据要跟着改").toMatch(/gameNowSec\.value(?![\s\S]*\*\s*1000)/);
+    // 视图传进来的是 nowMs.value（`useGameNow()` 的返回值）；它的真实单位由下一句钉住
+    expect(call, "参数形态变了，这条判据要跟着改").toMatch(/nowMs\.value(?![\s\S]*\*\s*1000)/);
 
     /*
      * `gameNow()` 的单位 —— 从实现里读,不靠变量名。
@@ -166,7 +166,7 @@ describe("顿悟冷却 · 算出来的数在物理上说得通", () => {
     /*
      * 这条钉的是**那一处调用**:`enlightenmentCooldownMs(x)` 里的 x 不许带乘数。
      *
-     * 只查一个形状:参数是裸的 `gameNowSec.value`。
+     * 只查一个形状:参数是裸的 `nowMs.value`。
      * 若有人加回 `* 1000`,立刻红 —— 而上面那条会同时红(双重保险)。
      */
     const at = CARD.indexOf("return enlightenmentCooldownMs(");

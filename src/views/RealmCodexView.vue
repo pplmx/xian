@@ -720,13 +720,13 @@ const player = usePlayerStore();
 const game = useGameStore();
 const ui = useUiStore();
 const resources = useResourcesStore();
-const gameNowSec = useGameNow();
+const nowMs = useGameNow();
 const now = computed(() => {
   // 暂停感知时钟:暂停时 activeDivination 因 gameNow() 冻结不散、恢复再顺延 expiresAt。
   // 心跳源是 useGameNow(1s 心跳、gameNow() 同源)而非 totalPlaySec —— 引擎只在
   // ACTIVE_STAMP_MS(5 秒)才加一次时间,卦的分秒倒计时会 5 秒一跳;换它之后秒针顺走,
   // 暂停冻结/恢复顺延与判定链(gameNow())同一条语义,过期判定照旧不读它。
-  void gameNowSec.value;
+  void nowMs.value;
   return gameNow();
 });
 
@@ -749,7 +749,7 @@ const showAllHex = ref(false);
 
 /** 在身之卦:读一次心跳,过期的卦才会自己消失(与 player 的判定同一个办法) */
 const currentReading = computed(() => {
-  void gameNowSec.value;
+  void nowMs.value;
   const state = player.activeDivination;
   return state ? readingFromState(state) : null;
 });
@@ -757,7 +757,7 @@ const drawnLines = computed(() => (currentReading.value ? drawLines(currentReadi
 const counsel = computed(() => (currentReading.value ? readingCounsel(currentReading.value) : []));
 const powerText = computed(() => (currentReading.value ? modsText(player.divinationMods) : ""));
 const remainText = computed(() => {
-  void gameNowSec.value;
+  void nowMs.value;
   const state = player.activeDivination;
   if (!state) return "";
   const sec = Math.max(0, Math.floor((state.expiresAt - now.value) / 1000));

@@ -145,14 +145,14 @@ const KIND_TEXT: Record<string, string> = {
 const kindText = computed(() => KIND_TEXT[def.value?.kind ?? ""] ?? "");
 
 /** 剩余秒数(随引擎实时递减) */
-const gameNowSec = useGameNow();
+const nowMs = useGameNow();
 const remainSec = computed(() => {
   const id = ui.buffDetailId;
   if (!id) return 0;
   // 显示心跳与结算解耦:totalPlaySec 只每 5 秒(ACTIVE_STAMP_MS)被引擎加一次,
   // 分秒倒计时会 5 秒一跳;换 useGameNow(1s 心跳、gameNow() 同源 —— 暂停冻结、
   // 恢复顺延与 shiftBuffEnds 一致),判定链(pruneBuffs)不读它,照旧。
-  void gameNowSec.value;
+  void nowMs.value;
   const inst = cultivation.buffs.find((b) => b.defId === id);
   return inst ? Math.max(0, (inst.endsAt - gameNow()) / 1000) : 0;
 });

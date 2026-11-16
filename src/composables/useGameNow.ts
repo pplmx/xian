@@ -32,8 +32,28 @@ import { ref, type Ref } from "vue";
 import { gameNow } from "@/core/enginePause";
 import { gameClock } from "./useGameClock";
 
-/** 命令式:起一枚 1s 心跳,返回响应式读数(调用方择时收表时用返回的 stop 之外的值即可) */
-export function gameNowSeconds(): Ref<number> {
+/**
+ * **这个模块返回的是毫秒,不是秒。**
+ *
+ * ## 名字曾经在骗人（第 416 轮）
+ *
+ * 那两个导出原先叫 `gameNowMs` / 局部变量 `gameNowSec` —— 而它们返回的是
+ * `gameNow()` 即 `Date.now()` 的**毫秒**。第 412 轮我在 `RetreatCard` 里信了那个
+ * 名字，写成 `enlightenmentCooldownMs(gameNowSec.value * 1000)`，于是：
+ *
+ * ```text
+ *   真实 now      1794838638298
+ *   传进去的       1794838638298000
+ *   剩余 ≈ −1.79e15 → 夹成 0 → v-if 恒假 → 那一行从没出现过
+ * ```
+ *
+ * 而当时五条判据全绿 —— 它们查的是「有没有那一行」「插值形态」「用没用
+ * `gameNowSec`」，**连「用对了钟」那条都把名字当成了单位**。
+ *
+ * 故改名为 `gameNowMs` / `nowMs`，并把单位写进函数名与这段注释。
+ * **名字里断言了单位，就必须真的是那个单位。**
+ */
+export function gameNowMs(): Ref<number> {
   const now = ref(gameNow());
   gameClock(() => {
     now.value = gameNow();
@@ -41,7 +61,12 @@ export function gameNowSeconds(): Ref<number> {
   return now;
 }
 
-/** 组合式:挂载即起表、卸载即收表(useGameClock 同壳) */
+/**
+ * 组合式：挂载即起表、卸载即收表（`useGameClock` 同壳）。
+ *
+ * 值同样是**毫秒**（`gameNow()` 即 `Date.now()`）。调用方一般只拿它当
+ * 「每秒变一次」的响应式依赖，读数是次要的 —— 但若要读，别当成秒。
+ */
 export function useGameNow(): Ref<number> {
   const now = ref(gameNow());
   useGameClockImpl(() => {
@@ -51,5 +76,5 @@ export function useGameNow(): Ref<number> {
 }
 
 // 组合式壳从 useGameClock 引:onMounted/onUnmounted 只能在组件 setup 里注册,
-// 命令式核心(gameNowSeconds)不在组件环境也能用(测试/脚本读数)。
+// 命令式核心(gameNowMs)不在组件环境也能用(测试/脚本读数)。
 import { useGameClock as useGameClockImpl } from "./useGameClock";

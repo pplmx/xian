@@ -314,9 +314,9 @@ const ui = useUiStore();
  * shiftTimedState 对 readyAt 的顺延一致):显示与判定仍读同一个时刻函数,
  * 判定链(breakthroughPrepState / attemptBreakthrough)不读它,口径不变。
  */
-const gameNowSec = useGameNow();
+const nowMs = useGameNow();
 const btInfo = computed(() => {
-  void gameNowSec.value;
+  void nowMs.value;
   return breakthroughInfo();
 });
 /**

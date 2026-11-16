@@ -124,9 +124,9 @@ const retreating = computed(() => isRetreating());
 // 显示心跳(useGameNow,1s 心跳、gameNow() 同源):totalPlaySec 只每 5 秒
 // (ACTIVE_STAMP_MS)被引擎加一次,分秒倒计时会 5 秒一跳 —— 换它之后秒针顺走;
 // 暂停冻结/恢复顺延与 shiftBuffEnds 同一条语义,判定链(getRetreatRemainingSec)不读它,照旧
-const gameNowSec = useGameNow();
+const nowMs = useGameNow();
 const retreatRemaining = computed(() => {
-  void gameNowSec.value;
+  void nowMs.value;
   return getRetreatRemainingSec();
 });
 /**
@@ -173,7 +173,7 @@ const retreatEnlightenRate = computed(() => retreatEnlightenChance(player.major)
  *
  * ## 那个单位错误：这一行曾经永远不出现
  *
- * 初版写的是 `enlightenmentCooldownMs(gameNowSec.value * 1000)`。
+ * 初版写的是 `enlightenmentCooldownMs(nowMs.value * 1000)`。
  * 而 `useGameNow()`（这个变量名里的 `Sec` 是**误名**）返回的是
  * `gameNow()` = `Date.now()`，即**毫秒**。多乘 1000 之后：
  *
@@ -185,15 +185,15 @@ const retreatEnlightenRate = computed(() => retreatEnlightenChance(player.major)
  * ```
  *
  * 而第 412 轮的判据全都绿着：它查的是「界面上有 data-enlighten-cooldown」
- * 「插值形态对不对」「用的是 gameNowSec」—— **三条都在查字，没有一条在查数**。
+ * 「插值形态对不对」「用的是 gameNowMs」—— **三条都在查字，没有一条在查数**。
  * 这正是第 393/398/410 轮反复撞到的那个形状，只是这次穿在一件更隐蔽的外衣上：
  * 连「用对了钟」这条判据本身，都把变量名里的 `Sec` 当成了真单位。
  *
  * 修法：不乘。并让变量名如实（`nowTick`），免得下一个人再信一次那个 `Sec`。
  */
 const enlightenCooldownMs = computed(() => {
-  void gameNowSec.value; // 建立对 1 秒心跳的依赖，让它自己重算
-  return enlightenmentCooldownMs(gameNowSec.value);
+  void nowMs.value; // 建立对 1 秒心跳的依赖，让它自己重算
+  return enlightenmentCooldownMs(nowMs.value);
 });
 const enlightenCooldownSec = computed(() => Math.ceil(enlightenCooldownMs.value / 1000));
 /**

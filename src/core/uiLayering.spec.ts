@@ -517,7 +517,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 判据:卡片必须用 useGameNow,且 btInfo 的 computed 里读它(接上心跳,不是只 import)。
     const card = fileAt("components/cultivation/BreakthroughCard.vue");
     expect(card?.src).toContain("useGameNow");
-    expect(card?.src).toMatch(/const btInfo = computed\(\(\) => \{\s*void gameNowSec\.value;/);
+    expect(card?.src).toMatch(/const btInfo = computed\(\(\) => \{\s*void nowMs\.value;/);
   });
 
   it("逆旅契灰卡有理由 —— 已签报「此生已签」、道果不足报「尚差 N」", () => {
