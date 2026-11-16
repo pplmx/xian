@@ -195,6 +195,19 @@
                 >
               </p>
               <!--
+                构成里**丹药与际遇加的那一栏**（第 411 轮）。
+                总数不说明它从哪来：吃一颗延寿丹，玩家只知道数变了，
+                不知道这一颗值多少 —— 下次要不要吃、值不值得为它凑材料，全靠猜。
+                只在有加算时出现，零值只是噪音。
+              -->
+              <p
+                v-if="lifespanFromBoons > 0"
+                class="character-dossier__floor-source tabular"
+                data-character-lifespan-boons
+              >
+                其中 {{ formatNum(lifespanFromBoons) }} 载来自延寿丹与际遇
+              </p>
+              <!--
                 灵根那一段解释收成一条「注」。
 
                 它答的是「倍率怎么算、五行管什么」—— 都是**为什么**,不是此刻的读数;
@@ -760,6 +773,20 @@ const player = usePlayerStore();
  * 故这里只做一次减法，不读 `realm.lifespanYears` 裸值。
  */
 const lifespanRemaining = computed(() => Math.max(0, player.lifespanMax - player.age));
+
+/**
+ * 寿元的构成里，**延寿丹与际遇直接加的那一栏**（第 411 轮）。
+ *
+ * `lifespanMax = floor(base × (1 + lifespanPct) + lifespanBonusYears)` ——
+ * 三项，而界面只报总数。于是玩家吃一颗延寿丹，看到总数变了却不知道它值多少，
+ * 下一次要不要吃、值不值得为它去凑材料，全靠猜。
+ *
+ * 而这一栏与本仓「让看不见的机制可见」那条一脉相承：延寿丹是可炼可买的实物，
+ * 它的作用恰恰是这一项，不露出来等于那颗丹在界面上没有分量。
+ *
+ * 只在有加算时才说 —— 一个「延寿 0 载」的读数只是噪音。
+ */
+const lifespanFromBoons = computed(() => Math.max(0, Math.floor(player.lifespanBonusYears)));
 const [foundationChapter, modifiersChapter, catalogChapter] = characterChapters();
 /** 卦在身:时限制的一卦在跑 —— 界域志那一行要报出来(问卦就在那一册里) */
 const divinationOn = computed(() => !!player.activeDivination);
