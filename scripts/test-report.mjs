@@ -52,8 +52,8 @@ const CATEGORIES = [
   {
     name: "Unit        数值纯函数",
     match: [
-      "gnum",
-      "format",
+      "gnum.spec",
+      "format.spec",
       "timeUnits",
       "listRender",
       "inventoryPriority",
@@ -61,19 +61,20 @@ const CATEGORIES = [
       "formulas",
       "linggenGen",
       "equipGen",
-      "crypto",
-      "quests",
-      "codex",
+      "crypto.spec",
+      "quests.spec",
+      "codex.spec",
       "craftability",
       "blueprintMastery",
-      "reforge",
+      "reforge.spec",
+      "reforgeAuto",
       "affixTransfer",
       "useAffixTransfer",
-      "theme",
+      "theme.spec",
       "audio.spec",
       "savePersistence",
       "enginePause",
-      "setMath",
+      "setMath.spec",
       "routeMap",
       "dongfu.spec",
       "ui.spec",
@@ -124,8 +125,8 @@ const CATEGORIES = [
       "docNumeralForms",
       "testNameCounts",
       "scriptCounts",
-      "ruleset",
-      "names",
+      "ruleset.spec",
+      "names.spec",
       "loreThresholds",
       "terminology",
       "releaseTodo",
@@ -140,14 +141,14 @@ const CATEGORIES = [
       "powerRating",
       "statBreakdown",
       "equipSet",
-      "astral",
+      "astral.spec",
       "artifactLadder",
       "artifacts.spec",
       "talentLadder",
       "petQuality",
-      "petVows",
+      "petVows.spec",
       "gongfaBranch",
-      "daoNote",
+      "daoNote.spec",
       "softCapAudit",
       "softCapVisibility",
       "speedGranularity",
@@ -207,11 +208,11 @@ const CATEGORIES = [
     match: [
       "economySim",
       "expIncome",
-      "lootSim",
+      "lootSim.spec",
       "loot.spec",
-      "salvage",
+      "salvage.spec",
       "smartKeep",
-      "petLuck",
+      "petLuck.spec",
       "pillValue",
       "pillValueMonotonic",
       "pillService",
@@ -238,7 +239,7 @@ const CATEGORIES = [
       "marketOverview.spec",
       "marketDesk",
       "marketShelf",
-      "bounty",
+      "bounty.spec",
     ],
   },
   {
@@ -365,7 +366,7 @@ const CATEGORIES = [
       "importCycles",
       "useTabKeys",
       "startupOrder",
-      "guard",
+      "guard.spec",
       "swRegistration",
       "routeTransition",
       "tribulationWeatherParity",
@@ -390,7 +391,7 @@ const CATEGORIES = [
       "tautologyGuard",
       "reportTestDecl",
       "fatePreview",
-      "goBack",
+      "goBack.spec",
       "inventorySeen",
       "inventoryArtifacts",
       "storeResilience",
@@ -421,7 +422,7 @@ const CATEGORIES = [
       "qualityTier",
       "assertionLiveness",
       "flashTier",
-      "rareSfx",
+      "rareSfx.spec",
       "nextStepSamePageFallback",
       "nextStep",
       "titleMoment",
@@ -443,7 +444,7 @@ const CATEGORIES = [
       "dailySettle",
       "majorBreak",
       "weatherSky",
-      "skyRoot",
+      "skyRoot.spec",
       "lifeName",
       "lifeChronicle",
       "artifactMoment",
@@ -462,6 +463,9 @@ const CATEGORIES = [
       "linggenCompare",
       "elementGains",
       "fortuneHint",
+      "fortuneWorldGate",
+      "fortuneEcho",
+      "fortuneChain",
       "tribulationReliefText",
       "lifeFootprint",
       "lifeDate",
@@ -532,7 +536,7 @@ const CATEGORIES = [
       "petWorldBand",
       "codexScale",
       "flavorTextNoNumbers",
-      "haptics",
+      "haptics.spec",
       "petTraitBreadth",
       "petFateOrder",
       "petFateMark",
@@ -831,7 +835,7 @@ const CATEGORIES = [
       "releaseCheck",
       "useServiceWorkerUpdate",
       "gradleShadow",
-      "rebrand",
+      "rebrand.spec",
     ],
   },
   {
@@ -858,13 +862,13 @@ const CATEGORIES = [
       "celestialDesk",
       "soulDesk",
       "endgameService",
-      "phase21",
+      "phase21.spec",
       "expedition",
       "gauntlet",
       "soulForge",
       "souls.spec",
       "rulesetEra",
-      "qimen",
+      "qimen.spec",
       "gateRuleText",
       // 终局(Map / 四屏 / 碑记 / 满级之后的修为去哪)属于这一册:
       // 走完全程才见到的那些内容
@@ -883,21 +887,21 @@ const CATEGORIES = [
       "worldGen",
       "ruleUniverse",
       "playerLab",
-      "legacy",
+      "legacy.spec",
       "identity",
       // 择道相性:八选一、一世不可改,是整世最重的一次决策
       "daoAffinity",
-      "samsara",
+      "samsara.spec",
       "reincarnationDesk",
       "reincarnationFloor",
-      "fortune",
+      "fortune.spec",
       "worldEcho",
       "regionEvent",
       "eventTier",
       "eventEngine",
       "eventDesk",
       "eventRealmBand",
-      "weather",
+      "weather.spec",
       "boundaryTribulation",
       "tribulation",
       "secretRealm",
@@ -959,13 +963,37 @@ if (!report) {
 }
 
 const rows = CATEGORIES.map((c) => ({ ...c, passed: 0, failed: 0 }));
+/**
+ * 同一个 spec 命中多类时记一笔。
+ *
+ * 文件头那条纪律写着「同一文件只应命中一类」，但代码从来没有执行过它 ——
+ * 实测 829 个 spec 里有几十个同时命中两三类（Contract 那一类收了 367 个登记名，
+ * 把 `xxxScene` / `xxxParity` 这类一致性判据全吞了，于是截胡 Balance / Progression /
+ * Decision / Audit）。
+ *
+ * `rows.find` 只取第一个，故**计数不会重复**，坏处是分类边界失真:
+ * 那些文件被归入的不是它们本该在的类，报告的分类占比于是不准。
+ *
+ * 这份清单不打算一次修完（那要动几百条登记），它先让失真**可见** ——
+ * 每次跑报告都列出来，谁加了新的跨类 spec 会立刻看见。
+ */
+const MULTI_HIT = [];
+
 let uncategorized = 0;
 /** 未登记的文件名与用例数 —— 光报个数没用,得让人一眼看到该往哪儿加 */
 const orphans = [];
 
 for (const file of report.testResults ?? []) {
   const path = String(file.name ?? "");
-  const row = rows.find((c) => c.match.some((m) => path.includes(m)));
+  const matched = rows.filter((c) => c.match.some((m) => path.includes(m)));
+  const row = matched[0];
+  if (matched.length > 1) {
+    MULTI_HIT.push({
+      path: path.replace(/^.*\/(src|packages)\//, "$1/"),
+      into: matched[0].name.split(" ")[0],
+      also: matched.slice(1).map((c) => c.name.split(" ")[0]),
+    });
+  }
   const passed = (file.assertionResults ?? []).filter((a) => a.status === "passed").length;
   // skipped/todo/disabled/pending 一律算失败:一条守卫用例被 .skip,等于把关卡拆了,
   // 它守护的回归从此不再被量。只报"0 败"会让人误以为真的全绿。
@@ -1008,6 +1036,13 @@ if (uncategorized > 0) {
 console.log(
   `\n  共 ${totalPassed} 过 / ${totalFailed} 败${uncategorized > 0 ? ` · 另有 ${uncategorized} 个未分类` : ""}`,
 );
+if (MULTI_HIT.length > 0) {
+  console.log(
+    `\n  ! 有 ${MULTI_HIT.length} 个 spec 同时命中多类 —— 只取第一个,故分类占比失真（不影响总数与成败）:`,
+  );
+  for (const m of MULTI_HIT)
+    console.log(`      ${m.into.padEnd(12)} (>${m.also.join(" ")}<)  ${m.path}`);
+}
 
 // —— 最慢的几个 spec 文件 ——
 //
