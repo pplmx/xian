@@ -223,7 +223,14 @@
                 </span>
                 <span class="inventory-seat__head">
                   <span class="inventory-seat__name">{{ row.name }}</span>
-                  <span v-if="row.stock" class="inventory-seat__stock">{{ row.stock }} 候</span>
+                  <!--
+                    这一格还有几件同槽装备可换。
+                    此前写作「{{ row.stock }} 候」，而同一元素的 aria-label 念的是
+                    「件同席候选」—— 同一个数在视觉与读屏上叫两个名字。
+                    且「1 候」在中文里不成立：「一候」是时间单位（五日一候），
+                    要指候选就得说「1 件候选」。现在两边同称「候选」。
+                  -->
+                  <span v-if="row.stock" class="inventory-seat__stock">候选 {{ row.stock }}</span>
                 </span>
                 <span v-if="row.item && row.template" class="inventory-seat__piece">
                   <GameIcon

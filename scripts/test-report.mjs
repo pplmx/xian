@@ -501,6 +501,7 @@ const CATEGORIES = [
       "mechanismFrequency",
       "timeAllocation",
       "progressUnitAlign",
+      "inventoryStockLabel",
       "startRealmTerm",
       "lootDustLedger",
       "sessionHaul",
