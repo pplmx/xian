@@ -11015,6 +11015,7 @@ async function taskBondFolio() {
             },
           ]),
         );
+        const lean = root.querySelector("[data-bond-lean]");
         return {
           text: (root.textContent || "").replace(/\s+/g, " ").trim(),
           nowBeforeMeters: !!now && !!meters && now.top < meters.top,
@@ -11023,6 +11024,14 @@ async function taskBondFolio() {
           nextStage: gate?.getAttribute("data-bond-next-stage"),
           gateText: (gate?.textContent || "").replace(/\s+/g, " ").trim(),
           meterRows,
+          lean: lean
+            ? {
+                stance: lean.getAttribute("data-bond-lean-stance"),
+                text: (lean.textContent || "").replace(/\s+/g, " ").trim(),
+                overflow: lean.scrollWidth > lean.clientWidth + 1,
+                aria: (lean.getAttribute("aria-label") || "").trim(),
+              }
+            : null,
           panelWidth: panel.clientWidth,
           panelScrollWidth: panel.scrollWidth,
         };
@@ -11076,6 +11085,31 @@ async function taskBondFolio() {
         );
       }
 
+      /*
+       * 素行之向 —— 契合里那一份「来自你是谁」，此前一个字都没露。
+       *
+       * 夹具里的玩家计数器是空的（`quests.counters: {}`），故这一档该是
+       * 「尚未走出素行」、增减 0 —— 而**这正是最容易做错的一档**：
+       * 若实现把「不知道谁是玩家」当成「无涉」，这里会读到 -1，
+       * 玩家会看到一个凭空的扣分。故两档都要量，不能只量「有素行」的那一半。
+       */
+      checked += 1;
+      if (
+        !folio?.lean ||
+        folio.lean.stance !== "unknown" ||
+        !folio.lean.text.includes("尚未走出素行") ||
+        !folio.lean.text.includes("契合 0") ||
+        !folio.lean.text.includes("她是丹鼎道") ||
+        !folio.lean.aria.includes("尚未走出素行") ||
+        folio.lean.overflow
+      ) {
+        failures.push(
+          `[390] 同行帖的素行之向不对:` +
+            `档 ${folio?.lean?.stance || "无"} / 正文 ${folio?.lean?.text?.slice(0, 90) || "无"} / ` +
+            `读屏 ${folio?.lean?.aria?.slice(0, 60) || "无"} / 溢 ${folio?.lean?.overflow ?? "?"}`,
+        );
+      }
+
       const controls = await auditModalControls(page);
       checked += 1;
       if (!controls || controls.count === 0 || controls.unnamed.length || controls.small.length) {
@@ -11110,7 +11144,10 @@ async function taskBondFolio() {
         ) ||
         Object.values(narrow.meterRows).some(
           (row) => row.overflow || row.headDirection !== "column",
-        )
+        ) ||
+        // 素行之向在 195 宽也要收住 —— 它是纵向排的说明块，不许横向溢出
+        !narrow.lean ||
+        narrow.lean.overflow
       ) {
         failures.push(
           `[195] 同行帖选项与关系读数没有上下收住:` +
@@ -11124,7 +11161,8 @@ async function taskBondFolio() {
               Object.entries(narrow?.meterRows ?? {})
                 .map(([key, row]) => `${key}:${row.overflow ? "溢" : "收"}/${row.headDirection}`)
                 .join(" ") || "无"
-            }`,
+            } / ` +
+            `素行 ${narrow?.lean ? (narrow.lean.overflow ? "溢" : "收") : "无"}`,
         );
       }
       if (SHOTS) await page.screenshot({ path: join(SHOTS_DIR, "bond-folio-195.png") });

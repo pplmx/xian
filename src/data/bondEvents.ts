@@ -32,7 +32,7 @@
  * StatMods / 资源 / 道果 / 宿慧。刚拆干净的跨世正反馈不能从这里接回来。
  */
 import type { CounterKey } from "@/types";
-import { type DaoLean, type DaoluDef } from "@/data/daolu";
+import { LEAN_TENSION, type DaoLean, type DaoluDef } from "@/data/daolu";
 
 /** 关系冲突的类型 —— 七个事件各代表一种,不做重复 */
 export type ConflictKind =
@@ -486,6 +486,54 @@ export function leanFromCounters(counter: (k: CounterKey) => number): DaoLean | 
 // ============ 选择的后果 ============
 
 /**
+ * 玩家素行对着她，落在哪一档 —— **结算与界面读的是这一个函数**。
+ *
+ * ```text
+ *   aligned   与她是同一道       +3
+ *   opposed   正是她的对头       -5   （LEAN_TENSION 那两对）
+ *   apart     不相干             -1
+ *   unknown   还没走出素行        0   （行为太少，leanFromCounters 回 null）
+ * ```
+ *
+ * 四档而不是三档：`unknown` 与 `apart` 在结算上不同（0 vs -1），
+ * 界面若把它们并成一句「无涉」，玩家会以为「什么都不做」与「做了别的事」
+ * 代价相同 —— 而这两件事差 1 点契合。
+ */
+export type LeanStance = "aligned" | "opposed" | "apart" | "unknown";
+
+export const LEAN_STANCE_TEXT: Record<LeanStance, string> = {
+  aligned: "与她同道",
+  opposed: "与她相左",
+  apart: "与她了无干涉",
+  unknown: "尚未走出素行",
+};
+
+/** 素行对着她的增减 —— 结算只用这一处，界面报的也是它 */
+export function leanStanceOf(herLean: DaoLean, playerLean: DaoLean | null): LeanStance {
+  if (!playerLean) return "unknown";
+  if (playerLean === herLean) return "aligned";
+  return LEAN_TENSION[herLean] === playerLean ? "opposed" : "apart";
+}
+
+/**
+ * 素行带来的契合增减。
+ *
+ * 三个数（+3 / -5 / -1）此前**只写在 resolveChoice 的 if 里**：
+ * 同行帖把契合总增减摊在选项上，而其中这一份来自「你是谁」——
+ * 玩家看不到自己是哪一道，也就无从知道这 -5 是自己的活法换来的。
+ */
+export const LEAN_STANCE_SHIFT: Record<LeanStance, number> = {
+  aligned: 3,
+  opposed: -5,
+  apart: -1,
+  unknown: 0,
+};
+
+export function leanShiftOf(herLean: DaoLean, playerLean: DaoLean | null): number {
+  return LEAN_STANCE_SHIFT[leanStanceOf(herLean, playerLean)];
+}
+
+/**
  * 结算一个选择。
  *
  * 三维各吃不同来源:
@@ -502,16 +550,10 @@ export function resolveChoice(
 ): BondOutcome & { leanShift: number } {
   const o = choice.outcome;
   // 选项体现的道途与她的道途是否相合
-  const tension: Partial<Record<DaoLean, DaoLean>> = {
-    slaughter: "longevity",
-    longevity: "slaughter",
-    sword: "alchemy",
-    alchemy: "sword",
-  };
   let leanShift = 0;
   if (choice.lean) {
     if (choice.lean === def.lean) leanShift = 6;
-    else leanShift = tension[def.lean] === choice.lean ? -8 : -2;
+    else leanShift = LEAN_TENSION[def.lean] === choice.lean ? -8 : -2;
   }
   /**
    * 玩家一贯的道途也参与判断 —— 这是契合成为「行为结果」的关键一环。
@@ -519,11 +561,7 @@ export function resolveChoice(
    * 三档都要有区别,否则「杀伐玩家」与「丹鼎玩家」做同一个选择会拿到
    * 完全相同的契合,那就退回了 33.8「接口存在但玩家无关」的状态
    */
-  if (playerLean) {
-    if (playerLean === def.lean) leanShift += 3;
-    else if (tension[def.lean] === playerLean) leanShift -= 5;
-    else leanShift -= 1;
-  }
+  leanShift += leanShiftOf(def.lean, playerLean);
   return {
     fate: o.fate,
     trust: o.trust + (choice.supportsHer ? 4 : 0) + (choice.crossesTaboo ? -6 : 0),

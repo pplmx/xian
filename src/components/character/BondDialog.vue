@@ -44,7 +44,7 @@
           <h2 class="bond-head__title">
             <span>{{ bondDef.name }}</span>
             <span class="bond-head__lean"
-              >{{ TEMPER_NAMES[bondDef.temper] }} · {{ LEAN_NAMES[bondDef.lean] }}道</span
+              >{{ TEMPER_NAMES[bondDef.temper] }} · {{ leanFullName(bondDef.lean) }}</span
             >
           </h2>
           <p class="bond-head__brief">{{ bondDef.brief }}</p>
@@ -276,6 +276,45 @@
             </em>
             <em v-else>此世已行至最高阶</em>
           </div>
+
+          <!--
+            素行之向 —— 契合里那一份「来自你是谁」,此前一个字都没露。
+
+            `resolveChoice` 每次都把「玩家素行 vs 她的素行」算进契合(+3 / -5 / -1),
+            而这一帖只摊开「选项那份」:玩家看得到「契 -12」,看不到其中 -5 是自己的活法。
+            一位杀伐道的玩家对长生道的云舒做任何事都额外 -5,他会把这条账算到
+            选项、随机或「这游戏对我不友好」上。
+
+            读的是 `leanStanceOf` / `leanShiftOf` —— 与结算同一个函数,不是另算一份。
+            纵向排(不是与三衡并排):195 宽下两列会折成三行,而这一块是**说明**,
+            本来就该在读数之下。
+          -->
+          <div
+            v-if="leanAxes"
+            class="bond-lean"
+            data-bond-lean
+            :data-bond-lean-stance="leanAxes.stance"
+            :aria-label="leanSummary"
+          >
+            <p class="bond-lean__head">
+              <span>素行之向</span>
+              <span class="bond-lean__her">她是{{ leanAxes.herLeanName }}</span>
+            </p>
+            <p class="bond-lean__you" data-bond-lean-line>
+              {{ leanAxes.stanceText }}，契合 {{ leanShiftText }}
+            </p>
+            <p v-if="leanAxes.from.length" class="bond-lean__from">
+              <span>你是{{ leanAxes.leanName }}</span>
+              {{ leanAxes.from.join(" · ") }}
+            </p>
+            <p v-else class="bond-lean__from">
+              尚无足够的行迹来判你的道途 —— 多做几件事，这一份自会见分晓
+            </p>
+            <p class="bond-lean__note">
+              这一份叠加在每个选项的「契」上：同道 +{{ LEAN_STANCE_SHIFT.aligned }}，相左
+              {{ LEAN_STANCE_SHIFT.opposed }}，无涉 {{ LEAN_STANCE_SHIFT.apart }}。
+            </p>
+          </div>
         </section>
       </div>
     </article>
@@ -362,13 +401,14 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
-import { ENDING_NAMES, LEAN_NAMES, STAGE_NAMES, TEMPER_NAMES } from "@/data/daolu";
+import { ENDING_NAMES, leanFullName, STAGE_NAMES, TEMPER_NAMES } from "@/data/daolu";
 import {
   chooseBondEvent,
   herStance,
   nextGateHint,
   PERIL_SAFE_ACCORD,
   PERIL_SAFE_TRUST,
+  playerLean,
   previewBondChoice,
   respondIntent,
   type BondChoicePreview,
@@ -380,7 +420,8 @@ import {
   type IntentAftermath,
   type IntentResponse,
 } from "@/data/bondIntent";
-import { TRIGGER_NAMES, type BondChoice } from "@/data/bondEvents";
+import { LEAN_STANCE_SHIFT, TRIGGER_NAMES, type BondChoice } from "@/data/bondEvents";
+import { bondLeanAxes, bondLeanSummary } from "@/ui/bondLeanAxes";
 import {
   firstNewVisibleIndex,
   listWindow,
@@ -469,6 +510,24 @@ function showPreviousPastBonds(): void {
 }
 
 const gateHint = computed(() => nextGateHint());
+
+/**
+ * 素行之向 —— 她是哪一道、你走的是哪一道、这一份算进契合多少。
+ *
+ * `playerLean()` 由行为计数推断（与结算同一个来源），故这一行会随玩法自己变:
+ * 斩妖斩得多了，它会从「尚未走出素行」变成「杀伐道」。
+ */
+const leanAxes = computed(() => {
+  const def = bondDef.value;
+  if (!def) return null;
+  return bondLeanAxes(def.lean, playerLean());
+});
+const leanShiftText = computed(() => {
+  const shift = leanAxes.value?.shift ?? 0;
+  return shift > 0 ? `+${shift}` : `${shift}`;
+});
+/** 一行说完 —— 读屏与窄屏用，不含任何两列排版的暗示 */
+const leanSummary = computed(() => (leanAxes.value ? bondLeanSummary(leanAxes.value) : ""));
 const pendingEventTriggers = computed(() =>
   (pendingEvent.value?.triggers ?? [])
     .map((t) => TRIGGER_NAMES[t])
@@ -621,7 +680,11 @@ function answerIntent(response: IntentResponse): void {
   --ink-scene-h: 7rem;
   /*
    * 墨取 0.72:这一条底下只有帖名与身份两行(不是整篇文章),可以比铺满那版浓一档;
-   * 再浓一档,「同行帖 · 厉孤」与「惜物 · 器道道」就和山脊抢。
+   * 再浓一档,「同行帖 · 厉孤」与「惜物 · 器道」就和山脊抢。
+   *
+   * （那两行原先有一处读作「器道道」—— `LEAN_NAMES` 是短名、界面统一补一个「道」字，
+   *   而「器道」本身就以「道」收尾。现由 `data/daolu` 的 `leanFullName` 一处拼接，
+   *   已经带「道」的不再补。判据见 `ui/bondLeanAxes.spec`。）
    */
   --ink-scene-ink: 0.72;
   position: absolute;
@@ -1233,6 +1296,52 @@ function answerIntent(response: IntentResponse): void {
 .bond-shared em {
   color: rgb(var(--color-qing-rgb));
   font-style: normal;
+}
+
+/*
+ * 素行之向 —— 说明,不是读数,故压在「共历」之下、字号与行距都收一档。
+ *
+ * 强色只用一处:相左那一档的读行取朱砂(那是要玩家留意的账,同顶部寿元告急那条)。
+ * 其余一律墨色;同道也不点石青 —— 这一块是说明,不是信息型提示。
+ */
+.bond-lean {
+  display: grid;
+  gap: 0.16rem;
+  margin-top: 0.42rem;
+  padding-top: 0.36rem;
+  border-top: 1px solid rgb(var(--color-ink-rgb) / 0.08);
+  color: rgb(var(--color-ink-faint-rgb));
+  font-size: var(--type-note);
+  line-height: 1.55;
+}
+
+.bond-lean__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.12rem 0.42rem;
+  color: rgb(var(--color-ink-soft-rgb));
+}
+
+.bond-lean__her {
+  color: rgb(var(--color-ink-faint-rgb));
+}
+
+.bond-lean__you {
+  color: rgb(var(--color-ink-soft-rgb));
+}
+
+.bond-lean[data-bond-lean-stance="opposed"] .bond-lean__you {
+  color: rgb(var(--color-cinnabar-rgb));
+}
+
+.bond-lean__from span {
+  margin-right: 0.3rem;
+  color: rgb(var(--color-ink-soft-rgb));
+}
+
+.bond-lean__note {
+  color: rgb(var(--color-ink-faint-rgb));
 }
 
 .bond-empty {

@@ -57,6 +57,35 @@ export const LEAN_NAMES: Record<DaoLean, string> = {
   truth: "问心",
 };
 
+/**
+ * 六种素行里**互相看不顺眼**的那两对。
+ *
+ * 只有两对,而且两条都写成双向的(slaughter→longevity 与 longevity→slaughter
+ * 各一条)—— 判定处直接查这张表,故它必须对称,否则「谁先查谁」会决定结果。
+ *
+ * 器道与问心**没有对头**:表里查不到,它们对任何人都落在「无涉」那一档。
+ * 这不是漏填 —— 但它的后果是这两道的玩家拿到的契合增减与"毫无关系的第三道"
+ * 完全相同(见 `ui/bondLeanAxes.spec` 里量到的那一格)。
+ */
+export const LEAN_TENSION: Partial<Record<DaoLean, DaoLean>> = {
+  slaughter: "longevity",
+  longevity: "slaughter",
+  sword: "alchemy",
+  alchemy: "sword",
+};
+
+/**
+ * 素行的全名 —— 用于「惜物 · 器道道」那种拼接。
+ *
+ * `LEAN_NAMES` 是短名(「杀伐」「器道」),界面常要接一个「道」字。
+ * 器道本身就以「道」收尾,直接拼会读成「器道道」—— 全站唯一一处这样的叠字,
+ * **而且一度真的印在同行帖上**。故拼接只走这一处:已经带「道」的不再补。
+ */
+export function leanFullName(lean: DaoLean): string {
+  const short = LEAN_NAMES[lean];
+  return short.endsWith("道") ? short : `${short}道`;
+}
+
 /** 行为倾向 —— 共同历练时她会建议什么 */
 export type Temperament =
   /** 谨慎:遇险主张绕行 */

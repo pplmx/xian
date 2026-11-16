@@ -36,20 +36,16 @@
  */
 import { MENTOR_WEIGHTS } from "@/core/mentorService";
 import type { MentorId } from "@/data/mentors";
+import { COUNTER_BEHAVIOR } from "@/data/counterText";
 
-/** 计数器键名 → 人话。玩家读的是行为,不是内部字段名。 */
-const BEHAVIOR_TEXT: Record<string, string> = {
-  kills: "斩妖除魔",
-  bossKills: "斩落妖王",
-  breakthroughs: "破境精进",
-  pillsCrafted: "炼丹",
-  pillsUsed: "服丹",
-  buildingUpgrades: "营造洞府",
-  offlineClaims: "坐收离线产出",
-  explores: "游历四方",
-  equipsGained: "寻得兵刃",
-  events: "撞见际遇",
-};
+/**
+ * 计数器键名 → 人话。玩家读的是行为,不是内部字段名。
+ *
+ * 表本身搬到 `data/counterText`（那里是全表，`Record<CounterKey, …>` 强制满）——
+ * 本模块原先自带半张表，只收师承用得到的十个键，而「素行」那边还要另外五个，
+ * 两边各写一份就是两本账。这里只留一层「是不是 CounterKey」的收窄。
+ */
+const BEHAVIOR_TEXT: Partial<Record<string, string>> = COUNTER_BEHAVIOR;
 
 export interface MentorBehaviorAxes {
   /** 与师承同向的行为 */

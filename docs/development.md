@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 829 个 spec;本作自己那部分 749 个) |
+| `bun run test` | 全量用例(全量 831 个 spec;本作自己那部分 751 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 829 个 spec = 宿主 747 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 831 个 spec = 宿主 751 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 829 个 spec(本作自己那部分 749 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 831 个 spec(本作自己那部分 751 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -1376,7 +1376,7 @@ FCP 没有实质变化(±16ms 是抖动),而**楷体换上一律变慢 130~200ms
 ```text
 packages/engine/          # 公共库:万象引擎(等级/属性/装备/副本四套系统的可配置内核)
 src/
-├── data/                 # 内容层:纯静态声明式定义(62 个模块)
+├── data/                 # 内容层:纯静态声明式定义(63 个模块)
 │   ├── realms.ts             # 4 界域 · 21 境界
 │   ├── regions.ts            # 44 区域
 │   ├── enemies.ts            # 132 敌人
@@ -20886,3 +20886,95 @@ Decision / Audit。
 **「已知且可见」比「假装没有」诚实。**
 
 工作区干净、全量 829 / 6899 全绿；check 同绿。
+
+### 第 388 轮:契合扣了五点,而它来自「你是谁」—— 界面从没说过你是谁
+
+前几轮都在收敛界面与判据。这一轮回到目标本身:**加可玩性**。
+找法照旧:先搜两处文档(149 条「第 N 轮」结论 + spec 文件名),再逐层读代码。
+
+#### 查到了什么
+
+`data/bondEvents` 的 `resolveChoice` 把契合拆成两份:
+
+```text
+选项那份   选项体现的道途 vs 她的道途       +6 / -8 / -2
+素行那份   玩家一贯的道途 vs 她的道途       +3 / -5 / -1 / 0
+```
+
+同行帖把第一份摊得很干净 —— 每个选项上都印着「契 +8」,还有「触碰底线」
+「站在她那边」两类旗。而**第二份没有任何界面出口**。实测:
+
+```text
+playerLean()   全仓 2 个调用点（结算 1 + 本轮新加 1）    改动前只有结算那一处
+LEAN_NAMES     全仓 1 个界面调用点                      只用在标题拼接
+```
+
+也就是说:玩家从来看不见自己是哪一道,而这一份**每一次结算都在算**。
+
+#### 为什么它比听起来严重
+
+一位杀伐道的玩家对长生道的云舒做任何事,契合都额外 -5。
+他不知道自己是杀伐道,于是把这条账算到选项、算到随机、算到「这游戏对我不友好」。
+这与 `mentorBehaviorAxes` / `swordPurityAxes` 是同一个形状:**报了结果,没报怎么来的**。
+在那两处,缺口的知识侧已经解决过两次;这一处是同一个形状的第三例。
+
+#### 改法
+
+```text
+data/daolu        LEAN_TENSION 从 resolveChoice 里抽出来（并写明必须对称）
+data/bondEvents   leanStanceOf / leanShiftOf / LEAN_STANCE_SHIFT —— 四档,不是三档
+data/counterText  计数器 → 行为的满表（师承的半张表与素行那半张合并成一份）
+ui/bondLeanAxes   报三件事:她是哪一道 / 你落在哪一档 / 你这一道由哪些行为推出来
+BondDialog        三衡之下一块「素行之向」,纵向排（195 宽下并排会折成三行）
+```
+
+**四档而不是三档**是这一轮的一个判断。「尚未走出素行」(0)与「无涉」(-1)
+在结算上不同;并成一句「无涉」会让玩家以为「什么都不做」与「做了别的事」代价相同。
+
+#### 顺带修掉一处叠字
+
+`LEAN_NAMES` 是短名,界面统一补一个「道」字,而「器道」本身以「道」收尾 ——
+同行帖上**真的印过「惜物 · 器道道」**。那条样例句至今留在 `BondDialog` 的注释里
+(「再浓一档,「同行帖 · 厉孤」与「惜物 · 器道道」就和山脊抢」),
+说明它被看见过,只是没人认出那是错的。拼接收进 `leanFullName` 一处。
+
+#### 一条判据第一版是绿的,而它本该红
+
+`bondLeanAxes.spec` 里那条「结算真走这一处」,第一版写的是:
+
+```ts
+expect(CODE, "结算没走 leanShiftOf").toContain("leanShiftOf(");
+```
+
+故障注入时把三个数**内联回 `resolveChoice`**(即完全等价于回退),判据**全绿** ——
+因为 `leanShiftOf(` 在**函数定义那一行**就命中了。
+
+改成按函数体取 `resolveChoice` 再查。而取函数体这件事本身也栽了一次:
+`code.indexOf("{", start)` 撞上返回类型里的 `{ leanShift: number }`,
+摘出来只有 21 个字符 —— 函数体的第一段就被花括号配平截断了。
+正解要先**越过参数表的右括号**,再往后找那个「后面紧跟换行」的花括号块。
+这与 `assertionLiveness.spec` 里那段注释是同一个教训:**摘取边界,不能靠「找一个看着像的符号」**。
+
+修好之后故障注入当场红:「素行那三个数被内联回结算里了 —— 界面报的就不是它扣的」。
+
+#### 六次故障注入
+
+```text
+删 LEAN_TENSION 的反向一条      → 4 红（对称性 / 差额 / 相左 / 每一位的对头数）
+leanFullName 改成朴素拼接        → 1 红（器道道）
+三个数内联回 resolveChoice       → 1 红（函数体级的源码判据）
+BondDialog 不再调 leanFullName   → 1 红（视图自己拼「道」）
+counterText 删掉 tribulations    → 3 红（满表 / 消费者 / 反空转）
+counterText 把 kills 写成键名    → 1 红（说法不许是键名）
+```
+
+#### 浏览器门里的那一档
+
+夹具的 `quests.counters` 是空的,故量到的是「尚未走出素行 / 契合 0」——
+而这恰恰是**最容易做错的那一档**:若实现把「不知道谁是玩家」当成「无涉」,
+玩家会看到一个凭空的 -1。390 量正文与读屏,195 量它不横向溢出。
+
+第一次跑红在「她是长生道」—— 夹具里那位是沈青璃(丹鼎道),是我写错了,不是产品。
+这正是判据该做的:它报的是「读数里没说出她是哪一道」,而我凭印象填了个名字。
+
+工作区干净、全量 831 / 6918 全绿;check、test:report、check:ui 同绿。
