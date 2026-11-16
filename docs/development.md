@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 858 个 spec;本作自己那部分 778 个) |
+| `bun run test` | 全量用例(全量 859 个 spec;本作自己那部分 779 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 858 个 spec = 宿主 778 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 859 个 spec = 宿主 779 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 858 个 spec(本作自己那部分 778 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 859 个 spec(本作自己那部分 779 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -24054,3 +24054,62 @@ N 只可能是 **0 或 5**,中间那 1~4 永远不会出现。
 「5 界已备」听起来像选择,实际是「你有 20 道源」—— 而后者才是玩家要判断的东西。
 
 工作区干净、全量 858 / 7067 全绿;check、test:report、check:ui 同绿。
+
+### 第 431 轮:四轮都在同一格上打转,该把那个问题问出来
+
+#### 那四轮
+
+```text
+第 428 轮  六支全空时 generateCurrentGoal 返回 null —— 首页那张卡整块不渲染
+第 429 轮  补的三支与旧五支挤在同一张脸下（标签写死「当前道途」）
+第 430 轮  第二支的「N 界已备」是假选择（五界代价全同，N 只会是 0 或 5）
+第 431 轮  把这三层合起来验一遍
+```
+
+分开看每一轮都对。但**没有一条判据回答过那个更大的问题**:
+
+> 一位真仙以上的玩家打开首页,**该看到的东西齐了吗?**
+
+#### 三件事
+
+```text
+① 目标卡        data-home-goal —— 这一格要说什么
+② 天界入口卡    data-home-celestial —— 通往道途 / 远征 / 天道那一整套
+③ 每日提示      「今日天道未做」—— 日常该有人提醒
+```
+
+三者缺一,「终局没有什么可做」这句话就有一部分是真的。
+
+#### 判据六条（`core/endgameHomeReach.spec`）
+
+```text
+① 天界入口卡在，且门槛读 WORLD_BREAK_MAJOR
+② 每日提示在，且 dailyPending 的门槛同源
+③ 目标卡在，且终局状态由调用方递进去（core/goal 不 import endgame store）
+④ 终局分支带 `&& endgame` 那个条件（不传时不读 undefined）
+⑤ 道源那一支报的是门槛，不是「N 界已备」
+⑥ 三处门槛同源 —— major >= 9 这种裸写一律红
+```
+
+⑥ 的口径是**只查比较表达式**:`WORLD_BREAK_MAJOR` 就是 9,而「第 9 境」这样的文案里出现 9 是正常的。
+
+#### 一个自己写坏的定位（第三次了）
+
+① 初版从 `data-home-celestial` 往前找 600 字里最近的 `v-if` —— 抓到的是**上一张卡**的
+`VEIN_UNLOCK_MAJOR`,判据红在一个与它无关的地方。
+
+改成从那个属性往回找到**它自己的 `<RouterLink`**,再在那一小段里取 `v-if`。
+
+> 这一族我已经踩过三次:第 429 轮找第一个 `next-tag` 抓到「今日一步」那张卡;
+> 第 425 轮把注释里的数字也算进「函数体里有没有裸 9」;这一轮又是往前找窗口太宽。
+>
+> **判据要找的是「那一处」,不是「附近长得像的」。** 定位窗口越宽,越容易抓到邻居。
+
+两次注入:门槛写死 9 → ①⑥ 同时红;删掉 `data-home-celestial` → ① 红。
+
+#### 四轮的位置
+
+前三轮各修了一层。这一轮不修新的东西 —— 它把那三层**收成一个问题**。
+四轮之后,「终局玩家打开首页该看到什么」这件事第一次有了判据。
+
+工作区干净、全量 859 / 7073 全绿;check、test:report、check:ui 同绿。
