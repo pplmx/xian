@@ -10,7 +10,9 @@ import { mulN } from "@/utils/gnum";
 import { formatGN } from "@/utils/format";
 import { stoneByTier } from "./formulas";
 import { PILLS, pillDef } from "@/data/pills";
+import { QUALITIES } from "@/data/qualities";
 import {
+  APPRENTICE_MAX_LEVEL,
   APPRENTICE_RECRUIT_TIER_AMOUNT,
   apprenticeYieldMult,
   DISPATCH_ADVENTURE_FIXED_SCORE,
@@ -63,15 +65,85 @@ export function apprenticeRecruitCost(major: number): GNum {
 }
 
 /**
- * 寻宝所得的丹:按**当前境界**从可炼丹里挑(与其余所有取丹路径一样守着
- * minRealm 的门,不能开局就让药童拾到高阶丹把境界门槛抄了近路)。
- * 该境界没有可炼丹时回退到全池 —— 宁可回退也不让寻宝落空、更不抛错。
+ * 寻宝所得的丹:按**当前境界与弟子等级**从可炼丹里挑。
+ *
+ * ## 两条约束
+ *
+ * 一 **境界门**:与其余所有取丹路径一样守着 `minRealm` —— 不能开局就让药童
+ *    拾到高阶丹把境界门槛抄了近路。该境界没有可炼丹时回退到全池(宁可回退,
+ *    也不让寻宝落空、更不抛错)。
+ *
+ * 二 **等级只许抬、不许降**(本轮修)。原先是 `src[(level * 7) % src.length]` ——
+ *    在池长上循环取模。而池子是**按强度大致递增**排的,于是等级一涨,
+ *    取到的位置可能绕回池头:实测同一境界下 Lv13 给「真仙丹」(minRealm 9),
+ *    Lv14 却是「定心丹」(minRealm 4),Lv20 又落回 minRealm 0 的 fine 丹。
+ *    20 级里 **8 级是退步** —— 一个「升级」的动作有近一半的步子在往下走,
+ *    而界面把等级当正数在报。
+ *
+ * ## 怎么抬
+ *
+ * 把「这一档能拿到的最强那一批」当作可选区:先按 (minRealm, 品阶) 升序排,
+ * 取**前 capacity 名**里的一个 —— capacity 随等级长。于是:
+ *
+ * ```text
+ *   等级低 → 只在最前面几名里挑（还是从弱到强）
+ *   等级高 → 候选区一直往后伸，最强的那几味也进得来
+ * ```
+ *
+ * 名次由 `(level * 7) % capacity` 定 —— 保留原实现那种「同一等级恒得同一味」
+ * 的确定性(预览与结算逐位相等,不能有随机),但取模的**分母是候选区长**而不是全池长,
+ * 故名次只会随着 capacity 增长而落到更强的位置上,不会绕回池头。
  */
 function pickSeekPill(major: number, level: number): string {
   const craftable = PILLS.filter((p) => p.recipe?.stoneBase != null);
   const pool = craftable.filter((p) => p.minRealm <= major);
   const src = pool.length > 0 ? pool : craftable;
-  return src[(level * 7) % src.length]!.id;
+  /*
+   * 按 (minRealm, 品阶, id) 升序 —— id 兜底保证全序稳定,同一条池子每次排出来一样。
+   * 与 `data/pills` 的书写顺序解耦:内容是随时会加删的,而「谁比谁强」是语义。
+   */
+  const ordered = [...src].sort(
+    (a, b) =>
+      a.minRealm - b.minRealm ||
+      qualityRankOf(a.quality) - qualityRankOf(b.quality) ||
+      a.id.localeCompare(b.id),
+  );
+  /*
+   * 名次 = 等级映射到池子**靠后**的那一段,而不是取模。
+   *
+   * ## 为什么不能用取模
+   *
+   * 第一版改法用 `(level * 7) % capacity` —— 保留了确定性,但取模本身就会绕回:
+   * 实测 20 级里仍有 **3 级退步**。绕回不是「偶尔运气不好」,是取模的定义:
+   * 名次一旦超过分母就从头开始。**只要分母是有限的,升级就必然有退步的那一级。**
+   *
+   * ## 现在怎么算
+   *
+   * 把等级线性映射到「池子的后 60%」:
+   *
+   * ```text
+   *   起点 = floor(len * 0.4)          低等级从池子四成处起步（不至于只给最弱的）
+   *   跨度 = max(1, len - 起点)        剩下的每一名都留给等级
+   *   名次 = 起点 + floor((level-1) / 19 * (跨度-1))
+   * ```
+   *
+   * 于是 `level` 单调不减则名次单调不减，名次单调不减则品阶单调不降。
+   * 满级(20)正好落在池尾最强的那一味上,1 级落在四成处。
+   *
+   * 确定性照旧:同一 (境界, 等级) 恒得同一味,预览与结算逐位相等。
+   */
+  const start = Math.min(ordered.length - 1, Math.floor(ordered.length * 0.4));
+  const span = Math.max(1, ordered.length - start);
+  const maxLevel = APPRENTICE_MAX_LEVEL - 1;
+  const t = maxLevel > 0 ? Math.min(maxLevel, Math.max(0, Math.round(level) - 1)) / maxLevel : 0;
+  const idx = Math.min(ordered.length - 1, start + Math.floor(t * (span - 1)));
+  return ordered[idx]!.id;
+}
+
+/** 品阶名 → 档位序号;认不出的按最低档(宁可低估,不越界) */
+function qualityRankOf(quality: string): number {
+  const i = QUALITIES.findIndex((q) => q.id === quality);
+  return i < 0 ? 0 : i;
 }
 
 function baseSpoils(major: number, level: number): Record<ApprenticeSpec, TaskSpoils> {
