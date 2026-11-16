@@ -57,6 +57,34 @@ export function getCurrentEnlightenment(): EnlightenmentEvent | null {
  * 刷新一次页面就等于把 5 分钟冷却清掉 —— 那是「重开页面刷顿悟」。
  */
 /**
+ * 顿悟还要等多久（毫秒）—— **0 表示此刻已可触发**（第 412 轮）。
+ *
+ * ## 为什么值得露出来
+ *
+ * `enlightenmentAt` 是频次闸：`Date.now() - enlightenmentAt < 300000` 时这一拍不掷。
+ * 实测这个数在界面上出现 **0 次** —— 玩家只知道「顿悟是随机的」，
+ * 不知道「现在能不能碰上」。
+ *
+ * 而这两件事的体感完全不同：
+ *
+ * ```text
+ *   冷却中     等下去有意义，但还要等
+ *   冷却已过   每一拍都在掷（8% × 境界存在感）
+ * ```
+ *
+ * 前一种等下去就有，后一种要一直等 —— 而它们在界面上长得一模一样。
+ * 这与第 410 轮的共同事件、第 411 轮的寿元构成是同一个形状：
+ * **内部有数、结算在用、界面不显示**。
+ *
+ * 返回**剩余毫秒**，不多说「还差几拍」—— 心跳节奏是私事，玩家读的是时间。
+ */
+export function enlightenmentCooldownMs(at: number = Date.now()): number {
+  const player = usePlayerStore();
+  const left = player.enlightenmentAt + 300000 - at;
+  return left > 0 ? left : 0;
+}
+
+/**
  * 这一拍**能不能**掷顿悟 —— 冷却 / 界面忙 / 已到退出境界，三件事都在这里。
  *
  * 抽出来是因为顿悟现在有**两个入口**（战斗胜利、闭关出关），而"什么时候不许出"

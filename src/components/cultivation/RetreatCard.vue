@@ -72,6 +72,29 @@
           >· 前期才有, 境界越高越少</span
         >
       </p>
+      <!--
+        顿悟还有多久可再触发（第 412 轮）。
+
+        `enlightenmentAt` 是频次闸（5 分钟），实测这个数在界面上出现过 **0 次** ——
+        玩家只知道「顿悟是随机的」，不知道「现在能不能碰上」。而这两件事的体感相反：
+
+          冷却中     等下去有意义，但还要等
+          冷却已过   每一拍都在掷（8% × 境界存在感）
+
+        前一种等下去就有，后一种要一直等，而它们在界面上长得一模一样。
+        这与第 410 轮的共同事件、第 411 轮的寿元构成是同一个形状。
+
+        只在冷却中显示 —— 已经可触发时再说一句「可再顿悟」，与上面那行「出关时约 N%」
+        叠在一起，会把「随时可能」写成一个待办。
+      -->
+      <p
+        v-if="!retreating && enlightenCooldownMs > 0"
+        class="cultivation-action__forecast tabular"
+        data-enlighten-cooldown
+      >
+        顿悟尚需
+        <span class="countdown-slot">{{ formatCountdown(enlightenCooldownSec) }}</span> 方可再遇
+      </p>
     </div>
   </article>
 </template>
@@ -81,6 +104,7 @@ import { computed, ref, watch } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import { useUiStore } from "@/stores/ui";
 import {
+  enlightenmentCooldownMs,
   isRetreating,
   startRetreat,
   getRetreatRemainingSec,
@@ -140,6 +164,22 @@ const retreatExtra = computed(
  * 故元婴之后为 0，模板那一行随之消失。不在这里另算一遍衰减。
  */
 const retreatEnlightenRate = computed(() => retreatEnlightenChance(player.major));
+
+/**
+ * 顿悟的频次闸还剩多久（第 412 轮）。
+ *
+ * 读 `core/earlyGameService` 的 `enlightenmentCooldownMs` —— 与结算那道闸
+ * 同一个算式，不在这里另写一遍「300000」。那个数若改了，这一行跟着变。
+ *
+ * 用 `gameNowSec` 那套 1 秒心跳而不是裸 `Date.now()`：后者在 computed 里不会
+ * 自己重算，倒计时会停在打开页面那一刻（与 `retreatRemaining` 同一套钟，
+ * 暂停冻结/恢复顺延的语义也一致）。
+ */
+const enlightenCooldownMs = computed(() => {
+  void gameNowSec.value;
+  return enlightenmentCooldownMs(gameNowSec.value * 1000);
+});
+const enlightenCooldownSec = computed(() => Math.ceil(enlightenCooldownMs.value / 1000));
 /**
  * 这个概率还会不会再降 —— 用来决定要不要加那句「前期才有，境界越高越少」。
  *

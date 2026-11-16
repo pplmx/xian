@@ -697,6 +697,8 @@ const CATEGORIES = [
       "bondEventGap",
       // 寿元里「其中多少来自延寿丹与际遇」:总数不说明它从哪来
       "lifespanBreakdown",
+      // 顿悟的频次闸:玩家看不到「还要等多久」
+      "enlightenCooldown",
       // 计数器 → 行为的一张满表:师承与素行两个消费者都读它,半张表各自长是这里的缺口
       "counterText",
       // 「这一趟能走多远」—— 出行窗只报产出不报能不能拿到,是本轮在真浏览器里量到的坑

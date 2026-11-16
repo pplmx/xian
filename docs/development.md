@@ -74,7 +74,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 847 个 spec;本作自己那部分 767 个) |
+| `bun run test` | 全量用例(全量 848 个 spec;本作自己那部分 768 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -83,7 +83,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 847 个 spec = 宿主 767 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 848 个 spec = 宿主 768 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -477,7 +477,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 847 个 spec(本作自己那部分 767 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 848 个 spec(本作自己那部分 768 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -22707,3 +22707,86 @@ expect(VIEW).toMatch(/\{\{\s*formatNum\(lifespanFromBoons\)\s*\}\}/);
 但**「多数是内部状态」不等于「全部是」**,这正是这一轮能捞到一条的原因。
 
 工作区干净、全量 847 / 6996 全绿;check、test:report、check:ui 同绿。
+
+### 第 412 轮:顿悟的频次闸,玩家看不到「还要等多久」
+
+第三个同形状的缺口。前两个是第 409/410 轮的共同事件与第 411 轮的寿元构成,
+这一轮的线索来自最初那份「只写不读」清单里的 `player.enlightenmentAt`。
+
+#### 缺口
+
+```text
+enlightenmentAt 是顿悟的频次闸：
+  Date.now() - player.enlightenmentAt < 300000 时，这一拍不掷
+实测这个数在界面上出现 0 次
+```
+
+玩家只知道「顿悟是随机的」,不知道「现在能不能碰上」。而这两件事的体感相反:
+
+```text
+冷却中     等下去有意义，但还要等
+冷却已过   每一拍都在掷（8% × 境界存在感）
+```
+
+前一种等下去就有,后一种要一直等 —— 而它们在界面上长得一模一样。
+
+#### 实现
+
+闭关卡里那行「出关时约 N% 携带顿悟」下面多一句:
+
+```text
+顿悟尚需 3:42 方可再遇
+```
+
+**只在冷却中显示。** 已可触发时再写一句「随时可遇」,与上面那行叠在一起,
+会把「随时可能」写成一个待办 —— 而顿悟本来就不该是待办。
+
+#### 判据五条
+
+```text
+① 读数与结算同一个冷却常数，不各写一遍
+② 冷却已过时返回 0，不是负数
+③ 界面真的印出来了，且是插值不是写死的话
+④ 只在冷却中显示
+⑤ 用的是游戏钟（gameNowSec 那套 1 秒心跳），不是裸 Date.now()
+```
+
+① 是这一族里最该有的一条:结算写 `300000`、读数也写 `300000`,两处一旦分叉,
+后果是**「界面说可以了,实际还不行」** —— 那比不显示更糟。故判据同时读两边。
+
+⑤ 是我自己写第一版时踩到的:初版用裸 `Date.now()`,而它在 computed 里不会自己重算,
+倒计时会停在打开页面那一刻 —— **一个看起来在走、其实不动的读数**。改成跟
+`retreatRemaining` 同一套 `gameNowSec`。
+
+#### 三次注入
+
+```text
+读数那边改成 4 分钟（与结算的 5 分钟分叉）  → 1 红
+倒计时改成写死「稍候」                      → 1 红
+改用裸 Date.now()                          → 1 红
+```
+
+#### 改界面要重新出图
+
+这一轮改了 `RetreatCard.vue`，`docShotsFresh.spec` 当场红了 ——
+那条判据按**提交时间**比，不是 mtime。重跑 `bun scripts/shots.mjs` 后转绿。
+这是它该有的行为:界面变了而截图没变，读 README 的人看到的就是旧的。
+
+#### 四轮的共同形状
+
+```text
+第 409 轮   她开口之前    看不到征兆           → 补足迹
+第 410 轮   共同事件      看不到进度           → 补「还差几个情境」
+第 411 轮   寿元          看不到「多少来自丹药」  → 补构成
+第 412 轮   顿悟          看不到「还要等多久」    → 补倒计时
+```
+
+四次都是**内部有数、结算在用、界面不显示**。而四次的手法越来越固定:
+
+```text
+1. 扫「只写不读」的 store 字段 / 「没进可达层」的 data 字段
+2. 逐个判断：这是内部状态，还是玩家该知道的
+3. 若是后者，补一个读数 + 接进界面 + 写五条判据（含「反差」那条）
+```
+
+工作区干净、全量 848 / 7001 全绿;check、test:report、check:ui 同绿。
