@@ -405,3 +405,72 @@ describe("世界页概览 · 段数与层级跨度", () => {
     }
   });
 });
+
+/**
+ * 接线 —— 那一句摘要真的到得了界面吗（第 434 轮）。
+ *
+ * ## 为什么单开一条
+ *
+ * 上面几条测的全是 `worldIdentity()` 这个**纯函数**的输出。而它是纯的：
+ * 就算 `worldView` 不把 `summary` 传出去、`MortalWorldView` 不读它，
+ * 那些判据照样全绿。
+ *
+ * 这正是第 388 轮那类「逻辑对、没人调」—— 而这一轮改的是一句话，
+ * **它有没有到玩家眼前**是另一件事。
+ *
+ * ## 判据
+ *
+ * ① `worldView` 把 `summary` 从 `worldIdentity` 转出去，不另写一句；
+ * ② 世界页的 header 读的是那个字段；
+ * ③ 反差：页面那一处不许自己拼一句摘要（那会变成第二本账）。
+ */
+describe("世界摘要 · 到得了界面", () => {
+  const SERVICE = readFileSync(resolve(__dirname, "mortalWorldService.ts"), "utf-8");
+  const VUE = readFileSync(resolve(__dirname, "../views/MortalWorldView.vue"), "utf-8");
+
+  it("worldView 把 summary 从 worldIdentity 转出去", () => {
+    /*
+     * 只在 `worldView` 那一段里找 —— 别的函数也可能有 `summary:` 字段
+     * （历史记录那一条是 `past.summary`，不是这一处）。
+     */
+    const at = SERVICE.indexOf("export function worldView(");
+    expect(at, "找不到 worldView").toBeGreaterThan(0);
+    const body = SERVICE.slice(at, SERVICE.indexOf("\n}", at));
+    expect(body, "worldView 没有把 summary 转出去 —— 世界页 header 就读不到它").toMatch(
+      /summary:\s*id\.summary/,
+    );
+    /*
+     * 反差：不许在这里另拼一句。`id.summary` 是唯一来源。
+     */
+    expect(body, "worldView 里另拼了一句摘要 —— 摘要该只有 worldIdentity 一个来源").not.toMatch(
+      /summary:\s*`/,
+    );
+  });
+
+  it("世界页 header 读的是那个字段", () => {
+    expect(VUE, "世界页没有把 summary 传进 header").toMatch(/:subtitle="view\.summary"/);
+    /*
+     * 反差：不许在页面里自己拼摘要。
+     */
+    expect(VUE, "页面上又拼了一句摘要").not.toMatch(/view\.summary\s*\|\|/);
+  });
+
+  it("效果看得见：分散档的世界页上会出现「N 种地貌交错」", () => {
+    /*
+     * 端到端复算一遍：真的造一个分散档世界，走 `worldView`，
+     * 确认它的 `summary` 里带着地貌构成。
+     *
+     * 这条把「纯函数的输出」与「世界页拿到的那个字符串」接在了一起 ——
+     * 若哪天有人给 `worldView` 换成别的来源，它会红。
+     */
+    const scattered = POOL.find((w) => worldIdentity(w).form === "scattered");
+    expect(scattered, "样本里没有分散档").toBeDefined();
+    const view = worldView(scattered!, () => "首领");
+    expect(view.summary, "世界页拿到的摘要是旧的「山川无序」—— 上一轮的改动没到界面").toMatch(
+      /等 \d+ 种地貌交错/,
+    );
+    expect(view.summary, "世界页的摘要与 worldIdentity 不一致").toBe(
+      worldIdentity(scattered!).summary,
+    );
+  });
+});
