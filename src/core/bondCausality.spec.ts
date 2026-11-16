@@ -204,14 +204,15 @@ describe("因果可感知 · 现状", () => {
 });
 
 describe("因果可感知 · 缺的是什么", () => {
-  it("缺的不是解释文本,是过程中的足迹", () => {
+  it("该做的不是解释文本,而是过程中的足迹 —— 而那些足迹已经做了", () => {
     // 反例:把因果写进弹窗会把游戏做成系统说明
     const badExample = "因为你已与她同行十六次,并且之前支持过她两次,所以她……";
     expect(VIEW).not.toContain("同行十六次");
     console.log(
       `\n不该做的:「${badExample}」` +
         "\n这会把关系变成系统日志。" +
-        "\n\n该做的是在累积途中留下轻量记忆,让玩家自己把节点串起来:" +
+        "\n\n该做的是在累积途中留下轻量记忆,让玩家自己把节点串起来 —— " +
+        "这件事第 409 轮已经做了(data/bondFootprints),这四条正是它的样子:" +
         "\n  「她又问起北境的消息。」" +
         "\n  「你注意到她仍在留意北方。」" +
         "\n  「她终于停下脚步。」" +
@@ -219,10 +220,23 @@ describe("因果可感知 · 缺的是什么", () => {
     );
   });
 
-  it("素材已经就位:每个人的所求都写好了", () => {
-    // 轻量记忆不需要新素材,pursuit 已经能长出四句话
+  it("素材已经就位,而且机制也已经做了", () => {
+    /*
+     * ## 这条措辞改过一次（第 453 轮）
+     *
+     * 它原来说「足迹文本可由 pursuit 派生 —— **缺的是机制,不是内容**」。
+     * 而机制早就在了:第 409 轮补的 `data/bondFootprints` 按 ripeness 分三档吐句子,
+     * 第 410 轮经 `useBondOverview.latestFootprintLine` 接进 `BondDialog`。
+     *
+     * 同一份文件里第 178 行那条判据一直在守「她开口」不掉回突兀 ——
+     * **判据是新的，而这段说明没跟上**。这两处说的本是同一件事，
+     * 一处已更新、一处没更新，读起来就自相矛盾。
+     */
     for (const d of DAOLU) expect(d.pursuit.length).toBeGreaterThan(0);
-    console.log("\n十位道侣各有所求,足迹文本可由它派生 —— 缺的是机制,不是内容");
+    console.log(
+      "\n十位道侣各有所求,足迹文本由它派生 —— 而机制也已就位:" +
+        "\n  data/bondFootprints 按 ripeness 三档吐句子,经 useBondOverview 接进道侣弹窗",
+    );
     for (const d of DAOLU.slice(0, 3)) console.log(`  ${d.name}:${d.pursuit}`);
   });
 

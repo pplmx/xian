@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 868 个 spec;本作自己那部分 788 个) |
+| `bun run test` | 全量用例(全量 869 个 spec;本作自己那部分 789 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 868 个 spec = 宿主 788 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 869 个 spec = 宿主 789 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 868 个 spec(本作自己那部分 788 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 869 个 spec(本作自己那部分 789 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -25091,3 +25091,74 @@ progress.ts 与 questProgress.ts 的 realm_(\d+)_(\d+) 正则
 与下一个人会不会读到，是两件事**。
 
 工作区干净、全量 868 / 7108 全绿；check、test:report、check:ui 同绿。
+
+### 第 453 轮:上一轮我打算做的，第 409 轮就做完了
+
+#### 上一轮结尾的判断
+
+第 452 轮我写下:「`bondCausality.spec` 逐字写着『缺的不是解释文本,是过程中的足迹』,
+而『素材已经就位……缺的是机制,不是内容』—— 这正是「已证明可行,但还没做」的一类」。
+
+#### 去看了,它已经做了
+
+```text
+src/data/bondFootprints.ts    第 409 轮写的 —— 按 ripeness 分三档,各吐一句
+src/composables/useBondOverview.ts:44   footprintsOf(brewingIntent(), bondDef.value.temper)
+src/composables/useBondOverview.ts:50   latestFootprintLine
+src/components/character/BondDialog.vue:76-80   v-if="!herIntent && latestFootprintLine"
+```
+
+而且 `bondFootprints.ts` 的文件头第一句就是「## 缺的是什么（第 409 轮）」——
+**它就是看着那条 spec 的结论写的。**
+
+更说明问题的是:`bondCausality.spec` **自己**第 178 行有一条判据在守这件事:
+
+```text
+expect(LINKS.find(l => l.surface === "她开口提出自己的事")?.level, ...)
+  "「她开口」这一条掉回了突兀 —— 足迹没接上界面"
+```
+
+**同一份文件里,判据是新的、说明是旧的。** 判据在守「足迹已接上界面」,
+而它下面两条测试还在说「缺的是机制」。
+
+#### 修了什么
+
+```text
+测试标题    「缺的不是解释文本,是过程中的足迹」→「该做的不是解释文本,而是过程中的足迹
+            —— 而那些足迹已经做了」
+同一文件另一条  「缺的是机制,不是内容」→「而机制也已就位」并点出 bondFootprints
+console 输出  把「该做的四句」改成「这四条正是它现在的样子」
+```
+
+#### 判据（`core/specGapClaims.spec`）
+
+扫 spec 里「缺的是 X」这类**断言某物缺失**的说法,再到 `src/` 找那个东西在不在。
+存在就报,并指出该改哪一句。
+
+口径保守:只登记**具体的一对**（道侣足迹 ↔ `data/bondFootprints.ts`）,
+不加泛化规则。
+
+#### 两个坑
+
+```text
+① 判据把自己也算进去了
+   它的文件头与 PAIRS 必须提到那些说法 —— 否则这条判据无从定义。
+   修法:扫描时排除本文件。「判据不该把自己的定义当成被检对象」。
+
+② 改注释不够，测试标题也是断言
+   第一次只改了注释与 console，判据仍红 —— 因为 `it("缺的不是解释文本…")`
+   那个**标题**本身就是一句断言。修完才绿。
+```
+
+#### 这一轮的形状
+
+```text
+第 444 轮  判据 vs 它守的数据      → 判据说「还没做到」，实现已有
+第 445 轮  源码注释 vs 实现        → 注释说「尚未计入」，代码在算
+第 453 轮  spec 说明 vs spec 判据  → 同一份文件里，下半段比上半段新
+```
+
+第三次撞到同一个形状。而这一次最清楚:**两处说法不一致,不是因为有人写错,
+而是因为改的时候只改了其中一处。**
+
+工作区干净、全量 869 / 7110 全绿；check、test:report、check:ui 同绿。
