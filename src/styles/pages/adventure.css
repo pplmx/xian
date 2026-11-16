@@ -2612,6 +2612,13 @@
   .adventure-mode__viability {
     color: rgb(var(--color-ink-faint-rgb));
   }
+  /*
+    「收益」后面那一截来源(「妖潮 ×1.2」)—— 与「敌势」那边同一个档次。
+    用 faint 一档:它答的是「这个数从哪来」,不是又一个要读的读数。
+  */
+  .adventure-mode__odds-parts {
+    color: rgb(var(--color-ink-faint-rgb));
+  }
   .adventure-mode__viability.is-hopeless {
     color: rgb(var(--color-cinnabar-rgb));
   }

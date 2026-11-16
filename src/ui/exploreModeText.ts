@@ -90,6 +90,18 @@ export interface ExploreModeRow {
   rewardMult: number;
   dangerMult: number;
   /**
+   * 这一档的**收益**在档位倍率之外还乘了哪几项(区域事件等)。
+   *
+   * 与 `foeParts` 完全对称:敌势那一行早就摊开了区域事件的危险倍率,
+   * 而收益这一行只报档位自己的数 —— 妖潮日(收益 ×1.2)那 20% 一直在到账,
+   * 界面上一个字都没有。危险说了、收益没说,比两边都不说更糟。
+   *
+   * 空数组表示档位之外没有加成,模板就此不渲染这一段。
+   */
+  rewardParts: string[];
+  /** 档位倍率 × 区域事件等之后的**实发**收益倍率 —— 与敌势的 `dangerTotal` 对称 */
+  rewardTotal: number;
+  /**
    * 这一档在**当前地界与灵兽之性**下的实发敌势总数。
    *
    * `dangerMult` 只是档位自己的倍率(normal 1 / deep 1.45 / risky 2.1),
@@ -152,6 +164,15 @@ export function exploreModeRow(input: {
    */
   dangerTotal?: number;
   /**
+   * 收益在档位倍率之外还乘了哪几项 —— 与 `foeParts` 对称。
+   * 不给则空(视图不渲染那一段)。
+   */
+  rewardParts?: string[];
+  /**
+   * 实发收益倍率 —— 档位 × 区域事件。不给则退回档位自己的倍率(旧行为)。
+   */
+  rewardTotal?: number;
+  /**
    * 这一档「打不打得过」的读数 —— 由调用方从 `core/tripViability` 算好传进来。
    *
    * 不给（或不传 `viability`）时退回旧行为:不印这一行。这样排行/文案之外的
@@ -185,6 +206,8 @@ export function exploreModeRow(input: {
     pillPerTrip: perTrip(input.pillBattlesPerPiece, plan.battles),
     rewardMult: mode.rewardMult,
     dangerMult: mode.dangerMult,
+    rewardParts: input.rewardParts ?? [],
+    rewardTotal: input.rewardTotal ?? mode.rewardMult,
     dangerTotal: input.dangerTotal ?? mode.dangerMult,
     viabilityText: input.viabilityText ?? null,
     /*

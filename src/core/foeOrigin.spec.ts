@@ -374,7 +374,19 @@ describe("来源到屏幕的接线", () => {
       /dangerMult: mode\.dangerMult/,
     );
     expect(view, "出行模式窗要把那一档的敌势倍数真的印出来").toContain("m.dangerMult");
-    expect(view, "收益与敌势同排,「要不要涉险」才是个可算的账").toContain("m.rewardMult");
+    /*
+     * 第 392 轮:收益那一格从 `m.rewardMult`(档位自己的数)换成 `m.rewardTotal`
+     * (档位 × 区域事件)。守的东西不变 —— 「收益与敌势同排,这张卡上两个数都在」——
+     * 故判据跟着搬到新的那个名字上,并**加一条**:不许再退回只档位那一格。
+     *
+     * 为什么要加那条:退回之后这一条照样绿(别处还写着 `m.rewardMult` 的话),
+     * 而玩家又开始读到「妖潮日报收益 ×1」。
+     */
+    expect(view, "收益与敌势同排,「要不要涉险」才是个可算的账").toContain("m.rewardTotal");
+    expect(
+      /收益\s*×\s*\{\{\s*m\.rewardMult\s*}}/.test(view),
+      "收益那一格退回成档位自己的倍率了 —— 区域事件那一份又变成看不见的",
+    ).toBe(false);
   });
 
   it("天界战报(试炼/变数/忆战/重写/挑战)也读它,不再只有远征能说清判定", () => {

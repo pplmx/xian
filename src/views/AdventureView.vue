@@ -873,7 +873,18 @@
             两个数摆在一起,「要不要涉险」才是个可算的账。
           -->
           <span class="adventure-mode__odds tabular">
-            收益 ×{{ m.rewardMult }} · 敌势
+            <!--
+              **收益报的是实发数**,不是档位自己的数。
+              妖潮日(收益 ×1.2)那份一直在到账,而这一格从前只写档位倍率 ——
+              危险那一半摊了区域事件、收益那一半没摊,一个诚实一个不诚实。
+              来源(「妖潮 ×1.2」)紧跟在下一句里,与敌势那边的摊法对称。
+            -->
+            <span :class="m.rewardTotal > 1 ? 'text-qing' : ''" :data-reward-total="m.rewardTotal"
+              >收益 ×{{ m.rewardTotal }}</span
+            ><template v-if="m.rewardParts.length">
+              <span class="adventure-mode__odds-parts">（{{ m.rewardParts.join(" · ") }}）</span>
+            </template>
+            <span aria-hidden="true"> · </span>敌势
             <span :class="m.dangerTotal > 1 ? 'text-cinnabar' : ''">×{{ m.dangerTotal }}</span>
             <!--
               「这一档我打不打得过」—— 上面那三个产出数的**前提**。
@@ -1426,6 +1437,50 @@ function foeLineFor(
 }
 
 /**
+ * 这一档的**收益**由哪几项乘起来 —— 与敌势那条完全对称。
+ *
+ * ## 缺口(第 392 轮)
+ *
+ * 敌势那一行早就把区域事件摊出来了(`foeLineFor` 读 `evDef.dangerMult`),
+ * 而收益那一行**只报档位自己的 `rewardMult`**。于是妖潮日(收益 ×1.2)打开出行窗:
+ *
+ * ```text
+ * 界面报   收益 ×1   · 敌势 ×1.15
+ * 实际     收益 ×1.20 · 敌势 ×1.15
+ * ```
+ *
+ * 危险那一半说了,收益那一半没说。玩家读到「×1」会以为这一天没有额外好处,
+ * 而那 20% 一直在到账 —— 它与「敌势乘了而收益没乘」是同一屏上的两件事,
+ * 一个诚实一个不诚实,比两边都不说更糟。
+ *
+ * ## 口径与敌势那条相同
+ *
+ * 只摊**档位之外**的项:灵兽之性与区域事件。档位自己的倍率就在上一格。
+ * 灵兽性格目前不改收益(只有 `dangerMult` / `dropLuck` / `exploreDurMult`,
+ * 后两者走各自的路),故这里实际只会出区域事件一项 —— 但**按数据算**
+ * 而不是按"我知道只有一项"硬写:哪天灵兽加了收益词条,这里自己会跟上。
+ */
+function rewardLineFor(
+  mode: ExploreMode,
+  region: RegionDef | null,
+): { total: number; parts: string[] } {
+  const modeMult = EXPLORE_MODES[mode].rewardMult;
+  if (!region) return { total: modeMult, parts: [] };
+  const ev = player.currentRegionEvent(region.id);
+  const evDef = ev ? regionEventDef(ev.eventId, player.major) : undefined;
+  const evMult = evDef?.rewardMult ?? 1;
+  /*
+   * 灵兽之性对收益的影响:**只经 `dropLuck`**,而那条走的是掉落品质/机率窗口,
+   * 不是 `rewardMult` 这条倍率。故这里不乘它 —— 与 `core/loot` 的算法一致
+   * (见 `dropEntriesFor` 只吃 `rewardMult`,`luck` 单独传)。
+   */
+  const parts = [{ label: evDef?.name ?? "", ratio: evMult }]
+    .filter((p) => p.label && p.ratio !== 1)
+    .map((p) => `${p.label} ×${Number(p.ratio.toFixed(2))}`);
+  return { total: Number((modeMult * evMult).toFixed(2)), parts };
+}
+
+/**
  * 「这一档会撞见哪些敌人」的快照 —— 与 `runBattle` 同一个取法。
  *
  * `runBattle` 里那一句是:
@@ -1536,6 +1591,17 @@ const modeRows = computed(() => {
       ...(() => {
         const f = foeLineFor(m.id, region);
         return { foeParts: f.parts, dangerTotal: f.total };
+      })(),
+      /*
+       * 收益的来源 —— 与敌势那条**同一把尺子**。
+       *
+       * 从前收益格只写档位自己的 `rewardMult`,而妖潮日(收益 ×1.2)那 20%
+       * 一直在到账、界面一个字都没说。危险那一半说了、收益那一半没说,
+       * 比两边都不说更糟(见 `rewardLineFor` 的注释)。
+       */
+      ...(() => {
+        const r = rewardLineFor(m.id, region);
+        return { rewardParts: r.parts, rewardTotal: r.total };
       })(),
       /*
        * 行囊还能再装几件 —— 整趟的装备期望远超这个数时,模式窗要把差额说出来。
