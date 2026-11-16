@@ -90,21 +90,42 @@ describe("单位断言 · 名字说了什么，实现就得是什么", () => {
          *   · 乘 1000（由秒折算）
          *   · 直接减两个毫秒时刻（Date.now() / gameNow()）
          *   · 读一个名字里带 ms/at/endsAt/expiresAt 的字段
-         *   · 返回本模块里一个**以毫秒为单位**的常量表
+         *   · 返回本模块里一张**以毫秒为单位的时长常量表**
          *
-         * 第四条是 `toastLifeMs` 那种:它按档返回 `TOAST_LIFE.base` 等，
-         * 而那张表是 2600 / 4200 / 5200 / 5600 —— 毫秒。
-         * 初版判据不认这种写法，于是把它算成「体里找不到毫秒运算」（实测）。
+         * ## 第四条收紧过一次（第 418 轮）
          *
-         * 判据**不猜**常量表的值域，只要求：函数体里引用的那个全大写常量，
-         * 名字里能看出是时间（LIFE / DURATION / TIME / MS）。
+         * 初版只要求「引用了一个全大写且名字带 LIFE/DURATION/TIME/MS 的常量」。
+         * 而那样太松:**造一个 `TOAST_LIFE_FAKE = 42` 并返回它,判据照样绿** ——
+         * 实测确认。42 毫秒的提示停一瞬间就没了,物理上不合理,而判据看不出来。
+         *
+         * 现在多一条硬要求:**那张表的值必须真的落在毫秒量级**（≥100 且 ≤10 分钟）。
+         * 判据去把这个常量定义找出来读它 —— 不猜,直接看数。
          */
+        const constOk = (() => {
+          const name = /\b([A-Z][A-Z0-9_]*(?:LIFE|DURATION|TIME|MS|DELAY)[A-Z0-9_]*)\b/.exec(body);
+          if (!name) return false;
+          /*
+           * 把那个常量的定义从**同一个文件**里取出来。找不到定义就放行 ——
+           * 说明它来自别处（跨模块的时长常量），那不在本判据的射程内。
+           */
+          const defAt = src.indexOf(`const ${name[1]}`);
+          if (defAt < 0) return true;
+          const defBody = bodyOfConst(src, defAt);
+          if (!defBody) return true;
+          const nums = [...defBody.matchAll(/(\d+(?:\.\d+)?)/g)].map((x) => Number(x[1]));
+          if (nums.length === 0) return true;
+          /*
+           * 每一条都必须在「毫秒量级」:≥100（提示类不会只有几十毫秒）
+           * 且 ≤600000（10 分钟，再长就不是提示时长了）。
+           */
+          return nums.every((n) => n >= 100 && n <= 600_000);
+        })();
         const ok =
           /\*\s*1000/.test(body) ||
           /Date\.now\(\)|gameNow\(\)/.test(body) ||
           /\b\w*(ms|Ms|At)\b/.test(body) ||
-          /\b[A-Z][A-Z0-9_]*(LIFE|DURATION|TIME|MS|DELAY)[A-Z0-9_]*\b/.test(body);
-        if (!ok) offenders.push(`${f}: ${m[1]} —— 体里找不到毫秒运算`);
+          constOk;
+        if (!ok) offenders.push(`${f}: ${m[1]} —— 体里找不到毫秒运算（或那张常量表的值不像毫秒）`);
       }
     }
     expect(checked, "一个 Ms 结尾的导出都没扫到 —— 判据在空转").toBeGreaterThan(2);
@@ -164,3 +185,28 @@ describe("单位断言 · 名字说了什么，实现就得是什么", () => {
     ).toBe(0);
   });
 });
+
+/** 取一个 `const NAME = {...}` / `= [...]` / `= 数字` 的定义体 */
+function bodyOfConst(src: string, at: number): string {
+  const eq = src.indexOf("=", at);
+  if (eq < 0) return "";
+  const rest = src.slice(eq + 1);
+  // 对象或数组：从第一个 { 或 [ 配平
+  const brace = /[{([]/.exec(rest);
+  if (brace && brace.index <= 2) {
+    const openCh = brace[0];
+    const closeCh = openCh === "{" ? "}" : openCh === "[" ? "]" : ")";
+    let depth = 0;
+    for (let i = eq + 1 + brace.index; i < src.length; i += 1) {
+      if (src[i] === openCh) depth += 1;
+      else if (src[i] === closeCh) {
+        depth -= 1;
+        if (depth === 0) return src.slice(eq + 1 + brace.index, i + 1);
+      }
+    }
+    return "";
+  }
+  // 标量：取到分号
+  const semi = rest.indexOf(";");
+  return semi < 0 ? rest : rest.slice(0, semi);
+}
