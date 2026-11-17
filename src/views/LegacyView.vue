@@ -616,6 +616,14 @@
                     }}</span>
                   </p>
                   <!--
+                    本世回照 —— 一句话说清这一世做过什么（第 555 轮）。
+                    上面那行报的是「是什么」，这一行说的是「做了什么」；
+                    没有素材的一世（初世之类）epitaph 为空串，整行不出。
+                  -->
+                  <p v-if="l.epitaph" class="legacy-history__epitaph" data-life-epitaph>
+                    {{ l.epitaph }}
+                  </p>
+                  <!--
                     那一世睁眼抽到的灵根 —— 转世弹窗在当次看得见，旧账里此前一个字都没留。
                     品阶名照说存档里的原话，五行只印徽记（单字 + 该系语义色，与人物页、
                     创角页、转世确认页同一份 data/linggen）。
@@ -1060,6 +1068,7 @@ import { computed, ref } from "vue";
 import { useEndgameStore } from "@/stores/endgame";
 import { useCultivationStore } from "@/stores/cultivation";
 import { apexRecord } from "@/core/apex";
+import { lifeEpitaph } from "@/core/lifeEpitaph";
 import { apexDeedSummary, apexDeeds } from "@/core/apexDeeds";
 import { MAX_MARKS } from "@/stores/endgame";
 import { TRIALS } from "@/data/endgame";
@@ -1337,6 +1346,15 @@ const lifeRows = computed(() =>
          * 是空串,整条不出:0 会印成 1970 年,那是假日期。
          */
         dateText: lifeDateText(l.at),
+        /*
+         * 本世回照（第 555 轮）。
+         *
+         * 上面几项报的是「这一世是什么」（终点 / 终寿 / 立的题 / 结局 / 契 / 灵根），
+         * 而玩家翻履历找的是「这一世做了什么」。这一句由 `core/lifeEpitaph`
+         * 从同一份 LifeRecord 推出来 —— 不另存一句话（那会是两本账）。
+         * 一条素材都没有的一世（如初世）返回空串，模板据此不出这一行。
+         */
+        epitaph: lifeEpitaph(l),
       };
     }),
 );
