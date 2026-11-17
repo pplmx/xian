@@ -114,6 +114,47 @@ describe("行迹 · 尚浅之后去做什么", () => {
     ).toMatch(/PROFILE_MIN_MARKS|成形|尚未成/);
   });
 
+  it("6. 历世卷那张终局印记也要报门槛 —— 同一份数据的第三处", () => {
+    /*
+     * ## 第三处（第 539 轮）
+     *
+     * 第 536 轮修了 `ApexSeal`，第 537 轮修了 `ApexBriefing` ——
+     * 而 `record.marks` **还有第三处**:`LegacyView` 的「此世终笔」那一格。
+     *
+     * ```text
+     *   {{ apexRecordRow.daoText }} · {{ apexRecordRow.marks }} 则道痕 ·
+     *   {{ apexRecordRow.milestones.done }}/{{ ... }} 枚碑记
+     * ```
+     *
+     * 只有当前值，没有成形与否、没有门槛。
+     *
+     * > 前两轮我各修一处、以为改完了。这一轮才把「同一个数有几处」问到底 ——
+     * > 而答案是三处，不是两处。
+     */
+    const legacy = readFileSync(resolve(__dirname, "../views/LegacyView.vue"), "utf8");
+    expect(legacy, "历世卷不再报道痕 —— 判据的前提要重看").toMatch(/apexRecordRow\.marks/);
+    /*
+     * ## 这一条收紧过一次（第 539 轮）
+     *
+     * 第一版把窗口开到 ±700/500 字符去找 `PROFILE_MIN_MARKS` ——
+     * 而那个文件**早就 import 了** `PROFILE_MIN_MARKS`（供别处用），
+     * 于是窗口里总能扫到它，**判据恒绿**，注入把门槛删掉也测不出来。
+     *
+     * 收紧成:紧跟在 `apexRecordRow.marks` 之后那一小段里要同时出现
+     * 「门槛常量」与「原位」。窗口从 700 收到 240。
+     */
+    const at = legacy.indexOf("{{ apexRecordRow.marks }}");
+    expect(at, "历世卷那一行的写法变了 —— 判据的前提要重看").toBeGreaterThan(0);
+    const near = legacy.slice(at, at + 240);
+    expect(
+      near,
+      "历世卷只报「N 则道痕」，既不说成没成形，也不说门槛 —— " +
+        "而同一个数在修行页与首页都已经报了「已 N 则，成形需 M 则」。近处实际是：" +
+        near.slice(0, 120),
+    ).toContain("PROFILE_MIN_MARKS");
+    expect(near, "没报成没成形 —— 与本仓另两处不一致").toMatch(/profileFormed|成形|尚浅/);
+  });
+
   it("③ 反差：门槛与 identityService 同源", () => {
     /*
      * 界面不该另写一个门槛数。这一条确认真正判「有没有行迹」的那一行还在

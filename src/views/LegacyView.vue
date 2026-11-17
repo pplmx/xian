@@ -102,8 +102,17 @@
           <p class="legacy-apex__eyebrow">此世终笔 · 第 {{ apexRecordRow.life }} 世</p>
           <p class="legacy-apex__realm">{{ apexRecordRow.realmLabel }}</p>
           <p class="legacy-apex__line">
-            {{ apexRecordRow.daoText }} · {{ apexRecordRow.marks }} 则道痕 ·
-            {{ apexRecordRow.milestones.done }}/{{ apexRecordRow.milestones.total }} 枚碑记
+            {{ apexRecordRow.daoText }} ·
+            <!--
+              道痕这一格要说成没成形、以及门槛（第 539 轮）。
+              同一个数在修行页与首页都已经报了「已 N 则，成形需 M 则」，
+              而这里只有当前值 —— 三处说的是同一件事，读者是同一个玩家。
+              判据见 core/identityRiskHint.spec 第 6 条。
+            -->
+            {{ apexRecordRow.marks }} / {{ PROFILE_MIN_MARKS }} 则道痕{{
+              apexRecordRow.profileFormed ? "" : "（未成形）"
+            }}
+            · {{ apexRecordRow.milestones.done }}/{{ apexRecordRow.milestones.total }} 枚碑记
           </p>
           <p class="legacy-apex__note">
             这一世已经走完了。道果与宿慧随神魂带走，下一世从「入山契」重新开始 ——
