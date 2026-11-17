@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 908 个 spec;本作自己那部分 828 个) |
+| `bun run test` | 全量用例(全量 909 个 spec;本作自己那部分 829 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 908 个 spec = 宿主 828 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 909 个 spec = 宿主 829 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 908 个 spec(本作自己那部分 828 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 909 个 spec(本作自己那部分 829 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -28223,3 +28223,64 @@ specGapClaims      它自己的**定义**里就有那些说法，故必须排除
 对「分析代码结构」不够 —— 需要后者的地方该用真正的 AST。这一句写进了它的文件头。
 
 工作区干净、全量 908 / 7246 全绿。
+
+### 第 511 轮:第一次沿着玩家的路走一遍
+
+#### 前几轮都在「工具说得不对」这一层
+
+```text
+第 507 轮  rules: {} / surface=numbers     空容器当没有、默认值当答案
+第 508 轮  「不在货架上」                   结论比它量的范围宽
+第 509 轮  「只有两项」                     名字停在写下那一刻
+第 510 轮  三处判据跳过自己                 判据的扫描方式有洞
+```
+
+四轮都是真的问题，但**产品一层没有新增**。这一轮换回来。
+
+#### 先量了内容规模，确认它已经饱和
+
+```text
+事件 159 · 丹药 95 · 功法 92 · 法宝 49 · 灵兽 44
+敌人 140 · 地界 44 · 称号 29 · 天赋 34 · 逆旅契 9
+```
+
+境界 0 的玩家面前就有 19 部功法（10 主修 + 9 辅修）、9 件装备、6 味可炼丹。
+**再往上加只会稀释质量。**
+
+#### 于是改做验证:这条路上每一步都算得出数吗
+
+本仓的验证是按主题分片的 —— 一击的伤害有 `combat`、掉落有 `loot`、
+境界曲线有 `progressionSim`、开局引导有 `firstStep`。
+而**玩家实际走的是那条从头到尾的路**，没有任何一份 spec 沿着它走一遍。
+
+`highTierSmoke` 补的是另一端（界外的敌人快照与掉落真的跑得出数），
+这一份补起点。六步:
+
+```text
+① 有地方可去，且那儿有敌人（且引用的敌人 id 都真实存在）
+② 有丹可炼，且最易那一味的门槛 ≤ 1 级炉子
+③ 有功法可修，主修席填得满
+④ 修为目标是个有限的数，且随境界抬升
+⑤ 第一次突破有成功率，且 0 < rate < 1
+⑥ 反差：开局三层的强度曲线连续，不是一跳到底
+```
+
+#### 六条全绿
+
+这说明**开局链路本来就是通的**。这条用例的价值不在「发现了什么」，
+而在于:它是本仓**第一次**沿着玩家的实际路径逐点验证。
+
+> 与第 505 轮那条「覆盖表从字段推」是同一个思路的两种用法:
+> 前者让判据说真话，这一条让判据**站在玩家的位置**上说话。
+
+#### 一处我最初打算做错的地方
+
+我本想把这份东西写成「从建号一路点到突破」的完整驱动（需要 Pinia 的 store）。
+而 `layeringAudit` 的 `CORE_PINIA_SPECS = 119` 是**只许减**的硬上限 ——
+新增一份用 Pinia 的 core spec 会当场超限。
+
+故改成**不碰 store** 的写法:只问「这条路上每个节点所需的数，能否从现成的纯函数里取到」。
+取不到、取到 NaN、取到 0 —— 那一步玩家就会看到空的东西。这个口径不需要 store，
+也就没有破坏那条基线。
+
+工作区干净、全量 909 / 7252 全绿。

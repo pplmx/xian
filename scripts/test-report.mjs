@@ -819,6 +819,8 @@ const CATEGORIES = [
       "testNameTruth",
       // 扫源码：先分清代码与字符串
       "sourceScanTruth",
+      // 开局链路：从新号到第一次突破
+      "openingJourney",
       // 计数器 → 行为的一张满表:师承与素行两个消费者都读它,半张表各自长是这里的缺口
       "counterText",
       // 「这一趟能走多远」—— 出行窗只报产出不报能不能拿到,是本轮在真浏览器里量到的坑
