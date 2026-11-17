@@ -80,8 +80,13 @@
             <span>三席</span>
             <span class="soul-array__rubric-note">
               {{
+                /*
+                 * 报了「几席」之后要说「合起来多深」(第 562 轮)。
+                 * 单看一枚「化真」说不出什么，三枚加起来 1.52 对基准 2.6 才是那一句话 ——
+                 * 而这个数是 souls.spec 一直在用的量尺，此前没有一处说给人听。
+                 */
                 activeModText
-                  ? `${soulPulse.activeCount}/${soulPulse.slotTotal} 席 · 合计词条见下`
+                  ? `${soulPulse.activeCount}/${soulPulse.slotTotal} 席 · 合计深度 ${soulPulse.totalDepth.toFixed(2)} / ${soulPulse.baseDepth}`
                   : `${soulPulse.activeCount}/${soulPulse.slotTotal} 席 · 尚无形意`
               }}
             </span>
