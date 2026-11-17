@@ -29886,3 +29886,56 @@ LegacyView   历世卷此世终笔   **只有:「12 则道痕」**
 三处已经问到底（`record.marks` 全仓只有这三个显示点，`MarksPanel` 的是另一个概念）。
 
 工作区干净、全量 929 / 7319 全绿、UI 门禁 0 个 ✗、截图已重出。
+
+### 第 540 轮:把「人工数次数」变成一条判据
+
+#### 先查了另外几组「同一个数几处」
+
+```text
+milestones        在 LegacyView 里两处 —— 一处报「N/M 枚碑记」（带分母），
+                  一处走 MILESTONE_TOTAL 常量。同源，无缺口
+worldsTotal       天界页报 `${CELESTIAL_WORLDS.length + 1}`（五重天界 + 虚界），
+                  LegacyView 报 `WORLDS.length`（人间/仙/神/混沌 4 个）
+                  —— 看着是缺陷，而**两处量词不同**:一处是「N/4 界」，一处是「征 N/6」
+                  「界」与「征」是两个量，不会混淆
+marksTotal        CelestialGateMap 走 MAX_MARKS（60），与 MarksPanel 同源
+```
+
+四处全空。
+
+#### 而前三轮那三次「找到一处、改好、以为完了」，都是人工数出来的
+
+```text
+第 536 轮  ApexSeal      补门槛
+第 537 轮  ApexBriefing  补门槛
+第 539 轮  LegacyView    补门槛
+```
+
+**下一个人加第四处时，没有任何东西会提醒他。**
+
+#### 故补一条（`core/identityRiskHint.spec` 第 7 条）
+
+```text
+三处显示同一份数的地方，每一处的字段都要齐:
+  marks          当前值
+  profileFormed  成没成形
+  PROFILE_MIN_MARKS  门槛
+```
+
+任意一处缺一项，它就与另两处说得不一样。
+
+#### 而它第一版也空转
+
+```text
+第一版  直接在原文里找这三个名字
+        而三处的**注释里都提到了 `PROFILE_MIN_MARKS`**（那几轮改动时写的说明）
+        → 把 import 与用法一起删掉，判据照样绿
+第二版  先 stripComments 再查 —— 注入当场红
+```
+
+> 这与第 539 轮**同一个毛病**:判据要守的那个名字，文件里本来就有别处在用它。
+> 只是那一轮的「别处」是 import，这一轮的「别处」是注释。
+>
+> 而解法就在仓里:`stripComments` 是现成的（`stripCommentsParity.spec` 守着只许有一份）。
+
+工作区干净、全量 929 / 7320 全绿。

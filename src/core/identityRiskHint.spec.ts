@@ -28,6 +28,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { stripComments } from "@/test/stripComments";
 
 const DIALOG = readFileSync(
   resolve(__dirname, "../components/character/IdentityDialog.vue"),
@@ -153,6 +154,49 @@ describe("行迹 · 尚浅之后去做什么", () => {
         near.slice(0, 120),
     ).toContain("PROFILE_MIN_MARKS");
     expect(near, "没报成没成形 —— 与本仓另两处不一致").toMatch(/profileFormed|成形|尚浅/);
+  });
+
+  it("7. 三处显示同一份数的地方，每一处的字段都要齐", () => {
+    /*
+     * ## 把前三轮的人工数次数，变成一条自动的（第 540 轮）
+     *
+     * 第 536/537/539 轮各修一处 `record.marks` 的显示点，三次都是「找到一处、改好、以为完了」。
+     * 而那是**人工数**出来的 —— 下一个人加第四处时，没有任何东西会提醒他。
+     *
+     * 这一条守的是**三处必须同时具备同样的字段**:
+     *
+     * ```text
+     *   marks           当前值
+     *   profileFormed   成没成形
+     *   门槛            成形需几则（PROFILE_MIN_MARKS）
+     * ```
+     *
+     * 任意一处缺一项，它就与另两处说得不一样。
+     */
+    const sites = [
+      "components/cultivation/ApexSeal.vue",
+      "components/common/ApexBriefing.vue",
+      "views/LegacyView.vue",
+    ] as const;
+    for (const rel of sites) {
+      /*
+       * ## 这一条也补过一次（第 540 轮）
+       *
+       * 第一版直接在原文里找 `PROFILE_MIN_MARKS` —— 而三处的**注释里都提到了它**
+       * （那几轮改动时写的说明），于是把 import 与用法一起删掉，判据照样绿。
+       *
+       * 与第 539 轮同一个毛病:判据要守的那个名字，文件里本来就有别处在用它 ——
+       * 只是那一轮的「别处」是 import，这一轮的「别处」是注释。
+       *
+       * 剥掉注释再查。`stripComments` 是本仓现成的（`stripCommentsParity.spec` 守着只许有一份）。
+       */
+      const src = stripComments(readFileSync(resolve(__dirname, "..", rel), "utf8"));
+      for (const field of ["marks", "profileFormed", "PROFILE_MIN_MARKS"]) {
+        expect(src, `${rel} 缺了「${field}」—— 它与另两处对同一份数的说法不一致了`).toContain(
+          field,
+        );
+      }
+    }
   });
 
   it("③ 反差：门槛与 identityService 同源", () => {
