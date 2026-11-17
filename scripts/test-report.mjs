@@ -745,6 +745,8 @@ const CATEGORIES = [
       "mortalRouteIconVariety",
       // 本世首领,该是那块地方本来写着的那个
       "mortalBossSemantics",
+      // 本世事件标签,不该与那块地方完全不相干
+      "mortalTagSemantics",
       // 计数器 → 行为的一张满表:师承与素行两个消费者都读它,半张表各自长是这里的缺口
       "counterText",
       // 「这一趟能走多远」—— 出行窗只报产出不报能不能拿到,是本轮在真浏览器里量到的坑

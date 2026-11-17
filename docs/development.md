@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 871 个 spec;本作自己那部分 791 个) |
+| `bun run test` | 全量用例(全量 872 个 spec;本作自己那部分 792 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 871 个 spec = 宿主 791 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 872 个 spec = 宿主 792 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 871 个 spec(本作自己那部分 791 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 872 个 spec(本作自己那部分 792 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -25531,3 +25531,105 @@ regions.ts 里每处地界都声明了自己的首领:
 玩家在剑冢里遇到一个叫「万妖林主」的首领,读到的是一个错的名字。
 
 工作区干净、全量 871 / 7119 全绿。
+
+### 第 462 轮:九幽魔渊里讲的是冰与废墟
+
+#### 顺着上一条链往下看
+
+第 461 轮修了 `MortalPlace` 上的**首领**字段与地界的语义绑定。这一轮看同一条链上的
+**另一个字段**：`eventTags` —— 它决定玩家在这里遇到什么故事。
+
+实测 20 世 252 段：
+
+```text
+与地界原生 eventTags 重合   19.4%
+一个原生标签都没用上的段     70 段
+```
+
+具体长这样:
+
+```text
+九幽魔渊  原生[general,dark] → 实际[ruin,ice]          魔渊里讲冰与废墟
+天外天    原生[general,sky]  → 实际[thunder,ice,ruin]  天外天里讲冰霜废墟
+鸿蒙裂隙  原生[general,sky]  → 实际[water]             虚空里讲水
+```
+
+#### 与 `contentTakeover` 的边界
+
+那四条验收要求的是「同 fromId、不同 seed → **允许**产生不同 event」——
+从没说过「可以完全不相干」。
+
+> **换过一批故事是对的，换到与这块地方无关就是错。**
+
+而这条边界一直没被判据写下来过 —— 就像第 461 轮的首领语义一样，
+数据里的绑定（`regions.ts` 的 `eventTags`）一直在，只是挑选时不看它。
+
+#### 改法
+
+原生标签里若有一个也在 `ALL_EVENT_TAGS` 里，就占掉一个位置，其余按层级抽。
+
+只保**一个** —— 保得多了，本世事件池会退回成静态区域表，
+`contentTakeover` 那四条验收里「不同 seed 产生不同 event」会变得很弱。
+
+#### 结果
+
+```text
+重合率      19.4% → 51.2%
+全外来段    70 → 0
+```
+
+判据三条:
+
+```text
+① 每一段至少有一个标签来自该地界的原生 eventTags（报错列出原生与实际两组）
+② 反差：标签仍不是静态表 —— 同一地界在不同世界里允许不同
+③ 反差：标签数量仍由节奏曲线决定
+```
+
+②③ 是这次改动的两个风险点：保原生标签可能让事件池退化成静态表；而
+「至少保一个」可能让各段标签数趋同，抹掉节奏原型的差异。
+
+注入验证:去掉原生标签保留 → ①立刻红。
+
+#### 四处「字段与地界无关」的检查
+
+```text
+第 461 轮  首领    只看层级，不看 regions.ts 的 boss     → 语义一致 7.3% → 100%
+第 462 轮  事件标签 只看层级，不看 regions.ts 的 eventTags → 全外来段 70 → 0
+查空       敌人    同样只看层级 —— 但那是**设计**：contentTakeover 要求跨世重组，
+                   且实测 tier 中位差 1、98% 在 2 以内，质量合格
+查空       地貌图标 第 458/459/460 轮已处理
+```
+
+`MortalPlace` 有五个字段来自原区域（名字、tier、enemies、boss、eventTags），
+前两者按设计重组，后三者里有两个丢了语义绑定 —— **同一个形状，连着两轮**。
+
+工作区干净、全量 872 / 7122 全绿。
+
+#### 顺带:UI 门禁抓到一处 「25%」重复
+
+跑 `check:ui` 时 `/build` 页报了一次:
+
+```text
+✗ [1280x800] /build 首屏把同一句说了两遍:«25%»
+```
+
+第一反应是「我的改动只在 `mortalWorldGen`，与世界生成有关，不该影响构筑页」——
+回退 `mortalWorldGen.ts` 后重跑，0 个 ✗，于是断定是**偶发**；再连跑两次，又都是 0。
+
+**这个判断是错的。** 真正的原因是两条并列的读数在某个档位恰好相等:
+
+```text
+BuildView.stageGapText      「距成形还差 25% 契合」
+BuildDiscovery              「核心词条平均跨过 25% 便会成路」
+```
+
+前者是 `stageMeter.gap`，后者是常量 `STYLE_EMERGENCE_AFFINITY = 0.25`。
+当玩家契合接近 0 时两者都是 25% —— **同一个数字，两件不同的事**。
+而我的 tag 改动让展示存档落到了那个档位，于是它才现身。
+
+修法:`BuildDiscovery` 那两句改成不报百分比（「跨过雏形线便会成路」），
+门槛线那个数仍由台账那一格报（`buildDesk.spec` 有一条判据要求它不许留空）。
+
+**教训**:偶发失败不一定是抖动。第一反应「与我的改动无关」时，
+要去看**它为什么现在才出现**——那一问往往指回自己的改动。

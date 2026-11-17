@@ -45,15 +45,14 @@
       <template v-if="hasTrace && closestGap > 0">
         最近的是「{{ closest.style.name }}」。再补
         <span>{{ closestGapText }}</span>
-        ，核心词条平均跨过 {{ formatPercent(STYLE_EMERGENCE_AFFINITY, 0) }} 便会成路。
+        ，核心词条平均跨过雏形线便会成路。
       </template>
       <!--
         已经跨过雏形线:说「成了」。这一支原先不存在 —— gap 归零时仍走上面那句，
         读出来是「再补最后一步，核心词条平均跨过 25% 便会成路」，而玩家已经跨过了。
       -->
       <template v-else-if="hasTrace">
-        最近的是「{{ closest.style.name }}」，已经跨过
-        {{ formatPercent(STYLE_EMERGENCE_AFFINITY, 0) }} 的雏形线 —— 这一路已立得住。
+        最近的是「{{ closest.style.name }}」，已经跨过雏形线 —— 这一路已立得住。
       </template>
       <template v-else>
         眼下{{

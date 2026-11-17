@@ -464,14 +464,45 @@ export function generateMortalWorld(seed: number): MortalWorld {
     const boss = picked2.boss;
     usedBossIds.add(boss.id);
     if (picked2.fellBack) bossFallbackAt.push(i);
-    // 事件标签数量由节奏曲线决定
+    /*
+     * 事件标签数量由节奏曲线决定 —— 但**至少保留一个原生标签**（第 462 轮）。
+     *
+     * ## 缺口
+     *
+     * 标签原先纯按层级抽，完全不看地界。实测 20 世 252 段：
+     * 只有 19.4% 的标签与地界原生 `eventTags` 重合，**70 段一个原生标签都没用上**。
+     *
+     * ```text
+     *   九幽魔渊  原生[general,dark] → 实际[ruin,ice]         魔渊里讲冰与废墟
+     *   天外天    原生[general,sky]  → 实际[thunder,ice,ruin] 天外天里讲冰霜废墟
+     *   鸿蒙裂隙  原生[general,sky]  → 实际[water]            虚空里讲水
+     * ```
+     *
+     * 这与 `contentTakeover.spec` 不冲突 —— 那条要求的是「允许不同」，
+     * 从没说过「可以完全不相干」。**换过一批故事是对的，换到与这块地方无关就是错。**
+     *
+     * ## 口径
+     *
+     * 原生标签里若有一个也在 `ALL_EVENT_TAGS` 里，就占掉一个位置，其余按层级抽。
+     * 只保一个 —— 保得多了，本世的事件池就退回成静态区域表，
+     * `contentTakeover` 那四条验收里「不同 seed 产生不同 event」会变得很弱。
+     */
     const want = density[i]!;
-    const tags = nearTier(
-      ALL_EVENT_TAGS.map((t) => ({ t, tier: TAG_HOME_TIER.get(t) ?? tier })),
-      tier,
-      rng,
-      want,
-    ).map((x) => x.t);
+    const nativeTags = r.eventTags.filter((t) => ALL_EVENT_TAGS.includes(t));
+    const keepNative =
+      nativeTags.length > 0 && want > 0 ? [nativeTags[rng.int(0, nativeTags.length - 1)]!] : [];
+    const tags = [
+      ...keepNative,
+      ...nearTier(
+        ALL_EVENT_TAGS.filter((t) => !keepNative.includes(t)).map((t) => ({
+          t,
+          tier: TAG_HOME_TIER.get(t) ?? tier,
+        })),
+        tier,
+        rng,
+        Math.max(0, want - keepNative.length),
+      ).map((x) => x.t),
+    ];
     return {
       nodeId: `n${i}_${r.id}`,
       fromId: r.id,
