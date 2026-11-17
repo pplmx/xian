@@ -83,7 +83,28 @@ describe("境界覆盖 · 升上去之后得有新东西", () => {
     ).toEqual([]);
   });
 
-  it("② 反差：累计池单调是必然的，不构成判据", () => {
+  it("② 报告：把逐境新增摊开，标出最薄的那几境", () => {
+    /*
+     * 判据①只回答「过不过」。这一条回答「哪一境最薄」——
+     * 它不做判断（故不设 expect 的阈值），只把那三境打出来。
+     * 报告型用例由 `reportTestDecl.spec` 认这个声明。
+     */
+    const rows = REALMS.map((r, i) => ({ name: r.name, realm: i, n: newlyAt(i) }));
+    const sorted = [...rows].sort((a, b) => a.n - b.n);
+    const median = rows.map((r) => r.n).sort((a, b) => a - b)[Math.floor(rows.length / 2)]!;
+    console.log(
+      `\n逐境新增内容（中位 ${median} 件）：` +
+        sorted
+          .slice(0, 3)
+          .map((r) => `\n  最薄 · 境 ${r.realm}（${r.name}）${r.n} 件`)
+          .join("") +
+        `\n  最厚 · 境 ${sorted[sorted.length - 1]!.realm}（${sorted[sorted.length - 1]!.name}）${sorted[sorted.length - 1]!.n} 件`,
+    );
+    /* 反空转：摊出来得有 21 行 */
+    expect(rows.length, "境界表空了 —— 报告没内容可打").toBeGreaterThan(10);
+  });
+
+  it("③ 反差：累计池单调是必然的，不构成判据", () => {
     /*
      * 累计数只加不减 —— 它恒单调，故守它等于没守。
      * 这一条把「为什么不用累计」写进判据里，免得后来者又去加一条恒真的断言。
@@ -95,7 +116,7 @@ describe("境界覆盖 · 升上去之后得有新东西", () => {
     }
   });
 
-  it("③ 反差：法宝与灵兽不进这条判据 —— 它们按层级收，不按境界解锁", () => {
+  it("④ 反差：法宝与灵兽不进这条判据 —— 它们按层级收，不按境界解锁", () => {
     /*
      * `ArtifactDef` 用 `fromTier`（区域层级），`PetDef` 用品质 —— 两者都没有
      * 「某境界解锁」这回事。把它们算进来会让判据虚高：一件法宝的 fromTier 是 12，
