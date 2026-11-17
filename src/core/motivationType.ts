@@ -115,7 +115,14 @@ export function trialProfiles(): MotivationProfile[] {
      * 故把**路线长度**也算进偏离:常规一世四到六段,压到三段是实打实的一世之变。
      * 权重取 0.5 —— 它的影响比改战斗规则(直接改每一场)小,但绝不是零。
      */
-    const routeDeviation = t.routeStages === undefined ? 0 : 0.5;
+    /*
+     * 两种「不碰 CombatRules」的契各有各的偏离度（第 473 轮）。
+     *
+     * `routeStages` 改的是这一世有几段路；`bannedItemKind` 改的是能带什么进场。
+     * 后者对面板的影响更直接（法宝被动整块没了），故权重取 0.6 略高于路线。
+     */
+    const routeDeviation =
+      t.routeStages !== undefined ? 0.5 : t.bannedItemKind !== undefined ? 0.6 : 0;
     return {
       id: t.id,
       name: t.name,
@@ -125,9 +132,11 @@ export function trialProfiles(): MotivationProfile[] {
       surface: "numbers" as ChangeSurface,
       type: classify(determinism, replayDelta),
       evidence:
-        t.routeStages === undefined
-          ? `rules 是 LIFE_TRIALS 里的常量;第二次签得到完全相同的一世`
-          : `routeStages 是 LIFE_TRIALS 里的常量;第二次签得到同样短的一世`,
+        t.routeStages !== undefined
+          ? `routeStages 是 LIFE_TRIALS 里的常量;第二次签得到同样短的一世`
+          : t.bannedItemKind !== undefined
+            ? `bannedItemKind 是 LIFE_TRIALS 里的常量;第二次签同样禁这一类`
+            : `rules 是 LIFE_TRIALS 里的常量;第二次签得到完全相同的一世`,
     };
   });
 }

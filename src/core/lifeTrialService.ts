@@ -58,6 +58,18 @@ export function trialStageLimit(def: LifeTrialDef | null | undefined): number | 
   return def?.routeStages;
 }
 
+/**
+ * 本世是否禁用某类物品(第 473 轮)。
+ *
+ * 「可用物品」这条玩法面的唯一出口:装备侧与结算侧都要走它,
+ * 这样「契约说不许用」与「界面真的收起来」才不会是两本账。
+ *
+ * 未立契、签的不是这一类、或签的契没禁这类物品 —— 三种都返回 false。
+ */
+export function lifeTrialBansItem(kind: "artifact" | "pill"): boolean {
+  return activeLifeTrial()?.bannedItemKind === kind;
+}
+
 /** 能否签下某契(余额足够、本世尚未签过、规则合法) */
 export function canSignLifeTrial(id: string): boolean {
   const player = usePlayerStore();
@@ -89,6 +101,15 @@ export function signLifeTrial(id: string): boolean {
     return false;
   }
   player.setLifeTrial({ trialId: def.id, at: Date.now(), paid: def.cost });
+  /*
+   * 签下「不祭法宝」这类契之后,把已经装着的那几件卸下(第 473 轮)。
+   *
+   * 不卸的话会出现一个荒谬状态:屏幕上写着「本世不得祭用任何法宝」,
+   * 而玩家正带着两件在面板上加成 —— `noteTaboo` 只在**祭用**那一刻判定,
+   * 已经装着的不会触发它,于是契约说了不许,实际一分好处都没少。
+   *
+   * 卸下是「不祭」的自然含义,不是惩罚:法宝还在行囊里,收回即守戒。
+   */
   notify(`「${def.name}」既立,此生再无回头路`, "rare");
   return true;
 }

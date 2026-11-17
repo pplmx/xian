@@ -336,6 +336,7 @@ import { cnNumber, formatGN, formatPercent, formatSignedPercent } from "@/utils/
 import { toNum } from "@/utils/gnum";
 import { STAT_NAMES } from "@/data/statNames";
 import { activeVowTaboo } from "@/core/samsaraService";
+import { activeLifeTrial, lifeTrialBansItem } from "@/core/lifeTrialService";
 import type { AnyStatKey } from "@/types";
 
 const inventory = useInventoryStore();
@@ -527,6 +528,19 @@ function showPreviousArtifacts(): void {
 }
 
 function toggleArtifact(defId: string): void {
+  /*
+   * 契禁法宝时不许装上(第 473 轮)——
+   * 与 `noteTaboo("artifact")` 的破题判定同一个口子:`lifeTrialBansItem`。
+   *
+   * **只拦「装上」,不拦「收回」**:收回正是守戒,拦住它就等于把玩家锁在破题状态里。
+   * 已装的旧档不在这里被强制卸下 —— 那会改变玩家上一刻的战力,且契约是「不祭」,
+   * 从这一件起不祭即可。
+   */
+  const wearing = inventory.equippedArtifacts.includes(defId);
+  if (!wearing && lifeTrialBansItem("artifact")) {
+    ui.toast(`「${activeLifeTrial()?.name ?? "本世之契"}」在身,这一世不得祭用法宝`, "warn");
+    return;
+  }
   const plan = planArtifactPlacement(inventory.equippedArtifacts, defId, artifactSlots.value);
   const replaced = plan.removedId ? artifactDef(plan.removedId) : undefined;
   const result = inventory.toggleArtifact(defId, artifactSlots.value);

@@ -356,7 +356,8 @@
 import { computed, ref, watch } from "vue";
 import { usePlayerStore } from "@/stores/player";
 import { useUiStore } from "@/stores/ui";
-import { LIFE_TRIALS } from "@/data/lifeTrials";
+import { useInventoryStore } from "@/stores/inventory";
+import { LIFE_TRIALS, lifeTrialDef } from "@/data/lifeTrials";
 import { activeLifeTrial, canSignLifeTrial, signLifeTrial } from "@/core/lifeTrialService";
 import { talentDef, TALENT_GRADE_COLORS, TALENT_GRADE_NAMES } from "@/data/talents";
 import { REALMS } from "@/data/realms";
@@ -383,6 +384,7 @@ const emit = defineEmits<{ close: [] }>();
 
 const player = usePlayerStore();
 const ui = useUiStore();
+const inventory = useInventoryStore();
 
 const currentLife = computed(() => player.reincarnation.count + 1);
 const canRebirth = computed(() => player.major >= MANUAL_REBIRTH_MIN_MAJOR);
@@ -443,7 +445,22 @@ function trialCostText(t: (typeof LIFE_TRIALS)[number]): string {
 }
 
 function signTrial(id: string): void {
-  if (signLifeTrial(id)) trialOpen.value = false;
+  const def = lifeTrialDef(id);
+  if (!signLifeTrial(id)) return;
+  /*
+   * 签下「不祭法宝」这类契之后，把已经装着的那几件卸下（第 473 轮）。
+   *
+   * 这一步放在这里而不是 `signLifeTrial` 里：那是个 core 模块，而
+   * `layeringAudit.spec` 要求「core 对 store 的依赖只许收拢」——
+   * 为它多引一个 store 会撞上那条基线。而「改玩家身上带着什么」本来就是
+   * 界面这一层的事：core 声明「本世不得祭用」，界面据此执行。
+   *
+   * 不卸的话会出现一个荒谬状态：屏幕上写着「本世不得祭用任何法宝」，
+   * 而玩家正带着两件在面板上加成 —— `noteTaboo` 只在**祭用**那一刻判定，
+   * 已经装着的不会触发它。
+   */
+  if (def?.bannedItemKind === "artifact") inventory.equippedArtifacts = [];
+  trialOpen.value = false;
 }
 
 const fruitInfo = computed(() => fruitMarginalInfo());

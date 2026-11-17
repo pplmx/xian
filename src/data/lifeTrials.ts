@@ -68,6 +68,19 @@ export interface LifeTrialDef {
    * 免得它悄悄退回老路。
    */
   routeStages?: number;
+  /**
+   * 本世禁用哪一类物品（第 473 轮）。
+   *
+   * 这是第三份**不碰 CombatRules** 的契，动的是可动空间里那第三项「可用物品」。
+   *
+   * 与 `rules` 的差别：`rules` 改的是**战斗怎么算**，这一项改的是**你带什么进场**。
+   * 前者让同样的构筑打得更难，后者让构筑本身少一块 —— 玩家要换的不是打法，
+   * 而是**这一世用什么立身**。
+   *
+   * 三份契（routeStages / bannedItemKind / rules）互斥地存在 ——
+   * 判据 `trialItemBind.spec` 守着它们不互相侵占，免得日后三样混成一样。
+   */
+  bannedItemKind?: "artifact" | "pill";
 }
 
 /**
@@ -132,6 +145,24 @@ const ROUTE_TRIAL: LifeTrialDef = {
 };
 
 LIFE_TRIALS.push(ROUTE_TRIAL);
+
+/**
+ * 第六份契:禁用一类物品,不动战斗规则,也不改路线。
+ *
+ * 定价与断径契同档 —— 两者的痛都是「少拿东西」:一个少走两段路,一个少一块面板。
+ */
+const BAN_TRIAL: LifeTrialDef = {
+  id: "tr_qiqi",
+  name: "弃器契",
+  seal: "弃",
+  desc: "法宝皆是外物。这一世空手上路,只凭一身修为。",
+  ruleText: "本世不得祭用任何法宝",
+  cost: 30,
+  rules: {},
+  bannedItemKind: "artifact",
+};
+
+LIFE_TRIALS.push(BAN_TRIAL);
 
 export function lifeTrialDef(id: string): LifeTrialDef | undefined {
   return LIFE_TRIALS.find((t) => t.id === id);

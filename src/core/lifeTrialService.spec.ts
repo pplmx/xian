@@ -23,6 +23,7 @@ import {
   activeLifeTrial,
   archiveLifeTrial,
   canSignLifeTrial,
+  lifeTrialBansItem,
   lifeTrialRules,
   signLifeTrial,
 } from "./lifeTrialService";
@@ -289,5 +290,24 @@ describe("逆旅契 · 规则文案与 rules 双向对账", () => {
       broken.map((t) => t.name),
       "把治疗效力 0.25 改成 0.10 却不改文案,这条必须红 —— 实测过旧判据下十六例全绿",
     ).toEqual(["孤行契"]);
+  });
+});
+
+describe("弃器契 · 本世不得祭用法宝（第 473 轮）", () => {
+  it("签下之后禁令立刻生效，且不连带禁丹药", () => {
+    // 清空身上法宝那一步在界面层（RebirthDialog）—— core 只声明禁令，
+    // 为它多引一个 store 会撞上 layeringAudit 的基线（实测 161 → 162）。
+    setActivePinia(createPinia());
+    usePlayerStore().reincarnation.daoFruit = 999;
+    expect(signLifeTrial("tr_qiqi"), "签失败了 —— 判据会空转（道果给够了）").toBe(true);
+    expect(lifeTrialBansItem("artifact"), "签了弃器契，禁令却没生效").toBe(true);
+    expect(lifeTrialBansItem("pill"), "弃器契不该连丹药一起禁").toBe(false);
+  });
+
+  it("反差：签别的契不许禁法宝", () => {
+    setActivePinia(createPinia());
+    usePlayerStore().reincarnation.daoFruit = 999;
+    expect(signLifeTrial("tr_duan"), "签断径契失败").toBe(true);
+    expect(lifeTrialBansItem("artifact"), "签了与法宝无关的契，却把法宝禁了").toBe(false);
   });
 });
