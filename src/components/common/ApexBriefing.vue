@@ -24,6 +24,7 @@ import { usePlayerStore } from "@/stores/player";
 import { useEndgameStore } from "@/stores/endgame";
 import { useCultivationStore } from "@/stores/cultivation";
 import { apexRecord } from "@/core/apex";
+import { PROFILE_MIN_MARKS } from "@/core/identity";
 import { daoPathDef } from "@/data/endgame";
 
 const player = usePlayerStore();
@@ -76,7 +77,15 @@ function go(route: string): void {
       <span class="home-deck__next-title">{{ record.realmLabel }}</span>
       <span class="home-deck__next-copy">
         {{ became.text }} · 第 {{ record.life }} 世 · {{ gongfaCount }} 部功法 ·
-        {{ record.marks }} 则道痕
+        <!--
+          道痕这一格要说成没成形、以及门槛（第 537 轮）。
+          同一个数在修行页已经报了「已 N 则，成形需 M 则」，而这里原先只有当前值 ——
+          两处说的不一样，而读者是同一个玩家。
+          判据见 core/identityRiskHint.spec 第 5 条。
+        -->
+        {{ record.marks }} / {{ PROFILE_MIN_MARKS }} 则道痕{{
+          record.profileFormed ? "" : "（未成形）"
+        }}
       </span>
     </span>
     <!--

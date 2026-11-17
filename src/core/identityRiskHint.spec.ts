@@ -87,6 +87,33 @@ describe("行迹 · 尚浅之后去做什么", () => {
     );
   });
 
+  it("5. 首页那张终局简报也要报门槛 —— 同一份数据的第二处", () => {
+    /*
+     * ## 同一份数据的第二处（第 537 轮）
+     *
+     * 上一轮给 `ApexSeal` 补了「已 N 则，成形需 5 则」。而 `record.marks`
+     * 在首页那张终局简报里**也出现一次**:
+     *
+     * ```text
+     *   此生已尽 · 第 3 世 · 12 部功法 · 12 则道痕
+     * ```
+     *
+     * 那里只有当前值，既没有结论（成没成形），也没有门槛 ——
+     * 与上一轮修掉的 `ApexSeal` 是同一个数、同一件事，两处说的不一样。
+     *
+     * 判据：两处要么都说门槛，要么都不说 —— 不许一处说、一处不说。
+     */
+    const brief = readFileSync(resolve(__dirname, "../components/common/ApexBriefing.vue"), "utf8");
+    expect(brief, "首页简报不再报道痕 —— 判据的前提要重看").toMatch(/record\.marks/);
+    const at = brief.indexOf("record.marks");
+    const near = brief.slice(Math.max(0, at - 500), at + 400);
+    expect(
+      near,
+      "首页简报只报「N 则道痕」，既不说成没成形，也不说门槛 —— " +
+        "而同一份数据在修行页已经报了「已 N 则，成形需 M 则」",
+    ).toMatch(/PROFILE_MIN_MARKS|成形|尚未成/);
+  });
+
   it("③ 反差：门槛与 identityService 同源", () => {
     /*
      * 界面不该另写一个门槛数。这一条确认真正判「有没有行迹」的那一行还在
