@@ -138,4 +138,91 @@ describe("历世足迹 · 纯函数", () => {
     expect(fp.points).toHaveLength(2);
     expect(fp.best?.index, "最高只在读得出的世里挑").toBe(1);
   });
+
+  it("终寿走向 —— 与境界走向同一条口径:首末两端,缺一不猜", () => {
+    /*
+     * ## 为什么单列一格（第 556 轮）
+     *
+     * 「平均终寿」答的是「这些年大概活多久」，却没答「越活越久还是越来越短」。
+     * 后者才是十世回望时会看的那一眼。
+     *
+     * 它与境界走向共用同一条纪律:**用首末两端算，任一端缺值就不给走向** ——
+     * 用一个缺值的端点算出来的差值会撒谎。
+     */
+    const up = lifeFootprint([
+      {
+        index: 1,
+        major: 2,
+        realmLabel: "筑基",
+        age: 120,
+        themeId: null,
+        themeResult: null,
+        insight: 0,
+        at: 0,
+      },
+      {
+        index: 2,
+        major: 3,
+        realmLabel: "金丹",
+        age: 240,
+        themeId: null,
+        themeResult: null,
+        insight: 0,
+        at: 0,
+      },
+    ]);
+    expect(up.ageDelta, "活得更久却没算出来").toBe(120);
+    expect(up.ageTrendText, "走向没成句").toBe("比首世多活了 120 载");
+
+    const down = lifeFootprint([
+      {
+        index: 1,
+        major: 3,
+        realmLabel: "金丹",
+        age: 300,
+        themeId: null,
+        themeResult: null,
+        insight: 0,
+        at: 0,
+      },
+      {
+        index: 2,
+        major: 2,
+        realmLabel: "筑基",
+        age: 90,
+        themeId: null,
+        themeResult: null,
+        insight: 0,
+        at: 0,
+      },
+    ]);
+    expect(down.ageDelta, "活得更短却没算出来 —— 短也是合法结果").toBe(-210);
+    expect(down.ageTrendText).toBe("比首世少活 210 载");
+
+    /* 首端缺值 → 不给走向，而不是拿 0 去减 */
+    const missing = lifeFootprint([
+      {
+        index: 1,
+        major: 2,
+        realmLabel: "筑基",
+        age: 0,
+        themeId: null,
+        themeResult: null,
+        insight: 0,
+        at: 0,
+      },
+      {
+        index: 2,
+        major: 3,
+        realmLabel: "金丹",
+        age: 240,
+        themeId: null,
+        themeResult: null,
+        insight: 0,
+        at: 0,
+      },
+    ]);
+    expect(missing.ageDelta, "首端读不出却仍给了一个差值 —— 那会撒谎").toBeNull();
+    expect(missing.ageTrendText).toBe("");
+  });
 });

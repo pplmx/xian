@@ -77,6 +77,20 @@ export interface LifeFootprint {
   ageSamples: number;
   /** 宿慧累计(只加读得出的世) */
   insightTotal: number;
+  /**
+   * 终寿走向:末世减首世的终寿差;不足两世或任一端读不出时为 null。
+   *
+   * 与 `majorDelta` 同一条纪律 —— 用一个缺值的端点算出来的差值会撒谎。
+   */
+  ageDelta: number | null;
+  /**
+   * 终寿走向的一句人话(如「比首世多活了 120 载」);没有走向时为空串。
+   *
+   * 为什么单列一份而不复用 `averageAge`:均寿答的是「这些年大概活多久」,
+   * 走向答的是「越活越久还是越来越短」。后者是十世回望时真正会看的那一眼 ——
+   * 而此前没有一处说得出它。
+   */
+  ageTrendText: string;
 }
 
 const EMPTY: LifeFootprint = {
@@ -90,6 +104,8 @@ const EMPTY: LifeFootprint = {
   ageSamples: 0,
   insightTotal: 0,
   trendText: "",
+  ageDelta: null,
+  ageTrendText: "",
 };
 
 /** 世序:有限的、>= 1 的整数 */
@@ -175,6 +191,23 @@ export function lifeFootprint(lives: readonly LifeRecord[]): LifeFootprint {
           ? `比首世浅 ${-majorDelta} 境`
           : "与首世同一境";
 
+  /*
+   * 终寿走向 —— 与 `majorDelta` 同一条口径:任一端读不出就不给走向。
+   * 均寿只算「> 0 的世」,而走向必须用**首末两端**;两端缺一就不猜。
+   */
+  const ageDelta =
+    points.length >= 2 && first.age !== null && first.age > 0 && last.age !== null && last.age > 0
+      ? last.age - first.age
+      : null;
+  const ageTrendText =
+    ageDelta === null
+      ? ""
+      : ageDelta > 0
+        ? `比首世多活了 ${ageDelta} 载`
+        : ageDelta < 0
+          ? `比首世少活 ${-ageDelta} 载`
+          : "与首世同寿";
+
   return {
     state: points.length >= 2 ? "ready" : "single",
     lives: points.length,
@@ -186,5 +219,7 @@ export function lifeFootprint(lives: readonly LifeRecord[]): LifeFootprint {
     averageAge,
     ageSamples: ages.length,
     insightTotal,
+    ageDelta,
+    ageTrendText,
   };
 }

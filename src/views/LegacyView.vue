@@ -585,6 +585,22 @@
                   <template v-else>未记</template>
                 </dd>
               </div>
+              <!--
+                终寿走向（第 556 轮）。
+                上面那格「平均终寿」答的是「这些年大概活多久」，这一格答的是
+                「越活越久还是越来越短」—— 十世回望时真正会看的那一眼，
+                而此前没有一处说得出它。口径与境界走向同源（首末两端，缺一不猜）。
+              -->
+              <div v-if="footprint.ageTrendText">
+                <dt>终寿走向</dt>
+                <dd
+                  class="tabular legacy-footprint__age-trend"
+                  :class="footprint.ageDelta! >= 0 ? 'is-up' : 'is-down'"
+                  data-footprint-age-trend
+                >
+                  {{ footprint.ageTrendText }}
+                </dd>
+              </div>
               <div>
                 <dt>宿慧累计</dt>
                 <dd class="tabular">{{ footprint.insightTotal }}</dd>
