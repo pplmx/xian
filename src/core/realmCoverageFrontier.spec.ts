@@ -83,22 +83,43 @@ describe("境界覆盖 · 升上去之后得有新东西", () => {
     ).toEqual([]);
   });
 
-  it("② 报告：把逐境新增摊开，标出最薄的那几境", () => {
+  it("② 报告：把逐境**可用**事件摊开，标出最薄的那几境", () => {
     /*
-     * 判据①只回答「过不过」。这一条回答「哪一境最薄」——
-     * 它不做判断（故不设 expect 的阈值），只把那三境打出来。
-     * 报告型用例由 `reportTestDecl.spec` 认这个声明。
+     * ## 这一行的口径改过一次（第 522 轮）
+     *
+     * 上一轮它量的是「逐境**新增**」，于是打出「境 17 神帝 8 件、境 7 大乘 9 件」。
+     * 而按那个读数补完内容之后去查**玩家实际能撞见多少**:
+     *
+     * ```text
+     *   境 7   可用 68 则    新增 10 件
+     *   境 17  可用 71 则    新增 10 件
+     * ```
+     *
+     * **池子一点也不薄。** 「新增」量的是「这一境有没有新东西」，
+     * 而玩家感受到的是「这一境能撞见多少」—— 后者是 `min ≤ r ≤ max` 的累计，
+     * 与新增是两回事。上一轮把前者当成后者，补了两处并不薄的地方。
+     *
+     * 按总量重算:min 40（境 9）· max 85（境 2）· 比值 2.13，
+     * 最薄的三境是 **境 9 / 10 / 11 —— 仙界前段**，也正是第 518 轮补过四条的那一段。
      */
-    const rows = REALMS.map((r, i) => ({ name: r.name, realm: i, n: newlyAt(i) }));
+    const rows = REALMS.map((r, i) => ({
+      name: r.name,
+      realm: i,
+      n: EVENTS.filter((e) => {
+        const min = (e as unknown as { minRealm?: number }).minRealm ?? 0;
+        const max = (e as unknown as { maxRealm?: number }).maxRealm ?? 99;
+        return min <= i && max >= i;
+      }).length,
+    }));
     const sorted = [...rows].sort((a, b) => a.n - b.n);
     const median = rows.map((r) => r.n).sort((a, b) => a - b)[Math.floor(rows.length / 2)]!;
     console.log(
-      `\n逐境新增内容（中位 ${median} 件）：` +
+      `\n逐境**可用**事件（中位 ${median} 则）：` +
         sorted
           .slice(0, 3)
-          .map((r) => `\n  最薄 · 境 ${r.realm}（${r.name}）${r.n} 件`)
+          .map((r) => `\n  最薄 · 境 ${r.realm}（${r.name}）${r.n} 则`)
           .join("") +
-        `\n  最厚 · 境 ${sorted[sorted.length - 1]!.realm}（${sorted[sorted.length - 1]!.name}）${sorted[sorted.length - 1]!.n} 件`,
+        `\n  最厚 · 境 ${sorted[sorted.length - 1]!.realm}（${sorted[sorted.length - 1]!.name}）${sorted[sorted.length - 1]!.n} 则`,
     );
     /* 反空转：摊出来得有 21 行 */
     expect(rows.length, "境界表空了 —— 报告没内容可打").toBeGreaterThan(10);
