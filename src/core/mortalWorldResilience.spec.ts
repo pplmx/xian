@@ -53,13 +53,7 @@ describe("本世之界 · 读档修形", () => {
 
     expect(adventure.mortalWorld).toEqual(w);
     expect(adventure.mortalCleared).toEqual(cleared);
-    expect(() =>
-      worldView(
-        adventure.mortalWorld!,
-        (id) => id,
-        (nodeId) => adventure.mortalCleared.includes(nodeId),
-      ),
-    ).not.toThrow();
+    expect(() => worldView(adventure.mortalWorld!, (id) => id)).not.toThrow();
   });
 
   it("路线进度只留当前世界从首段起的连续前缀,乱序、重复和旧节点都截掉", () => {

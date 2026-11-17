@@ -25686,3 +25686,82 @@ AdventureView   (id) => id  →  (id) => enemyDef(id)?.name ?? id
 > 而「注入红了但条数不对」是第三种：**判据扫到的地方比你以为的多**。
 
 工作区干净、全量 873 / 7124 全绿。
+
+### 第 464 轮:算出来、存进去、然后谁也不要
+
+#### 顺着上一轮的「两处传法不同」往下查
+
+第 463 轮修了 `worldView` 的第二参数（首领名解析器）。这一轮看它的**第三参数**
+`isCleared` —— 三处调用各不相同:
+
+```text
+mortalWorldService.ts:467   worldView(w, bossNameOf)                      ← 不传
+MortalWorldView.vue:397     worldView(w, ..., cleared)                    ← 传真实进度
+AdventureView.vue:1177      worldView(w, ...)                             ← 不传
+```
+
+#### 而它只影响一个字段
+
+`isCleared` 唯一的用途是算 `WorldView.clearedStages`。而那个字段——
+
+```text
+产品代码里一处都没读。
+```
+
+界面真正读的是**另外两条路径**:
+
+```text
+MortalWorldRibbon   clearedCount = statuses.filter(s => s.state === "cleared").length
+MortalWorldView     meter = worldDeskMeter(places, stageStatuses)
+```
+
+两者都从 `mortalStageStatuses` 那一份来 —— **那才是真的账**。`clearedStages`
+是同一件事的第三份算法，写进去之后再没人要。
+
+#### 删掉，而不是接上
+
+它带着注释「概览行先给结论」——听起来像是该接上的。但概览行**已经在报已行几程**了
+（`meter.cleared / meter.total`），只是走的是另一条路。接上它就等于制造第三个事实源。
+
+故 `clearedStages` 与 `isCleared` 一并删掉。两条测它的判据改成守「只有一条路径」:
+
+```text
+Object.keys(worldView(...)) 不含 clearedStages
+反差：stages（总段数）必须留着 —— 它有三处真消费
+```
+
+「连续前缀」「断档不算」那两条性质没有丢 —— 它们在 `mortalRouteAccess.spec` 里
+守着 `mortalStageStatuses` 本身。
+
+#### 真正的收获:扩了判据的扫描面
+
+`typeFieldCoverage.spec`（第 215 轮）守的正是这个形状 ——「算出来、存进去、然后谁也不要」。
+但它只扫 `src/types/index.ts`，而 `WorldView` 定义在 `core/mortalWorldService.ts`。
+
+故加了 `VIEW_TYPE_SOURCES`：把「有消费者承诺」的 core 模块**逐个点名**加进来，
+不像全量扫 core 那样一上来就淹没在噪音里。
+
+**第一次跑就抓到第二个**:
+
+```text
+PlaceContent.fromLegacy
+  注释写着「true 表示走的是老存档兼容路径」
+  三处调用方（exploration 两处、offline 一处）都直接用 enemies/boss/eventTags
+  没有一处据此拒绝
+```
+
+这一个**登记进 RESERVED 而不是删** —— 与 `RegionRecall.since` 同一类：那个事实是真的
+（这份内容确实来自兼容路径），只是眼下不需要据此做判断。而删了就再也分不出来。
+
+#### 这一轮的形状
+
+```text
+第 462 轮  事件标签与地界无关      → 数据层
+第 463 轮  同一个函数两处传法不同  → 调用层
+第 464 轮  算出来存进去没人要      → 类型层
+```
+
+三轮往三个层次各下探了一级。而这一轮的收获不只是删掉一个字段 ——
+**是让一条既有的判据去看它本该看的地方**。
+
+工作区干净、全量 873 / 7123 全绿。

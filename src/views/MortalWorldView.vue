@@ -394,7 +394,7 @@ const router = useRouter();
 const view = computed(() => {
   const w = adventure.mortalWorld ?? ensureMortalWorld();
   if (!w) return null;
-  return worldView(w, (id) => enemyDef(id)?.name ?? id, cleared);
+  return worldView(w, (id) => enemyDef(id)?.name ?? id);
 });
 
 const tierRangeText = computed(() => view.value?.tierText.replace(/^层级\s*/, "") ?? "");

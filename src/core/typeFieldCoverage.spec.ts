@@ -41,6 +41,27 @@ import { stripComments } from "@/test/stripComments";
 const TYPES = "src/types/index.ts";
 
 /**
+ * `core` 里的**视图型**接口也要扫。
+ *
+ * ## 由来（第 464 轮）
+ *
+ * `WorldView`（`core/mortalWorldService.ts`）有一个 `clearedStages`：
+ * `worldView()` 每次都算、每次都填，而**产品代码一处都没读** ——
+ * 界面真正读的是另外两条路径（`MortalWorldRibbon` 从 statuses 数、
+ * `MortalWorldView` 从 `worldDeskMeter` 算）。
+ *
+ * 这与本文件第 215 轮查出的那三个是**同一个形状**:算出来、存进去、然后谁也不要。
+ * 当时扫的是 `src/types/index.ts`，而这一类视图型接口不在那儿。
+ *
+ * 故把「有消费者承诺」的 core 模块逐个加进来 —— 一次加一个，各自有名有姓，
+ * 不像全量扫 core 那样一上来就淹没在噪音里。
+ */
+const VIEW_TYPE_SOURCES = [
+  // 世界页 / 历练页共用的一组视图结构（本文件第 464 轮加）
+  "src/core/mortalWorldService.ts",
+];
+
+/**
  * 预留字段 —— 有语义、将来要用，但此刻没有消费者。
  *
  * 留一条就要写明**为什么留**与**谁将来会读**。
@@ -50,6 +71,13 @@ const RESERVED = new Map<string, string>([
     "RegionRecall.since",
     "「本次状态自何时起」。有语义（这一档繁盛/混乱从哪天开始），暂未上界面；" +
       "将来若做「这一档还能持续多久」会读它",
+  ],
+  [
+    "PlaceContent.fromLegacy",
+    "「这份内容不是本世路线给的，走的是老存档兼容路径」。这个事实是真的，" +
+      "三处调用方（exploration 两处、offline 一处）目前都直接用 enemies/boss/eventTags，" +
+      "不需要据此拒绝；留着是因为将来若要做「本世内容 vs 兼容内容」的界面区分，" +
+      "它是唯一能分辨的地方 —— 删了就再也分不出来",
   ],
 ]);
 
@@ -84,7 +112,12 @@ describe("类型字段 · 要么有人读，要么登记为预留", () => {
   });
 
   it("每个只写不读的字段都在 RESERVED 里，且写了原因", () => {
-    const src = stripComments(readSource(TYPES));
+    /*
+     * 接口来自两个地方：`src/types/index.ts` 与 `VIEW_TYPE_SOURCES`。
+     * 后者是逐个点名加进来的 core 模块（见常量处的注释）。
+     */
+    const sources = [TYPES, ...VIEW_TYPE_SOURCES];
+    const src = sources.map((f) => stripComments(readSource(f))).join("\n");
     const ifaces = [...src.matchAll(/^export interface (\w+)/gm)].map((m) => m[1]!);
 
     /* 全仓生产代码（除类型文件自己） */

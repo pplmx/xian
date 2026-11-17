@@ -365,8 +365,6 @@ export interface WorldView {
   stages: number;
   /** 层级跨度的一句话:「层级 3–9」/「层级 5」 —— 值全相同时不写成 5–5 */
   tierText: string;
-  /** 本世已通几段 —— 概览行先给结论,细节仍留给下面的路线图 */
-  clearedStages: number;
   places: PlaceView[];
 }
 
@@ -391,11 +389,7 @@ function regionName(id: string): string {
  * 玩家没必要知道这一世走的是「长尾」还是「前缓后陡」,
  * 只需要看出路线长得不一样
  */
-export function worldView(
-  w: MortalWorld,
-  bossNameOf: (id: string) => string,
-  isCleared: (nodeId: string) => boolean = () => false,
-): WorldView {
+export function worldView(w: MortalWorld, bossNameOf: (id: string) => string): WorldView {
   const id = worldIdentity(w);
   const tiers = w.chain.map((p) => p.tier);
   const lo = Math.min(...tiers);
@@ -438,18 +432,12 @@ export function worldView(
       bossName: bossNameOf(p.boss),
     };
   });
-  let clearedStages = 0;
-  for (const p of w.chain) {
-    if (!isCleared(p.nodeId)) break;
-    clearedStages += 1;
-  }
   return {
     title: id.name,
     summary: id.summary,
     ruleText: w.ruleName,
     biasText: biasEffectOf(w.bias)?.label ?? "",
     stages: w.chain.length,
-    clearedStages,
     tierText: lo === hi ? `层级 ${lo}` : `层级 ${lo}–${hi}`,
     places,
   };

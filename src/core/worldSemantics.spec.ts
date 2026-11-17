@@ -328,30 +328,36 @@ describe("世界页概览 · 段数与层级跨度", () => {
     }
   });
 
-  it("已过几段来自同一份路线:给几段算几段,默认一段都不算", () => {
-    const w = POOL[0]!;
-    expect(worldView(w, (id) => id).clearedStages, "不传判定时应当是 0").toBe(0);
-    const ids = w.chain.map((p) => p.nodeId);
-    const two = new Set(ids.slice(0, 2));
-    const v = worldView(
-      w,
-      (id) => id,
-      (nodeId) => two.has(nodeId),
-    );
-    expect(v.clearedStages, "通了前两段就该报 2").toBe(2);
-    expect(v.clearedStages, "不许超过总段数").toBeLessThanOrEqual(v.stages);
-  });
-
-  it("断档与乱序记录不算已过:概览只数从首段起的连续前缀", () => {
-    const w = POOL[0]!;
-    const [first, , third] = w.chain;
-    const saved = new Set([first!.nodeId, third!.nodeId]);
-    const v = worldView(
-      w,
-      (id) => id,
-      (nodeId) => saved.has(nodeId),
-    );
-    expect(v.clearedStages, "只通了首段,后面的断档记录不能凑成 2").toBe(1);
+  it("已过几段只有一条路径 —— WorldView 不再自己算一份", () => {
+    /*
+     * ## 这两条测试改过一次（第 464 轮）
+     *
+     * 它们原先测 `WorldView.clearedStages` 与它的 `isCleared` 参数:
+     *
+     * ```text
+     *   worldView(w, (id) => id, (nodeId) => two.has(nodeId)).clearedStages === 2
+     * ```
+     *
+     * 而那个字段**产品代码里一处都没读** —— 它是死字段。
+     * 界面真正读的是两条路径，都与它无关:
+     *
+     * ```text
+     *   MortalWorldRibbon   clearedCount = statuses.filter(s => s.state === "cleared").length
+     *   MortalWorldView     meter = worldDeskMeter(places, stageStatuses)
+     * ```
+     *
+     * 两者都从 `mortalStageStatuses` 那一份来 —— 那才是真的账。
+     * 故 `clearedStages` 与 `isCleared` 一并删掉，这两条改为守「只有一条路径」。
+     *
+     * 「连续前缀」「断档不算」那两条性质并没有丢 —— 它们在
+     * `mortalRouteAccess.spec` 里守着 `mortalStageStatuses` 本身。
+     */
+    const view = Object.keys(worldView(POOL[0]!, (id) => id));
+    expect(view, "WorldView 还带着一个没人读的已行段数 —— 两本账").not.toContain("clearedStages");
+    /*
+     * 反差：`stages`（总段数）必须留着 —— 它有三处真消费。
+     */
+    expect(view, "总段数被误删了 —— 界面要拿它说「这一世有多长」").toContain("stages");
   });
 
   it("自证:层级全相同时不写成「5–5」", () => {
