@@ -102,7 +102,7 @@ function go(route: string): void {
         <p class="cultivation-apex__eyebrow">本境 · 已至尽头</p>
         <p class="cultivation-apex__name">{{ record.realmLabel }}</p>
       </div>
-      <p class="cultivation-apex__verdict">大道已尽,再无可破之境</p>
+      <p class="cultivation-apex__verdict">大道已尽,再无可破之境 —— 天界与道途自此展开</p>
     </header>
 
     <!--

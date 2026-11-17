@@ -23,7 +23,7 @@
           下一境 {{ btInfo.targetLabel }} · 成败、代价与此刻能补的筹码都在这一账。
         </p>
         <p v-else class="cultivation-action__lede" data-cultivation-at-apex>
-          大道已尽,再无可破之境 —— 这一世的修行到此为止。
+          大道已尽,再无可破之境 —— 而天界与道途、远征与转世,都在这一境之后才真正展开。
         </p>
       </div>
     </header>

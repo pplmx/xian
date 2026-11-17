@@ -44,7 +44,14 @@ export function cultivationStageOf(input: CultivationStageInput): CultivationSta
       return {
         key: "full",
         label: "大道已尽",
-        hint: "本境已是大道尽头，再无可破之境 —— 这一世的修行到此为止。",
+        /*
+         * 「这一世的修行到此为止」说的是**本境**到头了，那是对的。
+         * 而它读起来像「可以收工了」—— 本作在终点之后才展开最大的那几块:
+         * 天界与道途（major ≥ 9 就解锁）、远征、奇缘后三条、逆旅契、转世。
+         *
+         * 故补一句去处。判据见 core/apexNextStep.spec。
+         */
+        hint: "本境已是大道尽头，再无可破之境 —— 而天界与道途、远征与转世，都在这一境之后才真正展开。",
       };
     }
     const reason = input.breakthroughReason.trim();
