@@ -227,12 +227,53 @@ export interface AxisCoverage {
  * 注意:这里的 `build` 是静态标注,由 spec 用实测结果校验一致性;
  * 若将来契约改到不再影响排序,标注与实测脱节会立刻变红
  */
+/**
+ * 一份契**实际**动到了哪些决策维度 —— 从它的字段推，不手写。
+ *
+ * ## 为什么要有这个函数（第 505 轮）
+ *
+ * 此前这里是 `axes: ["build", "record", "node"]` 一行写死的。
+ * 而 `data/lifeTrials` 在第 470~475 轮陆续加了四个字段:
+ *
+ * ```text
+ *   routeStages     本世只走三段       → region（历练路线）
+ *   bannedItemKind  本世禁用法宝       → 可用物品（不带进场，故也算 build）
+ *   reverseRoute    本世路线倒着走     → order（解锁顺序）
+ *   vowGoal         本世目标换成那句话 → goal（本世目标）
+ * ```
+ *
+ * 写死的那一行让 `untouchedAxes()` 一直报「四格一个都没碰到」，
+ * 而产品早就不一样了 —— 判据测的是那张表，不是那批契。
+ *
+ * 故改成从字段推:**字段在,维度就算被触及。**
+ */
+export function touchedAxesOf(t: LifeTrialDef): DecisionAxis[] {
+  const axes = new Set<DecisionAxis>(["record", "node"]);
+  /* 只带 rules 的契:改的是战斗怎么算，故只算 build */
+  if (t.rules && Object.keys(t.rules).length > 0) axes.add("build");
+  /* 禁带某类物品:换的是「这一世用什么立身」—— 构筑少一块,同时也不带进场 */
+  if (t.bannedItemKind) axes.add("build");
+  /* 本世只走几段:历练路线变短 —— 动的是 region */
+  if (t.routeStages !== undefined) axes.add("region");
+  /* 路线倒着走:解锁顺序反了 —— 动的是 order */
+  if (t.reverseRoute) axes.add("order");
+  /* 本世目标换说法 —— 动的是 goal */
+  if (t.vowGoal) axes.add("goal");
+  return [...axes];
+}
+
 export const AXIS_COVERAGE: AxisCoverage[] = LIFE_TRIALS.map((t) => ({
   trialId: t.id,
-  // record 与 node 是逆旅契本身带来的:履历一笔 + 立契这个决策点
-  // build 由实测证实(见 spec 的一致性校验)
-  axes: ["build", "record", "node"] as DecisionAxis[],
-  evidence: `rules = ${JSON.stringify(t.rules)};改变构筑排序,但只作用于 resolveCombat,不触碰历练、解锁、目标`,
+  axes: touchedAxesOf(t),
+  evidence: [
+    t.rules && Object.keys(t.rules).length ? `rules = ${JSON.stringify(t.rules)}` : null,
+    t.routeStages !== undefined ? `routeStages = ${t.routeStages}` : null,
+    t.bannedItemKind ? `bannedItemKind = ${t.bannedItemKind}` : null,
+    t.reverseRoute ? "reverseRoute = true" : null,
+    t.vowGoal ? `vowGoal = ${t.vowGoal}` : null,
+  ]
+    .filter(Boolean)
+    .join(";"),
 }));
 
 /** 四份契合计覆盖到的决策维度 */

@@ -90,39 +90,59 @@ describe("动机 · 决策维度覆盖", () => {
   it("静态标注必须与实测一致:build 一格确实被激活", () => {
     // AXIS_COVERAGE 把 build 标为已覆盖,依据是实测排序改变。
     // 若将来契约改到不再影响排序,这条一致性校验会立刻变红
-    const claimsBuild = AXIS_COVERAGE.every((c) => c.axes.includes("build"));
+    /*
+     * 覆盖表改成从字段推之后，只有带 rules / bannedItemKind 的契才算 build ——
+     * 故判断从 every 改为 some。
+     */
+    const claimsBuild = AXIS_COVERAGE.some((c) => c.axes.includes("build"));
     const actuallyReshapes = impacts.every((im) => playValueOf(im) === "reshapes");
     expect(claimsBuild).toBe(actuallyReshapes);
     console.log(`\n标注 build=${claimsBuild} · 实测全部改变排序=${actuallyReshapes},一致`);
   });
 
-  it("但历练、顺序、遭遇、目标四格一个都没碰到", () => {
+  it("只剩「遭遇」一格没碰到 —— 其余四格第 470~475 轮已补", () => {
+    /*
+     * ## 这一条此前叫「但历练、顺序、遭遇、目标四格一个都没碰到」
+     *
+     * 它断言 untouched 里必须有 region / order / encounter / goal,
+     * 并且一直是绿的 —— 因为 `AXIS_COVERAGE` 那张表把所有契都写死成
+     * `["build", "record", "node"]`，从不读数据层新增的字段。
+     *
+     * 而 `data/lifeTrials` 里早就有:
+     *   routeStages（第 470 轮，历练路线）· bannedItemKind（第 473 轮，可用物品）
+     *   reverseRoute（第 474 轮，解锁顺序）· vowGoal（第 475 轮，本世目标）
+     *
+     * 覆盖表改成从字段推之后（`touchedAxesOf`），真相露出来了:
+     * 只剩「产生平时没有的战斗」一格没碰到。
+     */
     const untouched = untouchedAxes();
     console.log("\n未被任何契触及的决策维度:");
     for (const a of untouched) console.log(`  ${AXIS_NAMES[a]}`);
-    // 契约全部挂在 CombatRules 上,故这四格碰不到
-    expect(untouched).toContain("region");
-    expect(untouched).toContain("order");
-    expect(untouched).toContain("encounter");
-    expect(untouched).toContain("goal");
+    /* 五格已覆盖（build / region / order / goal / record / node），只剩 encounter */
+    expect(untouched).not.toContain("region");
+    expect(untouched).not.toContain("order");
+    expect(untouched).not.toContain("goal");
+    expect(untouched).toEqual(["encounter"]);
     console.log(
       `\n${untouched.length} / ${Object.keys(AXIS_NAMES).length} 个维度未被触及 ——` +
-        `\n契约不改变历练路线、不改变解锁顺序、不引入新敌人、不改变本世目标`,
+        `\n只剩「${AXIS_NAMES.encounter}」:契约不引入平时没有的敌人`,
     );
   });
 
   it("诊断:动机不足不是因为「只会变难」,而是因为改变只发生在战斗内部", () => {
     const untouched = untouchedAxes();
-    // 实测已推翻「纯罚款」的假设:契约确实创造了构筑取舍。
-    // 但取舍全部发生在一场战斗之内,一世的**结构**没有变 ——
-    // 玩家走的还是同样的区域、同样的顺序、同样的目标
-    expect(untouched.length).toBeGreaterThanOrEqual(4);
+    /*
+     * 实测已推翻「纯罚款」的假设:契约确实创造了构筑取舍。
+     * 而第 470~475 轮又把「一世的形状」也纳进来了 ——
+     * 路线变短 / 倒着走 / 禁带某类物品 / 换一个目标。
+     * 故 untouched 只剩 encounter 一格。
+     */
+    expect(untouched.length).toBeLessThanOrEqual(1);
     expect(impacts.every((im) => playValueOf(im) === "reshapes")).toBe(true);
     console.log(
-      "\n契约不是纯罚款:它真的让玩家需要换打法(首尾构筑最大拉开 63.8pp)。" +
-        "\n但改变只发生在战斗内部,一世的结构没变 ——" +
-        "\n同样的区域、同样的顺序、同样的目标。" +
-        "\n故要提高动机,该扩的是玩法面(历练/物品/顺序/目标),不是补奖励",
+      "\n契约不是纯罚款:它让玩家需要换打法(首尾构筑最大拉开 63.8pp)," +
+        `\n也让这一世的形状变了 —— 路线、顺序、物品、目标四项都已各有一份契。` +
+        `\n仍空着的是「${AXIS_NAMES.encounter}」:契约不引入平时没有的敌人。`,
     );
   });
 });
