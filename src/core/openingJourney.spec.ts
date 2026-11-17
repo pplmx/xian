@@ -23,6 +23,8 @@ import { PILLS } from "@/data/pills";
 import { GONGFA } from "@/data/gongfa";
 import { breakthroughBaseRate, expRequirement } from "@/core/formulas";
 import { powerScale } from "@/core/tierScale";
+import { MANUAL_REBIRTH_MIN_MAJOR } from "@/core/reincarnation";
+import { REALMS } from "@/data/realms";
 import { toNum } from "@/utils/gnum";
 
 describe("开局链路 · 从新号到第一次突破", () => {
@@ -98,5 +100,43 @@ describe("开局链路 · 从新号到第一次突破", () => {
         `t${tiers[i]} 相对 t${tiers[i - 1]} 强了 ${ratio.toFixed(1)} 倍 —— 断层`,
       ).toBeLessThan(5);
     }
+  });
+
+  it("⑦ 这条路要能走到第一次转世 —— 而它比「第一次突破」远得多", () => {
+    /*
+     * ## 补这一段为什么重要（第 563 轮）
+     *
+     * 上面六条走到「第一次突破」（0 → 1 境）。而玩家第一个**大循环**的闭环是
+     * 第一次转世 —— 门槛 `MANUAL_REBIRTH_MIN_MAJOR = 2`（金丹）。
+     *
+     * 从炼气到金丹要跨 2 个大境界、若干小层。若中间某一格的 `expRequirement`
+     * 取不到数（NaN / 0 / 负数），那条路就断在半途，而上面六条看不出来。
+     *
+     * 这一条不断言「多久」—— 那是 `progressionSim` 的事。它只断言:
+     * **从 0 境到转世门槛，每一层的需求都是有限正数。**
+     */
+    const rows: { major: number; req: number }[] = [];
+    for (let major = 0; major <= MANUAL_REBIRTH_MIN_MAJOR; major += 1) {
+      /* 每一大境取首层与圆满两层 —— 首层最便宜、圆满最贵，两端都通即整段通 */
+      /*
+       * 首层与末层 —— 首层最便宜、末层最贵，两端都是有限正数即整段通。
+       * `expRequirement` 返回 GNum，故要过 `toNum`（与本文件上面那条同口径）。
+       */
+      for (const sub of [0, 9]) {
+        rows.push({ major, req: toNum(expRequirement(major, sub)) });
+      }
+    }
+    const bad = rows.filter((r) => !Number.isFinite(r.req) || r.req <= 0);
+    expect(
+      bad,
+      "这条路上有一层的修为需求取不到有限正数 —— 玩家会卡在那儿：" +
+        bad.map((r) => `${REALMS[r.major]?.name ?? r.major}·${r.req}`).join("、"),
+    ).toEqual([]);
+
+    /* 反空转：整段确实在爬升，不是一堆相同的数 */
+    const reqs = rows.map((r) => r.req);
+    expect(Math.max(...reqs), "整段需求没有抬升 —— 判据可能取错了口径").toBeGreaterThan(
+      Math.min(...reqs),
+    );
   });
 });
