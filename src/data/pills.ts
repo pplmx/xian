@@ -1,5 +1,5 @@
 /**
- * 丹药库 —— 79 味。
+ * 丹药库 —— 88 味。
  *
  * ## 定价法则(Phase 32.6 丹药价值审计)
  *
@@ -209,6 +209,51 @@ export const PILLS: PillDef[] = [
     { instant: { qiPct: 1 }, recipe: { herb: 16, stoneBase: 32 }, alchemyLevel: 4 },
     "droplets",
   ),
+  /*
+   * 回气线的断档补齐（第 500 轮）。
+   *
+   * 查效果分布时发现:回气丹只有 8 味，落在境界 0/0/2/6/10/11/14/18 ——
+   * 元婴(3)、化神(4)、炼虚(5)、大乘(7)、渡劫(8) 的玩家想找一味回气的，**一味都没有**。
+   * 而灵气是核心资源（qiPct 直接回气），那几境只能干等。
+   * 判据见 core/pillLadderContinuity.spec。
+   */
+  p("p_yangqi", "养气散", "excellent", 1, "气不是攒出来的,是养出来的 —— 一日一分,百日见底", {
+    instant: { qiPct: 1 },
+    recipe: { herb: 9, stoneBase: 20 },
+    alchemyLevel: 2,
+  }),
+  p("p_ningqi", "凝气丸", "spirit", 3, "气散则凝,凝则复行 —— 一股浊气散去,清气自回", {
+    instant: { qiPct: 1 },
+    recipe: { herb: 38, stoneBase: 80 },
+    alchemyLevel: 5,
+  }),
+  p("p_xisui", "洗髓液", "profound", 4, "髓浊则气滞,洗过一遍,气行如新渠放水", {
+    instant: { qiPct: 1 },
+    recipe: { herb: 56, stoneBase: 124 },
+    alchemyLevel: 6,
+  }),
+  p(
+    "p_julinglu",
+    "聚灵露",
+    "profound",
+    5,
+    "露凝于叶,灵气凝于露 —— 一口下去,丹田先是一凉,再是一满",
+    {
+      instant: { qiPct: 1 },
+      recipe: { herb: 74, stoneBase: 168 },
+      alchemyLevel: 7,
+    },
+  ),
+  p("p_huiqi", "回天散", "earth", 7, "天倾可回,气竭亦可回 —— 此散入喉,如有人替你续上一口气", {
+    instant: { qiPct: 1 },
+    recipe: { herb: 142, stoneBase: 356 },
+    alchemyLevel: 9,
+  }),
+  p("p_huanyuan", "还元丹", "heaven", 8, "元者,本也 —— 一场大劫之后,把散出去的那些收回来", {
+    instant: { qiPct: 1 },
+    recipe: { herb: 196, stoneBase: 480 },
+    alchemyLevel: 10,
+  }),
   p("p_dahuan", "大还丹", "profound", 4, "起死人肉白骨,服之如闭关", {
     instant: { expSecs: 1800 },
     recipe: { herb: 47, stoneBase: 100 },
@@ -489,6 +534,36 @@ export const PILLS: PillDef[] = [
     instant: { lifespanYears: 5000 },
   }),
   /** 混沌两境与神王境的补位:此前这三境一味本境丹都没有(见 contentDensity 的「每境一味」判据) */
+  /*
+   * 神将(境 16)补一味（第 500 轮）。
+   *
+   * contentDensity 的地板由人间界现算，而我这一轮补的几味回气丹把那个地板
+   * 从 13 抬到了 14 —— 于是界外最薄的神将（原本 13 条）当场不够。
+   * 补的不是「判据要它够」，而是那一境确实只有两味丹，比同界的神人多一味之差。
+   */
+  p("p_shenjiang_hui", "神将回天丹", "divine", 15, "一将回天,万军复振 —— 丹成之时,炉上有光直上", {
+    instant: { qiPct: 1 },
+    recipe: { herb: 386, stoneBase: 1080 },
+    alchemyLevel: 10,
+  }),
+  p("p_shendi_yuan", "神帝元丹", "divine", 17, "帝者,一元之始 —— 丹成之日元气自复,不必再等他物", {
+    instant: { qiPct: 1 },
+    recipe: { herb: 468, stoneBase: 1320 },
+    alchemyLevel: 10,
+  }),
+  p(
+    "p_shenwang_ning",
+    "神王凝丹",
+    "divine",
+    16,
+    "王者所凝,非气非血 —— 一口下去,周身经脉俱是一沉,再是一轻",
+    {
+      instant: { qiPct: 1 },
+      recipe: { herb: 428, stoneBase: 1180 },
+      // 丹房最高 10 级（data/buildings.ts）—— 写 11 会让这味丹永远炼不出来
+      alchemyLevel: 10,
+    },
+  ),
   p("p_shenwu", "神悟丹", "divine", 16, "一炉神悟,胜过面壁经年", {
     instant: { wudao: 100 },
     recipe: { herb: 420, stoneBase: 1200 },

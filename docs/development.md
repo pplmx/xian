@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 899 个 spec;本作自己那部分 819 个) |
+| `bun run test` | 全量用例(全量 900 个 spec;本作自己那部分 820 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 899 个 spec = 宿主 819 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 900 个 spec = 宿主 820 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 899 个 spec(本作自己那部分 819 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 900 个 spec(本作自己那部分 820 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -27507,3 +27507,53 @@ apprentices 12 · classics 11 · comboArts 3 · equipSets 5 · inscriptions 22 �
 把铁壁共鸣的 `required` 从 2 改成 9 → 判据①②同时红。
 
 工作区干净、全量 899 / 7213 全绿。
+
+### 第 500 轮:回气丹在人间界中间断了一大片
+
+#### 查丹药的「族 × 境界链」
+
+上一轮补了装备共鸣的可达性。这一轮回到内容，量的是**每一族丹药的境界链**:
+
+```text
+修为丹   每境都有（20 味）
+回气丹   境界 0, 0, 2, 6, 10, 11, 14, 18   ← 只有 8 味
+寿元丹   境界 2, 4, 4, 5, 6, 12, 13, 14, 17, 19, 20
+```
+
+一位元婴（3）、化神（4）、炼虚（5）、大乘（7）、渡劫（8）的玩家，
+想找一味回气的 —— **一味都没有**。而灵气是核心资源。
+
+#### 补六味，撞上四处判据
+
+全部是真问题:
+
+```text
+法则 I      可炼方在其准入境界 overReach ≤ 1
+            聚灵露(境5,方子8阶)越 2 阶 → 改 7
+pillProse   养气散的 desc 与 buff 的 desc 一字不差 → 改
+idUniqueness 我给新丹用了 p_juling，而它已被「聚灵丹」占用 → 改 p_julinglu
+apprenticeSeekPill  境1 的弟子升级后丹变差（养气散档1 < 聚灵丹档2）→ 提到 excellent
+            境3 又差一档 → 凝气丸 fine → excellent → spirit
+contentDensity      补丹药把人间界地板从 13 抬到 14，于是界外最薄的
+                    神将(15)/神王(16)/神帝(17) 各 13 条当场不够 → 各补一味
+```
+
+#### 一处我改错了两次
+
+`p_juling` 这个 id **已经被「聚灵丹」占用**，而我给新丹也用了它。
+后果不是报错，而是 `pillDef("p_juling")` 查到错的那一味 ——
+`pillValue.spec` 的「存档:造化丹仍与奇遇共用道韵」当场红，因为它比的正是聚灵丹。
+
+> 这类冲突**类型系统看不出来**（两个 `p("p_juling", …)` 都是合法调用），
+> 而 `idUniqueness.spec` 是唯一会红的判据。**它红了，我却在两轮之后才去看它。**
+
+#### 三处计数连带修正
+
+```text
+pills.ts 头注释      79 → 88 味
+usage.md 两处        79 → 88
+eventEngine / loot / poolProximity.spec   79 → 88 味
+CollectionView 注释   960 → 969 枚
+```
+
+工作区干净、全量 900 / 7216 全绿。
