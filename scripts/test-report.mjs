@@ -755,6 +755,8 @@ const CATEGORIES = [
       "trialRouteBind",
       // 破题要在按下之前说
       "vowWarnBeforeAct",
+      // 破题警告：法宝那一半
+      "vowWarnBeforeArtifact",
       // 计数器 → 行为的一张满表:师承与素行两个消费者都读它,半张表各自长是这里的缺口
       "counterText",
       // 「这一趟能走多远」—— 出行窗只报产出不报能不能拿到,是本轮在真浏览器里量到的坑

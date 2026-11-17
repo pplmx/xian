@@ -200,6 +200,22 @@
               >
                 满位换入 · 将替下 法 {{ row.replaced.seat }}「{{ row.replaced.def.name }}」
               </p>
+              <!--
+                破题警告（第 472 轮）—— 第 471 轮给丹药补了同一件事，这是另一半。
+
+                `LifeTaboo` 有两种，而 `lt_zejian`（独行）那条写的是
+                「这一世不借法宝之力，整世未祭一件法宝」：装上第一件就破题，
+                而法宝是整世的主要战力 —— 比服一颗丹重得多，却一个字都没说过。
+
+                只在**未装**时警告：收回法宝正是守戒，那时候说「装上即破题」是反的。
+              -->
+              <p
+                v-if="!row.equipped && artifactVowWarn"
+                class="artifact-row__vow text-cinnabar"
+                data-artifact-vow-warn
+              >
+                {{ artifactVowWarn }}
+              </p>
               <div class="artifact-row__actions" data-artifact-actions>
                 <button
                   class="btn-seal artifact-row__action"
@@ -319,6 +335,7 @@ import { useQuestsStore } from "@/stores/quests";
 import { cnNumber, formatGN, formatPercent, formatSignedPercent } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import { STAT_NAMES } from "@/data/statNames";
+import { activeVowTaboo } from "@/core/samsaraService";
 import type { AnyStatKey } from "@/types";
 
 const inventory = useInventoryStore();
@@ -326,6 +343,20 @@ const resources = useResourcesStore();
 const player = usePlayerStore();
 const quests = useQuestsStore();
 const ui = useUiStore();
+
+/**
+ * 本世立的题忌法宝时，给一句服前警告（第 472 轮）。
+ *
+ * 与 `InventoryView` 的丹药那一句同源：都读 `activeVowTaboo()`，与
+ * `noteTaboo("artifact")` 的破题 toast 用的是同一份 vow 与同一个 lifeThemeDef。
+ * 故界面上这句话与真的破题必然是同一件事。
+ *
+ * 未立题 / 已破题 / 该题不忌法宝 —— 三种都返回空串，界面据此不出那一行。
+ */
+const artifactVowWarn = computed(() => {
+  const t = activeVowTaboo();
+  return t?.taboo === "artifact" ? `立誓「${t.vow}」——祭炼即破题,此世所得落空` : "";
+});
 
 const artifactSlots = computed(
   () => artifactSlotsFor(player.major) + artifactSlotBonus(player.reincarnation.heritage),
