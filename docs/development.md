@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 880 个 spec;本作自己那部分 800 个) |
+| `bun run test` | 全量用例(全量 881 个 spec;本作自己那部分 801 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 880 个 spec = 宿主 800 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 881 个 spec = 宿主 801 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 880 个 spec(本作自己那部分 800 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 881 个 spec(本作自己那部分 801 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -26359,3 +26359,62 @@ vowGoal         这一世做什么          0.40  只换注意力，不加难度
 ```
 
 工作区干净、全量 880 / 7153 全绿。
+
+### 第 476 轮:八份契约,手册里一份都查不到
+
+#### 上一轮说「这条线做完了」
+
+那指的是**代码里**的五种玩法面各有一份契。这一轮从玩家侧看:
+玩家怎么知道有哪些契可选?
+
+```text
+逆旅契是花道果的消费：最便宜 12 枚、最贵 48 枚，一次金丹转世约得 21 枚。
+玩家在转世弹窗里看到一排选项、要花掉攒了几世的道果。
+```
+
+而 `docs/usage.md`（玩法手册，README 只当门面）里:
+
+```text
+搜「逆旅契」     只有一句「两个花法之一」
+搜八份契的名字    0 命中
+```
+
+**八份里，一份都查不到。** 而第 470~475 轮陆续加了四份（断径 / 弃器 / 逆行 / 执念）——
+加的时候没人想起来要补文档。
+
+#### 为什么它漂了四轮没人发现
+
+`docs/design.md:3262` 写着:
+
+> 玩法文档 `docs/usage.md` —— 同一份 spec 从表数出数、再要求文档里那句话长得一样。
+
+那条纪律管的是**法宝节拍**（`dataHeaderAudit.spec`）。而**契约清单没有对应的判据** ——
+于是它漂了。
+
+> 「有纪律」与「有判据」是两件事。纪律说的是方向，判据才让它无法漂。
+
+#### 补的内容
+
+新增一节「逆旅契：八种逆境，各有各的难法」——一张表:契名 / 道果 / 这一世难在哪，
+并按「改战斗怎么算」与「改这一世的形状」分成两组。
+
+#### 判据三条（`core/trialDocListing.spec`）
+
+```text
+① 每一份契的名字都在 usage.md 里出现过
+② 反差：契名要落在正文里，不能只出现在一句计数中（后面还得有说明）
+③ 文档里写的道果数必须与 LIFE_TRIALS[].cost 一致
+```
+
+③ 是这一轮加的、比 ①② 更有价值的一条:**表格里的价格是手写的，而真值在数据里。**
+改价时若忘了改文档，玩家手册会教他「这个要 24 枚」而实际收 30 枚 ——
+那正是「界面上出现的每个数字都与结算同源」那条纪律要防的事，只不过这一处是文档。
+
+#### 注入三次
+
+```text
+删掉一行（逆锋契）      → ①② 红
+把孤行契价格 24 改成 30  → ③ 红
+```
+
+工作区干净、全量 881 / 7156 全绿。
