@@ -27626,6 +27626,24 @@ async function taskBuildArtifacts() {
     if (!jsChunks.some((chunk) => /^vendor-crypto-.*\.js$/.test(chunk.name))) {
       failures.push("构建产物里没有 vendor-crypto —— crypto-js 又被并回 player,500KB 警告会回来");
     }
+    /*
+     * 事件数据必须是独立的一块（第 521 轮）。
+     *
+     * `content` 在 476.7KB 时距 500,000 只剩 3%，而一则事件 607 字节 ——
+     * 再补两轮内容就会再撞一次。故把 `data/events.ts` 与 `data/chains.ts`
+     * 单拆成 `content-ev`，它有自己的预算。
+     *
+     * 这条断言守的是「那一刀还在」:配置被删回去时，构建不会报错，
+     * 只是事件又悄悄并进 content —— 而那要等到下次越界才会有人发现。
+     */
+    const evChunk = jsChunks.find((chunk) => /^content-ev-.*\.js$/.test(chunk.name));
+    if (!evChunk) {
+      failures.push("构建产物里没有 content-ev —— 事件数据又被并回 content,它的独立预算没了");
+    } else if (evChunk.bytes > 400_000) {
+      failures.push(
+        `content-ev 已 ${(evChunk.bytes / 1024).toFixed(1)}KB —— 逼近单块上限，该再切一刀了`,
+      );
+    }
   }
 
   return { failures, checked, contrastFails, pixelContrastFails, zoomFails };
