@@ -1,4 +1,4 @@
-/** 随机事件库 —— 138 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 142 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -1396,6 +1396,121 @@ export const EVENTS: EventDef[] = [
       ]),
     ],
     { maxRealm: MORTAL_END },
+  ),
+  /*
+   * 暗系四则（第 484 轮）。
+   *
+   * 前三轮补了冰 / 剑 / 火，用的是「标签摊到每处地界几则」这把尺。
+   * 这一轮换成同一个量法重排之后，最少的是 `dark`:
+   *
+   * ```text
+   *   dark     9 则 / 5 处地界 = 1.8
+   *   thunder  5 则 / 2 处地界 = 2.5
+   * ```
+   *
+   * 而 `dark` 横跨幽冥海（tier 8）到神魔古祭（tier 31）—— 玩家一路上反复经过它。
+   * 故这四则按**层级**分开写:人间界两则写阴冷与溃散，界外两则写侵蚀与低语。
+   */
+  ev(
+    "ev_youming_dukou",
+    "幽冥渡口",
+    "海面无风，却有一道一道的浪自远处推来。渡口边泊着一条船，船上没人。",
+    ["dark", "water"],
+    [
+      c("上船", [
+        o(40, "船自己动了。你不知漂了多久，靠岸时怀里多了一块冰凉的石头。", {
+          type: "material",
+          id: "ore",
+          amount: 10,
+        }),
+        o(35, "船行至半途忽然停住。水里有东西在看你，你不敢回头。", {
+          type: "exp",
+          secs: 100,
+        }),
+        o(25, "船翻了。你在黑水里泡了很久才摸回岸边。", { type: "buff", id: "injury" }),
+      ]),
+      c("在岸边等", [
+        o(55, "潮水退去，滩上留下一层细白的盐。你收了半袋。", {
+          type: "material",
+          id: "herb",
+          amount: 7,
+        }),
+        o(45, "等了半夜，船不见了。风还在吹。", { type: "nothing" }),
+      ]),
+      leave("你转身离开。这处渡口不该有活人。"),
+    ],
+    { minRealm: 2, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ev_jiuyou_huizhao",
+    "九幽回照",
+    "渊底有一面水，水面朝上，映的却是天空 —— 而这渊深不见底。",
+    ["dark"],
+    [
+      c("俯身细看", [
+        o(45, "你看见自己的倒影在对你笑。你确认过，你没有在笑。", {
+          type: "material",
+          id: "wudao",
+          amount: 18,
+        }),
+        o(35, "水里映的是很多年前的这一处。你记住了那个样子。", { type: "exp", secs: 110 }),
+        o(20, "你看得太久。回过神时，手已经伸进水里，冻得没了知觉。", {
+          type: "buff",
+          id: "injury",
+        }),
+      ]),
+      c("投石试水", [
+        o(60, "石头落下去，没有声。水纹散开，映出的天空裂了一道。", {
+          type: "nothing",
+        }),
+        o(40, "水面把石头弹了回来，砸在你脚边。", { type: "buff", id: "injury" }),
+      ]),
+    ],
+    { minRealm: 2, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ev_yunshen_canqi",
+    "陨神残旗",
+    "荒原上插着半面旗，旗面早烂成絮，旗杆却是整的。风过时它不响。",
+    ["dark"],
+    [
+      c("拔旗", [
+        o(40, "旗杆入手极沉。你走了几步就明白，它不是凡铁。", {
+          type: "equipment",
+          minQualityRank: 5,
+        }),
+        o(60, "旗杆纹丝不动。你松手时，掌心一道血痕。", { type: "buff", id: "injury" }),
+      ]),
+      c("在旗下坐一会儿", [
+        o(50, "风停了。你听见极远处有人在点兵，一声一声，很齐。", { type: "exp", secs: 115 }),
+        o(50, "什么也没听见。荒原很静。", { type: "nothing" }),
+      ]),
+    ],
+    { minRealm: 2, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ev_shenmo_yuyin",
+    "神魔低语",
+    "祭坛上什么都没有。可你一靠近，耳边就响起一串听不懂的话，像在报一个名字。",
+    ["dark"],
+    [
+      c("听下去", [
+        o(35, "那名字报完了。你忽然知道自己该往哪走 —— 虽然从没人告诉过你。", {
+          type: "material",
+          id: "wudao",
+          amount: 9,
+        }),
+        o(40, "听不清。声音越来越远，最后只剩自己的心跳。", { type: "nothing" }),
+        o(25, "你听懂了其中一个音节。那之后有三天，你不敢闭眼。", {
+          type: "buff",
+          id: "injury",
+        }),
+      ]),
+      c("掩耳退开", [o(1, "你退出祭坛。声音在坛边停住，没有跟出来。", { type: "nothing" })], {
+        isDefault: true,
+      }),
+    ],
+    { minRealm: 2, maxRealm: MORTAL_END },
   ),
   /*
    * 剑系与火系各三则（第 483 轮）。
