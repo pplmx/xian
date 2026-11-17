@@ -128,6 +128,17 @@ function deviationOf(t: LifeTrialDef): number {
   return hit?.weight ?? 0;
 }
 
+/** 这一份契动的是内容构成吗（而不是只改数值） */
+function changesContentOf(t: LifeTrialDef): boolean {
+  return (
+    t.routeStages !== undefined ||
+    t.bannedItemKind !== undefined ||
+    t.reverseRoute !== undefined ||
+    t.extraEnemyTier !== undefined ||
+    t.vowGoal !== undefined
+  );
+}
+
 /** 逆旅契的动机画像 */
 export function trialProfiles(): MotivationProfile[] {
   return LIFE_TRIALS.map((t) => {
@@ -164,7 +175,16 @@ export function trialProfiles(): MotivationProfile[] {
       determinism,
       deviation: Math.max(ruleDistance(t.rules, PLAIN_LIFE), deviation),
       replayDelta,
-      surface: "numbers" as ChangeSurface,
+      /*
+       * surface 说的是「动的是哪一层」。
+       *
+       * 此前九份契全部写死成 numbers —— 而断径（路线变短）/ 弃器（禁带法宝）/
+       * 逆行（路线倒走）/ 异途（换对手）/ 执念（换目标）动的是**内容构成**，
+       * 不是数值。`content` 这个值全仓只有虚界对照组在用。
+       *
+       * 判据见 core/trialSurfaceTruth.spec。
+       */
+      surface: (changesContentOf(t) ? "content" : "numbers") as ChangeSurface,
       type: classify(determinism, replayDelta),
       evidence:
         t.reverseRoute !== undefined

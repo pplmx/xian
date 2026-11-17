@@ -237,7 +237,6 @@ const ROUTE_TRIAL: LifeTrialDef = {
   desc: "这一程只有三处地界。天地不肯多给你一寸路。",
   ruleText: "本世路线只有 3 段",
   cost: 30,
-  rules: {},
   routeStages: 3,
 };
 
@@ -255,7 +254,6 @@ const BAN_TRIAL: LifeTrialDef = {
   desc: "法宝皆是外物。这一世空手上路,只凭一身修为。",
   ruleText: "本世不得祭用任何法宝",
   cost: 30,
-  rules: {},
   bannedItemKind: "artifact",
 };
 
@@ -273,7 +271,6 @@ const REVERSE_TRIAL: LifeTrialDef = {
   desc: "这一世自终而始。最难的那一关,就在你脚下。",
   ruleText: "本世路线由末段向首段推进",
   cost: 48,
-  rules: {},
   reverseRoute: true,
 };
 
@@ -292,7 +289,6 @@ const VOW_TRIAL: LifeTrialDef = {
   desc: "这一世只做一件事。做完，就行。",
   ruleText: "本世以「在历练中斩敌二百」为唯一目标",
   cost: 12,
-  rules: {},
   vowGoal: "在历练中斩敌二百",
 };
 

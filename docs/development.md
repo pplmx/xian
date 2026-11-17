@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 904 个 spec;本作自己那部分 824 个) |
+| `bun run test` | 全量用例(全量 905 个 spec;本作自己那部分 825 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 904 个 spec = 宿主 824 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 905 个 spec = 宿主 825 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 904 个 spec(本作自己那部分 824 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 905 个 spec(本作自己那部分 825 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -27949,3 +27949,87 @@ untouchedAxes()  →  []
 九份契分别动了:构筑 · 历练路线 · 可用物品 · 解锁顺序 · 本世目标 · 遭遇 · 履历 · 决策点。
 
 工作区干净、全量 904 / 7232 全绿。
+
+### 第 507 轮:两个「看起来对」的字段，都在说谎
+
+#### 第一件：四份契写着 `rules: {}`
+
+上一轮补完第九份契之后，这一轮先量了九份契两两之间的规则距离:
+
+```text
+断径契 vs 弃器契:  距离 0.000
+断径契 vs 逆行契:  距离 0.000
+残躯契 vs 断径契:  距离 0.220
+```
+
+距离 0.000 看着像「三份契一模一样」，而打开看:
+
+```text
+断径契: rules={}
+弃器契: rules={}
+逆行契: rules={}
+执念契: rules={}
+```
+
+**四份契的 rules 是空对象。** 而它们的注释明写「不动一条战斗规则」。
+
+```text
+rules: {}      有一份战斗规则，只是它什么都不改
+没有 rules     这一份不动战斗
+```
+
+两者在语义上是两回事。而 `isPurelyAdverse({})` 对所有空规则**恒真** ——
+于是那条「每一份契都是纯逆境」的判据对这四份**从来没有真正检查过**。
+
+删掉四个 `rules: {}`，并给判据补一条兜底:
+「既无 rules 也无任何玩法面的契 = 空签」。
+
+#### 第二件：九份契的 surface 全是 `numbers`
+
+删完之后看 `trialProfiles()` 的输出:
+
+```text
+孤行契  surface=numbers    治疗 25%              ← 确实是数值
+断径契  surface=numbers    这一世只有三段路       ← 这是内容
+弃器契  surface=numbers    不得祭用任何法宝       ← 这是内容
+逆行契  surface=numbers    路线由末段向首段推进   ← 这是内容
+异途契  surface=numbers    每场敌人层级 +1        ← 这是内容
+执念契  surface=numbers    这一世做什么           ← 这是内容
+```
+
+而 `ChangeSurface` 的定义是:
+
+```text
+numbers   只改数值（乘区、上限）
+content   改内容构成（有什么敌人、有什么可用、去哪些地方）
+```
+
+后五份**正是**那一句。而 `content` 这个值全仓只有虚界（对照组）在用 ——
+九份契一个都没用上。
+
+> **这不是标签问题。** `surface` 是「这一份动的是哪一层」的答案；
+> 以后任何按 surface 做聚合的地方（「内容型与数值型的动机够不够」）都会全错。
+
+#### 判据三条（`core/trialSurfaceTruth.spec`）
+
+```text
+① 动了玩法面的契，surface 必须是 content
+② 反差：只改 rules 的契仍是 numbers
+③ 反差：vowGoal 也算 content —— 它换的是「这一世做什么」
+```
+
+#### 两件的共同形状
+
+```text
+rules: {}       一个「空容器」被当成「没有」
+surface=numbers 一个「默认值」被当成「答案」
+```
+
+它们都不是写错的字，而是**没有人问过这两个字段到底该是什么** ——
+而判据此前也没问:
+`isPurelyAdverse` 对空对象恒真，`surface` 则从来没有任何判据在看。
+
+> 第 424 轮记过一句「看到空的 / 缺的 / 不显示的，先查它是不是有第二条路」。
+> 这一轮的反面同样成立:**看到「默认值」，先问它是被选的还是被默认的。**
+
+工作区干净、全量 905 / 7235 全绿。

@@ -94,9 +94,34 @@ describe("逆旅契 · 判据二:产物不进 StatMods", () => {
   it("每一份契都是纯逆境:只许加难,不许减难", () => {
     console.log("\n契        定价  规则");
     for (const t of LIFE_TRIALS) {
-      /* 不带 rules 的契（异途契）由 trialEncounterBind.spec 单独守「只许加难」 */
+      /*
+       * 不带 rules 的契，它的「纯逆境」由别的判据守:
+       *   extraEnemyTier    trialEncounterBind.spec ①（层级加成 > 0）
+       *   routeStages       trialRouteBind.spec（段数少于常规）
+       *   bannedItemKind    trialItemBind.spec（禁带，只减不加）
+       *   reverseRoute      trialUnlockBind.spec（倒着走更难）
+       *   vowGoal           trialGoalBind.spec（只改注意力，不该单独成契）
+       *
+       * ## 而 `rules: {}` 曾经在这里骗过这条判据
+       *
+       * 断径 / 弃器 / 逆行 / 执念四份契此前写的是 `rules: {}` —— 一个空规则对象。
+       * `isPurelyAdverse({})` 返回 true（没有一条违规），于是这条判据对它们**恒绿**，
+       * 而它们的注释明写「不动一条战斗规则」。
+       *
+       * 第 507 轮把那四个 `rules: {}` 删了：不带就是不带。
+       */
       if (t.rules) expect(isPurelyAdverse(t.rules)).toBe(true);
-      else expect(t.extraEnemyTier, `${t.name} 既无 rules 又无 extraEnemyTier`).toBeGreaterThan(0);
+      else {
+        const hasSurface =
+          t.extraEnemyTier !== undefined ||
+          t.routeStages !== undefined ||
+          t.bannedItemKind !== undefined ||
+          t.reverseRoute !== undefined ||
+          t.vowGoal !== undefined;
+        expect(hasSurface, `${t.name} 既无 rules 也无任何玩法面 —— 那它不是逆境，是空签`).toBe(
+          true,
+        );
+      }
       console.log(`${t.name.padEnd(8)} ${String(t.cost).padStart(4)}  ${t.ruleText}`);
     }
   });
