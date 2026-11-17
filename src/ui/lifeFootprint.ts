@@ -27,6 +27,7 @@
  * 与 `ui/lifeLinggen`、`ui/lifeLinggenSpread` 同一条纪律:收参数、给纯值。
  */
 import type { LifeRecord } from "@/data/samsara";
+import { lifeTrialArchive } from "./lifeTrialArchive";
 
 /** 足迹上的一个点 —— 一世 */
 export interface LifeFootprintPoint {
@@ -82,6 +83,19 @@ export interface LifeFootprint {
    *
    * 与 `majorDelta` 同一条纪律 —— 用一个缺值的端点算出来的差值会撒谎。
    */
+  /**
+   * 一世签过逆旅契的次数（按世数，不按份数 —— 一世只能签一份）。
+   *
+   * ## 为什么要汇总它（第 561 轮）
+   *
+   * `lifeTrialArchive` 把每一世的契翻成一行印在履历上，而**历世足迹里没有一处
+   * 说「你一共签过几份」**。而契约唯一的回报就是「被记住」——
+   * 不在汇总里说这个数，等于「被记住」这件事没兑现。
+   *
+   * 只数 `trialId` 非空且认得出的那些世；认不出的 id（老档 / 数据改名）不算，
+   * 因为那时界面上那一行也出不来，汇总与明细会不一致。
+   */
+  trialLives: number;
   ageDelta: number | null;
   /**
    * 终寿走向的一句人话(如「比首世多活了 120 载」);没有走向时为空串。
@@ -106,6 +120,7 @@ const EMPTY: LifeFootprint = {
   trendText: "",
   ageDelta: null,
   ageTrendText: "",
+  trialLives: 0,
 };
 
 /** 世序:有限的、>= 1 的整数 */
@@ -173,6 +188,12 @@ export function lifeFootprint(lives: readonly LifeRecord[]): LifeFootprint {
   const averageAge =
     ages.length > 0 ? Math.round((ages.reduce((s, v) => s + v, 0) / ages.length) * 10) / 10 : null;
 
+  /*
+   * 签过契的世数 —— 走 `lifeTrialArchive` 的那条判据（认得出才算），
+   * 与履历行同一口径：汇总说「3 世签过」，明细里就该恰好有 3 行印着契名。
+   */
+  const trialLives = lives.filter((l) => lifeTrialArchive(l?.trialId ?? null) !== null).length;
+
   const insightTotal = points
     .map((p) => p.insight)
     .filter((v): v is number => v !== null)
@@ -221,5 +242,6 @@ export function lifeFootprint(lives: readonly LifeRecord[]): LifeFootprint {
     insightTotal,
     ageDelta,
     ageTrendText,
+    trialLives,
   };
 }

@@ -25,6 +25,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { lifeFootprint } from "./lifeFootprint";
 import type { LifeRecord } from "@/data/samsara";
+import { LIFE_TRIALS } from "@/data/lifeTrials";
 
 const life = (
   index: number,
@@ -224,5 +225,75 @@ describe("历世足迹 · 纯函数", () => {
     ]);
     expect(missing.ageDelta, "首端读不出却仍给了一个差值 —— 那会撒谎").toBeNull();
     expect(missing.ageTrendText).toBe("");
+  });
+
+  it("签过几份逆旅契 —— 汇总的数要与明细对得上", () => {
+    /*
+     * ## 为什么要汇总它（第 561 轮）
+     *
+     * `lifeTrialArchive` 把每一世的契翻成一行印在履历上，而历世足迹里没有一处
+     * 说「你一共签过几份」。而契约唯一的回报就是「被记住」——
+     * 不在汇总里说这个数，等于「被记住」这件事没兑现。
+     *
+     * 口径与履历行同一条:走 `lifeTrialArchive`，认得出的才算。
+     * 认不出的 id（老档 / 数据改名）不计 —— 那时界面那一行也出不来，
+     * 汇总与明细必须一致。
+     */
+    const trial = LIFE_TRIALS[0]!;
+    const fp = lifeFootprint([
+      {
+        index: 1,
+        major: 2,
+        realmLabel: "筑基",
+        age: 120,
+        themeId: null,
+        themeResult: null,
+        insight: 0,
+        at: 1,
+        trialId: trial.id,
+      },
+      {
+        index: 2,
+        major: 3,
+        realmLabel: "金丹",
+        age: 240,
+        themeId: null,
+        themeResult: null,
+        insight: 0,
+        at: 2,
+        trialId: null,
+      },
+      {
+        index: 3,
+        major: 4,
+        realmLabel: "元婴",
+        age: 360,
+        themeId: null,
+        themeResult: null,
+        insight: 0,
+        at: 3,
+        trialId: trial.id,
+      },
+    ]);
+    expect(fp.trialLives, "两世签过契，却没数对").toBe(2);
+
+    /* 认不出的 id 不计 —— 与履历行同一条 */
+    const unknown = lifeFootprint([
+      {
+        index: 1,
+        major: 2,
+        realmLabel: "筑基",
+        age: 120,
+        themeId: null,
+        themeResult: null,
+        insight: 0,
+        at: 1,
+        trialId: "no_such_trial",
+      },
+    ]);
+    expect(unknown.trialLives, "认不出的契不该计入 —— 明细里它也不出一行").toBe(0);
+
+    /* 一世都没签过 → 0，不是空 */
+    expect(lifeFootprint([]).trialLives).toBe(0);
   });
 });

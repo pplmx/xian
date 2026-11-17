@@ -618,6 +618,16 @@
                   <small v-if="pace.fastest">最快第{{ pace.fastest.index }}世</small>
                 </dd>
               </div>
+              <!--
+                签过几份逆旅契（第 561 轮）。
+                契约唯一的回报是「被记住」，而履行这条回报的地方就是这一页 ——
+                履历逐行印着契名，而汇总里此前一处都没说「你一共签过几世」。
+                一世只能签一份，故「几世签过」即「几份」。
+              -->
+              <div v-if="footprint.trialLives > 0">
+                <dt>逆旅契</dt>
+                <dd class="tabular" data-footprint-trials>{{ footprint.trialLives }} 世签过</dd>
+              </div>
               <div>
                 <dt>宿慧累计</dt>
                 <dd class="tabular">{{ footprint.insightTotal }}</dd>
