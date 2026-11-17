@@ -252,6 +252,15 @@ describe("逆旅契 · 规则文案与 rules 双向对账", () => {
         const toText = EXPECT[key];
         if (toText) allowed.add(toText(value));
       }
+      /*
+       * `routeStages` 也是「会产生数字」的字段(第 470 轮)。
+       *
+       * 这条判据的本意是「ruleText 里的每个数字都能在数据里找到出处」,
+       * 而不是「只在 rules 里找」—— 第 470 轮加了第一份不碰 CombatRules 的契,
+       * 它的文案写「本世路线只有 3 段」,出处正是 `routeStages: 3`。
+       * 故把来源从「rules 一个对象」扩成「所有产生数字的字段」。
+       */
+      if (typeof t.routeStages === "number") allowed.add(String(t.routeStages));
       // 比的是**数字本身**:文案写「治疗效力 25%」,allowed 里是「25%」——
       // 直接拿 m[1]("25")去比会永远不等。故把 allowed 摊成数字集合再比。
       const allowedNums = new Set(

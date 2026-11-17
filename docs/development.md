@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 874 个 spec;本作自己那部分 794 个) |
+| `bun run test` | 全量用例(全量 875 个 spec;本作自己那部分 795 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 874 个 spec = 宿主 794 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 875 个 spec = 宿主 795 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 874 个 spec(本作自己那部分 794 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 875 个 spec(本作自己那部分 795 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -25898,3 +25898,83 @@ mortalWorldService.ts:17
 `BottomNavigation` / `SpiritRootReveal` / `NavigationAtlas` 等六处都在用它，故它在。
 
 工作区干净、全量 874 / 7127 全绿。
+
+### 第 470 轮:第一份不碰 CombatRules 的契约
+
+#### 这一轮不加判据，加玩法
+
+前几轮一直在「探索」，产出率掉到 0。这一轮改做东西。而做什么不是我拍脑袋定的 ——
+`trialMotivation.spec` 自己诊断出了结论:
+
+```text
+契约不是纯罚款:它真的让玩家需要换打法(首尾构筑最大拉开 63.8pp)。
+但改变只发生在战斗内部,一世的结构没变 —— 同样的区域、同样的顺序、同样的目标。
+故要提高动机,该扩的是玩法面(历练/物品/顺序/目标),不是补奖励
+```
+
+同一份判据还给了边界:
+
+```text
+可动(Rule Space)   CombatRules · 历练路线 · 可用物品 · 解锁顺序 · 本世目标
+不可动             StatMods · Economy · DaoFruit · Insight
+```
+
+而现有四份契(孤行/疾行/残躯/逆锋)**全部只填 `rules`**。
+故第五份:**断径契 —— 这一世只有三段路**。
+
+#### 我在这上面连错了两次
+
+```text
+第一版  生成后截尾 chain.slice(0, 3)
+        判据立刻红:「截短顺手把终点也拉低了 —— 那不是变难，是变简单」
+        路线层级递增，砍尾 = 把高段全砍了。玩家在更低的层级收工，
+        这一世不但短，还更轻松 —— 与「纯逆境」正好相反。
+
+第二版  截尾 + 把层级重摊到原跨度上
+        终点保住了，而实测:
+          后: 落霞谷(2) 青云山麓(11) 古战场遗迹(17)
+          青云山麓 t11: 敌差[7,8,8] 首领差 10
+          古战场遗迹 t17: 敌差[10,9,11] 首领差 11
+        敌人与首领是按**原层级**挑的 —— 这正是第 461/462 轮修掉的
+        「名与实不符」，被我重新制造了一遍。
+
+第三版  段数进生成器
+        generateMortalWorld(seed, stageLimit) 先把层级表压到 N 段，
+        再照原流程挑地界/敌人/首领 —— 所有绑定天然自洽。
+```
+
+> 两次错误都是同一个形状:**在生成之后改数据**。
+> 而这一仓第 461/462 轮已经证明过:改了生成后的字段，与它绑定的东西不会跟着变。
+
+#### 判据四条（`core/trialRouteBind.spec`）
+
+```text
+① 有一份只改路线长度的契，值域 2..6
+② 反差：它**不填 rules** —— 动了战斗规则就退回老路
+③ 生效后路线真的变短，且终点层级没被拉低（短而硬，不是短而软）
+④ 压段之后敌人与首领仍与所在段的层级相称（这一条是被自己的前两版逼出来的）
+```
+
+#### 三条既有判据跟着改口径
+
+新契约让三条旧判据变红。三次都**不是放宽断言，而是收窄范围或扩展来源**:
+
+```text
+trialMotivation.allImpacts     收窄到「有 rules 的契」——
+                               那两条断言说的是「战斗类契约都确实变了」，
+                               不是「所有契约都必须改战斗」
+lifeTrialService 的数字来源    从「rules 一个对象」扩成「所有产生数字的字段」，
+                               因为 routeStages 也是数字出处
+motivationType.ruleDistance    只对填了战斗规则的契断言；另加一条反差:
+                               空规则表必须给零，否则「不碰 CombatRules」是假口径
+```
+
+#### 我自己制造的一处污染
+
+`kaiFontCoverage.spec` 报红，断言里出现 **`первойб`** —— 我在
+`lifeTrialService.ts` 的注释里写了「первой пробе」(俄语)。已改成中文。
+
+> 这条判据量的是「源码里每个字楷体都画得出」，它抓不到语义，
+> 而它抓到了我不该写进去的东西。
+
+工作区干净、全量 875 / 7131 全绿。

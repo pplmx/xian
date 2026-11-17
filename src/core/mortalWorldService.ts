@@ -19,6 +19,7 @@
  */
 import type { MortalWorld } from "./mortalWorldGen";
 import { generateGatedMortal } from "./mortalGate";
+import { activeLifeTrial, trialStageLimit } from "./lifeTrialService";
 import { terrainOf, worldIdentity } from "./mortalIdentity";
 import { REGIONS } from "@/data/regions";
 import { useAdventureStore } from "@/stores/adventure";
@@ -37,6 +38,7 @@ const MORTAL_SEED_ATTEMPTS = 3;
 function generateMortalWithRetry(
   history: MortalWorld[],
   recentBiases: readonly string[],
+  stageLimit?: number,
 ): MortalWorld | null {
   const startedAt = Date.now();
   for (let attempt = 0; attempt < MORTAL_SEED_ATTEMPTS; attempt += 1) {
@@ -46,6 +48,7 @@ function generateMortalWithRetry(
       200,
       8,
       recentBiases,
+      stageLimit,
     );
     if (got) return got.report.world;
   }
@@ -86,7 +89,19 @@ function historyOf(cur: MortalWorld | null): MortalWorld[] {
  */
 export function rollMortalWorld(): MortalWorld | null {
   const adventure = useAdventureStore();
-  return generateMortalWithRetry(historyOf(adventure.mortalWorld), adventure.mortalBiasHistory);
+  return generateMortalWithRetry(
+    historyOf(adventure.mortalWorld),
+    adventure.mortalBiasHistory,
+    /*
+     * 契约要的段数 —— 断径契让这一世只有三段(第 470 轮)。
+     *
+     * 传给**生成器**,而不是生成完之后截:层级表先压到这么多段,
+     * 再照原流程挑地界/敌人/首领,所有「名实相符」的绑定天然自洽。
+     * 事后截尾会把终点砍低(短而软),事后重摊层级会让敌人与首领停留在原层级
+     * (实测差 7~11)—— 那正是第 461/462 轮修掉的形状。
+     */
+    trialStageLimit(activeLifeTrial()),
+  );
 }
 
 /**

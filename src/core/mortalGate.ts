@@ -108,11 +108,12 @@ export function generateGatedMortal(
   maxTries = 300,
   runs = 10,
   recentBiases: readonly string[] = [],
+  stageLimit?: number,
 ): GatedWorld | null {
   const rejectionsByGate: Record<string, number> = {};
   const unseenBiases = unseenMortalBiases([...recentBiases, ...history.map((w) => w.bias)]);
   for (let t = 0; t < maxTries; t += 1) {
-    const world = generateMortalWorld(baseSeed + t * 7919);
+    const world = generateMortalWorld(baseSeed + t * 7919, stageLimit);
     // 五世轮转不是审计层专属：真实换界也要先补齐尚未见过的产出路线。
     if (unseenBiases.size > 0 && !unseenBiases.has(world.bias)) {
       rejectionsByGate["资源偏向"] = (rejectionsByGate["资源偏向"] ?? 0) + 1;

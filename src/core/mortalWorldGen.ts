@@ -155,6 +155,20 @@ function resampleRhythm(curve: readonly number[], n: number): number[] {
  * - 交错型路线(`weave` / `short_weave`)本来就会回落,这条 `floor` 只在
  *   「骨架是递增的那几段」上生效 —— 判断依据是**这一段的骨架值是否高于前一段**
  */
+/**
+ * 把层级表压到至多 `limit` 段 —— **起点与终点都不动**,只减少中间台阶。
+ *
+ * 取原表的**等距下标**(向下取整并去重),故 N 等于原长时是恒等映射。
+ * 层级保持递增(原表本就递增,取子序列仍是),`jitterTiers` 的相邻约束不被破坏。
+ */
+function limitedTiers(tiers: readonly number[], limit: number | undefined): number[] {
+  if (!limit || limit >= tiers.length) return [...tiers];
+  const last = tiers.length - 1;
+  const idx = new Set<number>();
+  for (let i = 0; i < limit; i += 1) idx.add(Math.round((i * last) / (limit - 1)));
+  return [...idx].sort((a, b) => a - b).map((i) => tiers[i]!);
+}
+
 function jitterTiers(tiers: readonly number[], rng: RandomService): number[] {
   const out: number[] = [];
   for (let i = 0; i < tiers.length; i += 1) {
@@ -368,12 +382,21 @@ function formOfTerrains(terrains: readonly string[]): "single" | "dual" | "scatt
   return dominance >= DOM_SINGLE ? "single" : dualShare >= DOM_DUAL ? "dual" : "scattered";
 }
 
-export function generateMortalWorld(seed: number): MortalWorld {
+/**
+ * @param stageLimit 段数上限 —— 逆旅契「断径」用它(第 470 轮)。
+ *
+ * 必须是**生成前**的参数:层级表先压到这么多段,再照原流程挑地界/敌人/首领,
+ * 这样所有「名实相符」的绑定天然自洽。
+ *
+ * 事后截尾或事后重摊层级都不行 —— 前者把终点砍低(短而软),
+ * 后者让敌人与首领停留在原层级(实测差 7~11),正是第 461/462 轮修掉的形状。
+ */
+export function generateMortalWorld(seed: number, stageLimit?: number): MortalWorld {
   const rng = new RandomService(mulberry32(seed));
   // 先定骨架与节奏 —— 它们决定段数,也决定玩家感受到的推进形状
   const shape = ROUTE_SHAPES[rng.int(0, ROUTE_SHAPES.length - 1)]!;
   const rhythm = RHYTHM_ARCHETYPES[rng.int(0, RHYTHM_ARCHETYPES.length - 1)]!;
-  const tiers = jitterTiers(shape.tiers, rng);
+  const tiers = limitedTiers(jitterTiers(shape.tiers, rng), stageLimit);
   const density = resampleRhythm(rhythm.curve, tiers.length);
   // 资源偏向提前抽取,避免被后续 rng 消耗挤到同一取值(上一轮记下的弱点)
   const bias = BIAS_POOL[rng.int(0, BIAS_POOL.length - 1)]!;

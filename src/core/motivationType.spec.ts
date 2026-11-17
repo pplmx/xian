@@ -158,11 +158,23 @@ describe("动机类型 · 探索型消费的三个结构条件", () => {
 describe("动机类型 · 判据自身的可靠性", () => {
   it("规则距离对「无变化」给零,对「有变化」给正值", () => {
     expect(ruleDistance(PLAIN_LIFE, PLAIN_LIFE)).toBe(0);
-    for (const t of LIFE_TRIALS) {
+    /*
+     * 只对**填了战斗规则**的契断言(第 470 轮)。
+     *
+     * 这条用例量的是 `ruleDistance` 这个函数本身可靠不可靠:
+     * 「无变化给零、有变化给正值」。而第 470 轮的断径契 `rules: {}` ——
+     * 它本来就不该在这个函数上给出正值,那正是「不碰 CombatRules」的意思。
+     *
+     * 它的偏离由 `trialProfiles().deviation` 的另一支(路线长度)承担,
+     * 上面那条「契不是换皮」的用例量的是那一支。
+     */
+    for (const t of LIFE_TRIALS.filter((x) => Object.keys(x.rules ?? {}).length > 0)) {
       expect(ruleDistance(t.rules, PLAIN_LIFE)).toBeGreaterThan(0);
       // 自己与自己距离为零 —— 这正是 replayDelta = 0 的算式依据
       expect(ruleDistance(t.rules, t.rules)).toBe(0);
     }
+    // 反差:空规则表在同一个函数上必须给零 —— 否则「不碰 CombatRules」这条口径是假的
+    expect(ruleDistance({}, PLAIN_LIFE), "空规则表给出了非零距离").toBe(0);
     console.log("\n同一份契签两次,规则距离为 0 —— 重玩增量为零由此得出,不是主观判断");
   });
 

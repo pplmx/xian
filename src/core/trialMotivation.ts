@@ -143,8 +143,28 @@ export function trialImpact(trial: LifeTrialDef, n = 60): TrialImpact {
 }
 
 /** 四份契的完整影响 */
+/**
+ * 只量**战斗类**契约的影响(第 470 轮)。
+ *
+ * 这个模块量的是「契约在战斗内部的取舍」—— 它跑构筑对打、比排序变化。
+ * 而第 470 轮加了第一份**不碰 CombatRules** 的契(断径契:只缩短路线),
+ * 它对 `impacts` 的每一项都是恒等(null 影响),于是:
+ *
+ * ```text
+ *   每份契都确实变难了      → trialWin === baseWin，断言红
+ *   实测全部改变排序        → 它一个排序都没改，一致性校验红
+ * ```
+ *
+ * 那两条断言说的是「战斗类契约都确实变了」,**不是**「所有契约都必须改战斗」。
+ * 故这里把范围收窄到有战斗规则的那几份,而不是放宽断言。
+ *
+ * 断径契由 `trialRouteBind.spec` 守着 —— 它的四条判据量的是路线长度与
+ * 「敌人/首领仍与所在段相称」,那才是它该被量的地方。
+ */
 export function allImpacts(n = 60): TrialImpact[] {
-  return LIFE_TRIALS.map((t) => trialImpact(t, n));
+  return LIFE_TRIALS.filter((t) => Object.keys(t.rules ?? {}).length > 0).map((t) =>
+    trialImpact(t, n),
+  );
 }
 
 /**

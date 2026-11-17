@@ -151,7 +151,14 @@
                     ><span class="font-kai" aria-hidden="true">{{ activeTrial.seal }}</span>
                     {{ activeTrial.name }}</strong
                   >
-                  <p>{{ activeTrial.ruleText }} —— 本世每一场历练都按此算。</p>
+                  <!--
+                    后半句不能一律写「本世每一场历练都按此算」(第 470 轮)。
+
+                    第 470 轮加的第一份不碰 CombatRules 的契(断径契)改的是**路线长度**,
+                    挂在「每一场」下面就读错了:它一场都不改,它改的是这一世有几段路。
+                    故按契约实际作用的范围给后一句 —— 数据说了算,视图不猜。
+                  -->
+                  <p>{{ activeTrial.ruleText }} —— {{ trialScopeText(activeTrial) }}</p>
                 </div>
               </FolioNote>
               <div class="adventure-briefing__tiers">
@@ -1161,6 +1168,19 @@ const biasLabel = computed(() => biasEffectOf(adventure.mortalWorld?.bias)?.labe
 const activeTrial = computed(() => activeLifeTrial());
 
 /** 顶部行旅条:世界名、路线进度与眼下去处都从世界页同一份视图来 */
+/**
+ * 契约作用在哪个范围 —— 决定正文后半句怎么写（第 470 轮）。
+ *
+ * 只看数据，不看契约名字：有战斗规则就说「每一场」，只压路线就说「这几段路」。
+ * 两者都没有的情形不该出现（那等于签了一份什么都不做的契），故退到一句中性的说法。
+ */
+function trialScopeText(def: { rules?: object; routeStages?: number }): string {
+  const hasRules = Object.keys(def.rules ?? {}).length > 0;
+  if (hasRules) return "本世每一场历练都按此算。";
+  if (def.routeStages !== undefined) return "本世只走这几段路。";
+  return "本世按此行事。";
+}
+
 const worldOverview = computed(() => {
   const w = adventure.mortalWorld;
   /*

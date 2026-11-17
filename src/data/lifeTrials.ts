@@ -50,6 +50,24 @@ export interface LifeTrialDef {
   cost: number;
   /** 本世生效的战斗规则,只许加难 */
   rules: CombatRules;
+  /**
+   * 本世只走几段路(第 470 轮)。
+   *
+   * 这是第一份**不碰 CombatRules** 的契 —— `trialMotivation.spec` 的诊断说得很直白:
+   *
+   * > 改变只发生在战斗内部,一世的结构没变 —— 同样的区域、同样的顺序、同样的目标。
+   * > 故要提高动机,该扩的是玩法面(历练/物品/顺序/目标),不是补奖励
+   *
+   * 而它给的边界里「历练路线」是可动的。故这一份只做一件事:**这一世短两段**。
+   *
+   * 为什么这是纯逆境:每段的强度不变,所以同样的层级要在更少的段里爬完;
+   * 少走的段里那些敌群、首领与掉落也一并没了。它不是奖励,也不是减难,
+   * 是这一世的**形状**变了。
+   *
+   * 与 `rules` 互斥地存在 —— 判据 `trialRouteBind.spec` 守着「填了这个就不许填 rules」,
+   * 免得它悄悄退回老路。
+   */
+  routeStages?: number;
 }
 
 /**
@@ -95,6 +113,25 @@ export const LIFE_TRIALS: LifeTrialDef[] = [
     rules: { enemyAtkMult: 1.3, enemyHpMult: 1.2 },
   },
 ];
+
+/**
+ * 第五份契:只改路线长度,不动一条战斗规则。
+ *
+ * 定价低于同「痛感」的战斗契(36 / 48),因为它的痛是**少拿东西**,而不是打不过 ——
+ * 少两段意味着少两组敌群与两个首领的掉落,但不至于卡关。
+ */
+const ROUTE_TRIAL: LifeTrialDef = {
+  id: "tr_duan",
+  name: "断径契",
+  seal: "断",
+  desc: "这一程只有三处地界。天地不肯多给你一寸路。",
+  ruleText: "本世路线只有 3 段",
+  cost: 30,
+  rules: {},
+  routeStages: 3,
+};
+
+LIFE_TRIALS.push(ROUTE_TRIAL);
 
 export function lifeTrialDef(id: string): LifeTrialDef | undefined {
   return LIFE_TRIALS.find((t) => t.id === id);

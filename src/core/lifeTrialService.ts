@@ -36,6 +36,28 @@ export function lifeTrialRules(): CombatRules | undefined {
   return activeLifeTrial()?.rules;
 }
 
+/**
+ * 契约要的段数 —— 供世界生成时使用(第 470 轮)。
+ *
+ * `generateMortalWorld` 收一个可选的上限,在**挑段之前**就把骨架层级表压到这么多段。
+ * 为什么必须在生成前给,而不是生成后截:
+ *
+ * ```text
+ * 事后截尾版（第一版实现）
+ *   前 3 段原样保留,层级 2 / 4 / 7 —— 终点从 17 掉到 7,短而软
+ * 事后重摊版
+ *   层级摊成 2 / 11 / 17,终点保住了 —— 但敌人与首领是按**原层级**生成的:
+ *   实测 t11 那段的敌人层级差 7~8、首领差 10,地界名也还是「青云山麓」
+ *   —— 这正是第 461/462 轮修掉的那个形状,又被我制造了一遍
+ * ```
+ *
+ * 故段数必须**进生成器**:重采样层级表之后就照常走原有流程,
+ * 敌人、首领、地界名、事件标签全都按新层级重新挑,所有绑定天然自洽。
+ */
+export function trialStageLimit(def: LifeTrialDef | null | undefined): number | undefined {
+  return def?.routeStages;
+}
+
 /** 能否签下某契(余额足够、本世尚未签过、规则合法) */
 export function canSignLifeTrial(id: string): boolean {
   const player = usePlayerStore();

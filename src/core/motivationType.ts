@@ -103,15 +103,31 @@ export function trialProfiles(): MotivationProfile[] {
     // 规则是硬编码常量:签之前完全可预知,签第二次一模一样
     const determinism = 1;
     const replayDelta = 0;
+    /*
+     * 偏离度不再只看战斗规则(第 470 轮)。
+     *
+     * `ruleDistance` 量的是一组 `CombatRules` 与「平常的一世」的距离。
+     * 而第 470 轮加了第一份**不碰 CombatRules** 的契(断径契:只把路线压到三段),
+     * 它对那个函数是恒等 —— 于是这一份的 `deviation` 读作 0,
+     * 「四份契都确实偏离了平常的一世」那条断言就红了。
+     *
+     * 那条断言的本意是「契约不是换皮」,而不是「必须靠战斗规则才算偏离」。
+     * 故把**路线长度**也算进偏离:常规一世四到六段,压到三段是实打实的一世之变。
+     * 权重取 0.5 —— 它的影响比改战斗规则(直接改每一场)小,但绝不是零。
+     */
+    const routeDeviation = t.routeStages === undefined ? 0 : 0.5;
     return {
       id: t.id,
       name: t.name,
       determinism,
-      deviation: ruleDistance(t.rules, PLAIN_LIFE),
+      deviation: Math.max(ruleDistance(t.rules, PLAIN_LIFE), routeDeviation),
       replayDelta,
       surface: "numbers" as ChangeSurface,
       type: classify(determinism, replayDelta),
-      evidence: `rules 是 LIFE_TRIALS 里的常量;第二次签得到完全相同的一世`,
+      evidence:
+        t.routeStages === undefined
+          ? `rules 是 LIFE_TRIALS 里的常量;第二次签得到完全相同的一世`
+          : `routeStages 是 LIFE_TRIALS 里的常量;第二次签得到同样短的一世`,
     };
   });
 }
