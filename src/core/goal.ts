@@ -14,6 +14,7 @@
  * - build         流派未成形   → "凑出XX流" (中期核心目标)
  */
 import type { PlayerStore } from "@/stores/player";
+import { lifeTrialDef } from "@/data/lifeTrials";
 import { useAdventureStore } from "@/stores/adventure";
 import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
@@ -100,6 +101,32 @@ export function generateCurrentGoal(
 ): Goal | null {
   // 1. 死后无目标
   if (player.dead) return null;
+
+  /*
+   * 1.5 签了「执念契」的一世，下一步就是自己立下的那句话（第 475 轮）。
+   *
+   * 排在**修为突破之前**:契约是花道果立的，它比系统建议的「去突破」更该被看见 ——
+   * 否则玩家签完之后抬头仍是原来自动生成的那一条，「本世目标」这条玩法面等于没动。
+   *
+   * 只读 `player.reincarnation.trial.trialId` 再查静态表，**不新增 store 依赖**
+   * （`core/goal` 的既有约束，见 `layeringAudit.spec`）。
+   *
+   * 它只改「做什么」：回报仍是履历，不发放宿慧/资源（那四条出口判据守着）。
+   */
+  const signedTrial = player.reincarnation.trial;
+  const vowGoal = signedTrial ? lifeTrialDef(signedTrial.trialId)?.vowGoal : undefined;
+  if (vowGoal) {
+    /*
+     * `type` 此刻没有消费者（`HomeView` 的注释说它「从被造出来起就只是类型标注」），
+     * 故这里给 `"explore"` 只是取一个形状合法的值 —— 它不改变任何渲染。
+     * 真要分「契约目标」与「系统建议」时，该加的是新的一支而不是借用。
+     */
+    return {
+      type: "explore",
+      text: vowGoal,
+      hint: "这是你自己立下的一句话 —— 本世只此一件",
+    };
+  }
 
   /*
    * 2. 修为接近突破(最高优先级)—— **但到顶之后就没有突破了**。

@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 879 个 spec;本作自己那部分 799 个) |
+| `bun run test` | 全量用例(全量 880 个 spec;本作自己那部分 800 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 879 个 spec = 宿主 799 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 880 个 spec = 宿主 800 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 879 个 spec(本作自己那部分 799 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 880 个 spec(本作自己那部分 800 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -26287,3 +26287,75 @@ const held = settled ? Number(await settledHandle.jsonValue()) : 0;
 先记在这里:下次它再红，先看这句 `Number(await ...jsonValue())`。
 
 工作区干净、全量 879 / 7149 全绿。
+
+### 第 475 轮:可动空间第五项 —— 本世目标
+
+#### 五项凑齐
+
+```text
+CombatRules  孤行 / 疾行 / 残躯 / 逆锋
+历练路线     第 470 轮  断径契
+可用物品     第 473 轮  弃器契
+解锁顺序     第 474 轮  逆行契
+本世目标     ← 这一轮  执念契
+```
+
+#### 它与本世命题不是一回事
+
+`LifeThemeDef`（命题）也是「这一世要做什么」，两者容易混:
+
+```text
+命题  每世择一，达成给宿慧（跨世成长），破了只是所得落空
+契约  花道果签，达成只记进履历（不进任何计算），不签就没有
+```
+
+而 `lifeTrialService.spec` 有四条出口判据守着「契约不发放宿慧、不发放资源、
+不产生道果」—— 那些是为了堵「道果 → 契约 → 宿慧 → … → 战力」的闭环。
+故 `vowGoal` **只改「做什么」，不改「做完得到什么」**。
+
+#### 它改的是首页那张「下一步」卡
+
+`generateCurrentGoal(player)` 是唯一产出「下一步」的纯函数。原来的顺序是
+「修为突破优先」，于是签了执念契的玩家抬头看到的仍是系统建议的「去突破」——
+「本世目标」这条玩法面等于没动。
+
+故新增的那一支排在**修为突破之前**:契约是花道果立的，它比系统建议更该被看见。
+
+只读 `player.reincarnation.trial.trialId` 再查静态表，**不新增 store 依赖**
+（`core/goal` 的既有约束）。
+
+#### 判据四条
+
+```text
+① 有一份契声明本世要达成的事
+② 反差：五种玩法面各管各的
+③ 反差：契约不许顺手多出一个给成长的字段
+④ 目标真的被换成契约那件事
+```
+
+#### 第三次踩同一个坑
+
+④ 第一版写 `toContain("vowGoal")` —— 而那段代码的注释里也有 `vowGoal`。
+注入后**判据全绿**。
+
+> 这是第三次（第 471、472 轮各一次）。同一个形态:`toContain` 扫的是全文，
+> 而注释里正大光明地写着同一个名字。
+
+改成要求它出现在**读契约的那一行**:`/lifeTrialDef\([^)]*\)\?\.vowGoal/`。
+
+#### 「偏离度」重构为表驱动
+
+第四次撞上 `motivationType.spec` 的「契不是换皮」—— 每加一份契都要往
+那个赋值里插一支，而注释已经缠了三层（470/473/474/475）。
+
+故重构成一张表:
+
+```text
+字段            改的是什么            权重  依据
+reverseRoute    这些路的先后          0.70  开局最强，而开局玩家最弱
+bannedItemKind  能带什么进场          0.60  法宝被动整块没了
+routeStages     这一世有几段路        0.50  少走两段
+vowGoal         这一世做什么          0.40  只换注意力，不加难度
+```
+
+工作区干净、全量 880 / 7153 全绿。

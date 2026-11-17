@@ -101,6 +101,28 @@ export interface LifeTrialDef {
    * 判据 `trialUnlockBind.spec` 守着它们不互相侵占。
    */
   reverseRoute?: boolean;
+  /**
+   * 本世目标的说法（第 475 轮）。
+   *
+   * 这是第五份**不碰 CombatRules** 的契，动的是可动空间里那第五项「本世目标」。
+   *
+   * ## 与命题的区别
+   *
+   * `LifeThemeDef`（本世命题）也是「这一世要做什么」，但两者不可混:
+   *
+   * ```text
+   *   命题  每世择一，达成给宿慧（跨世成长），破了只是所得落空
+   *   契约  花道果签，达成只记进履历（不进任何计算），不签就没有
+   * ```
+   *
+   * 而 `lifeTrialService.spec` 有四条出口判据守着「契约不发放宿慧、不发放资源、
+   * 不产生道果」—— 那些是为了堵「道果 → 契约 → 宿慧 → … → 战力」的闭环。
+   * 故 `vowGoal` **只改「做什么」，不改「做完得到什么」**。
+   *
+   * 它改变的是首页那张「下一步」卡:签了这份契之后，玩家抬头看到的就是
+   * 自己立下的那句话，而不是系统建议的「去突破」。
+   */
+  vowGoal?: string;
 }
 
 /**
@@ -201,6 +223,25 @@ const REVERSE_TRIAL: LifeTrialDef = {
 };
 
 LIFE_TRIALS.push(REVERSE_TRIAL);
+
+/**
+ * 第八份契:本世目标换成契约要求的那件事。
+ *
+ * 定价最低一档(12)—— 它不增加任何难度，只是**换一件事去做**。
+ * 契约的痛在这里是「注意力」:这一世你被自己绑在了一件事上。
+ */
+const VOW_TRIAL: LifeTrialDef = {
+  id: "tr_zhinian",
+  name: "执念契",
+  seal: "执",
+  desc: "这一世只做一件事。做完，就行。",
+  ruleText: "本世以「在历练中斩敌二百」为唯一目标",
+  cost: 12,
+  rules: {},
+  vowGoal: "在历练中斩敌二百",
+};
+
+LIFE_TRIALS.push(VOW_TRIAL);
 
 export function lifeTrialDef(id: string): LifeTrialDef | undefined {
   return LIFE_TRIALS.find((t) => t.id === id);

@@ -20,7 +20,7 @@
  * 只做度量,不改数值、不新增契约。
  */
 import type { CombatRules } from "@/types";
-import { LIFE_TRIALS } from "@/data/lifeTrials";
+import { type LifeTrialDef, LIFE_TRIALS } from "@/data/lifeTrials";
 import { NOVELTY_MIN } from "./worldGen";
 
 // ============ 一、规则的向量化 ============
@@ -97,6 +97,30 @@ export function classify(determinism: number, replayDelta: number): MotivationTy
   return replayDelta > 0 && determinism < 1 ? "discovery" : "challenge";
 }
 
+/**
+ * 四种「不碰 CombatRules」的玩法面各自的偏离权重（第 475 轮整理成表）。
+ *
+ * 见 `trialProfiles` 里那段注释:这张表是**表驱动**而不是三元链,
+ * 因为 470/473/474/475 各改过一次那个赋值,注释已经缠了三层。
+ */
+const SURFACE_DEVIATION: ReadonlyArray<{
+  key: "reverseRoute" | "bannedItemKind" | "routeStages" | "vowGoal";
+  weight: number;
+}> = [
+  { key: "reverseRoute", weight: 0.7 },
+  { key: "bannedItemKind", weight: 0.6 },
+  { key: "routeStages", weight: 0.5 },
+  { key: "vowGoal", weight: 0.4 },
+];
+
+/** 一份契在玩法面上的偏离度;没有声明任何玩法面则为 0（只有战斗规则） */
+function deviationOf(t: LifeTrialDef): number {
+  const hit = SURFACE_DEVIATION.find(
+    (s) => (t as unknown as Record<string, unknown>)[s.key] !== undefined,
+  );
+  return hit?.weight ?? 0;
+}
+
 /** 逆旅契的动机画像 */
 export function trialProfiles(): MotivationProfile[] {
   return LIFE_TRIALS.map((t) => {
@@ -104,48 +128,33 @@ export function trialProfiles(): MotivationProfile[] {
     const determinism = 1;
     const replayDelta = 0;
     /*
-     * 偏离度不再只看战斗规则(第 470 轮)。
+     * 偏离度：这一世与「平常的一世」差多少。
      *
-     * `ruleDistance` 量的是一组 `CombatRules` 与「平常的一世」的距离。
-     * 而第 470 轮加了第一份**不碰 CombatRules** 的契(断径契:只把路线压到三段),
-     * 它对那个函数是恒等 —— 于是这一份的 `deviation` 读作 0,
-     * 「四份契都确实偏离了平常的一世」那条断言就红了。
+     * `ruleDistance` 只量一组 `CombatRules`。而 470 之后陆续加了四种
+     * **不碰 CombatRules** 的玩法面（路线长度 / 可用物品 / 解锁顺序 / 本世目标），
+     * 它们在那个函数上全是恒等 —— 于是 `deviation` 读作 0，
+     * 「契不是换皮」那条断言就红。
      *
-     * 那条断言的本意是「契约不是换皮」,而不是「必须靠战斗规则才算偏离」。
-     * 故把**路线长度**也算进偏离:常规一世四到六段,压到三段是实打实的一世之变。
-     * 权重取 0.5 —— 它的影响比改战斗规则(直接改每一场)小,但绝不是零。
-     */
-    /*
-     * 两种「不碰 CombatRules」的契各有各的偏离度（第 473 轮）。
-     *
-     * `routeStages` 改的是这一世有几段路；`bannedItemKind` 改的是能带什么进场。
-     * 后者对面板的影响更直接（法宝被动整块没了），故权重取 0.6 略高于路线。
-     */
-    /*
-     * 三种「不碰 CombatRules」的契各有各的偏离度（第 474 轮补第三种）。
+     * 那条断言的本意是「不是换皮」，而不是「必须靠战斗规则才算偏离」。
+     * 故把四种玩法面折进一张表,而不是继续在赋值式里堆三元:
      *
      * ```text
-     *   routeStages      改这一世有几段路        0.5
-     *   bannedItemKind   改能带什么进场          0.6
-     *   reverseRoute     改这些路的先后          0.7
+     *   字段            改的是什么            权重  依据
+     *   reverseRoute    这些路的先后          0.70  开局最强，而开局玩家最弱
+     *   bannedItemKind  能带什么进场          0.60  法宝被动整块没了
+     *   routeStages     这一世有几段路        0.50  少走两段
+     *   vowGoal         这一世做什么          0.40  只换注意力，不加难度
      * ```
      *
-     * 逆行契权重最高:它把开局那一段换成整条路线里最强的一段，
-     * 而开局恰恰是玩家最弱的时候。
+     * 表驱动而不是三元链:第 470/473/474/475 轮各改过一次这个赋值，
+     * 每次都只是多插一支 —— 而那段注释已经缠了三层。
      */
-    const routeDeviation =
-      t.reverseRoute !== undefined
-        ? 0.7
-        : t.routeStages !== undefined
-          ? 0.5
-          : t.bannedItemKind !== undefined
-            ? 0.6
-            : 0;
+    const deviation = deviationOf(t);
     return {
       id: t.id,
       name: t.name,
       determinism,
-      deviation: Math.max(ruleDistance(t.rules, PLAIN_LIFE), routeDeviation),
+      deviation: Math.max(ruleDistance(t.rules, PLAIN_LIFE), deviation),
       replayDelta,
       surface: "numbers" as ChangeSurface,
       type: classify(determinism, replayDelta),
