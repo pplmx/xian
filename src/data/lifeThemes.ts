@@ -19,6 +19,7 @@
  * minStage 保证命题的分量与玩家此刻的处境相称。
  */
 import type { SkillId } from "./crafting";
+import type { StatMods } from "@/types";
 
 /** 犯之即破题的忌讳 */
 export type LifeTaboo = "pill" | "artifact";
@@ -63,6 +64,29 @@ export interface LifeThemeDef {
   legacy: string;
   /** 达成所得宿慧 */
   insight: number;
+  /**
+   * 达成后**永久**获得的战斗词条（第 525 轮）。
+   *
+   * ## 为什么要有这个字段
+   *
+   * `contentGateAudit` 的诊断写着:合格的四类深修回报里，丹方 / 功法 / 认知三项
+   * 同属「知识」轴，方向差异不足 —— 需要新增**非知识类**的深修价值。
+   *
+   * 而命题本身就是「这一世活到某个深度」的检验，却只给宿慧（知识轴）。
+   * 这个字段补的就是另一半。
+   *
+   * ## 放什么、不放什么
+   *
+   * 只放**纯战斗**的键。`fruitOutlets.spec` 的结论是「没有一个属性键是安全的」——
+   * 任何能换回修炼速度的键都会重建「刷得快 → 更早轮回」那个回路。
+   * 故 `cultivationSpeed` / `expGain` / `dropRate` / `spiritStoneGain` / `luck`
+   * 这五个键一律不许出现，判据见 `core/themeLegacyMods.spec`。
+   *
+   * ## 只给最高阶的两门
+   *
+   * 十七条命题里只有两门带它。深修回报该是**少数几件了不起的事**，不是签到表。
+   */
+  mods?: StatMods;
   /** 需至少此阶方会出现 */
   minStage: number;
 }
@@ -77,8 +101,9 @@ function t(
   metric: LifeThemeMetric,
   legacy: string,
   taboo?: LifeTaboo,
+  mods?: StatMods,
 ): LifeThemeDef {
-  return { id, name, vow, goal, metric, taboo, legacy, insight, minStage };
+  return { id, name, vow, goal, metric, taboo, legacy, insight, minStage, mods };
 }
 
 export const LIFE_THEMES: LifeThemeDef[] = [
@@ -242,6 +267,13 @@ export const LIFE_THEMES: LifeThemeDef[] = [
     "本世修至大乘",
     { kind: "realm", major: 7 },
     "尽头的风景你亲眼看过一回,此后再攀不为求证,只为走得更从容。",
+    /*
+     * 第 525 轮:补的「非知识轴」深修回报。
+     * 走到大乘去看尽头 —— 看过的人，出手比没看过的人稳。
+     * 纯战斗词条:减伤 6%。不可用其他方式获得，也换不成修炼速度。
+     */
+    undefined,
+    { damageReduction: 0.06 },
   ),
   t(
     "lt_zhushu",
@@ -268,6 +300,12 @@ export const LIFE_THEMES: LifeThemeDef[] = [
     "本世踏入神界",
     { kind: "realm", major: 14 },
     "神界的法则在你眼里过了一遍,此后再高的天,你也不再仰头看。",
+    /*
+     * 第 525 轮:同一族的第二条。
+     * 神域的法则看过一遍 —— 看破之后，打得更准。纯战斗词条:暴击率 4%。
+     */
+    undefined,
+    { critRate: 0.04 },
   ),
 ];
 

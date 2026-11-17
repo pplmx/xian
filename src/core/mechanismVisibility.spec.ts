@@ -175,6 +175,15 @@ describe("看不见的机制 · 五项都在界面上露着", () => {
  * ```
  */
 const INTERNAL_ONLY: Readonly<Record<string, string>> = {
+  /*
+   * 已达成命题的永久战斗词条（第 525 轮）。
+   *
+   * 它是**合并前的一份中间量** —— 与 `fateModsValue` / `titleMods` 同形：
+   * 玩家要看的是「合并之后那个减伤是多少」与「它来自哪」，而后者由
+   * `modSources.sourceNames` 里那句「本世命题」承担。把这一份单独摆上界面，
+   * 等于把同一个数说两遍（本仓「不做两本账」）。
+   */
+  "player.themeModsValue": "合并前的一份中间量；来源名由 modSources 的「本世命题」承担",
   // ---- 状态机内部：计数 / 时间戳 / 去重集合 / seen 标记 ----
   "adventure.clearedAt": "各地界的征服时刻，给兴衰倒计时用",
   "adventure.regionWins": "按区的累计胜场，经 winsIn 供界面（CombatPanel）",

@@ -838,6 +838,9 @@ const CATEGORIES = [
       "realmCoverageFrontier",
       // 每处地界的池子：前期是后期的子集（说明为什么不加比值断言）
       "regionPoolRatio",
+      // 本世命题：深修回报的非知识轴
+      "themeLegacyMods",
+      "themeLegacyWiring",
       // 计数器 → 行为的一张满表:师承与素行两个消费者都读它,半张表各自长是这里的缺口
       "counterText",
       // 「这一趟能走多远」—— 出行窗只报产出不报能不能拿到,是本轮在真浏览器里量到的坑

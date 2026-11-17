@@ -7,6 +7,7 @@ import { gn, gnZero, add, gte, mulN, progress, subClamp } from "@/utils/gnum";
 import { persistConfig } from "@/utils/storage";
 import { codexMomentOfPlayer } from "@/ui/codexMoment";
 import { realmDef, realmLabel, worldOf, SUB_NAMES, MAX_MAJOR } from "@/data/realms";
+import { themeLegacyMods } from "@/core/themeMods";
 import { clampPeakMajor, notePeakMajor } from "@/core/peakRealm";
 import { SUB_LEVELS, START_AGE } from "@/data/constants";
 import { QI_BANK_MULT, QI_RICH_THRESHOLD_RATIO } from "@/data/constants";
@@ -255,6 +256,13 @@ export const usePlayerStore = defineStore(
      */
     const chart = computed(() => fateChart(fateSeed(linggen.value, reincarnation.value.count)));
     const fateModsValue = computed<StatMods>(() => fateMods(chart.value));
+    /**
+     * 已达成命题的永久战斗词条（第 525 轮）。
+     *
+     * 来源是 `reincarnation.lives` 里 `themeResult === "done"` 的那几世 ——
+     * 与转世页「走到底过的题不再重复出现」那个 `done` 集合同一个字段，不另存一份。
+     */
+    const themeModsValue = computed<StatMods>(() => themeLegacyMods(reincarnation.value.lives));
 
     const qiCapValue = computed(() => {
       // 聚灵阵(qiCapMult)与「修复阵法」类 buff(qiCapPct)都能抬高灵气上限
@@ -282,6 +290,7 @@ export const usePlayerStore = defineStore(
           weatherMods.value,
           divinationMods.value,
           fateModsValue.value,
+          themeModsValue.value,
           ...talentMods.value,
         ],
         // 名字与上面一一对应 —— 面板的「来源明细」直接读它们,不再另起一套说法
@@ -297,6 +306,7 @@ export const usePlayerStore = defineStore(
           "天时",
           "在身之卦",
           "命格",
+          "本世命题",
           ...reincarnation.value.talents.map((id) => `天赋·${talentDef(id)?.name ?? id}`),
         ],
         /** 凡界的平铺三维:**装备给的攻防血就是从这里进来的**(见 core/statsCalc) */
@@ -364,6 +374,7 @@ export const usePlayerStore = defineStore(
           weatherMods.value,
           divinationMods.value,
           fateModsValue.value,
+          themeModsValue.value,
           ...talentMods.value,
         ],
         sourceNames: [
@@ -379,6 +390,7 @@ export const usePlayerStore = defineStore(
           "天时",
           "在身之卦",
           "命格",
+          "本世命题",
           ...reincarnation.value.talents.map((id) => `天赋·${talentDef(id)?.name ?? id}`),
         ],
         /** 平铺三维也照常作数:它就是「基础属性」本身 */
