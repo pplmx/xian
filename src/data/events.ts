@@ -1,4 +1,4 @@
-/** 随机事件库 —— 152 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 156 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { MAX_MAJOR, WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -2453,6 +2453,123 @@ export const EVENTS: EventDef[] = [
       ),
     ],
     { minRealm: 9, maxRealm: 11 },
+  ),
+  /*
+   * 寿元四则（第 491 轮）。
+   *
+   * 152 个事件里只有三处能改寿元 —— 而寿元是这部作品最核心的压力:
+   * 「一世」就是以它计的。故补四则。
+   *
+   * **两个刻度不能混**（数据文件上方那条注释讲过）:
+   *   人间界   寿元以年计     → 写 years
+   *   界外     寿元以亿载计   → 写 pct（对金仙来说八百年连一次吐纳都算不上）
+   */
+  ev(
+    "ev_shouyan_zhi",
+    "寿宴之纸",
+    "村里在办寿宴。主家把一张写了字的红纸递到你手上 —— 那是一份「借寿」的字据。",
+    ["general"],
+    [
+      c("收下字据", [
+        o(50, "字据入袖，你觉得身子轻了些。", { type: "lifespan", years: 12 }),
+        o(30, "字据上那句话你琢磨了半宿 —— 借寿者，先要肯活。", {
+          type: "material",
+          id: "wudao",
+          amount: 5,
+        }),
+        o(20, "夜里你梦见有人在数自己的岁数，一声一声，数到天亮。", {
+          type: "buff",
+          id: "injury",
+        }),
+      ]),
+      c("把字据还回去", [
+        o(60, "主家愣了一下，随即笑着收下。那顿饭你吃得很踏实。", {
+          type: "exp",
+          secs: 60,
+        }),
+        /*
+         * 这一条给的是悟道而不是寿元:选项的价值不必与事件主题一致 ——
+         * 「把字据还回去」换来的是一句受用的话,那比十二年寿数更像是这个选择该有的回报。
+         * 同时它让这一则不至于在悟道供给上稀释本就稀薄的那一格(见 economySim 的偏离判据)。
+         */
+        o(1, "席散时主家送你出门,说了一句「活着比什么都好」。你记了很多年。", {
+          type: "material",
+          id: "wudao",
+          amount: 6,
+        }),
+        o(40, "主家不肯收。你只好把字据压在碗底下走了。", { type: "nothing" }),
+      ]),
+    ],
+    { minRealm: 0, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ev_xushi_canpian",
+    "续世残篇",
+    "洞窟深处有一卷残篇，只余半页。上面的字认不全，但「续」那个字很清楚。",
+    ["general", "ruin"],
+    [
+      c("照着残篇调息", [
+        o(45, "你按那几个字的意思调了三个月息。出关时，鬓角的白发少了几根。", {
+          type: "lifespan",
+          years: 25,
+        }),
+        o(35, "调岔了。你在洞窟里吐了半宿血。", { type: "buff", id: "injury" }),
+        o(20, "没什么效果。但那半页上的字，你琢磨了很久。", {
+          type: "material",
+          id: "wudao",
+          amount: 7,
+        }),
+      ]),
+      c("只抄不练", [
+        o(70, "抄下来的那半页，往后或许用得上。", { type: "material", id: "page", amount: 8 }),
+        o(30, "抄到一半，纸就碎了。", { type: "nothing" }),
+      ]),
+    ],
+    { minRealm: 2, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ev_jiedan_tingyan",
+    "解丹听验",
+    "丹成出炉。老丹师捏起一枚对着光看了很久，说：这一炉，能添几年。",
+    ["general"],
+    [
+      c("当场服下", [
+        o(55, "药力化开，你觉得筋骨里那点旧伤都松了。", { type: "lifespan", years: 40 }),
+        o(25, "药性太烈，你在床上躺了三天。", { type: "buff", id: "injury" }),
+        o(20, "丹是好丹，只是你此刻虚不受补。", { type: "nothing" }),
+      ]),
+      c("收起来，留到要紧时", [
+        o(1, "你把它收进最里层的匣子。老丹师那句话，你记了很多年。", {
+          type: "material",
+          id: "wudao",
+          amount: 8,
+        }),
+      ]),
+    ],
+    { minRealm: 5, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ev_xianren_xushou",
+    "仙人续寿",
+    "白衣人在云头坐下，指了指你。他没说话，但你知道他在问：「还想活多久」",
+    ["sky", "immortal"],
+    [
+      c("答「够用就好」", [
+        o(50, "他点了点头。你身上的旧疲忽然散了。", { type: "lifespan", pct: 0.06 }),
+        o(50, "他笑了一下，什么也没给，转身走了。", { type: "nothing" }),
+      ]),
+      c("答「越久越好」", [
+        o(40, "他伸手在你眉心一点。你觉得有什么东西被拉长了。", {
+          type: "lifespan",
+          pct: 0.12,
+        }),
+        o(60, "他摇头。那一指落下时，你听见自己体内有什么断了。", {
+          type: "buff",
+          id: "injury",
+        }),
+      ]),
+    ],
+    { minRealm: 10, maxRealm: MAX_MAJOR },
   ),
   /*
    * 天象四则（第 486 轮）。
