@@ -149,24 +149,32 @@ export function signLifeTrial(id: string): boolean {
   }
   player.setLifeTrial({ trialId: def.id, at: Date.now(), paid: def.cost });
   /*
-   * 签下「不祭法宝」这类契之后,**已经装着的那几件留在身上**。
+   * 签下「不祭法宝」这类契之后，**已装的那几件由界面卸下**（第 473 轮定的）。
    *
-   * ## 为什么是「不卸」而不是「卸」
-   *
-   * 这段注释在第 473 轮写的是「把已经装着的强制取下来」—— 而代码里从来没有
-   * 这一步（`signLifeTrial` 里与库存相关的调用一个都没有）。
-   * 第 516 轮把注释改回它实际的样子，理由取 `ArtifactPanel.toggleArtifact`:
+   * ## 两个机制容易混
    *
    * ```text
-   *   强制卸下会改变玩家上一刻的战力 —— 那比「多带一会儿」更坏;
-   *   而契约的语义是「不祭」，从这一件起不祭即可，收回正是守戒。
+   *   lifeTrialBansItem(kind)     逆旅契的禁用 —— 本文件，管「本世不得用」
+   *   noteTaboo(kind)             命题立誓的禁忌 —— samsaraService，管「破题」
    * ```
    *
-   * 故拦截点只有一个:`ArtifactPanel` 的「装上」那一侧
-   * （`!wearing && lifeTrialBansItem("artifact")`）。**收回不拦** ——
-   * 拦住收回等于把玩家锁在破题状态里。
+   * `exploration.ts` 里那句 `noteTaboo("artifact")` 查的是**命题禁忌**，
+   * 与逆旅契无关。故签了弃器契之后，已装的旧法宝既不会触发破题，也不会自己失效 ——
+   * 屏幕上写着「本世不得祭用任何法宝」，而它还在面板上加成。
    *
-   * 判据见 core/tabooUnloadTruth.spec。
+   * 卸下是「不祭」的自然含义，不是惩罚：法宝还在行囊里，收回即守戒。
+   * 拦截点两处：签契时卸下（界面），之后挡在「装上」那一侧（ArtifactPanel）。
+   *
+   * ## 这一节改过两次
+   *
+   * ```text
+   * 第 516 轮  我把这里改成「留在身上」—— 理由是 ArtifactPanel 的
+   *            「强制卸下会改变玩家上一刻的战力」
+   * 第 531 轮  发现那个理由站不住:ArtifactPanel 说的是「拦住收回」那件事，
+   *            而这里是「签的那一刻清一次」。两件事不同，故改回。
+   * ```
+   *
+   * 判据见 core/trialItemBind.spec 第 3 条与第 4 条。
    */
   notify(`「${def.name}」既立,此生再无回头路`, "rare");
   return true;

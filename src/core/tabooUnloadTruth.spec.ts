@@ -44,7 +44,7 @@ import { signLifeTrial } from "@/core/lifeTrialService";
 import { stripComments } from "@/test/stripComments";
 
 describe("逆旅契 · 注释说的行为，代码里得有", () => {
-  it("① 说「签下之后把已经装着的卸下」，代码里就得有待卸动作", () => {
+  it("① 说「签下之后把已经装着的卸下」，全链路里就得有卸下动作", () => {
     const src = readFileSync(resolve(__dirname, "lifeTrialService.ts"), "utf8");
     /*
      * 取 `signLifeTrial` 的函数体（从它的声明到文件里下一个顶层 `export`）。
@@ -59,18 +59,26 @@ describe("逆旅契 · 注释说的行为，代码里得有", () => {
     /* 词集放宽：「卸下 / 取下 / 收下 / 摘掉」都是「把已装着的拿掉」 */
     const commentSaysUnload = /签下[\s\S]{0,80}?(?:卸下|取下|摘掉|强行收起)/.test(body);
     /*
-     * ## 这一行改过两次
+     * ## 这一条的口径改过一次（第 531 轮）
      *
-     * 第一版直接 `/unequip|equippedArtifacts/.test(body)` —— 而它恒为真,
-     * 因为**这段注释自己就写着「与库存相关的调用一个都没有」这类话**。
-     * 判据拿注释里的词当成了代码里的证据（第 510 轮那个毛病）。
+     * 它原本只查 `lifeTrialService.signLifeTrial` 的函数体 —— 而卸下动作
+     * **落在界面**（`RebirthDialog.signTrial`），不在 core：
+     * `layeringAudit` 要求 core 对 store 的依赖只许收拢，故那一步挪到了界面。
      *
-     * 第二版我在本文件里写了一份 `stripComments` —— 而仓里**早已有一份**
-     * （`@/test/stripComments`，由 `stripCommentsParity.spec` 守着「只许有一份」）。
-     * 那正是第 510 轮记的「先查有没有现成的工具」。
+     * 起初这条判据红过两次（第 516 轮），当时的结论是「注释过期了」——
+     * 而第 531 轮发现**注释是对的、判据查错了地方**:
+     * 卸下确实在发生，只是在另一个文件里。
+     *
+     * 故口径改成「查全链路」:core 说、界面做。
      */
     const codeOnly = stripComments(body);
-    const codeUnloads = /unequip|equippedArtifacts/.test(codeOnly);
+    const coreUnloads = /unequip|equippedArtifacts/.test(codeOnly);
+    const dlg = stripComments(
+      readFileSync(resolve(__dirname, "../components/character/RebirthDialog.vue"), "utf8"),
+    );
+    const uiUnloads =
+      /bannedItemKind\s*===\s*"artifact"[\s\S]{0,120}equippedArtifacts\s*=\s*\[\]/.test(dlg);
+    const codeUnloads = coreUnloads || uiUnloads;
     /*
      * 两者要么都有、要么都没有。只有一个，就是注释或实现有一方在撒谎。
      */
