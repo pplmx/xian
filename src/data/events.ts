@@ -1,4 +1,4 @@
-/** 随机事件库 —— 148 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 152 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { MAX_MAJOR, WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -2453,6 +2453,118 @@ export const EVENTS: EventDef[] = [
       ),
     ],
     { minRealm: 9, maxRealm: 11 },
+  ),
+  /*
+   * 天象四则（第 486 轮）。
+   *
+   * `sky` 一直是「每处地界摊到几则」最低的那一处（15 则 / 10 处 = 1.5），
+   * 前四轮特意留到现在补 —— 因为它与冰/剑/火/暗都不同:
+   *
+   * ```text
+   *   sky   10 处地界，tier 17~32，minRealm 7~20
+   *         从星陨荒原一路铺到鸿蒙本源，跨三个界域
+   * ```
+   *
+   * 故这四则按**层级**分开:两则写「天象本身」（星、天外），两则写「天上留下的东西」
+   * （星潮、鸿蒙之音）。一律不带 `general`。
+   */
+  ev(
+    "ev_xingyun_shi",
+    "星陨石",
+    "荒原上散着一层细碎的光。走过去才发现，那是不久前落下来的星屑，还温着。",
+    ["sky", "immortal"],
+    [
+      c("拾取星屑", [
+        o(50, "星屑入手很轻。你收了一把。", { type: "material", id: "wudao", amount: 16 }),
+        o(30, "屑末在指间化成光，什么也没剩下。", { type: "nothing" }),
+        o(20, "有几粒还烫。你缩回手，指尖起了泡。", { type: "buff", id: "injury" }),
+      ]),
+      c("在原地看着", [
+        o(55, "又落了一阵。你看清了它们下来的方向。", { type: "exp", secs: 105 }),
+        o(45, "天很干净，什么都没再落。", { type: "nothing" }),
+      ]),
+    ],
+    { minRealm: 7, maxRealm: MAX_MAJOR },
+  ),
+  ev(
+    "ev_tianwaitian_jing",
+    "天外天镜",
+    "天尽头悬着一面镜，镜面朝下。它映的不是你，是你在很远的地方做过的某件事。",
+    ["sky", "immortal"],
+    [
+      c("看下去", [
+        o(45, "你看见了那道很久没想起的背影。回过神来，天色已暗。", {
+          type: "material",
+          id: "wudao",
+          amount: 20,
+        }),
+        o(35, "镜里一片模糊。你看了很久，也没认出那是谁。", { type: "nothing" }),
+        o(20, "镜面忽然一翻，光直射进眼。你捂着脸退了很远。", {
+          type: "buff",
+          id: "injury",
+        }),
+      ]),
+      c("背过身去", [o(1, "你没有看。有些事过去就过去了。", { type: "nothing" })], {
+        isDefault: true,
+      }),
+    ],
+    { minRealm: 9, maxRealm: MAX_MAJOR },
+  ),
+  ev(
+    "ev_luotian_xingchao",
+    "罗天星潮",
+    "星海涨潮了。无数光点从低处涌上来，一层一层，无声地漫过你的脚踝。",
+    ["sky", "immortal"],
+    [
+      c("迎潮而立", [
+        o(40, "光点穿过身体，没有重量，却把它们经过的每一处都点亮了。", {
+          type: "exp",
+          secs: 118,
+        }),
+        o(35, "潮水漫过肩头，你在其中站不住，退了出来。", { type: "nothing" }),
+        o(25, "潮里有东西是硬的。你被撞得退了半步，站定后发现它在手里。", {
+          type: "equipment",
+          minQualityRank: 5,
+        }),
+      ]),
+      c("退到高处看", [
+        o(60, "整片星海在你脚下涨落。你看懂了一点它的节律。", {
+          type: "material",
+          id: "wudao",
+          amount: 24,
+        }),
+        o(40, "太高了，看不清。只听见风。", { type: "nothing" }),
+      ]),
+    ],
+    { minRealm: 13, maxRealm: MAX_MAJOR },
+  ),
+  ev(
+    "ev_hongmeng_zhiyin",
+    "鸿蒙之音",
+    "什么都没有的地方，却一直有一个声音。它不像从哪里传来，更像本来就一直在。",
+    ["sky", "chaos"],
+    [
+      c("静听", [
+        o(40, "听到深处，那个声音不再是声音。你说不清那是什么。", {
+          type: "material",
+          id: "wudao",
+          amount: 28,
+        }),
+        o(35, "听着听着就忘了时间。醒来时不知过了多久。", { type: "exp", secs: 120 }),
+        o(25, "声音太满。你抱着头蹲下去，很久才起身。", { type: "buff", id: "injury" }),
+      ]),
+      c("开口应它", [
+        o(45, "你只应了一声。那声音停了。之后很久，什么都听不见。", {
+          type: "nothing",
+        }),
+        o(55, "应了之后，声音里多了一线回音 —— 那是你自己的。", {
+          type: "material",
+          id: "wudao",
+          amount: 18,
+        }),
+      ]),
+    ],
+    { minRealm: 20, maxRealm: MAX_MAJOR },
   ),
   /*
    * 界外六则（第 485 轮）。
