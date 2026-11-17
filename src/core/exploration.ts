@@ -326,6 +326,25 @@ export function regionRealmPressure(region: RegionDef): RealmPressure {
  * 「孤行/疾行/残躯/逆锋」四契的加难在本世最大的时段(离线挂机)里完全不生效。
  */
 export function explorationRules(): CombatRules | undefined {
+  /*
+   * 两份来源，逐层合并:**道途规则 × 逆旅契**。
+   *
+   * ## 世界规则不在这里 —— 这是有意的
+   *
+   * 生成器每世产出一条「世界规则」（ruleId / ruleName / rules），
+   * 而它**刻意不进战斗**:
+   *
+   * ```text
+   *    mortalFateNotInCombat.spec   「凡界命数不改写历练战斗」
+   *    worldSemantics.spec          界面上那句「其律尚未显化于历练」必须是真话
+   * ```
+   *
+   * 第 512 轮我曾把它合进来（以为那是一处「装配点没接」的缺口），
+   * 两条判据当场红了 —— 它们守的正是「不要接」。故退回。
+   *
+   * 那条规则目前的作用面是世界详情页与新颖度判据
+   * （见生成器 spec 那张「世代 / 世界规则」表），**不改写任何一场战斗**。
+   */
   return mergeRules(currentDaoRules(), lifeTrialRules());
 }
 
