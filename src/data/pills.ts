@@ -536,7 +536,8 @@ export const PILLS: PillDef[] = [
     kind: "buff",
     buffId: "buff_jinxian",
     recipe: { herb: 262, stoneBase: 660 },
-    alchemyLevel: 11,
+    // 丹房最高 10 级（data/buildings.ts）—— 这里写 11 会让这味丹永远炼不出来
+    alchemyLevel: 10,
   }),
   /** 增益线:每 buff 仅此一味丹产出(法则 C),增益定义见 data/buffs.ts */
   p("p_xianlidan", "仙力丹", "immortal", 10, "仙力灌入四肢,出手的声音比风先响", {
