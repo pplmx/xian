@@ -363,10 +363,15 @@ export const PILLS: PillDef[] = [
     recipe: { herb: 24, stoneBase: 48 },
     alchemyLevel: 4,
   }),
+  /*
+   * 御风丹的 recipe 是旧值（herb 30 / stone 70），而它在境 6 —— 比境 5 的炼虚神游丹(216)
+   * 与境 7 的大乘造化丹(420) 都便宜。buff 丹是同一族，价应当随境界走。
+   * 判据见 core/recipeCostLadder.spec ④。
+   */
   p("p_yufeng", "御风丹", "earth", 6, "风从袖里过,人比风先到", {
     kind: "buff",
     buffId: "buff_yufeng",
-    recipe: { herb: 30, stoneBase: 70 },
+    recipe: { herb: 96, stoneBase: 280 },
     alchemyLevel: 6,
   }),
   // ---- 炼丹自增益三味(概念契约):通用状态丹,炼丹面只是其中一格 ----
@@ -662,7 +667,14 @@ export const PILLS: PillDef[] = [
   p("p_huohou", "安神丹", "immortal", 12, "神魂落回原处,呼吸慢下来;盯着炉子看,能多看一会儿成", {
     kind: "buff",
     buffId: "buff_huohou",
-    recipe: { herb: 60, stoneBase: 150 },
+    /*
+     * recipe 原为旧值（herb 60 / stone 150）—— 这味丹当年叫「火候丹」，
+     * 改名走安神一路时 id 沿了旧、价钱没跟着境界抬。它在境 12，
+     * 而比境 5 的炼虚神游丹(216)、境 11 的金仙道体丹(660) 都便宜。
+     * 效果却是 { qiRegen: 0.25, alchemyYield: 0.2 } 持续 900 秒 —— 一点也不弱。
+     * 判据见 core/recipeCostLadder.spec ④。
+     */
+    recipe: { herb: 288, stoneBase: 720 },
     alchemyLevel: 10,
   }),
   // ---- 后期每境第二味(多维审视 P1:神界/混沌海 7 境曾一味独苗,悬在 11 条,薄于人间界地板)----
