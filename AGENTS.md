@@ -329,6 +329,58 @@ TODO / 未实现标记      全仓 0 处；只有 rebirthRoi.ts 一处「暂未�
   光靠值相同分不出「该引用常数」与「恰好等于这个值」
 ```
 
+第 489 轮:「查消费点」与「查装配点」—— 我又写窄了一次，而这次是靠改判据自己发现的
+
+#### 想查什么
+
+`core/weather.ts` 的 `WeatherDef` 有两个效果字段：
+
+```text
+tribulationMult   渡劫难度倍率     → 接进了 breakthrough.ts:324 与 tribulationDecision.ts
+mods              环境属性加成     → ？      { qiRegen: 0.2, cultivationSpeed: 0.1 } 之类
+```
+
+我 grep 了 `todayWeather`，只看见渡劫那两处；又 grep 了 `core/statsCalc.ts`，它一个字
+不提天时。于是写下判据：「天时的加成只被 HomeView 念成文字，不参与结算」。
+
+#### 而它在
+
+```text
+stores/player.ts:230   const weatherMods = computed(() => todayWeather(major.value).mods);
+stores/player.ts:282   modSources: [ … weatherMods.value, … ]     ← finalStats
+stores/player.ts:364   同一个数组（来源明细那一路）
+```
+
+**`statsCalc` 只是接收 `modSources` 数组的纯函数 —— 它当然不知道每一份来自哪里。**
+接入点在装配处（store），不在消费处（纯函数）。
+
+#### 这一条值得单独记，因为它与前几次不同
+
+```text
+前几次写窄    grep 漏了某个文件 / 某个写法      → 靠「多查几处」避免
+这一次写窄    **查对了文件，查错了位置**        → 要靠「知道该查哪一层」
+```
+
+一个纯函数不读某个数据，通常说明不了什么 —— 它的输入是参数。
+**判「有没有接上」，要查它的调用方把这个数据传进去了没有。**
+
+```text
+装配点    store / composable / 视图的 setup    ← 数据在这里被收进参数
+消费点    core 纯函数                          ← 只看见参数,看不见来源
+```
+
+| 想判的事 | 该查的地方 |
+| --- | --- |
+| 这个数据参与结算了吗 | 装配点：它有没有进 `modSources` / 输入结构 |
+| 这个字段有人读吗 | 全仓 grep（含装配点与视图） |
+| 这个计算对吗 | 消费点：纯函数本身 |
+
+#### 结果
+
+天时接入本来就是完整的（两条属性链都带上了，来源明细里也有「天时」这个名字）。
+三条判据写完即绿，`weatherModsLive.spec` 没有留在仓库里 —— 它守的东西已有
+`mechanismVisibility.spec` 与来源明细那一路在管。
+
 第 488 轮:内容密度九轮补完之后 —— 各维度都平了，而我在同一轮里写窄了三次
 
 #### 九轮补下来的现状
