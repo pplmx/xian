@@ -235,6 +235,7 @@
 import { chromium } from "playwright";
 import { createServer as createViteServer } from "vite";
 import { blockExternal, watchPageErrors } from "./lib/pageErrors.mjs";
+import { CHAINS } from "../src/data/chains.ts";
 import {
   decryptSlice,
   encryptSlice,
@@ -20179,8 +20180,17 @@ async function taskAdventureFold320() {
         if (desk.rows[0].id !== "old_man_stone") {
           failures.push(`[320-adventure] 在续的缘没排在最前 —— 首行是 «${desk.rows[0].id}»`);
         }
-        if (!/另有\s*5\s*条缘未起/.test(desk.foot)) {
-          failures.push(`[320-adventure] 未起的缘没报清条数 —— «${desk.foot}»(八条减三条动过 = 5)`);
+        /*
+         * 未起的条数 = 全部奇缘 − 动过的三条。
+         * **从前这里写死了 5**（八条减三条），第 517 轮补了第九条之后它当场红。
+         * 故改成从数据算:奇缘有几条，脚本就去数几条。
+         */
+        const chainTotal = CHAINS.length;
+        const expectUnstarted = Math.max(0, chainTotal - 3);
+        if (!new RegExp(`另有\\s*${expectUnstarted}\\s*条缘未起`).test(desk.foot)) {
+          failures.push(
+            `[320-adventure] 未起的缘没报清条数 —— «${desk.foot}»(${chainTotal} 条减 3 条动过 = ${expectUnstarted})`,
+          );
         }
         for (const name of ["古树藏卷", "夜灯照路", "云海故碑", "代天一行", "本源一滴"]) {
           if (desk.foot.includes(name) || desk.rows.some((r) => r.text.includes(name))) {
