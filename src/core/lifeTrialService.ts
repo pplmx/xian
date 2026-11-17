@@ -139,13 +139,24 @@ export function signLifeTrial(id: string): boolean {
   }
   player.setLifeTrial({ trialId: def.id, at: Date.now(), paid: def.cost });
   /*
-   * 签下「不祭法宝」这类契之后,把已经装着的那几件卸下(第 473 轮)。
+   * 签下「不祭法宝」这类契之后,**已经装着的那几件留在身上**。
    *
-   * 不卸的话会出现一个荒谬状态:屏幕上写着「本世不得祭用任何法宝」,
-   * 而玩家正带着两件在面板上加成 —— `noteTaboo` 只在**祭用**那一刻判定,
-   * 已经装着的不会触发它,于是契约说了不许,实际一分好处都没少。
+   * ## 为什么是「不卸」而不是「卸」
    *
-   * 卸下是「不祭」的自然含义,不是惩罚:法宝还在行囊里,收回即守戒。
+   * 这段注释在第 473 轮写的是「把已经装着的强制取下来」—— 而代码里从来没有
+   * 这一步（`signLifeTrial` 里与库存相关的调用一个都没有）。
+   * 第 516 轮把注释改回它实际的样子，理由取 `ArtifactPanel.toggleArtifact`:
+   *
+   * ```text
+   *   强制卸下会改变玩家上一刻的战力 —— 那比「多带一会儿」更坏;
+   *   而契约的语义是「不祭」，从这一件起不祭即可，收回正是守戒。
+   * ```
+   *
+   * 故拦截点只有一个:`ArtifactPanel` 的「装上」那一侧
+   * （`!wearing && lifeTrialBansItem("artifact")`）。**收回不拦** ——
+   * 拦住收回等于把玩家锁在破题状态里。
+   *
+   * 判据见 core/tabooUnloadTruth.spec。
    */
   notify(`「${def.name}」既立,此生再无回头路`, "rare");
   return true;
