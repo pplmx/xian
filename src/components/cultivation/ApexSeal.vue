@@ -31,6 +31,7 @@ import { usePlayerStore } from "@/stores/player";
 import { useEndgameStore } from "@/stores/endgame";
 import { MANUAL_REBIRTH_MIN_MAJOR } from "@/core/reincarnation";
 import { TRIAL_TOTAL, apexPursuits, apexRecord } from "@/core/apex";
+import { PROFILE_MIN_MARKS } from "@/core/identity";
 import { apexFurnaceEta } from "@/core/apexCultivation";
 import { toNum } from "@/utils/gnum";
 import { formatGN } from "@/utils/format";
@@ -120,7 +121,18 @@ function go(route: string): void {
       <dd>
         <span class="cultivation-apex__value tabular">{{ record.marks }} 则</span>
         <span class="cultivation-apex__aside">
-          {{ record.profileFormed ? "修行画像已成形" : "道痕尚浅,画像未成形" }}
+          <!--
+            未成形时要说差几则（第 536 轮）。
+            门槛 `PROFILE_MIN_MARKS` 就在 core/identity，而原先只报当前值 ——
+            玩家看到「12 则 · 画像未成形」，不知道该攒到几则。
+            这与第 529 轮「差额要给出来」是同一条纪律，那里是花费、这里是进度。
+            判据见 core/identityRiskHint.spec 第 4 条。
+          -->
+          {{
+            record.profileFormed
+              ? "修行画像已成形"
+              : `道痕尚浅,画像未成形 —— 已 ${record.marks} 则，成形需 ${PROFILE_MIN_MARKS} 则`
+          }}
         </span>
       </dd>
       <dt>熔真</dt>

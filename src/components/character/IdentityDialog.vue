@@ -248,7 +248,14 @@ const riskLine = computed(() => {
   const risk = identity.value?.traits.riskBias;
   if (risk === "gamble") return "杀伐多于历练，此修士惯以险求胜。";
   if (risk === "steady") return "行止更偏循序渐进，少以性命试未知。";
-  return "行迹尚浅，还不足以判读风险取向。";
+  /*
+   * 门槛只是一次行动（`kills + explores + breakthroughs > 0`，见 core/identityService）——
+   * 故这一句只出现在「这一世一次都还没动过」的时候。
+   *
+   * 这时玩家需要的不是「还差多少」，是「去做什么」。第 535 轮那个形状:
+   * 界面说清了当下，却没接上下一步。判据见 core/identityRiskHint.spec。
+   */
+  return "行迹尚浅，还不足以判读风险取向 —— 先去历练走一遭，回来便有分晓。";
 });
 </script>
 
