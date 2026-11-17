@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 895 个 spec;本作自己那部分 815 个) |
+| `bun run test` | 全量用例(全量 896 个 spec;本作自己那部分 816 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 895 个 spec = 宿主 815 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 896 个 spec = 宿主 816 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 895 个 spec(本作自己那部分 815 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 896 个 spec(本作自己那部分 816 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -27294,3 +27294,52 @@ old_man_stone_2 / ancient_tree_1 / night_lantern_1
 ```
 
 工作区干净、全量 895 / 7201 全绿。
+
+### 第 496 轮:同一个动作，两个数据文件用了两个名字
+
+#### 上一轮那把尺，再移一次
+
+第 494 轮查标题、第 495 轮查文案。这一轮查**选项名**:
+
+```text
+「离开」  × 42   ← events.ts 的 leave() 助手
+「离去」  × 15   ← chains.ts 也有一个自己的 leave() 助手
+「转身离开」 × 4  ← 少数事件手写了第三种
+```
+
+三种写法指的是**同一件事**（不参与、退出这个事件）。玩家看到的三个不同的词，
+而它们的行为完全一样 —— 那让玩家以为有区别。
+
+#### 中途我数错过一次
+
+第一次统计时，我按 `c.label` 收集，得到「离去 ×15」；而 `grep '"离去"' src/data/events.ts`
+却是**零命中**。
+
+原因:事件数据不止在 `events.ts` —— **`chains.ts` 里有一个自己的 `leave` 助手**，
+它用的是「离去」。两个文件各写了一个同义的助手，而我只看了其中一个。
+
+> 第 481 轮那条 `grep -v spec` 的教训是「别把自己的文件滤掉」;
+> 这一条是它的近亲:**同一个功能可能有两个数据文件各写一份。**
+
+#### 判据三条（`core/leaveLabelUniform.spec`）
+
+```text
+① 全表只用一种写法
+② 反差：其它选项名的复用不算问题
+③ 反差：退出那句文案不必唯一
+```
+
+② 守的是①的边界 —— 它只挑出那几个「退出」同义词，而不是要求所有选项名唯一
+（「俯身细看」在两条事件里都是这个动作，那是正常的）。
+③ 说明文案唯一性归第 495 轮那条判据管，这一条只管**名字**。
+
+#### 改法
+
+统一成「离开」（用得最多的那个）:
+
+```text
+chains.ts   c("离去", …)      → c("离开", …)    15 处（含助手本身）
+events.ts   c("转身离开", …)  → c("离开", …)     4 处
+```
+
+工作区干净、全量 896 / 7204 全绿。

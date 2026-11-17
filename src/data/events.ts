@@ -684,7 +684,7 @@ export const EVENTS: EventDef[] = [
     "海面上浮起一座岛,岛上有城;你朝它走了半个时辰,城还在原处,一步也没近。",
     ["general", "water"],
     [
-      c("转身离开", [
+      c("离开", [
         o(55, "你一转身,那座城忽然就到了身后 —— 原来它一直在追着你走。", {
           type: "material",
           id: "wudao",
@@ -3144,7 +3144,7 @@ export const EVENTS: EventDef[] = [
         ],
         { isDefault: true },
       ),
-      c("转身离开", [o(1, "终究是身外之物,你摇摇头走开。")]),
+      c("离开", [o(1, "终究是身外之物,你摇摇头走开。")]),
     ],
     { maxRealm: 4 },
   ),
@@ -3166,7 +3166,7 @@ export const EVENTS: EventDef[] = [
         ],
         { isDefault: true },
       ),
-      c("转身离开", [o(1, "凡间香火,你无意沾惹。")]),
+      c("离开", [o(1, "凡间香火,你无意沾惹。")]),
     ],
     { maxRealm: 5 },
   ),
@@ -3189,7 +3189,7 @@ export const EVENTS: EventDef[] = [
         ],
         { isDefault: true },
       ),
-      c("转身离开", [o(1, "深夜孤塔,你不想多惹是非。")]),
+      c("离开", [o(1, "深夜孤塔,你不想多惹是非。")]),
     ],
     { maxRealm: 8 },
   ),
