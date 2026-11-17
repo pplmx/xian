@@ -25,7 +25,6 @@ export interface CollectionProgressOverview {
   total: number;
   newCount: number;
   newRows: CollectionProgressRow[];
-  nearestRows: CollectionProgressRow[];
   initialOpenKeys: string[];
 }
 
@@ -72,7 +71,6 @@ export function collectionProgressOverview(
     total: rows.reduce((sum, row) => sum + row.total, 0),
     newCount: rows.reduce((sum, row) => sum + row.newCount, 0),
     newRows,
-    nearestRows,
     initialOpenKeys:
       newRows.length > 0
         ? newRows.slice(0, COLLECTION_INITIAL_OPEN_MAX).map((row) => row.key)

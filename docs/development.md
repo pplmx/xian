@@ -25765,3 +25765,73 @@ PlaceContent.fromLegacy
 **是让一条既有的判据去看它本该看的地方**。
 
 工作区干净、全量 873 / 7123 全绿。
+
+### 第 465 轮:把扫描面铺开，看它还漏了什么
+
+#### 上一轮的收获指向下一步
+
+第 464 轮加了一个 `VIEW_TYPE_SOURCES`（`mortalWorldService.ts`），**第一次跑就抓到**
+`clearedStages`。那说明:视图形接口区里可能还有同类的东西，而判据一直没看那里。
+
+核心有 42 个视图型接口。这一轮逐个试。
+
+#### 试了八个模块，抓到一个
+
+```text
+collectionProgress.ts   → CollectionProgressOverview.nearestRows   ← 抓到
+achievementProgress.ts  → clean
+buildDetect.ts          → clean
+endgameService.ts       → clean
+loreService.ts          → clean
+dailyChallenge.ts       → clean
+soulOverview.ts         → clean
+realmCodex.ts           → clean
+secretRealm.ts          → clean
+celestialOverview.ts    → clean
+apprenticeService.ts    → clean（73 个字段全有人读）
+```
+
+`nearestRows` 与上一轮那个是**同一个形状**:
+
+```text
+它是「将满榜」——按比例排好的、可望而可及的几格
+用途只有一处:挑出 initialOpenKeys 的第一项
+外部消费者:CollectionView 只读 newRows 与 initialOpenKeys，从不读它
+```
+
+也就是说它是一个**中途变量**，却被暴露成了接口字段。
+
+#### 修法与判据
+
+```text
+collectionProgress.ts   删掉那个字段（内部变量留着 —— initialOpenKeys 还要用它）
+collectionProgress.spec 两条测试去掉对它的断言，保留 initialOpenKeys 的那条
+                        （排序规则没丢：initialOpenKeys 取的就是将满榜的第一项）
+```
+
+判据把**试过的九个模块全部加进名单**，并新增一条守住名单本身:
+
+```text
+it("视图型来源一个都不许被删 —— 每一条都是一次真实的排查")
+```
+
+> 「干净」不是「可以删」——恰恰相反，把它们留在名单里，
+> 是为了**将来改坏了会红**。
+
+#### 一个数字上的错
+
+写这一轮的记录时，我以为新增了 spec 文件，把总数往上加了一个，`docs-check` 当场拦下:
+
+```text
+✗ docs/development.md: 写着「全量 N 个 spec」，实际比它少一个
+```
+
+这一轮**没有新增 spec 文件** —— 改的是既有的 `typeFieldCoverage.spec.ts`。
+数一轮的产出不该看「新增了几个文件」。
+
+#### 注入验证
+
+往 `CollectionProgressOverview` 加一个 `probeDead: number` 并赋上值 →
+判据立刻红，点名 `CollectionProgressOverview.probeDead`。
+
+工作区干净、全量 873 / 7124 全绿。

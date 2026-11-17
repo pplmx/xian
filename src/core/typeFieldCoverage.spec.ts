@@ -57,8 +57,19 @@ const TYPES = "src/types/index.ts";
  * 不像全量扫 core 那样一上来就淹没在噪音里。
  */
 const VIEW_TYPE_SOURCES = [
-  // 世界页 / 历练页共用的一组视图结构（本文件第 464 轮加）
+  // 世界页 / 历练页共用的一组视图结构（第 464 轮加）
   "src/core/mortalWorldService.ts",
+  // 弟子页的三张表：总览 / 名册 / 派遣需求（第 465 轮加）
+  "src/core/apprenticeService.ts",
+  // 藏珍页的九册总览（第 465 轮加 —— 加进来就抓到 nearestRows）
+  "src/core/collectionProgress.ts",
+  // 以下五个是第 465 轮**扫过确认干净**的视图型模块：加进来是为了让它们
+  // 保持干净，而不是因为它们有问题。逐条点名，各自有名有姓。
+  "src/core/soulOverview.ts", // 器魂总览
+  "src/core/loreService.ts", // 藏经阁
+  "src/core/realmCodex.ts", // 境界图鉴
+  "src/core/secretRealm.ts", // 秘境
+  "src/core/celestialOverview.ts", // 终局天界
 ];
 
 /**
@@ -109,6 +120,41 @@ describe("类型字段 · 要么有人读，要么登记为预留", () => {
     expect(ifaces.length, "接口太少 —— 扫错地方了").toBeGreaterThan(30);
     const total = ifaces.reduce((n, i) => n + fieldsOf(src, i).length, 0);
     expect(total, "字段太少 —— 扫错地方了").toBeGreaterThan(200);
+  });
+
+  it("视图型来源一个都不许被删 —— 每一条都是一次真实的排查", () => {
+    /*
+     * `VIEW_TYPE_SOURCES` 里的每个模块都不是随手挑的:
+     *
+     * ```text
+     *   mortalWorldService    第 464 轮 → 抓到 clearedStages
+     *   collectionProgress    第 465 轮 → 抓到 nearestRows
+     *   apprenticeService     第 465 轮 → 扫过确认干净
+     *   其余五个              第 465 轮 → 扫过确认干净
+     * ```
+     *
+     * 「干净」不是「可以删」——恰恰相反，把它们留在名单里，是为了**将来改坏了会红**。
+     * 这条判据守住名单不被顺手删掉；删了要么说明那个模块被删了，
+     * 要么说明有人嫌它烦 —— 后者正是这条要防的。
+     */
+    for (const f of VIEW_TYPE_SOURCES) {
+      expect(
+        (() => {
+          try {
+            readSource(f);
+            return true;
+          } catch {
+            return false;
+          }
+        })(),
+        `${f} 不在了 —— 若模块真的被删，请连同 VIEW_TYPE_SOURCES 里那一条一起删`,
+      ).toBe(true);
+    }
+    /*
+     * 反差：名单至少要覆盖到本文件历史上抓出问题的两处。
+     * 数量本身不是目标，但少了它们说明名单被人削过。
+     */
+    expect(VIEW_TYPE_SOURCES.length, "视图型来源少得可疑").toBeGreaterThanOrEqual(8);
   });
 
   it("每个只写不读的字段都在 RESERVED 里，且写了原因", () => {

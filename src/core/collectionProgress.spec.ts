@@ -90,7 +90,14 @@ describe("藏珍谱 · 从同一份图鉴条目派生", () => {
       category("pet", 0, 10),
       category("event", 10, 10),
     ]);
-    expect(overview.nearestRows.map((row) => row.key)).toEqual(["pill", "gongfa", "equip"]);
+    /*
+     * 原先这里还断言 `overview.nearestRows` 的排序（["pill","gongfa","equip"]）。
+     * 第 465 轮删掉了那个字段 —— 它只用于挑出 `initialOpenKeys` 的第一项，
+     * 没有任何外部消费者（`CollectionView` 只读 newRows 与 initialOpenKeys）。
+     *
+     * 排序规则没有丢：`initialOpenKeys` 取的就是「将满榜」的第一项，
+     * 故下面这条断言等价于「排序后 pill 排第一」。
+     */
     expect(overview.initialOpenKeys).toEqual(["pill"]);
   });
 
@@ -100,7 +107,6 @@ describe("藏珍谱 · 从同一份图鉴条目派生", () => {
       category("gongfa", 10, 10),
       category("empty", 0, 0),
     ]);
-    expect(overview.nearestRows).toEqual([]);
     expect(overview.initialOpenKeys).toEqual([]);
   });
 
