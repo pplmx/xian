@@ -1730,7 +1730,12 @@ export const EVENTS: EventDef[] = [
           id: "injury",
         }),
       ]),
-      leave(),
+      /*
+       * 离开那句不沿用 `leave()` 的默认文案 —— 它与 `ev_jade_slip` 撞了同一句。
+       * 冰魄问心是「它映出你此刻的模样」，走的时候该有一点它自己的余味。
+       * 判据见 core/eventTextReuse.spec。
+       */
+      leave("你没有再看那枚冰魄。雪又开始下了。"),
     ],
     { minRealm: 2, maxRealm: MORTAL_END },
   ),
