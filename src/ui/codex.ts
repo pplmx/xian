@@ -461,7 +461,19 @@ export function describeArtifact(def: ArtifactDef, level: number, collected: boo
      */
     hint:
       stage === 0
-        ? `尚未见过此宝 —— 到第 ${def.fromTier} 层（${worldNameOfTier(def.fromTier)}）起才可能掉落。`
+        ? /*
+           * 「阶」不是「层」（第 532 轮）。
+           *
+           * 本作里三个字各指一件事:
+           *   品  品质（凡品 / 良品 / … / 神品）
+           *   阶  区域层级（tier 1~32，对应 32 处地界）
+           *   层  境界小层（金丹·三层）
+           *
+           * 而这一句第 514 轮写的是「第 N 层」—— 读者会问是金丹九层还是第 9 号地界。
+           * `itemText` 里同一件事用的是「N 阶起可现世」，故这里跟它对齐。
+           * 判据见 core/tierTermUniform.spec。
+           */
+          `尚未见过此宝 —— 到第 ${def.fromTier} 阶（${worldNameOfTier(def.fromTier)}）起才可能掉落。`
         : ARTIFACT_HINTS[stage]!,
     foot: {
       label: "祭炼",
