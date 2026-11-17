@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 901 个 spec;本作自己那部分 821 个) |
+| `bun run test` | 全量用例(全量 902 个 spec;本作自己那部分 822 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 901 个 spec = 宿主 821 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 902 个 spec = 宿主 822 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 901 个 spec(本作自己那部分 821 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 902 个 spec(本作自己那部分 822 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -27701,3 +27701,83 @@ CollectionView 注释   969 → 972 枚
 > **同一份数据，三种比法，三种结果。** 而每一种都只看得见一个问题。
 
 工作区干净、全量 901 / 7221 全绿。
+
+### 第 504 轮:一味丹撑着一个核心属性
+
+#### 起点:把 buff 丹摊在境界轴上
+
+按第 502 轮的有效量法②，把「一族」摊在境界轴上。这次摊的是 **buff 丹指向的 mods**:
+
+```text
+cultivationSpeed  5 味   境 0,4,5,6,18
+breakthroughRate  5 味   境 0,1,4,7,18
+qiRegen           2 味   境 9,12
+eventLuck         2 味   境 5,8
+dropRate          1 味   境 3      ← 只有这一味
+```
+
+`dropRate` 乘在**所有掉落**上，是核心收益属性 —— 而全游只有「天运加身」一味丹给。
+化神（境 4）之后的玩家想让掉落多一点，手上没有任何丹药可选。
+
+补 4 味：拾禾丹（境 4，dropRate 0.12）· 满篓丹（境 10，dropRate 0.18）·
+风闻丹（境 6，eventLuck 0.17）· 息泉丹（境 14，qiRegen 0.27）。
+
+#### 判据三条（`core/buffModCoverage.spec`）
+
+```text
+① 每一个收益类属性至少在三个不同境界有丹
+② 反差：数的是「有没有」，不是「给多少」
+③ 反差：战斗内的属性不在此列（shieldPower / critRate 是构筑材料）
+```
+
+#### 而我在同一轮里又犯了那个错
+
+补完之后 `contentDensity` 红了 —— 因为**我加的丹把人间界地板从 14 抬到 15**，
+而界外最薄的金仙还是 14。
+
+于是我按「每境至少 +1」补了 **6 味修为丹**。结果连撞四处:
+
+```text
+contentDensity       神王丹(境16)比神王纪年丹(境16)还弱
+pillValueMonotonic   金仙续时丹每-成本 0.312 > 太初丹 0.294
+pillValue 法则 J      满篓丹 luck 6% 弱于鸿运丹 50%
+recipeCostLadder     星驰丹(境4) 48 石 比同境拾禾丹 110 石便宜
+```
+
+每一处都改，改完又冒出下一处。**因为我做的不是「补缺口」，是「凑判据的地板」。**
+
+#### 回滚六味，只留有依据的四味
+
+```text
+那 6 味丹的理由是「contentDensity 说金仙 14 < 15」——
+而 15 这个地板**是我自己这一轮抬上去的**。
+以「让判据变绿」为理由补内容，就会一路撞上所有别的判据 —— 因为它们各自守着不同的口径。
+```
+
+真正要修的只有一处:**风闻丹从境 7 移到境 6**（境 6 = 17、境 7 = 15，
+移走后两边都不碰地板，而 eventLuck 的覆盖仍是境 5、6、8 三处）。
+
+#### 顺带修掉两处旧账
+
+```text
+星驰丹(境4)  herb 24 → 46，stone 48 → 110
+    境 4 的 buff 丹只有它一味，所以「比更低境界便宜」一直没被判据抓到 ——
+    补了同境的拾禾丹之后才显出来。
+安神丹 27 味状态丹的计数 → 31 味
+    docCrossCheck 说这个数「一写下就是错的」（写 32，实为 23），
+    而现在是 31。
+```
+
+#### 这一轮的教训
+
+```text
+有效   把「一族」摊在境界轴上 → 看见 dropRate 只有一味
+无效   为了让 contentDensity 变绿而补 6 味丹 → 连撞四处，最后全回滚
+```
+
+> **「判据说 X 不够」不等于「X 真的有缺口」。**
+> `contentDensity` 报的是「界外不比人间界最薄的境界薄」——
+> 而那个「最薄的境界」是我这一轮自己抬上去的。
+> 修它该动的是**我加的那几味丹落在哪一境**，不是我再去补六味。
+
+工作区干净、全量 902 / 7224 全绿。

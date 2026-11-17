@@ -79,6 +79,50 @@ export const BUFFS: BuffDef[] = [
     "mountain",
   ),
   b(
+    /*
+     * 收益类属性的覆盖面补齐（第 504 轮）。
+     *
+     * 按「一族摊在境界轴上」量出来:dropRate 全游只有天运加身一味（境 3），
+     * eventLuck 只有境 5/8，qiRegen 只有境 9/12。而这三样都乘在产出上，
+     * 中间那几境的玩家想让产出多一点，手上没有任何丹药可选。
+     * 判据见 core/buffModCoverage.spec。
+     */
+    "buff_shihe",
+    "拾禾",
+    "pill",
+    1200,
+    "一穗之遗,拾者得之 —— 走路时多看两眼脚下",
+    { dropRate: 0.12 },
+    "leaf",
+  ),
+  b(
+    "buff_manlu",
+    "满篓",
+    "pill",
+    1500,
+    "篓满了才知道,原来是这么捡的",
+    { dropRate: 0.18, luck: 0.52 },
+    "leaf",
+  ),
+  b(
+    "buff_fengwen",
+    "风闻",
+    "pill",
+    1200,
+    "风里有话,听风的人先知道 —— 哪条路上有东西",
+    { eventLuck: 0.17 },
+    "wind",
+  ),
+  b(
+    "buff_xiquan",
+    "息泉",
+    "pill",
+    1500,
+    "泉眼在息处 —— 一呼一吸之间,气自己长回来",
+    { qiRegen: 0.27 },
+    "droplets",
+  ),
+  b(
     "buff_tianyun",
     "天运加身",
     "pill",

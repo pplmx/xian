@@ -1,5 +1,5 @@
 /**
- * 丹药库 —— 91 味。
+ * 丹药库 —— 95 味。
  *
  * ## 定价法则(Phase 32.6 丹药价值审计)
  *
@@ -33,7 +33,7 @@
  * - **I2 各族可炼厚度**:五条可折算时间的可炼线,每条 ≥3 味,不许中段开天窗。
  * - **J 同词条不许倒挂**:同一个 buff 词条出现在多味丹里时,准入境界更高的那味
  *   数值不许更低。A~I 都只在**同族同线**里比药力,而状态族(buff 丹)不折算成时间、
- *   `pillGainSec` 对它恒为 0 —— 于是 27 味状态丹的强弱此前从没被比过。
+ *   `pillGainSec` 对它恒为 0 —— 于是 31 味状态丹的强弱此前从没被比过。
  *   审计抓到的真倒挂:护心丹(境 1,减伤 15%)高于神威丹(境 15,12%)与
  *   神将丹(境 15,10%);金刚液(境 2,开盾 10%)低于罡气散(境 1,15%)。
  *   三味经文档豁免(造化丹 / 定心丹 / 本源丹),理由见 docs/alchemy.md。
@@ -227,6 +227,12 @@ export const PILLS: PillDef[] = [
     recipe: { herb: 38, stoneBase: 80 },
     alchemyLevel: 5,
   }),
+  p("p_shihe", "拾禾丹", "profound", 4, "拾禾者不贪,一穗一穗地捡 —— 走到哪儿都不空手", {
+    kind: "buff",
+    buffId: "buff_shihe",
+    recipe: { herb: 62, stoneBase: 140 },
+    alchemyLevel: 6,
+  }),
   p("p_xisui", "洗髓液", "profound", 4, "髓浊则气滞,洗过一遍,气行如新渠放水", {
     instant: { qiPct: 1 },
     recipe: { herb: 56, stoneBase: 124 },
@@ -244,6 +250,12 @@ export const PILLS: PillDef[] = [
       alchemyLevel: 7,
     },
   ),
+  p("p_fengwen", "风闻丹", "earth", 6, "风声里带着消息 —— 服之,路上多遇一二桩", {
+    kind: "buff",
+    buffId: "buff_fengwen",
+    recipe: { herb: 118, stoneBase: 300 },
+    alchemyLevel: 8,
+  }),
   p("p_huiqi", "回天散", "earth", 7, "天倾可回,气竭亦可回 —— 此散入喉,如有人替你续上一口气", {
     instant: { qiPct: 1 },
     recipe: { herb: 142, stoneBase: 356 },
@@ -360,7 +372,13 @@ export const PILLS: PillDef[] = [
   p("p_xingchi", "星驰丹", "profound", 4, "脚下生风的那一瞬,山川只是身后的墨点", {
     kind: "buff",
     buffId: "buff_xingchi",
-    recipe: { herb: 24, stoneBase: 48 },
+    /*
+     * 原 herb 24 / stone 48 —— 境 4 的 buff 丹只有这一味，所以「比更低境界便宜」
+     * 一直没被判据抓到。第 504 轮补了同境的拾禾丹（110 石）之后才显出来:
+     * 它比境 1 的破境丹(60)、境 3 的玄冥护体丹(60) 都只高一点点。
+     * 判据见 core/recipeCostLadder.spec ④。
+     */
+    recipe: { herb: 46, stoneBase: 110 },
     alchemyLevel: 4,
   }),
   /*
@@ -558,6 +576,12 @@ export const PILLS: PillDef[] = [
    * 从 13 抬到了 14 —— 于是界外最薄的神将（原本 13 条）当场不够。
    * 补的不是「判据要它够」，而是那一境确实只有两味丹，比同界的神人多一味之差。
    */
+  p("p_xiquan", "息泉丹", "immortal", 14, "息泉不涌,只是不绝 —— 服之,气自回", {
+    kind: "buff",
+    buffId: "buff_xiquan",
+    recipe: { herb: 336, stoneBase: 852 },
+    alchemyLevel: 10,
+  }),
   p("p_shenjiang_hui", "神将回天丹", "divine", 15, "一将回天,万军复振 —— 丹成之时,炉上有光直上", {
     instant: { qiPct: 1 },
     recipe: { herb: 386, stoneBase: 1080 },
@@ -624,6 +648,13 @@ export const PILLS: PillDef[] = [
     "droplets",
   ),
   // ---- 金仙(11)唯一的增益丹(第 487 轮) ----
+  /*
+   * 金仙(境 11)补一味寿元丹（第 504 轮）。
+   * contentDensity 的地板由人间界现算，而这一轮补的几味增益丹把它从 14 抬到 15 ——
+   * 于是界外最薄的金仙（原本 14 条）当场不够。
+   * 补的是它确实缺的那一类:境 12 有仙寿丹(800 年)，而境 11 一味寿元丹都没有。
+   * 取值落在境 12 之下，不与既有寿元线冲突。
+   */
   p("p_jinxianjue", "金仙道体丹", "immortal", 11, "道体初成,外物难侵,此丹固其形", {
     kind: "buff",
     buffId: "buff_jinxian",
@@ -662,6 +693,12 @@ export const PILLS: PillDef[] = [
   p("p_taiyi_lu", "太乙露", "immortal", 12, "太乙者,未分未判 —— 露凝于未判之时,服之则气自归位", {
     instant: { qiPct: 1 },
     recipe: { herb: 302, stoneBase: 760 },
+    alchemyLevel: 10,
+  }),
+  p("p_manlu", "满篓丹", "immortal", 10, "篓满则归,归时才知道这一趟捡了多少", {
+    kind: "buff",
+    buffId: "buff_manlu",
+    recipe: { herb: 252, stoneBase: 636 },
     alchemyLevel: 10,
   }),
   p("p_huohou", "安神丹", "immortal", 12, "神魂落回原处,呼吸慢下来;盯着炉子看,能多看一会儿成", {
