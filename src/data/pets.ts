@@ -178,7 +178,13 @@ export const PETS: PetDef[] = [
   },
   {
     id: "pet_shoumo",
-    name: "守岩貘",
+    /*
+     * 原名「守岩貘」—— 与灵品那只 `pet_shouyan`（熊族）撞了名。
+     * 两条的 id、族类、图标、品质、加成全都不同，是两只灵兽。
+     * 这只的 id 是「守貘」、族类是麒麟，而描述写「看上去就是一块石头」——
+     * 按 id 改作「守貘」，让名字与它自己的身份对上。判据见 core/petNameUnique.spec。
+     */
+    name: "守貘",
     desc: "趴着不动的时候,看上去就是一块石头 —— 记路却比谁都清楚",
     icon: "qilin",
     family: "qilin",
