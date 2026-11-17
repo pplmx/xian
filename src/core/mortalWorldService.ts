@@ -19,7 +19,7 @@
  */
 import type { MortalWorld } from "./mortalWorldGen";
 import { generateGatedMortal } from "./mortalGate";
-import { activeLifeTrial, trialStageLimit } from "./lifeTrialService";
+import { activeLifeTrial, routeOrderOf, trialStageLimit } from "./lifeTrialService";
 import { terrainOf, worldIdentity } from "./mortalIdentity";
 import { REGIONS } from "@/data/regions";
 import { useAdventureStore } from "@/stores/adventure";
@@ -150,13 +150,17 @@ export function canEnterNode(nodeId: string): boolean {
    * 不能只看「前一段 id 在不在表里」—— 手改档或异常写入一条第三段记录时,
    * 第四段会因此被误开。阶段提示已按前缀计算,准入必须共用同一条规则。
    */
-  return (
-    i <=
-    clearedPrefixLength(
-      w.chain.map((p) => p.nodeId),
-      adventure.mortalCleared,
-    )
-  );
+  /*
+   * 顺序取 `routeOrderOf` —— 逆行契让这一世倒着走（第 474 轮）。
+   *
+   * 前缀规则本身不变（仍是「从起点起一段不缺的连续前缀」），
+   * 变的只是「起点」在路线的哪一头：倒序之后，起点是原来的末段。
+   * 这样两件事仍然同源，不必给倒序再写一套准入。
+   */
+  const order = routeOrderOf(w.chain.map((p) => p.nodeId));
+  const posInOrder = order.indexOf(nodeId);
+  if (posInOrder < 0) return false;
+  return posInOrder <= clearedPrefixLength(order, adventure.mortalCleared);
 }
 
 /** 本世某节点是否已通 */

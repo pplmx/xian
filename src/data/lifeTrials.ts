@@ -81,6 +81,26 @@ export interface LifeTrialDef {
    * 判据 `trialItemBind.spec` 守着它们不互相侵占，免得日后三样混成一样。
    */
   bannedItemKind?: "artifact" | "pill";
+  /**
+   * 本世路线倒着走（第 474 轮）。
+   *
+   * 这是第四份**不碰 CombatRules** 的契，动的是可动空间里那第四项「解锁顺序」。
+   *
+   * ## 为什么倒着走是纯逆境
+   *
+   * ```text
+   *   顺着走  2 → 4 → 7 → 11 → 15 → 17   层级递增，逐步变强
+   *   倒着走 17 → 15 → 11 → 7 → 4 → 2    开局就撞终段
+   * ```
+   *
+   * 收尾那几段确实白给，但它们不影响「能不能通关」，只影响「何时」——
+   * 而开局那一段几乎必败，玩家必须先把装备与等级堆上去才能迈出第一步。
+   * 同样的路，倒着走要难得多。
+   *
+   * 四种玩法面（rules / routeStages / bannedItemKind / reverseRoute）互斥地存在 ——
+   * 判据 `trialUnlockBind.spec` 守着它们不互相侵占。
+   */
+  reverseRoute?: boolean;
 }
 
 /**
@@ -163,6 +183,24 @@ const BAN_TRIAL: LifeTrialDef = {
 };
 
 LIFE_TRIALS.push(BAN_TRIAL);
+
+/**
+ * 第七份契:倒着走,不动战斗规则、不改段数、不禁物品。
+ *
+ * 定价最高一档(48)—— 它的痛是「开局就打终局」，比少走两段或禁用一类物品重得多。
+ */
+const REVERSE_TRIAL: LifeTrialDef = {
+  id: "tr_nixing",
+  name: "逆行契",
+  seal: "溯",
+  desc: "这一世自终而始。最难的那一关,就在你脚下。",
+  ruleText: "本世路线由末段向首段推进",
+  cost: 48,
+  rules: {},
+  reverseRoute: true,
+};
+
+LIFE_TRIALS.push(REVERSE_TRIAL);
 
 export function lifeTrialDef(id: string): LifeTrialDef | undefined {
   return LIFE_TRIALS.find((t) => t.id === id);

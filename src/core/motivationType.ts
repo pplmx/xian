@@ -121,8 +121,26 @@ export function trialProfiles(): MotivationProfile[] {
      * `routeStages` 改的是这一世有几段路；`bannedItemKind` 改的是能带什么进场。
      * 后者对面板的影响更直接（法宝被动整块没了），故权重取 0.6 略高于路线。
      */
+    /*
+     * 三种「不碰 CombatRules」的契各有各的偏离度（第 474 轮补第三种）。
+     *
+     * ```text
+     *   routeStages      改这一世有几段路        0.5
+     *   bannedItemKind   改能带什么进场          0.6
+     *   reverseRoute     改这些路的先后          0.7
+     * ```
+     *
+     * 逆行契权重最高:它把开局那一段换成整条路线里最强的一段，
+     * 而开局恰恰是玩家最弱的时候。
+     */
     const routeDeviation =
-      t.routeStages !== undefined ? 0.5 : t.bannedItemKind !== undefined ? 0.6 : 0;
+      t.reverseRoute !== undefined
+        ? 0.7
+        : t.routeStages !== undefined
+          ? 0.5
+          : t.bannedItemKind !== undefined
+            ? 0.6
+            : 0;
     return {
       id: t.id,
       name: t.name,
@@ -132,11 +150,13 @@ export function trialProfiles(): MotivationProfile[] {
       surface: "numbers" as ChangeSurface,
       type: classify(determinism, replayDelta),
       evidence:
-        t.routeStages !== undefined
-          ? `routeStages 是 LIFE_TRIALS 里的常量;第二次签得到同样短的一世`
-          : t.bannedItemKind !== undefined
-            ? `bannedItemKind 是 LIFE_TRIALS 里的常量;第二次签同样禁这一类`
-            : `rules 是 LIFE_TRIALS 里的常量;第二次签得到完全相同的一世`,
+        t.reverseRoute !== undefined
+          ? `reverseRoute 是 LIFE_TRIALS 里的常量;第二次签同样倒着走`
+          : t.routeStages !== undefined
+            ? `routeStages 是 LIFE_TRIALS 里的常量;第二次签得到同样短的一世`
+            : t.bannedItemKind !== undefined
+              ? `bannedItemKind 是 LIFE_TRIALS 里的常量;第二次签同样禁这一类`
+              : `rules 是 LIFE_TRIALS 里的常量;第二次签得到完全相同的一世`,
     };
   });
 }

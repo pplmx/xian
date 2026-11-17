@@ -25,9 +25,13 @@ import {
   canSignLifeTrial,
   lifeTrialBansItem,
   lifeTrialRules,
+  routeOrderOf,
   signLifeTrial,
 } from "./lifeTrialService";
 import { usePlayerStore } from "@/stores/player";
+import { useAdventureStore } from "@/stores/adventure";
+import { generateMortalWorld } from "./mortalWorldGen";
+import { canEnterNode } from "./mortalWorldService";
 import { reachesEfficiency } from "./fruitOutlets";
 import type { AnyStatKey } from "@/types";
 
@@ -309,5 +313,35 @@ describe("弃器契 · 本世不得祭用法宝（第 473 轮）", () => {
     usePlayerStore().reincarnation.daoFruit = 999;
     expect(signLifeTrial("tr_duan"), "签断径契失败").toBe(true);
     expect(lifeTrialBansItem("artifact"), "签了与法宝无关的契，却把法宝禁了").toBe(false);
+  });
+});
+
+describe("逆行契 · 本世路线倒着走（第 474 轮）", () => {
+  it("签下之后，准入从末段开始、首段变成最后才开", () => {
+    setActivePinia(createPinia());
+    const adv = useAdventureStore();
+    const player = usePlayerStore();
+    const w = generateMortalWorld(4242);
+    adv.setMortalWorld(w);
+    adv.mortalCleared = [];
+    player.reincarnation.daoFruit = 999;
+    const ids = w.chain.map((p) => p.nodeId);
+
+    // 未签契：首段可进，末段不可进
+    expect(canEnterNode(ids[0]!), "未签契时首段该可进").toBe(true);
+    expect(canEnterNode(ids[ids.length - 1]!), "未签契时末段不该可进").toBe(false);
+
+    expect(signLifeTrial("tr_nixing"), "签逆行契失败 —— 判据会空转").toBe(true);
+
+    // 签契后：末段变起点，首段变成最后才开
+    expect(canEnterNode(ids[ids.length - 1]!), "签了逆行契，末段却不是起点").toBe(true);
+    expect(canEnterNode(ids[0]!), "签了逆行契，首段却仍可进").toBe(false);
+  });
+
+  it("反差：未签契时顺序原样 —— 这条路没被无条件倒过来", () => {
+    setActivePinia(createPinia());
+    usePlayerStore().reincarnation.daoFruit = 0;
+    const nodes = ["a", "b", "c"];
+    expect(routeOrderOf(nodes), "未签契时顺序被改了").toEqual(["a", "b", "c"]);
   });
 });

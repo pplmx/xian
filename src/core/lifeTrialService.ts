@@ -70,6 +70,18 @@ export function lifeTrialBansItem(kind: "artifact" | "pill"): boolean {
   return activeLifeTrial()?.bannedItemKind === kind;
 }
 
+/**
+ * 本世按什么顺序走这条路线(第 474 轮)。
+ *
+ * 「解锁顺序」这条玩法面的唯一出口:准入判定与界面都要走它,
+ * 这样「契说倒着走」与「界面真的倒着开」才不会成为两份账。
+ *
+ * 未立契、或签的契没有 `reverseRoute` —— 原样返回,**不复制不必要的数组**。
+ */
+export function routeOrderOf<T>(nodes: readonly T[]): readonly T[] {
+  return activeLifeTrial()?.reverseRoute ? [...nodes].reverse() : nodes;
+}
+
 /** 能否签下某契(余额足够、本世尚未签过、规则合法) */
 export function canSignLifeTrial(id: string): boolean {
   const player = usePlayerStore();

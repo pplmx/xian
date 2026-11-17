@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 878 个 spec;本作自己那部分 798 个) |
+| `bun run test` | 全量用例(全量 879 个 spec;本作自己那部分 799 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 878 个 spec = 宿主 798 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 879 个 spec = 宿主 799 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 878 个 spec(本作自己那部分 798 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 879 个 spec(本作自己那部分 799 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -26193,3 +26193,97 @@ layeringAudit.spec  core 用例需要 Pinia 的文件数
 读代码的人不会想到「卸下全部」四个字。改成 `inventory.equippedArtifacts = []`。
 
 工作区干净、全量 878 / 7144 全绿。
+
+### 第 474 轮:可动空间第四项 —— 解锁顺序
+
+#### 前三项各有一份契，这一轮补第四项
+
+```text
+CombatRules  孤行 / 疾行 / 残躯 / 逆锋
+历练路线     第 470 轮  断径契（这一世只走三段）
+可用物品     第 473 轮  弃器契（不得祭用法宝）
+解锁顺序     ← 这一轮  逆行契（自终而始）
+本世目标     未动
+```
+
+#### 为什么「倒着走」是纯逆境
+
+```text
+顺着走  2 → 4 → 7 → 11 → 15 → 17   层级递增，逐步变强
+倒着走 17 → 15 → 11 → 7 → 4 → 2    开局就撞终段
+```
+
+收尾那几段确实白给，但它们不影响「能不能通关」，只影响「何时」——
+而开局那一段几乎必败，玩家必须先把装备与等级堆上去才能迈出第一步。
+**同样的路，倒着走要难得多。**
+
+定价 48（最高一档）—— 比「少走两段」或「禁用一类物品」重得多。
+
+#### 改的是「起点在哪一头」，不是另写一套准入
+
+`canEnterNode` 的规则是「从起点起一段不缺的连续前缀」。倒序**没有改这条规则**，
+只把「起点」换到了路线的另一头:
+
+```text
+const order = routeOrderOf(w.chain.map((p) => p.nodeId));
+const posInOrder = order.indexOf(nodeId);
+return posInOrder <= clearedPrefixLength(order, adventure.mortalCleared);
+```
+
+两件事仍然同源 —— 若给倒序另写一套准入，那就成了两份账。
+
+#### 判据四条
+
+```text
+① 有一份契声明倒序解锁，且四种玩法面各管各的（不填 rules / routeStages / bannedItemKind）
+② 有 routeOrderOf 这个唯一出口，且它读 reverseRoute
+③ 反差：未签该契时顺序不变 —— 别把整条路线都倒过来
+④ 真跑一次：签下后末段变起点、首段变最后才开
+```
+
+#### 又一次撞上同一条基线
+
+④ 需要 Pinia，而 `layeringAudit.spec` 的 `CORE_PINIA_SPECS` 只许减。
+**与第 473 轮完全一样的处理**：把需要 Pinia 的那一条挪进 `lifeTrialService.spec`
+（它本来就用 Pinia），`trialUnlockBind.spec` 保持无 Pinia。
+
+> 这是同一条纪律的第二次应用。记在这里，因为下次还会撞上 ——
+> **新建的 core spec 不要用 Pinia**，需要真跑的用例放进已有的 Pinia spec。
+
+#### 第三次撞的是同一个「偏离度」
+
+`motivationType.spec` 的「契不是换皮」又说第 7 份偏离为 0 ——
+与第 473 轮同一个形状。`routeDeviation` 现在三分支:
+
+```text
+reverseRoute     0.7   改这些路的先后（开局最强，而开局玩家最弱）
+bannedItemKind   0.6   改能带什么进场
+routeStages      0.5   改这一世有几段路
+```
+
+工作区干净、全量 879 / 7149 全绿。
+
+#### 一次 UI 门禁的偶发，与它露出的一处不一致
+
+跑 `check:ui` 时「只读页 · 恢复」报了一次:
+
+```text
+✗ 刷新后没拿到写权(锁持有者 0,等锁已成功)
+  现场 {"shell":true,"held":["xuanshu.save-writer"],...,"hasLocks":true}
+```
+
+重跑 0 个 ✗ —— 是偶发。而这一条与本轮改动无关（契约数据不碰写锁）。
+
+但现场有处**对不上**，值得记一笔:报错说「锁持有者 0」，
+而同一份现场快照里 `held` 明明是 `["xuanshu.save-writer"]`。
+
+```js
+const held = settled ? Number(await settledHandle.jsonValue()) : 0;
+```
+
+`waitForFunction` 判定 truthy 即成功，而探测函数成功时返回数字 `1`。
+故 `held` 此时不该是 0 —— 除非 `jsonValue()` 在某种竞态下读到了上一帧的值。
+**这是判据侧的可疑之处，不是产品缺陷**，本轮不改（一次偶发不足以定案），
+先记在这里:下次它再红，先看这句 `Number(await ...jsonValue())`。
+
+工作区干净、全量 879 / 7149 全绿。
