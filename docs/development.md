@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 887 个 spec;本作自己那部分 807 个) |
+| `bun run test` | 全量用例(全量 888 个 spec;本作自己那部分 808 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 887 个 spec = 宿主 807 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 888 个 spec = 宿主 808 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 887 个 spec(本作自己那部分 807 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 888 个 spec(本作自己那部分 808 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -26799,3 +26799,57 @@ expIncome            ev_shenmo_yuyin 的 wudao 22 → 9
 ```
 
 工作区干净、全量 887 / 7177 全绿。
+
+### 第 485 轮:最薄的三处全在界外
+
+#### 上一轮那个量法继续用
+
+补完人间界的 dark 之后重排「每处地界摊到几则」:
+
+```text
+标签      事件数   地界数   每处摊到
+sky        12       10      1.2     ← 最薄
+god        10        8      1.3
+immortal   14       10      1.4
+chaos      12        6      2.0
+```
+
+**三处全是界外标签。** 而人间界那几处（ice / sword / fire）上一轮已经补到 7~8。
+
+这一轮补 `god` 与 `immortal`（`sky` 留待下一轮 —— 它覆盖 10 处、跨三个界域，
+症状与前两者不同，值得单独一轮）。
+
+#### 界外内容的第一条纪律：不许带 general
+
+```text
+god 事件现状   多数写 ["general","god"]  → 能出现在全图 44 处
+本轮六则       全部只写 ["god"] / ["immortal"] + 一处地界标签
+```
+
+理由与第 484 轮同:`general` 会让界外内容一路漏到人间界，与「界外另有界外的池子」
+这条纪律正相反。故判据②专门守这一条。
+
+#### 六则的定位
+
+```text
+god       神迹落日（停在半空的落日）· 天宫遗网（结着光的网）· 神阁旧盟（空着的落款）
+immortal  仙门守夜（无人却亮着的灯）· 云海残照（落日的余温）· 金阙玉牌（还剩三个空位）
+```
+
+六则都写「神/仙留下的痕迹，而他们本人不在」——这是界外与人间界最不一样的地方:
+人间界的事件里总有人，界外常常只有东西。
+
+#### 连带修正三处
+
+```text
+events.ts 头注释     142 → 148
+usage.md 两处        142 → 148
+CollectionView 注释   939 → 945 枚
+```
+
+#### 一次偶发
+
+全量跑第一遍时 `useServiceWorkerUpdate.spec` 红了两条。单跑 22 条全绿，
+重跑全量也全绿 —— 并发下的偶发，与本轮改动无关（我只动了事件数据）。
+
+工作区干净、全量 888 / 7181 全绿。

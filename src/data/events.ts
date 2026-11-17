@@ -1,6 +1,6 @@
-/** 随机事件库 —— 142 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 148 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
-import { WORLD_BREAK_MAJOR } from "./realms";
+import { MAX_MAJOR, WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
 
 function o(weight: number, text: string, ...effects: EventEffect[]): EventOutcome {
@@ -2453,6 +2453,150 @@ export const EVENTS: EventDef[] = [
       ),
     ],
     { minRealm: 9, maxRealm: 11 },
+  ),
+  /*
+   * 界外六则（第 485 轮）。
+   *
+   * 按「每处地界摊到几则」重排，最薄的三处全在界外:
+   *
+   * ```text
+   *   sky       12 则 / 10 处 = 1.2
+   *   god       10 则 /  8 处 = 1.3
+   *   immortal  14 则 / 10 处 = 1.4
+   * ```
+   *
+   * 这一轮补 god 与 immortal（sky 留待下一轮 —— 它跨三个界域，症状不同）。
+   *
+   * **一律不带 `general`**:界外内容混进通用池会一路漏到人间界,那与
+   * 「界外另有界外的池子」这条纪律正相反。
+   */
+  ev(
+    "ev_shenji_luori",
+    "神迹落日",
+    "落日停在半空,已经很多年了。据说那一日有神在此驻留,光便再没落下去。",
+    ["god", "sky"],
+    [
+      c("攀上光柱", [
+        o(40, "光柱里有极细的经文在流转。你伸手,它们绕上指节就散了。", {
+          type: "material",
+          id: "wudao",
+          amount: 26,
+        }),
+        o(35, "爬到一半你就明白了:那不是光,是极慢的燃烧。", { type: "exp", secs: 110 }),
+        o(25, "光柱烫得不像光。你在半空松了手。", { type: "buff", id: "injury" }),
+      ]),
+      c("在光下打坐", [
+        o(55, "这一坐不知多久。睁眼时落日开始动了,极慢。", { type: "exp", secs: 115 }),
+        o(45, "什么也没坐出来。光在头顶,不动。", { type: "nothing" }),
+      ]),
+    ],
+    { minRealm: 9, maxRealm: MAX_MAJOR },
+  ),
+  ev(
+    "ev_tiangong_yiwang",
+    "天宫遗网",
+    "空中的宫殿只剩骨架,檐角垂着一张网,网眼里结着已经僵住的光。",
+    ["god", "sky"],
+    [
+      c("收网", [
+        o(45, "网一收,那些光碎成粉末。你捧了满手。", {
+          type: "material",
+          id: "dust",
+          amount: 15,
+        }),
+        o(55, "网线一碰就断。断口处幽幽发光,慢慢暗下去。", { type: "nothing" }),
+      ]),
+      c("顺网而上", [
+        o(40, "网的尽头系着一间小殿,殿里没人,案上有一件旧物。", {
+          type: "equipment",
+          minQualityRank: 6,
+        }),
+        o(60, "爬到一半,整张网散了。你落了很久才落地。", { type: "buff", id: "injury" }),
+      ]),
+    ],
+    { minRealm: 11, maxRealm: MAX_MAJOR },
+  ),
+  ev(
+    "ev_shenge_jiumeng",
+    "神阁旧盟",
+    "阁楼里悬着一卷盟书,墨迹已淡。落款处有很多印,最末一处空着。",
+    ["god"],
+    [
+      c("捺下自己的印", [
+        o(40, "墨迹落纸的瞬间,你听见远处有谁在应。", { type: "material", id: "wudao", amount: 30 }),
+        o(60, "印捺上去,什么也没发生。你已经不是第一次了。", { type: "nothing" }),
+      ]),
+      c("读完盟书", [
+        o(50, "你记住了那上面的每一条。往后会用得上。", { type: "exp", secs: 118 }),
+        o(50, "字迹太淡。读到一半,后面全糊了。", { type: "nothing" }),
+      ]),
+    ],
+    { minRealm: 13, maxRealm: MAX_MAJOR },
+  ),
+  ev(
+    "ev_xianmen_shouye",
+    "仙门守夜",
+    "山门无人,灯却亮着。守夜的人本该在，也可能就是我。",
+    ["immortal", "mountain"],
+    [
+      c("替他守这一夜", [
+        o(50, "夜里来了三拨客。你都拦下了。天亮时灯自己灭了。", { type: "exp", secs: 100 }),
+        o(30, "什么都没有来。你在门口坐了一夜,想通了一点东西。", {
+          type: "material",
+          id: "wudao",
+          amount: 18,
+        }),
+        o(20, "第三拨不是人。你打退了它,肩膀脱了力。", { type: "buff", id: "injury" }),
+      ]),
+      c("吹灯离去", [
+        o(60, "灯灭了。山下的人该能睡个好觉。", { type: "nothing" }),
+        o(40, "灯吹不灭。你回头看,那一豆光在夜里很稳。", { type: "exp", secs: 95 }),
+      ]),
+    ],
+    { minRealm: 9, maxRealm: MAX_MAJOR },
+  ),
+  ev(
+    "ev_yunhai_canzhao",
+    "云海残照",
+    "云海的边缘泛着旧金。那不是什么祥瑞,只是上一场落日照下来的余温。",
+    ["immortal", "sky"],
+    [
+      c("走入余温", [
+        o(45, "云里暖得不像话。你在其中站了很久,身上那点寒气全散了。", {
+          type: "exp",
+          secs: 112,
+        }),
+        o(55, "云太薄。你走了几步就踩空,好在只是惊了一场。", { type: "nothing" }),
+      ]),
+      c("背对余温", [
+        o(50, "不回头看的人,走得更远些。", { type: "material", id: "wudao", amount: 20 }),
+        o(50, "你还是回头了。金光散了,云也散了。", { type: "nothing" }),
+      ]),
+    ],
+    { minRealm: 10, maxRealm: MAX_MAJOR },
+  ),
+  ev(
+    "ev_jinyu_wupai",
+    "金阙玉牌",
+    "金阙前插着一排玉牌,每一枚都刻着一个名字。空位还剩三处。",
+    ["immortal"],
+    [
+      c("取一枚空白玉牌", [
+        o(40, "玉牌入袖,你听见金阙深处传来一声很轻的响。", {
+          type: "equipment",
+          minQualityRank: 5,
+        }),
+        o(60, "玉牌取不下来。你使出全力,它也纹丝不动。", { type: "buff", id: "injury" }),
+      ]),
+      c("看牌上的名字", [
+        o(60, "里面有几个你认得。有些是几百年前的,有些是最近才刻的。", {
+          type: "exp",
+          secs: 108,
+        }),
+        o(40, "牌子太密。你看了很久,只记住两三个陌生的名字。", { type: "nothing" }),
+      ]),
+    ],
+    { minRealm: 12, maxRealm: MAX_MAJOR },
   ),
   ev(
     "ev_shenyu_zhen",
