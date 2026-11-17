@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 917 个 spec;本作自己那部分 837 个) |
+| `bun run test` | 全量用例(全量 918 个 spec;本作自己那部分 838 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 917 个 spec = 宿主 837 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 918 个 spec = 宿主 838 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 917 个 spec(本作自己那部分 837 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 918 个 spec(本作自己那部分 838 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -29047,3 +29047,51 @@ pillValue / souls 的「最高/最低」     都是各自表内的极值，无�
 ```
 
 工作区干净、全量 917 / 7278 全绿。
+
+### 第 524 轮:一条**不该加**的断言
+
+#### 顺着上一轮的做法再量一处
+
+第 523 轮给「逐境可用事件」加了一条比值断言（最薄/最厚 ≥ 0.55）。
+这一轮想知道「每处地界的池子」是否也该有同样一条:
+
+```text
+每处地界能撞见（含 general）: 最薄 44（青云山麓 t1）· 最厚 123 · 比值 0.36
+```
+
+0.36 比事件那条 0.52 还悬殊 —— 看着像又一处该补的地方。
+
+#### 而它不该被补
+
+事件的池子是 `minRealm ≤ 当前境界 ≤ maxRealm` 的累计。前期地界能撞见的，
+只有「门槛不高于它」的那些 —— **仙界的事进不来，这才是对的**。
+
+```text
+青云山麓 t1   minRealm ≤ 0 的事    44 则
+混沌海 t32    minRealm ≤ 20 的事  123 则     ← 包含前者
+```
+
+**比值随层级单调上升，是累积池的必然结果**，与「某一境的内容够不够」是两回事。
+加一条「比值 ≥ X」只会逼人往前期塞高阶事件 —— 那恰恰会破坏「仙界的事进不来」。
+
+#### 与第 485 轮那个量法的区别
+
+```text
+按标签摊   sky 12 / 地界 10 = 1.2      不受层级影响，能抓出「界外三处偏薄」
+按地界摊   最薄 44 / 最厚 123 = 0.36   随层级单调，只会把设计读成缺陷
+```
+
+两个都叫「摊到几则」，而**只有前者能抓缺陷**。第 485 轮用的是前者，故它抓到了东西。
+
+#### 判据三条（`core/regionPoolRatio.spec`）
+
+```text
+① 最低层那处地界的池子里，不许有门槛更高的事件（累积的证明）
+② 反差：比值 < 1 是必然的 —— 不许为它加「比值 ≥ X」的断言
+③ 反差：按标签摊的口径仍然成立，它才是抓缺陷的那一个
+```
+
+> 这一份 spec 的价值是**它记录的是一件不该做的事**，以及为什么不该做。
+> 判据不只用来「守住某个数」，也用来守住「某个数不该被守」。
+
+工作区干净、全量 918 / 7281 全绿。
