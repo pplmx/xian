@@ -601,6 +601,23 @@
                   {{ footprint.ageTrendText }}
                 </dd>
               </div>
+              <!--
+                世数节奏（第 557 轮）。
+                上面三格答的是「走多深」「活多久」「攒多少」，这一格答的是
+                「我越玩越快了吗」—— 十世回望时最会问的那一句。
+                数据来自 LifeRecord.at 的相邻之差，不引入任何新东西。
+              -->
+              <div v-if="pace.trendText">
+                <dt>世数节奏</dt>
+                <dd
+                  class="tabular legacy-footprint__pace"
+                  :class="pace.trend ? `is-${pace.trend}` : ''"
+                  data-footprint-pace
+                >
+                  {{ pace.trendText }}
+                  <small v-if="pace.fastest">最快第{{ pace.fastest.index }}世</small>
+                </dd>
+              </div>
               <div>
                 <dt>宿慧累计</dt>
                 <dd class="tabular">{{ footprint.insightTotal }}</dd>
@@ -1085,6 +1102,7 @@ import { useEndgameStore } from "@/stores/endgame";
 import { useCultivationStore } from "@/stores/cultivation";
 import { apexRecord } from "@/core/apex";
 import { lifeEpitaph } from "@/core/lifeEpitaph";
+import { lifePace } from "@/ui/lifePace";
 import { apexDeedSummary, apexDeeds } from "@/core/apexDeeds";
 import { MAX_MARKS } from "@/stores/endgame";
 import { TRIALS } from "@/data/endgame";
@@ -1389,6 +1407,14 @@ const linggenSpread = computed(() => lifeLinggenSpread(player.reincarnation.live
  * 过滤与取值口径收在 `ui/lifeFootprint` 里,视图只做接线。
  */
 const footprint = computed(() => lifeFootprint(player.reincarnation.lives));
+
+/**
+ * 世数节奏 —— 「我越玩越快了吗」（第 557 轮）。
+ *
+ * 历世足迹已经答了境界走向与终寿走向，而第三个走向（每世实际用了多久）
+ * 此前没人答。它来自 `LifeRecord.at`（归档时刻）之差，不引入任何新数据。
+ */
+const pace = computed(() => lifePace(player.reincarnation.lives));
 
 const LIFE_RENDER_BATCH = 12;
 const LIFE_RENDER_WINDOW = LIFE_RENDER_BATCH * 2;
