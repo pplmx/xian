@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 909 个 spec;本作自己那部分 829 个) |
+| `bun run test` | 全量用例(全量 910 个 spec;本作自己那部分 830 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 909 个 spec = 宿主 829 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 910 个 spec = 宿主 830 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 909 个 spec(本作自己那部分 829 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 910 个 spec(本作自己那部分 830 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -28361,3 +28361,73 @@ ls src/core/*.spec.ts  文件名就是它们守的题目
 
 工作区只多了一段注释（说明为什么不接），代码行为一行未变。
 全量 909 / 7252 全绿。
+
+### 第 513 轮:两次以为找到缺口，两次都是自己没先看
+
+#### 先按上一轮的教训搜档案
+
+```text
+心魔      → 第 373 轮已补（面壁破执）
+双修      → 源码里只有一句讲解文案，而 docs/ 里搜不到它的设计条目 → 不在设计范围
+业力      → 源码零命中 → 没这个东西，也没有人说过该有
+因果链足迹  → 第 409 轮已实现（data/bondFootprints），bondCausality.spec 现在全绿
+```
+
+四条全部有结论。**这一步是有效的** —— 上一轮栽的就是省了它。
+
+#### 第五处：图鉴里的法宝
+
+`CollectionCabinet` 与 `CollectionView` 都说「抽开看这一册的**来源**与条目」，
+而 `CODEX_SOURCES.artifact` 写的是「来源:历练掉落 —— **高阶地界才出得上品**」。
+
+「高阶」是哪一阶？我 grep 了 `fromTier` 在视图层的命中:**0**。
+
+于是判定:这是一处「决策信息不完整」——玩家想刷某件法宝，却只得到一句定性形容词。
+
+#### 第一次错:没看 `meta`
+
+写了三条判据，要求 `CodexEntry` 带上 `fromTier` 字段。**三条全红** ——
+因为 `CodexEntry` 上确实没有这个字段。
+
+而打开 `ui/itemText.ts:80`:
+
+```ts
+export function artifactMetaText(a: ArtifactDef): string {
+  return `${qualityDef(a.quality).name} · ${worldNameOfTier(a.fromTier)} · ${a.fromTier} 阶起可现世`;
+}
+```
+
+**「N 阶起可现世」一直就印在那里**，与 `fromTier` 同源，且比我要的更完整
+（还带了世界名）。判据写错，产品没错。
+
+#### 第二次错:又撞 Pinia 基线
+
+改对判据之后三条仍红 —— 这次是 `collectionCodex()` 要 store，
+在 core spec 里没有 active pinia。**上一轮已经栽过同一次**
+（`CORE_PINIA_SPECS = 119` 只许减），故这次直接挪到 `ui/` 层。
+
+#### 判据三条（`ui/codexArtifactTier.spec`）
+
+```text
+① 每件法宝的 meta 里都要有「N 阶起可现世」，且 N 与该件的 fromTier 一致
+② 反差：「高阶才出得上品」说的是品质，fromTier 说的是这一件 —— 两者都要在
+③ 反差：那个数必须与 fromTier 同源（界面不许另写一份）
+```
+
+注入验证过:把 `artifactMetaText` 里那句删掉 → 判据①当场红。
+
+#### 这一轮真正值得记的
+
+```text
+第一次错   grep 了「视图层有没有 fromTier」，没 grep「有没有一句话已经在说它」
+第二次错   上一轮刚栽过的 Pinia 基线，这一轮在改判据之前没先看它在哪一层
+```
+
+> 两次都不是产品的问题。而两次的共同动作缺失是同一个:
+> **我把「搜」执行成了「搜我想到的那个写法」，而不是「搜这件事有没有人做过」。**
+>
+> 上一轮记的是「动手前先搜」，这一轮补一句更具体的:
+> **搜的时候要搜「结论」，不是搜「实现」** ——
+> `grep fromTier` 找的是实现，而 `grep 阶起可现世` 才找得到结论。
+
+工作区干净、全量 910 / 7255 全绿。
