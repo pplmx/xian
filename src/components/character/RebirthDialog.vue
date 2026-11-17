@@ -128,6 +128,14 @@
               }}。
             </p>
             <p class="rebirth-panel__note">{{ softCapText }}</p>
+            <!--
+              来源一行（第 535 轮）。
+              玩家在这里读到「尚差 8 道果」时，知道差多少，却不知道该去哪攒 ——
+              而道果只能在天道熔炉由道源凝成，那在另一个页面。
+              措辞与天界页的 FurnaceDialog 同一套（「天道熔炉」「道源」）。
+              判据见 core/daoFruitWhereFrom.spec。
+            -->
+            <p class="rebirth-panel__note">来路:天界「天道熔炉」以道源凝成,跨世不散。</p>
           </section>
 
           <section class="rebirth-panel rebirth-talents" data-rebirth-talents>

@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 926 个 spec;本作自己那部分 846 个) |
+| `bun run test` | 全量用例(全量 927 个 spec;本作自己那部分 847 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 926 个 spec = 宿主 846 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 927 个 spec = 宿主 847 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 926 个 spec(本作自己那部分 846 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 927 个 spec(本作自己那部分 847 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -29612,3 +29612,47 @@ hint    下一步做什么
 > **判据要拿真实数据验证，而不是「我觉得应该这样」。**
 
 工作区干净、全量 926 / 7307 全绿。
+
+### 第 535 轮:知道差多少之后，他还得知道去哪攒
+
+#### 从玩家视角往下追一步
+
+上一轮结尾注意到「连续三轮的问题都在判据上」。这一轮换回产品，从玩家的一个真实困境出发:
+
+```text
+玩家想签逆旅契 → 看到「尚差 8 道果」（第 529 轮补的差额）
+              → 知道差多少
+              → 但不知道去哪攒
+```
+
+而道果的来源与签契的入口**不在同一屏**:
+
+```text
+道果的来源   天道熔炉（道源 → 道果），入口在天界页
+签契的入口   转世弹窗（RebirthDialog）
+```
+
+转世弹窗里只有「道果 +X%」（有效道果的增长率），没有「去哪凝」。
+
+#### 判据三条（`core/daoFruitWhereFrom.spec`）
+
+```text
+① 转世弹窗要指向道果的来源（天道熔炉 / 道源 / 天界）
+② 反差：它不许只复述「道果跨世保留」—— 那说的是性质，不是来源
+③ 反差：来源的措辞要与天界页一致 —— 不许在这里另起一个叫法
+```
+
+#### 补的一句
+
+```text
+来路:天界「天道熔炉」以道源凝成,跨世不散。
+```
+
+放在 `softCapText` 之后、与既有的两行说明并列。措辞取 `FurnaceDialog` 那一套
+（「天道熔炉」「道源」），判据③守着这一点。
+
+> 这一句与第 528 轮补的终局提示是同形:
+> **界面说清了「现在怎样」，却没说「接下来去哪」。**
+> 而 528 说的是「到此为止之后」，这一轮说的是「差多少之后」。
+
+工作区干净、全量 927 / 7310 全绿、UI 门禁 0 个 ✗、截图已重出。
