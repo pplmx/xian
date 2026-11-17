@@ -823,6 +823,8 @@ const CATEGORIES = [
       "openingJourney",
       // 图鉴：法宝从哪一层起掉落
       "codexArtifactTier",
+      // 图鉴来源：说的那一档得真的存在
+      "codexSourceClaim",
       // 计数器 → 行为的一张满表:师承与素行两个消费者都读它,半张表各自长是这里的缺口
       "counterText",
       // 「这一趟能走多远」—— 出行窗只报产出不报能不能拿到,是本轮在真浏览器里量到的坑

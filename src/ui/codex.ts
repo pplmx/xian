@@ -26,6 +26,7 @@ import { GONGFA_BRANCHES, canEnlighten, type GongfaBranchDef } from "@/data/gong
 import { GONGFA, GONGFA_TYPE_NAMES, gongfaDef } from "@/data/gongfa";
 import { gongfaBranchDef } from "@/data/gongfaBranches";
 import { realmLabel } from "@/data/realms";
+import { worldNameOfTier } from "@/core/tierScale";
 import { daoNoteLine, type DaoNote } from "@/core/daoNote";
 import { codexMomentText } from "./codexMoment";
 import { QUALITIES, qualityDef } from "@/data/qualities";
@@ -116,7 +117,15 @@ export interface CodexCat {
 
 /** 七类收藏册的来源说明(灵材谱与悟道录在各自构造函数里另给) */
 export const CODEX_SOURCES: Record<CollectionCategory, string> = {
-  equip: "来源:历练掉落 —— 强敌与首领更易出",
+  /*
+   * 第 514 轮:原话是「强敌与首领更易出」—— 而「强敌」这一档在 src 下零命中。
+   * `core/loot` 只区分首领与非首领（装备 ×2.5、丹药 ×3、法宝 ×6、材料 ×4），
+   * 没有中间那一档敌人。故删掉「强敌」，并把首领的倍数写出来 ——
+   * 那是一句能给玩家做判断的话，而不只是一个形容词。
+   *
+   * 判据见 core/codexSourceClaim.spec。
+   */
+  equip: "来源:历练掉落 —— 击破首领时装备概率 ×2.5",
   gongfa: "来源:藏经阁参悟 —— 用功法残页逐部撞见",
   // 三处:掉落(loot)、炼丹(pillService)、际遇赠丹(eventEngine)—— 由 codexSource.spec 对着 collect 点核
   pill: "来源:三处 —— 历练掉落、丹房照方炼出,际遇里也有人赠",
@@ -403,7 +412,13 @@ export const ARTIFACT_STAGE_NAMES = ["未录", "已录", "曾祭炼", "祭炼圆
 export const ARTIFACT_STAGE_MAX = 3;
 
 const ARTIFACT_HINTS = [
-  "尚未见过此宝 —— 高阶地界才出得上品。",
+  /*
+   * 第 514 轮:原话是「尚未见过此宝 —— 高阶地界才出得上品」。
+   * 而这一条**正对着某一件**法宝说话 —— 它有自己的 `fromTier`，
+   * 故可以说出确切层数（见 describeArtifact 里对 stage 0 的覆盖）。
+   * 这一句作为兜底保留，正常路径不会再走到。
+   */
+  "尚未见过此宝。",
   "录在册上了,还没拿它炼过一重 —— 祭炼过后,被动与神通各强八分。",
   "炼过几重了 —— 炼到九重,才算把它用透。",
   "",
@@ -440,7 +455,14 @@ export function describeArtifact(def: ArtifactDef, level: number, collected: boo
     stage,
     stageName: ARTIFACT_STAGE_NAMES[stage]!,
     badge: stage >= ARTIFACT_STAGE_MAX ? "满" : "",
-    hint: ARTIFACT_HINTS[stage]!,
+    /*
+     * 「尚未见过」这一档可以说得比兜底更准:这件法宝有自己的 fromTier ——
+     * 直接把它报出来，玩家就知道该往哪一层去。
+     */
+    hint:
+      stage === 0
+        ? `尚未见过此宝 —— 到第 ${def.fromTier} 层（${worldNameOfTier(def.fromTier)}）起才可能掉落。`
+        : ARTIFACT_HINTS[stage]!,
     foot: {
       label: "祭炼",
       value: `${Math.max(0, Math.min(ARTIFACT_MAX_LEVEL, Math.floor(level || 0)))}/${ARTIFACT_MAX_LEVEL} 重`,
