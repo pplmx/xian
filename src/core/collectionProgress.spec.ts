@@ -174,4 +174,34 @@ describe("藏珍谱 · 从同一份图鉴条目派生", () => {
     ]);
     expect(withEmpty.thinnest?.key, "空册（0/0）不该被选成最薄").toBe("pill");
   });
+
+  it("最快能补完的那一册 —— 与「最薄」成对，是同一批里排序相反的那一个", () => {
+    /*
+     * ## `nearestRows` 算过但没显示（第 559 轮）
+     *
+     * 它此前只用来决定 `initialOpenKeys`（自动展开哪一格），
+     * 而「哪一册快集齐了」这个信息从未显示给玩家。
+     *
+     * 与 `thinnest` 成对:
+     * ```text
+     *   thinnest   ratio 升序   「我该去补哪一册」—— 缺口最大的
+     *   nearest    ratio 降序   「哪一册快集齐了」—— 差得最少的
+     * ```
+     */
+    const overview = collectionProgressOverview([
+      { key: "equip", name: "器谱", known: 90, total: 100, newCount: 0 },
+      { key: "pill", name: "丹谱", known: 2, total: 80, newCount: 0 },
+      { key: "event", name: "事迹", known: 40, total: 50, newCount: 0 },
+    ]);
+    expect(overview.nearest?.key, "最快补完的是器谱（90/100）").toBe("equip");
+    expect(overview.nearest?.remaining, "它只差 10 件").toBe(10);
+    expect(overview.thinnest?.key, "而最薄的是丹谱 —— 两个读数在两端").toBe("pill");
+
+    /* 已集齐的册子不是「快」—— 它是已经满了 */
+    const allDone = collectionProgressOverview([
+      { key: "equip", name: "器谱", known: 100, total: 100, newCount: 0 },
+      { key: "pill", name: "丹谱", known: 40, total: 80, newCount: 0 },
+    ]);
+    expect(allDone.nearest?.key, "集齐那册不该被选成「最快」").toBe("pill");
+  });
 });

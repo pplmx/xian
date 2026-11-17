@@ -1043,7 +1043,19 @@ const collectionTrayHint = computed(() => {
      *
      * 一册都没有、或全部集齐时退回原来的操作指引。
      */
+    /*
+     * 两端各说一句（第 559 轮）:
+     *   最薄的       「我该去补哪一册」—— 缺口最大的
+     *   最快补完的   「哪一册快集齐了」—— 差得最少的
+     *
+     * 同一个玩家在同一刻会问这两句中的任何一句，而此前只有前一句。
+     * 后一句的数据（`nearest`）早就算好了，却只用来决定自动展开哪一格。
+     */
     const thin = collectionOverview.value.thinnest;
+    const near = collectionOverview.value.nearest;
+    if (thin && near && thin.key !== near.key) {
+      return `最薄的是「${thin.name}」（还差 ${thin.remaining} 枚）；最快补完的是「${near.name}」（只差 ${near.remaining} 枚）。`;
+    }
     return thin
       ? `最薄的是「${thin.name}」—— 已录 ${thin.known}/${thin.total}，还差 ${thin.remaining} 枚。`
       : "从左侧柜面点一枚柜格，抽开看这一册的来源与条目。";

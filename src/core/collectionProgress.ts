@@ -39,6 +39,21 @@ export interface CollectionProgressOverview {
    * 空册（total 为 0）不参与 —— 它没有「薄」可言，分母是零。
    */
   thinnest: CollectionProgressRow | null;
+  /**
+   * 最快能补完的那一册 —— 完赛度最高的那册，且还有剩。
+   *
+   * ## 与 `thinnest` 成对（第 559 轮）
+   *
+   * ```text
+   *   thinnest   ratio 升序   「我该去补哪一册」   —— 缺口最大的
+   *   nearest    ratio 降序   「哪一册快集齐了」   —— 差得最少的
+   * ```
+   *
+   * `nearestRows` 此前**只用来决定自动展开哪一格**（`initialOpenKeys`），
+   * 它算出的「哪一册快集齐了」这个信息从未显示给玩家。
+   * 玩家翻图鉴时那是个真问题:哪一册再补几件就满了。
+   */
+  nearest: CollectionProgressRow | null;
   initialOpenKeys: string[];
 }
 
@@ -91,6 +106,8 @@ export function collectionProgressOverview(
   return {
     rows,
     thinnest: thinnestRows[0] ?? null,
+    /* 与 thinnest 同一条筛选，只是排序相反 —— 已集齐的不是「快」，空册没意义 */
+    nearest: thinnestRows.length > 0 ? thinnestRows[thinnestRows.length - 1]! : null,
     known: rows.reduce((sum, row) => sum + row.known, 0),
     total: rows.reduce((sum, row) => sum + row.total, 0),
     newCount: rows.reduce((sum, row) => sum + row.newCount, 0),
