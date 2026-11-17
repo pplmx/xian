@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 892 个 spec;本作自己那部分 812 个) |
+| `bun run test` | 全量用例(全量 893 个 spec;本作自己那部分 813 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 892 个 spec = 宿主 812 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 893 个 spec = 宿主 813 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 892 个 spec(本作自己那部分 812 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 893 个 spec(本作自己那部分 813 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -27119,3 +27119,79 @@ CollectionView 注释   953 → 957 枚
 ```
 
 工作区干净、全量 892 / 7193 全绿。
+
+### 第 492 轮:法宝四十九件，只有两条事件能把它送出来
+
+#### 同一把尺再量一次
+
+上一轮补了寿元（2 → 7）。重排之后最少的是 `artifact`:
+
+```text
+artifact 2 · gongfa 8 · pill 10 · pet 21 · equipment 29
+```
+
+而法宝有 **49 件**、每件 9 级祭炼 —— 内容量仅次于装备，却只有两条事件能送出来:
+
+```text
+虚空裂缝「探手其中」  35% 摸到一件
+酒仙「拾葫芦归还」    30% 得一件
+```
+
+其余全靠战斗掉落（`core/loot` 的 `acquireArtifact`）。
+
+#### 三条，各落一处地界
+
+```text
+古井沉宝(ruin)   废庙后院那口盖着石板的井
+匠人遗镇(fire)   火域边缘塌了半边的铺子，炉子还是热的
+星宿遗物(sky)    星陨过后留下的浅坑
+```
+
+判据③专门守「不重」:三条的标签集合必须两两不同，不许都挤在 `general` 里。
+
+#### 又是那两处判据
+
+```text
+eventRealmBand   星宿遗物只带 sky → 被判成「人间界事件」，maxRealm 越界
+contentGateAudit 人间界事件金丹可触发 0.793 < 0.8
+```
+
+第一处的机制第 486 轮已经记过:**「带了什么标签」同时决定「算不算界外」与「能出现在哪」**。
+补上 `immortal` 就好。
+
+第二处照第 483 轮的修法:把两条的 minRealm 从 3/5 调到 2。
+
+#### 悟道那一格，这次补了四轮
+
+`economySim` 的「第2境际遇悟道模型偏离真跑」被拉到 16%。按上一轮的做法补悟道，
+**但前两次补的位置都不在抽取路径上**（数值一动没动）:
+
+```text
+第一次  井底淤泥那条(权重 45)      → 0.514 / 0.444 不变
+第二次  匠人炉火那条(权重 30)      → 不变
+第三次  古井「盖回原位」默认项 +9   → 15.006%（差一点点）
+第四次  同一个数 9 → 12            → 通过
+```
+
+前两次为什么不动？因为那两条结果不在**默认选项**里 —— 而判据的真跑取的是
+`ev.choices.find((c) => c.isDefault) ?? ev.choices[0]`。**默认项的权重才是真正被反复走的那一条。**
+
+> 这一处值得记:调「池子的平均值」时，要看判据怎么抽，而不是看哪条写得显眼。
+
+#### 判据三条（`core/artifactEventContent.spec`）
+
+```text
+① 三条都在表里，且都带 artifact 效果
+② 给法宝的那一档带条件 —— 不是「点一下就有」
+③ 三条的标签不重，各落一处地界
+```
+
+#### 连带修正三处计数
+
+```text
+events.ts 头注释     156 → 159
+usage.md 两处        156 → 159
+CollectionView 注释   957 → 960 枚
+```
+
+工作区干净、全量 893 / 7196 全绿。

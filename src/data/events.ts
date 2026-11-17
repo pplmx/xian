@@ -1,4 +1,4 @@
-/** 随机事件库 —— 156 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 159 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { MAX_MAJOR, WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -1498,7 +1498,7 @@ export const EVENTS: EventDef[] = [
         o(35, "那名字报完了。你忽然知道自己该往哪走 —— 虽然从没人告诉过你。", {
           type: "material",
           id: "wudao",
-          amount: 9,
+          amount: 12,
         }),
         o(40, "听不清。声音越来越远，最后只剩自己的心跳。", { type: "nothing" }),
         o(25, "你听懂了其中一个音节。那之后有三天，你不敢闭眼。", {
@@ -2453,6 +2453,108 @@ export const EVENTS: EventDef[] = [
       ),
     ],
     { minRealm: 9, maxRealm: 11 },
+  ),
+  /*
+   * 法宝三则（第 492 轮）。
+   *
+   * 上一轮补了寿元（2 → 7）之后，最少的一处是 `artifact`（2 处）。
+   * 而法宝有 **49 件**、每件 9 级祭炼 —— 内容量仅次于装备，却只有两条事件能送出来:
+   * 虚空裂缝「探手其中」35%、酒仙「拾葫芦归还」30%。
+   *
+   * 三条各自落在不同的地界类型上（遗迹 / 火域 / 天象），不挤在通用池里。
+   */
+  ev(
+    "ev_gujing_canbao",
+    "古井沉宝",
+    "废庙后院有一口井，井口盖着石板。石板上刻着「勿启」两个字 —— 刻得很深，像是刻的人自己也不信。",
+    ["ruin"],
+    [
+      c("挪开石板", [
+        o(30, "井底没有水。你摸到一件用油布裹着的东西，布已经朽了。", {
+          type: "artifact",
+        }),
+        o(45, "井底只有淤泥与一枚锈死的铜钱。那两个字你倒想了很久。", {
+          type: "material",
+          id: "wudao",
+          amount: 6,
+        }),
+        o(25, "石板滑落，砸在小腿上。你在井边坐了很久才站起来。", {
+          type: "buff",
+          id: "injury",
+        }),
+      ]),
+      c(
+        "把石板盖回原位",
+        [
+          o(1, "你把石板重新盖好。「勿启」那两个字朝上 —— 到底是为什么，你想了一路。", {
+            type: "material",
+            id: "wudao",
+            amount: 12,
+          }),
+        ],
+        {
+          isDefault: true,
+        },
+      ),
+    ],
+    { minRealm: 2, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ev_jiangren_yizhen",
+    "匠人遗镇",
+    "火域边缘有间塌了半边的铺子，炉子还是热的。炉边坐着一个人形的灰烬。",
+    ["fire"],
+    [
+      c("翻找炉后的架子", [
+        o(35, "架子最下层有个铁匣，匣子里的东西还带着匠人的手温。", { type: "artifact" }),
+        o(40, "架上全是废料。你挑了半天，只挑出一块能用的铁。", {
+          type: "material",
+          id: "ore",
+          amount: 12,
+        }),
+        o(25, "你一碰架子，整排连炉子一起塌了下来。火苗窜到眉毛。", {
+          type: "buff",
+          id: "injury",
+        }),
+      ]),
+      c("替他把炉火封上", [
+        o(70, "你封了火，把那堆灰烬扫到墙角。走的时候心里松了一块。", {
+          type: "exp",
+          secs: 95,
+        }),
+        o(30, "火封不住。你试了三次，看懂了那炉子为什么一直不灭。", {
+          type: "material",
+          id: "wudao",
+          amount: 5,
+        }),
+      ]),
+    ],
+    { minRealm: 2, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ev_xingxiu_yiwu",
+    "星宿遗物",
+    "星陨过后，荒原上留下一道浅坑。坑底有件东西在慢慢转，像还没想好要不要停下来。",
+    ["sky", "immortal"],
+    [
+      c("伸手去接", [
+        o(32, "它落在你掌心里，比看上去沉。", { type: "artifact" }),
+        o(43, "它在指尖一寸处停住，然后碎了。碎屑很凉。", { type: "nothing" }),
+        o(25, "它转得太快，割开了你的手。伤好之后留下道白痕。", {
+          type: "buff",
+          id: "injury",
+        }),
+      ]),
+      c("等它自己停", [
+        o(60, "你等了三天。它没停，你走了。", { type: "nothing" }),
+        o(40, "第三天夜里它忽然落下，正砸在你身边。你把它捡了起来。", {
+          type: "material",
+          id: "dust",
+          amount: 10,
+        }),
+      ]),
+    ],
+    { minRealm: 8, maxRealm: MAX_MAJOR },
   ),
   /*
    * 寿元四则（第 491 轮）。
