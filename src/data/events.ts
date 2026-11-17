@@ -1,4 +1,4 @@
-/** 随机事件库 —— 162 个随机事件(含 24 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 166 个随机事件(含 24 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { MAX_MAJOR, WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -2767,6 +2767,131 @@ export const EVENTS: EventDef[] = [
       ]),
     ],
     { minRealm: 13, maxRealm: MAX_MAJOR },
+  ),
+  /*
+   * 仙界前段补四条（第 518 轮）。
+   *
+   * 判据 `core/realmBandSupply.spec` 量出一处断层:境 8→9 的可用事件
+   * 从 64 则掉到 35 则（跌 45%）—— 人间界的事件带 maxRealm 上限，
+   * 一进仙界就不再出现，而仙界这边新写的只有那么多。
+   *
+   * 四条都是 `minRealm: 9` 且不设上限（maxRealm: MAX_MAJOR）——
+   * 仙界的事该一直能撞见，不该到了神界就消失。
+   */
+  ev(
+    "ev_xiangu_tai",
+    "仙骨台上的空位",
+    "云海里浮着一座旧台,台上九根石桩,八根各系一条褪色的绦。第九根空着 —— 而台面上刻的名字,是你。",
+    ["sky", "immortal"],
+    [
+      c("去系上自己那一条", [
+        o(45, "绦带入手是温的。系好之后,八条旧的都松了一分 —— 像有谁在让位。", {
+          type: "exp",
+          secs: 100,
+        }),
+        o(30, "绦带一碰就断。台上八条也一齐暗了一下。", { type: "nothing" }),
+        o(25, "你没系,只把名字上那层苔刮掉。刻痕是新的。", {
+          type: "material",
+          id: "wudao",
+          amount: 12,
+        }),
+      ]),
+      c("问台上还有谁来", [
+        o(50, "「都来过。」声音从石桩里出来,「都要走的。」", {
+          type: "material",
+          id: "page",
+          amount: 6,
+        }),
+        o(50, "没有人应。只有风把绦带吹得响。", { type: "nothing" }),
+      ]),
+    ],
+    { minRealm: 9, maxRealm: MAX_MAJOR },
+  ),
+  ev(
+    "ev_tianhe_yan",
+    "天河沿岸",
+    "沿河走了三日,水一直往西流。第四天你发现,岸也在往西流 —— 只是慢。",
+    ["sky", "immortal"],
+    [
+      c("停下看岸", [
+        o(55, "岸确实在动。你在地上插了一根签，两日后来看，签已经偏了三尺。", {
+          type: "exp",
+          secs: 110,
+        }),
+        o(45, "看得久了，分不清是岸在流，还是你在往前退。", {
+          type: "buff",
+          id: "buff_dingxin",
+        }),
+      ]),
+      c("逆着水走", [
+        o(40, "走了半日，水势不减，倒开出一朵白花 —— 落进手心里。", {
+          type: "material",
+          id: "herb",
+          amount: 40,
+        }),
+        o(30, "走不动。水推着你，像推一片叶子。", { type: "nothing" }),
+        o(30, "上游有个影子在等你回头看。", {
+          type: "exp",
+          secs: 60,
+        }),
+      ]),
+    ],
+    { minRealm: 9, maxRealm: MAX_MAJOR },
+  ),
+  ev(
+    "ev_yunzhong_zhong",
+    "云中钟",
+    "云里有口钟。你不敲它，它自己会响 —— 每九日一声。前八声都听见了，第九声你不在。",
+    ["sky", "immortal"],
+    [
+      c("等到下一声", [
+        o(50, "九日之后，钟自己响了。声音比想象中闷，像敲的是水。", {
+          type: "exp",
+          secs: 115,
+        }),
+        o(50, "等到第九日，天上什么都没有。你抬头的时候，它已经响过了。", { type: "nothing" }),
+      ]),
+      c("去摸摸钟身", [
+        o(60, "钟身上刻满了名字，最下面一个新刻的，字口还毛着。", {
+          type: "material",
+          id: "wudao",
+          amount: 14,
+        }),
+        o(40, "手一碰，钟就一直响到现在没停。云散了一片。", {
+          type: "buff",
+          id: "buff_juling",
+        }),
+      ]),
+    ],
+    { minRealm: 9, maxRealm: MAX_MAJOR },
+  ),
+  ev(
+    "ev_jieti_qian",
+    "阶题钱",
+    "登仙阶第九百级上放着一枚旧钱。你不认得那种铜，可它认得你 —— 你看它的时候，它翻了个面。",
+    ["sky", "immortal"],
+    [
+      c("捡起来", [
+        o(45, "钱上有一行字，磨得只剩半个。你没看懂，可把它收进了袖里。", {
+          type: "material",
+          id: "dust",
+          amount: 30,
+        }),
+        o(30, "捡它时手一麻。再看，它还在原位。", { type: "nothing" }),
+        o(25, "钱底下压着一条绦，褪色的，与仙骨台上那八条同一式。", {
+          type: "equipment",
+          minQualityRank: 4,
+        }),
+      ]),
+      c("不捡，接着往上走", [
+        o(60, "第九百零一级上，你又看见一枚。一模一样的。", {
+          type: "exp",
+          secs: 105,
+        }),
+        o(40, "什么也没有了。往上只是台阶。", { type: "nothing" }),
+      ]),
+    ],
+    { minRealm: 9, maxRealm: MAX_MAJOR },
   ),
   ev(
     "ev_hongmeng_zhiyin",

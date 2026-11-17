@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 915 个 spec;本作自己那部分 835 个) |
+| `bun run test` | 全量用例(全量 916 个 spec;本作自己那部分 836 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 915 个 spec = 宿主 835 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 916 个 spec = 宿主 836 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 915 个 spec(本作自己那部分 835 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 916 个 spec(本作自己那部分 836 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -28699,3 +28699,72 @@ noteTaboo("pill")       pillService.ts:119   ✓
 `type-check` 不拦（id 是 `string`），只有落进数据才现形。
 
 工作区干净、全量 915 / 7270 全绿、UI 门禁 0 个 ✗。
+
+### 第 518 轮:越过那一境时，可撞见的事少了一半
+
+#### 六族摊开，五族都平
+
+```text
+敌人 tier      32/32 全覆盖，每层至少 3 只
+法宝 fromTier  32/32 全覆盖
+灵兽品质       七档全有
+功法品阶       地品 2 部 —— 而档案 13244 行早有专节（补过两门，判据守着）
+仙界地界池     102~109 则（靠 general 兜底）
+```
+
+第五族的「事件按境界带 46 则 vs 87 则」我一开始读成「仙界前段偏薄」，
+而 46 则对三段区间不算少 —— **故先去量了每一处地界的池子，102~109，不薄**。
+
+#### 真正的入口在别处
+
+```text
+EventDef 的门是 minRealm ≤ 当前境界 ≤ maxRealm（eventEngine 第 56 行）。
+minRealm 是**下界**，从那一境起一直可用；
+而人间界的事件带 maxRealm 上限，进仙界之后就不再出现。
+```
+
+故按「某一境当场能抽到多少则」重算:
+
+```text
+境 0   63 则    境 9   35 则   ← 掉了一半
+境 3   78 则    境 12  48 则
+境 6   73 则    境 15  62 则
+境 8   64 则    境 18  66 则 / 境 20  72 则
+```
+
+**境 8→9 从 64 掉到 35，跌 45%。** 而跨界的正是本作最郑重的那一步
+（三处跨界入口都要渡劫）。
+
+#### 判据：只判跌幅，不判绝对值
+
+```text
+① 相邻两境的可用事件数跌幅不超过四成
+② 反差：数量少不一定坏 —— 仙界内容更精，故只判跌幅
+③ 反差：maxRealm 是正常的（人间的事到了仙界不该再撞见），不许为了凑数删掉
+```
+
+按标签数的那条判据（`eventTagSupply`：每个标签 ≥ 4 条）为什么没抓到:
+它问的是「这个题材够不够抽」，而这一条问的是「刚跨过去还剩多少事」——
+**两者是不同的问题**，与第 514 轮「路径 vs 额度」是同一类。
+
+#### 补的四条
+
+```text
+仙骨台上的空位    九根石桩，八根系绦，第九根空着 —— 台面上刻的是你
+天河沿岸          水往西流，第四天你发现岸也在往西流，只是慢
+云中钟            你不敲它，它自己会响，每九日一声
+阶题钱            第九百级上放着一枚旧钱，它认得你
+```
+
+四条都是 `minRealm: 9` 且不设上限 —— 仙界的事该一直能撞见，不该到了神界就消失。
+补完之后 35 → 39，境 8→9 的跌幅降到 39%，判据绿。
+
+#### 一处口径写错了两次
+
+```text
+第一次  按 minRealm 落在带内数专属 —— 判据报「六段全薄（1~8 则）」
+        因为 minRealm 是下界，63 则事件的 minRealm 都是 0
+第二次  改用「当场可用」（min ≤ r ≤ max）—— 这才是 eventEngine 的口径
+```
+
+工作区干净、全量 916 / 7273 全绿、UI 门禁 0 个 ✗。
