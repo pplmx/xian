@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 872 个 spec;本作自己那部分 792 个) |
+| `bun run test` | 全量用例(全量 873 个 spec;本作自己那部分 793 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 872 个 spec = 宿主 792 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 873 个 spec = 宿主 793 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 872 个 spec(本作自己那部分 792 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 873 个 spec(本作自己那部分 793 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -25633,3 +25633,56 @@ BuildDiscovery              「核心词条平均跨过 25% 便会成路」
 
 **教训**:偶发失败不一定是抖动。第一反应「与我的改动无关」时，
 要去看**它为什么现在才出现**——那一问往往指回自己的改动。
+
+### 第 463 轮:同一个函数,两处传法不同
+
+#### 怎么找到的
+
+前两轮（461/462）修的是「只看层级、不看语义」。这一轮换了个方向：
+去核 `worldView(w, bossNameOf, isCleared)` 的**两处调用**。
+
+```text
+MortalWorldView.vue:397   worldView(w, (id) => enemyDef(id)?.name ?? id, cleared)  ← 解析
+AdventureView.vue:1166    worldView(w, (id) => id)                                 ← 恒等函数
+```
+
+#### 而它当时是「无害」的
+
+`MortalWorldRibbon` 只读 `place.name` 与位置，`bossName` 一个地方都没消费 ——
+所以历练页那个恒等函数不产生任何可见后果。
+
+**但它是一颗定时炸弹**：哪天有人在行旅条里加一句
+「此去守关者：{{ place.bossName }}」，历练页会直接印出 `e_bwking`。
+
+而世界页从头就是解析过的 —— **同一个函数、两处传法不同，正是「两本账」的起点。**
+
+#### 修法
+
+```text
+AdventureView   (id) => id  →  (id) => enemyDef(id)?.name ?? id
+```
+
+一行，且 `enemyDef` 在那个文件里早已导入（第 960 行）。
+
+#### 判据两条（`core/worldViewBossName.spec`）
+
+```text
+① 传给 worldView 的解析器必须真的解析 —— 不许出现恒等函数
+② 反差：世界页那份必须仍然解析（防止有人「统一」成恒等）
+```
+
+#### 两次「注入没红」
+
+```text
+第一次  正则写成 /worldView\(\s*[^,]+,\s*([^,)]+)/ —— 被 (id) 的括号截断成 "(id"
+        → 注入恒等函数之后判据全绿。修法：直接匹配**恒等函数本身**，
+          而不是先切参数再判
+第二次  注入后报了两条，而我改的只有一处 —— 因为文档注释里**引用了**
+        那句旧写法。修法：扫之前先去掉注释
+        （第 445 轮踩过同一个坑：判据把「引用」当成了「声称」）
+```
+
+> 「注入没红」有两种可能：判据错了，或者注入没进去。
+> 而「注入红了但条数不对」是第三种：**判据扫到的地方比你以为的多**。
+
+工作区干净、全量 873 / 7124 全绿。

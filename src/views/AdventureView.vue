@@ -1163,7 +1163,18 @@ const activeTrial = computed(() => activeLifeTrial());
 /** 顶部行旅条:世界名、路线进度与眼下去处都从世界页同一份视图来 */
 const worldOverview = computed(() => {
   const w = adventure.mortalWorld;
-  return w ? worldView(w, (id) => id) : null;
+  /*
+   * 首领名要**解析**，不能原样返回 id（第 463 轮）。
+   *
+   * 这里原先是 `worldView(w, (id) => id)` —— 恒等函数。当时 `MortalWorldRibbon`
+   * 只读 `place.name` 与位置，`bossName` 没有任何地方消费，故那个恒等函数
+   * 一直是「无影响」的。但它是一颗定时炸弹：哪天有人在行旅条里加一句
+   * 「此去守关者：{{ place.bossName }}」，历练页会直接印出 `e_bwking`。
+   *
+   * 而世界页（MortalWorldView）从头就是 `enemyDef(id)?.name ?? id` ——
+   * 同一个函数，两处传法不同，正是「两本账」的起点。
+   */
+  return w ? worldView(w, (id) => enemyDef(id)?.name ?? id) : null;
 });
 const worldStatuses = computed(() => {
   const view = worldOverview.value;
