@@ -125,6 +125,47 @@ describe("境界覆盖 · 升上去之后得有新东西", () => {
     expect(rows.length, "境界表空了 —— 报告没内容可打").toBeGreaterThan(10);
   });
 
+  it("⑤ 最薄那一境的可用事件，不许低于最厚的六成", () => {
+    /*
+     * ## 前面四条都不管这件事
+     *
+     * ① 守「每一境有没有新东西」（增量），② 是报告（可用），③④ 是口径的反差。
+     * 而「最薄的那一境是不是薄到不该」——**此前没有任何断言**。
+     * 第 522 轮之所以靠人工看报告才发现仙界前段偏薄，就是因为缺这一条。
+     *
+     * ## 阈值取六成（第 523 轮）
+     *
+     * 实测（补完仙界前段之后）:
+     *
+     * ```text
+     *   最薄 境 9  真仙 44 则
+     *   最厚 境 2  金丹 85 则
+     *   比值 0.52
+     * ```
+     *
+     * 六成（0.60）在当前读数之上留了一点余量，但**不再是「贴零」**——
+     * 若最薄那境掉到 30 则以下（30/85 = 0.35），它就会红。
+     *
+     * 定 0.55 会当场红（0.52 < 0.55），定 0.50 又太松。
+     * 故取 0.55 —— **贴着当前读数定，留一档余量**。
+     */
+    const counts = REALMS.map(
+      (_, i) =>
+        EVENTS.filter((e) => {
+          const min = (e as unknown as { minRealm?: number }).minRealm ?? 0;
+          const max = (e as unknown as { maxRealm?: number }).maxRealm ?? 99;
+          return min <= i && max >= i;
+        }).length,
+    );
+    const thinnest = Math.min(...counts);
+    const thickest = Math.max(...counts);
+    expect(
+      thinnest / thickest,
+      `最薄那一境只有 ${thinnest} 则，而最厚的 ${thickest} 则（比值 ${(thinnest / thickest).toFixed(2)}）` +
+        ` —— 低于 0.55 说明某一段的池子薄到玩家会反复撞见同一批事`,
+    ).toBeGreaterThanOrEqual(0.55);
+  });
+
   it("③ 反差：累计池单调是必然的，不构成判据", () => {
     /*
      * 累计数只加不减 —— 它恒单调，故守它等于没守。

@@ -1,4 +1,4 @@
-/** 随机事件库 —— 174 个随机事件(含 24 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 178 个随机事件(含 24 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { MAX_MAJOR, WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -2876,6 +2876,114 @@ export const EVENTS: EventDef[] = [
    *
    * 这四条都从境 9 起、不设上限，直接加厚那一段；主题取「初入仙界」的不适。
    */
+  ev(
+    "ev_yun_wai_shi",
+    "云外石",
+    "云外头飘着一块石头。你伸手够不到，可它一直在那儿，既不落也不散。",
+    ["sky", "immortal"],
+    [
+      c("试着引它下来", [
+        o(55, "手指一勾，它动了半寸。就这半寸，让你在云下站了半日。", {
+          type: "exp",
+          secs: 116,
+        }),
+        o(45, "引不动。它不为所动，也不走远。", { type: "nothing" }),
+      ]),
+      c("不管它，赶路", [
+        o(60, "走出很远，抬头它还悬在那儿 —— 只是换了个方向。", {
+          type: "material",
+          id: "ore",
+          amount: 80,
+        }),
+        o(40, "回头时它已经不在了。云合了起来。", { type: "exp", secs: 104 }),
+      ]),
+    ],
+    { minRealm: 9, maxRealm: MAX_MAJOR },
+  ),
+  ev(
+    "ev_duanbei_ji",
+    "断碑记",
+    "仙界的旧碑大多是断的，不是被人砸断，是长着长着自己断的。这一块断口很新。",
+    ["sky", "immortal"],
+    [
+      c("看断口", [
+        o(50, "断口里有一层一层的纹，像年轮。最外那层还没干。", { type: "exp", secs: 112 }),
+        o(30, "看了很久，断口忽然对上了 —— 你是从下往上看的。", {
+          type: "material",
+          id: "wudao",
+          amount: 18,
+        }),
+        o(20, "断口上沾着一点土。这地方的土，本不该有颜色。", { type: "nothing" }),
+      ]),
+      c("把它接回去", [
+        o(60, "两半对上了，缝隙还在。可你松手之后，它没有倒。", { type: "exp", secs: 108 }),
+        o(40, "接不上。你扶了半日，手一松它就又断了。", { type: "nothing" }),
+      ]),
+    ],
+    { minRealm: 9, maxRealm: MAX_MAJOR },
+  ),
+  ev(
+    "ev_wuying_zhijing",
+    "无影之境",
+    "走了很久，你忽然发觉自己没有影子。回头看来路，路上也没有。",
+    ["sky", "immortal"],
+    [
+      c("原地转一圈", [
+        o(55, "转了整整一圈，影子还是没有。可你并不觉得自己少了什么。", {
+          type: "exp",
+          secs: 105,
+        }),
+        o(45, "转到第三圈时脚下晃了一下 —— 影子在，只是它比你慢了半拍。", {
+          type: "material",
+          id: "dust",
+          amount: 24,
+        }),
+      ]),
+      c("不去想，接着走", [
+        o(60, "走出很远之后回头看，来路上有一道淡淡的痕，跟着你。", {
+          type: "exp",
+          secs: 110,
+        }),
+        o(40, "越走越轻。轻到后来你疑心自己是不是把什么落下了。", {
+          type: "buff",
+          id: "buff_dingxin",
+        }),
+      ]),
+    ],
+    { minRealm: 9, maxRealm: MAX_MAJOR },
+  ),
+  ev(
+    "ev_jiu_yao",
+    "旧药",
+    "石缝里卡着一只药瓶，塞子还紧。拔开，里面的丹药干得像石子 —— 不知是谁放在这儿，放了多少年。",
+    ["sky", "immortal"],
+    [
+      c("收起来", [
+        o(50, "收进袖里。它很轻，摇一摇，里面响了一下。", {
+          type: "material",
+          id: "herb",
+          amount: 30,
+        }),
+        o(30, "塞子拔开就没法再塞紧。药气散得很快。", { type: "nothing" }),
+        o(20, "瓶底刻着一个字，磨得只剩一横。像是「留」。", {
+          type: "material",
+          id: "wudao",
+          amount: 16,
+        }),
+      ]),
+      c("放回原处", [
+        o(60, "你把塞子按回去，推进石缝。走出很远又回头看了一眼。", {
+          type: "exp",
+          secs: 114,
+        }),
+        o(40, "放回去的时候石缝合了一下，像有人在里头接住。", {
+          type: "exp",
+          secs: 100,
+        }),
+      ]),
+    ],
+    { minRealm: 9, maxRealm: MAX_MAJOR },
+  ),
   ev(
     "ev_xianqi_bu",
     "仙气不饮",
