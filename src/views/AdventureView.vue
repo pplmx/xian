@@ -439,6 +439,18 @@
                         >
                           <div class="adventure-region__conditions">
                             <!--
+                              宿敌在出发前就说（第 480 轮）——
+                              此前只在打起来之后由 CombatPanel 标出来，玩家没法
+                              「有备而来地回去找它」。只在有宿敌时出现。
+                            -->
+                            <p
+                              v-for="n in nemesisByRegion.get(row.def.id) ?? []"
+                              :key="`nem-${n.enemyName}`"
+                              class="mt-1 text-body text-cinnabar"
+                            >
+                              宿敌「{{ n.enemyName }}」在此——已败它 {{ n.lossCount }} 次
+                            </p>
+                            <!--
                     这一行是三档字号里的「注」:境相宜与中点留在最淡处(它是基准线),
                     凶险名抬到 ink-soft(它才是要判的那一项),凶险 ≥4 另有朱砂。
                   -->
@@ -960,6 +972,7 @@ import {
   expectedPillBattlesPerPiece,
 } from "@/core/loot";
 import { exploreTripPlan } from "@/core/explorationPlan";
+import { NEMESIS_THRESHOLD } from "@/core/worldMemory";
 import { tripViability, tripViabilityText } from "@/core/tripViability";
 import { buildPlayerSnap } from "@/core/playerSnap";
 import { makeEnemySnap } from "@/core/combat";
@@ -1243,6 +1256,31 @@ const MODE_LIST: { id: ExploreMode; risk: string }[] = [
 ];
 
 const currentBuild = computed(() => detectBuild(player.finalStats.mods));
+
+/**
+ * 尚未雪耻的宿敌，按地界分组（第 480 轮）。
+ *
+ * 宿敌系统本身早已完整（`worldMemory` 记败北、`markAvenged` 记雪耻、
+ * 命题按雪耻数判「本世雪耻一名宿敌」），而它出现在界面的两处
+ * ——`CombatPanel`（打起来之后）与 `LegacyView`（历世履历）——都在事后。
+ *
+ * 而玩家**选去哪一处**的那一页一个字都没有。于是「黑风林里那条狼咬死过我三次」
+ * 只能靠偶遇想起来，出发前看不到「那处还在等我」。
+ *
+ * 口径与 `isNemesis` 一致：`avengedAt === undefined` 且 `lossCount` 够。
+ * 雪耻过的不再算 —— 那已经不是「还在等你」了。
+ */
+const nemesisByRegion = computed(() => {
+  const out = new Map<string, { enemyName: string; lossCount: number }[]>();
+  for (const n of player.nemeses) {
+    if (n.avengedAt !== undefined) continue;
+    if (n.lossCount < NEMESIS_THRESHOLD) continue;
+    const list = out.get(n.regionId) ?? [];
+    list.push({ enemyName: n.enemyName, lossCount: n.lossCount });
+    out.set(n.regionId, list);
+  }
+  return out;
+});
 
 const regionRows = computed(() =>
   REGIONS.map((r) => {
