@@ -1,4 +1,4 @@
-/** 随机事件库 —— 132 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 138 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -1396,6 +1396,144 @@ export const EVENTS: EventDef[] = [
       ]),
     ],
     { maxRealm: MORTAL_END },
+  ),
+  /*
+   * 剑系与火系各三则（第 483 轮）。
+   *
+   * 第 482 轮给冰系补了三则（4 → 7）之后，最薄的两处变成 `sword`（4 则 / 1 处地界）
+   * 与 `fire`（5 则 / 1 处）。而那是剑冢（tier 10）与赤炎火域（tier 7）——
+   * 两个玩家会反复去的中高阶地界。
+   *
+   * 一律**不带 `general`**:带了就能出现在全图 44 处,那只是给通用池添乱。
+   */
+  ev(
+    "ev_jianzhong_wendao",
+    "剑冢问道",
+    "万剑成冢,断刃朝天。你站在其中,忽觉有一股极细的意从脚底升上来 —— 不是杀气。",
+    ["sword"],
+    [
+      c("静立感剑", [
+        o(45, "那股利意顺着经脉走了一圈。你睁眼时,手心多了一层薄汗。", {
+          type: "material",
+          id: "wudao",
+          amount: 15,
+        }),
+        o(35, "什么也没感到。冢中只有风穿过断刃的声音。", { type: "nothing" }),
+        o(20, "意太盛,反噬心神。你退出剑冢时,耳中还在响。", { type: "buff", id: "injury" }),
+      ]),
+      c("随剑而舞", [
+        o(40, "你拾起一柄无主之刃,随手挥了两下 —— 竟与冢中剑气合了拍。", {
+          type: "exp",
+          secs: 105,
+        }),
+        o(60, "剑太重。你舞了半刻,肩头酸了三天。", { type: "nothing" }),
+      ]),
+      leave("你退了出去。这地方不适合久留。"),
+    ],
+    { minRealm: 2, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ev_duanjian_chonglian",
+    "断剑重炼",
+    "冢边有个老炉,炉膛里还留着余火。炉旁横着一柄断剑 —— 断口很新。",
+    ["sword"],
+    [
+      c("接剑入炉", [
+        o(45, "断处接得严丝合缝。你把它带走了。", { type: "equipment", minQualityRank: 4 }),
+        o(55, "铁与铁之间终究差着一线。剑废了,炉也裂了。", { type: "buff", id: "injury" }),
+      ]),
+      c("只取残片", [
+        o(70, "你敲下剑柄上的一小块,揣进怀里。", { type: "material", id: "ore", amount: 10 }),
+        o(30, "残片碎成粉末。风一吹就散了。", { type: "nothing" }),
+      ]),
+    ],
+    { minRealm: 2, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ev_jianqi_chenghe",
+    "剑气成河",
+    "夜半,冢中无数断刃同时嗡鸣。那些声音连成一条线,听起来像水。",
+    ["sword"],
+    [
+      c("以身试河", [
+        o(35, "剑气过体,不伤血肉,只把经脉里淤着的东西冲散了。", { type: "exp", secs: 110 }),
+        o(40, "你被冲得倒退七步,背抵断碑才停住。", { type: "nothing" }),
+        o(25, "太利。你在原地站了很久才缓过来。", { type: "buff", id: "injury" }),
+      ]),
+      c("退出冢外", [o(1, "你在冢外坐到天明,声音才歇。", { type: "nothing" })], {
+        isDefault: true,
+      }),
+    ],
+    { minRealm: 2, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ev_huoyu_duanshi",
+    "火域锻石",
+    "地缝里翻出的石头发着暗红的光,握久了烫手。",
+    ["fire"],
+    [
+      c("取石入炉", [
+        o(50, "石头在炉里化了,凝成一小块赤红的料子。", {
+          type: "material",
+          id: "ore",
+          amount: 12,
+        }),
+        o(50, "石头炸开了。飞溅的碎屑在你手背上留下几个泡。", {
+          type: "buff",
+          id: "injury",
+        }),
+      ]),
+      c("就地埋回去", [
+        o(60, "你把它推回地缝。红光暗下去之前,你看清里面似乎有别的东西。", {
+          type: "nothing",
+        }),
+        o(40, "石缝深处有余热涌上来。你在那儿烤了很久。", { type: "exp", secs: 95 }),
+      ]),
+    ],
+    { minRealm: 2, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ev_dihuo_wenlu",
+    "地火问路",
+    "前方火墙拦路。墙里隐约有一条窄道 —— 也可能只是火焰的形状。",
+    ["fire"],
+    [
+      c("穿火而过", [
+        o(45, "你冲过去,衣角烧掉一半,人没事。对面是一片没被烧过的地。", {
+          type: "exp",
+          secs: 100,
+        }),
+        o(55, "你冲到一半退了回来。眉头与手臂都焦了。", { type: "buff", id: "injury" }),
+      ]),
+      c("绕行", [o(1, "你绕着走了大半天,多费了些工夫,倒也平安。", { type: "nothing" })], {
+        isDefault: true,
+      }),
+    ],
+    { minRealm: 2, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ev_huizhong_jiushi",
+    "灰中拾石",
+    "火域边缘的灰烬里,散着几粒没烧尽的东西。",
+    ["fire"],
+    [
+      c("翻找灰烬", [
+        o(55, "你捡出一小把暗色的颗粒,捻在指间有金属的凉。", {
+          type: "material",
+          id: "ore",
+          amount: 8,
+        }),
+        o(45, "底下的灰还是烫的。你甩着手跳开,掌心一片通红。", {
+          type: "buff",
+          id: "injury",
+        }),
+      ]),
+      c("拂灰静坐", [
+        o(70, "灰很软。你在这儿坐了半日,心里那点火气下去了些。", { type: "exp", secs: 85 }),
+        o(30, "静不下来。风一起,灰全扑在脸上。", { type: "nothing" }),
+      ]),
+    ],
+    { minRealm: 2, maxRealm: MORTAL_END },
   ),
   /*
    * 冰系三则（第 482 轮）。
