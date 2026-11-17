@@ -212,9 +212,16 @@
 
                   <p class="world-stage__guard">
                     <span>镇守 {{ p.bossName }}</span>
+                    <!--
+                      事件密度：几个点就是几档。
+                      aria-hidden 只挡点本身，旁边那句 sr-only 把同一件事说成话 ——
+                      此前整块都是 aria-hidden，**读屏与无点阵渲染下这条信息完全丢失**，
+                      而 docs/design.md 第 631 行写着这一栏要给「地名、镇守、事件密度」。
+                    -->
                     <span class="world-stage__density" aria-hidden="true">
                       <span v-for="n in p.eventLevel" :key="n" />
                     </span>
+                    <span class="sr-only">{{ densityText(p.eventLevel) }}</span>
                   </p>
 
                   <!-- 锁住的地界要给一句「为什么现在去不了」,而不是只画把锁 -->
@@ -414,6 +421,21 @@ const stageStatuses = computed(() =>
   mortalStageStatuses(view.value?.places.map((p) => p.nodeId) ?? [], adventure.mortalCleared),
 );
 /** 卷首山图、本世总账与路线标题共用这一份阶段读数 */
+/**
+ * 事件密度说成人话 —— 只报「几档」，不报标签数，也不报节奏原型名。
+ *
+ * `mortalWorldService` 的文件头写着「不向玩家暴露算法：骨架模板名与事件密度数字」——
+ * 那句话说的是**不报具体数字与内部名词**，不是「不报这件事」。
+ * 故这里给的是「疏 / 中 / 密」这一档的说法。
+ */
+function densityText(level: number): string {
+  if (level <= 1) return "此段路上事少";
+  if (level <= 2) return "此段路上事不多";
+  if (level <= 3) return "此段路上事适中";
+  if (level <= 4) return "此段路上事不少";
+  return "此段路上事极多";
+}
+
 const meter = computed(() => worldDeskMeter(view.value?.places ?? [], stageStatuses.value));
 const currentRouteText = computed(() =>
   meter.value.currentIndex >= 0

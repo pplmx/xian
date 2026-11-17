@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 873 个 spec;本作自己那部分 793 个) |
+| `bun run test` | 全量用例(全量 874 个 spec;本作自己那部分 794 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 873 个 spec = 宿主 793 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 874 个 spec = 宿主 794 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 873 个 spec(本作自己那部分 793 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 874 个 spec(本作自己那部分 794 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -25835,3 +25835,66 @@ it("视图型来源一个都不许被删 —— 每一条都是一次真实的�
 判据立刻红，点名 `CollectionProgressOverview.probeDead`。
 
 工作区干净、全量 873 / 7124 全绿。
+
+### 第 466 轮:那排点画的是什么
+
+#### 上一轮说的「该换对象」
+
+第 465 轮的命中率从 1/1 掉到 1/9 —— 视图型接口区基本干净了。这一轮换对象:
+不看「字段有没有人读」，看**界面上那处东西说不说得清**。
+
+#### 找到的一处
+
+`MortalWorldView` 每段地界上有个「镇守 X」后面跟着一排点:
+
+```html
+<span class="world-stage__density" aria-hidden="true">
+  <span v-for="n in p.eventLevel" :key="n" />
+</span>
+```
+
+那是事件密度（1~5 个点）。而**整块都是 `aria-hidden="true"`** ——
+读屏、禁用视觉渲染、纯文本导出下，这条信息完全丢失。全页也没有文字说那几个点是什么。
+
+#### 而设计本来是要说的
+
+```text
+docs/design.md:631
+  正文的山河案先给 MortalRouteMap 全图，再沿同一条路线列出每段地名、镇守、事件密度
+
+mortalWorldService.ts:17
+  不向玩家暴露算法：骨架模板名(短促/匀进/长尾…)与事件密度数字
+```
+
+后者说的是不报**具体数字与内部名词**，不是不报这件事。两句话在这里交汇成了现状:
+点了，但没说话。
+
+#### 修法
+
+```text
+点阵保持 aria-hidden（点是装饰）
+旁边加一句 sr-only：densityText(p.eventLevel)
+  「此段路上事少 / 事不多 / 事适中 / 事不少 / 事极多」
+```
+
+五档各有各的说法，且都不提标签数、不提节奏原型名。
+
+#### 判据三条（`core/worldDensitySpoken.spec`）
+
+```text
+① 点阵旁边必须有一句 sr-only 把同一件事说成话，且紧挨着（不能飘到页面别处）
+② 反差：点阵本身仍是 aria-hidden —— 点是装饰，话才是信息
+③ 五档都有说法，且两两不同
+```
+
+③ 是这一条里唯一有点意思的:它直接从源码里把 `densityText` 的四个分支抽出来比对，
+若哪天有人把两档合并成同一句话，这条会红 —— **那一档就白设了**。
+
+注入验证:删掉那句 sr-only → ①立刻红。
+
+#### 顺带确认的一件事
+
+`sr-only` 在本仓没有手写定义 —— 它是 Tailwind 的内置 utility，而本仓用 Tailwind。
+`BottomNavigation` / `SpiritRootReveal` / `NavigationAtlas` 等六处都在用它，故它在。
+
+工作区干净、全量 874 / 7127 全绿。

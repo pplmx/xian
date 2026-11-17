@@ -749,6 +749,8 @@ const CATEGORIES = [
       "mortalTagSemantics",
       // 世界视图里的首领名,不许是内部 id
       "worldViewBossName",
+      // 事件密度不能只是一排点
+      "worldDensitySpoken",
       // 计数器 → 行为的一张满表:师承与素行两个消费者都读它,半张表各自长是这里的缺口
       "counterText",
       // 「这一趟能走多远」—— 出行窗只报产出不报能不能拿到,是本轮在真浏览器里量到的坑
