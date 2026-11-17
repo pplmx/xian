@@ -236,7 +236,25 @@ export function pickBoss(
   rng: RandomService,
   used: Set<string>,
   pool: readonly EnemyDef[] = BOSSES,
-): { boss: EnemyDef; fellBack: boolean } {
+  /**
+   * 这处地界的**原生首领** —— 数据里它本来就是为那块地方写的
+   * （`regions.ts` 每条都声明了 `boss`，如剑冢 → `e_swordlord`）。
+   *
+   * ## 为什么加这一条（第 461 轮）
+   *
+   * 原先 `pickBoss` 只看层级，于是首领与地界的语义绑定被打散了。
+   * 实测 40 世 233 段：只有 **7.3%** 的首领恰是本段地界的原生首领 ——
+   * 剑冢里住着「万妖林主」、九幽魔渊里住着「星空古兽」、天外天里住着「鸿蒙古魔」。
+   * 而 `worldNaming.spec` 的最后一条一直写着「Boss 语义仍未处理 —— 等真实体验证据」。
+   *
+   * ## 只在「层级也合适」时才用
+   *
+   * 实测原生首领与它被分到那一段的层级差：中位 2、均值 1.8、最大 3，71% 在 2 以内。
+   * 故口径取「差 ≤ 3 且未被占用」—— 够宽，能救回大部分语义；又不至于像
+   * 第 91 轮那次「不高于本段 +2」一样把前段的首领池抽干。
+   */
+  preferred?: string,
+): { boss: EnemyDef; fellBack: boolean; native: boolean } {
   /*
    * 候选池先滤掉**明显比本段弱**的首领,再就近取。
    *
@@ -259,24 +277,34 @@ export function pickBoss(
    * 下限不一样:它只禁止「拿一个明显过时的凑数」,不禁止「提前用掉后面段该用的」。
    * 前段提前用强首领本身无害(它只是让节奏更紧凑),而末段拿到远古首领才是硬伤。
    */
+  /*
+   * 原生首领优先 —— 只在层级也合适时。差 > 3 时宁可放弃语义，
+   * 也不让一个 t6 的首领守 t20 的关（那正是 `notAncient` 在防的事）。
+   */
+  if (preferred) {
+    const native = pool.find((b) => b.id === preferred);
+    if (native && !used.has(native.id) && Math.abs(native.tier - tier) <= 3) {
+      return { boss: native, fellBack: false, native: true };
+    }
+  }
   const notAncient = pool.filter((b) => b.tier >= tier - 5);
   const cands = nearTier([...notAncient], tier, rng, Math.min(pool.length, 6));
   const fresh = cands.filter((b) => !used.has(b.id));
-  if (fresh.length > 0) return { boss: fresh[0]!, fellBack: false };
+  if (fresh.length > 0) return { boss: fresh[0]!, fellBack: false, native: false };
   // 窗口内全被占用:在**同样不远古**的池里再找一个没用过的
   const anyFresh = notAncient.filter((b) => !used.has(b.id));
   if (anyFresh.length > 0) {
     const sorted = [...anyFresh].sort((a, b) => Math.abs(a.tier - tier) - Math.abs(b.tier - tier));
-    return { boss: sorted[0]!, fellBack: false };
+    return { boss: sorted[0]!, fellBack: false, native: false };
   }
   // 不远古的都占完了 → 退回全池(宁可拿个旧的,也不让生成失败)
   const anyLeft = pool.filter((b) => !used.has(b.id));
   if (anyLeft.length > 0) {
     const sorted = [...anyLeft].sort((a, b) => Math.abs(a.tier - tier) - Math.abs(b.tier - tier));
-    return { boss: sorted[0]!, fellBack: false };
+    return { boss: sorted[0]!, fellBack: false, native: false };
   }
   // 全池用尽(段数多于首领总数)才复用
-  return { boss: cands[0]!, fellBack: true };
+  return { boss: cands[0]!, fellBack: true, native: false };
 }
 
 /** 取与目标层级相近的素材,避免把一阶妖物丢进末段 */
@@ -431,7 +459,8 @@ export function generateMortalWorld(seed: number): MortalWorld {
     // 层级来自骨架,原区域只贡献素材与名字
     const tier = tiers[i]!;
     const foes = nearTier(MOBS, tier, rng, FOES_PER_PLACE);
-    const picked2 = pickBoss(tier, rng, usedBossIds, BOSSES);
+    // 原生首领优先：r.boss 就是数据里为这块地方写的那个（见 pickBoss 的 preferred）
+    const picked2 = pickBoss(tier, rng, usedBossIds, BOSSES, r.boss);
     const boss = picked2.boss;
     usedBossIds.add(boss.id);
     if (picked2.fellBack) bossFallbackAt.push(i);

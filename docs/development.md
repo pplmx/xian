@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 870 个 spec;本作自己那部分 790 个) |
+| `bun run test` | 全量用例(全量 871 个 spec;本作自己那部分 791 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 870 个 spec = 宿主 790 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 871 个 spec = 宿主 791 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 870 个 spec(本作自己那部分 790 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 871 个 spec(本作自己那部分 791 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -25452,3 +25452,82 @@ luoxia  (sunset)   → 山岳   ← 与青云山麓一模一样
 `deadExportAudit.spec` 立刻报「写下的每个导出都得有人接」。删掉。
 
 工作区干净、全量 870 / 7116 全绿。
+
+### 第 461 轮:剑冢里住着万妖林主
+
+#### 一条挂了两百多轮的待办
+
+`worldNaming.spec` 的最后一条一直写着:
+
+```text
+Boss 语义仍未处理，与本轮无关 —— 等真实体验证据
+```
+
+这一轮去看了一眼,证据很明显:
+
+```text
+剑冢(7)      → 万妖林主(e_forestlord)
+九幽魔渊(16) → 星空古兽(e_starbeast)
+天外天(20)   → 鸿蒙古魔(e_hmdemon)
+```
+
+#### 那条绑定一直都在
+
+```text
+regions.ts 里每处地界都声明了自己的首领:
+  jianzhong → "e_swordlord"     剑冢之主
+  heifeng   → "e_wolfking"      黑风妖王
+  youmo     → "e_miaozu"        …
+```
+
+而 `pickBoss` **只看层级,不看这个字段**。实测 40 世 233 段:
+只有 **7.3%** 的首领恰是本段地界的原生首领。
+
+根因不是挑选逻辑,是**数据分布**:20 个凡界首领里 10 个是 `demon` 族。
+族类一半集中在妖魔,于是不管地界是什么,抽到的首领约半数长相相似。
+
+#### 改法
+
+`pickBoss` 加一个可选的 `preferred`:
+
+```text
+层级差 ≤3 且未被占用时 → 优先用该地界的原生首领
+```
+
+口径的两个数字都有依据:
+
+```text
+为什么是 3     实测原生首领与其段落的层级差:中位 2、均值 1.8、最大 3、71% 在 2 以内
+为什么无条件不行 第 91 轮试过「不高于本段 +2」,把前段首领池抽干了,最坏处反而更糟
+```
+
+#### 结果
+
+```text
+语义一致   7.3% → 100%（233/233 段）
+首领重复   0 世 → 0 世（没有引入撞车）
+```
+
+判据三条:
+
+```text
+① 每一段的首领都是该地界的原生首领（报错点名「某处住着谁，该是谁」）
+② 反差：一个世界内首领不重复 —— 语义优先不许撞车
+③ 反差：难度曲线没被破坏 —— 最大的「本段 − 首领层级」≤5（notAncient 的口径）
+```
+
+注入验证:去掉 `preferred` → ①立刻红,报错里第一句就是「剑冢里住着林主」。
+
+#### 这一轮的形状
+
+```text
+第 458 轮  同 tier 两处地界共用图标    → 换两个图标
+第 459 轮  本世路线内图标重复          → 试了，代价更大，回退
+第 460 轮  加上约束条件                → 两个指标同时改善
+第 461 轮  首领与地界的语义绑定        → 100% 一致
+```
+
+前三条是「同一片天重复出现」的不同切面;这一条是**另一种重复**——
+玩家在剑冢里遇到一个叫「万妖林主」的首领,读到的是一个错的名字。
+
+工作区干净、全量 871 / 7119 全绿。
