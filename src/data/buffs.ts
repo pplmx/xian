@@ -378,6 +378,49 @@ export const BUFFS: BuffDef[] = [
     { attackPct: 0.45, critDamage: 0.42, damageReduction: 0.16 },
     "sword",
   ),
+  // ---- 三个单薄境界的补位(第 487 轮) ----
+  // 大乘(7)/真仙(9)/金仙(11)此前**一味增益丹都没有**,只有修为丹 ——
+  // 玩家到了那里,可选的动作只剩「再补一点修为」。
+  b(
+    "buff_lianxu",
+    "炼虚神游",
+    "pill",
+    1500,
+    "神游太虚,所见者远",
+    // 历练向:炼虚这一境只有一味修为丹,补的是「去外面怎么走」
+    { explorationSpeed: 0.32, eventLuck: 0.16 },
+    "wind",
+  ),
+  b(
+    "buff_dacheng",
+    "大乘气象",
+    "pill",
+    1500,
+    "大乘之相已具,举手投足皆合于道",
+    // 破境向:大乘是人间界最后一站,下一境就是真仙
+    { breakthroughRate: 0.12, tribulationResist: 0.22 },
+    "cloud",
+  ),
+  b(
+    "buff_zhenxian",
+    "真仙灵韵",
+    "pill",
+    1800,
+    "仙气自生,不假外求",
+    // 续航向:真仙起战斗更长,护盾与回复的价值上升
+    { shieldPower: 0.2, qiRegen: 0.2 },
+    "cloud",
+  ),
+  b(
+    "buff_jinxian",
+    "金仙道体",
+    "pill",
+    1800,
+    "道体已成,万法不侵",
+    // 防御向:与前两味不撞(见法则 C:同境不撞涌)
+    { damageReduction: 0.15, maxHpPct: 0.22 },
+    "sword",
+  ),
   // ---- 气运爆点(P2 首落):不是天运的弱化版,是高量级短窗「赌一把」—— 天运 15% 它 50% ----
   b(
     "buff_yunji",

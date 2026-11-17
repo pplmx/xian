@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 889 个 spec;本作自己那部分 809 个) |
+| `bun run test` | 全量用例(全量 890 个 spec;本作自己那部分 810 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 889 个 spec = 宿主 809 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 890 个 spec = 宿主 810 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 889 个 spec(本作自己那部分 809 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 890 个 spec(本作自己那部分 810 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -26919,3 +26919,84 @@ CollectionView 注释   945 → 949 枚
 ```
 
 工作区干净、全量 889 / 7185 全绿。
+
+### 第 487 轮:换一个维度 —— 从「标签密度」换到「境界密度」
+
+#### 事件那条线走完了
+
+六轮之后，标签密度表已经平了:
+
+```text
+god 1.6 · sky 1.9 · immortal 2.0 · general 2.1 · chaos 2.2 · thunder 2.5
+dark 2.6 · forest 3.0 · ruin 3.8 · water 4.7 · mountain 6.3 · sword 7.0 · ice 7.0 · fire 8.0
+```
+
+最低 1.6、最高 8.0 —— 不再有「某一处特别薄」。故这一轮换到**丹药**,
+量的是另一个维度:**每个境界有几味丹药**。
+
+#### 量出来的缺口比预想的深
+
+```text
+境界 5 炼虚   可炼 1 味（太虚丹）
+境界 6 合体   可炼 3 味
+境界 7 大乘   可炼 1 味（九转还魂丹）
+境界 8 渡劫   可炼 2 味
+境界 9 真仙   可炼 1 味（真仙丹）
+境界 10 玄仙  可炼 2 味
+境界 11 金仙  可炼 1 味（仙泉玉液）
+```
+
+**四个境界只有一味可炼丹。** 而更要紧的是它们的**类型**:
+
+```text
+境 4  修为 · 寿元 · 速度 · 暴击 · 破境      ← 五种方向
+境 5  只有修为丹
+境 7  只有修为丹
+境 9  只有修为丹
+境 11 只有回气丹
+```
+
+玩家到了这四个境界，可选的动作只剩「再补一点修为」。
+
+#### 补法:四味增益丹，各写一个方向
+
+```text
+炼虚神游丹(5)  历练向 —— 行走得更快、际遇更易
+大乘造化丹(7)  破境向 —— 破境率与抗劫
+真仙灵韵丹(9)  续航向 —— 护盾与回气
+金仙道体丹(11) 防御向 —— 减伤与生命
+```
+
+#### 一条判据把数值问题指了出来
+
+`pillValue.spec` 的「法则 J:同一词条跨丹比较,更高境界不许更弱」连红三轮:
+
+```text
+第一版  damageReduction 金仙(11,10%) < 护心(1,15%)      → 抬到 22%
+第二版  金仙(11,22%) > 神威(15,18%)                       → 降到 18%
+第三版  金仙(11,18%) > 神将(15,16%)                       → 降到 15%
+```
+
+同理 `explorationSpeed`（炼虚 25% < 神行 30%）、`maxHpPct`（金仙 12% < 金刚液 20%）、
+`qiRegen`（真仙 27% > 安神 25%）。
+
+> **这条规则比想象中严**:新丹不只要高于**同词条的低境界丹**，
+> 还要低于**同词条的高境界丹** —— 而那两个方向都得试。
+> 每次修一处会翻出另一处，因为一条词条在全表里可能横跨十个境界。
+
+#### 另一条:文案不许与 buff 的 desc 一字不差
+
+`pillProse.spec` 报「炼虚神游丹、真仙灵韵丹 把 buff 的 desc 整句抄了进去」——
+因为我先写 buff 的 desc，写丹时顺手复用了。改成两句不同的。
+
+#### 六处计数连带更新
+
+```text
+pills.ts 头注释        75 → 79 味
+usage.md 两处          75 → 79
+alchemy.md + pills.ts  23 → 27 味状态丹
+eventEngine / loot / poolProximity.spec   75 → 79 味
+CollectionView 注释    949 → 953 枚
+```
+
+工作区干净、全量 890 / 7187 全绿。

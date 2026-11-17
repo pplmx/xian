@@ -1,5 +1,5 @@
 /**
- * 丹药库 —— 75 味。
+ * 丹药库 —— 79 味。
  *
  * ## 定价法则(Phase 32.6 丹药价值审计)
  *
@@ -33,7 +33,7 @@
  * - **I2 各族可炼厚度**:五条可折算时间的可炼线,每条 ≥3 味,不许中段开天窗。
  * - **J 同词条不许倒挂**:同一个 buff 词条出现在多味丹里时,准入境界更高的那味
  *   数值不许更低。A~I 都只在**同族同线**里比药力,而状态族(buff 丹)不折算成时间、
- *   `pillGainSec` 对它恒为 0 —— 于是 23 味状态丹的强弱此前从没被比过。
+ *   `pillGainSec` 对它恒为 0 —— 于是 27 味状态丹的强弱此前从没被比过。
  *   审计抓到的真倒挂:护心丹(境 1,减伤 15%)高于神威丹(境 15,12%)与
  *   神将丹(境 15,10%);金刚液(境 2,开盾 10%)低于罡气散(境 1,15%)。
  *   三味经文档豁免(造化丹 / 定心丹 / 本源丹),理由见 docs/alchemy.md。
@@ -224,6 +224,12 @@ export const PILLS: PillDef[] = [
     recipe: { herb: 80, stoneBase: 160 },
     alchemyLevel: 6,
   }),
+  p("p_lianxushen", "炼虚神游丹", "earth", 5, "服之则神思离体,山川在眼底铺开", {
+    kind: "buff",
+    buffId: "buff_lianxu",
+    recipe: { herb: 96, stoneBase: 216 },
+    alchemyLevel: 7,
+  }),
   p("p_taixu", "太虚丹", "earth", 5, "丹成有太虚幻境相随,服之如闭关", {
     instant: { expSecs: 3600 },
     recipe: { herb: 90, stoneBase: 200 },
@@ -239,11 +245,24 @@ export const PILLS: PillDef[] = [
     recipe: { herb: 178, stoneBase: 445 },
     alchemyLevel: 10,
   }),
+  // ---- 大乘(7)唯一的增益丹(第 487 轮) ----
+  p("p_dachengshen", "大乘造化丹", "heaven", 7, "大乘之世,一念之间可上可下,此丹固其本", {
+    kind: "buff",
+    buffId: "buff_dacheng",
+    recipe: { herb: 168, stoneBase: 420 },
+    alchemyLevel: 10,
+  }),
   // ---- 渡劫(8)/真仙(9) 可炼断档补齐(多维审视 P0-1:跨界前后各空一档;修为线续长) ----
   // 注意:混沌丹(8)/仙药丹(9)对渡劫丹恰在法则 A 红线(0.6)上,余量为零 —— 再涨这档或提前插 9000+ 的仙品修为丹立刻转红
   p("p_dujie", "渡劫丹", "immortal", 8, "紫霄雷淬炼真身,仙门洞开前最后一口凝实,服之如闭关", {
     instant: { expSecs: 9000 },
     recipe: { herb: 225, stoneBase: 560 },
+    alchemyLevel: 10,
+  }),
+  p("p_zhenxianling", "真仙灵韵丹", "immortal", 9, "一口入腹,周身灵气应声而起", {
+    kind: "buff",
+    buffId: "buff_zhenxian",
+    recipe: { herb: 228, stoneBase: 572 },
     alchemyLevel: 10,
   }),
   p("p_zhenxian", "真仙丹", "immortal", 9, "仙凡一线,自此两隔,服之如闭关", {
@@ -512,6 +531,13 @@ export const PILLS: PillDef[] = [
     { instant: { qiPct: 1 }, recipe: { herb: 90, stoneBase: 260 }, alchemyLevel: 10 },
     "droplets",
   ),
+  // ---- 金仙(11)唯一的增益丹(第 487 轮) ----
+  p("p_jinxianjue", "金仙道体丹", "immortal", 11, "道体初成,外物难侵,此丹固其形", {
+    kind: "buff",
+    buffId: "buff_jinxian",
+    recipe: { herb: 262, stoneBase: 660 },
+    alchemyLevel: 11,
+  }),
   /** 增益线:每 buff 仅此一味丹产出(法则 C),增益定义见 data/buffs.ts */
   p("p_xianlidan", "仙力丹", "immortal", 10, "仙力灌入四肢,出手的声音比风先响", {
     kind: "buff",
