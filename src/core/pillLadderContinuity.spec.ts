@@ -53,6 +53,31 @@ describe("丹药的境界链 · 回气不该断档", () => {
     expect(realms.size, "寿元丹挤在同一个境界 —— 那也不好").toBeGreaterThan(3);
   });
 
+  it("④ 界外也要有即时回气 —— 灵气是核心资源，不因境界高就消失", () => {
+    /*
+     * ## 这一条是上一轮补完之后才发现的
+     *
+     * 补完人间界（0~8）之后回气丹覆盖到 8 境，而 9 / 12 / 13 三个境界仍是空的:
+     *
+     * ```text
+     *   境 9  真仙   真仙灵韵丹(buff: qiRegen) + 真仙丹 + 仙药丹 —— 没有即时回气
+     *   境 12 太乙   玄胎丹 + 道音丹 + 安神丹(buff) + 仙寿丹 —— 没有即时回气
+     *   境 13 大罗   三秋丹 + 永昌丹 + 大罗丹 —— 没有即时回气
+     * ```
+     *
+     * `qiRegen` 是「回得更快」，`qiPct` 是「立刻回满」—— 两件事。
+     * 一位真仙灵气见底时，只能坐着等回气速度慢慢补。
+     */
+    const realms = new Set(qiPills().map((p) => p.minRealm));
+    const gaps: string[] = [];
+    for (let m = 9; m <= 20; m += 1) {
+      /* 界外不要求每境都有（内容密度那条已另有底线），但 9~13 这一段是仙界主干 */
+      if (m > 13) continue;
+      if (!realms.has(m)) gaps.push(`境 ${m}`);
+    }
+    expect(gaps, "仙界主干的这几境没有即时回气丹：" + gaps.join("、")).toEqual([]);
+  });
+
   it("③ 反差：回气丹的境界要覆盖到高段，不只补中间", () => {
     const realms = qiPills().map((p) => p.minRealm);
     const max = Math.max(...realms);

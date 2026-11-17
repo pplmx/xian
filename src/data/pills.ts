@@ -1,5 +1,5 @@
 /**
- * 丹药库 —— 88 味。
+ * 丹药库 —— 91 味。
  *
  * ## 定价法则(Phase 32.6 丹药价值审计)
  *
@@ -304,6 +304,18 @@ export const PILLS: PillDef[] = [
     recipe: { herb: 225, stoneBase: 560 },
     alchemyLevel: 10,
   }),
+  p(
+    "p_zhenxianquan",
+    "真仙泉",
+    "immortal",
+    9,
+    "仙泉自石罅出,一掬即满 —— 泉眼在真仙这一境才算找着",
+    {
+      instant: { qiPct: 1 },
+      recipe: { herb: 236, stoneBase: 588 },
+      alchemyLevel: 10,
+    },
+  ),
   p("p_zhenxianling", "真仙灵韵丹", "immortal", 9, "一口入腹,周身灵气应声而起", {
     kind: "buff",
     buffId: "buff_zhenxian",
@@ -642,6 +654,11 @@ export const PILLS: PillDef[] = [
   ),
   // ---- 炼丹增益(概念契约):安神丹 —— 神魂安泰(通用:回灵)+ 凝神观炉(炼丹面:双成)。
   // "火候"是炼丹者的本事,不是丹能管的火 —— 此名已废,改走安神一路(id 沿旧)。 ----
+  p("p_taiyi_lu", "太乙露", "immortal", 12, "太乙者,未分未判 —— 露凝于未判之时,服之则气自归位", {
+    instant: { qiPct: 1 },
+    recipe: { herb: 302, stoneBase: 760 },
+    alchemyLevel: 10,
+  }),
   p("p_huohou", "安神丹", "immortal", 12, "神魂落回原处,呼吸慢下来;盯着炉子看,能多看一会儿成", {
     kind: "buff",
     buffId: "buff_huohou",
@@ -650,6 +667,11 @@ export const PILLS: PillDef[] = [
   }),
   // ---- 后期每境第二味(多维审视 P1:神界/混沌海 7 境曾一味独苗,悬在 11 条,薄于人间界地板)----
   // 修为线律 G2:灵草 ≈ 秒数/10 场、控制在 2~5 倍 —— 大罗/神帝走悟道、神人走寿元、神将开新增益
+  p("p_daluo_qi", "大罗还气丹", "immortal", 13, "大罗之境,气不假外 —— 然而此丹仍值得一备", {
+    instant: { qiPct: 1 },
+    recipe: { herb: 328, stoneBase: 828 },
+    alchemyLevel: 10,
+  }),
   p("p_daluo", "大罗丹", "immortal", 13, "大罗天音,一念通玄", {
     instant: { wudao: 80 },
     recipe: { herb: 330, stoneBase: 850 },

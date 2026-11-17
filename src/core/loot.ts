@@ -281,7 +281,7 @@ export function acquireArtifact(defId: string, quiet = false): ArtifactAcquireRe
  * 两条路的**池子不一样**:
  *
  * ```text
- *   际遇给丹:全池 88 味(含神品、含可炼制的)
+ *   际遇给丹:全池 91 味(含神品、含可炼制的)
  *   掉落给丹:只 18 味掉落专属(品阶齐全,含 3 味神品)
  * ```
  *
