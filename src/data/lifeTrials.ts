@@ -260,6 +260,39 @@ const BAN_TRIAL: LifeTrialDef = {
 LIFE_TRIALS.push(BAN_TRIAL);
 
 /**
+ * 第十份契:禁丹药。
+ *
+ * 「禁法宝」与「禁丹药」是两种不同的难法:
+ *
+ * ```text
+ *   禁法宝    少一块面板 —— 被动与神通整块没了，构筑变薄
+ *   禁丹药    少一条退路 —— 打不过时没有那口回气、那颗续命丹
+ * ```
+ *
+ * 前者的痛在**开场**（你带什么进场），后者的痛在**中局**（你打不过时怎么办）。
+ * 故它比弃器契贵一档:法宝是加分项，丹药是兜底项。
+ *
+ * ## 为什么它此前不存在
+ *
+ * `lifeTrialBansItem` 的类型从第 473 轮起就是 `"artifact" | "pill"`，
+ * 而只有法宝那一侧接过（ArtifactPanel）。丹药侧的 `usePill` 从未检查过禁令 ——
+ * 故这一档若写进数据，丹照吃，禁令形同虚设。
+ * 第 515 轮把 `usePill` 那一侧接上，于是这一份才真的成立。
+ * 判据见 core/pillBanWiring.spec。
+ */
+const BAN_PILL_TRIAL: LifeTrialDef = {
+  id: "tr_duanliang",
+  name: "断粮契",
+  seal: "粮",
+  desc: "这一世不带一粒丹。扛不住的，就扛不住。",
+  ruleText: "本世不得服食任何丹药",
+  cost: 36,
+  bannedItemKind: "pill",
+};
+
+LIFE_TRIALS.push(BAN_PILL_TRIAL);
+
+/**
  * 第七份契:倒着走,不动战斗规则、不改段数、不禁物品。
  *
  * 定价最高一档(48)—— 它的痛是「开局就打终局」，比少走两段或禁用一类物品重得多。

@@ -23,6 +23,7 @@ import { buffOverflowOf } from "./engineBuffs";
 import { noteMaterialUsed } from "./loreService";
 import { noteTaboo } from "./samsaraService";
 import { usePlayerStore } from "@/stores/player";
+import { lifeTrialBansItem } from "./lifeTrialService";
 import { useResourcesStore } from "@/stores/resources";
 import { useInventoryStore } from "@/stores/inventory";
 import { useCultivationStore } from "@/stores/cultivation";
@@ -47,6 +48,20 @@ export function usePill(id: string, quiet = false): boolean {
   const cultivation = useCultivationStore();
   const def = pillDef(id);
   if (!def) return false;
+  /*
+   * 逆旅契「禁丹药」（第 515 轮）。
+   *
+   * `lifeTrialBansItem` 的类型一直支持 "artifact" | "pill"，而此前只有法宝那一侧
+   * 接了（ArtifactPanel）。丹药侧从未接过 —— 故 `bannedItemKind: "pill"` 若写进数据，
+   * 丹照吃，禁令形同虚设。
+   *
+   * 检查放在**扣药之前**:被禁时不该白扣一枚。
+   * 判据见 core/pillBanWiring.spec。
+   */
+  if (lifeTrialBansItem("pill")) {
+    if (!quiet) notify("本世契下不得服丹", "warn");
+    return false;
+  }
   if (!inventory.spendPill(id)) {
     if (!quiet) notify("丹药不足", "warn");
     return false;
