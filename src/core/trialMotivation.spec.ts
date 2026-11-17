@@ -100,7 +100,7 @@ describe("动机 · 决策维度覆盖", () => {
     console.log(`\n标注 build=${claimsBuild} · 实测全部改变排序=${actuallyReshapes},一致`);
   });
 
-  it("只剩「遭遇」一格没碰到 —— 其余四格第 470~475 轮已补", () => {
+  it("七格全满 —— 第 470~475 轮补了四格，第 506 轮补了最后一格", () => {
     /*
      * ## 这一条此前叫「但历练、顺序、遭遇、目标四格一个都没碰到」
      *
@@ -118,14 +118,22 @@ describe("动机 · 决策维度覆盖", () => {
     const untouched = untouchedAxes();
     console.log("\n未被任何契触及的决策维度:");
     for (const a of untouched) console.log(`  ${AXIS_NAMES[a]}`);
-    /* 五格已覆盖（build / region / order / goal / record / node），只剩 encounter */
-    expect(untouched).not.toContain("region");
-    expect(untouched).not.toContain("order");
-    expect(untouched).not.toContain("goal");
-    expect(untouched).toEqual(["encounter"]);
+    /*
+     * 七格全满了:
+     *   build      rules / bannedItemKind
+     *   region     routeStages
+     *   order      reverseRoute
+     *   goal       vowGoal
+     *   encounter  extraEnemyTier（第 506 轮的异途契，正是为了填这一格）
+     *   record / node  每份契都带
+     */
+    expect(
+      untouched,
+      `仍有维度未被触及：${untouched.map((a) => AXIS_NAMES[a]).join("、")}`,
+    ).toEqual([]);
     console.log(
-      `\n${untouched.length} / ${Object.keys(AXIS_NAMES).length} 个维度未被触及 ——` +
-        `\n只剩「${AXIS_NAMES.encounter}」:契约不引入平时没有的敌人`,
+      `\n${Object.keys(AXIS_NAMES).length} / ${Object.keys(AXIS_NAMES).length} 个维度全部被触及 ——` +
+        `\n九份契分别动了构筑、历练路线、可用物品、解锁顺序、本世目标、遭遇`,
     );
   });
 
@@ -137,12 +145,12 @@ describe("动机 · 决策维度覆盖", () => {
      * 路线变短 / 倒着走 / 禁带某类物品 / 换一个目标。
      * 故 untouched 只剩 encounter 一格。
      */
-    expect(untouched.length).toBeLessThanOrEqual(1);
+    expect(untouched.length).toBe(0);
     expect(impacts.every((im) => playValueOf(im) === "reshapes")).toBe(true);
     console.log(
       "\n契约不是纯罚款:它让玩家需要换打法(首尾构筑最大拉开 63.8pp)," +
         `\n也让这一世的形状变了 —— 路线、顺序、物品、目标四项都已各有一份契。` +
-        `\n仍空着的是「${AXIS_NAMES.encounter}」:契约不引入平时没有的敌人。`,
+        `\n七格全满了 —— 连「${AXIS_NAMES.encounter}」也有第九份契（异途契）补上。`,
     );
   });
 });

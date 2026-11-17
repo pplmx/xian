@@ -31,7 +31,12 @@ import { NOVELTY_MIN } from "./worldGen";
  * 与 worldGen 的 ruleVector 同构 —— 那边用来判「新世界够不够新」,
  * 这边用来判「这一世够不够不一样」,量的是同一件事
  */
-export function ruleVector(r: CombatRules): number[] {
+export function ruleVector(r: CombatRules | undefined): number[] {
+  /*
+   * `undefined` = 这一份契不带 rules（第 506 轮起：异途契动的是「你会遇到谁」）。
+   * 按「无附加规则」处理 —— 它在规则空间里的位置就是原点。
+   */
+  if (!r) return ruleVector({});
   return [
     r.healMult ?? 1,
     (r.maxRounds ?? 50) / 50,
@@ -46,7 +51,7 @@ export function ruleVector(r: CombatRules): number[] {
 }
 
 /** 两组规则的归一距离(0~1) */
-export function ruleDistance(a: CombatRules, b: CombatRules): number {
+export function ruleDistance(a: CombatRules | undefined, b: CombatRules | undefined): number {
   const va = ruleVector(a);
   const vb = ruleVector(b);
   let sum = 0;
@@ -104,10 +109,12 @@ export function classify(determinism: number, replayDelta: number): MotivationTy
  * 因为 470/473/474/475 各改过一次那个赋值,注释已经缠了三层。
  */
 const SURFACE_DEVIATION: ReadonlyArray<{
-  key: "reverseRoute" | "bannedItemKind" | "routeStages" | "vowGoal";
+  key: "reverseRoute" | "bannedItemKind" | "routeStages" | "vowGoal" | "extraEnemyTier";
   weight: number;
 }> = [
   { key: "reverseRoute", weight: 0.7 },
+  /* 敌人整层抬高（第 506 轮）：比禁带法宝更彻底 —— 每一场都换了一档对手 */
+  { key: "extraEnemyTier", weight: 0.65 },
   { key: "bannedItemKind", weight: 0.6 },
   { key: "routeStages", weight: 0.5 },
   { key: "vowGoal", weight: 0.4 },
@@ -144,6 +151,7 @@ export function trialProfiles(): MotivationProfile[] {
      *   bannedItemKind  能带什么进场          0.60  法宝被动整块没了
      *   routeStages     这一世有几段路        0.50  少走两段
      *   vowGoal         这一世做什么          0.40  只换注意力，不加难度
+     *   extraEnemyTier  会遇到谁             0.65  每一场的对手整层换掉
      * ```
      *
      * 表驱动而不是三元链:第 470/473/474/475 轮各改过一次这个赋值，
@@ -163,9 +171,11 @@ export function trialProfiles(): MotivationProfile[] {
           ? `reverseRoute 是 LIFE_TRIALS 里的常量;第二次签同样倒着走`
           : t.routeStages !== undefined
             ? `routeStages 是 LIFE_TRIALS 里的常量;第二次签得到同样短的一世`
-            : t.bannedItemKind !== undefined
-              ? `bannedItemKind 是 LIFE_TRIALS 里的常量;第二次签同样禁这一类`
-              : `rules 是 LIFE_TRIALS 里的常量;第二次签得到完全相同的一世`,
+            : t.extraEnemyTier !== undefined
+              ? `extraEnemyTier 是 LIFE_TRIALS 里的常量;第二次签同样遇见那一层`
+              : t.bannedItemKind !== undefined
+                ? `bannedItemKind 是 LIFE_TRIALS 里的常量;第二次签同样禁这一类`
+                : `rules 是 LIFE_TRIALS 里的常量;第二次签得到完全相同的一世`,
     };
   });
 }

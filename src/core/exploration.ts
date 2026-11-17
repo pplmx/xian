@@ -31,7 +31,7 @@ import { mergeRules } from "./gauntlet";
 import { suppressRateLine } from "./suppress";
 import { regionRecallFor } from "./worldMemory";
 import { sessionHaulText, sessionRecordText } from "@/ui/adventureText";
-import { lifeTrialRules } from "./lifeTrialService";
+import { lifeTrialEnemyTierBonus, lifeTrialRules } from "./lifeTrialService";
 import { buildPlayerSnap } from "./playerSnap";
 import { currentDaoRules } from "./endgameService";
 import { afterWin } from "./loot";
@@ -391,7 +391,16 @@ function runBattle(now: number): void {
     eventId: regEv?.eventId ?? null,
   });
   const pSnap = buildPlayerSnap();
-  const eSnap = makeEnemySnap(eDef, region.tier, dangerFactor, foeOrigin);
+  /*
+   * 异途契（第 506 轮）：本世每一场的敌人层级 +N。
+   *
+   * 它必须在这里生效 —— `makeEnemySnap` 用 tier 算三维曲线，
+   * 抬层级等于换一只敌人，而不只是乘一个倍率。
+   *
+   * 层级上限由 `makeEnemySnap` 自己夹（见那里的注释），故这里直接加。
+   */
+  const enemyTier = region.tier + lifeTrialEnemyTierBonus();
+  const eSnap = makeEnemySnap(eDef, enemyTier, dangerFactor, foeOrigin);
   // 道途在世,一切战斗皆循此规则
   // 逆旅契:本世签下的契对每一场历练战斗生效(道果的非效率出口)
   const result = resolveCombat(pSnap, eSnap, rng, explorationRules());

@@ -52,10 +52,10 @@ describe("逆旅契 · 生效现场要说一声", () => {
   it("契确实改的是战斗 —— 不是一句风味话", () => {
     // 逆锋契:敌人攻击与生命都真的进了 CombatRules
     const ni = lifeTrialDef("tr_ni")!;
-    expect(ni.rules.enemyAtkMult).toBeGreaterThan(1);
-    expect(ni.rules.enemyHpMult).toBeGreaterThan(1);
+    expect(ni.rules?.enemyAtkMult).toBeGreaterThan(1);
+    expect(ni.rules?.enemyHpMult).toBeGreaterThan(1);
     // 残躯契:开局气血真的压到 70%
-    expect(lifeTrialDef("tr_can")!.rules.playerStartHpPct).toBeLessThan(1);
+    expect(lifeTrialDef("tr_can")!.rules?.playerStartHpPct).toBeLessThan(1);
   });
 
   it("历练页在签了契时要报出契名与规则", () => {

@@ -259,6 +259,8 @@ export function touchedAxesOf(t: LifeTrialDef): DecisionAxis[] {
   if (t.reverseRoute) axes.add("order");
   /* 本世目标换说法 —— 动的是 goal */
   if (t.vowGoal) axes.add("goal");
+  /* 敌人层级抬高:来的是另一只 —— 动的是 encounter */
+  if (t.extraEnemyTier !== undefined) axes.add("encounter");
   return [...axes];
 }
 
@@ -271,6 +273,7 @@ export const AXIS_COVERAGE: AxisCoverage[] = LIFE_TRIALS.map((t) => ({
     t.bannedItemKind ? `bannedItemKind = ${t.bannedItemKind}` : null,
     t.reverseRoute ? "reverseRoute = true" : null,
     t.vowGoal ? `vowGoal = ${t.vowGoal}` : null,
+    t.extraEnemyTier !== undefined ? `extraEnemyTier = ${t.extraEnemyTier}` : null,
   ]
     .filter(Boolean)
     .join(";"),

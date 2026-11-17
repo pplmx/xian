@@ -82,7 +82,7 @@ describe("逆旅契 · 判据二:产物不进 StatMods", () => {
   it("契约只施加战斗规则,不发放任何属性", () => {
     for (const t of LIFE_TRIALS) {
       // playerExtraMods 若存在,其值必须全为负(减益)
-      for (const [k, v] of Object.entries(t.rules.playerExtraMods ?? {})) {
+      for (const [k, v] of Object.entries(t.rules?.playerExtraMods ?? {})) {
         expect(v).toBeLessThanOrEqual(0);
         expect(reachesEfficiency(k as AnyStatKey)).toBe(true);
       }
@@ -94,7 +94,9 @@ describe("逆旅契 · 判据二:产物不进 StatMods", () => {
   it("每一份契都是纯逆境:只许加难,不许减难", () => {
     console.log("\n契        定价  规则");
     for (const t of LIFE_TRIALS) {
-      expect(isPurelyAdverse(t.rules)).toBe(true);
+      /* 不带 rules 的契（异途契）由 trialEncounterBind.spec 单独守「只许加难」 */
+      if (t.rules) expect(isPurelyAdverse(t.rules)).toBe(true);
+      else expect(t.extraEnemyTier, `${t.name} 既无 rules 又无 extraEnemyTier`).toBeGreaterThan(0);
       console.log(`${t.name.padEnd(8)} ${String(t.cost).padStart(4)}  ${t.ruleText}`);
     }
   });
@@ -231,7 +233,7 @@ describe("逆旅契 · 规则文案与 rules 双向对账", () => {
 
   it("每个 rules 字段都在文案里如实出现", () => {
     for (const t of LIFE_TRIALS) {
-      for (const [key, value] of Object.entries(t.rules)) {
+      for (const [key, value] of Object.entries(t.rules ?? {})) {
         if (typeof value !== "number") continue;
         const toText = EXPECT[key];
         expect(
@@ -252,7 +254,7 @@ describe("逆旅契 · 规则文案与 rules 双向对账", () => {
   it("文案里的每个数字都能被某个 rules 字段解释 —— 不许凭空多写", () => {
     for (const t of LIFE_TRIALS) {
       const allowed = new Set<string>();
-      for (const [key, value] of Object.entries(t.rules)) {
+      for (const [key, value] of Object.entries(t.rules ?? {})) {
         if (typeof value !== "number") continue;
         const toText = EXPECT[key];
         if (toText) allowed.add(toText(value));
@@ -266,6 +268,8 @@ describe("逆旅契 · 规则文案与 rules 双向对账", () => {
        * 故把来源从「rules 一个对象」扩成「所有产生数字的字段」。
        */
       if (typeof t.routeStages === "number") allowed.add(String(t.routeStages));
+      /* `extraEnemyTier` 同理（第 506 轮）：文案写「敌人层级 +1」，出处正是它 */
+      if (typeof t.extraEnemyTier === "number") allowed.add(String(t.extraEnemyTier));
       // 比的是**数字本身**:文案写「治疗效力 25%」,allowed 里是「25%」——
       // 直接拿 m[1]("25")去比会永远不等。故把 allowed 摊成数字集合再比。
       const allowedNums = new Set(
@@ -287,7 +291,7 @@ describe("逆旅契 · 规则文案与 rules 双向对账", () => {
       t.id === "tr_gu" ? { ...t, rules: { ...t.rules, healMult: 0.1 } } : t,
     );
     const broken = mutated.filter((t) => {
-      const v = t.rules.healMult;
+      const v = t.rules?.healMult;
       return typeof v === "number" && v > 0 && !t.ruleText.includes(`${v * 100}%`);
     });
     expect(

@@ -48,8 +48,8 @@ export interface LifeTrialDef {
   ruleText: string;
   /** 签约要花的道果 */
   cost: number;
-  /** 本世生效的战斗规则,只许加难 */
-  rules: CombatRules;
+  /** 本世生效的战斗规则,只许加难。第 506 轮起改为可选 —— 有些契动的是玩法面，不是战斗算法 */
+  rules?: CombatRules;
   /**
    * 本世只走几段路(第 470 轮)。
    *
@@ -123,6 +123,30 @@ export interface LifeTrialDef {
    * 自己立下的那句话，而不是系统建议的「去突破」。
    */
   vowGoal?: string;
+  /**
+   * 本世每一场的敌人，层级 +N（第 506 轮）。
+   *
+   * 这是第六份**不碰 CombatRules** 的契，动的是可动空间里最后那一项「遭遇」。
+   *
+   * ## 与「逆锋契」的边界
+   *
+   * ```text
+   *   逆锋契     rules.enemyAtkMult +30% / enemyHpMult +20%
+   *              同一只敌人更凶
+   *   这一份     extraEnemyTier: 2
+   *              来的是另一只 —— 层级 +2 的那一层敌人
+   * ```
+   *
+   * 前者是乘法，后者是换人。两者形状不同，故互斥地存在
+   * （判据 `trialEncounterBind.spec` ① 守着「填了这个就不许填 rules」）。
+   *
+   * ## 为什么它是纯逆境
+   *
+   * 敌人层级决定血量、攻击、防御三条曲线（见 `core/formulas` 的层级倍率）。
+   * 层级 +2 意味着同样的构筑要面对更高一档的三维 —— 而玩家这一世的
+   * 属性、资源、道具一样不多。少掉的只有「能轻松打赢的那些场次」。
+   */
+  extraEnemyTier?: number;
 }
 
 /**
@@ -166,6 +190,37 @@ export const LIFE_TRIALS: LifeTrialDef[] = [
     ruleText: "本世敌人攻击 +30%、生命 +20%",
     cost: 48,
     rules: { enemyAtkMult: 1.3, enemyHpMult: 1.2 },
+  },
+  /**
+   * 第九份契:动「你会遇到谁」。
+   *
+   * 前八份分别动了构筑（rules / bannedItemKind）、历练路线（routeStages）、
+   * 解锁顺序（reverseRoute）、本世目标（vowGoal）——
+   * 而 `untouchedAxes()` 一直剩着一格:**产生平时没有的战斗**。
+   *
+   * 这一份补上它:本世每一场的敌人都高一境。
+   *
+   * 为什么是「高一层」而不是「乘一个倍率」:
+   *
+   * ```text
+   *   乘倍率（逆锋契）  同一只狼，攻 +30%    —— 你还认得它
+   *   换一层（这一份）  来的是更高一层的东西 —— 你不认得它
+   * ```
+   *
+   * 玩家感受到的不是「这一只更凶」，而是「这一世走的路和上一世不同」。
+   *
+   * 定 +1 而不是 +2:敌人层级是**指数曲线**（见 core/formulas 的层级倍率），
+   * +2 层在同境界下已接近必败 —— 那样这份契就不再是「难」，而是「不可玩」。
+   * +1 层恰好是「满配打得过、裸装打不过」的那一档。
+   */
+  {
+    id: "tr_yu",
+    name: "异途契",
+    seal: "异",
+    desc: "这一世你走的路，与上一世不是同一条。迎面来的，也不是你认得的那些。",
+    ruleText: "本世每场敌人层级 +1 —— 平时遇不到的东西",
+    cost: 42,
+    extraEnemyTier: 1,
   },
 ];
 

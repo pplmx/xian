@@ -37,6 +37,23 @@ export function lifeTrialRules(): CombatRules | undefined {
 }
 
 /**
+ * 契约要的敌人层级加成 —— 0 表示不加（第 506 轮）。
+ *
+ * ## 为什么它单独一路，而不是塞进 rules
+ *
+ * `rules` 改的是**战斗怎么算**（resolveCombat 的入参）。
+ * 这一项改的是**进来的是谁** —— 它必须在敌人快照生成**之前**生效，
+ * 而 rules 是在那之后才进 resolveCombat 的。
+ *
+ * 两处的时序不同，故分开。硬塞进 rules 的话，调用方得在 resolveCombat 里
+ * 反查「本次敌人的层级该不该抬」—— 那是把装配期的事挪到了消费期，
+ * 正是第 489 轮那条「装配点 vs 消费点」的老病。
+ */
+export function lifeTrialEnemyTierBonus(): number {
+  return activeLifeTrial()?.extraEnemyTier ?? 0;
+}
+
+/**
  * 契约要的段数 —— 供世界生成时使用(第 470 轮)。
  *
  * `generateMortalWorld` 收一个可选的上限,在**挑段之前**就把骨架层级表压到这么多段。
@@ -88,7 +105,11 @@ export function canSignLifeTrial(id: string): boolean {
   if (player.reincarnation.trial) return false;
   const def = lifeTrialDef(id);
   if (!def) return false;
-  if (!isPurelyAdverse(def.rules)) return false;
+  /*
+   * 有的契不带 rules（第 506 轮起：异途契改的是「你会遇到谁」）——
+   * 那种契的「纯逆境」由别的判据守（trialEncounterBind.spec ① 要求层级加成 > 0）。
+   */
+  if (def.rules && !isPurelyAdverse(def.rules)) return false;
   return player.reincarnation.daoFruit >= def.cost;
 }
 
@@ -107,7 +128,11 @@ export function signLifeTrial(id: string): boolean {
     return false;
   }
   // 规则不合法则拒签:契约只许加难,这是硬约束
-  if (!isPurelyAdverse(def.rules)) return false;
+  /*
+   * 有的契不带 rules（第 506 轮起：异途契改的是「你会遇到谁」）——
+   * 那种契的「纯逆境」由别的判据守（trialEncounterBind.spec ① 要求层级加成 > 0）。
+   */
+  if (def.rules && !isPurelyAdverse(def.rules)) return false;
   if (!player.spendDaoFruit(def.cost)) {
     notify("道果不足", "warn");
     return false;
