@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 884 个 spec;本作自己那部分 804 个) |
+| `bun run test` | 全量用例(全量 885 个 spec;本作自己那部分 805 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 884 个 spec = 宿主 804 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 885 个 spec = 宿主 805 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 884 个 spec(本作自己那部分 804 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 885 个 spec(本作自己那部分 805 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -26598,3 +26598,72 @@ AdventureView   nemesisByRegion = Map<regionId, {enemyName, lossCount}[]>
 改法是把注释里的函数名去掉（「雪耻数进命题判据（函数名略）」）。
 
 工作区干净、全量 884 / 7164 全绿。
+
+### 第 482 轮:不找缺口，直接加内容
+
+#### 前六轮只有一轮做成了产品改动
+
+```text
+第 476~479、481 轮   零玩法产出（5 轮）
+第 480 轮            一处界面缺口（1 轮）
+```
+
+「找缺口」这个方法的回报已经很低。故这一轮反过来:**直接加内容**。
+
+#### 选哪一处
+
+按标签密度找（地界数 / 事件数）:
+
+```text
+标签      地界数   事件数   密度
+ice        3        4      1.3     ← 最低
+sword      1        4      4.0
+fire       1        5      5.0
+```
+
+`ice` 对应寒潭幽窟 / 昆仑雪岭 / 蜃楼幻海，却只有四则事件。
+
+补三则，各写一个冰的侧面:湿冷侵骨（寒潮钓冰）、冰下有声（冰魄问心）、雪里有人（雪迹隐士）。
+
+#### 我的第一版写砸了
+
+三条初稿都带 `general` 标签 —— 而 `general` 让它们可出现在**全部 44 处地界**:
+
+```text
+初稿  ["general","ice","water"]  → 44 处（含赤炎火域、九幽魔渊）
+改后  ["ice","water"]            → 4 处（寒潭幽窟、幽冥海、昆仑雪岭、蜃楼幻海）
+```
+
+**那不是「补冰系内容」，那是给全图加了三个到处都能撞见的事件。**
+
+故判据⑤专门守这一条:它们可出现的地界数必须明显少于全图，且每一处都要有冰/山/水之一。
+
+#### 加内容会撞上五处既有判据
+
+全部是**真问题**，逐条修的是内容或文档，不是判据:
+
+```text
+expIncome              secs: 150 超出 30~120 区间      → 改成 115
+dataHeaderAudit        events.ts 头注释写 129           → 改成 132
+usageDocCounts         usage.md 两处写 129 事件        → 改成 132
+codexScale             CollectionView 注释写 926 枚    → 改成 929
+contentGateAudit       人间界事件金丹可触发 78.7% < 80% → 两条 minRealm 调低
+```
+
+最后一条值得说:判据的分母只含**人间界**事件，故每加一条 minRealm 高的就掉一格。
+这与它注释里批评的「整池口径」是同一个病，只是方向相反。
+**修法是把新事件的 minRealm 调低（它们是冰系入门内容，本来就该早出现），不是抬阈值。**
+
+#### 判据五条（`core/iceEventContent.spec`）
+
+```text
+① 三条都在事件表里，且带 ice 标签
+② 境界带与「能到那些地界的境界」对得上
+③ 每条至少两个选项 —— 单选项不是决策
+④ 不许无代价地给大额奖励
+⑤ 它们是「冰系」内容，不是贴了冰标签的通用事件
+```
+
+⑤ 是第一版砸出来的，也是这五条里唯一会拦住「加内容加歪」的。
+
+工作区干净、全量 885 / 7169 全绿。

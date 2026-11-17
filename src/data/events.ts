@@ -1,4 +1,4 @@
-/** 随机事件库 —— 129 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
+/** 随机事件库 —— 132 个随机事件(含 21 个奇缘阶段) + 19 条机缘,数据驱动,按区域标签 + 境界带匹配 */
 import type { EventChoice, EventDef, EventEffect, EventOutcome } from "@/types";
 import { WORLD_BREAK_MAJOR } from "./realms";
 import { CHAIN_EVENTS } from "./chains";
@@ -1396,6 +1396,114 @@ export const EVENTS: EventDef[] = [
       ]),
     ],
     { maxRealm: MORTAL_END },
+  ),
+  /*
+   * 冰系三则（第 482 轮）。
+   *
+   * 补的理由不是「缺」——`contentReachabilityAudit` 早就证明每个标签都可达。
+   * 理由是 `ice` 的密度最低:三处地界（寒潭幽窟 / 昆仑雪岭 / 冰原）只有一个标签，
+   * 而全库只给了它四则事件。同一个地界待久了，四则会撞完。
+   *
+   * 三则各写一个冰的侧面:湿冷侵骨、冰下有声、雪里有人。
+   */
+  ev(
+    "ev_hanchao_diaobing",
+    "寒潮钓冰",
+    "寒潮过境,河面冻成一面青灰色的镜子。冰下有东西在动 —— 也可能是水声。",
+    ["ice", "water"],
+    [
+      c("凿洞垂钓", [
+        o(45, "钓上来一尾通体透明的鱼,鳞片像碎冰。你没舍得吃,收进行囊。", {
+          type: "material",
+          id: "herb",
+          amount: 6,
+        }),
+        o(35, "钓了半天,只钓上来一截冻僵的旧绳。倒也不是全无用处。", {
+          type: "material",
+          id: "page",
+          amount: 2,
+        }),
+        o(20, "冰面裂开,你半条腿陷进水里。那股冷,过了好几天才散。", {
+          type: "buff",
+          id: "injury",
+        }),
+      ]),
+      c("破冰下水", [
+        o(40, "你咬牙下去,在冰层下的暗流里摸到一块温热的石头。", {
+          type: "material",
+          id: "ore",
+          amount: 8,
+        }),
+        o(30, "水下极静,你听见很远的地方有人在敲什么东西。上岸后耳鸣了半个时辰。", {
+          type: "exp",
+          secs: 80,
+        }),
+        o(30, "寒气直往骨头缝里钻。你爬上来时,嘴唇已经发紫。", {
+          type: "buff",
+          id: "injury",
+        }),
+      ]),
+      leave("你在岸边站了很久,到底没有下去。"),
+    ],
+    { minRealm: 1, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ev_bingpo_wenxin",
+    "冰魄问心",
+    "冰崖深处悬着一枚拳头大的冰魄,映出你此刻的模样 —— 那模样比你自己以为的苍老些。",
+    ["ice", "mountain"],
+    [
+      c("以心问冰", [
+        o(50, "冰魄里那道人影忽然睁开眼,与你对视。那一瞬,你想通了一件很久没想通的事。", {
+          type: "material",
+          id: "wudao",
+          amount: 12,
+        }),
+        o(50, "什么也没有发生。你离开时,雪又开始下了。", { type: "nothing" }),
+      ]),
+      c("叩碎冰魄", [
+        o(35, "冰魄碎成一把霜,落地时凝成一件东西的形状。", {
+          type: "equipment",
+          minQualityRank: 4,
+        }),
+        o(65, "碎冰溅了你一脸。等你擦干净,崖上已经什么都不剩了。", {
+          type: "buff",
+          id: "injury",
+        }),
+      ]),
+      leave(),
+    ],
+    { minRealm: 2, maxRealm: MORTAL_END },
+  ),
+  ev(
+    "ev_xueji_yinshi",
+    "雪迹隐士",
+    "雪地上有一行脚印,一直通到山壁里面去 —— 山壁上并没有门。",
+    ["ice", "mountain"],
+    [
+      c("循迹而入", [
+        o(40, "山壁后是一间石室,有人在里面煮过雪。炉边留着一卷旧书。", {
+          type: "material",
+          id: "page",
+          amount: 8,
+        }),
+        o(35, "石室里空无一人,只墙上刻着两句诗。你记住了其中一句。", {
+          type: "exp",
+          secs: 120,
+        }),
+        o(25, "石室塌了一半,你被埋在雪里爬了很久。", { type: "buff", id: "injury" }),
+      ]),
+      c("在门口静候", [
+        o(60, "雪下了一整夜。天亮时脚印还在,人没出来。你起身走了。", {
+          type: "nothing",
+        }),
+        o(40, "天亮前,门帘掀开一线。有人递出一杯热的东西,没说话。", {
+          type: "exp",
+          secs: 115,
+        }),
+      ]),
+    ],
+    { minRealm: 2, maxRealm: MORTAL_END },
   ),
   ev(
     "ev_ice_coffin",
