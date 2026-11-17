@@ -140,4 +140,38 @@ describe("藏珍谱 · 从同一份图鉴条目派生", () => {
     expect(overview).toMatchObject({ known: 3, total: 4, newCount: 1 });
     expect(overview.newRows.map((row) => row.key)).toEqual(["equip"]);
   });
+
+  it("最薄那一册 —— 与「最接近集齐」是相反的一端", () => {
+    /*
+     * ## 两个读数各答一句话（第 558 轮）
+     *
+     * ```text
+     *   nearestRows   按 ratio 降序   「哪一册再补一点就满了」—— 对收尾有用
+     *   thinnest      按 ratio 升序   「我该去补哪一册」      —— 此前没人答
+     * ```
+     *
+     * 玩家翻到图鉴卷首时更常问的是后者。
+     */
+    const overview = collectionProgressOverview([
+      { key: "equip", name: "器谱", known: 90, total: 100, newCount: 0 },
+      { key: "pill", name: "丹谱", known: 2, total: 80, newCount: 0 },
+      { key: "event", name: "事迹", known: 40, total: 50, newCount: 0 },
+    ]);
+    expect(overview.thinnest?.key, "最薄的是丹谱（2/80）").toBe("pill");
+    expect(overview.thinnest?.remaining, "它还剩 78 件 —— 这一格要说得出").toBe(78);
+
+    /* 已集齐的册子不是「薄」 */
+    const allDone = collectionProgressOverview([
+      { key: "equip", name: "器谱", known: 100, total: 100, newCount: 0 },
+      { key: "pill", name: "丹谱", known: 80, total: 80, newCount: 0 },
+    ]);
+    expect(allDone.thinnest, "全部集齐时不该再指一册「最薄」").toBeNull();
+
+    /* 空册不参与 —— 分母是零，没有「薄」可言 */
+    const withEmpty = collectionProgressOverview([
+      { key: "empty", name: "空册", known: 0, total: 0, newCount: 0 },
+      { key: "pill", name: "丹谱", known: 1, total: 10, newCount: 0 },
+    ]);
+    expect(withEmpty.thinnest?.key, "空册（0/0）不该被选成最薄").toBe("pill");
+  });
 });

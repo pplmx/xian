@@ -25,6 +25,20 @@ export interface CollectionProgressOverview {
   total: number;
   newCount: number;
   newRows: CollectionProgressRow[];
+  /**
+   * 最薄的那一册 —— 完赛度最低、且还有剩的那一册。
+   *
+   * ## 它答的不是「哪一册快集齐了」（第 558 轮）
+   *
+   * `nearestRows` 按 **ratio 降序**排,答的是「哪一册再补一点就满了」——
+   * 那是对**收尾**有用的读数。
+   *
+   * 而玩家翻到图鉴卷首时更常问的是另一句:**「我该去补哪一册」**。
+   * 那一册的答案在**另一端**:完赛度最低的那册。此前没有任何一格答它。
+   *
+   * 空册（total 为 0）不参与 —— 它没有「薄」可言，分母是零。
+   */
+  thinnest: CollectionProgressRow | null;
   initialOpenKeys: string[];
 }
 
@@ -65,8 +79,18 @@ export function collectionProgressOverview(
   const nearestRows = rows
     .filter((row) => !row.complete && row.known > 0)
     .sort((a, b) => b.ratio - a.ratio || a.remaining - b.remaining || byCategoryOrder(a, b));
+  /*
+   * 最薄那一册:按 ratio 升序取第一个，同 ratio 时取剩余多的那册
+   * （同样薄的情况下，剩得多的那册更值得去补）。
+   * 只挑**还有剩**的 —— 已集齐的册子不是「薄」。
+   */
+  const thinnestRows = rows
+    .filter((row) => !row.complete && row.total > 0)
+    .sort((a, b) => a.ratio - b.ratio || b.remaining - a.remaining || byCategoryOrder(a, b));
+
   return {
     rows,
+    thinnest: thinnestRows[0] ?? null,
     known: rows.reduce((sum, row) => sum + row.known, 0),
     total: rows.reduce((sum, row) => sum + row.total, 0),
     newCount: rows.reduce((sum, row) => sum + row.newCount, 0),

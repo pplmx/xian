@@ -1033,7 +1033,21 @@ const selectedCollectionCat = computed(
 const collectionTrayTitle = computed(() => selectedCollectionCat.value?.name ?? "柜屉未开");
 const collectionTrayHint = computed(() => {
   const cat = selectedCollectionCat.value;
-  if (!cat) return "从左侧柜面点一枚柜格，抽开看这一册的来源与条目。";
+  if (!cat) {
+    /*
+     * 未选柜时给一句「该点哪一枚」（第 558 轮）。
+     *
+     * 原先这句只教操作（「从左侧柜面点一枚柜格」），而玩家真正要决定的是
+     * **点哪一枚**。答案是「最薄的那一册」—— 按完赛度升序取，
+     * 与「最接近集齐」（那样在另一头）是相反的一端。
+     *
+     * 一册都没有、或全部集齐时退回原来的操作指引。
+     */
+    const thin = collectionOverview.value.thinnest;
+    return thin
+      ? `最薄的是「${thin.name}」—— 已录 ${thin.known}/${thin.total}，还差 ${thin.remaining} 枚。`
+      : "从左侧柜面点一枚柜格，抽开看这一册的来源与条目。";
+  }
   if (catComplete(cat)) return "此目已无未识之物 —— 见之者皆入册。";
   return cat.source;
 });
