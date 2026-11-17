@@ -91,7 +91,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 
 | 命令 | 作用 |
 | --- | --- |
-| `bun run test` | 全量用例(全量 906 个 spec;本作自己那部分 826 个) |
+| `bun run test` | 全量用例(全量 907 个 spec;本作自己那部分 827 个) |
 | `bun run test:report` | 一次完整测试 + 按系统分类的摘要 + 文档例数核对:未登记分类、文档里的例数与本次运行不符都会直接红并列出(CI 与发布闸用它替代 `test`,少跑一遍测试) |
 | `bun run check` | 环境自检(`scripts/env-check.mjs`)+ 类型检查(`vue-tsc -b`)+ Oxlint(`vp lint`,类型感知 + 模板级规则由 vite.config 的 lint 块配置)+ 文档自检(`scripts/docs-check.mjs`) |
 | `bun run lint` | 只跑 Oxlint(经 Vite+ 的 `vp lint`) |
@@ -100,7 +100,7 @@ error: Failed to resolve vite command: GenericFailure, Expected
 | `bun run check:ui` | 六个浏览器门的本地入口:构建时长 → 首屏 → 帧率 → 排版 → 冒烟 → 离线(先 `bunx playwright install chromium`;一轮约五分钟,故**不进** verify / pre-commit,只在发版前与改界面后跑) |
 | `bun run shots` | 从当前构建重拍 README / 文档的界面图(默认写 `images/app/*.webp`;`--theme dark` / `--device desktop` / `--out <目录>` 可选) |
 | `bun run build:favicon` | 重出 `public/favicon.ico`:从 `public/icons/icon-512.png`(与安装图标同一枚)缩出 16/32/48 三档,装成一枚(判据见 `src/ui/favicon.spec.ts`) |
-| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 906 个 spec = 宿主 826 + 引擎 80,别把 722 当成「只有宿主」 |
+| `bun run test:engine` | 只跑公共库(万象引擎)的用例。**`bun run test` 已经含它** —— `vite.config.ts` 的 `include` 同时列了 `src/**` 与 `packages/engine/**`,这条命令只用于快速迭代库本身。全量 907 个 spec = 宿主 827 + 引擎 80,别把 722 当成「只有宿主」 |
 | `bun run build:engine` | 出公共库的 dist |
 | `bun run check:engine` | 库的产物自检:编译 → 从 dist import → 跑完整一圈 → 发布包真装一遍 → 宿主引用方式 → 独立仓与本仓同树 |
 | `bun run check:engine:standalone` | 库的独立成库自检:复制到临时目录后独立编译 / 跑用例 / 跑示例 |
@@ -494,7 +494,7 @@ Round 107 修 `taskResetFlow` 时发现它没收拾取景,于是把同类全查�
 
 | 判据 | 钉住的事 |
 | --- | --- |
-| 用例 | 全量 906 个 spec(本作自己那部分 826 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
+| 用例 | 全量 907 个 spec(本作自己那部分 827 个),按 9 个系统分类归档 —— 新 spec 没登记分类,`test:report` 会红。文档只记 spec **文件数**(静态可数,由 `docs-check` 核对);**用例条数不写进文档** —— 它每次都随加删用例变,记在文档里只会逼人频繁改、且改漏就打红,而它的真实数 `test:report` 每次都会自己打出来 |
 | 门禁接线 | CI 里跑的每个 `bun scripts/*.mjs` 都必须在 package.json 或 verify 里有对等入口(反之 verify 点名的脚本必须真存在),由 `src/core/gateWiring.spec.ts` 守着 —— 「本地静态门过了,CI 静态门就过」这句话从此不是注释 |
 | 数值对账 | 四套系统迁移到万象引擎时,与**迁移前冻结的旧口径**逐位相等(见 [engine.md](./engine.md)) |
 | 数据自审 | 内容表的头注释计数与真实数组长度比对、敌人 / 区域 / 模板引用闭合、文本与词表覆盖 |
@@ -28095,3 +28095,69 @@ surface=numbers 一个「默认值」被当成「答案」
 > 它量的是「九份契」，说的是「道果的货架」。
 
 工作区干净、全量 906 / 7238 全绿。
+
+### 第 509 轮:用例名说「两项」，而它量的是四项
+
+#### 顺着上一轮那句话往下查
+
+第 508 轮发现 `motivationType.spec` 的**结论段**比它量的范围宽。
+这一轮查另一半:**用例名**。
+
+```text
+compoundingAudit.spec:48
+it("只有两项是真正的自动复利,其余是收藏或需操作", () => {
+  const auto = autoCompounding();          // ← 实际返回 4 项
+  ...
+  console.log(`自动复利 ${auto.length} 项:道果、资质地板、称号、灵兽`);
+  console.log(`其中无上限的只有「道果」,其余三项都会饱和`);
+});
+```
+
+名字里的「两项」是这条用例写下时的数字。后来查出了资质地板与称号
+（同文件另一条用例就叫「此前那张永久资产表漏掉了两条自动复利通道」），
+**正文跟着改了，名字没改。**
+
+> 用例名是测试报告里唯一会被人读的那一行。「只有两项」会让读报告的人
+> 以为复利面很窄 —— 而实际是四项。这正是本仓反复记的那条「不做两本账」:
+> 一个数字写在名字里，它就有被常数改动的义务。
+
+#### 判据写了两版
+
+第一版写得宽（体内第一处裸数字）。一次扫出 **6 条**，其中 **5 条是误报**:
+
+```text
+bondCausality   「1 条」vs 正文「907 项」—— 907 是别的东西
+foeOrigin       「4 项」vs 正文「1 项」—— 那个 1 是某个倍率
+loot / skillStageWording 同理
+compoundingAudit ✓ 只有这一处是真的
+```
+
+第二版改成窄判法:只认**紧邻的** `${X.length} 项` 与同一句里的「其余 N 项」，
+把「无上限的那 1 项」加回去与名字比。这一版精确得多。
+
+#### 而它差点自己失效
+
+修完之后我为了让自己的 spec 不再扫到那句旧名，把引用改成了 `N` 占位 ——
+**这一改，判据就再也抓不到它了。** 为了让判据变绿而改窄，正是它要防的事。
+
+故补了第④条**自证**:用一份运行期拼出来的合成源码跑同一条判法，
+断言它算得出「4 项 ≠ 2 项」。
+
+#### 而这条自证又撞了两次
+
+```text
+第一次  合成源码写成字面量 → 本仓扫 it("…") 的判据把它当成真用例，
+        reportTestDecl 当场红：「既无断言也无报告声明」
+第二次  改成运行期 `[...].join("\n")` 拼 → 源码里不再出现完整的 it("……" 字面量，通过
+```
+
+#### 判据四条（`core/testNameTruth.spec`）
+
+```text
+① 名字里写了「N 项/条/个」，正文同一句的「其余 N 项 + 无上限那 1 项」必须等于它
+② 反差：序数与枚举说法不在此列（「第一阶段」「三种逆境」不是 length）
+③ 反差：英文与注释里的数字不查
+④ 自证：合成一份错的源码，判据必须抓得到
+```
+
+工作区干净、全量 907 / 7242 全绿。

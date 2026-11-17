@@ -45,7 +45,7 @@ describe("复利链 · 谁真的会让下一世更快", () => {
     }
   });
 
-  it("只有两项是真正的自动复利,其余是收藏或需操作", () => {
+  it("自动复利共四项,其中只有一项无上限,其余是收藏或需操作", () => {
     const auto = autoCompounding();
     const unbounded = auto.filter((a) => a.kind === "auto-unbounded");
     // 无上限的只有道果一项
