@@ -37,6 +37,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
+import { stripStringLiterals } from "@/utils/sourceScan";
 
 const CN_NUM: Record<string, number> = {
   一: 1,
@@ -80,14 +81,22 @@ describe("用例名 · 它说几项，就得真是几项", () => {
     const dir = resolve(__dirname);
     const offenders: string[] = [];
     /*
-     * 跳过本文件:它的自证用例**故意**包含一句错名（否则证明不了判据抓得到），
-     * 而那句话会被自己扫到。这是这条判据唯一需要排除的文件。
+     * 不再跳过本文件（第 510 轮改动）。
+     *
+     * 从前这里是 `x !== "testNameTruth.spec.ts"` —— 因为本文件的自证用例里
+     * **故意**写着一段含错名的假样本，不跳过就会自己扫到自己。
+     *
+     * 而「跳过整个文件」是「不再查自己」，不是「查对」:这份文件里的真实用例
+     * 也因此脱离了检查。现在改成**先剥离字符串字面量再扫** ——
+     * 假样本在字符串里，抹掉它，而 `it(` 这个调用本身留在代码里。
+     *
+     * 用例名是 `it("…")` 的第一个参数，它**本身就在字符串里** ——
+     * 故要保留它。用 `keep` 判定:长度不超过 80 且不含换行的字符串视为「可能的用例名」。
      */
-    const files = readdirSync(dir).filter(
-      (x) => x.endsWith(".spec.ts") && x !== "testNameTruth.spec.ts",
-    );
+    const files = readdirSync(dir).filter((x) => x.endsWith(".spec.ts"));
     for (const f of files) {
-      const src = readFileSync(resolve(dir, f), "utf8");
+      const raw = readFileSync(resolve(dir, f), "utf8");
+      const src = stripStringLiterals(raw, { keep: (c) => !c.includes("\n") && c.length <= 80 });
       const re =
         /it\("([^"]*?([一二两三四五六七八九十]+)\s*(?:项|条|个)[^"]*?)",\s*\(\)\s*=>\s*\{/g;
       for (const m of src.matchAll(re)) {
@@ -151,7 +160,7 @@ describe("用例名 · 它说几项，就得真是几项", () => {
 });
 
 describe("判据自身的可靠性 · 它真的抓得到吗", () => {
-  it("④ 自证：把一条用例名改回错的那个数，判据立刻变红", () => {
+  it("④ 自证：把名字改回错的数字，判据立刻变红", () => {
     /*
      * 这一条防的是「判据写完就空转」:
      * 我在上面把引用的旧名改成了 `N` 占位，于是它自己扫不到了 ——
