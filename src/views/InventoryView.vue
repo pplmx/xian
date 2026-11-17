@@ -752,6 +752,7 @@ import { useNow } from "@/composables/useNow";
 import { useRouteTab } from "@/composables/useRouteTab";
 import { INVENTORY_CHAPTERS } from "@/ui/navigation";
 import { inventoryChapter, type InventoryTab } from "@/ui/inventoryDesk";
+import { activeVowTaboo } from "@/core/samsaraService";
 
 const inventory = useInventoryStore();
 // 「新」角标清账时机 = 离开背包那一刻(路由无 keep-alive,离开即卸载):
@@ -1125,6 +1126,21 @@ const currentPillOverflow = computed<BuffOverflow | null>(() => {
 const currentPillHint = computed<{ text: string; tone: "cinnabar" | "amber" | "faint" } | null>(
   () => {
     const def = currentPill.value?.def;
+    /*
+     * 破题警告排在最前面(第 471 轮)——它比「这一颗白费」更重。
+     *
+     * `noteTaboo` 的注释写着「玩家应当在按下那一刻就知道自己的话没说到底」,
+     * 而它实际是**按下之后**才弹 toast。同一个文件里另有一处口径相反的先例:
+     * 「这一颗会白费」在服前说了(`usePill` 在 full 也照吃,不能等服后 toast)。
+     * 后者是更轻的损失,却排在更前面 —— 顺序反了。
+     *
+     * 故这里先查本世立的题有没有「忌服丹」:`activeVowTaboo` 把命题本身
+     * (vow)一并带出来,警告里读的就是玩家自己立下的那句话,与破题 toast 同源。
+     */
+    const vowTaboo = activeVowTaboo();
+    if (vowTaboo?.taboo === "pill") {
+      return { text: `立誓「${vowTaboo.vow}」——服下即破题,此世所得落空`, tone: "cinnabar" };
+    }
     if (!def || def.kind !== "buff" || !def.buffId) return null;
     const overflow = currentPillOverflow.value;
     if (overflow === "full") return { text: "药力已顶满——这一颗将白费", tone: "cinnabar" };

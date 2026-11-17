@@ -244,6 +244,24 @@ export function vowResult(): "broken" | "done" | "unfinished" | null {
  * 不等到转世才结算:玩家应当在按下那一刻就知道自己的话没说到底,
  * 而不是几个时辰后被一句总结告知。
  */
+/**
+ * 本世立的题与它的禁忌 —— 给界面在**按下之前**用(第 471 轮)。
+ *
+ * `noteTaboo` 是「已经犯了」的当场通知；而这一份是「正要犯」的事前查询。
+ * 两者读的是同一份 `reincarnation.vow` 与同一个 `lifeThemeDef`，
+ * 故界面上那句话与破题 toast 说的必然是同一件事。
+ *
+ * 未立题、已破题、该题没有禁忌 —— 三种都返回 null，界面据此**完全不显示**那一行。
+ * 这一点很要紧:每颗丹上都挂一句「无禁忌」是纯噪音(与 `noteTaboo` 早退的条件一致)。
+ */
+export function activeVowTaboo(): { taboo: LifeTaboo; vow: string } | null {
+  const vow = usePlayerStore().reincarnation.vow;
+  if (!vow || vow.broken) return null;
+  const def = lifeThemeDef(vow.themeId);
+  if (!def?.taboo) return null;
+  return { taboo: def.taboo, vow: def.vow };
+}
+
 export function noteTaboo(taboo: LifeTaboo): void {
   const player = usePlayerStore();
   const vow = player.reincarnation.vow;
