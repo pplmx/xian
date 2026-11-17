@@ -27,6 +27,7 @@
  * 与 `ui/lifeLinggen`、`ui/lifeLinggenSpread` 同一条纪律:收参数、给纯值。
  */
 import type { LifeRecord } from "@/data/samsara";
+import { WORLDS } from "@/data/realms";
 import { lifeTrialArchive } from "./lifeTrialArchive";
 
 /** 足迹上的一个点 —— 一世 */
@@ -76,6 +77,21 @@ export interface LifeFootprint {
   averageAge: number | null;
   /** 参与均寿计算的世数 —— 界面要说清「按几世算的」 */
   ageSamples: number;
+  /**
+   * 这一路共跨过几界（人间 / 仙 / 神 / 混沌）。
+   *
+   * ## 为什么要它（第 564 轮）
+   *
+   * 历世足迹已经答了「走多深 · 活多久 · 快不快」，而这三是**同一轴上的读数**。
+   * 「跨了几界」是另一个轴：境界数字到 19 与「到过混沌海」不是一件事 ——
+   * 前者是进度，后者是**到过哪**。
+   *
+   * 而它只出现在 `apexRecord`（终局之后），历世足迹对**任何玩家**都可见。
+   *
+   * 口径与 `apexRecord` 同一条:取各世终点境界所在的界，去重计数。
+   * 读不出境界的世不参与 —— 那会凭空多算一界。
+   */
+  worldsCrossed: number;
   /** 宿慧累计(只加读得出的世) */
   insightTotal: number;
   /**
@@ -121,6 +137,7 @@ const EMPTY: LifeFootprint = {
   ageDelta: null,
   ageTrendText: "",
   trialLives: 0,
+  worldsCrossed: 0,
 };
 
 /** 世序:有限的、>= 1 的整数 */
@@ -194,6 +211,18 @@ export function lifeFootprint(lives: readonly LifeRecord[]): LifeFootprint {
    */
   const trialLives = lives.filter((l) => lifeTrialArchive(l?.trialId ?? null) !== null).length;
 
+  /*
+   * 跨过几界 —— 取各世终点境界落在一个界里，去重。
+   * 与 `core/apex` 的 `worldsCrossed` 同一条口径（那里也是按界去重）。
+   */
+  const worldIds = new Set<string>();
+  for (const p of points) {
+    if (p.major === null) continue;
+    const world = WORLDS.find((w) => p.major! >= w.start && p.major! <= w.end);
+    if (world) worldIds.add(world.id);
+  }
+  const worldsCrossed = worldIds.size;
+
   const insightTotal = points
     .map((p) => p.insight)
     .filter((v): v is number => v !== null)
@@ -243,5 +272,6 @@ export function lifeFootprint(lives: readonly LifeRecord[]): LifeFootprint {
     ageDelta,
     ageTrendText,
     trialLives,
+    worldsCrossed,
   };
 }

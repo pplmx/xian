@@ -628,6 +628,16 @@
                 <dt>逆旅契</dt>
                 <dd class="tabular" data-footprint-trials>{{ footprint.trialLives }} 世签过</dd>
               </div>
+              <!--
+                跨过几界（第 564 轮）。
+                上面几格都在「走多深 · 活多久 · 快不快」这条轴上，这一格是另一个轴:
+                境界数字到 19 与「到过混沌海」不是一件事 —— 前者是进度，后者是到过哪。
+                它此前只出现在终局印记（apexRecord），而历世足迹对任何玩家都可见。
+              -->
+              <div v-if="footprint.worldsCrossed > 1">
+                <dt>跨过</dt>
+                <dd class="tabular" data-footprint-worlds>{{ footprint.worldsCrossed }} 界</dd>
+              </div>
               <div>
                 <dt>宿慧累计</dt>
                 <dd class="tabular">{{ footprint.insightTotal }}</dd>

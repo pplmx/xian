@@ -296,4 +296,89 @@ describe("历世足迹 · 纯函数", () => {
     /* 一世都没签过 → 0，不是空 */
     expect(lifeFootprint([]).trialLives).toBe(0);
   });
+
+  it("跨过几界 —— 与「走多深」是另一个轴", () => {
+    /*
+     * ## 为什么单独一格（第 564 轮）
+     *
+     * 历世足迹已经答了「走多深 · 活多久 · 快不快」，而那三是**同一轴上的读数**。
+     * 「跨了几界」是另一个轴:境界数字到 19 与「到过混沌海」不是一件事 ——
+     * 前者是进度，后者是「到过哪」。
+     *
+     * 而它此前只出现在 `apexRecord`（终局之后），历世足迹对任何玩家都可见。
+     */
+    /* 人间界是 0~8，仙界 9~13 */
+    const mortalOnly = lifeFootprint([
+      {
+        index: 1,
+        major: 3,
+        realmLabel: "金丹",
+        age: 200,
+        themeId: null,
+        themeResult: null,
+        insight: 0,
+        at: 1,
+      },
+      {
+        index: 2,
+        major: 7,
+        realmLabel: "大乘",
+        age: 400,
+        themeId: null,
+        themeResult: null,
+        insight: 0,
+        at: 2,
+      },
+    ]);
+    expect(mortalOnly.worldsCrossed, "两世都在人间界，该只算一界").toBe(1);
+
+    const two = lifeFootprint([
+      {
+        index: 1,
+        major: 7,
+        realmLabel: "大乘",
+        age: 400,
+        themeId: null,
+        themeResult: null,
+        insight: 0,
+        at: 1,
+      },
+      {
+        index: 2,
+        major: 11,
+        realmLabel: "玄仙",
+        age: 900,
+        themeId: null,
+        themeResult: null,
+        insight: 0,
+        at: 2,
+      },
+    ]);
+    expect(two.worldsCrossed, "人间界 + 仙界 = 两界").toBe(2);
+
+    /* 读不出境界的世不参与 —— 否则会凭空多算 */
+    const dirty = lifeFootprint([
+      {
+        index: 1,
+        major: Number.NaN,
+        realmLabel: "",
+        age: 0,
+        themeId: null,
+        themeResult: null,
+        insight: 0,
+        at: 1,
+      },
+      {
+        index: 2,
+        major: 3,
+        realmLabel: "金丹",
+        age: 200,
+        themeId: null,
+        themeResult: null,
+        insight: 0,
+        at: 2,
+      },
+    ]);
+    expect(dirty.worldsCrossed, "读不出境界的那一世不该被算成一界").toBe(1);
+  });
 });
