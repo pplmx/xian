@@ -125,7 +125,16 @@ export function comprehendGongfa(): boolean {
   const cultivation = useCultivationStore();
   const pool = GONGFA.filter((g) => g.minRealm <= player.major + 1 && !cultivation.learned[g.id]);
   if (pool.length === 0) {
-    notify("当前境界的功法已尽数参悟", "info");
+    /*
+     * 补一句「怎样才能再有」。
+     *
+     * 池子的条件是 `minRealm <= major + 1` —— **跨过这一境就有新功法**。
+     * 而原句只说了「这一境已尽」，与 `bondQuiet` 那句
+     * 「这一世的……往后的路，你们只并肩」相比缺了后半。
+     *
+     * 判据见 core/exhaustHintNextStep.spec。
+     */
+    notify("当前境界的功法已尽数参悟 —— 境界再进一层,便又有新的可参", "info");
     return false;
   }
   resources.spendSmall("page", COMPREHEND_PAGE_COST);

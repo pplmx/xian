@@ -136,7 +136,12 @@ function applyOneUpgrade(uid: string): { dust: number; stone: GNum } | "max" | "
 export function upgradeEquipment(uid: string): boolean {
   const res = applyOneUpgrade(uid);
   if (res === "max") {
-    notify("已达强化上限", "warn");
+    /*
+     * 「已达强化上限」原句只说到顶了 —— 而顶是 `EQUIP_MAX_LEVEL_BASE + forgeCapBonus`，
+     * **炼器台能把它抬高**。补一句去处，与功法那句同形。
+     * 判据见 core/exhaustHintNextStep.spec ④。
+     */
+    notify("已达强化上限 —— 炼器台再升几级,能强化的层数也会跟着抬高", "warn");
     return false;
   }
   if (res === "broke") {
@@ -169,7 +174,12 @@ export interface UpgradeBatchResult {
 export function upgradeEquipmentAll(uid: string): UpgradeBatchResult {
   const plan = planEquipmentUpgradeAll(uid);
   if (!plan) {
-    notify("已达强化上限", "warn");
+    /*
+     * 「已达强化上限」原句只说到顶了 —— 而顶是 `EQUIP_MAX_LEVEL_BASE + forgeCapBonus`，
+     * **炼器台能把它抬高**。补一句去处，与功法那句同形。
+     * 判据见 core/exhaustHintNextStep.spec ④。
+     */
+    notify("已达强化上限 —— 炼器台再升几级,能强化的层数也会跟着抬高", "warn");
     return { count: 0, dust: 0, stone: gnZero(), ended: "unchanged" };
   }
   let count = 0;

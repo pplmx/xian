@@ -134,7 +134,17 @@ export function signLifeTrial(id: string): boolean {
    */
   if (def.rules && !isPurelyAdverse(def.rules)) return false;
   if (!player.spendDaoFruit(def.cost)) {
-    notify("道果不足", "warn");
+    /*
+     * 差额要给出来（第 529 轮）。
+     *
+     * 与 `forge.ts` 那条同口径:「差 8 枚」与「差 800 枚」是两种境遇 ——
+     * 前者再刷一趟就有，后者要先想清楚这一世要不要签。
+     * 道果是稀缺资源，这个数直接决定玩家去不去凝。
+     *
+     * 判据见 core/exhaustHintNextStep.spec 第 5 条。
+     */
+    const short = Math.max(0, def.cost - player.reincarnation.daoFruit);
+    notify(`道果不足 —— 尚差 ${short} 枚（此契需 ${def.cost} 枚）`, "warn");
     return false;
   }
   player.setLifeTrial({ trialId: def.id, at: Date.now(), paid: def.cost });
