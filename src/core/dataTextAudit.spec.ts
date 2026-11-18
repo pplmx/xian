@@ -1142,7 +1142,7 @@ describe("文案数值对账 · 用具三类的界面读同源函数", () => {
       "灵石不退",
     );
     expect(dialog, "灵石不退只在有石耗时才有意义(零石耗不摆空话)").toContain(
-      "toNum(r.cost.stone) > 0",
+      "toNum(detailRow.cost.stone) > 0",
     );
   });
 

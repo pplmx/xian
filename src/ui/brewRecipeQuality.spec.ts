@@ -32,14 +32,20 @@
  * 图标色还多一层亏:图标本身是**方子形状**(丹炉 / 药壶 / 茶叶…),它的颜色是
  * 附着在图形上的第二属性 —— 扫读一串方名时,视线落在字上而不是图标上。
  *
+ * ## 这一轮:清单行收成单行之后,品阶名反而更要紧
+ *
+ * 行上现在只剩「叫什么、多好、多难、几成把握」四段。品阶名若退到图标色上,
+ * 单行里就只剩颜色这一条线索;而单行正是**扫读**的形态 —— 第二属性最吃亏的地方。
+ *
  * ## 判据守什么
  *
- * 两条:
- *   一 丹方行里出现品阶名(`qualityDef(...).name`),不是只有颜色;
- *   二 品阶名与「N 阶」(丹方阶位)**并列** —— 两者含义不同,不许用一个顶替另一个。
+ * ① 丹方行里出现品阶名(`qualityDef(...).name`),不是只有颜色;
+ * ② 品阶名与「N 阶」(丹方阶位)**并列** —— 两者含义不同,不许用一个顶替另一个;
+ * ③ 详情浮层里同样两样都在(它是行被点开之后的完整账);
+ * ④ 反空转:品阶色仍在图标上,文字是补充线索,不是替代。
  *
- * 不要求盖 `QualitySeal` 章:图标已经是形状线索,行内再加一枚章会把这一屏的
- * 密度推高,而这一屏本来就挤(见模板里那段极窄档注释)。文字是最省地方的那条线索。
+ * 不要求盖 `QualitySeal` 章:图标已经是形状线索,单行里再加一枚章会把
+ * 这一屏的密度推高,而这一屏本来就挤(见模板里那段极窄档注释)。文字最省地方。
  */
 import { describe, expect, it } from "vite-plus/test";
 import { readSource } from "@/test/readSource";
@@ -47,25 +53,36 @@ import { readSource } from "@/test/readSource";
 const BREW = "src/components/inventory/BrewingDialog.vue";
 
 describe("开炉炼丹 · 丹方行要读得出品阶", () => {
-  it("丹方行里有品阶名,不是只有图标色", () => {
+  it("① 丹方行里有品阶名,不是只有图标色", () => {
     const src = readSource(BREW);
-    // 取丹方行那一块:从 v-for 起,到该行的动作块之前,足够覆盖方名 / 阶位 / 品阶
-    const row = src.match(/v-for="r in filteredRecipePage\.visible"[\s\S]{0,4000}/)?.[0] ?? "";
+    // 取册上那一行:从方子行按钮起,到那一行结束,足够覆盖方名 / 品阶 / 阶位 / 把握
+    const row = src.match(/data-recipe-row="row\.def\.id"[\s\S]{0,2600}/)?.[0] ?? "";
     expect(row, "定位不到丹方行 —— 判据会空转").not.toBe("");
-    expect(row, "丹方行要写出品阶名 —— 只有图标色的话,良品与精品在纸面上几乎一样").toMatch(
-      /qualityDef\(r\.def\.quality\)\.name/,
+    expect(row, "丹方行要写出品阶名 —— 只有图标色的话,良品与精品在纸面上几乎一样").toContain(
+      "qualityDef(row.def.quality).name",
     );
   });
 
-  it("品阶名与丹方阶位并列 —— 两者不是一回事", () => {
+  it("② 品阶名与丹方阶位并列 —— 两者不是一回事", () => {
     const src = readSource(BREW);
+    const row = src.match(/data-recipe-row="row\.def\.id"[\s\S]{0,2600}/)?.[0] ?? "";
+    expect(row, "定位不到丹方行 —— 判据会空转").not.toBe("");
     // 丹方阶位仍在(它是「这一方多难」),品阶名另加(它是「这一炉多好」)
-    expect(src, "丹方阶位不许被品阶名顶替").toMatch(/\{\{\s*r\.able\.rank\s*\}\}\s*阶/);
-    expect(src, "品阶名要另起一处").toContain("qualityDef(r.def.quality).name");
+    expect(row, "丹方阶位不许被品阶名顶替").toMatch(/\{\{\s*row\.able\.rank\s*\}\}\s*阶/);
+    expect(row, "品阶名要另起一处").toContain("qualityDef(row.def.quality).name");
   });
 
-  it("反空转:品阶色仍保留 —— 文字是补充线索", () => {
+  it("③ 详情浮层里两样都在 —— 它是行被点开之后的完整账", () => {
     const src = readSource(BREW);
-    expect(src, "图标上的品阶色不许删").toContain("qualityDef(r.def.quality).color");
+    const detail = src.match(/data-recipe-row-detail[\s\S]{0,3000}/)?.[0] ?? "";
+    expect(detail, "定位不到详情浮层 —— 判据会空转").not.toBe("");
+    expect(detail, "详情浮层也要写出品阶名").toContain("qualityDef(detailRow.def.quality).name");
+    expect(detail, "详情浮层也要写出丹方阶位").toMatch(/\{\{\s*detailRow\.able\.rank\s*\}\}\s*阶/);
+  });
+
+  it("④ 反空转:品阶色仍保留 —— 文字是补充线索", () => {
+    const src = readSource(BREW);
+    expect(src, "图标上的品阶色不许删").toContain("qualityDef(row.def.quality).color");
+    expect(src, "详情浮层的图标色同样不许删").toContain("qualityDef(detailRow.def.quality).color");
   });
 });

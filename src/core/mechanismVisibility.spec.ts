@@ -14,7 +14,7 @@
  * 五项**全部实现了**,而且实现得不含糊:
  *
  * ```text
- *   技艺进度     BrewingDialog 的「技艺(按道分,做得多就精)」进度条
+ *   技艺进度     BrewingDialog 的「看百工技艺 · 九项,做得多就精」进度条(默认合着,点开即见)
  *                EquipmentDetailDialog 的 forgeSkills(锻打/铭纹/器谱三行)
  *   buff 叠加份数 InventoryView:1079「已叠 N 份,服之续时」
  *                另有「药力已顶满——这一颗将白费」/「药力将触上限」两档

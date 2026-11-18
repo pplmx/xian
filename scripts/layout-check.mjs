@@ -164,8 +164,9 @@
  *      195 宽下另把候选续到第二批,量分页读数、入口与候选行是否被挤坏。
  *   五十七 法宝全册共 45 条长账,按 6 件一批、最多留 12 件。195 宽下逐批翻到末页
  *      再回翻,随身 / 炼化改序后焦点仍要跟住同一件;整页不许被双按钮或代价行挤坏。
- *   五十八 开炉丹方共 54 张,按 6 张一批、最多留 12 张。搜索换词要重置窗口且不抢
- *      输入焦点;195 宽下逐批翻到末页再回翻,炼制耗料改序后焦点仍要跟住同一张方。
+ *   五十八 开炉丹方按境界分章(21 章 / 77 张)。默认只展开玩家此刻那一境,章首是
+ *      它自己的折叠钮且排在正文之前;195 宽下逐章展开核全册可达,搜索时命中章一律
+ *      展开、清空后回到只开一章且焦点仍在输入框,开一炉后焦点跟住同一张方。
  *   五十九 词条转移的候选是整包装备的横切面:无部位限制的词条能落到全部藏品上。
  *      195 宽下按 12 件一批、最多留 24 件逐批翻到末页再回翻,续开焦点跟住新批;
  *      候选行、件数读数与两枚入口都不许把详情弹窗挤坏。
@@ -33835,11 +33836,18 @@ async function taskArtifactListOverflow() {
 }
 
 /**
- * 开炉丹方 —— 54 张方子每张都摊代价、成品、把握、双成、存货与两枚动作。
+ * 开炉丹方 —— 按境界分章,一章一折,方子行收成单行,代价与成品进详情浮层。
  *
- * max-h-64 只限制眼睛看到的滚动框,不限制 DOM;这里验证 6 张一批、12 张滑窗,
- * 搜索换词时窗口回到首批且不抢输入焦点,逐批翻到末页仍覆盖全部方子。最后在
- * 195 宽下真炼一炉,确认耗料改序后焦点仍跟住同一张方,而不是落到被销毁的节点。
+ * 这一屏此前是一个平面清单(6 张一批、12 张滑窗),每张方子摊代价、成品、把握、
+ * 双成、存货与两枚动作,一行 142px,一屏只看三张。现在改为按境界分章:章首一行
+ * 报「这一境 N/M · 缺几张」,默认只展开玩家此刻那一境;方子行只留
+ * 「叫什么、多好、多难、几成把握」,点开才铺代价与成品。
+ *
+ * 这里在真浏览器里核四件事:
+ *   ① 册子的总账(共几张 / 已得几张)与夹具一致,且章数 = 有方的境界数;
+ *   ② 默认只展开一章 —— 不是全合着(那样看不见自己在哪),也不是全展开;
+ *   ③ 章首折叠钮排在它自己展开的正文之前,一收一放它自己不挪位(docs/design.md:1080);
+ *   ④ 195 宽下不算溢出、章首与方子行都读得出,且开一炉之后焦点仍跟住同一张方。
  */
 async function taskRecipeListOverflow() {
   const failures = [];
@@ -33886,15 +33894,27 @@ async function taskRecipeListOverflow() {
     await page.setViewportSize({ width: 195, height: 422 });
     await settleVisuals(page);
 
-    async function readList() {
+    /** 册子的总账 + 各组读数 + 这一刻真正铺开的行 */
+    async function readLedger() {
       return page.evaluate(() => {
         const holder = document.querySelector("[data-recipe-total]");
+        const groups = [...document.querySelectorAll("[data-recipe-group]")];
         const rows = [...document.querySelectorAll("[data-recipe-row]")];
+        const openBodies = [...document.querySelectorAll("[data-recipe-group-body]")].filter(
+          (el) => el.offsetParent !== null,
+        );
         return {
           total: Number(holder?.getAttribute("data-recipe-total")),
+          known: Number(holder?.getAttribute("data-recipe-known")),
+          missing: Number(holder?.getAttribute("data-recipe-missing")),
           shown: Number(holder?.getAttribute("data-recipe-shown")),
-          start: Number(holder?.getAttribute("data-recipe-start")),
-          count: rows.length,
+          groupCount: groups.length,
+          groupMajors: groups.map((el) => Number(el.getAttribute("data-recipe-group"))),
+          groupKnown: groups.map((el) => Number(el.getAttribute("data-recipe-group-known"))),
+          groupTotal: groups.map((el) => Number(el.getAttribute("data-recipe-group-total"))),
+          openCount: openBodies.length,
+          openMajors: openBodies.map((el) => Number(el.id.replace("brew-recipe-group-", ""))),
+          rowCount: rows.length,
           ids: rows.map((row) => row.getAttribute("data-recipe-row")),
           focus: document.activeElement?.getAttribute("data-recipe-row"),
           searchFocused: document.activeElement?.getAttribute("aria-label") === "搜方名",
@@ -33908,19 +33928,6 @@ async function taskRecipeListOverflow() {
         if (!ledger) return null;
         const style = getComputedStyle(ledger);
         const rows = [...ledger.querySelectorAll("[data-recipe-row]")];
-        const tries = rows
-          .map((row) => {
-            const el = row.querySelector("[data-recipe-tries]");
-            if (!el) return null;
-            const range = document.createRange();
-            range.selectNodeContents(el);
-            return {
-              text: (el.textContent || "").replace(/\s+/g, " ").trim(),
-              lines: new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size,
-              clipped: el.scrollWidth > el.clientWidth + 1,
-            };
-          })
-          .filter(Boolean);
         return {
           borderTop: Number.parseFloat(style.borderTopWidth),
           borderRight: Number.parseFloat(style.borderRightWidth),
@@ -33930,7 +33937,6 @@ async function taskRecipeListOverflow() {
           background: style.backgroundColor,
           cards: ledger.querySelectorAll(".card-ink").length,
           rows: rows.length,
-          tries,
         };
       });
     }
@@ -33951,29 +33957,6 @@ async function taskRecipeListOverflow() {
       ) {
         failures.push(`[${tag}] 丹方册又套回内层卡壳:${JSON.stringify(ledger)}`);
       }
-      if (!ledger?.tries.length || ledger.tries.some((row) => row.lines > 1 || row.clipped)) {
-        failures.push(`[${tag}] 丹方平均炉数没有完整落在单行:${JSON.stringify(ledger?.tries)}`);
-      }
-    }
-
-    async function waitForShown(shown) {
-      await page.waitForFunction(
-        (wanted) =>
-          document.querySelector("[data-recipe-total]")?.getAttribute("data-recipe-shown") ===
-          String(wanted),
-        shown,
-        { timeout: 5000 },
-      );
-    }
-
-    async function waitForTotal(count) {
-      await page.waitForFunction(
-        (wanted) =>
-          document.querySelector("[data-recipe-total]")?.getAttribute("data-recipe-total") ===
-          String(wanted),
-        count,
-        { timeout: 5000 },
-      );
     }
 
     async function waitForFocus(id) {
@@ -33986,50 +33969,121 @@ async function taskRecipeListOverflow() {
         .catch(() => {});
     }
 
-    const initial = await readList();
-    const more = page.locator("[data-recipe-more]").first();
-    const moreText = ((await more.textContent()) || "").replace(/\s+/g, " ").trim();
+    // ---- ① 总账与章数 ----
+    const initial = await readLedger();
     checked += 1;
     if (
       initial.total !== total ||
-      initial.shown !== 6 ||
-      initial.start !== 0 ||
-      initial.count !== 6 ||
-      !new RegExp(`再看\\s*6\\s*张\\s*·\\s*余\\s*${total - 6}`).test(moreText)
+      initial.known !== total ||
+      initial.missing !== 0 ||
+      initial.groupCount < 2 ||
+      initial.groupCount !== initial.groupMajors.length
     ) {
       failures.push(
-        `[195] 丹方首批应 6/${total},实见 ${initial.count} 行 ` +
-          `(shown ${initial.shown} / total ${initial.total}) «${moreText}»`,
+        `[390] 丹方册总账不对:应 ${total} 张全为已得(夹具把配方全授下),` +
+          `实见 共 ${initial.total} · 已得 ${initial.known} · 缺 ${initial.missing} · ` +
+          `${initial.groupCount} 章`,
+      );
+    }
+    checked += 1;
+    {
+      /*
+       * 章按境界从低到高、且每章的总数之和 = 全册总数 —— 分章不许吞掉任何一张方。
+       */
+      const majors = initial.groupMajors;
+      const ascending = majors.every((m, i) => i === 0 || m > majors[i - 1]);
+      const sumTotal = initial.groupTotal.reduce((a, b) => a + b, 0);
+      const sumKnown = initial.groupKnown.reduce((a, b) => a + b, 0);
+      if (!ascending || sumTotal !== initial.total || sumKnown !== initial.known) {
+        failures.push(
+          `[390] 分章不对:境界序 ${majors.join(",")} / 各章共 ${sumTotal}(应 ${initial.total})` +
+            ` / 各章已得 ${sumKnown}(应 ${initial.known})`,
+        );
+      }
+    }
+
+    // ---- ② 默认只展开一章 ----
+    checked += 1;
+    if (initial.openCount !== 1) {
+      failures.push(
+        `[390] 丹方册应默认只展开玩家此刻那一境,实见 ${initial.openCount} 章开着` +
+          `(全合着看不见自己在哪,全展开就是回到那个平面长清单)`,
+      );
+    }
+    checked += 1;
+    if (initial.rowCount !== initial.shown || initial.rowCount < 1) {
+      failures.push(
+        `[390] 册上铺开的行数与 data-recipe-shown 对不上:` +
+          `实见 ${initial.rowCount} 行 / 报 ${initial.shown}`,
       );
     }
 
-    const fit = await more.evaluate((el) => {
-      const box = el.getBoundingClientRect();
-      return {
-        left: box.left,
-        right: box.right,
-        height: box.height,
+    // ---- ③ 折叠钮排在它自己展开的正文之前 ----
+    checked += 1;
+    {
+      /*
+       * 在**开着的那一章**里量:合着的章正文不在 DOM(v-if),量到的是零盒子。
+       */
+      const order = await page.evaluate(() => {
+        const bodies = [...document.querySelectorAll("[data-recipe-group-body]")];
+        const body = bodies.find((el) => el.offsetParent !== null);
+        const group = body?.closest("[data-recipe-group]");
+        const toggle = group?.querySelector("[data-recipe-group-toggle]");
+        if (!toggle || !body) return null;
+        const t = toggle.getBoundingClientRect();
+        const b = body.getBoundingClientRect();
+        return { toggleTop: t.top, toggleBottom: t.bottom, bodyTop: b.top };
+      });
+      if (!order || order.toggleBottom > order.bodyTop + 1) {
+        failures.push(
+          `[390] 章首折叠钮没排在它自己展开的正文之前 —— 一收一放钮就挪位:${JSON.stringify(order)}`,
+        );
+      }
+    }
+
+    // ---- ④ 章首与方子行在极窄档读得出 ----
+    checked += 1;
+    {
+      const fit = await page.evaluate(() => {
+        const visible = (el) => el && el.offsetParent !== null;
+        const group = [...document.querySelectorAll("[data-recipe-group]")].find(visible);
+        const row = [...document.querySelectorAll("[data-recipe-row]")].find(visible);
+        const name = row?.querySelector("[data-recipe-name]");
+        const rate = row?.querySelector("[data-recipe-rate]");
+        const box = (el) => {
+          if (!el) return null;
+          const r = el.getBoundingClientRect();
+          return { left: r.left, right: r.right, height: r.height, width: r.width };
+        };
+        return {
+          group: box(group?.querySelector("[data-recipe-group-toggle]")),
+          row: box(row),
+          name: box(name),
+          rate: box(rate),
+          viewport: window.innerWidth,
+        };
+      });
+      const bad =
+        !fit.group ||
+        !fit.row ||
+        !fit.name ||
+        !fit.rate ||
+        fit.group.right > fit.viewport + 1 ||
+        fit.row.right > fit.viewport + 1 ||
+        fit.row.height < 27.5 ||
+        fit.name.width < 30 ||
+        fit.rate.left < fit.name.left;
+      if (bad) {
+        failures.push(`[195] 丹方章首或方子行在极窄档读不出:${JSON.stringify(fit)}`);
+      }
+    }
+    const panelOverflow = await page
+      .locator(".modal-panel")
+      .first()
+      .evaluate((el) => ({
         scrollWidth: el.scrollWidth,
         clientWidth: el.clientWidth,
-        viewport: window.innerWidth,
-      };
-    });
-    checked += 1;
-    if (
-      fit.left < -1 ||
-      fit.right > fit.viewport + 1 ||
-      fit.scrollWidth > fit.clientWidth + 1 ||
-      fit.height < 27.5
-    ) {
-      failures.push(
-        `[195] 丹方续开入口被挤坏:盒 ${Math.round(fit.left)}..${Math.round(fit.right)} / ` +
-          `内容 ${fit.scrollWidth}>${fit.clientWidth} / 高 ${Math.round(fit.height * 10) / 10}px`,
-      );
-    }
-    const panelOverflow = await page.locator(".modal-panel").evaluate((el) => ({
-      scrollWidth: el.scrollWidth,
-      clientWidth: el.clientWidth,
-    }));
+      }));
     checked += 1;
     if (panelOverflow.scrollWidth > panelOverflow.clientWidth + 1) {
       failures.push(
@@ -34041,140 +34095,140 @@ async function taskRecipeListOverflow() {
     if (layoutProblems.length) failures.push(`[195] 丹方册 → ${layoutProblems.join(" / ")}`);
     await checkRecipeLedger("195");
 
-    await more.click({ timeout: 5000 });
-    await waitForShown(12);
-    await waitForFocus((await readList()).ids[6]);
-    const second = await readList();
-    checked += 1;
-    if (
-      second.shown !== 12 ||
-      second.start !== 0 ||
-      second.count !== 12 ||
-      second.focus !== second.ids[6]
-    ) {
-      failures.push(
-        `[195] 丹方续开首批后应铺 12 张、焦点落第 7 张,` +
-          `实见 ${second.count} 张 / start ${second.start} / 焦点 ${second.focus ?? "无"}`,
-      );
-    }
-
-    let last = second;
-    while (last.shown < total) {
-      const shownBefore = last.shown;
-      const shownAfter = Math.min(total, shownBefore + 6);
-      await page.locator("[data-recipe-more]").first().click({ timeout: 5000 });
-      await waitForShown(shownAfter);
-      last = await readList();
-      const expectedStart = Math.max(0, shownAfter - 12);
-      const newCount = shownAfter - shownBefore;
-      const focusId = last.ids[12 - newCount];
-      await waitForFocus(focusId);
-      const focused = await readList();
+    /*
+     * 逐章点开,确认 77 张方子**全都可达** —— 分章不许把某几张方藏在一个点不开的章里。
+     *
+     * 「可达」的口径是**真点开之后它在 DOM 里**(而不是「册子说它有」),
+     * 且每章一次只开一章(与藏珍的「每柜一次只抽开一屉」同一条规矩):
+     * 全开实测 DOM 峰值 1143,越过那一档 1100 的预算 —— 而按章铺开正是为了不让它长成那样。
+     */
+    {
+      const ids = new Set();
+      let maxRowCount = 0;
+      let maxOpen = 0;
+      const groups = await page.locator("[data-recipe-group]").count();
+      for (let i = 0; i < groups; i += 1) {
+        const major = Number(
+          await page.locator("[data-recipe-group]").nth(i).getAttribute("data-recipe-group"),
+        );
+        const toggle = page.locator(`[data-recipe-group="${major}"] [data-recipe-group-toggle]`);
+        if ((await toggle.getAttribute("aria-expanded")) !== "true") {
+          await toggle.click({ timeout: 3000 });
+          await page.waitForTimeout(60);
+        }
+        const chapter = await page.evaluate((m) => {
+          const el = document.querySelector(`[data-recipe-group="${m}"]`);
+          const body = el?.querySelector("[data-recipe-group-body]");
+          const openBodies = [...document.querySelectorAll("[data-recipe-group-body]")].filter(
+            (b) => b.offsetParent !== null,
+          );
+          return {
+            ids: [...(el?.querySelectorAll("[data-recipe-row]") ?? [])].map((r) =>
+              r.getAttribute("data-recipe-row"),
+            ),
+            rows: body ? body.querySelectorAll("[data-recipe-row]").length : 0,
+            openBodies: openBodies.length,
+          };
+        }, major);
+        for (const id of chapter.ids) ids.add(id);
+        maxRowCount = Math.max(maxRowCount, chapter.rows);
+        maxOpen = Math.max(maxOpen, chapter.openBodies);
+      }
       checked += 1;
-      if (
-        last.shown !== shownAfter ||
-        last.start !== expectedStart ||
-        last.count !== shownAfter - expectedStart ||
-        focused.focus !== focusId
-      ) {
+      if (ids.size !== total) {
         failures.push(
-          `[195] 丹方续开到第 ${shownAfter} 张时窗口不对:` +
-            `应 ${shownAfter - expectedStart} 行 / start ${expectedStart} / 焦点 ${focusId},` +
-            `实见 ${last.count} 行 / start ${last.start} / ` +
-            `焦点 ${focused.focus ?? "无"}(shown ${last.shown})`,
+          `[195] 逐章点开只见到 ${ids.size}/${total} 张方子 —— 有方子被藏在一个点不开的章里`,
         );
       }
-    }
-    const lastStart = total - 12;
-    checked += 1;
-    if (
-      last.count !== 12 ||
-      last.start !== lastStart ||
-      (await page.locator("[data-recipe-more]").count()) > 0 ||
-      (await page.locator("[data-recipe-prev]").count()) === 0
-    ) {
-      failures.push(
-        `[195] 丹方末批应滑窗为 12/${total}、从第 ${lastStart + 1} 张起并可回翻,` +
-          `实见 ${last.count} 张 / start ${last.start}`,
-      );
-    }
-
-    await page.locator("[data-recipe-prev]").first().click({ timeout: 5000 });
-    const backShown = Math.floor((total - 1) / 6) * 6;
-    const backStart = Math.max(0, backShown - 12);
-    await waitForShown(backShown);
-    const back = await readList();
-    await waitForFocus(back.ids[0]);
-    const backFocused = await readList();
-    checked += 1;
-    if (back.start !== backStart || back.count !== 12 || backFocused.focus !== back.ids[0]) {
-      failures.push(
-        `[195] 丹方回翻没有回到上一页:应 start ${backStart} / 12 张 / 焦点页首,` +
-          `实见 start ${back.start} / ${back.count} 张 / 焦点 ${backFocused.focus ?? "无"}`,
-      );
+      checked += 1;
+      if (maxOpen !== 1) {
+        failures.push(
+          `[195] 点开一章之后同时开着 ${maxOpen} 章 —— 一次只该开一章` +
+            `(全开就是一个平面长清单,而按章铺开正是为了不让它长成那样)`,
+        );
+      }
+      checked += 1;
+      if (maxRowCount > 12) {
+        failures.push(`[195] 单章铺了 ${maxRowCount} 行 —— 一章里放不下这么多方子`);
+      }
+      // 收回到开炉时的样子(玩家此刻那一境):后面的搜索与开炉要在正常态下量
+      const keep = initial.openMajors[0];
+      if (keep !== undefined) {
+        const toggle = page.locator(`[data-recipe-group="${keep}"] [data-recipe-group-toggle]`);
+        if ((await toggle.getAttribute("aria-expanded")) !== "true") {
+          await toggle.click({ timeout: 3000 });
+          await page.waitForTimeout(80);
+        }
+      }
+      await page.waitForTimeout(120);
     }
 
     const search = page.locator('input[aria-label="搜方名"]').first();
     await search.fill(searchName);
-    await waitForTotal(1);
-    await waitForShown(1);
-    const searched = await readList();
+    await page.waitForTimeout(120);
+    const searched = await readLedger();
     checked += 1;
     if (
-      searched.total !== 1 ||
-      searched.shown !== 1 ||
-      searched.start !== 0 ||
-      searched.count !== 1 ||
-      !searched.searchFocused
+      searched.rowCount < 1 ||
+      !searched.ids.some((id) => id) ||
+      !searched.searchFocused ||
+      searched.openCount !== searched.groupCount
     ) {
       failures.push(
-        `[195] 搜方名后窗口应重置为 1/1 且焦点留在输入框,` +
-          `实见 ${searched.count}/${searched.total} / start ${searched.start} / ` +
+        `[195] 搜方名后不对:命中 ${searched.rowCount} 行 / ` +
+          `展开 ${searched.openCount} 章(搜索时命中章都要展开)/ ` +
           `输入框 ${searched.searchFocused ? "有焦点" : "失焦"}`,
       );
     }
 
     await search.fill("");
-    await waitForTotal(total);
-    await waitForShown(6);
-    const cleared = await readList();
+    await page.waitForTimeout(120);
+    const cleared = await readLedger();
     checked += 1;
-    if (
-      cleared.shown !== 6 ||
-      cleared.start !== 0 ||
-      cleared.count !== 6 ||
-      !cleared.searchFocused
-    ) {
+    if (cleared.shown !== cleared.rowCount || cleared.openCount !== 1 || !cleared.searchFocused) {
       failures.push(
-        `[195] 清空搜索后应回首批 6 张且焦点仍留输入框,` +
-          `实见 ${cleared.count} 张 / start ${cleared.start} / ` +
+        `[195] 清空搜索后应回「只展开当前境」且焦点仍留输入框:` +
+          `实见 ${cleared.rowCount} 行 / 展开 ${cleared.openCount} 章 / ` +
           `输入框 ${cleared.searchFocused ? "有焦点" : "失焦"}`,
       );
     }
 
-    await page.locator("[data-recipe-more]").first().click({ timeout: 5000 });
-    await waitForShown(12);
-    const craftList = await readList();
-    const craftId = craftList.ids[6];
-    const craftRow = page.locator(`[data-recipe-row="${craftId}"]`);
-    const craftButton = craftRow.locator("button").first();
-    if ((await craftButton.count()) === 0 || !(await craftButton.isEnabled())) {
-      failures.push(`[195] 丹方焦点探针的 ${craftId} 不可炼制 —— 夹具算错了`);
+    /*
+     * ---- 开一炉:焦点跟住同一张方 ----
+     *
+     * 取**可见**的那一行:合着的章里行仍在 DOM(v-show 保内容),而第一枚未必开着。
+     */
+    const firstRow = page.locator("[data-recipe-row]:visible").first();
+    const craftId = await firstRow.getAttribute("data-recipe-row");
+    await firstRow.click({ timeout: 5000 });
+    const detail = page.locator("[data-recipe-row-detail]").first();
+    if ((await detail.count()) === 0) {
+      failures.push(`[195] 点方子没有开出详情浮层 —— 代价与成品没处读`);
     } else {
-      await craftButton.click({ timeout: 5000 });
-      await waitForFocus(craftId);
-      const crafted = await readList();
+      const detailId = await detail.getAttribute("data-recipe-row-detail");
+      const costVisible = await page.locator("[data-recipe-cost]").first().isVisible();
+      const craftButton = page.locator("[data-recipe-craft]");
       checked += 1;
-      if (crafted.focus !== craftId || !crafted.ids.includes(craftId)) {
+      if (detailId !== craftId || !costVisible) {
         failures.push(
-          `[195] 炼制耗料后焦点没有留在原方:应 ${craftId},` +
-            `实见 ${crafted.focus ?? "无"} / 当前窗 ${crafted.ids.join(",")}`,
+          `[195] 详情浮层打开的不是被点的那一张:点 ${craftId} / 开 ${detailId} / 代价行 ${costVisible}`,
         );
+      }
+      if ((await craftButton.count()) === 0 || !(await craftButton.first().isEnabled())) {
+        failures.push(`[195] 详情浮层里的「炼制」不可用 —— 夹具算错了`);
+      } else {
+        await craftButton.first().click({ timeout: 5000 });
+        await waitForFocus(craftId);
+        const crafted = await readLedger();
+        checked += 1;
+        if (crafted.focus !== craftId) {
+          failures.push(`[195] 开炉后焦点没有留在原方:应 ${craftId},实见 ${crafted.focus ?? "无"}`);
+        }
       }
     }
 
     if (pageErrors.length)
-      failures.push(`[320] 丹方全册场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
+      failures.push(`[320] 丹方册场景页面异常:${[...new Set(pageErrors)].join(" | ")}`);
   } finally {
     await ctx.close();
     await vite?.close();
@@ -35354,7 +35408,7 @@ const TASKS = [
   ["器魂两册的分批回看", taskSoulListOverflow],
   ["名号与灵兽两册的分批回看", taskTitlePetOverflow],
   ["法宝全册的分批回看", taskArtifactListOverflow],
-  ["开炉丹方的分批回看", taskRecipeListOverflow],
+  ["开炉丹方的分章回看", taskRecipeListOverflow],
   ["词条转移候选的分批回看", taskAffixTransferOverflow],
   ["只读页(第二个标签页)的常驻说明", taskReadOnlyTab],
   ["开局前两页(欢迎 / 建号)", taskPreGameTour],

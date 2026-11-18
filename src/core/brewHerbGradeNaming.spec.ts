@@ -85,20 +85,22 @@ describe("炼丹弹窗 · 两套档名必须分得开", () => {
     ).toContain("灵草");
   });
 
-  it("丹方卡那一处自带「灵草」后缀 —— 两处各有各的分法", () => {
+  it("代价行自带「灵草」后缀 —— 两处各有各的分法", () => {
     /*
-     * 丹方卡写的是 `凡品灵草×4`（简称 + 后缀），而灵草那一行是
+     * 代价行写的是 `凡品灵草×4`（简称 + 后缀），而灵草那一行是
      * `灵草 · 凡品 200`（前置标签 + 裸简称）。
      *
      * 两种写法都对 —— 判据要判的是「读的人能不能把这句和丹药的档名分开」，
      * 不是「必须用同一种写法」。故这条核**后缀那一处**：它不能丢掉那个「灵草」。
+     *
+     * 代价行这一轮搬进了点开方子才铺开的那一层(`data-recipe-cost`)——
+     * 清单行只留「叫什么、多好、多难、几成把握」。判据跟着搬:守的是
+     * 「代价那一处有没有说清是哪一品草」,不是它长在哪一屏。
      */
     const src = stripComments(readSource(DIALOG));
-    const idx = src.indexOf("HERB_GRADE_SHORT[r.cost.herbGrade]");
-    expect(idx, "找不到丹方卡里的灵草代价").toBeGreaterThan(-1);
+    const idx = src.indexOf("HERB_GRADE_SHORT[detailRow.cost.herbGrade]");
+    expect(idx, "找不到代价行里的灵草品阶").toBeGreaterThan(-1);
     const tail = src.slice(idx, idx + 120);
-    expect(tail, "丹方卡的灵草代价丢了「灵草」后缀 —— 「凡品×4」读不出是草还是丹").toContain(
-      "灵草",
-    );
+    expect(tail, "代价行丢了「灵草」后缀 —— 「凡品×4」读不出是草还是丹").toContain("灵草");
   });
 });

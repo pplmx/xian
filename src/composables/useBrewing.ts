@@ -17,11 +17,49 @@ import { craftability, type Craftability } from "@/core/craftability";
 import { modOf } from "@/core/statsCalc";
 import { alchemyBonusCapped } from "@/core/engineCraft";
 import { studyEta } from "@/core/loreService";
+import { defaultOpenMajor, recipeLedger } from "@/core/pillRecipeLedger";
 import { formatDuration, formatGN } from "@/utils/format";
 import { toNum } from "@/utils/gnum";
 import { modsText } from "@/data/statNames";
 import { pillFuncText } from "@/ui/itemText";
 import type { GNum, PillDef, StatMods } from "@/types";
+
+/** 炉前一行方子 —— 界面只读这一份,代价/把握/存货都在这里算过一次 */
+export interface BrewRecipeRow {
+  def: PillDef;
+  cost: { herb: number; herbGrade: HerbGrade; stone: GNum };
+  able: Craftability;
+  doubleRate: number;
+  guaranteeLeft: number;
+  salvageFraction: number;
+  keptHerb: number;
+  shouzhuoLeft: boolean;
+  shortHerb: boolean;
+  shortStone: boolean;
+  shortText: string | null;
+  stock: number;
+  overflow: ReturnType<typeof buffOverflowOf> | null;
+}
+
+/**
+ * 册上一境一章。
+ *
+ * `knownRows` 是**已得**方子(带整份炉前账,可点开、可开炉);
+ * `missing` 是这一境还没到手的张数 —— 不逐张铺占位:
+ * 名字与代价都是得到之后才知道的事(与图鉴的「???」同一条纪律),
+ * 一屏 71 枚问号既不给信息又比一行字占地方。玩家要的是
+ * 「一共多少、缺在哪一境」,那两句由 `missing` 与本册总账回答。
+ */
+export interface BrewLedgerGroup {
+  major: number;
+  realmName: string;
+  worldName: string;
+  worldFirst: boolean;
+  known: number;
+  total: number;
+  missing: number;
+  knownRows: BrewRecipeRow[];
+}
 
 /**
  * 开炉炼丹的共用账本 —— InventoryView(页面)与 BrewingDialog(开炉弹窗)同源调用。
@@ -83,99 +121,128 @@ export function useBrewing() {
     return `藏经阁翻检中,约 ${formatDuration(Math.round(eta.nextInSec))} 后翻出一张新方`;
   });
 
-  const recipes = computed(() =>
-    availableRecipes()
-      .map((id) => {
-        const def = pillDef(id);
-        const cost = pillCraftCost(id);
-        const able = craftability(id);
-        // 双成率 = 掷骰同一口径(alchemyBonusCapped:炉子份 + 炼丹产出词条,夹 0.8)—— 不许在界面重算一份
-        const doubleRate = alchemyBonusCapped(id);
-        // 浴火丹心(宿命传承)「本世前 3 炉必成」:余量 = 保底总数 − 已用,与 engineCraft.rate 同源。
-        // 界面不报这段时,持传承会在「把握 60%」里看到一个其实必成的炉。
-        const guaranteeLeft = Math.max(
-          0,
-          craftGuaranteeCrafts(player.reincarnation.heritage) -
-            (player.reincarnation.heritageUses.danxin ?? 0),
+  /**
+   * 炉前账:已知方逐张把代价、把握、双成、存货算一次 —— 册与详情都读这一份。
+   *
+   * 排序不再是「可炼优先 → 阶位」:册子按境界分章(见 core/pillRecipeLedger),
+   * 组内次序由那里给。这里只按 id 建索引,序归册子。
+   */
+  const recipeRows = computed(() => {
+    const out = new Map<string, BrewRecipeRow>();
+    for (const id of availableRecipes()) {
+      const def = pillDef(id);
+      const cost = pillCraftCost(id);
+      const able = craftability(id);
+      if (!def || !cost || !able) continue;
+      // 双成率 = 掷骰同一口径(alchemyBonusCapped:炉子份 + 炼丹产出词条,夹 0.8)—— 不许在界面重算一份
+      const doubleRate = alchemyBonusCapped(id);
+      // 浴火丹心(宿命传承)「本世前 3 炉必成」:余量 = 保底总数 − 已用,与 engineCraft.rate 同源。
+      // 界面不报这段时,持传承会在「把握 60%」里看到一个其实必成的炉。
+      const guaranteeLeft = Math.max(
+        0,
+        craftGuaranteeCrafts(player.reincarnation.heritage) -
+          (player.reincarnation.heritageUses.danxin ?? 0),
+      );
+      // 失败那面的代价也在炉前摊开:炸炉返草 ≈ salvageRatio(技艺)×(1+稳炉护料),与
+      // engineCraft.spentOnFail 同源 —— 只摊成功率等于只让玩家看见赢的那面
+      const salvageFraction =
+        salvageRatio(able.skill) * (1 + modOf(player.finalStats.mods, "craftSalvage"));
+      // 返草实算按整株取整(engineCraft.spentOnFail 对 cost.amount floor,
+      // 还原会退回 Math.floor(cost×ratio)),展示不许用浮点比率伪装整株:
+      // 4 株 20% 实际一株不退,写「~20%」就是骗。合体守拙本世首败灵草全保,也在炉前亮开。
+      const hasShouzhuo = player.reincarnation.heritage.includes("shouzhuo");
+      const shouzhuoLeft = hasShouzhuo && (player.reincarnation.heritageUses.shouzhuo ?? 0) === 0;
+      const keptHerb = shouzhuoLeft ? cost.herb : Math.floor(cost.herb * salvageFraction);
+      // 分级后「灵草不足」太笼统:满兜仙品草也可能缺几株凡品 —— 逐案点名缺什么,
+      // 缺草的直接指路灵草坊(那是唯一买草的地方)
+      const shortHerb = !resources.hasHerbs(cost.herbGrade, cost.herb);
+      const shortStone = !resources.hasStone(cost.stone);
+      // 双缺要并列报(「缺凡品,持 a/b · 灵石尚差 c 石」)—— 与同仓其它消费点(GongfaDialog 悟道点·残页)一个口子;
+      // 若只报第一个成立的,买齐草后灵石尚差才突然冒出来,等于把决策的一半藏到付款后
+      const shortParts: string[] = [];
+      if (shortHerb)
+        shortParts.push(
+          `缺${HERB_GRADE_NAMES[cost.herbGrade]},持 ${resources.herbOf(cost.herbGrade)}/${cost.herb}`,
         );
-        if (!def || !cost || !able) return null;
-        // 失败那面的代价也在炉前摊开:炸炉返草 ≈ salvageRatio(技艺)×(1+稳炉护料),与
-        // engineCraft.spentOnFail 同源 —— 只摊成功率等于只让玩家看见赢的那面
-        const salvageFraction =
-          salvageRatio(able.skill) * (1 + modOf(player.finalStats.mods, "craftSalvage"));
-        // 返草实算按整株取整(engineCraft.spentOnFail 对 cost.amount floor,
-        // 还原会退回 Math.floor(cost×ratio)),展示不许用浮点比率伪装整株:
-        // 4 株 20% 实际一株不退,写「~20%」就是骗。合体守拙本世首败灵草全保,也在炉前亮开。
-        const hasShouzhuo = player.reincarnation.heritage.includes("shouzhuo");
-        const shouzhuoLeft = hasShouzhuo && (player.reincarnation.heritageUses.shouzhuo ?? 0) === 0;
-        const keptHerb = shouzhuoLeft ? cost.herb : Math.floor(cost.herb * salvageFraction);
-        // 分级后「灵草不足」太笼统:满兜仙品草也可能缺几株凡品 —— 逐案点名缺什么,
-        // 缺草的直接指路灵草坊(那是唯一买草的地方)
-        const shortHerb = !resources.hasHerbs(cost.herbGrade, cost.herb);
-        const shortStone = !resources.hasStone(cost.stone);
-        // 双缺要并列报(「缺凡品,持 a/b · 灵石尚差 c 石」)—— 与同仓其它消费点(GongfaDialog 悟道点·残页)一个口子;
-        // 若只报第一个成立的,买齐草后灵石尚差才突然冒出来,等于把决策的一半藏到付款后
-        const shortParts: string[] = [];
-        if (shortHerb)
-          shortParts.push(
-            `缺${HERB_GRADE_NAMES[cost.herbGrade]},持 ${resources.herbOf(cost.herbGrade)}/${cost.herb}`,
-          );
-        if (shortStone)
-          shortParts.push(
-            `灵石不足,尚差 ${formatGN(Math.max(0, toNum(cost.stone) - toNum(resources.spiritStone)))} 石`,
-          );
-        const shortText = shortParts.length ? shortParts.join(" · ") : null;
-        // 炉前存货账:方子行亮「存 N」(读 inventory.pills,与丹匣同一份账),
-        // 增益丹再亮「药力状态」—— 顶满/将顶时炼出来也是白占一格,
-        // 判据与服用侧同一把尺(buffOverflowOf)+ 同一把响应式钟(now.value),
-        // 不许在炼制面另造一份「大概不用炼了」的黑话。
-        const stock = inventory.pills[id] ?? 0;
-        const overflow =
-          def.kind === "buff" && def.buffId
-            ? buffOverflowOf(cult.buffs, def.buffId, now.value)
-            : null;
-        return {
-          def,
-          cost,
-          able,
-          doubleRate,
-          guaranteeLeft,
-          salvageFraction,
-          keptHerb,
-          shouzhuoLeft,
-          shortHerb,
-          shortStone,
-          shortText,
-          stock,
-          overflow,
-        };
-      })
-      .filter(
-        (
-          x,
-        ): x is {
-          def: PillDef;
-          cost: { herb: number; herbGrade: HerbGrade; stone: GNum };
-          able: Craftability;
-          doubleRate: number;
-          guaranteeLeft: number;
-          salvageFraction: number;
-          keptHerb: number;
-          shouzhuoLeft: boolean;
-          shortHerb: boolean;
-          shortStone: boolean;
-          shortText: string | null;
-          stock: number;
-          overflow: ReturnType<typeof buffOverflowOf> | null;
-        } => x !== null,
-      )
-      // 现在能开炉的置顶,其余再按阶位 —— 进弹窗一眼看见此刻哪味立刻可炼
-      .sort((a, b) => {
-        const ca = a.shortHerb || a.shortStone ? 0 : 1;
-        const cb = b.shortHerb || b.shortStone ? 0 : 1;
-        return cb - ca || a.able.rank - b.able.rank;
-      }),
+      if (shortStone)
+        shortParts.push(
+          `灵石不足,尚差 ${formatGN(Math.max(0, toNum(cost.stone) - toNum(resources.spiritStone)))} 石`,
+        );
+      const shortText = shortParts.length ? shortParts.join(" · ") : null;
+      // 炉前存货账:方子行亮「存 N」(读 inventory.pills,与丹匣同一份账),
+      // 增益丹再亮药力状态 —— 顶满/将顶时炼出来也是白占一格,
+      // 判据与服用侧同一把尺(buffOverflowOf)+ 同一把响应式钟(now.value),
+      // 不许在炼制面另造一份「大概不用炼了」的黑话。
+      const stock = inventory.pills[id] ?? 0;
+      const overflow =
+        def.kind === "buff" && def.buffId
+          ? buffOverflowOf(cult.buffs, def.buffId, now.value)
+          : null;
+      out.set(id, {
+        def,
+        cost,
+        able,
+        doubleRate,
+        guaranteeLeft,
+        salvageFraction,
+        keptHerb,
+        shouzhuoLeft,
+        shortHerb,
+        shortStone,
+        shortText,
+        stock,
+        overflow,
+      });
+    }
+    return out;
+  });
+
+  /**
+   * 已知方(平面) —— 页面只读它的条数与「有没有一味立刻可炼」。
+   * 序按境界从低到高、再按阶位,与册子的组序同一条口径(不再用「可炼优先」插队)。
+   */
+  const recipes = computed(() =>
+    [...recipeRows.value.values()].sort(
+      (a, b) => a.def.minRealm - b.def.minRealm || a.able.rank - b.able.rank,
+    ),
   );
+
+  /**
+   * 丹方册 —— 按境界分章:已得的带整份炉前账,未得的只留占位。
+   *
+   * 玩家站在炉前问的是「我这境界该炼什么 / 下一境还差哪几张方子」,
+   * 而一个平面清单(按可炼优先 → 阶位排)答不了这句话。分组与次序全在
+   * core/pillRecipeLedger,这里只做接线:把行索引贴到册上的每一行。
+   */
+  const recipeLedgerGroups = computed<BrewLedgerGroup[]>(() =>
+    recipeLedger((id) => lore.recipeMastery(id)).groups.map((group) => ({
+      major: group.major,
+      realmName: group.realmName,
+      worldName: group.worldName,
+      worldFirst: group.worldFirst,
+      known: group.known,
+      total: group.total,
+      missing: group.total - group.known,
+      // 未得方在这几行里已被滤掉:它们连炉前账都没有(代价与把握是得到之后才知道的事)
+      knownRows: group.entries
+        .filter((entry) => entry.known)
+        .map((entry) => recipeRows.value.get(entry.def.id))
+        .filter((row): row is BrewRecipeRow => row !== undefined),
+    })),
+  );
+
+  /** 全册总账:已得几张 / 共几张 / 还有几张没到手 —— 界面不许另减一遍 */
+  const recipeMeter = computed(() => {
+    const ledger = recipeLedger((id) => lore.recipeMastery(id));
+    return {
+      known: ledger.known,
+      total: ledger.total,
+      missing: ledger.total - ledger.known,
+      noRecipe: ledger.noRecipe,
+      /** 默认展开的那一章 —— 玩家此刻那一境 */
+      defaultMajor: defaultOpenMajor(ledger.groups, player.major),
+    };
+  });
 
   /**
    * 技艺一览:名(道名 + 技艺名)、境地(skillStageName)、境地内进度(0~1)、这项技艺管什么。
@@ -220,7 +287,7 @@ export function useBrewing() {
   return {
     // 页面(InventoryView)与弹窗(BrewingDialog)共用:
     herbGradeHeld, // 逐品持有:开炉头与灵草坊两处同源
-    recipes, // 丹方总数:页面丹药 tab 副题读 length,弹窗列方子
+    recipes, // 已知方(平面):页面丹药 tab 副题读 length、可开炉圆点读有没有立刻可炼的
     pillFuncText, // @/ui/itemText 的纯函数经此转发:丹药详情与方子清单只认一份出处
     // 开炉弹窗专用:
     alchemyBuffRows,
@@ -230,5 +297,8 @@ export function useBrewing() {
     craftPill,
     craftBatch,
     batchGuaranteeText,
+    // 丹方册:按境界分章 + 炉前账索引(册与详情同源,见 core/pillRecipeLedger)
+    recipeLedgerGroups,
+    recipeMeter,
   };
 }

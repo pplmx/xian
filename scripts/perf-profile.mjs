@@ -29,7 +29,8 @@
  *
  * 基线(2026-11-01 实测,本机 + 无头 chromium,后期档):全 17 视图 ~60fps、
  * 最差帧 17ms、零长帧;300 件背包逐页翻到底峰值 675,此前 1000 件加压为 682;
- * 全 45 件法宝逐批翻到末页再回翻峰值 667;54 张丹方同窗峰值 725;同包点开武器槽、
+ * 全 45 件法宝逐批翻到末页再回翻峰值 667;77 张丹方逐章全开峰值见运行时读数;
+ * 同包点开武器槽、
  * 部位候选逐页到底再回翻峰值 984;词条转移候选逐页到底峰值 978;坊市寄卖 + 贡器
  * 各翻到末页峰值 917;全收集九册共 809 条逐册翻到末页再回翻,峰值 715;
  * 全习得三册功法逐门翻到末页,峰值 533。预算见 BUDGET,曾有过更糟的读数时任它红。
@@ -113,7 +114,8 @@ const BUDGET = {
   scrollMaxFrameMs: Number(process.env.PERF_SCROLL_MAX_FRAME_MS ?? 50),
   /**
    * 背包一次只留 32 张卡,可前后逐批翻完 300 件;80 张一窗实测 1048,故不设两批。
-   * 法宝全册 45 条长账按 6+6 滑窗,全流程峰值 667;丹方 54 张同窗,峰值 611。
+   * 法宝全册 45 条长账按 6+6 滑窗,全流程峰值 667;丹方按境界分章,默认只铺一章,
+   * 逐章全开(77 行单行账 + 21 条章首)是它的最坏态,峰值仍守在 1100 以内。
    * 词条转移 299 件候选按 12+12 滑窗,逐批开完峰值 948。四条密清单单独守 1100,
    * 不松动背包首屏预算。
    * 坊市是短横条/弹窗行,每窗最多 64 条;寄卖与贡器都逐页翻到末页再回翻一批。
@@ -446,6 +448,92 @@ async function rewindBatch(
       reason: String(error),
     };
   }
+}
+
+/**
+ * 逐章点开分章册,每一拍记 DOM 峰值,最后核一遍「全部方子都可达」。
+ *
+ * 与 `expandAllBatches` 的区别:那一套按「再看 N 件」逐批续开,**窗口会滑**,
+ * 故它另有回翻与「跨批重复」的对账。分章册是**手风琴**——一次只开一章,
+ * 故没有「全部展开」这个态。这里量的是:
+ *   ① 每一拍的 DOM 峰值(判据 ≤ 1100)。这一册的最坏态是「一章里有十二张方子」
+ *      全开(单章最多 6 张,但行数不是唯一变量:章越靠后,前面已铺的章首越多);
+ *   ② 逐章点开、把每一张方子都收进一个集合,最后核 size = 夹具总数(不许藏方子);
+ *   ③ 每次点开之后同时开着的章恰为一章(与藏珍的「每柜一次只抽开一屉」同一条规矩);
+ *   ④ 焦点留在被点开的那个章首上(没有掉到页面顶端)。
+ */
+async function expandAllChapters(page, expectedTotal) {
+  const peakOf = () => page.evaluate(() => document.querySelectorAll("body *").length);
+  let peakNodes = await peakOf();
+  const toggle = page.locator("[data-recipe-group-toggle]");
+  const groups = await toggle.count();
+  if (groups === 0) throw new Error("分章册一个章首都没有");
+  const seen = new Set();
+  let maxOpen = 0;
+  let closedAgain = false;
+  for (let i = 0; i < groups; i += 1) {
+    if (i > 200) throw new Error("章首超过 200 个,疑似不收敛");
+    const major = await page
+      .locator("[data-recipe-group]")
+      .nth(i)
+      .getAttribute("data-recipe-group");
+    const item = page.locator(`[data-recipe-group="${major}"] [data-recipe-group-toggle]`);
+    if ((await item.getAttribute("aria-expanded")) !== "true") {
+      await item.click({ timeout: 3000 });
+      await page.waitForTimeout(40);
+    }
+    const snap = await page.evaluate((m) => {
+      const el = document.querySelector(`[data-recipe-group="${m}"]`);
+      return {
+        ids: [...(el?.querySelectorAll("[data-recipe-row]") ?? [])].map((r) =>
+          r.getAttribute("data-recipe-row"),
+        ),
+        openBodies: [...document.querySelectorAll("[data-recipe-group-body]")].filter(
+          (b) => b.offsetParent !== null,
+        ).length,
+        focusIsToggle:
+          document.activeElement?.getAttribute("data-recipe-group-toggle") !== null &&
+          document.activeElement?.hasAttribute("data-recipe-group-toggle"),
+      };
+    }, major);
+    for (const id of snap.ids) seen.add(id);
+    maxOpen = Math.max(maxOpen, snap.openBodies);
+    if (!snap.focusIsToggle) throw new Error(`点开第 ${major} 境之后焦点没有留在章首上`);
+    peakNodes = Math.max(peakNodes, await peakOf());
+    /*
+     * 再点一次应当收回(手风琴的另一半):拿**最后一章**验,验完重新点开,
+     * 免得把「收得回」当成「打不开」。
+     */
+    if (!closedAgain) {
+      await item.click({ timeout: 3000 });
+      await page.waitForTimeout(40);
+      const collapsed = await page
+        .locator(`[data-recipe-group="${major}"] [data-recipe-group-body]`)
+        .count();
+      if (collapsed !== 0) throw new Error(`再点一次章首,第 ${major} 境没有收回去`);
+      await item.click({ timeout: 3000 });
+      await page.waitForTimeout(40);
+      closedAgain = true;
+    }
+  }
+  if (maxOpen !== 1) {
+    throw new Error(`同时开着 ${maxOpen} 章 —— 一次只该开一章(全开就是一个平面长清单)`);
+  }
+  if (seen.size !== expectedTotal) {
+    throw new Error(
+      `逐章点开只见到 ${seen.size}/${expectedTotal} 张方子 —— 有方子被藏在合着的章里`,
+    );
+  }
+  return {
+    before: 1,
+    promised: expectedTotal - 1,
+    after: seen.size,
+    steps: groups,
+    slides: 0,
+    peakNodes,
+    ok: true,
+    mode: "chapters",
+  };
 }
 
 /** 一直点到这一份清单的末页,每一拍都记 DOM 峰值 —— 只点一次会把「还能继续长」漏掉。 */
@@ -806,21 +894,13 @@ for (const view of VIEWS) {
           .locator("[data-recipe-total]")
           .first()
           .waitFor({ state: "visible", timeout: 3000 });
-        recipeBatches = await expandAllBatches(
-          page,
-          "[data-recipe-row]",
-          "button[data-recipe-more]",
-          {
-            selector: "[data-recipe-total]",
-            attribute: "data-recipe-total",
-            count: fullRecipeCount,
-          },
-          {
-            startSelector: "[data-recipe-total]",
-            startAttribute: "data-recipe-start",
-            previousSelector: "button[data-recipe-prev]",
-          },
-        );
+        /*
+         * 丹方册按境界分章之后没有「再看 N 张」了:每章自己是一个折叠钮。
+         * 逐章点开、每一拍记 DOM 峰值 —— 全开是这一册的最坏态(77 行单行账 + 21 条章首)。
+         * 判据仍是「整册进 DOM 也不许撑爆」:分章的收益是首屏只铺一章,
+         * 而这一项量的是**全开之后**的峰值,两件事都要在。
+         */
+        recipeBatches = await expandAllChapters(page, fullRecipeCount);
         await page.keyboard.press("Escape");
         await page
           .locator("[data-recipe-total]")
@@ -1231,7 +1311,7 @@ function batchChecks(r) {
   const checks = [];
   if (r.batch) checks.push(["续开", r.batch]);
   if (r.artifactBatches) checks.push(["法宝续开", r.artifactBatches]);
-  if (r.recipeBatches) checks.push(["丹方续开", r.recipeBatches]);
+  if (r.recipeBatches) checks.push(["丹方分章", r.recipeBatches]);
   if (r.slotCandidates) checks.push(["部位候选续开", r.slotCandidates]);
   if (r.affixTransfer) checks.push(["词条转移续开", r.affixTransfer]);
   for (const batch of r.gongfaBatches ?? []) checks.push([`功法/${batch.label}续开`, batch]);
@@ -1250,7 +1330,7 @@ for (const r of results) {
         `${label}=${b.before}→${b.after}${
           b.singleWindow ? "(单窗)" : b.steps > 1 ? `(${b.steps}批/滑${b.slides})` : ""
         }${b.finalNodes && b.finalNodes !== b.peakNodes ? ` 收=${b.finalNodes}` : ""}${
-          (["法宝续开", "丹方续开", "部位候选续开", "词条转移续开"].includes(label) ||
+          (["法宝续开", "丹方分章", "部位候选续开", "词条转移续开"].includes(label) ||
             label.startsWith("功法/") ||
             label === "道痕续开") &&
           b.peakNodes
@@ -1311,7 +1391,7 @@ for (const r of results) {
     );
   else if (gate && r.recipeBatches?.peakNodes > 1100)
     failures.push(
-      `${r.name}: 丹方全册 DOM ${r.recipeBatches.peakNodes} > 1100 —— 方子是否又整册进弹窗了`,
+      `${r.name}: 丹方全册 DOM ${r.recipeBatches.peakNodes} > 1100 —— 分章是否又退回整册直铺`,
     );
   else if (gate && r.affixTransfer?.peakNodes > 1100)
     failures.push(

@@ -251,7 +251,7 @@ describe("批量炼丹 · UI 收口", () => {
   const viewSrc = (): string => readFileSync(join(SRC, "views/InventoryView.vue"), "utf8");
 
   it("连炼挂在批量开炉上;连服只在即时丹上挂(增益丹不许批量按钮)", () => {
-    expect(dialogSrc()).toContain("craftBatch(r.def.id)");
+    expect(dialogSrc()).toContain("craftMany(detailRow.def.id)");
     // 按钮上的批量数须读 PILL_BATCH(单源,不许再手写「×5」)—— 写常量即撒谎
     expect(viewSrc()).toContain("连服 ×{{ PILL_BATCH }}");
     expect(dialogSrc()).toContain("连炼 ×{{ PILL_BATCH }}");
@@ -272,7 +272,7 @@ describe("批量炼丹 · UI 收口", () => {
     // 双成率的口径(alchemyBonusCapped)在 useBrewing 的行构造器,展示在弹窗模板
     const brew = readFileSync(join(SRC, "composables/useBrewing.ts"), "utf8");
     expect(brew).toContain("const doubleRate = alchemyBonusCapped(id)");
-    expect(dialogSrc()).toContain("formatPercent(r.doubleRate)");
+    expect(dialogSrc()).toContain("formatPercent(detailRow.doubleRate)");
     expect(dialogSrc()).toContain(" 双成");
   });
 });

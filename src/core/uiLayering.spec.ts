@@ -1210,56 +1210,80 @@ describe("界面分层 · 浮层只有一个出处", () => {
     );
   });
 
-  it("开炉丹方渐进铺开 —— 搜索重置窗口,炼制后焦点留在原方", () => {
-    // 54 张丹方每张都摊代价、成品、把握、双成、存货与两枚动作。整册塞进
-    // max-h-64 只是视觉上滚动,DOM 仍会一次铺满;长列表规则必须进开炉弹窗。
+  it("开炉丹方按境界分章 —— 一章一折,搜索与开炉后焦点都跟得住", () => {
+    /*
+     * 这一屏此前是一个**平面清单**:现在料够的置顶,其余按丹方阶位从易到难。
+     * 那是「我今天能炼哪几炉」的排法,而玩家站在炉前问的是另一句:
+     *
+     *     我这境界该炼什么 / 下一境还差哪几张方子
+     *
+     * 阶位与境界是两个轴,混在一个序列里之后,炼气那几张与混沌海那两张隔着几十行。
+     * 故改为**按境界分章**(分组与次序在 core/pillRecipeLedger,配 14 条判据),
+     * 一章一行、默认只展开玩家此刻那一境;方子行收成单行,代价/成品/双成/存货
+     * 移进点开的那一层。
+     *
+     * 判据守的是**新结构**,不是删掉:分章、章首折叠、单行、详情浮层、
+     * 以及「开一炉之后焦点仍跟住同一张方」这条一直有效的约束。
+     */
     const dialog = fileAt("components/inventory/BrewingDialog.vue");
-    expect(dialog?.src, "丹方册要复用长列表窗口").toMatch(
-      /import\s*\{[\s\S]*?listWindow[\s\S]*?\}\s*from\s*"@\/core\/listRender"/,
+    expect(dialog?.src, "丹方册要从 useBrewing 取分好章的册子").toMatch(
+      /import\s*\{[\s\S]*?useBrewing[\s\S]*?\}\s*from\s*"@\/composables\/useBrewing"/,
     );
-    expect(dialog?.src, "丹方按 6 张一批、最多留 12 张").toMatch(
-      /RECIPE_RENDER_BATCH\s*=\s*6[\s\S]{0,140}RECIPE_RENDER_WINDOW\s*=\s*RECIPE_RENDER_BATCH\s*\*\s*2/,
+    expect(dialog?.src, "册子要经 useBrewing 解构出来").toMatch(/recipeLedgerGroups,/);
+    const brew = readFileSync(join(SRC, "composables/useBrewing.ts"), "utf-8");
+    expect(brew, "分组与次序只许有一份出处(core/pillRecipeLedger)").toContain(
+      'from "@/core/pillRecipeLedger"',
     );
-    expect(dialog?.src, "只循环当前窗口,不许再整册铺开").toMatch(
-      /v-for="r in filteredRecipePage\.visible"/,
+    expect(dialog?.src, "章要有稳定落点给运行时门").toContain(":data-recipe-group=");
+    expect(dialog?.src, "一章一章地循环,不许再铺成一个平面").toMatch(/v-for="g in filteredGroups"/);
+    expect(dialog?.src, "章首是它自己的折叠钮:aria-expanded 指向它自己的开合").toMatch(
+      /:aria-expanded="isGroupOpen\(g\)"[\s\S]{0,400}?data-recipe-group-toggle/,
     );
-    expect(dialog?.src, "丹方册要收成一册连续长账").toContain("data-recipe-ledger");
-    expect(dialog?.src, "丹方账只留上下账线与行间线").toMatch(
-      /class="[^"]*divide-y[^"]*border-y[^"]*"[\s\S]{0,100}?data-recipe-ledger/,
+    expect(dialog?.src, "章身要有稳定落点").toContain("data-recipe-group-body");
+    /*
+     * 折叠钮排在它自己展开的正文之前 —— docs/design.md:1080 的硬约束:
+     * 一收一放,钮本身一步不动。秘境名录、名号谱、工坊三处都栽过一次。
+     */
+    const toggleAt = dialog?.src.indexOf("data-recipe-group-toggle") ?? -1;
+    const bodyAt = dialog?.src.indexOf("data-recipe-group-body") ?? -1;
+    expect(toggleAt, "找不到章首折叠钮 —— 判据会空转").toBeGreaterThan(-1);
+    expect(bodyAt, "找不到章身 —— 判据会空转").toBeGreaterThan(-1);
+    expect(toggleAt, "章首折叠钮跑到了它自己展开的正文后面 —— 一按它自己就沉下去").toBeLessThan(
+      bodyAt,
     );
-    expect(dialog?.src, "丹方逐张不再套内层纸卡").not.toContain("card-ink");
-    expect(dialog?.src, "平均炉数要独占一行且不拆行").toMatch(
-      /class="[^"]*whitespace-nowrap[^"]*"[\s\S]{0,100}?data-recipe-tries/,
-    );
-    for (const attr of ["total", "shown", "start"]) {
+    expect(dialog?.src, "方子行要有稳定指纹").toContain(":data-recipe-row=");
+    for (const attr of ["total", "known", "missing"]) {
       expect(dialog?.src, `丹方册要暴露 ${attr} 读数给运行时门`).toContain(`data-recipe-${attr}`);
     }
-    expect(dialog?.src, "丹方卡要有稳定指纹与可编程焦点").toContain(":data-recipe-row=");
-    expect(dialog?.src, "余方要能续开").toContain("data-recipe-more");
-    expect(dialog?.src, "滑走的批次要能回翻").toContain("data-recipe-prev");
-    expect(dialog?.src, "续开焦点要落到新露出的第一张").toMatch(
-      /firstNewVisibleIndex\(\s*shownBefore,\s*shownAfter,\s*RECIPE_RENDER_WINDOW\s*\)/,
+    expect(dialog?.src, "册子要报「已得 N / 共 M」").toContain("data-recipe-meter");
+    expect(dialog?.src, "搜索要能滤已得方名").toContain('aria-label="搜方名"');
+    expect(dialog?.src, "搜索词变化要回到「只展开当前境」").toMatch(
+      /watch\(\s*\(\) => props\.open[\s\S]{0,800}?resetGroupState\(\)/,
     );
-    expect(dialog?.src, "搜索词变化只重置窗口,不许抢走搜索框焦点").toMatch(
-      /watch\(\s*recipeQuery,\s*\(\)\s*=>\s*\{\s*recipeLimit\.value\s*=\s*RECIPE_RENDER_BATCH;?\s*\}\)/,
+    /* 开一炉之后焦点仍跟住同一张方 —— 这一条与结构无关,一直有效 */
+    expect(dialog?.src, "开炉后要按同一张方补焦点").toMatch(
+      /function craftOne\(id: string\): void \{\s*brewOne\(id\);[\s\S]{0,120}?focusRecipeRowById\(id\);/,
     );
-    expect(dialog?.src, "炼制与连炼后都要按同一张方的新位置补焦点").toMatch(
-      /craftPill:\s*brewOne[\s\S]{0,900}function craftPill\(id: string\): void \{\s*brewOne\(id\);\s*focusRecipeRowById\(id\);/,
+    expect(dialog?.src, "连炼后同样补焦点").toMatch(
+      /function craftMany\(id: string\): void \{\s*brewBatch\(id\);[\s\S]{0,120}?focusRecipeRowById\(id\);/,
     );
-    expect(dialog?.src).toMatch(
-      /craftBatch:\s*brewBatch[\s\S]{0,900}function craftBatch\(id: string\): void \{\s*brewBatch\(id\);\s*focusRecipeRowById\(id\);/,
+    expect(dialog?.src, "焦点若落在合着的章里,要先把那一章打开").toMatch(
+      /function focusRecipeRowById[\s\S]{0,1600}?openMajor\.value = group\.major;/,
     );
+    /* 单行化 + 详情浮层:代价与成品移进点开的那一层 */
+    expect(dialog?.src, "方子行要收成单行(详情另起一层)").toContain("data-recipe-row-detail");
+    expect(dialog?.src, "详情浮层要盖在册子之上").toMatch(/<BaseModal[\s\S]{0,200}?\btop\b/);
+    expect(dialog?.src, "代价行在详情里").toContain("data-recipe-cost");
     const fixture = readFileSync(
       resolve(__dirname, "../../scripts/lib/fullRecipeFixture.ts"),
       "utf8",
     );
     expect(fixture, "全丹方夹具必须从内容表生成,不许手抄 id").toContain("PILLS");
     const perf = readFileSync(resolve(__dirname, "../../scripts/perf-profile.mjs"), "utf8");
-    expect(perf, "运行时门要按丹方卡落点核对件数").toContain('"[data-recipe-row]"');
-    expect(perf, "运行时门要逐批翻完整丹方册").toContain("button[data-recipe-more]");
+    expect(perf, "运行时门要按丹方行落点核对件数").toContain('"[data-recipe-row]"');
     const layout = readFileSync(resolve(__dirname, "../../scripts/layout-check.mjs"), "utf8");
-    expect(layout, "195 宽要逐批翻完丹方并复核搜索与炼制后的焦点").toContain(
-      '["开炉丹方的分批回看", taskRecipeListOverflow]',
+    expect(layout, "195 宽要逐章展开丹方并复核搜索与开炉后的焦点").toContain(
+      '["开炉丹方的分章回看", taskRecipeListOverflow]',
     );
   });
 
@@ -2650,7 +2674,7 @@ describe("界面分层 · 浮层只有一个出处", () => {
     expect(brew?.src, "保底余量与结算同源(craftGuaranteeCrafts)").toContain(
       "craftGuaranteeCrafts(",
     );
-    expect(brew?.src, "窗口期展望必成而非裸把握").toContain('r.guaranteeLeft > 0 ? "必成"');
+    expect(brew?.src, "窗口期展望必成而非裸把握").toContain('guaranteeLeft > 0 ? "必成"');
     expect(brew?.src, "总数不许手写 3").toContain(
       "craftGuaranteeCrafts(player.reincarnation.heritage)",
     );
@@ -2662,7 +2686,8 @@ describe("界面分层 · 浮层只有一个出处", () => {
     // 增益丹再亮药力状态(已顶/将顶);判据与服用侧同一把尺(buffOverflowOf)+
     // 同一把响应式钟(useNow),拆分后都住在 composables/useBrewing.ts。
     const brew = fileAt("components/inventory/BrewingDialog.vue");
-    expect(brew?.src, "方子行要亮存 N").toContain("存 {{ r.stock }}");
+    expect(brew?.src, "方子行要亮存 N").toContain("存 {{ row.stock }}");
+    expect(brew?.src, "详情浮层同样亮存 N").toContain("存 {{ detailRow.stock }}");
     expect(brew?.src, "顶满要就地写「已顶」(与服用侧同族措辞)").toContain("已顶");
     expect(brew?.src, "将顶要亮(amber 金赭,与突破已封顶同族)").toContain("将顶");
     const src = readFileSync(join(SRC, "composables/useBrewing.ts"), "utf-8");
