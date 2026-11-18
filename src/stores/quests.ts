@@ -187,6 +187,17 @@ export const useQuestsStore = defineStore(
       if (lastCollectionViewAt.value === 0) lastCollectionViewAt.value = Date.now();
     }
 
+    /**
+     * 某一条的**首次收录**时刻；没记过（老存档 / 未收录）返回 0。
+     *
+     * `collectedAt` 那张表的键是 `category:id` 的拼串，界面不该自己拼 ——
+     * 拼错一次就静默拿到 0，而 0 看起来像「没收录过」。
+     */
+    function collectedAtOf(category: string, id: string): number {
+      const ts = collectedAt.value[`${category}:${id}`];
+      return typeof ts === "number" && Number.isFinite(ts) && ts > 0 ? ts : 0;
+    }
+
     /** 收录时刻落在「上次打开图鉴」之后才挂「新」(无时间戳一律非新)。
      * category 收 string:图鉴的 CodexCat.key 就是字符串,与 CollectionCategory 同字面量而非同型。 */
     function isEntryNew(category: string, id: string): boolean {
@@ -345,6 +356,7 @@ export const useQuestsStore = defineStore(
       titleMoments,
       collections,
       collectedAt,
+      collectedAtOf,
       collectedMoment,
       lastCollectionViewAt,
       isEntryNew,

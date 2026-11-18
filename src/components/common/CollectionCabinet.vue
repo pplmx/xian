@@ -67,6 +67,18 @@
             <span class="collection-cabinet__reading tabular"
               >{{ cell.known }}/{{ cell.total }}</span
             >
+            <!--
+              逐册的「通顶」数（第 218 轮）。
+              卷首报的是九柜合计，而玩家站在某一柜前面时会问
+              「这一册我参透了几条」—— 录了 40 条与其中 8 条通顶是两件事。
+              为 0 时不印，免得九格右下角挂一排「通顶 0」。
+            -->
+            <span
+              v-if="cell.peakCount > 0"
+              class="collection-cabinet__peak tabular"
+              :data-collection-peak="cell.key"
+              >通顶 {{ cell.peakCount }}</span
+            >
           </span>
           <span class="collection-cabinet__track" aria-hidden="true">
             <span :style="{ width: `${cell.ratio * 100}%` }" />
@@ -100,6 +112,13 @@ interface CabinetCell {
   knownStart: number;
   knownShown: number;
   knownTotal: number;
+  /**
+   * 这一册走到最深那一档的条数（第 217 轮）。
+   *
+   * 与 `known` 分开是因为两者答的不是一件事:
+   * 收满 20 味丹、全部只到「已录」，与 20 味全通晓，`known` 都是 20。
+   */
+  peakCount: number;
 }
 
 defineProps<{

@@ -595,6 +595,8 @@ import {
 } from "@/core/achievementProgress";
 import {
   collectionProgressOverviewFromCodex,
+  collectionStagePeak,
+  recentCollects,
   type CollectionProgressRow,
 } from "@/core/collectionProgress";
 import { rewardTextAtTier } from "@/core/progress";
@@ -895,8 +897,20 @@ const collectionOverview = computed(() =>
   ),
 );
 const collectionHasNew = computed(() => collectionOverview.value.newCount > 0);
+/**
+ * 九柜的「参到什么程度」—— 每册已录几条、其中几条走到了该册最深那一档。
+ *
+ * 九柜此前只报 `known / total`。而录了 80 条、其中 0 条通晓，
+ * 与 80 条全通晓，是两个世界 —— 而界面说同一句话（第 216 轮）。
+ */
+const collectionStagePeaks = computed(() => collectionStagePeak(collectionCats.value));
 const collectionCabinetCells = computed(() => {
   const byKey = new Map(visibleCats.value.map((cat) => [cat.key, cat]));
+  /*
+   * 逐册的「通顶」数 —— 卷首报的是九柜合计，柜面报各自的（第 218 轮）。
+   * 玩家站在某一柜前面时会问「这一册我参透了几条」，而不是「九柜一共几条」。
+   */
+  const peakByKey = new Map(collectionStagePeaks.value.map((p) => [p.key, p.peakCount]));
   return buildCollectionCabinetCells(collectionOverview.value.rows).map((cell) => {
     const cat = byKey.get(cell.key);
     return {
@@ -904,6 +918,7 @@ const collectionCabinetCells = computed(() => {
       knownStart: cat?.knownStart ?? 0,
       knownShown: cat?.knownShown ?? 0,
       knownTotal: cat?.knownTotal ?? cell.known,
+      peakCount: peakByKey.get(cell.key) ?? 0,
     };
   });
 });
@@ -978,15 +993,51 @@ const collectionLeadDescription = computed(() => {
     return "九柜已无未识之物；抽开任一柜，回看这一路的来处。";
   }
   if (overview.known > 0) {
+    /*
+     * 已有一部分收藏、没有新得、也还没集齐时，玩家会问的是另一件事:
+     * **「我上次收了什么」** —— 第 565 轮。
+     *
+     * `quests.collectedAtOf` 一直记着每条的首次收录时刻，此前只用来判「是不是新得的」，
+     * 从没用来排「最近」。九柜按品阶排 —— 那是「该看哪一条」的答案，不是「刚刚发生了什么」。
+     */
+    const recent = recentCollects(
+      collectionCats.value,
+      (key, id) => quests.collectedAtOf(key, id),
+      2,
+    );
+    /*
+     * 取两条：一条只说「最后收了什么」，而这一支的玩家已经在收了一段时间 ——
+     * 他真正会问的是「我最近在收什么」。第二件把方向说出来（第 206 轮）。
+     * 只有一件时不硬凑。
+     */
+    if (recent.length >= 2) {
+      const top = recent[0]!;
+      const prev = recent[1]!;
+      return `最近收录:「${top.name}」（${top.categoryName}）；再往前是「${prev.name}」（${prev.categoryName}）—— 先抽开将满的一柜；余柜的缺口与新得都写在柜面。`;
+    }
+    if (recent.length === 1) {
+      const top = recent[0]!;
+      return `最近收录:「${top.name}」（${top.categoryName}）—— 先抽开将满的一柜；余柜的缺口与新得都写在柜面。`;
+    }
     return "先抽开将满的一柜；余柜的缺口与新得都写在柜面。";
   }
   return "先从历练、炼丹与奇缘里带回第一件，九柜会自己亮起来。";
 });
-const collectionLeadFact = computed(() =>
-  collectionOverview.value.newCount > 0
-    ? `${collectionOverview.value.newCount} 枚待看`
-    : `${collectionOverview.value.known}/${collectionOverview.value.total} 已录`,
-);
+const collectionLeadFact = computed(() => {
+  const ov = collectionOverview.value;
+  if (ov.newCount > 0) return `${ov.newCount} 枚待看`;
+  /*
+   * 已录状态下，此前只报 `known/total`。而「录了 80 条」与「80 条全通晓」
+   * 是两个世界 —— 后者才说明这一册真的参透了（第 216 轮）。
+   *
+   * 取「走到顶档总条数」而不是逐册摊开：卷首这一处只放一个数，
+   * 逐册明细在九柜各自的柜面上。
+   */
+  const peaks = collectionStagePeaks.value;
+  const peakTotal = peaks.reduce((n, p) => n + p.peakCount, 0);
+  const base = `${ov.known}/${ov.total} 已录`;
+  return peakTotal > 0 ? `${base} · 通顶 ${peakTotal}` : base;
+});
 
 const selectedCollectionKey = ref<string | null>(null);
 

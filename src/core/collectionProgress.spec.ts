@@ -1,6 +1,21 @@
 import { describe, expect, it } from "vite-plus/test";
+/*
+ * 只在判据里引一次 ui/codex —— 为的是守住 `STAGE_DEPTH_BY_KEY` 那份手写表。
+ * 生产代码里 core 不引 ui（分层由 uiLayering / importCycles 守），
+ * 而这里是一次性核对:表里的数必须与真实数组长度相等。
+ */
+import {
+  ARTIFACT_STAGE_NAMES,
+  BRANCH_STAGE_NAMES,
+  EQUIP_STAGE_NAMES,
+  PET_STAGE_NAMES,
+  PILL_STAGE_NAMES,
+} from "@/ui/codex";
+import { LORE_STAGE_NAMES } from "@/data/materials";
 import {
   collectionProgressOverview,
+  recentCollects,
+  collectionStagePeak,
   collectionProgressOverviewFromCodex,
   type CollectionProgressCategory,
 } from "./collectionProgress";
@@ -203,5 +218,191 @@ describe("藏珍谱 · 从同一份图鉴条目派生", () => {
       { key: "pill", name: "丹谱", known: 40, total: 80, newCount: 0 },
     ]);
     expect(allDone.nearest?.key, "集齐那册不该被选成「最快」").toBe("pill");
+  });
+
+  it("最近收录 —— 与「这一册里什么最好」是两个问题", () => {
+    /*
+     * ## 为什么要它（第 565 轮）
+     *
+     * `quests.collectedAt` 记着每一条**首次收录**的时刻，而它此前只用来判
+     * 「是不是新得的」（`isEntryNew`，与「上次打开图鉴」比），**从没用来排序**。
+     * 九柜一律按 `byBest`（品阶 / 深度）排 —— 那是「该看哪一条」的答案，
+     * 而不是「我刚刚收了什么」。
+     */
+    const cats = [
+      {
+        key: "pill",
+        name: "丹谱",
+        entries: [
+          { id: "a", stage: 1, name: "回灵丹" },
+          { id: "b", stage: 1, name: "聚气散" },
+          { id: "c", stage: 0, name: "九转还魂丹" },
+        ],
+      },
+    ];
+    const at: Record<string, number> = { "pill:a": 100, "pill:b": 300, "pill:c": 500 };
+
+    const top = recentCollects(cats, (k, id) => at[`${k}:${id}`] ?? 0, 3);
+    expect(top.length, "只该有两条已收录的").toBe(2);
+    expect(top[0]!.id, "聚气散收录得更晚，该排第一").toBe("b");
+    expect(top[0]!.name).toBe("聚气散");
+    expect(top[0]!.categoryName).toBe("丹谱");
+    /* 未收录那条不参与 —— 即使它的时刻最大 */
+    expect(
+      top.some((r) => r.id === "c"),
+      "未收录的不该出现在「最近收录」里",
+    ).toBe(false);
+
+    /* 没记时刻的（0）视为没记，不当成 1970 年 */
+    const partial = recentCollects(cats, () => 0, 3);
+    expect(partial, "一条时刻都没有时该返回空").toEqual([]);
+
+    /* 同一时刻按名字排 —— 排序要稳定 */
+    const tie = recentCollects(cats, () => 200, 3);
+    expect(
+      tie.map((r) => r.id),
+      "同一时刻该按名字定序",
+    ).toEqual(["a", "b"]);
+  });
+
+  it("取两条时的顺序 —— 先最近，再往前，且不重复", () => {
+    const cats = [
+      {
+        key: "pill",
+        name: "丹谱",
+        entries: [
+          { id: "a", stage: 1, name: "甲丹" },
+          { id: "b", stage: 1, name: "乙丹" },
+          { id: "c", stage: 1, name: "丙丹" },
+        ],
+      },
+    ];
+    const at: Record<string, number> = { "pill:a": 100, "pill:b": 300, "pill:c": 200 };
+    const two = recentCollects(cats, (k, id) => at[`${k}:${id}`] ?? 0, 2);
+    expect(two.length, "应该正好取到两条").toBe(2);
+    expect(two[0]!.name, "第一条必须是最新的那件").toBe("乙丹");
+    expect(two[1]!.name, "第二条是上一件").toBe("丙丹");
+    expect(two[0]!.id, "两件不能是同一条").not.toBe(two[1]!.id);
+    const one = recentCollects(
+      [{ key: "pill", name: "丹谱", entries: [{ id: "a", stage: 1, name: "甲丹" }] }],
+      () => 100,
+      2,
+    );
+    expect(one.length, "只有一件时不该凑出两件").toBe(1);
+  });
+
+  it("参到什么程度 —— 录了 80 条与 80 条全通晓是两个世界", () => {
+    /*
+     * 九柜此前只报 known / total。而每一条还有自己的收录深度：
+     * 录了 80 条、其中 0 条通晓，与 80 条全通晓，界面说同一句话。
+     */
+    const cats = [
+      {
+        key: "pill",
+        name: "丹谱",
+        entries: [
+          { id: "a", stage: 1 },
+          { id: "b", stage: 3 },
+          { id: "c", stage: 3 },
+          { id: "d", stage: 0 },
+        ],
+      },
+      { key: "branch", name: "悟道", entries: [{ id: "x", stage: 0 }] },
+    ];
+    const out = collectionStagePeak(cats);
+    expect(out.length, "一条都没录的那一册不该出现").toBe(1);
+    expect(out[0]!.known, "已录 3 条").toBe(3);
+    expect(out[0]!.peakCount, "其中 2 条到了顶档").toBe(2);
+    expect(out[0]!.key, "册的 key 要带出来 —— 界面靠它对回柜面").toBe("pill");
+    /* 全都没录 → 空数组，不是一排 0 */
+    expect(collectionStagePeak([cats[1]!]), "一条都没录时该返回空").toEqual([]);
+  });
+
+  it("只收到「已录」的玩家，通顶数是 0 —— 顶档取自册的定义，不是玩家进度", () => {
+    /*
+     * ## 这条守的是第 238 轮修掉的那个语义错误
+     *
+     * 早前的实现从玩家已录条目里取最大 stage 当顶档。后果:
+     *
+     * ```text
+     * 一位新玩家收了 20 味丹，全部只到「已录」（stage 1）
+     * → 最大 stage = 1，于是「stage >= 1」的都算通顶
+     * → 界面显示「通顶 20」
+     * → 而他一条都没通晓（通晓是第 4 档）
+     * ```
+     *
+     * 现在顶档取自 `STAGE_DEPTH_BY_KEY`（丹谱 4 档 → 顶档 stage 3），
+     * 二十味只到「已录」的丹，通顶数必须是 0，未通顶 20 条。
+     */
+    const fresh = collectionStagePeak([
+      {
+        key: "pill",
+        name: "丹谱",
+        entries: Array.from({ length: 20 }, (_, i) => ({ id: `p${i}`, stage: 1 })),
+      },
+    ]);
+    expect(fresh.length).toBe(1);
+    expect(fresh[0]!.known, "二十味全都收录了").toBe(20);
+    expect(fresh[0]!.peakCount, "但一条都没通晓 —— 通顶必须是 0").toBe(0);
+  });
+
+  it("六册的档数手写表与真实 stage 数组长度一致 —— 防将来漂移", () => {
+    /*
+     * `STAGE_DEPTH_BY_KEY` 是手写的六项表。若某一册的 `*_STAGE_NAMES` 将来增删一档，
+     * 这张表不会自动跟着变，通顶判据会静默错一档 ——
+     * 比如把「已得方」当成「通晓」报给玩家。
+     *
+     * 这里不读那张私有表，而是**问它的行为**:给每册喂一条「按真实数组长度算出的
+     * 顶档」条目，它必须被判为通顶；再喂低一档的，必须不算。
+     */
+    const realDepths: [string, string, readonly string[]][] = [
+      ["equip", "装备谱", EQUIP_STAGE_NAMES],
+      ["artifact", "法宝录", ARTIFACT_STAGE_NAMES],
+      ["pill", "丹谱", PILL_STAGE_NAMES],
+      ["pet", "灵兽谱", PET_STAGE_NAMES],
+      ["branch", "悟道录", BRANCH_STAGE_NAMES],
+      ["material", "灵材谱", LORE_STAGE_NAMES],
+    ];
+    for (const [key, name, arr] of realDepths) {
+      const topIndex = arr.length - 1;
+      const atTop = collectionStagePeak([{ key, name, entries: [{ id: "x", stage: topIndex }] }]);
+      expect(atTop.length, `${name}: 到了真实顶档却没被算进通顶表`).toBe(1);
+      expect(atTop[0]!.peakCount, `${name}: 真实顶档 ${topIndex} 应算作通顶`).toBe(1);
+
+      /* 低一档的不算通顶 —— 若表里的 depth 比真实小，这条会红 */
+      if (topIndex >= 2) {
+        const below = collectionStagePeak([
+          { key, name, entries: [{ id: "x", stage: topIndex - 1 }] },
+        ]);
+        expect(
+          below[0]!.peakCount,
+          `${name}: 第 ${topIndex - 1} 档不该算通顶（顶档是 ${topIndex}）`,
+        ).toBe(0);
+      }
+    }
+  });
+
+  it("二态册不参与通顶 —— 收 / 未收没有中间档", () => {
+    /*
+     * 功法阁 / 见闻志 / 天赋鉴三册是二态的：收进册子里就是全部，
+     * 没有「收录到第几层」可言。它们若也报通顶，那个数就等于 known ——
+     * 界面会说「通顶 30 / 已录 30」，是一句废话。
+     */
+    const out = collectionStagePeak([
+      {
+        key: "gongfa",
+        name: "功法阁",
+        entries: [
+          { id: "g1", stage: 1 },
+          { id: "g2", stage: 1 },
+        ],
+      },
+      { key: "event", name: "见闻志", entries: [{ id: "e1", stage: 1 }] },
+      { key: "pill", name: "丹谱", entries: [{ id: "p1", stage: 3 }] },
+    ]);
+    expect(
+      out.map((r) => r.key),
+      "只有丹谱（有档位的那六册之一）该出现在通顶表里",
+    ).toEqual(["pill"]);
   });
 });
